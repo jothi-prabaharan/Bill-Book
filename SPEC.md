@@ -11,6 +11,21 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 All columns below are in addition to the four inherited from `AuditableEntity`:
 `CreatedBy` (Guid, required) · `CreatedAt` (DateTimeOffset, required) · `ModifiedBy` (Guid?) · `ModifiedAt` (DateTimeOffset?)
 
+## System-master naming convention
+
+Every seeded/system master row carries **two names**:
+
+| Column | Editable | Purpose |
+|---|---|---|
+| `SystemName` | **No** — set at seed, immutable | The canonical identity. All code, reports, GSTR mapping and seed logic key on this (or the id), never on the display name |
+| `DisplayName` | Yes | What the UI shows. The user may rename it |
+
+The rule: **a user can rename a system master for display, but can never change what it *is*.** Renaming the "Cost of Goods Sold" subtype to "COGS / Direct Cost" changes the label on screen and on reports; it does not change that this row is the COGS control point the sale posting targets. `SystemName` is hidden on every screen.
+
+Applies to the system masters the user asked to be renamable — **Chart of Accounts (`AccountTypes`, `AccountSubTypes`, system `Accounts`), Roles, Tax Master** — and to any future reference master with `IsSystem = true`. For a customer-created row (`IsSystem = false`) the two names are seeded equal and both stay editable.
+
+Enforcement: on update of a row where `IsSystem = true`, reject any change to `SystemName` (or any column other than `DisplayName` and active flag) with `Forbid()`.
+
 ---
 
 ## MASTER DATABASE
@@ -134,12 +149,29 @@ The account/billing entity. **One Customer = one physical database.**
 | CountryPrefix | string(2) | Required, default `IN` |
 | Name | string(200) | Required |
 | BillingEmail | string(200) | Required, email |
-| Status | enum→string(20) | Provisioning / Active / Suspended / Trial |
+| Status | enum→string(20) | Provisioning / Active / Suspended / Trial / Expired |
 | PlanTier | string(30) | Required, default `Standard` |
 
-Navigation: `ICollection<Organization> Organizations`, `CustomerDatabase? CustomerDatabase`
+Navigation: `ICollection<Organization> Organizations`, `CustomerDatabase? CustomerDatabase`, `License License`
 
 Database name = `CountryPrefix + CustomerCode` → `IN0000000001`
+
+### `plt.Licenses` 🔨
+One per Customer. A **Trial** licence is created automatically at signup — the customer never picks it.
+
+| Column | Type | Rules |
+|---|---|---|
+| LicenseId | Guid | PK |
+| CustomerId | Guid | Required, FK → Customers, unique (one-to-one) |
+| LicenseType | enum→string(20) | Required, default `Trial`. Trial / Standard / Professional / Enterprise |
+| StartDate | DateOnly | Required, default today |
+| ExpiryDate | DateOnly | Required. Trial = StartDate + 14 days |
+| MaxUsers | int | Trial default 3 |
+| MaxOrganizations | int | Trial default 1 |
+| IsActive | bool | Default true |
+| GraceDays | int | Default 0. Read-only access window after expiry, if any |
+
+A licence is **expired** when `today > ExpiryDate + GraceDays`. Expiry is evaluated at login and stamped onto `Customers.Status = Expired`; it does not need a nightly job, though one may flip status proactively for reporting. **Expiry blocks the app, never the login** — see the trial-expiry flow.
 
 ### `plt.Organizations` ✅
 A set of books. Many per Customer, sharing that Customer's database, separated by `OrgId`.
@@ -200,6 +232,26 @@ Tenant directory.
 ### `plt.PlatformAdminUsers` 📋
 Operator staff, separate from tenant users in `idn`.
 
+### `plt.SmtpSettings` 🔨
+The outbound mail account used to send invitations, OTPs and password-reset mail. One system default (`CustomerId = null`); a customer may override with its own mailbox.
+
+| Column | Type | Rules |
+|---|---|---|
+| SmtpSettingsId | Guid | PK |
+| CustomerId | Guid? | **Null = system default.** Set = this customer's own mailbox |
+| Host | string(200) | Required, e.g. `smtp.gmail.com` |
+| Port | int | Required, e.g. 587 |
+| UseSsl | bool | Default true |
+| FromEmail | string(200) | Required, email. The `From` address |
+| FromName | string(200) | Required, e.g. `Bill-Book` |
+| Username | string(200) | Required. SMTP auth user (often = FromEmail) |
+| PasswordEncrypted | string(1000) | Required. **Reversibly encrypted (AES via a Key Vault data-protection key) — NOT hashed.** The worker must recover the plaintext to authenticate to the SMTP server |
+| IsActive | bool | Default true |
+
+Unique index: `(CustomerId)` — one row per customer, one system row where null.
+
+> **Encrypted, not hashed — and this is the one place that is correct.** Everywhere else a secret is stored (`Users.PasswordHash`, `RefreshTokens.TokenHash`, OTP codes) it is **hashed**, one-way, because we only ever need to *verify* it. An SMTP password is different: the Notification worker has to present the actual password to the mail server, so it must be recoverable. Store it AES-encrypted with a key from Key Vault, never plaintext, never in a log. The encryption key lives in Key Vault, not in the database or config.
+
 ---
 
 ### `idn.Users` ✅
@@ -207,9 +259,9 @@ Operator staff, separate from tenant users in `idn`.
 |---|---|---|
 | UserId | Guid | PK |
 | Email | string(200) | Required, unique, email |
-| PasswordHash | string(500) | Required. BCrypt work factor 12. Empty for invited users until they set one |
+| PasswordHash | string(500) | **Hashed with BCrypt work factor 12 — one-way, never encrypted, never reversible.** Null/empty for invited users until they set one |
 | DisplayName | string(200) | Required |
-| MobileNumber | string(20)? | |
+| MobileNumber | string(20)? | Stored with leading `+` for foreign numbers. Needed for OTP-by-SMS |
 | EmailConfirmed | bool | |
 | MobileConfirmed | bool | |
 | TwoFactorEnabled | bool | |
@@ -224,14 +276,17 @@ Operator staff, separate from tenant users in `idn`.
 |---|---|---|
 | RoleId | int | PK, identity |
 | CustomerId | Guid? | **Null = built-in system role**; set = customer-defined |
-| Name | string(100) | Required |
+| SystemName | string(100) | Required. **Immutable, hidden** — the canonical role identity |
+| DisplayName | string(100) | Required. User-editable label |
 | Description | string(300)? | |
-| IsSystemRole | bool | System roles are read-only |
+| IsSystemRole | bool | System roles: permissions are read-only, but `DisplayName` and `Description` may be edited |
 | IsActive | bool | Default true |
 
-Unique index: (CustomerId, Name)
+Unique index: `(CustomerId, SystemName)`, plus partial `UNIQUE (SystemName) WHERE CustomerId IS NULL` so two system roles can't share a name (Postgres treats nulls as distinct)
 
-**Seed**: 1 Owner, 2 Administrator, 3 Accountant, 4 Sales, 5 Viewer — all `IsSystemRole = true`, `CustomerId = null`
+**Seed** (`SystemName` = `DisplayName` at seed): 1 Owner, 2 Administrator, 3 Accountant, 4 Sales, 5 Viewer — all `IsSystemRole = true`, `CustomerId = null`
+
+A system role's **permission set** is fixed, but the customer may rename it — calling "Accountant" → "Finance Lead" for display — without altering what it grants.
 
 ### `idn.Permissions` ✅
 | Column | Type | Rules |
@@ -304,8 +359,29 @@ Also used for **user invitations** — same mechanism, longer expiry.
 | PasswordResetTokenId | long | PK, identity |
 | UserId | Guid | Required, FK |
 | TokenHash | string(500) | Required, indexed |
-| ExpiresAt | DateTimeOffset | Required. 1 hour for reset, 7 days for invitation |
+| ExpiresAt | DateTimeOffset | Required. **Invitation only, 7 days.** A long random link token |
 | UsedAt | DateTimeOffset? | Single-use |
+
+Invitations stay **link-based** (a long token in a URL). Forgot-password is now **OTP-based** — see below.
+
+### `idn.OtpVerifications` 🔨
+A short numeric code sent to email or mobile. Used by forgot-password, and reusable for mobile/email confirmation.
+
+| Column | Type | Rules |
+|---|---|---|
+| OtpVerificationId | long | PK, identity |
+| UserId | Guid | Required, FK |
+| Purpose | enum→string(20) | Required. PasswordReset / EmailConfirm / MobileConfirm |
+| Channel | enum→string(10) | Required. Email / Sms |
+| Destination | string(200) | Required. The email or masked mobile the code went to |
+| CodeHash | string(500) | Required. **The 6-digit code, hashed (SHA-256) — never stored plaintext** |
+| ExpiresAt | DateTimeOffset | Required. **10 minutes** |
+| AttemptCount | int | Default 0. **Lock after 5 wrong tries** |
+| ConsumedAt | DateTimeOffset? | Single-use |
+
+Indexes: `(UserId, Purpose, ExpiresAt)`.
+
+The code is 6 digits, generated with a cryptographic RNG, and only its hash is stored — same discipline as passwords. A new request invalidates any unconsumed code for the same `(UserId, Purpose)`. Mobile delivery needs an **SMS provider**, which is not yet in the stack — see the flow note.
 
 ### `rat.CurrencyRates` 📋 / `rat.MetalRates` 📋
 Dated history, not just today's rate. Manual override always available.
@@ -322,12 +398,13 @@ Reference data, **no `OrgId`** — identical for every organization.
 | Column | Type | Rules |
 |---|---|---|
 | AccountTypeId | int | PK, not identity |
-| Name | string(20) | Required, unique |
+| SystemName | string(20) | Required, unique. **Immutable, hidden** |
+| DisplayName | string(20) | Required. User-editable label |
 | NormalBalance | enum | Debit / Credit |
 | ReportSection | enum | BalanceSheet / ProfitAndLoss |
 | SortOrder | int | |
 
-**Seed**: 1 Asset/Debit/BalanceSheet · 2 Liability/Credit/BalanceSheet · 3 Equity/Credit/BalanceSheet · 4 Income/Credit/ProfitAndLoss · 5 Expense/Debit/ProfitAndLoss
+**Seed** (`SystemName` = `DisplayName` at seed): 1 Asset/Debit/BalanceSheet · 2 Liability/Credit/BalanceSheet · 3 Equity/Credit/BalanceSheet · 4 Income/Credit/ProfitAndLoss · 5 Expense/Debit/ProfitAndLoss
 
 ### `acc.AccountSubTypes` 🔨
 Reference data, **no `OrgId`**.
@@ -336,11 +413,12 @@ Reference data, **no `OrgId`**.
 |---|---|---|
 | AccountSubTypeId | int | PK, not identity |
 | AccountTypeId | int | Required, FK |
-| Name | string(50) | Required |
+| SystemName | string(50) | Required. **Immutable, hidden** |
+| DisplayName | string(50) | Required. User-editable label |
 | IsContra | bool | Normal balance opposite its type — reports subtract |
 | SortOrder | int | |
 
-Unique index: (AccountTypeId, Name)
+Unique index: (AccountTypeId, SystemName)
 
 **Seed**:
 - Asset: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Other Current Asset, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
@@ -359,10 +437,11 @@ The Chart of Accounts. Seeded **per organization** at org creation.
 | AccountTypeId | int | Required, FK. **Denormalized — always derive from subtype on write** |
 | AccountSubTypeId | int | Required, FK |
 | AccountCode | string(20) | Required |
-| AccountName | string(200) | Required |
+| AccountSystemName | string(200)? | System accounts only: immutable canonical name. Null for user accounts |
+| AccountName | string(200) | Required. Display name. **Editable even on system accounts** |
 | ParentAccountId | long? | Self-FK |
 | CurrencyCode | string(3)? | Null = org base currency |
-| IsSystemDefault | bool | Seeded control accounts — cannot be deleted |
+| IsSystemDefault | bool | Seeded control accounts — cannot be deleted; `AccountSystemName` and code are locked, `AccountName` may be renamed |
 | IsActive | bool | Default true |
 
 Unique index: (OrgId, AccountCode)
@@ -393,7 +472,8 @@ Unique index: (AccountId, ReferenceType, ReferenceId)
 |---|---|---|
 | TaxRateId | long | PK, identity |
 | OrgId | Guid | Required |
-| TaxName | string(50) | Required |
+| TaxSystemName | string(50)? | Seeded rows only: immutable canonical name (e.g. `GST18`). Null for user-created rows |
+| TaxName | string(50) | Required. Display name — editable on seeded rows |
 | TotalRate | decimal(5,2) | Required |
 | CgstRate | decimal(5,2) | Required. Check: `CgstRate = SgstRate` |
 | SgstRate | decimal(5,2) | Required. Check: `CgstRate + SgstRate = TotalRate` |
@@ -584,50 +664,90 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 
 **Every page must work at ~360px**: grids → card lists, multi-column forms → single column, modals → full-screen sheets.
 
+### Trial-expiry gate
+When the access token's `license_status = Expired`, the shell enters a **locked state**:
+
+- The user **is** logged in — the token is valid and the session is real
+- A single **route guard** (`licenseActiveGuard`) sits above every feature route. If the licence is expired it **cancels navigation and renders the empty "Trial expired" page** instead of the requested feature — so typing a URL like `/accounting/journal` directly lands on the empty page, not the journal
+- The empty page shows only: the expiry message, a Renew/Upgrade action, and Logout. Nav rail and tab bar render disabled
+- The **only** routes allowed while expired: the expiry page itself, billing/upgrade, and logout
+- The server enforces the same rule — every feature API returns `403` with `reason: "LicenseExpired"` when the licence is expired, so a hand-crafted request can't reach data the UI is hiding. The guard is UX; the API check is the real boundary
+
 ---
 
 ## Auth pages (`apps/web`, `apps/portal`) 🔨
 
 ### Login
-`POST /api/auth/login` → email + password. On success shows the org list; if only one org, auto-selects it.
+`POST /api/auth/login` → email + password. Verified against `PasswordHash` with BCrypt. On success shows the org list; if only one org, auto-selects it.
 - Errors: invalid credentials (generic message — never say which field), account locked (show unlock time), no org access
+- **Licence is checked at login, not before.** An expired customer still authenticates — the response carries `licenseStatus: "Expired"`, and the app gates on it (trial-expiry flow below). Login itself never fails for expiry.
+- 5 failed attempts → 15-minute lockout (`FailedLoginCount`, `LockedOutUntil`); every attempt writes `idn.LoginHistories`
 - Link to Forgot password
 
 ### Organization selector
 `POST /api/auth/select-organization` with `X-PreAuth-Token` header → access + refresh token.
 - Shows org name and the user's role in each
 - Skipped when the user has exactly one org
+- Access token carries `license_status` and `license_expiry` claims so the shell can gate without a second call
 
-### Forgot password
-`POST /api/auth/forgot-password` → **always shows the same confirmation**, even for unknown emails.
+### Forgot password — OTP
+Three steps, all on one route with a wizard:
 
-### Reset password
-`POST /api/auth/reset-password` with token from the email link. Min 8 chars, confirm field. On success all sessions are revoked — redirect to login.
+1. **Request** — `POST /api/auth/forgot-password` with email (or mobile). **Always returns 200 with the same message** and always advances to step 2, even for an unknown account — never reveal whether it exists. If the account *does* exist, a 6-digit OTP (`idn.OtpVerifications`, 10-min expiry) is sent via the Notification worker to email, or SMS if the user chose mobile and has a confirmed number.
+2. **Verify** — `POST /api/auth/verify-otp` with the code. Wrong code increments `AttemptCount`; **5 wrong tries locks the code** and forces a new request. Expired code → ask to resend.
+3. **Reset** — `POST /api/auth/reset-password` with the verified OTP reference + new password (min 8 chars, confirm field). On success **all refresh tokens are revoked** — redirect to login.
+
+> **SMS delivery is not yet wired.** The stack has the Notification worker and SMTP for email; there is no SMS provider. Mobile OTP is specced but, until a provider (e.g. an SMS gateway) is added, only the **email** channel actually delivers. The mobile option should be hidden until then.
 
 ### Accept invitation
-Same endpoint as reset-password. Invited users have an empty `PasswordHash` until this completes.
+Invitations are **link-based**, not OTP: the user opens the tokenised URL from the invite mail (`idn.PasswordResetTokens`, 7-day expiry) and sets a password. Invited users have a null/empty `PasswordHash` until this completes, and cannot log in before it.
 
 ---
 
 ## Trial signup (`apps/web`, public) 🔨
-`POST /api/customers/signup`
+`POST /api/customers/signup` — one public form that provisions a whole tenant.
 
-Fields: CompanyName, OrganizationName, DisplayName, Email, Password, CountryId (dropdown from `/api/master/countries`), StateId (dependent dropdown), BaseCurrency (defaults from country).
+**Account** — DisplayName (the person), Email, Password, MobileNumber
+**Company / first organization** — CompanyName, OrganizationName, financial-year start date (defaults to 1 April), BaseCurrency (defaults from country)
+**Statutory (India, all optional at signup, editable later)** — GSTIN, PAN, TAN, TIN, CIN, Udyam
+**Location** — CountryId (dropdown from `/api/master/countries`), StateId (dependent dropdown), City, PostalCode
+
+Validate GSTIN's first two digits against the chosen state's `StateCode` when GSTIN is supplied.
+
+**What the server does on submit** (see the signup flow for the full sequence):
+1. Create `plt.Customers` (Status = Provisioning) + generate `CustomerCode`
+2. Create a **Trial `plt.Licenses`** — 14 days, 3 users, 1 org — automatically
+3. `CREATE DATABASE`, run every service's migrations, seed master data (AccountTypes, AccountSubTypes, default Accounts, the 6 TaxMasters), create the first Organization and its Chart of Accounts
+4. Create the owner `idn.Users` with the Owner role, password already hashed
+5. Flip Customer + CustomerDatabase to Active/Ready
 
 **After submit**: shows a "setting up your account" state and polls `GET /api/customers/{id}/status` until `CanLogin = true`. Provisioning creates a physical database — this is eventually consistent and login must be blocked until ready.
 
 ---
 
 ## User management (`apps/web` → Settings) 🔨
-- **List**: `GET /api/users` — scoped to current org. Columns: DisplayName, Email, Role, LastLoginAt, status. Mobile → card list.
-- **Add**: `POST /api/users` — Email, DisplayName, MobileNumber, RoleId. **Sends an invitation link; never a temporary password.**
-- **Revoke**: `DELETE /api/users/{id}` — sets `IsActive = false` on the org assignment. Cannot revoke yourself.
+- **List**: `GET /api/users` — scoped to current org. Columns: DisplayName, Email, Role, MobileNumber, LastLoginAt, status (Invited / Active / Locked / Inactive). Mobile → card list.
+- **Add / invite**: `POST /api/users` — full form: Email, DisplayName, MobileNumber, RoleId (dropdown from Role master), optional per-org role rows if the customer has more than one org. On save:
+  1. Creates `idn.Users` with an empty `PasswordHash` and `EmailConfirmed = false`
+  2. Writes the `idn.UserOrganizationRoles` pivot for the selected org(s)
+  3. Issues an invitation token (`idn.PasswordResetTokens`, 7-day) and **sends the invite mail via the Notification worker + SMTP** — never a temporary password
+  4. Blocks against the licence `MaxUsers` — over the cap returns `409` with an upgrade prompt
+- **Edit**: change DisplayName, MobileNumber, role assignment. Cannot change Email (it's the identity).
+- **Resend invite** / **Reset password (send OTP)** actions per row.
+- **Revoke**: `DELETE /api/users/{id}` — sets `IsActive = false` on the org assignment (soft, per the pivot). **Cannot revoke yourself**, and cannot revoke the last active Owner.
 
 ## Role master (`apps/web` → Settings) 🔨
-- **List**: `GET /api/roles` — system roles + this customer's own. Show user count per role.
-- **Create/Edit**: `POST` / `PUT /api/roles` — Name, Description, permission checkbox matrix grouped by module (`GET /api/roles/permissions`). **120 checkboxes** (12 modules × 10 actions), so the matrix needs a module accordion and select-all per row; at 360px it collapses to one module per screen.
-- **System roles are read-only** — show but disable editing.
-- **Delete**: soft delete. Blocked (409) if assigned to any active user.
+- **List**: `GET /api/roles` — system roles + this customer's own. Show user count per role, and a "System" badge.
+- **Create/Edit**: `POST` / `PUT /api/roles` — DisplayName, Description, permission checkbox matrix grouped by module (`GET /api/roles/permissions`). **120 checkboxes** (12 modules × 10 actions), so the matrix needs a module accordion and select-all per row; at 360px it collapses to one module per screen.
+- **System roles**: `DisplayName` and `Description` are editable, but the **permission matrix is read-only** and `SystemName` is never shown. The user can rename "Accountant" → "Finance Lead" for display; they cannot change what it grants or delete it. (Per the system-master naming convention.)
+- **Delete**: soft delete, customer-defined roles only. Blocked (409) if assigned to any active user.
+
+## SMTP settings (`apps/admin`, and `apps/web` → Settings for per-customer override) 🔨
+Backs the invite / OTP / reset mail.
+- Fields: Host, Port, UseSsl, FromEmail, FromName, Username, Password.
+- **The password field is write-only** — the API accepts a new value and stores it AES-encrypted (`plt.SmtpSettings.PasswordEncrypted`); it is never returned to the client, shown as `••••••` with a "change" affordance.
+- **Send test email** button verifies the settings before save.
+- Platform admin edits the system default (`CustomerId = null`); a customer may set its own row to send from its own mailbox.
 
 ## Organization settings (`apps/web` → Settings) 📋
 Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, FY start month, AP/AR due days, discount type) · Preferences (theme).
@@ -638,12 +758,13 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Tree view grouped by AccountType → AccountSubType, with a flat searchable list toggle
 - Create/edit: AccountCode, AccountName, AccountSubTypeId (grouped dropdown), ParentAccountId, CurrencyCode
 - **AccountTypeId is derived from the selected subtype — never a separate input**
-- `IsSystemDefault` accounts cannot be deleted; deactivate instead
+- `IsSystemDefault` accounts cannot be deleted; deactivate instead. Their code and `AccountSystemName` are locked, but **`AccountName` (display) can be renamed** — same for the seeded types and subtypes
 - Mobile: accordion by type
 
 ## Tax master (`apps/web` → Settings) 📋
 - List: TaxName, TotalRate, CGST/SGST split, IGST, EffectiveFrom/To, active
 - Create/edit: enter TotalRate → **CGST and SGST auto-fill as half each, IGST as the full rate**
+- Seeded rates (the 6 GST rows) can be **renamed for display** (`TaxName`) but their `TaxSystemName` and split are locked
 - Effective-dated: editing a rate creates a new row and expires the old one rather than overwriting
 
 ## Journal entry (`apps/web` → Accounting) 📋
@@ -682,3 +803,182 @@ Customer list with provisioning status · Organization list per customer · API 
 8. **Gateway** (YARP), then the Angular workspace
 
 Frontend can start in parallel once Identity's endpoints are working — the shell, auth pages, and signup only need Identity and Platform.
+
+---
+
+# PART 4 — AUTH & TENANT FLOWS
+
+The end-to-end sequences for login, signup, forgot-password, invitation and trial-expiry. Tables referenced live in PART 1.
+
+## Signup + tenant provisioning
+
+Public, self-service. One form creates a Customer, its database, a Trial licence, the first Organization and the Owner user.
+
+```mermaid
+sequenceDiagram
+    actor U as Visitor
+    participant W as apps/web (signup)
+    participant P as Platform API
+    participant DB as Postgres (master)
+    participant PV as Provisioner
+    participant N as Notification worker
+
+    U->>W: company, org, name, email, password,<br/>country/state, GSTIN/PAN/TIN…, FY start
+    W->>P: POST /api/customers/signup
+    P->>DB: insert Customer (Provisioning) + CustomerCode
+    P->>DB: insert License (Trial, +14d, 3 users, 1 org)
+    P-->>W: 202 { customerId }  → "setting up…"
+    P->>PV: provision(customerId)
+    PV->>DB: CREATE DATABASE IN000000000N (UTF8)
+    PV->>DB: migrate every service schema
+    PV->>DB: seed AccountTypes, AccountSubTypes,<br/>default Accounts, 6 TaxMasters
+    PV->>DB: create Organization + its Chart of Accounts
+    PV->>DB: create Owner User (password hashed) + Owner role pivot
+    PV->>DB: Customer=Active, CustomerDatabase=Ready
+    PV->>N: send "welcome / verify email"
+    N-->>U: welcome mail (SMTP)
+    loop until CanLogin
+        W->>P: GET /api/customers/{id}/status
+        P-->>W: { CanLogin: false | true }
+    end
+    W-->>U: redirect to Login
+```
+
+Key points: the **Trial licence is automatic** — never chosen. Login is **blocked until `CanLogin = true`** because the database is created asynchronously. The owner's password is hashed (BCrypt) before it ever hits a row.
+
+## Login (two-step, licence-aware)
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant W as apps/web
+    participant A as Identity API
+    participant DB as master DB
+
+    U->>W: email + password
+    W->>A: POST /api/auth/login
+    A->>DB: find User by email
+    alt locked (LockedOutUntil > now)
+        A-->>W: 423 locked — show unlock time
+    else bad password
+        A->>DB: FailedLoginCount++ ; LoginHistory(fail)
+        A-->>W: 401 generic "invalid credentials"
+    else ok
+        A->>DB: reset FailedLoginCount ; LoginHistory(ok)
+        A->>DB: read accessible orgs + License
+        A-->>W: 200 pre-auth token (5 min) + orgs + licenseStatus
+    end
+    W->>A: POST /api/auth/select-organization (X-PreAuth-Token)
+    A->>DB: resolve role + permissions for that org
+    A-->>W: access token (15 min, incl. license_status) + refresh token (7 d)
+    alt license_status = Expired
+        W-->>U: land on **Trial-expired** page (locked shell)
+    else active
+        W-->>U: dashboard
+    end
+```
+
+Expiry does **not** stop authentication — the token issues normally and carries `license_status`. The gate is in the shell and re-checked by every feature API.
+
+## Trial-expired access
+
+```mermaid
+flowchart TD
+    L[Logged in, token valid] --> G{license_status<br/>Expired?}
+    G -- no --> APP[Normal app: nav + all pages]
+    G -- yes --> LOCK[Locked shell]
+    LOCK --> E[Trial-expired page:<br/>message · Renew · Logout]
+    LOCK -. types /accounting/journal .-> GUARD{licenseActiveGuard}
+    GUARD -- expired --> E
+    E --> API[Any feature API call]
+    API --> CHK{server licence check}
+    CHK -- expired --> B[403 LicenseExpired]
+```
+
+The user **can log in** but reaches only the empty expiry page — manual URL navigation is caught by the route guard and redirected there, and the API returns `403 LicenseExpired` so nothing is reachable by crafting a request. Renew and Logout are the only live actions.
+
+## Forgot password — OTP
+
+```mermaid
+sequenceDiagram
+    actor U as User
+    participant W as apps/web
+    participant A as Identity API
+    participant DB as master DB
+    participant N as Notification worker
+
+    U->>W: enter email (or mobile)
+    W->>A: POST /api/auth/forgot-password
+    A->>DB: find user
+    alt user exists
+        A->>DB: insert OtpVerification (6-digit hash, 10 min)
+        A->>N: send OTP (email now; SMS when provider added)
+        N-->>U: OTP code
+    else unknown
+        Note over A: do nothing
+    end
+    A-->>W: 200 "if the account exists, a code was sent"  (identical either way)
+    W-->>U: OTP entry screen (always)
+    U->>W: enter code
+    W->>A: POST /api/auth/verify-otp
+    alt wrong / expired
+        A->>DB: AttemptCount++ (lock after 5)
+        A-->>W: 400 — retry or resend
+    else correct
+        A-->>W: 200 verified reference
+        U->>W: new password + confirm
+        W->>A: POST /api/auth/reset-password
+        A->>DB: update PasswordHash (BCrypt)
+        A->>DB: revoke ALL refresh tokens
+        A-->>W: 200 → redirect to Login
+    end
+```
+
+The response and the next screen are **identical whether or not the account exists** — the CLAUDE.md "always 200" rule, preserved with OTP. The code is hashed, 10-minute-lived, single-use, and locks after 5 wrong tries. Resetting revokes every session.
+
+## Invite a user (link-based, not OTP)
+
+```mermaid
+sequenceDiagram
+    actor Admin
+    participant W as apps/web (Users)
+    participant A as Identity API
+    participant DB as master DB
+    participant N as Notification worker
+    actor Invitee
+
+    Admin->>W: email, name, role
+    W->>A: POST /api/users
+    A->>DB: check License.MaxUsers (409 if over)
+    A->>DB: create User (empty PasswordHash) + UserOrganizationRoles
+    A->>DB: PasswordResetToken (invitation, 7 d)
+    A->>N: send invite mail via SMTP
+    N-->>Invitee: "You've been invited" + link
+    Invitee->>W: opens tokenised link
+    W->>A: POST /api/auth/reset-password (invite token)
+    A->>DB: set PasswordHash (BCrypt) ; EmailConfirmed = true
+    A-->>W: 200 → Login
+```
+
+Invitees get a **link, never a temporary password**. Until they complete it, `PasswordHash` is empty and login is refused. The invite mail goes through the same SMTP account as OTP/reset.
+
+## Secret handling — one table of truth
+
+| Secret | Table.Column | Method | Why |
+|---|---|---|---|
+| User login password | `Users.PasswordHash` | **Hash** (BCrypt 12) | Only ever verified |
+| Refresh token | `RefreshTokens.TokenHash` | **Hash** (SHA-256) | Only ever verified |
+| OTP code | `OtpVerifications.CodeHash` | **Hash** (SHA-256) | Only ever verified |
+| Invite / reset link | `PasswordResetTokens.TokenHash` | **Hash** | Only ever verified |
+| SMTP password | `SmtpSettings.PasswordEncrypted` | **Encrypt** (AES, Key Vault key) | Must be recovered to log in to the mail server |
+| DB connection string | `CustomerDatabases.ConnectionSecretRef` | **Key Vault reference** | Never in the database at all |
+
+The single rule: **hash what you only verify; encrypt only what you must replay.** The SMTP password is the sole thing in the system that is encrypted rather than hashed, and that is deliberate.
+
+## Build-order note for these flows
+
+These slot into build step 1 (Identity/Platform) and step 7 (Notification worker):
+- `plt.Licenses`, `plt.SmtpSettings`, `idn.OtpVerifications` migrations, and the `license_status` claim
+- `IEmailSender` backed by real SMTP reading `plt.SmtpSettings` (decrypting the password)
+- `licenseActiveGuard` (frontend) + the `403 LicenseExpired` middleware (every service)
+- SMS delivery is **deferred** until an SMS provider is chosen — mobile OTP stays hidden until then
