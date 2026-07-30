@@ -1,7 +1,30 @@
 {
-  "/api/auth": { "target": "http://localhost:5001", "secure": false },
-  "/api/users": { "target": "http://localhost:5001", "secure": false },
-  "/api/roles": { "target": "http://localhost:5001", "secure": false },
-  "/api/customers": { "target": "http://localhost:5002", "secure": false },
-  "/api/master": { "target": "http://localhost:5003", "secure": false }
+  "/api/auth": {
+    "target": "http://localhost:5001",
+    "secure": false
+  },
+  "/api/users": {
+    "target": "http://localhost:5001",
+    "secure": false
+  },
+  "/api/roles": {
+    "target": "http://localhost:5001",
+    "secure": false
+  },
+  "/api/customers": {
+    "target": "http://localhost:5002",
+    "secure": false
+  },
+  "/api/master": {
+    "target": "http://localhost:5003",
+    "secure": false
+  },
+  "/api/accounts": {
+    "target": "http://localhost:5004",
+    "secure": false
+  },
+  "/api/sub-accounts": {
+    "target": "http://localhost:5004",
+    "secure": false
+  }
 }

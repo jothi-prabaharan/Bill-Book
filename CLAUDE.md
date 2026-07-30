@@ -35,6 +35,10 @@ Always report in **this order**, each with a completion status:
 6. **Reports**
 7. **Settings**
 
+Present each area as a table with these columns:
+
+| Master | Schema | Rows | API | Page |
+
 State what is built, what is designed but uncoded, and what is not designed — never blur those three together. "Designed" is not "done".
 
 ---

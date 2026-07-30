@@ -50,6 +50,11 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('@bill-book/platform-ui').then((m) => m.SmtpSettingsPage),
       },
+      {
+        path: 'accounting/chart-of-accounts',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.ChartOfAccountsPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },

@@ -41,6 +41,19 @@
       "console": "internalConsole"
     },
     {
+      "name": "Accounting.Api (5004)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api/bin/Debug/net10.0/Accounting.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5004"
+      },
+      "console": "internalConsole"
+    },
+    {
       "name": "Gateway (5000)",
       "type": "coreclr",
       "request": "launch",
@@ -64,11 +77,12 @@
   ],
   "compounds": [
     {
-      "name": "🚀 Everything (APIs + Gateway + Web)",
+      "name": "\ud83d\ude80 Everything (APIs + Gateway + Web)",
       "configurations": [
         "Identity.Api (5001)",
         "Platform.Api (5002)",
         "Master.Api (5003)",
+        "Accounting.Api (5004)",
         "Gateway (5000)",
         "Web (Chrome, 4200)"
       ],
@@ -80,6 +94,7 @@
         "Identity.Api (5001)",
         "Platform.Api (5002)",
         "Master.Api (5003)",
+        "Accounting.Api (5004)",
         "Gateway (5000)"
       ],
       "stopAll": true
