@@ -1,0 +1,88 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Identity.Api (5001)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Identity/Identity.Api/bin/Debug/net10.0/Identity.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Identity/Identity.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5001"
+      },
+      "console": "internalConsole"
+    },
+    {
+      "name": "Platform.Api (5002)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Platform/Platform.Api/bin/Debug/net10.0/Platform.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Platform/Platform.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5002"
+      },
+      "console": "internalConsole"
+    },
+    {
+      "name": "Master.Api (5003)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Master/Master.Api/bin/Debug/net10.0/Master.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Master/Master.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5003"
+      },
+      "console": "internalConsole"
+    },
+    {
+      "name": "Gateway (5000)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Gateway/bin/Debug/net10.0/Gateway.dll",
+      "cwd": "${workspaceFolder}/backend/Gateway",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5000"
+      },
+      "console": "internalConsole"
+    },
+    {
+      "name": "Web (Chrome, 4200)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "serve-web",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/frontend"
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Everything (APIs + Gateway + Web)",
+      "configurations": [
+        "Identity.Api (5001)",
+        "Platform.Api (5002)",
+        "Master.Api (5003)",
+        "Gateway (5000)",
+        "Web (Chrome, 4200)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Backend only (APIs + Gateway)",
+      "configurations": [
+        "Identity.Api (5001)",
+        "Platform.Api (5002)",
+        "Master.Api (5003)",
+        "Gateway (5000)"
+      ],
+      "stopAll": true
+    }
+  ]
+}
