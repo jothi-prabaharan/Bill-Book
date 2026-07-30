@@ -498,19 +498,22 @@ Per-contact and per-item detail under a parent control account. Keeps the CoA sm
 | AccountId | long | Required, FK → Accounts |
 | ReferenceType | enum→string(20) | Contact / Item / **Tax** |
 | ReferenceId | long | Polymorphic pointer, no FK. ContactId, ItemId or **TaxRateId** |
+| TaxComponent | enum→string(10) | Default `None`. **Cgst / Sgst / Igst** for `Tax` subaccounts; `None` for Contact/Item |
 | SubAccountName | string(200) | Required |
 | IsActive | bool | Default true |
 
-Unique index: (AccountId, ReferenceType, ReferenceId)
+Unique index: **(AccountId, ReferenceType, ReferenceId, TaxComponent)** — the component completes the key so three rows can share a parent and rate
 
 **Auto-created**, always as a side effect of the owning master, never by hand:
 - each **Contact** → 2 (Accounts Receivable, Accounts Payable)
 - each **Item** → 3 (Inventory, Cost of Goods Sold, Sales Revenue)
-- each **Tax Master** → up to 2 GST subaccounts, one per direction:
-  - **Input GST** subaccount (parent = the Input GST control account) — created when the rate `IsPurchase`
-  - **Output GST** subaccount (parent = the Output GST control account) — created when the rate `IsSales`
+- each **Tax Master** → up to **6** GST subaccounts — CGST, SGST and IGST in each direction:
+  - under the **Input GST** control account: Input CGST, Input SGST, Input IGST — created when the rate `IsPurchase`
+  - under the **Output GST** control account: Output CGST, Output SGST, Output IGST — created when the rate `IsSales`
 
-For a `Tax` subaccount, `ReferenceId` is the `TaxRateId` and the **parent account distinguishes input from output** — Input GST is under an Asset/Input GST account, Output GST under a Liability/Output GST account, so the same `(ReferenceType=Tax, ReferenceId)` yields two rows under two different `AccountId`s, which the unique index allows. `SubAccountName` mirrors the rate's display name, e.g. `Input GST — GST 18%`. This is what lets the GST ledger and GSTR reports break down by rate rather than lumping all input tax into one control balance.
+For a `Tax` subaccount, `ReferenceId` is the `TaxRateId`, the **parent account gives the direction** (Input GST = Asset, Output GST = Liability), and **`TaxComponent` gives the component** (CGST/SGST/IGST). Together — parent + rate + component — the six rows are distinct under the unique index. `SubAccountName` reads e.g. `Output CGST — GST 18%`. This is the finest GST granularity: every posting lands on the right rate **and** the right component, so GSTR-1/3B and ITC can be built straight from the subledger.
+
+Which components a transaction hits is set by tax determination, not stored per subaccount: intra-state → CGST + SGST subaccounts; inter-state → the IGST subaccount. All six stand ready; each posting uses the two-or-one that apply.
 
 ### `acc.TaxMasters` 🔨
 | Column | Type | Rules |
@@ -532,9 +535,9 @@ For a `Tax` subaccount, `ReferenceId` is the `TaxRateId` and the **parent accoun
 
 At least one of `IsSales` / `IsPurchase` must be true — a rate usable on neither document is dead data. Filtered indexes: `(OrgId) WHERE IsSales`, `(OrgId) WHERE IsPurchase`, for the tax pickers.
 
-**Creating a rate auto-creates its GST subaccounts** (`acc.SubAccounts`, `ReferenceType = Tax`): an Input GST subaccount when `IsPurchase`, an Output GST subaccount when `IsSales`. Deactivating or expiring a rate deactivates its subaccounts. This is the same event-driven pattern as Contact and Item subaccounts.
+**Creating a rate auto-creates its GST subaccounts** (`acc.SubAccounts`, `ReferenceType = Tax`): CGST, SGST and IGST under Input GST when `IsPurchase`, and the same three under Output GST when `IsSales` — up to six per rate. Deactivating or expiring a rate deactivates its subaccounts. Same event-driven pattern as Contact and Item subaccounts.
 
-**Seed at org creation** (all seeded rows `IsSales = true` and `IsPurchase = true`, so each seeds **both** GST subaccounts): GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
+**Seed at org creation** (all seeded rows `IsSales = true` and `IsPurchase = true`, so each seeds all **six** GST subaccounts): GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
 
 ### `acc.Journals` 🔨
 Manual journal header.
@@ -568,7 +571,7 @@ Journal lines. Debit and credit are mutually exclusive per line.
 | JournalId | long | Required, FK, cascade delete |
 | LineNumber | int | Required |
 | AccountId | long | Required, FK → Accounts |
-| SubAccountId | long? | FK → SubAccounts. AR/AP → contact, item legs → item, **GST legs → the rate's GST subaccount**. Null only for bank and equity lines |
+| SubAccountId | long? | FK → SubAccounts. AR/AP → contact, item legs → item, **GST legs → the rate + component (CGST/SGST/IGST) subaccount**. Null only for bank and equity lines |
 | DebitAmount | decimal(18,2) | Default 0 |
 | CreditAmount | decimal(18,2) | Default 0 |
 | DebitAmountBase | decimal(18,2) | Default 0 |
