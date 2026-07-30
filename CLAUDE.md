@@ -140,7 +140,7 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 ### SubAccount rules
 - Each Contact → 2 SubAccounts (Accounts Receivable, Accounts Payable)
 - Each Item → 3 SubAccounts (Inventory, Cost of Goods Sold, Sales Revenue)
-- `JournalEntryLine.SubAccountId` is nullable — bank, GST, and equity lines have no contact or item dimension
+- `JournalDetail.SubAccountId` and `JournalLedger.SubAccountId` are nullable — bank, GST, and equity lines have no contact or item dimension
 
 ### Both Inventory and Cost of Goods Sold exist. Don't merge them.
 Inventory (Asset) = stock still held. COGS (Expense) = cost of stock sold.
