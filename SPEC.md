@@ -225,6 +225,8 @@ A set of books. Many per Customer, sharing that Customer's database, separated b
 | Name | string(200) | Required |
 | BaseCurrency | string(3) | Required, default `INR` |
 | FinancialYearStartMonth | int | Range 1–12, default 4 (April) |
+| QuantityDecimalPlaces | int | Range 0–6, default 2. Decimal precision for **quantity** inputs |
+| PriceDecimalPlaces | int | Range 0–6, default 2. Decimal precision for **unit price** inputs (often > money dp) |
 | Gstin | string(15)? | |
 | Pan | string(10)? | |
 | Tan | string(10)? | |
@@ -788,6 +790,51 @@ When the access token's `license_status = Expired`, the shell enters a **locked 
 
 ---
 
+## Shared input components (`libs/shared/ui-components`) 🔨
+
+One component per input type, used by every master and document form so validation, formatting and 360px behaviour are written once. Built on **Angular CDK + Signals only — no Syncfusion**, so they work in the Ionic apps as well as web (Syncfusion is desktop-app-only, per CLAUDE.md).
+
+Every component:
+- Implements `ControlValueAccessor` → drops into reactive forms as a normal `formControlName`
+- Takes a common **`label` · `hint` · `disabled` · `readonly` · `placeholder`** set
+- Renders its own error text from the shared validation model below
+- Collapses correctly at ~360px (full-width, native pickers on mobile)
+
+### The components
+
+| Component | Purpose | Type-specific inputs |
+|---|---|---|
+| `bb-list` | Single-select dropdown | `options` (static or async), `bindLabel`, `bindValue`, `searchable`, `clearable`, `groupBy` |
+| `bb-multiselect` | Multi-select, **multi-column** | `options`, `columns[]` (header + field, so the dropdown renders as a grid), `selectAll`, chips for chosen values, `maxSelected` |
+| `bb-money` | Currency amount | `currencyCode` (defaults to org base) → pulls symbol, `Format` mask and `DecimalPlaces` from `mst.Currencies`; right-aligned; symbol prefix/suffix per `SymbolPosition` |
+| `bb-quantity` | Stock/qty amount | `DecimalPlaces` from `Organizations.QuantityDecimalPlaces`; `step`; unit suffix (UOM) |
+| `bb-unitprice` | Per-unit price | `DecimalPlaces` from `Organizations.PriceDecimalPlaces` (independent of money and quantity); currency symbol |
+| `bb-text` | Text / textarea | `multiline`, `rows`, `mask` (GSTIN, PAN, phone), `transform` (upper/trim) |
+| `bb-date` | Single date | native picker on mobile; display format from org/locale; `minDate` / `maxDate` |
+| `bb-daterange` | From–to range | `presets` (This month, This FY, Last quarter…); enforces `from ≤ to`; optional `maxSpanDays` |
+
+`bb-money`, `bb-quantity` and `bb-unitprice` read their format from a shared **`OrgFormatService`** (in `libs/shared/currency-format`), which caches the org's currency and the two decimal settings — so precision is defined in one place and every numeric field obeys it. Money precision comes from the **currency**; quantity and price precision from **org settings**; the three are deliberately independent.
+
+### Shared validation model
+
+All components accept one declarative `validation` object rather than hand-wired validators, so every field validates the same way:
+
+| Option | Applies to | Meaning |
+|---|---|---|
+| `required` | all | Non-empty |
+| `min` / `max` | money, quantity, unitprice, date | Numeric or date bounds |
+| `minLength` / `maxLength` | text, multiselect | Character count, or selected-item count |
+| `pattern` / `format` | text | Regex or named mask (GSTIN, PAN, email, phone) |
+| `step` | quantity, unitprice | Value must be a multiple |
+| `maxSpanDays` | daterange | Range width cap |
+| `custom` | all | A named async/sync validator (e.g. GSTIN checksum, StateCode-vs-GSTIN) |
+
+- Maps to Angular reactive-forms validators under the hood; `custom` covers domain rules like the GSTIN-first-two-digits check.
+- Error messages are centralised and overridable per field — and every message carries an `ErrorMessage` in the same spirit as the backend Data Annotations rule.
+- Numeric components **clamp to their decimal places on blur** and reject more precision than allowed, so a 2-dp quantity field can never submit `1.005`.
+
+---
+
 ## Auth pages (`apps/web`, `apps/portal`) 🔨
 
 ### Login
@@ -863,7 +910,9 @@ Backs the invite / OTP / reset mail.
 - Platform admin edits the system default (`CustomerId = null`); a customer may set its own row to send from its own mailbox.
 
 ## Organization settings (`apps/web` → Settings) 📋
-Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, FY start month, AP/AR due days, discount type) · Preferences (theme).
+Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, active currencies, FY start month, **quantity decimal places, price decimal places**, AP/AR due days, discount type) · Preferences (theme).
+
+The two decimal settings feed `bb-quantity` and `bb-unitprice` app-wide — changing them here reformats every quantity and price field.
 
 Validate `StateId`'s code matches GSTIN's first two digits.
 
