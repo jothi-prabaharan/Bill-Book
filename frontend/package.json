@@ -4,17 +4,21 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
+    "start": "nx serve web",
     "build": "nx run-many -t build",
     "test": "nx run-many -t test",
     "lint": "nx run-many -t lint"
   },
   "devDependencies": {
+    "@angular/build": "^20.0.0",
+    "@angular/compiler": "^20.0.0",
+    "@angular/compiler-cli": "^20.0.0",
     "@nx/angular": "^21.0.0",
     "@nx/eslint": "^21.0.0",
     "@nx/js": "^21.0.0",
     "@nx/workspace": "^21.0.0",
     "nx": "^21.0.0",
-    "typescript": "~5.6.0"
+    "typescript": "~5.8.0"
   },
   "dependencies": {
     "@angular/common": "^20.0.0",
