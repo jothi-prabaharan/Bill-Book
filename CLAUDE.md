@@ -15,7 +15,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 3. **Every Data Annotation needs `ErrorMessage`.**
 4. **PascalCase table and column names**, matching C# property names exactly. Postgres needs quoted identifiers for this — that's expected.
 5. **PostgreSQL only.** Never add SQL Server compatibility, never avoid a Postgres feature for portability. RLS, `xmin`, and JSONB are all in use deliberately.
-6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it.
+6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it. All four audit columns are **nullable**; `CreatedBy IS NULL` marks system/seed master data (written by no user).
 7. **Enums, not magic strings**, for any fixed set of values.
 8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
@@ -122,7 +122,7 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 - **New Organization** under an existing Customer: insert row, seed its Chart of Accounts + Tax Master. No new database.
 
 ### Cross-database FKs are impossible in Postgres
-- `CreatedBy`/`ModifiedBy` (Users are in master) → plain `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
+- `CreatedBy`/`ModifiedBy` (Users are in master) → plain nullable `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
 - Contacts referencing `mst` Countries/States → unenforced ids, validate in C#
 
 ---

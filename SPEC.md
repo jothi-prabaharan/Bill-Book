@@ -14,12 +14,14 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 
 | Column | Type | Rules |
 |---|---|---|
-| `CreatedBy` | Guid | Required. User id, or a fixed system-actor Guid for seeded/reference rows |
-| `CreatedAt` | DateTimeOffset | Required |
-| `ModifiedBy` | Guid? | Null until first update |
-| `ModifiedAt` | DateTimeOffset? | Null until first update |
+| `CreatedBy` | Guid? | Nullable. A user id for user-created rows; **null marks system/seed data** |
+| `CreatedAt` | DateTimeOffset? | Nullable. Null for seed data written at provisioning |
+| `ModifiedBy` | Guid? | Null until first user update |
+| `ModifiedAt` | DateTimeOffset? | Null until first user update |
 
-No table is exempt — this includes reference/seed masters (`mst.Currencies`, `mst.Countries`, `AccountTypes`, `TransactionTypes`, …), join tables (`idn.RolePermissions`), and child/detail tables (`acc.JournalDetails`, `acc.JournalEntryLines`). Seed data sets `CreatedBy` to a reserved system-actor Guid.
+**All four are nullable.** A row with `CreatedBy = null` is system/default master data — seeded at provisioning by no human — and that null is the signal, so `CreatedBy IS NULL` cleanly distinguishes shipped reference data from anything a user added. When a user creates or edits a row, the interceptor stamps their id and the timestamp.
+
+No table is exempt — this includes reference/seed masters (`mst.Currencies`, `mst.Countries`, `AccountTypes`, `TransactionTypes`, …), join tables (`idn.RolePermissions`), and child/detail tables (`acc.JournalDetails`, `acc.JournalEntryLines`).
 
 The **only** exception is `acc.vw_LedgerDetail`, because it is a database **view**, not a table — it has no rows of its own to audit.
 
@@ -225,8 +227,6 @@ A set of books. Many per Customer, sharing that Customer's database, separated b
 | Name | string(200) | Required |
 | BaseCurrency | string(3) | Required, default `INR` |
 | FinancialYearStartMonth | int | Range 1–12, default 4 (April) |
-| QuantityDecimalPlaces | int | Range 0–6, default 2. Decimal precision for **quantity** inputs |
-| PriceDecimalPlaces | int | Range 0–6, default 2. Decimal precision for **unit price** inputs (often > money dp) |
 | Gstin | string(15)? | |
 | Pan | string(10)? | |
 | Tan | string(10)? | |
@@ -266,6 +266,36 @@ Unique index: `(OrgId, CurrencyId)`, plus partial `UNIQUE (OrgId) WHERE IsBaseCu
 - **Seeded at org creation** with one row: the org's `BaseCurrency`, `IsBaseCurrency = true`. `Organizations.BaseCurrency` stays the authority; this row must always match it, and the base row cannot be deactivated or deleted.
 - This is what the **currency picker** on every transaction lists — an org sees only its active currencies, not all ~180.
 - It also scopes **exchange-rate sync**: `rat.CurrencyRates` only needs rates for pairs an org has enabled here.
+
+### `plt.Configurations` 🔨
+Generic key-value settings — the long tail of tunables (decimal places, default due days, document prefixes, feature toggles) without a column each. A **system default row** (`OrgId = null`) ships the shipped value; a per-org row overrides it.
+
+| Column | Type | Rules |
+|---|---|---|
+| ConfigId | Guid | PK |
+| OrgId | Guid? | **Null = system default.** Set = this org's override |
+| Code | string(50) | Required. Stable key, e.g. `unitPrice.decimals`. Never renamed — code reads it |
+| Name | string(100) | Required. Display label, e.g. `Unit Price Decimals` |
+| Description | string(300)? | Help text shown on the settings screen |
+| DataType | enum→string(10) | Required. `Number` / `Text` / `Boolean` / `Date` / `Json` |
+| Value | string(1000) | Required. Stored as text, **parsed per `DataType`** |
+| Category | string(50)? | Groups rows on the settings page, e.g. `Formatting`, `Documents` |
+| IsSystem | bool | Default false. System keys can be overridden but not deleted |
+
+Unique index: `(OrgId, Code)`, plus partial `UNIQUE (Code) WHERE OrgId IS NULL` (one system default per key).
+
+**Effective value** = the org's row for that `Code` if present, else the system-default row. Resolve once per request and cache; a typed accessor casts `Value` by `DataType` (`GetInt`, `GetBool`, …) so callers never parse strings.
+
+**Seed** (system defaults, `OrgId = null`, `IsSystem = true`):
+
+| Code | Name | Description | DataType | Value |
+|---|---|---|---|---|
+| `unitPrice.decimals` | Unit Price Decimals | Decimal places for unit price inputs | Number | `2` |
+| `quantity.decimals` | Quantity Decimals | Decimal places for quantity inputs | Number | `2` |
+| `sales.dueDays` | Sales Due Days | Default payment terms on invoices | Number | `30` |
+| `purchase.dueDays` | Purchase Due Days | Default payment terms on bills | Number | `30` |
+
+> **This supersedes the two typed decimal columns** that were briefly on `plt.Organizations` (`QuantityDecimalPlaces`, `PriceDecimalPlaces`). Keeping both would be two sources of truth for the same number; the config table is the single home. `mst.Currencies.DecimalPlaces` stays where it is — money precision is a property of the currency, not an org tunable.
 
 ### `plt.CustomerDatabases` ✅
 Tenant directory.
@@ -807,13 +837,13 @@ Every component:
 | `bb-list` | Single-select dropdown | `options` (static or async), `bindLabel`, `bindValue`, `searchable`, `clearable`, `groupBy` |
 | `bb-multiselect` | Multi-select, **multi-column** | `options`, `columns[]` (header + field, so the dropdown renders as a grid), `selectAll`, chips for chosen values, `maxSelected` |
 | `bb-money` | Currency amount | `currencyCode` (defaults to org base) → pulls symbol, `Format` mask and `DecimalPlaces` from `mst.Currencies`; right-aligned; symbol prefix/suffix per `SymbolPosition` |
-| `bb-quantity` | Stock/qty amount | `DecimalPlaces` from `Organizations.QuantityDecimalPlaces`; `step`; unit suffix (UOM) |
-| `bb-unitprice` | Per-unit price | `DecimalPlaces` from `Organizations.PriceDecimalPlaces` (independent of money and quantity); currency symbol |
+| `bb-quantity` | Stock/qty amount | `DecimalPlaces` from config `quantity.decimals`; `step`; unit suffix (UOM) |
+| `bb-unitprice` | Per-unit price | `DecimalPlaces` from config `unitPrice.decimals` (independent of money and quantity); currency symbol |
 | `bb-text` | Text / textarea | `multiline`, `rows`, `mask` (GSTIN, PAN, phone), `transform` (upper/trim) |
 | `bb-date` | Single date | native picker on mobile; display format from org/locale; `minDate` / `maxDate` |
 | `bb-daterange` | From–to range | `presets` (This month, This FY, Last quarter…); enforces `from ≤ to`; optional `maxSpanDays` |
 
-`bb-money`, `bb-quantity` and `bb-unitprice` read their format from a shared **`OrgFormatService`** (in `libs/shared/currency-format`), which caches the org's currency and the two decimal settings — so precision is defined in one place and every numeric field obeys it. Money precision comes from the **currency**; quantity and price precision from **org settings**; the three are deliberately independent.
+`bb-money`, `bb-quantity` and `bb-unitprice` read their format from a shared **`OrgFormatService`** (in `libs/shared/currency-format`), which caches the org's currency and the `quantity.decimals` / `unitPrice.decimals` config values — so precision is defined in one place and every numeric field obeys it. Money precision comes from the **currency** (`mst.Currencies`); quantity and price precision from **`plt.Configurations`**; the three are deliberately independent.
 
 ### Shared validation model
 
@@ -910,9 +940,9 @@ Backs the invite / OTP / reset mail.
 - Platform admin edits the system default (`CustomerId = null`); a customer may set its own row to send from its own mailbox.
 
 ## Organization settings (`apps/web` → Settings) 📋
-Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, active currencies, FY start month, **quantity decimal places, price decimal places**, AP/AR due days, discount type) · Preferences (theme).
+Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, active currencies, FY start month, AP/AR due days, discount type) · Preferences (theme).
 
-The two decimal settings feed `bb-quantity` and `bb-unitprice` app-wide — changing them here reformats every quantity and price field.
+Number-format and other tunables (`quantity.decimals`, `unitPrice.decimals`, due days, …) are edited on a **Settings → Configuration** screen driven by `plt.Configurations`, grouped by `Category`, rendered with the matching `bb-*` input per `DataType`. Changing `unitPrice.decimals` there reformats every price field app-wide.
 
 Validate `StateId`'s code matches GSTIN's first two digits.
 
