@@ -241,11 +241,15 @@ Unique index: (CustomerId, Name)
 | Module | string(50) | Required |
 | Description | string(200)? | |
 
-**Seed**: 12 modules × 4 actions = 48 permissions.
+**Seed**: 12 modules × 10 actions = 120 permissions.
 Modules: dashboard, contacts, crm, inventory, sales, purchase, accounting, banking, reports, settings, support, platform
-Actions: view, create, edit, delete
+Actions: view, create, edit, approve, void, delete, print, export, import, AllUserData
 
 Role grants: Owner + Administrator → everything except `platform.*` · Viewer → all `.view` · Accountant → accounting, banking, reports, purchase · Sales → sales, contacts, crm
+
+> **⚠ open — the module-level grants above now hand out `approve`, `void` and `AllUserData` wholesale.** With four actions, "Accountant → accounting, banking, reports, purchase" was a reasonable shorthand. With ten it also grants self-approval, voiding of posted documents, and visibility of every user's data in those modules. These three need per-role decisions rather than a blanket module grant.
+
+`AllUserData` is a **data-scope** permission, not an action: without it a user sees only records they created, with it they see the whole organization's. It rides the same `{module}.{action}` format for consistency, but the authorization check is a query filter, not a gate on an endpoint.
 
 ### `idn.RolePermissions` ✅
 | Column | Type | Rules |
@@ -621,7 +625,7 @@ Fields: CompanyName, OrganizationName, DisplayName, Email, Password, CountryId (
 
 ## Role master (`apps/web` → Settings) 🔨
 - **List**: `GET /api/roles` — system roles + this customer's own. Show user count per role.
-- **Create/Edit**: `POST` / `PUT /api/roles` — Name, Description, permission checkbox matrix grouped by module (`GET /api/roles/permissions`).
+- **Create/Edit**: `POST` / `PUT /api/roles` — Name, Description, permission checkbox matrix grouped by module (`GET /api/roles/permissions`). **120 checkboxes** (12 modules × 10 actions), so the matrix needs a module accordion and select-all per row; at 360px it collapses to one module per screen.
 - **System roles are read-only** — show but disable editing.
 - **Delete**: soft delete. Blocked (409) if assigned to any active user.
 
