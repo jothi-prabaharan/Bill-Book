@@ -2,9 +2,9 @@
 
 A multi-tenant retail ERP and accounting SaaS for Indian SMBs. Zoho Books is the functional benchmark.
 
-Billing, inventory, double-entry accounting, GST compliance, CRM and a support helpdesk, delivered as web, client-portal, admin and desktop apps over a set of .NET services on PostgreSQL.
+Billing, inventory, double-entry accounting, GST compliance, CRM and a support helpdesk, delivered as web, client-portal, admin, desktop and documentation apps over a set of .NET services on PostgreSQL.
 
-> **Status:** early. See [Current status](#current-status) before trying to build anything — the application code is not yet in this repository.
+> **Status:** early but real. The platform foundation is committed — Shared.Kernel, the Master, Platform and Identity domains, the auth and signup flows, and the web app's auth screens. Nine of twelve services are not started, and **nothing has been compiled yet**. See [Current status](#current-status).
 
 ---
 
@@ -55,7 +55,7 @@ Request flow: resolve `CustomerId` from the JWT → select the database via the 
 
 Everything posts through a **Journal Entry** — invoices, bills, payments, depreciation, opening balances. Nothing else writes GL rows: Sales, Purchase and Banking publish events, and Accounting consumes them.
 
-- Chart of accounts is four tables: `AccountTypes` (5 fixed) → `AccountSubTypes` → `Accounts` → `SubAccounts`
+- Chart of accounts is three tables: `mst.AccountTypes` (5 fixed) → `acc.Accounts` → `acc.SubAccounts`. Sub-types were removed; `IsContra` lives on the account
 - Journal entry lines are debit **xor** credit, never negative
 - Lifecycle is Draft → Posted → Reversed. A posted entry is never edited, only reversed with an offsetting entry.
 - Inventory (Asset) and Cost of Goods Sold (Expense) are deliberately separate — gross profit depends on it
@@ -88,7 +88,8 @@ frontend/
 │   ├── web/                          main application
 │   ├── portal/                       client portal (Phase 2)
 │   ├── admin/                        platform operator screens
-│   └── desktop/                      Electron; only host for ESC/POS printing
+│   ├── desktop/                      Electron; only host for ESC/POS printing
+│   └── docs/                         static help site (markdown, no API)
 └── libs/
     ├── {module}/                     one folder per module, mirroring Api/
     │   ├── {module}-core/            view-models + models, no templates
@@ -149,22 +150,24 @@ cd frontend && npx nx serve web
 
 ## Current status
 
-**Authored:** Master (countries and 37 Indian states with GST codes), Platform (customers, organizations, tenant directory, trial signup, database provisioning), Identity (users, roles, permissions, JWT auth, password reset) — roughly 45 C# files across 10 projects.
+**Committed and building toward a first compile:**
 
-**Not in this repository.** At present the repo contains only `CLAUDE.md`, `README.md` and `.gitignore`. The services above exist outside version control and still need to be committed.
+| Area | State |
+|---|---|
+| `Shared.Kernel` | `AuditableEntity`, audit interceptor, secret/event/email interfaces |
+| Master | Countries, states, currencies + TransactionTypes, LedgerTypes, LedgerSources, AccountTypes — all seeded, read-only API |
+| Platform | Customers, organizations, licences, SMTP, config, org-currencies; signup + background provisioning |
+| Identity | Users, roles, permissions (120), tokens, OTP; login, org selection, OTP reset |
+| Frontend | Teams-style shell, login, signup, OTP wizard, trial-expired page, currency settings, docs app |
+| Tooling | 41-project solution, 35 Nx projects, VS Code one-press debug, YARP gateway |
 
-**Never compiled.** The code was written without a .NET SDK available. Expect failures on the first `dotnet build`, most likely around EF Core 10 package versions and namespace collisions (`Identity` and `Platform` are close to framework namespaces).
+**Never compiled.** No .NET SDK was available while authoring, and no `npm install` has run. Expect the first `dotnet build` and first `nx serve` to surface fixes — most likely EF Core package versions and Angular/Nx alignment. Migrations have not been generated yet.
 
-### Blocking issues
+**Development stand-ins**, all marked in code: the email sender logs OTPs to the console instead of sending, and the secret store and event publisher are in-memory. Replace with SMTP, Key Vault and Service Bus before anything real.
 
-1. `AuthController.ResolveCustomerIdAsync` returns null — needs a Platform call. **Login cannot complete until this is implemented.**
-2. `ISecretStore`, `IEventPublisher` and `IEmailSender` are interfaces with no implementations — DI startup fails.
-3. Login does not check whether the customer's database finished provisioning.
-4. `CustomerCode` generation reads the maximum then increments — needs retry-on-conflict for concurrent signups.
+### Not built
 
-### Not yet built
-
-Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking and Reporting services. The entire frontend. The gateway. All three background workers.
+Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support and Reporting services. The three background workers. User and role management screens. The `portal`, `admin` and `desktop` apps are empty scaffolds.
 
 ---
 

@@ -19,6 +19,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 7. **Enums, not magic strings**, for any fixed set of values.
 8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
+10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
 
 ---
 
@@ -67,7 +68,7 @@ backend/
 │   └── RateSync.Worker/
 └── Gateway/
 frontend/
-├── apps/
+├── apps/                    web · portal · admin · desktop · docs
 └── libs/
     ├── {module}/                one folder per module, mirroring Api/
     │   ├── {module}-core/
@@ -89,7 +90,7 @@ Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. N
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
-**Frontend** (Nx): `apps/{web, portal, admin, desktop}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+**Frontend** (Nx): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
 `-core` libs must stay Ionic-compatible: Signals and DI are fine, but no `window`/`document`, no Syncfusion, no Electron/Node APIs.
 
