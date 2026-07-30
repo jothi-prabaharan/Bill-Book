@@ -43,6 +43,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **Email settings** — configure the mailbox invitations and verification codes are sent from, with a test-send button to confirm the credentials before relying on them. A customer can send from its own address instead of the platform default.
 - **User management** — invite people by email with a role, resend an invitation, and revoke access. Invitations are links, so nobody is ever sent a temporary password.
 - **Chart of accounts** — a per-organization chart grouped by account type, seeded with ten standard accounts when the organization is created. Accounts carry usage flags controlling which document pickers they appear in, and can be renamed freely; once an account has been used its type and code are fixed so existing postings cannot be reclassified.
+- **Tax master** — the six standard GST rates are created with each organization, including the 3% bullion rate. Enter a total and the CGST, SGST and IGST split fills itself in. Rates are effective-dated: changing one creates a new version and keeps the old, so invoices dated before the change still use the rate that applied then.
 - **Sub-accounts** — per-contact, per-item and per-tax-rate detail beneath the control accounts, provisioned automatically by the master that owns them. GST rates get separate CGST, SGST and IGST sub-accounts in each direction, so tax reports break down by rate and component.
 
 ### Security

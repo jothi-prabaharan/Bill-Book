@@ -20,6 +20,8 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<SubAccount> SubAccounts => Set<SubAccount>();
 
+    public DbSet<TaxMaster> TaxMasters => Set<TaxMaster>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("acc");
@@ -58,6 +60,39 @@ public class AccountingDbContext : TenantDbContext
                 .WithMany()
                 .HasForeignKey(e => e.AccountId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<TaxMaster>(b =>
+        {
+            b.HasKey(e => e.TaxMasterId);
+            b.HasIndex(e => new { e.OrgId, e.TaxGroupId, e.EffectiveFrom });
+            b.HasIndex(e => new { e.OrgId, e.EffectiveFrom, e.EffectiveTo });
+            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_TaxMasters_Sales");
+            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_TaxMasters_Purchase");
+
+            foreach (string rate in new[] { "TotalRate", "CgstRate", "SgstRate", "IgstRate", "CessRate" })
+            {
+                b.Property(rate).HasColumnType("decimal(5,2)");
+            }
+
+            // The split invariant, enforced in the database so it cannot drift:
+            // CGST equals SGST, the two sum to the total, and IGST is the total.
+            b.ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_tax_split",
+                    "\"CgstRate\" = \"SgstRate\" AND \"CgstRate\" + \"SgstRate\" = \"TotalRate\" "
+                        + "AND \"IgstRate\" = \"TotalRate\"");
+
+                // A rate usable on neither document is dead data.
+                table.HasCheckConstraint(
+                    "chk_tax_applicability",
+                    "\"IsSales\" = true OR \"IsPurchase\" = true");
+
+                table.HasCheckConstraint(
+                    "chk_tax_effective_range",
+                    "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\"");
+            });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

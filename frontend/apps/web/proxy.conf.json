@@ -26,5 +26,9 @@
   "/api/sub-accounts": {
     "target": "http://localhost:5004",
     "secure": false
+  },
+  "/api/tax-masters": {
+    "target": "http://localhost:5004",
+    "secure": false
   }
 }

@@ -52,6 +52,7 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<SubAccountService>();
+builder.Services.AddScoped<TaxMasterService>();
 
 string? signingKey = builder.Configuration["Jwt:SigningKey"];
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
