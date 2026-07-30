@@ -106,35 +106,46 @@ Seeded reference data. The single source for currency code, symbol and display f
 ---
 
 ### `mst.TransactionTypes` 🔨
-Every document type that can post to the ledger. **Three-letter code as the key.** Referenced from per-customer tables by unenforced code — cross-database FK is impossible, so validate in C#.
+Every document type in the system. **Three-letter code as the key.** Referenced from per-customer tables by unenforced code — cross-database FK is impossible, so validate in C#.
 
 | Column | Type | Rules |
 |---|---|---|
-| Code | string(3) | PK. Exactly three letters, uppercase |
+| Code | string(3) | PK. Exactly three uppercase letters |
 | Name | string(50) | Required, unique |
+| IsLedgerPosting | bool | False for documents that post nothing (quote, orders) |
+| IsActive | bool | Default true. Retire a type without deleting it |
 
-**Seed** — 16 types:
+**No maintenance UI.** All rows ship as seed data; a new document type is added by **EF migration**, never at runtime — a new code with no posting logic behind it would be unusable anyway. The API is **read-only**:
 
-| Code | Name |
-|---|---|
-| QTE | Quote |
-| BIL | Bill |
-| POR | Purchase Order |
-| GRN | Goods Receipt |
-| SOR | Sales Order |
-| INV | Invoice |
-| CRN | Credit Note |
-| DBN | Debit Note |
-| JRN | Journal |
-| SPM | Spend Money |
-| RCM | Receive Money |
-| TRM | Transfer Money |
-| OPB | Opening Balance |
-| DEP | Depreciation |
-| STA | Stock Adjustment |
-| POS | POS Sale |
+```
+GET /api/master/transaction-types          all active types
+GET /api/master/transaction-types/{code}   one type
+```
 
-The code is both the key and what appears on screen and in document numbers, so a ledger row reads without a join.
+**Seed** — 16 types, 13 posting and 3 non-posting:
+
+| Code | Name | Posts |
+|---|---|---|
+| QTE | Quote | no |
+| BIL | Bill | yes |
+| POR | Purchase Order | no |
+| GRN | Goods Receipt | yes |
+| SOR | Sales Order | no |
+| INV | Invoice | yes |
+| CRN | Credit Note | yes |
+| DBN | Debit Note | yes |
+| JRN | Journal | yes |
+| SPM | Spend Money | yes |
+| RCM | Receive Money | yes |
+| TRM | Transfer Money | yes |
+| OPB | Opening Balance | yes |
+| DEP | Depreciation | yes |
+| STA | Stock Adjustment | yes |
+| POS | POS Sale | yes |
+
+The code is both the key and what appears on screen and in document numbers, so a ledger row reads without a join. **A code can never be changed once data exists** — every `JournalLedger`, `Journals` and `TransactionRatio` row stores it as a plain string with no FK to cascade a rename.
+
+`IsLedgerPosting` is the data-level answer to "may this document type reach the ledger?" — the posting path checks it instead of hard-coding a list of codes.
 
 ### `mst.LedgerTypes` 🔨
 **Which leg** of a document a ledger row represents.

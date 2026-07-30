@@ -18,6 +18,8 @@ public class MasterDbContext : DbContext
 
     public DbSet<Currency> Currencies => Set<Currency>();
 
+    public DbSet<TransactionType> TransactionTypes => Set<TransactionType>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -45,10 +47,18 @@ public class MasterDbContext : DbContext
             b.Property(e => e.SymbolPosition).HasConversion<string>().HasMaxLength(6);
         });
 
+        modelBuilder.Entity<TransactionType>(b =>
+        {
+            b.HasKey(e => e.Code);
+            b.Property(e => e.Code).HasMaxLength(3).IsFixedLength();
+            b.HasIndex(e => e.Name).IsUnique();
+        });
+
         MapXminConcurrency(modelBuilder);
         SeedCountries(modelBuilder);
         SeedCurrencies(modelBuilder);
         SeedIndianStates(modelBuilder);
+        SeedTransactionTypes(modelBuilder);
     }
 
     private static void MapXminConcurrency(ModelBuilder modelBuilder)
@@ -118,5 +128,39 @@ public class MasterDbContext : DbContext
         }
 
         modelBuilder.Entity<State>().HasData(rows);
+    }
+
+    private static void SeedTransactionTypes(ModelBuilder modelBuilder)
+    {
+        // (code, name, posts to the ledger). Quotes and orders are commercial
+        // documents only — nothing hits the GL until they become an invoice/bill.
+        (string Code, string Name, bool Posts)[] types =
+        {
+            ("QTE", "Quote", false),
+            ("BIL", "Bill", true),
+            ("POR", "Purchase Order", false),
+            ("GRN", "Goods Receipt", true),
+            ("SOR", "Sales Order", false),
+            ("INV", "Invoice", true),
+            ("CRN", "Credit Note", true),
+            ("DBN", "Debit Note", true),
+            ("JRN", "Journal", true),
+            ("SPM", "Spend Money", true),
+            ("RCM", "Receive Money", true),
+            ("TRM", "Transfer Money", true),
+            ("OPB", "Opening Balance", true),
+            ("DEP", "Depreciation", true),
+            ("STA", "Stock Adjustment", true),
+            ("POS", "POS Sale", true),
+        };
+
+        modelBuilder.Entity<TransactionType>().HasData(
+            types.Select(t => new TransactionType
+            {
+                Code = t.Code,
+                Name = t.Name,
+                IsLedgerPosting = t.Posts,
+                IsActive = true,
+            }));
     }
 }
