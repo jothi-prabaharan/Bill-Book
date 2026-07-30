@@ -47,40 +47,35 @@ Unique index: (CountryId, StateCode)
 ---
 
 ### `mst.TransactionTypes` 🔨
-Every document type that can post to the ledger. **Two-digit id plus a short alpha code.** Referenced from per-customer tables by unenforced id — cross-database FK is impossible, so validate in C#.
+Every document type that can post to the ledger. **Three-letter code as the key.** Referenced from per-customer tables by unenforced code — cross-database FK is impossible, so validate in C#.
 
 | Column | Type | Rules |
 |---|---|---|
-| TransactionTypeId | int | PK, **not** identity. Two digits, 01–99 |
-| Code | string(5) | Required, unique. e.g. `INV`, `BL`, `SM` |
-| Name | string(50) | Required |
-| Module | string(30) | Required. sales / purchase / banking / accounting / inventory |
-| DocumentPrefix | string(5)? | Seeds document numbering, e.g. `INV-` |
-| IsLedgerPosting | bool | False for non-financial documents (quote, order) |
-| IsActive | bool | Default true |
+| Code | string(3) | PK. Exactly three letters, uppercase |
+| Name | string(50) | Required, unique |
 
-**Seed** — ids `02`, `06`, `10`, `11` carry over from the legacy system and must not be renumbered:
+**Seed** — 16 types:
 
-| Id | Code | Name | Module | Posts |
-|---|---|---|---|---|
-| 01 | QT | Quote | sales | no |
-| 02 | BL | Bill | purchase | yes |
-| 03 | PO | Purchase Order | purchase | no |
-| 04 | GRN | Goods Receipt | purchase | yes |
-| 05 | SO | Sales Order | sales | no |
-| 06 | INV | Invoice | sales | yes |
-| 07 | CN | Credit Note | sales | yes |
-| 08 | DN | Debit Note | purchase | yes |
-| 09 | JV | Journal | accounting | yes |
-| 10 | SM | Spend Money | banking | yes |
-| 11 | RM | Receive Money | banking | yes |
-| 12 | RF | Refund | banking | yes |
-| 13 | OB | Opening Balance | accounting | yes |
-| 14 | DP | Depreciation | accounting | yes |
-| 15 | SA | Stock Adjustment | inventory | yes |
-| 16 | POS | POS Sale | sales | yes |
+| Code | Name |
+|---|---|
+| QTE | Quote |
+| BIL | Bill |
+| POR | Purchase Order |
+| GRN | Goods Receipt |
+| SOR | Sales Order |
+| INV | Invoice |
+| CRN | Credit Note |
+| DBN | Debit Note |
+| JRN | Journal |
+| SPM | Spend Money |
+| RCM | Receive Money |
+| RFD | Refund |
+| OPB | Opening Balance |
+| DEP | Depreciation |
+| STA | Stock Adjustment |
+| POS | POS Sale |
 
-`Code` is what appears in document numbers and on screen; `TransactionTypeId` is what the ledger stores.
+The code is both the key and what appears on screen and in document numbers, so a ledger row reads without a join.
 
 ### `mst.LedgerTypes` 🔨
 **Which leg** of a document a ledger row represents.
@@ -396,7 +391,7 @@ Manual journal header.
 | ExchangeRate | decimal(18,8) | Default 1. **Snapshot at JournalDate — never live** |
 | Reference | string(200)? | |
 | Memo | string? | Unbounded text |
-| TransactionTypeId | int | Required → `mst.TransactionTypes`, no FK. `09` when hand-written, else the source document's type |
+| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. `JRN` when hand-written, else the source document's type |
 | SourceId | long? | Source document header, polymorphic, no FK |
 | Status | enum→string(10) | Draft / Posted / Reversed |
 | PostedAt | DateTimeOffset? | |
@@ -404,7 +399,7 @@ Manual journal header.
 | ReversesJournalId | long? | Self-FK. Set on the **reversing** journal |
 | ReversedByJournalId | long? | Self-FK. Set on the **reversed** journal |
 
-Unique index: (OrgId, JournalNo) · Indexes: (OrgId, JournalDate), (OrgId, TransactionTypeId, SourceId)
+Unique index: (OrgId, JournalNo) · Indexes: (OrgId, JournalDate), (OrgId, TransactionTypeCode, SourceId)
 
 ### `acc.JournalDetails` 🔨
 Journal lines. Debit and credit are mutually exclusive per line.
@@ -447,7 +442,7 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 | LedgerDate | DateOnly | Required. Posting date |
 | AccountId | long | Required, FK → Accounts. The GL account being hit |
 | SubAccountId | long? | FK → SubAccounts. Set only for AP, AR and Inventory legs |
-| TransactionTypeId | int | Required → `mst.TransactionTypes`, no FK |
+| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK |
 | TransactionId | long | Required. Source document header |
 | TransactionDetailId | long | Required, default 0. Source document line; `0` when the leg is not line-level |
 | DebitAmount | decimal(18,2) | Default 0. Transaction currency |
@@ -463,19 +458,19 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 | SourceDocumentId | long? | Provenance |
 | TransactionDesc | string(500)? | Description shown in the ledger |
 | MappingTransactionId | long? | **Links a payment back to its document** |
-| MappingTransactionTypeId | int? | **Type of the mapped document** |
+| MappingTransactionTypeCode | string(3)? | **Type of the mapped document** |
 | BranchId | long? | **Reporting dimension only** |
 | JournalId | long? | Set when `LedgerSourceId = 4` (Journal) |
 
-Indexes: (OrgId, LedgerDate) · (OrgId, AccountId, LedgerDate) · (OrgId, TransactionTypeId, TransactionId) · (OrgId, MappingTransactionTypeId, MappingTransactionId) · (OrgId, ContactId) · (OrgId, SubAccountId)
+Indexes: (OrgId, LedgerDate) · (OrgId, AccountId, LedgerDate) · (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransactionTypeCode, MappingTransactionId) · (OrgId, ContactId) · (OrgId, SubAccountId)
 
 **Check constraints**: same two as `JournalDetails` — debit/credit exclusive, all four amounts ≥ 0.
 
-**Deferred constraint trigger**: sum(DebitAmountBase) = sum(CreditAmountBase) per (`OrgId`, `TransactionTypeId`, `TransactionId`). `DEFERRABLE INITIALLY DEFERRED`.
+**Deferred constraint trigger**: sum(DebitAmountBase) = sum(CreditAmountBase) per (`OrgId`, `TransactionTypeCode`, `TransactionId`). `DEFERRABLE INITIALLY DEFERRED`.
 
 #### Document posting
 
-One row per leg, all under the document's own `TransactionTypeId`:
+One row per leg, all under the document's own `TransactionTypeCode`:
 
 | Leg | Account | LedgerTypeId |
 |---|---|---|
@@ -488,18 +483,18 @@ Posted documents only — a draft or void document writes nothing.
 
 #### Payment posting and the mapping pair
 
-A payment posts under its **own** identity (`10` Spend Money for a bill payment, `11` Receive Money for an invoice receipt) and points back at the document it settles:
+A payment posts under its **own** identity (`SPM` Spend Money for a bill payment, `RCM` Receive Money for an invoice receipt) and points back at the document it settles:
 
 | | Debit row | Credit row |
 |---|---|---|
 | `AccountId` | Accounts Payable — clears the liability | Bank or cash account |
-| `TransactionTypeId` | `10` | `10` |
+| `TransactionTypeCode` | `SPM` | `SPM` |
 | `TransactionId` | the payment id | the payment id |
 | `TransactionDetailId` | payment line if line-level, else `0` | `0` |
 | `LedgerTypeId` | 3 `CONTROL` | 3 `CONTROL` |
 | `LedgerSourceId` | 2 `PAYMENT`, or 6 `PREPAYMENT` | same |
 | **`MappingTransactionId`** | **the bill's `TransactionId`** | same |
-| **`MappingTransactionTypeId`** | **`02`** (Bill) | same |
+| **`MappingTransactionTypeCode`** | **`BIL`** | same |
 
 That pairing is the whole mechanism for tracing a payment to its bill or invoice. It is also why payments never appear in stock tables — they carry no item dimension.
 
@@ -514,10 +509,10 @@ Allocation between documents — a credit note applied across invoices, or a pre
 |---|---|---|
 | TransactionRatioId | long | PK, identity |
 | OrgId | Guid | Required |
-| TransactionTypeId | int | Required. The allocating document, e.g. `07` Credit Note |
+| TransactionTypeCode | string(3) | Required. The allocating document, e.g. `CRN` Credit Note |
 | TransactionId | long | Required |
 | TransactionDetailId | long | Default 0 |
-| MappingTransactionTypeId | int | Required. The target document, e.g. `06` Invoice |
+| MappingTransactionTypeCode | string(3) | Required. The target document, e.g. `INV` Invoice |
 | MappingTransactionId | long | Required |
 | MappingTransactionDetailId | long | Default 0 |
 | AllocatedAmount | decimal(18,2) | Required. Transaction currency |
@@ -527,7 +522,7 @@ Allocation between documents — a credit note applied across invoices, or a pre
 | CurrencyCode | string(3) | Required |
 | ExchangeRate | decimal(18,8) | Default 1 |
 
-Indexes: (OrgId, TransactionTypeId, TransactionId) · (OrgId, MappingTransactionTypeId, MappingTransactionId)
+Indexes: (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransactionTypeCode, MappingTransactionId)
 
 Allocations must never exceed the target's outstanding balance. Enforce in C# — the sum spans rows, so no check constraint can express it.
 
@@ -638,8 +633,8 @@ Reads `acc.vw_LedgerDetail`. One screen for every transaction type, because they
 - Filters: date range, account, sub-account, contact, transaction type, ledger source, branch
 - Columns: LedgerDate, TransactionType code, document number, description, contact, debit, credit, running balance
 - **Currency toggle**: transaction currency or base currency — the view carries both
-- Drill-through: a row opens its source document, resolved from `TransactionTypeId` + `TransactionId`
-- **Payment rows show what they settle**, resolved through `MappingTransactionTypeId` + `MappingTransactionId` — a Spend Money row links back to its bill
+- Drill-through: a row opens its source document, resolved from `TransactionTypeCode` + `TransactionId`
+- **Payment rows show what they settle**, resolved through `MappingTransactionTypeCode` + `MappingTransactionId` — a Spend Money row links back to its bill
 - Reversals show paired against the original, from the journal reversal mapping
 - Mobile: card list with debit/credit and running balance; filters in a full-screen sheet
 
@@ -651,7 +646,7 @@ Customer list with provisioning status · Organization list per customer · API 
 # PART 3 — BUILD ORDER
 
 1. **Fix the blockers first** — `AuthController.ResolveCustomerIdAsync` returns null, so login cannot complete. Implement `ISecretStore`, `IEventPublisher`, `IEmailSender` (or register no-op stubs so DI resolves). Then get a first successful `dotnet build` — this code has never been compiled.
-2. **Accounting service** — the four chart-of-accounts tables, TaxMasters, Journals + JournalDetails, then `JournalLedger` and the combined view, with seed data. The three `mst` master tables (TransactionTypes, LedgerTypes, LedgerSources) come first — everything downstream stores their ids
+2. **Accounting service** — the four chart-of-accounts tables, TaxMasters, Journals + JournalDetails, then `JournalLedger` and the combined view, with seed data. The three `mst` master tables (TransactionTypes, LedgerTypes, LedgerSources) come first — everything downstream stores their codes and ids
 3. **Contacts service** — needed before Sales/Purchase can reference anyone
 4. **Inventory service** — UOM, warehouses, items, batch tracking, shared stock pool
 5. **Sales / Purchase** — document chains, both publishing events that Accounting consumes
