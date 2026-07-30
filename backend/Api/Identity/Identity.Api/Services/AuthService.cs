@@ -284,6 +284,36 @@ public sealed class AuthService
         return true;
     }
 
+    /// <summary>
+    /// Completes an invitation. Uses the link token (PasswordResetTokens), not an
+    /// OTP — invitations are link-based. Sets the first password and confirms the
+    /// email in one step.
+    /// </summary>
+    public async Task<bool> AcceptInvitationAsync(AcceptInvitationRequest request, CancellationToken ct)
+    {
+        DateTimeOffset now = _clock.GetUtcNow();
+        User? user = await _db.Users.FirstOrDefaultAsync(u => u.Email == request.Email, ct);
+        if (user is null)
+        {
+            return false;
+        }
+
+        string hash = HashUtil.Sha256(request.Token);
+        PasswordResetToken? token = await _db.PasswordResetTokens.FirstOrDefaultAsync(
+            t => t.UserId == user.UserId && t.TokenHash == hash && t.UsedAt == null && t.ExpiresAt > now,
+            ct);
+        if (token is null)
+        {
+            return false;
+        }
+
+        token.UsedAt = now;
+        user.PasswordHash = _passwordHasher.Hash(request.Password);
+        user.EmailConfirmed = true;
+        await _db.SaveChangesAsync(ct);
+        return true;
+    }
+
     private async Task<OtpVerification?> ActiveOtpAsync(string email, CancellationToken ct)
     {
         DateTimeOffset now = _clock.GetUtcNow();

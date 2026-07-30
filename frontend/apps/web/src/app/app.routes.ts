@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import {
+  AcceptInvitationPage,
   ForgotPasswordPage,
   LoginPage,
   SignupPage,
@@ -14,6 +15,7 @@ export const appRoutes: Routes = [
   { path: 'login', component: LoginPage },
   { path: 'signup', component: SignupPage },
   { path: 'forgot-password', component: ForgotPasswordPage },
+  { path: 'accept-invitation', component: AcceptInvitationPage },
   { path: 'expired', component: TrialExpiredPage, canActivate: [authGuard] },
   {
     path: '',
@@ -38,6 +40,15 @@ export const appRoutes: Routes = [
       {
         path: 'settings/roles',
         loadComponent: () => import('@bill-book/identity-ui').then((m) => m.RolesPage),
+      },
+      {
+        path: 'settings/users',
+        loadComponent: () => import('@bill-book/identity-ui').then((m) => m.UsersPage),
+      },
+      {
+        path: 'settings/email',
+        loadComponent: () =>
+          import('@bill-book/platform-ui').then((m) => m.SmtpSettingsPage),
       },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports

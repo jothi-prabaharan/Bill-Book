@@ -40,12 +40,16 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **Documentation site** — this help app, versioned alongside the product.
 - **Roles & permissions** — the five built-in roles now carry their actual permission grants, and you can create your own roles with a per-module permission matrix. Built-in roles can be renamed to suit your vocabulary without changing what they allow.
 - **Configuration screen** — edit unit-price and quantity decimal places and default payment terms per organization, with a one-click reset back to the shipped default.
+- **Email settings** — configure the mailbox invitations and verification codes are sent from, with a test-send button to confirm the credentials before relying on them. A customer can send from its own address instead of the platform default.
+- **User management** — invite people by email with a role, resend an invitation, and revoke access. Invitations are links, so nobody is ever sent a temporary password.
 
 ### Security
 - Trial expiry pauses access without locking you out of your account: you can still sign in, see why access stopped and renew. Feature pages and their APIs both refuse access until the licence is renewed.
 - Password reset never reveals whether an email address is registered.
 
 ### Changed
+- Licence tiers are Trial, Standard, Pro and Elite. Tier and state are tracked separately, so an Elite plan that lapses reports as expired without losing its tier.
+- Invitation and verification emails now send in the background and retry automatically, so saving an invitation no longer waits on the mail server.
 - Account types are now the only level above the chart of accounts; account sub-types were removed. Accounts carry a contra flag directly, and an account can be renamed for display without changing what it is.
 
 ---

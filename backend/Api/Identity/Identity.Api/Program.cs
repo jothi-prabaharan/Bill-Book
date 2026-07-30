@@ -31,9 +31,15 @@ builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<RoleService>();
+builder.Services.AddScoped<UserService>();
 
-// Placeholder email sender — replaced by the Notification worker's SMTP sender.
-builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();
+// Mail goes through Platform, which owns plt.SmtpSettings — the decrypted
+// password never leaves that service. Platform queues and delivers it.
+builder.Services.AddHttpClient<IEmailSender, PlatformEmailSender>(client =>
+{
+    string baseUrl = builder.Configuration["Platform:BaseUrl"] ?? "http://localhost:5002";
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 // Cross-service seam to Platform.
 builder.Services.AddHttpClient<IPlatformDirectory, PlatformDirectory>(client =>

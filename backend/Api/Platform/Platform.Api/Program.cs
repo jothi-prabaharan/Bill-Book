@@ -25,6 +25,15 @@ builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();
+builder.Services.AddScoped<SmtpSettingsService>();
+builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
+
+// Mail is queued and delivered on a background worker, so an SMTP round-trip
+// never blocks a request. SmtpEmailSender is resolved by the worker only.
+builder.Services.AddScoped<SmtpEmailSender>();
+builder.Services.AddSingleton<IEmailQueue, InProcessEmailQueue>();
+builder.Services.AddScoped<IEmailSender, QueuedEmailSender>();
+builder.Services.AddHostedService<EmailDispatchWorker>();
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 

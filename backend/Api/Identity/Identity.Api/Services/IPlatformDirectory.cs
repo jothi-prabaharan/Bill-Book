@@ -27,4 +27,7 @@ public sealed class OrgContext
     public required string LicenseStatus { get; init; }
 
     public DateOnly? LicenseExpiry { get; init; }
+
+    /// <summary>Licence seat cap — invites are refused at this number.</summary>
+    public int MaxUsers { get; init; }
 }

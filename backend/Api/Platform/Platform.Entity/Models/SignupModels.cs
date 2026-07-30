@@ -111,4 +111,6 @@ public class OrgContextResponse
     public string LicenseStatus { get; set; } = null!;
 
     public DateOnly? LicenseExpiry { get; set; }
+
+    public int MaxUsers { get; set; }
 }

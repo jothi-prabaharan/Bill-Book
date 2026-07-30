@@ -6,3 +6,4 @@ export * from './lib/pages/login.page';
 export * from './lib/pages/signup.page';
 export * from './lib/pages/forgot-password.page';
 export * from './lib/pages/trial-expired.page';
+export * from './lib/pages/accept-invitation.page';

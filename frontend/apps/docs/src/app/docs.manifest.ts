@@ -30,6 +30,7 @@ export const DOCS: DocSection[] = [
       { slug: 'auth', title: 'Authentication', status: 'built' },
       { slug: 'signup', title: 'Signup & provisioning', status: 'built' },
       { slug: 'licensing', title: 'Licensing & trial expiry', status: 'built' },
+      { slug: 'email', title: 'Email & invitations', status: 'built' },
     ],
   },
   {

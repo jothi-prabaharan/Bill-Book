@@ -116,6 +116,17 @@ public sealed class AuthController : ControllerBase
             : BadRequest(new MessageResponse { Message = "Invalid or expired code." });
     }
 
+    /// <summary>Completes an invitation from the emailed link.</summary>
+    [HttpPost("accept-invitation")]
+    public async Task<IActionResult> AcceptInvitation(
+        [FromBody] AcceptInvitationRequest request, CancellationToken ct)
+    {
+        bool ok = await _auth.AcceptInvitationAsync(request, ct);
+        return ok
+            ? Ok(new MessageResponse { Message = "Password set. Please sign in." })
+            : BadRequest(new MessageResponse { Message = "This invitation link is invalid or has expired." });
+    }
+
     private string? Ip() => HttpContext.Connection.RemoteIpAddress?.ToString();
 
     private string? UserAgent() => Request.Headers.UserAgent.ToString();
