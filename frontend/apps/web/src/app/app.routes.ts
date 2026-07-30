@@ -25,8 +25,13 @@ export const appRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: DashboardPage },
+      {
+        path: 'settings/currencies',
+        loadComponent: () =>
+          import('@bill-book/platform-ui').then((m) => m.OrgCurrenciesPage),
+      },
       // Feature modules mount here as they are built:
-      // sales, purchase, banking, contacts, inventory, accounting, reports, settings
+      // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },
     ],
   },

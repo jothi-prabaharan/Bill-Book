@@ -75,4 +75,45 @@ public sealed class MasterController : ControllerBase
             .FirstOrDefaultAsync(ct);
         return type is null ? NotFound() : Ok(type);
     }
+
+    [HttpGet("ledger-types")]
+    public async Task<IActionResult> GetLedgerTypes(CancellationToken ct)
+    {
+        var types = await _db.LedgerTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.LedgerTypeId)
+            .Select(t => new { t.LedgerTypeId, t.Code, t.Name })
+            .ToListAsync(ct);
+        return Ok(types);
+    }
+
+    [HttpGet("ledger-sources")]
+    public async Task<IActionResult> GetLedgerSources(CancellationToken ct)
+    {
+        var sources = await _db.LedgerSources
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.LedgerSourceId)
+            .Select(s => new { s.LedgerSourceId, s.Code, s.Name, s.Direction })
+            .ToListAsync(ct);
+        return Ok(sources);
+    }
+
+    /// <summary>The five account types — the only level above the chart of accounts.</summary>
+    [HttpGet("account-types")]
+    public async Task<IActionResult> GetAccountTypes(CancellationToken ct)
+    {
+        var types = await _db.AccountTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => new
+            {
+                t.AccountTypeId,
+                t.DisplayName,
+                t.NormalBalance,
+                t.ReportSection,
+                t.SortOrder,
+            })
+            .ToListAsync(ct);
+        return Ok(types);
+    }
 }

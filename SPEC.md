@@ -38,7 +38,7 @@ Every seeded/system master row carries **two names**:
 
 The rule: **a user can rename a system master for display, but can never change what it *is*.** Renaming the "Cost of Goods Sold" subtype to "COGS / Direct Cost" changes the label on screen and on reports; it does not change that this row is the COGS control point the sale posting targets. `SystemName` is hidden on every screen.
 
-Applies to the system masters the user asked to be renamable — **Chart of Accounts (`AccountTypes`, `AccountSubTypes`, system `Accounts`), Roles, Tax Master** — and to any future reference master with `IsSystem = true`. For a customer-created row (`IsSystem = false`) the two names are seeded equal and both stay editable.
+Applies to the system masters the user asked to be renamable — **Chart of Accounts (`AccountTypes`, system `Accounts`), Roles, Tax Master** — and to any future reference master with `IsSystem = true`. For a customer-created row (`IsSystem = false`) the two names are seeded equal and both stay editable.
 
 Enforcement: on update of a row where `IsSystem = true`, reject any change to `SystemName` (or any column other than `DisplayName` and active flag) with `Forbid()`.
 
@@ -147,26 +147,72 @@ The code is both the key and what appears on screen and in document numbers, so 
 
 `IsLedgerPosting` is the data-level answer to "may this document type reach the ledger?" — the posting path checks it instead of hard-coding a list of codes.
 
-### `mst.LedgerTypes` 🔨
-**Which leg** of a document a ledger row represents.
+### `mst.LedgerTypes` ✅
+**Which leg** of a document a ledger row represents. Same pattern as TransactionTypes: seeded, no maintenance UI, read-only API, new rows by migration.
 
 | Column | Type | Rules |
 |---|---|---|
-| LedgerTypeId | int | PK, not identity |
+| LedgerTypeId | int | PK, **not** identity — explicit ids for seeding |
 | Code | string(20) | Required, unique |
 | Name | string(50) | Required |
+| IsActive | bool | Default true |
 
-**Seed**: 1 `ITEM` Line item · 2 `TAX` Tax · 3 `CONTROL` AP / AR / bank / cash control leg · 4 `COGS` Cost of goods sold · 5 `FX` Realized exchange gain or loss · 6 `ROUNDOFF` Rounding
+**Seed** — 6 types:
+
+| Id | Code | Name |
+|---|---|---|
+| 1 | ITEM | Line item |
+| 2 | TAX | Tax |
+| 3 | CONTROL | AP / AR / bank / cash control leg |
+| 4 | COGS | Cost of goods sold |
+| 5 | FX | Realized exchange gain or loss |
+| 6 | ROUNDOFF | Rounding |
+
+```
+GET /api/master/ledger-types
+```
+
+### `mst.AccountTypes` ✅
+The five fixed account types — the top and now **only** level above the chart of accounts. Global reference data, so it lives in the master database alongside the other seeded masters rather than being duplicated into every customer database. `acc.Accounts.AccountTypeId` references it as an unenforced id (cross-database FK is impossible).
+
+| Column | Type | Rules |
+|---|---|---|
+| AccountTypeId | int | PK, **not** identity |
+| SystemName | string(20) | Required, unique. **Immutable, hidden** — code and reports key on this |
+| DisplayName | string(20) | Required. User-editable label |
+| NormalBalance | enum→string(6) | Debit / Credit — which side increases the balance |
+| ReportSection | enum→string(15) | BalanceSheet / ProfitAndLoss |
+| SortOrder | smallint | Report ordering — these five always render in a fixed order |
+| IsActive | bool | Default true |
+
+**Seed** — exactly five, ids contractual (`SystemName` = `DisplayName` at seed):
+
+| Id | Name | NormalBalance | ReportSection | Sort |
+|---|---|---|---|---|
+| 1 | Asset | Debit | BalanceSheet | 1 |
+| 2 | Liability | Credit | BalanceSheet | 2 |
+| 3 | Equity | Credit | BalanceSheet | 3 |
+| 4 | Income | Credit | ProfitAndLoss | 4 |
+| 5 | Expense | Debit | ProfitAndLoss | 5 |
+
+Gross profit exists only because Income (4) and Expense (5) are distinct types — never merge them. `SortOrder` is kept here (unlike TransactionTypes) because reports *do* order by it.
+
+```
+GET /api/master/account-types
+```
 
 ### `mst.LedgerSources` 🔨
 **What produced** the ledger row. Since a payment and a refund share the same transaction type — both are Spend Money or Receive Money — this is what tells them apart. Anything that needs to distinguish them (refunds report, GST return, bank reconciliation) filters on `LedgerSourceId`, not on `TransactionTypeCode`.
 
 | Column | Type | Rules |
 |---|---|---|
-| LedgerSourceId | int | PK, not identity |
+| LedgerSourceId | int | PK, **not** identity |
 | Code | string(20) | Required, unique |
 | Name | string(50) | Required |
 | Direction | enum→string(10) | In / Out / Both. Sanity-check against the transaction type |
+| IsActive | bool | Default true |
+
+Same pattern: seeded, no maintenance UI, read-only `GET /api/master/ledger-sources`, new rows by migration.
 
 **Seed** — the `Typical type` column is guidance, not a constraint:
 
@@ -494,40 +540,9 @@ Dated history, not just today's rate. Manual override always available.
 
 Every table below needs `OrgId` (Guid, required) + EF Core global query filter + Postgres RLS policy.
 
-### `acc.AccountTypes` 🔨
-Reference data, **no `OrgId`** — identical for every organization.
-
-| Column | Type | Rules |
-|---|---|---|
-| AccountTypeId | int | PK, not identity |
-| SystemName | string(20) | Required, unique. **Immutable, hidden** |
-| DisplayName | string(20) | Required. User-editable label |
-| NormalBalance | enum | Debit / Credit |
-| ReportSection | enum | BalanceSheet / ProfitAndLoss |
-| SortOrder | int | |
-
-**Seed** (`SystemName` = `DisplayName` at seed): 1 Asset/Debit/BalanceSheet · 2 Liability/Credit/BalanceSheet · 3 Equity/Credit/BalanceSheet · 4 Income/Credit/ProfitAndLoss · 5 Expense/Debit/ProfitAndLoss
-
-### `acc.AccountSubTypes` 🔨
-Reference data, **no `OrgId`**.
-
-| Column | Type | Rules |
-|---|---|---|
-| AccountSubTypeId | int | PK, not identity |
-| AccountTypeId | int | Required, FK |
-| SystemName | string(50) | Required. **Immutable, hidden** |
-| DisplayName | string(50) | Required. User-editable label |
-| IsContra | bool | Normal balance opposite its type — reports subtract |
-| SortOrder | int | |
-
-Unique index: (AccountTypeId, SystemName)
-
-**Seed**:
-- Asset: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Other Current Asset, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
-- Liability: Accounts Payable, Credit Card, Advance from Customer, Output GST, TDS Payable, Other Current Liability, Long-term Liability
-- Equity: Capital, Drawings, Retained Earnings, Opening Balance Equity
-- Income: Operating Revenue, Sales Returns *(contra)*, Discount Given *(contra)*, Other Income
-- Expense: Cost of Goods Sold, Purchase Returns *(contra)*, Operating Expense, Payroll Expense, Rent, Depreciation, Other Expense
+> **`AccountSubTypes` has been removed** (decision, not omission). The chart of accounts is now **two levels**: `mst.AccountTypes` → `acc.Accounts`, with `ParentAccountId` providing any display grouping a subtype layer used to give. Two consequences were handled rather than dropped:
+> - **`IsContra` moved onto `acc.Accounts`.** It used to live on the subtype; without rehoming it, Accumulated Depreciation, Sales Returns, Discount Given and Purchase Returns would stop subtracting and every report would overstate.
+> - **`AccountTypeId` is now chosen directly, not derived.** The old "always derive from the subtype, never accept from a caller" rule no longer applies — there is no subtype to derive from. It is still immutable once the account is used (config lock).
 
 ### `acc.Accounts` 🔨
 The Chart of Accounts. Seeded **per organization** at org creation.
@@ -536,8 +551,8 @@ The Chart of Accounts. Seeded **per organization** at org creation.
 |---|---|---|
 | AccountId | long | PK, identity |
 | OrgId | Guid | Required |
-| AccountTypeId | int | Required, FK. **Denormalized — always derive from subtype on write** |
-| AccountSubTypeId | int | Required, FK |
+| AccountTypeId | int | Required → `mst.AccountTypes`, unenforced (cross-database). Directly chosen; immutable once used |
+| IsContra | bool | Default false. Normal balance opposite its type — **reports subtract**. Rehomed from the removed subtype |
 | AccountCode | string(20) | Required |
 | AccountSystemName | string(200)? | System accounts only: immutable canonical name. Null for user accounts |
 | AccountName | string(200) | Required. Display name. **Editable even on system accounts** |
@@ -562,7 +577,7 @@ Two independent locks, deliberately not the same column:
 - **`IsLock`** freezes *posting*. A used account stays fully configurable-for-posting until an admin sets this; a locked account still exists and still shows balances, it just rejects new lines. Reversible.
 - **Config lock** freezes *what the account is*. It is **not** a stored flag — it is the condition `IsUsed = true OR IsSystemDefault = true`. Once true it never clears (an account cannot be un-used).
 
-When the config is locked, these become **immutable**: `AccountTypeId`, `AccountSubTypeId`, `AccountCode`, `AccountSystemName`, and all the usage flags `IsJE`, `IsSales`, `IsPurchase`, `IsPayment`, `IsBank`. Still editable: `AccountName` (display), `IsActive`, `IsLock`, `ParentAccountId`.
+When the config is locked, these become **immutable**: `AccountTypeId`, `IsContra`, `AccountCode`, `AccountSystemName`, and all the usage flags `IsJE`, `IsSales`, `IsPurchase`, `IsPayment`, `IsBank`. Still editable: `AccountName` (display), `IsActive`, `IsLock`, `ParentAccountId`.
 
 The rules that produce it:
 1. **First use flips `IsUsed`.** Any reference — a `JournalDetail` or `JournalLedger` row, a `SubAccount` parented to it, a document line, an opening balance — sets `IsUsed = true` in the same transaction, atomically. From that instant the account's nature is frozen: you cannot re-point a used Expense account to become an Asset, because its existing postings would silently reclassify.
@@ -596,7 +611,6 @@ Per-contact and per-item detail under a parent control account. Keeps the CoA sm
 | SubAccountId | long | PK, identity |
 | OrgId | Guid | Required |
 | AccountTypeId | int | Required, FK. **Denormalized from parent Account** |
-| AccountSubTypeId | int | Required, FK. **Denormalized from parent Account** |
 | AccountId | long | Required, FK → Accounts |
 | ReferenceType | enum→string(20) | Contact / Item / **Tax** |
 | ReferenceId | long | Polymorphic pointer, no FK. ContactId, ItemId or **TaxRateId** |
@@ -956,7 +970,7 @@ Validate GSTIN's first two digits against the chosen state's `StateCode` when GS
 **What the server does on submit** (see the signup flow for the full sequence):
 1. Create `plt.Customers` (Status = Provisioning) + generate `CustomerCode`
 2. Create a **Trial `plt.Licenses`** — 14 days, 3 users, 1 org — automatically
-3. `CREATE DATABASE`, run every service's migrations, seed master data (AccountTypes, AccountSubTypes, default Accounts, the 6 TaxMasters), create the first Organization and its Chart of Accounts
+3. `CREATE DATABASE`, run every service's migrations, seed the org's default Accounts and the 6 TaxMasters (AccountTypes and the other reference masters live in the master database), create the first Organization and its Chart of Accounts
 4. Create the owner `idn.Users` with the Owner role, password already hashed
 5. Flip Customer + CustomerDatabase to Active/Ready
 
@@ -996,9 +1010,9 @@ Number-format and other tunables (`quantity.decimals`, `unitPrice.decimals`, due
 Validate `StateId`'s code matches GSTIN's first two digits.
 
 ## Chart of accounts (`apps/web` → Accounting) 📋
-- Tree view grouped by AccountType → AccountSubType, with a flat searchable list toggle
-- Create/edit: AccountCode, AccountName, AccountSubTypeId (grouped dropdown), ParentAccountId, CurrencyCode
-- **AccountTypeId is derived from the selected subtype — never a separate input**
+- Tree view grouped by AccountType, nested by `ParentAccountId`, with a flat searchable list toggle
+- Create/edit: AccountCode, AccountName, AccountTypeId (dropdown), IsContra, ParentAccountId, CurrencyCode
+- **`IsContra` marks an account whose normal balance is opposite its type** (accumulated depreciation, sales returns, discounts given, purchase returns) — reports subtract it
 - **Usage flags** (IsSales, IsPurchase, IsPayment, IsBank) as a checkbox group — they decide which account pickers this account appears in. **`IsJE` is not shown here** — it is backend-only. `IsLock` is a separate toggle that freezes the account against all posting
 - **Once the account has been used** (`IsUsed`), type, subtype, code and all usage flags render **read-only** — only display name, active and lock stay editable. System accounts are read-only this way from creation
 - `IsSystemDefault` accounts cannot be deleted; deactivate instead. Their code and `AccountSystemName` are locked, but **`AccountName` (display) can be renamed** — same for the seeded types and subtypes
@@ -1075,7 +1089,7 @@ sequenceDiagram
     P->>PV: provision(customerId)
     PV->>DB: CREATE DATABASE IN000000000N (UTF8)
     PV->>DB: migrate every service schema
-    PV->>DB: seed AccountTypes, AccountSubTypes,<br/>default Accounts, 6 TaxMasters
+    PV->>DB: seed default Accounts,<br/>6 TaxMasters
     PV->>DB: create Organization + its Chart of Accounts
     PV->>DB: create Owner User (password hashed) + Owner role pivot
     PV->>DB: Customer=Active, CustomerDatabase=Ready

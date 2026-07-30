@@ -23,13 +23,19 @@ builder.Services.AddDbContext<PlatformDbContext>((sp, options) =>
 // Signup + provisioning pipeline.
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<OrgContextService>();
+builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 
-// Cross-service seam to Identity's internal API.
+// Cross-service seams — Platform never touches another service's DbContext.
 builder.Services.AddHttpClient<IIdentityAdmin, IdentityAdminClient>(client =>
 {
     string baseUrl = builder.Configuration["Identity:BaseUrl"] ?? "http://localhost:5001";
+    client.BaseAddress = new Uri(baseUrl);
+});
+builder.Services.AddHttpClient<IMasterCurrencies, MasterCurrenciesClient>(client =>
+{
+    string baseUrl = builder.Configuration["Master:BaseUrl"] ?? "http://localhost:5003";
     client.BaseAddress = new Uri(baseUrl);
 });
 

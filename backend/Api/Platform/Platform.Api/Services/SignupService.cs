@@ -15,12 +15,18 @@ public sealed class SignupService
 
     private readonly PlatformDbContext _db;
     private readonly IProvisioningQueue _queue;
+    private readonly IMasterCurrencies _master;
     private readonly TimeProvider _clock;
 
-    public SignupService(PlatformDbContext db, IProvisioningQueue queue, TimeProvider clock)
+    public SignupService(
+        PlatformDbContext db,
+        IProvisioningQueue queue,
+        IMasterCurrencies master,
+        TimeProvider clock)
     {
         _db = db;
         _queue = queue;
+        _master = master;
         _clock = clock;
     }
 
@@ -95,6 +101,21 @@ public sealed class SignupService
             Email = request.Email,
         };
         _db.Organizations.Add(org);
+
+        // The org's base currency is enabled and active from creation, and can
+        // never be deactivated — every posting converts to it.
+        int? baseCurrencyId = await _master.FindCurrencyIdAsync(org.BaseCurrency, ct);
+        if (baseCurrencyId is int currencyId)
+        {
+            _db.OrgCurrencies.Add(new OrgCurrency
+            {
+                OrgCurrencyId = Guid.NewGuid(),
+                OrgId = org.OrgId,
+                CurrencyId = currencyId,
+                IsBaseCurrency = true,
+                IsActive = true,
+            });
+        }
 
         string databaseName = customer.CountryPrefix + customer.CustomerCode;
         var database = new CustomerDatabase

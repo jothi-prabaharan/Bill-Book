@@ -20,6 +20,12 @@ public class MasterDbContext : DbContext
 
     public DbSet<TransactionType> TransactionTypes => Set<TransactionType>();
 
+    public DbSet<LedgerType> LedgerTypes => Set<LedgerType>();
+
+    public DbSet<LedgerSource> LedgerSources => Set<LedgerSource>();
+
+    public DbSet<AccountType> AccountTypes => Set<AccountType>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -54,11 +60,38 @@ public class MasterDbContext : DbContext
             b.HasIndex(e => e.Name).IsUnique();
         });
 
+        modelBuilder.Entity<LedgerType>(b =>
+        {
+            b.HasKey(e => e.LedgerTypeId);
+            b.Property(e => e.LedgerTypeId).ValueGeneratedNever();
+            b.HasIndex(e => e.Code).IsUnique();
+        });
+
+        modelBuilder.Entity<LedgerSource>(b =>
+        {
+            b.HasKey(e => e.LedgerSourceId);
+            b.Property(e => e.LedgerSourceId).ValueGeneratedNever();
+            b.HasIndex(e => e.Code).IsUnique();
+            b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(10);
+        });
+
+        modelBuilder.Entity<AccountType>(b =>
+        {
+            b.HasKey(e => e.AccountTypeId);
+            b.Property(e => e.AccountTypeId).ValueGeneratedNever();
+            b.HasIndex(e => e.SystemName).IsUnique();
+            b.Property(e => e.NormalBalance).HasConversion<string>().HasMaxLength(6);
+            b.Property(e => e.ReportSection).HasConversion<string>().HasMaxLength(15);
+        });
+
         MapXminConcurrency(modelBuilder);
         SeedCountries(modelBuilder);
         SeedCurrencies(modelBuilder);
         SeedIndianStates(modelBuilder);
         SeedTransactionTypes(modelBuilder);
+        SeedLedgerTypes(modelBuilder);
+        SeedLedgerSources(modelBuilder);
+        SeedAccountTypes(modelBuilder);
     }
 
     private static void MapXminConcurrency(ModelBuilder modelBuilder)
@@ -160,6 +193,88 @@ public class MasterDbContext : DbContext
                 Code = t.Code,
                 Name = t.Name,
                 IsLedgerPosting = t.Posts,
+                IsActive = true,
+            }));
+    }
+
+    private static void SeedLedgerTypes(ModelBuilder modelBuilder)
+    {
+        (int Id, string Code, string Name)[] types =
+        {
+            (1, "ITEM", "Line item"),
+            (2, "TAX", "Tax"),
+            (3, "CONTROL", "AP / AR / bank / cash control leg"),
+            (4, "COGS", "Cost of goods sold"),
+            (5, "FX", "Realized exchange gain or loss"),
+            (6, "ROUNDOFF", "Rounding"),
+        };
+
+        modelBuilder.Entity<LedgerType>().HasData(
+            types.Select(t => new LedgerType
+            {
+                LedgerTypeId = t.Id,
+                Code = t.Code,
+                Name = t.Name,
+                IsActive = true,
+            }));
+    }
+
+    private static void SeedLedgerSources(ModelBuilder modelBuilder)
+    {
+        // Payment and refund are paired in opposite directions so each pair
+        // reconciles against the same document.
+        (int Id, string Code, string Name, LedgerDirection Direction)[] sources =
+        {
+            (1, "TRANSACTION", "Document posting", LedgerDirection.Both),
+            (2, "BILLPAYMENT", "Bill payment", LedgerDirection.Out),
+            (3, "INVOICEPAYMENT", "Invoice payment", LedgerDirection.In),
+            (4, "BILLREFUND", "Bill refund received", LedgerDirection.In),
+            (5, "INVOICEREFUND", "Invoice refund paid", LedgerDirection.Out),
+            (6, "CREDITNOTEREFUND", "Credit note refund paid", LedgerDirection.Out),
+            (7, "DEBITNOTEREFUND", "Debit note refund received", LedgerDirection.In),
+            (8, "VENDORPREPAYMENT", "Advance paid to vendor", LedgerDirection.Out),
+            (9, "CUSTOMERPREPAYMENT", "Advance received from customer", LedgerDirection.In),
+            (10, "ALLOCATION", "Credit note, debit note or prepayment allocation", LedgerDirection.Both),
+            (11, "MONEYTRANSFER", "Bank or cash transfer", LedgerDirection.Both),
+            (12, "JOURNAL", "Manual journal", LedgerDirection.Both),
+            (13, "OPENINGBALANCE", "Opening balance", LedgerDirection.Both),
+            (14, "DEPRECIATION", "Depreciation", LedgerDirection.Out),
+            (15, "STOCKADJUSTMENT", "Stock adjustment", LedgerDirection.Both),
+        };
+
+        modelBuilder.Entity<LedgerSource>().HasData(
+            sources.Select(s => new LedgerSource
+            {
+                LedgerSourceId = s.Id,
+                Code = s.Code,
+                Name = s.Name,
+                Direction = s.Direction,
+                IsActive = true,
+            }));
+    }
+
+    private static void SeedAccountTypes(ModelBuilder modelBuilder)
+    {
+        // Ids 1-5 are contractual. Income (4) and Expense (5) stay separate —
+        // gross profit only exists because they are distinct types.
+        (int Id, string Name, NormalBalance Balance, ReportSection Section)[] types =
+        {
+            (1, "Asset", NormalBalance.Debit, ReportSection.BalanceSheet),
+            (2, "Liability", NormalBalance.Credit, ReportSection.BalanceSheet),
+            (3, "Equity", NormalBalance.Credit, ReportSection.BalanceSheet),
+            (4, "Income", NormalBalance.Credit, ReportSection.ProfitAndLoss),
+            (5, "Expense", NormalBalance.Debit, ReportSection.ProfitAndLoss),
+        };
+
+        modelBuilder.Entity<AccountType>().HasData(
+            types.Select(t => new AccountType
+            {
+                AccountTypeId = t.Id,
+                SystemName = t.Name,
+                DisplayName = t.Name,
+                NormalBalance = t.Balance,
+                ReportSection = t.Section,
+                SortOrder = (short)t.Id,
                 IsActive = true,
             }));
     }

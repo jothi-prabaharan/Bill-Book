@@ -129,13 +129,14 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 
 ## Accounting — get this right or reports lie
 
-### Chart of accounts is four tables
-- `AccountTypes` — 5 fixed rows (Asset, Liability, Equity, Income, Expense), each with `NormalBalance` and `ReportSection`
-- `AccountSubTypes` — FK to type, `IsContra` flag
-- `Accounts` — the CoA, `OrgId`-scoped, seeded at org creation
-- `SubAccounts` — per-contact / per-item detail under a parent control account
+### Chart of accounts is three tables
+- `mst.AccountTypes` — 5 fixed rows (Asset, Liability, Equity, Income, Expense), each with `NormalBalance` and `ReportSection`. **Master database** — global reference data, not duplicated per customer
+- `acc.Accounts` — the CoA, `OrgId`-scoped, seeded at org creation. `AccountTypeId` is an unenforced cross-database reference; `IsContra` marks accounts whose normal balance is opposite their type
+- `acc.SubAccounts` — per-contact / per-item / per-tax detail under a parent control account
 
-`AccountTypeId` is denormalized onto `Accounts` and `SubAccounts`. **Always derive it from the subtype or parent on write. Never accept it from a caller** — if the two columns disagree, reports contradict each other depending on which one they group by.
+**There is no `AccountSubTypes` table** — removed by decision. `ParentAccountId` on `Accounts` supplies any display grouping it used to give, and `IsContra` moved onto `Accounts`.
+
+`AccountTypeId` is denormalized onto `SubAccounts`. **Always derive it from the parent account on write, never accept it from a caller** — if the two disagree, reports contradict each other depending on which one they group by. On `Accounts` it is chosen directly, and becomes immutable once the account has been used.
 
 ### SubAccount rules
 - Each Contact → 2 SubAccounts (Accounts Receivable, Accounts Payable)
@@ -149,12 +150,15 @@ Inventory (Asset) = stock still held. COGS (Expense) = cost of stock sold.
 
 Gross profit exists only because Revenue (Income) and COGS (Expense) are separate types.
 
-### Subtypes
-- **Asset**: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Other Current Asset, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
-- **Liability**: Accounts Payable, Credit Card, Advance from Customer, Output GST, TDS Payable, Other Current Liability, Long-term Liability
+### Contra accounts
+With subtypes gone, `IsContra` on `acc.Accounts` is what tells a report to subtract. Set it on accounts whose normal balance runs opposite their type — **Accumulated Depreciation** (Asset), **Sales Returns** and **Discount Given** (Income), **Purchase Returns** (Expense). Miss it and the report overstates silently.
+
+Useful account names to seed or expect under each type (guidance, not a table):
+- **Asset**: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
+- **Liability**: Accounts Payable, Credit Card, Advance from Customer, Output GST, TDS Payable, Long-term Liability
 - **Equity**: Capital, Drawings, Retained Earnings, Opening Balance Equity
 - **Income**: Operating Revenue, Sales Returns *(contra)*, Discount Given *(contra)*, Other Income
-- **Expense**: Cost of Goods Sold, Purchase Returns *(contra)*, Operating Expense, Payroll Expense, Rent, Depreciation, Other Expense
+- **Expense**: Cost of Goods Sold, Purchase Returns *(contra)*, Operating Expense, Payroll Expense, Rent, Depreciation
 
 ### Journal Entry is the only posting mechanism
 Everything — invoices, bills, payments, depreciation, opening balances — produces a JE.
