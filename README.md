@@ -183,3 +183,5 @@ Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking and Reporting ser
 Read **[CLAUDE.md](./CLAUDE.md)** before writing any code. It holds the binding conventions — LINQ-only data access, entity shape, tenancy rules, the accounting model, and the recipes for adding a table or an endpoint. The rules there are decisions already taken, not suggestions.
 
 It also lists what is still undecided. If your work touches one of those items, ask rather than assume.
+
+Then read **[SPEC.md](./SPEC.md)** for the concrete what-to-build: column-level table definitions, seed data, page specifications and the build order. Each item carries a status — ✅ built, 🔨 designed but not built, 📋 scoped only.
