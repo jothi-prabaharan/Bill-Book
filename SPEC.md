@@ -519,9 +519,13 @@ Unique index: (AccountId, ReferenceType, ReferenceId)
 | CessRate | decimal(5,2) | Default 0 |
 | EffectiveFrom | DateOnly | Required |
 | EffectiveTo | DateOnly? | Null = currently in effect |
+| IsSales | bool | Default true. Selectable as an **output** tax on sales documents |
+| IsPurchase | bool | Default true. Selectable as an **input** tax on purchase documents |
 | IsActive | bool | Default true |
 
-**Seed at org creation**: GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
+At least one of `IsSales` / `IsPurchase` must be true — a rate usable on neither document is dead data. Filtered indexes: `(OrgId) WHERE IsSales`, `(OrgId) WHERE IsPurchase`, for the tax pickers.
+
+**Seed at org creation** (all seeded rows `IsSales = true` and `IsPurchase = true`): GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
 
 ### `acc.Journals` 🔨
 Manual journal header.
@@ -802,8 +806,8 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Mobile: accordion by type
 
 ## Tax master (`apps/web` → Settings) 📋
-- List: TaxName, TotalRate, CGST/SGST split, IGST, EffectiveFrom/To, active
-- Create/edit: enter TotalRate → **CGST and SGST auto-fill as half each, IGST as the full rate**
+- List: TaxName, TotalRate, CGST/SGST split, IGST, Sales/Purchase applicability, EffectiveFrom/To, active
+- Create/edit: enter TotalRate → **CGST and SGST auto-fill as half each, IGST as the full rate**. Sales / Purchase checkboxes (at least one required) decide which document pickers the rate appears in
 - Seeded rates (the 6 GST rows) can be **renamed for display** (`TaxName`) but their `TaxSystemName` and split are locked
 - Effective-dated: editing a rate creates a new row and expires the old one rather than overwriting
 
