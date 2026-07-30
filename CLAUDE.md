@@ -51,7 +51,7 @@ Two top-level halves. Inside `backend/`, four groups — `Api/`, `shared/`, `wor
 
 ```
 backend/
-├── RetailErp.sln
+├── Bill-Book.sln
 ├── Api/
 │   └── {Module}/                one folder per service (×12)
 │       ├── {Module}.Entity/

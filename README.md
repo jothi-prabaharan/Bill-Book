@@ -70,7 +70,7 @@ Everything posts through a **Journal Entry** — invoices, bills, payments, depr
 
 ```
 backend/
-├── RetailErp.sln
+├── Bill-Book.sln
 ├── Api/
 │   └── {Module}/                     one folder per service (×12)
 │       ├── {Module}.Entity/          TableEntities/ · Models/ · Enums/
