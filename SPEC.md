@@ -441,16 +441,33 @@ The Chart of Accounts. Seeded **per organization** at org creation.
 | AccountName | string(200) | Required. Display name. **Editable even on system accounts** |
 | ParentAccountId | long? | Self-FK |
 | CurrencyCode | string(3)? | Null = org base currency |
-| IsSystemDefault | bool | Seeded control accounts — cannot be deleted; `AccountSystemName` and code are locked, `AccountName` may be renamed |
-| IsActive | bool | Default true |
-| IsJE | bool | Default true. May this account be picked on a **manual journal** line. False for control accounts posted only by the system (AR, AP, Inventory, GST) |
-| IsLock | bool | Default false. Hard lock — **no posting of any kind**, manual or system. Overrides all the flags below |
+| IsSystemDefault | bool | Seeded control accounts — cannot be deleted; **config-locked from creation** (see below) |
+| IsActive | bool | Default true. Operational — changeable any time |
+| IsUsed | bool | Default false. Set true — **and never back** — the first time this account is referenced by any posting or master row. Drives the config lock |
+| IsJE | bool | Default false. May this account be picked on a **manual journal** line. **Backend/admin only — never a customer-facing toggle**, and settable only while the config is unlocked |
+| IsLock | bool | Default false. Posting freeze — **no posting of any kind**, manual or system. Operational, changeable any time; orthogonal to the config lock |
 | IsSales | bool | Default false. Selectable as an income/revenue account on a **sales** document |
 | IsPurchase | bool | Default false. Selectable as an expense/asset account on a **purchase** document |
 | IsPayment | bool | Default false. Selectable as the settlement account on a **payment / receipt** (Spend/Receive Money) |
 | IsBank | bool | Default false. This account **is** a bank or cash account — appears in bank pickers, reconciliation and Transfer Money |
 
 Unique index: (OrgId, AccountCode) · Filtered indexes: `(OrgId) WHERE IsBank`, `(OrgId) WHERE IsSales`, `(OrgId) WHERE IsPurchase`
+
+#### Configuration lock — what can change, and when
+
+Two independent locks, deliberately not the same column:
+
+- **`IsLock`** freezes *posting*. A used account stays fully configurable-for-posting until an admin sets this; a locked account still exists and still shows balances, it just rejects new lines. Reversible.
+- **Config lock** freezes *what the account is*. It is **not** a stored flag — it is the condition `IsUsed = true OR IsSystemDefault = true`. Once true it never clears (an account cannot be un-used).
+
+When the config is locked, these become **immutable**: `AccountTypeId`, `AccountSubTypeId`, `AccountCode`, `AccountSystemName`, and all the usage flags `IsJE`, `IsSales`, `IsPurchase`, `IsPayment`, `IsBank`. Still editable: `AccountName` (display), `IsActive`, `IsLock`, `ParentAccountId`.
+
+The rules that produce it:
+1. **First use flips `IsUsed`.** Any reference — a `JournalDetail` or `JournalLedger` row, a `SubAccount` parented to it, a document line, an opening balance — sets `IsUsed = true` in the same transaction, atomically. From that instant the account's nature is frozen: you cannot re-point a used Expense account to become an Asset, because its existing postings would silently reclassify.
+2. **`IsJE` is backend-only.** It is never rendered as an editable control on the customer Chart-of-Accounts page. An operator sets it from the backend (admin tool / seed), and only while `IsUsed = false` and `IsSystemDefault = false`. After first use it is fixed like the rest.
+3. **System accounts are locked from creation.** `IsSystemDefault = true` config-locks the row at seed — before any use — so the ten control accounts can never have their type, code or usage flags changed. Their flag values are fixed by the seed table below.
+
+Enforcement lives on write: reject a change to any immutable column when the config lock holds, with `Forbid()`. A missing check here lets someone reclassify an account that already holds a year of postings.
 
 **Seed at org creation**: Accounts Receivable, Accounts Payable, Inventory, Input GST, Output GST, Sales Revenue, Cost of Goods Sold, Realized FX Gain/Loss, Unrealized FX Gain/Loss, Opening Balance Equity — all `IsSystemDefault = true`
 
@@ -779,7 +796,8 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Tree view grouped by AccountType → AccountSubType, with a flat searchable list toggle
 - Create/edit: AccountCode, AccountName, AccountSubTypeId (grouped dropdown), ParentAccountId, CurrencyCode
 - **AccountTypeId is derived from the selected subtype — never a separate input**
-- **Usage flags** (IsJE, IsSales, IsPurchase, IsPayment, IsBank) as a checkbox group — they decide which account pickers this account appears in across the app. `IsLock` is a separate toggle that freezes the account against all posting
+- **Usage flags** (IsSales, IsPurchase, IsPayment, IsBank) as a checkbox group — they decide which account pickers this account appears in. **`IsJE` is not shown here** — it is backend-only. `IsLock` is a separate toggle that freezes the account against all posting
+- **Once the account has been used** (`IsUsed`), type, subtype, code and all usage flags render **read-only** — only display name, active and lock stay editable. System accounts are read-only this way from creation
 - `IsSystemDefault` accounts cannot be deleted; deactivate instead. Their code and `AccountSystemName` are locked, but **`AccountName` (display) can be renamed** — same for the seeded types and subtypes
 - Mobile: accordion by type
 
