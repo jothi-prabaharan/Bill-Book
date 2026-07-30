@@ -59,6 +59,34 @@ Unique index: (CountryId, StateCode)
 
 **Seed** — all 37 Indian states/UTs by GST code: 01 Jammu and Kashmir, 02 Himachal Pradesh, 03 Punjab, 04 Chandigarh, 05 Uttarakhand, 06 Haryana, 07 Delhi, 08 Rajasthan, 09 Uttar Pradesh, 10 Bihar, 11 Sikkim, 12 Arunachal Pradesh, 13 Nagaland, 14 Manipur, 15 Mizoram, 16 Tripura, 17 Meghalaya, 18 Assam, 19 West Bengal, 20 Jharkhand, 21 Odisha, 22 Chhattisgarh, 23 Madhya Pradesh, 24 Gujarat, 26 Dadra and Nagar Haveli and Daman and Diu, 27 Maharashtra, 29 Karnataka, 30 Goa, 31 Lakshadweep, 32 Kerala, 33 Tamil Nadu, 34 Puducherry, 35 Andaman and Nicobar Islands, 36 Telangana, 37 Andhra Pradesh, 38 Ladakh, 97 Other Territory
 
+### `mst.Currencies` ✅
+Seeded reference data. The single source for currency code, symbol and display formatting — feeds `libs/shared/currency-format` on the frontend and base-currency conversion on the backend. Referenced by `mst.Countries.CurrencyCode` and `plt.Organizations.BaseCurrency` (real FKs, same DB) and by every per-customer transaction's `CurrencyCode` (unenforced string — cross-database).
+
+| Column | Type | Rules |
+|---|---|---|
+| CurrencyId | int | PK, **not** identity — explicit ids for seeding |
+| Code | string(3) | Required, unique. ISO 4217 |
+| Name | string(60) | Required, e.g. `Indian Rupee` |
+| Symbol | string(5) | Required, e.g. `₹` `$` `£`. UTF-8, may be multi-char (`CHF`, `kr`) |
+| Format | string(30) | Required. Display mask, e.g. `###,###,##0.00` |
+| DecimalPlaces | int | Required, default 2. **Drives money rounding, not just display** — JPY 0, KWD 3 |
+| SymbolPosition | enum→string(6) | `Prefix` / `Suffix`, default Prefix |
+| IsActive | bool | Default true |
+
+**`Format` is the grouping mask, and India is the reason it's a column, not a constant.** Western grouping is threes — `###,###,##0.00` → `1,234,567.89`. Indian grouping is the lakh/crore pattern — `##,##,##0.00` → `12,34,567.89`. A single hard-coded format would render Indian amounts wrong, so each currency carries its own. `DecimalPlaces` is separate because rounding money must never be inferred from a display string.
+
+**Seed** (matching the seeded countries, extend as needed):
+
+| Id | Code | Name | Symbol | Format | Dp |
+|---|---|---|---|---|---|
+| 1 | INR | Indian Rupee | ₹ | `##,##,##0.00` | 2 |
+| 2 | USD | US Dollar | $ | `###,###,##0.00` | 2 |
+| 3 | GBP | Pound Sterling | £ | `###,###,##0.00` | 2 |
+| 4 | AED | UAE Dirham | د.إ | `###,###,##0.00` | 2 |
+| 5 | SGD | Singapore Dollar | S$ | `###,###,##0.00` | 2 |
+
+> The user asked for "all currencies" — the five above match the seeded countries. The full ISO 4217 set (~180) is a larger seed to load at implementation from a data file, not to enumerate here. INR is the lone lakh/crore format; the rest use the threes mask, most at 2 dp (notable exceptions: JPY/KRW 0, KWD/BHD/OMR 3).
+
 ---
 
 ### `mst.TransactionTypes` 🔨
@@ -205,6 +233,24 @@ A set of books. Many per Customer, sharing that Customer's database, separated b
 Unique index: (CustomerId, Name)
 
 **Validate `StateId`'s StateCode matches Gstin's first 2 digits** — a mismatch silently breaks CGST/SGST vs IGST.
+
+### `plt.OrgCurrencies` 🔨
+The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Inherits `AuditableEntity` (who enabled a currency and when is worth an audit trail). Lives in `plt` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither.
+
+| Column | Type | Rules |
+|---|---|---|
+| OrgCurrencyId | Guid | PK |
+| OrgId | Guid | Required, FK → Organizations |
+| CurrencyId | int | Required, FK → mst.Currencies |
+| IsBaseCurrency | bool | Default false. **Exactly one true per org** |
+| IsActive | bool | Default true. Deactivate to retire a currency without losing history |
+| *(+ AuditableEntity)* | | CreatedBy, CreatedAt, ModifiedBy, ModifiedAt |
+
+Unique index: `(OrgId, CurrencyId)`, plus partial `UNIQUE (OrgId) WHERE IsBaseCurrency` so an org can have only one base.
+
+- **Seeded at org creation** with one row: the org's `BaseCurrency`, `IsBaseCurrency = true`. `Organizations.BaseCurrency` stays the authority; this row must always match it, and the base row cannot be deactivated or deleted.
+- This is what the **currency picker** on every transaction lists — an org sees only its active currencies, not all ~180.
+- It also scopes **exchange-rate sync**: `rat.CurrencyRates` only needs rates for pairs an org has enabled here.
 
 ### `plt.CustomerDatabases` ✅
 Tenant directory.
