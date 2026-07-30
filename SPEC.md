@@ -89,15 +89,38 @@ The code is both the key and what appears on screen and in document numbers, so 
 **Seed**: 1 `ITEM` Line item · 2 `TAX` Tax · 3 `CONTROL` AP / AR / bank / cash control leg · 4 `COGS` Cost of goods sold · 5 `FX` Realized exchange gain or loss · 6 `ROUNDOFF` Rounding
 
 ### `mst.LedgerSources` 🔨
-**What produced** the ledger row.
+**What produced** the ledger row. Since a payment and a refund share the same transaction type — both are Spend Money or Receive Money — this is what tells them apart. Anything that needs to distinguish them (refunds report, GST return, bank reconciliation) filters on `LedgerSourceId`, not on `TransactionTypeCode`.
 
 | Column | Type | Rules |
 |---|---|---|
 | LedgerSourceId | int | PK, not identity |
 | Code | string(20) | Required, unique |
 | Name | string(50) | Required |
+| Direction | enum→string(10) | In / Out / Both. Sanity-check against the transaction type |
 
-**Seed**: 1 `TRANSACTION` Document posting · 2 `PAYMENT` Payment · 3 `REFUND` Refund · 4 `JOURNAL` Manual journal · 5 `OPENINGBALANCE` Opening balance · 6 `PREPAYMENT` Prepayment applied · 7 `ALLOCATION` Credit-note allocation
+**Seed** — the `Typical type` column is guidance, not a constraint:
+
+| Id | Code | Name | Typical type | Direction |
+|---|---|---|---|---|
+| 1 | TRANSACTION | Document posting | BIL, INV, CRN, DBN, POS, GRN | Both |
+| 2 | BILLPAYMENT | Bill payment | SPM | Out |
+| 3 | INVOICEPAYMENT | Invoice payment | RCM | In |
+| 4 | BILLREFUND | Bill refund received | RCM | In |
+| 5 | INVOICEREFUND | Invoice refund paid | SPM | Out |
+| 6 | CREDITNOTEREFUND | Credit note refund paid | SPM | Out |
+| 7 | DEBITNOTEREFUND | Debit note refund received | RCM | In |
+| 8 | VENDORPREPAYMENT | Advance paid to vendor | SPM | Out |
+| 9 | CUSTOMERPREPAYMENT | Advance received from customer | RCM | In |
+| 10 | ALLOCATION | Credit note, debit note or prepayment allocation | CRN, DBN | Both |
+| 11 | MONEYTRANSFER | Bank or cash transfer | TRM | Both |
+| 12 | JOURNAL | Manual journal | JRN | Both |
+| 13 | OPENINGBALANCE | Opening balance | OPB | Both |
+| 14 | DEPRECIATION | Depreciation | DEP | Out |
+| 15 | STOCKADJUSTMENT | Stock adjustment | STA | Both |
+
+Payment and refund are deliberately **paired in opposite directions**: `BILLPAYMENT` pays a vendor and `BILLREFUND` receives money back from one, so the pair reconciles. Same for `INVOICEPAYMENT` / `INVOICEREFUND`.
+
+`MONEYTRANSFER` is the one source with no contact — both legs are bank or cash accounts, so `ContactId` and `SubAccountId` are null and there is no AP/AR control leg.
 
 ---
 
@@ -460,7 +483,7 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 | MappingTransactionId | long? | **Links a payment back to its document** |
 | MappingTransactionTypeCode | string(3)? | **Type of the mapped document** |
 | BranchId | long? | **Reporting dimension only** |
-| JournalId | long? | Set when `LedgerSourceId = 4` (Journal) |
+| JournalId | long? | Set when `LedgerSourceId = 12` (Journal) |
 
 Indexes: (OrgId, LedgerDate) · (OrgId, AccountId, LedgerDate) · (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransactionTypeCode, MappingTransactionId) · (OrgId, ContactId) · (OrgId, SubAccountId)
 
@@ -492,7 +515,7 @@ A payment posts under its **own** identity (`SPM` Spend Money for a bill payment
 | `TransactionId` | the payment id | the payment id |
 | `TransactionDetailId` | payment line if line-level, else `0` | `0` |
 | `LedgerTypeId` | 3 `CONTROL` | 3 `CONTROL` |
-| `LedgerSourceId` | 2 `PAYMENT`, or 6 `PREPAYMENT` | same |
+| `LedgerSourceId` | 2 `BILLPAYMENT`, or 8 `VENDORPREPAYMENT` | same |
 | **`MappingTransactionId`** | **the bill's `TransactionId`** | same |
 | **`MappingTransactionTypeCode`** | **`BIL`** | same |
 
