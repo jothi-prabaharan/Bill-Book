@@ -98,6 +98,69 @@ public sealed class MasterController : ControllerBase
         return Ok(sources);
     }
 
+    /// <summary>
+    /// HSN and SAC codes, searchable. Chapter rows (2 digits) are grouping
+    /// headings and are excluded by default — an invoice line needs a real code.
+    /// </summary>
+    [HttpGet("hsn-sac")]
+    public async Task<IActionResult> GetHsnSacCodes(
+        [FromQuery] string? search,
+        [FromQuery] string? codeType,
+        [FromQuery] bool includeChapters,
+        [FromQuery] int take = 50,
+        CancellationToken ct = default)
+    {
+        IQueryable<Entity.TableEntities.HsnSacCode> query = _db.HsnSacCodes.Where(c => c.IsActive);
+
+        if (!includeChapters)
+        {
+            query = query.Where(c => c.DigitLength > 2);
+        }
+
+        if (!string.IsNullOrWhiteSpace(codeType))
+        {
+            Entity.Enums.HsnSacCodeType type = codeType.Equals("SAC", StringComparison.OrdinalIgnoreCase)
+                ? Entity.Enums.HsnSacCodeType.Sac
+                : Entity.Enums.HsnSacCodeType.Hsn;
+            query = query.Where(c => c.CodeType == type);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string term = search.Trim();
+            query = query.Where(c => c.Code.StartsWith(term) || c.Description.Contains(term));
+        }
+
+        var codes = await query
+            .OrderBy(c => c.Code)
+            .Take(Math.Clamp(take, 1, 200))
+            .Select(c => new
+            {
+                c.HsnSacCodeId,
+                c.Code,
+                c.CodeType,
+                c.Description,
+                c.ChapterCode,
+                c.DefaultGstRate,
+                c.DigitLength,
+            })
+            .ToListAsync(ct);
+
+        return Ok(codes);
+    }
+
+    /// <summary>The chapter headings, for grouping the picker.</summary>
+    [HttpGet("hsn-sac/chapters")]
+    public async Task<IActionResult> GetHsnChapters(CancellationToken ct)
+    {
+        var chapters = await _db.HsnSacCodes
+            .Where(c => c.DigitLength == 2 && c.IsActive)
+            .OrderBy(c => c.Code)
+            .Select(c => new { c.Code, c.Description, c.CodeType })
+            .ToListAsync(ct);
+        return Ok(chapters);
+    }
+
     /// <summary>The five account types — the only level above the chart of accounts.</summary>
     [HttpGet("account-types")]
     public async Task<IActionResult> GetAccountTypes(CancellationToken ct)

@@ -26,6 +26,8 @@ public class MasterDbContext : DbContext
 
     public DbSet<AccountType> AccountTypes => Set<AccountType>();
 
+    public DbSet<HsnSacCode> HsnSacCodes => Set<HsnSacCode>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -84,6 +86,16 @@ public class MasterDbContext : DbContext
             b.Property(e => e.ReportSection).HasConversion<string>().HasMaxLength(15);
         });
 
+        modelBuilder.Entity<HsnSacCode>(b =>
+        {
+            b.HasKey(e => e.HsnSacCodeId);
+            b.Property(e => e.HsnSacCodeId).ValueGeneratedNever();
+            b.HasIndex(e => e.Code).IsUnique();
+            b.HasIndex(e => new { e.CodeType, e.ChapterCode });
+            b.Property(e => e.CodeType).HasConversion<string>().HasMaxLength(3);
+            b.Property(e => e.DefaultGstRate).HasColumnType("decimal(5,2)");
+        });
+
         MapXminConcurrency(modelBuilder);
         SeedCountries(modelBuilder);
         SeedCurrencies(modelBuilder);
@@ -92,6 +104,7 @@ public class MasterDbContext : DbContext
         SeedLedgerTypes(modelBuilder);
         SeedLedgerSources(modelBuilder);
         SeedAccountTypes(modelBuilder);
+        modelBuilder.Entity<HsnSacCode>().HasData(SeedData.HsnSacSeed.Build());
     }
 
     private static void MapXminConcurrency(ModelBuilder modelBuilder)
