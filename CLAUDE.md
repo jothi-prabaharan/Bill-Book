@@ -23,6 +23,22 @@ These are non-negotiable. Violating them means the code gets rejected.
 
 ---
 
+## When asked for status
+
+Always report in **this order**, each with a completion status:
+
+1. **Master**
+2. **Accounting**
+3. **Contacts**
+4. **Inventory**
+5. **Transactions**
+6. **Reports**
+7. **Settings**
+
+State what is built, what is designed but uncoded, and what is not designed — never blur those three together. "Designed" is not "done".
+
+---
+
 ## When asked to add a table
 
 Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new.
