@@ -8,8 +8,22 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 
 # PART 1 — TABLES
 
-All columns below are in addition to the four inherited from `AuditableEntity`:
-`CreatedBy` (Guid, required) · `CreatedAt` (DateTimeOffset, required) · `ModifiedBy` (Guid?) · `ModifiedAt` (DateTimeOffset?)
+## Audit columns — on every table, no exceptions
+
+**Every table in this spec** carries these four, inherited from `Shared.Kernel.Entities.AuditableEntity` (CLAUDE.md hard rule 6). They are **not** repeated in the per-table column lists below — assume them on all of them:
+
+| Column | Type | Rules |
+|---|---|---|
+| `CreatedBy` | Guid | Required. User id, or a fixed system-actor Guid for seeded/reference rows |
+| `CreatedAt` | DateTimeOffset | Required |
+| `ModifiedBy` | Guid? | Null until first update |
+| `ModifiedAt` | DateTimeOffset? | Null until first update |
+
+No table is exempt — this includes reference/seed masters (`mst.Currencies`, `mst.Countries`, `AccountTypes`, `TransactionTypes`, …), join tables (`idn.RolePermissions`), and child/detail tables (`acc.JournalDetails`, `acc.JournalEntryLines`). Seed data sets `CreatedBy` to a reserved system-actor Guid.
+
+The **only** exception is `acc.vw_LedgerDetail`, because it is a database **view**, not a table — it has no rows of its own to audit.
+
+Values are written **only** by `AuditSaveChangesInterceptor`, never set by hand (CLAUDE.md hard rule 6).
 
 ## System-master naming convention
 
@@ -235,7 +249,7 @@ Unique index: (CustomerId, Name)
 **Validate `StateId`'s StateCode matches Gstin's first 2 digits** — a mismatch silently breaks CGST/SGST vs IGST.
 
 ### `plt.OrgCurrencies` 🔨
-The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Inherits `AuditableEntity` (who enabled a currency and when is worth an audit trail). Lives in `plt` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither.
+The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Lives in `plt` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither. Audit columns apply as everywhere — the trail of who enabled a currency and when is genuinely useful here.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -244,7 +258,6 @@ The currencies an organization actually transacts in — a per-org subset of `ms
 | CurrencyId | int | Required, FK → mst.Currencies |
 | IsBaseCurrency | bool | Default false. **Exactly one true per org** |
 | IsActive | bool | Default true. Deactivate to retire a currency without losing history |
-| *(+ AuditableEntity)* | | CreatedBy, CreatedAt, ModifiedBy, ModifiedAt |
 
 Unique index: `(OrgId, CurrencyId)`, plus partial `UNIQUE (OrgId) WHERE IsBaseCurrency` so an org can have only one base.
 
