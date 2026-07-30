@@ -71,13 +71,17 @@ Everything posts through a **Journal Entry** — invoices, bills, payments, depr
 ```
 backend/
 ├── RetailErp.sln
-├── Shared.Kernel/                    AuditableEntity, interceptors
-├── {Module}.Entity/                  TableEntities/ · Models/ · Enums/
-├── {Module}.Repository/              DbContext, repositories, seed data
-├── {Module}.Api/                     controllers, services, DI
-├── Notification.Worker/
-├── CostingEngine.Worker/
-├── RateSync.Worker/
+├── Api/
+│   └── {Module}/                     one folder per service (×12)
+│       ├── {Module}.Entity/          TableEntities/ · Models/ · Enums/
+│       ├── {Module}.Repository/      DbContext, repositories, seed data
+│       └── {Module}.Api/             controllers, services, DI
+├── shared/
+│   └── Shared.Kernel/                AuditableEntity, interceptors
+├── worker/
+│   ├── Notification.Worker/
+│   ├── CostingEngine.Worker/
+│   └── RateSync.Worker/
 └── Gateway/                          YARP
 frontend/
 ├── apps/
@@ -92,7 +96,7 @@ frontend/
                                       currency-format, theming
 ```
 
-Each of the twelve services contributes the three `{Module}.*` projects. Dependency direction is one-way: `Api` → `Repository` → `Entity` → `Shared.Kernel`.
+Each of the twelve services gets its own folder under `backend/Api/`, holding exactly the three `{Module}.*` projects. Dependency direction is one-way: `Api` → `Repository` → `Entity` → `Shared.Kernel`.
 
 `-core` libraries must stay Ionic-compatible — no `window`/`document`, no Syncfusion, no Electron or Node APIs. Every page must work at ~360px wide.
 
@@ -128,15 +132,15 @@ Each service owns and migrates its own schema:
 
 ```bash
 cd backend
-dotnet ef database update --project Master.Repository     --startup-project Master.Api
-dotnet ef database update --project Platform.Repository   --startup-project Platform.Api
-dotnet ef database update --project Identity.Repository   --startup-project Identity.Api
+dotnet ef database update --project Api/Master/Master.Repository     --startup-project Api/Master/Master.Api
+dotnet ef database update --project Api/Platform/Platform.Repository --startup-project Api/Platform/Platform.Api
+dotnet ef database update --project Api/Identity/Identity.Repository --startup-project Api/Identity/Identity.Api
 ```
 
 ### Run
 
 ```bash
-cd backend && dotnet run --project Gateway          # then each {Module}.Api
+cd backend && dotnet run --project Gateway          # then each Api/{Module}/{Module}.Api
 cd frontend && npx nx serve web
 ```
 
