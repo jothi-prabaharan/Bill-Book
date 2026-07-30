@@ -47,6 +47,20 @@ Every per-customer table needs `OrgId` plus a global query filter. Master-databa
 
 ## Project layout
 
+Two top-level halves. Backend is flat inside `backend/` — no `src/` nesting.
+
+```
+backend/
+├── RetailErp.sln
+├── Shared.Kernel/
+├── {Module}.Entity/ · {Module}.Repository/ · {Module}.Api/      (×12 services)
+├── Notification.Worker/ · CostingEngine.Worker/ · RateSync.Worker/
+└── Gateway/
+frontend/
+├── apps/
+└── libs/
+```
+
 Three projects per service, no more:
 
 ```
@@ -57,7 +71,7 @@ Three projects per service, no more:
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
-**Services** (11): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
+**Services** (12): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
