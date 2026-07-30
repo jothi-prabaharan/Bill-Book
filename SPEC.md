@@ -802,10 +802,48 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 ## Shell (all apps) 🔨
 `libs/app-shell`
 
-- **Desktop (≥768px)**: left icon rail — all primary nav items + "More" overflow, org switcher and avatar in top bar
-- **Mobile (<768px)**: bottom tab bar — top 4 items + "More" sheet
-- Same nav model both ways; breakpoint = Angular CDK handset
+**Teams-style three-pane layout on desktop:**
+
+```
+┌──┬──────────┬───────────────────────┐
+│🏠│ context  │                       │
+│👥│ pane:    │   main work area      │
+│📦│ list /   │   (list · form ·      │
+│🧾│ sub-nav  │    document detail)   │
+│💰│          │                       │
+│⚙ │          │                       │
+└──┴──────────┴───────────────────────┘
+ rail   pane          main
+```
+
+- **Icon rail** (far left, ~64px): one icon per module — Dashboard, Contacts, Inventory, Sales, Purchase, Accounting, Banking, Reports, Support, Settings. Active module highlighted; tooltip on hover; "More" overflow if they don't fit. Bottom of rail: org switcher + avatar/profile menu.
+- **Context pane** (~280px, collapsible): the selected module's sub-navigation or the current list (e.g. under Sales → the invoice list; under Settings → the settings sub-menu). Collapses to give the main area full width.
+- **Main work area**: the actual page — list, form, or document detail.
+- **Top strip** (thin, optional): global search + "＋ New" quick-create. May sit above main rather than full-width.
+
+**Mobile (<768px) — exactly like the Microsoft Teams mobile app:**
+
+```
+┌───────────────────────┐
+│  ← Invoices        ⋮  │  top bar: back + title + overflow
+├───────────────────────┤
+│  #INV-001             │
+│  #INV-002             │  full-screen list;
+│  #INV-003             │  tap a row → detail
+│  #INV-004             │  pushes over it
+├──────┬──────┬─────┬───┤
+│ 🏠   │ 🧾   │ 💰  │ ⋯ │  bottom tab bar (5 slots)
+│ Home │Sales │Bank │More│
+└──────┴──────┴─────┴───┘
+```
+
+- **Bottom tab bar**, 5 slots: the 4 most-used modules + **"More"** (a sheet listing the rest). Fixed to the bottom, labels under icons, active tab highlighted — the Teams-mobile pattern.
+- The desktop rail + context pane **collapse into a single stack**: tapping a module shows its list full-screen; tapping a row pushes the detail as a full-screen view with a back arrow.
+- Org switcher and profile move into the "More" sheet / top-bar overflow.
+- Breakpoint = Angular CDK handset. Same nav model both ways — only the chrome changes.
+
 - Theme toggle: Light / Dark / System, persisted to `idn.Users.ThemePreference`
+- Built on Angular CDK (layout, overlay) + Signals — no Syncfusion in the shell, so it runs in the Ionic apps too
 
 **Every page must work at ~360px**: grids → card lists, multi-column forms → single column, modals → full-screen sheets.
 
