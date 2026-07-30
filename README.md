@@ -90,8 +90,9 @@ frontend/
 │   ├── admin/                        platform operator screens
 │   └── desktop/                      Electron; only host for ESC/POS printing
 └── libs/
-    ├── {module}-core/                view-models + models, no templates
-    ├── {module}-ui/                  pages
+    ├── {module}/                     one folder per module, mirroring Api/
+    │   ├── {module}-core/            view-models + models, no templates
+    │   └── {module}-ui/              pages
     └── shared/                       auth, api-client, ui-components,
                                       currency-format, theming
 ```

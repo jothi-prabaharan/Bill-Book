@@ -67,6 +67,10 @@ backend/
 frontend/
 ├── apps/
 └── libs/
+    ├── {module}/                one folder per module, mirroring Api/
+    │   ├── {module}-core/
+    │   └── {module}-ui/
+    └── shared/
 ```
 
 Three projects per service, no more — all three under `backend/Api/{Module}/`:
@@ -83,7 +87,7 @@ Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. N
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
-**Frontend** (Nx): `apps/{web, portal, admin, desktop}` · `libs/{module}-core` (view-models + models, no templates) + `libs/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+**Frontend** (Nx): `apps/{web, portal, admin, desktop}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
 `-core` libs must stay Ionic-compatible: Signals and DI are fine, but no `window`/`document`, no Syncfusion, no Electron/Node APIs.
 
