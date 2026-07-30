@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "inventory-core",
+  "projectType": "library",
+  "sourceRoot": "libs/inventory/inventory-core/src",
+  "tags": ["scope:inventory", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

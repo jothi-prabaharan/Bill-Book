@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "master-core",
+  "projectType": "library",
+  "sourceRoot": "libs/master/master-core/src",
+  "tags": ["scope:master", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

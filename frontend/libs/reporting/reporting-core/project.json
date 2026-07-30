@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "reporting-core",
+  "projectType": "library",
+  "sourceRoot": "libs/reporting/reporting-core/src",
+  "tags": ["scope:reporting", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

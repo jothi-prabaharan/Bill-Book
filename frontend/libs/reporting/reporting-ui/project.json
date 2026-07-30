@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "reporting-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/reporting/reporting-ui/src",
+  "tags": ["scope:reporting", "type:ui"],
+  "targets": {}
+}

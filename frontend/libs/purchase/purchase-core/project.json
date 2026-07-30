@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "purchase-core",
+  "projectType": "library",
+  "sourceRoot": "libs/purchase/purchase-core/src",
+  "tags": ["scope:purchase", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

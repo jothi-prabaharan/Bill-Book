@@ -1,0 +1,29 @@
+{
+  "name": "bill-book",
+  "version": "0.0.0",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint"
+  },
+  "devDependencies": {
+    "@nx/angular": "^21.0.0",
+    "@nx/eslint": "^21.0.0",
+    "@nx/js": "^21.0.0",
+    "@nx/workspace": "^21.0.0",
+    "nx": "^21.0.0",
+    "typescript": "~5.6.0"
+  },
+  "dependencies": {
+    "@angular/common": "^20.0.0",
+    "@angular/core": "^20.0.0",
+    "@angular/forms": "^20.0.0",
+    "@angular/platform-browser": "^20.0.0",
+    "@angular/router": "^20.0.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.8.0",
+    "zone.js": "~0.15.0"
+  }
+}

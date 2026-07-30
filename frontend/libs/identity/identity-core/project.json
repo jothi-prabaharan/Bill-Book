@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "identity-core",
+  "projectType": "library",
+  "sourceRoot": "libs/identity/identity-core/src",
+  "tags": ["scope:identity", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}
