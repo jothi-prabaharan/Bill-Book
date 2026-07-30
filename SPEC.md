@@ -69,7 +69,7 @@ Every document type that can post to the ledger. **Three-letter code as the key.
 | JRN | Journal |
 | SPM | Spend Money |
 | RCM | Receive Money |
-| RFD | Refund |
+| TRM | Transfer Money |
 | OPB | Opening Balance |
 | DEP | Depreciation |
 | STA | Stock Adjustment |
