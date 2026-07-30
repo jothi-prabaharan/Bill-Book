@@ -30,6 +30,7 @@ builder.Services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
 builder.Services.AddScoped<ITokenService, JwtTokenService>();
 builder.Services.AddScoped<IOtpService, OtpService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<RoleService>();
 
 // Placeholder email sender — replaced by the Notification worker's SMTP sender.
 builder.Services.AddScoped<IEmailSender, LoggingEmailSender>();

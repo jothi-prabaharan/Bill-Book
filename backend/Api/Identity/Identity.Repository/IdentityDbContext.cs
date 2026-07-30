@@ -165,5 +165,52 @@ public class IdentityDbContext : DbContext
         }
 
         modelBuilder.Entity<Permission>().HasData(permissions);
+        SeedRolePermissions(modelBuilder, permissions);
+    }
+
+    /// <summary>
+    /// Links the 5 system roles to their permissions. Module-level grants: a role
+    /// that owns a module gets all 10 actions in it, including approve, void and
+    /// AllUserData.
+    /// </summary>
+    private static void SeedRolePermissions(ModelBuilder modelBuilder, List<Permission> permissions)
+    {
+        const int owner = 1;
+        const int administrator = 2;
+        const int accountant = 3;
+        const int sales = 4;
+        const int viewer = 5;
+
+        string[] accountantModules = { "accounting", "banking", "reports", "purchase" };
+        string[] salesModules = { "sales", "contacts", "crm" };
+
+        var grants = new List<RolePermission>();
+        long id = 1;
+
+        void Grant(int roleId, IEnumerable<Permission> matched)
+        {
+            foreach (Permission permission in matched)
+            {
+                grants.Add(new RolePermission
+                {
+                    RolePermissionId = id++,
+                    RoleId = roleId,
+                    PermissionId = permission.PermissionId,
+                });
+            }
+        }
+
+        // platform.* is operator-only and never granted to a tenant role.
+        List<Permission> nonPlatform = permissions.Where(p => p.Module != "platform").ToList();
+
+        Grant(owner, nonPlatform);
+        Grant(administrator, nonPlatform);
+        Grant(accountant, nonPlatform.Where(p => accountantModules.Contains(p.Module)));
+        Grant(sales, nonPlatform.Where(p => salesModules.Contains(p.Module)));
+
+        // Viewer sees everything and changes nothing. "dashboard.view" style only.
+        Grant(viewer, nonPlatform.Where(p => p.Code.EndsWith(".view", StringComparison.Ordinal)));
+
+        modelBuilder.Entity<RolePermission>().HasData(grants);
     }
 }

@@ -38,6 +38,8 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **User invitations** — invited users receive a link and set their own password; no temporary passwords are ever issued.
 - **Per-organization currencies** — enable the currencies you trade in, deactivate ones you no longer use, and see only active ones by default. Amounts follow each currency's own format, including Indian lakh/crore grouping.
 - **Documentation site** — this help app, versioned alongside the product.
+- **Roles & permissions** — the five built-in roles now carry their actual permission grants, and you can create your own roles with a per-module permission matrix. Built-in roles can be renamed to suit your vocabulary without changing what they allow.
+- **Configuration screen** — edit unit-price and quantity decimal places and default payment terms per organization, with a one-click reset back to the shipped default.
 
 ### Security
 - Trial expiry pauses access without locking you out of your account: you can still sign in, see why access stopped and renew. Feature pages and their APIs both refuse access until the licence is renewed.

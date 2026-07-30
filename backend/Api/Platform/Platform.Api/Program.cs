@@ -24,6 +24,7 @@ builder.Services.AddDbContext<PlatformDbContext>((sp, options) =>
 builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
+builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 

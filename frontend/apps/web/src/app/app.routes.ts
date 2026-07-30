@@ -30,6 +30,15 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('@bill-book/platform-ui').then((m) => m.OrgCurrenciesPage),
       },
+      {
+        path: 'settings/configuration',
+        loadComponent: () =>
+          import('@bill-book/platform-ui').then((m) => m.ConfigurationsPage),
+      },
+      {
+        path: 'settings/roles',
+        loadComponent: () => import('@bill-book/identity-ui').then((m) => m.RolesPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },
