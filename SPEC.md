@@ -328,10 +328,10 @@ Unique index: (AccountId, ReferenceType, ReferenceId)
 |---|---|---|
 | JournalEntryId | long | PK, identity |
 | OrgId | Guid | Required |
-| JeNumber | string(30) | Required |
-| JeDate | DateOnly | Required |
+| JournalNo | string(30) | Required |
+| JournalDate | DateOnly | Required |
 | CurrencyCode | string(3) | Required |
-| ExchangeRate | decimal(18,8) | Default 1. **Snapshot at JeDate — never live** |
+| ExchangeRate | decimal(18,8) | Default 1. **Snapshot at JournalDate — never live** |
 | Reference | string(200)? | |
 | Memo | string? | Unbounded text |
 | SourceType | string(50) | Required. Manual / SalesInvoice / PurchaseBill / Depreciation / OpeningBalance / Reversal |
@@ -341,7 +341,7 @@ Unique index: (AccountId, ReferenceType, ReferenceId)
 | PostedBy | Guid? | |
 | ReversedByJournalEntryId | long? | Self-FK |
 
-Unique index: (OrgId, JeNumber) · Indexes: (OrgId, JeDate), (SourceType, SourceId)
+Unique index: (OrgId, JournalNo) · Indexes: (OrgId, JournalDate), (SourceType, SourceId)
 
 ### `acc.JournalEntryLines` 🔨
 | Column | Type | Rules |
@@ -448,7 +448,7 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Effective-dated: editing a rate creates a new row and expires the old one rather than overwriting
 
 ## Journal entry (`apps/web` → Accounting) 📋
-- Header: JeNumber (auto), JeDate, CurrencyCode, ExchangeRate (auto from rate table at JeDate, overridable), Reference, Memo
+- Header: JournalNo (auto), JournalDate, CurrencyCode, ExchangeRate (auto from rate table at JournalDate, overridable), Reference, Memo
 - Line grid: Account, SubAccount (optional), Debit, Credit, Branch, Memo
 - **Running debit/credit totals with a difference indicator — Post disabled until balanced**
 - Debit and credit are mutually exclusive per line: entering one clears the other
