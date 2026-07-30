@@ -443,10 +443,31 @@ The Chart of Accounts. Seeded **per organization** at org creation.
 | CurrencyCode | string(3)? | Null = org base currency |
 | IsSystemDefault | bool | Seeded control accounts — cannot be deleted; `AccountSystemName` and code are locked, `AccountName` may be renamed |
 | IsActive | bool | Default true |
+| IsJE | bool | Default true. May this account be picked on a **manual journal** line. False for control accounts posted only by the system (AR, AP, Inventory, GST) |
+| IsLock | bool | Default false. Hard lock — **no posting of any kind**, manual or system. Overrides all the flags below |
+| IsSales | bool | Default false. Selectable as an income/revenue account on a **sales** document |
+| IsPurchase | bool | Default false. Selectable as an expense/asset account on a **purchase** document |
+| IsPayment | bool | Default false. Selectable as the settlement account on a **payment / receipt** (Spend/Receive Money) |
+| IsBank | bool | Default false. This account **is** a bank or cash account — appears in bank pickers, reconciliation and Transfer Money |
 
-Unique index: (OrgId, AccountCode)
+Unique index: (OrgId, AccountCode) · Filtered indexes: `(OrgId) WHERE IsBank`, `(OrgId) WHERE IsSales`, `(OrgId) WHERE IsPurchase`
 
 **Seed at org creation**: Accounts Receivable, Accounts Payable, Inventory, Input GST, Output GST, Sales Revenue, Cost of Goods Sold, Realized FX Gain/Loss, Unrealized FX Gain/Loss, Opening Balance Equity — all `IsSystemDefault = true`
+
+Flag defaults on the seeded accounts — the system posts to these directly, so they are **off** the manual-journal and document pickers:
+
+| Account | IsJE | IsSales | IsPurchase | IsPayment | IsBank |
+|---|---|---|---|---|---|
+| Accounts Receivable | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Accounts Payable | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Inventory | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Input GST / Output GST | ✗ | ✗ | ✗ | ✗ | ✗ |
+| Sales Revenue | ✗ | ✓ | ✗ | ✗ | ✗ |
+| Cost of Goods Sold | ✗ | ✗ | ✓ | ✗ | ✗ |
+| Realized / Unrealized FX | ✓ | ✗ | ✗ | ✗ | ✗ |
+| Opening Balance Equity | ✓ | ✗ | ✗ | ✗ | ✗ |
+
+A cash/bank account created later (e.g. "HDFC Current A/c") is the one that carries `IsBank = ✓` and `IsPayment = ✓`. None of the ten seeded control accounts is a bank account.
 
 ### `acc.SubAccounts` 🔨
 Per-contact and per-item detail under a parent control account. Keeps the CoA small.
@@ -758,6 +779,7 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Tree view grouped by AccountType → AccountSubType, with a flat searchable list toggle
 - Create/edit: AccountCode, AccountName, AccountSubTypeId (grouped dropdown), ParentAccountId, CurrencyCode
 - **AccountTypeId is derived from the selected subtype — never a separate input**
+- **Usage flags** (IsJE, IsSales, IsPurchase, IsPayment, IsBank) as a checkbox group — they decide which account pickers this account appears in across the app. `IsLock` is a separate toggle that freezes the account against all posting
 - `IsSystemDefault` accounts cannot be deleted; deactivate instead. Their code and `AccountSystemName` are locked, but **`AccountName` (display) can be renamed** — same for the seeded types and subtypes
 - Mobile: accordion by type
 
