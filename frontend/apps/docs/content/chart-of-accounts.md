@@ -38,6 +38,10 @@ The reason is not tidiness. Re-pointing a used Expense account to Asset would mo
 
 `IsUsed` is set on first reference and never cleared. An account cannot become unused.
 
+Today the only thing that sets it is **sub-account provisioning** — giving an account a sub-account marks it used in the same transaction. Journals, documents and opening balances will each set it as they are built; until then, a user-created account with nothing beneath it stays editable.
+
+The account's **currency** is frozen with the rest of the configuration. Changing it on an account that already holds postings would restate every one of them at a different rate.
+
 ## Seeded accounts
 
 Ten written when an organization is created, all `IsSystemDefault`, so locked from birth:
@@ -64,10 +68,16 @@ For a tax sub-account, three things identify it: the **parent account** gives th
 
 Provisioning is **idempotent**, because the events that trigger it are at-least-once. Retiring a master deactivates its sub-accounts rather than deleting them, so history survives.
 
+If a control account cannot be resolved — the chart was never seeded for the organization, or a system account was renamed at the database level — provisioning creates what it can and reports the rest as **missing**. A partial provision is a 409, not a 200: a contact with no Accounts Receivable sub-account would silently drop out of the aging report.
+
+The **Sub-accounts** screen (Accounting → Sub-accounts) lists them grouped under their control account, filterable by owner type. It is read-only in both directions — nothing on it can be created, renamed or retired, because the owning master decides all three.
+
 ```
 GET    /api/accounts?includeInactive=false
 POST   /api/accounts
 PUT    /api/accounts/{id}
 DELETE /api/accounts/{id}          deactivates; system accounts refused
 GET    /api/sub-accounts?referenceType=&referenceId=
+POST   /internal/sub-accounts/provision     409 when control accounts are missing
+POST   /internal/sub-accounts/deactivate
 ```

@@ -1,0 +1,59 @@
+<h1>Configuration</h1>
+<p class="hint">
+  Values apply to this organization. A changed value shows as overridden; resetting returns
+  it to the shipped default.
+</p>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@for (group of grouped(); track group.category) {
+  <section>
+    <h2>{{ group.category }}</h2>
+    @for (row of group.rows; track row.code) {
+      <div class="setting">
+        <div class="meta">
+          <strong>{{ row.name }}</strong>
+          @if (row.isOverridden) {
+            <span class="badge">overridden</span>
+          }
+          @if (row.description) {
+            <span class="desc">{{ row.description }}</span>
+          }
+          <code>{{ row.code }}</code>
+        </div>
+        <div class="control">
+          @switch (row.dataType) {
+            @case ('Boolean') {
+              <select [(ngModel)]="row.value" (ngModelChange)="save(row)">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            }
+            @case ('Number') {
+              <input type="number" [(ngModel)]="row.value" (blur)="save(row)" />
+            }
+            @case ('Date') {
+              <input type="date" [(ngModel)]="row.value" (blur)="save(row)" />
+            }
+            @default {
+              <input type="text" [(ngModel)]="row.value" (blur)="save(row)" />
+            }
+          }
+          <button
+            type="button"
+            class="link"
+            [disabled]="!row.isOverridden || busy()"
+            title="Reset to the shipped default"
+            (click)="reset(row)"
+          >
+            ↻ {{ row.defaultValue }}
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+} @empty {
+  <p>No configuration keys.</p>
+}

@@ -1,0 +1,42 @@
+<div class="shell">
+  <nav class="rail" aria-label="Modules">
+    @for (item of nav; track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
+        <span class="icon">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
+      </a>
+    }
+    <div class="spacer"></div>
+    <button type="button" class="rail-btn" title="Sign out" (click)="logout()">⎋</button>
+  </nav>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+
+  <nav class="tabs" aria-label="Modules">
+    @for (item of nav.slice(0, 4); track item.path) {
+      <a [routerLink]="item.path" routerLinkActive="active">
+        <span class="icon">{{ item.icon }}</span>
+        <span class="label">{{ item.label }}</span>
+      </a>
+    }
+    <button type="button" (click)="moreOpen = !moreOpen">
+      <span class="icon">⋯</span>
+      <span class="label">More</span>
+    </button>
+  </nav>
+
+  @if (moreOpen) {
+    <div class="more-sheet" (click)="moreOpen = false">
+      <div class="sheet-body">
+        @for (item of nav.slice(4); track item.path) {
+          <a [routerLink]="item.path" (click)="moreOpen = false">
+            <span class="icon">{{ item.icon }}</span> {{ item.label }}
+          </a>
+        }
+        <button type="button" (click)="logout()">⎋ Sign out</button>
+      </div>
+    </div>
+  }
+</div>

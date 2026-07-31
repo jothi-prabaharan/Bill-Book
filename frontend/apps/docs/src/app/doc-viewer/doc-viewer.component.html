@@ -1,0 +1,12 @@
+@if (missing()) {
+  <article>
+    <h1>Not documented yet</h1>
+    <p>
+      There is no page for <code>{{ slug() }}</code> yet. Documentation is written
+      alongside the feature it describes — if the feature is not built, the page is
+      usually not either.
+    </p>
+  </article>
+} @else {
+  <article [innerHTML]="html()"></article>
+}

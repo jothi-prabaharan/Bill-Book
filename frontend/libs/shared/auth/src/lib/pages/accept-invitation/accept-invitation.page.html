@@ -1,0 +1,26 @@
+<div class="auth-card">
+  <h1>Set your password</h1>
+
+  @if (!token()) {
+    <p class="error">
+      This link is missing its token. Ask your administrator to resend the invitation.
+    </p>
+    <p><a routerLink="/login">Back to sign in</a></p>
+  } @else {
+    <p class="hint">Welcome{{ email() ? ', ' + email() : '' }}. Choose a password to finish.</p>
+    <form (ngSubmit)="submit()">
+      <label>
+        New password
+        <input name="password" type="password" minlength="8" [(ngModel)]="password" required />
+      </label>
+      <label>
+        Confirm password
+        <input name="confirmPassword" type="password" [(ngModel)]="confirmPassword" required />
+      </label>
+      @if (error()) {
+        <p class="error">{{ error() }}</p>
+      }
+      <button type="submit" [disabled]="busy()">Set password and continue</button>
+    </form>
+  }
+</div>

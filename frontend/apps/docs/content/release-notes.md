@@ -46,6 +46,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **HSN & SAC codes** — a searchable master of goods and service codes, with a CSV importer for the official CBIC list. Assigning a code to an item pre-selects its usual GST rate.
 - **Tax master** — the six standard GST rates are created with each organization, including the 3% bullion rate. Enter a total and the CGST, SGST and IGST split fills itself in. Rates are effective-dated: changing one creates a new version and keeps the old, so invoices dated before the change still use the rate that applied then.
 - **Sub-accounts** — per-contact, per-item and per-tax-rate detail beneath the control accounts, provisioned automatically by the master that owns them. GST rates get separate CGST, SGST and IGST sub-accounts in each direction, so tax reports break down by rate and component.
+- **Sub-accounts screen** — see what is posting beneath each control account, grouped by account and filtered by owner type. Read-only: sub-accounts belong to the contact, item or tax rate that created them.
+
+### Fixed
+- An account that already had sub-accounts beneath it could still have its type, code and usage flags changed. The configuration lock now engages the moment anything is created under an account, as it was always documented to.
+- Changing the currency of a locked account appeared to save but silently did nothing. It is now refused with an explanation, alongside the other frozen fields.
+- An account could be made its own ancestor through a chain of parents, producing a chart of accounts that no report could total. Parent changes now reject cycles.
 
 ### Security
 - Trial expiry pauses access without locking you out of your account: you can still sign in, see why access stopped and renew. Feature pages and their APIs both refuse access until the licence is renewed.

@@ -12,7 +12,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5001"
       },
-      "console": "internalConsole"
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
     },
     {
       "name": "Platform.Api (5002)",
@@ -25,7 +27,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5002"
       },
-      "console": "internalConsole"
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
     },
     {
       "name": "Master.Api (5003)",
@@ -38,7 +42,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5003"
       },
-      "console": "internalConsole"
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
     },
     {
       "name": "Accounting.Api (5004)",
@@ -51,7 +57,9 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5004"
       },
-      "console": "internalConsole"
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
     },
     {
       "name": "Gateway (5000)",
@@ -64,20 +72,58 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5000"
       },
-      "console": "internalConsole"
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
     },
+
+    {
+      "name": "Attach to .NET process",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    },
+
     {
       "name": "Web (Chrome, 4200)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-web",
       "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/frontend"
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+        "webpack:///./*": "${workspaceFolder}/frontend/*",
+        "webpack:///*": "*",
+        "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+        "/apps/*": "${workspaceFolder}/frontend/apps/*",
+        "/libs/*": "${workspaceFolder}/frontend/libs/*"
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ],
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile",
+      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+    },
+    {
+      "name": "Web (Chrome, attach 9222)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:4200/*",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ]
     }
   ],
   "compounds": [
     {
-      "name": "\ud83d\ude80 Everything (APIs + Gateway + Web)",
+      "name": "🚀 Everything (APIs + Gateway + Web)",
       "configurations": [
         "Identity.Api (5001)",
         "Platform.Api (5002)",

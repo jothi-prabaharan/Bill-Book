@@ -13,6 +13,30 @@ Open the Run panel, choose **🚀 Everything (APIs + Gateway + Web)** and press 
 
 There is also **Backend only** for when you do not want a browser, and each service individually.
 
+If Chrome is already open on a debugging port, **Web (Chrome, attach 9222)** attaches to the running tab instead of launching a second browser. **Attach to .NET process** picks up a service you started from a terminal.
+
+### How the debug wiring fits together
+
+A few pieces are load-bearing and easy to break by "tidying" them:
+
+- **`build-backend` builds `Bill-Book.Debug.slnf`, not the full solution.** The filter contains only the five runnable projects. Building all 36 on every F5 is slow, and rebuilding a project whose process is already running fails on a locked DLL.
+- **`serve-web` runs `.vscode/serve-web.js`, not `npx nx serve web` directly.** When port 4200 is taken, `@angular/build` asks "use a different port?" and waits — the guard meant to suppress that prompt (`if (!tty_1.isTTY)` in `check-port.js`) tests a function object rather than calling it, so it is always false and the prompt always appears. In a debug session that hangs the preLaunchTask forever and the browser never opens. The wrapper reuses an existing dev server instead.
+- **The `serve-web` task must stay `isBackground: true` with a `background` matcher.** Its `endsPattern` is what tells VS Code the dev server is ready. Without it, Chrome launches before the server is listening and lands on a connection error.
+- **`resolveSourceMapLocations` excludes `node_modules`.** Without it the debugger tries to resolve vendor source maps and breakpoints in your own components bind unreliably.
+
+## Frontend page structure
+
+Every page and component is three files with a shared base name — `.ts`, `.html`, `.scss`:
+
+```
+libs/accounting/accounting-ui/src/lib/
+  tax-master.page.ts       @Component with templateUrl + styleUrl
+  tax-master.page.html     template
+  tax-master.page.scss     component-scoped styles
+```
+
+No inline `template:` or `styles:` blocks. Components with no styling of their own still get a `.scss` file so the trio is predictable — editors, search and the "go to file" list all behave the same for every page. Styles are SCSS, matching the app-level `styles.scss`.
+
 ## By hand
 
 ```bash

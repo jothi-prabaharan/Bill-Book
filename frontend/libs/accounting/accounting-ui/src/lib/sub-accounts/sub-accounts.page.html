@@ -1,0 +1,78 @@
+<header class="page-head">
+  <h1>Sub-accounts</h1>
+  <label class="inline">
+    <input type="checkbox" [(ngModel)]="showInactive" />
+    Show inactive
+  </label>
+</header>
+
+<p class="note">
+  Sub-accounts are created by the master that owns them — a contact gets two, an item three,
+  a tax rate up to six. They cannot be added or renamed here.
+</p>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+<div class="filters">
+  <div class="chips">
+    <button
+      type="button"
+      class="chip-btn"
+      [class.on]="referenceType() === null"
+      (click)="setType(null)"
+    >
+      All
+    </button>
+    @for (t of referenceTypes; track t) {
+      <button type="button" class="chip-btn" [class.on]="referenceType() === t" (click)="setType(t)">
+        {{ t }}
+      </button>
+    }
+  </div>
+  <input
+    class="search"
+    type="search"
+    placeholder="Filter by name…"
+    [(ngModel)]="search"
+    (ngModelChange)="searchTerm.set($event)"
+  />
+</div>
+
+@if (busy()) {
+  <p class="empty">Loading…</p>
+} @else {
+  @for (group of grouped(); track group.accountId) {
+    <section>
+      <h2>
+        <span class="code">{{ group.accountCode }}</span>
+        {{ group.accountName }}
+        <span class="meta">{{ group.rows.length }}</span>
+      </h2>
+      <table class="grid">
+        <tbody>
+          @for (s of group.rows; track s.subAccountId) {
+            <tr [class.inactive]="!s.isActive">
+              <td>
+                {{ s.subAccountName }}
+                @if (!s.isActive) { <span class="badge off">Inactive</span> }
+              </td>
+              <td class="tags">
+                <span class="chip">{{ s.referenceType }}</span>
+                @if (s.taxComponent !== 'None') {
+                  <span class="chip tax">{{ s.taxComponent.toUpperCase() }}</span>
+                }
+              </td>
+              <td class="ref">#{{ s.referenceId }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  } @empty {
+    <p class="empty">
+      No sub-accounts yet. They appear as soon as a contact, item or tax rate is created.
+    </p>
+  }
+}

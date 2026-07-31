@@ -13,15 +13,6 @@ namespace Accounting.Api.Services;
 /// </summary>
 public sealed class SubAccountService
 {
-    // System account names the provisioner targets.
-    private const string AccountsReceivable = "Accounts Receivable";
-    private const string AccountsPayable = "Accounts Payable";
-    private const string Inventory = "Inventory";
-    private const string CostOfGoodsSold = "Cost of Goods Sold";
-    private const string SalesRevenue = "Sales Revenue";
-    private const string InputGst = "Input GST";
-    private const string OutputGst = "Output GST";
-
     private readonly AccountingDbContext _db;
 
     public SubAccountService(AccountingDbContext db) => _db = db;
@@ -49,6 +40,7 @@ public sealed class SubAccountService
                 SubAccountId = sub.SubAccountId,
                 AccountId = sub.AccountId,
                 AccountName = account.AccountName,
+                AccountCode = account.AccountCode,
                 AccountTypeId = sub.AccountTypeId,
                 ReferenceType = sub.ReferenceType,
                 ReferenceId = sub.ReferenceId,
@@ -61,21 +53,26 @@ public sealed class SubAccountService
     /// <summary>
     /// Creates the sub-accounts a master owns:
     /// Contact → 2 · Item → 3 · Tax rate → up to 6 (CGST/SGST/IGST per direction).
+    ///
+    /// Any control account that gains a sub-account is marked used in the same
+    /// transaction — a parented sub-account is a reference, and from that moment
+    /// the parent's type and code must not move under its postings.
     /// </summary>
-    public async Task<int> ProvisionAsync(ProvisionSubAccountsRequest request, CancellationToken ct)
+    public async Task<ProvisionSubAccountsResult> ProvisionAsync(
+        ProvisionSubAccountsRequest request, CancellationToken ct)
     {
-        List<(string AccountName, TaxComponent Component, string Label)> targets = request.ReferenceType switch
+        List<(SystemAccount Parent, TaxComponent Component, string Label)> targets = request.ReferenceType switch
         {
             SubAccountReferenceType.Contact =>
             [
-                (AccountsReceivable, TaxComponent.None, $"{AccountsReceivable} — {request.Name}"),
-                (AccountsPayable, TaxComponent.None, $"{AccountsPayable} — {request.Name}"),
+                (SystemAccount.AccountsReceivable, TaxComponent.None, Label(SystemAccount.AccountsReceivable, request.Name)),
+                (SystemAccount.AccountsPayable, TaxComponent.None, Label(SystemAccount.AccountsPayable, request.Name)),
             ],
             SubAccountReferenceType.Item =>
             [
-                (Inventory, TaxComponent.None, $"{Inventory} — {request.Name}"),
-                (CostOfGoodsSold, TaxComponent.None, $"{CostOfGoodsSold} — {request.Name}"),
-                (SalesRevenue, TaxComponent.None, $"{SalesRevenue} — {request.Name}"),
+                (SystemAccount.Inventory, TaxComponent.None, Label(SystemAccount.Inventory, request.Name)),
+                (SystemAccount.CostOfGoodsSold, TaxComponent.None, Label(SystemAccount.CostOfGoodsSold, request.Name)),
+                (SystemAccount.SalesRevenue, TaxComponent.None, Label(SystemAccount.SalesRevenue, request.Name)),
             ],
             SubAccountReferenceType.Tax => BuildTaxTargets(request),
             _ => [],
@@ -83,21 +80,31 @@ public sealed class SubAccountService
 
         if (targets.Count == 0)
         {
-            return 0;
+            return new ProvisionSubAccountsResult(0, []);
         }
 
         // One lookup for every control account this provision needs.
-        List<string> names = targets.Select(t => t.AccountName).Distinct().ToList();
+        List<string> names = targets.Select(t => SystemAccountNames.Of(t.Parent)).Distinct().ToList();
         Dictionary<string, Account> accounts = await _db.Accounts
             .Where(a => a.AccountSystemName != null && names.Contains(a.AccountSystemName))
             .ToDictionaryAsync(a => a.AccountSystemName!, ct);
 
         int created = 0;
-        foreach ((string accountName, TaxComponent component, string label) in targets)
+        var missing = new List<string>();
+        foreach ((SystemAccount parentAccount, TaxComponent component, string label) in targets)
         {
-            if (!accounts.TryGetValue(accountName, out Account? parent))
+            string parentName = SystemAccountNames.Of(parentAccount);
+            if (!accounts.TryGetValue(parentName, out Account? parent))
             {
-                // The chart of accounts has not been seeded for this org yet.
+                // The chart of accounts has not been seeded for this org, or a
+                // control account was renamed away. Either way the sub-ledger
+                // would be incomplete, so the caller is told rather than left
+                // with a silent success.
+                if (!missing.Contains(parentName))
+                {
+                    missing.Add(parentName);
+                }
+
                 continue;
             }
 
@@ -123,6 +130,10 @@ public sealed class SubAccountService
                 SubAccountName = label,
                 IsActive = true,
             });
+
+            // First reference freezes the parent's configuration. Set in the same
+            // SaveChanges as the sub-account, so the two can never disagree.
+            parent.IsUsed = true;
             created++;
         }
 
@@ -131,7 +142,7 @@ public sealed class SubAccountService
             await _db.SaveChangesAsync(ct);
         }
 
-        return created;
+        return new ProvisionSubAccountsResult(created, missing);
     }
 
     /// <summary>Deactivates a master's sub-accounts without deleting them, so history survives.</summary>
@@ -155,9 +166,10 @@ public sealed class SubAccountService
         return rows.Count;
     }
 
-    private static List<(string, TaxComponent, string)> BuildTaxTargets(ProvisionSubAccountsRequest request)
+    private static List<(SystemAccount, TaxComponent, string)> BuildTaxTargets(
+        ProvisionSubAccountsRequest request)
     {
-        var targets = new List<(string, TaxComponent, string)>();
+        var targets = new List<(SystemAccount, TaxComponent, string)>();
         TaxComponent[] components = [TaxComponent.Cgst, TaxComponent.Sgst, TaxComponent.Igst];
 
         // The parent account gives the direction; TaxComponent gives the component.
@@ -165,7 +177,7 @@ public sealed class SubAccountService
         {
             foreach (TaxComponent component in components)
             {
-                targets.Add((InputGst, component, $"Input {component.ToString().ToUpperInvariant()} — {request.Name}"));
+                targets.Add((SystemAccount.InputGst, component, TaxLabel("Input", component, request.Name)));
             }
         }
 
@@ -173,10 +185,22 @@ public sealed class SubAccountService
         {
             foreach (TaxComponent component in components)
             {
-                targets.Add((OutputGst, component, $"Output {component.ToString().ToUpperInvariant()} — {request.Name}"));
+                targets.Add((SystemAccount.OutputGst, component, TaxLabel("Output", component, request.Name)));
             }
         }
 
         return targets;
     }
+
+    private static string Label(SystemAccount parent, string name) =>
+        $"{SystemAccountNames.Of(parent)} — {name}";
+
+    private static string TaxLabel(string direction, TaxComponent component, string name) =>
+        $"{direction} {component.ToString().ToUpperInvariant()} — {name}";
 }
+
+/// <summary>
+/// <paramref name="MissingAccounts"/> lists control accounts the provision could
+/// not resolve. Non-empty means the sub-ledger is incomplete for that master.
+/// </summary>
+public sealed record ProvisionSubAccountsResult(int Created, IReadOnlyList<string> MissingAccounts);

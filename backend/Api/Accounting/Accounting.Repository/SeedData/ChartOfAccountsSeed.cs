@@ -1,3 +1,4 @@
+using Accounting.Entity.Enums;
 using Accounting.Entity.TableEntities;
 
 namespace Accounting.Repository.SeedData;
@@ -22,27 +23,29 @@ public static class ChartOfAccountsSeed
 
     public static IReadOnlyList<Account> Build(Guid orgId) =>
     [
-        Account(orgId, "1100", "Accounts Receivable", Asset),
-        Account(orgId, "1200", "Inventory", Asset),
-        Account(orgId, "1300", "Input GST", Asset),
-        Account(orgId, "2100", "Accounts Payable", Liability),
-        Account(orgId, "2200", "Output GST", Liability),
-        Account(orgId, "3100", "Opening Balance Equity", Equity, isJe: true),
-        Account(orgId, "4100", "Sales Revenue", Income, isSales: true),
-        Account(orgId, "5100", "Cost of Goods Sold", Expense, isPurchase: true),
-        Account(orgId, "4900", "Realized FX Gain/Loss", Income, isJe: true),
-        Account(orgId, "4910", "Unrealized FX Gain/Loss", Income, isJe: true),
+        Account(orgId, "1100", SystemAccount.AccountsReceivable, Asset),
+        Account(orgId, "1200", SystemAccount.Inventory, Asset),
+        Account(orgId, "1300", SystemAccount.InputGst, Asset),
+        Account(orgId, "2100", SystemAccount.AccountsPayable, Liability),
+        Account(orgId, "2200", SystemAccount.OutputGst, Liability),
+        Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
+        Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
+        Account(orgId, "5100", SystemAccount.CostOfGoodsSold, Expense, isPurchase: true),
+        Account(orgId, "4900", SystemAccount.RealizedFxGainLoss, Income, isJe: true),
+        Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
     ];
 
     private static Account Account(
         Guid orgId,
         string code,
-        string name,
+        SystemAccount systemAccount,
         int accountTypeId,
         bool isJe = false,
         bool isSales = false,
-        bool isPurchase = false) =>
-        new()
+        bool isPurchase = false)
+    {
+        string name = SystemAccountNames.Of(systemAccount);
+        return new()
         {
             OrgId = orgId,
             AccountCode = code,
@@ -55,4 +58,5 @@ public static class ChartOfAccountsSeed
             IsSales = isSales,
             IsPurchase = isPurchase,
         };
+    }
 }

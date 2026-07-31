@@ -1,0 +1,12 @@
+{
+  "solution": {
+    "path": "Bill-Book.sln",
+    "projects": [
+      "Api\\Accounting\\Accounting.Api\\Accounting.Api.csproj",
+      "Api\\Identity\\Identity.Api\\Identity.Api.csproj",
+      "Api\\Master\\Master.Api\\Master.Api.csproj",
+      "Api\\Platform\\Platform.Api\\Platform.Api.csproj",
+      "Gateway\\Gateway.csproj"
+    ]
+  }
+}

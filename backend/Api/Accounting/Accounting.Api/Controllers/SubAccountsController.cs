@@ -43,8 +43,19 @@ public sealed class InternalSubAccountsController : ControllerBase
     public async Task<IActionResult> Provision(
         [FromBody] ProvisionSubAccountsRequest request, CancellationToken ct)
     {
-        int created = await _subAccounts.ProvisionAsync(request, ct);
-        return Ok(new { created });
+        ProvisionSubAccountsResult result = await _subAccounts.ProvisionAsync(request, ct);
+
+        // A partially provisioned master has an incomplete sub-ledger, so the
+        // caller must be able to see it rather than read a bare 200.
+        return result.MissingAccounts.Count > 0
+            ? StatusCode(StatusCodes.Status409Conflict, new
+            {
+                created = result.Created,
+                missingAccounts = result.MissingAccounts,
+                message = "The chart of accounts is missing control accounts, so some "
+                    + "sub-accounts were not created.",
+            })
+            : Ok(new { created = result.Created });
     }
 
     [HttpPost("deactivate")]

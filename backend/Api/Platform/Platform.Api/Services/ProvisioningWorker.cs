@@ -76,8 +76,10 @@ public sealed class ProvisioningWorker : BackgroundService
         // 1. CREATE DATABASE — raw SQL is allowed here (no LINQ equivalent).
         //    The name is generated (prefix + digits), never user input.
         string safeName = new(job.DatabaseName.Where(char.IsLetterOrDigit).ToArray());
+#pragma warning disable EF1002 // CREATE DATABASE takes no parameters; safeName is stripped to letters and digits above.
         await db.Database.ExecuteSqlRawAsync(
             $"CREATE DATABASE \"{safeName}\" ENCODING 'UTF8'", ct);
+#pragma warning restore EF1002
 
         // 2. Store the tenant connection string — Key Vault, never plt.
         string template = _config["TenantDatabase:ConnectionTemplate"]

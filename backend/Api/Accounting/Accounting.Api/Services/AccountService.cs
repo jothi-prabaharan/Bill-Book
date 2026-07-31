@@ -117,7 +117,8 @@ public sealed class AccountService
 
         if (request.ParentAccountId is long parentId && parentId != account.ParentAccountId)
         {
-            if (parentId == accountId || !await ParentIsValidAsync(parentId, account.AccountTypeId, ct))
+            if (!await ParentIsValidAsync(parentId, account.AccountTypeId, ct)
+                || await WouldCycleAsync(accountId, parentId, ct))
             {
                 return new SaveAccountResult(SaveAccountOutcome.InvalidParent, null);
             }
@@ -186,7 +187,10 @@ public sealed class AccountService
         || account.IsSales != request.IsSales
         || account.IsPurchase != request.IsPurchase
         || account.IsPayment != request.IsPayment
-        || account.IsBank != request.IsBank;
+        || account.IsBank != request.IsBank
+        // Repricing an account that already holds postings would restate every
+        // one of them, so the currency is frozen with the rest of the config.
+        || account.CurrencyCode != request.CurrencyCode;
 
     private async Task<bool> ParentIsValidAsync(long parentId, int accountTypeId, CancellationToken ct)
     {
@@ -195,6 +199,38 @@ public sealed class AccountService
         // A child must sit under the same account type, or the tree would put an
         // expense under an asset and reports would double-count.
         return parent is not null && parent.AccountTypeId == accountTypeId;
+    }
+
+    /// <summary>
+    /// Walks up from the proposed parent looking for this account. Without it,
+    /// A→B followed by B→A makes a ring that no report could ever total, and
+    /// checking self-parenting alone does not catch it.
+    /// </summary>
+    private async Task<bool> WouldCycleAsync(long accountId, long parentId, CancellationToken ct)
+    {
+        long? cursor = parentId;
+        var seen = new HashSet<long>();
+
+        while (cursor is long current)
+        {
+            if (current == accountId)
+            {
+                return true;
+            }
+
+            // Defensive: a ring that predates this check would otherwise spin here.
+            if (!seen.Add(current))
+            {
+                return true;
+            }
+
+            cursor = await _db.Accounts
+                .Where(a => a.AccountId == current)
+                .Select(a => a.ParentAccountId)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        return false;
     }
 
     private static AccountListItem Map(Account a) => new()

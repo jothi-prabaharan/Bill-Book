@@ -1,0 +1,133 @@
+<header class="page-head">
+  <h1>Tax master</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showHistory" (ngModelChange)="load()" />
+      Show superseded
+    </label>
+    <button type="button" (click)="startCreate()" [disabled]="busy()">+ New rate</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+}
+
+@if (mode()) {
+  <form class="editor" (ngSubmit)="save()">
+    @if (mode() === 'revise') {
+      <p class="note">
+        This creates a new version. The current one is closed the day before the date below,
+        so documents dated earlier keep the old rate.
+      </p>
+    }
+    @if (mode() === 'rename') {
+      <p class="note">
+        Display name only. This is a standard rate — its split and identity stay fixed, so
+        reports and GST returns are unaffected.
+      </p>
+    }
+
+    <label>
+      Name
+      <input name="taxName" [(ngModel)]="form.taxName" required maxlength="50" />
+    </label>
+
+    @if (mode() !== 'rename') {
+      <div class="row">
+        <label>
+          Total rate %
+          <input
+            name="totalRate"
+            type="number"
+            step="0.01"
+            min="0"
+            [(ngModel)]="form.totalRate"
+            (ngModelChange)="recalc()"
+            required
+          />
+        </label>
+        <label>
+          Cess %
+          <input name="cessRate" type="number" step="0.01" min="0" [(ngModel)]="form.cessRate" />
+        </label>
+      </div>
+
+      <div class="split">
+        <div><span>CGST</span><strong>{{ half() }}</strong></div>
+        <div><span>SGST</span><strong>{{ half() }}</strong></div>
+        <div><span>IGST</span><strong>{{ form.totalRate || 0 }}</strong></div>
+        <p class="hint">
+          Derived automatically: intra-state splits in half, inter-state carries the full rate.
+        </p>
+      </div>
+
+      <label>
+        Effective from
+        <input name="effectiveFrom" type="date" [(ngModel)]="form.effectiveFrom" required />
+      </label>
+
+      <fieldset>
+        <legend>Applies to</legend>
+        <label class="inline">
+          <input type="checkbox" name="isSales" [(ngModel)]="form.isSales" />
+          Sales <span class="opt">(output tax)</span>
+        </label>
+        <label class="inline">
+          <input type="checkbox" name="isPurchase" [(ngModel)]="form.isPurchase" />
+          Purchases <span class="opt">(input tax)</span>
+        </label>
+        <p class="hint">
+          At least one is required. Each direction gets its own CGST, SGST and IGST
+          sub-accounts.
+        </p>
+      </fieldset>
+    }
+
+    <div class="editor-actions">
+      <button type="submit" [disabled]="busy() || !valid()">Save</button>
+      <button type="button" class="link" (click)="mode.set(null)">Cancel</button>
+    </div>
+  </form>
+} @else {
+  <table class="grid">
+    <thead>
+      <tr>
+        <th>Name</th><th>Total</th><th>CGST</th><th>SGST</th><th>IGST</th>
+        <th>Applies to</th><th>Effective</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (r of rates(); track r.taxMasterId) {
+        <tr [class.superseded]="!r.isCurrent" [class.inactive]="!r.isActive">
+          <td>
+            {{ r.taxName }}
+            @if (r.isSystemRate) { <span class="badge sys">Standard</span> }
+            @if (!r.isCurrent) { <span class="badge old">Superseded</span> }
+          </td>
+          <td class="num">{{ r.totalRate }}%</td>
+          <td class="num">{{ r.cgstRate }}</td>
+          <td class="num">{{ r.sgstRate }}</td>
+          <td class="num">{{ r.igstRate }}</td>
+          <td>
+            @if (r.isSales) { <span class="chip">Sales</span> }
+            @if (r.isPurchase) { <span class="chip">Purchase</span> }
+          </td>
+          <td class="dates">
+            {{ r.effectiveFrom }}
+            @if (r.effectiveTo) { → {{ r.effectiveTo }} }
+          </td>
+          <td class="row-actions">
+            @if (r.isCurrent && r.isActive) {
+              <button type="button" class="link" (click)="startRename(r)">Rename</button>
+              <button type="button" class="link" (click)="startRevise(r)">Revise</button>
+              <button type="button" class="link danger" (click)="deactivate(r)">Deactivate</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="8">No tax rates.</td></tr>
+      }
+    </tbody>
+  </table>
+}

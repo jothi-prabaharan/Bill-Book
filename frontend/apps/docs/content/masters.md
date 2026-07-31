@@ -1,6 +1,6 @@
 # Master data
 
-**Status: partial.** The global reference masters are built; the per-organization ones are designed but not yet coded.
+**Status: partial.** The global reference masters are built, as are the first three per-organization ones — chart of accounts, sub-accounts and the tax master. The trading masters (contacts, items, warehouses) are not.
 
 ## Built — global reference masters (`mst`)
 
@@ -15,7 +15,10 @@ All are seeded, have **no maintenance screen**, and expose read-only endpoints. 
 | LedgerTypes | 6 | `GET /api/master/ledger-types` |
 | LedgerSources | 15 | `GET /api/master/ledger-sources` |
 | AccountTypes | 5 | `GET /api/master/account-types` |
+| HSN/SAC codes | 129 seeded headings, rest imported | `GET /api/master/hsn-sac` |
 | Permissions | 120 (12 modules × 10 actions) | via roles |
+
+HSN/SAC is the exception to "no maintenance screen" — it has a CSV importer, because the detailed codes change with each CBIC notification. See [HSN & SAC codes](#/hsn-sac).
 
 ### Transaction types
 
@@ -44,10 +47,20 @@ Seeded masters carry two names:
 
 So a customer can relabel "Accountant" as "Finance Lead", or "Cost of Goods Sold" as "Direct Cost", **without changing what the row is or what posts to it**. Applies to account types, roles and tax rates.
 
+## Built — per-organization masters (`acc`)
+
+These live in the customer's own database, resolved per request through the tenant directory. Each is seeded when an organization is created.
+
+| Master | Rows at creation | Screen |
+|---|---|---|
+| Chart of accounts (`acc.Accounts`) | 10 control accounts | Accounting → Chart of accounts |
+| Sub-accounts (`acc.SubAccounts`) | none — provisioned by their owner | Accounting → Sub-accounts (read-only) |
+| Tax master (`acc.TaxMasters`) | 6 GST rates, effective-dated | Settings → Tax |
+
+See [Chart of accounts](#/chart-of-accounts) and [GST & tax](#/gst).
+
 ## Designed, not built
 
-- **Chart of accounts** (`acc.Accounts`) and sub-accounts — see [Chart of accounts](#/chart-of-accounts)
-- **Tax master** — 6 seeded GST rates, effective-dated
-- **Contacts**, **Items**, **UOM**, **Branch/Warehouse**, **Item Category**, **HSN/SAC**
+- **Contacts**, **Items**, **UOM**, **Branch/Warehouse**, **Item Category**
 
-The last group lives in per-customer schemas, so it needs tenant connection resolution — a piece of infrastructure that does not exist yet.
+These belong to the Contacts and Inventory services, neither of which exists yet. Until they do, the only sub-accounts in the system are the tax ones — the contact and item provisioning paths are built and tested by nothing.

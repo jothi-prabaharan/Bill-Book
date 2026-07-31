@@ -1,2 +1,2 @@
-export * from './lib/roles.page';
-export * from './lib/users.page';
+export * from './lib/roles/roles.page';
+export * from './lib/users/users.page';

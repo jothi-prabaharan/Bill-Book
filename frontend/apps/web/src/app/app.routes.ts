@@ -9,7 +9,7 @@ import {
   licenseActiveGuard,
 } from '@bill-book/auth';
 import { ShellComponent } from '@bill-book/app-shell';
-import { DashboardPage } from './dashboard.page';
+import { DashboardPage } from './dashboard/dashboard.page';
 
 export const appRoutes: Routes = [
   { path: 'login', component: LoginPage },
@@ -54,6 +54,11 @@ export const appRoutes: Routes = [
         path: 'accounting/chart-of-accounts',
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.ChartOfAccountsPage),
+      },
+      {
+        path: 'accounting/sub-accounts',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.SubAccountsPage),
       },
       {
         path: 'settings/tax',

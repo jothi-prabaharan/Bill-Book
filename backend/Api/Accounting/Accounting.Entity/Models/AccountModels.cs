@@ -88,6 +88,8 @@ public class SubAccountListItem
 
     public string AccountName { get; set; } = null!;
 
+    public string AccountCode { get; set; } = null!;
+
     public int AccountTypeId { get; set; }
 
     public SubAccountReferenceType ReferenceType { get; set; }

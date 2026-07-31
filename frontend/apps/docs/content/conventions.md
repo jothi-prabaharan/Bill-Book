@@ -29,6 +29,12 @@ Every unique constraint on an org-scoped table must include `OrgId`.
 
 Never reference another service's `DbContext`. Read over its API through a named seam; write by publishing an event.
 
+## Frontend components
+
+Three files per page or component, sharing a base name: `.ts`, `.html`, `.scss`. The decorator uses `templateUrl` and `styleUrl` — **no inline `template:` or `styles:` blocks**. A component with no styles of its own still gets a `.scss` file, so the trio is the same everywhere.
+
+`-core` libs stay Ionic-compatible: Signals and DI are fine, but no `window`, no `document`, no Syncfusion, no Electron or Node APIs. Every page works at ~360px.
+
 ## Documentation
 
 **Update this site in the same commit as the feature.** See [Release notes](#/release-notes) for how that flows into a version entry.

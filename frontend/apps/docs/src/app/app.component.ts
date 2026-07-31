@@ -6,31 +6,8 @@ import { DOCS } from './docs.manifest';
   selector: 'bb-docs-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
-  template: `
-    <div class="layout">
-      <aside>
-        <a class="brand" routerLink="/index">Bill-Book <span>docs</span></a>
-        @for (section of docs; track section.title) {
-          <h2>{{ section.title }}</h2>
-          <ul>
-            @for (page of section.pages; track page.slug) {
-              <li>
-                <a [routerLink]="'/' + page.slug" routerLinkActive="active">
-                  {{ page.title }}
-                  @if (page.status !== 'built') {
-                    <span class="tag" [class.planned]="page.status === 'planned'">
-                      {{ page.status }}
-                    </span>
-                  }
-                </a>
-              </li>
-            }
-          </ul>
-        }
-      </aside>
-      <main><router-outlet /></main>
-    </div>
-  `,
+  templateUrl: './app.component.html',
+  styleUrl: './app.component.scss',
 })
 export class AppComponent {
   readonly docs = DOCS;

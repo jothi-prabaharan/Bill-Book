@@ -1,0 +1,81 @@
+<header class="page-head">
+  <h1>Users</h1>
+  <button type="button" (click)="inviting.set(!inviting())" [disabled]="busy()">
+    + Invite user
+  </button>
+</header>
+
+@if (message()) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+}
+
+@if (inviting()) {
+  <form class="invite" (ngSubmit)="invite()">
+    <label>
+      Email
+      <input name="email" type="email" [(ngModel)]="form.email" required />
+    </label>
+    <label>
+      Name
+      <input name="displayName" [(ngModel)]="form.displayName" required />
+    </label>
+    <label>
+      Mobile <span class="opt">(optional)</span>
+      <input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
+    </label>
+    <label>
+      Role
+      <select name="roleId" [(ngModel)]="form.roleId" required>
+        <option [ngValue]="0">Select…</option>
+        @for (r of roles(); track r.roleId) {
+          <option [ngValue]="r.roleId">{{ r.displayName }}</option>
+        }
+      </select>
+    </label>
+    <div class="invite-actions">
+      <button type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
+      <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>
+    </div>
+    <p class="hint">
+      They will receive an email with a link to set their own password. No temporary
+      password is created.
+    </p>
+  </form>
+}
+
+<table class="grid">
+  <thead>
+    <tr><th>Name</th><th>Email</th><th>Role</th><th>Last login</th><th>Status</th><th></th></tr>
+  </thead>
+  <tbody>
+    @for (u of users(); track u.userId) {
+      <tr [class.inactive]="!u.isActive">
+        <td>{{ u.displayName }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.roleName }}</td>
+        <td>{{ u.lastLoginAt ? (u.lastLoginAt | date: 'medium') : '—' }}</td>
+        <td>
+          @if (!u.isActive) {
+            <span class="tag off">Revoked</span>
+          } @else if (u.isInvitePending) {
+            <span class="tag pending">Invite pending</span>
+          } @else if (u.isLockedOut) {
+            <span class="tag locked">Locked</span>
+          } @else {
+            <span class="tag on">Active</span>
+          }
+        </td>
+        <td class="row-actions">
+          @if (u.isInvitePending && u.isActive) {
+            <button type="button" class="link" (click)="resend(u)">Resend</button>
+          }
+          @if (u.isActive) {
+            <button type="button" class="link danger" (click)="revoke(u)">Revoke</button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="6">No users.</td></tr>
+    }
+  </tbody>
+</table>

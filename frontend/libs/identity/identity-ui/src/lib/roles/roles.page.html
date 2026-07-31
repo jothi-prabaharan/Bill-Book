@@ -1,0 +1,87 @@
+<header class="page-head">
+  <h1>Roles</h1>
+  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
+</header>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (!editing()) {
+  <table class="grid">
+    <thead>
+      <tr><th>Role</th><th>Description</th><th>Users</th><th>Permissions</th><th></th></tr>
+    </thead>
+    <tbody>
+      @for (r of roles(); track r.roleId) {
+        <tr [class.inactive]="!r.isActive">
+          <td>
+            {{ r.displayName }}
+            @if (r.isSystemRole) { <span class="badge">System</span> }
+          </td>
+          <td>{{ r.description }}</td>
+          <td>{{ r.userCount }}</td>
+          <td>{{ r.permissionCount }}</td>
+          <td class="row-actions">
+            <button type="button" class="link" (click)="startEdit(r.roleId)">Edit</button>
+            @if (!r.isSystemRole) {
+              <button type="button" class="link danger" (click)="remove(r)">Delete</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5">No roles.</td></tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <form class="editor" (ngSubmit)="save()">
+    <label>
+      Name
+      <input name="displayName" [(ngModel)]="form.displayName" required maxlength="100" />
+    </label>
+    <label>
+      Description
+      <input name="description" [(ngModel)]="form.description" maxlength="300" />
+    </label>
+
+    @if (isSystem()) {
+      <p class="note">
+        This is a system role. You can rename it for display, but its permissions are fixed
+        and it cannot be deleted.
+      </p>
+    }
+
+    <h2>Permissions</h2>
+    @for (group of matrix(); track group.module) {
+      <fieldset class="module">
+        <legend>
+          {{ group.module }}
+          @if (!isSystem()) {
+            <button type="button" class="link" (click)="toggleModule(group)">
+              {{ allSelected(group) ? 'Clear' : 'Select all' }}
+            </button>
+          }
+        </legend>
+        <div class="actions-grid">
+          @for (p of group.permissions; track p.permissionId) {
+            <label class="check">
+              <input
+                type="checkbox"
+                [disabled]="isSystem()"
+                [checked]="selected().has(p.permissionId)"
+                (change)="togglePermission(p.permissionId)"
+              />
+              {{ p.action }}
+            </label>
+          }
+        </div>
+      </fieldset>
+    }
+
+    <div class="editor-actions">
+      <button type="submit" [disabled]="busy()">Save</button>
+      <button type="button" class="link" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+}
