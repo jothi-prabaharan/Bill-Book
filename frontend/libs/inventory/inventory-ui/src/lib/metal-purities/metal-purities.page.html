@@ -1,0 +1,100 @@
+<header class="page-head">
+  <h1>Metal purities</h1>
+  <div class="head-actions">
+    <select [(ngModel)]="metalFilter" (ngModelChange)="load()" aria-label="Filter by metal">
+      <option value="">All metals</option>
+      <option value="Gold">Gold</option>
+      <option value="Silver">Silver</option>
+      <option value="Platinum">Platinum</option>
+      <option value="Diamond">Diamond</option>
+    </select>
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add purity</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  The factor is the fraction of pure metal — 22K is 0.9160. It multiplies the pure-metal rate to
+  price a piece, so it is fixed once an item uses it.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="handle-col"><span class="sr-only">Reorder</span></th>
+      <th>Metal</th>
+      <th>Purity</th>
+      <th class="num">Factor</th>
+      <th>Active</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+    @for (row of rows(); track row.metalPurityId) {
+      <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
+        <td class="handle-col"><span class="handle" cdkDragHandle aria-hidden="true">⠿</span></td>
+        <td>{{ row.metalType }}</td>
+        <td>
+          {{ row.purityName }}
+          @if (row.isSystem) {
+            <span class="badge">Built-in</span>
+          }
+        </td>
+        <td class="num">{{ row.purityFactor }}</td>
+        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+        <td class="actions-col">
+          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+          @if (!row.isSystem) {
+            <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+              Delete
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="6">No purities.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editingId() !== null) {
+  <div class="sheet narrow">
+    <h2>{{ editingId() === 0 ? 'New purity' : 'Edit purity' }}</h2>
+    <div class="fields">
+      <label>
+        Metal
+        <select [(ngModel)]="form.metalType" [disabled]="editingId() !== 0">
+          <option value="Gold">Gold</option>
+          <option value="Silver">Silver</option>
+          <option value="Platinum">Platinum</option>
+          <option value="Diamond">Diamond</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+      <label>
+        Name
+        <input type="text" [(ngModel)]="form.purityName" maxlength="20" />
+        <small>What the counter calls it: 22K, 916, 999.</small>
+      </label>
+      <label>
+        Factor
+        <input type="number" [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
+      </label>
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+        Active
+      </label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.purityName">Save</button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

@@ -42,6 +42,7 @@ export const DOCS: DocSection[] = [
       { slug: 'roles-permissions', title: 'Roles & permissions', status: 'built' },
       { slug: 'numbering-series', title: 'Numbering series', status: 'built' },
       { slug: 'contacts', title: 'Contacts', status: 'built' },
+      { slug: 'inventory-masters', title: 'Inventory masters', status: 'built' },
       { slug: 'payment-terms', title: 'Payment terms', status: 'built' },
       { slug: 'configuration', title: 'Configuration', status: 'built' },
     ],

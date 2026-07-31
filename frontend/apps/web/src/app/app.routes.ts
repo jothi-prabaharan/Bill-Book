@@ -78,6 +78,28 @@ export const appRoutes: Routes = [
         path: 'contacts',
         loadComponent: () => import('@bill-book/contacts-ui').then((m) => m.ContactsPage),
       },
+      {
+        path: 'inventory/items',
+        loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.ItemsPage),
+      },
+      {
+        path: 'inventory/categories',
+        loadComponent: () =>
+          import('@bill-book/inventory-ui').then((m) => m.ItemCategoriesPage),
+      },
+      {
+        path: 'inventory/warehouses',
+        loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.WarehousesPage),
+      },
+      {
+        path: 'settings/unit-types',
+        loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.UnitTypesPage),
+      },
+      {
+        path: 'settings/metal-purities',
+        loadComponent: () =>
+          import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },

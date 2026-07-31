@@ -764,6 +764,29 @@ Filtered unique (OrgId, ContactId) WHERE IsDefault · (OrgId, MobileNumber) WHER
 
 Seeded: Primary (default) · Owner/Proprietor · Accounts · Purchase · Sales · Dispatch · Support · Other. Maintained from a popup, not a page. A role in use cannot be deleted — deactivate instead.
 
+### `inv.*` — Inventory masters ✅
+Nine tables. The core item is vertical-neutral; pharma and jewellery attributes sit in 1:0..1 extensions so their required fields are plain `NOT NULL` rather than a conditional check per vertical.
+
+**`inv.UomTypes`** — UomTypeId · UomTypeSystemName? · UomTypeName · DisplayOrder · IsSystem · IsActive. Six seeded, user-extensible. No `BaseUomId`: the base is a flag on the unit, where a filtered unique index guarantees at most one per type.
+
+**`inv.UnitOfMeasures`** — UomId · UomTypeId (FK, restrict) · UomSystemName? · **UomCode** · **UqcCode** · UomName · **IsBaseUnit** · **ConversionToBase** decimal(18,6) · DecimalPlaces · DisplayOrder · IsSystem · IsActive.
+Checks: factor > 0 · base ⇒ factor = 1 · decimals 0–6. Filtered unique `(OrgId, UomTypeId) WHERE IsBaseUnit`.
+**The only conversion mechanism in the system.** Pack sizes are units of their type — a 50 kg bag is a Weight unit with factor 50 — which is why there is no `ItemUoms` table. `UqcCode` is separate because carat and tola are not notified units.
+
+**`inv.ItemCategories`** — self-referencing tree, **maximum depth 3**, with `DefaultItemProfile`, `DefaultCostingType` and `DefaultUomTypeId` copied onto an item at creation and independent thereafter.
+
+**`inv.MetalPurities`** — per metal, `PurityFactor` decimal(6,4) — 22K is 0.9160. Frozen once an item uses it. Seeded with the standard Indian purities, finest first.
+
+**`inv.Items`** — the SKU. Five unit columns: `UomTypeId`, `InventoryUomId`, `SalesUomId`, `PurchaseUomId`, `ReportUomId`, all of which must belong to the type. Stock, weighted average cost and quantity precision come from the inventory unit. Prices store **per the inventory unit**, so changing the sales unit cannot silently reprice.
+Checks: `TrackInventory` ⇔ `CostingType <> None` · expiry ⇒ batch · Fefo ⇒ batch + expiry · SpecificIdentification ⇒ serial · MinSalePrice ≤ SalesPrice.
+**Locked once stock has moved**: UomTypeId, InventoryUomId, CostingType, ItemProfile and the three tracking flags.
+
+**`inv.ItemJewelleryDetails`** / **`inv.ItemPharmaDetails`** — ItemId is key and FK both, cascade. Nominal design weights on the jewellery side; each physical piece's actual weights and HUID belong to its serial row.
+
+**`inv.ItemBarcodes`** — unique per org, filtered unique primary per item, `BarcodeType` including GS1 DataMatrix.
+
+**`inv.Warehouses`** — location dimension only; stock is one shared pool and WAC is company-wide. Own GSTIN, `StorageType`, one default per org.
+
 ### `acc.Journals` 🔨
 Manual journal header.
 
@@ -1157,6 +1180,13 @@ Modal, not a routed page. Inline rename, add row, drag to reorder, default radio
 
 ## Payment terms (`apps/web` → Settings) ✅
 Grid: Name · Rule (in words) · **Due for a bill dated today** · Discount · Used on · Default · Active, drag-ordered. The worked example is the point — "end of month plus 15" is not self-explanatory. A built-in term's rule renders read-only with a note saying why.
+
+## Inventory masters (`apps/web`) ✅
+- **Unit types** (Settings) — types with units inline, base-unit radio, factor and decimals per unit; moving the base prompts and is refused once units are in use.
+- **Categories** (Inventory) — three-level tree with per-level defaults, drag-ordered.
+- **Metal purities** (Settings) — per metal, ordered finest first.
+- **Warehouses** (Inventory) — with storage type and own GSTIN; the default cannot be deactivated.
+- **Items** (Inventory) — five tabs: General · Units · Stock · the profile tab (Pharma or Jewellery) · Barcodes. Costing drives which tracking options are forced and locked; a moved-stock item renders the five locked fields read-only with the reason stated.
 
 ## Journal entry (`apps/web` → Accounting) 📋
 - Header: JournalNo (auto), JournalDate, CurrencyCode, ExchangeRate (auto from rate table at JournalDate, overridable), Reference, Memo
