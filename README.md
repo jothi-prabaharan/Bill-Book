@@ -1,6 +1,37 @@
 # RetailErp
 
-A multi-tenant retail ERP and accounting SaaS for Indian SMBs. Zoho Books is the functional benchmark.
+## Local development credentials
+
+> **Localhost only.** These values exist so a fresh clone runs without setup. They are committed on purpose and are safe precisely because they reach nothing but your own machine. Staging, UAT and Production ship blank and read every secret from environment variables — see [Environments](frontend/apps/docs/content/environments.md). Never paste a real credential into this file or into any `appsettings.*.json`.
+
+```text
+PostgreSQL          localhost:5432
+Username            postgres
+Password            123
+
+Development DB      retailerp_master     mst, plt, idn, rat schemas
+Testing DB          retailerp_test       drop and recreate freely
+Design-time DB      retailerp_design     per-customer schemas, for dotnet ef
+Sample customer DB  IN0000000001         stands in for a provisioned tenant
+```
+
+Connection string:
+
+```text
+Host=localhost;Port=5432;Database=retailerp_master;Username=postgres;Password=123
+```
+
+First run:
+
+```powershell
+./scripts/setup-dev-db.ps1
+```
+
+That creates all four databases, generates the EF Core migrations and applies them, then prints the seeded master row counts. Re-running it is safe. Then press <kbd>F5</kbd> in VS Code and pick **Everything (APIs + Gateway + Web)**.
+
+---
+
+A multi-tenant retail ERP and accounting SaaS for Indian SMBs. Bill Books is the functional benchmark.
 
 Billing, inventory, double-entry accounting, GST compliance, CRM and a support helpdesk, delivered as web, client-portal, admin, desktop and documentation apps over a set of .NET services on PostgreSQL.
 
