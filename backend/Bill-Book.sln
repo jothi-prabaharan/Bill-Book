@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -114,12 +114,24 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Support", "Support", "{417B
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Reporting", "Reporting", "{E006E63A-52AE-5402-9286-ECECC33148B1}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Entity", "Gateway\Gateway.Entity\Gateway.Entity.csproj", "{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Repository", "Gateway\Gateway.Repository\Gateway.Repository.csproj", "{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}.Release|Any CPU.ActiveCfg = Release|Any CPU

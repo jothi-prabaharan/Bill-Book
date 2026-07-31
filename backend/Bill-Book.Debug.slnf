@@ -6,6 +6,8 @@
       "Api\\Identity\\Identity.Api\\Identity.Api.csproj",
       "Api\\Master\\Master.Api\\Master.Api.csproj",
       "Api\\Platform\\Platform.Api\\Platform.Api.csproj",
+      "Gateway\\Gateway.Entity\\Gateway.Entity.csproj",
+      "Gateway\\Gateway.Repository\\Gateway.Repository.csproj",
       "Gateway\\Gateway.csproj"
     ]
   }
