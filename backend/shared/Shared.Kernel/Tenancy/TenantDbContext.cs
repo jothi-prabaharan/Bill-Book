@@ -25,8 +25,16 @@ public abstract class TenantDbContext : DbContext
 
     protected ITenantContext Tenant { get; }
 
-    /// <summary>Read by the query filter. A null org yields no rows rather than all rows.</summary>
-    private Guid CurrentOrgId => Tenant.OrgId ?? Guid.Empty;
+    /// <summary>
+    /// Read by the query filter. A null org yields no rows rather than all rows.
+    ///
+    /// Public deliberately. The filter is built with
+    /// <c>Expression.Property(Expression.Constant(this), nameof(CurrentOrgId))</c>,
+    /// and that overload resolves public properties only. While this was private,
+    /// model building threw "Instance property 'CurrentOrgId' is not defined for
+    /// type ..." for every per-customer context, at run time as well as design time.
+    /// </summary>
+    public Guid CurrentOrgId => Tenant.OrgId ?? Guid.Empty;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
