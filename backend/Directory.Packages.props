@@ -16,7 +16,10 @@
     <PackageVersion Include="System.IdentityModel.Tokens.Jwt" Version="8.3.0" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <!-- Microsoft.AspNetCore.OpenApi 10.0.0 pulls Microsoft.OpenApi 2.0.0, which carries
-         GHSA-v5pm-xwqc-g5wc. Pinned transitively to the patched release. -->
+         GHSA-v5pm-xwqc-g5wc. Pinned transitively to 2.7.5, the first patched 2.x release.
+         2.7.5 is also new enough that IOpenApiMediaType.Example is read-only, which breaks
+         the XML-comment source generator in AspNetCore.OpenApi 10.0.0. That generator is
+         removed in Directory.Build.targets — read the note there before touching this pin. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
