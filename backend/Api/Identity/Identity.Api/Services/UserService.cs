@@ -204,7 +204,13 @@ public sealed class UserService
     private async Task SendInviteAsync(
         User user, string orgName, string token, Guid? customerId, CancellationToken ct)
     {
-        string baseUrl = _config["App:BaseUrl"] ?? "http://localhost:4200";
+        // Guarded rather than defaulted: an unset value yields a relative link that
+        // is dead in every mail client, and the send still reports success.
+        string baseUrl = _config["App:BaseUrl"] is { Length: > 0 } configured
+            ? configured.TrimEnd('/')
+            : throw new InvalidOperationException(
+                "App:BaseUrl is not configured. Set it in appsettings.{Environment}.json " +
+                "or via the App__BaseUrl environment variable.");
         string link = $"{baseUrl}/accept-invitation?token={Uri.EscapeDataString(token)}" +
                       $"&email={Uri.EscapeDataString(user.Email)}";
 

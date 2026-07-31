@@ -82,8 +82,15 @@ public sealed class ProvisioningWorker : BackgroundService
 #pragma warning restore EF1002
 
         // 2. Store the tenant connection string — Key Vault, never plt.
-        string template = _config["TenantDatabase:ConnectionTemplate"]
-            ?? "Host=localhost;Port=5432;Database={0};Username=postgres;Password=postgres";
+        //    Guarded rather than defaulted: an unset value here would store an empty
+        //    connection string and step 5 would still flip the org to Active, telling
+        //    the customer their account is ready when it can never connect.
+        string template = _config["TenantDatabase:ConnectionTemplate"] is { Length: > 0 } configured
+            ? configured
+            : throw new InvalidOperationException(
+                "TenantDatabase:ConnectionTemplate is not configured. Set it in " +
+                "appsettings.{Environment}.json or via the TenantDatabase__ConnectionTemplate " +
+                "environment variable.");
         await secrets.SetSecretAsync(
             $"tenant-db-{safeName}", string.Format(template, safeName), ct);
 

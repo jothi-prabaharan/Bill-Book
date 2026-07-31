@@ -40,13 +40,11 @@ builder.Services.AddHostedService<ProvisioningWorker>();
 // Cross-service seams — Platform never touches another service's DbContext.
 builder.Services.AddHttpClient<IIdentityAdmin, IdentityAdminClient>(client =>
 {
-    string baseUrl = builder.Configuration["Identity:BaseUrl"] ?? "http://localhost:5001";
-    client.BaseAddress = new Uri(baseUrl);
+    client.BaseAddress = new Uri(RequiredSetting("Identity:BaseUrl"));
 });
 builder.Services.AddHttpClient<IMasterCurrencies, MasterCurrenciesClient>(client =>
 {
-    string baseUrl = builder.Configuration["Master:BaseUrl"] ?? "http://localhost:5003";
-    client.BaseAddress = new Uri(baseUrl);
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 });
 
 // Dev infrastructure — swap for Key Vault / Service Bus in production.
@@ -63,3 +61,13 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 app.Run();
+
+// Settings with no safe default. Blank is treated as missing: appsettings.json ships
+// every key present but empty so the shape is discoverable, which means a `??` fallback
+// would never fire and a broken value would flow on silently instead.
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");

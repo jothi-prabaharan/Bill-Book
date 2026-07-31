@@ -25,8 +25,7 @@ builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
 {
-    string baseUrl = builder.Configuration["Platform:BaseUrl"] ?? "http://localhost:5002";
-    client.BaseAddress = new Uri(baseUrl);
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
 });
 
 // TODO: replace with the Key Vault-backed store before production.
@@ -41,8 +40,9 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        : builder.Configuration.GetConnectionString("DesignTimeDatabase")
-            ?? "Host=localhost;Port=5432;Database=retailerp_design;Username=postgres;Password=postgres";
+        // Guarded, not defaulted: a blank here would hand Npgsql an empty string
+        // and the failure would surface as an unrelated connection error.
+        : RequiredConnectionString("DesignTimeDatabase");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
@@ -54,7 +54,9 @@ builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<SubAccountService>();
 builder.Services.AddScoped<TaxMasterService>();
 
-string? signingKey = builder.Configuration["Jwt:SigningKey"];
+// Must match Identity's key exactly: Identity mints the tokens, Accounting only
+// validates them. Never fall back to a constant here.
+string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -65,8 +67,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"] ?? "bill-book",
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(signingKey ?? "dev-only-change-me")),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
             ValidateLifetime = true,
         };
     });
@@ -88,3 +89,20 @@ app.UseMiddleware<TenantMiddleware>();
 app.MapControllers();
 
 app.Run();
+
+// Settings with no safe default. Blank is treated as missing: appsettings.json ships
+// every key present but empty so the shape is discoverable, which means a `??` fallback
+// would never fire and a broken value would flow on silently instead.
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
+
+string RequiredConnectionString(string name) =>
+    builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
+            $"or via the ConnectionStrings__{name} environment variable.");

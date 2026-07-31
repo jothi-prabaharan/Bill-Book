@@ -37,19 +37,25 @@ builder.Services.AddScoped<UserService>();
 // password never leaves that service. Platform queues and delivers it.
 builder.Services.AddHttpClient<IEmailSender, PlatformEmailSender>(client =>
 {
-    string baseUrl = builder.Configuration["Platform:BaseUrl"] ?? "http://localhost:5002";
-    client.BaseAddress = new Uri(baseUrl);
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
 });
 
 // Cross-service seam to Platform.
 builder.Services.AddHttpClient<IPlatformDirectory, PlatformDirectory>(client =>
 {
-    string baseUrl = builder.Configuration["Platform:BaseUrl"] ?? "http://localhost:5002";
-    client.BaseAddress = new Uri(baseUrl);
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
 });
 
 // JWT bearer for protected endpoints (the auth endpoints themselves are anonymous).
 JwtOptions jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
+if (string.IsNullOrWhiteSpace(jwt.SigningKey))
+{
+    throw new InvalidOperationException(
+        "Jwt:SigningKey is not configured. Set it in appsettings.{Environment}.json or via the " +
+        "Jwt__SigningKey environment variable. Never fall back to a constant: every deployment " +
+        "sharing a signing key means tokens minted anywhere are accepted everywhere.");
+}
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -60,7 +66,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = true,
             ValidAudience = jwt.Audience,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey ?? "dev-only-change-me")),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
             ValidateLifetime = true,
         };
     });
@@ -78,3 +84,13 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// Settings with no safe default. Blank is treated as missing: appsettings.json ships
+// every key present but empty so the shape is discoverable, which means a `??` fallback
+// would never fire and a broken value would flow on silently instead.
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
