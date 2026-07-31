@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "purchase-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/purchase/purchase-ui/src",
+  "tags": ["scope:purchase", "type:ui"],
+  "targets": {}
+}

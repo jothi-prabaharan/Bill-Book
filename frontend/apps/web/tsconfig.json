@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "types": []
+  },
+  "files": ["src/main.ts"],
+  "include": [
+    "src/**/*.ts",
+    "../../libs/shared/auth/src/**/*.ts",
+    "../../libs/shared/api-client/src/**/*.ts",
+    "../../libs/app-shell/src/**/*.ts"
+  ],
+  "angularCompilerOptions": {
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "strictTemplates": true
+  }
+}

@@ -1,0 +1,31 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.inline { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; }
+.note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .6rem .8rem; font-size: .85rem; color: #4a4f60; }
+.error { color: #c0392b; }
+.filters { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-top: 1rem; flex-wrap: wrap; }
+.chips { display: flex; gap: .4rem; flex-wrap: wrap; }
+.chip-btn { background: #eceef3; border: 0; border-radius: 999px; padding: .3rem .8rem; font: inherit; font-size: .8rem; color: #4a4f60; cursor: pointer; }
+.chip-btn.on { background: #3557d6; color: #fff; }
+.search { padding: .45rem .6rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; min-width: 14rem; }
+section { margin-top: 1.75rem; }
+h2 { font-size: 1rem; border-bottom: 1px solid #e2e4ea; padding-bottom: .3rem; display: flex; gap: .6rem; align-items: baseline; }
+.meta { font-size: .72rem; color: #8a8f9e; font-weight: 400; margin-left: auto; }
+.code { font-variant-numeric: tabular-nums; color: #6a6f80; font-weight: 400; }
+.grid { width: 100%; border-collapse: collapse; }
+.grid td { padding: .45rem .6rem; border-bottom: 1px solid #f0f1f5; vertical-align: top; }
+.grid tr.inactive { opacity: .5; }
+.tags { white-space: nowrap; width: 12rem; }
+.ref { color: #8a8f9e; font-size: .8rem; text-align: right; width: 5rem; font-variant-numeric: tabular-nums; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.chip { font-size: .62rem; background: #e3e9fd; color: #2743a8; padding: .05rem .3rem; border-radius: 3px; margin-right: .25rem; }
+.chip.tax { background: #ffe9c7; color: #8a5a00; }
+.badge { font-size: .62rem; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+.badge.off { background: #eceef3; color: #6a6f80; }
+
+@media (max-width: 640px) {
+  .filters { flex-direction: column; align-items: stretch; }
+  .search { min-width: 0; }
+  .grid td { display: block; border: 0; padding: .1rem .6rem; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #f0f1f5; }
+  .tags, .ref { width: auto; text-align: left; }
+}

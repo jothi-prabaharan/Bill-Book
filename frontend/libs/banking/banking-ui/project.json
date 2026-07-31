@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "banking-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/banking/banking-ui/src",
+  "tags": ["scope:banking", "type:ui"],
+  "targets": {}
+}

@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "app-shell",
+  "projectType": "library",
+  "sourceRoot": "libs/app-shell/src",
+  "tags": ["scope:shared", "type:ui"],
+  "targets": {}
+}

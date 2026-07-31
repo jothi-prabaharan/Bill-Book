@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "sales-core",
+  "projectType": "library",
+  "sourceRoot": "libs/sales/sales-core/src",
+  "tags": ["scope:sales", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

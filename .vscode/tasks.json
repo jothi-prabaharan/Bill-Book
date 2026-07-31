@@ -1,0 +1,144 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-backend",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["build", "${workspaceFolder}/backend/Bill-Book.Debug.slnf"],
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "web-install",
+      "type": "shell",
+      "command": "npm",
+      "args": ["install"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "problemMatcher": []
+    },
+
+    // Creates the local databases, generates the EF migrations and applies them,
+    // then prints the seeded master row counts. Idempotent: safe to re-run.
+    {
+      "label": "setup-dev-db",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "& '${workspaceFolder}/scripts/setup-dev-db.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/setup-dev-db.log'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
+    // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
+    // a dev server that is already on the port instead of hanging on Angular's
+    // interactive "use a different port?" prompt. See .vscode/serve-angular.js.
+    //
+    // Only development and staging are served here. UAT and Production are
+    // deploy-time build configurations, not things you attach a debugger to.
+    {
+      "label": "serve-web",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "development"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run web:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-web-staging",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "staging"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run web:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-docs",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "development"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run docs:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-docs-staging",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "staging"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run docs:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    }
+  ]
+}

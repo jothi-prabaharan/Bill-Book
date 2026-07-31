@@ -1,0 +1,561 @@
+<header class="page-head">
+  <h1>Items</h1>
+  <div class="head-actions">
+    <input
+      type="search"
+      [(ngModel)]="search"
+      (keyup.enter)="load()"
+      placeholder="Name or code"
+      aria-label="Search items"
+    />
+    <select [(ngModel)]="profileFilter" (ngModelChange)="load()" aria-label="Filter by profile">
+      <option value="">All profiles</option>
+      <option value="Standard">Standard</option>
+      <option value="Pharma">Pharma</option>
+      <option value="Jewellery">Jewellery</option>
+    </select>
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add item</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Name</th>
+      <th>Profile</th>
+      <th>Category</th>
+      <th>Costing</th>
+      <th>Unit</th>
+      <th class="num">Price</th>
+      <th>Active</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.itemId) {
+      <tr [class.inactive]="!row.isActive">
+        <td><code>{{ row.itemCode }}</code></td>
+        <td>{{ row.itemName }}</td>
+        <td>
+          <span class="chip">{{ row.itemProfile }}</span>
+          @if (row.itemType === 'Service') {
+            <span class="chip">Service</span>
+          }
+        </td>
+        <td>{{ row.categoryName ?? '—' }}</td>
+        <td>{{ row.costingType }}</td>
+        <td><code>{{ row.inventoryUomCode }}</code></td>
+        <td class="num">
+          {{ row.salesPrice ?? '—' }}
+          @if (row.mrp) {
+            <span class="sub">MRP {{ row.mrp }}</span>
+          }
+        </td>
+        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+        <td class="actions-col">
+          <button type="button" class="link" (click)="openEdit(row)" [disabled]="busy()">Edit</button>
+          @if (row.isActive) {
+            <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
+              Deactivate
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="9">No items.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editorOpen()) {
+  <div class="sheet">
+    <h2>{{ editingId() === null ? 'New item' : form.itemName }}</h2>
+
+    @if (locked) {
+      <p class="note">
+        Stock has moved for this item, so its unit type, inventory unit, costing method and tracking
+        options are fixed. Every quantity and cost already recorded was written under them.
+      </p>
+    }
+
+    <nav class="tabs">
+      <button type="button" [class.on]="tab() === 'general'" (click)="tab.set('general')">General</button>
+      <button type="button" [class.on]="tab() === 'units'" (click)="tab.set('units')">Units</button>
+      <button type="button" [class.on]="tab() === 'stock'" (click)="tab.set('stock')">Stock</button>
+      @if (form.itemProfile !== 'Standard') {
+        <button type="button" [class.on]="tab() === 'profile'" (click)="tab.set('profile')">
+          {{ form.itemProfile }}
+        </button>
+      }
+      <button type="button" [class.on]="tab() === 'barcodes'" (click)="tab.set('barcodes')">
+        Barcodes ({{ form.barcodes.length }})
+      </button>
+    </nav>
+
+    @if (tab() === 'general') {
+      <div class="fields">
+        <label>
+          Name
+          <input type="text" [(ngModel)]="form.itemName" maxlength="200" />
+        </label>
+
+        <label>
+          Print name
+          <input type="text" [(ngModel)]="form.printName" maxlength="200" />
+          <small>What prints on the invoice. Blank uses the name.</small>
+        </label>
+
+        <label>
+          Code
+          <input type="text" [(ngModel)]="form.itemCode" maxlength="50" [disabled]="editingId() !== null" />
+          <small>Blank takes the next code from the numbering series.</small>
+        </label>
+
+        <label>
+          Category
+          <select [(ngModel)]="form.itemCategoryId" (ngModelChange)="onCategoryChange()">
+            <option [ngValue]="null">Not set</option>
+            @for (category of categories(); track category.itemCategoryId) {
+              <option [ngValue]="category.itemCategoryId">{{ category.categoryName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Profile
+          <select [(ngModel)]="form.itemProfile" (ngModelChange)="onProfileChange()" [disabled]="locked">
+            <option value="Standard">Standard</option>
+            <option value="Pharma">Pharma</option>
+            <option value="Jewellery">Jewellery</option>
+          </select>
+        </label>
+
+        <label>
+          Type
+          <select [(ngModel)]="form.itemType" (ngModelChange)="onItemTypeChange()">
+            <option value="Goods">Goods</option>
+            <option value="Service">Service</option>
+          </select>
+        </label>
+
+        <label>
+          Tax preference
+          <select [(ngModel)]="form.taxPreference">
+            <option value="Taxable">Taxable</option>
+            <option value="Exempt">Exempt</option>
+            <option value="NilRated">Nil rated</option>
+            <option value="NonGst">Non-GST</option>
+            <option value="ZeroRated">Zero rated</option>
+          </select>
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isPriceInclusiveOfTax" />
+          Prices include tax
+        </label>
+
+        <label>
+          Sales price
+          <input type="number" [(ngModel)]="form.salesPrice" step="0.0001" />
+          <small>Per the inventory unit, always.</small>
+        </label>
+
+        <label>
+          Purchase price
+          <input type="number" [(ngModel)]="form.purchasePrice" step="0.0001" />
+        </label>
+
+        <label>
+          MRP
+          <input type="number" [(ngModel)]="form.mrp" step="0.01" />
+          @if (form.isBatchTracked) {
+            <small>A batch's own MRP wins over this.</small>
+          }
+        </label>
+
+        <label>
+          Minimum sale price
+          <input type="number" [(ngModel)]="form.minSalePrice" step="0.0001" />
+          <small>The floor a discount may not cross.</small>
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isSales" />
+          Sold
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isPurchase" />
+          Purchased
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isReturnable" />
+          Returnable
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isActive" />
+          Active
+        </label>
+      </div>
+    }
+
+    @if (tab() === 'units') {
+      <p class="hint">
+        All four must belong to the same unit type — that is what makes them convertible. Stock and
+        cost are held in the inventory unit, and it sets quantity precision
+        ({{ inventoryDecimals() }} decimals).
+      </p>
+
+      <div class="fields">
+        <label>
+          Unit type
+          <select [(ngModel)]="form.uomTypeId" (ngModelChange)="onUomTypeChange()" [disabled]="locked">
+            @for (type of types(); track type.uomTypeId) {
+              <option [ngValue]="type.uomTypeId">{{ type.uomTypeName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Inventory unit
+          <select [(ngModel)]="form.inventoryUomId" [disabled]="locked">
+            @for (unit of unitsOfType(); track unit.uomId) {
+              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
+            }
+          </select>
+          <small>Stock, cost and precision. Frozen once stock moves.</small>
+        </label>
+
+        <label>
+          Sales unit
+          <select [(ngModel)]="form.salesUomId">
+            @for (unit of unitsOfType(); track unit.uomId) {
+              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Purchase unit
+          <select [(ngModel)]="form.purchaseUomId">
+            @for (unit of unitsOfType(); track unit.uomId) {
+              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Report unit
+          <select [(ngModel)]="form.reportUomId">
+            @for (unit of unitsOfType(); track unit.uomId) {
+              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
+            }
+          </select>
+          <small>What stock reports display in. Presentation only.</small>
+        </label>
+      </div>
+    }
+
+    @if (tab() === 'stock') {
+      <div class="fields">
+        <label>
+          Costing method
+          <select [(ngModel)]="form.costingType" (ngModelChange)="onCostingChange()" [disabled]="locked">
+            <option value="None">Not stocked</option>
+            <option value="WeightedAverage">Weighted average</option>
+            <option value="Fifo">FIFO</option>
+            <option value="Lifo">LIFO</option>
+            <option value="Fefo">FEFO — earliest expiry</option>
+            <option value="SpecificIdentification">Specific identification</option>
+          </select>
+          <small>{{ costingNote }}</small>
+        </label>
+
+        @if (form.costingType !== 'None') {
+          <label class="inline">
+            <input
+              type="checkbox"
+              [(ngModel)]="form.isBatchTracked"
+              [disabled]="locked || form.costingType === 'Fefo'"
+            />
+            Track batches
+          </label>
+
+          <label class="inline">
+            <input
+              type="checkbox"
+              [(ngModel)]="form.isExpiryTracked"
+              [disabled]="locked || form.costingType === 'Fefo' || !form.isBatchTracked"
+            />
+            Track expiry
+          </label>
+
+          <label class="inline">
+            <input
+              type="checkbox"
+              [(ngModel)]="form.isSerialTracked"
+              [disabled]="locked || form.costingType === 'SpecificIdentification'"
+            />
+            Track serial numbers
+          </label>
+
+          <label>
+            Default warehouse
+            <select [(ngModel)]="form.defaultWarehouseId">
+              <option [ngValue]="null">Not set</option>
+              @for (warehouse of warehouses(); track warehouse.warehouseId) {
+                <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Reorder level
+            <input type="number" [(ngModel)]="form.reorderLevel" step="0.001" />
+          </label>
+
+          <label>
+            Reorder quantity
+            <input type="number" [(ngModel)]="form.reorderQuantity" step="0.001" />
+          </label>
+
+          <label>
+            Lead time (days)
+            <input type="number" [(ngModel)]="form.leadTimeDays" min="0" />
+          </label>
+        }
+      </div>
+    }
+
+    @if (tab() === 'profile' && form.itemProfile === 'Jewellery' && form.jewellery) {
+      <p class="hint">
+        These are the nominal design values. Each physical piece records its own weights and its
+        HUID against its serial number.
+      </p>
+
+      <div class="fields">
+        <label>
+          Metal
+          <select [(ngModel)]="form.jewellery['metalType']">
+            <option value="Gold">Gold</option>
+            <option value="Silver">Silver</option>
+            <option value="Platinum">Platinum</option>
+            <option value="Diamond">Diamond</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label>
+          Purity
+          <select [(ngModel)]="form.jewellery['metalPurityId']">
+            @for (purity of purities(); track purity.metalPurityId) {
+              <option [ngValue]="purity.metalPurityId">
+                {{ purity.metalType }} — {{ purity.purityName }} ({{ purity.purityFactor }})
+              </option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Gross weight
+          <input type="number" [(ngModel)]="form.jewellery['grossWeight']" step="0.001" />
+        </label>
+
+        <label>
+          Net weight
+          <input type="number" [(ngModel)]="form.jewellery['netWeight']" step="0.001" />
+          <small>The metal rate applies to this, not to gross.</small>
+        </label>
+
+        <label>
+          Stone weight
+          <input type="number" [(ngModel)]="form.jewellery['stoneWeight']" step="0.001" />
+        </label>
+
+        <label>
+          Stone charge
+          <input type="number" [(ngModel)]="form.jewellery['stoneCharge']" step="0.01" />
+        </label>
+
+        <label>
+          Wastage %
+          <input type="number" [(ngModel)]="form.jewellery['wastagePercent']" step="0.01" />
+        </label>
+
+        <label>
+          Making charge type
+          <select [(ngModel)]="form.jewellery['makingChargeType']">
+            <option value="PerGram">Per gram</option>
+            <option value="Percentage">Percentage</option>
+            <option value="Fixed">Fixed</option>
+          </select>
+        </label>
+
+        <label>
+          Making charge
+          <input type="number" [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.jewellery['isHallmarked']" />
+          Hallmarked
+        </label>
+      </div>
+    }
+
+    @if (tab() === 'profile' && form.itemProfile === 'Pharma' && form.pharma) {
+      <div class="fields">
+        <label>
+          Generic name (salt)
+          <input type="text" [(ngModel)]="form.pharma['genericName']" maxlength="200" />
+        </label>
+
+        <label>
+          Strength
+          <input type="text" [(ngModel)]="form.pharma['strength']" maxlength="50" />
+        </label>
+
+        <label>
+          Dosage form
+          <select [(ngModel)]="form.pharma['dosageForm']">
+            <option value="Tablet">Tablet</option>
+            <option value="Capsule">Capsule</option>
+            <option value="Syrup">Syrup</option>
+            <option value="Injection">Injection</option>
+            <option value="Ointment">Ointment</option>
+            <option value="Drops">Drops</option>
+            <option value="Powder">Powder</option>
+            <option value="Other">Other</option>
+          </select>
+        </label>
+
+        <label>
+          Pack size
+          <input type="text" [(ngModel)]="form.pharma['packSize']" maxlength="50" />
+        </label>
+
+        <label>
+          Manufacturer
+          <input type="text" [(ngModel)]="form.pharma['manufacturerName']" maxlength="200" />
+        </label>
+
+        <label>
+          Marketed by
+          <input type="text" [(ngModel)]="form.pharma['marketedBy']" maxlength="200" />
+        </label>
+
+        <label>
+          Drug schedule
+          <select [(ngModel)]="form.pharma['drugSchedule']">
+            <option value="None">None</option>
+            <option value="G">G</option>
+            <option value="H">H</option>
+            <option value="H1">H1</option>
+            <option value="X">X</option>
+          </select>
+          <small>H, H1 and X require a prescription — set automatically.</small>
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.pharma['isNarcotic']" />
+          Narcotic
+        </label>
+
+        <label>
+          Storage
+          <select [(ngModel)]="form.pharma['storageCondition']">
+            <option value="Ambient">Ambient</option>
+            <option value="CoolDry">Cool and dry</option>
+            <option value="ColdChain">Cold chain (2–8 °C)</option>
+            <option value="Frozen">Frozen</option>
+          </select>
+        </label>
+
+        <label>
+          Shelf life (days)
+          <input type="number" [(ngModel)]="form.pharma['shelfLifeDays']" min="1" />
+        </label>
+
+        <label>
+          Minimum expiry on receipt (days)
+          <input type="number" [(ngModel)]="form.pharma['minExpiryDaysOnReceipt']" min="0" />
+          <small>Inward stock expiring sooner than this is refused.</small>
+        </label>
+
+        <label>
+          Expiry alert (days)
+          <input type="number" [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
+        </label>
+      </div>
+    }
+
+    @if (tab() === 'barcodes') {
+      <div class="child-actions">
+        <button type="button" (click)="addBarcode()">+ Add barcode</button>
+      </div>
+
+      @for (barcode of form.barcodes; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label>
+              Barcode
+              <input type="text" [(ngModel)]="barcode.barcode" [name]="'bc' + $index" maxlength="50" />
+            </label>
+
+            <label>
+              Type
+              <select [(ngModel)]="barcode.barcodeType" [name]="'bcType' + $index">
+                <option value="Ean13">EAN-13</option>
+                <option value="Code128">Code 128</option>
+                <option value="Gs1DataMatrix">GS1 DataMatrix</option>
+                <option value="QrCode">QR code</option>
+                <option value="JewelleryTag">Jewellery tag</option>
+              </select>
+            </label>
+
+            <label>
+              Scans as
+              <select [(ngModel)]="barcode.uomId" [name]="'bcUom' + $index">
+                <option [ngValue]="null">Inventory unit</option>
+                @for (unit of unitsOfType(); track unit.uomId) {
+                  <option [ngValue]="unit.uomId">{{ unit.uomCode }}</option>
+                }
+              </select>
+            </label>
+          </div>
+
+          <div class="child-footer">
+            <label class="inline">
+              <input
+                type="radio"
+                name="primaryBarcode"
+                [checked]="barcode.isPrimary"
+                (change)="setPrimaryBarcode($index)"
+              />
+              Primary
+            </label>
+            <button type="button" class="link danger" (click)="removeBarcode($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">No barcodes. One scan must resolve to one item, so each code is unique.</p>
+      }
+    }
+
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.itemName">Save item</button>
+      <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
+    </div>
+  </div>
+}

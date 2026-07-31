@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "currency-format",
+  "projectType": "library",
+  "sourceRoot": "libs/shared/currency-format/src",
+  "tags": ["scope:shared", "type:util"],
+  "targets": {}
+}

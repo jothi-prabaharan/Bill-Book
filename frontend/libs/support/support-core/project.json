@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "support-core",
+  "projectType": "library",
+  "sourceRoot": "libs/support/support-core/src",
+  "tags": ["scope:support", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

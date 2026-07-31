@@ -1,0 +1,34 @@
+<Project>
+
+  <!--
+    Microsoft.AspNetCore.OpenApi 10.0.0 ships an XML comment source generator that emits
+
+        foreach (var mediaType in content) { mediaType.Example = jsonString.Parse(); }
+
+    into OpenApiXmlCommentSupport.generated.cs. Microsoft.OpenApi later made that
+    property read only (IOpenApiMediaType.Example), so the generated file no longer
+    compiles: CS0200, "Property or indexer 'IOpenApiMediaType.Example' cannot be
+    assigned to, it is read only".
+
+    We cannot resolve this by moving Microsoft.OpenApi. Directory.Packages.props pins
+    it to 2.7.5 because every earlier 2.x release carries GHSA-v5pm-xwqc-g5wc, and
+    2.7.5 is the first patched version on that line, which is also new enough to have
+    the read only property. Patched and generator compatible do not overlap.
+
+    ASP.NET Core cannot fix this in 10.0 either; the correction lands in .NET 11.
+    See https://github.com/dotnet/aspnetcore/issues/64317 and
+    https://github.com/microsoft/OpenAPI.NET/issues/2618.
+
+    So the generator is removed until we move to .NET 11. The only thing lost is that
+    triple slash comments are not surfaced into the OpenAPI document. Endpoint
+    discovery, schema generation and the OpenAPI endpoint itself are unaffected.
+
+    Delete this file when the solution moves to .NET 11.
+  -->
+  <Target Name="RemoveOpenApiXmlCommentGenerator" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Analyzer Remove="@(Analyzer->WithMetadataValue('Filename','Microsoft.AspNetCore.OpenApi.SourceGenerators'))" />
+    </ItemGroup>
+  </Target>
+
+</Project>

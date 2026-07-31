@@ -1,0 +1,137 @@
+<header class="page-head">
+  <h1>Chart of accounts</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startCreate()" [disabled]="busy()">+ New account</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+}
+
+@if (editing()) {
+  <form class="editor" (ngSubmit)="save()">
+    @if (locked()) {
+      <p class="note">
+        This account has been used, so its type, code and usage flags are fixed. Changing them
+        would silently reclassify postings that already exist. Name, active state and posting
+        lock can still change.
+      </p>
+    }
+
+    <div class="row">
+      <label>
+        Type
+        <select name="accountTypeId" [(ngModel)]="form.accountTypeId" [disabled]="locked()" required>
+          @for (t of types(); track t.accountTypeId) {
+            <option [ngValue]="t.accountTypeId">{{ t.displayName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Code
+        <input name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
+      </label>
+    </div>
+
+    <label>
+      Name
+      <input name="accountName" [(ngModel)]="form.accountName" required />
+    </label>
+
+    <label>
+      Parent account <span class="opt">(same type only)</span>
+      <select name="parentAccountId" [(ngModel)]="form.parentAccountId">
+        <option [ngValue]="null">— none —</option>
+        @for (a of parentOptions(); track a.accountId) {
+          <option [ngValue]="a.accountId">{{ a.accountCode }} · {{ a.accountName }}</option>
+        }
+      </select>
+    </label>
+
+    <fieldset>
+      <legend>Usage</legend>
+      <div class="flags">
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isSales" name="isSales" [disabled]="locked()" />
+          Sales documents
+        </label>
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isPurchase" name="isPurchase" [disabled]="locked()" />
+          Purchase documents
+        </label>
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isPayment" name="isPayment" [disabled]="locked()" />
+          Payments
+        </label>
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isBank" name="isBank" [disabled]="locked()" />
+          Bank / cash account
+        </label>
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isContra" name="isContra" [disabled]="locked()" />
+          Contra <span class="opt">(reports subtract)</span>
+        </label>
+      </div>
+    </fieldset>
+
+    <div class="row">
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" name="isActive" />
+        Active
+      </label>
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isLock" name="isLock" />
+        Posting locked <span class="opt">(freeze all posting)</span>
+      </label>
+    </div>
+
+    <div class="editor-actions">
+      <button type="submit" [disabled]="busy()">Save</button>
+      <button type="button" class="link" (click)="editing.set(false)">Cancel</button>
+    </div>
+  </form>
+} @else {
+  @for (group of grouped(); track group.type.accountTypeId) {
+    <section>
+      <h2>
+        {{ group.type.displayName }}
+        <span class="meta">{{ group.type.normalBalance }} · {{ group.type.reportSection }}</span>
+      </h2>
+      <table class="grid">
+        <tbody>
+          @for (a of group.accounts; track a.accountId) {
+            <tr [class.inactive]="!a.isActive" [class.child]="a.parentAccountId">
+              <td class="code">{{ a.accountCode }}</td>
+              <td>
+                {{ a.accountName }}
+                @if (a.isSystemDefault) { <span class="badge sys">System</span> }
+                @if (a.isContra) { <span class="badge contra">Contra</span> }
+                @if (a.isLock) { <span class="badge lock">Locked</span> }
+              </td>
+              <td class="flags-cell">
+                @if (a.isBank) { <span class="chip">Bank</span> }
+                @if (a.isSales) { <span class="chip">Sales</span> }
+                @if (a.isPurchase) { <span class="chip">Purchase</span> }
+                @if (a.isPayment) { <span class="chip">Payment</span> }
+                @if (a.isJE) { <span class="chip je">Journal</span> }
+              </td>
+              <td class="row-actions">
+                <button type="button" class="link" (click)="startEdit(a)">Edit</button>
+                @if (!a.isSystemDefault && a.isActive) {
+                  <button type="button" class="link danger" (click)="deactivate(a)">Deactivate</button>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr><td colspan="4" class="empty">No accounts of this type.</td></tr>
+          }
+        </tbody>
+      </table>
+    </section>
+  }
+}

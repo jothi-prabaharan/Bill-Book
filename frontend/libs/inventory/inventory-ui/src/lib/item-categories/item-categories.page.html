@@ -1,0 +1,128 @@
+<header class="page-head">
+  <h1>Item categories</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startAdd(null)" [disabled]="busy()">+ Add category</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Three levels deep at most. The defaults below are copied onto an item when it is created and then
+  belong to the item — changing a category never rewrites items already saved.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="handle-col"><span class="sr-only">Reorder</span></th>
+      <th>Category</th>
+      <th>Code</th>
+      <th>Default profile</th>
+      <th>Default costing</th>
+      <th class="num">Items</th>
+      <th>Active</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+    @for (row of rows(); track row.itemCategoryId) {
+      <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
+        <td class="handle-col"><span class="handle" cdkDragHandle aria-hidden="true">⠿</span></td>
+        <td [class.indent-1]="row.depth === 2" [class.indent-2]="row.depth === 3">
+          {{ row.categoryName }}
+        </td>
+        <td><code>{{ row.categoryCode }}</code></td>
+        <td>{{ row.defaultItemProfile ?? '—' }}</td>
+        <td>{{ row.defaultCostingType ?? '—' }}</td>
+        <td class="num">{{ row.itemCount }}</td>
+        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+        <td class="actions-col">
+          @if (row.depth < 3) {
+            <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
+              + Sub
+            </button>
+          }
+          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+          @if (row.itemCount === 0) {
+            <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+              Delete
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="8">No categories.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === 0 ? 'New category' : 'Edit category' }}</h2>
+    <div class="fields">
+      <label>
+        Name
+        <input type="text" [(ngModel)]="form.categoryName" maxlength="100" />
+      </label>
+      <label>
+        Code
+        <input type="text" [(ngModel)]="form.categoryCode" maxlength="20" />
+      </label>
+      <label>
+        Parent
+        <select [(ngModel)]="form.parentCategoryId">
+          <option [ngValue]="null">Top level</option>
+          @for (parent of parentOptions; track parent.itemCategoryId) {
+            <option [ngValue]="parent.itemCategoryId">{{ parent.categoryName }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Default profile
+        <select [(ngModel)]="form.defaultItemProfile">
+          <option [ngValue]="null">Not set</option>
+          <option value="Standard">Standard</option>
+          <option value="Pharma">Pharma</option>
+          <option value="Jewellery">Jewellery</option>
+        </select>
+      </label>
+      <label>
+        Default costing
+        <select [(ngModel)]="form.defaultCostingType">
+          <option [ngValue]="null">Not set</option>
+          <option value="WeightedAverage">Weighted average</option>
+          <option value="Fifo">FIFO</option>
+          <option value="Lifo">LIFO</option>
+          <option value="Fefo">FEFO</option>
+          <option value="SpecificIdentification">Specific identification</option>
+        </select>
+      </label>
+      <label>
+        Default unit type
+        <select [(ngModel)]="form.defaultUomTypeId">
+          <option [ngValue]="null">Not set</option>
+          @for (type of types(); track type.uomTypeId) {
+            <option [ngValue]="type.uomTypeId">{{ type.uomTypeName }}</option>
+          }
+        </select>
+      </label>
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+        Active
+      </label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.categoryName || !form.categoryCode">
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

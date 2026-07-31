@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instructions for Claude working on **RetailErp** — a multi-tenant retail ERP and accounting SaaS for Indian SMBs. Zoho Books is the functional benchmark.
+Instructions for Claude working on **RetailErp** — a multi-tenant retail ERP and accounting SaaS for Indian SMBs. Bill Books is the functional benchmark.
 
 Read this before writing any code. The rules here are decisions already made — follow them rather than re-deciding.
 
@@ -15,14 +15,37 @@ These are non-negotiable. Violating them means the code gets rejected.
 3. **Every Data Annotation needs `ErrorMessage`.**
 4. **PascalCase table and column names**, matching C# property names exactly. Postgres needs quoted identifiers for this — that's expected.
 5. **PostgreSQL only.** Never add SQL Server compatibility, never avoid a Postgres feature for portability. RLS, `xmin`, and JSONB are all in use deliberately.
-6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it.
+6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it. All four audit columns are **nullable**; `CreatedBy IS NULL` marks system/seed master data (written by no user).
 7. **Enums, not magic strings**, for any fixed set of values.
 8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
+10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
+
+---
+
+## When asked for status
+
+Always report in **this order**, each with a completion status:
+
+1. **Master**
+2. **Accounting**
+3. **Contacts**
+4. **Inventory**
+5. **Transactions**
+6. **Reports**
+7. **Settings**
+
+Present each area as a table with these columns:
+
+| Master | Schema | Rows | API | Page |
+
+State what is built, what is designed but uncoded, and what is not designed — never blur those three together. "Designed" is not "done".
 
 ---
 
 ## When asked to add a table
+
+Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new.
 
 Produce, in this order:
 1. Entity class in `{Module}.Entity/TableEntities/{Name}.cs`
@@ -47,7 +70,33 @@ Every per-customer table needs `OrgId` plus a global query filter. Master-databa
 
 ## Project layout
 
-Three projects per service, no more:
+Two top-level halves. Inside `backend/`, four groups — `Api/`, `shared/`, `worker/`, `Gateway/`.
+
+```
+backend/
+├── Bill-Book.sln
+├── Api/
+│   └── {Module}/                one folder per service (×12)
+│       ├── {Module}.Entity/
+│       ├── {Module}.Repository/
+│       └── {Module}.Api/
+├── shared/
+│   └── Shared.Kernel/
+├── worker/
+│   ├── Notification.Worker/
+│   ├── CostingEngine.Worker/
+│   └── RateSync.Worker/
+└── Gateway/
+frontend/
+├── apps/                    web · portal · admin · desktop · docs
+└── libs/
+    ├── {module}/                one folder per module, mirroring Api/
+    │   ├── {module}-core/
+    │   └── {module}-ui/
+    └── shared/
+```
+
+Three projects per service, no more — all three under `backend/Api/{Module}/`:
 
 ```
 {Module}.Entity/       TableEntities/ · Models/ · Enums/
@@ -57,11 +106,11 @@ Three projects per service, no more:
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
-**Services** (11): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
+**Services** (12): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
-**Frontend** (Nx): `apps/{web, portal, admin, desktop}` · `libs/{module}-core` (view-models + models, no templates) + `libs/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+**Frontend** (Nx): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
 `-core` libs must stay Ionic-compatible: Signals and DI are fine, but no `window`/`document`, no Syncfusion, no Electron/Node APIs.
 
@@ -94,25 +143,26 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 - **New Organization** under an existing Customer: insert row, seed its Chart of Accounts + Tax Master. No new database.
 
 ### Cross-database FKs are impossible in Postgres
-- `CreatedBy`/`ModifiedBy` (Users are in master) → plain `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
+- `CreatedBy`/`ModifiedBy` (Users are in master) → plain nullable `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
 - Contacts referencing `mst` Countries/States → unenforced ids, validate in C#
 
 ---
 
 ## Accounting — get this right or reports lie
 
-### Chart of accounts is four tables
-- `AccountTypes` — 5 fixed rows (Asset, Liability, Equity, Income, Expense), each with `NormalBalance` and `ReportSection`
-- `AccountSubTypes` — FK to type, `IsContra` flag
-- `Accounts` — the CoA, `OrgId`-scoped, seeded at org creation
-- `SubAccounts` — per-contact / per-item detail under a parent control account
+### Chart of accounts is three tables
+- `mst.AccountTypes` — 5 fixed rows (Asset, Liability, Equity, Income, Expense), each with `NormalBalance` and `ReportSection`. **Master database** — global reference data, not duplicated per customer
+- `acc.Accounts` — the CoA, `OrgId`-scoped, seeded at org creation. `AccountTypeId` is an unenforced cross-database reference; `IsContra` marks accounts whose normal balance is opposite their type
+- `acc.SubAccounts` — per-contact / per-item / per-tax detail under a parent control account
 
-`AccountTypeId` is denormalized onto `Accounts` and `SubAccounts`. **Always derive it from the subtype or parent on write. Never accept it from a caller** — if the two columns disagree, reports contradict each other depending on which one they group by.
+**There is no `AccountSubTypes` table** — removed by decision. `ParentAccountId` on `Accounts` supplies any display grouping it used to give, and `IsContra` moved onto `Accounts`.
+
+`AccountTypeId` is denormalized onto `SubAccounts`. **Always derive it from the parent account on write, never accept it from a caller** — if the two disagree, reports contradict each other depending on which one they group by. On `Accounts` it is chosen directly, and becomes immutable once the account has been used.
 
 ### SubAccount rules
 - Each Contact → 2 SubAccounts (Accounts Receivable, Accounts Payable)
 - Each Item → 3 SubAccounts (Inventory, Cost of Goods Sold, Sales Revenue)
-- `JournalEntryLine.SubAccountId` is nullable — bank, GST, and equity lines have no contact or item dimension
+- `JournalDetail.SubAccountId` and `JournalLedger.SubAccountId` are nullable — bank and equity lines have no sub-dimension. Contact, item **and GST** legs do carry one (GST → a per-rate GST subaccount)
 
 ### Both Inventory and Cost of Goods Sold exist. Don't merge them.
 Inventory (Asset) = stock still held. COGS (Expense) = cost of stock sold.
@@ -121,12 +171,15 @@ Inventory (Asset) = stock still held. COGS (Expense) = cost of stock sold.
 
 Gross profit exists only because Revenue (Income) and COGS (Expense) are separate types.
 
-### Subtypes
-- **Asset**: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Other Current Asset, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
-- **Liability**: Accounts Payable, Credit Card, Advance from Customer, Output GST, TDS Payable, Other Current Liability, Long-term Liability
+### Contra accounts
+With subtypes gone, `IsContra` on `acc.Accounts` is what tells a report to subtract. Set it on accounts whose normal balance runs opposite their type — **Accumulated Depreciation** (Asset), **Sales Returns** and **Discount Given** (Income), **Purchase Returns** (Expense). Miss it and the report overstates silently.
+
+Useful account names to seed or expect under each type (guidance, not a table):
+- **Asset**: Cash, Bank, Accounts Receivable, Inventory, Prepaid Expense, Advance to Vendor, Fixed Asset, Accumulated Depreciation *(contra)*, Input GST
+- **Liability**: Accounts Payable, Credit Card, Advance from Customer, Output GST, TDS Payable, Long-term Liability
 - **Equity**: Capital, Drawings, Retained Earnings, Opening Balance Equity
 - **Income**: Operating Revenue, Sales Returns *(contra)*, Discount Given *(contra)*, Other Income
-- **Expense**: Cost of Goods Sold, Purchase Returns *(contra)*, Operating Expense, Payroll Expense, Rent, Depreciation, Other Expense
+- **Expense**: Cost of Goods Sold, Purchase Returns *(contra)*, Operating Expense, Payroll Expense, Rent, Depreciation
 
 ### Journal Entry is the only posting mechanism
 Everything — invoices, bills, payments, depreciation, opening balances — produces a JE.

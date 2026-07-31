@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "accounting-core",
+  "projectType": "library",
+  "sourceRoot": "libs/accounting/accounting-core/src",
+  "tags": ["scope:accounting", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}

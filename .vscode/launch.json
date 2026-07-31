@@ -1,0 +1,247 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Identity.Api (5001)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Identity/Identity.Api/bin/Debug/net10.0/Identity.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Identity/Identity.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5001"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Platform.Api (5002)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Platform/Platform.Api/bin/Debug/net10.0/Platform.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Platform/Platform.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5002"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Master.Api (5003)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Master/Master.Api/bin/Debug/net10.0/Master.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Master/Master.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5003"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Accounting.Api (5004)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api/bin/Debug/net10.0/Accounting.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5004"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Gateway (5000)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Gateway/bin/Debug/net10.0/Gateway.dll",
+      "cwd": "${workspaceFolder}/backend/Gateway",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5000"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+
+    {
+      "name": "Attach to .NET process",
+      "type": "coreclr",
+      "request": "attach",
+      "processId": "${command:pickProcess}"
+    },
+
+    {
+      "name": "Web · Development (Chrome, 4200)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "serve-web",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+        "webpack:///./*": "${workspaceFolder}/frontend/*",
+        "webpack:///*": "*",
+        "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+        "/apps/*": "${workspaceFolder}/frontend/apps/*",
+        "/libs/*": "${workspaceFolder}/frontend/libs/*"
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ],
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
+      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+    },
+    {
+      "name": "Web · Staging (Chrome, 4200)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "serve-web-staging",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+        "webpack:///./*": "${workspaceFolder}/frontend/*",
+        "webpack:///*": "*",
+        "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+        "/apps/*": "${workspaceFolder}/frontend/apps/*",
+        "/libs/*": "${workspaceFolder}/frontend/libs/*"
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ],
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
+      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+    },
+    {
+      "name": "Docs · Development (Chrome, 4300)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "serve-docs",
+      "url": "http://localhost:4300",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+        "webpack:///./*": "${workspaceFolder}/frontend/*",
+        "webpack:///*": "*",
+        "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+        "/apps/*": "${workspaceFolder}/frontend/apps/*",
+        "/libs/*": "${workspaceFolder}/frontend/libs/*"
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ],
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
+      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+    },
+    {
+      "name": "Docs · Staging (Chrome, 4300)",
+      "type": "chrome",
+      "request": "launch",
+      "preLaunchTask": "serve-docs-staging",
+      "url": "http://localhost:4300",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${workspaceFolder}/frontend/node_modules/*",
+        "webpack:///./*": "${workspaceFolder}/frontend/*",
+        "webpack:///*": "*",
+        "webpack://_N_E/*": "${workspaceFolder}/frontend/*",
+        "/apps/*": "${workspaceFolder}/frontend/apps/*",
+        "/libs/*": "${workspaceFolder}/frontend/libs/*"
+      },
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ],
+      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
+      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+    },
+    {
+      "name": "Web (Chrome, attach 9222)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:4200/*",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ]
+    },
+    {
+      "name": "Docs (Chrome, attach 9222)",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "url": "http://localhost:4300/*",
+      "webRoot": "${workspaceFolder}/frontend",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/frontend/**",
+        "!${workspaceFolder}/frontend/node_modules/**"
+      ]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "🚀 Everything (APIs + Gateway + Web)",
+      "configurations": [
+        "Identity.Api (5001)",
+        "Platform.Api (5002)",
+        "Master.Api (5003)",
+        "Accounting.Api (5004)",
+        "Gateway (5000)",
+        "Web · Development (Chrome, 4200)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Backend only (APIs + Gateway)",
+      "configurations": [
+        "Identity.Api (5001)",
+        "Platform.Api (5002)",
+        "Master.Api (5003)",
+        "Accounting.Api (5004)",
+        "Gateway (5000)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Frontend only (Web + Docs, Development)",
+      "configurations": [
+        "Web · Development (Chrome, 4200)",
+        "Docs · Development (Chrome, 4300)"
+      ],
+      "stopAll": true
+    },
+    {
+      "name": "Frontend only (Web + Docs, Staging)",
+      "configurations": [
+        "Web · Staging (Chrome, 4200)",
+        "Docs · Staging (Chrome, 4300)"
+      ],
+      "stopAll": true
+    }
+  ]
+}

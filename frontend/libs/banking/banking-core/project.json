@@ -1,0 +1,8 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "banking-core",
+  "projectType": "library",
+  "sourceRoot": "libs/banking/banking-core/src",
+  "tags": ["scope:banking", "type:core", "platform:ionic-safe"],
+  "targets": {}
+}
