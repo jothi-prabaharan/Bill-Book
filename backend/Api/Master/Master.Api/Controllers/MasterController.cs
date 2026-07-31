@@ -35,6 +35,22 @@ public sealed class MasterController : ControllerBase
         return Ok(states);
     }
 
+    /// <summary>
+    /// One state by id. Per-customer services hold an unenforced StateId and
+    /// need its GST code to check a GSTIN's first two digits — a cross-database
+    /// FK is impossible, so the check happens in C# against this.
+    /// </summary>
+    [HttpGet("states/{stateId:int}")]
+    public async Task<IActionResult> GetState(int stateId, CancellationToken ct)
+    {
+        var state = await _db.States
+            .Where(s => s.StateId == stateId)
+            .Select(s => new { s.StateId, s.CountryId, s.StateCode, s.StateName, s.IsActive })
+            .FirstOrDefaultAsync(ct);
+
+        return state is null ? NotFound() : Ok(state);
+    }
+
     [HttpGet("currencies")]
     public async Task<IActionResult> GetCurrencies(CancellationToken ct)
     {

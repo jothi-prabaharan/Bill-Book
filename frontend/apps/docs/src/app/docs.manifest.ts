@@ -41,6 +41,8 @@ export const DOCS: DocSection[] = [
       { slug: 'hsn-sac', title: 'HSN & SAC codes', status: 'partial' },
       { slug: 'roles-permissions', title: 'Roles & permissions', status: 'built' },
       { slug: 'numbering-series', title: 'Numbering series', status: 'built' },
+      { slug: 'contacts', title: 'Contacts', status: 'built' },
+      { slug: 'payment-terms', title: 'Payment terms', status: 'built' },
       { slug: 'configuration', title: 'Configuration', status: 'built' },
     ],
   },

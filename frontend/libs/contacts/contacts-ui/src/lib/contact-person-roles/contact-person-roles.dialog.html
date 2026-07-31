@@ -1,0 +1,85 @@
+<div class="backdrop" (click)="close()"></div>
+
+<div class="dialog" role="dialog" aria-label="Manage contact person roles">
+  <header>
+    <h2>Contact person roles</h2>
+    <button type="button" class="link" (click)="close()">Close</button>
+  </header>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="handle-col"><span class="sr-only">Reorder</span></th>
+        <th>Role</th>
+        <th class="num">In use</th>
+        <th>Default</th>
+        <th>Active</th>
+        <th class="actions-col"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+      @for (row of rows(); track row.contactPersonRoleId) {
+        <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
+          <td class="handle-col">
+            <span class="handle" cdkDragHandle aria-hidden="true">⠿</span>
+          </td>
+          <td>
+            @if (editingId() === row.contactPersonRoleId) {
+              <input type="text" [(ngModel)]="editName" maxlength="50" />
+              <button type="button" class="link" (click)="saveEdit(row)">Save</button>
+              <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+            } @else {
+              {{ row.roleName }}
+              @if (row.isSystem) {
+                <span class="badge">Built-in</span>
+              }
+            }
+          </td>
+          <td class="num">{{ row.usageCount }}</td>
+          <td>
+            @if (row.isDefault) {
+              <span class="badge">Default</span>
+            } @else if (row.isActive) {
+              <button type="button" class="link" (click)="makeDefault(row)" [disabled]="busy()">
+                Set
+              </button>
+            }
+          </td>
+          <td>
+            <button type="button" class="link" (click)="toggleActive(row)" [disabled]="busy()">
+              {{ row.isActive ? 'Active' : 'Inactive' }}
+            </button>
+          </td>
+          <td class="actions-col">
+            @if (editingId() !== row.contactPersonRoleId) {
+              <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">
+                Rename
+              </button>
+            }
+            @if (!row.isSystem && row.usageCount === 0) {
+              <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+                Delete
+              </button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6">No roles.</td></tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="add-row">
+    <input type="text" [(ngModel)]="newRoleName" maxlength="50" placeholder="New role name" />
+    <button type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">Add</button>
+  </div>
+
+  <p class="hint">
+    A role that people already hold cannot be deleted — make it inactive instead, so existing
+    contacts keep it and their history still reads correctly.
+  </p>
+</div>

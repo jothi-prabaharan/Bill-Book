@@ -1,6 +1,6 @@
 using System.Text;
-using Accounting.Api.Services;
-using Accounting.Repository;
+using Contacts.Api.Services;
+using Contacts.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -33,17 +33,29 @@ builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client
 // TODO: replace with the Key Vault-backed store before production.
 builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 
+// States live in the master database, so the GSTIN-versus-place-of-supply check
+// crosses a service boundary. Cached hard: state codes are legislated.
+builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+});
+
+// Only Accounting writes ledger rows, so a contact's two sub-accounts are
+// created by calling it rather than by inserting here.
+builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+});
+
 // The connection string is chosen per request, so the context is built from the
 // resolved tenant rather than a fixed configuration value.
-builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
+builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
     string connectionString = tenant.CustomerId is Guid customerId
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        // Guarded, not defaulted: a blank here would hand Npgsql an empty string
-        // and the failure would surface as an unrelated connection error.
         : RequiredConnectionString("DesignTimeDatabase");
 
     options.UseNpgsql(connectionString);
@@ -52,21 +64,18 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-builder.Services.AddScoped<AccountService>();
-builder.Services.AddScoped<SubAccountService>();
-builder.Services.AddScoped<TaxMasterService>();
-builder.Services.AddScoped<NumberingSeriesService>();
-builder.Services.AddScoped<PaymentTermService>();
+builder.Services.AddScoped<ContactService>();
+builder.Services.AddScoped<ContactPersonRoleService>();
 
-// Numbering. Accounting owns the series table and migrates it; the generator is
-// registered against this service's own DbContext so a number is allocated
-// inside the same transaction as the record that consumes it.
+// Numbering. The series table belongs to Accounting, but the generator runs
+// against this service's own DbContext so a contact code is allocated inside the
+// same transaction as the contact — a failed insert gives the number back.
 builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("Numbering"));
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
-    sp.GetRequiredService<AccountingDbContext>(),
+    sp.GetRequiredService<ContactsDbContext>(),
     sp.GetRequiredService<IOptions<NumberingOptions>>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Accounting only
+// Must match Identity's key exactly: Identity mints the tokens, Contacts only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -23,6 +23,8 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<TaxMaster> TaxMasters => Set<TaxMaster>();
 
+    public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
+
     /// <summary>
     /// Shared with every service that generates a code. Accounting owns the
     /// migration; the others map the same entity and exclude it from theirs.
@@ -101,6 +103,60 @@ public class AccountingDbContext : TenantDbContext
                 table.HasCheckConstraint(
                     "chk_tax_effective_range",
                     "\"EffectiveTo\" IS NULL OR \"EffectiveTo\" >= \"EffectiveFrom\"");
+            });
+        });
+
+        modelBuilder.Entity<PaymentTerm>(b =>
+        {
+            b.HasKey(e => e.PaymentTermId);
+            b.HasIndex(e => new { e.OrgId, e.TermName }).IsUnique();
+
+            b.HasIndex(e => new { e.OrgId, e.TermSystemName })
+                .IsUnique()
+                .HasFilter("\"TermSystemName\" IS NOT NULL")
+                .HasDatabaseName("IX_PaymentTerms_SystemName");
+
+            // At most one default, enforced here rather than by whoever
+            // remembers to clear the previous one.
+            b.HasIndex(e => e.OrgId)
+                .IsUnique()
+                .HasFilter("\"IsDefault\" = true")
+                .HasDatabaseName("IX_PaymentTerms_Default");
+
+            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_PaymentTerms_Sales");
+            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_PaymentTerms_Purchase");
+            b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.TermName })
+                .HasDatabaseName("IX_PaymentTerms_Order");
+
+            b.Property(e => e.TermType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DiscountPercent).HasColumnType("decimal(5,2)");
+
+            b.ToTable(table =>
+            {
+                // A term usable on neither document is dead data.
+                table.HasCheckConstraint(
+                    "chk_term_applicability",
+                    "\"IsSales\" = true OR \"IsPurchase\" = true");
+
+                // The day of month only means anything for DayOfNextMonth, and
+                // that type cannot work without it.
+                table.HasCheckConstraint(
+                    "chk_term_day_of_month",
+                    "(\"TermType\" = 'DayOfNextMonth' AND \"DueDayOfMonth\" IS NOT NULL) "
+                        + "OR (\"TermType\" <> 'DayOfNextMonth' AND \"DueDayOfMonth\" IS NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_term_due_on_receipt",
+                    "\"TermType\" <> 'DueOnReceipt' OR \"DueDays\" = 0");
+
+                // A discount window that outlives the due date can never be earned.
+                table.HasCheckConstraint(
+                    "chk_term_discount_window",
+                    "\"TermType\" <> 'Net' OR \"DiscountDays\" <= \"DueDays\"");
+
+                table.HasCheckConstraint(
+                    "chk_term_discount_days",
+                    "\"DiscountPercent\" = 0 OR \"DiscountDays\" > 0");
             });
         });
 

@@ -69,6 +69,15 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.NumberingSeriesPage),
       },
+      {
+        path: 'settings/payment-terms',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.PaymentTermsPage),
+      },
+      {
+        path: 'contacts',
+        loadComponent: () => import('@bill-book/contacts-ui').then((m) => m.ContactsPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },

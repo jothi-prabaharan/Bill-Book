@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Platform.Entity.Enums;
 using Shared.Kernel.Entities;
+using Shared.Kernel.Validation;
 
 namespace Platform.Entity.TableEntities;
 
@@ -62,10 +63,11 @@ public class Organization : AuditableEntity
     public int CountryId { get; set; }
 
     [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
-    [RegularExpression(@"^\d{2,}[\s\-]?\d{3,}$", ErrorMessage = "Phone number needs an STD code then the number.")]
+    [Landline]
     public string? PhoneNumber { get; set; }
 
     [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
+    [Mobile]
     public string? MobileNumber { get; set; }
 
     [EmailAddress(ErrorMessage = "Email must be a valid email address.")]

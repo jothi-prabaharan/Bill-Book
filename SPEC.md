@@ -655,6 +655,19 @@ At least one of `IsSales` / `IsPurchase` must be true — a rate usable on neith
 
 **Seed at org creation** (all seeded rows `IsSales = true` and `IsPurchase = true`, so each seeds all **six** GST subaccounts): GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
 
+### `acc.PaymentTerms` ✅
+Owned by Accounting, surfaced as a Settings screen — Sales and Purchase both need it, so it cannot live inside either.
+
+| PaymentTermId long PK · OrgId · TermSystemName string(30)? · TermName string(50) · TermType enum→string(20) · DueDays int · DueDayOfMonth int? · DiscountPercent decimal(5,2) · DiscountDays int · IsSales · IsPurchase · IsDefault · IsSystem · IsActive · DisplayOrder int |
+
+Indexes: unique (OrgId, TermName) · filtered unique system name · filtered unique (OrgId) WHERE IsDefault · sales/purchase filtered · order index
+
+Check constraints: applies to sales or purchase · DayOfNextMonth ⇔ DueDayOfMonth · DueOnReceipt ⇒ DueDays = 0 · discount window ≤ due days on Net · discount % ⇒ discount days
+
+**Due-date calculation lives in Accounting and is exposed at `GET /api/payment-terms/{id}/due-date`.** DayOfNextMonth clamps: day 31 in February is the 28th, never 3 March. A seeded term's rule is immutable — contacts and unpaid documents point at it — while its name stays editable.
+
+Seed: Due on Receipt (default) · Net 15 · Net 30 · Net 45 · Net 60 · End of Month
+
 ### `acc.NumberingSeries` ✅
 Every generated code in the product: master codes now, document numbers as Sales and Purchase land. One table rather than a generator per master — they all need a prefix, zero padding, a financial-year segment and a per-branch variant, and only one of those can be got subtly wrong.
 
@@ -695,6 +708,61 @@ Check constraints: `SeriesFor = 'Master' OR AllowManualOverride = false` · `Nex
 **Seed at org creation** (all `IsSystem`, `IsDefault`, `AllowManualOverride = true`, reset `Never`): `CUSTOMER` CUST-00001 · `VENDOR` VEND-00001 · `ITEM` ITM-00001 · `WAREHOUSE` WH-001 · `BANK` BNK-001. Document series are seeded by Sales and Purchase.
 
 Deactivating is refused when it would leave a code with no active series, or the next contact saved fails with a numbering error far from anything the user did. Rows are never hard-deleted — codes they issued are on records.
+
+### `con.Contacts` ✅
+Customers, vendors, job workers and prescribers — one table with role flags. Separate tables would duplicate the GSTIN and addresses of any party that is both, which in Indian SMB books is routine. Receivable and payable stay apart through their sub-accounts, not through the master.
+
+| Column | Type | Rules |
+|---|---|---|
+| ContactId | long | PK, identity |
+| OrgId | Guid | Required |
+| ContactCode | string(20) | Required, unique per org. From the `CUSTOMER` / `VENDOR` numbering series unless typed |
+| IsCustomer · IsVendor · IsJobWorker · IsPrescriber | bool | **At least one true** — check constraint |
+| ContactCategory | enum→string(15) | Business / Individual |
+| DisplayName | string(200) | Required |
+| LegalName | string(200)? | Name as on the GST certificate |
+| Gstin | string(15)? | Format + checksum validated |
+| GstRegistrationType | enum→string(20) | Regular / Composition / Unregistered / SEZ / Overseas / Consumer |
+| Pan · Tan | string? | |
+| PlaceOfSupplyStateId | int? | Unenforced → `mst.States`. **Decides CGST+SGST vs IGST** |
+| CountryId | int? | Unenforced → `mst.Countries` |
+| CurrencyCode | string(3) | Default org base |
+| PaymentTermId | long? | Unenforced → `acc.PaymentTerms` (cross-service) |
+| CreditLimit | decimal(18,2)? | Null = unlimited |
+| MaxOutstandingDays | int? | **From the due date**, not the invoice date |
+| MaxDiscountPercent | decimal(5,2)? | |
+| ReceivableAccountId · PayableAccountId | long? | Overrides; unenforced → `acc.Accounts` |
+| IsTdsApplicable + TdsSection | bool + string(10)? | |
+| IsMsme + UdyamNumber | bool + string(20)? | |
+| Notes | string(500)? | |
+| IsActive | bool | Default true |
+
+**No email, phone or website.** They live on `con.ContactPersons`, where exactly one row is the default — one place to look up where an invoice is emailed rather than two that can disagree.
+
+Indexes: unique (OrgId, ContactCode) · filtered unique (OrgId, Gstin) WHERE NOT NULL · (OrgId, DisplayName) · four filtered role indexes
+
+Check constraints: at least one role · TDS ⇒ section · MSME ⇒ Udyam · limits in range · registration type ⇔ GSTIN present or absent
+
+Validated in C# (spans rows or crosses a service): **GSTIN's first two digits must equal the place-of-supply state's GST code**, verified against `mst.States` through Master's API and cached · GSTIN unique across contacts · at least one active person, exactly one default · the default person must have an email or mobile · one default address per type.
+
+**On create** → two sub-accounts in Accounting via `POST internal/sub-accounts/provision`, idempotent.
+
+### `con.ContactAddresses` ✅
+| ContactAddressId long PK · OrgId · ContactId (FK, cascade) · AddressType enum→string(10) Billing/Shipping · IsDefault · Label string(50)? · AddressLine1 string(200) · AddressLine2 string(200)? · Landmark string(100)? · City string(100) · StateId int? · CountryId int · PostalCode string(10)? · Gstin string(15)? · ContactPersonName string(100)? · PhoneNumber · MobileNumber · IsActive |
+
+Filtered unique (OrgId, ContactId, AddressType) WHERE IsDefault — one default billing, one default shipping.
+
+**Place of supply resolution**: document override → default Shipping state → `Contact.PlaceOfSupplyStateId` → default Billing state. Wrong order posts IGST on intra-state sales.
+
+### `con.ContactPersons` ✅
+| ContactPersonId long PK · OrgId · ContactId (FK, cascade) · ContactPersonRoleId (FK, **restrict**) · Salutation string(10)? · FirstName string(100) · LastName string(100)? · Designation string(100)? · Email string(150)? · PhoneNumber · MobileNumber · Website string(200)? · IsDefault · IsActive |
+
+Filtered unique (OrgId, ContactId) WHERE IsDefault · (OrgId, MobileNumber) WHERE NOT NULL — counter staff search by phone constantly.
+
+### `con.ContactPersonRoles` ✅
+| ContactPersonRoleId long PK · OrgId · RoleSystemName string(30)? · RoleName string(50) · DisplayOrder int · IsDefault · IsSystem · IsActive |
+
+Seeded: Primary (default) · Owner/Proprietor · Accounts · Purchase · Sales · Dispatch · Support · Other. Maintained from a popup, not a page. A role in use cannot be deleted — deactivate instead.
 
 ### `acc.Journals` 🔨
 Manual journal header.
@@ -1074,6 +1142,21 @@ Defines how every generated code is built. Grid: drag handle · Name · Code · 
 - **Document series lock two controls**: manual override is disabled, and the financial-year segment plus yearly reset are switched on by default.
 - **Drag to reorder**, sending `{ movedId, previousId, nextId }` so the server derives `DisplayOrder`; the handle is inactive while inactive rows are shown, since "between these two" has no stable meaning under a filter.
 - 360px: the grid becomes cards, the editor a full-width sheet.
+
+## Contacts (`apps/web` → Contacts) ✅
+List with search (name, code, GSTIN), role filter and inactive toggle. Editor is a three-tab sheet — General, Addresses, People — saving as one aggregate, because the rules are rules about the set.
+
+- Role checkboxes, not a type dropdown: a party that is both customer and vendor is one record.
+- GSTIN field appears only for registrations that may carry one, and the state check is enforced on save.
+- Addresses: default radio per type, **Copy billing to shipping** on the toolbar.
+- People: default radio, role dropdown with **Manage roles** beside it opening the roles popup.
+- 360px: grid becomes cards, tabs scroll, the sheet goes full width.
+
+## Contact person roles (popup from the contact list) ✅
+Modal, not a routed page. Inline rename, add row, drag to reorder, default radio, activate/deactivate. Delete only when nothing holds the role and it is not built in. Full-screen sheet at 360px.
+
+## Payment terms (`apps/web` → Settings) ✅
+Grid: Name · Rule (in words) · **Due for a bill dated today** · Discount · Used on · Default · Active, drag-ordered. The worked example is the point — "end of month plus 15" is not self-explanatory. A built-in term's rule renders read-only with a note saying why.
 
 ## Journal entry (`apps/web` → Accounting) 📋
 - Header: JournalNo (auto), JournalDate, CurrencyCode, ExchangeRate (auto from rate table at JournalDate, overridable), Reference, Memo
