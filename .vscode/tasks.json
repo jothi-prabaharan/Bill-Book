@@ -17,14 +17,18 @@
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "problemMatcher": []
     },
+
+    // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
+    // a dev server that is already on the port instead of hanging on Angular's
+    // interactive "use a different port?" prompt. See .vscode/serve-angular.js.
+    //
+    // Only development and staging are served here. UAT and Production are
+    // deploy-time build configurations, not things you attach a debugger to.
     {
       "label": "serve-web",
       "type": "shell",
-      // Wrapper rather than `npx nx serve web` directly: it reuses a dev server
-      // that is already on 4200 instead of hanging on Angular's interactive
-      // "use a different port?" prompt. See .vscode/serve-web.js.
       "command": "node",
-      "args": ["${workspaceFolder}/.vscode/serve-web.js"],
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "development"],
       "options": { "cwd": "${workspaceFolder}/frontend" },
       "isBackground": true,
       "problemMatcher": {
@@ -41,6 +45,81 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "(Building|Watch mode enabled|nx run web:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-web-staging",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "web", "4200", "staging"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run web:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-docs",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "development"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run docs:serve|Reusing the dev server)",
+          "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
+        }
+      }
+    },
+    {
+      "label": "serve-docs-staging",
+      "type": "shell",
+      "command": "node",
+      "args": ["${workspaceFolder}/.vscode/serve-angular.js", "docs", "4300", "staging"],
+      "options": { "cwd": "${workspaceFolder}/frontend" },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "typescript",
+        "fileLocation": ["relative", "${workspaceFolder}/frontend"],
+        "pattern": {
+          "regexp": "^([^\\s].*)\\((\\d+,\\d+)\\):\\s+(error|warning|info)\\s+(TS\\d+)\\s*:\\s*(.*)$",
+          "file": 1,
+          "location": 2,
+          "severity": 3,
+          "code": 4,
+          "message": 5
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "(Building|Watch mode enabled|nx run docs:serve|Reusing the dev server)",
           "endsPattern": "(Local:|listening on|Compiled successfully|Application bundle generation complete)"
         }
       }
