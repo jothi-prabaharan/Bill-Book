@@ -18,6 +18,19 @@ public enum SystemAccount
     CostOfGoodsSold = 8,
     RealizedFxGainLoss = 9,
     UnrealizedFxGainLoss = 10,
+
+    /// <summary>Parent group for cash and wallet accounts. Locked: nothing posts to the group itself.</summary>
+    CashInHand = 11,
+
+    /// <summary>Parent group for savings and current accounts.</summary>
+    BankAccounts = 12,
+
+    /// <summary>
+    /// Parent group for overdrafts, cash credit and credit cards. A Liability,
+    /// not an Asset — an overdrawn account is borrowing, and showing it as a
+    /// negative asset is what auditors query.
+    /// </summary>
+    BankOverdraftAndCards = 13,
 }
 
 /// <summary>
@@ -39,6 +52,9 @@ public static class SystemAccountNames
         SystemAccount.CostOfGoodsSold => "Cost of Goods Sold",
         SystemAccount.RealizedFxGainLoss => "Realized FX Gain/Loss",
         SystemAccount.UnrealizedFxGainLoss => "Unrealized FX Gain/Loss",
+        SystemAccount.CashInHand => "Cash in Hand",
+        SystemAccount.BankAccounts => "Bank Accounts",
+        SystemAccount.BankOverdraftAndCards => "Bank OD & Credit Cards",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

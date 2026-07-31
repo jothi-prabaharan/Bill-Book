@@ -100,6 +100,14 @@ export const appRoutes: Routes = [
         loadComponent: () =>
           import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),
       },
+      {
+        path: 'banking/banks',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BanksPage),
+      },
+      {
+        path: 'banking/accounts',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BankAccountsPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },

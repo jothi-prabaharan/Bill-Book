@@ -124,3 +124,46 @@ public class ProvisionSubAccountsRequest
 
     public bool ForPurchase { get; set; } = true;
 }
+
+/// <summary>
+/// Asks Accounting to create the GL account behind a bank account. Sent by
+/// Banking on create; idempotent, because the account is keyed on the bank
+/// account id and a retry must not produce a second one.
+/// </summary>
+public class ProvisionBankAccountRequest
+{
+    [Range(1, long.MaxValue, ErrorMessage = "Bank account id is required.")]
+    public long BankAccountId { get; set; }
+
+    [Required(ErrorMessage = "Account name is required.")]
+    [MaxLength(200, ErrorMessage = "Account name cannot exceed 200 characters.")]
+    public string AccountName { get; set; } = null!;
+
+    /// <summary>Savings, Current, OverDraft, CashCredit, CreditCard, Wallet or Cash.</summary>
+    [Required(ErrorMessage = "Account type is required.")]
+    public string AccountType { get; set; } = "Current";
+
+    /// <summary>Null when the account is in the organization's base currency.</summary>
+    [MaxLength(3, ErrorMessage = "Currency must be a 3-letter code.")]
+    public string? CurrencyCode { get; set; }
+}
+
+public class UpdateBankAccountLedgerRequest
+{
+    [Required(ErrorMessage = "Account name is required.")]
+    [MaxLength(200, ErrorMessage = "Account name cannot exceed 200 characters.")]
+    public string AccountName { get; set; } = null!;
+
+    public bool IsActive { get; set; } = true;
+}
+
+public enum BankLedgerOutcome
+{
+    Ok = 0,
+    NotFound = 1,
+    /// <summary>The seeded parent group is missing, so the account has nowhere to hang.</summary>
+    ParentMissing = 2,
+    InvalidValue = 3,
+}
+
+public sealed record BankLedgerResult(BankLedgerOutcome Outcome, long? AccountId, string? AccountCode);

@@ -43,6 +43,14 @@ public class AccountingDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.AccountCode }).IsUnique();
             b.HasIndex(e => new { e.OrgId, e.AccountTypeId });
 
+            // What makes bank-account provisioning idempotent: a retried call
+            // finds the existing row instead of creating a second account. It
+            // also enforces that the seeded control names stay unique.
+            b.HasIndex(e => new { e.OrgId, e.AccountSystemName })
+                .IsUnique()
+                .HasFilter("\"AccountSystemName\" IS NOT NULL")
+                .HasDatabaseName("IX_Accounts_SystemName");
+
             // Filtered indexes for the pickers that scan these flags.
             b.HasIndex(e => e.OrgId).HasFilter("\"IsBank\" = true").HasDatabaseName("IX_Accounts_Bank");
             b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_Accounts_Sales");

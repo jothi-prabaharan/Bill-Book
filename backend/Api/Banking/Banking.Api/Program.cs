@@ -1,6 +1,6 @@
 using System.Text;
-using Accounting.Api.Services;
-using Accounting.Repository;
+using Banking.Api.Services;
+using Banking.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -35,15 +35,13 @@ builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 
 // The connection string is chosen per request, so the context is built from the
 // resolved tenant rather than a fixed configuration value.
-builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
+builder.Services.AddDbContext<BankingDbContext>((sp, options) =>
 {
     ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
     string connectionString = tenant.CustomerId is Guid customerId
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        // Guarded, not defaulted: a blank here would hand Npgsql an empty string
-        // and the failure would surface as an unrelated connection error.
         : RequiredConnectionString("DesignTimeDatabase");
 
     options.UseNpgsql(connectionString);
@@ -52,22 +50,24 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-builder.Services.AddScoped<AccountService>();
-builder.Services.AddScoped<SubAccountService>();
-builder.Services.AddScoped<TaxMasterService>();
-builder.Services.AddScoped<NumberingSeriesService>();
-builder.Services.AddScoped<PaymentTermService>();
-builder.Services.AddScoped<BankLedgerService>();
+builder.Services.AddScoped<BankService>();
 
-// Numbering. Accounting owns the series table and migrates it; the generator is
-// registered against this service's own DbContext so a number is allocated
-// inside the same transaction as the record that consumes it.
+// Only Accounting writes ledger rows, so the GL account behind a bank account
+// is created by calling it rather than by inserting here.
+builder.Services.AddHttpClient<IAccountingLedger, AccountingLedger>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+});
+
+// Numbering. The series table belongs to Accounting, but the generator runs
+// against this service's own DbContext so a bank code is allocated inside the
+// same transaction as the bank — a failed insert gives the number back.
 builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("Numbering"));
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
-    sp.GetRequiredService<AccountingDbContext>(),
+    sp.GetRequiredService<BankingDbContext>(),
     sp.GetRequiredService<IOptions<NumberingOptions>>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Accounting only
+// Must match Identity's key exactly: Identity mints the tokens, Banking only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

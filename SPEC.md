@@ -787,6 +787,20 @@ Checks: `TrackInventory` ⇔ `CostingType <> None` · expiry ⇒ batch · Fefo �
 
 **`inv.Warehouses`** — location dimension only; stock is one shared pool and WAC is company-wide. Own GSTIN, `StorageType`, one default per org.
 
+### `bnk.Banks` / `bnk.BankAccounts` ✅
+**`bnk.Banks`** — BankId · OrgId · BankCode (unique) · BankName · DisplayOrder · IsSystem · IsActive. The institution, so its name is entered once.
+
+**`bnk.BankAccounts`** — BankAccountId · OrgId · BankId? (FK, restrict — null only for Cash and Wallet) · **LedgerAccountId?** · AccountName · AccountNumber · AccountType enum→string(15) · Ifsc? · Micr? · SwiftCode? · Iban? · BranchName? · CurrencyCode · OdLimit? · IsDefault · DisplayOrder · IsActive.
+
+Indexes: unique (OrgId, BankId, AccountNumber) · filtered unique `(OrgId, LedgerAccountId)` where not null — **one GL account per bank account, never shared**, or reconciliation cannot tell two apart · filtered unique default · order index.
+Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCredit/CreditCard.
+
+**Creating an account creates its `acc.Accounts` row.** A full account, not a sub-account — bank journal lines carry no sub-dimension, so a sub-account would leave the bank with no ledger identity. Mapping: Savings/Current → Asset under 1500 · Cash/Wallet → Asset under 1400 · OverDraft/CashCredit/CreditCard → **Liability** under 2300. Flags `IsBank`, `IsPayment` and `IsJE` true; `IsSystemDefault` true, so it is config-locked and undeletable.
+
+**Idempotent on `AccountSystemName = "BANK:{id}"`**, guarded by a new filtered unique index on `(OrgId, AccountSystemName)`. The HTTP call cannot join Banking's transaction, so the row is inserted with a null `LedgerAccountId` and linked immediately after; a failure leaves the account visibly unlinked with a retry action rather than discarding what was typed.
+
+**Three parent groups added to the org-creation seed**: 1400 Cash in Hand (Asset) · 1500 Bank Accounts (Asset) · 2300 Bank OD & Credit Cards (Liability), all `IsLock = true` so nothing posts to the group.
+
 ### `acc.Journals` 🔨
 Manual journal header.
 
@@ -1187,6 +1201,9 @@ Grid: Name · Rule (in words) · **Due for a bill dated today** · Discount · U
 - **Metal purities** (Settings) — per metal, ordered finest first.
 - **Warehouses** (Inventory) — with storage type and own GSTIN; the default cannot be deactivated.
 - **Items** (Inventory) — five tabs: General · Units · Stock · the profile tab (Pharma or Jewellery) · Barcodes. Costing drives which tracking options are forced and locked; a moved-stock item renders the five locked fields read-only with the reason stated.
+
+## Banks & bank accounts (`apps/web` → Banking) ✅
+Two pages. Banks is a plain drag-ordered list. Bank accounts shows the ledger link state per row, hides IFSC and branch for cash and wallets, offers a limit only on the kinds that can be overdrawn, and states which ledger account the chosen type will create. An unlinked account carries a **Link ledger** action.
 
 ## Journal entry (`apps/web` → Accounting) 📋
 - Header: JournalNo (auto), JournalDate, CurrencyCode, ExchangeRate (auto from rate table at JournalDate, overridable), Reference, Memo

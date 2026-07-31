@@ -31,6 +31,13 @@ public static class ChartOfAccountsSeed
         Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
         Account(orgId, "5100", SystemAccount.CostOfGoodsSold, Expense, isPurchase: true),
+
+        // Parent groups for bank accounts. Each bank account created in Banking
+        // hangs a child account under one of these, so the chart of accounts
+        // grows a line per real account rather than needing one seeded per bank.
+        Account(orgId, "1400", SystemAccount.CashInHand, Asset, isLock: true),
+        Account(orgId, "1500", SystemAccount.BankAccounts, Asset, isLock: true),
+        Account(orgId, "2300", SystemAccount.BankOverdraftAndCards, Liability, isLock: true),
         Account(orgId, "4900", SystemAccount.RealizedFxGainLoss, Income, isJe: true),
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
     ];
@@ -42,7 +49,8 @@ public static class ChartOfAccountsSeed
         int accountTypeId,
         bool isJe = false,
         bool isSales = false,
-        bool isPurchase = false)
+        bool isPurchase = false,
+        bool isLock = false)
     {
         string name = SystemAccountNames.Of(systemAccount);
         return new()
@@ -57,6 +65,9 @@ public static class ChartOfAccountsSeed
             IsJE = isJe,
             IsSales = isSales,
             IsPurchase = isPurchase,
+            // A grouping row: locking it stops a posting landing on the group
+            // instead of the account underneath.
+            IsLock = isLock,
         };
     }
 }
