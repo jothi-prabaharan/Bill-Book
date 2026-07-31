@@ -1,0 +1,37 @@
+# Normalize line endings.
+#
+# Everything is stored LF in the repository. Git converts to the platform's
+# native ending on checkout, so Windows working copies still get CRLF. Without
+# this file the whole tree flips between LF and CRLF depending on who last
+# saved it, and every diff drowns in whitespace.
+* text=auto
+
+# Files that must stay LF even on Windows: shell scripts break with CR, and
+# these formats are read by tools that do not tolerate it.
+*.sh        text eol=lf
+*.bash      text eol=lf
+Dockerfile  text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+
+# Files that must stay CRLF.
+*.bat       text eol=crlf
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
+
+# Binary: never touch, never diff as text.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.zip       binary
+*.dll       binary
+*.exe       binary
+*.pfx       binary
+*.snk       binary
