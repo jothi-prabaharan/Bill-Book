@@ -59,6 +59,7 @@ export const DOCS: DocSection[] = [
     title: 'Development',
     pages: [
       { slug: 'running-locally', title: 'Running locally', status: 'built' },
+      { slug: 'environments', title: 'Environments', status: 'built' },
       { slug: 'conventions', title: 'Conventions', status: 'built' },
     ],
   },

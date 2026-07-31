@@ -2,6 +2,8 @@
 
 **Status: built.**
 
+Business tunables an organization owns and edits in the app. Not deployment settings — connection strings, signing keys and service addresses come from `appsettings` and environment variables instead, covered in [Environments](#/environments).
+
 ## How it works
 
 A key-value store for the long tail of tunables — decimal places, default due days — without a database column for each.
