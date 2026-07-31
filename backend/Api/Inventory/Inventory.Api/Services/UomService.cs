@@ -1,0 +1,378 @@
+using Inventory.Entity.Models;
+using Inventory.Entity.TableEntities;
+using Inventory.Repository;
+using Microsoft.EntityFrameworkCore;
+
+namespace Inventory.Api.Services;
+
+/// <summary>
+/// Unit types and their units, served together because the screen edits them
+/// together.
+///
+/// The rule that shapes this service: every conversion in the system derives
+/// from <c>ConversionToBase</c>, so moving which unit is the base rescales the
+/// whole type. That is its own action, and it is refused once any item uses a
+/// unit of the type — the rescale would restate quantities already recorded.
+/// </summary>
+public sealed class UomService
+{
+    private readonly InventoryDbContext _db;
+
+    public UomService(InventoryDbContext db) => _db = db;
+
+    public async Task<IReadOnlyList<UomTypeListItem>> ListAsync(
+        bool includeInactive, CancellationToken ct)
+    {
+        List<UomType> types = await Types(includeInactive)
+            .OrderBy(t => t.DisplayOrder)
+            .ThenBy(t => t.UomTypeName)
+            .ToListAsync(ct);
+
+        List<UnitOfMeasure> units = await Units(includeInactive)
+            .OrderBy(u => u.UomTypeId)
+            .ThenBy(u => u.DisplayOrder)
+            .ThenBy(u => u.UomCode)
+            .ToListAsync(ct);
+
+        // One grouped query rather than a lookup per unit — this list is small
+        // but the pattern is what makes the item list survive.
+        HashSet<long> usedUnitIds = await UsedUnitIdsAsync(ct);
+
+        return types.Select(t => new UomTypeListItem
+        {
+            UomTypeId = t.UomTypeId,
+            UomTypeSystemName = t.UomTypeSystemName,
+            UomTypeName = t.UomTypeName,
+            DisplayOrder = t.DisplayOrder,
+            IsSystem = t.IsSystem,
+            IsActive = t.IsActive,
+            Units = units
+                .Where(u => u.UomTypeId == t.UomTypeId)
+                .Select(u => Map(u, usedUnitIds.Contains(u.UomId)))
+                .ToList(),
+        }).ToList();
+    }
+
+    public async Task<SaveUomOutcome> CreateTypeAsync(SaveUomTypeRequest request, CancellationToken ct)
+    {
+        if (await _db.UomTypes.AnyAsync(t => t.UomTypeName == request.UomTypeName.Trim(), ct))
+        {
+            return SaveUomOutcome.DuplicateName;
+        }
+
+        int highest = await _db.UomTypes.Select(t => (int?)t.DisplayOrder).MaxAsync(ct) ?? 0;
+
+        _db.UomTypes.Add(new UomType
+        {
+            UomTypeSystemName = null,
+            UomTypeName = request.UomTypeName.Trim(),
+            DisplayOrder = highest + Reordering.Gap,
+            IsSystem = false,
+            IsActive = request.IsActive,
+        });
+
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> UpdateTypeAsync(
+        long uomTypeId, SaveUomTypeRequest request, CancellationToken ct)
+    {
+        UomType? type = await _db.UomTypes.FirstOrDefaultAsync(t => t.UomTypeId == uomTypeId, ct);
+        if (type is null)
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        string name = request.UomTypeName.Trim();
+        if (await _db.UomTypes.AnyAsync(t => t.UomTypeName == name && t.UomTypeId != uomTypeId, ct))
+        {
+            return SaveUomOutcome.DuplicateName;
+        }
+
+        // Deactivating a type whose units are on live items would make those
+        // units vanish from every picker while the items keep trading in them.
+        if (type.IsActive && !request.IsActive && await TypeInUseAsync(uomTypeId, ct))
+        {
+            return SaveUomOutcome.TypeInUse;
+        }
+
+        type.UomTypeName = name;
+        type.IsActive = request.IsActive;
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> DeleteTypeAsync(long uomTypeId, CancellationToken ct)
+    {
+        UomType? type = await _db.UomTypes.FirstOrDefaultAsync(t => t.UomTypeId == uomTypeId, ct);
+        if (type is null)
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        if (type.IsSystem)
+        {
+            return SaveUomOutcome.SystemRowUndeletable;
+        }
+
+        // Deleting would orphan every unit under it, and those units are on items.
+        if (await _db.UnitOfMeasures.AnyAsync(u => u.UomTypeId == uomTypeId, ct))
+        {
+            return SaveUomOutcome.TypeInUse;
+        }
+
+        _db.UomTypes.Remove(type);
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> CreateUnitAsync(
+        SaveUnitOfMeasureRequest request, CancellationToken ct)
+    {
+        if (!await _db.UomTypes.AnyAsync(t => t.UomTypeId == request.UomTypeId, ct))
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        string code = request.UomCode.Trim().ToUpperInvariant();
+        if (await _db.UnitOfMeasures.AnyAsync(u => u.UomCode == code, ct))
+        {
+            return SaveUomOutcome.DuplicateCode;
+        }
+
+        bool typeHasUnits = await _db.UnitOfMeasures.AnyAsync(u => u.UomTypeId == request.UomTypeId, ct);
+
+        int highest = await _db.UnitOfMeasures
+            .Where(u => u.UomTypeId == request.UomTypeId)
+            .Select(u => (int?)u.DisplayOrder)
+            .MaxAsync(ct) ?? 0;
+
+        // The first unit of a type has to be its base, or the type has no scale
+        // and nothing under it can convert.
+        bool isBase = !typeHasUnits;
+
+        _db.UnitOfMeasures.Add(new UnitOfMeasure
+        {
+            UomTypeId = request.UomTypeId,
+            UomSystemName = null,
+            UomCode = code,
+            UqcCode = request.UqcCode.Trim().ToUpperInvariant(),
+            UomName = request.UomName.Trim(),
+            IsBaseUnit = isBase,
+            ConversionToBase = isBase ? 1m : request.ConversionToBase,
+            DecimalPlaces = request.DecimalPlaces,
+            DisplayOrder = highest + Reordering.Gap,
+            IsSystem = false,
+            IsActive = request.IsActive,
+        });
+
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> UpdateUnitAsync(
+        long uomId, SaveUnitOfMeasureRequest request, CancellationToken ct)
+    {
+        UnitOfMeasure? unit = await _db.UnitOfMeasures.FirstOrDefaultAsync(u => u.UomId == uomId, ct);
+        if (unit is null)
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        string code = request.UomCode.Trim().ToUpperInvariant();
+        if (await _db.UnitOfMeasures.AnyAsync(u => u.UomCode == code && u.UomId != uomId, ct))
+        {
+            return SaveUomOutcome.DuplicateCode;
+        }
+
+        // The base unit defines the scale; a factor other than 1 on it is
+        // meaningless rather than merely wrong.
+        if (unit.IsBaseUnit && request.ConversionToBase != 1m)
+        {
+            return SaveUomOutcome.BaseUnitFactorFixed;
+        }
+
+        bool used = (await UsedUnitIdsAsync(ct)).Contains(uomId);
+
+        // Rescaling a unit that items already hold stock in would restate every
+        // quantity recorded under it.
+        if (used && unit.ConversionToBase != request.ConversionToBase)
+        {
+            return SaveUomOutcome.UnitInUse;
+        }
+
+        if (used && unit.UomTypeId != request.UomTypeId)
+        {
+            return SaveUomOutcome.UnitInUse;
+        }
+
+        unit.UomTypeId = request.UomTypeId;
+        unit.UomCode = code;
+        unit.UqcCode = request.UqcCode.Trim().ToUpperInvariant();
+        unit.UomName = request.UomName.Trim();
+        unit.ConversionToBase = unit.IsBaseUnit ? 1m : request.ConversionToBase;
+        unit.DecimalPlaces = request.DecimalPlaces;
+        unit.IsActive = request.IsActive;
+
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Moves the base unit of a type, rescaling every factor in it so the
+    /// relationships between units are preserved. Refused once any item uses a
+    /// unit of the type.
+    /// </summary>
+    public async Task<SaveUomOutcome> SetBaseUnitAsync(long uomId, CancellationToken ct)
+    {
+        UnitOfMeasure? target = await _db.UnitOfMeasures.FirstOrDefaultAsync(u => u.UomId == uomId, ct);
+        if (target is null)
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        if (target.IsBaseUnit)
+        {
+            return SaveUomOutcome.Ok;
+        }
+
+        List<UnitOfMeasure> siblings = await _db.UnitOfMeasures
+            .Where(u => u.UomTypeId == target.UomTypeId)
+            .ToListAsync(ct);
+
+        HashSet<long> used = await UsedUnitIdsAsync(ct);
+        if (siblings.Any(u => used.Contains(u.UomId)))
+        {
+            return SaveUomOutcome.BaseChangeBlocked;
+        }
+
+        // Every factor is divided by the new base's factor, which leaves each
+        // unit's ratio to every other unchanged and puts the new base at 1.
+        decimal divisor = target.ConversionToBase;
+        foreach (UnitOfMeasure unit in siblings)
+        {
+            unit.IsBaseUnit = false;
+            unit.ConversionToBase = unit.ConversionToBase / divisor;
+        }
+
+        target.IsBaseUnit = true;
+        target.ConversionToBase = 1m;
+
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> DeleteUnitAsync(long uomId, CancellationToken ct)
+    {
+        UnitOfMeasure? unit = await _db.UnitOfMeasures.FirstOrDefaultAsync(u => u.UomId == uomId, ct);
+        if (unit is null)
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        if (unit.IsSystem)
+        {
+            return SaveUomOutcome.SystemRowUndeletable;
+        }
+
+        if ((await UsedUnitIdsAsync(ct)).Contains(uomId))
+        {
+            return SaveUomOutcome.UnitInUse;
+        }
+
+        // A type with units must keep exactly one base. Removing the base would
+        // leave the rest with factors relative to nothing.
+        if (unit.IsBaseUnit
+            && await _db.UnitOfMeasures.AnyAsync(u => u.UomTypeId == unit.UomTypeId && u.UomId != uomId, ct))
+        {
+            return SaveUomOutcome.BaseUnitRequired;
+        }
+
+        _db.UnitOfMeasures.Remove(unit);
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    public async Task<SaveUomOutcome> ReorderTypesAsync(ReorderRequest request, CancellationToken ct)
+    {
+        List<UomType> all = await _db.UomTypes
+            .OrderBy(t => t.DisplayOrder)
+            .ThenBy(t => t.UomTypeName)
+            .ToListAsync(ct);
+
+        if (!Reordering.Apply(all, request, t => t.UomTypeId, t => t.DisplayOrder,
+                (t, order) => t.DisplayOrder = order))
+        {
+            return SaveUomOutcome.NotFound;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return SaveUomOutcome.Ok;
+    }
+
+    /// <summary>Writes the unit types and units for a newly created organization.</summary>
+    public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
+    {
+        if (await _db.UomTypes.IgnoreQueryFilters().AnyAsync(t => t.OrgId == orgId, ct))
+        {
+            return 0;
+        }
+
+        IReadOnlyList<UomType> types = Repository.SeedData.UomSeed.BuildTypes(orgId);
+        _db.UomTypes.AddRange(types);
+
+        // Saved first: the units need the generated type ids.
+        await _db.SaveChangesAsync(ct);
+
+        Dictionary<string, long> typeIds = types
+            .Where(t => t.UomTypeSystemName is not null)
+            .ToDictionary(t => t.UomTypeSystemName!, t => t.UomTypeId);
+
+        IReadOnlyList<UnitOfMeasure> units = Repository.SeedData.UomSeed.BuildUnits(orgId, typeIds);
+        _db.UnitOfMeasures.AddRange(units);
+        await _db.SaveChangesAsync(ct);
+
+        return types.Count + units.Count;
+    }
+
+    /// <summary>
+    /// Units referenced by any item, in one query. A unit is "used" the moment
+    /// an item points at it in any of its four slots.
+    /// </summary>
+    private async Task<HashSet<long>> UsedUnitIdsAsync(CancellationToken ct)
+    {
+        List<long> ids = await _db.Items
+            .SelectMany(i => new[] { i.InventoryUomId, i.SalesUomId, i.PurchaseUomId, i.ReportUomId })
+            .Distinct()
+            .ToListAsync(ct);
+
+        return [.. ids];
+    }
+
+    private Task<bool> TypeInUseAsync(long uomTypeId, CancellationToken ct) =>
+        _db.Items.AnyAsync(i => i.UomTypeId == uomTypeId, ct);
+
+    private IQueryable<UomType> Types(bool includeInactive) =>
+        includeInactive ? _db.UomTypes : _db.UomTypes.Where(t => t.IsActive);
+
+    private IQueryable<UnitOfMeasure> Units(bool includeInactive) =>
+        includeInactive ? _db.UnitOfMeasures : _db.UnitOfMeasures.Where(u => u.IsActive);
+
+    private static UnitOfMeasureListItem Map(UnitOfMeasure u, bool isUsed) => new()
+    {
+        UomId = u.UomId,
+        UomTypeId = u.UomTypeId,
+        UomSystemName = u.UomSystemName,
+        UomCode = u.UomCode,
+        UqcCode = u.UqcCode,
+        UomName = u.UomName,
+        IsBaseUnit = u.IsBaseUnit,
+        ConversionToBase = u.ConversionToBase,
+        DecimalPlaces = u.DecimalPlaces,
+        DisplayOrder = u.DisplayOrder,
+        IsSystem = u.IsSystem,
+        IsActive = u.IsActive,
+        IsUsed = isUsed,
+    };
+}
