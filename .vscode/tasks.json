@@ -18,6 +18,22 @@
       "problemMatcher": []
     },
 
+    // Creates the local databases, generates the EF migrations and applies them,
+    // then prints the seeded master row counts. Idempotent: safe to re-run.
+    {
+      "label": "setup-dev-db",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "& '${workspaceFolder}/scripts/setup-dev-db.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/setup-dev-db.log'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
     // Angular dev servers. Wrapper rather than `npx nx serve` directly: it reuses
     // a dev server that is already on the port instead of hanging on Angular's
     // interactive "use a different port?" prompt. See .vscode/serve-angular.js.

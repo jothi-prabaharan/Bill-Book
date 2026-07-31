@@ -114,6 +114,13 @@ if ($SkipMigrations) {
 # ------------------------------------------------------------------ migrations
 Write-Step 'Generating migrations'
 
+# Must be set before `migrations add`, not just before `database update`. EF builds
+# the application host to find the DbContext, and a WebApplication with no
+# environment set defaults to Production — where every connection string is blank
+# by design, so the startup guard throws and EF reports only "Unable to create a
+# DbContext", which points nowhere near the real cause.
+$env:ASPNETCORE_ENVIRONMENT = 'Development'
+
 foreach ($service in $services) {
     $repositoryPath = Join-Path $backend $service.Repository
     $migrationsPath = Join-Path $repositoryPath 'Migrations'
@@ -138,11 +145,6 @@ foreach ($service in $services) {
 # ---------------------------------------------------------------------- update
 Write-Step 'Applying migrations'
 
-# The startup projects read appsettings.Development.json for their connection
-# strings, so the environment has to say Development or they get the blank
-# placeholders from appsettings.json and fail.
-$env:ASPNETCORE_ENVIRONMENT = 'Development'
-
 foreach ($service in $services) {
     $database = if ($service.Target -eq 'master') { 'retailerp_master' } else { 'retailerp_design' }
     Write-Host "    $($service.Name) -> $database" -ForegroundColor Yellow
@@ -157,23 +159,10 @@ foreach ($service in $services) {
 # ----------------------------------------------------------------- verification
 Write-Step 'Verifying seed data'
 
-$masterCounts = @'
-SELECT 'Countries'        AS master, count(*) FROM mst."Countries"
-UNION ALL SELECT 'Currencies',        count(*) FROM mst."Currencies"
-UNION ALL SELECT 'States',            count(*) FROM mst."States"
-UNION ALL SELECT 'AccountTypes',      count(*) FROM mst."AccountTypes"
-UNION ALL SELECT 'TransactionTypes',  count(*) FROM mst."TransactionTypes"
-UNION ALL SELECT 'LedgerTypes',       count(*) FROM mst."LedgerTypes"
-UNION ALL SELECT 'LedgerSources',     count(*) FROM mst."LedgerSources"
-UNION ALL SELECT 'HsnSacCodes',       count(*) FROM mst."HsnSacCodes"
-UNION ALL SELECT 'Roles',             count(*) FROM idn."Roles"
-UNION ALL SELECT 'Permissions',       count(*) FROM idn."Permissions"
-UNION ALL SELECT 'RolePermissions',   count(*) FROM idn."RolePermissions"
-UNION ALL SELECT 'Configurations',    count(*) FROM plt."Configurations"
-ORDER BY 1;
-'@
-
-psql -h $PostgresHost -p $PostgresPort -U $PostgresUser -d retailerp_master -c $masterCounts
+# Query lives in a file: identifiers are PascalCase and need double quotes,
+# which PowerShell mangles on the way to psql.exe when passed with -c.
+psql -h $PostgresHost -p $PostgresPort -U $PostgresUser -d retailerp_master `
+     -f (Join-Path $PSScriptRoot 'verify-seed.sql')
 
 Write-Step 'Not yet built'
 Write-Skip "No DbContext, so no migration: $($notYetBuilt -join ', ')"
