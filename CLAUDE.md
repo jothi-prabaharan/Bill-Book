@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Instructions for Claude working on **RetailErp** — a multi-tenant retail ERP and accounting SaaS for Indian SMBs. Zoho Books is the functional benchmark.
+Instructions for Claude working on **RetailErp** — a multi-tenant retail ERP and accounting SaaS for Indian SMBs. Bill Books is the functional benchmark.
 
 Read this before writing any code. The rules here are decisions already made — follow them rather than re-deciding.
 
