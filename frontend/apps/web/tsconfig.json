@@ -8,6 +8,7 @@
   "include": [
     "src/**/*.ts",
     "../../libs/shared/auth/src/**/*.ts",
+    "../../libs/shared/api-client/src/**/*.ts",
     "../../libs/app-shell/src/**/*.ts"
   ],
   "angularCompilerOptions": {

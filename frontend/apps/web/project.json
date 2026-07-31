@@ -13,6 +13,7 @@
         "index": "apps/web/src/index.html",
         "browser": "apps/web/src/main.ts",
         "tsConfig": "apps/web/tsconfig.json",
+        "polyfills": ["zone.js"],
         "styles": ["apps/web/src/styles.scss"]
       },
       "configurations": {
@@ -20,7 +21,38 @@
           "budgets": [
             { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
           ],
-          "outputHashing": "all"
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/web/src/environments/environment.ts",
+              "with": "apps/web/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "uat": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/web/src/environments/environment.ts",
+              "with": "apps/web/src/environments/environment.uat.ts"
+            }
+          ]
+        },
+        "staging": {
+          "budgets": [
+            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
+          ],
+          "outputHashing": "all",
+          "sourceMap": true,
+          "fileReplacements": [
+            {
+              "replace": "apps/web/src/environments/environment.ts",
+              "with": "apps/web/src/environments/environment.staging.ts"
+            }
+          ]
         },
         "development": {
           "optimization": false,
@@ -33,10 +65,16 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "buildTarget": "web:build:development",
         "proxyConfig": "apps/web/proxy.conf.json",
         "port": 4200
-      }
+      },
+      "configurations": {
+        "development": { "buildTarget": "web:build:development" },
+        "staging": { "buildTarget": "web:build:staging" },
+        "uat": { "buildTarget": "web:build:uat" },
+        "production": { "buildTarget": "web:build:production" }
+      },
+      "defaultConfiguration": "development"
     }
   }
 }

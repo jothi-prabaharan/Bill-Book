@@ -13,6 +13,7 @@
         "index": "apps/docs/src/index.html",
         "browser": "apps/docs/src/main.ts",
         "tsConfig": "apps/docs/tsconfig.json",
+        "polyfills": ["zone.js"],
         "styles": ["apps/docs/src/styles.scss"],
         "assets": [
           {
@@ -23,7 +24,34 @@
         ]
       },
       "configurations": {
-        "production": { "outputHashing": "all" },
+        "production": {
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/docs/src/environments/environment.ts",
+              "with": "apps/docs/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "uat": {
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/docs/src/environments/environment.ts",
+              "with": "apps/docs/src/environments/environment.uat.ts"
+            }
+          ]
+        },
+        "staging": {
+          "outputHashing": "all",
+          "sourceMap": true,
+          "fileReplacements": [
+            {
+              "replace": "apps/docs/src/environments/environment.ts",
+              "with": "apps/docs/src/environments/environment.staging.ts"
+            }
+          ]
+        },
         "development": { "optimization": false, "sourceMap": true }
       },
       "defaultConfiguration": "production"
@@ -31,9 +59,15 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "buildTarget": "docs:build:development",
         "port": 4300
-      }
+      },
+      "configurations": {
+        "development": { "buildTarget": "docs:build:development" },
+        "staging": { "buildTarget": "docs:build:staging" },
+        "uat": { "buildTarget": "docs:build:uat" },
+        "production": { "buildTarget": "docs:build:production" }
+      },
+      "defaultConfiguration": "development"
     }
   }
 }
