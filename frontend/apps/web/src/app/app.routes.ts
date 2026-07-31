@@ -64,6 +64,11 @@ export const appRoutes: Routes = [
         path: 'settings/tax',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TaxMasterPage),
       },
+      {
+        path: 'settings/numbering',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.NumberingSeriesPage),
+      },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
       { path: '**', component: DashboardPage },

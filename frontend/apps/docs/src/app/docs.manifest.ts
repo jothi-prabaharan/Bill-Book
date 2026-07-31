@@ -40,6 +40,7 @@ export const DOCS: DocSection[] = [
       { slug: 'currencies', title: 'Currencies', status: 'built' },
       { slug: 'hsn-sac', title: 'HSN & SAC codes', status: 'partial' },
       { slug: 'roles-permissions', title: 'Roles & permissions', status: 'built' },
+      { slug: 'numbering-series', title: 'Numbering series', status: 'built' },
       { slug: 'configuration', title: 'Configuration', status: 'built' },
     ],
   },

@@ -3,8 +3,10 @@ using Accounting.Api.Services;
 using Accounting.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
@@ -53,6 +55,15 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 builder.Services.AddScoped<AccountService>();
 builder.Services.AddScoped<SubAccountService>();
 builder.Services.AddScoped<TaxMasterService>();
+builder.Services.AddScoped<NumberingSeriesService>();
+
+// Numbering. Accounting owns the series table and migrates it; the generator is
+// registered against this service's own DbContext so a number is allocated
+// inside the same transaction as the record that consumes it.
+builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("Numbering"));
+builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
+    sp.GetRequiredService<AccountingDbContext>(),
+    sp.GetRequiredService<IOptions<NumberingOptions>>()));
 
 // Must match Identity's key exactly: Identity mints the tokens, Accounting only
 // validates them. Never fall back to a constant here.

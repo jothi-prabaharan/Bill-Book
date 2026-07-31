@@ -1,5 +1,6 @@
 using Accounting.Entity.TableEntities;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 
 namespace Accounting.Repository;
@@ -22,9 +23,17 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<TaxMaster> TaxMasters => Set<TaxMaster>();
 
+    /// <summary>
+    /// Shared with every service that generates a code. Accounting owns the
+    /// migration; the others map the same entity and exclude it from theirs.
+    /// </summary>
+    public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("acc");
+
+        modelBuilder.ConfigureNumberingSeries(ownsMigration: true);
 
         modelBuilder.Entity<Account>(b =>
         {

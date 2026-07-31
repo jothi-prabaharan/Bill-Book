@@ -655,6 +655,47 @@ At least one of `IsSales` / `IsPurchase` must be true — a rate usable on neith
 
 **Seed at org creation** (all seeded rows `IsSales = true` and `IsPurchase = true`, so each seeds all **six** GST subaccounts): GST 0% · 5% (2.5+2.5) · 12% (6+6) · 18% (9+9) · 28% (14+14) · **3% Bullion (1.5+1.5)**
 
+### `acc.NumberingSeries` ✅
+Every generated code in the product: master codes now, document numbers as Sales and Purchase land. One table rather than a generator per master — they all need a prefix, zero padding, a financial-year segment and a per-branch variant, and only one of those can be got subtly wrong.
+
+**The entity lives in `Shared.Kernel`, not `Accounting.Entity`.** Accounting owns the migration and the Settings API; every other service maps the same entity into its own DbContext with `ExcludeFromMigrations()` and allocates locally. An HTTP hop cannot join the caller's transaction, and a rolled-back document would leave a consumed number behind — for a GST invoice series that is a gap an auditor asks about. This is a deliberate, documented exception to CLAUDE.md rule 8: no service touches another's DbContext, but the table is genuinely shared.
+
+| Column | Type | Rules |
+|---|---|---|
+| NumberingSeriesId | long | PK, identity |
+| OrgId | Guid | Required |
+| SeriesSystemName | string(30)? | Seeded rows only: immutable canonical name. Null for user-created |
+| SeriesCode | string(30) | Required. The lookup key — `CUSTOMER`, `ITEM`, or for documents the three-letter `mst.TransactionTypes` code |
+| SeriesName | string(50) | Required. Display name, editable on seeded rows |
+| SeriesFor | enum→string(10) | `Master` / `Document`. Fixed after creation |
+| BranchId | long? | Null = org-wide |
+| Prefix / Suffix | string(15)? | |
+| Separator | string(1)? | Default `-`. Empty runs segments together |
+| IncludeFinancialYear | bool | Default false |
+| FinancialYearFormat | enum→string(15) | `FullYearRange` 2025-26 · `ShortYearRange` 25-26 · `Compact` 2526 · `StartYear` 2025 |
+| IncludeBranchCode | bool | Default false |
+| BranchCode | string(10)? | **Copied onto the series**, not read from the branch master — composing a number must never cross into the master database |
+| NumberLength | int | Default 5. Zero-padding width |
+| StartNumber | long | Default 1 |
+| NextNumber | long | The counter |
+| ResetFrequency | enum→string(10) | `Never` / `Yearly` / `Monthly` / `Daily`. Yearly means the **financial** year |
+| LastResetOn | DateOnly? | Null until the first reset |
+| AllowManualOverride | bool | Refused on document series |
+| IsDefault | bool | Preselected when several share a code and branch |
+| IsSystem | bool | Seeded: renamable, never deletable |
+| IsActive | bool | Default true |
+| DisplayOrder | int | Default 0, seeded in tens |
+
+Indexes: unique (OrgId, SeriesName) · `IX_NumberingSeries_Lookup` (OrgId, SeriesCode, BranchId) · filtered unique `IX_NumberingSeries_Default` (OrgId, SeriesCode, BranchId) WHERE IsDefault · filtered unique `IX_NumberingSeries_SystemName` (OrgId, SeriesSystemName) WHERE NOT NULL · `IX_NumberingSeries_Order` (OrgId, DisplayOrder, SeriesName)
+
+Check constraints: `SeriesFor = 'Master' OR AllowManualOverride = false` · `NextNumber >= StartNumber AND NumberLength BETWEEN 1 AND 12` · `IncludeBranchCode = false OR BranchCode IS NOT NULL`
+
+**Allocation is a compare-and-swap**, not read-max-then-increment: a single `ExecuteUpdateAsync` that moves the counter only if it still holds the value that was read, retried when it affects no rows. It runs inside the caller's transaction, which is what keeps a document series gapless when the surrounding insert rolls back. The number is taken **at save, never at form open** — reserving on open leaves a gap for every abandoned draft.
+
+**Seed at org creation** (all `IsSystem`, `IsDefault`, `AllowManualOverride = true`, reset `Never`): `CUSTOMER` CUST-00001 · `VENDOR` VEND-00001 · `ITEM` ITM-00001 · `WAREHOUSE` WH-001 · `BANK` BNK-001. Document series are seeded by Sales and Purchase.
+
+Deactivating is refused when it would leave a code with no active series, or the next contact saved fails with a numbering error far from anything the user did. Rows are never hard-deleted — codes they issued are on records.
+
 ### `acc.Journals` 🔨
 Manual journal header.
 
@@ -1024,6 +1065,15 @@ Validate `StateId`'s code matches GSTIN's first two digits.
 - Seeded rates (the 6 GST rows) can be **renamed for display** (`TaxName`) but their `TaxSystemName` and split are locked
 - Saving a new rate silently provisions its Input/Output GST subaccounts — no separate step
 - Effective-dated: editing a rate creates a new row and expires the old one rather than overwriting
+
+## Numbering series (`apps/web` → Settings) ✅
+Defines how every generated code is built. Grid: drag handle · Name · Code · For · **Preview** · Next · Reset · Default · Active · actions.
+
+- **Live preview** in the editor, composed by the same rules the server allocates with — a second implementation would eventually disagree, and the user would find out after the number was on a document.
+- **Counter is its own action**, not a field on the form. Moving it forward skips numbers; moving it back warns, and a real collision is refused by the target record's own unique index.
+- **Document series lock two controls**: manual override is disabled, and the financial-year segment plus yearly reset are switched on by default.
+- **Drag to reorder**, sending `{ movedId, previousId, nextId }` so the server derives `DisplayOrder`; the handle is inactive while inactive rows are shown, since "between these two" has no stable meaning under a filter.
+- 360px: the grid becomes cards, the editor a full-width sheet.
 
 ## Journal entry (`apps/web` → Accounting) 📋
 - Header: JournalNo (auto), JournalDate, CurrencyCode, ExchangeRate (auto from rate table at JournalDate, overridable), Reference, Memo
