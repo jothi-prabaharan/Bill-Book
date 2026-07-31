@@ -44,7 +44,10 @@ apps/desktop/out/
 .env
 .env.*
 !.env.example
-appsettings.Development.json
+# appsettings.Development.json is deliberately committed: it holds only localhost
+# values (see docs/environments) so a clone runs with no setup. Staging, UAT and
+# Production ship blank and are filled from environment variables. Anything
+# genuinely secret goes in appsettings.Local.json, which stays ignored.
 appsettings.Local.json
 *.pfx
 *.p12
