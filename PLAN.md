@@ -29,22 +29,26 @@ Verified on 1 August 2026, by reading the repository rather than from memory.
 
 Until this stage is finished, every claim about this repository is "written", not "works". Nothing below it can be trusted, so nothing below it should be started.
 
-- [ ] **0.1 — Session-start hook that installs the .NET SDK and runs `npm ci`**
+- [x] **0.1 — Session-start hook that installs the .NET SDK and npm packages**
+  `.claude/hooks/session-start.sh`, registered in `.claude/settings.json`. Runs synchronously, is idempotent, and persists `DOTNET_ROOT` and `PATH` through `$CLAUDE_ENV_FILE`.
   *Done when*: a fresh session can run `dotnet --version` and `nx --version` without setup.
+  **Partly blocked** — the npm half is verified. The SDK half cannot be verified here: see 0.2.
 
-- [ ] **0.2 — First `dotnet build` on the solution, and fix what it finds**
-  Expect EF Core 10 package versions to be wrong (`Directory.Packages.props` says as much), and `Identity` / `Platform` to collide with framework namespaces.
+- [ ] **0.2 — First `dotnet build` on the solution, and fix what it finds** ⛔ **BLOCKED**
+  The egress policy for these sessions denies `dot.net` and `builds.dotnet.microsoft.com` with a 403, so the SDK cannot be installed and the backend cannot be compiled. The proxy README says to report a blocked host rather than route around it.
+  **To unblock**: have those two hosts allowed for this repository's sessions, then start a new session — the hook installs the SDK on its own from that point.
+  Once it runs, expect EF Core 10 package versions to be wrong (`Directory.Packages.props` says as much), `Identity` / `Platform` to collide with framework namespaces, and `TreatWarningsAsErrors` to turn every warning into a failure.
   *Done when*: `dotnet build backend/Bill-Book.sln` succeeds with no errors.
 
-- [ ] **0.3 — First `npm install` and `nx build web`**
-  `@angular/cdk` was added to `package.json` but never resolved, and 11 pages have never been compiled.
+- [x] **0.3 — First `npm install` and `nx build web`**
+  Done. 1167 packages install, `@angular/cdk` resolves at 20.2.14, and both apps build. The eleven pages are in the bundle — confirmed by grepping the emitted lazy chunks for their content, not just by the build exiting zero.
   *Done when*: `nx build web` and `nx build docs` both succeed.
 
-- [ ] **0.4 — Regenerate the hand-written migrations with `dotnet ef` and diff them**
+- [ ] **0.4 — Regenerate the hand-written migrations with `dotnet ef` and diff them** ⛔ blocked by 0.2
   Five migrations were written by hand to match EF's output format: Accounting's `AddNumberingSeries`, `AddPaymentTerms` and `AddBankParentAccountsIndex`, and the `InitialCreate` for Contacts, Inventory and Banking. Their model snapshots were assembled the same way.
   *Done when*: `dotnet ef migrations add` produces an empty migration for every context, proving each snapshot matches its model.
 
-- [ ] **0.5 — Apply every migration to a local database**
+- [ ] **0.5 — Apply every migration to a local database** ⛔ blocked by 0.2
   *Done when*: `scripts/setup-dev-db` runs clean and all schemas exist with their RLS policies.
 
 ---
@@ -162,6 +166,9 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.5 — Refresh `CLAUDE.md`**
   Its "Current state", "Blocking gaps" and "Not yet built" sections all predate this work, and the login gap it calls blocking is closed.
+
+- [ ] **5.7 — There are no tests and no linter**
+  No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
 
 - [ ] **5.6 — Decide the numbering-series ownership exception**
   `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations`, so a code can be allocated inside the caller's transaction. It is a deliberate, documented exception to the no-shared-tables rule — either confirm it in `CLAUDE.md` or replace it with a table per service.
