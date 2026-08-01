@@ -45,7 +45,14 @@
     @for (row of rows(); track row.contactId) {
       <tr [class.inactive]="!row.isActive">
         <td><code>{{ row.contactCode }}</code></td>
-        <td>{{ row.displayName }}</td>
+        <td>
+          {{ row.displayName }}
+          @if (!row.isSubLedgerLinked) {
+            <span class="badge unlinked" title="Cannot be invoiced or billed until linked">
+              No sub-ledger
+            </span>
+          }
+        </td>
         <td>
           @if (row.isCustomer) { <span class="chip">Customer</span> }
           @if (row.isVendor) { <span class="chip">Vendor</span> }
@@ -61,6 +68,11 @@
         <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
         <td class="actions-col">
           <button type="button" class="link" (click)="openEdit(row)" [disabled]="busy()">Edit</button>
+          @if (!row.isSubLedgerLinked) {
+            <button type="button" class="link" (click)="linkSubLedger(row)" [disabled]="busy()">
+              Link sub-ledger
+            </button>
+          }
           @if (row.isActive) {
             <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
               Deactivate

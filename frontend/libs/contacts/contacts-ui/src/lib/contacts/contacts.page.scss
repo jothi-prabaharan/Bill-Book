@@ -69,3 +69,7 @@ fieldset.roles small { flex-basis: 100%; color: #8a8f9e; font-size: .72rem; }
   .fields { grid-template-columns: 1fr; }
   .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
 }
+
+/* A contact with no sub-ledger cannot be invoiced. Colour plus the words, so it
+   reads the same without colour vision. */
+.badge.unlinked { font-size: .62rem; background: #fdf0d5; color: #8a5b00; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }

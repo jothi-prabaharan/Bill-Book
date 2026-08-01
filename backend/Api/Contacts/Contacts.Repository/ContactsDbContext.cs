@@ -52,6 +52,12 @@ public class ContactsDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.DisplayName });
 
             // One GSTIN, one row — whether they buy, sell, or both.
+            // Finding contacts whose sub-ledger call failed, without scanning a
+            // table where nearly every row succeeded.
+            b.HasIndex(e => new { e.OrgId, e.ContactId })
+                .HasFilter("\"SubLedgerProvisionedAt\" IS NULL")
+                .HasDatabaseName("IX_Contacts_SubLedgerPending");
+
             b.HasIndex(e => new { e.OrgId, e.Gstin })
                 .IsUnique()
                 .HasFilter("\"Gstin\" IS NOT NULL")

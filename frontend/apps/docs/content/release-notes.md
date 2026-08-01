@@ -69,6 +69,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **Development, Staging, UAT and Production environments** — every service and both Angular apps now build and run against a named environment. Development works from a fresh clone with no setup; the other three take their connection strings, signing keys and service addresses from the deployment environment, and refuse to start rather than fall back to a local default. Web and Docs can each be debugged in Development or Staging from VS Code.
 
 ### Fixed
+- **A contact could be saved without its ledger sub-accounts and nothing said so.** The failure was silently discarded, leaving a contact that looked complete and could not be invoiced. Contacts now show **No sub-ledger** when that has happened, with a **Link sub-ledger** action to create them — the same treatment a bank account whose ledger link failed already had.
 - Contacts, Inventory and Banking could not start in Development at all: none of them had a development configuration, so each refused to boot on a missing token signing key. All three now start from a fresh clone.
 - An account that already had sub-accounts beneath it could still have its type, code and usage flags changed. The configuration lock now engages the moment anything is created under an account, as it was always documented to.
 - Changing the currency of a locked account appeared to save but silently did nothing. It is now refused with an explanation, alongside the other frozen fields.

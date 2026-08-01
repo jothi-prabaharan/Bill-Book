@@ -20,6 +20,7 @@ interface ContactListItem {
   currencyCode: string;
   creditLimit: number | null;
   isActive: boolean;
+  isSubLedgerLinked: boolean;
   email: string | null;
   mobileNumber: string | null;
   city: string | null;
@@ -576,6 +577,23 @@ export class ContactsPage implements OnInit {
     }
   }
 
+  /**
+   * Creates the sub-accounts for a contact whose call failed when it was saved.
+   * Safe to run twice — Accounting's provisioning is idempotent.
+   */
+  async linkSubLedger(row: ContactListItem): Promise<void> {
+    this.busy.set(true);
+    try {
+      await this.send('POST', `/api/contacts/${row.contactId}/link-sub-ledger`, {});
+      this.succeed('Sub-accounts created.');
+      await this.load();
+    } catch (err: unknown) {
+      this.fail(this.messageOf(err, 'Could not create the sub-accounts.'));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
   async deactivate(row: ContactListItem): Promise<void> {
     this.busy.set(true);
     try {
@@ -619,6 +637,7 @@ export class ContactsPage implements OnInit {
       currencyCode: 'INR',
       creditLimit: null,
       isActive: true,
+      isSubLedgerLinked: false,
       email: null,
       mobileNumber: null,
       city: null,

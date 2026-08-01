@@ -106,5 +106,16 @@ public class Contact : OrgScopedEntity
     [MaxLength(500, ErrorMessage = "Notes cannot exceed 500 characters.")]
     public string? Notes { get; set; }
 
+    /// <summary>
+    /// When Accounting created this contact's receivable and payable
+    /// sub-accounts. Null means it has none — the contact saved but the call
+    /// failed, so it cannot be posted against yet.
+    ///
+    /// Stored here rather than asked of Accounting per row: the contact list is
+    /// the classic N+1, and a question asked once per contact would be one HTTP
+    /// call per row.
+    /// </summary>
+    public DateTimeOffset? SubLedgerProvisionedAt { get; set; }
+
     public bool IsActive { get; set; } = true;
 }

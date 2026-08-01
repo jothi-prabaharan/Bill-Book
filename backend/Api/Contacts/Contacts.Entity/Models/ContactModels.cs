@@ -29,6 +29,13 @@ public class ContactListItem
 
     public decimal? CreditLimit { get; set; }
 
+    /// <summary>
+    /// False when Accounting never created this contact's receivable and
+    /// payable sub-accounts. The contact is saved and editable; it just cannot
+    /// be posted against until the sub-ledger exists.
+    /// </summary>
+    public bool IsSubLedgerLinked { get; set; }
+
     public bool IsActive { get; set; }
 
     /// <summary>From the default contact person — the contact itself stores neither.</summary>
@@ -282,6 +289,15 @@ public enum SaveContactOutcome
     UnknownRole = 16,
     /// <summary>More than one payout account marked as the default.</summary>
     MultipleDefaultBankDetails = 17,
+    /// <summary>
+    /// The contact was saved but Accounting could not create its sub-accounts.
+    /// Reported rather than rolled back: an HTTP call cannot join the local
+    /// transaction, so undoing the contact after Accounting had already written
+    /// would be the worse failure.
+    /// </summary>
+    SubLedgerUnavailable = 18,
+    /// <summary>Retrying the sub-ledger for a contact that already has one.</summary>
+    SubLedgerAlreadyLinked = 19,
 }
 
 public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode);

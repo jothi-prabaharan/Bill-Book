@@ -53,6 +53,17 @@ public sealed class ContactsController : ControllerBase
         return Respond(result.Outcome, NoContent);
     }
 
+    /// <summary>
+    /// Creates the sub-accounts for a contact whose call failed when it was
+    /// saved — the contact exists, it simply cannot be posted against yet.
+    /// </summary>
+    [HttpPost("{contactId:long}/link-sub-ledger")]
+    public async Task<IActionResult> LinkSubLedger(long contactId, CancellationToken ct)
+    {
+        SaveContactOutcome outcome = await _contacts.RetrySubLedgerAsync(contactId, ct);
+        return Respond(outcome, NoContent);
+    }
+
     [HttpDelete("{contactId:long}")]
     public async Task<IActionResult> Deactivate(long contactId, CancellationToken ct) =>
         Respond(await _contacts.DeactivateAsync(contactId, ct), NoContent);
@@ -109,6 +120,18 @@ public sealed class ContactsController : ControllerBase
             SaveContactOutcome.MultipleDefaultAddresses => BadRequest(new MessageResponse
             {
                 Message = "Only one billing address and one shipping address can be the default.",
+            }),
+            SaveContactOutcome.SubLedgerUnavailable => StatusCode(
+                StatusCodes.Status409Conflict,
+                new MessageResponse
+                {
+                    Message = "The contact was saved but its receivable and payable sub-accounts "
+                        + "could not be created, so it cannot be invoiced or billed yet. Use "
+                        + "Link sub-ledger to try again.",
+                }),
+            SaveContactOutcome.SubLedgerAlreadyLinked => BadRequest(new MessageResponse
+            {
+                Message = "This contact already has its sub-accounts.",
             }),
             SaveContactOutcome.MultipleDefaultBankDetails => BadRequest(new MessageResponse
             {

@@ -188,8 +188,11 @@ Independent of the stages above; take any of them whenever.
   Confirmed by reading every migration rather than from memory: those three were the only per-customer tables in the system with no policy — `acc.NumberingSeries` and `acc.PaymentTerms` in the same schema already had one. Added in `AddAccountingRowLevelSecurity`, each `DROP POLICY IF EXISTS` first so the migration is safe to re-run.
   **Also fixed while here**: four migrations had no `.Designer.cs` — `OrganizationIsTheBranch`, `DropNumberingBranchId`, `DropBranchId` and the new one. Three of those were mine. EF diffs `migrations add` against the last Designer, so a missing one makes the *next* migration wrong, which would have surfaced as a confusing bad diff at 0.4 rather than as an obvious omission.
 
-- [ ] **5.2 — Surface sub-account provisioning failures in Contacts**
+- [x] **5.2 — Surface sub-account provisioning failures in Contacts**
   `ContactService` discards the result, so a contact can save while its receivable and payable sub-accounts silently fail. Banking already does this properly — copy that pattern, including the retry action.
+  Worth recording what was actually there: the call site carried a comment saying *"the outcome is reported rather than swallowed"* directly above the line that swallowed it. The comment was the intent; the code never caught up.
+  `con.Contacts.SubLedgerProvisionedAt` now records it, mirroring `BankAccounts.LedgerAccountId is null`. Held locally rather than asked of Accounting per row — the contact list is the classic N+1, and one HTTP call per row is not a list. Create returns `SubLedgerUnavailable` (409, contact kept), the list shows **No sub-ledger**, and `POST api/contacts/{id}/link-sub-ledger` retries.
+  **Judgement call on existing rows**: the migration backfills them as provisioned. Marking every existing contact broken would be a false alarm on the common case, which is how a warning badge stops being read — and the retry is idempotent where the assumption is wrong. Said plainly in the migration.
 
 - [ ] **5.3 — Read the financial-year start month per organization**
   Hardcoded to 4 via configuration in the numbering generator and the numbering page. An organization on a different year numbers wrongly.

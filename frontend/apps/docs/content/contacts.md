@@ -110,6 +110,10 @@ These are enforced when Sales and Purchase are built. Until then they are stored
 
 A contact gets **two sub-accounts** in the ledger — one receivable, one payable — created by Accounting. They are what let the ledger report per contact without the chart of accounts growing a line per customer.
 
+Accounting is a separate service, so that step can fail on its own. When it does the contact is still saved — undoing it after Accounting may already have written its rows would be the worse outcome — but it is marked **No sub-ledger** on the list and cannot be invoiced or billed until it has one.
+
+**Link sub-ledger** on the row creates them. It is safe to press twice.
+
 ## Deactivating
 
 Contacts are never deleted. Documents point at them and their sub-accounts hold ledger history. Deactivating takes them out of the pickers and leaves everything else intact.

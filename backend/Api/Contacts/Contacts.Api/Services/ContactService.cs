@@ -231,12 +231,61 @@ public sealed class ContactService
         await ReplaceChildrenAsync(contact.ContactId, request, ct);
         await _db.SaveChangesAsync(ct);
 
-        // Two sub-accounts, receivable and payable, written by Accounting. A
-        // failure here leaves a saved contact without a sub-ledger, so the
-        // outcome is reported rather than swallowed.
-        await _subAccounts.ProvisionForContactAsync(contact.ContactId, contact.DisplayName, ct);
+        // Two sub-accounts, receivable and payable, written by Accounting.
+        //
+        // Reported, not rolled back. An HTTP call cannot join this transaction,
+        // so undoing the contact after Accounting had already written its rows
+        // would be the worse failure — the contact stays, plainly missing its
+        // sub-ledger, and can be retried. Same shape as an unlinked bank
+        // account.
+        bool provisioned = await _subAccounts.ProvisionForContactAsync(
+            contact.ContactId, contact.DisplayName, ct);
+
+        if (!provisioned)
+        {
+            return new SaveContactResult(
+                SaveContactOutcome.SubLedgerUnavailable, contact.ContactId, contact.ContactCode);
+        }
+
+        contact.SubLedgerProvisionedAt = _clock.GetUtcNow();
+        await _db.SaveChangesAsync(ct);
 
         return new SaveContactResult(SaveContactOutcome.Ok, contact.ContactId, contact.ContactCode);
+    }
+
+    /// <summary>
+    /// Creates the sub-accounts for a contact whose call failed when it was
+    /// saved. Idempotent on this side by the timestamp, and Accounting's own
+    /// provisioning is idempotent too, so running it twice is harmless.
+    /// </summary>
+    public async Task<SaveContactOutcome> RetrySubLedgerAsync(
+        long contactId, CancellationToken ct)
+    {
+        Contact? contact = await _db.Contacts
+            .FirstOrDefaultAsync(c => c.ContactId == contactId, ct);
+
+        if (contact is null)
+        {
+            return SaveContactOutcome.NotFound;
+        }
+
+        if (contact.SubLedgerProvisionedAt is not null)
+        {
+            return SaveContactOutcome.SubLedgerAlreadyLinked;
+        }
+
+        bool provisioned = await _subAccounts.ProvisionForContactAsync(
+            contact.ContactId, contact.DisplayName, ct);
+
+        if (!provisioned)
+        {
+            return SaveContactOutcome.SubLedgerUnavailable;
+        }
+
+        contact.SubLedgerProvisionedAt = _clock.GetUtcNow();
+        await _db.SaveChangesAsync(ct);
+
+        return SaveContactOutcome.Ok;
     }
 
     public async Task<SaveContactResult> UpdateAsync(
@@ -658,6 +707,7 @@ public sealed class ContactService
         CurrencyCode = c.CurrencyCode,
         CreditLimit = c.CreditLimit,
         IsActive = c.IsActive,
+        IsSubLedgerLinked = c.SubLedgerProvisionedAt is not null,
     };
 
     private static ContactDetail MapDetail(Contact c) => new()
@@ -675,6 +725,7 @@ public sealed class ContactService
         CurrencyCode = c.CurrencyCode,
         CreditLimit = c.CreditLimit,
         IsActive = c.IsActive,
+        IsSubLedgerLinked = c.SubLedgerProvisionedAt is not null,
         LegalName = c.LegalName,
         Pan = c.Pan,
         Tan = c.Tan,
