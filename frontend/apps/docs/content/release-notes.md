@@ -32,6 +32,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ## Unreleased
 
 ### Added
+- **Branches** — a Settings screen for the places you trade from. Adding one sets up its books as it is created — chart of accounts, GST rates, numbering series, payment terms, units and purities — and the branch stays marked *Setting up* until that finishes, so it is never handed over half-made. Switch between branches without signing out; you get the permissions you hold in the branch you move to. The number allowed comes from your licence, and the first branch cannot be suspended.
 - **Trial signup** — public self-service signup that provisions a customer database, a 14-day Trial licence, the first organization and the owner account, with a progress screen that waits until the account is ready.
 - **Two-step login** — sign in once, then choose an organization; skipped automatically when you only have one.
 - **Password reset by email code** — a 6-digit code valid for 10 minutes, replacing reset links. Resetting signs out every other session.

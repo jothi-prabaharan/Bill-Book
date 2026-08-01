@@ -27,6 +27,7 @@ export const DOCS: DocSection[] = [
     title: 'Platform',
     pages: [
       { slug: 'tenancy', title: 'Tenancy model', status: 'built' },
+      { slug: 'organizations', title: 'Branches', status: 'built' },
       { slug: 'auth', title: 'Authentication', status: 'built' },
       { slug: 'signup', title: 'Signup & provisioning', status: 'built' },
       { slug: 'licensing', title: 'Licensing & trial expiry', status: 'built' },

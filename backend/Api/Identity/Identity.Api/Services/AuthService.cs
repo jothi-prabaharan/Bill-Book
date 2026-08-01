@@ -83,27 +83,11 @@ public sealed class AuthService
         });
         await _db.SaveChangesAsync(ct);
 
-        var assignments = await (
-            from uor in _db.UserOrganizationRoles
-            join role in _db.Roles on uor.RoleId equals role.RoleId
-            where uor.UserId == user.UserId && uor.IsActive
-            select new { uor.OrgId, RoleName = role.DisplayName }).ToListAsync(ct);
+        IReadOnlyList<AccessibleOrgDto> orgs = await AccessibleOrgsAsync(user.UserId, ct);
 
-        if (assignments.Count == 0)
+        if (orgs.Count == 0)
         {
             throw new NoOrganizationAccessException();
-        }
-
-        var orgs = new List<AccessibleOrgDto>();
-        foreach (var assignment in assignments)
-        {
-            OrgContext? ctx = await _platform.ResolveOrgAsync(assignment.OrgId, ct);
-            orgs.Add(new AccessibleOrgDto
-            {
-                OrgId = assignment.OrgId,
-                OrgName = ctx?.OrgName ?? "(unavailable)",
-                RoleName = assignment.RoleName,
-            });
         }
 
         return new LoginResponse
@@ -116,6 +100,40 @@ public sealed class AuthService
     }
 
     // ---- Step two: pick an org -> access + refresh token ------------------
+
+    /// <summary>
+    /// The branches this user may work in. Read at login to offer a choice, and
+    /// again by the switcher — the same list either way, so the two can never
+    /// disagree about what someone has access to.
+    /// </summary>
+    public async Task<IReadOnlyList<AccessibleOrgDto>> AccessibleOrgsAsync(
+        Guid userId, CancellationToken ct)
+    {
+        var assignments = await (
+            from uor in _db.UserOrganizationRoles
+            join role in _db.Roles on uor.RoleId equals role.RoleId
+            where uor.UserId == userId && uor.IsActive
+            select new { uor.OrgId, RoleName = role.DisplayName }).ToListAsync(ct);
+
+        var orgs = new List<AccessibleOrgDto>();
+
+        foreach (var assignment in assignments)
+        {
+            // Names live in Platform, so a branch that cannot be resolved is
+            // still listed rather than silently dropped — a missing branch is
+            // something to see, not to hide.
+            OrgContext? ctx = await _platform.ResolveOrgAsync(assignment.OrgId, ct);
+
+            orgs.Add(new AccessibleOrgDto
+            {
+                OrgId = assignment.OrgId,
+                OrgName = ctx?.OrgName ?? "(unavailable)",
+                RoleName = assignment.RoleName,
+            });
+        }
+
+        return orgs;
+    }
 
     public async Task<TokenResponse> SelectOrganizationAsync(
         Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct)

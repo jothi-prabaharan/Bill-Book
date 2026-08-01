@@ -15,6 +15,7 @@ import {
 const ACCESS_KEY = 'bb.access';
 const REFRESH_KEY = 'bb.refresh';
 const LICENSE_KEY = 'bb.license';
+const ORG_KEY = 'bb.orgId';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -51,9 +52,34 @@ export class AuthService {
     localStorage.setItem(ACCESS_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
     localStorage.setItem(LICENSE_KEY, response.licenseStatus);
+    localStorage.setItem(ORG_KEY, orgId);
     this.accessToken.set(response.accessToken);
     this.licenseStatus.set(response.licenseStatus);
     this.preAuthToken.set(null);
+    return response;
+  }
+
+  /** The branches this user may work in, read after login for the switcher. */
+  async accessibleOrganizations(): Promise<AccessibleOrg[]> {
+    return firstValueFrom(this.http.get<AccessibleOrg[]>('/api/auth/organizations'));
+  }
+
+  /**
+   * Moves to another branch without signing out. A branch is a separate set of
+   * books, so this issues a new token carrying that org and the permissions
+   * held there — the old token keeps naming the old branch and is replaced.
+   */
+  async switchOrganization(orgId: string): Promise<TokenResponse> {
+    const response = await firstValueFrom(
+      this.http.post<TokenResponse>('/api/auth/switch-organization', { orgId }),
+    );
+
+    localStorage.setItem(ACCESS_KEY, response.accessToken);
+    localStorage.setItem(REFRESH_KEY, response.refreshToken);
+    localStorage.setItem(LICENSE_KEY, response.licenseStatus);
+    localStorage.setItem(ORG_KEY, orgId);
+    this.accessToken.set(response.accessToken);
+    this.licenseStatus.set(response.licenseStatus);
     return response;
   }
 

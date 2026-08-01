@@ -1,5 +1,6 @@
 using Identity.Api.Services;
 using Identity.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Identity.Api.Controllers;
@@ -86,6 +87,68 @@ public sealed class AuthController : ControllerBase
             });
         }
     }
+
+    /// <summary>
+    /// The branches the signed-in user may work in. The same list login offers,
+    /// read again so a switcher never has to cache it.
+    /// </summary>
+    [Authorize]
+    [HttpGet("organizations")]
+    public async Task<IActionResult> Organizations(CancellationToken ct) =>
+        CallerUserId() is Guid userId
+            ? Ok(await _auth.AccessibleOrgsAsync(userId, ct))
+            : Unauthorized();
+
+    /// <summary>
+    /// Moves an already signed-in user to another branch.
+    ///
+    /// Reuses the same path as step two of login: a branch is a separate set of
+    /// books, so switching into one means a new token carrying that org and the
+    /// permissions the user holds *there*. Re-authenticating is not required —
+    /// the caller has already proved who they are — but access to the target
+    /// branch is checked exactly as it is at login.
+    /// </summary>
+    [Authorize]
+    [HttpPost("switch-organization")]
+    public async Task<IActionResult> SwitchOrganization(
+        [FromBody] SelectOrganizationRequest request, CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId)
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            TokenResponse response = await _auth.SelectOrganizationAsync(
+                userId, request.OrgId, Ip(), UserAgent(), ct);
+
+            return Ok(response);
+        }
+        catch (NoOrganizationAccessException)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new MessageResponse
+            {
+                Message = "You do not have access to that branch.",
+            });
+        }
+        catch (DatabaseNotReadyException)
+        {
+            return StatusCode(StatusCodes.Status409Conflict, new MessageResponse
+            {
+                Message = "That branch is still being set up. Please try again shortly.",
+            });
+        }
+    }
+
+    /// <summary>The user on the access token, for endpoints that need no pre-auth step.</summary>
+    private Guid? CallerUserId() =>
+        Guid.TryParse(
+            User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
+                ?? User.FindFirst("sub")?.Value,
+            out Guid userId)
+            ? userId
+            : null;
 
     /// <summary>Always returns the same 200, whether or not the account exists.</summary>
     [HttpPost("forgot-password")]

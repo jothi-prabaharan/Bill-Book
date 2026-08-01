@@ -1,0 +1,201 @@
+<header class="page-head">
+  <h1>Branches</h1>
+  <div class="head-actions">
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add branch</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Each branch is a complete set of books — its own items, contacts, stock, chart of accounts and
+  numbering. Nothing crosses between them. They share this account's database and are separated
+  by organization, so adding one costs no new database.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Branch</th>
+      <th>City</th>
+      <th>State</th>
+      <th>GSTIN</th>
+      <th>Currency</th>
+      <th>Status</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.orgId) {
+      <tr [class.inactive]="row.status === 'Suspended'">
+        <td><code>{{ row.orgCode }}</code></td>
+        <td>
+          {{ row.name }}
+          @if (row.orgId === currentOrgId()) {
+            <span class="badge here">You are here</span>
+          }
+          @if (row.isFirst) {
+            <span class="badge">First</span>
+          }
+        </td>
+        <td>{{ row.city ?? '—' }}</td>
+        <td>{{ stateNameOf(row.stateId) }}</td>
+        <td><code>{{ row.gstin ?? '—' }}</code></td>
+        <td>{{ row.baseCurrency }}</td>
+        <td>
+          @switch (row.status) {
+            @case ('Active') { Active }
+            @case ('Provisioning') { <span class="badge warn">Setting up</span> }
+            @default { {{ row.status }} }
+          }
+        </td>
+        <td class="actions-col">
+          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+
+          @if (row.status === 'Provisioning') {
+            <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
+              Finish setup
+            </button>
+          } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
+            <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
+              Switch to
+            </button>
+          }
+
+          @if (!row.isFirst && row.status === 'Active') {
+            <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
+              Suspend
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="8">No branches.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === '' ? 'New branch' : 'Edit branch' }}</h2>
+
+    @if (editingId() === '') {
+      <p class="hint">
+        A new branch starts empty and is set up as it is created — chart of accounts, GST rates,
+        numbering series, payment terms, units and purities. It stays unusable until that
+        finishes, rather than opening with no books behind it.
+      </p>
+    }
+
+    <div class="fields">
+      <label>
+        Code
+        <input type="text" [(ngModel)]="form.orgCode" maxlength="10" style="text-transform: uppercase" />
+        <small>Goes into document numbers when a series includes the branch code.</small>
+      </label>
+
+      <label>
+        Name
+        <input type="text" [(ngModel)]="form.name" maxlength="200" />
+      </label>
+
+      <label>
+        Base currency
+        <input
+          type="text"
+          [(ngModel)]="form.baseCurrency"
+          maxlength="3"
+          [disabled]="currencyLocked"
+          style="text-transform: uppercase"
+        />
+        <small>
+          @if (currencyLocked) {
+            Fixed — every amount already posted here was converted to it.
+          } @else {
+            Every posting in this branch converts to it. It cannot be changed afterwards.
+          }
+        </small>
+      </label>
+
+      <label>
+        Financial year starts
+        <select [(ngModel)]="form.financialYearStartMonth">
+          @for (month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track month) {
+            <option [ngValue]="month">Month {{ month }}</option>
+          }
+        </select>
+        <small>April for India. Drives the year segment in generated numbers.</small>
+      </label>
+
+      <label>
+        GSTIN
+        <input type="text" [(ngModel)]="form.gstin" maxlength="15" style="text-transform: uppercase" />
+        <small>Its first two digits must match the branch's state.</small>
+      </label>
+
+      <label>
+        PAN
+        <input type="text" [(ngModel)]="form.pan" maxlength="10" style="text-transform: uppercase" />
+      </label>
+
+      <label class="wide">
+        Address line 1
+        <input type="text" [(ngModel)]="form.addressLine1" maxlength="200" />
+      </label>
+
+      <label class="wide">
+        Address line 2
+        <input type="text" [(ngModel)]="form.addressLine2" maxlength="200" />
+      </label>
+
+      <label>
+        City
+        <input type="text" [(ngModel)]="form.city" maxlength="100" />
+      </label>
+
+      <label>
+        State
+        <select [(ngModel)]="form.stateId">
+          <option [ngValue]="null">Not set</option>
+          @for (state of states(); track state.stateId) {
+            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Postal code
+        <input type="text" [(ngModel)]="form.postalCode" maxlength="10" />
+      </label>
+
+      <label>
+        Phone
+        <input type="text" [(ngModel)]="form.phoneNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Mobile
+        <input type="text" [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" [(ngModel)]="form.email" maxlength="200" />
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="busy() || !form.orgCode || !form.name || !form.baseCurrency"
+      >
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

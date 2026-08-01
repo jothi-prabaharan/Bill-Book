@@ -20,6 +20,8 @@ That is the trade this model makes. It gives each branch clean, independent book
 
 **There is no separate branch table, and no `BranchId` column.** `OrgId` *is* the branch. One briefly existed and was removed: it duplicated the organization almost column for column while only `OrgId` scoped anything.
 
+Branches are created and switched between from **Settings › Branches** — see [Branches](organizations).
+
 ## Which database holds what
 
 The **master database** is shared by every customer:

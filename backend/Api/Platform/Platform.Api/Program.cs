@@ -30,6 +30,14 @@ builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<SmtpSettingsService>();
+builder.Services.AddScoped<OrganizationService>();
+
+// A branch GSTIN is checked against its state's code, and states live in the
+// master database. Cached hard: state codes are legislated.
+builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+});
 builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
 
 // Mail is queued and delivered on a background worker, so an SMTP round-trip
@@ -64,12 +72,15 @@ builder.Services.AddSingleton<IEventPublisher, LoggingEventPublisher>();
 // Must match Identity's key exactly: Identity mints the tokens, Platform only
 // validates them.
 //
-// Only endpoints carrying [Authorize] require a token — signup, the internal
-// endpoints and the org-context lookup stay as they were. The org-scoped
-// endpoints that predate this (currencies, configurations, SMTP settings) are
-// still anonymous and still take the org id from the route unchecked; that is
-// tracked as debt rather than changed here, because tightening them without a
-// compiler to hand is how a working signup flow stops working.
+// OrganizationsController carries [Authorize] and reads the customer from the
+// token rather than the route. Signup, the internal endpoints and the org-context
+// lookup stay anonymous by design.
+//
+// The org-scoped endpoints that predate this — currencies, configurations, SMTP
+// settings — are still anonymous and still take the org id from the route
+// unchecked. Tracked as 5.10, and deliberately not changed blind: tightening
+// signup and the internal endpoints without a compiler to hand is how a working
+// provisioning flow stops working.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>

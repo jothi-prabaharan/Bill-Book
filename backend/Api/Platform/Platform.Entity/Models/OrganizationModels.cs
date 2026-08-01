@@ -1,0 +1,132 @@
+using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Validation;
+
+namespace Platform.Entity.Models;
+
+/// <summary>A branch, as the branch list shows it.</summary>
+public class OrganizationListItem
+{
+    public Guid OrgId { get; set; }
+
+    public string OrgCode { get; set; } = null!;
+
+    public string Name { get; set; } = null!;
+
+    public string BaseCurrency { get; set; } = null!;
+
+    public int FinancialYearStartMonth { get; set; }
+
+    public string? Gstin { get; set; }
+
+    public string? Pan { get; set; }
+
+    public string? AddressLine1 { get; set; }
+
+    public string? AddressLine2 { get; set; }
+
+    public string? City { get; set; }
+
+    public int? StateId { get; set; }
+
+    public string? PostalCode { get; set; }
+
+    public int CountryId { get; set; }
+
+    public string? PhoneNumber { get; set; }
+
+    public string? MobileNumber { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? Website { get; set; }
+
+    /// <summary>Provisioning, Active, Suspended — a branch is only usable once Active.</summary>
+    public string Status { get; set; } = null!;
+
+    /// <summary>
+    /// True for the first branch on the account. It cannot be deactivated,
+    /// because an account with no usable branch has nowhere to sign in to.
+    /// </summary>
+    public bool IsFirst { get; set; }
+}
+
+public class SaveOrganizationRequest
+{
+    [Required(ErrorMessage = "Branch code is required.")]
+    [MaxLength(10, ErrorMessage = "Branch code cannot exceed 10 characters.")]
+    public string OrgCode { get; set; } = null!;
+
+    [Required(ErrorMessage = "Branch name is required.")]
+    [MaxLength(200, ErrorMessage = "Branch name cannot exceed 200 characters.")]
+    public string Name { get; set; } = null!;
+
+    /// <summary>Immutable once set — every posting in the branch converts to it.</summary>
+    [Required(ErrorMessage = "Base currency is required.")]
+    [MaxLength(3, ErrorMessage = "Base currency must be a 3-letter code.")]
+    public string BaseCurrency { get; set; } = "INR";
+
+    [Range(1, 12, ErrorMessage = "Financial year start month must be between 1 and 12.")]
+    public int FinancialYearStartMonth { get; set; } = 4;
+
+    [MaxLength(15, ErrorMessage = "GSTIN cannot exceed 15 characters.")]
+    public string? Gstin { get; set; }
+
+    [MaxLength(10, ErrorMessage = "PAN cannot exceed 10 characters.")]
+    public string? Pan { get; set; }
+
+    [MaxLength(200, ErrorMessage = "Address line 1 cannot exceed 200 characters.")]
+    public string? AddressLine1 { get; set; }
+
+    [MaxLength(200, ErrorMessage = "Address line 2 cannot exceed 200 characters.")]
+    public string? AddressLine2 { get; set; }
+
+    [MaxLength(100, ErrorMessage = "City cannot exceed 100 characters.")]
+    public string? City { get; set; }
+
+    public int? StateId { get; set; }
+
+    [MaxLength(10, ErrorMessage = "Postal code cannot exceed 10 characters.")]
+    public string? PostalCode { get; set; }
+
+    [Range(1, int.MaxValue, ErrorMessage = "Country is required.")]
+    public int CountryId { get; set; }
+
+    [MaxLength(20, ErrorMessage = "Phone number cannot exceed 20 characters.")]
+    [Landline]
+    public string? PhoneNumber { get; set; }
+
+    [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
+    [Mobile]
+    public string? MobileNumber { get; set; }
+
+    [EmailAddress(ErrorMessage = "Email must be a valid email address.")]
+    [MaxLength(200, ErrorMessage = "Email cannot exceed 200 characters.")]
+    public string? Email { get; set; }
+
+    [MaxLength(200, ErrorMessage = "Website cannot exceed 200 characters.")]
+    public string? Website { get; set; }
+}
+
+public enum SaveOrganizationOutcome
+{
+    Ok = 0,
+    NotFound = 1,
+    DuplicateCode = 2,
+    DuplicateName = 3,
+    /// <summary>The GSTIN's first two digits do not match the chosen state's code.</summary>
+    GstinStateMismatch = 4,
+    /// <summary>The licence allows fewer branches than this would make.</summary>
+    LicenceLimitReached = 5,
+    /// <summary>The customer's database is not ready, so a branch cannot be seeded into it.</summary>
+    DatabaseNotReady = 6,
+    /// <summary>Created, but one or more services could not write its master data.</summary>
+    SeedingFailed = 7,
+    /// <summary>The first branch on an account cannot be deactivated.</summary>
+    FirstOrganizationLocked = 8,
+    /// <summary>Base currency is fixed once the branch exists — every posting converts to it.</summary>
+    BaseCurrencyLocked = 9,
+    InvalidValue = 10,
+}
+
+public sealed record SaveOrganizationResult(
+    SaveOrganizationOutcome Outcome, Guid? OrgId, IReadOnlyList<string> UnseededServices);
