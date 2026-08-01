@@ -54,6 +54,13 @@ public class StockPosition
     /// <summary>True when the method draws down layers rather than a running average.</summary>
     public bool UsesCostLayers { get; set; }
 
+    /// <summary>
+    /// Value from the layers themselves — <c>Σ(remaining × layer cost)</c>. On a
+    /// layered item this is the real figure; <see cref="StockValue"/> is the
+    /// running average's version of the same thing and the two can differ.
+    /// </summary>
+    public decimal LayeredStockValue { get; set; }
+
     public DateTimeOffset? LastMovementAt { get; set; }
 }
 
@@ -117,6 +124,8 @@ public class StockMovementListItem
     public string? SourceType { get; set; }
 
     public long? SourceId { get; set; }
+
+    public long? ReturnsStockMovementId { get; set; }
 
     public string? Notes { get; set; }
 
@@ -188,6 +197,12 @@ public class RecordStockMovementRequest
     /// <summary>Per-piece HUIDs, positionally matched to <see cref="SerialNumbers"/>.</summary>
     public List<string> HallmarkNumbers { get; set; } = [];
 
+    /// <summary>
+    /// On a return, the issue being returned. Stock then goes back onto the
+    /// layers it left from, at the cost it left at.
+    /// </summary>
+    public long? ReturnsStockMovementId { get; set; }
+
     [MaxLength(300, ErrorMessage = "Notes cannot exceed 300 characters.")]
     public string? Notes { get; set; }
 }
@@ -247,6 +262,10 @@ public enum StockOutcome
     SerialConflict = 15,
     /// <summary>Layered costing could not find enough remaining layers to cover the issue.</summary>
     InsufficientCostLayers = 16,
+    /// <summary>The movement being returned does not exist, or is not an issue of this item.</summary>
+    ReturnedMovementNotFound = 17,
+    /// <summary>Returning more than went out on that issue.</summary>
+    ReturnExceedsIssue = 18,
 }
 
 public sealed record RecordStockMovementResult(

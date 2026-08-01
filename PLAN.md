@@ -145,9 +145,11 @@ The largest piece, and what makes `CostingType` honest. Today an item set to FEF
   Selection is implemented too, since it is a single ORDER BY once the layers exist: FIFO by receipt date, LIFO reversed, FEFO by expiry with nulls last, specific identification straight off the serial's own layer. Weighted average creates layers and consumes none — it keeps a running average instead, and its layers stand as receipt history.
   **Deliberate deviation to review in 4.2**: costing runs *inside* the movement's transaction, not on a worker. `CLAUDE.md` says costing is async. Committing layers with the movement is the only way to guarantee they never drift, and it removes 4.3's entire problem class — an async pass would have to solve ordering and exactly-once delivery to arrive back at the same guarantee. If the worker is still wanted, it should take recosting and backdating rather than first-pass allocation.
 
-- [ ] **4.2 — `CostingEngine.Worker`**
+- [ ] **4.2 — `CostingEngine.Worker`** — **needs a decision before it is built**
   Layer selection per method — FIFO by receipt date, FEFO by expiry, specific identification by serial — consumed with an `xmin` compare-and-swap, never read-then-write.
   *Done when*: the same purchases and sale produce different, correct COGS under each method.
+  **Selection and the guarded consume are already done, inline, in 4.1.** What is left of this item is the question of whether a worker should exist at all. Recommendation: it should, but owning **recosting and backdating** (4.4), not first-pass allocation — moving allocation off the transaction would reintroduce the ordering and exactly-once problems 4.3 exists to solve, in exchange for nothing.
+  The *done when* line above cannot be demonstrated here: there is no test project and no SDK to run one (5.7, 0.2). Whoever unblocks the build should write that test first — it is three purchases, one sale, and five expected COGS figures.
 
 - [ ] **4.3 — Per-item event ordering**
   Service Bus is unordered and at-least-once; FIFO consumes the wrong layer if movements arrive out of sequence.
@@ -157,9 +159,11 @@ The largest piece, and what makes `CostingType` honest. Today an item set to FEF
   A receipt dated before issues that already consumed layers invalidates every allocation after it. Unwind, replay, and post a COGS adjustment — reversing, never editing a posted entry.
   *Done when*: inserting a backdated receipt restates COGS and the adjustment is visible as its own journal.
 
-- [ ] **4.5 — Returns to the originating layer**
+- [x] **4.5 — Returns to the originating layer**
   A sales return puts quantity back on the layers it came from at their original cost, not at today's.
   *Done when*: buy, sell, return leaves stock value exactly where it started.
+  `StockMovement.ReturnsStockMovementId` names the issue being reversed; the return reads that issue's allocations and gives them back oldest first, guarded by each layer's own ceiling so nothing can hold more than it received. Partial returns accumulate and cannot exceed what went out. A return left unlinked still falls back to the running average — refusing it outright would block a return whose original sale predates this feature.
+  `StockPosition.LayeredStockValue` was added to make the acceptance test checkable: it sums the layers rather than trusting the running average, which is the figure that has to come back to where it started.
 
 ---
 

@@ -88,6 +88,14 @@ public class StockMovement : OrgScopedEntity
     /// <summary>The source document line. Zero when the movement is not line-level.</summary>
     public long SourceLineId { get; set; }
 
+    /// <summary>
+    /// The issue this movement returns, when it is a return. Without it a
+    /// return has no way to find the layers the stock originally left on, and
+    /// falls back to the running average — which is what makes buy-sell-return
+    /// fail to land stock value back where it started.
+    /// </summary>
+    public long? ReturnsStockMovementId { get; set; }
+
     [MaxLength(300, ErrorMessage = "Notes cannot exceed 300 characters.")]
     public string? Notes { get; set; }
 }

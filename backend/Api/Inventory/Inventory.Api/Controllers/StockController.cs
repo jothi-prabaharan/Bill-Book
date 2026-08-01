@@ -150,6 +150,14 @@ public sealed class StockController : ControllerBase
                         + "the stock does. Nothing was changed. This needs investigating before "
                         + "the item is sold again.",
                 }),
+            StockOutcome.ReturnedMovementNotFound => NotFound(new MessageResponse
+            {
+                Message = "The sale being returned could not be found against this item.",
+            }),
+            StockOutcome.ReturnExceedsIssue => BadRequest(new MessageResponse
+            {
+                Message = "That is more than went out on the sale being returned.",
+            }),
             StockOutcome.InvalidValue => BadRequest(new MessageResponse
             {
                 Message = "One of the selected options is not a recognised value.",

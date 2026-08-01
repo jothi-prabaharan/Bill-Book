@@ -125,8 +125,15 @@ Layers come down the same way stock does — a guarded statement, never a read f
 
 Costing runs **inside the same transaction** as the movement. Layers and stock have to agree exactly, and committing them together is the only way to guarantee it.
 
+## Returns
+
+A sales return should name **the sale it reverses**. Naming it puts the stock back on the layers it left from, at the cost it left at — so buy, sell, return leaves stock value exactly where it started.
+
+Left unlinked, the return re-enters at the current running average instead. On a layered item that quietly changes what the stock is worth even though nothing was bought or sold on net, so the field is worth filling in.
+
+Partial returns are fine, and are given back oldest allocation first. Two partial returns of the same sale cannot together give back more than went out, and no layer can ever hold more than it originally received — the database refuses both.
+
 ## What is not here yet
 
 - **Backdated receipts do not restate anything.** A receipt dated before issues that already consumed layers should unwind those allocations, replay them and post a COGS adjustment. Today it creates a layer at the back of the queue and leaves the earlier issues costed as they were.
-- **Returns do not go back to their originating layer.** A sales return adds quantity at the running average rather than at the cost the piece left on, so buy-sell-return does not yet land stock value exactly where it started.
 - **Nothing posts to the ledger.** An issue computes its cost of goods sold and stops there — `Dr COGS / Cr Inventory` is Accounting's to write, and the two are not yet connected.

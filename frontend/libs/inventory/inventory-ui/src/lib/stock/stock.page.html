@@ -50,7 +50,9 @@
         <td class="num">{{ row.quantityOnHand }} {{ row.inventoryUomCode }}</td>
         <td class="num">{{ row.quantityInReportUom }} {{ row.reportUomCode }}</td>
         <td class="num">{{ row.weightedAverageCost }}</td>
-        <td class="num">{{ row.stockValue }}</td>
+        <td class="num">
+          {{ row.stockValue }}
+        </td>
         <td>{{ row.costingType }}</td>
         <td class="actions-col">
           <button type="button" class="link" (click)="openMovement(row)" [disabled]="busy()">
@@ -74,7 +76,7 @@
     <div class="fields">
       <label>
         Type
-        <select [(ngModel)]="form.movementType">
+        <select [(ngModel)]="form.movementType" (ngModelChange)="loadIssues()">
           @for (type of movementTypes; track type.value) {
             <option [value]="type.value">{{ type.label }}</option>
           }
@@ -123,6 +125,28 @@
           }
         </select>
       </label>
+
+      @if (isReturn) {
+        <label class="wide">
+          Sale being returned
+          <select [(ngModel)]="form.returnsStockMovementId">
+            <option [ngValue]="null">Not linked</option>
+            @for (issue of issues(); track issue.stockMovementId) {
+              <option [ngValue]="issue.stockMovementId">
+                {{ issue.movementDate }} — {{ issue.quantity }} {{ item.inventoryUomCode }}
+                @if (issue.sourceType) {
+                  ({{ issue.sourceType }}-{{ issue.sourceId }})
+                }
+              </option>
+            }
+          </select>
+          <small>
+            Naming the sale puts the stock back on the layers it left from, at the cost it left
+            at. Left unlinked it re-enters at the running average, which changes what the stock
+            is worth.
+          </small>
+        </label>
+      }
 
       @if (item.isBatchTracked) {
         <label>

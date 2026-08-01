@@ -40,7 +40,23 @@ public sealed class StockService
         List<StockPosition> rows = await QueryPositions(_db.Items.Where(i => i.ItemId == itemId))
             .ToListAsync(ct);
 
-        return rows.Count == 0 ? null : Finish(rows[0]);
+        if (rows.Count == 0)
+        {
+            return null;
+        }
+
+        StockPosition position = Finish(rows[0]);
+
+        // Only for one item: summing layers across a whole list would be a
+        // second scan of the largest table here for a figure the list does not
+        // show.
+        if (position.UsesCostLayers)
+        {
+            position.LayeredStockValue = Math.Round(
+                await _costing.LayeredValueAsync(itemId, ct), 2, MidpointRounding.AwayFromZero);
+        }
+
+        return position;
     }
 
     /// <summary>
@@ -352,6 +368,7 @@ public sealed class StockService
             SourceType = request.SourceType,
             SourceId = request.SourceId,
             SourceLineId = request.SourceLineId,
+            ReturnsStockMovementId = request.ReturnsStockMovementId,
             Notes = request.Notes,
         };
 
@@ -470,6 +487,35 @@ public sealed class StockService
             return (batchOutcome, null);
         }
 
+        // A return that names the issue it reverses goes back onto the layers
+        // the stock left from, at the cost it left at. Creating a fresh layer
+        // instead would re-enter it at today's cost and change what the stock is
+        // worth without anything having been bought.
+        if (direction == StockDirection.In
+            && IsReturn(movement.MovementType)
+            && request.ReturnsStockMovementId is long returnedId)
+        {
+            StockOutcome valid = await ValidateReturnedMovementAsync(item, returnedId, ct);
+            if (valid != StockOutcome.Ok)
+            {
+                return (valid, null);
+            }
+
+            (StockOutcome returned, decimal returnedCost) =
+                await _costing.ReturnToLayersAsync(item, movement, returnedId, ct);
+
+            if (returned != StockOutcome.Ok)
+            {
+                return (returned, null);
+            }
+
+            await _db.SaveChangesAsync(ct);
+
+            return CostingService.ConsumesLayers(item.CostingType)
+                ? (StockOutcome.Ok, returnedCost)
+                : (StockOutcome.Ok, null);
+        }
+
         if (direction == StockDirection.In)
         {
             CostLayer layer = _costing.CreateLayer(
@@ -506,6 +552,26 @@ public sealed class StockService
         return CostingService.ConsumesLayers(item.CostingType)
             ? (StockOutcome.Ok, cost)
             : (StockOutcome.Ok, null);
+    }
+
+    /// <summary>Only a return can name a movement it reverses.</summary>
+    private static bool IsReturn(StockMovementType type) =>
+        type is StockMovementType.SalesReturn or StockMovementType.PurchaseReturn;
+
+    /// <summary>
+    /// The movement being returned has to be an outbound movement of this same
+    /// item. Anything else and the layers found would belong to something else.
+    /// </summary>
+    private async Task<StockOutcome> ValidateReturnedMovementAsync(
+        Item item, long returnedMovementId, CancellationToken ct)
+    {
+        bool valid = await _db.StockMovements.AnyAsync(
+            m => m.StockMovementId == returnedMovementId
+                && m.ItemId == item.ItemId
+                && m.Direction == StockDirection.Out,
+            ct);
+
+        return valid ? StockOutcome.Ok : StockOutcome.ReturnedMovementNotFound;
     }
 
     /// <summary>

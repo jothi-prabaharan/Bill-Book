@@ -18,6 +18,7 @@ interface StockPosition {
   reorderLevel: number | null;
   isBelowReorderLevel: boolean;
   costingType: string;
+  layeredStockValue: number;
   isBatchTracked: boolean;
   isExpiryTracked: boolean;
   isSerialTracked: boolean;
@@ -55,6 +56,7 @@ interface StockMovement {
   resultingWeightedAverageCost: number | null;
   sourceType: string | null;
   sourceId: number | null;
+  returnsStockMovementId: number | null;
   notes: string | null;
 }
 
@@ -84,6 +86,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
   { value: 'Receipt', label: 'Receipt', needsCost: true },
   { value: 'Issue', label: 'Issue', needsCost: false },
   { value: 'Adjustment', label: 'Adjustment', needsCost: false },
+  { value: 'SalesReturn', label: 'Sales return', needsCost: false },
 ];
 
 /**
@@ -245,6 +248,30 @@ export class StockPage implements OnInit {
     return this.form.movementType === 'Adjustment';
   }
 
+  /** A return has to name the sale it reverses, or it cannot find the layers. */
+  protected get isReturn(): boolean {
+    return this.form.movementType === 'SalesReturn';
+  }
+
+  /** Issues of this item, newest first — what a return can point at. */
+  protected readonly issues = signal<StockMovement[]>([]);
+
+  async loadIssues(): Promise<void> {
+    const item = this.movementFor();
+    if (item === null || !this.isReturn) {
+      return;
+    }
+
+    try {
+      const all = await this.get<StockMovement[]>(
+        `/api/stock/movements?itemId=${item.itemId}`,
+      );
+      this.issues.set(all.filter((m) => m.direction === 'Out'));
+    } catch {
+      /* the field stays empty and the server refuses an unnamed return */
+    }
+  }
+
   private blankMovement() {
     return {
       itemId: 0,
@@ -258,6 +285,7 @@ export class StockPage implements OnInit {
       batchNumber: null as string | null,
       batchExpiryDate: null as string | null,
       batchMrp: null as number | null,
+      returnsStockMovementId: null as number | null,
       notes: null as string | null,
     };
   }

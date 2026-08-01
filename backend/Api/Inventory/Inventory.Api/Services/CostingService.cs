@@ -149,6 +149,110 @@ public sealed class CostingService
             : (StockOutcome.Ok, total);
     }
 
+    /// <summary>
+    /// Puts returned stock back on the layers it left from, at the cost it left
+    /// at. Without this a return re-enters at whatever the running average
+    /// happens to be now, and buy-sell-return quietly changes what the stock is
+    /// worth even though nothing was bought or sold on net.
+    ///
+    /// Allocations are read from the original issue and given back in
+    /// proportion, oldest first, so a partial return takes back part of each.
+    /// The rows written are ordinary consumption rows against the return
+    /// movement — the movement's own direction is what says they are coming back
+    /// rather than going out, which keeps the table append-only.
+    /// </summary>
+    public async Task<(StockOutcome Outcome, decimal TotalCost)> ReturnToLayersAsync(
+        Item item,
+        StockMovement returnMovement,
+        long returnedMovementId,
+        CancellationToken ct)
+    {
+        if (!ConsumesLayers(item.CostingType))
+        {
+            return (StockOutcome.Ok, 0m);
+        }
+
+        List<CostLayerConsumption> original = await _db.CostLayerConsumptions
+            .AsNoTracking()
+            .Where(c => c.StockMovementId == returnedMovementId)
+            .OrderBy(c => c.CostLayerConsumptionId)
+            .ToListAsync(ct);
+
+        if (original.Count == 0)
+        {
+            return (StockOutcome.ReturnedMovementNotFound, 0m);
+        }
+
+        // What has already come back on earlier partial returns, so two returns
+        // of the same issue cannot together give back more than went out.
+        decimal alreadyReturned = await _db.CostLayerConsumptions
+            .Where(c => _db.StockMovements
+                .Any(m => m.StockMovementId == c.StockMovementId
+                    && m.ReturnsStockMovementId == returnedMovementId))
+            .SumAsync(c => (decimal?)c.Quantity, ct) ?? 0m;
+
+        decimal issued = original.Sum(c => c.Quantity);
+
+        if (returnMovement.Quantity + alreadyReturned > issued)
+        {
+            return (StockOutcome.ReturnExceedsIssue, 0m);
+        }
+
+        decimal outstanding = returnMovement.Quantity;
+        decimal total = 0m;
+
+        foreach (CostLayerConsumption allocation in original)
+        {
+            if (outstanding <= 0)
+            {
+                break;
+            }
+
+            decimal give = Math.Min(outstanding, allocation.Quantity);
+
+            // Guarded by the layer's own ceiling: a layer can never hold more
+            // than it originally received, so an over-return is refused by the
+            // database rather than silently inflating stock.
+            int restored = await _db.CostLayers
+                .Where(l => l.CostLayerId == allocation.CostLayerId
+                    && l.RemainingQuantity + give <= l.OriginalQuantity)
+                .ExecuteUpdateAsync(
+                    l => l.SetProperty(x => x.RemainingQuantity, x => x.RemainingQuantity + give),
+                    ct);
+
+            if (restored == 0)
+            {
+                continue;
+            }
+
+            decimal cost = Math.Round(
+                give * allocation.UnitCost, 2, MidpointRounding.AwayFromZero);
+
+            _db.CostLayerConsumptions.Add(new CostLayerConsumption
+            {
+                CostLayerId = allocation.CostLayerId,
+                StockMovementId = returnMovement.StockMovementId,
+                Quantity = give,
+                UnitCost = allocation.UnitCost,
+                TotalCost = cost,
+            });
+
+            outstanding = Math.Round(
+                outstanding - give, QuantityScale, MidpointRounding.AwayFromZero);
+            total += cost;
+        }
+
+        return outstanding > 0
+            ? (StockOutcome.InsufficientCostLayers, 0m)
+            : (StockOutcome.Ok, total);
+    }
+
+    /// <summary>Value straight from the layers — what a layered item is actually worth.</summary>
+    public async Task<decimal> LayeredValueAsync(long itemId, CancellationToken ct) =>
+        await _db.CostLayers
+            .Where(l => l.ItemId == itemId && l.RemainingQuantity > 0)
+            .SumAsync(l => (decimal?)(l.RemainingQuantity * l.UnitCost), ct) ?? 0m;
+
     /// <summary>What an issue actually took, for the stock ledger and a margin query.</summary>
     public async Task<IReadOnlyList<CostAllocationItem>> AllocationsAsync(
         long stockMovementId, CancellationToken ct) =>
