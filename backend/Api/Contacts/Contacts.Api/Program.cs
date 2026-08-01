@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
+using Shared.Kernel.Storage;
 using Shared.Kernel.Tenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -66,6 +67,13 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 
 builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<ContactPersonRoleService>();
+builder.Services.AddScoped<ContactAttachmentService>();
+
+// Uploaded files. Local disk is a working implementation rather than a stub —
+// an interface with nothing behind it is how ISecretStore, IEventPublisher and
+// IEmailSender ended up blocking startup. A blob-backed implementation slots in
+// behind the same interface without touching anything above it.
+builder.Services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a contact code is allocated inside the

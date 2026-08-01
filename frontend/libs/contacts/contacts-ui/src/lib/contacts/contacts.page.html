@@ -91,6 +91,15 @@
       <button type="button" [class.on]="tab() === 'persons'" (click)="tab.set('persons')">
         People ({{ form.persons.length }})
       </button>
+      <button type="button" [class.on]="tab() === 'banking'" (click)="tab.set('banking')">
+        Bank details ({{ form.bankDetails.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'licences'" (click)="tab.set('licences')">
+        Licences ({{ form.licences.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'documents'" (click)="tab.set('documents')">
+        Documents ({{ form.attachments.length }})
+      </button>
     </nav>
 
     @if (tab() === 'general') {
@@ -386,6 +395,245 @@
         Every contact needs at least one person, and exactly one of them is the default — invoices
         and reminders go to that person's email or mobile, so one of the two is required.
       </p>
+    }
+
+    @if (tab() === 'banking') {
+      <div class="child-actions">
+        <button type="button" (click)="addBankDetail()">+ Add account</button>
+      </div>
+
+      @for (bank of form.bankDetails; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label class="wide">
+              Account holder name
+              <input
+                type="text"
+                [(ngModel)]="bank.accountHolderName"
+                [name]="'holder' + $index"
+                maxlength="100"
+              />
+              <small>Exactly as on the passbook — a transfer is rejected when it differs.</small>
+            </label>
+
+            <label>
+              Bank
+              <input type="text" [(ngModel)]="bank.bankName" [name]="'bankName' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              Account number
+              <input type="text" [(ngModel)]="bank.accountNumber" [name]="'acctNo' + $index" maxlength="30" />
+            </label>
+
+            <label>
+              Account type
+              <select [(ngModel)]="bank.accountKind" [name]="'acctKind' + $index">
+                <option value="Savings">Savings</option>
+                <option value="Current">Current</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              IFSC
+              <input
+                type="text"
+                [(ngModel)]="bank.ifsc"
+                [name]="'ifsc' + $index"
+                maxlength="11"
+                style="text-transform: uppercase"
+              />
+            </label>
+
+            <label>
+              Branch
+              <input type="text" [(ngModel)]="bank.branchName" [name]="'branch' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              UPI id
+              <input type="text" [(ngModel)]="bank.upiId" [name]="'upi' + $index" maxlength="100" />
+              <small>Often the only detail a small vendor gives you.</small>
+            </label>
+          </div>
+
+          <div class="child-footer">
+            <label class="inline">
+              <input
+                type="radio"
+                name="defaultBank"
+                [checked]="bank.isDefault"
+                (change)="setDefaultBankDetail($index)"
+              />
+              Default payout account
+            </label>
+            <button type="button" class="link danger" (click)="removeBankDetail($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">
+          No payout accounts. These are the vendor's accounts — money we send out — not the
+          organization's own bank accounts, which live under Banking.
+        </p>
+      }
+    }
+
+    @if (tab() === 'licences') {
+      <div class="child-actions">
+        <button type="button" (click)="addLicence()">+ Add licence</button>
+      </div>
+
+      @for (licence of form.licences; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label>
+              Type
+              <select [(ngModel)]="licence.licenceType" [name]="'licType' + $index">
+                @for (type of licenceTypes; track type.value) {
+                  <option [value]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Number
+              <input type="text" [(ngModel)]="licence.licenceNumber" [name]="'licNo' + $index" maxlength="50" />
+            </label>
+
+            <label>
+              Issuing authority
+              <input
+                type="text"
+                [(ngModel)]="licence.issuingAuthority"
+                [name]="'licAuth' + $index"
+                maxlength="100"
+              />
+            </label>
+
+            <label>
+              Issued on
+              <input type="date" [(ngModel)]="licence.issuedOn" [name]="'licFrom' + $index" />
+            </label>
+
+            <label>
+              Expires on
+              <input type="date" [(ngModel)]="licence.expiresOn" [name]="'licTo' + $index" />
+              <small>Leave empty when the licence does not expire.</small>
+            </label>
+
+            <label>
+              Description
+              <input
+                type="text"
+                [(ngModel)]="licence.description"
+                [name]="'licDesc' + $index"
+                maxlength="100"
+              />
+              <small>"Form 20B", "Retail" — the authority's own wording.</small>
+            </label>
+          </div>
+
+          <div class="child-footer">
+            @switch (licenceStatus(licence)) {
+              @case ('expired') {
+                <span class="badge expired">Expired</span>
+              }
+              @case ('soon') {
+                <span class="badge soon">Expires within 30 days</span>
+              }
+              @case ('valid') {
+                <span class="badge valid">Valid</span>
+              }
+              @default {
+                <span class="muted">No expiry</span>
+              }
+            }
+            <button type="button" class="link danger" (click)="removeLicence($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">
+          No licences. A pharma distributor's drug licence belongs here — selling Schedule H stock
+          against a lapsed one is an offence, and nobody checks a date they cannot see.
+        </p>
+      }
+    }
+
+    @if (tab() === 'documents') {
+      @if (editingId() === null) {
+        <p class="hint">Save the contact first — a file has to be attached to something.</p>
+      } @else {
+        <div class="fields">
+          <label>
+            Document type
+            <select [(ngModel)]="uploadDocumentType" name="uploadType">
+              @for (type of documentTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Description
+            <input type="text" [(ngModel)]="uploadDescription" name="uploadDesc" maxlength="500" />
+          </label>
+
+          <label>
+            Expires on
+            <input type="date" [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
+            <small>Optional — for agreements and certificates that lapse.</small>
+          </label>
+
+          <label class="wide">
+            File
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp,image/tiff"
+              [disabled]="uploading()"
+              (change)="uploadFile($event)"
+            />
+            <small>PDF or image, up to 10 MB. The file uploads as soon as you choose it.</small>
+          </label>
+        </div>
+
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>File</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th>Expires</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (attachment of form.attachments; track attachment.contactAttachmentId) {
+              <tr>
+                <td>
+                  <div class="stack">
+                    <strong>{{ attachment.fileName }}</strong>
+                    @if (attachment.description) {
+                      <span class="muted">{{ attachment.description }}</span>
+                    }
+                  </div>
+                </td>
+                <td>{{ labelOf(documentTypes, attachment.documentType) }}</td>
+                <td>{{ formatSize(attachment.fileSizeBytes) }}</td>
+                <td>{{ attachment.expiryDate ?? '—' }}</td>
+                <td class="actions-col">
+                  <button type="button" class="link" (click)="downloadFile(attachment)">Download</button>
+                  <button type="button" class="link danger" (click)="deleteFile(attachment)">Remove</button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="muted">No documents yet.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
     }
 
     <div class="sheet-actions">

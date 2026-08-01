@@ -110,6 +110,10 @@ public sealed class ContactsController : ControllerBase
             {
                 Message = "Only one billing address and one shipping address can be the default.",
             }),
+            SaveContactOutcome.MultipleDefaultBankDetails => BadRequest(new MessageResponse
+            {
+                Message = "Only one payout account can be the default.",
+            }),
             SaveContactOutcome.TdsSectionRequired => BadRequest(new MessageResponse
             {
                 Message = "Enter the TDS section, or turn TDS off.",

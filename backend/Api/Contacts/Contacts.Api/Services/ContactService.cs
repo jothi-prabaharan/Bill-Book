@@ -134,6 +134,65 @@ public sealed class ContactService
             })
             .ToList();
 
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        detail.BankDetails = await _db.ContactBankDetails
+            .Where(b => b.ContactId == contactId)
+            .OrderByDescending(b => b.IsDefault)
+            .ThenBy(b => b.BankName)
+            .Select(b => new ContactBankDetailModel
+            {
+                ContactBankDetailId = b.ContactBankDetailId,
+                AccountHolderName = b.AccountHolderName,
+                BankName = b.BankName,
+                AccountNumber = b.AccountNumber,
+                Ifsc = b.Ifsc,
+                BranchName = b.BranchName,
+                AccountKind = b.AccountKind.ToString(),
+                UpiId = b.UpiId,
+                IsDefault = b.IsDefault,
+                IsActive = b.IsActive,
+            })
+            .ToListAsync(ct);
+
+        List<ContactLicence> licences = await _db.ContactLicences
+            .Where(l => l.ContactId == contactId)
+            .OrderBy(l => l.ExpiresOn ?? DateOnly.MaxValue)
+            .ToListAsync(ct);
+
+        detail.Licences = licences.Select(l => new ContactLicenceModel
+        {
+            ContactLicenceId = l.ContactLicenceId,
+            LicenceType = l.LicenceType.ToString(),
+            LicenceNumber = l.LicenceNumber,
+            Description = l.Description,
+            IssuingAuthority = l.IssuingAuthority,
+            IssuedOn = l.IssuedOn,
+            ExpiresOn = l.ExpiresOn,
+            IsActive = l.IsActive,
+            // Negative once lapsed, so the screen can say so without recomputing.
+            DaysUntilExpiry = l.ExpiresOn is DateOnly expires
+                ? expires.DayNumber - today.DayNumber
+                : null,
+        }).ToList();
+
+        detail.Attachments = await _db.ContactAttachments
+            .Where(a => a.ContactId == contactId && a.IsActive)
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new ContactAttachmentModel
+            {
+                ContactAttachmentId = a.ContactAttachmentId,
+                ContactId = a.ContactId,
+                DocumentType = a.DocumentType.ToString(),
+                FileName = a.FileName,
+                ContentType = a.ContentType,
+                FileSizeBytes = a.FileSizeBytes,
+                Description = a.Description,
+                ExpiryDate = a.ExpiryDate,
+                UploadedAt = a.CreatedAt,
+            })
+            .ToListAsync(ct);
+
         ContactPerson? defaultPerson = persons.FirstOrDefault(p => p.IsDefault);
         detail.Email = defaultPerson?.Email;
         detail.MobileNumber = defaultPerson?.MobileNumber;
@@ -333,7 +392,16 @@ public sealed class ContactService
             .GroupBy(a => a.AddressType)
             .Any(g => g.Count() > 1);
 
-        return duplicateDefaults ? SaveContactOutcome.MultipleDefaultAddresses : SaveContactOutcome.Ok;
+        if (duplicateDefaults)
+        {
+            return SaveContactOutcome.MultipleDefaultAddresses;
+        }
+
+        // Same rule as addresses and people: the filtered unique index would
+        // catch it, but as a 500 rather than something a user can act on.
+        return request.BankDetails.Count(b => b.IsActive && b.IsDefault) > 1
+            ? SaveContactOutcome.MultipleDefaultBankDetails
+            : SaveContactOutcome.Ok;
     }
 
     /// <summary>
@@ -405,6 +473,87 @@ public sealed class ContactService
             row.ContactPersonName = model.ContactPersonName;
             row.PhoneNumber = model.PhoneNumber;
             row.MobileNumber = model.MobileNumber;
+            row.IsActive = model.IsActive;
+        }
+
+        List<ContactBankDetail> existingBankDetails = await _db.ContactBankDetails
+            .Where(b => b.ContactId == contactId)
+            .ToListAsync(ct);
+
+        long[] keptBankIds = request.BankDetails
+            .Where(b => b.ContactBankDetailId > 0)
+            .Select(b => b.ContactBankDetailId)
+            .ToArray();
+
+        _db.ContactBankDetails.RemoveRange(
+            existingBankDetails.Where(b => !keptBankIds.Contains(b.ContactBankDetailId)));
+
+        // Cleared before any is set, so the filtered unique index never sees two.
+        foreach (ContactBankDetail row in existingBankDetails)
+        {
+            row.IsDefault = false;
+        }
+
+        foreach (ContactBankDetailModel model in request.BankDetails)
+        {
+            ContactBankDetail? row = model.ContactBankDetailId > 0
+                ? existingBankDetails.FirstOrDefault(
+                    b => b.ContactBankDetailId == model.ContactBankDetailId)
+                : null;
+
+            if (row is null)
+            {
+                row = new ContactBankDetail { ContactId = contactId };
+                _db.ContactBankDetails.Add(row);
+            }
+
+            row.AccountHolderName = model.AccountHolderName.Trim();
+            row.BankName = model.BankName.Trim();
+            row.AccountNumber = model.AccountNumber.Trim();
+            row.Ifsc = string.IsNullOrWhiteSpace(model.Ifsc)
+                ? null
+                : model.Ifsc.Trim().ToUpperInvariant();
+            row.BranchName = model.BranchName;
+            row.AccountKind = Enum.TryParse(model.AccountKind, ignoreCase: true, out BankAccountKind kind)
+                ? kind
+                : BankAccountKind.Current;
+            row.UpiId = model.UpiId;
+            row.IsDefault = model.IsDefault;
+            row.IsActive = model.IsActive;
+        }
+
+        List<ContactLicence> existingLicences = await _db.ContactLicences
+            .Where(l => l.ContactId == contactId)
+            .ToListAsync(ct);
+
+        long[] keptLicenceIds = request.Licences
+            .Where(l => l.ContactLicenceId > 0)
+            .Select(l => l.ContactLicenceId)
+            .ToArray();
+
+        _db.ContactLicences.RemoveRange(
+            existingLicences.Where(l => !keptLicenceIds.Contains(l.ContactLicenceId)));
+
+        foreach (ContactLicenceModel model in request.Licences)
+        {
+            ContactLicence? row = model.ContactLicenceId > 0
+                ? existingLicences.FirstOrDefault(l => l.ContactLicenceId == model.ContactLicenceId)
+                : null;
+
+            if (row is null)
+            {
+                row = new ContactLicence { ContactId = contactId };
+                _db.ContactLicences.Add(row);
+            }
+
+            row.LicenceType = Enum.TryParse(model.LicenceType, ignoreCase: true, out LicenceType type)
+                ? type
+                : LicenceType.Other;
+            row.LicenceNumber = model.LicenceNumber.Trim();
+            row.Description = model.Description;
+            row.IssuingAuthority = model.IssuingAuthority;
+            row.IssuedOn = model.IssuedOn;
+            row.ExpiresOn = model.ExpiresOn;
             row.IsActive = model.IsActive;
         }
 

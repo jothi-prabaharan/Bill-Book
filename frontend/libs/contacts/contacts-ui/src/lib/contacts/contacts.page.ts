@@ -60,6 +60,44 @@ interface PersonModel {
   isActive: boolean;
 }
 
+interface BankDetailModel {
+  contactBankDetailId: number;
+  accountHolderName: string;
+  bankName: string;
+  accountNumber: string;
+  ifsc: string | null;
+  branchName: string | null;
+  accountKind: 'Savings' | 'Current' | 'Other';
+  upiId: string | null;
+  isDefault: boolean;
+  isActive: boolean;
+}
+
+interface LicenceModel {
+  contactLicenceId: number;
+  licenceType: string;
+  licenceNumber: string;
+  description: string | null;
+  issuingAuthority: string | null;
+  issuedOn: string | null;
+  expiresOn: string | null;
+  isActive: boolean;
+  daysUntilExpiry: number | null;
+}
+
+interface AttachmentModel {
+  contactAttachmentId: number;
+  contactId: number;
+  documentType: string;
+  fileName: string;
+  contentType: string;
+  fileSizeBytes: number;
+  description: string | null;
+  expiryDate: string | null;
+  uploadedAt: string | null;
+  downloadUrl: string | null;
+}
+
 interface ContactDetail extends ContactListItem {
   legalName: string | null;
   pan: string | null;
@@ -76,6 +114,10 @@ interface ContactDetail extends ContactListItem {
   notes: string | null;
   addresses: AddressModel[];
   persons: PersonModel[];
+  bankDetails: BankDetailModel[];
+  licences: LicenceModel[];
+  /** Read-only through the aggregate — files have their own endpoint. */
+  attachments: AttachmentModel[];
 }
 
 interface PaymentTerm {
@@ -90,7 +132,28 @@ interface State {
   stateName: string;
 }
 
-type Tab = 'general' | 'addresses' | 'persons';
+type Tab = 'general' | 'addresses' | 'persons' | 'banking' | 'licences' | 'documents';
+
+/** Mirrors Contacts.Entity.Enums.LicenceType. */
+const LICENCE_TYPES: readonly { value: string; label: string }[] = [
+  { value: 'DrugLicence', label: 'Drug licence' },
+  { value: 'Fssai', label: 'FSSAI' },
+  { value: 'Bis', label: 'BIS' },
+  { value: 'MedicalRegistration', label: 'Medical registration' },
+  { value: 'Other', label: 'Other' },
+];
+
+/** Mirrors Contacts.Entity.Enums.AttachmentDocumentType. */
+const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
+  { value: 'GstCertificate', label: 'GST certificate' },
+  { value: 'PanCard', label: 'PAN card' },
+  { value: 'Agreement', label: 'Agreement' },
+  { value: 'PurchaseOrder', label: 'Purchase order' },
+  { value: 'CancelledCheque', label: 'Cancelled cheque' },
+  { value: 'Msme', label: 'MSME certificate' },
+  { value: 'Licence', label: 'Licence' },
+  { value: 'Other', label: 'Other' },
+];
 
 /**
  * Customers, vendors, job workers and prescribers — one master with role flags,
@@ -125,10 +188,18 @@ export class ContactsPage implements OnInit {
   protected readonly rolesOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
   protected readonly tab = signal<Tab>('general');
+  protected readonly uploading = signal(false);
+
+  protected readonly licenceTypes = LICENCE_TYPES;
+  protected readonly documentTypes = DOCUMENT_TYPES;
 
   search = '';
   roleFilter = '';
   showInactive = false;
+
+  uploadDocumentType = 'Other';
+  uploadDescription: string | null = null;
+  uploadExpiryDate: string | null = null;
 
   form: ContactDetail = this.blank();
 
@@ -191,7 +262,18 @@ export class ContactsPage implements OnInit {
   async openEdit(row: ContactListItem): Promise<void> {
     this.busy.set(true);
     try {
-      this.form = await this.get<ContactDetail>(`/api/contacts/${row.contactId}`);
+      const detail = await this.get<ContactDetail>(`/api/contacts/${row.contactId}`);
+
+      // The child collections drive @for loops, so an absent one has to become
+      // an empty array rather than reach the template as undefined.
+      this.form = {
+        ...detail,
+        addresses: detail.addresses ?? [],
+        persons: detail.persons ?? [],
+        bankDetails: detail.bankDetails ?? [],
+        licences: detail.licences ?? [],
+        attachments: detail.attachments ?? [],
+      };
       this.editingId.set(row.contactId);
       this.tab.set('general');
       this.editorOpen.set(true);
@@ -294,6 +376,182 @@ export class ContactsPage implements OnInit {
     this.form.persons = this.form.persons.map((p, i) => ({ ...p, isDefault: i === index }));
   }
 
+  addBankDetail(): void {
+    this.form.bankDetails = [
+      ...this.form.bankDetails,
+      {
+        contactBankDetailId: 0,
+        accountHolderName: this.form.legalName ?? this.form.displayName,
+        bankName: '',
+        accountNumber: '',
+        ifsc: null,
+        branchName: null,
+        accountKind: 'Current',
+        upiId: null,
+        // The first account is the default; after that it is a choice.
+        isDefault: !this.form.bankDetails.some((b) => b.isDefault),
+        isActive: true,
+      },
+    ];
+  }
+
+  removeBankDetail(index: number): void {
+    const removed = this.form.bankDetails[index];
+    const remaining = this.form.bankDetails.filter((_, i) => i !== index);
+
+    // A contact with accounts but no default would make a payment screen ask a
+    // question it has no reason to ask.
+    if (removed.isDefault && remaining.length > 0) {
+      remaining[0] = { ...remaining[0], isDefault: true };
+    }
+
+    this.form.bankDetails = remaining;
+  }
+
+  setDefaultBankDetail(index: number): void {
+    this.form.bankDetails = this.form.bankDetails.map((b, i) => ({
+      ...b,
+      isDefault: i === index,
+    }));
+  }
+
+  addLicence(): void {
+    this.form.licences = [
+      ...this.form.licences,
+      {
+        contactLicenceId: 0,
+        licenceType: 'DrugLicence',
+        licenceNumber: '',
+        description: null,
+        issuingAuthority: null,
+        issuedOn: null,
+        expiresOn: null,
+        isActive: true,
+        daysUntilExpiry: null,
+      },
+    ];
+  }
+
+  removeLicence(index: number): void {
+    this.form.licences = this.form.licences.filter((_, i) => i !== index);
+  }
+
+  /**
+   * Expired / expiring / valid, from the expiry date the user is looking at
+   * rather than the one the server sent — the row may have just been edited.
+   */
+  protected licenceStatus(licence: LicenceModel): 'none' | 'expired' | 'soon' | 'valid' {
+    if (!licence.expiresOn) {
+      return 'none';
+    }
+
+    const days = Math.floor(
+      (Date.parse(licence.expiresOn) - Date.parse(new Date().toISOString().slice(0, 10))) / 86_400_000,
+    );
+
+    return days < 0 ? 'expired' : days <= 30 ? 'soon' : 'valid';
+  }
+
+  /**
+   * Uploads immediately rather than on save. Files cannot ride in the contact's
+   * JSON body, and holding them in memory until save would lose them on cancel.
+   */
+  async uploadFile(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const contactId = this.editingId();
+
+    if (!file || contactId === null) {
+      return;
+    }
+
+    const body = new FormData();
+    body.append('file', file);
+    body.append('documentType', this.uploadDocumentType);
+    if (this.uploadDescription) {
+      body.append('description', this.uploadDescription);
+    }
+    if (this.uploadExpiryDate) {
+      body.append('expiryDate', this.uploadExpiryDate);
+    }
+
+    this.uploading.set(true);
+    try {
+      await new Promise<unknown>((resolve, reject) =>
+        this.http
+          .post(`/api/contacts/${contactId}/attachments`, body)
+          .subscribe({ next: resolve, error: reject }),
+      );
+
+      this.form.attachments = await this.get<AttachmentModel[]>(
+        `/api/contacts/${contactId}/attachments`,
+      );
+      this.uploadDescription = null;
+      this.uploadExpiryDate = null;
+      this.succeed('File uploaded.');
+    } catch (err: unknown) {
+      this.fail(this.messageOf(err, 'Could not upload that file.'));
+    } finally {
+      this.uploading.set(false);
+      // Clears the picker so choosing the same file again still fires a change.
+      input.value = '';
+    }
+  }
+
+  /**
+   * Fetches the bytes through the API rather than linking to them: the request
+   * needs the bearer token, which an anchor href cannot carry.
+   */
+  async downloadFile(attachment: AttachmentModel): Promise<void> {
+    try {
+      const blob = await new Promise<Blob>((resolve, reject) =>
+        this.http
+          .get(`/api/contacts/attachments/${attachment.contactAttachmentId}/download`, {
+            responseType: 'blob',
+          })
+          .subscribe({ next: resolve, error: reject }),
+      );
+
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = attachment.fileName;
+      anchor.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      this.fail('Could not download that file.');
+    }
+  }
+
+  async deleteFile(attachment: AttachmentModel): Promise<void> {
+    try {
+      await this.send('DELETE', `/api/contacts/attachments/${attachment.contactAttachmentId}`, {});
+      this.form.attachments = this.form.attachments.filter(
+        (a) => a.contactAttachmentId !== attachment.contactAttachmentId,
+      );
+      this.succeed('File removed.');
+    } catch (err: unknown) {
+      this.fail(this.messageOf(err, 'Could not remove that file.'));
+    }
+  }
+
+  protected formatSize(bytes: number): string {
+    if (bytes < 1024) {
+      return `${bytes} B`;
+    }
+
+    return bytes < 1_048_576
+      ? `${Math.round(bytes / 1024)} KB`
+      : `${(bytes / 1_048_576).toFixed(1)} MB`;
+  }
+
+  protected labelOf(
+    options: readonly { value: string; label: string }[],
+    value: string,
+  ): string {
+    return options.find((o) => o.value === value)?.label ?? value;
+  }
+
   onRolesClosed(): void {
     this.rolesOpen.set(false);
     void this.loadLookups();
@@ -379,6 +637,9 @@ export class ContactsPage implements OnInit {
       notes: null,
       addresses: [],
       persons: [],
+      bankDetails: [],
+      licences: [],
+      attachments: [],
     };
   }
 

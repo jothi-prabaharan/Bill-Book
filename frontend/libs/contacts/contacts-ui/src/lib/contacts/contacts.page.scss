@@ -19,6 +19,13 @@
 
 .chip { font-size: .62rem; background: #e3e9fd; color: #2743a8; padding: .05rem .3rem; border-radius: 3px; margin-right: .25rem; }
 
+/* Licence expiry. Colour is the cue but never the only one — each badge says
+   in words what it is, so it reads the same without colour vision. */
+.badge { font-size: .72rem; padding: .15rem .45rem; border-radius: 4px; }
+.badge.expired { background: #fbe4e0; color: #a52c17; }
+.badge.soon { background: #fdf0d5; color: #8a5b00; }
+.badge.valid { background: #e2f3e9; color: #187a4b; }
+
 .link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
 .link.danger { color: #c0392b; }
 button:not(.link) { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }

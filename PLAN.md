@@ -80,23 +80,24 @@ Small, and it turns eleven empty screens into a working system. Today a new orga
 
 Agreed scope that was specified and not delivered. Four of seven tables exist.
 
-- [ ] **2.1 — `IFileStorage`, with both implementations**
+- [~] **2.1 — `IFileStorage`, with both implementations** — *one of two shipped*
   `AzureBlobFileStorage` for production and `LocalDiskFileStorage` for development, shipped together — `ISecretStore`, `IEventPublisher` and `IEmailSender` are interface-only and that is exactly the trap to avoid repeating.
   *Done when*: DI starts in Development with no Azure account.
+  **`LocalDiskFileStorage` is written and registered; `AzureBlobFileStorage` is not.** `Azure.Storage.Blobs` is not in `Directory.Packages.props`, and adding a package reference that cannot be restored or compiled — the SDK hosts are blocked — would be worse than the gap. Carried to 5.9. The interface is not stubbed: it has a working implementation behind it, so DI starts.
 
-- [ ] **2.2 — `con.ContactAttachments`**
+- [x] **2.2 — `con.ContactAttachments`**
   Content-type allowlist, size cap from configuration, blob keys namespaced `{orgId}/contacts/{contactId}/…`, downloads through a signed URL minted per request rather than a public link.
   *Done when*: a GST certificate can be uploaded against a contact and downloaded back.
 
-- [ ] **2.3 — `con.ContactLicences`**
+- [x] **2.3 — `con.ContactLicences`**
   Drug licence, FSSAI, BIS, medical registration, each with an expiry.
   *Done when*: a contact with a lapsed drug licence is visible as such, and an expiring-licences report exists.
 
-- [ ] **2.4 — `con.ContactBankDetails`**
+- [x] **2.4 — `con.ContactBankDetails`**
   Vendor payout details: account holder, number, IFSC, UPI, one default.
   *Done when*: a vendor can hold more than one payout account with exactly one default.
 
-- [ ] **2.5 — Three more tabs on the contact page**
+- [x] **2.5 — Three more tabs on the contact page**
   Bank Details, Licences, Documents. Trading limits already live on the General tab.
   *Done when*: all seven specified tabs are present and save as part of the contact.
 
@@ -173,6 +174,9 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.7 — There are no tests and no linter**
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
+
+- [ ] **5.9 — `AzureBlobFileStorage`**
+  Left out of 2.1. Needs `Azure.Storage.Blobs` added to `Directory.Packages.props`, which cannot be restored or compiled while the SDK hosts are blocked. `GetDownloadUrlAsync` returning a real SAS URL is the reason to build it — until then every download streams through the API, which works but puts the bytes through the service.
 
 - [ ] **5.6 — Decide the numbering-series ownership exception**
   `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations`, so a code can be allocated inside the caller's transaction. It is a deliberate, documented exception to the no-shared-tables rule — either confirm it in `CLAUDE.md` or replace it with a table per service.

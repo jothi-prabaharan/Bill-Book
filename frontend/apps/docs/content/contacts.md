@@ -54,6 +54,46 @@ The default is where the contact's email and phone come from — there is no sep
 
 Roles come from a small master maintained in a popup, reachable from the contact list and from the form itself, so a missing role never forces you to abandon a half-filled contact. Renaming a built-in role is fine; deleting one that people hold is not — make it inactive, and existing contacts keep it so their history still reads correctly.
 
+## Bank details
+
+Where a **vendor is paid**: account holder, account number, IFSC, branch, and a UPI id — often the only detail a small vendor gives you.
+
+These are somebody else's accounts. They are deliberately separate from the organization's own accounts under **Banking**, which are accounts you hold, reconcile against a statement, and which each carry a ledger account. Nothing here posts to the ledger; it is payout information and nothing more.
+
+A contact can hold several accounts with **exactly one default** — the one a payment screen picks without asking. Setting a new default clears the old one, and removing the default hands it to the first account left, so a contact with accounts always has one.
+
+The account holder name is worth typing carefully: banks reject a transfer whose name does not match the account, and the rejection comes back days later.
+
+## Licences
+
+Registrations the contact holds, each with an expiry.
+
+| Type | Who holds it |
+|---|---|
+| Drug licence | Chemists and distributors — Form 20/21 retail, 20B/21B wholesale |
+| FSSAI | Anyone trading food lines and nutraceuticals |
+| BIS | Hallmarked jewellery |
+| Medical registration | Prescribers, from their state medical council |
+| Other | Anything else worth a renewal date |
+
+**The expiry is the point.** Supplying Schedule H stock to a chemist whose drug licence has lapsed is an offence, not an oversight, and nobody checks a date they cannot see. Each licence shows as **valid**, **expiring within 30 days**, or **expired** as soon as you open the tab.
+
+`GET /api/contacts/licences/expiring?withinDays=30` returns everything lapsing across all contacts, ordered soonest first, with negative days for ones already gone. A licence with no expiry date is simply never flagged.
+
+Licences are held here rather than as two columns on the contact because a distributor holds several, with different numbers and different dates.
+
+## Documents
+
+Files against the contact: GST certificate, PAN card, agreement, purchase order, cancelled cheque, MSME certificate, licence scan.
+
+**PDF or image, up to 10 MB.** Both the size cap and the accepted types are configuration, so a deployment that needs 25 MB scans can have them without a code change. The file uploads the moment you choose it — it does not wait for the contact to be saved — which also means the contact has to exist first; the tab says so on a contact you have not saved yet.
+
+Downloads go **through the API**, which checks your organization before handing over a byte, and always as a download rather than something the browser renders in place. Files are stored under a generated key beginning with the organization id, so the tenant boundary is in the storage path as well as in the row that points at it — the name you upload never decides where the file lands.
+
+Removing a document takes it off the list and leaves the stored file alone. A mistaken delete that also destroyed the bytes would be unrecoverable.
+
+An optional expiry date can be set on any document, for agreements and certificates that lapse.
+
 ## Trading limits
 
 Three limits, all optional:

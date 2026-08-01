@@ -66,3 +66,6 @@ Thumbs.db
 
 # Throwaway Chrome profile created by the "Web (Chrome, 4200)" debug config.
 .vscode/.chrome-debug-profile/
+
+# Files uploaded against a contact in Development — LocalDiskFileStorage's root.
+.files/

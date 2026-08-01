@@ -74,6 +74,13 @@ public class ContactDetail : ContactListItem
     public List<ContactAddressModel> Addresses { get; set; } = [];
 
     public List<ContactPersonModel> Persons { get; set; } = [];
+
+    public List<ContactBankDetailModel> BankDetails { get; set; } = [];
+
+    public List<ContactLicenceModel> Licences { get; set; } = [];
+
+    /// <summary>Read-only here; files are uploaded and removed on their own endpoint.</summary>
+    public List<ContactAttachmentModel> Attachments { get; set; } = [];
 }
 
 public class ContactAddressModel
@@ -248,6 +255,10 @@ public class SaveContactRequest
     public List<ContactAddressModel> Addresses { get; set; } = [];
 
     public List<ContactPersonModel> Persons { get; set; } = [];
+
+    public List<ContactBankDetailModel> BankDetails { get; set; } = [];
+
+    public List<ContactLicenceModel> Licences { get; set; } = [];
 }
 
 public enum SaveContactOutcome
@@ -269,6 +280,146 @@ public enum SaveContactOutcome
     UdyamNumberRequired = 14,
     InvalidValue = 15,
     UnknownRole = 16,
+    /// <summary>More than one payout account marked as the default.</summary>
+    MultipleDefaultBankDetails = 17,
 }
 
 public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode);
+
+public class ContactBankDetailModel
+{
+    /// <summary>Zero on a row being added.</summary>
+    public long ContactBankDetailId { get; set; }
+
+    [Required(ErrorMessage = "Account holder name is required.")]
+    [MaxLength(100, ErrorMessage = "Account holder name cannot exceed 100 characters.")]
+    public string AccountHolderName { get; set; } = null!;
+
+    [Required(ErrorMessage = "Bank name is required.")]
+    [MaxLength(100, ErrorMessage = "Bank name cannot exceed 100 characters.")]
+    public string BankName { get; set; } = null!;
+
+    [Required(ErrorMessage = "Account number is required.")]
+    [MaxLength(30, ErrorMessage = "Account number cannot exceed 30 characters.")]
+    public string AccountNumber { get; set; } = null!;
+
+    [MaxLength(11, ErrorMessage = "IFSC must be 11 characters.")]
+    public string? Ifsc { get; set; }
+
+    [MaxLength(100, ErrorMessage = "Branch name cannot exceed 100 characters.")]
+    public string? BranchName { get; set; }
+
+    [Required(ErrorMessage = "Account kind is required.")]
+    public string AccountKind { get; set; } = "Current";
+
+    [MaxLength(100, ErrorMessage = "UPI id cannot exceed 100 characters.")]
+    public string? UpiId { get; set; }
+
+    public bool IsDefault { get; set; }
+
+    public bool IsActive { get; set; } = true;
+}
+
+public class ContactLicenceModel
+{
+    /// <summary>Zero on a row being added.</summary>
+    public long ContactLicenceId { get; set; }
+
+    [Required(ErrorMessage = "Licence type is required.")]
+    public string LicenceType { get; set; } = "DrugLicence";
+
+    [Required(ErrorMessage = "Licence number is required.")]
+    [MaxLength(50, ErrorMessage = "Licence number cannot exceed 50 characters.")]
+    public string LicenceNumber { get; set; } = null!;
+
+    [MaxLength(100, ErrorMessage = "Description cannot exceed 100 characters.")]
+    public string? Description { get; set; }
+
+    [MaxLength(100, ErrorMessage = "Issuing authority cannot exceed 100 characters.")]
+    public string? IssuingAuthority { get; set; }
+
+    public DateOnly? IssuedOn { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>Filled on the way out: days until expiry, negative once lapsed.</summary>
+    public int? DaysUntilExpiry { get; set; }
+}
+
+/// <summary>
+/// An uploaded file. Read-only through the contact aggregate — files arrive on
+/// their own endpoint, because they cannot travel in a JSON body.
+/// </summary>
+public class ContactAttachmentModel
+{
+    public long ContactAttachmentId { get; set; }
+
+    public long ContactId { get; set; }
+
+    public string DocumentType { get; set; } = null!;
+
+    public string FileName { get; set; } = null!;
+
+    public string ContentType { get; set; } = null!;
+
+    public long FileSizeBytes { get; set; }
+
+    public string? Description { get; set; }
+
+    public DateOnly? ExpiryDate { get; set; }
+
+    public DateTimeOffset? UploadedAt { get; set; }
+
+    /// <summary>
+    /// Set when the backing store can mint a time-limited link. Null means the
+    /// caller should fetch the bytes from the download endpoint instead.
+    /// </summary>
+    public string? DownloadUrl { get; set; }
+}
+
+public class UploadAttachmentRequest
+{
+    [Required(ErrorMessage = "Document type is required.")]
+    public string DocumentType { get; set; } = "Other";
+
+    [MaxLength(500, ErrorMessage = "Description cannot exceed 500 characters.")]
+    public string? Description { get; set; }
+
+    public DateOnly? ExpiryDate { get; set; }
+}
+
+public enum AttachmentOutcome
+{
+    Ok = 0,
+    ContactNotFound = 1,
+    NotFound = 2,
+    NoFile = 3,
+    /// <summary>Larger than FileStorage:MaxBytes.</summary>
+    TooLarge = 4,
+    /// <summary>Content type is not on the allowlist.</summary>
+    UnsupportedType = 5,
+    InvalidValue = 6,
+}
+
+/// <summary>A licence that has expired, or is about to.</summary>
+public class ExpiringLicenceItem
+{
+    public long ContactId { get; set; }
+
+    public string ContactCode { get; set; } = null!;
+
+    public string DisplayName { get; set; } = null!;
+
+    public long ContactLicenceId { get; set; }
+
+    public string LicenceType { get; set; } = null!;
+
+    public string LicenceNumber { get; set; } = null!;
+
+    public DateOnly ExpiresOn { get; set; }
+
+    /// <summary>Negative once lapsed.</summary>
+    public int DaysUntilExpiry { get; set; }
+}

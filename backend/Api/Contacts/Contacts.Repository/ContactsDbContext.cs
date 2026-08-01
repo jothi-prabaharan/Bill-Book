@@ -25,6 +25,12 @@ public class ContactsDbContext : TenantDbContext
 
     public DbSet<ContactPersonRole> ContactPersonRoles => Set<ContactPersonRole>();
 
+    public DbSet<ContactBankDetail> ContactBankDetails => Set<ContactBankDetail>();
+
+    public DbSet<ContactLicence> ContactLicences => Set<ContactLicence>();
+
+    public DbSet<ContactAttachment> ContactAttachments => Set<ContactAttachment>();
+
     /// <summary>
     /// Mapped, not migrated. Accounting owns this table; Contacts maps the same
     /// Shared.Kernel entity so a contact code can be allocated inside the same
@@ -166,6 +172,71 @@ public class ContactsDbContext : TenantDbContext
 
             b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.RoleName })
                 .HasDatabaseName("IX_ContactPersonRoles_Order");
+        });
+
+        modelBuilder.Entity<ContactBankDetail>(b =>
+        {
+            b.HasKey(e => e.ContactBankDetailId);
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            // At most one default payout account per contact.
+            b.HasIndex(e => new { e.OrgId, e.ContactId })
+                .IsUnique()
+                .HasFilter("\"IsDefault\" = true")
+                .HasDatabaseName("IX_ContactBankDetails_Default");
+
+            b.Property(e => e.AccountKind).HasConversion<string>().HasMaxLength(10);
+
+            b.HasOne<Contact>()
+                .WithMany()
+                .HasForeignKey(e => e.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ContactLicence>(b =>
+        {
+            b.HasKey(e => e.ContactLicenceId);
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            // The expiring-licences report scans this: everything with a date,
+            // ordered by it. Filtered, because licences without one never match.
+            b.HasIndex(e => new { e.OrgId, e.ExpiresOn })
+                .HasFilter("\"ExpiresOn\" IS NOT NULL")
+                .HasDatabaseName("IX_ContactLicences_Expiry");
+
+            b.Property(e => e.LicenceType).HasConversion<string>().HasMaxLength(20);
+
+            b.HasOne<Contact>()
+                .WithMany()
+                .HasForeignKey(e => e.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_licence_dates",
+                "\"IssuedOn\" IS NULL OR \"ExpiresOn\" IS NULL OR \"ExpiresOn\" >= \"IssuedOn\""));
+        });
+
+        modelBuilder.Entity<ContactAttachment>(b =>
+        {
+            b.HasKey(e => e.ContactAttachmentId);
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            // One row per stored blob. Two rows pointing at one file would make
+            // deleting either of them orphan or destroy the other's bytes.
+            b.HasIndex(e => new { e.OrgId, e.StoragePath })
+                .IsUnique()
+                .HasDatabaseName("IX_ContactAttachments_Storage");
+
+            b.Property(e => e.DocumentType).HasConversion<string>().HasMaxLength(20);
+
+            b.HasOne<Contact>()
+                .WithMany()
+                .HasForeignKey(e => e.ContactId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_attachment_size",
+                "\"FileSizeBytes\" > 0"));
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it
