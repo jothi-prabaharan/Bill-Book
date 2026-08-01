@@ -2,10 +2,14 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Shared.Kernel\Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\Api\Inventory\Inventory.Api\Inventory.Api.csproj" />
   </ItemGroup>
 
 </Project>

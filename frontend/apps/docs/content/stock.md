@@ -123,7 +123,22 @@ This is what makes a disputed margin answerable: the cost of a sale can be walke
 
 Layers come down the same way stock does — a guarded statement, never a read followed by a write, so two sales cannot take the same last unit of a layer.
 
-Costing runs **inside the same transaction** as the movement. Layers and stock have to agree exactly, and committing them together is the only way to guarantee it.
+## When the cost is settled
+
+**The quantity moves inside the request. What it cost is settled a moment later**, by the costing engine.
+
+That split is deliberate. A till cannot wait for layer arithmetic to finish, and it must never sell the last unit twice — so the decrement is synchronous and everything downstream is not. A movement carries its costing state, so an unsettled cost reads as *"costing…"* rather than as zero.
+
+Batch numbers and serial numbers are still checked **in the request**. Both are things a person typed: a batch that does not exist, or a serial that is not on the shelf, is the caller's mistake and is answered as one rather than surfacing later as a background failure nobody is watching.
+
+Asynchronous costing brings two hard problems, and the engine solves both by **using the movements table as the queue** rather than a message broker:
+
+- **Order.** FIFO gives the wrong answer if movements are costed out of sequence. Work is read in `(item, date, id)` order and processed one at a time per item, so the order is a property of the read rather than something a broker has to promise.
+- **Exactly once.** A movement is claimed by a guarded status change from *Pending* to *In progress*. Two engines racing means one of them changes no rows and moves on. There is no redelivery to guard against, because there is no delivery.
+
+A restart loses nothing: a movement's state is a row, not a message in flight. Claims left behind by a crashed engine are reclaimed after a timeout.
+
+A movement that keeps failing stops after a set number of attempts and is marked **Failed**, with the reason on the row. It does not retry forever, because a cost that cannot settle needs a person, and an infinite retry hides that. The stock screen says so at the top.
 
 ## Returns
 
@@ -137,7 +152,7 @@ Partial returns are fine, and are given back oldest allocation first. Two partia
 
 A receipt entered late, dated before sales that have already happened, is a problem: under FIFO that stock **should** have gone out first, and it did not. The sales after it were costed against the wrong layers.
 
-Recording such a receipt **restates them automatically**. The affected sales are unwound, their quantity is given back to the layers it came from, and each one is replayed in date order against the layers as they now stand.
+Recording such a receipt **restates them automatically**. The affected sales are unwound, their quantity is given back to the layers it came from, and they go back into the costing queue — where the engine replays them in date order like any other pending work, rather than through a second, different code path.
 
 Nothing is deleted. The old allocations keep their rows, marked as superseded — a restated cost is only defensible if what it replaced is still readable. And **quantities never change**: what moved, moved. Only what it cost changes.
 

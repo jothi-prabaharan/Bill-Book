@@ -159,9 +159,30 @@ public class StockMovementListItem
 
     public long? ReturnsStockMovementId { get; set; }
 
+    /// <summary>Pending, InProgress, Costed, Skipped or Failed — costing is asynchronous.</summary>
+    public string CostingStatus { get; set; } = null!;
+
+    public DateTimeOffset? CostedAt { get; set; }
+
+    public string? CostingError { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTimeOffset? RecordedAt { get; set; }
+}
+
+/// <summary>How far behind costing is, and whether anything has given up.</summary>
+public class CostingQueueStatus
+{
+    public int Pending { get; set; }
+
+    public int InProgress { get; set; }
+
+    /// <summary>Movements that failed enough times to stop retrying. These need a person.</summary>
+    public int Failed { get; set; }
+
+    /// <summary>The oldest movement still waiting, so "behind" can be read as a duration.</summary>
+    public DateTimeOffset? OldestPendingAt { get; set; }
 }
 
 /// <summary>

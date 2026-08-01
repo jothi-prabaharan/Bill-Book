@@ -140,12 +140,44 @@ public sealed class StockService
                 ResultingWeightedAverageCost = x.m.ResultingWeightedAverageCost,
                 SourceType = x.m.SourceType,
                 SourceId = x.m.SourceId,
+                ReturnsStockMovementId = x.m.ReturnsStockMovementId,
+                CostingStatus = x.m.CostingStatus.ToString(),
+                CostedAt = x.m.CostedAt,
+                CostingError = x.m.CostingError,
                 Notes = x.m.Notes,
                 RecordedAt = x.m.CreatedAt,
             })
             .OrderByDescending(m => m.MovementDate)
             .ThenByDescending(m => m.StockMovementId)
             .ToListAsync(ct);
+    }
+
+    /// <summary>
+    /// How far behind costing is. Worth showing rather than hiding: an
+    /// asynchronous cost that silently stopped settling would leave every
+    /// margin report quietly wrong.
+    /// </summary>
+    public async Task<CostingQueueStatus> CostingQueueAsync(CancellationToken ct)
+    {
+        var counts = await _db.StockMovements
+            .Where(m => m.CostingStatus == CostingStatus.Pending
+                || m.CostingStatus == CostingStatus.InProgress
+                || m.CostingStatus == CostingStatus.Failed)
+            .GroupBy(m => m.CostingStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
+        DateTimeOffset? oldest = await _db.StockMovements
+            .Where(m => m.CostingStatus == CostingStatus.Pending)
+            .MinAsync(m => (DateTimeOffset?)m.CreatedAt, ct);
+
+        return new CostingQueueStatus
+        {
+            Pending = counts.FirstOrDefault(c => c.Status == CostingStatus.Pending)?.Count ?? 0,
+            InProgress = counts.FirstOrDefault(c => c.Status == CostingStatus.InProgress)?.Count ?? 0,
+            Failed = counts.FirstOrDefault(c => c.Status == CostingStatus.Failed)?.Count ?? 0,
+            OldestPendingAt = oldest,
+        };
     }
 
     /// <summary>What an issue took, layer by layer. Empty on a weighted-average item.</summary>
@@ -414,29 +446,28 @@ public sealed class StockService
         _db.StockMovements.Add(movement);
         await _db.SaveChangesAsync(ct);
 
-        // Costing runs inside this transaction rather than on a worker. Layers
-        // and movements have to agree exactly, and the only way to guarantee
-        // that is to commit them together — an async pass would have to solve
-        // ordering and exactly-once delivery to reach the same place.
-        (StockOutcome costed, decimal? layeredCost) =
-            await ApplyCostingAsync(item, movement, direction, request, ct);
+        // Batch and serial handling stays here: both are user input, and a bad
+        // batch number or a serial that is not on the shelf has to fail the save
+        // rather than surface later as a costing error nobody is watching.
+        (StockOutcome prepared, long? batchId) =
+            await PrepareTrackingAsync(item, movement, direction, request, ct);
 
-        if (costed != StockOutcome.Ok)
+        if (prepared != StockOutcome.Ok)
         {
             await tx.RollbackAsync(ct);
-            return Fail(costed);
+            return Fail(prepared);
         }
 
-        // On a layered item the issue's real cost is what the layers gave up,
-        // not the running average — that is the whole point of the method.
-        if (layeredCost is decimal cogs)
-        {
-            movement.TotalCost = cogs;
-            movement.UnitCost = quantity > 0
-                ? Math.Round(cogs / quantity, 6, MidpointRounding.AwayFromZero)
-                : null;
-            await _db.SaveChangesAsync(ct);
-        }
+        // Costing itself is the worker's. The quantity has moved and the caller
+        // can be answered; what it cost is settled shortly afterwards, and the
+        // status on the row is what says so rather than a null cost that could
+        // be mistaken for free stock.
+        movement.ItemBatchId = batchId;
+        movement.CostingStatus = NeedsCosting(item, type, direction)
+            ? CostingStatus.Pending
+            : CostingStatus.Costed;
+
+        await _db.SaveChangesAsync(ct);
 
         if (after is not null)
         {
@@ -503,18 +534,19 @@ public sealed class StockService
     }
 
     /// <summary>
-    /// Resolves the batch, moves the serials, and creates or consumes layers.
-    /// Runs inside the caller's transaction, after the movement has an id.
+    /// Resolves the lot and moves the serials, inside the request. Both are
+    /// user input: a batch number that does not exist, or a serial that is not
+    /// on the shelf, is the caller's mistake and has to be answered as one.
+    ///
+    /// Layers are deliberately not touched here — that is the worker's.
     /// </summary>
-    private async Task<(StockOutcome Outcome, decimal? LayeredCost)> ApplyCostingAsync(
+    private async Task<(StockOutcome Outcome, long? BatchId)> PrepareTrackingAsync(
         Item item,
         StockMovement movement,
         StockDirection direction,
         RecordStockMovementRequest request,
         CancellationToken ct)
     {
-        // A transfer changes neither the pool nor the layers — it is a location
-        // fact, and re-costing it would invent a cost that nothing paid.
         if (!AffectsPool(movement.MovementType))
         {
             return (StockOutcome.Ok, null);
@@ -526,91 +558,51 @@ public sealed class StockService
             return (batchOutcome, null);
         }
 
-        // A return that names the issue it reverses goes back onto the layers
-        // the stock left from, at the cost it left at. Creating a fresh layer
-        // instead would re-enter it at today's cost and change what the stock is
-        // worth without anything having been bought.
-        if (direction == StockDirection.In
-            && IsReturn(movement.MovementType)
-            && request.ReturnsStockMovementId is long returnedId)
-        {
-            StockOutcome valid = await ValidateReturnedMovementAsync(item, returnedId, ct);
-            if (valid != StockOutcome.Ok)
-            {
-                return (valid, null);
-            }
-
-            (StockOutcome returned, decimal returnedCost) =
-                await _costing.ReturnToLayersAsync(item, movement, returnedId, ct);
-
-            if (returned != StockOutcome.Ok)
-            {
-                return (returned, null);
-            }
-
-            await _db.SaveChangesAsync(ct);
-
-            return CostingService.ConsumesLayers(item.CostingType)
-                ? (StockOutcome.Ok, returnedCost)
-                : (StockOutcome.Ok, null);
-        }
-
         if (direction == StockDirection.In)
         {
-            CostLayer layer = _costing.CreateLayer(
-                item,
-                movement,
-                batch?.ItemBatchId,
-                batch?.ExpiryDate ?? request.BatchExpiryDate,
-                movement.UnitCost ?? 0m);
-
-            await _db.SaveChangesAsync(ct);
-
-            StockOutcome created = await CreateSerialsAsync(item, movement, batch, layer, request, ct);
-            if (created != StockOutcome.Ok)
+            if (IsReturn(movement.MovementType)
+                && request.ReturnsStockMovementId is long returnedId)
             {
-                return (created, null);
-            }
-
-            // A receipt dated before issues that already consumed layers means
-            // those issues were costed against stock that should have gone out
-            // first. Unwind and replay them rather than leaving the earlier
-            // sales costed at a figure the receipt has since made wrong.
-            if (await _costing.IsBackdatedAsync(item, movement, ct))
-            {
-                (StockOutcome recosted, int _, decimal __) =
-                    await _costing.RecostAsync(item, movement, ct);
-
-                if (recosted != StockOutcome.Ok)
+                StockOutcome valid = await ValidateReturnedMovementAsync(item, returnedId, ct);
+                if (valid != StockOutcome.Ok)
                 {
-                    return (recosted, null);
+                    return (valid, null);
                 }
             }
 
-            return (StockOutcome.Ok, null);
+            // Serials are created without a layer id — the layer does not exist
+            // yet. The worker points them at it once it does.
+            StockOutcome created = await CreateSerialsAsync(item, movement, batch, request, ct);
+            return created == StockOutcome.Ok
+                ? (StockOutcome.Ok, batch?.ItemBatchId)
+                : (created, null);
         }
 
-        (StockOutcome retired, List<long> layerIds) =
+        (StockOutcome retired, List<long> _) =
             await RetireSerialsAsync(item, movement, request, ct);
 
-        if (retired != StockOutcome.Ok)
+        return retired == StockOutcome.Ok
+            ? (StockOutcome.Ok, batch?.ItemBatchId)
+            : (retired, null);
+    }
+
+    /// <summary>
+    /// Whether the worker has anything to do. A transfer moves nothing to cost,
+    /// and an issue on weighted average is already costed by the running average
+    /// — marking those Pending would leave a queue that never drains.
+    /// </summary>
+    private static bool NeedsCosting(
+        Item item, StockMovementType type, StockDirection direction)
+    {
+        if (!AffectsPool(type))
         {
-            return (retired, null);
+            return false;
         }
 
-        (StockOutcome consumed, decimal cost) =
-            await _costing.ConsumeAsync(item, movement, layerIds, ct);
-
-        if (consumed != StockOutcome.Ok)
-        {
-            return (consumed, null);
-        }
-
-        await _db.SaveChangesAsync(ct);
-
-        return CostingService.ConsumesLayers(item.CostingType)
-            ? (StockOutcome.Ok, cost)
-            : (StockOutcome.Ok, null);
+        // Inbound always creates a layer, whatever the method: the layer is the
+        // receipt, and one never written could not be reconstructed later.
+        return direction == StockDirection.In
+            || CostingService.ConsumesLayers(item.CostingType);
     }
 
     /// <summary>Only a return can name a movement it reverses.</summary>
@@ -683,14 +675,14 @@ public sealed class StockService
     }
 
     /// <summary>
-    /// Creates one serial per unit received, each pointing at the layer it
-    /// arrived on — which is what specific identification reads its cost from.
+    /// Creates one serial per unit received. The layer they arrived on is
+    /// attached by the worker, because it does not exist yet — costing runs
+    /// after the request has been answered.
     /// </summary>
     private async Task<StockOutcome> CreateSerialsAsync(
         Item item,
         StockMovement movement,
         ItemBatch? batch,
-        CostLayer layer,
         RecordStockMovementRequest request,
         CancellationToken ct)
     {
@@ -720,7 +712,6 @@ public sealed class StockService
                     && !string.IsNullOrWhiteSpace(request.HallmarkNumbers[i])
                         ? request.HallmarkNumbers[i].Trim()
                         : null,
-                CostLayerId = layer.CostLayerId,
                 Status = SerialStatus.InStock,
                 WarehouseId = movement.WarehouseId,
                 ReceivedMovementId = movement.StockMovementId,

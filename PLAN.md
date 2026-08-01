@@ -145,17 +145,22 @@ The largest piece, and what makes `CostingType` honest. Today an item set to FEF
   Selection is implemented too, since it is a single ORDER BY once the layers exist: FIFO by receipt date, LIFO reversed, FEFO by expiry with nulls last, specific identification straight off the serial's own layer. Weighted average creates layers and consumes none — it keeps a running average instead, and its layers stand as receipt history.
   **Deliberate deviation to review in 4.2**: costing runs *inside* the movement's transaction, not on a worker. `CLAUDE.md` says costing is async. Committing layers with the movement is the only way to guarantee they never drift, and it removes 4.3's entire problem class — an async pass would have to solve ordering and exactly-once delivery to arrive back at the same guarantee. If the worker is still wanted, it should take recosting and backdating rather than first-pass allocation.
 
-- [ ] **4.2 — `CostingEngine.Worker`** — **needs a decision before it is built**
+- [x] **4.2 — `CostingEngine.Worker`**
   Layer selection per method — FIFO by receipt date, FEFO by expiry, specific identification by serial — consumed with an `xmin` compare-and-swap, never read-then-write.
   *Done when*: the same purchases and sale produce different, correct COGS under each method.
-  **Selection and the guarded consume are already done, inline, in 4.1.** What is left of this item is the question of whether a worker should exist at all. Recommendation: it should, but owning **recosting and backdating** (4.4), not first-pass allocation — moving allocation off the transaction would reintroduce the ordering and exactly-once problems 4.3 exists to solve, in exchange for nothing.
-  The *done when* line above cannot be demonstrated here: there is no test project and no SDK to run one (5.7, 0.2). Whoever unblocks the build should write that test first — it is three purchases, one sale, and five expected COGS figures.
+  Built as the owner decided: **costing is asynchronous**. `StockService` records the movement, moves the pool and marks it `Pending`; the worker settles the cost. Batch and serial handling stays in the request, because both are user input and belong in the answer to the caller rather than in a background failure.
+  The worker walks organizations from `internal/customers/active-organizations` and sets the tenant on its own scope, since it has no request to take one from.
+  *Done when* still cannot be demonstrated here — no test project, no SDK (5.7, 0.2). It is three purchases, one sale, five expected COGS figures; write it first when the build unblocks.
 
-- [ ] **4.3 — Per-item event ordering**
+- [x] **4.3 — Per-item event ordering**
   Service Bus is unordered and at-least-once; FIFO consumes the wrong layer if movements arrive out of sequence.
   *Done when*: movements replayed out of order still cost identically, and a redelivered event does not double-count.
+  Solved by making **the movements table the queue** instead of putting a broker in the path. Ordering comes from `ORDER BY ItemId, MovementDate, StockMovementId` — a property of the read, not a promise from a broker. Exactly-once comes from claiming a movement with a guarded `Pending → InProgress` update: two workers racing means one changes no rows. There is no redelivery to dedupe because there is no delivery, and the unique index on (issue, layer) would refuse a duplicate allocation anyway.
+  A crashed worker's claims are reclaimed after a timeout, and a movement that keeps failing is parked as `Failed` with the reason on the row rather than retrying forever.
+  If a broker is added later it should **wake** the loop, not replace it — the database stays the source of truth.
 
 - [~] **4.4 — Backdated receipts and recosting** — *restated and visible; the journal half waits on 5.12*
+  Now runs on the worker with everything else: a backdated receipt unwinds the affected issues and puts them **back in the queue**, so the replay is ordinary pending work rather than a second code path.
   A receipt dated before issues that already consumed layers invalidates every allocation after it. Unwind, replay, and post a COGS adjustment — reversing, never editing a posted entry.
   *Done when*: inserting a backdated receipt restates COGS and the adjustment is visible as its own journal.
   Recording a backdated receipt now unwinds every issue on or after its date, returns the quantity to the layers it came from, and replays them in date order against the layers as they now stand. Allocations are **superseded, never deleted** — `CostLayerConsumption.SupersededAt` plus a batch id, with the unique index filtered to current rows so the replacement can sit beside what it replaced. Quantities are untouched throughout; only cost moves.

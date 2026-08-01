@@ -373,6 +373,19 @@ public class InventoryDbContext : TenantDbContext
 
             b.Property(e => e.MovementType).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(3);
+            b.Property(e => e.CostingStatus).HasConversion<string>().HasMaxLength(12);
+
+            // The costing queue, read in the order the worker consumes it.
+            // Filtered: settled movements are the overwhelming majority and the
+            // worker never looks at them.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.MovementDate, e.StockMovementId })
+                .HasFilter("\"CostingStatus\" IN ('Pending', 'InProgress')")
+                .HasDatabaseName("IX_StockMovements_CostingQueue");
+
+            b.HasOne<ItemBatch>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemBatchId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             foreach (string qty in new[] { "EnteredQuantity", "Quantity" })
             {

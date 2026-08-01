@@ -20,6 +20,29 @@ public sealed class InternalCustomersController : ControllerBase
 
     public InternalCustomersController(PlatformDbContext db) => _db = db;
 
+    /// <summary>
+    /// Every branch that is ready to be worked on, with the database it lives
+    /// in. Background workers have no request to take a tenant from, so they
+    /// walk this list instead.
+    /// </summary>
+    [HttpGet("active-organizations")]
+    public async Task<IActionResult> ActiveOrganizations(CancellationToken ct)
+    {
+        var rows = await (
+            from o in _db.Organizations
+            join d in _db.CustomerDatabases on o.CustomerId equals d.CustomerId
+            where o.Status == TenantStatus.Active && d.Status == ProvisioningStatus.Ready
+            orderby o.CustomerId, o.OrgId
+            select new
+            {
+                o.CustomerId,
+                o.OrgId,
+                d.DatabaseName,
+            }).ToListAsync(ct);
+
+        return Ok(rows);
+    }
+
     [HttpGet("{customerId:guid}/database")]
     public async Task<IActionResult> GetDatabase(Guid customerId, CancellationToken ct)
     {

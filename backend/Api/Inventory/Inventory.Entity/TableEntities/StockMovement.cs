@@ -30,6 +30,13 @@ public class StockMovement : OrgScopedEntity
     /// <summary>Where it happened. A location dimension — it never partitions the pool.</summary>
     public long? WarehouseId { get; set; }
 
+    /// <summary>
+    /// The lot this movement is against. Resolved in the request, because a bad
+    /// batch number should fail the save rather than surface later as a costing
+    /// error nobody is watching.
+    /// </summary>
+    public long? ItemBatchId { get; set; }
+
     public StockMovementType MovementType { get; set; }
 
     public StockDirection Direction { get; set; }
@@ -87,6 +94,20 @@ public class StockMovement : OrgScopedEntity
 
     /// <summary>The source document line. Zero when the movement is not line-level.</summary>
     public long SourceLineId { get; set; }
+
+    // --- Costing state. Costing is asynchronous, so a movement carries where
+    // it has got to rather than leaving a reader to guess from a null cost.
+
+    public CostingStatus CostingStatus { get; set; } = CostingStatus.Pending;
+
+    public DateTimeOffset? CostedAt { get; set; }
+
+    /// <summary>Attempts so far. A movement that keeps failing stops rather than retrying forever.</summary>
+    public int CostingAttempts { get; set; }
+
+    /// <summary>Why the last attempt failed, kept so the failure can be diagnosed without logs.</summary>
+    [MaxLength(500, ErrorMessage = "Costing error cannot exceed 500 characters.")]
+    public string? CostingError { get; set; }
 
     /// <summary>
     /// The issue this movement returns, when it is a return. Without it a

@@ -73,7 +73,18 @@ interface StockMovement {
   sourceType: string | null;
   sourceId: number | null;
   returnsStockMovementId: number | null;
+  costingStatus: 'Pending' | 'InProgress' | 'Costed' | 'Skipped' | 'Failed';
+  costedAt: string | null;
+  costingError: string | null;
   notes: string | null;
+}
+
+/** How far behind the costing engine is. */
+interface CostingQueue {
+  pending: number;
+  inProgress: number;
+  failed: number;
+  oldestPendingAt: string | null;
 }
 
 interface Unit {
@@ -136,6 +147,7 @@ export class StockPage implements OnInit {
   protected readonly movementTypes = MANUAL_TYPES;
   protected readonly allocations = signal<CostAllocation[]>([]);
   protected readonly recostings = signal<Recosting[]>([]);
+  protected readonly costingQueue = signal<CostingQueue | null>(null);
 
   /** Typed as one per line, so a scanner can be held down into the box. */
   serialText = '';
@@ -149,6 +161,19 @@ export class StockPage implements OnInit {
   ngOnInit(): void {
     void this.load();
     void this.loadLookups();
+    void this.loadCostingQueue();
+  }
+
+  /**
+   * Costing settles after the sale, so a stalled engine has to be visible.
+   * Silently unsettled costs would show up as margins that are quietly wrong.
+   */
+  async loadCostingQueue(): Promise<void> {
+    try {
+      this.costingQueue.set(await this.get<CostingQueue>('/api/stock/costing-queue'));
+    } catch {
+      this.costingQueue.set(null);
+    }
   }
 
   async load(): Promise<void> {
@@ -245,9 +270,10 @@ export class StockPage implements OnInit {
         hallmarkNumbers: lines(this.hallmarkText),
       });
       this.movementFor.set(null);
-      this.message.set('Stock movement recorded.');
+      this.message.set('Stock movement recorded. Its cost settles shortly.');
       this.messageIsError.set(false);
       await this.load();
+      await this.loadCostingQueue();
     } catch (err: unknown) {
       const anyErr = err as { error?: { message?: string } };
       this.fail(anyErr?.error?.message ?? 'Could not record that movement.');

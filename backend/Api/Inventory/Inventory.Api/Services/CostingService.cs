@@ -153,109 +153,191 @@ public sealed class CostingService
 
 
     /// <summary>
-    /// Restates every issue on or after a backdated receipt.
+    /// Costs one movement. This is the worker's entry point, and the only
+    /// caller: the request path records the movement and leaves.
     ///
-    /// A receipt dated before issues that have already consumed layers
-    /// invalidates every allocation after it — under FIFO the backdated stock
-    /// should have gone out first, and it did not. Under FEFO a lot expiring
-    /// sooner should have gone first. Either way the answer is the same: unwind
-    /// the affected allocations, put the quantity back on the layers they came
-    /// from, and replay each issue in date order against the layers as they now
-    /// stand.
-    ///
-    /// Nothing is deleted. Superseded allocations keep their rows, because a
-    /// restated cost is only defensible if what it replaced is still readable.
-    /// Quantities are untouched throughout: what moved, moved. Only what it cost
-    /// changes.
+    /// Idempotent by construction. The claim is a guarded status change, so a
+    /// movement already taken by another worker affects no rows and is left
+    /// alone; and the unique index on (issue, layer) refuses a second allocation
+    /// even if a claim were somehow duplicated.
     /// </summary>
-    public async Task<(StockOutcome Outcome, int Restated, decimal TotalDelta)> RecostAsync(
-        Item item, StockMovement trigger, CancellationToken ct)
+    public async Task<StockOutcome> CostMovementAsync(
+        Item item, StockMovement movement, CancellationToken ct)
     {
-        if (!ConsumesLayers(item.CostingType))
+        if (!AffectsPool(movement.MovementType) || !ConsumesLayers(item.CostingType))
         {
-            return (StockOutcome.Ok, 0, 0m);
+            // Transfers move nothing to cost, and weighted average keeps a
+            // running figure rather than layers. Inbound still needs its layer,
+            // so only outbound is genuinely nothing to do.
+            if (movement.Direction == StockDirection.Out || !AffectsPool(movement.MovementType))
+            {
+                return StockOutcome.Ok;
+            }
         }
 
-        // Every issue the backdated receipt could have supplied, oldest first —
-        // replay order has to match the order the sales actually happened in, or
-        // FIFO produces a different answer than it would have at the time.
+        if (movement.Direction == StockDirection.In)
+        {
+            return await CostInboundAsync(item, movement, ct);
+        }
+
+        List<long> serialLayers = await SerialLayersAsync(item, movement, ct);
+
+        (StockOutcome outcome, decimal cost) =
+            await ConsumeAsync(item, movement, serialLayers, ct);
+
+        if (outcome != StockOutcome.Ok)
+        {
+            return outcome;
+        }
+
+        await StampCostAsync(movement, cost, ct);
+        return StockOutcome.Ok;
+    }
+
+    /// <summary>
+    /// A receipt becomes a layer; a return goes back onto the layers it left
+    /// from. Serials received earlier are pointed at the new layer here, because
+    /// the layer did not exist when the request created them.
+    /// </summary>
+    private async Task<StockOutcome> CostInboundAsync(
+        Item item, StockMovement movement, CancellationToken ct)
+    {
+        if (IsReturn(movement.MovementType) && movement.ReturnsStockMovementId is long returnedId)
+        {
+            (StockOutcome returned, decimal returnedCost) =
+                await ReturnToLayersAsync(item, movement, returnedId, ct);
+
+            if (returned != StockOutcome.Ok)
+            {
+                return returned;
+            }
+
+            if (ConsumesLayers(item.CostingType))
+            {
+                await StampCostAsync(movement, returnedCost, ct);
+            }
+
+            await _db.SaveChangesAsync(ct);
+            return StockOutcome.Ok;
+        }
+
+        // The lot was resolved when the movement was saved, so the expiry that
+        // FEFO orders by comes straight off it.
+        DateOnly? expiresOn = movement.ItemBatchId is null
+            ? null
+            : await _db.ItemBatches
+                .Where(b => b.ItemBatchId == movement.ItemBatchId)
+                .Select(b => b.ExpiryDate)
+                .FirstOrDefaultAsync(ct);
+
+        CostLayer layer = CreateLayer(
+            item, movement, movement.ItemBatchId, expiresOn, movement.UnitCost ?? 0m);
+
+        await _db.SaveChangesAsync(ct);
+
+        // Serials were created with the movement, before the layer existed.
+        await _db.ItemSerials
+            .Where(s => s.ReceivedMovementId == movement.StockMovementId && s.CostLayerId == null)
+            .ExecuteUpdateAsync(s => s.SetProperty(x => x.CostLayerId, layer.CostLayerId), ct);
+
+        // A receipt dated before sales that already happened means those sales
+        // were costed against stock that should have gone out first. They go
+        // back in the queue rather than being replayed here, so the worker keeps
+        // processing one movement at a time in order.
+        if (await IsBackdatedAsync(item, movement, ct))
+        {
+            await RequeueAffectedAsync(item, movement, ct);
+        }
+
+        return StockOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Puts every issue on or after a backdated receipt back in the queue, with
+    /// its current allocations unwound. The worker then recosts them in date
+    /// order like any other pending work — which is what keeps recosting from
+    /// needing a second, different code path.
+    /// </summary>
+    private async Task RequeueAffectedAsync(
+        Item item, StockMovement trigger, CancellationToken ct)
+    {
         List<StockMovement> affected = await _db.StockMovements
-            .AsNoTracking()
             .Where(m => m.ItemId == item.ItemId
                 && m.Direction == StockDirection.Out
                 && m.MovementDate >= trigger.MovementDate
-                && m.StockMovementId != trigger.StockMovementId)
+                && m.StockMovementId != trigger.StockMovementId
+                && m.CostingStatus == CostingStatus.Costed)
             .OrderBy(m => m.MovementDate)
             .ThenBy(m => m.StockMovementId)
             .ToListAsync(ct);
 
         if (affected.Count == 0)
         {
-            return (StockOutcome.Ok, 0, 0m);
+            return;
         }
 
         Guid batch = Guid.NewGuid();
         DateTimeOffset runAt = DateTimeOffset.UtcNow;
 
-        // Unwind first, all of it, so the replay sees every layer restored. Doing
-        // it issue by issue would replay the earliest against layers the later
-        // ones still hold.
-        Dictionary<long, decimal> previousCosts = await UnwindAsync(affected, batch, runAt, ct);
-
-        int restated = 0;
-        decimal totalDelta = 0m;
+        Dictionary<long, decimal> previous = await UnwindAsync(affected, batch, runAt, ct);
 
         foreach (StockMovement issue in affected)
         {
-            List<long> serialLayers = await SerialLayersAsync(item, issue, ct);
+            issue.CostingStatus = CostingStatus.Pending;
+            issue.CostedAt = null;
 
-            (StockOutcome outcome, decimal newCost) =
-                await ConsumeAsync(item, issue, serialLayers, ct, batch);
-
-            if (outcome != StockOutcome.Ok)
+            // Held so the replay can report what the cost was before it ran.
+            _db.RecostingAdjustments.Add(new RecostingAdjustment
             {
-                return (outcome, 0, 0m);
-            }
-
-            decimal previous = previousCosts.GetValueOrDefault(issue.StockMovementId);
-            decimal delta = newCost - previous;
-
-            if (delta != 0m)
-            {
-                _db.RecostingAdjustments.Add(new RecostingAdjustment
-                {
-                    RecostingBatchId = batch,
-                    ItemId = item.ItemId,
-                    StockMovementId = issue.StockMovementId,
-                    TriggerStockMovementId = trigger.StockMovementId,
-                    PreviousCost = previous,
-                    NewCost = newCost,
-                    Delta = delta,
-                    RunAt = runAt,
-                });
-
-                restated++;
-                totalDelta += delta;
-            }
-
-            // The movement's own cost columns follow the allocation, so the
-            // stock ledger and the adjustment never disagree.
-            await _db.StockMovements
-                .Where(m => m.StockMovementId == issue.StockMovementId)
-                .ExecuteUpdateAsync(
-                    m => m
-                        .SetProperty(x => x.TotalCost, newCost)
-                        .SetProperty(
-                            x => x.UnitCost,
-                            issue.Quantity > 0
-                                ? Math.Round(newCost / issue.Quantity, 6, MidpointRounding.AwayFromZero)
-                                : null),
-                    ct);
+                RecostingBatchId = batch,
+                ItemId = item.ItemId,
+                StockMovementId = issue.StockMovementId,
+                TriggerStockMovementId = trigger.StockMovementId,
+                PreviousCost = previous.GetValueOrDefault(issue.StockMovementId),
+                NewCost = 0m,
+                Delta = -previous.GetValueOrDefault(issue.StockMovementId),
+                RunAt = runAt,
+            });
         }
 
         await _db.SaveChangesAsync(ct);
-        return (StockOutcome.Ok, restated, totalDelta);
     }
+
+    /// <summary>
+    /// Writes the settled cost onto the movement, and completes any recosting
+    /// adjustment waiting on it.
+    /// </summary>
+    private async Task StampCostAsync(
+        StockMovement movement, decimal cost, CancellationToken ct)
+    {
+        await _db.StockMovements
+            .Where(m => m.StockMovementId == movement.StockMovementId)
+            .ExecuteUpdateAsync(
+                m => m
+                    .SetProperty(x => x.TotalCost, cost)
+                    .SetProperty(
+                        x => x.UnitCost,
+                        movement.Quantity > 0
+                            ? Math.Round(cost / movement.Quantity, 6, MidpointRounding.AwayFromZero)
+                            : null),
+                ct);
+
+        // An adjustment written by RequeueAffectedAsync is only half finished —
+        // it knows what the cost was, not what it became. Close it here.
+        await _db.RecostingAdjustments
+            .Where(a => a.StockMovementId == movement.StockMovementId && a.NewCost == 0m)
+            .ExecuteUpdateAsync(
+                a => a
+                    .SetProperty(x => x.NewCost, cost)
+                    .SetProperty(x => x.Delta, x => cost - x.PreviousCost),
+                ct);
+    }
+
+    private static bool IsReturn(StockMovementType type) =>
+        type is StockMovementType.SalesReturn or StockMovementType.PurchaseReturn;
+
+    private static bool AffectsPool(StockMovementType type) =>
+        type is not (StockMovementType.TransferIn or StockMovementType.TransferOut);
 
     /// <summary>
     /// Retires the current allocations of the given issues and gives their

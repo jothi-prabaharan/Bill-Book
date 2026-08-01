@@ -56,6 +56,15 @@ public sealed class StockController : ControllerBase
         Ok(await _stock.AllocationsAsync(stockMovementId, ct));
 
     /// <summary>
+    /// How far behind costing is. Costing is asynchronous, so this is how a
+    /// stalled engine becomes visible rather than showing up as margins that
+    /// are quietly wrong.
+    /// </summary>
+    [HttpGet("costing-queue")]
+    public async Task<IActionResult> CostingQueue(CancellationToken ct) =>
+        Ok(await _stock.CostingQueueAsync(ct));
+
+    /// <summary>
     /// Costs restated by backdated receipts. Each row is one sale whose cost of
     /// goods sold changed, and the receipt that changed it.
     /// </summary>

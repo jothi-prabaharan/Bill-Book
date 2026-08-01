@@ -19,6 +19,20 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
+@if (costingQueue(); as queue) {
+  @if (queue.failed > 0) {
+    <p class="error">
+      {{ queue.failed }} movement(s) could not be costed and have stopped retrying. Their
+      quantities are correct; their costs are not settled. This needs looking at.
+    </p>
+  } @else if (queue.pending + queue.inProgress > 0) {
+    <p class="notice">
+      {{ queue.pending + queue.inProgress }} movement(s) waiting to be costed. Quantities are
+      already up to date; costs settle a moment behind.
+    </p>
+  }
+}
+
 <p class="hint">
   One quantity and one cost per item, across every warehouse in this branch. Stock is a shared
   pool — a warehouse records where a movement happened, it does not hold a balance of its own.
@@ -254,7 +268,22 @@
               {{ movement.direction === 'Out' ? '−' : '+' }}{{ movement.quantity }}
               {{ item.inventoryUomCode }}
             </td>
-            <td class="num">{{ movement.unitCost ?? '—' }}</td>
+            <td class="num">
+              @switch (movement.costingStatus) {
+                @case ('Costed') {
+                  {{ movement.unitCost ?? '—' }}
+                }
+                @case ('Skipped') {
+                  {{ movement.unitCost ?? '—' }}
+                }
+                @case ('Failed') {
+                  <span class="badge out" [title]="movement.costingError ?? ''">Failed</span>
+                }
+                @default {
+                  <span class="badge low">Costing…</span>
+                }
+              }
+            </td>
             <td class="num">{{ movement.resultingWeightedAverageCost ?? '—' }}</td>
             <td>
               @if (movement.sourceType) {
