@@ -159,18 +159,39 @@ public sealed class AccountService
         return DeleteAccountOutcome.Ok;
     }
 
-    /// <summary>Writes the default chart of accounts for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the default chart of accounts, adding only the control accounts an
+    /// organization does not already have.
+    ///
+    /// Deliberately per-account rather than all-or-nothing. The seed list grows:
+    /// the three bank parent groups were added after organizations already
+    /// existed, and an all-or-nothing guard would skip them forever, leaving
+    /// those organizations unable to create a bank account. Re-running this is
+    /// how such a gap is closed, and the unique index on
+    /// (OrgId, AccountSystemName) makes running it twice harmless.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.Accounts.IgnoreQueryFilters().AnyAsync(a => a.OrgId == orgId, ct))
+        List<string> existing = await _db.Accounts
+            .IgnoreQueryFilters()
+            .Where(a => a.OrgId == orgId && a.AccountSystemName != null)
+            .Select(a => a.AccountSystemName!)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing];
+
+        List<Account> missing = Repository.SeedData.ChartOfAccountsSeed.Build(orgId)
+            .Where(a => a.AccountSystemName is not null && !present.Contains(a.AccountSystemName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<Account> seed = Repository.SeedData.ChartOfAccountsSeed.Build(orgId);
-        _db.Accounts.AddRange(seed);
+        _db.Accounts.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-        return seed.Count;
+        return missing.Count;
     }
 
     /// <summary>

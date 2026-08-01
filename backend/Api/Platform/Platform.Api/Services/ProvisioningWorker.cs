@@ -99,9 +99,29 @@ public sealed class ProvisioningWorker : BackgroundService
             job.OrgId, job.OwnerEmail, job.OwnerDisplayName,
             job.OwnerMobileNumber, job.OwnerPassword), ct);
 
-        // 4. Fan out — Accounting seeds CoA + Tax Master, others migrate schemas.
+        // 4. Fan out. The event is published for whatever consumes it later, but
+        //    it is not what seeds the organization: the only IEventPublisher
+        //    implementation logs and drops, so relying on it left every new
+        //    organization with no chart of accounts, no units and no numbering.
+        //    The seeder calls each service directly and is the step that counts.
         await events.PublishAsync(new CustomerProvisioned(
             job.CustomerId, job.OrgId, safeName), ct);
+
+        ITenantSeeder seeder = scope.ServiceProvider.GetRequiredService<ITenantSeeder>();
+        IReadOnlyList<string> unseeded = await seeder.SeedAsync(job.CustomerId, job.OrgId, ct);
+
+        // An organization missing its master data is not ready, whatever the
+        // rest of provisioning did: no journal can post without a chart of
+        // accounts, and no item can be saved without a unit type. Failing here
+        // sends it to admin retry instead of handing the customer an account
+        // that looks finished and is not. Every seed is idempotent, so the
+        // retry is safe.
+        if (unseeded.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Provisioning could not seed: {string.Join(", ", unseeded)}. "
+                + "The organization has been left unprovisioned for retry.");
+        }
 
         // 5. Flip statuses; login stays blocked until this commits.
         Customer customer = await db.Customers.FirstAsync(c => c.CustomerId == job.CustomerId, ct);

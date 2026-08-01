@@ -37,6 +37,12 @@ builder.Services.AddHostedService<EmailDispatchWorker>();
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 
+// Writes each service's master data for a new organization. A named client
+// rather than a typed one, because one seeder talks to several services and
+// sets the base address per call.
+builder.Services.AddHttpClient("seeding");
+builder.Services.AddScoped<ITenantSeeder, HttpTenantSeeder>();
+
 // Cross-service seams — Platform never touches another service's DbContext.
 builder.Services.AddHttpClient<IIdentityAdmin, IdentityAdminClient>(client =>
 {

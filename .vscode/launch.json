@@ -62,6 +62,51 @@
       "justMyCode": true
     },
     {
+      "name": "Contacts.Api (5005)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Contacts/Contacts.Api/bin/Debug/net10.0/Contacts.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Contacts/Contacts.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5005"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Inventory.Api (5006)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api/bin/Debug/net10.0/Inventory.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5006"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Banking.Api (5007)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Banking/Banking.Api/bin/Debug/net10.0/Banking.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Banking/Banking.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5007"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
       "name": "Gateway (5000)",
       "type": "coreclr",
       "request": "launch",
@@ -76,16 +121,14 @@
       "stopAtEntry": false,
       "justMyCode": true
     },
-
     {
       "name": "Attach to .NET process",
       "type": "coreclr",
       "request": "attach",
       "processId": "${command:pickProcess}"
     },
-
     {
-      "name": "Web · Development (Chrome, 4200)",
+      "name": "Web \u00b7 Development (Chrome, 4200)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-web",
@@ -105,10 +148,12 @@
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
       "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
-      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+      "runtimeArgs": [
+        "--disable-features=CalculateNativeWinOcclusion"
+      ]
     },
     {
-      "name": "Web · Staging (Chrome, 4200)",
+      "name": "Web \u00b7 Staging (Chrome, 4200)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-web-staging",
@@ -128,10 +173,12 @@
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
       "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
-      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+      "runtimeArgs": [
+        "--disable-features=CalculateNativeWinOcclusion"
+      ]
     },
     {
-      "name": "Docs · Development (Chrome, 4300)",
+      "name": "Docs \u00b7 Development (Chrome, 4300)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-docs",
@@ -151,10 +198,12 @@
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
       "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
-      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+      "runtimeArgs": [
+        "--disable-features=CalculateNativeWinOcclusion"
+      ]
     },
     {
-      "name": "Docs · Staging (Chrome, 4300)",
+      "name": "Docs \u00b7 Staging (Chrome, 4300)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-docs-staging",
@@ -174,7 +223,9 @@
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
       "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
-      "runtimeArgs": ["--disable-features=CalculateNativeWinOcclusion"]
+      "runtimeArgs": [
+        "--disable-features=CalculateNativeWinOcclusion"
+      ]
     },
     {
       "name": "Web (Chrome, attach 9222)",
@@ -205,14 +256,17 @@
   ],
   "compounds": [
     {
-      "name": "🚀 Everything (APIs + Gateway + Web)",
+      "name": "\ud83d\ude80 Everything (APIs + Gateway + Web)",
       "configurations": [
         "Identity.Api (5001)",
         "Platform.Api (5002)",
         "Master.Api (5003)",
         "Accounting.Api (5004)",
+        "Contacts.Api (5005)",
+        "Inventory.Api (5006)",
+        "Banking.Api (5007)",
         "Gateway (5000)",
-        "Web · Development (Chrome, 4200)"
+        "Web \u00b7 Development (Chrome, 4200)"
       ],
       "stopAll": true
     },
@@ -223,6 +277,9 @@
         "Platform.Api (5002)",
         "Master.Api (5003)",
         "Accounting.Api (5004)",
+        "Contacts.Api (5005)",
+        "Inventory.Api (5006)",
+        "Banking.Api (5007)",
         "Gateway (5000)"
       ],
       "stopAll": true
@@ -230,16 +287,16 @@
     {
       "name": "Frontend only (Web + Docs, Development)",
       "configurations": [
-        "Web · Development (Chrome, 4200)",
-        "Docs · Development (Chrome, 4300)"
+        "Web \u00b7 Development (Chrome, 4200)",
+        "Docs \u00b7 Development (Chrome, 4300)"
       ],
       "stopAll": true
     },
     {
       "name": "Frontend only (Web + Docs, Staging)",
       "configurations": [
-        "Web · Staging (Chrome, 4200)",
-        "Docs · Staging (Chrome, 4300)"
+        "Web \u00b7 Staging (Chrome, 4200)",
+        "Docs \u00b7 Staging (Chrome, 4300)"
       ],
       "stopAll": true
     }

@@ -57,20 +57,21 @@ Until this stage is finished, every claim about this repository is "written", no
 
 Small, and it turns eleven empty screens into a working system. Today a new organization gets **no master data at all**, so the Item page cannot save anything: an item needs a unit type, and none exist.
 
-- [ ] **1.1 — Organization-created hook**
-  Platform publishes it; each service subscribes. One mechanism, not a call per service.
+- [x] **1.1 — Organization-created hook**
+  Done, as a call rather than an event. `ProvisioningWorker` published `CustomerProvisioned` through `IEventPublisher`, whose only implementation logs "EVENT (not delivered)" — which is exactly why eight seed methods had no caller. `ITenantSeeder` now calls each service's `POST internal/seed/organization` in turn, guarded by `[InternalOnly]` and a shared key, with the tenant on the request because the worker holds no user token. The event is still published for whatever consumes it later.
+  Provisioning now **fails** when a service cannot be seeded, rather than flipping the organization to Active with no master data.
   *Done when*: creating an organization causes every service to run its seed exactly once, and twice is harmless.
 
-- [ ] **1.2 — Wire the eight orphaned seeds to it**
-  `SeedForOrganizationAsync` exists with **zero callers** in: chart of accounts, tax master, numbering series, payment terms, contact person roles, unit types + units, metal purities.
+- [x] **1.2 — Wire the eight orphaned seeds to it**
+  All eight now run from the seed endpoints in Accounting, Contacts and Inventory. Accounting seeds first, because tax rates provision sub-accounts beneath its control accounts.
   *Done when*: a brand-new organization has a chart of accounts, six tax rates, five numbering series, six payment terms, eight contact roles, six unit types with their units, and the standard metal purities.
 
-- [ ] **1.3 — Gateway routes for Contacts, Inventory and Banking**
-  Every page calls `/api/…` with nothing routing those paths.
+- [x] **1.3 — Gateway routes for Contacts, Inventory and Banking**
+  Eleven routes and three clusters added, with Contacts on 5005, Inventory on 5006 and Banking on 5007. The three services had no launch configuration at all, so those were added too and folded into both compounds. `internal/*` stays unrouted, which is what keeps the seed endpoints off the public surface.
   *Done when*: each new page loads its data through the gateway rather than a direct service address.
 
-- [ ] **1.4 — Backfill migration for the bank parent accounts**
-  Organizations seeded before Banking landed have no 1400 / 1500 / 2300 groups, so creating a bank account fails with "the chart of accounts has no bank parent group".
+- [x] **1.4 — Backfill for the bank parent accounts**
+  Solved by making the chart-of-accounts seed idempotent **per account** rather than all-or-nothing: it now adds only the control accounts an organization lacks. Re-running the seed endpoint closes the gap, and the unique index on (OrgId, AccountSystemName) makes it safe to run repeatedly. Better than a data migration, which would have needed raw SQL outside the four cases CLAUDE.md allows, and would have fixed this one gap only.
   *Done when*: an organization created before that change can add a bank account.
 
 ---
@@ -166,6 +167,9 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.5 — Refresh `CLAUDE.md`**
   Its "Current state", "Blocking gaps" and "Not yet built" sections all predate this work, and the login gap it calls blocking is closed.
+
+- [ ] **5.8 — Make the remaining seeds idempotent per row**
+  The chart of accounts now adds only what is missing. Tax masters, numbering series, payment terms, contact person roles, unit types and metal purities still bail out if the organization has any rows at all, so anything added to those seed lists later will never reach an existing organization.
 
 - [ ] **5.7 — There are no tests and no linter**
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.

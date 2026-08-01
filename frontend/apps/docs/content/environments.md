@@ -152,3 +152,28 @@ Each launch configuration has a matching task — `serve-web`, `serve-web-stagin
 `apps/portal`, `apps/admin` and `apps/desktop` are empty shells with no build targets. They get environment files and debug configurations when they get something to build.
 
 The eight backend services that are not yet implemented — Contacts, Crm, Inventory, Sales, Purchase, Banking, Support, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
+
+## Service-to-service key
+
+Platform's provisioning worker calls each service's `internal/seed/organization`
+endpoint to write that service's master data for a new organization. Those
+endpoints take the organization to act on as a parameter rather than from a
+token, because the worker has no user token — so they are guarded by a shared
+key rather than a JWT.
+
+| Setting | Where |
+|---|---|
+| `Internal:ApiKey` | Platform (sender), Accounting, Contacts, Inventory (receivers) |
+
+All four must hold the **same** value. Development ships a throwaway key so a
+clone runs with no setup; Staging, UAT and Production ship blank and read it
+from `Internal__ApiKey` in the environment.
+
+A blank key on a receiver **refuses every internal call** rather than accepting
+them. That is deliberate: a misconfigured deployment fails loudly instead of
+leaving an unauthenticated endpoint that can seed any organization it is given
+the id of.
+
+These routes are also absent from the gateway, so they are not reachable from
+outside the cluster — but that is a routing detail, not a control, which is why
+the key exists as well.
