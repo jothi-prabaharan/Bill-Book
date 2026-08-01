@@ -75,6 +75,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - An account could be made its own ancestor through a chain of parents, producing a chart of accounts that no report could total. Parent changes now reject cycles.
 
 ### Security
+- **Branch isolation is now enforced by the database for the chart of accounts, sub-accounts and tax rates.** Those three were the last tables relying on the application alone to keep one branch's rows out of another's. They now carry the same row-level security policy every other table already had, so the boundary holds however the data is reached.
 - Trial expiry pauses access without locking you out of your account: you can still sign in, see why access stopped and renew. Feature pages and their APIs both refuse access until the licence is renewed.
 - Password reset never reveals whether an email address is registered.
 

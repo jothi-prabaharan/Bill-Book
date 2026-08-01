@@ -183,8 +183,10 @@ The largest piece, and what makes `CostingType` honest. Today an item set to FEF
 
 Independent of the stages above; take any of them whenever.
 
-- [ ] **5.1 — RLS policies on `acc.Accounts`, `acc.SubAccounts`, `acc.TaxMasters`**
+- [x] **5.1 — RLS policies on `acc.Accounts`, `acc.SubAccounts`, `acc.TaxMasters`**
   The only per-customer tables without one. They rely on the EF query filter alone, which `CLAUDE.md` treats as the first line of defence, not the last.
+  Confirmed by reading every migration rather than from memory: those three were the only per-customer tables in the system with no policy — `acc.NumberingSeries` and `acc.PaymentTerms` in the same schema already had one. Added in `AddAccountingRowLevelSecurity`, each `DROP POLICY IF EXISTS` first so the migration is safe to re-run.
+  **Also fixed while here**: four migrations had no `.Designer.cs` — `OrganizationIsTheBranch`, `DropNumberingBranchId`, `DropBranchId` and the new one. Three of those were mine. EF diffs `migrations add` against the last Designer, so a missing one makes the *next* migration wrong, which would have surfaced as a confusing bad diff at 0.4 rather than as an obvious omission.
 
 - [ ] **5.2 — Surface sub-account provisioning failures in Contacts**
   `ContactService` discards the result, so a contact can save while its receivable and payable sub-accounts silently fail. Banking already does this properly — copy that pattern, including the retry action.
