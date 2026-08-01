@@ -9,7 +9,6 @@ interface NumberingSeries {
   seriesCode: string;
   seriesName: string;
   seriesFor: 'Master' | 'Document';
-  branchId: number | null;
   prefix: string | null;
   suffix: string | null;
   separator: string | null;
@@ -28,14 +27,6 @@ interface NumberingSeries {
   isActive: boolean;
   displayOrder: number;
   preview: string;
-}
-
-/** Branches come from Platform — they live in the master database, next to the org. */
-interface Branch {
-  branchId: number;
-  branchCode: string;
-  branchName: string;
-  isHeadOffice: boolean;
 }
 
 type FormModel = Omit<
@@ -78,10 +69,7 @@ export class NumberingSeriesPage implements OnInit {
    */
   private readonly financialYearStartMonth = 4;
 
-  private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
-
   protected readonly rows = signal<NumberingSeries[]>([]);
-  protected readonly branches = signal<Branch[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -100,41 +88,6 @@ export class NumberingSeriesPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
-    void this.loadBranches();
-  }
-
-  /** A series without a branch applies org-wide, so a failure here is not fatal. */
-  private async loadBranches(): Promise<void> {
-    try {
-      this.branches.set(
-        await this.get<Branch[]>(`/api/organizations/${this.orgId()}/branches`),
-      );
-    } catch {
-      /* the picker falls back to "All branches" */
-    }
-  }
-
-  protected branchNameOf(branchId: number | null): string {
-    if (branchId === null) {
-      return 'All branches';
-    }
-
-    return this.branches().find((b) => b.branchId === branchId)?.branchName ?? String(branchId);
-  }
-
-  /**
-   * Copies the chosen branch's code onto the series. The code is stored on the
-   * series rather than read from the branch on every compose: composing a
-   * document number must never reach across into the master database, and a
-   * branch renamed later must not silently restyle numbers already issued.
-   */
-  onBranchChange(): void {
-    const branch = this.branches().find((b) => b.branchId === this.form.branchId);
-    this.form.branchCode = branch?.branchCode ?? null;
-
-    if (!branch) {
-      this.form.includeBranchCode = false;
-    }
   }
 
   async load(): Promise<void> {
@@ -161,7 +114,6 @@ export class NumberingSeriesPage implements OnInit {
       seriesCode: row.seriesCode,
       seriesName: row.seriesName,
       seriesFor: row.seriesFor,
-      branchId: row.branchId,
       prefix: row.prefix,
       suffix: row.suffix,
       separator: row.separator,
@@ -336,7 +288,6 @@ export class NumberingSeriesPage implements OnInit {
       seriesCode: '',
       seriesName: '',
       seriesFor: 'Master',
-      branchId: null,
       prefix: '',
       suffix: '',
       separator: '-',

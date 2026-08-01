@@ -54,13 +54,15 @@ public static class NumberingSeriesModel
             // the entity carry the defaults instead.
             b.HasIndex(e => new { e.OrgId, e.SeriesName }).IsUnique();
 
-            // The lookup the generator runs on every save.
-            b.HasIndex(e => new { e.OrgId, e.SeriesCode, e.BranchId })
+            // The lookup the generator runs on every save. Scoped by OrgId,
+            // which is the branch — the series table is already per-branch, so
+            // there is nothing further to key on.
+            b.HasIndex(e => new { e.OrgId, e.SeriesCode })
                 .HasDatabaseName("IX_NumberingSeries_Lookup");
 
-            // One default per code and branch, enforced by the database rather
-            // than by whoever remembers to clear the old one.
-            b.HasIndex(e => new { e.OrgId, e.SeriesCode, e.BranchId })
+            // One default per code, enforced by the database rather than by
+            // whoever remembers to clear the old one.
+            b.HasIndex(e => new { e.OrgId, e.SeriesCode })
                 .IsUnique()
                 .HasFilter("\"IsDefault\" = true")
                 .HasDatabaseName("IX_NumberingSeries_Default");

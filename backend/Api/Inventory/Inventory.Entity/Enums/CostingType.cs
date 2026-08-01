@@ -11,7 +11,7 @@ public enum CostingType
     /// <summary>Not stocked. Services and non-inventory items.</summary>
     None = 0,
 
-    /// <summary>One average cost per item, company-wide across every branch.</summary>
+    /// <summary>One average cost per item, across every warehouse in the branch.</summary>
     WeightedAverage = 1,
 
     /// <summary>Cost layers consumed oldest receipt first.</summary>

@@ -61,6 +61,6 @@ See [Chart of accounts](#/chart-of-accounts) and [GST & tax](#/gst).
 
 ## Designed, not built
 
-- **Contacts**, **Items**, **UOM**, **Branch/Warehouse**, **Item Category**
+- **Contacts**, **Items**, **UOM**, **Warehouse**, **Item Category**
 
 These belong to the Contacts and Inventory services, neither of which exists yet. Until they do, the only sub-accounts in the system are the tax ones — the contact and item provisioning paths are built and tested by nothing.

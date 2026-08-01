@@ -93,8 +93,6 @@ public class WarehouseListItem
 
     public string WarehouseType { get; set; } = null!;
 
-    public long? BranchId { get; set; }
-
     public string StorageType { get; set; } = null!;
 
     public string? AddressLine1 { get; set; }
@@ -135,8 +133,6 @@ public class SaveWarehouseRequest
 
     [Required(ErrorMessage = "Warehouse type is required.")]
     public string WarehouseType { get; set; } = "Store";
-
-    public long? BranchId { get; set; }
 
     [Required(ErrorMessage = "Storage type is required.")]
     public string StorageType { get; set; } = "Ambient";

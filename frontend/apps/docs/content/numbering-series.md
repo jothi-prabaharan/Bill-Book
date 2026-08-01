@@ -12,7 +12,7 @@ A generated code is assembled from up to four parts, joined by the separator, wi
 |---|---|---|
 | Prefix | `INV` | Free text, up to 15 characters |
 | Financial year | `2526` | Optional. Four formats to choose from |
-| Branch code | `CHN` | Optional. Only for a series tied to a branch |
+| Branch code | `CHN` | Optional. The branch's own code, so a number names where it was written |
 | Number | `00042` | Zero-padded to the chosen number of digits |
 
 `INV` + `2526` + `00042` with `/` as the separator gives **INV/2526/00042**.
@@ -45,9 +45,13 @@ Master series are relaxed about both: a jeweller who already runs an item-code s
 
 ## Several series for one thing
 
-You can have more than one series for the same code — a separate invoice series per branch, for example. One of them is the **default**, which is what a form preselects; a branch series wins over the org-wide series when the record belongs to that branch.
+You can have more than one series for the same code. One of them is the **default**, which is what a form preselects.
 
-Every series for the same code and branch shares one rule: exactly one may be the default, and the database enforces it.
+Series belong to a branch, because every branch keeps its own books — so two branches numbering invoices never collide, and neither needs to know the other exists. Turning on **include branch code** puts that branch's own code into the number, so `INV/2526/CHN/00042` says where it was written.
+
+The code is copied onto the series rather than read back from the branch each time, so renaming a branch later cannot restyle numbers already issued.
+
+Every series for the same code shares one rule: exactly one may be the default, and the database enforces it.
 
 ## Moving the counter
 

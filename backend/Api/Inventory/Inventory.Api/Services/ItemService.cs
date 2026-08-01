@@ -338,7 +338,7 @@ public sealed class ItemService
         }
 
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        NumberAllocation allocation = await _numbers.NextAsync("ITEM", null, today, ct);
+        NumberAllocation allocation = await _numbers.NextAsync("ITEM", today, ct);
         return allocation.Code;
     }
 

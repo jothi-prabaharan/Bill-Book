@@ -5,12 +5,33 @@ using Shared.Kernel.Validation;
 
 namespace Platform.Entity.TableEntities;
 
-/// <summary>A set of books. Many per Customer, sharing that Customer's database, separated by OrgId.</summary>
+/// <summary>
+/// A branch — one place the business trades from, and one complete set of books.
+///
+/// The Customer is the head office: the account, the billing relationship, and
+/// the owner of one physical database. Every Organization beneath it is a branch
+/// sharing that database, separated by <c>OrgId</c>.
+///
+/// <b>A branch is a hard data boundary, not a reporting tag.</b> <c>OrgId</c> is
+/// the EF query filter and the Postgres row-level security policy on every
+/// per-customer table, so each branch keeps its own items, contacts, stock,
+/// chart of accounts and numbering. Nothing crosses between them.
+/// </summary>
 public class Organization : AuditableEntity
 {
     public Guid OrgId { get; set; }
 
+    /// <summary>The head office this branch belongs to.</summary>
     public Guid CustomerId { get; set; }
+
+    /// <summary>
+    /// Short code for the branch, unique within the head office. Copied onto a
+    /// numbering series so a generated number can name where it was written —
+    /// <c>INV/2526/CHN/00042</c>.
+    /// </summary>
+    [Required(ErrorMessage = "Branch code is required.")]
+    [MaxLength(10, ErrorMessage = "Branch code cannot exceed 10 characters.")]
+    public string OrgCode { get; set; } = null!;
 
     [Required(ErrorMessage = "Name is required.")]
     [MaxLength(200, ErrorMessage = "Name cannot exceed 200 characters.")]

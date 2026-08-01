@@ -8,7 +8,6 @@ interface Warehouse {
   warehouseCode: string;
   warehouseName: string;
   warehouseType: string;
-  branchId: number | null;
   storageType: string;
   addressLine1: string | null;
   addressLine2: string | null;
@@ -23,14 +22,6 @@ interface Warehouse {
   isDefault: boolean;
   displayOrder: number;
   isActive: boolean;
-}
-
-/** Branches come from Platform — they live in the master database, next to the org. */
-interface Branch {
-  branchId: number;
-  branchCode: string;
-  branchName: string;
-  isHeadOffice: boolean;
 }
 
 /**
@@ -48,10 +39,7 @@ interface Branch {
 export class WarehousesPage implements OnInit {
   private readonly http = inject(HttpClient);
 
-  private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
-
   protected readonly rows = signal<Warehouse[]>([]);
-  protected readonly branches = signal<Branch[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -62,26 +50,6 @@ export class WarehousesPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
-    void this.loadBranches();
-  }
-
-  /** A warehouse without a branch is org-wide, so a failure here is not fatal. */
-  private async loadBranches(): Promise<void> {
-    try {
-      this.branches.set(
-        await this.get<Branch[]>(`/api/organizations/${this.orgId()}/branches`),
-      );
-    } catch {
-      /* the picker falls back to "Not set" */
-    }
-  }
-
-  protected branchNameOf(branchId: number | null): string {
-    if (branchId === null) {
-      return 'All branches';
-    }
-
-    return this.branches().find((b) => b.branchId === branchId)?.branchName ?? String(branchId);
   }
 
   async load(): Promise<void> {
@@ -106,7 +74,6 @@ export class WarehousesPage implements OnInit {
       warehouseCode: row.warehouseCode,
       warehouseName: row.warehouseName,
       warehouseType: row.warehouseType,
-      branchId: row.branchId,
       storageType: row.storageType,
       addressLine1: row.addressLine1,
       addressLine2: row.addressLine2,
@@ -174,7 +141,6 @@ export class WarehousesPage implements OnInit {
       warehouseCode: '',
       warehouseName: '',
       warehouseType: 'Store',
-      branchId: null as number | null,
       storageType: 'Ambient',
       addressLine1: null as string | null,
       addressLine2: null as string | null,

@@ -7,10 +7,11 @@ namespace Inventory.Entity.TableEntities;
 /// The live stock position for an item: how much is on hand and what it cost.
 ///
 /// <b>One row per item, not per warehouse.</b> Stock is a single shared pool
-/// across every branch and every location — a warehouse is where a movement
+/// across every location in the branch — a warehouse is where a movement
 /// happened, not a separate balance. Splitting this row per location is what
 /// makes one SKU carry two weighted average costs and the totals stop
-/// reconciling.
+/// reconciling. Another branch is another OrgId, so its stock is a different
+/// row that the query filter never returns here.
 ///
 /// This is the target of the synchronous point-of-sale decrement: a conditional
 /// <c>UPDATE … WHERE QuantityOnHand &gt;= @qty</c> that either moves the row or

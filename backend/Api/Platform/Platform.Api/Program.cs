@@ -30,15 +30,7 @@ builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<SmtpSettingsService>();
-builder.Services.AddScoped<BranchService>();
 builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
-
-// A branch GSTIN has to be checked against its state's code, and states live in
-// the master database. Cached hard: state codes are legislated.
-builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
-{
-    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-});
 
 // Mail is queued and delivered on a background worker, so an SMTP round-trip
 // never blocks a request. SmtpEmailSender is resolved by the worker only.

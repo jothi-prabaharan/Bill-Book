@@ -29,7 +29,6 @@
       <th>Name</th>
       <th>Code</th>
       <th>For</th>
-      <th>Branch</th>
       <th>Preview</th>
       <th class="num">Next</th>
       <th>Reset</th>
@@ -59,7 +58,6 @@
         </td>
         <td><code>{{ row.seriesCode }}</code></td>
         <td>{{ row.seriesFor }}</td>
-        <td>{{ branchNameOf(row.branchId) }}</td>
         <td><code class="preview">{{ row.preview }}</code></td>
         <td class="num">{{ row.nextNumber }}</td>
         <td>{{ row.resetFrequency }}</td>
@@ -86,7 +84,7 @@
         </td>
       </tr>
     } @empty {
-      <tr><td colspan="11">No numbering series.</td></tr>
+      <tr><td colspan="10">No numbering series.</td></tr>
     }
   </tbody>
 </table>
@@ -152,19 +150,8 @@
         </label>
       }
 
-      <label>
-        Branch
-        <select [(ngModel)]="form.branchId" (ngModelChange)="onBranchChange()">
-          <option [ngValue]="null">All branches</option>
-          @for (branch of branches(); track branch.branchId) {
-            <option [ngValue]="branch.branchId">{{ branch.branchCode }} — {{ branch.branchName }}</option>
-          }
-        </select>
-        <small>A branch series is used ahead of the org-wide one for that branch.</small>
-      </label>
-
       <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.includeBranchCode" [disabled]="!form.branchCode" />
+        <input type="checkbox" [(ngModel)]="form.includeBranchCode" />
         Include branch code
       </label>
 
@@ -173,8 +160,8 @@
           Branch code
           <input type="text" [(ngModel)]="form.branchCode" maxlength="10" />
           <small>
-            Copied from the branch and stored here. Renaming the branch later does not restyle
-            numbers already issued.
+            This branch's own code. Stored on the series, so renaming the branch later does not
+            restyle numbers already issued.
           </small>
         </label>
       }

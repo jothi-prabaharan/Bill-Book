@@ -15,8 +15,6 @@ public class NumberingSeriesListItem
     /// <summary>Master or Document.</summary>
     public string SeriesFor { get; set; } = null!;
 
-    public long? BranchId { get; set; }
-
     public string? Prefix { get; set; }
 
     public string? Suffix { get; set; }
@@ -72,8 +70,6 @@ public class SaveNumberingSeriesRequest
     /// <summary>Master or Document. Ignored on update — a series cannot change what it numbers.</summary>
     [Required(ErrorMessage = "Series type is required.")]
     public string SeriesFor { get; set; } = "Master";
-
-    public long? BranchId { get; set; }
 
     [MaxLength(15, ErrorMessage = "Prefix cannot exceed 15 characters.")]
     public string? Prefix { get; set; }

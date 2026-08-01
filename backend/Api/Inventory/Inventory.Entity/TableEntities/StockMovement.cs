@@ -30,9 +30,6 @@ public class StockMovement : OrgScopedEntity
     /// <summary>Where it happened. A location dimension — it never partitions the pool.</summary>
     public long? WarehouseId { get; set; }
 
-    /// <summary>Reporting dimension only. Unenforced id into plt.Branches, a different database.</summary>
-    public long? BranchId { get; set; }
-
     public StockMovementType MovementType { get; set; }
 
     public StockDirection Direction { get; set; }

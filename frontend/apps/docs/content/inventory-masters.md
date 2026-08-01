@@ -64,7 +64,7 @@ The profile decides which extra tab appears and which extension table the item c
 
 ## Warehouses
 
-Locations for movements and reporting. **Stock is one shared pool** across every warehouse and branch, and weighted average cost is company-wide — warehouses never hold separate stock or separate costs. Per-warehouse quantities come from aggregating movements.
+Locations for movements and reporting. **Stock is one shared pool across every warehouse in the branch**, with one weighted average cost — warehouses never hold separate stock or separate costs. Per-warehouse quantities come from aggregating movements. Another branch's stock is a different pool entirely, because a branch is a separate set of books.
 
 A warehouse in another state carries its own GSTIN, because it changes the place of supply for goods despatched from it. Cold-chain storage is a field rather than a note: breaking it makes the stock unsaleable.
 

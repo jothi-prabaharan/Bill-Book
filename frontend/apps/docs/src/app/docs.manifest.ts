@@ -37,7 +37,6 @@ export const DOCS: DocSection[] = [
     title: 'Masters',
     pages: [
       { slug: 'masters', title: 'Master data', status: 'partial' },
-      { slug: 'branches', title: 'Branches', status: 'built' },
       { slug: 'currencies', title: 'Currencies', status: 'built' },
       { slug: 'hsn-sac', title: 'HSN & SAC codes', status: 'partial' },
       { slug: 'roles-permissions', title: 'Roles & permissions', status: 'built' },

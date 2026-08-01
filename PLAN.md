@@ -107,10 +107,10 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
 
 ~~Until this lands, an item is a catalogue entry that cannot hold stock, and the "locked once stock has moved" rule is inert — `HasStockMovementsAsync` returns `false` unconditionally.~~ **Done.** Items hold stock, and the lock is live.
 
-- [x] **3.1 — `plt.Branches`**
-  `BranchId` is already referenced by `acc.JournalDetails`, `acc.JournalLedger`, `inv.Warehouses` and `acc.NumberingSeries`, with no table behind any of them.
-  *Done when*: a branch can be created and picked wherever `BranchId` is stored.
-  Master database, with a real FK to `plt.Organizations` — the one place the two can have one. Filtered unique index gives exactly one head office per org; provisioning writes it from the organization's own details. Picked on the Warehouses and Numbering Series pages; journal lines follow when Accounting's document screens land. Platform gained JWT authentication for this endpoint alone — see 5.10.
+- [x] ~~**3.1 — `plt.Branches`**~~ — **struck: it was a duplicate**
+  Built, then removed the same day at the owner's direction. The intended model is **two levels, not three**: the Customer is the head office and an **Organization is a branch**. `plt.Branches` duplicated `plt.Organizations` almost column for column — GSTIN, both address lines, city, state, postal code, country, phone, mobile, email — while `OrgId`, not `BranchId`, was the only thing that ever scoped a row.
+  Reverted in full: the table, its API and its page are gone, `BranchId` is dropped from `inv.Warehouses`, `inv.StockMovements` and `acc.NumberingSeries`, and `Organization` gained `OrgCode` to carry the branch code that numbering needs. `CLAUDE.md` now states the two-level model and forbids a `BranchId` column outright.
+  **The consequence to keep in mind**: a branch is a hard data boundary, so each one has its own items, contacts, stock and books. Cross-branch consolidated reporting is a deliberate read across organizations, not a filter that can be relaxed.
 
 - [x] **3.2 — `inv.ItemStock`**
   One row per item — quantity on hand, weighted average cost, `xmin`. The target of the synchronous, concurrency-safe point-of-sale decrement.

@@ -14,8 +14,7 @@ public sealed record CustomerProvisioned(Guid CustomerId, Guid OrgId, string Dat
 /// CREATE DATABASE (raw SQL — allowed exception) → store connection in the
 /// secret store → create the owner user via Identity → publish
 /// CustomerProvisioned (consumers migrate per-customer schemas and seed CoA /
-/// Tax Master) → write the head-office branch → mark Customer Trial-active
-/// and the database Ready.
+/// Tax Master) → mark Customer Trial-active and the database Ready.
 /// On any failure the database row is marked Failed for admin retry.
 /// </summary>
 public sealed class ProvisioningWorker : BackgroundService
@@ -100,14 +99,7 @@ public sealed class ProvisioningWorker : BackgroundService
             job.OrgId, job.OwnerEmail, job.OwnerDisplayName,
             job.OwnerMobileNumber, job.OwnerPassword), ct);
 
-        // 4. Head office. In the master database, so it is written here rather
-        //    than by the seeder — a branch picker with nothing in it is the
-        //    same failure as an item form with no unit types. Idempotent, so a
-        //    retry after a later step failed does not create a second one.
-        BranchService branches = scope.ServiceProvider.GetRequiredService<BranchService>();
-        await branches.SeedHeadOfficeAsync(job.OrgId, ct);
-
-        // 5. Fan out. The event is published for whatever consumes it later, but
+        // 4. Fan out. The event is published for whatever consumes it later, but
         //    it is not what seeds the organization: the only IEventPublisher
         //    implementation logs and drops, so relying on it left every new
         //    organization with no chart of accounts, no units and no numbering.
@@ -131,7 +123,7 @@ public sealed class ProvisioningWorker : BackgroundService
                 + "The organization has been left unprovisioned for retry.");
         }
 
-        // 6. Flip statuses; login stays blocked until this commits.
+        // 5. Flip statuses; login stays blocked until this commits.
         Customer customer = await db.Customers.FirstAsync(c => c.CustomerId == job.CustomerId, ct);
         Organization org = await db.Organizations.FirstAsync(o => o.OrgId == job.OrgId, ct);
         CustomerDatabase database = await db.CustomerDatabases.FirstAsync(d => d.CustomerId == job.CustomerId, ct);

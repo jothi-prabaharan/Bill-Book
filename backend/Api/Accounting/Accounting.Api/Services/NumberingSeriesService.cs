@@ -91,7 +91,6 @@ public sealed class NumberingSeriesService
             SeriesCode = request.SeriesCode.Trim().ToUpperInvariant(),
             SeriesName = request.SeriesName.Trim(),
             SeriesFor = seriesFor,
-            BranchId = request.BranchId,
             Prefix = request.Prefix,
             Suffix = request.Suffix,
             Separator = request.Separator,
@@ -112,7 +111,7 @@ public sealed class NumberingSeriesService
         // The first series for a code and branch has to be the default, or the
         // generator finds nothing to allocate from.
         series.IsDefault = !await _db.NumberingSeries.AnyAsync(
-            s => s.SeriesCode == series.SeriesCode && s.BranchId == series.BranchId && s.IsDefault, ct);
+            s => s.SeriesCode == series.SeriesCode && s.IsDefault, ct);
 
         _db.NumberingSeries.Add(series);
         await _db.SaveChangesAsync(ct);
@@ -170,7 +169,6 @@ public sealed class NumberingSeriesService
 
         series.SeriesCode = requestedCode;
         series.SeriesName = request.SeriesName.Trim();
-        series.BranchId = request.BranchId;
         series.Prefix = request.Prefix;
         series.Suffix = request.Suffix;
         series.Separator = request.Separator;
@@ -228,7 +226,6 @@ public sealed class NumberingSeriesService
 
         List<NumberingSeries> siblings = await _db.NumberingSeries
             .Where(s => s.SeriesCode == series.SeriesCode
-                && s.BranchId == series.BranchId
                 && s.IsDefault
                 && s.NumberingSeriesId != numberingSeriesId)
             .ToListAsync(ct);
@@ -449,7 +446,6 @@ public sealed class NumberingSeriesService
             SeriesCode = s.SeriesCode,
             SeriesName = s.SeriesName,
             SeriesFor = s.SeriesFor.ToString(),
-            BranchId = s.BranchId,
             Prefix = s.Prefix,
             Suffix = s.Suffix,
             Separator = s.Separator,

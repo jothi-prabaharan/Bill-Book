@@ -419,7 +419,7 @@ public sealed class BankService
         }
 
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        NumberAllocation allocation = await _numbers.NextAsync("BANK", null, today, ct);
+        NumberAllocation allocation = await _numbers.NextAsync("BANK", today, ct);
         return allocation.Code;
     }
 

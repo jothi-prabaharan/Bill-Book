@@ -396,7 +396,7 @@ export class ItemsPage implements OnInit {
       case 'None':
         return 'Not stocked — no cost is relieved when this is sold.';
       case 'WeightedAverage':
-        return 'One average cost per item, company-wide across every branch.';
+        return 'One average cost per item, across every warehouse in this branch.';
       case 'Fifo':
         return 'Cost layers consumed oldest receipt first.';
       case 'Lifo':

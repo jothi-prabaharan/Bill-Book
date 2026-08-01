@@ -2,15 +2,23 @@
 
 Two nested boundaries, enforced by different mechanisms. Getting these confused is the most damaging mistake available in this codebase.
 
-## Customer vs Organization
+## Head office and branch
 
-- **Customer** — the account and billing entity. Owns **one physical database**.
-- **Organization** — a set of books with its own GSTIN, currency and branches. A Customer owns **many**, all sharing that Customer's database.
+Two levels, and only two.
+
+- **Customer** — the **head office**. The account, the billing relationship, the licence. Owns **one physical database**.
+- **Organization** — a **branch**. One place you trade from, and one complete set of books: its own code, GSTIN, address and currency. A head office owns **many**, all sharing its database.
 
 | Boundary | Enforced by |
 |---|---|
-| Customer ↔ Customer | Separate physical databases |
-| Organization ↔ Organization | `OrgId` + EF Core global query filter + Postgres RLS |
+| Head office ↔ head office | Separate physical databases |
+| Branch ↔ branch | `OrgId` + EF Core global query filter + Postgres RLS |
+
+**A branch is a hard data boundary, not a tag on a transaction.** Each branch keeps its own items, contacts, stock, chart of accounts and numbering series, and nothing crosses between them. Chennai cannot see Bangalore's rows, because the query filter and the row-level security policy both stop it.
+
+That is the trade this model makes. It gives each branch clean, independent books and makes cross-branch leakage structurally impossible — at the cost of maintaining master data per branch, and of consolidated reporting being a deliberate read across organizations rather than a default.
+
+**There is no separate branch table, and no `BranchId` column.** `OrgId` *is* the branch. One briefly existed and was removed: it duplicated the organization almost column for column while only `OrgId` scoped anything.
 
 ## Which database holds what
 

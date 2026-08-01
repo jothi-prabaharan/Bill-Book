@@ -61,8 +61,6 @@ public class StockMovementListItem
 
     public string? WarehouseName { get; set; }
 
-    public long? BranchId { get; set; }
-
     public string MovementType { get; set; } = null!;
 
     public string Direction { get; set; } = null!;
@@ -118,8 +116,6 @@ public class RecordStockMovementRequest
     public long? UomId { get; set; }
 
     public long? WarehouseId { get; set; }
-
-    public long? BranchId { get; set; }
 
     /// <summary>Cost per <b>entered</b> unit. Required on anything that brings stock in.</summary>
     [Range(0, 999999999999.999999, ErrorMessage = "Unit cost cannot be negative.")]

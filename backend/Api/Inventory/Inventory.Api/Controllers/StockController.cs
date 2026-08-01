@@ -8,9 +8,10 @@ namespace Inventory.Api.Controllers;
 /// <summary>
 /// Stock positions and movements.
 ///
-/// One pool per item across every branch and warehouse, so there is no
+/// One pool per item across every warehouse in the branch, so there is no
 /// per-location balance to ask for. A warehouse filters the movement history;
-/// it never splits the quantity.
+/// it never splits the quantity. Another branch is another organization, and
+/// the query filter keeps its stock out of here entirely.
 /// </summary>
 [ApiController]
 [Authorize]

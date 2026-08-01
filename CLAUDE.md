@@ -120,15 +120,21 @@ Every page must work at ~360px — grids become card lists, forms stack, modals 
 
 ## Tenancy — the thing most likely to be got wrong
 
-**Customer** = the account/billing entity. Owns **one physical database**.
-**Organization** = a set of books (own GSTIN, currency, branches). A Customer owns **many**, all sharing that Customer's database.
+**Two levels, not three.**
+
+**Customer** = the **head office**. The account, the billing relationship, the licence. Owns **one physical database**.
+**Organization** = a **branch**. One place the business trades from, and one complete set of books — own code, GSTIN, address, currency. A Customer owns **many**, all sharing that Customer's database.
 
 | Boundary | Enforced by |
 |---|---|
-| Customer ↔ Customer | Separate physical databases |
-| Organization ↔ Organization | `OrgId` + EF Core query filter + Postgres RLS |
+| Customer ↔ Customer (head office ↔ head office) | Separate physical databases |
+| Organization ↔ Organization (branch ↔ branch) | `OrgId` + EF Core query filter + Postgres RLS |
 
-**`OrgId` is load-bearing for security.** A missing query filter leaks data between organizations. Never omit it on a per-customer table.
+**There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `plt.Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
+
+**A branch is a hard data boundary, not a reporting tag.** Each branch has its own items, contacts, stock, chart of accounts and numbering series. Nothing crosses between them. Consolidated reporting across branches is a **read across organizations**, done deliberately and above the query filter — never by relaxing it.
+
+**`OrgId` is load-bearing for security.** A missing query filter leaks data between branches. Never omit it on a per-customer table.
 
 Per request: resolve `CustomerId` from JWT → pick the database via the `plt` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
 
@@ -140,7 +146,7 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 
 ### Provisioning
 - **New Customer**: create row → generate `CustomerCode` → `CREATE DATABASE` → store connection in Key Vault → publish `CustomerProvisioned` → each service migrates its own schema → mark Active. Block login until ready.
-- **New Organization** under an existing Customer: insert row, seed its Chart of Accounts + Tax Master. No new database.
+- **New Organization (a new branch)** under an existing Customer: insert row with its own `OrgCode`, seed its full master data — Chart of Accounts, Tax Master, numbering series, units, payment terms. No new database. A branch starts empty and is seeded exactly like the first one, because it is a complete set of books.
 
 ### Cross-database FKs are impossible in Postgres
 - `CreatedBy`/`ModifiedBy` (Users are in master) → plain nullable `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
@@ -204,9 +210,9 @@ Highest-risk screen in the system:
 
 ## Inventory & costing
 
-**Stock is one shared pool across all branches.** `BranchId` is a reporting dimension only — never partition inventory or WAC by it.
+**Stock is one shared pool per branch — that is, per `OrgId`.** One quantity and one weighted average cost per item within a branch, shared across every warehouse in it. `WarehouseId` is a location dimension only: never partition inventory or WAC by it. Branches do not share stock, because a branch is a separate set of books; the query filter already sees to that, so no code needs to think about it.
 
-**Point-of-sale stock decrement must be synchronous** — a concurrency-safe conditional update against Inventory. Not event-driven, or two branches oversell the last unit. Everything downstream (costing, accounting, notifications) is async.
+**Point-of-sale stock decrement must be synchronous** — a concurrency-safe conditional update against Inventory. Not event-driven, or two tills oversell the last unit. Everything downstream (costing, accounting, notifications) is async.
 
 Weighted average cost per SKU, company-wide:
 - Receipt: `newWac = (oldQty × oldWac + recvQty × recvCost) / (oldQty + recvQty)`

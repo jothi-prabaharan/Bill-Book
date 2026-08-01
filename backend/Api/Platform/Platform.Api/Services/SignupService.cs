@@ -84,6 +84,10 @@ public sealed class SignupService
             OrgId = Guid.NewGuid(),
             CustomerId = customer.CustomerId,
             Name = request.OrganizationName,
+            // The first branch on a new account is the head office itself, so
+            // it takes the head-office code rather than asking for one during
+            // signup. Later branches are named by the customer.
+            OrgCode = "HO",
             BaseCurrency = request.BaseCurrency ?? "INR",
             FinancialYearStartMonth = request.FinancialYearStartMonth,
             Gstin = request.Gstin,

@@ -23,111 +23,6 @@ namespace Platform.Repository.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Platform.Entity.TableEntities.Branch", b =>
-                {
-                    b.Property<long>("BranchId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("BranchId"));
-
-                    b.Property<string>("AddressLine1")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("BranchCode")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("BranchName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int?>("CountryId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Gstin")
-                        .HasMaxLength(15)
-                        .HasColumnType("character varying(15)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsHeadOffice")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("MobileNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("OrgId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<string>("PostalCode")
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<int?>("StateId")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("BranchId");
-
-                    b.HasIndex("OrgId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Branches_HeadOffice")
-                        .HasFilter("\"IsHeadOffice\" = true");
-
-                    b.HasIndex("OrgId", "BranchCode")
-                        .IsUnique();
-
-                    b.HasIndex("OrgId", "BranchName")
-                        .IsUnique();
-
-                    b.HasIndex("OrgId", "DisplayOrder", "BranchName")
-                        .HasDatabaseName("IX_Branches_Order");
-
-                    b.ToTable("Branches", "plt");
-                });
-
             modelBuilder.Entity("Platform.Entity.TableEntities.Configuration", b =>
                 {
                     b.Property<Guid>("ConfigId")
@@ -535,6 +430,11 @@ namespace Platform.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<string>("OrgCode")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
                     b.Property<string>("Pan")
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
@@ -582,6 +482,9 @@ namespace Platform.Repository.Migrations
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("CustomerId", "Name")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId", "OrgCode")
                         .IsUnique();
 
                     b.ToTable("Organizations", "plt");
@@ -656,15 +559,6 @@ namespace Platform.Repository.Migrations
 
                     b.ToTable("SmtpSettings", "plt");
                 });
-            modelBuilder.Entity("Platform.Entity.TableEntities.Branch", b =>
-                {
-                    b.HasOne("Platform.Entity.TableEntities.Organization", null)
-                        .WithMany()
-                        .HasForeignKey("OrgId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
 #pragma warning restore 612, 618
         }
     }

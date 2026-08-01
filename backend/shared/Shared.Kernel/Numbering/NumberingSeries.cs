@@ -39,9 +39,6 @@ public class NumberingSeries : OrgScopedEntity
 
     public SeriesFor SeriesFor { get; set; } = SeriesFor.Master;
 
-    /// <summary>Null means the series applies org-wide. A branch series numbers only its own branch.</summary>
-    public long? BranchId { get; set; }
-
     [MaxLength(15, ErrorMessage = "Prefix cannot exceed 15 characters.")]
     public string? Prefix { get; set; }
 
@@ -62,9 +59,13 @@ public class NumberingSeries : OrgScopedEntity
     public bool IncludeBranchCode { get; set; }
 
     /// <summary>
-    /// Copied onto the series rather than read from the branch master, so
-    /// generating a number never crosses a database boundary. Branches live in
-    /// the master database; the number is composed in the customer database.
+    /// The branch's own code — <c>Organization.OrgCode</c> — copied onto the
+    /// series rather than read from it, so generating a number never crosses a
+    /// database boundary. Organizations live in the master database; the number
+    /// is composed in the customer database.
+    ///
+    /// Copying also means renaming a branch later cannot restyle numbers already
+    /// issued under the old code.
     /// </summary>
     [MaxLength(10, ErrorMessage = "Branch code cannot exceed 10 characters.")]
     public string? BranchCode { get; set; }

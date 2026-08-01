@@ -421,7 +421,7 @@ public sealed class ContactService
         string seriesCode = request.IsCustomer || request.IsPrescriber ? "CUSTOMER" : "VENDOR";
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
-        NumberAllocation allocation = await _numbers.NextAsync(seriesCode, null, today, ct);
+        NumberAllocation allocation = await _numbers.NextAsync(seriesCode, today, ct);
         return allocation.Code;
     }
 

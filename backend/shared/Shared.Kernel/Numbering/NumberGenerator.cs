@@ -24,11 +24,11 @@ public sealed class NumberGenerator : INumberGenerator
     }
 
     public async Task<NumberAllocation> NextAsync(
-        string seriesCode, long? branchId, DateOnly onDate, CancellationToken ct)
+        string seriesCode, DateOnly onDate, CancellationToken ct)
     {
         for (int attempt = 0; attempt < _options.MaxAllocationAttempts; attempt++)
         {
-            NumberingSeries series = await ResolveAsync(seriesCode, branchId, ct)
+            NumberingSeries series = await ResolveAsync(seriesCode, ct)
                 ?? throw new InvalidOperationException(
                     $"No active numbering series is configured for '{seriesCode}'. " +
                     "Add one under Settings › Numbering series.");
@@ -74,9 +74,9 @@ public sealed class NumberGenerator : INumberGenerator
     }
 
     public async Task<string?> PeekAsync(
-        string seriesCode, long? branchId, DateOnly onDate, CancellationToken ct)
+        string seriesCode, DateOnly onDate, CancellationToken ct)
     {
-        NumberingSeries? series = await ResolveAsync(seriesCode, branchId, ct);
+        NumberingSeries? series = await ResolveAsync(seriesCode, ct);
         if (series is null)
         {
             return null;
@@ -90,18 +90,19 @@ public sealed class NumberGenerator : INumberGenerator
     }
 
     /// <summary>
-    /// A series for this branch wins over the org-wide one; among equals the
-    /// default wins. Ordering rather than filtering, so a branch with no series
-    /// of its own still numbers from the org series instead of failing.
+    /// The default series for this code wins; among equals, display order then
+    /// id, so the choice is stable rather than whatever the planner returns.
+    ///
+    /// There is no branch argument: the query filter already scopes this to one
+    /// OrgId, and an OrgId <i>is</i> a branch. Each branch numbers from its own
+    /// series, which is what keeps two branches from issuing the same invoice
+    /// number.
     /// </summary>
     private Task<NumberingSeries?> ResolveAsync(
-        string seriesCode, long? branchId, CancellationToken ct) =>
+        string seriesCode, CancellationToken ct) =>
         _db.Set<NumberingSeries>()
-            .Where(s => s.SeriesCode == seriesCode
-                && s.IsActive
-                && (s.BranchId == null || s.BranchId == branchId))
-            .OrderByDescending(s => s.BranchId != null)
-            .ThenByDescending(s => s.IsDefault)
+            .Where(s => s.SeriesCode == seriesCode && s.IsActive)
+            .OrderByDescending(s => s.IsDefault)
             .ThenBy(s => s.DisplayOrder)
             .ThenBy(s => s.NumberingSeriesId)
             .FirstOrDefaultAsync(ct);

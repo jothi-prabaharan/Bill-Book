@@ -12,21 +12,21 @@ public interface INumberGenerator
 {
     /// <summary>
     /// Consumes one number and returns the composed code. A branch series is
-    /// preferred over the org-wide series when <paramref name="branchId"/> has one.
+    /// scoped to the caller's organization, which is the branch.
     /// </summary>
     /// <param name="onDate">
     /// The document's own date, not today — it decides the financial-year segment
     /// and whether the counter is due to restart.
     /// </param>
     Task<NumberAllocation> NextAsync(
-        string seriesCode, long? branchId, DateOnly onDate, CancellationToken ct);
+        string seriesCode, DateOnly onDate, CancellationToken ct);
 
     /// <summary>
     /// The code the next allocation would produce, without consuming it. For
     /// previews only — two callers can preview the same value.
     /// </summary>
     Task<string?> PeekAsync(
-        string seriesCode, long? branchId, DateOnly onDate, CancellationToken ct);
+        string seriesCode, DateOnly onDate, CancellationToken ct);
 }
 
 /// <summary>The allocated code and the series it came from.</summary>

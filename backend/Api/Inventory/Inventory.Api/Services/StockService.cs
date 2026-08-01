@@ -109,7 +109,6 @@ public sealed class StockService
                     .Where(w => w.WarehouseId == x.m.WarehouseId)
                     .Select(w => w.WarehouseName)
                     .FirstOrDefault(),
-                BranchId = x.m.BranchId,
                 MovementType = x.m.MovementType.ToString(),
                 Direction = x.m.Direction.ToString(),
                 MovementDate = x.m.MovementDate,
@@ -324,7 +323,6 @@ public sealed class StockService
         {
             ItemId = item.ItemId,
             WarehouseId = request.WarehouseId,
-            BranchId = request.BranchId,
             MovementType = type,
             Direction = direction,
             MovementDate = request.MovementDate

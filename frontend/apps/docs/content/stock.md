@@ -4,19 +4,21 @@ How much of each item you hold, what it cost, and everything that moved it.
 
 **Inventory › Stock**
 
-## One pool
+## One pool per branch
 
-**There is one quantity per item, across every branch and every warehouse.** Not one per location.
+**There is one quantity per item within a branch, shared across every warehouse in it.** Not one per warehouse.
 
-A warehouse records *where* a movement happened. It does not hold a balance of its own, and neither does a branch. Two shops selling the same SKU draw down one number.
+A warehouse records *where* a movement happened. It does not hold a balance of its own. Two counters in the same shop draw down one number.
 
-This is a decision, not a simplification. Split the quantity per location and the same item ends up carrying two different weighted average costs, valuation stops agreeing with the ledger, and every report has to say which location it means before it can say anything else.
+This is a decision, not a simplification. Split the quantity per warehouse and the same item ends up carrying two different weighted average costs, valuation stops agreeing with the ledger, and every report has to say which location it means before it can say anything else.
 
-Per-location quantities, when they are needed, come from adding up the movements — not from a second balance that can drift from the first.
+Per-warehouse quantities, when they are needed, come from adding up the movements — not from a second balance that can drift from the first.
+
+**Branches do not share stock.** A branch is a separate set of books with its own items and its own quantities, so there is nothing to reconcile between them — the organization boundary already keeps them apart, and no code has to remember to.
 
 ## Weighted average cost
 
-One cost per item, company-wide, moved only by what you buy:
+One cost per item in the branch, moved only by what you buy:
 
 ```
 newAverage = (oldQty × oldAverage + receivedQty × receivedCost) ÷ (oldQty + receivedQty)

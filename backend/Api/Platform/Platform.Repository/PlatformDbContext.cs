@@ -26,8 +26,6 @@ public class PlatformDbContext : DbContext
 
     public DbSet<Configuration> Configurations => Set<Configuration>();
 
-    public DbSet<Branch> Branches => Set<Branch>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("plt");
@@ -43,6 +41,7 @@ public class PlatformDbContext : DbContext
         {
             b.HasKey(e => e.OrgId);
             b.HasIndex(e => new { e.CustomerId, e.Name }).IsUnique();
+            b.HasIndex(e => new { e.CustomerId, e.OrgCode }).IsUnique();
             b.HasIndex(e => e.CustomerId);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
         });
@@ -81,30 +80,6 @@ public class PlatformDbContext : DbContext
             b.HasIndex(e => new { e.OrgId, e.Code }).IsUnique();
             b.HasIndex(e => e.Code).IsUnique().HasFilter("\"OrgId\" IS NULL");
             b.Property(e => e.DataType).HasConversion<string>().HasMaxLength(10);
-        });
-
-        modelBuilder.Entity<Branch>(b =>
-        {
-            b.HasKey(e => e.BranchId);
-            b.HasIndex(e => new { e.OrgId, e.BranchCode }).IsUnique();
-            b.HasIndex(e => new { e.OrgId, e.BranchName }).IsUnique();
-            b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.BranchName })
-                .HasDatabaseName("IX_Branches_Order");
-
-            // Exactly one head office per organization. Filtered unique rather
-            // than a check constraint: a constraint cannot see the other rows.
-            b.HasIndex(e => e.OrgId)
-                .IsUnique()
-                .HasFilter("\"IsHeadOffice\" = true")
-                .HasDatabaseName("IX_Branches_HeadOffice");
-
-            // A real foreign key, because both tables live in the master
-            // database. Restrict: an organization with branches is not something
-            // to delete out from under its own documents.
-            b.HasOne<Organization>()
-                .WithMany()
-                .HasForeignKey(e => e.OrgId)
-                .OnDelete(DeleteBehavior.Restrict);
         });
 
         MapXminConcurrency(modelBuilder);

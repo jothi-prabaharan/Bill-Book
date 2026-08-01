@@ -177,7 +177,7 @@ public sealed class WarehouseService
         }
 
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        NumberAllocation allocation = await _numbers.NextAsync("WAREHOUSE", null, today, ct);
+        NumberAllocation allocation = await _numbers.NextAsync("WAREHOUSE", today, ct);
         return allocation.Code;
     }
 
@@ -189,7 +189,6 @@ public sealed class WarehouseService
     {
         warehouse.WarehouseName = request.WarehouseName.Trim();
         warehouse.WarehouseType = type;
-        warehouse.BranchId = request.BranchId;
         warehouse.StorageType = storage;
         warehouse.AddressLine1 = request.AddressLine1;
         warehouse.AddressLine2 = request.AddressLine2;
@@ -217,7 +216,6 @@ public sealed class WarehouseService
         WarehouseCode = w.WarehouseCode,
         WarehouseName = w.WarehouseName,
         WarehouseType = w.WarehouseType.ToString(),
-        BranchId = w.BranchId,
         StorageType = w.StorageType.ToString(),
         AddressLine1 = w.AddressLine1,
         AddressLine2 = w.AddressLine2,

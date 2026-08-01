@@ -33,10 +33,6 @@ export const appRoutes: Routes = [
           import('@bill-book/platform-ui').then((m) => m.OrgCurrenciesPage),
       },
       {
-        path: 'settings/branches',
-        loadComponent: () => import('@bill-book/platform-ui').then((m) => m.BranchesPage),
-      },
-      {
         path: 'settings/configuration',
         loadComponent: () =>
           import('@bill-book/platform-ui').then((m) => m.ConfigurationsPage),

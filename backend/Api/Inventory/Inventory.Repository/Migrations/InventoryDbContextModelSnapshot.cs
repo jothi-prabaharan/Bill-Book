@@ -780,9 +780,6 @@ namespace Inventory.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<long?>("BranchId")
-                        .HasColumnType("bigint");
-
                     b.Property<string>("City")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -895,9 +892,6 @@ namespace Inventory.Repository.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<long?>("BranchId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -1000,10 +994,10 @@ namespace Inventory.Repository.Migrations
                     b.HasIndex("OrgId", "DisplayOrder", "SeriesName")
                         .HasDatabaseName("IX_NumberingSeries_Order");
 
-                    b.HasIndex("OrgId", "SeriesCode", "BranchId")
+                    b.HasIndex("OrgId", "SeriesCode")
                         .HasDatabaseName("IX_NumberingSeries_Lookup");
 
-                    b.HasIndex("OrgId", "SeriesCode", "BranchId")
+                    b.HasIndex("OrgId", "SeriesCode")
                         .IsUnique()
                         .HasDatabaseName("IX_NumberingSeries_Default")
                         .HasFilter("\"IsDefault\" = true");
@@ -1077,9 +1071,6 @@ namespace Inventory.Repository.Migrations
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("StockMovementId"));
-
-                    b.Property<long?>("BranchId")
-                        .HasColumnType("bigint");
 
                     b.Property<decimal>("ConversionFactor")
                         .HasColumnType("decimal(18,6)");

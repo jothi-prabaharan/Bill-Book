@@ -26,7 +26,6 @@
       <th>Name</th>
       <th>Type</th>
       <th>Storage</th>
-      <th>Branch</th>
       <th>City</th>
       <th>GSTIN</th>
       <th>Default</th>
@@ -47,7 +46,6 @@
             <span class="chip">2–8 °C</span>
           }
         </td>
-        <td>{{ branchNameOf(row.branchId) }}</td>
         <td>{{ row.city ?? '—' }}</td>
         <td><code>{{ row.gstin ?? '—' }}</code></td>
         <td>
@@ -68,7 +66,7 @@
         </td>
       </tr>
     } @empty {
-      <tr><td colspan="11">No warehouses.</td></tr>
+      <tr><td colspan="10">No warehouses.</td></tr>
     }
   </tbody>
 </table>
@@ -103,16 +101,6 @@
           <option value="ColdChain">Cold chain (2–8 °C)</option>
           <option value="Frozen">Frozen</option>
         </select>
-      </label>
-      <label>
-        Branch
-        <select [(ngModel)]="form.branchId">
-          <option [ngValue]="null">All branches</option>
-          @for (branch of branches(); track branch.branchId) {
-            <option [ngValue]="branch.branchId">{{ branch.branchCode }} — {{ branch.branchName }}</option>
-          }
-        </select>
-        <small>Reporting only. Stock is one pool whichever branch a warehouse sits in.</small>
       </label>
       <label class="wide">
         Address line 1

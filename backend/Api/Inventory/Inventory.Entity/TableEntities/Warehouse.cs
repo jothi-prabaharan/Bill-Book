@@ -7,7 +7,7 @@ namespace Inventory.Entity.TableEntities;
 
 /// <summary>
 /// A stock location. A reporting and movement dimension only — stock is one
-/// shared pool across every warehouse and branch, and weighted average cost is
+/// shared pool across every warehouse in the branch, and weighted average cost is
 /// company-wide. Per-warehouse quantities come from aggregating movements, never
 /// from a separate cost pool.
 /// </summary>
@@ -24,9 +24,6 @@ public class Warehouse : OrgScopedEntity
     public string WarehouseName { get; set; } = null!;
 
     public WarehouseType WarehouseType { get; set; } = WarehouseType.Store;
-
-    /// <summary>Reporting dimension. Unenforced — branches live in the master database.</summary>
-    public long? BranchId { get; set; }
 
     /// <summary>Cold chain is not a note: breaking it makes the stock unsaleable.</summary>
     public StorageCondition StorageType { get; set; } = StorageCondition.Ambient;

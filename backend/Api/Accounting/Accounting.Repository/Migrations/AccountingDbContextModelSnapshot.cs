@@ -416,9 +416,6 @@ namespace Accounting.Repository.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<long?>("BranchId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -521,10 +518,10 @@ namespace Accounting.Repository.Migrations
                     b.HasIndex("OrgId", "DisplayOrder", "SeriesName")
                         .HasDatabaseName("IX_NumberingSeries_Order");
 
-                    b.HasIndex("OrgId", "SeriesCode", "BranchId")
+                    b.HasIndex("OrgId", "SeriesCode")
                         .HasDatabaseName("IX_NumberingSeries_Lookup");
 
-                    b.HasIndex("OrgId", "SeriesCode", "BranchId")
+                    b.HasIndex("OrgId", "SeriesCode")
                         .IsUnique()
                         .HasDatabaseName("IX_NumberingSeries_Default")
                         .HasFilter("\"IsDefault\" = true");

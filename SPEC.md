@@ -681,13 +681,12 @@ Every generated code in the product: master codes now, document numbers as Sales
 | SeriesCode | string(30) | Required. The lookup key — `CUSTOMER`, `ITEM`, or for documents the three-letter `mst.TransactionTypes` code |
 | SeriesName | string(50) | Required. Display name, editable on seeded rows |
 | SeriesFor | enum→string(10) | `Master` / `Document`. Fixed after creation |
-| BranchId | long? | Null = org-wide |
 | Prefix / Suffix | string(15)? | |
 | Separator | string(1)? | Default `-`. Empty runs segments together |
 | IncludeFinancialYear | bool | Default false |
 | FinancialYearFormat | enum→string(15) | `FullYearRange` 2025-26 · `ShortYearRange` 25-26 · `Compact` 2526 · `StartYear` 2025 |
 | IncludeBranchCode | bool | Default false |
-| BranchCode | string(10)? | **Copied onto the series**, not read from the branch master — composing a number must never cross into the master database |
+| BranchCode | string(10)? | The branch's own `Organization.OrgCode`, **copied onto the series** rather than read back — composing a number must never cross into the master database, and a renamed branch must not restyle numbers already issued |
 | NumberLength | int | Default 5. Zero-padding width |
 | StartNumber | long | Default 1 |
 | NextNumber | long | The counter |
@@ -699,7 +698,7 @@ Every generated code in the product: master codes now, document numbers as Sales
 | IsActive | bool | Default true |
 | DisplayOrder | int | Default 0, seeded in tens |
 
-Indexes: unique (OrgId, SeriesName) · `IX_NumberingSeries_Lookup` (OrgId, SeriesCode, BranchId) · filtered unique `IX_NumberingSeries_Default` (OrgId, SeriesCode, BranchId) WHERE IsDefault · filtered unique `IX_NumberingSeries_SystemName` (OrgId, SeriesSystemName) WHERE NOT NULL · `IX_NumberingSeries_Order` (OrgId, DisplayOrder, SeriesName)
+Indexes: unique (OrgId, SeriesName) · `IX_NumberingSeries_Lookup` (OrgId, SeriesCode) · filtered unique `IX_NumberingSeries_Default` (OrgId, SeriesCode) WHERE IsDefault · filtered unique `IX_NumberingSeries_SystemName` (OrgId, SeriesSystemName) WHERE NOT NULL · `IX_NumberingSeries_Order` (OrgId, DisplayOrder, SeriesName)
 
 Check constraints: `SeriesFor = 'Master' OR AllowManualOverride = false` · `NextNumber >= StartNumber AND NumberLength BETWEEN 1 AND 12` · `IncludeBranchCode = false OR BranchCode IS NOT NULL`
 
@@ -838,7 +837,6 @@ Journal lines. Debit and credit are mutually exclusive per line.
 | CreditAmount | decimal(18,2) | Default 0 |
 | DebitAmountBase | decimal(18,2) | Default 0 |
 | CreditAmountBase | decimal(18,2) | Default 0 |
-| BranchId | long? | **Reporting dimension only** |
 | LineMemo | string(300)? | |
 | ReversesJournalDetailId | long? | Self-FK. The original line this row reverses |
 | ReversedByJournalDetailId | long? | Self-FK. The line that reversed this row |
@@ -882,7 +880,6 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 | TransactionDesc | string(500)? | Description shown in the ledger |
 | MappingTransactionId | long? | **Links a payment back to its document** |
 | MappingTransactionTypeCode | string(3)? | **Type of the mapped document** |
-| BranchId | long? | **Reporting dimension only** |
 | JournalId | long? | Set when `LedgerSourceId = 12` (Journal) |
 
 Indexes: (OrgId, LedgerDate) · (OrgId, AccountId, LedgerDate) · (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransactionTypeCode, MappingTransactionId) · (OrgId, ContactId) · (OrgId, SubAccountId)
