@@ -310,8 +310,46 @@
       </table>
     }
 
+    @if (recostings().length > 0) {
+      <h3>Costs restated</h3>
+      <p class="hint">
+        A receipt turned up dated before these sales, so the stock that should have gone out
+        first was not the stock that did. Their cost of goods sold has been recalculated. The
+        quantities never changed — only what they cost.
+      </p>
+
+      <table class="grid">
+        <thead>
+          <tr>
+            <th>Sale dated</th>
+            <th class="num">Was</th>
+            <th class="num">Now</th>
+            <th class="num">Difference</th>
+            <th>Restated</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (recosting of recostings(); track recosting.recostingAdjustmentId) {
+            <tr>
+              <td>{{ recosting.movementDate }}</td>
+              <td class="num">{{ recosting.previousCost }}</td>
+              <td class="num">{{ recosting.newCost }}</td>
+              <td class="num" [class.up]="recosting.delta > 0" [class.down]="recosting.delta < 0">
+                {{ recosting.delta > 0 ? '+' : '' }}{{ recosting.delta }}
+              </td>
+              <td>{{ recosting.runAt }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
     <div class="sheet-actions">
-      <button type="button" class="link" (click)="ledgerFor.set(null); allocations.set([])">
+      <button
+        type="button"
+        class="link"
+        (click)="ledgerFor.set(null); allocations.set([]); recostings.set([])"
+      >
         Close
       </button>
     </div>

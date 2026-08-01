@@ -56,6 +56,14 @@ public sealed class StockController : ControllerBase
         Ok(await _stock.AllocationsAsync(stockMovementId, ct));
 
     /// <summary>
+    /// Costs restated by backdated receipts. Each row is one sale whose cost of
+    /// goods sold changed, and the receipt that changed it.
+    /// </summary>
+    [HttpGet("recostings")]
+    public async Task<IActionResult> Recostings([FromQuery] long? itemId, CancellationToken ct) =>
+        Ok(await _stock.RecostingsAsync(itemId, ct));
+
+    /// <summary>
     /// Records one movement and moves the pool with it, in a single
     /// transaction. Returns the resulting position so the caller never has to
     /// re-read it.

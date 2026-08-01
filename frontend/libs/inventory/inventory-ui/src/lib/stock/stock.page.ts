@@ -26,6 +26,22 @@ interface StockPosition {
   lastMovementAt: string | null;
 }
 
+/** A cost restated because a receipt turned up dated before the sale. */
+interface Recosting {
+  recostingAdjustmentId: number;
+  recostingBatchId: string;
+  itemId: number;
+  itemCode: string;
+  itemName: string;
+  stockMovementId: number;
+  movementDate: string;
+  triggerStockMovementId: number;
+  previousCost: number;
+  newCost: number;
+  delta: number;
+  runAt: string;
+}
+
 /** One layer an issue drew from — what it cost, and which receipt it came from. */
 interface CostAllocation {
   costLayerId: number;
@@ -119,6 +135,7 @@ export class StockPage implements OnInit {
 
   protected readonly movementTypes = MANUAL_TYPES;
   protected readonly allocations = signal<CostAllocation[]>([]);
+  protected readonly recostings = signal<Recosting[]>([]);
 
   /** Typed as one per line, so a scanner can be held down into the box. */
   serialText = '';
@@ -172,6 +189,17 @@ export class StockPage implements OnInit {
       this.movements.set(
         await this.get<StockMovement[]>(`/api/stock/movements?itemId=${row.itemId}`),
       );
+
+      // Restatements belong beside the ledger: they explain why a sale's cost
+      // is not the figure it was recorded at.
+      try {
+        this.recostings.set(
+          await this.get<Recosting[]>(`/api/stock/recostings?itemId=${row.itemId}`),
+        );
+      } catch {
+        this.recostings.set([]);
+      }
+
       this.ledgerFor.set(row);
     } catch {
       this.fail('Could not load the movement history.');

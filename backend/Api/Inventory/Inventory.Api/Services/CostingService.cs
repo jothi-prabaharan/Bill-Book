@@ -82,7 +82,8 @@ public sealed class CostingService
         Item item,
         StockMovement movement,
         IReadOnlyList<long> serialLayerIds,
-        CancellationToken ct)
+        CancellationToken ct,
+        Guid? recostingBatchId = null)
     {
         if (!ConsumesLayers(item.CostingType))
         {
@@ -136,6 +137,7 @@ public sealed class CostingService
                     Quantity = take,
                     UnitCost = layer.UnitCost,
                     TotalCost = cost,
+                    RecostingBatchId = recostingBatchId,
                 });
 
                 outstanding = Math.Round(
@@ -148,6 +150,181 @@ public sealed class CostingService
             ? (StockOutcome.InsufficientCostLayers, 0m)
             : (StockOutcome.Ok, total);
     }
+
+
+    /// <summary>
+    /// Restates every issue on or after a backdated receipt.
+    ///
+    /// A receipt dated before issues that have already consumed layers
+    /// invalidates every allocation after it — under FIFO the backdated stock
+    /// should have gone out first, and it did not. Under FEFO a lot expiring
+    /// sooner should have gone first. Either way the answer is the same: unwind
+    /// the affected allocations, put the quantity back on the layers they came
+    /// from, and replay each issue in date order against the layers as they now
+    /// stand.
+    ///
+    /// Nothing is deleted. Superseded allocations keep their rows, because a
+    /// restated cost is only defensible if what it replaced is still readable.
+    /// Quantities are untouched throughout: what moved, moved. Only what it cost
+    /// changes.
+    /// </summary>
+    public async Task<(StockOutcome Outcome, int Restated, decimal TotalDelta)> RecostAsync(
+        Item item, StockMovement trigger, CancellationToken ct)
+    {
+        if (!ConsumesLayers(item.CostingType))
+        {
+            return (StockOutcome.Ok, 0, 0m);
+        }
+
+        // Every issue the backdated receipt could have supplied, oldest first —
+        // replay order has to match the order the sales actually happened in, or
+        // FIFO produces a different answer than it would have at the time.
+        List<StockMovement> affected = await _db.StockMovements
+            .AsNoTracking()
+            .Where(m => m.ItemId == item.ItemId
+                && m.Direction == StockDirection.Out
+                && m.MovementDate >= trigger.MovementDate
+                && m.StockMovementId != trigger.StockMovementId)
+            .OrderBy(m => m.MovementDate)
+            .ThenBy(m => m.StockMovementId)
+            .ToListAsync(ct);
+
+        if (affected.Count == 0)
+        {
+            return (StockOutcome.Ok, 0, 0m);
+        }
+
+        Guid batch = Guid.NewGuid();
+        DateTimeOffset runAt = DateTimeOffset.UtcNow;
+
+        // Unwind first, all of it, so the replay sees every layer restored. Doing
+        // it issue by issue would replay the earliest against layers the later
+        // ones still hold.
+        Dictionary<long, decimal> previousCosts = await UnwindAsync(affected, batch, runAt, ct);
+
+        int restated = 0;
+        decimal totalDelta = 0m;
+
+        foreach (StockMovement issue in affected)
+        {
+            List<long> serialLayers = await SerialLayersAsync(item, issue, ct);
+
+            (StockOutcome outcome, decimal newCost) =
+                await ConsumeAsync(item, issue, serialLayers, ct, batch);
+
+            if (outcome != StockOutcome.Ok)
+            {
+                return (outcome, 0, 0m);
+            }
+
+            decimal previous = previousCosts.GetValueOrDefault(issue.StockMovementId);
+            decimal delta = newCost - previous;
+
+            if (delta != 0m)
+            {
+                _db.RecostingAdjustments.Add(new RecostingAdjustment
+                {
+                    RecostingBatchId = batch,
+                    ItemId = item.ItemId,
+                    StockMovementId = issue.StockMovementId,
+                    TriggerStockMovementId = trigger.StockMovementId,
+                    PreviousCost = previous,
+                    NewCost = newCost,
+                    Delta = delta,
+                    RunAt = runAt,
+                });
+
+                restated++;
+                totalDelta += delta;
+            }
+
+            // The movement's own cost columns follow the allocation, so the
+            // stock ledger and the adjustment never disagree.
+            await _db.StockMovements
+                .Where(m => m.StockMovementId == issue.StockMovementId)
+                .ExecuteUpdateAsync(
+                    m => m
+                        .SetProperty(x => x.TotalCost, newCost)
+                        .SetProperty(
+                            x => x.UnitCost,
+                            issue.Quantity > 0
+                                ? Math.Round(newCost / issue.Quantity, 6, MidpointRounding.AwayFromZero)
+                                : null),
+                    ct);
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return (StockOutcome.Ok, restated, totalDelta);
+    }
+
+    /// <summary>
+    /// Retires the current allocations of the given issues and gives their
+    /// quantity back to the layers. Returns what each issue cost before, so the
+    /// replay can report a delta against it.
+    /// </summary>
+    private async Task<Dictionary<long, decimal>> UnwindAsync(
+        List<StockMovement> affected, Guid batch, DateTimeOffset runAt, CancellationToken ct)
+    {
+        long[] ids = affected.Select(m => m.StockMovementId).ToArray();
+
+        List<CostLayerConsumption> current = await _db.CostLayerConsumptions
+            .Where(c => ids.Contains(c.StockMovementId) && c.SupersededAt == null)
+            .ToListAsync(ct);
+
+        var previous = new Dictionary<long, decimal>();
+
+        foreach (CostLayerConsumption allocation in current)
+        {
+            previous[allocation.StockMovementId] =
+                previous.GetValueOrDefault(allocation.StockMovementId) + allocation.TotalCost;
+
+            decimal give = allocation.Quantity;
+
+            await _db.CostLayers
+                .Where(l => l.CostLayerId == allocation.CostLayerId
+                    && l.RemainingQuantity + give <= l.OriginalQuantity)
+                .ExecuteUpdateAsync(
+                    l => l.SetProperty(x => x.RemainingQuantity, x => x.RemainingQuantity + give),
+                    ct);
+
+            allocation.SupersededAt = runAt;
+            allocation.RecostingBatchId = batch;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return previous;
+    }
+
+    /// <summary>
+    /// The layers the pieces on this issue came in on. Specific identification
+    /// has no selection rule to replay — the same pieces went out, so the same
+    /// layers are consumed, and only their costs can have changed.
+    /// </summary>
+    private async Task<List<long>> SerialLayersAsync(
+        Item item, StockMovement issue, CancellationToken ct)
+    {
+        if (item.CostingType != CostingType.SpecificIdentification)
+        {
+            return [];
+        }
+
+        return await _db.ItemSerials
+            .Where(s => s.IssuedMovementId == issue.StockMovementId && s.CostLayerId != null)
+            .Select(s => s.CostLayerId!.Value)
+            .Distinct()
+            .ToListAsync(ct);
+    }
+
+    /// <summary>Whether this receipt lands before issues that have already been costed.</summary>
+    public Task<bool> IsBackdatedAsync(Item item, StockMovement receipt, CancellationToken ct) =>
+        !ConsumesLayers(item.CostingType)
+            ? Task.FromResult(false)
+            : _db.StockMovements.AnyAsync(
+                m => m.ItemId == item.ItemId
+                    && m.Direction == StockDirection.Out
+                    && m.MovementDate >= receipt.MovementDate
+                    && m.StockMovementId != receipt.StockMovementId,
+                ct);
 
     /// <summary>
     /// Puts returned stock back on the layers it left from, at the cost it left
@@ -174,7 +351,7 @@ public sealed class CostingService
 
         List<CostLayerConsumption> original = await _db.CostLayerConsumptions
             .AsNoTracking()
-            .Where(c => c.StockMovementId == returnedMovementId)
+            .Where(c => c.StockMovementId == returnedMovementId && c.SupersededAt == null)
             .OrderBy(c => c.CostLayerConsumptionId)
             .ToListAsync(ct);
 
@@ -186,6 +363,7 @@ public sealed class CostingService
         // What has already come back on earlier partial returns, so two returns
         // of the same issue cannot together give back more than went out.
         decimal alreadyReturned = await _db.CostLayerConsumptions
+            .Where(c => c.SupersededAt == null)
             .Where(c => _db.StockMovements
                 .Any(m => m.StockMovementId == c.StockMovementId
                     && m.ReturnsStockMovementId == returnedMovementId))
@@ -257,7 +435,7 @@ public sealed class CostingService
     public async Task<IReadOnlyList<CostAllocationItem>> AllocationsAsync(
         long stockMovementId, CancellationToken ct) =>
         await _db.CostLayerConsumptions
-            .Where(c => c.StockMovementId == stockMovementId)
+            .Where(c => c.StockMovementId == stockMovementId && c.SupersededAt == null)
             .Join(_db.CostLayers, c => c.CostLayerId, l => l.CostLayerId, (c, l) => new { c, l })
             .OrderBy(x => x.l.ReceivedOn)
             .Select(x => new CostAllocationItem

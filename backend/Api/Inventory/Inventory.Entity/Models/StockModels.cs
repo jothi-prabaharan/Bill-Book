@@ -64,6 +64,38 @@ public class StockPosition
     public DateTimeOffset? LastMovementAt { get; set; }
 }
 
+/// <summary>A cost restated because a receipt arrived dated before the sale.</summary>
+public class RecostingAdjustmentItem
+{
+    public long RecostingAdjustmentId { get; set; }
+
+    /// <summary>Groups every adjustment made by one run.</summary>
+    public Guid RecostingBatchId { get; set; }
+
+    public long ItemId { get; set; }
+
+    public string ItemCode { get; set; } = null!;
+
+    public string ItemName { get; set; } = null!;
+
+    /// <summary>The sale whose cost changed.</summary>
+    public long StockMovementId { get; set; }
+
+    public DateOnly MovementDate { get; set; }
+
+    /// <summary>The backdated receipt that caused it.</summary>
+    public long TriggerStockMovementId { get; set; }
+
+    public decimal PreviousCost { get; set; }
+
+    public decimal NewCost { get; set; }
+
+    /// <summary>Signed — a restatement genuinely runs both ways.</summary>
+    public decimal Delta { get; set; }
+
+    public DateTimeOffset RunAt { get; set; }
+}
+
 /// <summary>What one issue took, from which layer, at what cost.</summary>
 public class CostAllocationItem
 {

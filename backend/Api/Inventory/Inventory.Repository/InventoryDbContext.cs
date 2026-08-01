@@ -47,6 +47,8 @@ public class InventoryDbContext : TenantDbContext
 
     public DbSet<CostLayerConsumption> CostLayerConsumptions => Set<CostLayerConsumption>();
 
+    public DbSet<RecostingAdjustment> RecostingAdjustments => Set<RecostingAdjustment>();
+
     /// <summary>
     /// Mapped, not migrated. Accounting owns this table; Inventory maps the same
     /// Shared.Kernel entity so an item code is allocated inside the same
@@ -533,10 +535,12 @@ public class InventoryDbContext : TenantDbContext
         {
             b.HasKey(e => e.CostLayerConsumptionId);
 
-            // One allocation per layer per issue. Replaying an issue hits this
-            // and fails rather than consuming the layer a second time.
+            // One *current* allocation per layer per issue. Filtered on
+            // SupersededAt, because a recosting keeps the row it replaced —
+            // without the filter the replay could never write its own.
             b.HasIndex(e => new { e.OrgId, e.StockMovementId, e.CostLayerId })
                 .IsUnique()
+                .HasFilter("\"SupersededAt\" IS NULL")
                 .HasDatabaseName("IX_CostLayerConsumptions_Allocation");
 
             // Summing an issue's COGS, and finding what to unwind when a
@@ -564,6 +568,40 @@ public class InventoryDbContext : TenantDbContext
             b.ToTable(table => table.HasCheckConstraint(
                 "chk_consumption_amounts",
                 "\"Quantity\" > 0 AND \"UnitCost\" >= 0 AND \"TotalCost\" >= 0"));
+        });
+
+        modelBuilder.Entity<RecostingAdjustment>(b =>
+        {
+            b.HasKey(e => e.RecostingAdjustmentId);
+
+            // Reading one run as a whole, which is how it is reviewed.
+            b.HasIndex(e => new { e.OrgId, e.RecostingBatchId })
+                .HasDatabaseName("IX_RecostingAdjustments_Batch");
+
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.RunAt })
+                .HasDatabaseName("IX_RecostingAdjustments_Item");
+
+            b.HasIndex(e => new { e.OrgId, e.StockMovementId })
+                .HasDatabaseName("IX_RecostingAdjustments_Movement");
+
+            foreach (string money in new[] { "PreviousCost", "NewCost", "Delta" })
+            {
+                b.Property(money).HasColumnType("decimal(18,2)");
+            }
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<StockMovement>()
+                .WithMany()
+                .HasForeignKey(e => e.StockMovementId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_recosting_delta",
+                "\"Delta\" = \"NewCost\" - \"PreviousCost\""));
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

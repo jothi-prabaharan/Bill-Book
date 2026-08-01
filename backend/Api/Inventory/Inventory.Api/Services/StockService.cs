@@ -153,6 +153,45 @@ public sealed class StockService
         long stockMovementId, CancellationToken ct) =>
         _costing.AllocationsAsync(stockMovementId, ct);
 
+    /// <summary>
+    /// Costs restated by a backdated receipt — which sale, by how much, and
+    /// because of which receipt.
+    /// </summary>
+    public async Task<IReadOnlyList<RecostingAdjustmentItem>> RecostingsAsync(
+        long? itemId, CancellationToken ct)
+    {
+        IQueryable<RecostingAdjustment> query = _db.RecostingAdjustments;
+
+        if (itemId is long id)
+        {
+            query = query.Where(a => a.ItemId == id);
+        }
+
+        return await query
+            .Join(_db.Items, a => a.ItemId, i => i.ItemId, (a, i) => new { a, i })
+            .Select(x => new RecostingAdjustmentItem
+            {
+                RecostingAdjustmentId = x.a.RecostingAdjustmentId,
+                RecostingBatchId = x.a.RecostingBatchId,
+                ItemId = x.a.ItemId,
+                ItemCode = x.i.ItemCode,
+                ItemName = x.i.ItemName,
+                StockMovementId = x.a.StockMovementId,
+                TriggerStockMovementId = x.a.TriggerStockMovementId,
+                MovementDate = _db.StockMovements
+                    .Where(m => m.StockMovementId == x.a.StockMovementId)
+                    .Select(m => m.MovementDate)
+                    .FirstOrDefault(),
+                PreviousCost = x.a.PreviousCost,
+                NewCost = x.a.NewCost,
+                Delta = x.a.Delta,
+                RunAt = x.a.RunAt,
+            })
+            .OrderByDescending(a => a.RunAt)
+            .ThenBy(a => a.MovementDate)
+            .ToListAsync(ct);
+    }
+
     public async Task<RecordStockMovementResult> RecordAsync(
         RecordStockMovementRequest request, CancellationToken ct)
     {
@@ -528,7 +567,27 @@ public sealed class StockService
             await _db.SaveChangesAsync(ct);
 
             StockOutcome created = await CreateSerialsAsync(item, movement, batch, layer, request, ct);
-            return created == StockOutcome.Ok ? (StockOutcome.Ok, null) : (created, null);
+            if (created != StockOutcome.Ok)
+            {
+                return (created, null);
+            }
+
+            // A receipt dated before issues that already consumed layers means
+            // those issues were costed against stock that should have gone out
+            // first. Unwind and replay them rather than leaving the earlier
+            // sales costed at a figure the receipt has since made wrong.
+            if (await _costing.IsBackdatedAsync(item, movement, ct))
+            {
+                (StockOutcome recosted, int _, decimal __) =
+                    await _costing.RecostAsync(item, movement, ct);
+
+                if (recosted != StockOutcome.Ok)
+                {
+                    return (recosted, null);
+                }
+            }
+
+            return (StockOutcome.Ok, null);
         }
 
         (StockOutcome retired, List<long> layerIds) =

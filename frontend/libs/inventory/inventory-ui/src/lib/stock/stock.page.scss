@@ -77,3 +77,7 @@ button:disabled { opacity: .6; cursor: default; }
 
 .fields textarea { padding: .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; resize: vertical; }
 .sheet h3 { margin: 1.25rem 0 .25rem; font-size: .95rem; }
+
+/* A restatement runs both ways, and the sign is stated as well as coloured. */
+.num.up { color: #a52c17; }
+.num.down { color: #187a4b; }

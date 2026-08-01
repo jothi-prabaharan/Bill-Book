@@ -155,9 +155,12 @@ The largest piece, and what makes `CostingType` honest. Today an item set to FEF
   Service Bus is unordered and at-least-once; FIFO consumes the wrong layer if movements arrive out of sequence.
   *Done when*: movements replayed out of order still cost identically, and a redelivered event does not double-count.
 
-- [ ] **4.4 — Backdated receipts and recosting**
+- [~] **4.4 — Backdated receipts and recosting** — *restated and visible; the journal half waits on 5.12*
   A receipt dated before issues that already consumed layers invalidates every allocation after it. Unwind, replay, and post a COGS adjustment — reversing, never editing a posted entry.
   *Done when*: inserting a backdated receipt restates COGS and the adjustment is visible as its own journal.
+  Recording a backdated receipt now unwinds every issue on or after its date, returns the quantity to the layers it came from, and replays them in date order against the layers as they now stand. Allocations are **superseded, never deleted** — `CostLayerConsumption.SupersededAt` plus a batch id, with the unique index filtered to current rows so the replacement can sit beside what it replaced. Quantities are untouched throughout; only cost moves.
+  `inv.RecostingAdjustments` records each restatement: sale, previous cost, new cost, signed delta, and the receipt that triggered it. Surfaced at `GET api/stock/recostings` and on the item's movement history.
+  **What is not done is the journal.** "Visible as its own journal" needs Accounting, and Inventory does not yet talk to it (5.12). The adjustment is a first-class record here and posts nothing. Finish this item when 5.12 lands — the rows it needs already exist and carry a signed delta for exactly that purpose.
 
 - [x] **4.5 — Returns to the originating layer**
   A sales return puts quantity back on the layers it came from at their original cost, not at today's.
@@ -194,6 +197,7 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.12 — A stock issue posts nothing to the ledger**
   `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, on an event Inventory does not yet publish — so today stock and the general ledger disagree the moment anything is issued. Nothing is wrong with either half; they are simply not connected. Do it when Sales lands, since that is what will be issuing.
+  **4.4 is blocked on this too.** A backdated receipt already restates costs and records a signed delta per sale in `inv.RecostingAdjustments`; what it cannot do is post the correcting journal. Those rows exist to be read by whatever closes this item.
 
 - [ ] **5.13 — No reserved quantity**
   `ItemStock` holds on-hand only. An order that is confirmed but not yet delivered leaves stock fully available, so it can be promised twice. Needs a `QuantityReserved` column and a matching guarded update — deliberately left out until Sales exists to write it, because a reserve nothing releases is worse than none.

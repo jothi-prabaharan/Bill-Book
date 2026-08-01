@@ -133,7 +133,19 @@ Left unlinked, the return re-enters at the current running average instead. On a
 
 Partial returns are fine, and are given back oldest allocation first. Two partial returns of the same sale cannot together give back more than went out, and no layer can ever hold more than it originally received — the database refuses both.
 
+## Backdated receipts
+
+A receipt entered late, dated before sales that have already happened, is a problem: under FIFO that stock **should** have gone out first, and it did not. The sales after it were costed against the wrong layers.
+
+Recording such a receipt **restates them automatically**. The affected sales are unwound, their quantity is given back to the layers it came from, and each one is replayed in date order against the layers as they now stand.
+
+Nothing is deleted. The old allocations keep their rows, marked as superseded — a restated cost is only defensible if what it replaced is still readable. And **quantities never change**: what moved, moved. Only what it cost changes.
+
+Each restatement is recorded as its own row: which sale, what it cost before, what it costs now, the difference, and which receipt caused it. They appear under **Costs restated** on the item's movement history.
+
+Under specific identification there is nothing to re-select — the same pieces went out, so the same layers are consumed, and only their costs can have moved.
+
 ## What is not here yet
 
-- **Backdated receipts do not restate anything.** A receipt dated before issues that already consumed layers should unwind those allocations, replay them and post a COGS adjustment. Today it creates a layer at the back of the queue and leaves the earlier issues costed as they were.
-- **Nothing posts to the ledger.** An issue computes its cost of goods sold and stops there — `Dr COGS / Cr Inventory` is Accounting's to write, and the two are not yet connected.
+- **The restatement does not post to the ledger.** The adjustment is recorded and visible, but the matching `Dr/Cr COGS` journal is Accounting's to write from it, and Inventory and Accounting are not yet connected. Until they are, a restated cost shows here and not in the accounts.
+- **Nothing posts to the ledger on an ordinary sale either.** An issue computes its cost of goods sold and stops — `Dr COGS / Cr Inventory` is the same missing connection.

@@ -37,4 +37,16 @@ public class CostLayerConsumption : OrgScopedEntity
     /// <summary><c>Quantity × UnitCost</c>. This is the COGS contribution of this allocation.</summary>
     [Range(0, 999999999999.99, ErrorMessage = "Total cost cannot be negative.")]
     public decimal TotalCost { get; set; }
+
+    /// <summary>
+    /// Set when a recosting replaced this allocation. The row stays: a restated
+    /// COGS figure is only defensible if what it replaced is still readable, and
+    /// deleting it would be editing history rather than correcting it.
+    ///
+    /// Null means current. Every read of "what did this issue cost" filters on it.
+    /// </summary>
+    public DateTimeOffset? SupersededAt { get; set; }
+
+    /// <summary>Which recosting run wrote or retired this row. Null on an original allocation.</summary>
+    public Guid? RecostingBatchId { get; set; }
 }
