@@ -105,24 +105,27 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
 
 ## Stage 3 — Stock foundation
 
-Until this lands, an item is a catalogue entry that cannot hold stock, and the "locked once stock has moved" rule is inert — `HasStockMovementsAsync` returns `false` unconditionally.
+~~Until this lands, an item is a catalogue entry that cannot hold stock, and the "locked once stock has moved" rule is inert — `HasStockMovementsAsync` returns `false` unconditionally.~~ **Done.** Items hold stock, and the lock is live.
 
 - [x] **3.1 — `plt.Branches`**
   `BranchId` is already referenced by `acc.JournalDetails`, `acc.JournalLedger`, `inv.Warehouses` and `acc.NumberingSeries`, with no table behind any of them.
   *Done when*: a branch can be created and picked wherever `BranchId` is stored.
   Master database, with a real FK to `plt.Organizations` — the one place the two can have one. Filtered unique index gives exactly one head office per org; provisioning writes it from the organization's own details. Picked on the Warehouses and Numbering Series pages; journal lines follow when Accounting's document screens land. Platform gained JWT authentication for this endpoint alone — see 5.10.
 
-- [ ] **3.2 — `inv.ItemStock`**
+- [x] **3.2 — `inv.ItemStock`**
   One row per item — quantity on hand, weighted average cost, `xmin`. The target of the synchronous, concurrency-safe point-of-sale decrement.
   *Done when*: two concurrent sales of the last unit cannot both succeed.
+  `ItemId` is key and foreign key both, so a second row is structurally impossible. The decrement is one `ExecuteUpdateAsync` guarded by `QuantityOnHand >= qty`, and the row count is the answer — zero means nothing changed. The weighted average is recomputed inside the same UPDATE, which reads the pre-statement values, so there is no read to race against.
 
-- [ ] **3.3 — `inv.StockMovements`**
+- [x] **3.3 — `inv.StockMovements`**
   Receipts, issues, adjustments and transfers, each storing the unit as entered **and** the base quantity as a snapshot.
   *Done when*: a receipt in bags and an issue in grams both land on one stock figure in the item's inventory unit.
+  The conversion factor is stored on the row, not re-derived, so correcting a unit factor later cannot restate recorded history — a check constraint asserts the two quantities agree. `(OrgId, SourceType, SourceId, SourceLineId)` is uniquely indexed, which is the idempotency key for at-least-once delivery. Transfers write two rows and change the pool by nothing, because the pool was never split by location.
 
-- [ ] **3.4 — Switch the item config lock on**
+- [x] **3.4 — Switch the item config lock on**
   Replace the `HasStockMovementsAsync` stub with a real query. It is deliberately the only line that needs to change.
   *Done when*: an item with movements refuses a change to its unit type, inventory unit, costing method, profile or tracking flags.
+  It was one line, as designed.
 
 ---
 
@@ -175,6 +178,12 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.7 — There are no tests and no linter**
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
+
+- [ ] **5.12 — A stock issue posts nothing to the ledger**
+  `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, on an event Inventory does not yet publish — so today stock and the general ledger disagree the moment anything is issued. Nothing is wrong with either half; they are simply not connected. Do it when Sales lands, since that is what will be issuing.
+
+- [ ] **5.13 — No reserved quantity**
+  `ItemStock` holds on-hand only. An order that is confirmed but not yet delivered leaves stock fully available, so it can be promised twice. Needs a `QuantityReserved` column and a matching guarded update — deliberately left out until Sales exists to write it, because a reserve nothing releases is worse than none.
 
 - [ ] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
   `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.

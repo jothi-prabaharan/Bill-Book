@@ -1,0 +1,214 @@
+<header class="page-head">
+  <h1>Stock</h1>
+  <div class="head-actions">
+    <input
+      type="search"
+      [(ngModel)]="search"
+      (ngModelChange)="load()"
+      placeholder="Search items"
+      aria-label="Search items"
+    />
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="belowReorderOnly" (ngModelChange)="load()" />
+      Below reorder level
+    </label>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  One quantity and one cost per item, across every branch and warehouse. Stock is a shared pool —
+  a warehouse records where a movement happened, it does not hold a balance of its own.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Item</th>
+      <th class="num">On hand</th>
+      <th class="num">In report unit</th>
+      <th class="num">Avg. cost</th>
+      <th class="num">Value</th>
+      <th>Costing</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.itemId) {
+      <tr [class.low]="row.isBelowReorderLevel">
+        <td><code>{{ row.itemCode }}</code></td>
+        <td>
+          {{ row.itemName }}
+          @if (row.isBelowReorderLevel) {
+            <span class="badge low">Reorder</span>
+          }
+        </td>
+        <td class="num">{{ row.quantityOnHand }} {{ row.inventoryUomCode }}</td>
+        <td class="num">{{ row.quantityInReportUom }} {{ row.reportUomCode }}</td>
+        <td class="num">{{ row.weightedAverageCost }}</td>
+        <td class="num">{{ row.stockValue }}</td>
+        <td>{{ row.costingType }}</td>
+        <td class="actions-col">
+          <button type="button" class="link" (click)="openMovement(row)" [disabled]="busy()">
+            Record
+          </button>
+          <button type="button" class="link" (click)="openLedger(row)" [disabled]="busy()">
+            History
+          </button>
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="8">No stocked items.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (movementFor(); as item) {
+  <div class="sheet">
+    <h2>Record a movement — {{ item.itemName }}</h2>
+
+    <div class="fields">
+      <label>
+        Type
+        <select [(ngModel)]="form.movementType">
+          @for (type of movementTypes; track type.value) {
+            <option [value]="type.value">{{ type.label }}</option>
+          }
+        </select>
+      </label>
+
+      @if (directionEditable) {
+        <label>
+          Direction
+          <select [(ngModel)]="form.direction">
+            <option value="In">In — found, written on</option>
+            <option value="Out">Out — short, broken, written off</option>
+          </select>
+        </label>
+      }
+
+      <label>
+        Date
+        <input type="date" [(ngModel)]="form.movementDate" />
+      </label>
+
+      <label>
+        Quantity
+        <input type="number" [(ngModel)]="form.quantity" min="0" step="0.001" />
+      </label>
+
+      <label>
+        Unit
+        <select [(ngModel)]="form.uomId">
+          @for (unit of enterableUnits; track unit.uomId) {
+            <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
+          }
+        </select>
+        <small>
+          Enter in whichever unit you counted in. It converts into {{ item.inventoryUomCode }},
+          which is what stock is held in.
+        </small>
+      </label>
+
+      <label>
+        Warehouse
+        <select [(ngModel)]="form.warehouseId">
+          <option [ngValue]="null">Not recorded</option>
+          @for (warehouse of warehouses(); track warehouse.warehouseId) {
+            <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
+          }
+        </select>
+      </label>
+
+      @if (costRequired) {
+        <label>
+          Cost per unit
+          <input type="number" [(ngModel)]="form.unitCost" min="0" step="0.000001" />
+          <small>
+            Per the unit chosen above. This is the only thing that moves the weighted average.
+          </small>
+        </label>
+      }
+
+      <label class="wide">
+        Notes
+        <input type="text" [(ngModel)]="form.notes" maxlength="300" />
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button
+        type="button"
+        (click)="record()"
+        [disabled]="busy() || form.quantity <= 0 || (costRequired && form.unitCost === null)"
+      >
+        Record
+      </button>
+      <button type="button" class="link" (click)="movementFor.set(null)">Cancel</button>
+    </div>
+  </div>
+}
+
+@if (ledgerFor(); as item) {
+  <div class="sheet">
+    <h2>Movement history — {{ item.itemName }}</h2>
+
+    <p class="hint">
+      Every row shows the quantity as entered and again in {{ item.inventoryUomCode }}. The
+      history is append-only: a mistake is corrected by an opposite movement, never by an edit.
+    </p>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Type</th>
+          <th>Warehouse</th>
+          <th class="num">Entered</th>
+          <th class="num">In stock unit</th>
+          <th class="num">Unit cost</th>
+          <th class="num">Avg. after</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (movement of movements(); track movement.stockMovementId) {
+          <tr>
+            <td>{{ movement.movementDate }}</td>
+            <td>
+              {{ movement.movementType }}
+              <span class="badge" [class.out]="movement.direction === 'Out'">
+                {{ movement.direction }}
+              </span>
+            </td>
+            <td>{{ movement.warehouseName ?? '—' }}</td>
+            <td class="num">{{ movement.enteredQuantity }} {{ movement.enteredUomCode }}</td>
+            <td class="num">
+              {{ movement.direction === 'Out' ? '−' : '+' }}{{ movement.quantity }}
+              {{ item.inventoryUomCode }}
+            </td>
+            <td class="num">{{ movement.unitCost ?? '—' }}</td>
+            <td class="num">{{ movement.resultingWeightedAverageCost ?? '—' }}</td>
+            <td>
+              @if (movement.sourceType) {
+                <code>{{ movement.sourceType }}-{{ movement.sourceId }}</code>
+              } @else {
+                <span class="muted">Manual</span>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr><td colspan="8">Nothing has moved yet.</td></tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="sheet-actions">
+      <button type="button" class="link" (click)="ledgerFor.set(null)">Close</button>
+    </div>
+  </div>
+}

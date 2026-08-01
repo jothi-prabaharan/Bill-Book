@@ -92,6 +92,10 @@ export const appRoutes: Routes = [
           import('@bill-book/inventory-ui').then((m) => m.ItemCategoriesPage),
       },
       {
+        path: 'inventory/stock',
+        loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.StockPage),
+      },
+      {
         path: 'inventory/warehouses',
         loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.WarehousesPage),
       },

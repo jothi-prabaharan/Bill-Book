@@ -55,6 +55,7 @@ builder.Services.AddScoped<ItemCategoryService>();
 builder.Services.AddScoped<MetalPurityService>();
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ItemService>();
+builder.Services.AddScoped<StockService>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so an item code is allocated inside the

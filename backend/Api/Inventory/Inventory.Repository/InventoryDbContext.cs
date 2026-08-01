@@ -35,6 +35,10 @@ public class InventoryDbContext : TenantDbContext
 
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
 
+    public DbSet<ItemStock> ItemStock => Set<ItemStock>();
+
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
     /// <summary>
     /// Mapped, not migrated. Accounting owns this table; Inventory maps the same
     /// Shared.Kernel entity so an item code is allocated inside the same
@@ -306,6 +310,113 @@ public class InventoryDbContext : TenantDbContext
 
             b.Property(e => e.WarehouseType).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.StorageType).HasConversion<string>().HasMaxLength(15);
+        });
+
+        modelBuilder.Entity<ItemStock>(b =>
+        {
+            // ItemId is key and foreign key both: one item, one stock row, with
+            // no way to write a second.
+            b.HasKey(e => e.ItemId);
+            b.Property(e => e.ItemId).ValueGeneratedNever();
+
+            b.Property(e => e.QuantityOnHand).HasColumnType("decimal(18,3)");
+            b.Property(e => e.WeightedAverageCost).HasColumnType("decimal(18,6)");
+
+            b.HasOne<Item>()
+                .WithOne()
+                .HasForeignKey<ItemStock>(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table =>
+            {
+                // The conditional decrement already guarantees this; the
+                // constraint is what turns a costing bug into a loud failure
+                // rather than negative stock nobody notices.
+                table.HasCheckConstraint(
+                    "chk_item_stock_non_negative",
+                    "\"QuantityOnHand\" >= 0 AND \"WeightedAverageCost\" >= 0");
+            });
+        });
+
+        modelBuilder.Entity<StockMovement>(b =>
+        {
+            b.HasKey(e => e.StockMovementId);
+
+            // The item's ledger, and the query behind the config lock.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.MovementDate })
+                .HasDatabaseName("IX_StockMovements_Item");
+
+            b.HasIndex(e => new { e.OrgId, e.WarehouseId, e.ItemId })
+                .HasDatabaseName("IX_StockMovements_Warehouse");
+
+            b.HasIndex(e => new { e.OrgId, e.MovementDate })
+                .HasDatabaseName("IX_StockMovements_Date");
+
+            // Idempotency. Service Bus is at-least-once, so a redelivered event
+            // must not move stock twice — the second insert hits this index and
+            // fails rather than doubling the quantity. Filtered, because a
+            // manual adjustment has no source document.
+            b.HasIndex(e => new { e.OrgId, e.SourceType, e.SourceId, e.SourceLineId })
+                .IsUnique()
+                .HasFilter("\"SourceType\" IS NOT NULL")
+                .HasDatabaseName("IX_StockMovements_Source");
+
+            b.Property(e => e.MovementType).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(3);
+
+            foreach (string qty in new[] { "EnteredQuantity", "Quantity" })
+            {
+                b.Property(qty).HasColumnType("decimal(18,3)");
+            }
+
+            b.Property(e => e.ConversionFactor).HasColumnType("decimal(18,6)");
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
+            b.Property(e => e.ResultingWeightedAverageCost).HasColumnType("decimal(18,6)");
+            b.Property(e => e.TotalCost).HasColumnType("decimal(18,2)");
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<Warehouse>()
+                .WithMany()
+                .HasForeignKey(e => e.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<UnitOfMeasure>()
+                .WithMany()
+                .HasForeignKey(e => e.EnteredUomId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // Positive quantities only; Direction carries the sign. A
+                // negative here would reverse a movement with nothing on screen
+                // saying so.
+                table.HasCheckConstraint(
+                    "chk_movement_quantity_positive",
+                    "\"Quantity\" > 0 AND \"EnteredQuantity\" > 0 AND \"ConversionFactor\" > 0");
+
+                // The two quantities have to agree, or the entered figure is
+                // decoration and the stock figure is unexplainable. Rounded to
+                // the stored scale before comparing.
+                table.HasCheckConstraint(
+                    "chk_movement_conversion",
+                    "\"Quantity\" = ROUND(\"EnteredQuantity\" * \"ConversionFactor\", 3)");
+
+                table.HasCheckConstraint(
+                    "chk_movement_cost_non_negative",
+                    "(\"UnitCost\" IS NULL OR \"UnitCost\" >= 0) "
+                        + "AND (\"TotalCost\" IS NULL OR \"TotalCost\" >= 0)");
+
+                // A source id without a type, or the reverse, is half a
+                // reference — and the idempotency index would not catch it.
+                table.HasCheckConstraint(
+                    "chk_movement_source",
+                    "(\"SourceType\" IS NULL AND \"SourceId\" IS NULL) "
+                        + "OR (\"SourceType\" IS NOT NULL AND \"SourceId\" IS NOT NULL)");
+            });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

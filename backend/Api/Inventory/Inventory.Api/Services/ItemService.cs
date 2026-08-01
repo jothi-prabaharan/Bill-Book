@@ -483,13 +483,16 @@ public sealed class ItemService
     }
 
     /// <summary>
-    /// Whether stock has ever moved for this item. The movements table is not
-    /// built yet, so this is false everywhere — but every caller that must
-    /// respect the lock already goes through here, and the day the table lands
-    /// this is the only line that changes.
+    /// Whether stock has ever moved for this item.
+    ///
+    /// This is what makes the config lock real: the unit type, inventory unit,
+    /// costing method, profile and tracking flags are frozen once a single
+    /// movement exists, because every quantity and cost recorded so far was
+    /// written under them. Movements are never deleted, so this only ever goes
+    /// from false to true.
     /// </summary>
     private Task<bool> HasStockMovementsAsync(long itemId, CancellationToken ct) =>
-        Task.FromResult(false);
+        _db.StockMovements.AnyAsync(m => m.ItemId == itemId, ct);
 
     private static void Apply(Item item, SaveItemRequest request, ParsedItem parsed)
     {

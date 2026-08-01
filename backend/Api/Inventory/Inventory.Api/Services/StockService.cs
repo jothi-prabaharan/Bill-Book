@@ -1,0 +1,545 @@
+using Inventory.Entity.Enums;
+using Inventory.Entity.Models;
+using Inventory.Entity.TableEntities;
+using Inventory.Repository;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace Inventory.Api.Services;
+
+/// <summary>
+/// Stock: one pool per item, company-wide, and the append-only movement history
+/// behind it.
+///
+/// The decrement is the part that matters. It is a single conditional UPDATE —
+/// <c>SET QuantityOnHand = QuantityOnHand - @qty WHERE QuantityOnHand &gt;= @qty</c>
+/// — and the row count is the answer. Zero rows means there was not enough and
+/// nothing changed. Read-then-write would let two tills both see the last unit
+/// and both sell it, which is exactly the failure this shape exists to prevent.
+/// It is synchronous for the same reason: costing, accounting and notifications
+/// can all be told afterwards, but the quantity cannot.
+/// </summary>
+public sealed class StockService
+{
+    private readonly InventoryDbContext _db;
+    private readonly TimeProvider _clock;
+
+    public StockService(InventoryDbContext db, TimeProvider clock)
+    {
+        _db = db;
+        _clock = clock;
+    }
+
+    /// <summary>Quantities are held to three decimals; the movement check constraint asserts the same.</summary>
+    private const int QuantityScale = 3;
+
+    public async Task<StockPosition?> GetAsync(long itemId, CancellationToken ct)
+    {
+        List<StockPosition> rows = await QueryPositions(_db.Items.Where(i => i.ItemId == itemId))
+            .ToListAsync(ct);
+
+        return rows.Count == 0 ? null : Finish(rows[0]);
+    }
+
+    /// <summary>
+    /// Every stocked item, whether or not it has a stock row yet — an item that
+    /// has never moved is a zero, not an absence, and a reorder report that
+    /// silently skipped it would be worse than useless.
+    /// </summary>
+    public async Task<IReadOnlyList<StockPosition>> ListAsync(
+        string? search, bool belowReorderOnly, CancellationToken ct)
+    {
+        IQueryable<Item> items = _db.Items.Where(i => i.IsActive && i.TrackInventory);
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string term = search.Trim();
+            items = items.Where(i =>
+                EF.Functions.ILike(i.ItemName, $"%{term}%")
+                || EF.Functions.ILike(i.ItemCode, $"%{term}%"));
+        }
+
+        List<StockPosition> rows = await QueryPositions(items)
+            .OrderBy(p => p.ItemName)
+            .ToListAsync(ct);
+
+        IEnumerable<StockPosition> finished = rows.Select(Finish);
+
+        return belowReorderOnly
+            ? finished.Where(p => p.IsBelowReorderLevel).ToList()
+            : finished.ToList();
+    }
+
+    public async Task<IReadOnlyList<StockMovementListItem>> ListMovementsAsync(
+        long? itemId, long? warehouseId, DateOnly? from, DateOnly? to, CancellationToken ct)
+    {
+        IQueryable<StockMovement> query = _db.StockMovements;
+
+        if (itemId is long item)
+        {
+            query = query.Where(m => m.ItemId == item);
+        }
+
+        if (warehouseId is long warehouse)
+        {
+            query = query.Where(m => m.WarehouseId == warehouse);
+        }
+
+        if (from is DateOnly start)
+        {
+            query = query.Where(m => m.MovementDate >= start);
+        }
+
+        if (to is DateOnly end)
+        {
+            query = query.Where(m => m.MovementDate <= end);
+        }
+
+        return await query
+            .Join(_db.Items, m => m.ItemId, i => i.ItemId, (m, i) => new { m, i })
+            .Join(_db.UnitOfMeasures, x => x.m.EnteredUomId, u => u.UomId, (x, u) => new { x.m, x.i, u })
+            .Select(x => new StockMovementListItem
+            {
+                StockMovementId = x.m.StockMovementId,
+                ItemId = x.m.ItemId,
+                ItemCode = x.i.ItemCode,
+                ItemName = x.i.ItemName,
+                WarehouseId = x.m.WarehouseId,
+                WarehouseName = _db.Warehouses
+                    .Where(w => w.WarehouseId == x.m.WarehouseId)
+                    .Select(w => w.WarehouseName)
+                    .FirstOrDefault(),
+                BranchId = x.m.BranchId,
+                MovementType = x.m.MovementType.ToString(),
+                Direction = x.m.Direction.ToString(),
+                MovementDate = x.m.MovementDate,
+                EnteredQuantity = x.m.EnteredQuantity,
+                EnteredUomId = x.m.EnteredUomId,
+                EnteredUomCode = x.u.UomCode,
+                Quantity = x.m.Quantity,
+                ConversionFactor = x.m.ConversionFactor,
+                UnitCost = x.m.UnitCost,
+                TotalCost = x.m.TotalCost,
+                ResultingWeightedAverageCost = x.m.ResultingWeightedAverageCost,
+                SourceType = x.m.SourceType,
+                SourceId = x.m.SourceId,
+                Notes = x.m.Notes,
+                RecordedAt = x.m.CreatedAt,
+            })
+            .OrderByDescending(m => m.MovementDate)
+            .ThenByDescending(m => m.StockMovementId)
+            .ToListAsync(ct);
+    }
+
+    public async Task<RecordStockMovementResult> RecordAsync(
+        RecordStockMovementRequest request, CancellationToken ct)
+    {
+        if (!Enum.TryParse(request.MovementType, ignoreCase: true, out StockMovementType type))
+        {
+            return Fail(StockOutcome.InvalidValue);
+        }
+
+        Item? item = await _db.Items.FirstOrDefaultAsync(i => i.ItemId == request.ItemId, ct);
+        if (item is null)
+        {
+            return Fail(StockOutcome.ItemNotFound);
+        }
+
+        if (!item.TrackInventory)
+        {
+            return Fail(StockOutcome.NotStocked);
+        }
+
+        StockDirection direction = DirectionOf(type, request.Direction);
+
+        (StockOutcome conversionOutcome, decimal factor) =
+            await ResolveFactorAsync(item, request.UomId, ct);
+
+        if (conversionOutcome != StockOutcome.Ok)
+        {
+            return Fail(conversionOutcome);
+        }
+
+        if (request.WarehouseId is long warehouseId
+            && !await _db.Warehouses.AnyAsync(w => w.WarehouseId == warehouseId, ct))
+        {
+            return Fail(StockOutcome.UnknownWarehouse);
+        }
+
+        // Bringing stock in without a cost would drag weighted average cost
+        // toward zero and understate every COGS posting after it.
+        bool movesCost = MovesWeightedAverage(type);
+        if (movesCost && request.UnitCost is null)
+        {
+            return Fail(StockOutcome.UnitCostRequired);
+        }
+
+        if (request.SourceType is { Length: > 0 } sourceType
+            && request.SourceId is long sourceId
+            && await _db.StockMovements.AnyAsync(
+                m => m.SourceType == sourceType
+                    && m.SourceId == sourceId
+                    && m.SourceLineId == request.SourceLineId, ct))
+        {
+            // The unique index would catch this too. Checking first turns a
+            // redelivered event into a clean "already done" instead of a 500.
+            return Fail(StockOutcome.DuplicateSource);
+        }
+
+        decimal quantity = Math.Round(
+            request.Quantity * factor, QuantityScale, MidpointRounding.AwayFromZero);
+
+        if (quantity <= 0)
+        {
+            // A quantity small enough to round away is not a movement — and the
+            // check constraint would refuse it anyway.
+            return Fail(StockOutcome.InvalidValue);
+        }
+
+        // Cost per inventory unit, from a cost per entered unit.
+        decimal? unitCost = request.UnitCost is decimal entered ? entered / factor : null;
+
+        return await ApplyAsync(item, type, direction, quantity, factor, unitCost, request, ct);
+    }
+
+    /// <summary>
+    /// Warehouse to warehouse. Two movements and no net change: the pool is
+    /// shared, so a transfer records where stock sits and nothing else. It is
+    /// still refused when the source has less than the quantity, because a
+    /// warehouse cannot ship what it does not hold.
+    /// </summary>
+    public async Task<RecordStockMovementResult> TransferAsync(
+        TransferStockRequest request, CancellationToken ct)
+    {
+        if (request.FromWarehouseId == request.ToWarehouseId)
+        {
+            return Fail(StockOutcome.SameWarehouse);
+        }
+
+        var outbound = new RecordStockMovementRequest
+        {
+            ItemId = request.ItemId,
+            MovementType = nameof(StockMovementType.TransferOut),
+            MovementDate = request.MovementDate,
+            Quantity = request.Quantity,
+            UomId = request.UomId,
+            WarehouseId = request.FromWarehouseId,
+            Notes = request.Notes,
+        };
+
+        RecordStockMovementResult sent = await RecordAsync(outbound, ct);
+        if (sent.Outcome != StockOutcome.Ok)
+        {
+            return sent;
+        }
+
+        var inbound = new RecordStockMovementRequest
+        {
+            ItemId = request.ItemId,
+            MovementType = nameof(StockMovementType.TransferIn),
+            MovementDate = request.MovementDate,
+            Quantity = request.Quantity,
+            UomId = request.UomId,
+            WarehouseId = request.ToWarehouseId,
+            Notes = request.Notes,
+        };
+
+        return await RecordAsync(inbound, ct);
+    }
+
+    /// <summary>
+    /// Writes the movement and moves the pool, in one transaction. The two have
+    /// to commit together: a movement without the balance change makes the
+    /// ledger disagree with the position, and the reverse loses the audit trail.
+    /// </summary>
+    private async Task<RecordStockMovementResult> ApplyAsync(
+        Item item,
+        StockMovementType type,
+        StockDirection direction,
+        decimal quantity,
+        decimal factor,
+        decimal? unitCost,
+        RecordStockMovementRequest request,
+        CancellationToken ct)
+    {
+        await using IDbContextTransaction tx = await _db.Database.BeginTransactionAsync(ct);
+
+        decimal? resultingCost = null;
+
+        if (AffectsPool(type))
+        {
+            if (direction == StockDirection.Out)
+            {
+                // The whole point. One statement, guarded, and the row count is
+                // the answer — never a read followed by a write.
+                int moved = await _db.ItemStock
+                    .Where(s => s.ItemId == item.ItemId && s.QuantityOnHand >= quantity)
+                    .ExecuteUpdateAsync(
+                        s => s.SetProperty(x => x.QuantityOnHand, x => x.QuantityOnHand - quantity),
+                        ct);
+
+                if (moved == 0)
+                {
+                    // No row, or not enough in it. Either way nothing changed.
+                    await tx.RollbackAsync(ct);
+                    return Fail(StockOutcome.InsufficientStock);
+                }
+            }
+            else
+            {
+                await IncreaseAsync(item.ItemId, quantity, unitCost, MovesWeightedAverage(type), ct);
+            }
+        }
+        else if (direction == StockDirection.Out)
+        {
+            // A transfer out still cannot ship more than exists, even though the
+            // pool is unchanged by it.
+            bool enough = await _db.ItemStock
+                .AnyAsync(s => s.ItemId == item.ItemId && s.QuantityOnHand >= quantity, ct);
+
+            if (!enough)
+            {
+                await tx.RollbackAsync(ct);
+                return Fail(StockOutcome.InsufficientStock);
+            }
+        }
+
+        // Read back through a fresh query, not the change tracker: ExecuteUpdate
+        // changed the row in the database and left any tracked instance holding
+        // the numbers it had before.
+        var after = await _db.ItemStock
+            .AsNoTracking()
+            .Where(s => s.ItemId == item.ItemId)
+            .Select(s => new { s.QuantityOnHand, s.WeightedAverageCost })
+            .FirstOrDefaultAsync(ct);
+
+        resultingCost = after?.WeightedAverageCost;
+
+        // Anything that does not set the cost is valued at the cost already
+        // held, so an issue, a return and an adjustment all leave valuation
+        // where the receipts put it.
+        decimal? movementCost = unitCost ?? resultingCost;
+
+        var movement = new StockMovement
+        {
+            ItemId = item.ItemId,
+            WarehouseId = request.WarehouseId,
+            BranchId = request.BranchId,
+            MovementType = type,
+            Direction = direction,
+            MovementDate = request.MovementDate
+                ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime),
+            EnteredQuantity = request.Quantity,
+            EnteredUomId = request.UomId ?? item.InventoryUomId,
+            Quantity = quantity,
+            ConversionFactor = factor,
+            UnitCost = movementCost,
+            TotalCost = movementCost is decimal cost
+                ? Math.Round(quantity * cost, 2, MidpointRounding.AwayFromZero)
+                : null,
+            ResultingWeightedAverageCost = resultingCost,
+            SourceType = request.SourceType,
+            SourceId = request.SourceId,
+            SourceLineId = request.SourceLineId,
+            Notes = request.Notes,
+        };
+
+        _db.StockMovements.Add(movement);
+        await _db.SaveChangesAsync(ct);
+
+        if (after is not null)
+        {
+            // Also a statement rather than a tracked edit, for the same reason.
+            await _db.ItemStock
+                .Where(s => s.ItemId == item.ItemId)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(x => x.LastMovementAt, _clock.GetUtcNow()), ct);
+        }
+
+        await tx.CommitAsync(ct);
+
+        return new RecordStockMovementResult(
+            StockOutcome.Ok, movement.StockMovementId, await GetAsync(item.ItemId, ct));
+    }
+
+    /// <summary>
+    /// Adds to the pool, creating the row on first movement.
+    ///
+    /// The weighted average is recomputed inside the UPDATE rather than in C#:
+    /// every SET in one statement reads the row as it was before the statement,
+    /// so the old quantity is still the old quantity even though the same
+    /// statement is replacing it. Computing it here instead would mean a read,
+    /// and a read is where the race lives.
+    /// </summary>
+    private async Task IncreaseAsync(
+        long itemId, decimal quantity, decimal? unitCost, bool movesCost, CancellationToken ct)
+    {
+        // Hoisted out of the expression tree below. Non-null whenever movesCost
+        // is true — RecordAsync refuses the movement otherwise.
+        decimal cost = unitCost ?? 0m;
+
+        for (int attempt = 0; attempt < 2; attempt++)
+        {
+            int moved = movesCost
+                ? await _db.ItemStock
+                    .Where(s => s.ItemId == itemId)
+                    .ExecuteUpdateAsync(
+                        s => s
+                            .SetProperty(
+                                x => x.WeightedAverageCost,
+                                x => ((x.QuantityOnHand * x.WeightedAverageCost)
+                                        + (quantity * cost))
+                                    / (x.QuantityOnHand + quantity))
+                            .SetProperty(x => x.QuantityOnHand, x => x.QuantityOnHand + quantity),
+                        ct)
+                : await _db.ItemStock
+                    .Where(s => s.ItemId == itemId)
+                    .ExecuteUpdateAsync(
+                        s => s.SetProperty(x => x.QuantityOnHand, x => x.QuantityOnHand + quantity),
+                        ct);
+
+            if (moved > 0)
+            {
+                return;
+            }
+
+            // First movement for this item. A concurrent caller may be inserting
+            // the same row, so a conflict here is expected rather than an error —
+            // the retry then finds the row and updates it.
+            var seed = new ItemStock
+            {
+                ItemId = itemId,
+                QuantityOnHand = 0,
+                WeightedAverageCost = 0,
+            };
+
+            try
+            {
+                _db.ItemStock.Add(seed);
+                await _db.SaveChangesAsync(ct);
+            }
+            catch (DbUpdateException)
+            {
+                // Detached rather than clearing the whole tracker: the caller
+                // has its own pending work in this context.
+                _db.Entry(seed).State = EntityState.Detached;
+            }
+        }
+    }
+
+    /// <summary>
+    /// The factor from the entered unit to the item's inventory unit. Both
+    /// factors are relative to their type's base unit, so the ratio converts
+    /// between them — which is why both units must be of the item's type.
+    /// </summary>
+    private async Task<(StockOutcome Outcome, decimal Factor)> ResolveFactorAsync(
+        Item item, long? enteredUomId, CancellationToken ct)
+    {
+        if (enteredUomId is not long uomId || uomId == item.InventoryUomId)
+        {
+            return (StockOutcome.Ok, 1m);
+        }
+
+        List<UnitOfMeasure> units = await _db.UnitOfMeasures
+            .Where(u => u.UomId == uomId || u.UomId == item.InventoryUomId)
+            .ToListAsync(ct);
+
+        UnitOfMeasure? entered = units.FirstOrDefault(u => u.UomId == uomId);
+        UnitOfMeasure? inventory = units.FirstOrDefault(u => u.UomId == item.InventoryUomId);
+
+        if (entered is null || inventory is null)
+        {
+            return (StockOutcome.UnknownUnit, 0m);
+        }
+
+        if (entered.UomTypeId != item.UomTypeId || inventory.UomTypeId != item.UomTypeId)
+        {
+            return (StockOutcome.UnitTypeMismatch, 0m);
+        }
+
+        return (StockOutcome.Ok, entered.ConversionToBase / inventory.ConversionToBase);
+    }
+
+    /// <summary>
+    /// Which way the movement runs. Fixed by the type for everything except an
+    /// adjustment, which is the only one that can go either way — a count
+    /// correction is as often a shortfall as a surplus.
+    /// </summary>
+    private static StockDirection DirectionOf(StockMovementType type, string? requested) =>
+        type switch
+        {
+            StockMovementType.Opening => StockDirection.In,
+            StockMovementType.Receipt => StockDirection.In,
+            StockMovementType.SalesReturn => StockDirection.In,
+            StockMovementType.TransferIn => StockDirection.In,
+            StockMovementType.Issue => StockDirection.Out,
+            StockMovementType.PurchaseReturn => StockDirection.Out,
+            StockMovementType.TransferOut => StockDirection.Out,
+            _ => Enum.TryParse(requested, ignoreCase: true, out StockDirection parsed)
+                ? parsed
+                : StockDirection.In,
+        };
+
+    /// <summary>
+    /// A transfer moves stock between locations, and the pool is shared across
+    /// all of them — so it changes nothing to add up. Everything else does.
+    /// </summary>
+    private static bool AffectsPool(StockMovementType type) =>
+        type is not (StockMovementType.TransferIn or StockMovementType.TransferOut);
+
+    /// <summary>
+    /// Only a purchase sets what stock cost. A return comes back at what it left
+    /// at and an adjustment is a count, not a purchase — valuing either at a new
+    /// figure would move the average without anything having been bought.
+    /// </summary>
+    private static bool MovesWeightedAverage(StockMovementType type) =>
+        type is StockMovementType.Opening or StockMovementType.Receipt;
+
+    private IQueryable<StockPosition> QueryPositions(IQueryable<Item> items) =>
+        items
+            .AsNoTracking()
+            .GroupJoin(_db.ItemStock, i => i.ItemId, s => s.ItemId, (i, s) => new { i, s })
+            .SelectMany(x => x.s.DefaultIfEmpty(), (x, s) => new { x.i, s })
+            .Join(_db.UnitOfMeasures, x => x.i.InventoryUomId, u => u.UomId, (x, u) => new { x.i, x.s, inv = u })
+            .Join(_db.UnitOfMeasures, x => x.i.ReportUomId, u => u.UomId, (x, u) => new { x.i, x.s, x.inv, rep = u })
+            .Select(x => new StockPosition
+            {
+                ItemId = x.i.ItemId,
+                ItemCode = x.i.ItemCode,
+                ItemName = x.i.ItemName,
+                // Left join: an item that has never moved has no row, and that
+                // is a zero rather than a missing item.
+                QuantityOnHand = x.s == null ? 0m : x.s.QuantityOnHand,
+                WeightedAverageCost = x.s == null ? 0m : x.s.WeightedAverageCost,
+                UomTypeId = x.i.UomTypeId,
+                InventoryUomId = x.i.InventoryUomId,
+                InventoryUomCode = x.inv.UomCode,
+                ReportUomId = x.i.ReportUomId,
+                ReportUomCode = x.rep.UomCode,
+                // Both factors are relative to the type's base unit, so their
+                // ratio converts the stock figure into the report unit.
+                QuantityInReportUom = (x.s == null ? 0m : x.s.QuantityOnHand)
+                    * x.inv.ConversionToBase / x.rep.ConversionToBase,
+                ReorderLevel = x.i.ReorderLevel,
+                CostingType = x.i.CostingType.ToString(),
+                LastMovementAt = x.s == null ? null : x.s.LastMovementAt,
+            });
+
+    /// <summary>Fills the derived fields the query deliberately left to C#.</summary>
+    private static StockPosition Finish(StockPosition position)
+    {
+        position.QuantityInReportUom = Math.Round(
+            position.QuantityInReportUom, QuantityScale, MidpointRounding.AwayFromZero);
+
+        position.StockValue = Math.Round(
+            position.QuantityOnHand * position.WeightedAverageCost, 2, MidpointRounding.AwayFromZero);
+
+        position.IsBelowReorderLevel =
+            position.ReorderLevel is decimal level && position.QuantityOnHand <= level;
+
+        return position;
+    }
+
+    private static RecordStockMovementResult Fail(StockOutcome outcome) =>
+        new(outcome, null, null);
+}
