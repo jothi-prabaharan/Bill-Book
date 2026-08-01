@@ -22,11 +22,13 @@ namespace Inventory.Api.Services;
 public sealed class StockService
 {
     private readonly InventoryDbContext _db;
+    private readonly CostingService _costing;
     private readonly TimeProvider _clock;
 
-    public StockService(InventoryDbContext db, TimeProvider clock)
+    public StockService(InventoryDbContext db, CostingService costing, TimeProvider clock)
     {
         _db = db;
+        _costing = costing;
         _clock = clock;
     }
 
@@ -130,6 +132,11 @@ public sealed class StockService
             .ToListAsync(ct);
     }
 
+    /// <summary>What an issue took, layer by layer. Empty on a weighted-average item.</summary>
+    public Task<IReadOnlyList<CostAllocationItem>> AllocationsAsync(
+        long stockMovementId, CancellationToken ct) =>
+        _costing.AllocationsAsync(stockMovementId, ct);
+
     public async Task<RecordStockMovementResult> RecordAsync(
         RecordStockMovementRequest request, CancellationToken ct)
     {
@@ -183,6 +190,12 @@ public sealed class StockService
             // The unique index would catch this too. Checking first turns a
             // redelivered event into a clean "already done" instead of a 500.
             return Fail(StockOutcome.DuplicateSource);
+        }
+
+        StockOutcome tracking = ValidateTracking(item, direction, request);
+        if (tracking != StockOutcome.Ok)
+        {
+            return Fail(tracking);
         }
 
         decimal quantity = Math.Round(
@@ -345,6 +358,30 @@ public sealed class StockService
         _db.StockMovements.Add(movement);
         await _db.SaveChangesAsync(ct);
 
+        // Costing runs inside this transaction rather than on a worker. Layers
+        // and movements have to agree exactly, and the only way to guarantee
+        // that is to commit them together — an async pass would have to solve
+        // ordering and exactly-once delivery to reach the same place.
+        (StockOutcome costed, decimal? layeredCost) =
+            await ApplyCostingAsync(item, movement, direction, request, ct);
+
+        if (costed != StockOutcome.Ok)
+        {
+            await tx.RollbackAsync(ct);
+            return Fail(costed);
+        }
+
+        // On a layered item the issue's real cost is what the layers gave up,
+        // not the running average — that is the whole point of the method.
+        if (layeredCost is decimal cogs)
+        {
+            movement.TotalCost = cogs;
+            movement.UnitCost = quantity > 0
+                ? Math.Round(cogs / quantity, 6, MidpointRounding.AwayFromZero)
+                : null;
+            await _db.SaveChangesAsync(ct);
+        }
+
         if (after is not null)
         {
             // Also a statement rather than a tracked edit, for the same reason.
@@ -358,6 +395,260 @@ public sealed class StockService
 
         return new RecordStockMovementResult(
             StockOutcome.Ok, movement.StockMovementId, await GetAsync(item.ItemId, ct));
+    }
+
+    /// <summary>
+    /// The item's tracking flags, checked against what the movement supplied.
+    /// These live on the item, so no database constraint can see them from here.
+    /// </summary>
+    private static StockOutcome ValidateTracking(
+        Item item, StockDirection direction, RecordStockMovementRequest request)
+    {
+        bool inbound = direction == StockDirection.In;
+
+        if (item.IsBatchTracked
+            && inbound
+            && request.ItemBatchId is null
+            && string.IsNullOrWhiteSpace(request.BatchNumber))
+        {
+            return StockOutcome.BatchRequired;
+        }
+
+        // Only when the lot is new: an existing lot already carries its date.
+        if (item.IsExpiryTracked
+            && inbound
+            && request.ItemBatchId is null
+            && request.BatchExpiryDate is null)
+        {
+            return StockOutcome.ExpiryRequired;
+        }
+
+        if (item.IsSerialTracked)
+        {
+            // One serial per unit, exactly. Fewer and pieces go untracked; more
+            // and the count disagrees with the quantity that moved.
+            decimal expected = Math.Round(
+                request.Quantity, QuantityScale, MidpointRounding.AwayFromZero);
+
+            if (request.SerialNumbers.Count != (int)expected || expected != (int)expected)
+            {
+                return StockOutcome.SerialCountMismatch;
+            }
+
+            if (request.SerialNumbers.Any(string.IsNullOrWhiteSpace)
+                || request.SerialNumbers.Distinct(StringComparer.OrdinalIgnoreCase).Count()
+                    != request.SerialNumbers.Count)
+            {
+                return StockOutcome.SerialConflict;
+            }
+        }
+
+        return StockOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Resolves the batch, moves the serials, and creates or consumes layers.
+    /// Runs inside the caller's transaction, after the movement has an id.
+    /// </summary>
+    private async Task<(StockOutcome Outcome, decimal? LayeredCost)> ApplyCostingAsync(
+        Item item,
+        StockMovement movement,
+        StockDirection direction,
+        RecordStockMovementRequest request,
+        CancellationToken ct)
+    {
+        // A transfer changes neither the pool nor the layers — it is a location
+        // fact, and re-costing it would invent a cost that nothing paid.
+        if (!AffectsPool(movement.MovementType))
+        {
+            return (StockOutcome.Ok, null);
+        }
+
+        (StockOutcome batchOutcome, ItemBatch? batch) = await ResolveBatchAsync(item, request, ct);
+        if (batchOutcome != StockOutcome.Ok)
+        {
+            return (batchOutcome, null);
+        }
+
+        if (direction == StockDirection.In)
+        {
+            CostLayer layer = _costing.CreateLayer(
+                item,
+                movement,
+                batch?.ItemBatchId,
+                batch?.ExpiryDate ?? request.BatchExpiryDate,
+                movement.UnitCost ?? 0m);
+
+            await _db.SaveChangesAsync(ct);
+
+            StockOutcome created = await CreateSerialsAsync(item, movement, batch, layer, request, ct);
+            return created == StockOutcome.Ok ? (StockOutcome.Ok, null) : (created, null);
+        }
+
+        (StockOutcome retired, List<long> layerIds) =
+            await RetireSerialsAsync(item, movement, request, ct);
+
+        if (retired != StockOutcome.Ok)
+        {
+            return (retired, null);
+        }
+
+        (StockOutcome consumed, decimal cost) =
+            await _costing.ConsumeAsync(item, movement, layerIds, ct);
+
+        if (consumed != StockOutcome.Ok)
+        {
+            return (consumed, null);
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return CostingService.ConsumesLayers(item.CostingType)
+            ? (StockOutcome.Ok, cost)
+            : (StockOutcome.Ok, null);
+    }
+
+    /// <summary>
+    /// Finds the lot by id, or by number, creating it on the way in. A lot named
+    /// on an issue must already exist — inventing one there would be inventing
+    /// stock.
+    /// </summary>
+    private async Task<(StockOutcome Outcome, ItemBatch? Batch)> ResolveBatchAsync(
+        Item item, RecordStockMovementRequest request, CancellationToken ct)
+    {
+        if (request.ItemBatchId is long batchId)
+        {
+            ItemBatch? existing = await _db.ItemBatches
+                .FirstOrDefaultAsync(b => b.ItemBatchId == batchId && b.ItemId == item.ItemId, ct);
+
+            return existing is null
+                ? (StockOutcome.BatchNotFound, null)
+                : (StockOutcome.Ok, existing);
+        }
+
+        if (string.IsNullOrWhiteSpace(request.BatchNumber))
+        {
+            return (StockOutcome.Ok, null);
+        }
+
+        string number = request.BatchNumber.Trim();
+
+        ItemBatch? found = await _db.ItemBatches
+            .FirstOrDefaultAsync(b => b.ItemId == item.ItemId && b.BatchNumber == number, ct);
+
+        if (found is not null)
+        {
+            return (StockOutcome.Ok, found);
+        }
+
+        var batch = new ItemBatch
+        {
+            ItemId = item.ItemId,
+            BatchNumber = number,
+            ManufactureDate = request.BatchManufactureDate,
+            ExpiryDate = request.BatchExpiryDate,
+            Mrp = request.BatchMrp,
+            IsActive = true,
+        };
+
+        _db.ItemBatches.Add(batch);
+        await _db.SaveChangesAsync(ct);
+
+        return (StockOutcome.Ok, batch);
+    }
+
+    /// <summary>
+    /// Creates one serial per unit received, each pointing at the layer it
+    /// arrived on — which is what specific identification reads its cost from.
+    /// </summary>
+    private async Task<StockOutcome> CreateSerialsAsync(
+        Item item,
+        StockMovement movement,
+        ItemBatch? batch,
+        CostLayer layer,
+        RecordStockMovementRequest request,
+        CancellationToken ct)
+    {
+        if (!item.IsSerialTracked || request.SerialNumbers.Count == 0)
+        {
+            return StockOutcome.Ok;
+        }
+
+        string[] numbers = request.SerialNumbers.Select(s => s.Trim()).ToArray();
+
+        // A serial number is unique per item, so a repeat is a re-entry of a
+        // piece already in stock rather than a second piece.
+        if (await _db.ItemSerials.AnyAsync(
+                s => s.ItemId == item.ItemId && numbers.Contains(s.SerialNumber), ct))
+        {
+            return StockOutcome.SerialConflict;
+        }
+
+        for (int i = 0; i < numbers.Length; i++)
+        {
+            _db.ItemSerials.Add(new ItemSerial
+            {
+                ItemId = item.ItemId,
+                SerialNumber = numbers[i],
+                ItemBatchId = batch?.ItemBatchId,
+                HallmarkNumber = i < request.HallmarkNumbers.Count
+                    && !string.IsNullOrWhiteSpace(request.HallmarkNumbers[i])
+                        ? request.HallmarkNumbers[i].Trim()
+                        : null,
+                CostLayerId = layer.CostLayerId,
+                Status = SerialStatus.InStock,
+                WarehouseId = movement.WarehouseId,
+                ReceivedMovementId = movement.StockMovementId,
+            });
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return StockOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Marks the named pieces sold and returns the layers they came in on, which
+    /// is the whole of specific identification's selection rule.
+    /// </summary>
+    private async Task<(StockOutcome Outcome, List<long> LayerIds)> RetireSerialsAsync(
+        Item item,
+        StockMovement movement,
+        RecordStockMovementRequest request,
+        CancellationToken ct)
+    {
+        if (!item.IsSerialTracked || request.SerialNumbers.Count == 0)
+        {
+            return (StockOutcome.Ok, []);
+        }
+
+        string[] numbers = request.SerialNumbers.Select(s => s.Trim()).ToArray();
+
+        List<ItemSerial> serials = await _db.ItemSerials
+            .Where(s => s.ItemId == item.ItemId
+                && numbers.Contains(s.SerialNumber)
+                && s.Status == SerialStatus.InStock)
+            .ToListAsync(ct);
+
+        // Every named piece has to be on the shelf. A missing one means it was
+        // already sold, or never received — either way the sale is wrong.
+        if (serials.Count != numbers.Length)
+        {
+            return (StockOutcome.SerialConflict, []);
+        }
+
+        foreach (ItemSerial serial in serials)
+        {
+            serial.Status = SerialStatus.Sold;
+            serial.IssuedMovementId = movement.StockMovementId;
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return (StockOutcome.Ok, serials
+            .Where(s => s.CostLayerId is not null)
+            .Select(s => s.CostLayerId!.Value)
+            .Distinct()
+            .ToList());
     }
 
     /// <summary>
@@ -520,6 +811,13 @@ public sealed class StockService
                     * x.inv.ConversionToBase / x.rep.ConversionToBase,
                 ReorderLevel = x.i.ReorderLevel,
                 CostingType = x.i.CostingType.ToString(),
+                IsBatchTracked = x.i.IsBatchTracked,
+                IsExpiryTracked = x.i.IsExpiryTracked,
+                IsSerialTracked = x.i.IsSerialTracked,
+                UsesCostLayers = x.i.CostingType == CostingType.Fifo
+                    || x.i.CostingType == CostingType.Lifo
+                    || x.i.CostingType == CostingType.Fefo
+                    || x.i.CostingType == CostingType.SpecificIdentification,
                 LastMovementAt = x.s == null ? null : x.s.LastMovementAt,
             });
 

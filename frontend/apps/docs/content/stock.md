@@ -89,6 +89,44 @@ Every quantity and cost recorded so far was written under them. Changing the inv
 
 Everything else on the item — name, prices, category, reorder levels — stays editable.
 
+## Batches
+
+A **lot** of one item received together: same run, same expiry, usually the same printed MRP.
+
+Receiving against a batch-tracked item asks for the batch number. An existing lot is reused; a new one is created. Expiry-tracked items must give an expiry on a new lot — without it nothing can decide which lot goes out first.
+
+A batch carries its **own MRP**, which wins over the item's. A price rise reprints the pack, and the older lot has to keep selling at what is printed on it.
+
+## Serial numbers
+
+For items tracked piece by piece. Enter one serial per unit — the count has to match the quantity exactly, or pieces go untracked and the count stops agreeing with the stock.
+
+Jewellery pieces carry a **HUID** alongside the serial: the six-character BIS hallmark id. It sits on the piece, never on the item, because two rings of the same design carry two different HUIDs. Each is unique across the branch.
+
+On the way out, the serials you name are the pieces that left — and on a specific-identification item, they are also what decides the cost.
+
+## Cost layers
+
+Every receipt writes a **layer**: how much came in, what it cost, and how much of it is left. What differs by costing method is what draws them down.
+
+| Method | Takes from |
+|---|---|
+| Weighted average | Nothing — one running average, layers kept as history |
+| FIFO | The oldest receipt first |
+| LIFO | The newest receipt first |
+| FEFO | Whatever expires soonest; no expiry sorts last |
+| Specific identification | The layer the named piece arrived on |
+
+An issue records **which layers it consumed, and how much from each**. An issue of 30 against three layers writes three rows, and their costs sum to its cost of goods sold. The **Layers** button on the movement history shows exactly that.
+
+This is what makes a disputed margin answerable: the cost of a sale can be walked back to the purchases it came from, receipt by receipt.
+
+Layers come down the same way stock does — a guarded statement, never a read followed by a write, so two sales cannot take the same last unit of a layer.
+
+Costing runs **inside the same transaction** as the movement. Layers and stock have to agree exactly, and committing them together is the only way to guarantee it.
+
 ## What is not here yet
 
-Costing methods other than weighted average are **selectable but not yet honoured**. An item set to FIFO, LIFO, FEFO or specific identification currently costs at weighted average, because nothing consumes cost layers yet. Batches and serial numbers are in the same position: the flags are stored and locked, and the tables behind them come with the costing engine.
+- **Backdated receipts do not restate anything.** A receipt dated before issues that already consumed layers should unwind those allocations, replay them and post a COGS adjustment. Today it creates a layer at the back of the queue and leaves the earlier issues costed as they were.
+- **Returns do not go back to their originating layer.** A sales return adds quantity at the running average rather than at the cost the piece left on, so buy-sell-return does not yet land stock value exactly where it started.
+- **Nothing posts to the ledger.** An issue computes its cost of goods sold and stops there — `Dr COGS / Cr Inventory` is Accounting's to write, and the two are not yet connected.

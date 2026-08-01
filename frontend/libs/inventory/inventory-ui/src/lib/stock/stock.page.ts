@@ -18,7 +18,22 @@ interface StockPosition {
   reorderLevel: number | null;
   isBelowReorderLevel: boolean;
   costingType: string;
+  isBatchTracked: boolean;
+  isExpiryTracked: boolean;
+  isSerialTracked: boolean;
+  usesCostLayers: boolean;
   lastMovementAt: string | null;
+}
+
+/** One layer an issue drew from — what it cost, and which receipt it came from. */
+interface CostAllocation {
+  costLayerId: number;
+  receivedOn: string;
+  expiresOn: string | null;
+  batchNumber: string | null;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
 }
 
 interface StockMovement {
@@ -100,6 +115,11 @@ export class StockPage implements OnInit {
   protected readonly movementFor = signal<StockPosition | null>(null);
 
   protected readonly movementTypes = MANUAL_TYPES;
+  protected readonly allocations = signal<CostAllocation[]>([]);
+
+  /** Typed as one per line, so a scanner can be held down into the box. */
+  serialText = '';
+  hallmarkText = '';
 
   search = '';
   belowReorderOnly = false;
@@ -161,14 +181,38 @@ export class StockPage implements OnInit {
     this.form = this.blankMovement();
     this.form.itemId = row.itemId;
     this.form.uomId = row.inventoryUomId;
+    this.serialText = '';
+    this.hallmarkText = '';
     this.movementFor.set(row);
+  }
+
+  /** Which layers an issue drew from. Empty on a weighted-average item. */
+  async openAllocations(movement: StockMovement): Promise<void> {
+    try {
+      this.allocations.set(
+        await this.get<CostAllocation[]>(
+          `/api/stock/movements/${movement.stockMovementId}/allocations`,
+        ),
+      );
+    } catch {
+      this.fail('Could not load the cost allocations.');
+    }
   }
 
   async record(): Promise<void> {
     this.busy.set(true);
     this.message.set(null);
     try {
-      await this.send('POST', '/api/stock/movements', this.form);
+      // One per line, blanks dropped — a trailing newline should not become a
+      // serial number the server then rejects.
+      const lines = (text: string) =>
+        text.split('\n').map((s) => s.trim()).filter((s) => s.length > 0);
+
+      await this.send('POST', '/api/stock/movements', {
+        ...this.form,
+        serialNumbers: lines(this.serialText),
+        hallmarkNumbers: lines(this.hallmarkText),
+      });
       this.movementFor.set(null);
       this.message.set('Stock movement recorded.');
       this.messageIsError.set(false);
@@ -211,6 +255,9 @@ export class StockPage implements OnInit {
       uomId: null as number | null,
       warehouseId: null as number | null,
       unitCost: null as number | null,
+      batchNumber: null as string | null,
+      batchExpiryDate: null as string | null,
+      batchMrp: null as number | null,
       notes: null as string | null,
     };
   }

@@ -39,6 +39,14 @@ public class InventoryDbContext : TenantDbContext
 
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
+    public DbSet<ItemBatch> ItemBatches => Set<ItemBatch>();
+
+    public DbSet<ItemSerial> ItemSerials => Set<ItemSerial>();
+
+    public DbSet<CostLayer> CostLayers => Set<CostLayer>();
+
+    public DbSet<CostLayerConsumption> CostLayerConsumptions => Set<CostLayerConsumption>();
+
     /// <summary>
     /// Mapped, not migrated. Accounting owns this table; Inventory maps the same
     /// Shared.Kernel entity so an item code is allocated inside the same
@@ -417,6 +425,145 @@ public class InventoryDbContext : TenantDbContext
                     "(\"SourceType\" IS NULL AND \"SourceId\" IS NULL) "
                         + "OR (\"SourceType\" IS NOT NULL AND \"SourceId\" IS NOT NULL)");
             });
+        });
+
+        modelBuilder.Entity<ItemBatch>(b =>
+        {
+            b.HasKey(e => e.ItemBatchId);
+
+            // One batch number per item. The same number on two lots makes
+            // "which one expires first" unanswerable.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.BatchNumber }).IsUnique();
+
+            // What FEFO orders by. Filtered, because a lot with no expiry never
+            // competes to go out first.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.ExpiryDate })
+                .HasFilter("\"ExpiryDate\" IS NOT NULL")
+                .HasDatabaseName("IX_ItemBatches_Expiry");
+
+            b.Property(e => e.Mrp).HasColumnType("decimal(18,2)");
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_batch_dates",
+                "\"ManufactureDate\" IS NULL OR \"ExpiryDate\" IS NULL "
+                    + "OR \"ExpiryDate\" >= \"ManufactureDate\""));
+        });
+
+        modelBuilder.Entity<ItemSerial>(b =>
+        {
+            b.HasKey(e => e.ItemSerialId);
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.SerialNumber }).IsUnique();
+
+            // A HUID identifies exactly one piece in the country, so two rows
+            // carrying the same one is a data-entry error worth refusing.
+            b.HasIndex(e => new { e.OrgId, e.HallmarkNumber })
+                .IsUnique()
+                .HasFilter("\"HallmarkNumber\" IS NOT NULL")
+                .HasDatabaseName("IX_ItemSerials_Huid");
+
+            // The picker on a sale: what is still on the shelf.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.Status })
+                .HasDatabaseName("IX_ItemSerials_Status");
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<ItemBatch>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemBatchId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<CostLayer>(b =>
+        {
+            b.HasKey(e => e.CostLayerId);
+
+            // One layer per inbound movement. A second would double the stock
+            // available to allocate against without changing the quantity.
+            b.HasIndex(e => new { e.OrgId, e.StockMovementId }).IsUnique();
+
+            // FIFO ascending, LIFO descending — one index serves both. Filtered
+            // to layers with something left, which is all a selection ever scans.
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.ReceivedOn })
+                .HasFilter("\"RemainingQuantity\" > 0")
+                .HasDatabaseName("IX_CostLayers_Fifo");
+
+            b.HasIndex(e => new { e.OrgId, e.ItemId, e.ExpiresOn })
+                .HasFilter("\"RemainingQuantity\" > 0 AND \"ExpiresOn\" IS NOT NULL")
+                .HasDatabaseName("IX_CostLayers_Fefo");
+
+            foreach (string qty in new[] { "OriginalQuantity", "RemainingQuantity" })
+            {
+                b.Property(qty).HasColumnType("decimal(18,3)");
+            }
+
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<StockMovement>()
+                .WithMany()
+                .HasForeignKey(e => e.StockMovementId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<ItemBatch>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemBatchId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_layer_remaining",
+                "\"RemainingQuantity\" >= 0 AND \"RemainingQuantity\" <= \"OriginalQuantity\" "
+                    + "AND \"OriginalQuantity\" > 0 AND \"UnitCost\" >= 0"));
+        });
+
+        modelBuilder.Entity<CostLayerConsumption>(b =>
+        {
+            b.HasKey(e => e.CostLayerConsumptionId);
+
+            // One allocation per layer per issue. Replaying an issue hits this
+            // and fails rather than consuming the layer a second time.
+            b.HasIndex(e => new { e.OrgId, e.StockMovementId, e.CostLayerId })
+                .IsUnique()
+                .HasDatabaseName("IX_CostLayerConsumptions_Allocation");
+
+            // Summing an issue's COGS, and finding what to unwind when a
+            // backdated receipt invalidates the allocations after it.
+            b.HasIndex(e => new { e.OrgId, e.StockMovementId })
+                .HasDatabaseName("IX_CostLayerConsumptions_Movement");
+
+            b.HasIndex(e => new { e.OrgId, e.CostLayerId })
+                .HasDatabaseName("IX_CostLayerConsumptions_Layer");
+
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,3)");
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
+            b.Property(e => e.TotalCost).HasColumnType("decimal(18,2)");
+
+            b.HasOne<CostLayer>()
+                .WithMany()
+                .HasForeignKey(e => e.CostLayerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<StockMovement>()
+                .WithMany()
+                .HasForeignKey(e => e.StockMovementId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_consumption_amounts",
+                "\"Quantity\" > 0 AND \"UnitCost\" >= 0 AND \"TotalCost\" >= 0"));
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

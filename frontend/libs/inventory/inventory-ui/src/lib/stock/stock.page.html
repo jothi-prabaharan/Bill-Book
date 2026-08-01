@@ -124,6 +124,44 @@
         </select>
       </label>
 
+      @if (item.isBatchTracked) {
+        <label>
+          Batch number
+          <input type="text" [(ngModel)]="form.batchNumber" maxlength="50" />
+          <small>An existing lot is reused; a new one is created.</small>
+        </label>
+      }
+
+      @if (item.isExpiryTracked) {
+        <label>
+          Batch expiry
+          <input type="date" [(ngModel)]="form.batchExpiryDate" />
+          <small>What FEFO orders by — the soonest to expire goes out first.</small>
+        </label>
+      }
+
+      @if (item.isBatchTracked) {
+        <label>
+          Batch MRP
+          <input type="number" [(ngModel)]="form.batchMrp" min="0" step="0.01" />
+          <small>Printed on this lot. Overrides the item's own MRP.</small>
+        </label>
+      }
+
+      @if (item.isSerialTracked) {
+        <label class="wide">
+          Serial numbers
+          <textarea rows="4" [(ngModel)]="serialText"></textarea>
+          <small>One per line — exactly one for every unit in the quantity.</small>
+        </label>
+
+        <label class="wide">
+          HUIDs
+          <textarea rows="4" [(ngModel)]="hallmarkText"></textarea>
+          <small>Optional, one per line, matching the serials above line for line.</small>
+        </label>
+      }
+
       @if (costRequired) {
         <label>
           Cost per unit
@@ -173,6 +211,7 @@
           <th class="num">Unit cost</th>
           <th class="num">Avg. after</th>
           <th>Source</th>
+          <th class="actions-col"><span class="sr-only">Cost</span></th>
         </tr>
       </thead>
       <tbody>
@@ -200,15 +239,57 @@
                 <span class="muted">Manual</span>
               }
             </td>
+            <td class="actions-col">
+              @if (item.usesCostLayers && movement.direction === 'Out') {
+                <button type="button" class="link" (click)="openAllocations(movement)">
+                  Layers
+                </button>
+              }
+            </td>
           </tr>
         } @empty {
-          <tr><td colspan="8">Nothing has moved yet.</td></tr>
+          <tr><td colspan="9">Nothing has moved yet.</td></tr>
         }
       </tbody>
     </table>
 
+    @if (allocations().length > 0) {
+      <h3>Cost layers consumed</h3>
+      <p class="hint">
+        What this issue actually took, and from which receipt. These costs sum to its cost of
+        goods sold — a disputed margin can be walked back to the purchases behind it.
+      </p>
+
+      <table class="grid">
+        <thead>
+          <tr>
+            <th>Received</th>
+            <th>Batch</th>
+            <th>Expires</th>
+            <th class="num">Quantity</th>
+            <th class="num">Unit cost</th>
+            <th class="num">Cost</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (allocation of allocations(); track allocation.costLayerId) {
+            <tr>
+              <td>{{ allocation.receivedOn }}</td>
+              <td>{{ allocation.batchNumber ?? '—' }}</td>
+              <td>{{ allocation.expiresOn ?? '—' }}</td>
+              <td class="num">{{ allocation.quantity }}</td>
+              <td class="num">{{ allocation.unitCost }}</td>
+              <td class="num">{{ allocation.totalCost }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+
     <div class="sheet-actions">
-      <button type="button" class="link" (click)="ledgerFor.set(null)">Close</button>
+      <button type="button" class="link" (click)="ledgerFor.set(null); allocations.set([])">
+        Close
+      </button>
     </div>
   </div>
 }

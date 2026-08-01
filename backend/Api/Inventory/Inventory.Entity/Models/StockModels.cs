@@ -44,7 +44,38 @@ public class StockPosition
 
     public string CostingType { get; set; } = null!;
 
+    /// <summary>Drives which fields a movement form has to ask for.</summary>
+    public bool IsBatchTracked { get; set; }
+
+    public bool IsExpiryTracked { get; set; }
+
+    public bool IsSerialTracked { get; set; }
+
+    /// <summary>True when the method draws down layers rather than a running average.</summary>
+    public bool UsesCostLayers { get; set; }
+
     public DateTimeOffset? LastMovementAt { get; set; }
+}
+
+/// <summary>What one issue took, from which layer, at what cost.</summary>
+public class CostAllocationItem
+{
+    public long CostLayerId { get; set; }
+
+    public long StockMovementId { get; set; }
+
+    /// <summary>The receipt that created the layer, so a margin query can name the purchase.</summary>
+    public DateOnly ReceivedOn { get; set; }
+
+    public DateOnly? ExpiresOn { get; set; }
+
+    public string? BatchNumber { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public decimal UnitCost { get; set; }
+
+    public decimal TotalCost { get; set; }
 }
 
 public class StockMovementListItem
@@ -128,6 +159,35 @@ public class RecordStockMovementRequest
 
     public long SourceLineId { get; set; }
 
+    // --- Batch and serial. Required by the item's own tracking flags, checked
+    // in C# because the rule lives on the item rather than on this row.
+
+    /// <summary>An existing lot to move against. Wins over <see cref="BatchNumber"/>.</summary>
+    public long? ItemBatchId { get; set; }
+
+    /// <summary>A lot to find or create on the way in. Required when the item is batch-tracked.</summary>
+    [MaxLength(50, ErrorMessage = "Batch number cannot exceed 50 characters.")]
+    public string? BatchNumber { get; set; }
+
+    /// <summary>Required when the item is expiry-tracked and the lot is new.</summary>
+    public DateOnly? BatchExpiryDate { get; set; }
+
+    public DateOnly? BatchManufactureDate { get; set; }
+
+    /// <summary>The MRP printed on this lot, which may differ from the item's.</summary>
+    [Range(0, 999999999999.99, ErrorMessage = "MRP cannot be negative.")]
+    public decimal? BatchMrp { get; set; }
+
+    /// <summary>
+    /// The individual pieces. On the way in they are created; on the way out
+    /// they name exactly which pieces left. Count must equal the quantity when
+    /// the item is serial-tracked.
+    /// </summary>
+    public List<string> SerialNumbers { get; set; } = [];
+
+    /// <summary>Per-piece HUIDs, positionally matched to <see cref="SerialNumbers"/>.</summary>
+    public List<string> HallmarkNumbers { get; set; } = [];
+
     [MaxLength(300, ErrorMessage = "Notes cannot exceed 300 characters.")]
     public string? Notes { get; set; }
 }
@@ -176,6 +236,17 @@ public enum StockOutcome
     DuplicateSource = 8,
     SameWarehouse = 9,
     InvalidValue = 10,
+    /// <summary>The item is batch-tracked and the movement named no batch.</summary>
+    BatchRequired = 11,
+    /// <summary>The item is expiry-tracked and the new lot has no expiry date.</summary>
+    ExpiryRequired = 12,
+    BatchNotFound = 13,
+    /// <summary>Serial numbers given do not match the quantity, one per unit.</summary>
+    SerialCountMismatch = 14,
+    /// <summary>A serial named on the way in already exists, or one named on the way out does not.</summary>
+    SerialConflict = 15,
+    /// <summary>Layered costing could not find enough remaining layers to cover the issue.</summary>
+    InsufficientCostLayers = 16,
 }
 
 public sealed record RecordStockMovementResult(

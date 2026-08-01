@@ -48,6 +48,14 @@ public sealed class StockController : ControllerBase
         Ok(await _stock.ListMovementsAsync(itemId, warehouseId, from, to, ct));
 
     /// <summary>
+    /// Which layers an issue consumed, and at what cost. Empty for a weighted
+    /// average item, which keeps one running cost rather than layers.
+    /// </summary>
+    [HttpGet("movements/{stockMovementId:long}/allocations")]
+    public async Task<IActionResult> Allocations(long stockMovementId, CancellationToken ct) =>
+        Ok(await _stock.AllocationsAsync(stockMovementId, ct));
+
+    /// <summary>
     /// Records one movement and moves the pool with it, in a single
     /// transaction. Returns the resulting position so the caller never has to
     /// re-read it.
@@ -111,6 +119,37 @@ public sealed class StockController : ControllerBase
             {
                 Message = "Choose two different warehouses.",
             }),
+            StockOutcome.BatchRequired => BadRequest(new MessageResponse
+            {
+                Message = "This item is batch-tracked. Enter the batch number the stock came in on.",
+            }),
+            StockOutcome.ExpiryRequired => BadRequest(new MessageResponse
+            {
+                Message = "This item is expiry-tracked, so a new batch needs its expiry date. "
+                    + "Without one nothing can decide which lot goes out first.",
+            }),
+            StockOutcome.BatchNotFound => NotFound(new MessageResponse
+            {
+                Message = "That batch no longer exists.",
+            }),
+            StockOutcome.SerialCountMismatch => BadRequest(new MessageResponse
+            {
+                Message = "Enter one serial number for each unit — the count has to match the "
+                    + "quantity exactly.",
+            }),
+            StockOutcome.SerialConflict => Conflict(new MessageResponse
+            {
+                Message = "One of those serial numbers is already in stock, or is not in stock "
+                    + "to be sold. Check the list against what is on the shelf.",
+            }),
+            StockOutcome.InsufficientCostLayers => StatusCode(
+                StatusCodes.Status500InternalServerError,
+                new MessageResponse
+                {
+                    Message = "The cost layers for this item do not cover the quantity, although "
+                        + "the stock does. Nothing was changed. This needs investigating before "
+                        + "the item is sold again.",
+                }),
             StockOutcome.InvalidValue => BadRequest(new MessageResponse
             {
                 Message = "One of the selected options is not a recognised value.",

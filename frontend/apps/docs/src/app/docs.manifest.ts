@@ -43,7 +43,7 @@ export const DOCS: DocSection[] = [
       { slug: 'numbering-series', title: 'Numbering series', status: 'built' },
       { slug: 'contacts', title: 'Contacts', status: 'built' },
       { slug: 'inventory-masters', title: 'Inventory masters', status: 'built' },
-      { slug: 'stock', title: 'Stock & movements', status: 'partial' },
+      { slug: 'stock', title: 'Stock, batches & costing', status: 'partial' },
       { slug: 'payment-terms', title: 'Payment terms', status: 'built' },
       { slug: 'configuration', title: 'Configuration', status: 'built' },
     ],

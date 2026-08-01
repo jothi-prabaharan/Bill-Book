@@ -55,6 +55,7 @@ builder.Services.AddScoped<ItemCategoryService>();
 builder.Services.AddScoped<MetalPurityService>();
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ItemService>();
+builder.Services.AddScoped<CostingService>();
 builder.Services.AddScoped<StockService>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
