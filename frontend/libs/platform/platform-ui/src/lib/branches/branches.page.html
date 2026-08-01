@@ -1,0 +1,156 @@
+<header class="page-head">
+  <h1>Branches</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add branch</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Branches are a reporting and numbering dimension. Stock is a single pool across all of them —
+  a branch never holds its own quantity or its own cost.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="handle-col"><span class="sr-only">Reorder</span></th>
+      <th>Code</th>
+      <th>Branch</th>
+      <th>City</th>
+      <th>State</th>
+      <th>GSTIN</th>
+      <th>Active</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
+    @for (row of rows(); track row.branchId) {
+      <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
+        <td class="handle-col"><span class="handle" cdkDragHandle aria-hidden="true">⠿</span></td>
+        <td><code>{{ row.branchCode }}</code></td>
+        <td>
+          {{ row.branchName }}
+          @if (row.isHeadOffice) {
+            <span class="badge">Head office</span>
+          }
+        </td>
+        <td>{{ row.city ?? '—' }}</td>
+        <td>{{ stateNameOf(row.stateId) }}</td>
+        <td>{{ row.gstin ?? '—' }}</td>
+        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
+        <td class="actions-col">
+          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+          @if (!row.isHeadOffice && row.isActive) {
+            <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
+              Deactivate
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="8">No branches.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === 0 ? 'New branch' : 'Edit branch' }}</h2>
+
+    <div class="fields">
+      <label>
+        Code
+        <input type="text" [(ngModel)]="form.branchCode" maxlength="10" style="text-transform: uppercase" />
+        <small>Goes into document numbers when a series includes the branch code.</small>
+      </label>
+
+      <label>
+        Name
+        <input type="text" [(ngModel)]="form.branchName" maxlength="100" />
+      </label>
+
+      <label>
+        GSTIN
+        <input type="text" [(ngModel)]="form.gstin" maxlength="15" style="text-transform: uppercase" />
+        <small>Only when this branch holds its own registration. Its first two digits must match the state.</small>
+      </label>
+
+      <label class="wide">
+        Address line 1
+        <input type="text" [(ngModel)]="form.addressLine1" maxlength="200" />
+      </label>
+
+      <label class="wide">
+        Address line 2
+        <input type="text" [(ngModel)]="form.addressLine2" maxlength="200" />
+      </label>
+
+      <label>
+        City
+        <input type="text" [(ngModel)]="form.city" maxlength="100" />
+      </label>
+
+      <label>
+        State
+        <select [(ngModel)]="form.stateId">
+          <option [ngValue]="null">Not set</option>
+          @for (state of states(); track state.stateId) {
+            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Postal code
+        <input type="text" [(ngModel)]="form.postalCode" maxlength="10" />
+      </label>
+
+      <label>
+        Phone
+        <input type="text" [(ngModel)]="form.phoneNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Mobile
+        <input type="text" [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" [(ngModel)]="form.email" maxlength="200" />
+      </label>
+
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isHeadOffice" [disabled]="editingHeadOffice" />
+        Head office
+      </label>
+
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" [disabled]="editingHeadOffice" />
+        Active
+      </label>
+    </div>
+
+    @if (editingHeadOffice) {
+      <p class="hint">
+        This is the head office. Make another branch the head office before changing or
+        deactivating this one — an organization always needs exactly one.
+      </p>
+    }
+
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.branchCode || !form.branchName">
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

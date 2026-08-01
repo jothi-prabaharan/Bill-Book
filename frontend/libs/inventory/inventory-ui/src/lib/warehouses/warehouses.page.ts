@@ -25,6 +25,14 @@ interface Warehouse {
   isActive: boolean;
 }
 
+/** Branches come from Platform — they live in the master database, next to the org. */
+interface Branch {
+  branchId: number;
+  branchCode: string;
+  branchName: string;
+  isHeadOffice: boolean;
+}
+
 /**
  * Inventory › Warehouses. A location dimension only — stock is one shared pool
  * and weighted average cost is company-wide, so nothing here splits inventory.
@@ -40,7 +48,10 @@ interface Warehouse {
 export class WarehousesPage implements OnInit {
   private readonly http = inject(HttpClient);
 
+  private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
+
   protected readonly rows = signal<Warehouse[]>([]);
+  protected readonly branches = signal<Branch[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -51,6 +62,26 @@ export class WarehousesPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    void this.loadBranches();
+  }
+
+  /** A warehouse without a branch is org-wide, so a failure here is not fatal. */
+  private async loadBranches(): Promise<void> {
+    try {
+      this.branches.set(
+        await this.get<Branch[]>(`/api/organizations/${this.orgId()}/branches`),
+      );
+    } catch {
+      /* the picker falls back to "Not set" */
+    }
+  }
+
+  protected branchNameOf(branchId: number | null): string {
+    if (branchId === null) {
+      return 'All branches';
+    }
+
+    return this.branches().find((b) => b.branchId === branchId)?.branchName ?? String(branchId);
   }
 
   async load(): Promise<void> {

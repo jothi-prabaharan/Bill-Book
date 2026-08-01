@@ -107,9 +107,10 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
 
 Until this lands, an item is a catalogue entry that cannot hold stock, and the "locked once stock has moved" rule is inert — `HasStockMovementsAsync` returns `false` unconditionally.
 
-- [ ] **3.1 — `plt.Branches`**
+- [x] **3.1 — `plt.Branches`**
   `BranchId` is already referenced by `acc.JournalDetails`, `acc.JournalLedger`, `inv.Warehouses` and `acc.NumberingSeries`, with no table behind any of them.
   *Done when*: a branch can be created and picked wherever `BranchId` is stored.
+  Master database, with a real FK to `plt.Organizations` — the one place the two can have one. Filtered unique index gives exactly one head office per org; provisioning writes it from the organization's own details. Picked on the Warehouses and Numbering Series pages; journal lines follow when Accounting's document screens land. Platform gained JWT authentication for this endpoint alone — see 5.10.
 
 - [ ] **3.2 — `inv.ItemStock`**
   One row per item — quantity on hand, weighted average cost, `xmin`. The target of the synchronous, concurrency-safe point-of-sale decrement.
@@ -174,6 +175,12 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.7 — There are no tests and no linter**
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
+
+- [ ] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
+  `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.
+
+- [ ] **5.11 — Three copies of `Reordering`**
+  Banking and Inventory each carry their own, and `Shared.Kernel.Ordering` now holds the canonical one that Platform uses. Point the other two at it and delete their copies, along with their local `ReorderRequest`.
 
 - [ ] **5.9 — `AzureBlobFileStorage`**
   Left out of 2.1. Needs `Azure.Storage.Blobs` added to `Directory.Packages.props`, which cannot be restored or compiled while the SDK hosts are blocked. `GetDownloadUrlAsync` returning a real SAS URL is the reason to build it — until then every download streams through the API, which works but puts the bytes through the service.
