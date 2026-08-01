@@ -62,12 +62,14 @@ type FormModel = Omit<
 export class NumberingSeriesPage implements OnInit {
   private readonly http = inject(HttpClient);
 
+  private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
+
   /**
-   * TODO: read from the organization once the org context service lands. The
-   * backend has the same placeholder — an organization on a different financial
-   * year would preview and generate the wrong year segment.
+   * The branch's own start month, read from its settings. April until it
+   * loads — the preview would otherwise show a year segment for a financial
+   * year this branch does not use.
    */
-  private readonly financialYearStartMonth = 4;
+  protected readonly financialYearStartMonth = signal(4);
 
   protected readonly rows = signal<NumberingSeries[]>([]);
   protected readonly busy = signal(false);
@@ -88,6 +90,23 @@ export class NumberingSeriesPage implements OnInit {
 
   ngOnInit(): void {
     void this.load();
+    void this.loadFinancialYear();
+  }
+
+  /** The preview has to compose against the same month the server generates with. */
+  private async loadFinancialYear(): Promise<void> {
+    try {
+      const org = await this.get<{ financialYearStartMonth: number }>(
+        `/api/organizations/${this.orgId()}`,
+      );
+
+      if (org.financialYearStartMonth >= 1 && org.financialYearStartMonth <= 12) {
+        this.financialYearStartMonth.set(org.financialYearStartMonth);
+      }
+    } catch {
+      // The server composes the real number regardless; only the preview here
+      // would be a month out, and April is right for most branches.
+    }
   }
 
   async load(): Promise<void> {
@@ -265,7 +284,7 @@ export class NumberingSeriesPage implements OnInit {
   private financialYear(format: FormModel['financialYearFormat']): string {
     const today = new Date();
     const start =
-      today.getMonth() + 1 >= this.financialYearStartMonth
+      today.getMonth() + 1 >= this.financialYearStartMonth()
         ? today.getFullYear()
         : today.getFullYear() - 1;
     const end = start + 1;

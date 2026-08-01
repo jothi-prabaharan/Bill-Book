@@ -4,13 +4,13 @@ namespace Shared.Kernel.Numbering;
 public sealed class NumberingOptions
 {
     /// <summary>
-    /// The organization's financial year start month — 4 for India. Decides the
-    /// financial-year segment and the yearly reset boundary.
+    /// Fallback financial year start month — 4 for India.
     ///
-    /// TODO: read from plt.Organizations.FinancialYearStartMonth per request.
-    /// It lives in the master database, so it needs the same cached Platform
-    /// lookup the tenant directory already does; until then this is configured
-    /// per service and an organization on a different year would number wrongly.
+    /// The real value is the branch's own, read through
+    /// <see cref="IFinancialYearProvider"/>. This is what is used when there is
+    /// no branch to ask about (seeding, design time) or when Platform cannot be
+    /// reached — refusing to allocate a code because a settings lookup failed
+    /// would be the worse outcome.
     /// </summary>
     public int FinancialYearStartMonth { get; set; } = 4;
 

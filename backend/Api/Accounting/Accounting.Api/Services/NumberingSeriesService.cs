@@ -1,7 +1,6 @@
 using Accounting.Entity.Models;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Shared.Kernel.Numbering;
 
 namespace Accounting.Api.Services;
@@ -23,14 +22,14 @@ public sealed class NumberingSeriesService
 
     private readonly AccountingDbContext _db;
     private readonly TimeProvider _clock;
-    private readonly NumberingOptions _options;
+    private readonly IFinancialYearProvider _financialYear;
 
     public NumberingSeriesService(
-        AccountingDbContext db, TimeProvider clock, IOptions<NumberingOptions> options)
+        AccountingDbContext db, TimeProvider clock, IFinancialYearProvider financialYear)
     {
         _db = db;
         _clock = clock;
-        _options = options.Value;
+        _financialYear = financialYear;
     }
 
     public async Task<IReadOnlyList<NumberingSeriesListItem>> ListAsync(
@@ -54,7 +53,11 @@ public sealed class NumberingSeriesService
             .ThenBy(s => s.SeriesName)
             .ToListAsync(ct);
 
-        return rows.Select(Map).ToList();
+        // Resolved once for the whole list rather than per row: the preview on
+        // every row is composed against the same branch's year.
+        int startMonth = await _financialYear.GetStartMonthAsync(ct);
+
+        return rows.Select(s => Map(s, startMonth)).ToList();
     }
 
     public async Task<NumberingSeriesListItem?> GetAsync(long numberingSeriesId, CancellationToken ct)
@@ -62,7 +65,7 @@ public sealed class NumberingSeriesService
         NumberingSeries? row = await _db.NumberingSeries
             .FirstOrDefaultAsync(s => s.NumberingSeriesId == numberingSeriesId, ct);
 
-        return row is null ? null : Map(row);
+        return row is null ? null : Map(row, await _financialYear.GetStartMonthAsync(ct));
     }
 
     public async Task<SaveSeriesResult> CreateAsync(
@@ -432,10 +435,10 @@ public sealed class NumberingSeriesService
             && Enum.TryParse(request.ResetFrequency, ignoreCase: true, out reset);
     }
 
-    private NumberingSeriesListItem Map(NumberingSeries s)
+    private NumberingSeriesListItem Map(NumberingSeries s, int startMonth)
     {
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        long next = NumberFormat.IsResetDue(s, today, _options.FinancialYearStartMonth)
+        long next = NumberFormat.IsResetDue(s, today, startMonth)
             ? s.StartNumber
             : s.NextNumber;
 
@@ -463,7 +466,7 @@ public sealed class NumberingSeriesService
             IsSystem = s.IsSystem,
             IsActive = s.IsActive,
             DisplayOrder = s.DisplayOrder,
-            Preview = NumberFormat.Compose(s, next, today, _options.FinancialYearStartMonth),
+            Preview = NumberFormat.Compose(s, next, today, startMonth),
         };
     }
 }

@@ -113,4 +113,11 @@ public class OrgContextResponse
     public DateOnly? LicenseExpiry { get; set; }
 
     public int MaxUsers { get; set; }
+
+    /// <summary>
+    /// The branch's financial year start month — 4 for India. Carried here
+    /// because every service composing a document number needs it, and it lives
+    /// in the master database where none of them can read it directly.
+    /// </summary>
+    public int FinancialYearStartMonth { get; set; }
 }

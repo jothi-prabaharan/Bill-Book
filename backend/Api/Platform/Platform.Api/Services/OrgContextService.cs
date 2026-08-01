@@ -30,6 +30,7 @@ public sealed class OrgContextService
                 o.OrgId,
                 o.CustomerId,
                 OrgName = o.Name,
+                o.FinancialYearStartMonth,
                 CustomerStatus = c.Status,
                 DbStatus = d.Status,
                 l.ExpiryDate,
@@ -74,6 +75,7 @@ public sealed class OrgContextService
             LicenseStatus = licenseStatus.ToString(),
             LicenseExpiry = row.ExpiryDate,
             MaxUsers = row.MaxUsers,
+            FinancialYearStartMonth = row.FinancialYearStartMonth,
         };
     }
 }

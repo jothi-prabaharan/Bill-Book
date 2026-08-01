@@ -16,16 +16,21 @@ public sealed class NumberGenerator : INumberGenerator
 {
     private readonly DbContext _db;
     private readonly NumberingOptions _options;
+    private readonly IFinancialYearProvider _financialYear;
 
-    public NumberGenerator(DbContext db, IOptions<NumberingOptions> options)
+    public NumberGenerator(
+        DbContext db, IOptions<NumberingOptions> options, IFinancialYearProvider financialYear)
     {
         _db = db;
         _options = options.Value;
+        _financialYear = financialYear;
     }
 
     public async Task<NumberAllocation> NextAsync(
         string seriesCode, DateOnly onDate, CancellationToken ct)
     {
+        int startMonth = await _financialYear.GetStartMonthAsync(ct);
+
         for (int attempt = 0; attempt < _options.MaxAllocationAttempts; attempt++)
         {
             NumberingSeries series = await ResolveAsync(seriesCode, ct)
@@ -33,7 +38,7 @@ public sealed class NumberGenerator : INumberGenerator
                     $"No active numbering series is configured for '{seriesCode}'. " +
                     "Add one under Settings › Numbering series.");
 
-            bool resetDue = NumberFormat.IsResetDue(series, onDate, _options.FinancialYearStartMonth);
+            bool resetDue = NumberFormat.IsResetDue(series, onDate, startMonth);
             long current = resetDue ? series.StartNumber : series.NextNumber;
             long expected = series.NextNumber;
 
@@ -61,7 +66,7 @@ public sealed class NumberGenerator : INumberGenerator
                 _db.Entry(series).State = EntityState.Detached;
 
                 string code = NumberFormat.Compose(
-                    series, current, onDate, _options.FinancialYearStartMonth);
+                    series, current, onDate, startMonth);
                 return new NumberAllocation(series.NumberingSeriesId, current, code);
             }
 
@@ -76,17 +81,19 @@ public sealed class NumberGenerator : INumberGenerator
     public async Task<string?> PeekAsync(
         string seriesCode, DateOnly onDate, CancellationToken ct)
     {
+        int startMonth = await _financialYear.GetStartMonthAsync(ct);
+
         NumberingSeries? series = await ResolveAsync(seriesCode, ct);
         if (series is null)
         {
             return null;
         }
 
-        long next = NumberFormat.IsResetDue(series, onDate, _options.FinancialYearStartMonth)
+        long next = NumberFormat.IsResetDue(series, onDate, startMonth)
             ? series.StartNumber
             : series.NextNumber;
 
-        return NumberFormat.Compose(series, next, onDate, _options.FinancialYearStartMonth);
+        return NumberFormat.Compose(series, next, onDate, startMonth);
     }
 
     /// <summary>

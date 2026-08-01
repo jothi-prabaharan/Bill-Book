@@ -194,8 +194,11 @@ Independent of the stages above; take any of them whenever.
   `con.Contacts.SubLedgerProvisionedAt` now records it, mirroring `BankAccounts.LedgerAccountId is null`. Held locally rather than asked of Accounting per row — the contact list is the classic N+1, and one HTTP call per row is not a list. Create returns `SubLedgerUnavailable` (409, contact kept), the list shows **No sub-ledger**, and `POST api/contacts/{id}/link-sub-ledger` retries.
   **Judgement call on existing rows**: the migration backfills them as provisioned. Marking every existing contact broken would be a false alarm on the common case, which is how a warning badge stops being read — and the retry is idempotent where the assumption is wrong. Said plainly in the migration.
 
-- [ ] **5.3 — Read the financial-year start month per organization**
+- [x] **5.3 — Read the financial-year start month per organization**
   Hardcoded to 4 via configuration in the numbering generator and the numbering page. An organization on a different year numbers wrongly.
+  `IFinancialYearProvider` in `Shared.Kernel`, reading the branch's own month from Platform's existing org-context endpoint and caching it for six hours — it changes about never, and an HTTP call per allocated code would be absurd. Added to that endpoint rather than a new one, so there is one lookup and one cache rather than two.
+  **It never throws.** No tenant (seeding, design time) or Platform unreachable falls back to the configured value, because refusing to allocate a code over a settings lookup would be the worse failure. A month outside 1–12 is logged and ignored rather than composing a number nobody can explain.
+  The Accounting preview and the Angular page now read it too, so what the screen shows and what the server generates cannot disagree. `NumberingSeriesService` lost its `NumberingOptions` dependency entirely as a result.
 
 - [ ] **5.4 — Fix the `MetalPuritiesSeed` comment**
   It claims to seed only for jewellery organizations; the code seeds unconditionally. One or the other should change.

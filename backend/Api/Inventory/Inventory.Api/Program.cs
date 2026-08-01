@@ -62,9 +62,18 @@ builder.Services.AddScoped<StockService>();
 // against this service's own DbContext so an item code is allocated inside the
 // same transaction as the item — a failed insert gives the number back.
 builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("Numbering"));
+// The financial year start month is the branch's own, held in the master
+// database. Cached for hours: it changes about never, and an HTTP call on every
+// code allocation would be absurd.
+builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+});
+
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<InventoryDbContext>(),
-    sp.GetRequiredService<IOptions<NumberingOptions>>()));
+    sp.GetRequiredService<IOptions<NumberingOptions>>(),
+    sp.GetRequiredService<IFinancialYearProvider>()));
 
 // Must match Identity's key exactly: Identity mints the tokens, Inventory only
 // validates them. Never fall back to a constant here.
