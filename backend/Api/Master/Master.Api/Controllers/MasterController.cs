@@ -229,6 +229,31 @@ public sealed class MasterController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// One code by id. The item master stores only <c>HsnSacCodeId</c>, so a
+    /// saved item has nothing to display without this — search is by code
+    /// prefix and cannot resolve an id it already holds.
+    /// </summary>
+    [HttpGet("hsn-sac/{hsnSacCodeId:int}")]
+    public async Task<IActionResult> GetHsnSacCode(int hsnSacCodeId, CancellationToken ct)
+    {
+        var code = await _db.HsnSacCodes
+            .Where(c => c.HsnSacCodeId == hsnSacCodeId)
+            .Select(c => new
+            {
+                c.HsnSacCodeId,
+                c.Code,
+                c.CodeType,
+                c.Description,
+                c.DefaultGstRate,
+                c.DigitLength,
+                c.IsActive,
+            })
+            .FirstOrDefaultAsync(ct);
+
+        return code is null ? NotFound() : Ok(code);
+    }
+
     /// <summary>The chapter headings, for grouping the picker.</summary>
     [HttpGet("hsn-sac/chapters")]
     public async Task<IActionResult> GetHsnChapters(CancellationToken ct)

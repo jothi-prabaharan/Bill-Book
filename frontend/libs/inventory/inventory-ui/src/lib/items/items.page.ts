@@ -27,6 +27,24 @@ interface UomType {
   units: Unit[];
 }
 
+interface TaxRate {
+  taxGroupId: number;
+  taxName: string;
+  totalRate: number;
+}
+
+interface HsnCode {
+  hsnSacCodeId: number;
+  code: string;
+  codeType: string;
+  description: string;
+  defaultGstRate: number | null;
+}
+
+interface HsnSearchResult {
+  rows: HsnCode[];
+}
+
 interface Category {
   itemCategoryId: number;
   categoryName: string;
@@ -132,6 +150,12 @@ export class ItemsPage implements OnInit {
   protected readonly rows = signal<ItemListRow[]>([]);
   protected readonly types = signal<UomType[]>([]);
   protected readonly categories = signal<Category[]>([]);
+  protected readonly taxRates = signal<TaxRate[]>([]);
+
+  /** Matches for the HSN search box, and the code the item currently holds. */
+  protected readonly hsnMatches = signal<HsnCode[]>([]);
+  protected readonly hsnSelected = signal<HsnCode | null>(null);
+  protected readonly hsnSearching = signal(false);
   protected readonly purities = signal<Purity[]>([]);
   protected readonly warehouses = signal<Warehouse[]>([]);
   protected readonly busy = signal(false);
@@ -146,6 +170,7 @@ export class ItemsPage implements OnInit {
   showInactive = false;
 
   form: ItemDetail = this.blank();
+  hsnSearch = '';
 
   /** Units of the item's type — the only ones the four slots may point at. */
   protected readonly unitsOfType = computed(
@@ -196,12 +221,14 @@ export class ItemsPage implements OnInit {
       load<Category>('/api/item-categories', (r) => this.categories.set(r)),
       load<Purity>('/api/metal-purities', (r) => this.purities.set(r)),
       load<Warehouse>('/api/warehouses', (r) => this.warehouses.set(r)),
+      load<TaxRate>('/api/tax-masters', (r) => this.taxRates.set(r)),
     ]);
   }
 
   openAdd(): void {
     this.editingId.set(null);
     this.form = this.blank();
+    this.clearHsnSearch();
     this.tab.set('general');
     this.editorOpen.set(true);
   }
@@ -211,6 +238,8 @@ export class ItemsPage implements OnInit {
     try {
       this.form = await this.get<ItemDetail>(`/api/items/${row.itemId}`);
       this.editingId.set(row.itemId);
+      this.clearHsnSearch();
+      void this.showCurrentHsn();
       this.tab.set('general');
       this.editorOpen.set(true);
     } catch {
@@ -218,6 +247,88 @@ export class ItemsPage implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  // ---- HSN / SAC ----------------------------------------------------------
+
+  /**
+   * The item stores only an id, and the search endpoint matches on code prefix,
+   * so an id already held cannot be resolved by searching for it. Read the one
+   * row instead, or the field shows blank on every saved item.
+   */
+  private async showCurrentHsn(): Promise<void> {
+    if (this.form.hsnSacCodeId === null) {
+      this.hsnSelected.set(null);
+      return;
+    }
+
+    try {
+      this.hsnSelected.set(
+        await this.get<HsnCode>(`/api/master/hsn-sac/${this.form.hsnSacCodeId}`),
+      );
+    } catch {
+      // A code that no longer resolves still has an id on the item. Showing
+      // nothing would look like it was never set, so say what is stored.
+      this.hsnSelected.set(null);
+    }
+  }
+
+  async searchHsn(): Promise<void> {
+    const term = this.hsnSearch.trim();
+    if (term.length < 2) {
+      this.hsnMatches.set([]);
+      return;
+    }
+
+    this.hsnSearching.set(true);
+    try {
+      // Services take SAC and goods take HSN; filtering by the item's own type
+      // keeps a chemist from being offered consulting codes.
+      const codeType = this.form.itemType === 'Service' ? 'SAC' : 'HSN';
+      const page = await this.get<HsnSearchResult>(
+        `/api/master/hsn-sac?search=${encodeURIComponent(term)}&codeType=${codeType}&take=20`,
+      );
+      this.hsnMatches.set(page.rows);
+    } catch {
+      this.hsnMatches.set([]);
+    } finally {
+      this.hsnSearching.set(false);
+    }
+  }
+
+  /**
+   * Picking a code sets the item's HSN and, when the code carries a usual rate
+   * and no rate has been chosen yet, pre-selects the matching one.
+   *
+   * **Pre-select, never overwrite.** The same code attracts a different rate by
+   * condition, so a rate someone has already chosen is a decision, not a
+   * default waiting to be corrected.
+   */
+  pickHsn(code: HsnCode): void {
+    this.form.hsnSacCodeId = code.hsnSacCodeId;
+    this.hsnSelected.set(code);
+    this.hsnMatches.set([]);
+    this.hsnSearch = '';
+
+    if (code.defaultGstRate === null || this.form.taxGroupId !== null) {
+      return;
+    }
+
+    const match = this.taxRates().find((r) => r.totalRate === code.defaultGstRate);
+    if (match) {
+      this.form.taxGroupId = match.taxGroupId;
+    }
+  }
+
+  clearHsn(): void {
+    this.form.hsnSacCodeId = null;
+    this.hsnSelected.set(null);
+    this.clearHsnSearch();
+  }
+
+  private clearHsnSearch(): void {
+    this.hsnSearch = '';
+    this.hsnMatches.set([]);
   }
 
   /** Choosing a category copies its defaults onto a new item, once. */

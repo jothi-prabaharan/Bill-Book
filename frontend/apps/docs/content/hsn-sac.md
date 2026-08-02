@@ -74,9 +74,15 @@ Matches on code prefix or description text, fifty at a time and capped at 200. T
 
 `summary` returns how many HSN chapters, HSN codes, SAC groups, SAC codes and retired rows exist. It is what the coverage strip reads.
 
-## Three things still open
+## Assigning a code to an item
 
-**Nothing assigns a code to an item.** `hsnSacCodeId` is on the item's save model and on the table, but the Items form has no field for it — so no item can carry an HSN code today, and the "pre-selects its usual GST rate" behaviour above has nothing to trigger it. The same is true of the item's tax rate. This is the next thing to fix, and it blocks invoicing.
+**Items › General** carries the picker. Type two characters or more of a code or its description and pick from the matches; the item's own type decides which half of the nomenclature is searched, so a service is offered SAC codes and goods HSN. The chosen code shows with its description and its usual rate, and **Change** replaces it.
+
+Picking a code with a usual rate **pre-selects** the matching GST rate beside it — but only when no rate has been chosen. The same code attracts a different rate by condition, so a rate someone has already set is a decision, not a default waiting to be corrected. The item's own rate is what reaches an invoice either way.
+
+If a search finds nothing, the field says so and points at Settings › HSN & SAC codes, because the likely reason is that the detailed list has not been imported rather than that the code does not exist.
+
+## Two things still open
 
 **Digit length by turnover.** GST requires 4 digits for B2B below ₹5 crore turnover and 6 above. That is a property of the *organization*, not the code, so it belongs in configuration — a `hsn.digits` key enforced when an item is saved. Not implemented.
 

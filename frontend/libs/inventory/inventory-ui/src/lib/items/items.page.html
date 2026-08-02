@@ -147,6 +147,66 @@
           </select>
         </label>
 
+        <!-- A div, not a label: once a code is picked this block contains no form
+             control for a label to be associated with. -->
+        <div class="field wide">
+          <span class="field-label">HSN / SAC code</span>
+          @if (hsnSelected(); as code) {
+            <span class="picked">
+              <strong>{{ code.code }}</strong> — {{ code.description }}
+              @if (code.defaultGstRate !== null) {
+                <span class="badge">usually {{ code.defaultGstRate }}%</span>
+              }
+              <button type="button" class="link" (click)="clearHsn()">Change</button>
+            </span>
+          } @else {
+            <label class="sr-only" for="item-hsn-search">Search HSN or SAC codes</label>
+            <input
+              id="item-hsn-search"
+              type="search"
+              name="hsnSearch"
+              [(ngModel)]="hsnSearch"
+              (keyup.enter)="searchHsn()"
+              (ngModelChange)="searchHsn()"
+              placeholder="Search code or description"
+            />
+            @if (hsnSearching()) {
+              <small>Searching…</small>
+            } @else if (hsnMatches().length > 0) {
+              <ul class="matches">
+                @for (match of hsnMatches(); track match.hsnSacCodeId) {
+                  <li>
+                    <button type="button" class="link" (click)="pickHsn(match)">
+                      <strong>{{ match.code }}</strong> {{ match.description }}
+                      @if (match.defaultGstRate !== null) {
+                        <span class="badge">{{ match.defaultGstRate }}%</span>
+                      }
+                    </button>
+                  </li>
+                }
+              </ul>
+            } @else if (hsnSearch.length >= 2) {
+              <small>
+                No match. The detailed code list may not be loaded yet — see
+                Settings › HSN &amp; SAC codes.
+              </small>
+            } @else {
+              <small>Two characters or more to search. Goods show HSN, services SAC.</small>
+            }
+          }
+        </div>
+
+        <label>
+          GST rate
+          <select [(ngModel)]="form.taxGroupId">
+            <option [ngValue]="null">Not set</option>
+            @for (rate of taxRates(); track rate.taxGroupId) {
+              <option [ngValue]="rate.taxGroupId">{{ rate.taxName }}</option>
+            }
+          </select>
+          <small>The item's own rate is what reaches an invoice; the code only suggests it.</small>
+        </label>
+
         <label>
           Tax preference
           <select [(ngModel)]="form.taxPreference">
