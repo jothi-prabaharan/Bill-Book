@@ -15,13 +15,13 @@ The order to build things in, and how to tell when each one is actually done.
 
 ## Where things stand
 
-Verified on 1 August 2026, by reading the repository rather than from memory.
+Verified on 2 August 2026, by reading the repository rather than from memory.
 
-**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 16 master tables added most recently, 11 pages, 5 hand-written migrations.
+**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 25 pages, and every endpoint behind an authentication and permission check.
 
-**The one fact that colours everything below**: nothing in this repository has ever been compiled. There has never been a .NET SDK or a `node_modules` available to it. Every service and both Angular apps are unverified against a build, including code that predates the recent work.
+**The one fact that colours everything below**: the backend has never been compiled. There has never been a .NET SDK available to it, so every service, every migration and every Designer file is unverified against a build. The frontend is not in that position any more — `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green.
 
-**Known-stale documentation**: `CLAUDE.md` still lists `AuthController.ResolveCustomerIdAsync` as a blocking gap. It is not — `IPlatformDirectory.ResolveOrgAsync` replaced it. Its "Not yet built" list is also out of date.
+**Stage 5 is finished apart from what cannot move here.** What is left is blocked by the SDK (0.2, 0.4, 0.5, 5.9), waiting for Sales to exist (5.12, 5.13, and the journal half of 4.4), or an owner's decision (5.14, 5.16). The next substantial build is **Sales** — it is the next thing on the Phase 1 roadmap and it is what unblocks the two stock items.
 
 ---
 
@@ -308,5 +308,8 @@ Independent of the stages above; take any of them whenever.
   The questions for the owner: is a branch ever more than one trade at once — a chemist that also sells FMCG, a jeweller that also does watch repair? Does the vertical hide a screen or merely preset a default? Can it be changed after the branch has traded, and if so what happens to the rows the old vertical seeded?
   Not started deliberately: guessing wrong here means an unpickable choice on the signup form that every customer has to answer before they understand it.
 
-- [ ] **5.6 — Decide the numbering-series ownership exception**
+- [x] **5.6 — Decide the numbering-series ownership exception** — *confirmed; reversible if the owner disagrees*
   `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations`, so a code can be allocated inside the caller's transaction. It is a deliberate, documented exception to the no-shared-tables rule — either confirm it in `CLAUDE.md` or replace it with a table per service.
+  **Confirmed, and `CLAUDE.md` now says so as a decision rather than a question.** Decided from the code rather than by preference: `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction. That is what makes a failed insert give its code back and a document series stay gapless — and it only works while the table is in the caller's `DbContext`.
+  **Both alternatives lose something real.** A table per service breaks Settings › Numbering series, which is one list of every series with one default per code — four tables means four services to query and nowhere to enforce that. Asking Accounting for a number over HTTP breaks the transaction instead: the number is spent whether or not the insert that wanted it succeeds, and consecutive numbering is a statutory requirement on an Indian invoice, not a preference.
+  Recorded in `CLAUDE.md` with the reasoning and the line to preserve if it is ever revisited — the transaction, not the table. This is the cheapest of the remaining decisions to reverse, since nothing outside `NumberingSeriesModel` depends on where the table lives.

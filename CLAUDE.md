@@ -305,7 +305,13 @@ Schema, API and page all exist for these. Task tracking lives in [`PLAN.md`](./P
 | **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen |
 | **Banking** | Bank, BankAccount | Each bank account provisions its own ledger account |
 
-`NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations` — a deliberate exception to the no-shared-tables rule, so a code can be allocated inside the caller's transaction. PLAN 5.6 decides whether it stays.
+`NumberingSeries` lives in `Shared.Kernel` and is mapped by four services — Accounting owns the migration, Contacts, Inventory and Banking map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
+
+The reason is the allocation. `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction — so an item insert that fails gives its code back, and a document series stays gapless. Both properties need the table in the caller's `DbContext`. Ask another service for a number over HTTP and the transaction ends at the wire: the number is spent whether or not the insert succeeds.
+
+A table per service would also break the screen. Settings › Numbering series is one list of every series, and splitting the table means four services to query and no single place to enforce one default per code.
+
+If this is ever revisited, the thing to preserve is the transaction, not the table.
 
 **Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update and costs them.
 
