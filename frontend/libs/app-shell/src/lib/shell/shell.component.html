@@ -28,6 +28,10 @@
   </nav>
 
   @if (moreOpen) {
+    <!-- Tap-outside-to-close. The keyboard equivalent is Escape, handled on the
+         component host; the sheet's own links and buttons are what a keyboard
+         user reaches. -->
+    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
     <div class="more-sheet" (click)="moreOpen = false">
       <div class="sheet-body">
         @for (item of nav.slice(4); track item.path) {

@@ -4,7 +4,9 @@
     "outDir": "../../dist/out-tsc",
     "types": []
   },
-  "files": ["src/main.ts"],
+  "files": [
+    "src/main.ts"
+  ],
   "include": [
     "src/**/*.ts",
     "../../libs/shared/auth/src/**/*.ts",
@@ -15,5 +17,8 @@
     "strictInjectionParameters": true,
     "strictInputAccessModifiers": true,
     "strictTemplates": true
-  }
+  },
+  "exclude": [
+    "**/*.spec.ts"
+  ]
 }

@@ -3,8 +3,14 @@
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "production": ["default", "!{projectRoot}/**/*.spec.ts"],
-    "sharedGlobals": []
+    "sharedGlobals": ["{workspaceRoot}/eslint.config.mjs", "{workspaceRoot}/tsconfig.base.json"]
   },
+  "plugins": [
+    {
+      "plugin": "@nx/eslint/plugin",
+      "options": { "targetName": "lint" }
+    }
+  ],
   "targetDefaults": {
     "build": {
       "dependsOn": ["^build"],
@@ -12,6 +18,9 @@
       "cache": true
     },
     "test": { "cache": true },
-    "lint": { "cache": true }
+    "lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/eslint.config.mjs", "{workspaceRoot}/tsconfig.eslint.json"]
+    }
   }
 }

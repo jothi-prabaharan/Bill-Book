@@ -63,6 +63,36 @@ npx nx serve docs    # http://localhost:4300 — this site
 
 Both default to the `development` configuration. Add `--configuration staging` to serve a production-shaped build that still has source maps.
 
+## Checks
+
+```bash
+cd frontend
+npm run lint     # ESLint across every project
+npm run test     # Vitest, once
+npm run check    # lint, then test, then build — what to run before pushing
+```
+
+`npm run test:watch` re-runs on save.
+
+**Lint** is one flat config at `frontend/eslint.config.mjs`, and Nx infers a
+`lint` target for every project from it — a new library is linted the day it is
+created rather than when someone remembers to wire it up. The rules that are on
+beyond the recommended sets are there to catch defects, not to enforce a style:
+floating promises (a failed save that reports success), misused promises (an
+`async ngOnInit`, which Angular never awaits), unused variables, and the
+component-selector prefix.
+
+**Tests** run on Vitest with jsdom, from one config at
+`frontend/vitest.config.mts`. Services, guards and interceptors are testable
+today; component tests are not, because they need templates compiled and that
+means adding the Angular Vite plugin. The Angular `unit-test` builder was tried
+and rejected — Angular marks it experimental, and as configured it insists on a
+real browser to run tests that do not need one.
+
+Backend tests live in `backend/tests/` and run with `dotnet test`. **They have
+never been compiled**, for the same reason as the rest of the backend — read
+`backend/tests/README.md` before trusting one.
+
 ## Ports
 
 | Port | Service |

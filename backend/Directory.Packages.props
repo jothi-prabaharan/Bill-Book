@@ -29,4 +29,13 @@
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
   </ItemGroup>
 
+  <!-- Test-only. Same caveat as above, and more sharply: these have never been
+       restored either, and xunit v3 changed its package layout, so expect the
+       first `dotnet restore` to want corrections here. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
 </Project>

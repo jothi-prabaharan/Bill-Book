@@ -96,7 +96,11 @@ export class RolesPage implements OnInit {
 
   togglePermission(id: number): void {
     const next = new Set(this.selected());
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
     this.selected.set(next);
   }
 
@@ -108,7 +112,11 @@ export class RolesPage implements OnInit {
     const next = new Set(this.selected());
     const turnOff = this.allSelected(group);
     for (const p of group.permissions) {
-      turnOff ? next.delete(p.permissionId) : next.add(p.permissionId);
+      if (turnOff) {
+        next.delete(p.permissionId);
+      } else {
+        next.add(p.permissionId);
+      }
     }
     this.selected.set(next);
   }

@@ -19,6 +19,10 @@ interface NavItem {
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
+  // Escape closes the More sheet. Tapping outside it does too, but that is a
+  // pointer gesture with no keyboard equivalent — without this, a keyboard user
+  // who opens the sheet has no way to dismiss it.
+  host: { '(document:keydown.escape)': 'moreOpen = false' },
 })
 export class ShellComponent {
   private readonly auth = inject(AuthService);

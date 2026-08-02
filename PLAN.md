@@ -223,8 +223,24 @@ Independent of the stages above; take any of them whenever.
   `MetalPurities` was the only one of the six with no unique index on its system name, so a concurrent re-seed could have inserted twice — added in `AddMetalPuritySystemNameIndex`, filtered on NOT NULL like the others.
   The internal seed endpoints are now documented as re-runnable, which they had to be for any of this to be worth doing, and **Finish setup** on the branches screen is the user-facing way in.
 
-- [ ] **5.7 — There are no tests and no linter**
+- [~] **5.7 — There are no tests and no linter** — *frontend done and green; the backend project exists but has never compiled*
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
+
+  **Lint.** One flat config at `frontend/eslint.config.mjs`; Nx's eslint plugin infers a `lint` target for all 11 projects that have source, so a new library is linted the day it is created. Beyond the recommended sets the rules that are on are there to catch defects, not style: `no-floating-promises` (a failed save that reports success), `no-misused-promises`, `no-unused-vars`, and the `bb` selector prefix. It found **seven real problems on the first run**, all now fixed:
+  - Two overlays — the mobile More sheet and the contact-roles popup — could be opened but not closed from the keyboard. Both dismissed on outside-click with no key doing the same thing, which is a focus trap. Escape now closes both.
+  - `signup.page.ts` had an `async ngOnInit`. Angular does not await it, so nothing watches for a rejection.
+  - Two ternaries used as statements in `roles.page.ts`.
+
+  **Tests.** Vitest with jsdom, one config at `frontend/vitest.config.mts`. **25 tests** over the licence and auth guards, the auth interceptor, `AuthService` session handling and the API base-url interceptor — chosen because each is small enough that nobody re-reads it and wrong enough to matter: a guard that lets an expired licence through, an interceptor that signs a user out on the wrong status code. Mutation-checked by inverting the licence guard's condition; 5 of 7 tests failed, so they are load-bearing rather than decorative.
+  **Not the Angular `unit-test` builder**, which was tried first. Angular marks it EXPERIMENTAL, and as configured through Nx it demands `@vitest/browser` plus Playwright to run tests that never touch a browser. Component tests remain unsupported — those need templates compiled, which means the Angular Vite plugin, and that is worth doing when there is a component test to write.
+
+  **A typecheck gap opened and was closed.** Spec files had to be excluded from the app tsconfigs (the app build was compiling them into the bundle), and Vitest does not typecheck — esbuild strips types without reading them. So the specs would have been checked by nothing. `npm run typecheck` runs `tsc --noEmit` over `tsconfig.eslint.json`, which covers every file including specs, and `npm run check` is lint → typecheck → test → build.
+
+  **Backend: the project exists, the tests have never run.** `backend/tests/Shared.Kernel.Tests` covers `NumberFormat`, `Reordering` and the phone attributes — all pure, no `DbContext`, no mocks. With no SDK they are a stated expectation rather than a passing one, and `backend/tests/README.md` says so first. The wiring is the tedious part to retrofit, so it is in place; the first person with an SDK runs one command instead of spending an afternoon on scaffolding.
+  **Services are deliberately not covered.** The interesting behaviour — guarded conditional updates, query filters, deferred constraint triggers — is Postgres's, not C#'s, and testing it against an in-memory provider asserts only that the mock behaves like the mock. That wants a real Postgres and is its own piece of work.
+
+- [ ] **5.15 — `package-lock.json` is gitignored**
+  Found while doing 5.7. `.gitignore` excludes it, so every install resolves versions afresh and two machines can get different ones. That mattered less when nothing was verified; it matters now that `npm run check` is what says the frontend is sound — a lint or test result that depends on which day the packages were installed is not a result. Committing it is the fix, but it is a large diff against a deliberate-looking ignore rule, so it is the owner's call rather than a silent change.
 
 - [ ] **5.12 — A stock issue posts nothing to the ledger**
   `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, on an event Inventory does not yet publish — so today stock and the general ledger disagree the moment anything is issued. Nothing is wrong with either half; they are simply not connected. Do it when Sales lands, since that is what will be issuing.

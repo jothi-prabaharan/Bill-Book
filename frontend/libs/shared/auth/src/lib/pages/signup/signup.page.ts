@@ -41,7 +41,14 @@ export class SignupPage implements OnInit {
     countryId: 1, stateId: undefined as number | undefined, city: '', postalCode: '',
   };
 
-  async ngOnInit(): Promise<void> {
+  ngOnInit(): void {
+    // Angular does not await ngOnInit, so returning a promise from it means
+    // nothing is watching for a rejection. The work is kicked off explicitly
+    // instead, and load() handles its own failure.
+    void this.load();
+  }
+
+  private async load(): Promise<void> {
     try {
       this.countries.set(await this.auth.countries());
       await this.loadStates(this.m.countryId);

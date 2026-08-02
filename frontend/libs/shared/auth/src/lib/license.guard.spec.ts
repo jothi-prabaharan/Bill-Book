@@ -1,0 +1,104 @@
+import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import {
+  ActivatedRouteSnapshot,
+  CanActivateFn,
+  Router,
+  RouterStateSnapshot,
+  UrlTree,
+  provideRouter,
+} from '@angular/router';
+import { describe, beforeEach, expect, it } from 'vitest';
+import { AuthService } from './auth.service';
+import { authGuard, licenseActiveGuard } from './license.guard';
+
+/**
+ * These two guards decide whether a page is reachable, so a mistake in either
+ * is a page that opens when it should not. They are three lines each, which is
+ * exactly why they are worth a test: nobody re-reads three lines.
+ *
+ * The server enforces both rules independently — this is the UX half only — but
+ * a guard that lets an expired licence through means the user sees a screen
+ * that then fails on every request, which reads as the product being broken
+ * rather than as the licence having lapsed.
+ */
+describe('route guards', () => {
+  let auth: AuthService;
+
+  // Both guards ignore the route and state they are handed — they answer from
+  // AuthService alone — so empty ones are honest stand-ins rather than a mock
+  // of anything.
+  const route = new ActivatedRouteSnapshot();
+  const state = { url: '/somewhere' } as RouterStateSnapshot;
+
+  const run = (guard: CanActivateFn): boolean | UrlTree =>
+    TestBed.runInInjectionContext(() => guard(route, state)) as boolean | UrlTree;
+
+  beforeEach(() => {
+    localStorage.clear();
+
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideRouter([])],
+    });
+
+    auth = TestBed.inject(AuthService);
+  });
+
+  describe('authGuard', () => {
+    it('lets a signed-in user through', () => {
+      auth.accessToken.set('a-token');
+
+      expect(run(authGuard)).toBe(true);
+    });
+
+    it('sends a signed-out user to login', () => {
+      auth.accessToken.set(null);
+
+      const result = run(authGuard);
+
+      expect(result).toBeInstanceOf(UrlTree);
+      expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login');
+    });
+  });
+
+  describe('licenseActiveGuard', () => {
+    it('lets an active licence through', () => {
+      auth.licenseStatus.set('Active');
+
+      expect(run(licenseActiveGuard)).toBe(true);
+    });
+
+    it('lets a trial through — a trial is not an expired licence', () => {
+      auth.licenseStatus.set('Trial');
+
+      expect(run(licenseActiveGuard)).toBe(true);
+    });
+
+    it('redirects an expired licence to the expired page', () => {
+      auth.licenseStatus.set('Expired');
+
+      const result = run(licenseActiveGuard);
+
+      expect(result).toBeInstanceOf(UrlTree);
+      expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/expired');
+    });
+
+    it('lets an unknown status through rather than locking the user out', () => {
+      // Only the exact string 'Expired' blocks. A status this build has not
+      // heard of — a tier added server-side after the app shipped — must not
+      // strand a paying customer on the expired page; the server refuses what
+      // it should refuse.
+      auth.licenseStatus.set('SomeFutureTier');
+
+      expect(run(licenseActiveGuard)).toBe(true);
+    });
+
+    it('lets a user with no licence status through', () => {
+      // Nothing stored yet, which is the state before the first sign-in
+      // completes. authGuard is what stops that user, not this one.
+      auth.licenseStatus.set(null);
+
+      expect(run(licenseActiveGuard)).toBe(true);
+    });
+  });
+});

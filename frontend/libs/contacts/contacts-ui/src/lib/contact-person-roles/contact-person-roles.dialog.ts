@@ -25,6 +25,10 @@ export interface ContactPersonRole {
   imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
   templateUrl: './contact-person-roles.dialog.html',
   styleUrl: './contact-person-roles.dialog.scss',
+  // Escape closes it. Clicking the backdrop does too, but that is a pointer
+  // gesture with no keyboard equivalent — and a modal a keyboard user cannot
+  // dismiss is a trap.
+  host: { '(document:keydown.escape)': 'close()' },
 })
 export class ContactPersonRolesDialog implements OnInit {
   private readonly http = inject(HttpClient);

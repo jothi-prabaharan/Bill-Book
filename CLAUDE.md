@@ -309,7 +309,9 @@ Schema, API and page all exist for these. Task tracking lives in [`PLAN.md`](./P
 
 **Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update and costs them.
 
-**Frontend**: `apps/web` and `apps/docs` build. 25 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. `libs/shared`: auth, api-client, ui-components, currency-format, theming.
+**Frontend**: `apps/web` and `apps/docs` build. 25 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
+
+**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all three. Component tests need the Angular Vite plugin and are not set up. The backend has one test project, `Shared.Kernel.Tests` — **never compiled**, see `backend/tests/README.md`.
 
 ### Still not built
 

@@ -1,4 +1,7 @@
-<div class="backdrop" (click)="close()"></div>
+<!-- Pointer-only dismissal. The keyboard equivalent is Escape, handled on the
+     component host; the backdrop itself is decorative and aria-hidden, so it is
+     not something a screen reader should be offered in the first place. -->
+<div class="backdrop" aria-hidden="true" (click)="close()"></div>
 
 <div class="dialog" role="dialog" aria-label="Manage contact person roles">
   <header>

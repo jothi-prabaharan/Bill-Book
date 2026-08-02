@@ -90,6 +90,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "shared", "shared", "{AD155F
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "worker", "worker", "{461965E9-D4A8-561F-A1C8-FE6C854E87EF}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}"
+EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Master", "Master", "{9B0A6EE0-1CC0-55BA-90C2-D44050A66B06}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Platform", "Platform", "{37D2E043-635A-5959-B6F8-350EA947219E}"
@@ -117,6 +119,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Entity", "Gateway\Gateway.Entity\Gateway.Entity.csproj", "{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A01}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Repository", "Gateway\Gateway.Repository\Gateway.Repository.csproj", "{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel.Tests", "tests\Shared.Kernel.Tests\Shared.Kernel.Tests.csproj", "{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -296,11 +300,16 @@ Global
 		{7A244E29-6F9B-535B-967D-FF69A148E10D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7A244E29-6F9B-535B-967D-FF69A148E10D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7A244E29-6F9B-535B-967D-FF69A148E10D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02} = {5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}
 		{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C} = {AD155F54-BBA9-5E0C-A34F-F368D5073ABB}
 		{9B2DF8B3-EEA6-5DF1-B51E-18CE52004661} = {9B0A6EE0-1CC0-55BA-90C2-D44050A66B06}
 		{8AA48A84-A417-5F59-9C1F-94047570E88E} = {9B0A6EE0-1CC0-55BA-90C2-D44050A66B06}

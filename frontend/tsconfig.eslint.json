@@ -1,0 +1,20 @@
+// Every source file in the workspace, in one project.
+//
+// Two things use it. ESLint's type-aware rules need a project each file belongs
+// to, and the libraries here deliberately have no tsconfig of their own — they
+// compile through the consuming app's `include` list — so a per-project service
+// would find most files orphaned.
+//
+// `npm run typecheck` uses it too, and that is the more important reason it
+// exists. Spec files are excluded from the app builds, so the app build no
+// longer typechecks them; without this they would be checked by nothing, and
+// Vitest would not notice because esbuild strips types without reading them.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "allowJs": true,
+    "noEmit": true
+  },
+  "include": ["apps/**/*.ts", "libs/**/*.ts", "*.mjs"]
+}

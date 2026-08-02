@@ -4,10 +4,17 @@
     "outDir": "../../dist/out-tsc",
     "types": []
   },
-  "files": ["src/main.ts"],
-  "include": ["src/**/*.ts"],
+  "files": [
+    "src/main.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ],
   "angularCompilerOptions": {
     "strictInjectionParameters": true,
     "strictTemplates": true
-  }
+  },
+  "exclude": [
+    "**/*.spec.ts"
+  ]
 }
