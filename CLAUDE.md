@@ -23,6 +23,16 @@ These are non-negotiable. Violating them means the code gets rejected.
 
 ---
 
+## Git — how work reaches main
+
+> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.**
+
+One branch is named for the session's work; every commit goes there, and it is merged into `main` when the work is done. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind — which is how a change that was written and reviewed is missing from the product.
+
+The same applies to a follow-up: reuse the designated branch rather than opening a second one beside it.
+
+---
+
 ## When asked for status
 
 Always report in **this order**, each with a completion status:

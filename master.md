@@ -2,7 +2,7 @@
 
 The order to build things in, and how to tell when each one is actually done.
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) continues it for the sixteen document types — Stage 6 below, kept in its own file because it is the larger half of the product.
 
 ## How to use this file
 
@@ -10,6 +10,8 @@ The order to build things in, and how to tell when each one is actually done.
 2. Do it, and check it against its **Done when** line. That line is the test; "it compiles" is not the same as "it works".
 3. Tick the box **in the same commit as the work**, the way release notes and docs already work here.
 4. If a task turns out to be wrong or unnecessary, strike it and say why rather than deleting it. The reason is worth more than the tidiness.
+
+> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 
 ---
 
@@ -350,3 +352,15 @@ Independent of the stages above; take any of them whenever.
   **Confirmed, and `CLAUDE.md` now says so as a decision rather than a question.** Decided from the code rather than by preference: `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction. That is what makes a failed insert give its code back and a document series stay gapless — and it only works while the table is in the caller's `DbContext`.
   **Both alternatives lose something real.** A table per service breaks Settings › Numbering series, which is one list of every series with one default per code — four tables means four services to query and nowhere to enforce that. Asking Accounting for a number over HTTP breaks the transaction instead: the number is spent whether or not the insert that wanted it succeeds, and consecutive numbering is a statutory requirement on an Indian invoice, not a preference.
   Recorded in `CLAUDE.md` with the reasoning and the line to preserve if it is ever revisited — the transaction, not the table. This is the cheapest of the remaining decisions to reverse, since nothing outside `NumberingSeriesModel` depends on where the table lives.
+
+---
+
+## Stage 6 — Transactions → [`TRANSACTIONS.md`](./TRANSACTIONS.md)
+
+The sixteen document types, none of which is built. It lives in its own file because it is larger than everything above it put together, and it keeps its boxes there rather than duplicating them here.
+
+**T0 — foundations** · the ledger door takes one leg type per call and a document has four · no tax determination exists · no document numbering series · one lifecycle for every type · `acc.Journals` · a ledger screen, before the first document rather than after
+
+**T1** manual journal · **T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T6** spend, receive and transfer money · **T7** POS sale · **T8** opening balances · **T9** stock adjustment document · **T10** fixed assets and depreciation
+
+Six decisions are gathered at the end of that file, four of them with a recommendation waiting on a yes.
