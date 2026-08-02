@@ -63,6 +63,7 @@ public sealed class SmtpSettingsController : ControllerBase
 
     /// <summary>A customer's own mailbox, falling back to the default (flagged inherited).</summary>
     [CustomerRouteMustMatchToken]
+    [RequirePermission("settings.view")]
     [HttpGet("customers/{customerId:guid}")]
     public async Task<IActionResult> GetForCustomer(Guid customerId, CancellationToken ct)
     {
@@ -71,6 +72,7 @@ public sealed class SmtpSettingsController : ControllerBase
     }
 
     [CustomerRouteMustMatchToken]
+    [RequirePermission("settings.edit")]
     [HttpPut("customers/{customerId:guid}")]
     public async Task<IActionResult> SaveForCustomer(
         Guid customerId, [FromBody] SaveSmtpSettingsRequest request, CancellationToken ct)
@@ -88,6 +90,7 @@ public sealed class SmtpSettingsController : ControllerBase
 
     /// <summary>Drops the override so the customer sends from the platform mailbox again.</summary>
     [CustomerRouteMustMatchToken]
+    [RequirePermission("settings.edit")]
     [HttpDelete("customers/{customerId:guid}")]
     public async Task<IActionResult> DeleteOverride(Guid customerId, CancellationToken ct) =>
         await _service.DeleteOverrideAsync(customerId, ct) ? NoContent() : NotFound();

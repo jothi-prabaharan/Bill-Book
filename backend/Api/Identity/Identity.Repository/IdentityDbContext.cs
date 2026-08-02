@@ -211,6 +211,26 @@ public class IdentityDbContext : DbContext
         // Viewer sees everything and changes nothing. "dashboard.view" style only.
         Grant(viewer, nonPlatform.Where(p => p.Code.EndsWith(".view", StringComparison.Ordinal)));
 
+        // Read-only grants outside a role's own modules, for things the role has
+        // to look at to do its own job. These were invisible until permissions
+        // were actually enforced: Identity minted the claims from the beginning
+        // and no service read one, so the matrix had never met a real screen.
+        //
+        // Sales cannot sell what it cannot look up, and Accountant values stock
+        // and chases receivables that are held per contact. Both are reads —
+        // nothing here lets a salesperson edit an item or an accountant edit a
+        // contact, which would be a different decision.
+        string[] accountantAlsoReads = { "contacts", "inventory" };
+        string[] salesAlsoReads = { "inventory" };
+
+        Grant(accountant, nonPlatform.Where(p =>
+            accountantAlsoReads.Contains(p.Module)
+            && p.Code.EndsWith(".view", StringComparison.Ordinal)));
+
+        Grant(sales, nonPlatform.Where(p =>
+            salesAlsoReads.Contains(p.Module)
+            && p.Code.EndsWith(".view", StringComparison.Ordinal)));
+
         modelBuilder.Entity<RolePermission>().HasData(grants);
     }
 }

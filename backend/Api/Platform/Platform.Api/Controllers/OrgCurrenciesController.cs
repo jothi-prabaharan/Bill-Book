@@ -16,6 +16,7 @@ namespace Platform.Api.Controllers;
 /// is an attribute on the controller rather than a line in each action.
 /// </summary>
 [Authorize]
+[RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/currencies")]
 public sealed class OrgCurrenciesController : ControllerBase

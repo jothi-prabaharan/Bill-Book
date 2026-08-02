@@ -2,6 +2,7 @@ using Contacts.Api.Services;
 using Contacts.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 
 namespace Contacts.Api.Controllers;
@@ -13,6 +14,7 @@ namespace Contacts.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("contacts")]
 [Route("api/contact-person-roles")]
 public sealed class ContactPersonRolesController : ControllerBase
 {

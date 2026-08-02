@@ -2,6 +2,7 @@ using Banking.Api.Services;
 using Banking.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 
 namespace Banking.Api.Controllers;
@@ -14,6 +15,7 @@ public class MessageResponse
 /// <summary>Banking › Banks. The institution, entered once and reused by its accounts.</summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("banking")]
 [Route("api/banks")]
 public sealed class BanksController : ControllerBase
 {

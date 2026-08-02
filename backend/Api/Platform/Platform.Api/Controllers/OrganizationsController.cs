@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Services;
 using Platform.Entity.Models;
+using Shared.Kernel.Internal;
 
 namespace Platform.Api.Controllers;
 
@@ -17,6 +18,7 @@ namespace Platform.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("settings")]
 [Route("api/organizations")]
 public sealed class OrganizationsController : ControllerBase
 {

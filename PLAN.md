@@ -275,10 +275,17 @@ Independent of the stages above; take any of them whenever.
 
   Verified by re-auditing all 36 routes: every one now carries exactly one guard, and the frontend's four Master calls still resolve — two anonymous for signup, two behind a token.
 
-- [ ] **5.17 — Permission claims are minted and never checked**
+- [x] **5.17 — Permission claims are minted and never checked**
   Identity puts a `permission` claim on every access token for each of the ~120 seeded permissions, and until 5.10 no service read a single one. Any authenticated user can call any endpoint their token reaches, whatever role they hold — a Viewer can post a journal.
-  `RequirePermission` now exists and guards exactly two actions, both operator-only, because those had no tenant claim to fall back on. Everything else is authenticated but unauthorized.
-  The work is deciding the mapping, not writing the filter: which permission each endpoint needs, whether read endpoints take `.view` or nothing, and what a role holding none of them should see. Worth one pass with the matrix in front of you rather than a guess per controller.
+  `RequireModulePermission` derives the action from the HTTP method — GET is `.view`, DELETE is `.delete`, everything else `.edit` — so it is **one attribute per controller instead of a hundred across twenty-one**. The mapping those hundred would encode is the same three lines every time; here it is those three lines, in one place, where it can be argued with. Applied to 21 controllers.
+  **The module is the data's owner, not the menu.** Tax rates, numbering series and payment terms sit under Settings and take `accounting.*`, because an accountant refused a GST rate on account of where it is filed would be a menu deciding an access rule. That choice is what makes the matrix work: with it, Accountant keeps everything the role needs.
+  **Enforcing it for the first time broke two system roles, which is the whole point of the item.** The matrix had never met a real screen. Sales could not open the item master or stock — fatal in a retail product, since you cannot sell what you cannot look up — and Accountant could not open contacts or inventory, though receivables are per contact and stock has to be valued. Fixed with three `.view` grants in `AddCrossModuleViewGrants`, appended after the existing rows so no `RolePermissionId` already issued changes; inserting them in role order would have renumbered thirty Viewer rows to add three. No write access crosses a module.
+  **Nothing gains access.** Before this, every authenticated caller could reach everything, so enforcement can only remove. Verified by generating the full role × route matrix from the seed and the attributes rather than by reading controllers: Owner and Administrator everything, Accountant reads all business data and writes accounting and banking, Sales reads contacts and inventory and writes contacts, Viewer reads everything and writes nothing.
+  Reference data — countries, states, currencies, HSN/SAC, the type masters — asks only for a signed-in user, because it is read by every module and belongs to none.
+
+- [ ] **5.18 — The menu still offers screens a role cannot open**
+  The shell renders a fixed nav list, so after 5.17 a Sales user still sees Accounting and Settings and gets a 403 on arriving. The server is right; the UI is now lying about what is available.
+  Needs the permissions on the client, which the token carries but `AuthService` does not read — either decode the JWT or return them on the login response — and then a permission per nav item. Not security: the boundary holds either way. It is the difference between a product that says no and one that does not offer.
 
 - [x] **5.11 — Three copies of `Reordering`**
   Banking and Inventory each carry their own, and `Shared.Kernel.Ordering` now holds the canonical one that Platform uses. Point the other two at it and delete their copies, along with their local `ReorderRequest`.

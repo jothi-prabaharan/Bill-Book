@@ -2,6 +2,7 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Inventory.Api.Controllers;
 
@@ -15,6 +16,7 @@ namespace Inventory.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("inventory")]
 [Route("api/stock")]
 public sealed class StockController : ControllerBase
 {

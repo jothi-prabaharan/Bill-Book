@@ -2,12 +2,14 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 
 namespace Inventory.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequireModulePermission("inventory")]
 [Route("api/metal-purities")]
 public sealed class MetalPuritiesController : ControllerBase
 {

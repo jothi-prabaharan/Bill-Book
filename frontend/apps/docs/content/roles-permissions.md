@@ -21,11 +21,27 @@ Actions: view, create, edit, approve, void, delete, print, export, import, AllUs
 |---|---|
 | **Owner** | Everything except `platform.*` |
 | **Administrator** | Everything except `platform.*` |
-| **Accountant** | All 10 actions in accounting, banking, reports, purchase |
-| **Sales** | All 10 actions in sales, contacts, crm |
+| **Accountant** | All 10 actions in accounting, banking, reports, purchase — plus read-only contacts and inventory |
+| **Sales** | All 10 actions in sales, contacts, crm — plus read-only inventory |
 | **Viewer** | Every `.view` permission, nothing else |
 
 Grants are **module-level**: a role that owns a module gets every action in it, including `approve`, `void` and `AllUserData`.
+
+The two read-only additions are there because a role has to look at things it does not own in order to do its own job. Sales cannot sell what it cannot look up, and an accountant values stock and chases receivables that are held per contact. Neither grant allows a write: a salesperson still cannot edit an item, and an accountant still cannot edit a contact. Take them away on a copy of the role if that is not how you work.
+
+## Which permission an endpoint asks for
+
+The module is the one that **owns the data**, not the menu the screen sits under. GST rates and numbering series appear under Settings and belong to Accounting, so they ask for `accounting.*` — an accountant who could not edit a tax rate because of where it is filed would be a menu deciding an access rule.
+
+| Screen | Asks for |
+|---|---|
+| Chart of accounts, sub-accounts, tax rates, payment terms, numbering series | `accounting.*` |
+| Banks, bank accounts | `banking.*` |
+| Contacts, contact roles, contact documents | `contacts.*` |
+| Items, categories, stock, warehouses, units, purities | `inventory.*` |
+| Users, roles, branches, currencies, configuration, email | `settings.*` |
+
+Reading asks for `.view`, changing asks for `.edit`, and deleting asks for `.delete`. Country and state lists, currencies and the HSN/SAC master are reference data read by every module and ask only that you are signed in.
 
 > Worth knowing when you assign these: Accountant and Sales can approve and void documents in their own modules, and can see every user's records there. If you need someone who can enter but not approve, create a customer role rather than using these.
 

@@ -2,6 +2,7 @@ using Banking.Api.Services;
 using Banking.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 
 namespace Banking.Api.Controllers;
@@ -13,6 +14,7 @@ namespace Banking.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("banking")]
 [Route("api/bank-accounts")]
 public sealed class BankAccountsController : ControllerBase
 {

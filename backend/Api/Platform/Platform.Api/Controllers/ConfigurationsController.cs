@@ -11,6 +11,7 @@ namespace Platform.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/configurations")]
 public sealed class ConfigurationsController : ControllerBase

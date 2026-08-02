@@ -13,6 +13,7 @@ namespace Accounting.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("accounting")]
 [Route("api/sub-accounts")]
 public sealed class SubAccountsController : ControllerBase
 {

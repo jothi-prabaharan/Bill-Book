@@ -2,6 +2,7 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
 
 namespace Inventory.Api.Controllers;
@@ -12,6 +13,7 @@ namespace Inventory.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("inventory")]
 [Route("api/uom-types")]
 public sealed class UomController : ControllerBase
 {

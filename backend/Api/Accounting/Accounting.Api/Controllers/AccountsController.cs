@@ -2,11 +2,13 @@ using Accounting.Api.Services;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Accounting.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequireModulePermission("accounting")]
 [Route("api/accounts")]
 public sealed class AccountsController : ControllerBase
 {

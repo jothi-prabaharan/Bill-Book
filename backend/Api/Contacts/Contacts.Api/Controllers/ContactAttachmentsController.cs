@@ -3,6 +3,7 @@ using Contacts.Entity.Models;
 using Contacts.Entity.TableEntities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Contacts.Api.Controllers;
 
@@ -14,6 +15,7 @@ namespace Contacts.Api.Controllers;
 /// </summary>
 [ApiController]
 [Authorize]
+[RequireModulePermission("contacts")]
 [Route("api/contacts")]
 public sealed class ContactAttachmentsController : ControllerBase
 {

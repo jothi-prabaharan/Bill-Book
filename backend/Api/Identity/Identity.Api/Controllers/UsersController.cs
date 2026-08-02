@@ -3,11 +3,13 @@ using Identity.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 
 namespace Identity.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequireModulePermission("settings")]
 [Route("api/users")]
 public sealed class UsersController : ControllerBase
 {
