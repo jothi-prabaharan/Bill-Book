@@ -125,6 +125,11 @@ export const appRoutes: Routes = [
         data: { permission: 'inventory.view' },
       },
       {
+        path: 'settings/hsn-sac',
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.HsnSacPage),
+        data: { permission: 'inventory.view' },
+      },
+      {
         path: 'settings/metal-purities',
         loadComponent: () =>
           import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),

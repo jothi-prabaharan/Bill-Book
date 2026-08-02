@@ -1,0 +1,132 @@
+<div class="page-head">
+  <h1>HSN &amp; SAC codes</h1>
+</div>
+
+<p class="hint">
+  The goods and services codes notified by the CBIC. They are the same for every
+  business in the country, so they are maintained centrally and shown here to
+  look up — what appears on an invoice is the item's own tax rate.
+</p>
+
+@if (coverage(); as c) {
+  @if (awaitingImport()) {
+    <p class="note">
+      <strong>Only the chapter headings are loaded.</strong>
+      {{ c.hsnChapters }} HSN chapters and {{ c.sacGroups }} SAC groups are
+      available. The detailed 4-, 6- and 8-digit codes come from the official
+      CBIC file and have not been imported, so searching for a specific code
+      will not find one. Ask your administrator to load it.
+    </p>
+  } @else {
+    <p class="hint">
+      {{ c.hsnCodes }} HSN codes across {{ c.hsnChapters }} chapters ·
+      {{ c.sacCodes }} SAC codes across {{ c.sacGroups }} groups@if (c.inactive > 0) {
+        · {{ c.inactive }} retired
+      }
+    </p>
+  }
+}
+
+<div class="head-actions">
+  <label class="sr-only" for="hsn-search">Search</label>
+  <input
+    id="hsn-search"
+    type="search"
+    name="search"
+    placeholder="Code or description"
+    [(ngModel)]="search"
+    (keyup.enter)="applyFilters()"
+  />
+
+  <label class="sr-only" for="hsn-type">Type</label>
+  <select id="hsn-type" name="codeType" [(ngModel)]="codeType" (ngModelChange)="applyFilters()">
+    <option value="">All types</option>
+    <option value="HSN">HSN — goods</option>
+    <option value="SAC">SAC — services</option>
+  </select>
+
+  <label class="inline">
+    <input
+      type="checkbox"
+      name="includeChapters"
+      [(ngModel)]="includeChapters"
+      (ngModelChange)="applyFilters()"
+    />
+    Chapter headings
+  </label>
+
+  <label class="inline">
+    <input
+      type="checkbox"
+      name="includeInactive"
+      [(ngModel)]="includeInactive"
+      (ngModelChange)="applyFilters()"
+    />
+    Retired
+  </label>
+
+  <button type="button" (click)="applyFilters()" [disabled]="busy()">Search</button>
+</div>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th scope="col">Code</th>
+      <th scope="col">Type</th>
+      <th scope="col">Description</th>
+      <th scope="col" class="num">Usual GST</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.hsnSacCodeId) {
+      <tr [class.inactive]="!row.isActive">
+        <td>
+          <strong>{{ row.code }}</strong>
+          @if (row.digitLength <= 2) {
+            <span class="badge">chapter</span>
+          }
+          @if (!row.isActive) {
+            <span class="badge">retired</span>
+          }
+        </td>
+        <td>{{ row.codeType }}</td>
+        <td>{{ row.description }}</td>
+        <td class="num">
+          @if (row.defaultGstRate !== null) {
+            {{ row.defaultGstRate }}%
+          } @else {
+            <span class="sub" title="No single rate applies to this code">—</span>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="4">
+          @if (busy()) {
+            Loading…
+          } @else if (search) {
+            Nothing matches “{{ search }}”.
+          } @else {
+            No codes to show.
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+@if (total() > 0) {
+  <nav class="pager" aria-label="Pages">
+    <button type="button" class="link" (click)="previous()" [disabled]="!hasPrevious() || busy()">
+      Previous
+    </button>
+    <span class="hint">{{ showingFrom() }}–{{ showingTo() }} of {{ total() }}</span>
+    <button type="button" class="link" (click)="next()" [disabled]="!hasNext() || busy()">
+      Next
+    </button>
+  </nav>
+}

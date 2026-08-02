@@ -137,10 +137,17 @@ public sealed class MasterController : ControllerBase
         [FromQuery] string? search,
         [FromQuery] string? codeType,
         [FromQuery] bool includeChapters,
+        [FromQuery] bool includeInactive,
+        [FromQuery] int skip = 0,
         [FromQuery] int take = 50,
         CancellationToken ct = default)
     {
-        IQueryable<Entity.TableEntities.HsnSacCode> query = _db.HsnSacCodes.Where(c => c.IsActive);
+        IQueryable<Entity.TableEntities.HsnSacCode> query = _db.HsnSacCodes;
+
+        if (!includeInactive)
+        {
+            query = query.Where(c => c.IsActive);
+        }
 
         if (!includeChapters)
         {
@@ -161,8 +168,13 @@ public sealed class MasterController : ControllerBase
             query = query.Where(c => c.Code.StartsWith(term) || c.Description.Contains(term));
         }
 
+        // Counted before paging: the master page has to say how many matched,
+        // not how many fitted on the page.
+        int total = await query.CountAsync(ct);
+
         var codes = await query
             .OrderBy(c => c.Code)
+            .Skip(Math.Max(skip, 0))
             .Take(Math.Clamp(take, 1, 200))
             .Select(c => new
             {
@@ -173,10 +185,48 @@ public sealed class MasterController : ControllerBase
                 c.ChapterCode,
                 c.DefaultGstRate,
                 c.DigitLength,
+                c.IsActive,
             })
             .ToListAsync(ct);
 
-        return Ok(codes);
+        return Ok(new { total, skip = Math.Max(skip, 0), rows = codes });
+    }
+
+    /// <summary>
+    /// How much of the nomenclature is actually loaded, split by what it is.
+    ///
+    /// The page needs this to tell an empty search from an empty database. Only
+    /// the 97 HS chapters and 32 SAC groups ship as seed data; the ~13,000
+    /// detailed codes are imported from the CBIC file, and until that runs a
+    /// search for a real 8-digit code finds nothing — which reads as a broken
+    /// screen rather than as data nobody has loaded yet.
+    /// </summary>
+    [HttpGet("hsn-sac/summary")]
+    public async Task<IActionResult> GetHsnSacSummary(CancellationToken ct)
+    {
+        var counts = await _db.HsnSacCodes
+            .GroupBy(c => new { c.CodeType, IsChapter = c.DigitLength <= 2 })
+            .Select(g => new
+            {
+                g.Key.CodeType,
+                g.Key.IsChapter,
+                Total = g.Count(),
+                Active = g.Count(c => c.IsActive),
+            })
+            .ToListAsync(ct);
+
+        return Ok(new
+        {
+            HsnChapters = counts.Where(c => c.CodeType == Entity.Enums.HsnSacCodeType.Hsn && c.IsChapter)
+                .Sum(c => c.Total),
+            HsnCodes = counts.Where(c => c.CodeType == Entity.Enums.HsnSacCodeType.Hsn && !c.IsChapter)
+                .Sum(c => c.Total),
+            SacGroups = counts.Where(c => c.CodeType == Entity.Enums.HsnSacCodeType.Sac && c.IsChapter)
+                .Sum(c => c.Total),
+            SacCodes = counts.Where(c => c.CodeType == Entity.Enums.HsnSacCodeType.Sac && !c.IsChapter)
+                .Sum(c => c.Total),
+            Inactive = counts.Sum(c => c.Total - c.Active),
+        });
     }
 
     /// <summary>The chapter headings, for grouping the picker.</summary>

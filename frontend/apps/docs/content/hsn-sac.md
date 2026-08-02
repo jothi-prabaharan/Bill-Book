@@ -1,6 +1,6 @@
 # HSN & SAC codes
 
-**Status: partial.** The table, search API and CSV importer are built. The seed covers the chapter and group headings; the detailed codes are loaded from the authoritative file.
+**Status: partial.** The table, the search API, the CSV importer and the **Settings › HSN & SAC codes** screen are built. The seed covers only the chapter and group headings — until the detailed codes are imported, a search for a specific code finds nothing, and the screen says so rather than looking broken.
 
 ## What they are
 
@@ -54,16 +54,29 @@ Code,CodeType,Description,DefaultGstRate
 
 The import is **idempotent** — an existing code is updated, a new one inserted, and nothing is ever deleted, because items already reference these rows. Malformed lines are reported rather than silently skipped.
 
+## The screen
+
+**Settings › HSN & SAC codes.** Search by code or description, filter to goods or services, and optionally show chapter headings or retired codes. Paged fifty at a time, with the matched total beside the pager.
+
+**Read-only, deliberately.** This table is in the master database — one set of rows shared by every customer on the platform — so a customer editing it would be editing it for everyone. The list is maintained centrally from the CBIC file; what a business needs from this screen is to find a code and see the rate it usually attracts.
+
+A strip at the top reports how much of the nomenclature is actually loaded. That is there because the alternative is unreadable: with only the headings seeded, every search for a real code returns nothing, and an empty table looks like a broken search rather than data nobody has imported.
+
 ## Searching
 
 ```
-GET /api/master/hsn-sac?search=8471&codeType=HSN&take=50
+GET /api/master/hsn-sac?search=8471&codeType=HSN&skip=0&take=50
 GET /api/master/hsn-sac/chapters
+GET /api/master/hsn-sac/summary
 ```
 
-Matches on code prefix or description text, capped at 200 results.
+Matches on code prefix or description text, fifty at a time and capped at 200. The list response carries `total` — counted before paging — alongside the rows, so the screen can say how many matched rather than how many fitted.
 
-## Two things still open
+`summary` returns how many HSN chapters, HSN codes, SAC groups, SAC codes and retired rows exist. It is what the coverage strip reads.
+
+## Three things still open
+
+**Nothing assigns a code to an item.** `hsnSacCodeId` is on the item's save model and on the table, but the Items form has no field for it — so no item can carry an HSN code today, and the "pre-selects its usual GST rate" behaviour above has nothing to trigger it. The same is true of the item's tax rate. This is the next thing to fix, and it blocks invoicing.
 
 **Digit length by turnover.** GST requires 4 digits for B2B below ₹5 crore turnover and 6 above. That is a property of the *organization*, not the code, so it belongs in configuration — a `hsn.digits` key enforced when an item is saved. Not implemented.
 

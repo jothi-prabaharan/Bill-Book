@@ -1,0 +1,38 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.head-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+.inline { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; }
+.error { color: #c0392b; }
+.hint { color: #6a6f80; font-size: .78rem; margin: .3rem 0 0; }
+.sub { color: #8a8f9e; font-size: .72rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.note { background: #fffaf0; border-left: 3px solid #f0b429; padding: .6rem .8rem; font-size: .85rem; margin: 1rem 0 0; }
+
+.head-actions input[type='search'], .head-actions select {
+  padding: .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit;
+}
+.head-actions input[type='search'] { min-width: 16rem; }
+
+.grid { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.grid th, .grid td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #e2e4ea; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.grid tr.inactive { opacity: .45; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.badge { font-size: .62rem; background: #eceef3; color: #6a6f80; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+
+.link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
+button:not(.link) { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
+button:disabled { opacity: .6; cursor: default; }
+
+.pager { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+.pager .hint { margin: 0; }
+
+/* Below ~700px the grid becomes cards, per the 360px rule. The description is
+   the long column, so it gets its own row rather than being truncated. */
+@media (max-width: 700px) {
+  .grid thead { display: none; }
+  .grid tr { display: grid; gap: .15rem; padding: .6rem 0; border-bottom: 1px solid #e2e4ea; }
+  .grid td { border: 0; padding: .1rem 0; }
+  .num { text-align: left; }
+  .head-actions input[type='search'] { min-width: 0; width: 100%; }
+}
