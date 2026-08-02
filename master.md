@@ -369,3 +369,9 @@ The sixteen document types, none of which is built. They live in their own files
 **T1 is the first stage of the plan, in either file** — a posting nobody can read is a posting nobody checks, and the manual journal is the cheapest document to prove the ledger with.
 
 Six decisions are gathered at the end of the two files, four of them with a recommendation waiting on a yes.
+
+**Three flow documents sit beside the plan and are not part of it** — no checkboxes, nothing to tick. They describe how a transaction behaves rather than what to build, which is the question the plan cannot answer while you are in the middle of writing one of its tasks.
+
+- [`FLOW-SALES.md`](./FLOW-SALES.md) — quote → order → invoice → receipt, plus POS and the credit note
+- [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md) — order → receipt → bill → payment, plus the debit note
+- [`FLOW-STOCK.md`](./FLOW-STOCK.md) — the pool, the guarded move, the two queues, costing and recosting. **Built, so it describes running code** rather than an intention, unlike the other two

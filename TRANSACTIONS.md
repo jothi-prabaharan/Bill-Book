@@ -8,6 +8,8 @@ Same rules as `master.md`: take the first unticked box, check it against its **D
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 
+**Flow documents, beside this plan and not part of it**: [`FLOW-SALES.md`](./FLOW-SALES.md), [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md) and [`FLOW-STOCK.md`](./FLOW-STOCK.md) describe how these documents behave once built. No checkboxes — this file is the work, those are the behaviour.
+
 ---
 
 ## Scope — the ten trading documents
