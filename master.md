@@ -2,7 +2,7 @@
 
 The order to build things in, and how to tell when each one is actually done.
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) continues it for the sixteen document types — Stage 6 below, kept in its own file because it is the larger half of the product.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) and [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) continue it for the sixteen document types — Stage 6 below, in their own files because together they are the larger half of the product.
 
 ## How to use this file
 
@@ -355,12 +355,17 @@ Independent of the stages above; take any of them whenever.
 
 ---
 
-## Stage 6 — Transactions → [`TRANSACTIONS.md`](./TRANSACTIONS.md)
+## Stage 6 — Transactions → two files
 
-The sixteen document types, none of which is built. It lives in its own file because it is larger than everything above it put together, and it keeps its boxes there rather than duplicating them here.
+The sixteen document types, none of which is built. They live in their own files because together they are larger than everything above put together, and they keep their boxes there rather than duplicating them here. Stage numbers run T0–T10 across both, and are **not** renumbered by the split — the gaps in each file say where the missing stage went.
 
-**T0 — foundations** · the ledger door takes one leg type per call and a document has four · no tax determination exists · no document numbering series · one lifecycle for every type · `acc.Journals` · a ledger screen, before the first document rather than after
+**[`TRANSACTIONS.md`](./TRANSACTIONS.md) — the trading documents.** Sales, Purchase and Inventory: ten types, and the shared foundations every document needs.
+**T0 — foundations** · the ledger door takes one leg type per call and a document has four · no tax determination exists · no document numbering series · one lifecycle for every type · a ledger screen, before the first document rather than after
+**T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T7** POS sale · **T9** stock adjustment document
 
-**T1** manual journal · **T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T6** spend, receive and transfer money · **T7** POS sale · **T8** opening balances · **T9** stock adjustment document · **T10** fixed assets and depreciation
+**[`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) — the money documents.** Accounting and Banking: the six that trade nothing — no item, no price, no GST, no cost layer.
+**T0.5 / T0.7** `acc.Journals` and whether any other document writes one · **T1** manual journal · **T6** spend, receive and transfer money · **T8** opening balances · **T10** fixed assets and depreciation
 
-Six decisions are gathered at the end of that file, four of them with a recommendation waiting on a yes.
+**T1 is the first stage of the plan, in either file** — a posting nobody can read is a posting nobody checks, and the manual journal is the cheapest document to prove the ledger with.
+
+Six decisions are gathered at the end of the two files, four of them with a recommendation waiting on a yes.
