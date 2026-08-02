@@ -20,7 +20,13 @@ project.fragment.lock.json
 
 # ---------------------------------------------------------------- Node / Nx
 node_modules/
-package-lock.json
+
+# package-lock.json is committed, deliberately. `npm run check` is what says the
+# frontend is sound, and a lint or test result that depends on which day the
+# packages were resolved is not a result. It was ignored here only because it
+# arrived inside a stock Angular .gitignore, between the two lockfiles this
+# repository does not use — which stay ignored, so a second one cannot appear
+# alongside it.
 yarn.lock
 pnpm-lock.yaml
 .nx/
