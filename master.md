@@ -1,4 +1,4 @@
-# PLAN.md — build order
+# master.md — build order
 
 The order to build things in, and how to tell when each one is actually done.
 

@@ -32,7 +32,7 @@ away from being testable, and the interesting behaviour — guarded conditional
 updates, query filters, deferred constraints — is behaviour of Postgres, not of
 C#. Testing it against an in-memory provider would assert that the mock behaves
 like the mock. When those are tested it should be against a real Postgres, and
-that is a different piece of work: see PLAN 5.7.
+that is a different piece of work: see master.md 5.7.
 
 That line is what decides whether something belongs here. `StockLedgerMapping`
 qualifies because it is a `static` function over an entity — it names accounts

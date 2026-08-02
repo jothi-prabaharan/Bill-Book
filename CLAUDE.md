@@ -293,7 +293,7 @@ JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `l
 
 ### Built and wired end to end
 
-Schema, API and page all exist for these. Task tracking lives in [`PLAN.md`](./PLAN.md); this is the shape of the thing, not the to-do list.
+Schema, API and page all exist for these. Task tracking lives in [`master.md`](./master.md); this is the shape of the thing, not the to-do list.
 
 | Service | Tables | What works |
 |---|---|---|
@@ -331,7 +331,7 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 - **Compiled, tested and migrated as of 2 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 58, every EF snapshot matches its model, and all 29 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
 - **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
-- **Every endpoint is behind a credential and a permission** (PLAN 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.
+- **Every endpoint is behind a credential and a permission** (master.md 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.
 
 ---
 
@@ -354,4 +354,4 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 - CRM: campaign/marketing automation in v1?
 - API client scope granularity: per-module or per-action
 - Fixed assets: straight-line only, or both books and tax depreciation?
-- Whether a branch should declare its trade (Pharma / Jewellery / General), so seeding and the settings menu can narrow themselves — today every branch gets everything (PLAN 5.14)
+- Whether a branch should declare its trade (Pharma / Jewellery / General), so seeding and the settings menu can narrow themselves — today every branch gets everything (master.md 5.14)

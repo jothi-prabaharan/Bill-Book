@@ -10,7 +10,7 @@ namespace Shared.Kernel.Tests;
 /// exercises by hand.
 ///
 /// There is now one copy, and every drag-ordered screen in the product runs it
-/// (PLAN 5.11). Five services had their own before that, two of which had
+/// (master.md 5.11). Five services had their own before that, two of which had
 /// drifted on the drop-at-the-top guard below — so these tests are the
 /// specification that stops it happening again, not just coverage.
 /// </summary>

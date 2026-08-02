@@ -15,7 +15,7 @@ namespace Inventory.Repository.SeedData;
 /// which they can deactivate and forget.
 ///
 /// Whether a branch should declare its trade is a real question, and one for
-/// the owner rather than for this comment — see PLAN 5.14.
+/// the owner rather than for this comment — see master.md 5.14.
 /// </summary>
 public static class MetalPuritiesSeed
 {

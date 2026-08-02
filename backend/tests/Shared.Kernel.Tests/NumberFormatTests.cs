@@ -139,7 +139,7 @@ public class NumberFormatTests
     [Fact]
     public void FinancialYear_FollowsTheBranchStartMonthRatherThanAssumingApril()
     {
-        // A branch on a calendar year. This is the bug PLAN 5.3 fixed: April was
+        // A branch on a calendar year. This is the bug master.md 5.3 fixed: April was
         // assumed for everyone, so a January-start branch was issued the wrong
         // year segment and its counters reset in the wrong month.
         Assert.Equal(

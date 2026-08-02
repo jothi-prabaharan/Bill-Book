@@ -73,7 +73,7 @@ public sealed class CustomerRouteMustMatchTokenAttribute : Attribute, IActionFil
 /// It is used only where there is no other boundary: the platform's own settings
 /// belong to the operator, not to any customer, so no tenant claim can protect
 /// them. Applying permissions across the whole API is a larger piece of work and
-/// is tracked separately (PLAN 5.17).
+/// is tracked separately (master.md 5.17).
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = true)]
 public sealed class RequirePermissionAttribute : Attribute, IActionFilter

@@ -84,7 +84,7 @@ public class Organization : AuditableEntity
     /// extending the licence without extending the branches leaves them expired
     /// under a licence that is perfectly valid — and the login would refuse with
     /// nothing on the licence to explain it. There is no renewal endpoint yet;
-    /// whoever writes one must handle this. See PLAN 5.16.
+    /// whoever writes one must handle this. See master.md 5.16.
     /// </summary>
     public DateOnly? ExpiryDate { get; set; }
 
