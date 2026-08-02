@@ -2,7 +2,7 @@
 
 `CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the ten document types owned by Sales, Purchase and Inventory** — the trading half, none of which is built.
 
-The six owned by **Accounting and Banking** — journal, spend, receive, transfer, opening balance, depreciation — are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md). **Stage numbers were not renumbered when the two were split**: T0, T2, T3, T4, T5, T7 and T9 are here, T1, T6, T8 and T10 are there, and each gap below says so. The sixteen together are every row of `mst.TransactionTypes`.
+The documents owned by **Accounting and Banking** are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) and are not repeated here. **Stage numbers were not renumbered when the two files were split**, so the numbering below skips T1, T6, T8 and T10 — those stages live in that file, and the gaps are deliberate rather than a mistake.
 
 Same rules as `master.md`: take the first unticked box, check it against its **Done when** line, tick it in the same commit as the work, and strike a task rather than deleting it if it turns out to be wrong.
 
@@ -10,32 +10,24 @@ Same rules as `master.md`: take the first unticked box, check it against its **D
 
 ---
 
-## Scope — the sixteen types, and which file each is in
+## Scope — the ten trading documents
 
-Every row of `mst.TransactionTypes`, which is seeded and applied. Three post nothing; thirteen reach the ledger.
+The rows of `mst.TransactionTypes` owned by Sales, Purchase and Inventory. Three post nothing; seven reach the ledger. All ten trade something — an item, a price, GST, a cost layer — which is what separates them from the money documents in the other file and why they need the foundations below.
 
-| Code | Document | Owner | Posts | Moves stock | Stage | File |
-|---|---|---|---|---|---|---|
-| JRN | Manual journal | Accounting | yes | no | T1 | *money* |
-| QTE | Quote | Sales | no | no | T2 | here |
-| SOR | Sales order | Sales | no | reserves | T2 | here |
-| INV | Invoice | Sales | yes | issues | T3 | here |
-| POR | Purchase order | Purchase | no | no | T4 | here |
-| GRN | Goods receipt | Purchase | yes | receives | T4 | here |
-| BIL | Bill | Purchase | yes | no¹ | T4 | here |
-| CRN | Credit note | Sales | yes | returns | T5 | here |
-| DBN | Debit note | Purchase | yes | returns | T5 | here |
-| SPM | Spend money | Banking | yes | no | T6 | *money* |
-| RCM | Receive money | Banking | yes | no | T6 | *money* |
-| TRM | Transfer money | Banking | yes | no | T6 | *money* |
-| POS | POS sale | Sales | yes | issues | T7 | here |
-| OPB | Opening balance | Accounting | yes | receives | T8 | *money* |
-| STA | Stock adjustment | Inventory | yes | adjusts | T9 | here |
-| DEP | Depreciation | Accounting | yes | no | T10 | *money* |
+| Code | Document | Owner | Posts | Moves stock | Stage |
+|---|---|---|---|---|---|
+| QTE | Quote | Sales | no | no | T2 |
+| SOR | Sales order | Sales | no | reserves | T2 |
+| INV | Invoice | Sales | yes | issues | T3 |
+| POR | Purchase order | Purchase | no | no | T4 |
+| GRN | Goods receipt | Purchase | yes | receives | T4 |
+| BIL | Bill | Purchase | yes | no¹ | T4 |
+| CRN | Credit note | Sales | yes | returns | T5 |
+| DBN | Debit note | Purchase | yes | returns | T5 |
+| POS | POS sale | Sales | yes | issues | T7 |
+| STA | Stock adjustment | Inventory | yes | adjusts | T9 |
 
 ¹ A bill against a goods receipt moves no stock — the receipt already did. A bill with no receipt behind it does, and is the common case for services and for a trader who never raises a GRN.
-
-*money* = [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md). The cut is not by service alone: those six are the documents that trade nothing — no item, no price, no GST, no cost layer — which is why they need almost none of the foundations below.
 
 ---
 
@@ -83,12 +75,6 @@ None of these is a document. All five are things a document immediately needs an
   Account ledger — account, date range, running balance, drill to the document. Trial balance — every account, debit and credit totals, and the two agreeing, which is the one number that says the whole system is sound.
   **Settle `acc.vw_LedgerDetail` here.** SPEC flags it: `CREATE VIEW` is not in `CLAUDE.md`'s raw-SQL exception list, and a view that omits `security_invoker = true` bypasses RLS and leaks the general ledger across branches. *Recommendation: don't add the view.* Do the join as a LINQ projection in Accounting and compute the running balance in C# over the ordered, account-scoped, date-ranged result — a ledger screen is always all three of those, so the window function buys less than the exception costs.
   *Done when*: a trial balance built from the stock postings already in the ledger balances, and every posting in it drills back to the movement that wrote it.
-
----
-
-## Stage T1 — the manual journal (JRN) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t1--the-manual-journal-jrn)
-
-**Still the first stage of the plan, in either file.** No stock, no tax, no contact — the cheapest document to prove the extended ledger door with, and what makes every posting below checkable on a screen rather than in SQL.
 
 ---
 
@@ -154,12 +140,6 @@ A sales return and a purchase return. Both reverse value and both put stock back
 
 ---
 
-## Stage T6 — money: spend, receive, transfer (SPM, RCM, TRM) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t6--money-spend-receive-transfer-spm-rcm-trm)
-
-Where the receivable and payable balances T3 and T4 raise are actually cleared. It needs T3.3 and T4.5 first — there has to be something outstanding before there is anything to pay — and it consumes the `acc.TransactionRatio` that T5.1 builds.
-
----
-
 ## Stage T7 — POS sale (POS)
 
 An invoice and its receipt in one action, from `apps/desktop`, which today has no source files at all.
@@ -171,12 +151,6 @@ An invoice and its receipt in one action, from `apps/desktop`, which today has n
 
 ---
 
-## Stage T8 — opening balances (OPB) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t8--opening-balances-opb)
-
-Accounting orchestrates it, which is why it sits in the other file, but it calls **into** this one: Inventory takes the opening quantity and unit cost that seed the weighted average, and Contacts takes opening AR and AP per contact.
-
----
-
 ## Stage T9 — stock adjustment as a document (STA)
 
 Movements already post as `STA` when they have no document behind them, each filed under its own movement id. What is missing is the document: a sheet of lines with a reason and an approval, rather than one movement at a time.
@@ -184,12 +158,6 @@ Movements already post as `STA` when they have no document behind them, each fil
 - [ ] **T9.1 — `inv.StockAdjustments` header and lines**, with a reason and an approver, posting through the existing mapping under one document id instead of per movement.
 - [ ] **T9.2 — Physical count** — enter counted quantities, adjust to the difference, and post the sheet as one document.
   *Done when*: a count sheet of twenty items posts as one document with twenty movements, and the ledger shows one adjustment rather than twenty.
-
----
-
-## Stage T10 — fixed assets: acquisition, depreciation, disposal (DEP) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-acquisition-depreciation-disposal-dep)
-
-Nothing in this file waits on it, but **it waits on T4.5**: an asset is capitalised from the bill that bought it, off a capital line. A disposal with proceeds may also post under `INV` — that is the open decision in T10.2.
 
 ---
 
