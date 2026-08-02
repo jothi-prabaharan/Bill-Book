@@ -364,7 +364,7 @@ The sixteen document types, none of which is built. They live in their own files
 **T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T7** POS sale · **T9** stock adjustment document
 
 **[`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) — the money documents.** Accounting and Banking: the six that trade nothing — no item, no price, no GST, no cost layer.
-**T0.5 / T0.7** `acc.Journals` and whether any other document writes one · **T1** manual journal · **T6** spend, receive and transfer money · **T8** opening balances · **T10** fixed assets and depreciation
+**T0.5 / T0.7** `acc.Journals` and whether any other document writes one · **T1** manual journal · **T6** spend, receive and transfer money · **T8** opening balances · **T10** fixed assets — acquisition, depreciation, disposal
 
 **T1 is the first stage of the plan, in either file** — a posting nobody can read is a posting nobody checks, and the manual journal is the cheapest document to prove the ledger with.
 

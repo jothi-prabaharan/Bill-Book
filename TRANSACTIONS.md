@@ -137,7 +137,8 @@ Mirrors T2–T3 and reuses the tax component, the numbering and the lifecycle un
 - [ ] **T4.4 — Goods receipt: API and page** — receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input.
   *Done when*: a receipt against an order opens a cost layer at the received cost, and a partial receipt leaves the order partly open.
 - [ ] **T4.5 — Bill: API and page** — with or without a receipt, with the Input GST legs and payment terms driving the due date.
-  *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; and payables aging ties to the Accounts Payable control account.
+  **A bill line is stock, expense or capital**, and the third is how every purchased fixed asset gets onto the books — it posts to a Fixed Asset account and creates the register row, rather than to Inventory. The line flag belongs here; what it then does is [T10.2](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-acquisition-depreciation-disposal-dep) in the other file, and T10 cannot start until this task exists.
+  *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; a capital line moves neither and lands on a Fixed Asset account; and payables aging ties to the Accounts Payable control account.
 
 ---
 
@@ -186,9 +187,9 @@ Movements already post as `STA` when they have no document behind them, each fil
 
 ---
 
-## Stage T10 — fixed assets and depreciation (DEP) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-and-depreciation-dep)
+## Stage T10 — fixed assets: acquisition, depreciation, disposal (DEP) → [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-acquisition-depreciation-disposal-dep)
 
-Nothing in this file waits on it.
+Nothing in this file waits on it, but **it waits on T4.5**: an asset is capitalised from the bill that bought it, off a capital line. A disposal with proceeds may also post under `INV` — that is the open decision in T10.2.
 
 ---
 

@@ -23,6 +23,8 @@ Same rules as `master.md`: take the first unticked box, check it against its **D
 | OPB | Opening balance | Accounting | yes | receives | T8 |
 | DEP | Depreciation | Accounting | yes | no | T10 |
 
+**`DEP` is the only code T10 owns, and a depreciation run is the middle act of three.** Acquisition and disposal have no transaction type of their own and are not missing from `mst.TransactionTypes` by oversight — they ride on `BIL`, `OPB`, `JRN` and `INV`. T10.2 says which, and the decision table says why.
+
 What these six have in common, and what makes them a coherent file rather than an arbitrary cut: **none of them sells or buys anything.** There is no item being traded, no price, no GST determination and no cost layer. A journal, a payment, a transfer, an opening balance and a depreciation run each move value between accounts that already exist. That is why they need almost none of the machinery `TRANSACTIONS.md` spends its first four foundations building — and why the manual journal is the right first document in the whole plan.
 
 The exception is OPB, which receives stock. It is here because Accounting orchestrates it and it is a book-opening act, not a purchase.
@@ -40,8 +42,10 @@ These live in [`TRANSACTIONS.md`](./TRANSACTIONS.md) and are prerequisites here.
 | **T0.4** — one lifecycle for every type, and `.void` reachable by `.edit` | every stage here |
 | **T0.6** — nothing displays a ledger, and everything writes to one | T1 above all — it is what makes a posting checkable |
 | **T5.1** — `acc.TransactionRatio`, allocation between documents | T6 |
+| **T4.5** — the bill, which is what a purchased fixed asset arrives on | T10.2 |
+| **T3.1** — the invoice, if a disposal with proceeds posts under `INV` | T10.4, pending the T10.2 decision |
 
-**T0.2**, tax determination, is the one foundation nothing here needs. None of these six documents carries GST.
+**T0.2**, tax determination, is the one foundation only partly needed here. Five of these six documents carry no GST at all — but a fixed asset bought on a bill does, since input credit on capital goods is claimable, and that GST is determined by T0.2 on the Purchase side rather than here.
 
 ---
 
@@ -100,14 +104,37 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 
 ---
 
-## Stage T10 — fixed assets and depreciation (DEP)
+## Stage T10 — fixed assets: acquisition, depreciation, disposal (DEP)
 
-Last because nothing else waits on it, and because it still carries an open question in `CLAUDE.md`.
+**An earlier draft of this stage had a register, a depreciation run and a disposal, and nothing that put an asset on the books.** That is not a small omission: a depreciation run over an empty register posts nothing at all, and a register filled in by hand depreciates an asset the ledger never bought — so `Dr Depreciation Expense / Cr Accumulated Depreciation` accumulates against a Fixed Asset account holding zero, and the balance sheet carries a negative net book value that balances perfectly and is nonsense. Depreciation is only meaningful as the second act. **T10.2 is the acquisition, and it comes first.**
 
 - [ ] **T10.1 — `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules`** — not designed in SPEC. **The category owns the GL mapping** (Fixed Asset / Accumulated Depreciation / Depreciation Expense); per-asset mapping does not scale.
-- [ ] **T10.2 — Depreciation run** — a period posting `Dr Depreciation Expense / Cr Accumulated Depreciation`, the latter contra so the balance sheet subtracts it.
-- [ ] **T10.3 — Disposal** — proceeds against written-down value, gain or loss to the P&L.
+  The register carries **where the asset came from** — `TransactionTypeCode` and `TransactionId` of the document that capitalised it — so that every row traces to a posting rather than to whoever typed it. That column is what makes T10.5 possible.
+
+- [ ] **T10.2 — Acquisition: capitalise from the document that bought the asset** *(the missing transaction)*
+  An asset arrives one of four ways, and three of them are documents that already exist by this stage:
+  - **Purchased** — a bill (`BIL`) whose line is marked capital rather than stock or expense. `Dr Fixed Asset / Cr Accounts Payable`, with input GST on capital goods claimed as it is on anything else. This is the common case.
+  - **Migrated** — the opening balance (`OPB`), which T8.3 already covers and which skips historical depreciation.
+  - **Self-constructed, or transferred out of stock** — a manual journal (`JRN`) moving cost from Inventory or work in progress to Fixed Asset. A jeweller turning a display case out of purchased material is doing exactly this.
+  - **Donated or otherwise free** — a journal against Other Income. Rare, and it falls out of the `JRN` path for nothing extra.
+
+  The work is the **capitalisation link**, not a new screen: a capital line on a bill creates the register row and posts to the category's Fixed Asset account instead of Inventory or Expense, in the same transaction as the bill. Created any other way round — a register the user fills in separately — and the asset register and the Fixed Asset control account disagree from the first entry, with nothing to reconcile them against.
+  *Done when*: a bill with one capital line and one stock line posts each to its own account, creates exactly one register row naming that bill, and leaves the Fixed Asset control account equal to the register's total cost.
+
+- [ ] **T10.3 — Depreciation run** — a period posting `Dr Depreciation Expense / Cr Accumulated Depreciation` under `DEP`, the latter contra so the balance sheet subtracts it rather than adding it.
+  Runs per period over the register, skipping assets already fully depreciated and assets migrated at written-down value. Re-running a period must replace its postings rather than add to them — the posting key from T0.1 already gives that, and without it a second run silently doubles the charge.
   *Blocked on an owner decision already recorded in `CLAUDE.md`*: straight-line only, or books **and** tax depreciation? Two schedules per asset is a different table shape, so it is cheaper to answer than to retrofit.
+  *Done when*: an asset acquired mid-period is depreciated from its own acquisition date, a run repeated twice charges once, and accumulated depreciation never exceeds cost.
+
+- [ ] **T10.4 — Disposal** — proceeds against written-down value, gain or loss to the P&L. Four legs, not two: `Dr Accumulated Depreciation` for everything charged to date, `Cr Fixed Asset` at full cost, `Dr Bank or Accounts Receivable` for the proceeds, and the difference to Gain or Loss on Disposal.
+  Scrapping is the same posting with no proceeds, so the whole written-down value becomes the loss. A disposal stops depreciation from its date — an asset that is gone must not keep depreciating, which is the failure a register disconnected from the ledger produces silently.
+  *Done when*: buying, depreciating and disposing at exactly written-down value leaves the Fixed Asset, Accumulated Depreciation and Gain/Loss accounts all at zero for that asset.
+
+- [ ] **T10.5 — The register ties to the control account**
+  Sum of cost in `acc.FixedAssets` equals the Fixed Asset control account; sum of accumulated depreciation equals its own. Shown on the register screen the way T8.2 blocks a finalize that does not tie, because a fixed asset register is a subledger and every other subledger in this product is checked against its control account. This one would otherwise be the exception, and it is the subledger a statutory audit actually opens.
+  *Done when*: the two agree after an acquisition, a depreciation run and a disposal, and a deliberate hand-edit to the register is visible as a break rather than absorbed.
+
+**Decision inside this stage** — see the table below: acquisition and disposal have **no transaction type of their own**. `mst.TransactionTypes` seeds sixteen codes and `DEP` is the only one here; SPEC says a new code arrives by EF migration, never at runtime.
 
 ---
 
@@ -122,7 +149,12 @@ One requirement copied to two files is one requirement that drifts.
 | # | Question | Needed by | Recommendation |
 |---|---|---|---|
 | T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only |
+| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 | No — capitalise from `BIL`, dispose under `INV` or `JRN` |
 | — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* |
+
+**On T10.2**, since it is the one raised by this stage rather than inherited. Adding an `FXA`/`FXD` pair to `mst.TransactionTypes` would give the asset register clean provenance under its own codes — but a purchase of a laptop **is** a purchase: same vendor, same input GST, same payment terms, same aging. A new code buys a numbering series, a screen, a lifecycle and a posting path that all duplicate Purchase, to record something Purchase already records. Capitalising from a bill line costs one flag on the line and one register row.
+
+The case against the recommendation, stated honestly: a disposal posted under `INV` puts a non-inventory sale into the sales ledger, where a revenue report has to know to exclude it. That is a real cost, and it is the reason to answer this rather than let it be decided by whoever writes T10.4 first.
 
 The other four are in [`TRANSACTIONS.md`](./TRANSACTIONS.md#open-decisions-gathered).
 
@@ -130,4 +162,6 @@ The other four are in [`TRANSACTIONS.md`](./TRANSACTIONS.md#open-decisions-gathe
 
 **T1 first, before anything in either file.** A posting nobody can read is a posting nobody checks, and the manual journal is the cheapest document to prove the ledger with — no stock, no tax, no contact. Everything Sales and Purchase post afterwards is verified on the screens T0.6 and T1 put in place.
 
-Then the other file runs T2 → T5, and the rest of this one follows what it produces: **T6** needs invoices and bills to settle, **T8** wants every subledger finished, and **T10** waits on nothing and is last for that reason.
+Then the other file runs T2 → T5, and the rest of this one follows what it produces: **T6** needs invoices and bills to settle, **T8** wants every subledger finished, and **T10** needs the bill from T4.5 — an asset is capitalised from the document that bought it, so the fixed asset register cannot come before the document.
+
+That last dependency is new. T10 was described as waiting on nothing and being last for that reason, which was only true while the stage had no acquisition in it.
