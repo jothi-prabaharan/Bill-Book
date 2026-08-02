@@ -11,6 +11,10 @@ namespace Inventory.Api.Controllers;
 ///
 /// The unit types matter most — an item requires one, so until this runs the
 /// item master cannot save anything at all.
+///
+/// **Re-runnable, and meant to be.** Both seeders add only the rows the
+/// organization is missing, so calling this against an organization set up
+/// months ago backfills whatever has been added to the seed lists since.
 /// </summary>
 [ApiController]
 [InternalOnly]

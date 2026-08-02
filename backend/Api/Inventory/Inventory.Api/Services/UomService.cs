@@ -311,29 +311,142 @@ public sealed class UomService
         return SaveUomOutcome.Ok;
     }
 
-    /// <summary>Writes the unit types and units for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the unit types and units for an organization, adding only what is
+    /// missing. Safe to re-run: a unit added to the seed list later reaches
+    /// organizations created before it existed.
+    ///
+    /// Still two passes, for the original reason — a unit needs its type's
+    /// generated id — but the second pass keys off the types the organization
+    /// actually has, not only the ones just inserted. A unit missing from a type
+    /// that was already there is the common case on a re-run, and looking only
+    /// at new types would never find it.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.UomTypes.IgnoreQueryFilters().AnyAsync(t => t.OrgId == orgId, ct))
+        int added = await SeedTypesAsync(orgId, ct);
+        added += await SeedUnitsAsync(orgId, ct);
+        return added;
+    }
+
+    private async Task<int> SeedTypesAsync(Guid orgId, CancellationToken ct)
+    {
+        List<UomType> existing = await _db.UomTypes
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing
+            .Where(t => t.UomTypeSystemName is not null)
+            .Select(t => t.UomTypeSystemName!)];
+
+        // UomTypeName is unique per organization; a customer-created "Weight"
+        // would otherwise fail the insert for every type in the batch.
+        HashSet<string> taken = [.. existing.Select(t => t.UomTypeName)];
+
+        List<UomType> missing = Repository.SeedData.UomSeed.BuildTypes(orgId)
+            .Where(t => t.UomTypeSystemName is not null
+                && !present.Contains(t.UomTypeSystemName)
+                && !taken.Contains(t.UomTypeName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<UomType> types = Repository.SeedData.UomSeed.BuildTypes(orgId);
-        _db.UomTypes.AddRange(types);
-
-        // Saved first: the units need the generated type ids.
+        _db.UomTypes.AddRange(missing);
         await _db.SaveChangesAsync(ct);
+        return missing.Count;
+    }
 
-        Dictionary<string, long> typeIds = types
-            .Where(t => t.UomTypeSystemName is not null)
-            .ToDictionary(t => t.UomTypeSystemName!, t => t.UomTypeId);
+    private async Task<int> SeedUnitsAsync(Guid orgId, CancellationToken ct)
+    {
+        // Every type the organization has, not just the new ones — units hang
+        // off whichever type row is actually there.
+        Dictionary<string, long> typeIds = await _db.UomTypes
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId && t.UomTypeSystemName != null)
+            .ToDictionaryAsync(t => t.UomTypeSystemName!, t => t.UomTypeId, ct);
 
-        IReadOnlyList<UnitOfMeasure> units = Repository.SeedData.UomSeed.BuildUnits(orgId, typeIds);
-        _db.UnitOfMeasures.AddRange(units);
+        if (typeIds.Count == 0)
+        {
+            return 0;
+        }
+
+        List<UnitOfMeasure> existing = await _db.UnitOfMeasures
+            .IgnoreQueryFilters()
+            .Where(u => u.OrgId == orgId)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing
+            .Where(u => u.UomSystemName is not null)
+            .Select(u => u.UomSystemName!)];
+
+        // UomCode is unique per organization.
+        HashSet<string> taken = [.. existing.Select(u => u.UomCode)];
+
+        // The base unit each type currently has, by system name where it has
+        // one. Needed for the rescaling check below, not just for the "at most
+        // one base unit" index.
+        Dictionary<long, string?> currentBase = existing
+            .Where(u => u.IsBaseUnit)
+            .ToDictionary(u => u.UomTypeId, u => u.UomSystemName);
+
+        IReadOnlyList<UnitOfMeasure> seeded = Repository.SeedData.UomSeed.BuildUnits(orgId, typeIds);
+
+        // Which unit the seed treats as base for each type, read out of the seed
+        // rather than restated here so the two cannot drift.
+        Dictionary<long, string?> seedBase = seeded
+            .Where(u => u.IsBaseUnit)
+            .ToDictionary(u => u.UomTypeId, u => u.UomSystemName);
+
+        List<UnitOfMeasure> candidates = [.. seeded
+            .Where(u => u.UomSystemName is not null
+                && !present.Contains(u.UomSystemName)
+                && !taken.Contains(u.UomCode))];
+
+        var missing = new List<UnitOfMeasure>();
+
+        foreach (IGrouping<long, UnitOfMeasure> group in candidates.GroupBy(u => u.UomTypeId))
+        {
+            if (!currentBase.TryGetValue(group.Key, out string? existingBase))
+            {
+                // No base unit yet, so nothing to be inconsistent with — the
+                // type is empty and takes the seed as written.
+                missing.AddRange(group);
+                continue;
+            }
+
+            if (existingBase is null
+                || !seedBase.TryGetValue(group.Key, out string? expected)
+                || existingBase != expected)
+            {
+                // The organization has moved this type onto a different base,
+                // and SetBaseUnitAsync rescales every sibling factor when it
+                // does. The seed's factors are still expressed against the
+                // original base, so inserting them here would put a unit into
+                // the type at the wrong scale — a thousandfold error in stock
+                // and cost that nothing would flag. Adding nothing is the only
+                // honest option; a customer who rebased a type can add the unit
+                // themselves with the factor they meant.
+                continue;
+            }
+
+            // Same base, so the factors are on the same scale. The seed's own
+            // base row is already present and filtered out above, which is why
+            // nothing here can collide with the one-base-per-type index.
+            missing.AddRange(group);
+        }
+
+        if (missing.Count == 0)
+        {
+            return 0;
+        }
+
+        _db.UnitOfMeasures.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-
-        return types.Count + units.Count;
+        return missing.Count;
     }
 
     /// <summary>

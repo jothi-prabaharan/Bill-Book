@@ -12,6 +12,12 @@ namespace Accounting.Api.Controllers;
 /// Called by Platform's provisioning worker, which holds no user token — so the
 /// tenant is taken from the request body and set here, and the endpoint is
 /// guarded by a shared key rather than a JWT.
+///
+/// **Re-runnable, and meant to be.** Each seeder adds only the rows the
+/// organization is missing, so calling this against an organization set up
+/// months ago backfills whatever has been added to the seed lists since. The
+/// counts in the response are what was actually written, which is zero on an
+/// organization that is already complete.
 /// </summary>
 [ApiController]
 [InternalOnly]

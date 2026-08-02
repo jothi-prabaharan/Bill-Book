@@ -197,32 +197,58 @@ public sealed class TaxMasterService
         return SaveTaxOutcome.Ok;
     }
 
-    /// <summary>Writes the six default GST rates for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the default GST rates for an organization, adding only what is
+    /// missing. Safe to re-run: a rate added to the seed list later — the way
+    /// the 3% bullion rate once was — reaches organizations created before it
+    /// existed, which a bail-out on "has any rows" would not.
+    ///
+    /// Presence is judged on <c>TaxSystemName</c> across <b>every</b> version of
+    /// a rate, not only the current one. This table is effective-dated, so a
+    /// revised GST 18% is a second row with the same system name and the earlier
+    /// one closed off; matching on today's rows alone would re-seed a rate whose
+    /// history is sitting right there.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.TaxMasters.IgnoreQueryFilters().AnyAsync(t => t.OrgId == orgId, ct))
+        List<string> existing = await _db.TaxMasters
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId && t.TaxSystemName != null)
+            .Select(t => t.TaxSystemName!)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing];
+
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        List<TaxMaster> missing = Repository.SeedData.TaxMasterSeed.Build(orgId, today)
+            .Where(t => t.TaxSystemName is not null && !present.Contains(t.TaxSystemName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        IReadOnlyList<TaxMaster> seed = Repository.SeedData.TaxMasterSeed.Build(orgId, today);
-        _db.TaxMasters.AddRange(seed);
+        _db.TaxMasters.AddRange(missing);
         await _db.SaveChangesAsync(ct);
 
-        foreach (TaxMaster rate in seed)
+        foreach (TaxMaster rate in missing)
         {
             rate.TaxGroupId = rate.TaxMasterId;
         }
 
         await _db.SaveChangesAsync(ct);
 
-        foreach (TaxMaster rate in seed)
+        // Only the new rows. A rate that already existed already has its
+        // sub-accounts; backfilling ones missing them is a different repair and
+        // belongs with whatever notices they are missing.
+        foreach (TaxMaster rate in missing)
         {
             await ProvisionSubAccountsAsync(rate, ct);
         }
 
-        return seed.Count;
+        return missing.Count;
     }
 
     /// <summary>

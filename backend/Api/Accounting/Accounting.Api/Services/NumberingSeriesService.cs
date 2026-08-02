@@ -323,18 +323,54 @@ public sealed class NumberingSeriesService
         return SaveSeriesOutcome.Ok;
     }
 
-    /// <summary>Writes the default numbering series for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the master numbering series for an organization, adding only what
+    /// is missing. Safe to re-run, which matters more here than elsewhere: the
+    /// document series Sales and Purchase will add have to reach organizations
+    /// created long before those services existed, and a bail-out on "has any
+    /// rows" would mean they never did.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.NumberingSeries.IgnoreQueryFilters().AnyAsync(s => s.OrgId == orgId, ct))
+        List<NumberingSeries> existing = await _db.NumberingSeries
+            .IgnoreQueryFilters()
+            .Where(s => s.OrgId == orgId)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing
+            .Where(s => s.SeriesSystemName is not null)
+            .Select(s => s.SeriesSystemName!)];
+
+        // SeriesName is unique per organization; a customer-created series
+        // holding a seed row's name would fail the insert for all of them.
+        HashSet<string> taken = [.. existing.Select(s => s.SeriesName)];
+
+        // IsDefault is unique per SeriesCode, not per organization — one default
+        // customer series and one default item series coexist. So the flag is
+        // checked per code rather than once.
+        HashSet<string> defaulted = [.. existing
+            .Where(s => s.IsDefault)
+            .Select(s => s.SeriesCode)];
+
+        List<NumberingSeries> missing = Repository.SeedData.NumberingSeriesSeed.Build(orgId)
+            .Where(s => s.SeriesSystemName is not null
+                && !present.Contains(s.SeriesSystemName)
+                && !taken.Contains(s.SeriesName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<NumberingSeries> seed = Repository.SeedData.NumberingSeriesSeed.Build(orgId);
-        _db.NumberingSeries.AddRange(seed);
+        foreach (NumberingSeries series in missing.Where(s => defaulted.Contains(s.SeriesCode)))
+        {
+            series.IsDefault = false;
+        }
+
+        _db.NumberingSeries.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-        return seed.Count;
+        return missing.Count;
     }
 
     /// <summary>

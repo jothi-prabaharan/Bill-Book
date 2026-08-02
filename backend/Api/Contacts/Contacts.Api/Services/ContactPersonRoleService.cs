@@ -206,18 +206,61 @@ public sealed class ContactPersonRoleService
         return SaveRoleOutcome.Ok;
     }
 
-    /// <summary>Writes the default contact person roles for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the default contact person roles for an organization, adding only
+    /// what is missing. Safe to re-run: a role added to the seed list later
+    /// reaches organizations created before it existed. Matched on
+    /// <c>RoleSystemName</c>, which is what the rest of the code matches on too,
+    /// so a renamed role is recognised as present rather than seeded again
+    /// under its original label.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.ContactPersonRoles.IgnoreQueryFilters().AnyAsync(r => r.OrgId == orgId, ct))
+        List<string> existing = await _db.ContactPersonRoles
+            .IgnoreQueryFilters()
+            .Where(r => r.OrgId == orgId && r.RoleSystemName != null)
+            .Select(r => r.RoleSystemName!)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing];
+
+        // RoleName is unique per organization too, and this master is editable
+        // from a popup — a customer-created "Dispatch" is entirely likely. Skip
+        // the row rather than let a name clash throw the whole seeding call.
+        List<string> names = await _db.ContactPersonRoles
+            .IgnoreQueryFilters()
+            .Where(r => r.OrgId == orgId)
+            .Select(r => r.RoleName)
+            .ToListAsync(ct);
+
+        HashSet<string> taken = [.. names];
+
+        List<ContactPersonRole> missing = Repository.SeedData.ContactPersonRolesSeed.Build(orgId)
+            .Where(r => r.RoleSystemName is not null
+                && !present.Contains(r.RoleSystemName)
+                && !taken.Contains(r.RoleName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<ContactPersonRole> seed = Repository.SeedData.ContactPersonRolesSeed.Build(orgId);
-        _db.ContactPersonRoles.AddRange(seed);
+        // One default per organization is a filtered unique index; only claim it
+        // if it is going spare.
+        if (await _db.ContactPersonRoles
+            .IgnoreQueryFilters()
+            .AnyAsync(r => r.OrgId == orgId && r.IsDefault, ct))
+        {
+            foreach (ContactPersonRole role in missing)
+            {
+                role.IsDefault = false;
+            }
+        }
+
+        _db.ContactPersonRoles.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-        return seed.Count;
+        return missing.Count;
     }
 
     private async Task RenumberAsync(

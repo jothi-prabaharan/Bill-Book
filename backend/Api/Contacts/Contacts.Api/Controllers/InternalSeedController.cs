@@ -9,6 +9,10 @@ namespace Contacts.Api.Controllers;
 /// Writes the contact person roles for a newly created organization. Called by
 /// Platform's provisioning worker with no user token, so the tenant comes from
 /// the body and the endpoint is guarded by a shared key.
+///
+/// **Re-runnable, and meant to be.** The seeder adds only the roles the
+/// organization is missing, so calling this against an organization set up
+/// months ago backfills whatever has been added to the seed list since.
 /// </summary>
 [ApiController]
 [InternalOnly]

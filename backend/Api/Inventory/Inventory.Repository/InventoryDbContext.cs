@@ -143,6 +143,15 @@ public class InventoryDbContext : TenantDbContext
             b.HasKey(e => e.MetalPurityId);
             b.HasIndex(e => new { e.OrgId, e.MetalType, e.PurityName }).IsUnique();
 
+            // The stable identity, as on every other seeded master. PurityName
+            // is renamable — a jeweller relabelling "916 (22K)" as "22 Karat" is
+            // ordinary — so re-seeding matches on this instead, and it has to be
+            // unique or a second run could add the row twice.
+            b.HasIndex(e => new { e.OrgId, e.PuritySystemName })
+                .IsUnique()
+                .HasFilter("\"PuritySystemName\" IS NOT NULL")
+                .HasDatabaseName("IX_MetalPurities_SystemName");
+
             b.HasIndex(e => new { e.OrgId, e.MetalType, e.DisplayOrder })
                 .HasDatabaseName("IX_MetalPurities_Order");
 

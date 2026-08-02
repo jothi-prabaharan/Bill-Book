@@ -239,18 +239,62 @@ public sealed class PaymentTermService
         return SaveTermOutcome.Ok;
     }
 
-    /// <summary>Writes the default payment terms for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the default payment terms for an organization, adding only what is
+    /// missing. Safe to re-run: a term added to the seed list later reaches
+    /// organizations created before it existed, which a bail-out on "has any
+    /// rows" never would. Matched on <c>TermSystemName</c>, so a term the
+    /// customer has renamed is still recognised as present.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.PaymentTerms.IgnoreQueryFilters().AnyAsync(t => t.OrgId == orgId, ct))
+        List<string> existing = await _db.PaymentTerms
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId && t.TermSystemName != null)
+            .Select(t => t.TermSystemName!)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing];
+
+        // TermName is unique per organization too. A customer who created their
+        // own "Net 15" before this seed row existed would otherwise make the
+        // whole seeding call throw, which during provisioning fails the branch.
+        List<string> names = await _db.PaymentTerms
+            .IgnoreQueryFilters()
+            .Where(t => t.OrgId == orgId)
+            .Select(t => t.TermName)
+            .ToListAsync(ct);
+
+        HashSet<string> taken = [.. names];
+
+        List<PaymentTerm> missing = Repository.SeedData.PaymentTermsSeed.Build(orgId)
+            .Where(t => t.TermSystemName is not null
+                && !present.Contains(t.TermSystemName)
+                && !taken.Contains(t.TermName))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<PaymentTerm> seed = Repository.SeedData.PaymentTermsSeed.Build(orgId);
-        _db.PaymentTerms.AddRange(seed);
+        // One default per organization is a filtered unique index. Backfilling
+        // Due on Receipt into an organization that has since made Net 30 its
+        // default would violate it, so the seed's flag only stands when there is
+        // no default to displace.
+        if (await _db.PaymentTerms
+            .IgnoreQueryFilters()
+            .AnyAsync(t => t.OrgId == orgId && t.IsDefault, ct))
+        {
+            foreach (PaymentTerm term in missing)
+            {
+                term.IsDefault = false;
+            }
+        }
+
+        _db.PaymentTerms.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-        return seed.Count;
+        return missing.Count;
     }
 
     /// <summary>

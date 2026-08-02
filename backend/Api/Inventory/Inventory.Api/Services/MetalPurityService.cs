@@ -171,17 +171,44 @@ public sealed class MetalPurityService
         return SaveMasterOutcome.Ok;
     }
 
-    /// <summary>Writes the standard Indian purities for a newly created organization.</summary>
+    /// <summary>
+    /// Writes the standard purities for an organization, adding only what is
+    /// missing. Safe to re-run: a purity added to the seed list later reaches
+    /// organizations created before it existed.
+    ///
+    /// Matched on <c>PuritySystemName</c> rather than the display name, which is
+    /// the whole reason that column exists — a jeweller who relabels
+    /// "916 (22K)" as "22 Karat" must not be handed a second copy of it under
+    /// the original label.
+    /// </summary>
     public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
     {
-        if (await _db.MetalPurities.IgnoreQueryFilters().AnyAsync(p => p.OrgId == orgId, ct))
+        List<MetalPurity> existing = await _db.MetalPurities
+            .IgnoreQueryFilters()
+            .Where(p => p.OrgId == orgId)
+            .ToListAsync(ct);
+
+        HashSet<string> present = [.. existing
+            .Where(p => p.PuritySystemName is not null)
+            .Select(p => p.PuritySystemName!)];
+
+        // (MetalType, PurityName) is unique. A hand-typed purity holding a seed
+        // row's name would otherwise fail the insert for every other row too.
+        HashSet<(MetalType, string)> taken = [.. existing.Select(p => (p.MetalType, p.PurityName))];
+
+        List<MetalPurity> missing = Repository.SeedData.MetalPuritiesSeed.Build(orgId)
+            .Where(p => p.PuritySystemName is not null
+                && !present.Contains(p.PuritySystemName)
+                && !taken.Contains((p.MetalType, p.PurityName)))
+            .ToList();
+
+        if (missing.Count == 0)
         {
             return 0;
         }
 
-        IReadOnlyList<MetalPurity> seed = Repository.SeedData.MetalPuritiesSeed.Build(orgId);
-        _db.MetalPurities.AddRange(seed);
+        _db.MetalPurities.AddRange(missing);
         await _db.SaveChangesAsync(ct);
-        return seed.Count;
+        return missing.Count;
     }
 }

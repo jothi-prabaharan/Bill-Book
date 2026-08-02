@@ -180,8 +180,22 @@ public sealed class AccountService
 
         HashSet<string> present = [.. existing];
 
+        // AccountCode is unique per organization. A customer-created account on
+        // 1400 would otherwise fail the insert for every account in the batch,
+        // not just its own — and this runs during provisioning, where a throw
+        // fails the whole branch.
+        List<string> codes = await _db.Accounts
+            .IgnoreQueryFilters()
+            .Where(a => a.OrgId == orgId)
+            .Select(a => a.AccountCode)
+            .ToListAsync(ct);
+
+        HashSet<string> taken = [.. codes];
+
         List<Account> missing = Repository.SeedData.ChartOfAccountsSeed.Build(orgId)
-            .Where(a => a.AccountSystemName is not null && !present.Contains(a.AccountSystemName))
+            .Where(a => a.AccountSystemName is not null
+                && !present.Contains(a.AccountSystemName)
+                && !taken.Contains(a.AccountCode))
             .ToList();
 
         if (missing.Count == 0)
