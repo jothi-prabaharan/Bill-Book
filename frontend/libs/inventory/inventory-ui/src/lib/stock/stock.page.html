@@ -31,6 +31,19 @@
       already up to date; costs settle a moment behind.
     </p>
   }
+
+  @if (queue.ledgerFailed > 0) {
+    <p class="error">
+      {{ queue.ledgerFailed }} movement(s) could not be posted to the accounts and have stopped
+      retrying. <strong>Stock and the general ledger disagree until this is resolved.</strong>
+      The usual cause is a missing account in the chart of accounts.
+    </p>
+  } @else if (queue.ledgerPending > 0) {
+    <p class="notice">
+      {{ queue.ledgerPending }} movement(s) waiting to reach the accounts. Posting runs just
+      behind costing.
+    </p>
+  }
 }
 
 <p class="hint">
@@ -262,6 +275,7 @@
           <th class="num">In stock unit</th>
           <th class="num">Unit cost</th>
           <th class="num">Avg. after</th>
+          <th>Accounts</th>
           <th>Source</th>
           <th class="actions-col"><span class="sr-only">Cost</span></th>
         </tr>
@@ -300,6 +314,22 @@
             </td>
             <td class="num">{{ movement.resultingWeightedAverageCost ?? '—' }}</td>
             <td>
+              @switch (movement.ledgerStatus) {
+                @case ('Posted') {
+                  <span class="badge posted">Posted</span>
+                }
+                @case ('NotApplicable') {
+                  <span class="muted" [title]="movement.ledgerError ?? 'Nothing to post.'">—</span>
+                }
+                @case ('Failed') {
+                  <span class="badge out" [title]="movement.ledgerError ?? ''">Not posted</span>
+                }
+                @default {
+                  <span class="badge low">Posting…</span>
+                }
+              }
+            </td>
+            <td>
               @if (movement.sourceType) {
                 <code>{{ movement.sourceType }}-{{ movement.sourceId }}</code>
               } @else {
@@ -315,7 +345,7 @@
             </td>
           </tr>
         } @empty {
-          <tr><td colspan="9">Nothing has moved yet.</td></tr>
+          <tr><td colspan="10">Nothing has moved yet.</td></tr>
         }
       </tbody>
     </table>

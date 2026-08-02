@@ -61,6 +61,18 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
 });
 
 builder.Services.AddScoped<CostingService>();
+
+// Posting to the ledger. A second pass over the same table rather than work
+// done inside the costing transaction: tying a stock movement's fate to
+// Accounting being reachable at that instant would either roll back a settled
+// cost or lose the posting it owed.
+builder.Services.AddScoped<StockLedgerPoster>();
+builder.Services.AddHttpClient<IAccountingLedger, AccountingLedger>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddHostedService<CostingWorker>();
 
 IHost host = builder.Build();

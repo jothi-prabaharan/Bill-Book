@@ -393,6 +393,7 @@ public class InventoryDbContext : TenantDbContext
             b.Property(e => e.MovementType).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(3);
             b.Property(e => e.CostingStatus).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.LedgerStatus).HasConversion<string>().HasMaxLength(14);
 
             // The costing queue, read in the order the worker consumes it.
             // Filtered: settled movements are the overwhelming majority and the
@@ -400,6 +401,13 @@ public class InventoryDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.ItemId, e.MovementDate, e.StockMovementId })
                 .HasFilter("\"CostingStatus\" IN ('Pending', 'InProgress')")
                 .HasDatabaseName("IX_StockMovements_CostingQueue");
+
+            // The posting queue. A second filtered index rather than a wider
+            // one: the two queues drain independently and a movement sits in
+            // the first for a while before it is eligible for the second, so a
+            // shared index would be scanned past on every pass of both.
+            b.HasIndex(["OrgId", "MovementDate", "StockMovementId"], "IX_StockMovements_LedgerQueue")
+                .HasFilter("\"LedgerStatus\" IN ('Pending', 'InProgress')");
 
             b.HasOne<ItemBatch>()
                 .WithMany()

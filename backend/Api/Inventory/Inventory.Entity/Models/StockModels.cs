@@ -176,6 +176,20 @@ public class StockMovementListItem
 
     public string? CostingError { get; set; }
 
+    /// <summary>
+    /// Pending, InProgress, Posted, NotApplicable or Failed. Posting follows
+    /// costing, so a movement is behind on this until its cost has settled.
+    /// </summary>
+    public string LedgerStatus { get; set; } = null!;
+
+    public DateTimeOffset? LedgerPostedAt { get; set; }
+
+    /// <summary>
+    /// Why the posting has not happened. On a <c>NotApplicable</c> movement this
+    /// says why there was nothing to post rather than reporting a failure.
+    /// </summary>
+    public string? LedgerError { get; set; }
+
     public string? Notes { get; set; }
 
     public DateTimeOffset? RecordedAt { get; set; }
@@ -193,6 +207,19 @@ public class CostingQueueStatus
 
     /// <summary>The oldest movement still waiting, so "behind" can be read as a duration.</summary>
     public DateTimeOffset? OldestPendingAt { get; set; }
+
+    /// <summary>
+    /// Movements costed but not yet posted to the general ledger. Some lag is
+    /// normal — the posting runs just behind the costing.
+    /// </summary>
+    public int LedgerPending { get; set; }
+
+    /// <summary>
+    /// Movements that gave up posting. <b>While this is above zero, stock and
+    /// the general ledger disagree</b>, which is worth saying out loud rather
+    /// than leaving to be discovered in a reconciliation.
+    /// </summary>
+    public int LedgerFailed { get; set; }
 }
 
 /// <summary>

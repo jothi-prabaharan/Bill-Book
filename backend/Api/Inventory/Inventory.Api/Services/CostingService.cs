@@ -286,6 +286,15 @@ public sealed class CostingService
             issue.CostingStatus = CostingStatus.Pending;
             issue.CostedAt = null;
 
+            // Back into the ledger queue as well. The sale's cost of goods sold
+            // is about to change, so the rows already posted for it are about to
+            // be wrong. Posting the same key again replaces them, which is why
+            // this is a status reset rather than a correcting entry to compose
+            // here — the restatement is recorded in its own right below.
+            issue.LedgerStatus = LedgerStatus.Pending;
+            issue.LedgerPostedAt = null;
+            issue.LedgerAttempts = 0;
+
             // Held so the replay can report what the cost was before it ran.
             _db.RecostingAdjustments.Add(new RecostingAdjustment
             {

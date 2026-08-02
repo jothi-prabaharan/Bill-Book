@@ -1,6 +1,6 @@
 # Journal & ledger
 
-**Status: partial.** The ledger table, its rules and the posting API are built. Nothing writes to it yet, and there is no screen — see [Build status](#/status).
+**Status: partial.** The ledger, its rules and the posting API are built, and stock posts to it. There is no ledger screen yet, and no manual journal entry — see [Build status](#/status).
 
 ## One posting target
 
@@ -61,8 +61,11 @@ The ledger is a per-branch table with an `OrgId`, an EF Core query filter, and a
 
 The query filter is the first line of defence, not the last: it is a property of the code, and one query written to ignore it would read another branch's general ledger. The policy is a property of the database and holds however the connection is used.
 
+## Who posts today
+
+**Stock**, and only stock. Every stock movement that changes what the branch owns posts its cost — see [Reaching the accounts](#/stock). Sales, Purchase and Banking will follow as those services are built.
+
 ## What is not built
 
 - **`acc.Journals` and `acc.JournalDetails`** — the manual journal-entry document. The ledger does not need them to work; they are what a person posting an entry by hand types into.
-- **The ledger screen and the trial balance.** Nothing displays any of this yet.
-- **Callers.** No service posts today. Stock is the first, and it is being wired now.
+- **The ledger screen and the trial balance.** Nothing displays any of this yet, so what stock posts is visible today only in the accounts column of the movement history.

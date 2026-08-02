@@ -109,6 +109,23 @@ public class StockMovement : OrgScopedEntity
     [MaxLength(500, ErrorMessage = "Costing error cannot exceed 500 characters.")]
     public string? CostingError { get; set; }
 
+    // --- Ledger state. The same shape as costing, one step behind it: a
+    // movement cannot be posted until what it cost has been settled.
+
+    public LedgerStatus LedgerStatus { get; set; } = LedgerStatus.Pending;
+
+    public DateTimeOffset? LedgerPostedAt { get; set; }
+
+    /// <summary>Attempts so far. Bounded for the same reason costing's is.</summary>
+    public int LedgerAttempts { get; set; }
+
+    /// <summary>
+    /// Why the last posting failed. Worth surfacing rather than logging: while
+    /// it is set, stock and the general ledger disagree about this movement.
+    /// </summary>
+    [MaxLength(500, ErrorMessage = "Ledger error cannot exceed 500 characters.")]
+    public string? LedgerError { get; set; }
+
     /// <summary>
     /// The issue this movement returns, when it is a return. Without it a
     /// return has no way to find the layers the stock originally left on, and

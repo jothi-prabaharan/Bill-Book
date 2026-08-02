@@ -302,7 +302,7 @@ Schema, API and page all exist for these. Task tracking lives in [`PLAN.md`](./P
 | **Identity** | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
 | **Contacts** | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
 | **Inventory** | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
-| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen |
+| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through |
 | **Banking** | Bank, BankAccount | Each bank account provisions its own ledger account |
 
 `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services — Accounting owns the migration, Contacts, Inventory and Banking map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
@@ -313,7 +313,7 @@ A table per service would also break the screen. Settings › Numbering series i
 
 If this is ever revisited, the thing to preserve is the transaction, not the table.
 
-**Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update and costs them.
+**Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update, costs them, then drains a second queue on the same table that posts them to the ledger.
 
 **Frontend**: `apps/web` and `apps/docs` build. 25 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
 
@@ -324,11 +324,11 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 - **Crm, Sales, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
 - **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
 - **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
-- **The ledger side of stock.** `StockService` moves quantity and cost and stops; `Dr COGS / Cr Inventory` is not posted (PLAN 5.12), so stock and the GL disagree the moment anything is issued
+- **The ledger screen and the manual journal.** `acc.JournalLedger` accepts postings and stock writes to it, but `acc.Journals`/`acc.JournalDetails` do not exist and nothing displays a ledger or a trial balance — so what is posted is visible only in the stock movement history
 
 ### Standing caveats
 
-- **Compiled, tested and migrated as of 2 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 46, every EF snapshot matches its model, and all eleven migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Compiled, tested and migrated as of 2 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 58, every EF snapshot matches its model, and all 29 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
 - **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
 - **Every endpoint is behind a credential and a permission** (PLAN 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.

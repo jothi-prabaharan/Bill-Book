@@ -89,9 +89,9 @@ means adding the Angular Vite plugin. The Angular `unit-test` builder was tried
 and rejected — Angular marks it experimental, and as configured it insists on a
 real browser to run tests that do not need one.
 
-Backend tests live in `backend/tests/` and run with `dotnet test` — 46 of them,
-over the pure logic in `Shared.Kernel`: number composition, drag-ordering and
-the phone attributes.
+Backend tests live in `backend/tests/` and run with `dotnet test` — 58 of them,
+over pure logic only: number composition, drag-ordering and the phone attributes
+in `Shared.Kernel`, and what a stock movement means in the general ledger.
 
 ## Ports
 
@@ -107,7 +107,7 @@ the phone attributes.
 
 ## First run caveats
 
-The backend builds, tests and migrates cleanly as of 2 August 2026: `dotnet build` with zero warnings, 46 tests passing, every EF snapshot matching its model, and all eleven migrations applied to PostgreSQL 16.
+The backend builds, tests and migrates cleanly as of 2 August 2026: `dotnet build` with zero warnings, 58 tests passing, every EF snapshot matching its model, and all 29 migrations applied to PostgreSQL 16.
 
 If a container has no `dotnet`, install it from the distribution repository rather than the install script — some environments deny `dot.net` by egress policy:
 

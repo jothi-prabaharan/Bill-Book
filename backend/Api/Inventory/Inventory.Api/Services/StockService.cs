@@ -144,6 +144,9 @@ public sealed class StockService
                 CostingStatus = x.m.CostingStatus.ToString(),
                 CostedAt = x.m.CostedAt,
                 CostingError = x.m.CostingError,
+                LedgerStatus = x.m.LedgerStatus.ToString(),
+                LedgerPostedAt = x.m.LedgerPostedAt,
+                LedgerError = x.m.LedgerError,
                 Notes = x.m.Notes,
                 RecordedAt = x.m.CreatedAt,
             })
@@ -171,12 +174,29 @@ public sealed class StockService
             .Where(m => m.CostingStatus == CostingStatus.Pending)
             .MinAsync(m => (DateTimeOffset?)m.CreatedAt, ct);
 
+        // The posting queue rides along on the same call. It is the same
+        // question asked one step later — "has this reached the books yet" —
+        // and two round trips to answer it would be two chances for the screen
+        // to show a costing figure and a ledger figure taken a second apart.
+        var ledgerCounts = await _db.StockMovements
+            .Where(m => m.LedgerStatus == LedgerStatus.Pending
+                || m.LedgerStatus == LedgerStatus.InProgress
+                || m.LedgerStatus == LedgerStatus.Failed)
+            .GroupBy(m => m.LedgerStatus)
+            .Select(g => new { Status = g.Key, Count = g.Count() })
+            .ToListAsync(ct);
+
         return new CostingQueueStatus
         {
             Pending = counts.FirstOrDefault(c => c.Status == CostingStatus.Pending)?.Count ?? 0,
             InProgress = counts.FirstOrDefault(c => c.Status == CostingStatus.InProgress)?.Count ?? 0,
             Failed = counts.FirstOrDefault(c => c.Status == CostingStatus.Failed)?.Count ?? 0,
             OldestPendingAt = oldest,
+            LedgerPending =
+                (ledgerCounts.FirstOrDefault(c => c.Status == LedgerStatus.Pending)?.Count ?? 0)
+                + (ledgerCounts.FirstOrDefault(c => c.Status == LedgerStatus.InProgress)?.Count ?? 0),
+            LedgerFailed =
+                ledgerCounts.FirstOrDefault(c => c.Status == LedgerStatus.Failed)?.Count ?? 0,
         };
     }
 

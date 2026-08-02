@@ -72,6 +72,17 @@ public sealed class CostingWorker : BackgroundService
     private int BatchSize =>
         int.TryParse(_config["Costing:BatchSize"], out int size) ? size : 100;
 
+    /// <summary>
+    /// Attempts before a posting is parked. Separate from the costing bound
+    /// because the two fail for unrelated reasons — costing fails on this
+    /// branch's own data, posting fails on another service being reachable.
+    /// </summary>
+    private int LedgerMaxAttempts =>
+        int.TryParse(_config["Ledger:MaxAttempts"], out int attempts) ? attempts : 5;
+
+    private int LedgerBatchSize =>
+        int.TryParse(_config["Ledger:BatchSize"], out int size) ? size : 100;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _log.LogInformation("Costing engine started, polling every {Interval}", PollInterval);
@@ -143,6 +154,48 @@ public sealed class CostingWorker : BackgroundService
         foreach (StockMovement movement in pending)
         {
             await CostOneAsync(db, costing, movement, ct);
+        }
+
+        // Posting runs after costing in the same tick, so a movement costed a
+        // moment ago is posted a moment later rather than a whole poll interval
+        // later. It is a separate pass rather than part of CostOneAsync because
+        // it must not be able to roll back a settled cost: Accounting being
+        // briefly unreachable is not a reason to un-cost a sale.
+        await PostOrganizationAsync(scope, organization, ct);
+    }
+
+    /// <summary>
+    /// Drains this organization's ledger queue. Failures here are contained:
+    /// one organization that cannot post must not stop the others, because the
+    /// usual cause is that organization's own chart of accounts.
+    /// </summary>
+    private async Task PostOrganizationAsync(
+        IServiceScope scope, ActiveOrganization organization, CancellationToken ct)
+    {
+        try
+        {
+            var poster = scope.ServiceProvider.GetRequiredService<StockLedgerPoster>();
+
+            int posted = await poster.PostPendingAsync(LedgerBatchSize, LedgerMaxAttempts, ct);
+
+            if (posted > 0)
+            {
+                _log.LogInformation(
+                    "Posted {Count} stock movement(s) to the ledger for organization {OrgId}",
+                    posted,
+                    organization.OrgId);
+            }
+        }
+        catch (OperationCanceledException) when (ct.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _log.LogError(
+                ex,
+                "Posting stock movements failed for organization {OrgId}",
+                organization.OrgId);
         }
     }
 

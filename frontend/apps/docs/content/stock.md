@@ -81,6 +81,37 @@ Reserving and releasing go through the same conditional statement selling does, 
 
 Nothing reserves anything yet — Sales is what will. Until then every item reads a reserved of nothing and an available equal to its on hand.
 
+## Reaching the accounts
+
+A movement changes what the branch owns, so it also has to reach the general ledger. A sale of stock that cost ₹300 posts:
+
+```
+Dr  Cost of Goods Sold   300
+    Cr  Inventory              300
+```
+
+**This posting is the only reason gross profit exists.** Revenue is Income and cost of goods sold is Expense, and a report can subtract one from the other only because they are separate account types. Without it, the inventory asset would fall with nothing recording what the stock cost.
+
+What each movement means:
+
+| Movement | Debit | Credit |
+|---|---|---|
+| Sale, write-off, shrinkage | Cost of Goods Sold | Inventory |
+| Sales return, count correction upward | Inventory | Cost of Goods Sold |
+| Opening balance, receipt with no document | Inventory | Opening Balance Equity |
+| Transfer between warehouses | *nothing* | |
+| Receipt or return against a purchase | *nothing — the document posts it* | |
+
+Two of those rows are deliberate absences. A **transfer** changes where stock is, not what the branch owns — the pool was never split, so there is nothing to move between accounts. And goods received **against a purchase document** are posted by that document, whose other leg is Accounts Payable: only Purchase knows the vendor and how much of the amount was tax, and posting the stock half here as well would double the inventory asset.
+
+A **receipt with no document behind it** is the business asserting stock it holds, which is what an opening balance is, so it lands the same way. Purchase supersedes that the day it arrives.
+
+**Posting is asynchronous, and one step behind costing.** It cannot happen until what the movement cost has been settled, and it does not happen inside the costing transaction — tying a stock movement's fate to the accounts service being reachable at that instant would either roll back a settled cost or lose the posting it owed. So the movement carries a posting status of its own, shown beside each row in the history, and the queue is again the movements table.
+
+A movement that **cannot** be posted says so rather than going quiet. While anything is in that state, stock and the general ledger disagree, and the stock screen says exactly that. The usual cause is a control account missing from the chart of accounts.
+
+**A restated cost reposts itself.** When a backdated receipt changes what an earlier sale cost, that sale goes back into both queues and posts again — [replacing its ledger rows](#/ledger) rather than adding a second entry.
+
 ## The movement history
 
 Append-only. Rows are never edited or deleted — a mistake is corrected by a movement in the opposite direction, the same way a posted journal is reversed rather than changed.

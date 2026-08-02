@@ -80,15 +80,23 @@ interface StockMovement {
   costingStatus: 'Pending' | 'InProgress' | 'Costed' | 'Skipped' | 'Failed';
   costedAt: string | null;
   costingError: string | null;
+  /** Posting follows costing, so a movement reaches this only once its cost has settled. */
+  ledgerStatus: 'Pending' | 'InProgress' | 'Posted' | 'NotApplicable' | 'Failed';
+  ledgerPostedAt: string | null;
+  ledgerError: string | null;
   notes: string | null;
 }
 
-/** How far behind the costing engine is. */
+/** How far behind the costing engine is, and how far behind the ledger is. */
 interface CostingQueue {
   pending: number;
   inProgress: number;
   failed: number;
   oldestPendingAt: string | null;
+  /** Costed but not yet in the books. Some lag is normal. */
+  ledgerPending: number;
+  /** Gave up posting. While this is above zero, stock and the ledger disagree. */
+  ledgerFailed: number;
 }
 
 interface Unit {
