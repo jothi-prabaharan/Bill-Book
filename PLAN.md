@@ -11,6 +11,8 @@ The order to build things in, and how to tell when each one is actually done.
 3. Tick the box **in the same commit as the work**, the way release notes and docs already work here.
 4. If a task turns out to be wrong or unnecessary, strike it and say why rather than deleting it. The reason is worth more than the tidiness.
 
+> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
+
 ---
 
 ## Where things stand
