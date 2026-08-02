@@ -257,8 +257,14 @@ Independent of the stages above; take any of them whenever.
 - [ ] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
   `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.
 
-- [ ] **5.11 — Three copies of `Reordering`**
+- [x] **5.11 — Three copies of `Reordering`**
   Banking and Inventory each carry their own, and `Shared.Kernel.Ordering` now holds the canonical one that Platform uses. Point the other two at it and delete their copies, along with their local `ReorderRequest`.
+  **It was five, not three, and two of them had already drifted.** Banking and Inventory were verbatim copies of the shared class. Accounting had two hand-rolled implementations — `NumberingSeriesService` and `PaymentTermService` — and Contacts a third, none of them calling `Reordering` at all. Four separate `ReorderRequest` classes on top of that.
+  The drift is in the drop-at-the-top guard: `first > 0` in Contacts and payment terms, `first > 1` everywhere else. With a first row at order 1 the loose version writes `1 / 2 == 0` and the strict one renumbers instead. Nothing visibly breaks either way, which is the point — five copies of the same arithmetic diverged and no screen showed it. All five now run the tested one.
+  `NumberingSeriesService` had also restructured the branches into an `if`/`else if` chain. Behaviourally the same, differently shaped, one more thing to compare by eye when a bug turns up.
+  `ReorderRequest` now lives in `Shared.Kernel` — a deliberate exception to keeping request models in `{Module}.Entity/Models`, on the grounds that three fields with no module-specific meaning were not worth five definitions, two of which had already gone their own way. Noted on the class.
+  Local `OrderGap = 10` constants went too, replaced by `Reordering.Gap`. A new row's spacing and a reordered row's spacing have to be the same number, and there were three private copies of it.
+  Net: ~230 lines removed, and `ReorderingTests` now covers every screen that reorders rather than one.
 
 - [ ] **5.9 — `AzureBlobFileStorage`**
   Left out of 2.1. Needs `Azure.Storage.Blobs` added to `Directory.Packages.props`, which cannot be restored or compiled while the SDK hosts are blocked. `GetDownloadUrlAsync` returning a real SAS URL is the reason to build it — until then every download streams through the API, which works but puts the bytes through the service.

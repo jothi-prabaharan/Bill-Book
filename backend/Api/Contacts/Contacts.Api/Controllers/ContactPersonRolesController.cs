@@ -2,6 +2,7 @@ using Contacts.Api.Services;
 using Contacts.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Ordering;
 
 namespace Contacts.Api.Controllers;
 

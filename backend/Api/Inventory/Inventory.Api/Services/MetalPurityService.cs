@@ -3,6 +3,7 @@ using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Ordering;
 
 namespace Inventory.Api.Services;
 

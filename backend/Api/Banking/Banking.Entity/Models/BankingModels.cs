@@ -114,19 +114,6 @@ public class SaveBankAccountRequest
     public bool IsActive { get; set; } = true;
 }
 
-/// <summary>
-/// A drag-and-drop drop, described by its neighbours rather than a computed
-/// position, so the server picks the value.
-/// </summary>
-public class ReorderRequest
-{
-    public long MovedId { get; set; }
-
-    public long? PreviousId { get; set; }
-
-    public long? NextId { get; set; }
-}
-
 public enum SaveBankOutcome
 {
     Ok = 0,

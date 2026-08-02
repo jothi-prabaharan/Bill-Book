@@ -9,9 +9,10 @@ namespace Shared.Kernel.Tests;
 /// path that rewrites every row rather than one, and it is the path nobody
 /// exercises by hand.
 ///
-/// Three services still carry their own copy of this arithmetic (PLAN 5.11).
-/// These tests are against the canonical one, so they are also the specification
-/// the other two have to match when they are folded in.
+/// There is now one copy, and every drag-ordered screen in the product runs it
+/// (PLAN 5.11). Five services had their own before that, two of which had
+/// drifted on the drop-at-the-top guard below — so these tests are the
+/// specification that stops it happening again, not just coverage.
 /// </summary>
 public class ReorderingTests
 {

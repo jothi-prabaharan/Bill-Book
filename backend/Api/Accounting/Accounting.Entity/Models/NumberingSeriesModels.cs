@@ -113,22 +113,6 @@ public class SetNextNumberRequest
     public long NextNumber { get; set; }
 }
 
-/// <summary>
-/// A drag-and-drop drop, described by its neighbours rather than by a computed
-/// position. The server derives the value, so two people dragging at once cannot
-/// both compute the same one.
-/// </summary>
-public class ReorderRequest
-{
-    public long MovedId { get; set; }
-
-    /// <summary>The row now above the moved row. Null means it moved to the top.</summary>
-    public long? PreviousId { get; set; }
-
-    /// <summary>The row now below the moved row. Null means it moved to the bottom.</summary>
-    public long? NextId { get; set; }
-}
-
 public enum SaveSeriesOutcome
 {
     Ok = 0,

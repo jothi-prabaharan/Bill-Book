@@ -1,6 +1,14 @@
 namespace Shared.Kernel.Ordering;
 
-/// <summary>Where a dragged row was dropped: what it landed between.</summary>
+/// <summary>
+/// Where a dragged row was dropped: what it landed between.
+///
+/// A request model in <c>Shared.Kernel</c>, which is a deliberate exception to
+/// keeping those in <c>{Module}.Entity/Models</c>. Five services had their own
+/// identical copy and two of them had already drifted, which is the failure the
+/// convention exists to prevent rather than an example of it working. Three
+/// fields with no module-specific meaning are not worth five definitions.
+/// </summary>
 public class ReorderRequest
 {
     public long MovedId { get; set; }
@@ -15,10 +23,12 @@ public class ReorderRequest
 /// <summary>
 /// Applies a drag-and-drop drop to a list's display order.
 ///
-/// Shared because every drag-ordered master reorders identically, and each copy
-/// of the gap arithmetic is another chance to get the renumber case wrong. This
-/// is the canonical home; Banking and Inventory still carry their own copies and
-/// should move onto this one.
+/// <b>The only copy.</b> Five services had their own — two verbatim duplicates
+/// and three hand-rolled — and two of them had already drifted on the
+/// drop-at-the-top threshold, so the same drag produced a different order
+/// depending on which screen it happened on. That is what each copy of the gap
+/// arithmetic buys: another chance to get the renumber case wrong, and no way to
+/// notice.
 ///
 /// The moved row normally lands midway between its new neighbours, touching one
 /// row. Only when the neighbours have no room between them is the whole list

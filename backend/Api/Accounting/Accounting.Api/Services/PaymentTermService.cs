@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Ordering;
 
 namespace Accounting.Api.Services;
 
@@ -14,8 +15,6 @@ namespace Accounting.Api.Services;
 /// </summary>
 public sealed class PaymentTermService
 {
-    private const int OrderGap = 10;
-
     private readonly AccountingDbContext _db;
     private readonly TimeProvider _clock;
 
@@ -203,39 +202,18 @@ public sealed class PaymentTermService
 
     public async Task<SaveTermOutcome> ReorderAsync(ReorderRequest request, CancellationToken ct)
     {
-        PaymentTerm? moved = await _db.PaymentTerms
-            .FirstOrDefaultAsync(t => t.PaymentTermId == request.MovedId, ct);
+        List<PaymentTerm> all = await _db.PaymentTerms
+            .OrderBy(t => t.DisplayOrder)
+            .ThenBy(t => t.TermName)
+            .ToListAsync(ct);
 
-        if (moved is null)
+        if (!Reordering.Apply(all, request, t => t.PaymentTermId, t => t.DisplayOrder,
+                (t, order) => t.DisplayOrder = order))
         {
             return SaveTermOutcome.NotFound;
         }
 
-        int? above = await OrderOfAsync(request.PreviousId, ct);
-        int? below = await OrderOfAsync(request.NextId, ct);
-
-        if (above is int a && below is int b && b - a >= 2)
-        {
-            moved.DisplayOrder = a + ((b - a) / 2);
-            await _db.SaveChangesAsync(ct);
-            return SaveTermOutcome.Ok;
-        }
-
-        if (above is int last && below is null)
-        {
-            moved.DisplayOrder = last + OrderGap;
-            await _db.SaveChangesAsync(ct);
-            return SaveTermOutcome.Ok;
-        }
-
-        if (above is null && below is int first && first > 0)
-        {
-            moved.DisplayOrder = first / 2;
-            await _db.SaveChangesAsync(ct);
-            return SaveTermOutcome.Ok;
-        }
-
-        await RenumberAsync(moved, request, ct);
+        await _db.SaveChangesAsync(ct);
         return SaveTermOutcome.Ok;
     }
 
@@ -362,57 +340,10 @@ public sealed class PaymentTermService
         || term.DiscountPercent != request.DiscountPercent
         || term.DiscountDays != request.DiscountDays;
 
-    private async Task RenumberAsync(
-        PaymentTerm moved, ReorderRequest request, CancellationToken ct)
-    {
-        List<PaymentTerm> all = await _db.PaymentTerms
-            .OrderBy(t => t.DisplayOrder)
-            .ThenBy(t => t.TermName)
-            .ToListAsync(ct);
-
-        all.Remove(moved);
-
-        int insertAt;
-        if (request.NextId is long nextId)
-        {
-            int index = all.FindIndex(t => t.PaymentTermId == nextId);
-            insertAt = index < 0 ? all.Count : index;
-        }
-        else if (request.PreviousId is long previousId)
-        {
-            int index = all.FindIndex(t => t.PaymentTermId == previousId);
-            insertAt = index < 0 ? all.Count : index + 1;
-        }
-        else
-        {
-            insertAt = 0;
-        }
-
-        all.Insert(insertAt, moved);
-
-        for (int i = 0; i < all.Count; i++)
-        {
-            all[i].DisplayOrder = (i + 1) * OrderGap;
-        }
-
-        await _db.SaveChangesAsync(ct);
-    }
-
-    private async Task<int?> OrderOfAsync(long? paymentTermId, CancellationToken ct)
-    {
-        if (paymentTermId is not long id)
-        {
-            return null;
-        }
-
-        PaymentTerm? row = await _db.PaymentTerms.FirstOrDefaultAsync(t => t.PaymentTermId == id, ct);
-        return row?.DisplayOrder;
-    }
-
     private async Task<int> NextDisplayOrderAsync(CancellationToken ct)
     {
         int highest = await _db.PaymentTerms.Select(t => (int?)t.DisplayOrder).MaxAsync(ct) ?? 0;
-        return highest + OrderGap;
+        return highest + Reordering.Gap;
     }
 
     private Task<bool> NameTakenAsync(string termName, long? exceptId, CancellationToken ct)

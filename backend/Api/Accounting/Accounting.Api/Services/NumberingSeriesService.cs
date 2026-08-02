@@ -2,6 +2,7 @@ using Accounting.Entity.Models;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
+using Shared.Kernel.Ordering;
 
 namespace Accounting.Api.Services;
 
@@ -14,12 +15,6 @@ namespace Accounting.Api.Services;
 /// </summary>
 public sealed class NumberingSeriesService
 {
-    /// <summary>
-    /// Seeded gap between rows. Wide enough that a drop between two neighbours
-    /// almost always lands in the middle without renumbering anything.
-    /// </summary>
-    private const int OrderGap = 10;
-
     private readonly AccountingDbContext _db;
     private readonly TimeProvider _clock;
     private readonly IFinancialYearProvider _financialYear;
@@ -283,43 +278,18 @@ public sealed class NumberingSeriesService
     /// </summary>
     public async Task<SaveSeriesOutcome> ReorderAsync(ReorderRequest request, CancellationToken ct)
     {
-        NumberingSeries? moved = await _db.NumberingSeries
-            .FirstOrDefaultAsync(s => s.NumberingSeriesId == request.MovedId, ct);
+        List<NumberingSeries> all = await _db.NumberingSeries
+            .OrderBy(s => s.DisplayOrder)
+            .ThenBy(s => s.SeriesName)
+            .ToListAsync(ct);
 
-        if (moved is null)
+        if (!Reordering.Apply(all, request, s => s.NumberingSeriesId, s => s.DisplayOrder,
+                (s, order) => s.DisplayOrder = order))
         {
             return SaveSeriesOutcome.NotFound;
         }
 
-        int? above = await OrderOfAsync(request.PreviousId, ct);
-        int? below = await OrderOfAsync(request.NextId, ct);
-
-        if (above is int a && below is int b)
-        {
-            if (b - a >= 2)
-            {
-                moved.DisplayOrder = a + ((b - a) / 2);
-                await _db.SaveChangesAsync(ct);
-                return SaveSeriesOutcome.Ok;
-            }
-        }
-        else if (below is int onlyBelow && above is null)
-        {
-            if (onlyBelow > 0)
-            {
-                moved.DisplayOrder = onlyBelow / 2;
-                await _db.SaveChangesAsync(ct);
-                return SaveSeriesOutcome.Ok;
-            }
-        }
-        else if (above is int onlyAbove && below is null)
-        {
-            moved.DisplayOrder = onlyAbove + OrderGap;
-            await _db.SaveChangesAsync(ct);
-            return SaveSeriesOutcome.Ok;
-        }
-
-        await RenumberAsync(moved, request, ct);
+        await _db.SaveChangesAsync(ct);
         return SaveSeriesOutcome.Ok;
     }
 
@@ -373,66 +343,13 @@ public sealed class NumberingSeriesService
         return missing.Count;
     }
 
-    /// <summary>
-    /// Rebuilds the order in tens with the moved row in its new slot. Only runs
-    /// when the neighbours have no room between them.
-    /// </summary>
-    private async Task RenumberAsync(
-        NumberingSeries moved, ReorderRequest request, CancellationToken ct)
-    {
-        List<NumberingSeries> all = await _db.NumberingSeries
-            .OrderBy(s => s.DisplayOrder)
-            .ThenBy(s => s.SeriesName)
-            .ToListAsync(ct);
-
-        all.Remove(moved);
-
-        int insertAt = all.Count;
-        if (request.NextId is long nextId)
-        {
-            int index = all.FindIndex(s => s.NumberingSeriesId == nextId);
-            insertAt = index < 0 ? all.Count : index;
-        }
-        else if (request.PreviousId is long previousId)
-        {
-            int index = all.FindIndex(s => s.NumberingSeriesId == previousId);
-            insertAt = index < 0 ? all.Count : index + 1;
-        }
-        else
-        {
-            insertAt = 0;
-        }
-
-        all.Insert(insertAt, moved);
-
-        for (int i = 0; i < all.Count; i++)
-        {
-            all[i].DisplayOrder = (i + 1) * OrderGap;
-        }
-
-        await _db.SaveChangesAsync(ct);
-    }
-
-    private async Task<int?> OrderOfAsync(long? numberingSeriesId, CancellationToken ct)
-    {
-        if (numberingSeriesId is not long id)
-        {
-            return null;
-        }
-
-        NumberingSeries? row = await _db.NumberingSeries
-            .FirstOrDefaultAsync(s => s.NumberingSeriesId == id, ct);
-
-        return row?.DisplayOrder;
-    }
-
     private async Task<int> NextDisplayOrderAsync(CancellationToken ct)
     {
         int highest = await _db.NumberingSeries
             .Select(s => (int?)s.DisplayOrder)
             .MaxAsync(ct) ?? 0;
 
-        return highest + OrderGap;
+        return highest + Reordering.Gap;
     }
 
     private Task<bool> NameTakenAsync(string seriesName, long? exceptId, CancellationToken ct)

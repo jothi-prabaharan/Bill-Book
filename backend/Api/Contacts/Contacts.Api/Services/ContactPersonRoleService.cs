@@ -2,6 +2,7 @@ using Contacts.Entity.Models;
 using Contacts.Entity.TableEntities;
 using Contacts.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Ordering;
 
 namespace Contacts.Api.Services;
 
@@ -12,8 +13,6 @@ namespace Contacts.Api.Services;
 /// </summary>
 public sealed class ContactPersonRoleService
 {
-    private const int OrderGap = 10;
-
     private readonly ContactsDbContext _db;
 
     public ContactPersonRoleService(ContactsDbContext db) => _db = db;
@@ -69,7 +68,7 @@ public sealed class ContactPersonRoleService
         {
             RoleSystemName = null,
             RoleName = request.RoleName.Trim(),
-            DisplayOrder = highest + OrderGap,
+            DisplayOrder = highest + Reordering.Gap,
             IsDefault = false,
             IsSystem = false,
             IsActive = request.IsActive,
@@ -170,39 +169,18 @@ public sealed class ContactPersonRoleService
 
     public async Task<SaveRoleOutcome> ReorderAsync(ReorderRequest request, CancellationToken ct)
     {
-        ContactPersonRole? moved = await _db.ContactPersonRoles
-            .FirstOrDefaultAsync(r => r.ContactPersonRoleId == request.MovedId, ct);
+        List<ContactPersonRole> all = await _db.ContactPersonRoles
+            .OrderBy(r => r.DisplayOrder)
+            .ThenBy(r => r.RoleName)
+            .ToListAsync(ct);
 
-        if (moved is null)
+        if (!Reordering.Apply(all, request, r => r.ContactPersonRoleId, r => r.DisplayOrder,
+                (r, order) => r.DisplayOrder = order))
         {
             return SaveRoleOutcome.NotFound;
         }
 
-        int? above = await OrderOfAsync(request.PreviousId, ct);
-        int? below = await OrderOfAsync(request.NextId, ct);
-
-        if (above is int a && below is int b && b - a >= 2)
-        {
-            moved.DisplayOrder = a + ((b - a) / 2);
-            await _db.SaveChangesAsync(ct);
-            return SaveRoleOutcome.Ok;
-        }
-
-        if (above is int last && below is null)
-        {
-            moved.DisplayOrder = last + OrderGap;
-            await _db.SaveChangesAsync(ct);
-            return SaveRoleOutcome.Ok;
-        }
-
-        if (above is null && below is int first && first > 0)
-        {
-            moved.DisplayOrder = first / 2;
-            await _db.SaveChangesAsync(ct);
-            return SaveRoleOutcome.Ok;
-        }
-
-        await RenumberAsync(moved, request, ct);
+        await _db.SaveChangesAsync(ct);
         return SaveRoleOutcome.Ok;
     }
 
@@ -261,55 +239,6 @@ public sealed class ContactPersonRoleService
         _db.ContactPersonRoles.AddRange(missing);
         await _db.SaveChangesAsync(ct);
         return missing.Count;
-    }
-
-    private async Task RenumberAsync(
-        ContactPersonRole moved, ReorderRequest request, CancellationToken ct)
-    {
-        List<ContactPersonRole> all = await _db.ContactPersonRoles
-            .OrderBy(r => r.DisplayOrder)
-            .ThenBy(r => r.RoleName)
-            .ToListAsync(ct);
-
-        all.Remove(moved);
-
-        int insertAt;
-        if (request.NextId is long nextId)
-        {
-            int index = all.FindIndex(r => r.ContactPersonRoleId == nextId);
-            insertAt = index < 0 ? all.Count : index;
-        }
-        else if (request.PreviousId is long previousId)
-        {
-            int index = all.FindIndex(r => r.ContactPersonRoleId == previousId);
-            insertAt = index < 0 ? all.Count : index + 1;
-        }
-        else
-        {
-            insertAt = 0;
-        }
-
-        all.Insert(insertAt, moved);
-
-        for (int i = 0; i < all.Count; i++)
-        {
-            all[i].DisplayOrder = (i + 1) * OrderGap;
-        }
-
-        await _db.SaveChangesAsync(ct);
-    }
-
-    private async Task<int?> OrderOfAsync(long? roleId, CancellationToken ct)
-    {
-        if (roleId is not long id)
-        {
-            return null;
-        }
-
-        ContactPersonRole? row = await _db.ContactPersonRoles
-            .FirstOrDefaultAsync(r => r.ContactPersonRoleId == id, ct);
-
-        return row?.DisplayOrder;
     }
 
     private Task<bool> NameTakenAsync(string roleName, long? exceptId, CancellationToken ct)

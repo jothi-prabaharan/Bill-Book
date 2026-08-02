@@ -2,6 +2,7 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Ordering;
 
 namespace Inventory.Api.Controllers;
 
