@@ -44,6 +44,13 @@ public class PlatformDbContext : DbContext
             b.HasIndex(e => new { e.CustomerId, e.OrgCode }).IsUnique();
             b.HasIndex(e => e.CustomerId);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+
+            // Read on every login, alongside the customer's licence. Filtered,
+            // because most branches have no date of their own and an index over
+            // mostly-null rows is bigger than the answer it gives.
+            b.HasIndex(e => e.ExpiryDate)
+                .HasFilter("\"ExpiryDate\" IS NOT NULL")
+                .HasDatabaseName("IX_Organizations_ExpiryDate");
         });
 
         modelBuilder.Entity<CustomerDatabase>(b =>

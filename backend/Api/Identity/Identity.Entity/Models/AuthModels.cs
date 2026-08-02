@@ -55,7 +55,18 @@ public class TokenResponse
     /// <summary>Trial / Active / Expired — the shell gates on this.</summary>
     public string LicenseStatus { get; set; } = null!;
 
+    /// <summary>
+    /// When access to the branch just selected ends — the earlier of the
+    /// customer's licence expiry and the branch's own.
+    /// </summary>
     public DateOnly? LicenseExpiry { get; set; }
+
+    /// <summary>
+    /// True when it is the branch's date. The expired page reads it to choose
+    /// between asking the customer to renew and telling them the branch itself
+    /// has closed.
+    /// </summary>
+    public bool ExpiryIsBranchLevel { get; set; }
 }
 
 // ---- Forgot password (OTP) ----------------------------------------------

@@ -30,4 +30,7 @@ public sealed class AccessTokenRequest
     public required string LicenseStatus { get; init; }
 
     public DateOnly? LicenseExpiry { get; init; }
+
+    /// <summary>Whether that date is the branch's own rather than the licence's.</summary>
+    public bool ExpiryIsBranchLevel { get; init; }
 }

@@ -97,6 +97,12 @@ public sealed class SignupService
             Cin = request.Cin,
             UdyamNumber = request.UdyamNumber,
             Status = TenantStatus.Provisioning,
+            // The branch carries its own copy of when access ends, so the login
+            // check has a date on the organization itself rather than only on
+            // the account above it. On a new customer the two are the same by
+            // construction; they only diverge if a head office later winds this
+            // branch down early.
+            ExpiryDate = license.ExpiryDate,
             CountryId = request.CountryId,
             StateId = request.StateId,
             City = request.City,

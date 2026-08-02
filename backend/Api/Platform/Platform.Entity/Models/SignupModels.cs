@@ -110,7 +110,19 @@ public class OrgContextResponse
 
     public string LicenseStatus { get; set; } = null!;
 
+    /// <summary>
+    /// When access to <em>this branch</em> ends — the earlier of the customer's
+    /// licence expiry and the branch's own, not the licence date alone. It is
+    /// the date the user is shown, so it has to be the one being enforced.
+    /// </summary>
     public DateOnly? LicenseExpiry { get; set; }
+
+    /// <summary>
+    /// True when the branch's own date is what ends access, rather than the
+    /// customer's licence. The two need different words on screen: one asks the
+    /// customer to renew, the other tells them to talk to their head office.
+    /// </summary>
+    public bool ExpiryIsBranchLevel { get; set; }
 
     public int MaxUsers { get; set; }
 

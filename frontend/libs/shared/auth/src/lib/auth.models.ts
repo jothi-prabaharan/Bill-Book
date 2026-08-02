@@ -17,7 +17,17 @@ export interface TokenResponse {
   accessExpiresInSeconds: number;
   /** Trial | Active | Expired — the shell gates on this. */
   licenseStatus: string;
+  /**
+   * When access to the branch just selected ends — the earlier of the account's
+   * licence expiry and the branch's own, so it is the date being enforced.
+   */
   licenseExpiry: string | null;
+  /**
+   * True when it is the branch's own date rather than the account's licence.
+   * The two need different words: one asks the customer to renew, the other
+   * tells them this branch has closed and the account is fine.
+   */
+  expiryIsBranchLevel: boolean;
 }
 
 export interface SignupRequest {

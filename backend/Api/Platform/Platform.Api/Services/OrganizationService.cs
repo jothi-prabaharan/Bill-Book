@@ -94,10 +94,12 @@ public sealed class OrganizationService
 
         int existing = await _db.Organizations.CountAsync(o => o.CustomerId == customerId, ct);
 
-        int allowed = await _db.Licenses
+        var licence = await _db.Licenses
             .Where(l => l.CustomerId == customerId)
-            .Select(l => l.MaxOrganizations)
+            .Select(l => new { l.MaxOrganizations, l.ExpiryDate })
             .FirstOrDefaultAsync(ct);
+
+        int allowed = licence?.MaxOrganizations ?? 0;
 
         // Stored and enforced by nothing until now. A trial allows one branch,
         // which is why this is checked rather than assumed.
@@ -114,6 +116,12 @@ public sealed class OrganizationService
             // Provisioning until its master data is written. A branch nobody can
             // use is better than one that looks ready and cannot save an item.
             Status = TenantStatus.Provisioning,
+            // Starts where the account's licence ends. A branch is never given
+            // longer than the head office has — this only ever brings the date
+            // forward, and taking the licence's date is what makes that true on
+            // day one. Not settable from the request: a customer extending their
+            // own branch would be extending their own licence.
+            ExpiryDate = licence?.ExpiryDate,
         };
 
         Apply(organization, request);

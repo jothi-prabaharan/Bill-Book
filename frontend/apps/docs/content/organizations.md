@@ -58,4 +58,16 @@ The number of branches allowed comes from your **licence** — a trial allows on
 
 **The first branch cannot be suspended.** The account would have nowhere to sign in to.
 
+## When a branch's access ends
+
+Every branch carries its **own end date**, set when the branch is created and taken from the account's licence at that moment. It is checked at every sign-in, alongside the licence.
+
+It is a **cap, not a replacement**. Whichever of the two ends first is the one that applies, so a branch can never outlive the licence paying for it — and a branch can be wound down early without touching the account everyone else works in. A seasonal counter, a franchise leaving, a location closing: the branch stops and nothing else does.
+
+Signing in still works. You land on a page saying **this branch has closed**, with the date, and you sign out and pick another branch — the switcher lives on a settings page, and settings pages are behind the same check that stopped you. The wording is deliberately different from an expired licence: your account is fine, so there is nothing to renew and nobody should be sent to a billing page.
+
+Branches created before this existed have no end date of their own, and follow the account's licence exactly as they always did.
+
+> **Renewing the licence does not move the branch dates.** Each branch holds its own copy, taken when it was created. Extending the licence without extending the branches leaves them closed under an account that is perfectly valid. There is no renewal screen yet; when there is, it has to move both.
+
 Branches are never deleted. Their documents, ledger rows and stock all live under the branch's id, and removing it would leave that history belonging to nothing. Suspending takes a branch out of use and leaves everything intact.

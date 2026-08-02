@@ -48,6 +48,13 @@ public sealed class JwtTokenService : ITokenService
             claims.Add(new Claim("license_expiry", expiry.ToString("yyyy-MM-dd")));
         }
 
+        // Only when true. A claim that says "false" on every ordinary token is
+        // bytes on every request for the rare case.
+        if (request.ExpiryIsBranchLevel)
+        {
+            claims.Add(new Claim("expiry_scope", "branch"));
+        }
+
         foreach (string permission in request.Permissions)
         {
             claims.Add(new Claim("permission", permission));

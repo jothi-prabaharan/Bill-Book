@@ -15,6 +15,8 @@ import {
 const ACCESS_KEY = 'bb.access';
 const REFRESH_KEY = 'bb.refresh';
 const LICENSE_KEY = 'bb.license';
+const EXPIRY_KEY = 'bb.licenseExpiry';
+const EXPIRY_SCOPE_KEY = 'bb.expiryScope';
 const ORG_KEY = 'bb.orgId';
 
 @Injectable({ providedIn: 'root' })
@@ -27,6 +29,17 @@ export class AuthService {
 
   readonly accessToken = signal<string | null>(localStorage.getItem(ACCESS_KEY));
   readonly licenseStatus = signal<string | null>(localStorage.getItem(LICENSE_KEY));
+
+  /** The date access to the current branch ends, as an ISO date or null. */
+  readonly licenseExpiry = signal<string | null>(localStorage.getItem(EXPIRY_KEY));
+
+  /**
+   * Whether that date is the branch's own rather than the account's licence.
+   * Only ever narrows what the expired page says; nothing is gated on it.
+   */
+  readonly expiryIsBranchLevel = signal<boolean>(
+    localStorage.getItem(EXPIRY_SCOPE_KEY) === 'branch',
+  );
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
   readonly isLicenseExpired = computed(() => this.licenseStatus() === 'Expired');
@@ -51,10 +64,9 @@ export class AuthService {
     );
     localStorage.setItem(ACCESS_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
-    localStorage.setItem(LICENSE_KEY, response.licenseStatus);
     localStorage.setItem(ORG_KEY, orgId);
+    this.storeLicense(response);
     this.accessToken.set(response.accessToken);
-    this.licenseStatus.set(response.licenseStatus);
     this.preAuthToken.set(null);
     return response;
   }
@@ -76,10 +88,9 @@ export class AuthService {
 
     localStorage.setItem(ACCESS_KEY, response.accessToken);
     localStorage.setItem(REFRESH_KEY, response.refreshToken);
-    localStorage.setItem(LICENSE_KEY, response.licenseStatus);
     localStorage.setItem(ORG_KEY, orgId);
+    this.storeLicense(response);
     this.accessToken.set(response.accessToken);
-    this.licenseStatus.set(response.licenseStatus);
     return response;
   }
 
@@ -87,9 +98,37 @@ export class AuthService {
     localStorage.removeItem(ACCESS_KEY);
     localStorage.removeItem(REFRESH_KEY);
     localStorage.removeItem(LICENSE_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
+    localStorage.removeItem(EXPIRY_SCOPE_KEY);
     this.accessToken.set(null);
     this.licenseStatus.set(null);
+    this.licenseExpiry.set(null);
+    this.expiryIsBranchLevel.set(false);
     this.organizations.set([]);
+  }
+
+  /**
+   * Licence state travels with the branch, not with the user, so switching
+   * branch replaces all three values rather than merging them — an expired
+   * Chennai must not leave its date showing after moving to a live Bangalore.
+   */
+  private storeLicense(response: TokenResponse): void {
+    localStorage.setItem(LICENSE_KEY, response.licenseStatus);
+    this.licenseStatus.set(response.licenseStatus);
+
+    if (response.licenseExpiry) {
+      localStorage.setItem(EXPIRY_KEY, response.licenseExpiry);
+    } else {
+      localStorage.removeItem(EXPIRY_KEY);
+    }
+    this.licenseExpiry.set(response.licenseExpiry ?? null);
+
+    if (response.expiryIsBranchLevel) {
+      localStorage.setItem(EXPIRY_SCOPE_KEY, 'branch');
+    } else {
+      localStorage.removeItem(EXPIRY_SCOPE_KEY);
+    }
+    this.expiryIsBranchLevel.set(response.expiryIsBranchLevel === true);
   }
 
   // ---- Forgot password (OTP) ----------------------------------------------

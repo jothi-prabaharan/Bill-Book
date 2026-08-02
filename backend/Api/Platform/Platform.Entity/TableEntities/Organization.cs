@@ -67,6 +67,27 @@ public class Organization : AuditableEntity
 
     public TenantStatus Status { get; set; } = TenantStatus.Provisioning;
 
+    /// <summary>
+    /// When this branch's own access ends. Set from the customer's licence when
+    /// the branch is created, and checked at every login.
+    ///
+    /// It is a <b>cap, not a replacement</b>. The customer's licence still
+    /// governs; this can only bring the date forward, never push it out. That is
+    /// what lets a head office wind one branch down — a seasonal counter, a
+    /// franchise leaving — without touching the account everyone else works in.
+    ///
+    /// Null means no branch-level limit, and the licence alone decides. Every
+    /// branch created before this column existed is null, so nothing about them
+    /// changed.
+    ///
+    /// <b>A renewal has to move this too.</b> The date is copied at creation, so
+    /// extending the licence without extending the branches leaves them expired
+    /// under a licence that is perfectly valid — and the login would refuse with
+    /// nothing on the licence to explain it. There is no renewal endpoint yet;
+    /// whoever writes one must handle this. See PLAN 5.16.
+    /// </summary>
+    public DateOnly? ExpiryDate { get; set; }
+
     [MaxLength(200, ErrorMessage = "Address line 1 cannot exceed 200 characters.")]
     public string? AddressLine1 { get; set; }
 

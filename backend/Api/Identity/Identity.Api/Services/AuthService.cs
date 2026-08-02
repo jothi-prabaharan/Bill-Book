@@ -169,6 +169,7 @@ public sealed class AuthService
             Permissions = permissions,
             LicenseStatus = ctx.LicenseStatus,
             LicenseExpiry = ctx.LicenseExpiry,
+            ExpiryIsBranchLevel = ctx.ExpiryIsBranchLevel,
         });
 
         (string refreshToken, string hash, DateTimeOffset expiresAt) = _tokens.CreateRefreshToken();
@@ -189,6 +190,7 @@ public sealed class AuthService
             AccessExpiresInSeconds = 15 * 60,
             LicenseStatus = ctx.LicenseStatus,
             LicenseExpiry = ctx.LicenseExpiry,
+            ExpiryIsBranchLevel = ctx.ExpiryIsBranchLevel,
         };
     }
 

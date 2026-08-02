@@ -116,6 +116,77 @@ describe('AuthService', () => {
     });
   });
 
+  describe('branch expiry', () => {
+    const tokenFor = (
+      licenseStatus: string,
+      licenseExpiry: string | null,
+      expiryIsBranchLevel: boolean,
+    ) => ({
+      accessToken: 'access',
+      refreshToken: 'refresh',
+      licenseStatus,
+      licenseExpiry,
+      expiryIsBranchLevel,
+    });
+
+    const selectInto = async (token: ReturnType<typeof tokenFor>): Promise<void> => {
+      auth.preAuthToken.set('pre-auth');
+      const select = auth.selectOrganization('org-1');
+      httpMock.expectOne('/api/auth/select-organization').flush(token);
+      await select;
+    };
+
+    it('keeps the effective expiry date and whose date it is', async () => {
+      await selectInto(tokenFor('Expired', '2026-07-31', true));
+
+      expect(auth.licenseExpiry()).toBe('2026-07-31');
+      expect(auth.expiryIsBranchLevel()).toBe(true);
+    });
+
+    it('reports an account-level expiry as not branch-level', async () => {
+      await selectInto(tokenFor('Expired', '2026-07-31', false));
+
+      expect(auth.expiryIsBranchLevel()).toBe(false);
+    });
+
+    it('clears the branch flag when switching to a branch that is fine', async () => {
+      await selectInto(tokenFor('Expired', '2026-07-31', true));
+
+      const move = auth.switchOrganization('org-2');
+      httpMock
+        .expectOne('/api/auth/switch-organization')
+        .flush(tokenFor('Active', '2027-03-31', false));
+      await move;
+
+      // Licence state belongs to the branch, not the user. A leftover flag here
+      // would tell someone working in a live branch that it had closed.
+      expect(auth.expiryIsBranchLevel()).toBe(false);
+      expect(auth.licenseExpiry()).toBe('2027-03-31');
+      expect(auth.isLicenseExpired()).toBe(false);
+      expect(localStorage.getItem('bb.expiryScope')).toBeNull();
+    });
+
+    it('leaves nothing behind on logout', async () => {
+      await selectInto(tokenFor('Expired', '2026-07-31', true));
+
+      auth.logout();
+
+      expect(auth.licenseExpiry()).toBeNull();
+      expect(auth.expiryIsBranchLevel()).toBe(false);
+      expect(localStorage.getItem('bb.licenseExpiry')).toBeNull();
+      expect(localStorage.getItem('bb.expiryScope')).toBeNull();
+    });
+
+    it('survives a reload', async () => {
+      await selectInto(tokenFor('Expired', '2026-07-31', true));
+
+      configure();
+
+      expect(auth.licenseExpiry()).toBe('2026-07-31');
+      expect(auth.expiryIsBranchLevel()).toBe(true);
+    });
+  });
+
   describe('restoring a session', () => {
     it('reads the token and licence back out of storage on construction', () => {
       localStorage.setItem('bb.access', 'stored-token');

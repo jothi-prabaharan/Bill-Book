@@ -1,8 +1,32 @@
 <div class="auth-card">
-  <h1>Your trial has expired</h1>
-  <p>Your data is safe, but access is paused until you renew.</p>
-  <div class="actions">
-    <button type="button" (click)="renew()">Renew / Upgrade</button>
-    <button type="button" class="link" (click)="logout()">Sign out</button>
-  </div>
+  @if (branchEnded()) {
+    <h1>This branch has closed</h1>
+    <p>
+      @if (endedOn(); as ended) {
+        Access to this branch ended on {{ ended }}. Your account is unaffected —
+        your other branches carry on as normal.
+      } @else {
+        Access to this branch has ended. Your account is unaffected — your other
+        branches carry on as normal.
+      }
+    </p>
+    <p>Your data is safe. Your head office can reopen the branch.</p>
+    <div class="actions">
+      <button type="button" (click)="logout()">Sign out and choose another branch</button>
+    </div>
+  } @else {
+    <h1>Your trial has expired</h1>
+    <p>
+      @if (endedOn(); as ended) {
+        Your licence ended on {{ ended }}. Your data is safe, but access is
+        paused until you renew.
+      } @else {
+        Your data is safe, but access is paused until you renew.
+      }
+    </p>
+    <div class="actions">
+      <button type="button" (click)="renew()">Renew / Upgrade</button>
+      <button type="button" class="link" (click)="logout()">Sign out</button>
+    </div>
+  }
 </div>
