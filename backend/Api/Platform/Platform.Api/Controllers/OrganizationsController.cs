@@ -230,8 +230,8 @@ public sealed class OrganizationsController : ControllerBase
             {
                 Message = "One of the selected options is not a recognised value.",
             }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError),
-
             SaveOrganizationOutcome.CreatedOnTrial => NoContent(),
+
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
         };
 }

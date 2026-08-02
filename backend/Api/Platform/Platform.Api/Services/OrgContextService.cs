@@ -103,7 +103,7 @@ public sealed class OrgContextService
             // "your licence has lapsed, renew it" from "this branch was wound
             // down, talk to your head office" — and telling a paying customer
             // to renew a licence that is perfectly valid is the worse message.
-            ExpiryIsBranchLevel = row.OrgExpiryDate is DateOnly d && d < row.ExpiryDate,
+            ExpiryIsBranchLevel = row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
             MaxUsers = row.MaxUsers,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
         };

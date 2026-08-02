@@ -197,10 +197,10 @@ public sealed class CostingWorker : BackgroundService
 
         try
         {
-            Entity.Models.StockOutcome outcome =
+            Inventory.Entity.Models.StockOutcome outcome =
                 await costing.CostMovementAsync(item, movement, ct);
 
-            if (outcome != Entity.Models.StockOutcome.Ok)
+            if (outcome != Inventory.Entity.Models.StockOutcome.Ok)
             {
                 await tx.RollbackAsync(ct);
                 await ParkAsync(db, movement, $"Costing returned {outcome}.", ct);

@@ -22,6 +22,7 @@
          removed in Directory.Build.targets — read the note there before touching this pin. -->
     <PackageVersion Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.0" />
     <PackageVersion Include="Yarp.ReverseProxy" Version="2.3.0" />
     <PackageVersion Include="BCrypt.Net-Next" Version="4.0.3" />
     <PackageVersion Include="Azure.Identity" Version="1.13.1" />

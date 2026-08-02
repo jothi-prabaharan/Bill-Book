@@ -11,7 +11,13 @@ namespace Shared.Kernel.Validation;
 /// </summary>
 public sealed class LandlineAttribute : RegularExpressionAttribute
 {
-    public const string Pattern = @"^\+?\d{2,}[\s\-]?\d{3,}$";
+    /// <summary>
+    /// The regex, exposed for tests. <c>new</c> because
+    /// <see cref="RegularExpressionAttribute.Pattern"/> is an instance property
+    /// of the same name — hiding it is intended, and the base value is the same
+    /// string, since it is what the constructor passes up.
+    /// </summary>
+    public new const string Pattern = @"^\+?\d{2,}[\s\-]?\d{3,}$";
 
     public LandlineAttribute()
         : base(Pattern) =>

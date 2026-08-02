@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Mvc;
 namespace Identity.Api.Controllers;
 
 [ApiController]
-[AllowAnonymous]
 [Route("api/auth")]
 public sealed class AuthController : ControllerBase
 {
@@ -22,6 +21,7 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Step one: credentials to a pre-auth token plus the accessible organizations.</summary>
+    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
@@ -52,6 +52,7 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Step two: exchange the pre-auth token + chosen org for access and refresh tokens.</summary>
+    [AllowAnonymous]
     [HttpPost("select-organization")]
     public async Task<IActionResult> SelectOrganization(
         [FromBody] SelectOrganizationRequest request, CancellationToken ct)
@@ -152,6 +153,7 @@ public sealed class AuthController : ControllerBase
             : null;
 
     /// <summary>Always returns the same 200, whether or not the account exists.</summary>
+    [AllowAnonymous]
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequest request, CancellationToken ct)
     {
@@ -162,6 +164,7 @@ public sealed class AuthController : ControllerBase
         });
     }
 
+    [AllowAnonymous]
     [HttpPost("verify-otp")]
     public async Task<IActionResult> VerifyOtp([FromBody] VerifyOtpRequest request, CancellationToken ct)
     {
@@ -171,6 +174,7 @@ public sealed class AuthController : ControllerBase
             : BadRequest(new MessageResponse { Message = "Invalid or expired code." });
     }
 
+    [AllowAnonymous]
     [HttpPost("reset-password")]
     public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest request, CancellationToken ct)
     {
@@ -181,6 +185,7 @@ public sealed class AuthController : ControllerBase
     }
 
     /// <summary>Completes an invitation from the emailed link.</summary>
+    [AllowAnonymous]
     [HttpPost("accept-invitation")]
     public async Task<IActionResult> AcceptInvitation(
         [FromBody] AcceptInvitationRequest request, CancellationToken ct)
