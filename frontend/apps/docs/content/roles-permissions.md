@@ -43,6 +43,12 @@ The module is the one that **owns the data**, not the menu the screen sits under
 
 Reading asks for `.view`, changing asks for `.edit`, and deleting asks for `.delete`. Country and state lists, currencies and the HSN/SAC master are reference data read by every module and ask only that you are signed in.
 
+## What you see
+
+The menu shows only what you can open. A role without `inventory.view` has no Inventory entry, and a bookmark or a typed address for one of its screens lands on Home rather than on a page that fails as it loads.
+
+That is presentation, not protection. The permissions are read out of your sign-in token, which lives in your browser, so it is not something to rely on — every request is checked again on the server against a signed copy of the same claims, and that check is the one that decides. Hiding the menu entry is about not offering what you cannot have.
+
 > Worth knowing when you assign these: Accountant and Sales can approve and void documents in their own modules, and can see every user's records there. If you need someone who can enter but not approve, create a customer role rather than using these.
 
 ## What a system role allows

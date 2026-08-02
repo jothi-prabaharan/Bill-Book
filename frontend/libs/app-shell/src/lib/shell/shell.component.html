@@ -1,6 +1,6 @@
 <div class="shell">
   <nav class="rail" aria-label="Modules">
-    @for (item of nav; track item.path) {
+    @for (item of nav(); track item.path) {
       <a [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
         <span class="icon">{{ item.icon }}</span>
         <span class="label">{{ item.label }}</span>
@@ -15,7 +15,7 @@
   </main>
 
   <nav class="tabs" aria-label="Modules">
-    @for (item of nav.slice(0, 4); track item.path) {
+    @for (item of nav().slice(0, 4); track item.path) {
       <a [routerLink]="item.path" routerLinkActive="active">
         <span class="icon">{{ item.icon }}</span>
         <span class="label">{{ item.label }}</span>
@@ -34,7 +34,7 @@
     <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
     <div class="more-sheet" (click)="moreOpen = false">
       <div class="sheet-body">
-        @for (item of nav.slice(4); track item.path) {
+        @for (item of nav().slice(4); track item.path) {
           <a [routerLink]="item.path" (click)="moreOpen = false">
             <span class="icon">{{ item.icon }}</span> {{ item.label }}
           </a>

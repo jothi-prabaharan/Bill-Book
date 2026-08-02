@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { readPermissions } from './token-claims';
 import {
   AccessibleOrg,
   Country,
@@ -43,6 +44,26 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => this.accessToken() !== null);
   readonly isLicenseExpired = computed(() => this.licenseStatus() === 'Expired');
+
+  /**
+   * What this user may do in the branch they are signed in to, read off the
+   * token rather than stored separately — switching branch replaces the token,
+   * so the permissions follow without anything having to remember to clear them.
+   */
+  readonly permissions = computed(() => new Set(readPermissions(this.accessToken())));
+
+  /** Whether the user holds a permission, by its full code. */
+  has(permission: string): boolean {
+    return this.permissions().has(permission);
+  }
+
+  /**
+   * Whether the user can see a module at all. The menu asks this; anything
+   * finer belongs to the screen, and the server decides either way.
+   */
+  canView(module: string): boolean {
+    return this.has(`${module}.view`);
+  }
 
   async login(email: string, password: string): Promise<LoginResponse> {
     const response = await firstValueFrom(

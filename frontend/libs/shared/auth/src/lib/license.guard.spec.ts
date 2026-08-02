@@ -10,12 +10,12 @@ import {
 } from '@angular/router';
 import { describe, beforeEach, expect, it } from 'vitest';
 import { AuthService } from './auth.service';
-import { authGuard, licenseActiveGuard } from './license.guard';
+import { authGuard, licenseActiveGuard, permissionGuard } from './license.guard';
 
 /**
- * These two guards decide whether a page is reachable, so a mistake in either
- * is a page that opens when it should not. They are three lines each, which is
- * exactly why they are worth a test: nobody re-reads three lines.
+ * These three guards decide whether a page is reachable, so a mistake in any of
+ * them is a page that opens when it should not. They are a few lines each, which
+ * is exactly why they are worth a test: nobody re-reads a few lines.
  *
  * The server enforces both rules independently — this is the UX half only — but
  * a guard that lets an expired licence through means the user sees a screen
@@ -33,6 +33,24 @@ describe('route guards', () => {
 
   const run = (guard: CanActivateFn): boolean | UrlTree =>
     TestBed.runInInjectionContext(() => guard(route, state)) as boolean | UrlTree;
+
+  /** An access token whose payload carries the given permissions. */
+  const tokenWith = (permissions: string[]): string => {
+    const json = JSON.stringify({ permission: permissions });
+    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+    return `header.${b64}.signature`;
+  };
+
+  const runWithData = (data: Record<string, unknown>): boolean | UrlTree => {
+    const withData = new ActivatedRouteSnapshot();
+    withData.data = data;
+    return TestBed.runInInjectionContext(() =>
+      permissionGuard(withData, state),
+    ) as boolean | UrlTree;
+  };
 
   beforeEach(() => {
     localStorage.clear();
@@ -99,6 +117,44 @@ describe('route guards', () => {
       auth.licenseStatus.set(null);
 
       expect(run(licenseActiveGuard)).toBe(true);
+    });
+  });
+
+  describe('permissionGuard', () => {
+    it('lets a route through when the user holds its permission', () => {
+      auth.accessToken.set(tokenWith(['inventory.view', 'inventory.edit']));
+
+      expect(runWithData({ permission: 'inventory.view' })).toBe(true);
+    });
+
+    it('sends a user without the permission Home rather than to a broken screen', () => {
+      auth.accessToken.set(tokenWith(['contacts.view']));
+
+      const result = runWithData({ permission: 'settings.view' });
+
+      expect(result).toBeInstanceOf(UrlTree);
+      expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/dashboard');
+    });
+
+    it('allows a route that declares no permission', () => {
+      // Home declares none, and every role has to be able to land somewhere.
+      auth.accessToken.set(tokenWith([]));
+
+      expect(runWithData({})).toBe(true);
+    });
+
+    it('does not treat a permission in another module as a match', () => {
+      // inventory.view must not open a settings screen. Obvious, and exactly
+      // the kind of thing a prefix comparison would get wrong.
+      auth.accessToken.set(tokenWith(['inventory.view']));
+
+      expect(runWithData({ permission: 'settings.view' })).toBeInstanceOf(UrlTree);
+    });
+
+    it('does not let .view stand in for .edit', () => {
+      auth.accessToken.set(tokenWith(['accounting.view']));
+
+      expect(runWithData({ permission: 'accounting.edit' })).toBeInstanceOf(UrlTree);
     });
   });
 });
