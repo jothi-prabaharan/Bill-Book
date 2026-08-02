@@ -19,9 +19,9 @@ Verified on 2 August 2026, by reading the repository rather than from memory.
 
 **Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 25 pages, and every endpoint behind an authentication and permission check.
 
-**The one fact that colours everything below**: the backend has never been compiled. There has never been a .NET SDK available to it, so every service, every migration and every Designer file is unverified against a build. The frontend is not in that position any more — `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green.
+**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 46 tests pass, every EF snapshot matches its model, and all eleven migrations apply to a real PostgreSQL. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
-**Stage 5 is finished apart from what cannot move here.** What is left is blocked by the SDK (0.2, 0.4, 0.5, 5.9), waiting for Sales to exist (5.12, 5.13, and the journal half of 4.4), or an owner's decision (5.14, 5.16). The next substantial build is **Sales** — it is the next thing on the Phase 1 roadmap and it is what unblocks the two stock items.
+**Nothing is blocked by tooling any more.** What is left waits for Sales to exist (5.12, 5.13, and the journal half of 4.4) or is an owner's decision (5.14, 5.16, 5.19). The next substantial build is **Sales** — the next thing on the Phase 1 roadmap, and what unblocks the two stock items. `sal.*` is still marked *not designed* in SPEC, so it starts with a schema.
 
 ---
 
@@ -34,7 +34,11 @@ Until this stage is finished, every claim about this repository is "written", no
   *Done when*: a fresh session can run `dotnet --version` and `nx --version` without setup.
   **Partly blocked** — the npm half is verified. The SDK half cannot be verified here: see 0.2.
 
-- [ ] **0.2 — First `dotnet build` on the solution, and fix what it finds** ⛔ **BLOCKED**
+- [x] **0.2 — First `dotnet build` on the solution, and fix what it finds**
+  **The block was never real.** The egress policy denies `dot.net` and `builds.dotnet.microsoft.com` — the install script's CDN — but the distribution repository carries `dotnet-sdk-10.0` and NuGet answers 200. The index was stale; `apt-get update` then `apt-get install dotnet-sdk-10.0` works. The denied hosts were never contacted, so nothing was worked around. Every session since the project began has reported the backend as uncompilable on the strength of one failing download.
+  **Eight defects in code that had never been compiled**, the worst of them mine: the class-level `[AllowAnonymous]` added for default-deny silently overrode the per-action `[Authorize]` on `GET organizations` and `POST switch-organization`, so both were callable with no token. ASP0026 caught it.
+  The rest: a `PackageReference` with no `PackageVersion`; `LandlineAttribute.Pattern` hiding its base without `new`; `DrugSchedule` referenced by an entity, a service, a check constraint and the item form while never existing as a type; a pattern variable colliding with a query range variable, because pattern variables scope to the method; an arm after the catch-all that could never match; `Entity.Models` used from a namespace where it does not resolve; and seven scaffolds with no entry point.
+  Builds with **zero warnings** under `TreatWarningsAsErrors`, and `Shared.Kernel.Tests` passed 46/46 on its first ever run.
   The egress policy for these sessions denies `dot.net` and `builds.dotnet.microsoft.com` with a 403, so the SDK cannot be installed and the backend cannot be compiled. The proxy README says to report a blocked host rather than route around it.
   **To unblock**: have those two hosts allowed for this repository's sessions, then start a new session — the hook installs the SDK on its own from that point.
   Once it runs, expect EF Core 10 package versions to be wrong (`Directory.Packages.props` says as much), `Identity` / `Platform` to collide with framework namespaces, and `TreatWarningsAsErrors` to turn every warning into a failure.
@@ -44,11 +48,17 @@ Until this stage is finished, every claim about this repository is "written", no
   Done. 1167 packages install, `@angular/cdk` resolves at 20.2.14, and both apps build. The eleven pages are in the bundle — confirmed by grepping the emitted lazy chunks for their content, not just by the build exiting zero.
   *Done when*: `nx build web` and `nx build docs` both succeed.
 
-- [ ] **0.4 — Regenerate the hand-written migrations with `dotnet ef` and diff them** ⛔ blocked by 0.2
+- [x] **0.4 — Regenerate the hand-written migrations with `dotnet ef` and diff them**
+  **Four of seven contexts drifted, and the cause was a real modelling bug.** EF identifies an index by its property set, so `HasIndex(e => e.OrgId)` called four times on `Contact` configures **one** index, each call overwriting the last — only `IX_Contacts_Prescriber` survived in the model. The same on `Account` (3), `PaymentTerm` (3), `TaxMaster` (2) and `Item` (2). The hand-written migrations created all of them; the model knew one each.
+  Fixed with the named overload, `HasIndex(["OrgId"], "IX_…")`, which makes each a distinct index. The snapshots were then regenerated from the corrected model.
+  All seven now produce an empty migration.
   Five migrations were written by hand to match EF's output format: Accounting's `AddNumberingSeries`, `AddPaymentTerms` and `AddBankParentAccountsIndex`, and the `InitialCreate` for Contacts, Inventory and Banking. Their model snapshots were assembled the same way.
   *Done when*: `dotnet ef migrations add` produces an empty migration for every context, proving each snapshot matches its model.
 
-- [ ] **0.5 — Apply every migration to a local database** ⛔ blocked by 0.2
+- [x] **0.5 — Apply every migration to a local database**
+  PostgreSQL 16 started, `retailerp_master` and `retailerp_design` created, all eleven migrations applied clean.
+  Verified against the catalogue rather than the exit code: schemas `mst plt idn` and `acc bnk con inv`; 47 tables; **30 tables with RLS enabled and 30 policies**; 41 check constraints; and the four filtered role indexes on `con.Contacts` all present — the ones the model had been collapsing into one.
+  Seed data landed: 37 states, 129 HSN/SAC rows, 16 transaction types, 5 account types, 120 permissions and 304 role grants, including the three cross-module `.view` grants from 5.17.
   *Done when*: `scripts/setup-dev-db` runs clean and all schemas exist with their RLS policies.
 
 ---
@@ -80,10 +90,10 @@ Small, and it turns eleven empty screens into a working system. Today a new orga
 
 Agreed scope that was specified and not delivered. Four of seven tables exist.
 
-- [~] **2.1 — `IFileStorage`, with both implementations** — *one of two shipped*
+- [x] **2.1 — `IFileStorage`, with both implementations**
   `AzureBlobFileStorage` for production and `LocalDiskFileStorage` for development, shipped together — `ISecretStore`, `IEventPublisher` and `IEmailSender` are interface-only and that is exactly the trap to avoid repeating.
   *Done when*: DI starts in Development with no Azure account.
-  **`LocalDiskFileStorage` is written and registered; `AzureBlobFileStorage` is not.** `Azure.Storage.Blobs` is not in `Directory.Packages.props`, and adding a package reference that cannot be restored or compiled — the SDK hosts are blocked — would be worse than the gap. Carried to 5.9. The interface is not stubbed: it has a working implementation behind it, so DI starts.
+  Both ship. `AzureBlobFileStorage` landed with 5.9 once the SDK was available to compile it against; until then the package could not be restored, so writing it would have been guesswork.
 
 - [x] **2.2 — `con.ContactAttachments`**
   Content-type allowlist, size cap from configuration, blob keys namespaced `{orgId}/contacts/{contactId}/…`, downloads through a signed URL minted per request rather than a public link.
@@ -223,7 +233,7 @@ Independent of the stages above; take any of them whenever.
   `MetalPurities` was the only one of the six with no unique index on its system name, so a concurrent re-seed could have inserted twice — added in `AddMetalPuritySystemNameIndex`, filtered on NOT NULL like the others.
   The internal seed endpoints are now documented as re-runnable, which they had to be for any of this to be worth doing, and **Finish setup** on the branches screen is the user-facing way in.
 
-- [~] **5.7 — There are no tests and no linter** — *frontend done and green; the backend project exists but has never compiled*
+- [x] **5.7 — There are no tests and no linter**
   No project in the Nx workspace defines a `lint` or `test` target, so `npm run lint` and `npm run test` are no-ops against an empty set, and the backend has no test project at all. Worth fixing before the codebase grows further.
 
   **Lint.** One flat config at `frontend/eslint.config.mjs`; Nx's eslint plugin infers a `lint` target for all 11 projects that have source, so a new library is linted the day it is created. Beyond the recommended sets the rules that are on are there to catch defects, not style: `no-floating-promises` (a failed save that reports success), `no-misused-promises`, `no-unused-vars`, and the `bb` selector prefix. It found **seven real problems on the first run**, all now fixed:
@@ -236,7 +246,7 @@ Independent of the stages above; take any of them whenever.
 
   **A typecheck gap opened and was closed.** Spec files had to be excluded from the app tsconfigs (the app build was compiling them into the bundle), and Vitest does not typecheck — esbuild strips types without reading them. So the specs would have been checked by nothing. `npm run typecheck` runs `tsc --noEmit` over `tsconfig.eslint.json`, which covers every file including specs, and `npm run check` is lint → typecheck → test → build.
 
-  **Backend: the project exists, the tests have never run.** `backend/tests/Shared.Kernel.Tests` covers `NumberFormat`, `Reordering` and the phone attributes — all pure, no `DbContext`, no mocks. With no SDK they are a stated expectation rather than a passing one, and `backend/tests/README.md` says so first. The wiring is the tedious part to retrofit, so it is in place; the first person with an SDK runs one command instead of spending an afternoon on scaffolding.
+  **Backend: 46 tests, passing.** `backend/tests/Shared.Kernel.Tests` covers `NumberFormat`, `Reordering` and the phone attributes — all pure, no `DbContext`, no mocks. They compiled and passed on their first ever run once the SDK was available (0.2), which is the result the scaffolding was written for.
   **Services are deliberately not covered.** The interesting behaviour — guarded conditional updates, query filters, deferred constraint triggers — is Postgres's, not C#'s, and testing it against an in-memory provider asserts only that the mock behaves like the mock. That wants a real Postgres and is its own piece of work.
 
 - [ ] **5.19 — Nothing takes payment for a branch, so nothing clears its trial**
@@ -303,7 +313,10 @@ Independent of the stages above; take any of them whenever.
   Local `OrderGap = 10` constants went too, replaced by `Reordering.Gap`. A new row's spacing and a reordered row's spacing have to be the same number, and there were three private copies of it.
   Net: ~230 lines removed, and `ReorderingTests` now covers every screen that reorders rather than one.
 
-- [ ] **5.9 — `AzureBlobFileStorage`**
+- [x] **5.9 — `AzureBlobFileStorage`**
+  Written against `IFileStorage` and building. Uploads set the content type in the same call rather than a second one that can fail on its own; a missing blob answers null, because a document row can outlive its blob; and the SAS is read-only, since one that could write would let anyone holding the link replace the document it was issued for.
+  `GetDownloadUrlAsync` returns null when the client cannot sign — which is every managed-identity deployment. That is the interface's documented "stream it through the API instead", not a failure.
+  Selected by whether `Storage:ConnectionString` is set rather than by environment name, so a developer can point at real storage without pretending to be Production, and a deployment cannot silently fall back to a disk that vanishes with the container.
   Left out of 2.1. Needs `Azure.Storage.Blobs` added to `Directory.Packages.props`, which cannot be restored or compiled while the SDK hosts are blocked. `GetDownloadUrlAsync` returning a real SAS URL is the reason to build it — until then every download streams through the API, which works but puts the bytes through the service.
 
 - [ ] **5.14 — Should a branch declare its trade?** *(needs an owner decision, not code)*

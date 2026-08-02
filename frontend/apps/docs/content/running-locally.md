@@ -89,9 +89,9 @@ means adding the Angular Vite plugin. The Angular `unit-test` builder was tried
 and rejected — Angular marks it experimental, and as configured it insists on a
 real browser to run tests that do not need one.
 
-Backend tests live in `backend/tests/` and run with `dotnet test`. **They have
-never been compiled**, for the same reason as the rest of the backend — read
-`backend/tests/README.md` before trusting one.
+Backend tests live in `backend/tests/` and run with `dotnet test` — 46 of them,
+over the pure logic in `Shared.Kernel`: number composition, drag-ordering and
+the phone attributes.
 
 ## Ports
 
@@ -107,6 +107,12 @@ never been compiled**, for the same reason as the rest of the backend — read
 
 ## First run caveats
 
-The code has been written but **never compiled in the authoring environment** — there was no .NET SDK available. Expect the first `dotnet build` to surface fixes, most likely EF Core package versions and Angular/Nx version alignment. This is expected, not a sign something is wrong.
+The backend builds, tests and migrates cleanly as of 2 August 2026: `dotnet build` with zero warnings, 46 tests passing, every EF snapshot matching its model, and all eleven migrations applied to PostgreSQL 16.
+
+If a container has no `dotnet`, install it from the distribution repository rather than the install script — some environments deny `dot.net` by egress policy:
+
+```bash
+apt-get update && apt-get install -y dotnet-sdk-10.0
+```
 
 Two development stand-ins are in place and clearly marked in code: the email sender **logs the OTP to the console instead of sending mail** (convenient for testing the reset flow), and the secret store and event publisher are in-memory. Replace with SMTP, Key Vault and Service Bus for anything real.

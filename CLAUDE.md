@@ -328,10 +328,10 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ### Standing caveats
 
-- **Never compiled.** No .NET SDK has been available in any session — the egress policy blocks `dot.net` and `builds.dotnet.microsoft.com`. Every migration and Designer file is hand-written. Expect real fixes on first `dotnet build`, most likely EF Core 10 package versions and namespace collisions (`Identity` and `Platform` are close to framework namespaces).
-- **No tests and no linter.** No project in the Nx workspace defines a `lint` or `test` target, and there is no backend test project (PLAN 5.7).
-- **Infrastructure interfaces have development stand-ins, not production implementations.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`; `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing; `IFileStorage` → `LocalDiskFileStorage`. Key Vault, Service Bus and Blob Storage all still to write. Nothing that reads an event works yet, because nothing publishes one anywhere it can be read.
-- **Platform's currencies, configurations and SMTP endpoints are unauthenticated** — they take the org id from the route with no `[Authorize]` and no claim check (PLAN 5.10).
+- **Compiled, tested and migrated as of 2 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 46, every EF snapshot matches its model, and all eleven migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
+- **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
+- **Every endpoint is behind a credential and a permission** (PLAN 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.
 
 ---
 

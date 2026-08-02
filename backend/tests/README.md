@@ -2,24 +2,19 @@
 
 `dotnet test` from `backend/`.
 
-## Read this before trusting anything here
+## Status
 
-**These tests have never been compiled or run.** No .NET SDK has been available
-in any session that worked on this repository — the egress policy blocks
-`dot.net` and `builds.dotnet.microsoft.com` — which is the same reason every
-migration and Designer file here is hand-written.
+**46 tests, passing.** They compiled and ran green the first time an SDK was
+available, which is what the scaffolding was written for — the wiring (csproj,
+solution entry, package versions) is the tedious part to retrofit, and having it
+in place meant one command rather than an afternoon.
 
-So treat a test in this project as a *stated expectation*, not as a passing one.
-The first `dotnet test` will almost certainly need corrections: package versions
-in `Directory.Packages.props` are unverified, and `TreatWarningsAsErrors` is on
-solution-wide, so an xunit analyser warning is a build failure rather than a
-note.
+If `dotnet` is missing from a container, install it from the distribution
+repository — some environments deny `dot.net` by egress policy:
 
-That is a real cost, and it was weighed against the alternative. Retrofitting
-the project wiring — csproj, solution entry, package versions, folder layout —
-is the tedious part; the tests themselves are cheap. Having the wiring in place
-means the first person with an SDK runs one command and gets a signal, instead
-of spending an afternoon on scaffolding before writing a line.
+```bash
+apt-get update && apt-get install -y dotnet-sdk-10.0
+```
 
 ## What is covered, and why only this
 

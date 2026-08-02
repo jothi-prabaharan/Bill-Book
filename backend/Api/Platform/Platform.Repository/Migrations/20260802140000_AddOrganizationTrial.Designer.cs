@@ -454,9 +454,7 @@ namespace Platform.Repository.Migrations
                         .HasColumnType("character varying(10)");
 
                     b.Property<bool>("IsTrial")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
+                        .HasColumnType("boolean");
 
                     b.Property<int?>("StateId")
                         .HasColumnType("integer");

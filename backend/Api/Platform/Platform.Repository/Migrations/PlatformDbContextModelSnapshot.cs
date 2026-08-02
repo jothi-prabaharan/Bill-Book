@@ -414,6 +414,9 @@ namespace Platform.Repository.Migrations
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)");
 
+                    b.Property<bool>("IsTrial")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("LogoUrl")
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
@@ -450,11 +453,6 @@ namespace Platform.Repository.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<bool>("IsTrial")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false);
-
                     b.Property<int?>("StateId")
                         .HasColumnType("integer");
 
@@ -489,15 +487,15 @@ namespace Platform.Repository.Migrations
 
                     b.HasIndex("CustomerId");
 
+                    b.HasIndex("ExpiryDate")
+                        .HasDatabaseName("IX_Organizations_ExpiryDate")
+                        .HasFilter("\"ExpiryDate\" IS NOT NULL");
+
                     b.HasIndex("CustomerId", "Name")
                         .IsUnique();
 
                     b.HasIndex("CustomerId", "OrgCode")
                         .IsUnique();
-
-                    b.HasIndex("ExpiryDate")
-                        .HasDatabaseName("IX_Organizations_ExpiryDate")
-                        .HasFilter("\"ExpiryDate\" IS NOT NULL");
 
                     b.ToTable("Organizations", "plt");
                 });

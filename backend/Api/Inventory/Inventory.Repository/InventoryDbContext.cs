@@ -173,8 +173,8 @@ public class InventoryDbContext : TenantDbContext
             b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.ItemName })
                 .HasDatabaseName("IX_Items_Order");
 
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_Items_Sales");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_Items_Purchase");
+            b.HasIndex(["OrgId"], "IX_Items_Sales").HasFilter("\"IsSales\" = true");
+            b.HasIndex(["OrgId"], "IX_Items_Purchase").HasFilter("\"IsPurchase\" = true");
 
             b.Property(e => e.ItemProfile).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.ItemType).HasConversion<string>().HasMaxLength(10);

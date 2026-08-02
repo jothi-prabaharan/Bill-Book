@@ -28,6 +28,7 @@
     <PackageVersion Include="Azure.Identity" Version="1.13.1" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
+    <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
   </ItemGroup>
 
   <!-- Test-only. Same caveat as above, and more sharply: these have never been

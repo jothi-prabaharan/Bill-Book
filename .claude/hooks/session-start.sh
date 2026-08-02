@@ -37,12 +37,20 @@ else
   echo "==> Installing the .NET 10 SDK"
   INSTALLER="$(mktemp)"
 
-  if curl -fsSL --retry 2 https://dot.net/v1/dotnet-install.sh -o "$INSTALLER"; then
+  # The distribution repository first. It carries dotnet-sdk-10.0 and is a
+  # permitted source; dot.net and builds.dotnet.microsoft.com are denied by the
+  # egress policy in some environments, and every session before this one
+  # concluded from that one failure that the backend could not be compiled at
+  # all. The index is often stale, hence the update.
+  if apt-get update >/dev/null 2>&1 && apt-get install -y dotnet-sdk-10.0 >/dev/null 2>&1 \
+      && command -v dotnet >/dev/null 2>&1; then
+    echo "==> Installed the .NET SDK from the distribution repository"
+  elif curl -fsSL --retry 2 https://dot.net/v1/dotnet-install.sh -o "$INSTALLER"; then
     bash "$INSTALLER" --channel 10.0 --install-dir "$DOTNET_DIR" --no-path \
       || echo "!! dotnet-install.sh failed."
   else
     cat <<'BLOCKED'
-!! Could not download dotnet-install.sh.
+!! Neither the distribution package nor dotnet-install.sh could be obtained.
 !! If this was a 403, the egress policy for this session does not allow
 !!   dot.net / builds.dotnet.microsoft.com
 !! Ask for those hosts to be allowed, then start a new session. Do not work

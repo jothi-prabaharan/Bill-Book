@@ -108,21 +108,28 @@ namespace Accounting.Repository.Migrations
 
                     b.HasKey("AccountId");
 
-                    b.HasIndex("OrgId")
-                        .HasDatabaseName("IX_Accounts_Purchase")
-                        .HasFilter("\"IsPurchase\" = true");
+                    b.HasIndex("OrgId");
 
                     b.HasIndex("ParentAccountId");
 
                     b.HasIndex("OrgId", "AccountCode")
                         .IsUnique();
 
-                    b.HasIndex("OrgId", "AccountTypeId");
-
                     b.HasIndex("OrgId", "AccountSystemName")
                         .IsUnique()
                         .HasDatabaseName("IX_Accounts_SystemName")
                         .HasFilter("\"AccountSystemName\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "AccountTypeId");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_Accounts_Bank")
+                        .HasFilter("\"IsBank\" = true");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_Accounts_Purchase")
+                        .HasFilter("\"IsPurchase\" = true");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_Accounts_Sales")
+                        .HasFilter("\"IsSales\" = true");
 
                     b.ToTable("Accounts", "acc");
                 });
@@ -204,19 +211,6 @@ namespace Accounting.Repository.Migrations
 
                     b.HasIndex("OrgId");
 
-                    b.HasIndex("OrgId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_PaymentTerms_Default")
-                        .HasFilter("\"IsDefault\" = true");
-
-                    b.HasIndex("OrgId")
-                        .HasDatabaseName("IX_PaymentTerms_Purchase")
-                        .HasFilter("\"IsPurchase\" = true");
-
-                    b.HasIndex("OrgId")
-                        .HasDatabaseName("IX_PaymentTerms_Sales")
-                        .HasFilter("\"IsSales\" = true");
-
                     b.HasIndex("OrgId", "TermName")
                         .IsUnique();
 
@@ -227,6 +221,16 @@ namespace Accounting.Repository.Migrations
 
                     b.HasIndex("OrgId", "DisplayOrder", "TermName")
                         .HasDatabaseName("IX_PaymentTerms_Order");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_PaymentTerms_Default")
+                        .IsUnique()
+                        .HasFilter("\"IsDefault\" = true");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_PaymentTerms_Purchase")
+                        .HasFilter("\"IsPurchase\" = true");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_PaymentTerms_Sales")
+                        .HasFilter("\"IsSales\" = true");
 
                     b.ToTable("PaymentTerms", "acc", t =>
                         {
@@ -383,13 +387,17 @@ namespace Accounting.Repository.Migrations
 
                     b.HasKey("TaxMasterId");
 
-                    b.HasIndex("OrgId")
-                        .HasDatabaseName("IX_TaxMasters_Purchase")
-                        .HasFilter("\"IsPurchase\" = true");
+                    b.HasIndex("OrgId");
 
                     b.HasIndex("OrgId", "EffectiveFrom", "EffectiveTo");
 
                     b.HasIndex("OrgId", "TaxGroupId", "EffectiveFrom");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_TaxMasters_Purchase")
+                        .HasFilter("\"IsPurchase\" = true");
+
+                    b.HasIndex(new[] { "OrgId" }, "IX_TaxMasters_Sales")
+                        .HasFilter("\"IsSales\" = true");
 
                     b.ToTable("TaxMasters", "acc", t =>
                         {
@@ -472,6 +480,10 @@ namespace Accounting.Repository.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
+                    b.Property<string>("Separator")
+                        .HasMaxLength(1)
+                        .HasColumnType("character varying(1)");
+
                     b.Property<string>("SeriesCode")
                         .IsRequired()
                         .HasMaxLength(30)
@@ -491,10 +503,6 @@ namespace Accounting.Repository.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
-                    b.Property<string>("Separator")
-                        .HasMaxLength(1)
-                        .HasColumnType("character varying(1)");
-
                     b.Property<long>("StartNumber")
                         .HasColumnType("bigint");
 
@@ -512,24 +520,21 @@ namespace Accounting.Repository.Migrations
 
                     b.HasIndex("OrgId");
 
-                    b.HasIndex("OrgId", "SeriesName")
-                        .IsUnique();
-
-                    b.HasIndex("OrgId", "DisplayOrder", "SeriesName")
-                        .HasDatabaseName("IX_NumberingSeries_Order");
-
-                    b.HasIndex("OrgId", "SeriesCode")
-                        .HasDatabaseName("IX_NumberingSeries_Lookup");
-
                     b.HasIndex("OrgId", "SeriesCode")
                         .IsUnique()
                         .HasDatabaseName("IX_NumberingSeries_Default")
                         .HasFilter("\"IsDefault\" = true");
 
+                    b.HasIndex("OrgId", "SeriesName")
+                        .IsUnique();
+
                     b.HasIndex("OrgId", "SeriesSystemName")
                         .IsUnique()
                         .HasDatabaseName("IX_NumberingSeries_SystemName")
                         .HasFilter("\"SeriesSystemName\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "DisplayOrder", "SeriesName")
+                        .HasDatabaseName("IX_NumberingSeries_Order");
 
                     b.ToTable("NumberingSeries", "acc", t =>
                         {

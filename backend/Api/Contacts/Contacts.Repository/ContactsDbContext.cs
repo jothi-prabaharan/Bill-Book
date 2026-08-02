@@ -64,10 +64,10 @@ public class ContactsDbContext : TenantDbContext
                 .HasDatabaseName("IX_Contacts_Gstin");
 
             // The four role pickers.
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsCustomer\" = true").HasDatabaseName("IX_Contacts_Customer");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsVendor\" = true").HasDatabaseName("IX_Contacts_Vendor");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsJobWorker\" = true").HasDatabaseName("IX_Contacts_JobWorker");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsPrescriber\" = true").HasDatabaseName("IX_Contacts_Prescriber");
+            b.HasIndex(["OrgId"], "IX_Contacts_Customer").HasFilter("\"IsCustomer\" = true");
+            b.HasIndex(["OrgId"], "IX_Contacts_Vendor").HasFilter("\"IsVendor\" = true");
+            b.HasIndex(["OrgId"], "IX_Contacts_JobWorker").HasFilter("\"IsJobWorker\" = true");
+            b.HasIndex(["OrgId"], "IX_Contacts_Prescriber").HasFilter("\"IsPrescriber\" = true");
 
             b.Property(e => e.ContactCategory).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.GstRegistrationType).HasConversion<string>().HasMaxLength(20);

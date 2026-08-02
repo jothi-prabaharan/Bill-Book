@@ -52,9 +52,9 @@ public class AccountingDbContext : TenantDbContext
                 .HasDatabaseName("IX_Accounts_SystemName");
 
             // Filtered indexes for the pickers that scan these flags.
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsBank\" = true").HasDatabaseName("IX_Accounts_Bank");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_Accounts_Sales");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_Accounts_Purchase");
+            b.HasIndex(["OrgId"], "IX_Accounts_Bank").HasFilter("\"IsBank\" = true");
+            b.HasIndex(["OrgId"], "IX_Accounts_Sales").HasFilter("\"IsSales\" = true");
+            b.HasIndex(["OrgId"], "IX_Accounts_Purchase").HasFilter("\"IsPurchase\" = true");
 
             b.HasOne<Account>()
                 .WithMany()
@@ -86,8 +86,8 @@ public class AccountingDbContext : TenantDbContext
             b.HasKey(e => e.TaxMasterId);
             b.HasIndex(e => new { e.OrgId, e.TaxGroupId, e.EffectiveFrom });
             b.HasIndex(e => new { e.OrgId, e.EffectiveFrom, e.EffectiveTo });
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_TaxMasters_Sales");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_TaxMasters_Purchase");
+            b.HasIndex(["OrgId"], "IX_TaxMasters_Sales").HasFilter("\"IsSales\" = true");
+            b.HasIndex(["OrgId"], "IX_TaxMasters_Purchase").HasFilter("\"IsPurchase\" = true");
 
             foreach (string rate in new[] { "TotalRate", "CgstRate", "SgstRate", "IgstRate", "CessRate" })
             {
@@ -126,13 +126,12 @@ public class AccountingDbContext : TenantDbContext
 
             // At most one default, enforced here rather than by whoever
             // remembers to clear the previous one.
-            b.HasIndex(e => e.OrgId)
+            b.HasIndex(["OrgId"], "IX_PaymentTerms_Default")
                 .IsUnique()
-                .HasFilter("\"IsDefault\" = true")
-                .HasDatabaseName("IX_PaymentTerms_Default");
+                .HasFilter("\"IsDefault\" = true");
 
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsSales\" = true").HasDatabaseName("IX_PaymentTerms_Sales");
-            b.HasIndex(e => e.OrgId).HasFilter("\"IsPurchase\" = true").HasDatabaseName("IX_PaymentTerms_Purchase");
+            b.HasIndex(["OrgId"], "IX_PaymentTerms_Sales").HasFilter("\"IsSales\" = true");
+            b.HasIndex(["OrgId"], "IX_PaymentTerms_Purchase").HasFilter("\"IsPurchase\" = true");
             b.HasIndex(e => new { e.OrgId, e.DisplayOrder, e.TermName })
                 .HasDatabaseName("IX_PaymentTerms_Order");
 

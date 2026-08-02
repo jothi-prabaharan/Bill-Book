@@ -10,6 +10,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
+using Azure.Storage.Blobs;
 using Shared.Kernel.Storage;
 using Shared.Kernel.Tenancy;
 
@@ -79,11 +80,34 @@ builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<ContactPersonRoleService>();
 builder.Services.AddScoped<ContactAttachmentService>();
 
-// Uploaded files. Local disk is a working implementation rather than a stub —
-// an interface with nothing behind it is how ISecretStore, IEventPublisher and
-// IEmailSender ended up blocking startup. A blob-backed implementation slots in
-// behind the same interface without touching anything above it.
-builder.Services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+// Uploaded files. Blob storage when a connection string is configured, local
+// disk otherwise — chosen by whether the setting is present rather than by an
+// environment name, so a developer can point at real storage without pretending
+// to be Production and a deployment cannot silently fall back to a disk that
+// disappears with the container.
+//
+// Both are working implementations. An interface with nothing behind it is how
+// ISecretStore, IEventPublisher and IEmailSender ended up blocking startup.
+if (builder.Configuration["Storage:ConnectionString"] is { Length: > 0 } storageConnection)
+{
+    string containerName = builder.Configuration["Storage:Container"] ?? "documents";
+
+    builder.Services.AddSingleton<IFileStorage>(_ =>
+    {
+        var container = new BlobContainerClient(storageConnection, containerName);
+
+        // Created on startup rather than per upload: it is one call, it is
+        // idempotent, and the alternative is every first upload in a fresh
+        // deployment failing on a container nobody made.
+        container.CreateIfNotExists();
+
+        return new AzureBlobFileStorage(container);
+    });
+}
+else
+{
+    builder.Services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
+}
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a contact code is allocated inside the
