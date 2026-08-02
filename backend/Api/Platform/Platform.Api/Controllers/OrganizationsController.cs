@@ -33,6 +33,47 @@ public sealed class OrganizationsController : ControllerBase
             ? Ok(await _organizations.ListAsync(customerId, ct))
             : Forbid();
 
+    /// <summary>
+    /// The branch the caller is signed in to, from the token rather than the
+    /// URL. The Organization settings screen edits "this branch" and has no id
+    /// to pass — and taking one from the caller would let them edit a branch
+    /// they are not in.
+    ///
+    /// Declared before the <c>{orgId:guid}</c> route below; "current" is not a
+    /// Guid so the constraint keeps them apart either way.
+    /// </summary>
+    [HttpGet("current")]
+    public async Task<IActionResult> Current(CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId || CallerOrg() is not Guid orgId)
+        {
+            return Forbid();
+        }
+
+        OrganizationListItem? organization =
+            await _organizations.GetAsync(customerId, orgId, ct);
+
+        return organization is null ? NotFound() : Ok(organization);
+    }
+
+    /// <summary>Updates the branch the caller is signed in to.</summary>
+    [HttpPut("current")]
+    public async Task<IActionResult> UpdateCurrent(
+        [FromBody] SaveOrganizationRequest request, CancellationToken ct)
+    {
+        if (Caller() is not Guid customerId || CallerOrg() is not Guid orgId)
+        {
+            return Forbid();
+        }
+
+        SaveOrganizationResult result =
+            await _organizations.UpdateAsync(customerId, orgId, request, ct);
+
+        return result.Outcome == SaveOrganizationOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome);
+    }
+
     [HttpGet("{orgId:guid}")]
     public async Task<IActionResult> Get(Guid orgId, CancellationToken ct)
     {
@@ -66,6 +107,11 @@ public sealed class OrganizationsController : ControllerBase
         return result.Outcome switch
         {
             SaveOrganizationOutcome.Ok =>
+                CreatedAtAction(nameof(Get), new { orgId = result.OrgId }, result),
+
+            // Created, on the branch's own trial. A 201 with the reason on it,
+            // not an error — the branch exists, is seeded and is usable today.
+            SaveOrganizationOutcome.CreatedOnTrial =>
                 CreatedAtAction(nameof(Get), new { orgId = result.OrgId }, result),
 
             SaveOrganizationOutcome.SeedingFailed => Accepted(new MessageResponse
@@ -133,6 +179,10 @@ public sealed class OrganizationsController : ControllerBase
     /// pre-auth token, issued before an organization has been chosen, and it
     /// owns nothing.
     /// </summary>
+    /// <summary>The branch on the caller's token — which branch they are working in.</summary>
+    private Guid? CallerOrg() =>
+        Guid.TryParse(User.FindFirstValue("org_id"), out Guid orgId) ? orgId : null;
+
     private Guid? Caller() =>
         Guid.TryParse(User.FindFirstValue("customer_id"), out Guid customerId)
             ? customerId
@@ -154,6 +204,9 @@ public sealed class OrganizationsController : ControllerBase
             {
                 Message = "The GSTIN's first two digits must match the branch's state.",
             }),
+            // Kept for the update path and for any older client still reading it.
+            // Create no longer returns this: a branch beyond the entitlement is
+            // created on a trial rather than refused.
             SaveOrganizationOutcome.LicenceLimitReached => BadRequest(new MessageResponse
             {
                 Message = "Your licence does not allow another branch. Upgrade the plan to add "
@@ -178,5 +231,7 @@ public sealed class OrganizationsController : ControllerBase
                 Message = "One of the selected options is not a recognised value.",
             }),
             _ => StatusCode(StatusCodes.Status500InternalServerError),
+
+            SaveOrganizationOutcome.CreatedOnTrial => NoContent(),
         };
 }

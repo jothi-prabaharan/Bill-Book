@@ -21,6 +21,14 @@ namespace Platform.Api.Services;
 /// </summary>
 public sealed class OrganizationService
 {
+    /// <summary>
+    /// How long a branch created beyond the licence runs before it stops.
+    /// Thirty days rather than the account's fourteen: a branch is set up, its
+    /// masters adjusted and its first month traded before anyone can judge it,
+    /// and a fortnight does not cover a monthly cycle.
+    /// </summary>
+    private const int BranchTrialDays = 30;
+
     private readonly PlatformDbContext _db;
     private readonly ITenantSeeder _seeder;
     private readonly IMasterCurrencies _master;
@@ -101,13 +109,17 @@ public sealed class OrganizationService
 
         int allowed = licence?.MaxOrganizations ?? 0;
 
-        // Stored and enforced by nothing until now. A trial allows one branch,
-        // which is why this is checked rather than assumed.
-        if (allowed > 0 && existing >= allowed)
-        {
-            return new SaveOrganizationResult(
-                SaveOrganizationOutcome.LicenceLimitReached, null, []);
-        }
+        // Beyond the licence, a branch is not refused — it is created on its own
+        // trial. A business opening a second counter should be able to set it up
+        // and see it working before paying for it; refusing outright means the
+        // decision is made against an empty screen.
+        //
+        // The entitlement still means something: past it the branch carries its
+        // own expiry instead of the licence's, so an unpaid branch stops on its
+        // own without touching the account or the branches already paid for.
+        bool beyondLicence = allowed > 0 && existing >= allowed;
+
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var organization = new Organization
         {
@@ -116,12 +128,17 @@ public sealed class OrganizationService
             // Provisioning until its master data is written. A branch nobody can
             // use is better than one that looks ready and cannot save an item.
             Status = TenantStatus.Provisioning,
-            // Starts where the account's licence ends. A branch is never given
-            // longer than the head office has — this only ever brings the date
-            // forward, and taking the licence's date is what makes that true on
-            // day one. Not settable from the request: a customer extending their
-            // own branch would be extending their own licence.
-            ExpiryDate = licence?.ExpiryDate,
+            // Within the entitlement a branch starts where the account's licence
+            // ends — never longer than the head office has, and not settable
+            // from the request, since a customer extending their own branch
+            // would be extending their own licence.
+            //
+            // Beyond it, the branch trial is its own 30 days. It is still a cap
+            // rather than an extension: login enforces whichever of the two ends
+            // first, so a trial branch under a licence expiring next week stops
+            // next week.
+            ExpiryDate = beyondLicence ? today.AddDays(BranchTrialDays) : licence?.ExpiryDate,
+            IsTrial = beyondLicence,
         };
 
         Apply(organization, request);
@@ -165,7 +182,10 @@ public sealed class OrganizationService
         organization.Status = TenantStatus.Active;
         await _db.SaveChangesAsync(ct);
 
-        return new SaveOrganizationResult(SaveOrganizationOutcome.Ok, organization.OrgId, []);
+        return new SaveOrganizationResult(
+            beyondLicence ? SaveOrganizationOutcome.CreatedOnTrial : SaveOrganizationOutcome.Ok,
+            organization.OrgId,
+            []);
     }
 
     /// <summary>
@@ -310,6 +330,11 @@ public sealed class OrganizationService
         organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
+        organization.Tan = Trimmed(request.Tan)?.ToUpperInvariant();
+        organization.Tin = Trimmed(request.Tin)?.ToUpperInvariant();
+        organization.Cin = Trimmed(request.Cin)?.ToUpperInvariant();
+        organization.UdyamNumber = Trimmed(request.UdyamNumber)?.ToUpperInvariant();
+        organization.LogoUrl = Trimmed(request.LogoUrl);
         organization.AddressLine1 = Trimmed(request.AddressLine1);
         organization.AddressLine2 = Trimmed(request.AddressLine2);
         organization.City = Trimmed(request.City);
@@ -334,6 +359,13 @@ public sealed class OrganizationService
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,
         Pan = o.Pan,
+        Tan = o.Tan,
+        Tin = o.Tin,
+        Cin = o.Cin,
+        UdyamNumber = o.UdyamNumber,
+        LogoUrl = o.LogoUrl,
+        ExpiryDate = o.ExpiryDate,
+        IsTrial = o.IsTrial,
         AddressLine1 = o.AddressLine1,
         AddressLine2 = o.AddressLine2,
         City = o.City,

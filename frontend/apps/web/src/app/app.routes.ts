@@ -37,6 +37,12 @@ export const appRoutes: Routes = [
         data: { permission: 'settings.view' },
       },
       {
+        path: 'settings/organization',
+        loadComponent: () =>
+          import('@bill-book/platform-ui').then((m) => m.OrganizationSettingsPage),
+        data: { permission: 'settings.view' },
+      },
+      {
         path: 'settings/branches',
         loadComponent: () =>
           import('@bill-book/platform-ui').then((m) => m.OrganizationsPage),

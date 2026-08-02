@@ -52,11 +52,33 @@ The page reloads on switching, deliberately: everything on screen belongs to the
 
 Only branches you have been given access to appear.
 
-## Limits, suspending and deleting
+## Adding a branch beyond your licence
 
-The number of branches allowed comes from your **licence** — a trial allows one. Adding beyond it is refused with an explanation rather than failing silently.
+Your **licence** covers a number of branches — a trial covers one. Adding one beyond that is **not refused**. It is created, seeded and usable, on its own **30-day trial**, and marked *Trial* in the list.
+
+That is deliberate. A branch is a complete set of books, and nobody can judge one from an empty screen: it has to be set up, its masters adjusted and a month traded through it. Thirty days rather than the account's fourteen, because a fortnight does not cover a monthly cycle.
+
+The trial is a **cap, not an extension**. Login enforces whichever ends first, so a trial branch under a licence expiring next week stops next week. When it ends the branch stops and everything in it is kept; your other branches are unaffected, and there is nothing to renew on the account itself. Adding a licence for the branch clears the trial.
+
+Nothing takes payment yet, so nothing clears the flag automatically.
+
+## Suspending and deleting
 
 **The first branch cannot be suspended.** The account would have nowhere to sign in to.
+
+Branches are never deleted. Their documents, ledger rows and stock all live under the branch's id, and removing it would leave that history belonging to nothing. Suspending takes a branch out of use and leaves everything intact.
+
+## Editing the branch you are in
+
+**Settings › Organization** edits the branch you are signed in to, in three tabs:
+
+- **Profile** — code, name, address, contact details, website, logo.
+- **Statutory** — GSTIN, PAN, TAN, TIN, CIN and Udyam number. The GSTIN's first two digits must match the state on Profile; the form says so before the save is refused.
+- **Financial** — financial year start month. The base currency is shown but fixed: every posting in the branch converts to it, so changing it after anything has been posted would restate the books.
+
+Which branch is taken from your sign-in rather than the address, so it is always the one you are working in. To edit a different one, switch to it from Branches.
+
+TAN, TIN, CIN, Udyam number, website and logo had no screen at all before this — they could be set at signup and never corrected, which is not how a CIN or an MSME registration arrives.
 
 ## When a branch's access ends
 
@@ -69,5 +91,3 @@ Signing in still works. You land on a page saying **this branch has closed**, wi
 Branches created before this existed have no end date of their own, and follow the account's licence exactly as they always did.
 
 > **Renewing the licence does not move the branch dates.** Each branch holds its own copy, taken when it was created. Extending the licence without extending the branches leaves them closed under an account that is perfectly valid. There is no renewal screen yet; when there is, it has to move both.
-
-Branches are never deleted. Their documents, ledger rows and stock all live under the branch's id, and removing it would leave that history belonging to nothing. Suspending takes a branch out of use and leaves everything intact.

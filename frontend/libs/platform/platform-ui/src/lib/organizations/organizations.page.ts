@@ -23,6 +23,8 @@ interface Organization {
   website: string | null;
   status: string;
   isFirst: boolean;
+  isTrial: boolean;
+  expiryDate: string | null;
 }
 
 interface State {
@@ -31,7 +33,10 @@ interface State {
   stateName: string;
 }
 
-type OrganizationForm = Omit<Organization, 'orgId' | 'status' | 'isFirst'>;
+type OrganizationForm = Omit<
+  Organization,
+  'orgId' | 'status' | 'isFirst' | 'isTrial' | 'expiryDate'
+>;
 
 /**
  * Settings › Branches. Each branch is a complete set of books — its own items,

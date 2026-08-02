@@ -40,6 +40,16 @@
           @if (row.isFirst) {
             <span class="badge">First</span>
           }
+          @if (row.isTrial) {
+            <span
+              class="badge trial"
+              [title]="
+                row.expiryDate
+                  ? 'On a branch trial until ' + row.expiryDate
+                  : 'On a branch trial'
+              "
+            >Trial</span>
+          }
         </td>
         <td>{{ row.city ?? '—' }}</td>
         <td>{{ stateNameOf(row.stateId) }}</td>

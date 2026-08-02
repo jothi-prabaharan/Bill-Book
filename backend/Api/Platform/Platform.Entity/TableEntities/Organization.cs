@@ -88,6 +88,20 @@ public class Organization : AuditableEntity
     /// </summary>
     public DateOnly? ExpiryDate { get; set; }
 
+    /// <summary>
+    /// True when this branch was created beyond what the account's licence
+    /// entitles it to, and is running on its own 30-day trial.
+    ///
+    /// The date alone cannot say this. A branch deliberately wound down early
+    /// also expires before the licence does, and the two need opposite words on
+    /// screen — one is "buy a licence for this branch", the other is "this
+    /// branch was closed". Storing the reason is cheaper than guessing it.
+    ///
+    /// Cleared when the branch is paid for; nothing clears it automatically,
+    /// because nothing takes payment yet.
+    /// </summary>
+    public bool IsTrial { get; set; }
+
     [MaxLength(200, ErrorMessage = "Address line 1 cannot exceed 200 characters.")]
     public string? AddressLine1 { get; set; }
 
