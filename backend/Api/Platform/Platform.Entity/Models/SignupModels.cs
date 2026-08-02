@@ -132,4 +132,11 @@ public class OrgContextResponse
     /// in the master database where none of them can read it directly.
     /// </summary>
     public int FinancialYearStartMonth { get; set; }
+
+    /// <summary>
+    /// The currency the branch keeps its books in. Here for the same reason as
+    /// the financial year: every GL posting is denominated in it, and it lives
+    /// in the master database that no per-customer service can read.
+    /// </summary>
+    public string BaseCurrency { get; set; } = null!;
 }

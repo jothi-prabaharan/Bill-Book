@@ -66,6 +66,16 @@ builder.Services.AddScoped<TaxMasterService>();
 builder.Services.AddScoped<NumberingSeriesService>();
 builder.Services.AddScoped<PaymentTermService>();
 builder.Services.AddScoped<BankLedgerService>();
+builder.Services.AddScoped<LedgerPostingService>();
+
+// The branch's base currency, for stamping onto ledger rows. Cached per
+// organization for the same reason the financial year is: it changes about
+// never, and the alternative is an HTTP call on every posting.
+builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Numbering. Accounting owns the series table and migrates it; the generator is
 // registered against this service's own DbContext so a number is allocated

@@ -263,9 +263,20 @@ Independent of the stages above; take any of them whenever.
   **It was not a decision.** The whole `.gitignore` arrived in one unrelated commit — a column rename — as a stock Angular/Node template, section headers and all, with `package-lock.json` sitting between `yarn.lock` and `pnpm-lock.yaml`. Ignoring all three lockfiles is a template default; this repository uses npm, so the other two stay ignored precisely so a second lockfile cannot appear beside the committed one.
   Committed after `npm ci` succeeded from a clean install, which is the check that package.json and the lock actually agree rather than merely both existing. 1268 packages, lockfileVersion 3.
 
-- [ ] **5.12 — A stock issue posts nothing to the ledger**
-  `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, on an event Inventory does not yet publish — so today stock and the general ledger disagree the moment anything is issued. Nothing is wrong with either half; they are simply not connected. Do it when Sales lands, since that is what will be issuing.
-  **4.4 is blocked on this too.** A backdated receipt already restates costs and records a signed delta per sale in `inv.RecostingAdjustments`; what it cannot do is post the correcting journal. Those rows exist to be read by whatever closes this item.
+- [~] **5.12 — A stock issue posts nothing to the ledger** — *the ledger and its posting API exist; Inventory is not yet wired to them*
+  `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, so today stock and the general ledger disagree the moment anything is issued.
+
+  **Built so far — the target and the door into it.** `acc.JournalLedger`, the single posting target every document in the product will write to, with `LedgerPostingService` and `POST internal/ledger/postings` in front of it. Verified against a real PostgreSQL, not just compiled: a leg carrying both a debit and a credit is refused by check constraint on insert; an unbalanced posting is *accepted* row by row and refused at `COMMIT`, which is the deferred trigger doing the one thing an immediate trigger cannot; a balanced pair commits; removing one leg of a committed pair is refused; and delete-and-repost of a whole set at a new cost succeeds.
+
+  **The posting key is the design decision worth keeping.** A posting is identified by (transaction type, transaction, line, leg type) and posting it again *replaces* those rows. That is what makes a caller safe to retry after a dropped response, and it is also how a restated cost corrects itself. Including the leg type is what lets two services write to the same document without treading on each other — Sales' revenue and receivable legs and Inventory's cost-of-goods legs replace independently.
+
+  **Accounts are named, never numbered.** Callers send `AccountSystemName` and a sub-account *reference* — this item, this contact — because an account id is a per-branch number in a database the caller does not read. Resolving one on the far side is how a leg lands on the wrong account.
+
+  **The currency is read, never assumed.** `IBaseCurrencyProvider` answers null rather than defaulting when Platform is unreachable, and the endpoint returns 503 so the posting stays queued. A ledger row stamped with a guessed currency is wrong in a total nobody re-reads.
+
+  **Still to do**: `LedgerStatus` on `inv.StockMovements` so posting is queued off the movements table exactly as costing is, the movement-to-legs mapping, the Inventory client, the worker pass that drains it, and the stock screen showing whether a movement has reached the ledger.
+
+  **4.4 is blocked on this too.** A backdated receipt already restates costs and records a signed delta per sale in `inv.RecostingAdjustments`; what it cannot do is post the correcting journal. The replace-by-key behaviour above is what those rows will use.
 
 - [x] **5.13 — No reserved quantity**
   `ItemStock` held on-hand only, so an order confirmed but not yet delivered left stock fully available and it could be promised twice. `QuantityReserved` now sits beside it, with `ReserveAsync` and `ReleaseAsync` running the same guarded conditional update every other quantity change runs — a reserve above what is available and a release of what was never reserved both change no rows and are refused, rather than overdrawing.

@@ -26,6 +26,12 @@ public class AccountingDbContext : TenantDbContext
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
 
     /// <summary>
+    /// The general ledger. Every posting in the product lands here and nowhere
+    /// else, whichever service described it.
+    /// </summary>
+    public DbSet<JournalLedger> JournalLedger => Set<JournalLedger>();
+
+    /// <summary>
     /// Shared with every service that generates a code. Accounting owns the
     /// migration; the others map the same entity and exclude it from theirs.
     /// </summary>
@@ -164,6 +170,82 @@ public class AccountingDbContext : TenantDbContext
                 table.HasCheckConstraint(
                     "chk_term_discount_days",
                     "\"DiscountPercent\" = 0 OR \"DiscountDays\" > 0");
+            });
+        });
+
+        modelBuilder.Entity<JournalLedger>(b =>
+        {
+            b.HasKey(e => e.LedgerId);
+
+            // Reporting reads: a period, an account within a period, and the
+            // rows behind one document.
+            b.HasIndex(e => new { e.OrgId, e.LedgerDate });
+            b.HasIndex(e => new { e.OrgId, e.AccountId, e.LedgerDate });
+
+            // The replace key, and the document lookup, in one index. A posting
+            // is identified by all four columns — the leftmost three are what
+            // "show me this invoice's rows" asks for, so a separate shorter
+            // index would duplicate this one's prefix and earn nothing.
+            b.HasIndex(e => new
+            {
+                e.OrgId,
+                e.TransactionTypeCode,
+                e.TransactionId,
+                e.TransactionDetailId,
+                e.LedgerTypeId,
+            }).HasDatabaseName("IX_JournalLedger_Posting");
+
+            // Tracing a payment back to the document it settles.
+            b.HasIndex(e => new
+            {
+                e.OrgId,
+                e.MappingTransactionTypeCode,
+                e.MappingTransactionId,
+            }).HasDatabaseName("IX_JournalLedger_Mapping");
+
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+            b.HasIndex(e => new { e.OrgId, e.SubAccountId });
+
+            foreach (string amount in new[]
+            {
+                "DebitAmount", "CreditAmount", "DebitAmountBase", "CreditAmountBase",
+            })
+            {
+                b.Property(amount).HasColumnType("decimal(18,2)");
+            }
+
+            b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
+            b.Property(e => e.TaxExchangeRate).HasColumnType("decimal(18,8)");
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<SubAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.SubAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // A leg is a debit xor a credit. Both, or neither, and no column
+                // in the ledger can be summed without knowing which convention
+                // its writer used.
+                table.HasCheckConstraint(
+                    "chk_ledger_exclusive",
+                    "(\"DebitAmount\" = 0) <> (\"CreditAmount\" = 0)");
+
+                table.HasCheckConstraint(
+                    "chk_ledger_base_exclusive",
+                    "\"DebitAmountBase\" = 0 OR \"CreditAmountBase\" = 0");
+
+                // Never negative. A reversal is an offsetting entry, not a
+                // debit written as a minus.
+                table.HasCheckConstraint(
+                    "chk_ledger_non_negative",
+                    "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0 "
+                        + "AND \"DebitAmountBase\" >= 0 AND \"CreditAmountBase\" >= 0");
             });
         });
 

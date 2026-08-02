@@ -31,6 +31,7 @@ public sealed class OrgContextService
                 o.CustomerId,
                 OrgName = o.Name,
                 o.FinancialYearStartMonth,
+                o.BaseCurrency,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
                 DbStatus = d.Status,
@@ -106,6 +107,7 @@ public sealed class OrgContextService
             ExpiryIsBranchLevel = row.OrgExpiryDate is DateOnly branchDate && branchDate < row.ExpiryDate,
             MaxUsers = row.MaxUsers,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
+            BaseCurrency = row.BaseCurrency,
         };
     }
 }
