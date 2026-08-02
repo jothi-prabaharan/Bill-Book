@@ -21,7 +21,7 @@ Verified on 2 August 2026, by reading the repository rather than from memory.
 
 **Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 46 tests pass, every EF snapshot matches its model, and all eleven migrations apply to a real PostgreSQL. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
-**Nothing is blocked by tooling any more.** What is left waits for Sales to exist (5.12, 5.13, and the journal half of 4.4) or is an owner's decision (5.14, 5.16, 5.19). The next substantial build is **Sales** — the next thing on the Phase 1 roadmap, and what unblocks the two stock items. `sal.*` is still marked *not designed* in SPEC, so it starts with a schema.
+**Nothing is blocked by tooling any more.** What is left is an owner's decision (5.14, 5.16, 5.19) or waits on Sales to have a caller (the journal half of 4.4). Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen. The next substantial build is **Sales** — the next thing on the Phase 1 roadmap. `sal.*` is still marked *not designed* in SPEC, so it starts with a schema.
 
 ---
 
@@ -267,8 +267,14 @@ Independent of the stages above; take any of them whenever.
   `StockService` moves quantity and cost and stops there. `Dr COGS / Cr Inventory` is Accounting's to write, on an event Inventory does not yet publish — so today stock and the general ledger disagree the moment anything is issued. Nothing is wrong with either half; they are simply not connected. Do it when Sales lands, since that is what will be issuing.
   **4.4 is blocked on this too.** A backdated receipt already restates costs and records a signed delta per sale in `inv.RecostingAdjustments`; what it cannot do is post the correcting journal. Those rows exist to be read by whatever closes this item.
 
-- [ ] **5.13 — No reserved quantity**
-  `ItemStock` holds on-hand only. An order that is confirmed but not yet delivered leaves stock fully available, so it can be promised twice. Needs a `QuantityReserved` column and a matching guarded update — deliberately left out until Sales exists to write it, because a reserve nothing releases is worse than none.
+- [x] **5.13 — No reserved quantity**
+  `ItemStock` held on-hand only, so an order confirmed but not yet delivered left stock fully available and it could be promised twice. `QuantityReserved` now sits beside it, with `ReserveAsync` and `ReleaseAsync` running the same guarded conditional update every other quantity change runs — a reserve above what is available and a release of what was never reserved both change no rows and are refused, rather than overdrawing.
+  **Built ahead of Sales after all.** The original reasoning — that a reserve nothing releases is worse than none — argues for not *calling* it yet, not for the column being absent when the caller arrives. Sales would otherwise land needing a schema change, a migration and a rewrite of both issue guards in the same commit as its own first screen.
+  **Reserved is never subtracted from on hand.** The stock is on the shelf and worth what it cost, so valuation, counts and the inventory account are untouched by a reservation; only availability moves. Availability is therefore *derived* — `QuantityOnHand - QuantityReserved`, computed in the projection — not a third column that could disagree with the two behind it.
+  Both issue guards changed from `QuantityOnHand >= qty` to `QuantityOnHand - QuantityReserved >= qty`, which is the whole behavioural change: a sale is now refused against available rather than against on hand. **Issuing reserved stock is release-then-issue, in one transaction** — issue first and the order's own reservation is counted against it.
+  `chk_stock_reserved` (`>= 0 AND <= QuantityOnHand`) is what stops the pair going incoherent when application code is wrong: a release that ran twice would drive the reserve negative and silently free stock nobody released. Verified against the live database — reserving above on hand and reserving a negative are both rejected by the constraint, and `migrations add` produces no drift.
+
+
 
 - [x] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
   `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.

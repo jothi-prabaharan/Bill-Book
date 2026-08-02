@@ -336,9 +336,11 @@ public class InventoryDbContext : TenantDbContext
             // ItemId is key and foreign key both: one item, one stock row, with
             // no way to write a second.
             b.HasKey(e => e.ItemId);
+
             b.Property(e => e.ItemId).ValueGeneratedNever();
 
             b.Property(e => e.QuantityOnHand).HasColumnType("decimal(18,3)");
+            b.Property(e => e.QuantityReserved).HasColumnType("decimal(18,3)");
             b.Property(e => e.WeightedAverageCost).HasColumnType("decimal(18,6)");
 
             b.HasOne<Item>()
@@ -354,6 +356,14 @@ public class InventoryDbContext : TenantDbContext
                 table.HasCheckConstraint(
                     "chk_item_stock_non_negative",
                     "\"QuantityOnHand\" >= 0 AND \"WeightedAverageCost\" >= 0");
+
+                // Keeps the reserve coherent with what is held. A release that
+                // ran twice would otherwise drive it negative and quietly free
+                // stock nobody released; a reserve above on-hand would promise
+                // what is not there.
+                table.HasCheckConstraint(
+                    "chk_stock_reserved",
+                    "\"QuantityReserved\" >= 0 AND \"QuantityReserved\" <= \"QuantityOnHand\"");
             });
         });
 

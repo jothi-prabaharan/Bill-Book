@@ -372,7 +372,8 @@ public sealed class StockService
                 // The whole point. One statement, guarded, and the row count is
                 // the answer — never a read followed by a write.
                 int moved = await _db.ItemStock
-                    .Where(s => s.ItemId == item.ItemId && s.QuantityOnHand >= quantity)
+                    .Where(s => s.ItemId == item.ItemId
+                        && s.QuantityOnHand - s.QuantityReserved >= quantity)
                     .ExecuteUpdateAsync(
                         s => s.SetProperty(x => x.QuantityOnHand, x => x.QuantityOnHand - quantity),
                         ct);
@@ -394,7 +395,8 @@ public sealed class StockService
             // A transfer out still cannot ship more than exists, even though the
             // pool is unchanged by it.
             bool enough = await _db.ItemStock
-                .AnyAsync(s => s.ItemId == item.ItemId && s.QuantityOnHand >= quantity, ct);
+                .AnyAsync(s => s.ItemId == item.ItemId
+                    && s.QuantityOnHand - s.QuantityReserved >= quantity, ct);
 
             if (!enough)
             {
@@ -915,6 +917,8 @@ public sealed class StockService
                 // Left join: an item that has never moved has no row, and that
                 // is a zero rather than a missing item.
                 QuantityOnHand = x.s == null ? 0m : x.s.QuantityOnHand,
+                QuantityReserved = x.s == null ? 0m : x.s.QuantityReserved,
+                QuantityAvailable = x.s == null ? 0m : x.s.QuantityOnHand - x.s.QuantityReserved,
                 WeightedAverageCost = x.s == null ? 0m : x.s.WeightedAverageCost,
                 UomTypeId = x.i.UomTypeId,
                 InventoryUomId = x.i.InventoryUomId,
@@ -954,4 +958,60 @@ public sealed class StockService
 
     private static RecordStockMovementResult Fail(StockOutcome outcome) =>
         new(outcome, null, null);
+
+    // ---- Reservations -------------------------------------------------------
+
+    /// <summary>
+    /// Promises stock without moving it: a confirmed order that has not shipped.
+    ///
+    /// Guarded on availability in one statement, so two tills confirming the
+    /// last unit cannot both succeed — the same primitive the decrement uses,
+    /// and for the same reason.
+    ///
+    /// <b>Reserving does not decrement.</b> The stock is still on the shelf and
+    /// still worth what it cost; only its availability changed. Anything that
+    /// values stock keeps reading <c>QuantityOnHand</c>.
+    /// </summary>
+    public async Task<StockOutcome> ReserveAsync(long itemId, decimal quantity, CancellationToken ct)
+    {
+        if (quantity <= 0)
+        {
+            return StockOutcome.InvalidQuantity;
+        }
+
+        int reserved = await _db.ItemStock
+            .Where(s => s.ItemId == itemId && s.QuantityOnHand - s.QuantityReserved >= quantity)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.QuantityReserved, x => x.QuantityReserved + quantity),
+                ct);
+
+        return reserved == 0 ? StockOutcome.InsufficientStock : StockOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Gives a promise back — an order cancelled, or one about to be issued.
+    ///
+    /// <b>Issuing reserved stock is release-then-issue, in that order and in one
+    /// transaction.</b> The issue guard reads availability, so a reservation
+    /// still held would make the very stock it is holding look unavailable and
+    /// the issue would be refused.
+    ///
+    /// Guarded on the reservation being there, so releasing twice cannot drive
+    /// it negative and quietly free stock nobody released.
+    /// </summary>
+    public async Task<StockOutcome> ReleaseAsync(long itemId, decimal quantity, CancellationToken ct)
+    {
+        if (quantity <= 0)
+        {
+            return StockOutcome.InvalidQuantity;
+        }
+
+        int released = await _db.ItemStock
+            .Where(s => s.ItemId == itemId && s.QuantityReserved >= quantity)
+            .ExecuteUpdateAsync(
+                s => s.SetProperty(x => x.QuantityReserved, x => x.QuantityReserved - quantity),
+                ct);
+
+        return released == 0 ? StockOutcome.NotReserved : StockOutcome.Ok;
+    }
 }

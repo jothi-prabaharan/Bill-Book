@@ -13,6 +13,16 @@ public class StockPosition
 
     public decimal QuantityOnHand { get; set; }
 
+    /// <summary>Promised to a confirmed order and not yet issued.</summary>
+    public decimal QuantityReserved { get; set; }
+
+    /// <summary>
+    /// <c>QuantityOnHand - QuantityReserved</c> — what may still be sold.
+    /// Computed rather than stored, so it cannot disagree with the two it
+    /// comes from.
+    /// </summary>
+    public decimal QuantityAvailable { get; set; }
+
     public decimal WeightedAverageCost { get; set; }
 
     /// <summary><c>QuantityOnHand × WeightedAverageCost</c>, computed rather than stored.</summary>
@@ -319,6 +329,12 @@ public enum StockOutcome
     ReturnedMovementNotFound = 17,
     /// <summary>Returning more than went out on that issue.</summary>
     ReturnExceedsIssue = 18,
+
+    /// <summary>The quantity is zero or negative — nothing to reserve or release.</summary>
+    InvalidQuantity = 19,
+
+    /// <summary>Releasing more than is reserved. Nothing changed.</summary>
+    NotReserved = 20,
 }
 
 public sealed record RecordStockMovementResult(

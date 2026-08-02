@@ -7,6 +7,10 @@ interface StockPosition {
   itemCode: string;
   itemName: string;
   quantityOnHand: number;
+  /** Promised to a confirmed order. Still on the shelf, still in the valuation. */
+  quantityReserved: number;
+  /** On hand less reserved — what a new order may draw on. Server-computed. */
+  quantityAvailable: number;
   weightedAverageCost: number;
   stockValue: number;
   inventoryUomId: number;

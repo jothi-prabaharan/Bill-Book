@@ -54,12 +54,32 @@ Stock comes down through a single conditional statement:
 
 ```sql
 UPDATE ItemStock SET QuantityOnHand = QuantityOnHand - @qty
-WHERE ItemId = @id AND QuantityOnHand >= @qty
+WHERE ItemId = @id AND QuantityOnHand - QuantityReserved >= @qty
 ```
 
 If it changes no rows, there was not enough and **nothing** changed. There is no read followed by a write, because that is the gap where two tills both see the last unit and both sell it.
 
 The decrement is also **synchronous**. Costing, accounting and notifications all happen afterwards and can be retried; the quantity cannot wait, because by the time a queued message is processed the second customer has already been served.
+
+## Reserved and available
+
+Stock promised to a confirmed order that has not shipped yet is **reserved**.
+
+| | What it means |
+|---|---|
+| **On hand** | What is physically in the branch |
+| **Reserved** | Of that, what is already promised |
+| **Available** | On hand less reserved — what a new order may draw on |
+
+**Reserving never moves on-hand.** The stock is still on the shelf and still worth what it cost, so a stock count, a valuation and the inventory account all keep reading on hand and none of them change when a reservation is made. Only "can I sell this" changes, and that is what reads available.
+
+Available is not stored. It is on hand minus reserved, worked out wherever it is needed — a third column could disagree with the two it comes from, and there would be no way to tell which was right.
+
+Reserving and releasing go through the same conditional statement selling does, so a reserve is refused when there is not enough available rather than overdrawing it, and a release is refused when there is nothing reserved to release. Two things depend on that: a release that ran twice would drive the reserve negative and quietly free stock nobody released, and the database refuses that outright — reserved can never be below zero, nor above on hand.
+
+**Issuing reserved stock is release-then-issue, in that order and inside one transaction.** Issue first and the item's own reservation is still counted against it, so an order can be refused the stock it is holding.
+
+Nothing reserves anything yet — Sales is what will. Until then every item reads a reserved of nothing and an available equal to its on hand.
 
 ## The movement history
 

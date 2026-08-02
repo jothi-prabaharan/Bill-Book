@@ -81,3 +81,8 @@ button:disabled { opacity: .6; cursor: default; }
 /* A restatement runs both ways, and the sign is stated as well as coloured. */
 .num.up { color: #a52c17; }
 .num.down { color: #187a4b; }
+
+/* Nothing left to promise. The number itself already says so — the colour only
+   makes it findable in a long list, so nothing depends on seeing it. */
+.num.short { color: #a52c17; }
+.muted { color: #8a8f9e; }

@@ -40,6 +40,21 @@ public class ItemStock : OrgScopedEntity
     [Range(0, 999999999999.999999, ErrorMessage = "Weighted average cost cannot be negative.")]
     public decimal WeightedAverageCost { get; set; }
 
+    /// <summary>
+    /// Promised but not yet issued — a confirmed order that has not shipped.
+    ///
+    /// <b>Never subtracted from <see cref="QuantityOnHand"/>.</b> The stock is
+    /// still physically there and still worth what it cost; only its
+    /// availability has changed. Reports that value stock read on-hand, and
+    /// anything asking "can I sell this" reads
+    /// <c>QuantityOnHand - QuantityReserved</c>.
+    ///
+    /// Reserving and releasing use the same guarded conditional update the
+    /// decrement does, for the same reason: two tills confirming the last unit
+    /// must not both succeed.
+    /// </summary>
+    public decimal QuantityReserved { get; set; }
+
     /// <summary>When stock last moved. Read by reports; never a substitute for the movement rows.</summary>
     public DateTimeOffset? LastMovementAt { get; set; }
 }
