@@ -5,8 +5,17 @@ namespace Inventory.Repository.SeedData;
 
 /// <summary>
 /// The standard Indian purities, ordered finest first because that is how a
-/// jeweller reads a list. Only seeded for an organization whose vertical is
-/// jewellery — a chemist has no use for them.
+/// jeweller reads a list.
+///
+/// Seeded for <b>every</b> branch, not only jewellers. There is nothing on a
+/// branch that says which trade it is in, so there is nothing to condition on —
+/// and the cost of getting it wrong is asymmetric. A jeweller who did not get
+/// them cannot price a single ornament until someone types eleven rows by hand;
+/// a chemist who did get them has eleven unused rows on one settings screen,
+/// which they can deactivate and forget.
+///
+/// Whether a branch should declare its trade is a real question, and one for
+/// the owner rather than for this comment — see PLAN 5.14.
 /// </summary>
 public static class MetalPuritiesSeed
 {

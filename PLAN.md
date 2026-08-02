@@ -200,8 +200,12 @@ Independent of the stages above; take any of them whenever.
   **It never throws.** No tenant (seeding, design time) or Platform unreachable falls back to the configured value, because refusing to allocate a code over a settings lookup would be the worse failure. A month outside 1–12 is logged and ignored rather than composing a number nobody can explain.
   The Accounting preview and the Angular page now read it too, so what the screen shows and what the server generates cannot disagree. `NumberingSeriesService` lost its `NumberingOptions` dependency entirely as a result.
 
-- [ ] **5.4 — Fix the `MetalPuritiesSeed` comment**
+- [x] **5.4 — Fix the `MetalPuritiesSeed` comment**
   It claims to seed only for jewellery organizations; the code seeds unconditionally. One or the other should change.
+  **The comment changed, not the code** — because the code could not have done what the comment described. `Vertical` and `Industry` appear nowhere in the backend outside migrations: there is no field on an organization that says which trade it is in, so there was nothing to condition on. The comment was describing a design that was never built.
+  Seeding unconditionally is also the right default while that is true, and the comment now says why: the cost is asymmetric. A jeweller who did not get the purities cannot price a single ornament until someone types eleven rows by hand; a chemist who did get them has eleven unused rows on one settings screen, which they can deactivate and forget.
+  Whether a branch should declare its trade is a real product question, not a comment's to answer — split out as **5.14** so the reference is not dangling.
+  Checked every other seed file's summary while here — `ContactPersonRolesSeed`, `PaymentTermsSeed`, `ChartOfAccountsSeed`, `NumberingSeriesSeed`, `TaxMasterSeed`, `HsnSacSeed`, `HsnSacCsvLoader` — all accurate. This was the only one.
 
 - [ ] **5.5 — Refresh `CLAUDE.md`**
   Its "Current state", "Blocking gaps" and "Not yet built" sections all predate this work, and the login gap it calls blocking is closed.
@@ -227,6 +231,12 @@ Independent of the stages above; take any of them whenever.
 
 - [ ] **5.9 — `AzureBlobFileStorage`**
   Left out of 2.1. Needs `Azure.Storage.Blobs` added to `Directory.Packages.props`, which cannot be restored or compiled while the SDK hosts are blocked. `GetDownloadUrlAsync` returning a real SAS URL is the reason to build it — until then every download streams through the API, which works but puts the bytes through the service.
+
+- [ ] **5.14 — Should a branch declare its trade?** *(needs an owner decision, not code)*
+  Nothing on an organization says whether it sells medicines or ornaments. Every branch is therefore seeded with everything: eleven metal purities on a chemist, pharma fields on a jeweller's item form. It works, and it is untidy in a way that grows — each vertical added makes every other vertical's settings screens longer.
+  A `Vertical` on the organization (Pharma / Jewellery / General, or several ticked) would let seeding, the item profile default and the settings menu all narrow themselves. It is a small column with a wide blast radius: signup, the branch form, `OrganizationProvisioningService`, `MetalPuritiesSeed`, the item profile picker and probably the reports menu.
+  The questions for the owner: is a branch ever more than one trade at once — a chemist that also sells FMCG, a jeweller that also does watch repair? Does the vertical hide a screen or merely preset a default? Can it be changed after the branch has traded, and if so what happens to the rows the old vertical seeded?
+  Not started deliberately: guessing wrong here means an unpickable choice on the signup form that every customer has to answer before they understand it.
 
 - [ ] **5.6 — Decide the numbering-series ownership exception**
   `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations`, so a code can be allocated inside the caller's transaction. It is a deliberate, documented exception to the no-shared-tables rule — either confirm it in `CLAUDE.md` or replace it with a table per service.
