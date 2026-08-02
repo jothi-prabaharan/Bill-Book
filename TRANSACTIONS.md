@@ -1,8 +1,8 @@
 # TRANSACTIONS.md — the plan for every transaction document
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`PLAN.md`](./PLAN.md) holds the build order up to here. **This file holds the plan for the sixteen document types** — the half of the product that moves money and stock, none of which is built.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the sixteen document types** — the half of the product that moves money and stock, none of which is built.
 
-Same rules as `PLAN.md`: take the first unticked box, check it against its **Done when** line, tick it in the same commit as the work, and strike a task rather than deleting it if it turns out to be wrong.
+Same rules as `master.md`: take the first unticked box, check it against its **Done when** line, tick it in the same commit as the work, and strike a task rather than deleting it if it turns out to be wrong.
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 
@@ -78,7 +78,7 @@ None of these is a document. All six are things a document immediately needs and
   *Done when*: a two-line journal saves as a draft while unbalanced, refuses to post unbalanced, and a reversal links both headers and every line.
 
 - [ ] **T0.6 — Nothing displays a ledger, and everything below writes to one**
-  `acc.JournalLedger` accepts postings and stock already writes to it, and there is no screen. Build the account ledger and the trial balance **before the first document**, not after: from here every stage is verified by whether a posting is right, and a posting that can only be read with SQL will be checked by nobody. It also closes the presentation half of PLAN 4.4, which has been waiting for somewhere to be shown.
+  `acc.JournalLedger` accepts postings and stock already writes to it, and there is no screen. Build the account ledger and the trial balance **before the first document**, not after: from here every stage is verified by whether a posting is right, and a posting that can only be read with SQL will be checked by nobody. It also closes the presentation half of master.md 4.4, which has been waiting for somewhere to be shown.
   Account ledger — account, date range, running balance, drill to the document. Trial balance — every account, debit and credit totals, and the two agreeing, which is the one number that says the whole system is sound.
   **Settle `acc.vw_LedgerDetail` here.** SPEC flags it: `CREATE VIEW` is not in `CLAUDE.md`'s raw-SQL exception list, and a view that omits `security_invoker = true` bypasses RLS and leaks the general ledger across branches. *Recommendation: don't add the view.* Do the join as a LINQ projection in Accounting and compute the running balance in C# over the ordered, account-scoped, date-ranged result — a ledger screen is always all three of those, so the window function buys less than the exception costs.
   *Done when*: a trial balance built from the stock postings already in the ledger balances, and every posting in it drills back to the movement that wrote it.
@@ -242,7 +242,7 @@ Answering these before the stage that needs them is much cheaper than after. Fou
 | T4.1 | Does a goods receipt post to a GRNI clearing account? | T4 | Yes, and seed the account |
 | T0.6 | `acc.vw_LedgerDetail` as a database view, or a LINQ projection? | T0 | LINQ projection; don't grow the raw-SQL exception list |
 | — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* |
-| — | Should a branch declare its trade, so documents and settings narrow themselves? | any | *(open in `CLAUDE.md`, PLAN 5.14)* |
+| — | Should a branch declare its trade, so documents and settings narrow themselves? | any | *(open in `CLAUDE.md`, master.md 5.14)* |
 
 ## Sequencing, and the one place it is arguable
 
