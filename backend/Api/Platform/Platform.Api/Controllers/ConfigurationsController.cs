@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Services;
+using Shared.Kernel.Internal;
 
 namespace Platform.Api.Controllers;
 
@@ -8,6 +10,8 @@ namespace Platform.Api.Controllers;
 /// edits values and clears overrides, but never adds or deletes keys.
 /// </summary>
 [ApiController]
+[Authorize]
+[OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/configurations")]
 public sealed class ConfigurationsController : ControllerBase
 {

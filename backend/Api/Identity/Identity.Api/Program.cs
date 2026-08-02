@@ -2,14 +2,21 @@ using System.Text;
 using Identity.Api.Services;
 using Identity.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+// Attaches the shared internal key to every service-to-service call, so a
+// guarded endpoint is reachable by this service and by nothing else.
+builder.Services.AddTransient<InternalKeyHandler>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -38,13 +45,15 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddHttpClient<IEmailSender, PlatformEmailSender>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Cross-service seam to Platform.
 builder.Services.AddHttpClient<IPlatformDirectory, PlatformDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // JWT bearer for protected endpoints (the auth endpoints themselves are anonymous).
 JwtOptions jwt = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -70,7 +79,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
         };
     });
-builder.Services.AddAuthorization();
+// Default deny: a controller added later is authenticated because nobody did
+// anything about it. Endpoints that genuinely run before a token exists —
+// signup, login, the internal service-to-service ones — say so with
+// [AllowAnonymous], which makes the exception visible on the controller itself.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 WebApplication app = builder.Build();
 

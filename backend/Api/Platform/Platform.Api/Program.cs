@@ -1,15 +1,22 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Platform.Api.Services;
 using Platform.Repository;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+// Attaches the shared internal key to every service-to-service call, so a
+// guarded endpoint is reachable by this service and by nothing else.
+builder.Services.AddTransient<InternalKeyHandler>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
@@ -37,7 +44,8 @@ builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
 
 // Mail is queued and delivered on a background worker, so an SMTP round-trip
@@ -59,11 +67,13 @@ builder.Services.AddScoped<ITenantSeeder, HttpTenantSeeder>();
 builder.Services.AddHttpClient<IIdentityAdmin, IdentityAdminClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Identity:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IMasterCurrencies, MasterCurrenciesClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Dev infrastructure — swap for Key Vault / Service Bus in production.
 builder.Services.AddSingleton<ISecretStore, InMemorySecretStore>();
@@ -96,7 +106,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
         };
     });
-builder.Services.AddAuthorization();
+// Default deny: a controller added later is authenticated because nobody did
+// anything about it. Endpoints that genuinely run before a token exists —
+// signup, login, the internal service-to-service ones — say so with
+// [AllowAnonymous], which makes the exception visible on the controller itself.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 WebApplication app = builder.Build();
 

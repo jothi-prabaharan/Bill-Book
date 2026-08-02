@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Entity.Models;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 
 namespace Platform.Api.Controllers;
 
@@ -10,6 +12,8 @@ namespace Platform.Api.Controllers;
 /// stays inside Platform. Must not be routed through the public gateway.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/notifications")]
 public sealed class InternalNotificationsController : ControllerBase
 {

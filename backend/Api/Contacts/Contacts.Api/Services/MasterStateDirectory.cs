@@ -35,7 +35,7 @@ public sealed class MasterStateDirectory : IStateDirectory
             return cached;
         }
 
-        HttpResponseMessage response = await _http.GetAsync($"api/master/states/{stateId}", ct);
+        HttpResponseMessage response = await _http.GetAsync($"internal/master/states/{stateId}", ct);
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;

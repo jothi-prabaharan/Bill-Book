@@ -3,6 +3,7 @@ using Accounting.Entity.Enums;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Accounting.Api.Controllers;
 
@@ -32,6 +33,8 @@ public sealed class SubAccountsController : ControllerBase
 /// when they create or retire a row. Not routed through the public gateway.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/sub-accounts")]
 public sealed class InternalSubAccountsController : ControllerBase
 {

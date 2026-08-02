@@ -39,7 +39,7 @@ public sealed class MasterCurrenciesClient : IMasterCurrencies
     public async Task<IReadOnlyList<MasterCurrency>> GetAllAsync(CancellationToken ct = default)
     {
         List<MasterCurrency>? currencies =
-            await _http.GetFromJsonAsync<List<MasterCurrency>>("api/master/currencies", ct);
+            await _http.GetFromJsonAsync<List<MasterCurrency>>("internal/master/currencies", ct);
         return currencies ?? [];
     }
 

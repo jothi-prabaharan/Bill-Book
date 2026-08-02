@@ -155,25 +155,48 @@ The eight backend services that are not yet implemented — Contacts, Crm, Inven
 
 ## Service-to-service key
 
-Platform's provisioning worker calls each service's `internal/seed/organization`
-endpoint to write that service's master data for a new organization. Those
-endpoints take the organization to act on as a parameter rather than from a
-token, because the worker has no user token — so they are guarded by a shared
-key rather than a JWT.
+Services call each other for things no user token covers: Platform's provisioning
+worker writes each service's master data for a new organization, Identity asks
+Platform which account an organization belongs to on every sign-in, and Contacts,
+Accounting, Banking and Inventory ask Platform which database to open on every
+request. None of those callers has a user token, so those endpoints take the
+organization or customer to act on as a parameter — which is exactly what makes
+them dangerous, and why they are guarded by a shared key instead.
+
+Every route beginning `internal/` carries that guard. They are also absent from
+the gateway and so unreachable from outside the cluster, but that is a routing
+detail rather than a control, which is why the key exists as well.
 
 | Setting | Where |
 |---|---|
-| `Internal:ApiKey` | Platform (sender), Accounting, Contacts, Inventory (receivers) |
+| `Internal:ApiKey` | Every service. All of them both send and receive. |
 
-All four must hold the **same** value. Development ships a throwaway key so a
-clone runs with no setup; Staging, UAT and Production ship blank and read it
-from `Internal__ApiKey` in the environment.
+They must all hold the **same** value. Development ships a throwaway key so a
+clone runs with no setup; Staging, UAT and Production ship blank and read it from
+`Internal__ApiKey` in the environment.
 
 A blank key on a receiver **refuses every internal call** rather than accepting
-them. That is deliberate: a misconfigured deployment fails loudly instead of
-leaving an unauthenticated endpoint that can seed any organization it is given
-the id of.
+them, so a misconfigured deployment fails loudly instead of leaving an open
+endpoint that will seed, reseed or read any organization it is given the id of.
 
-These routes are also absent from the gateway, so they are not reachable from
-outside the cluster — but that is a routing detail, not a control, which is why
-the key exists as well.
+## What is reachable without signing in
+
+Three things, and only three:
+
+- **Sign-in itself** — login, organization selection, password reset by code, and
+  accepting an invitation. All of these necessarily happen before a token exists.
+- **Signup**, including the status poll the progress screen makes while the
+  account is being provisioned.
+- **Countries and their states**, because the signup form asks for them before
+  there is an account to authenticate.
+
+Everything else requires a token. That is enforced by a default-deny policy in
+each service rather than by an attribute on each controller, so a controller
+added tomorrow is authenticated because nobody did anything — the three
+exceptions above say so explicitly, and are visible as such.
+
+The same rule covers reference data that is not secret but is nobody else's
+business either. Currencies, HSN/SAC codes and the account and ledger type
+masters are read only from inside the app, so they are not served to whoever
+finds the port; the two lookups other services need have their own key-guarded
+route rather than being opened up.

@@ -1,4 +1,5 @@
 using Accounting.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
@@ -20,6 +21,7 @@ namespace Accounting.Api.Controllers;
 /// organization that is already complete.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [InternalOnly]
 [Route("internal/seed")]
 public sealed class InternalSeedController : ControllerBase

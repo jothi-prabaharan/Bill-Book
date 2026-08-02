@@ -254,8 +254,29 @@ Independent of the stages above; take any of them whenever.
 - [ ] **5.13 — No reserved quantity**
   `ItemStock` holds on-hand only. An order that is confirmed but not yet delivered leaves stock fully available, so it can be promised twice. Needs a `QuantityReserved` column and a matching guarded update — deliberately left out until Sales exists to write it, because a reserve nothing releases is worse than none.
 
-- [ ] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
+- [x] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
   `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.
+
+  **The three named endpoints were the smaller half.** Auditing every route first turned up that **seven of the ten `internal/` endpoints had no guard at all** — `InternalOnly` was on the three seeding controllers and nowhere else. `POST internal/users/owner` mints an owner account; `internal/customers/{id}/database` hands back a tenant's connection reference; `internal/orgs/{id}/context` returns customer and licence; `internal/sub-accounts/provision` writes ledger rows. All reachable by anything that could open the port. `internal/sub-accounts` was missed on the first sweep because its file is not named `Internal*` — the second matched on `Route("internal/` instead.
+
+  **The guard could not be added on its own.** Only `TenantSeeder` sent the key; the other eight callers sent nothing, and nothing failed because nothing checked. Adding `InternalOnly` alone would have broken login, tenant resolution on every request, and signup, all at once. So `Shared.Kernel.Internal.InternalKeyHandler` attaches the key to every service-to-service client — one handler rather than eight call sites, because a call site is a thing to forget.
+
+  **Default deny.** Each service now sets `FallbackPolicy = RequireAuthenticatedUser`, so a controller added tomorrow is authenticated because nobody did anything. The exceptions are explicit and few: sign-in, signup, and the country and state lists the signup form needs. Internal controllers carry `[AllowAnonymous]` beside `[InternalOnly]` — they authenticate with a key rather than a token, and the fallback policy would otherwise reject them before the filter ran.
+
+  **Master had no authentication whatsoever** — no scheme, no `[Authorize]`, no `Jwt:SigningKey`. Reference data is not secret, but "not secret" is not "serve to anyone who finds the port", and the HSN/SAC importer sat on that service. It validates tokens like the rest now.
+
+  That created the one genuine design problem: `states/{id}` and `currencies` are read both by the browser (user token, no key) and by Contacts and Platform (key, no token). Rather than one endpoint accepting either — a door with two locks and no way to tell who came through — the two lookups got their own `internal/master` route and the service-to-service clients were repointed at it.
+
+  **`OrgRouteMustMatchToken` / `CustomerRouteMustMatchToken`** cover the original three. Attributes rather than per-action checks: the failure mode is omission, and a per-action check is only as good as whoever remembers the next action. `plt` is the master database with no query filter and no row-level security, so the claim is the entire boundary there.
+
+  **`RequirePermission` is the first place a permission claim is enforced anywhere.** Identity has minted them into every token since the beginning and no server has ever read one. It guards the platform's own mailbox, which belongs to the operator and so has no tenant claim that could protect it. Applying permissions properly is 5.17.
+
+  Verified by re-auditing all 36 routes: every one now carries exactly one guard, and the frontend's four Master calls still resolve — two anonymous for signup, two behind a token.
+
+- [ ] **5.17 — Permission claims are minted and never checked**
+  Identity puts a `permission` claim on every access token for each of the ~120 seeded permissions, and until 5.10 no service read a single one. Any authenticated user can call any endpoint their token reaches, whatever role they hold — a Viewer can post a journal.
+  `RequirePermission` now exists and guards exactly two actions, both operator-only, because those had no tenant claim to fall back on. Everything else is authenticated but unauthorized.
+  The work is deciding the mapping, not writing the filter: which permission each endpoint needs, whether read endpoints take `.view` or nothing, and what a role holding none of them should see. Worth one pass with the matrix in front of you rather than a guess per controller.
 
 - [x] **5.11 — Three copies of `Reordering`**
   Banking and Inventory each carry their own, and `Shared.Kernel.Ordering` now holds the canonical one that Platform uses. Point the other two at it and delete their copies, along with their local `ReorderRequest`.

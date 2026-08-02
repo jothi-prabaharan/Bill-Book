@@ -2,10 +2,12 @@ using System.Text;
 using Contacts.Api.Services;
 using Contacts.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Storage;
@@ -14,6 +16,11 @@ using Shared.Kernel.Tenancy;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+// Attaches the shared internal key to every service-to-service call, so a
+// guarded endpoint is reachable by this service and by nothing else.
+builder.Services.AddTransient<InternalKeyHandler>();
+
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddMemoryCache();
@@ -29,7 +36,8 @@ builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>(
 builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // TODO: replace with the Key Vault-backed store before production.
 builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
@@ -39,14 +47,16 @@ builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Only Accounting writes ledger rows, so a contact's two sub-accounts are
 // created by calling it rather than by inserting here.
 builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // The connection string is chosen per request, so the context is built from the
 // resolved tenant rather than a fixed configuration value.
@@ -85,7 +95,8 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<ContactsDbContext>(),
@@ -109,7 +120,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
         };
     });
-builder.Services.AddAuthorization();
+// Default deny: a controller added later is authenticated because nobody did
+// anything about it. Endpoints that genuinely run before a token exists —
+// signup, login, the internal service-to-service ones — say so with
+// [AllowAnonymous], which makes the exception visible on the controller itself.
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 WebApplication app = builder.Build();
 

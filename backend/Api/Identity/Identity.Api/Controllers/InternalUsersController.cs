@@ -2,8 +2,10 @@ using Identity.Api.Services;
 using Identity.Entity.Models;
 using Identity.Entity.TableEntities;
 using Identity.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Internal;
 
 namespace Identity.Api.Controllers;
 
@@ -12,6 +14,8 @@ namespace Identity.Api.Controllers;
 /// Must not be routed through the public gateway.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/users")]
 public sealed class InternalUsersController : ControllerBase
 {

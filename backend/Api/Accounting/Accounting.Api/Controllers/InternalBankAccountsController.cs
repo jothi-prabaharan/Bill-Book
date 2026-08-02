@@ -1,6 +1,8 @@
 using Accounting.Api.Services;
 using Accounting.Entity.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Accounting.Api.Controllers;
 
@@ -10,6 +12,8 @@ namespace Accounting.Api.Controllers;
 /// rather than inserted from the other side.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/accounts/bank-account")]
 public sealed class InternalBankAccountsController : ControllerBase
 {

@@ -1,4 +1,5 @@
 using Contacts.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
@@ -15,6 +16,7 @@ namespace Contacts.Api.Controllers;
 /// months ago backfills whatever has been added to the seed list since.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [InternalOnly]
 [Route("internal/seed")]
 public sealed class InternalSeedController : ControllerBase

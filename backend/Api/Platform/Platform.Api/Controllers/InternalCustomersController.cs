@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Platform.Entity.Enums;
 using Platform.Repository;
+using Shared.Kernel.Internal;
 
 namespace Platform.Api.Controllers;
 
@@ -13,6 +15,8 @@ namespace Platform.Api.Controllers;
 /// Internal only; not routed through the public gateway.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/customers")]
 public sealed class InternalCustomersController : ControllerBase
 {

@@ -1,6 +1,8 @@
-using Master.Repository;
 using Master.Repository.SeedData;
+using Master.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Controllers;
 
@@ -15,6 +17,8 @@ namespace Master.Api.Controllers;
 /// Operator-only; not routed through the public gateway.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 [Route("internal/hsn-sac")]
 public sealed class InternalHsnImportController : ControllerBase
 {

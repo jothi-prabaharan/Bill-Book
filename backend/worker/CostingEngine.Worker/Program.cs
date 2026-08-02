@@ -3,6 +3,7 @@ using Inventory.Api.Services;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
@@ -23,15 +24,21 @@ builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>(
 // exactly what CLAUDE.md reserves a null CreatedBy for: written by no person.
 builder.Services.AddScoped<ICurrentUser, SystemUser>();
 
+// Attaches the shared internal key to every service-to-service call, so a
+// guarded endpoint is reachable by this service and by nothing else.
+builder.Services.AddTransient<InternalKeyHandler>();
+
 builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
-});
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Reused from Inventory rather than reimplemented: the worker resolves tenant
 // connections exactly the way the service does, and two copies of that logic is

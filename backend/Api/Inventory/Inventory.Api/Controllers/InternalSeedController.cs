@@ -1,4 +1,5 @@
 using Inventory.Api.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
@@ -17,6 +18,7 @@ namespace Inventory.Api.Controllers;
 /// months ago backfills whatever has been added to the seed lists since.
 /// </summary>
 [ApiController]
+[AllowAnonymous]
 [InternalOnly]
 [Route("internal/seed")]
 public sealed class InternalSeedController : ControllerBase

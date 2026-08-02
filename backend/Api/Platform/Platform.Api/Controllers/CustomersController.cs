@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Services;
 using Platform.Entity.Models;
@@ -5,6 +6,7 @@ using Platform.Entity.Models;
 namespace Platform.Api.Controllers;
 
 [ApiController]
+[AllowAnonymous]
 [Route("api/customers")]
 public sealed class CustomersController : ControllerBase
 {

@@ -1,11 +1,21 @@
 using Master.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace Master.Api.Controllers;
 
-/// <summary>Public reference data for the signup and settings screens.</summary>
+/// <summary>
+/// Reference data for the signup and settings screens.
+///
+/// Authenticated by default, with two exceptions marked below. Countries and
+/// states are needed by the signup form, which by definition runs before any
+/// token exists. Everything else here — currencies, HSN/SAC, account and ledger
+/// types — is only ever read from inside the app, so there is no reason to serve
+/// it to anyone who finds the port.
+/// </summary>
 [ApiController]
+[Authorize]
 [Route("api/master")]
 public sealed class MasterController : ControllerBase
 {
@@ -13,6 +23,8 @@ public sealed class MasterController : ControllerBase
 
     public MasterController(MasterDbContext db) => _db = db;
 
+    /// <summary>Anonymous: the signup form needs this before there is an account.</summary>
+    [AllowAnonymous]
     [HttpGet("countries")]
     public async Task<IActionResult> GetCountries(CancellationToken ct)
     {
@@ -24,6 +36,8 @@ public sealed class MasterController : ControllerBase
         return Ok(countries);
     }
 
+    /// <summary>Anonymous for the same reason as countries — signup asks for a state.</summary>
+    [AllowAnonymous]
     [HttpGet("countries/{countryId:int}/states")]
     public async Task<IActionResult> GetStates(int countryId, CancellationToken ct)
     {

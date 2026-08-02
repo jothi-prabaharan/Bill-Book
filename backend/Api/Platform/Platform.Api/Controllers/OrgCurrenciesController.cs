@@ -1,10 +1,22 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Platform.Api.Services;
 using Platform.Entity.Models;
+using Shared.Kernel.Internal;
 
 namespace Platform.Api.Controllers;
 
 [ApiController]
+/// <summary>
+/// The currencies a branch trades in.
+///
+/// The organization comes off the URL, and `plt` is the master database — it
+/// holds every customer's rows with no query filter and no row-level security
+/// to fall back on. The claim check is the entire boundary here, which is why it
+/// is an attribute on the controller rather than a line in each action.
+/// </summary>
+[Authorize]
+[OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/currencies")]
 public sealed class OrgCurrenciesController : ControllerBase
 {
