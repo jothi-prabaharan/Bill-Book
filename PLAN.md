@@ -207,8 +207,12 @@ Independent of the stages above; take any of them whenever.
   Whether a branch should declare its trade is a real product question, not a comment's to answer — split out as **5.14** so the reference is not dangling.
   Checked every other seed file's summary while here — `ContactPersonRolesSeed`, `PaymentTermsSeed`, `ChartOfAccountsSeed`, `NumberingSeriesSeed`, `TaxMasterSeed`, `HsnSacSeed`, `HsnSacCsvLoader` — all accurate. This was the only one.
 
-- [ ] **5.5 — Refresh `CLAUDE.md`**
+- [x] **5.5 — Refresh `CLAUDE.md`**
   Its "Current state", "Blocking gaps" and "Not yet built" sections all predate this work, and the login gap it calls blocking is closed.
+  **All four "blocking gaps" were closed and none had been ticked.** `ResolveCustomerIdAsync` is now `IPlatformDirectory`; login refuses on `!ctx.DatabaseReady`; `CustomerCode` retries on the unique-index conflict; the three infrastructure interfaces all have registrations. Read every one in the code rather than trusting the list — a file claiming a login is broken when it works is worse than no file, because the next person builds around a problem that is not there.
+  Rewrote "Current state" as a table per service with what actually works, and replaced the blocking-gaps list with **standing caveats** — never compiled, no tests, development stand-ins for Key Vault / Service Bus / Blob, and 5.10's unauthenticated endpoints. Those are the things a reader has to know before writing a line.
+  **Also corrected three stale sections 5.5 did not name**, all of the same kind and all load-bearing: *Inventory & costing* still said weighted average only, with no mention of per-item costing methods, cost layers, async costing or the movements-table queue; the JWT claim list was missing `license_status` and `license_expiry`; and the roadmap still had FIFO/FEFO/LIFO in Phase 3 when it shipped in Phase 1. Someone reading any of those writes the wrong code.
+  Trimmed *Undecided* of the two questions the code has since answered (trial expiry is blocked-not-read-only; costing is per-item), narrowed the provisioning one to the half still open, and added 5.14's branch-vertical question.
 
 - [ ] **5.8 — Make the remaining seeds idempotent per row**
   The chart of accounts now adds only what is missing. Tax masters, numbering series, payment terms, contact person roles, unit types and metal purities still bail out if the organization has any rows at all, so anything added to those seed lists later will never reach an existing organization.

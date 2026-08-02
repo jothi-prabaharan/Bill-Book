@@ -210,15 +210,23 @@ Highest-risk screen in the system:
 
 ## Inventory & costing
 
-**Stock is one shared pool per branch — that is, per `OrgId`.** One quantity and one weighted average cost per item within a branch, shared across every warehouse in it. `WarehouseId` is a location dimension only: never partition inventory or WAC by it. Branches do not share stock, because a branch is a separate set of books; the query filter already sees to that, so no code needs to think about it.
+**Stock is one shared pool per branch — that is, per `OrgId`.** One quantity and one running cost per item within a branch, shared across every warehouse in it. `WarehouseId` is a location dimension only: never partition inventory, cost layers or WAC by it. Branches do not share stock, because a branch is a separate set of books; the query filter already sees to that, so no code needs to think about it.
 
 **Point-of-sale stock decrement must be synchronous** — a concurrency-safe conditional update against Inventory. Not event-driven, or two tills oversell the last unit. Everything downstream (costing, accounting, notifications) is async.
 
-Weighted average cost per SKU, company-wide:
+**The costing method is per item**, chosen on the item master and frozen the moment stock first moves — earlier postings were made under it, so changing it later would restate history silently. WeightedAverage / Fifo / Lifo / Fefo / SpecificIdentification / None.
+
+Weighted average, which is the default and the only one needing a formula:
 - Receipt: `newWac = (oldQty × oldWac + recvQty × recvCost) / (oldQty + recvQty)`
 - Sale: `COGS = qtySold × currentWac` (WAC unchanged; only quantity moves)
 
-**Service Bus is at-least-once. Every consumer needs idempotency** (dedup on event id) or costs double-count on redelivery.
+Everything else runs on **cost layers**. A receipt opens an `inv.CostLayer` at what it cost; an issue records `inv.CostLayerConsumption` rows naming which layers it drew from and how much from each, so the cost of a sale walks back to the purchases behind it. Layers are consumed by the same guarded conditional update stock uses, each capped by its own remaining quantity.
+
+**Costing is asynchronous; quantity is not.** A movement's quantity is applied inside the request — see the POS rule above — and its cost is settled just after by `CostingEngine.Worker`. A movement carries a `CostingStatus`, and until it reaches `Costed` the screen says so rather than showing zero.
+
+**There is no message broker.** `inv.StockMovements` *is* the queue: ordering comes from `ORDER BY ItemId, MovementDate, StockMovementId`, and exactly-once from a guarded `Pending → InProgress` status claim whose row count is the answer. If a broker is added later it should **wake** that loop, not replace it — the ordering guarantee is the point, and a broker does not give it. When one does arrive: **Service Bus is at-least-once, so every consumer needs idempotency** (dedup on event id) or costs double-count on redelivery.
+
+**A backdated receipt restates the issues after it.** Under FIFO that stock should have gone out first, so the affected movements are requeued and recosted, and each restatement is written to `inv.RecostingAdjustments` with the before and after. Quantities never change; the old figures are kept rather than overwritten.
 
 ---
 
@@ -248,7 +256,7 @@ Two-step login, because one account spans multiple organizations:
 1. `POST /api/auth/login` — credentials → pre-auth token (5 min, no org context) + accessible orgs
 2. `POST /api/auth/select-organization` — → access token (15 min) + refresh token (7 days)
 
-JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `permission[]`.
+JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `license_expiry` (when set), `permission[]`. The licence claims are what let a page and its API both refuse an expired customer without either asking Platform per request.
 
 - BCrypt work factor 12; refresh tokens **rotate** on use; all tokens stored **hashed**
 - Lockout: 5 failed attempts → 15 min
@@ -281,18 +289,41 @@ JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `permission[]`.
 
 ## Current state
 
-**Implemented**: Master (countries + 37 Indian states with GST codes), Platform (customers, orgs, tenant directory, trial signup + DB provisioning), Identity (users, roles, permissions, JWT auth, password reset). ~45 C# files, 10 projects.
+~326 C# files across 43 projects. **Still never compiled** — see below.
 
-**Never compiled** — was authored without a .NET SDK available. Expect fixes on first `dotnet build`, most likely EF Core 10 package versions and namespace collisions (`Identity` and `Platform` are close to framework namespaces).
+### Built and wired end to end
 
-### Blocking gaps
-- **`AuthController.ResolveCustomerIdAsync` returns null** — needs a Platform call. **Login cannot complete until this is implemented.**
-- `ISecretStore` (Key Vault), `IEventPublisher` (Service Bus), `IEmailSender` (Notification worker) — interfaces only. DI startup fails without implementations.
-- Login doesn't check whether the customer's database finished provisioning
-- `CustomerCode` generation is read-max-then-increment — needs retry-on-conflict under concurrent signups
+Schema, API and page all exist for these. Task tracking lives in [`PLAN.md`](./PLAN.md); this is the shape of the thing, not the to-do list.
 
-### Not yet built
-Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting services. All frontend. Gateway. All three background workers.
+| Service | Tables | What works |
+|---|---|---|
+| **Master** | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
+| **Platform** | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
+| **Identity** | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
+| **Contacts** | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
+| **Inventory** | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
+| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen |
+| **Banking** | Bank, BankAccount | Each bank account provisions its own ledger account |
+
+`NumberingSeries` lives in `Shared.Kernel` and is mapped by four services with `ExcludeFromMigrations` — a deliberate exception to the no-shared-tables rule, so a code can be allocated inside the caller's transaction. PLAN 5.6 decides whether it stays.
+
+**Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update and costs them.
+
+**Frontend**: `apps/web` and `apps/docs` build. 25 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. `libs/shared`: auth, api-client, ui-components, currency-format, theming.
+
+### Still not built
+
+- **Crm, Sales, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
+- **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
+- **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
+- **The ledger side of stock.** `StockService` moves quantity and cost and stops; `Dr COGS / Cr Inventory` is not posted (PLAN 5.12), so stock and the GL disagree the moment anything is issued
+
+### Standing caveats
+
+- **Never compiled.** No .NET SDK has been available in any session — the egress policy blocks `dot.net` and `builds.dotnet.microsoft.com`. Every migration and Designer file is hand-written. Expect real fixes on first `dotnet build`, most likely EF Core 10 package versions and namespace collisions (`Identity` and `Platform` are close to framework namespaces).
+- **No tests and no linter.** No project in the Nx workspace defines a `lint` or `test` target, and there is no backend test project (PLAN 5.7).
+- **Infrastructure interfaces have development stand-ins, not production implementations.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`; `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing; `IFileStorage` → `LocalDiskFileStorage`. Key Vault, Service Bus and Blob Storage all still to write. Nothing that reads an event works yet, because nothing publishes one anywhere it can be read.
+- **Platform's currencies, configurations and SMTP endpoints are unauthenticated** — they take the org id from the route with no `[Authorize]` and no claim check (PLAN 5.10).
 
 ---
 
@@ -300,18 +331,19 @@ Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporti
 
 **Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Fixed Assets, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, Banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, Platform provisioning
 **Phase 2** — Recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
-**Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, FIFO/FEFO/LIFO batch allocation, compliance bundle
+**Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+
+*FIFO/FEFO/LIFO batch allocation was Phase 3 and landed early, with cost layers — it is built. Do not defer work that depends on it.*
 
 ---
 
 ## Undecided — ask, don't assume
 
-- Who holds `CREATEDB` in production; sync vs async provisioning UX
+- Who holds `CREATEDB` in production *(the UX half is settled: provisioning is async, behind a progress screen that waits)*
 - RBI rate ingestion: scrape / paid wrapper / manual
-- Trial expiry behaviour: read-only or blocked
 - Empty-string vs null normalization for optional phone fields
 - Whether `settings` splits into per-sub-screen libs
 - CRM: campaign/marketing automation in v1?
 - API client scope granularity: per-module or per-action
 - Fixed assets: straight-line only, or both books and tax depreciation?
-- Costing: blended WAC confirmed, or batch-level for expiry-sensitive stock?
+- Whether a branch should declare its trade (Pharma / Jewellery / General), so seeding and the settings menu can narrow themselves — today every branch gets everything (PLAN 5.14)
