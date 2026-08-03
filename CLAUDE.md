@@ -176,7 +176,7 @@ Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `nt
 `AccountTypeId` is denormalized onto `SubAccounts`. **Always derive it from the parent account on write, never accept it from a caller** — if the two disagree, reports contradict each other depending on which one they group by. On `Accounts` it is chosen directly, and becomes immutable once the account has been used.
 
 ### SubAccount rules
-- Each Contact → 2 SubAccounts (Accounts Receivable, Accounts Payable)
+- Each Contact → 4 SubAccounts (Accounts Receivable, Accounts Payable, Advance to Vendor, Advance from Customer). The two advances hold money that moved before a document existed, or past what one asked for; both are per contact because a refund is owed to a named contact, not to a pool
 - Each Item → 3 SubAccounts (Inventory, Cost of Goods Sold, Sales Revenue)
 - `JournalDetail.SubAccountId` and `JournalLedger.SubAccountId` are nullable — bank and equity lines have no sub-dimension. Contact, item **and GST** legs do carry one (GST → a per-rate GST subaccount)
 
@@ -338,7 +338,7 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ### Standing caveats
 
-- **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 91, every EF snapshot matches its model, and all 30 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 92, every EF snapshot matches its model, and all 31 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
 - **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
 - **Every endpoint is behind a credential and a permission** (master.md 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.

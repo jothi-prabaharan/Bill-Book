@@ -136,7 +136,6 @@ public sealed class StockLedgerPoster
             orgId,
             posting.TransactionTypeCode,
             posting.TransactionId,
-            posting.LedgerSourceId,
             movement.MovementDate,
             movement.StockMovementId,
             [
@@ -185,6 +184,7 @@ public sealed class StockLedgerPoster
             // key this posting replaces, so a recosted movement corrects its own
             // rows and leaves the rest of the document alone.
             StockLedgerMapping.CogsLedgerType,
+            posting.LedgerSourceId,
             posting.TransactionDetailId,
             account,
             // Only the stock accounts have an item beneath them. Opening Balance

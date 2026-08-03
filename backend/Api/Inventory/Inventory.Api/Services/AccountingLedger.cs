@@ -19,23 +19,24 @@ public interface IAccountingLedger
 /// <summary>
 /// A posting as Inventory describes it. Accounting decides what lands.
 ///
-/// The leg type and the document line sit on the leg rather than here: a
-/// document produces several of each at once, and the pair of them is what says
-/// which rows a leg replaces. Inventory only ever sends COGS legs on one line at
-/// a time, but the shape is the ledger's, not this caller's.
+/// The leg type, the ledger source and the document line all sit on the leg
+/// rather than here: a document produces several of each at once, and they are
+/// what say which rows a leg replaces and what produced it. Inventory only ever
+/// sends COGS legs on one line at a time under one source, but the shape is the
+/// ledger's, not this caller's.
 /// </summary>
 public sealed record LedgerPosting(
     Guid CustomerId,
     Guid OrgId,
     string TransactionTypeCode,
     long TransactionId,
-    int LedgerSourceId,
     DateOnly LedgerDate,
     long? SourceDocumentId,
     IReadOnlyList<LedgerPostingLeg> Legs);
 
 public sealed record LedgerPostingLeg(
     int LedgerTypeId,
+    int LedgerSourceId,
     long TransactionDetailId,
     string AccountSystemName,
     int? SubAccountReferenceType,

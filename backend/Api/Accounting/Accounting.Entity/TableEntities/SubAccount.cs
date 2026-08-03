@@ -9,7 +9,8 @@ namespace Accounting.Entity.TableEntities;
 /// chart of accounts small while giving the ledger a sub-dimension to report on.
 ///
 /// Never created by hand — always a side effect of the owning master:
-/// Contact → 2 (AR, AP) · Item → 3 (Inventory, COGS, Sales Revenue) ·
+/// Contact → 4 (AR, AP, Advance to Vendor, Advance from Customer) ·
+/// Item → 3 (Inventory, COGS, Sales Revenue) ·
 /// Tax rate → up to 6 (CGST/SGST/IGST under each of Input and Output GST).
 /// </summary>
 public class SubAccount : OrgScopedEntity

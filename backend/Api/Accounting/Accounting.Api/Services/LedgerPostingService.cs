@@ -33,6 +33,12 @@ namespace Accounting.Api.Services;
 /// costing worker posts the COGS legs onto the same invoice minutes later. Each
 /// replaces only the keys its own legs name, so the two are independent without
 /// either knowing the other exists.
+///
+/// <b>One document can also be several things at once.</b> A payment that runs
+/// past what was owed settles a bill with part of itself and leaves the rest as
+/// an advance — so the ledger source is a property of the leg, not of the
+/// posting, and a payables report reading bill payments still sees the part that
+/// was one.
 /// </summary>
 public sealed class LedgerPostingService
 {
@@ -194,7 +200,7 @@ public sealed class LedgerPostingService
                 ExchangeRate = rate,
                 ContactId = request.ContactId,
                 LedgerTypeId = leg.LedgerTypeId,
-                LedgerSourceId = request.LedgerSourceId,
+                LedgerSourceId = leg.LedgerSourceId,
                 SourceDocumentId = request.SourceDocumentId,
                 TransactionDesc = leg.TransactionDesc,
                 JournalId = request.JournalId,

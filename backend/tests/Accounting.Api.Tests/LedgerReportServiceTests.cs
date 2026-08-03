@@ -18,6 +18,9 @@ public class LedgerReportServiceTests
 {
     private const int Control = 3;
 
+    /// <summary>`mst.LedgerSources` 12 — a manual journal.</summary>
+    private const int Journal = 12;
+
     private readonly PostgresFixture _postgres;
 
     public LedgerReportServiceTests(PostgresFixture postgres) => _postgres = postgres;
@@ -154,13 +157,13 @@ public class LedgerReportServiceTests
             {
                 TransactionTypeCode = "JRN",
                 TransactionId = transactionId,
-                LedgerSourceId = 12,
                 LedgerDate = on,
                 Legs =
                 [
                     new LedgerLegRequest
                     {
                         LedgerTypeId = Control,
+                        LedgerSourceId = Journal,
                         TransactionDetailId = 1,
                         AccountId = RentId,
                         DebitAmount = amount,
@@ -168,6 +171,7 @@ public class LedgerReportServiceTests
                     new LedgerLegRequest
                     {
                         LedgerTypeId = Control,
+                        LedgerSourceId = Journal,
                         TransactionDetailId = 2,
                         AccountId = CashId,
                         CreditAmount = amount,

@@ -52,11 +52,22 @@ public sealed class SubAccountService
 
     /// <summary>
     /// Creates the sub-accounts a master owns:
-    /// Contact → 2 · Item → 3 · Tax rate → up to 6 (CGST/SGST/IGST per direction).
+    /// Contact → 4 · Item → 3 · Tax rate → up to 6 (CGST/SGST/IGST per direction).
+    ///
+    /// <b>A contact gets four, not two.</b> Receivable and payable are what they
+    /// owe against documents; the two advance accounts are money that moved
+    /// before a document existed, or past what one asked for. All four are per
+    /// contact because every one of them is answered per contact — you refund a
+    /// named customer's advance, not a pooled balance — and a control account
+    /// whose balance cannot be split by contact cannot be reconciled at all.
     ///
     /// Any control account that gains a sub-account is marked used in the same
     /// transaction — a parented sub-account is a reference, and from that moment
     /// the parent's type and code must not move under its postings.
+    ///
+    /// <b>Re-runnable.</b> Each target is skipped when it already exists, so
+    /// calling this again for a contact created before the advance accounts
+    /// existed backfills exactly the two it is missing.
     /// </summary>
     public async Task<ProvisionSubAccountsResult> ProvisionAsync(
         ProvisionSubAccountsRequest request, CancellationToken ct)
@@ -67,6 +78,13 @@ public sealed class SubAccountService
             [
                 (SystemAccount.AccountsReceivable, TaxComponent.None, Label(SystemAccount.AccountsReceivable, request.Name)),
                 (SystemAccount.AccountsPayable, TaxComponent.None, Label(SystemAccount.AccountsPayable, request.Name)),
+
+                // Prepayments and overpayments, both directions. One sub-account
+                // each rather than one per kind: an advance and an overpayment
+                // are the same balance owed to the same contact, and the ledger
+                // source on the row is what says which it came from.
+                (SystemAccount.AdvanceToVendor, TaxComponent.None, Label(SystemAccount.AdvanceToVendor, request.Name)),
+                (SystemAccount.AdvanceFromCustomer, TaxComponent.None, Label(SystemAccount.AdvanceFromCustomer, request.Name)),
             ],
             SubAccountReferenceType.Item =>
             [

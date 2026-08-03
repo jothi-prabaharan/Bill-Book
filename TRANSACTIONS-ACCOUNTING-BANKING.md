@@ -92,8 +92,32 @@ Where the receivable and payable balances raised by Sales and Purchase are actua
 Needs T3.3 and T4.5 from the other file — there has to be something outstanding before there is anything to pay.
 
 - [ ] **T6.1 — `bnk.*` transaction schema** — payments, receipts and transfers, with lines that allocate to documents.
-- [ ] **T6.2 — Spend money (SPM)** — bill payment, vendor prepayment, invoice refund, credit-note refund, chosen by `LedgerSourceId` rather than by transaction type. `Dr Accounts Payable / Cr Bank`, with `MappingTransactionId` and `MappingTransactionTypeCode` pointing at the bill — that pair is the entire mechanism for tracing a payment to what it settles.
-  *Done when*: paying a bill clears it from payables aging, and the ledger row names the bill it paid.
+- [ ] **T6.2 — Spend money (SPM)** — one document type carrying six meanings, chosen by `LedgerSourceId` rather than by transaction type. `MappingTransactionId` and `MappingTransactionTypeCode` point at what is being settled — that pair is the entire mechanism for tracing a payment to what it clears.
+
+  | # | Type | Posting | `LedgerSourceId` |
+  |---|---|---|---|
+  | 1 | **Bill payment** | `Dr Accounts Payable / Cr Bank` | 2 `BILLPAYMENT` |
+  | 2 | **Prepayment** — advance to a vendor before their bill | `Dr Advance to Vendor / Cr Bank` | 8 `VENDORPREPAYMENT` |
+  | 3 | **Overpayment** — paid past what was owed | `Dr Accounts Payable` (settled) **+** `Dr Advance to Vendor` (excess) `/ Cr Bank` | 2 **and** 16 `VENDOROVERPAYMENT`, per leg |
+  | 4 | **Credit-note refund** — a *sales* return paid back to a customer | `Dr Accounts Receivable / Cr Bank` | 6 `CREDITNOTEREFUND` |
+  | 5 | **Overpayment refund** — a customer's excess given back | `Dr Advance from Customer / Cr Bank` | 18 `CUSTOMEROVERPAYMENTREFUND` |
+  | 6 | **Prepayment refund** — a customer's advance given back | `Dr Advance from Customer / Cr Bank` | 19 `CUSTOMERPREPAYMENTREFUND` |
+
+  **Overpayment is not a type of its own — it is two types on one document**, and that is why the ledger source sits on the leg. Stamp the whole document "overpayment" and a payables report filtering on bill payments silently misses the part that *was* a bill payment.
+
+  **Rows 5 and 6 post identically and are told apart only by their source.** They can be, because the receipt that created the balance was itself marked `CUSTOMERPREPAYMENT` or `CUSTOMEROVERPAYMENT` — that distinction upstream is what makes the distinction here mean anything. Both clear the same per-contact balance on Advance from Customer; two accounts were considered and rejected, because a customer would then carry two credit balances and a statement would have to add them up.
+
+  **A *purchase* credit note is a debit note here, and its refund is money coming in.** The vendor's credit note against goods you returned is recorded as `DBN` — you debit the vendor and reduce payables — and settling it means the vendor pays *you*. So it is a **Receive money** type under `DEBITNOTEREFUND` (7, direction `In`), not a spend-money one. The credit-note refund at row 4 is the sales side: `CRN`, the customer returned goods, you pay them back.
+
+  *Done when*: paying a bill clears it from payables aging and the ledger row names the bill it paid; an overpayment settles its bill and leaves the excess readable as an advance against that vendor; and refunding a customer's advance clears exactly that contact's balance.
+
+  **Already built, ahead of this task** — none of it needed a bill to exist:
+  - `Advance to Vendor` (Asset, 1600) and `Advance from Customer` (Liability, 2400) seeded into the chart of accounts. Four of the six had nowhere to post before.
+  - `mst.LedgerSources` 16–19. `LedgerSource.Code` widened to 30, because the naming scheme runs past 20 characters and abbreviating a key to fit a column is how a lookup table fills with codes nobody can read.
+  - **`LedgerSourceId` moved onto the ledger leg**, the same move T0.1 made for `LedgerTypeId` and for a related reason — see T0.1 in [`TRANSACTIONS.md`](./TRANSACTIONS.md).
+  - **A contact now gets four sub-accounts, not two**: receivable, payable, and one under each advance account. Every one of these balances is answered per contact — you refund a named customer, not a pool.
+
+  **Still open here**: the `bnk.*` document itself (T6.1), the screen, and allocation (T5.1). **T6.3 will want sources 20–21** — the vendor-side mirrors, for a vendor refunding your overpayment or returning your advance. They are deliberately not seeded yet: `LedgerSources` ids are contractual, and seeding a code nothing writes is a row that gets used for the wrong thing before its document arrives.
 - [ ] **T6.3 — Receive money (RCM)** — the mirror, against invoices, with customer prepayments landing in Advance from Customer rather than against a document.
 - [ ] **T6.4 — Transfer money (TRM)** — bank to bank or bank to cash. No contact, no sub-account, no control leg; the one source with no counterparty.
 - [ ] **T6.5 — Realized FX on settlement** — an extra pair to Realized FX Gain/Loss at `LedgerTypeId = 5`, computed from the difference between the document's `ExchangeRate` and the payment's. **Never from a live rate.**

@@ -40,6 +40,20 @@ public static class ChartOfAccountsSeed
         Account(orgId, "2300", SystemAccount.BankOverdraftAndCards, Liability, isLock: true),
         Account(orgId, "4900", SystemAccount.RealizedFxGainLoss, Income, isJe: true),
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
+
+        // Where money paid or received ahead of a document sits, and where the
+        // excess goes when a payment runs past what was owed.
+        //
+        // Both are control accounts with a contact sub-account beneath them, so
+        // they stay off the manual-journal picker for the same reason
+        // receivables and payables do: the balance is per contact, and a hand
+        // entry against the control account would break the tie to it.
+        //
+        // Neither may be netted into Accounts Payable or Accounts Receivable.
+        // An unapplied advance is not a settled document, and folding it in
+        // understates the control account and puts the aging out with it.
+        Account(orgId, "1600", SystemAccount.AdvanceToVendor, Asset),
+        Account(orgId, "2400", SystemAccount.AdvanceFromCustomer, Liability),
     ];
 
     private static Account Account(

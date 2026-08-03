@@ -61,6 +61,14 @@ Because the key includes both the leg type and the line, a service replacing its
 
 **Withdrawing a posting is the one asymmetric case.** A void has no legs to say what it is removing, so it names the leg types explicitly and clears them across the whole document, leaving any other writer's legs alone.
 
+### A document can be several things at once
+
+What a leg came from — a bill payment, an advance, a refund — is recorded on the **leg**, not on the document.
+
+Paying ₹11,000 against a ₹10,000 bill is the case that decides it. That single payment is two things: ₹10,000 settles the bill, and ₹1,000 becomes an advance held against the supplier. Record the document as one thing — "an overpayment" — and a payables report asking for bill payments quietly misses ₹10,000 of a real one. Nothing fails; the total is just wrong.
+
+So the ledger row carries its own source, and both halves read correctly: the settled part is a bill payment against that bill, and the excess is an advance against that supplier.
+
 ## The manual journal
 
 The document a person writes when no other document fits: an accrual, a correction, a transfer between two accounts, an asset built out of purchased material.

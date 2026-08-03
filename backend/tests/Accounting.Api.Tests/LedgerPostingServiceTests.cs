@@ -24,6 +24,14 @@ public class LedgerPostingServiceTests
     private const int Cogs = 4;
     private const int RoundOff = 6;
 
+    /// <summary>`mst.LedgerSources` 1 — a document posting.</summary>
+    private const int DocumentPosting = 1;
+
+    /// <summary>`mst.LedgerSources` 2 and 8 — the two halves of an overpayment.</summary>
+    private const int BillPayment = 2;
+
+    private const int VendorPrepayment = 8;
+
     private readonly PostgresFixture _postgres;
 
     public LedgerPostingServiceTests(PostgresFixture postgres) => _postgres = postgres;
@@ -43,7 +51,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 5001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -78,7 +85,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 6001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -92,7 +98,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 6001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -106,7 +111,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 6001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -145,7 +149,6 @@ public class LedgerPostingServiceTests
             {
                 TransactionTypeCode = "INV",
                 TransactionId = 7001,
-                LedgerSourceId = 1,
                 LedgerDate = new DateOnly(2026, 8, 1),
                 Legs =
                 [
@@ -178,7 +181,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 8001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -195,7 +197,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 8001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             WithdrawLedgerTypeIds = [Item, Tax, Control, RoundOff],
             Legs = [],
@@ -226,7 +227,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 9001,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs =
             [
@@ -239,6 +239,55 @@ public class LedgerPostingServiceTests
         Assert.Contains("900", result.Detail);
     }
 
+    /// <summary>
+    /// The case that put the ledger source on the leg. Paying ₹11,000 against a
+    /// ₹10,000 bill is a bill payment <b>and</b> a vendor prepayment on one
+    /// document — ₹10,000 settles the bill and ₹1,000 becomes an advance.
+    ///
+    /// Stamp the whole document "overpayment" and a payables report filtering on
+    /// bill payments misses ₹10,000 of a real one. Nothing fails; the number is
+    /// just quietly wrong.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_overpayment_carries_two_sources_on_one_document()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        PostLedgerResult result = await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "SPM",
+            TransactionId = 4001,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            Legs =
+            [
+                Leg(Control, 1, harness.PayableId, debit: 10_000m, ledgerSourceId: BillPayment),
+                Leg(Control, 2, harness.AdvanceToVendorId, debit: 1_000m,
+                    ledgerSourceId: VendorPrepayment),
+                Leg(Control, 0, harness.BankId, credit: 11_000m, ledgerSourceId: BillPayment),
+            ],
+        }, ct);
+
+        Assert.Equal(PostLedgerOutcome.Ok, result.Outcome);
+
+        List<JournalLedger> rows = await harness.Db.JournalLedger
+            .Where(l => l.TransactionTypeCode == "SPM" && l.TransactionId == 4001)
+            .ToListAsync(ct);
+
+        // The settled part still reads as a bill payment.
+        Assert.Equal(
+            10_000m,
+            rows.Where(r => r.LedgerSourceId == BillPayment && r.AccountId == harness.PayableId)
+                .Sum(r => r.DebitAmountBase));
+
+        // And the excess reads as an advance, on the same document.
+        JournalLedger advance = Assert.Single(
+            rows, r => r.LedgerSourceId == VendorPrepayment);
+
+        Assert.Equal(harness.AdvanceToVendorId, advance.AccountId);
+        Assert.Equal(1_000m, advance.DebitAmountBase);
+    }
+
     /// <summary>A withdrawal that names nothing says nothing about what to remove.</summary>
     [SkippableFact]
     public async Task A_withdrawal_naming_no_leg_types_is_refused()
@@ -249,7 +298,6 @@ public class LedgerPostingServiceTests
         {
             TransactionTypeCode = "INV",
             TransactionId = 9002,
-            LedgerSourceId = 1,
             LedgerDate = new DateOnly(2026, 8, 1),
             Legs = [],
         }, CancellationToken.None);
@@ -258,10 +306,16 @@ public class LedgerPostingServiceTests
     }
 
     private static LedgerLegRequest Leg(
-        int ledgerTypeId, long detailId, long accountId, decimal debit = 0m, decimal credit = 0m) =>
+        int ledgerTypeId,
+        long detailId,
+        long accountId,
+        decimal debit = 0m,
+        decimal credit = 0m,
+        int ledgerSourceId = DocumentPosting) =>
         new()
         {
             LedgerTypeId = ledgerTypeId,
+            LedgerSourceId = ledgerSourceId,
             TransactionDetailId = detailId,
             AccountId = accountId,
             DebitAmount = debit,
@@ -289,6 +343,12 @@ public class LedgerPostingServiceTests
         public required long InventoryId { get; init; }
 
         public required long RoundOffId { get; init; }
+
+        public required long PayableId { get; init; }
+
+        public required long BankId { get; init; }
+
+        public required long AdvanceToVendorId { get; init; }
 
         public static async Task<Harness> CreateAsync(PostgresFixture postgres)
         {
@@ -326,6 +386,9 @@ public class LedgerPostingServiceTests
                 CogsId = await Account("5100", "Cost of Goods Sold", 5),
                 InventoryId = await Account("1200", "Inventory", 1),
                 RoundOffId = await Account("4990", "Round Off", 4),
+                PayableId = await Account("2100", "Accounts Payable", 2),
+                BankId = await Account("1510", "Bank — Current", 1),
+                AdvanceToVendorId = await Account("1600", "Advance to Vendor", 1),
             };
         }
 

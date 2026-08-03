@@ -489,7 +489,6 @@ public sealed class JournalService
             OrgId = _tenant.OrgId ?? Guid.Empty,
             TransactionTypeCode = JournalTypeCode,
             TransactionId = journal.JournalId,
-            LedgerSourceId = JournalLedgerSource,
             LedgerDate = journal.JournalDate,
             CurrencyCode = journal.CurrencyCode,
             ExchangeRate = journal.ExchangeRate,
@@ -498,6 +497,11 @@ public sealed class JournalService
             Legs = [.. lines.Select(l => new LedgerLegRequest
             {
                 LedgerTypeId = ControlLedgerType,
+
+                // Every line of a hand-written entry is a manual journal. A
+                // document that can be two things at once — an overpayment, say —
+                // varies this per leg; this one cannot.
+                LedgerSourceId = JournalLedgerSource,
 
                 // The line number, not the detail id — a reader looking at the
                 // ledger sees the line they typed rather than a surrogate key.

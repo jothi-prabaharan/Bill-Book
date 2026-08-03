@@ -51,7 +51,7 @@ builder.Services.AddHttpClient<IStateDirectory, MasterStateDirectory>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-// Only Accounting writes ledger rows, so a contact's two sub-accounts are
+// Only Accounting writes ledger rows, so a contact's four sub-accounts are
 // created by calling it rather than by inserting here.
 builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(client =>
 {

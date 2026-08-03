@@ -253,6 +253,25 @@ public class MasterDbContext : DbContext
             (13, "OPENINGBALANCE", "Opening balance", LedgerDirection.Both),
             (14, "DEPRECIATION", "Depreciation", LedgerDirection.Out),
             (15, "STOCKADJUSTMENT", "Stock adjustment", LedgerDirection.Both),
+
+            // Overpayment is not a document type of its own — it is a payment
+            // that ran past what was owed, and the excess is an advance. The two
+            // halves land on one document carrying different sources, which is
+            // why the source sits on the ledger leg rather than on the posting.
+            //
+            // The excess is marked as an overpayment rather than as an ordinary
+            // advance, and that is the whole reason these two exist. Refunding an
+            // overpayment and refunding a deliberate advance move the same
+            // balance the same way; without the distinction here, the two refund
+            // sources below would have nothing to tell them apart.
+            (16, "VENDOROVERPAYMENT", "Overpayment to vendor", LedgerDirection.Out),
+            (17, "CUSTOMEROVERPAYMENT", "Overpayment from customer", LedgerDirection.In),
+
+            // Money held for a customer, given back. Both clear Advance from
+            // Customer; they differ only in how the credit arose, which is
+            // exactly what a ledger source is for.
+            (18, "CUSTOMEROVERPAYMENTREFUND", "Customer overpayment refunded", LedgerDirection.Out),
+            (19, "CUSTOMERPREPAYMENTREFUND", "Customer advance refunded", LedgerDirection.Out),
         };
 
         modelBuilder.Entity<LedgerSource>().HasData(

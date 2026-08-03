@@ -44,9 +44,11 @@ The account's **currency** is frozen with the rest of the configuration. Changin
 
 ## Seeded accounts
 
-Ten written when an organization is created, all `IsSystemDefault`, so locked from birth:
+Twelve written when an organization is created, all `IsSystemDefault`, so locked from birth:
 
-Accounts Receivable · Inventory · Input GST · Accounts Payable · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+Accounts Receivable · Inventory · Input GST · Accounts Payable · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss · **Advance to Vendor** · **Advance from Customer**
+
+The two advance accounts hold money that moved before a document existed, or past what one asked for — an advance paid to a supplier, a customer's deposit, the excess when a payment is rounded up. They are deliberately **not** netted into Accounts Payable or Accounts Receivable: a payable is what you owe against a document, and folding an unapplied advance into it understates the control account and puts the aging out by the same amount.
 
 They can be **renamed for display** — the hidden `AccountSystemName` is what code matches on — but never deleted, and their code and flags never change.
 
@@ -58,7 +60,7 @@ Per-contact, per-item and per-tax detail beneath a control account, so the chart
 
 | Owner | Creates |
 |---|---|
-| Contact | 2 — Accounts Receivable, Accounts Payable |
+| Contact | 4 — Accounts Receivable, Accounts Payable, Advance to Vendor, Advance from Customer |
 | Item | 3 — Inventory, Cost of Goods Sold, Sales Revenue |
 | Tax rate | up to 6 — CGST, SGST and IGST beneath **each** of Input GST and Output GST |
 
@@ -66,7 +68,9 @@ For a tax sub-account, three things identify it: the **parent account** gives th
 
 `AccountTypeId` is copied from the parent account on write and never accepted from a caller; if the two disagreed, a report grouped by type would contradict the same report grouped by account.
 
-Provisioning is **idempotent**, because the events that trigger it are at-least-once. Retiring a master deactivates its sub-accounts rather than deleting them, so history survives.
+All four of a contact's are per contact for the same reason: every one of those balances is answered about a named contact. You refund a particular customer's deposit, not a pooled one, and a control account whose balance cannot be split by contact cannot be reconciled at all.
+
+Provisioning is **idempotent** — per target, not just per call — because the events that trigger it are at-least-once. A contact created before the advance accounts existed gains exactly the two it is missing when provisioning is re-run, and keeps the two it already had. Retiring a master deactivates its sub-accounts rather than deleting them, so history survives.
 
 If a control account cannot be resolved — the chart was never seeded for the organization, or a system account was renamed at the database level — provisioning creates what it can and reports the rest as **missing**. A partial provision is a 409, not a 200: a contact with no Accounts Receivable sub-account would silently drop out of the aging report.
 

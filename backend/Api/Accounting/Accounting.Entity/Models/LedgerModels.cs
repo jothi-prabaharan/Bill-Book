@@ -19,6 +19,13 @@ namespace Accounting.Entity.Models;
 /// subset of those balances on its own. So the leg type and the document line
 /// belong to the leg, not to the request, and one call carries the lot.
 ///
+/// <b>A document can also be more than one kind of thing at once.</b> Paying
+/// ₹11,000 against a ₹10,000 bill is a bill payment and a vendor prepayment on
+/// one document: ₹10,000 settles the bill and ₹1,000 becomes an advance. Stamp
+/// the whole thing "overpayment" and a payables report filtering on bill
+/// payments silently misses ₹10,000 of a real one — so the source is on the leg
+/// too.
+///
 /// <b>Replace, never append.</b> A leg is identified by
 /// (<see cref="TransactionTypeCode"/>, <see cref="TransactionId"/>,
 /// <see cref="LedgerLegRequest.TransactionDetailId"/>,
@@ -49,9 +56,6 @@ public class PostLedgerRequest
     public string TransactionTypeCode { get; set; } = null!;
 
     public long TransactionId { get; set; }
-
-    [Range(1, 15, ErrorMessage = "Ledger source must be one of the fifteen sources.")]
-    public int LedgerSourceId { get; set; }
 
     public DateOnly LedgerDate { get; set; }
 
@@ -98,12 +102,22 @@ public class PostLedgerRequest
 /// The leg carries its own <see cref="LedgerTypeId"/> and
 /// <see cref="TransactionDetailId"/> because a single document produces several
 /// of each at once, and it is the pair of them that says which rows this leg
-/// replaces.
+/// replaces. It carries its own <see cref="LedgerSourceId"/> because a single
+/// document can be several things at once.
 /// </summary>
 public class LedgerLegRequest
 {
     [Range(1, 6, ErrorMessage = "Ledger type must be one of the six leg types.")]
     public int LedgerTypeId { get; set; }
+
+    /// <summary>
+    /// What produced this leg, from <c>mst.LedgerSources</c>. On the leg rather
+    /// than the request: an overpayment settles a bill with part of itself and
+    /// leaves the rest as an advance, and those two halves are different sources
+    /// on one document.
+    /// </summary>
+    [Range(1, 19, ErrorMessage = "Ledger source must be one of the nineteen sources.")]
+    public int LedgerSourceId { get; set; }
 
     /// <summary>The document line, or 0 when the leg is not line-level.</summary>
     public long TransactionDetailId { get; set; }

@@ -4,7 +4,7 @@
 
 ## Status
 
-**91 tests, passing.** They compiled and ran green the first time an SDK was
+**92 tests, passing.** They compiled and ran green the first time an SDK was
 available, which is what the scaffolding was written for — the wiring (csproj,
 solution entry, package versions) is the tedious part to retrofit, and having it
 in place meant one command rather than an afternoon.
