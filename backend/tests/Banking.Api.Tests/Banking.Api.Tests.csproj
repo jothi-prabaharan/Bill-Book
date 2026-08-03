@@ -14,6 +14,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Api\Banking\Banking.Api\Banking.Api.csproj" />
+
+    <!-- Banking and Accounting share one per-customer database in production, and
+         acc.NumberingSeries lives in it: Accounting migrates that table, Banking
+         maps it with ExcludeFromMigrations so a number can be allocated inside
+         Banking's own transaction. A test database built from Banking's
+         migrations alone would not have it, so the fixture migrates both — which
+         is what the real database looks like. The reference is the test's, never
+         the service's. -->
+    <ProjectReference Include="..\..\Api\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
   </ItemGroup>
 
 </Project>

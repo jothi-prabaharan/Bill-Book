@@ -33,7 +33,21 @@ public sealed class PostgresFixture : IAsyncLifetime
             // Migrate rather than EnsureCreated: the triggers and RLS policies
             // live in the migrations, and EnsureCreated builds the tables from
             // the model and skips every one of them.
-            await using BankingDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
+            var customerId = Guid.NewGuid();
+            var orgId = Guid.NewGuid();
+
+            // Accounting first: it owns acc.NumberingSeries, which Banking maps
+            // but does not migrate. In production both schemas live in the one
+            // per-customer database, and a test database missing half of it would
+            // fail on the first number allocated rather than on anything real.
+            await using var accounting = new Accounting.Repository.AccountingDbContext(
+                new DbContextOptionsBuilder<Accounting.Repository.AccountingDbContext>()
+                    .UseNpgsql(ConnectionString).Options,
+                new TenantContext { CustomerId = customerId, OrgId = orgId });
+
+            await accounting.Database.MigrateAsync();
+
+            await using BankingDbContext db = CreateContext(customerId, orgId);
             await db.Database.MigrateAsync();
         }
         catch (Exception ex)
