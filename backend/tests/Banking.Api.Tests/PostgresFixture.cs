@@ -1,0 +1,66 @@
+using Banking.Repository;
+using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Tenancy;
+using Xunit;
+
+namespace Banking.Api.Tests;
+
+/// <summary>
+/// A real PostgreSQL, for the same reason Accounting's suite needs one: what is
+/// being tested here is almost entirely the database's half of the schema — check
+/// constraints and a deferred trigger. An in-memory provider has neither, so a
+/// test that passed against one would prove nothing about the thing being
+/// claimed.
+///
+/// <b>The suite skips itself when no server answers</b> rather than failing. A
+/// suite that fails on a machine without Postgres trains people to ignore red;
+/// one that passes without running is worse.
+/// </summary>
+public sealed class PostgresFixture : IAsyncLifetime
+{
+    private const string DefaultConnection =
+        "Host=localhost;Port=5432;Database=banking_tests;Username=postgres;Password=123";
+
+    public string? SkipReason { get; private set; }
+
+    private string ConnectionString =>
+        Environment.GetEnvironmentVariable("BANKING_TEST_DB") ?? DefaultConnection;
+
+    public async Task InitializeAsync()
+    {
+        try
+        {
+            // Migrate rather than EnsureCreated: the triggers and RLS policies
+            // live in the migrations, and EnsureCreated builds the tables from
+            // the model and skips every one of them.
+            await using BankingDbContext db = CreateContext(Guid.NewGuid(), Guid.NewGuid());
+            await db.Database.MigrateAsync();
+        }
+        catch (Exception ex)
+        {
+            SkipReason =
+                $"No PostgreSQL answered at the test connection string, so the database-backed "
+                + $"tests did not run. Set BANKING_TEST_DB to point at one. ({ex.GetType().Name})";
+        }
+    }
+
+    public Task DisposeAsync() => Task.CompletedTask;
+
+    /// <summary>
+    /// A context bound to one branch. Each test gets its own OrgId, so the query
+    /// filter keeps them apart — which also means the tests exercise the filter
+    /// rather than working around it.
+    /// </summary>
+    public BankingDbContext CreateContext(Guid customerId, Guid orgId)
+    {
+        var options = new DbContextOptionsBuilder<BankingDbContext>()
+            .UseNpgsql(ConnectionString)
+            .Options;
+
+        return new BankingDbContext(
+            options, new TenantContext { CustomerId = customerId, OrgId = orgId });
+    }
+}
+
+[CollectionDefinition(nameof(PostgresCollection))]
+public sealed class PostgresCollection : ICollectionFixture<PostgresFixture>;

@@ -127,6 +127,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounting.Api.Tests", "tests\Accounting.Api.Tests\Accounting.Api.Tests.csproj", "{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Banking.Api.Tests", "tests\Banking.Api.Tests\Banking.Api.Tests.csproj", "{E02A8744-7AC3-4561-8623-D1D54065F66E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -689,6 +691,18 @@ Global
 		{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}.Release|x64.Build.0 = Release|Any CPU
 		{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}.Release|x86.ActiveCfg = Release|Any CPU
 		{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}.Release|x86.Build.0 = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|x64.Build.0 = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Debug|x86.Build.0 = Debug|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|x64.ActiveCfg = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|x64.Build.0 = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|x86.ActiveCfg = Release|Any CPU
+		{E02A8744-7AC3-4561-8623-D1D54065F66E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -749,5 +763,6 @@ Global
 		{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02} = {5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}
 		{A611876E-59A6-43F4-9C3B-4EE77AA704AC} = {5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}
 		{EA06E7A7-24CE-411C-AD00-77F1F67C9B01} = {5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}
+		{E02A8744-7AC3-4561-8623-D1D54065F66E} = {5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B01}
 	EndGlobalSection
 EndGlobal

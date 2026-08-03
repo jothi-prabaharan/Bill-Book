@@ -20,6 +20,15 @@ public class BankingDbContext : TenantDbContext
 
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
 
+    /// <summary>
+    /// Spend, receive and transfer money — three transaction types in one table,
+    /// discriminated by <c>TransactionTypeCode</c>.
+    /// </summary>
+    public DbSet<MoneyTransaction> MoneyTransactions => Set<MoneyTransaction>();
+
+    public DbSet<MoneyTransactionDetail> MoneyTransactionDetails =>
+        Set<MoneyTransactionDetail>();
+
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
@@ -81,6 +90,131 @@ public class BankingDbContext : TenantDbContext
                     "chk_bank_account_od_limit",
                     "\"OdLimit\" IS NULL "
                         + "OR \"AccountType\" IN ('OverDraft', 'CashCredit', 'CreditCard')");
+            });
+        });
+
+        modelBuilder.Entity<MoneyTransaction>(b =>
+        {
+            b.HasKey(e => e.MoneyTransactionId);
+
+            // Filtered, because a draft has no number yet. The uniqueness that
+            // matters is over issued numbers, and the type is in the key because
+            // each of the three has its own series — two series left with no
+            // prefix would otherwise collide at 00001.
+            b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.TransactionNo })
+                .IsUnique()
+                .HasFilter("\"TransactionNo\" IS NOT NULL")
+                .HasDatabaseName("IX_MoneyTransactions_Number");
+
+            b.HasIndex(e => new { e.OrgId, e.TransactionDate });
+
+            // Reconciliation: one account over a period.
+            b.HasIndex(e => new { e.OrgId, e.BankAccountId, e.TransactionDate })
+                .HasDatabaseName("IX_MoneyTransactions_Account");
+
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
+
+            // Restrict, both sides: a bank account with money moved through it
+            // cannot be deleted out from under its own history.
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.BankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.ToBankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // The number is taken at post. Both halves matter: a draft
+                // holding one has consumed a number it may never use, and a
+                // posted document without one is a ledger row nobody can cite.
+                table.HasCheckConstraint(
+                    "chk_money_number_on_post",
+                    "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) "
+                        + "OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_money_posted_stamp",
+                    "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_money_void_stamp",
+                    "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
+
+                // Zero moves no money, and a negative amount would mean the
+                // direction lives on the number rather than on the document type.
+                table.HasCheckConstraint("chk_money_amount_positive", "\"Amount\" > 0");
+
+                table.HasCheckConstraint("chk_money_rate_positive", "\"ExchangeRate\" > 0");
+
+                // A transfer is the one money document with no counterparty:
+                // both sides are the organization's own accounts. Everything else
+                // has a counterparty and no destination account.
+                table.HasCheckConstraint(
+                    "chk_money_transfer_shape",
+                    "(\"TransactionTypeCode\" = 'TRM' "
+                        + "AND \"ToBankAccountId\" IS NOT NULL AND \"ContactId\" IS NULL) "
+                        + "OR (\"TransactionTypeCode\" <> 'TRM' AND \"ToBankAccountId\" IS NULL)");
+
+                // Moving money to the account it came from posts two legs that
+                // cancel, and reconciles as a transaction that never happened.
+                table.HasCheckConstraint(
+                    "chk_money_transfer_distinct",
+                    "\"ToBankAccountId\" IS NULL OR \"ToBankAccountId\" <> \"BankAccountId\"");
+
+                // Only the three this table is for. A fourth code here would be a
+                // document with no posting path behind it.
+                table.HasCheckConstraint(
+                    "chk_money_transaction_type",
+                    "\"TransactionTypeCode\" IN ('SPM', 'RCM', 'TRM')");
+            });
+        });
+
+        modelBuilder.Entity<MoneyTransactionDetail>(b =>
+        {
+            b.HasKey(e => e.MoneyTransactionDetailId);
+
+            b.HasIndex(e => new { e.MoneyTransactionId, e.LineNumber }).IsUnique();
+
+            // "What has been paid against this bill?" — the read that turns a
+            // pile of payments back into an outstanding balance.
+            b.HasIndex(e => new
+            {
+                e.OrgId,
+                e.MappingTransactionTypeCode,
+                e.MappingTransactionId,
+            }).HasDatabaseName("IX_MoneyTransactionDetails_Mapping");
+
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.AmountBase).HasColumnType("decimal(18,2)");
+
+            // Cascade: a draft's lines have no meaning without their header, and
+            // a posted document is voided rather than deleted.
+            b.HasOne<MoneyTransaction>()
+                .WithMany()
+                .HasForeignKey(e => e.MoneyTransactionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table =>
+            {
+                table.HasCheckConstraint(
+                    "chk_money_detail_amount_positive",
+                    "\"Amount\" > 0 AND \"AmountBase\" > 0");
+
+                // Half a mapping traces to nothing. Either the line settles a
+                // named document or it settles none — an id with no type cannot
+                // be resolved, and a type with no id names every document at once.
+                table.HasCheckConstraint(
+                    "chk_money_detail_mapping_paired",
+                    "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
             });
         });
 

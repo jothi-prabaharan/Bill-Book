@@ -21,7 +21,7 @@ Verified on 3 August 2026, by reading the repository rather than from memory.
 
 **Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 28 pages, and every endpoint behind an authentication and permission check.
 
-**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 98 tests pass, every EF snapshot matches its model, and all 32 migrations are applied to a real PostgreSQL — 23 in a customer database, 9 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
+**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 110 tests pass, every EF snapshot matches its model, and all 33 migrations are applied to a real PostgreSQL — 24 in a customer database, 9 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
 **Nothing is blocked by tooling any more.** What is left is an owner's decision — 5.14, 5.16, 5.19. **4.4 is closed**: the account ledger and the trial balance are built (T0.6), so what is posted finally has somewhere to be read. Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen.
 

@@ -91,7 +91,12 @@ Where the receivable and payable balances raised by Sales and Purchase are actua
 
 Needs T3.3 and T4.5 from the other file — there has to be something outstanding before there is anything to pay.
 
-- [ ] **T6.1 — `bnk.*` transaction schema** — payments, receipts and transfers, with lines that allocate to documents.
+- [x] **T6.1 — `bnk.*` transaction schema** — payments, receipts and transfers, with lines that allocate to documents.
+  **Done.** `bnk.MoneyTransactions` + `bnk.MoneyTransactionDetails`, **one discriminated pair rather than three**, following T2.1's recommendation for `sal` and for the same reasons: the three share every column that matters, and what differs is a destination account on a transfer and a contact on the other two. Two nullable columns against three near-identical tables, three list screens and three numbering paths.
+  **`LedgerSourceId` is on the detail line, not the header** — which is the whole shape of T6.2 made structural. A payment that runs past what was owed is a bill payment *and* a deposit at once, so what a document *means* cannot live on the header. The same mechanism covers a payment split across several bills: one line per bill, one bank movement.
+  Enforcement is where most of this task actually lives, and it is all in the database: a document must add up before it posts (a deferred trigger, and a **second** on the header because posting never touches the lines — the same pair the journal carries), a transfer has a destination and no contact, a payment has a contact and no destination, nothing transfers to itself, a draft holds no number and a posted document must have one, half a mapping is refused, and only `SPM`/`RCM`/`TRM` are accepted. Twelve tests in a new `Banking.Api.Tests` against a real PostgreSQL, skipping with a reason when none answers.
+  **Banking now seeds its own document series** — `PAY`, `REC`, `TRF`, financial-year reset, no manual override — which is T0.3's per-service rule applied here. Banking had no seeder at all, so this adds one and wires it into Platform's `TenantSeeder` **after** Accounting, because Accounting owns the numbering table.
+  Not in this box, and still open: the API, the screens and allocation. Those are T6.2–T6.6.
 - [ ] **T6.2 — Spend money (SPM)** — one document type carrying six meanings, chosen by `LedgerSourceId` rather than by transaction type. `MappingTransactionId` and `MappingTransactionTypeCode` point at what is being settled — that pair is the entire mechanism for tracing a payment to what it clears.
 
   | # | Type | Posting | `LedgerSourceId` |

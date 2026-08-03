@@ -59,6 +59,7 @@ builder.Services.AddDbContext<BankingDbContext>((sp, options) =>
 });
 
 builder.Services.AddScoped<BankService>();
+builder.Services.AddScoped<BankingSeeder>();
 
 // Only Accounting writes ledger rows, so the GL account behind a bank account
 // is created by calling it rather than by inserting here.

@@ -31,9 +31,13 @@ public sealed class HttpTenantSeeder : ITenantSeeder
 
     /// <summary>
     /// Accounting first: its control accounts are what the others' sub-accounts
-    /// hang beneath, and its numbering series is what their codes come from.
+    /// hang beneath, and it owns the numbering-series table the rest write into.
+    /// Banking seeds its own document series for spend, receive and transfer
+    /// money, so it has to come after Accounting has created the table's rows for
+    /// the branch — not before.
     /// </summary>
-    private static readonly string[] Services = ["Accounting", "Contacts", "Inventory"];
+    private static readonly string[] Services =
+        ["Accounting", "Contacts", "Inventory", "Banking"];
 
     public HttpTenantSeeder(
         IHttpClientFactory clients, IConfiguration config, ILogger<HttpTenantSeeder> log)

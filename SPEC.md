@@ -800,6 +800,59 @@ Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCred
 
 **Three parent groups added to the org-creation seed**: 1400 Cash in Hand (Asset) · 1500 Bank Accounts (Asset) · 2300 Bank OD & Credit Cards (Liability), all `IsLock = true` so nothing posts to the group.
 
+### `bnk.MoneyTransactions` / `bnk.MoneyTransactionDetails` ✅
+Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one table pair discriminated by `TransactionTypeCode`**, not three. The three share every column that matters; what differs is a destination account on a transfer and a contact on the other two. The same shape decision T2.1 takes for `sal`.
+
+**`bnk.MoneyTransactions`** — header.
+
+| Column | Type | Rules |
+|---|---|---|
+| MoneyTransactionId | long | PK, identity |
+| OrgId | Guid | Required |
+| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. `SPM` / `RCM` / `TRM` only, by check constraint |
+| TransactionNo | string(30)? | **Null while Draft** — the number is taken at post, never at draft |
+| TransactionDate | DateOnly | Required |
+| BankAccountId | long | Required, FK → `bnk.BankAccounts`, restrict. On a transfer this is the **source** |
+| ToBankAccountId | long? | FK → `bnk.BankAccounts`, restrict. **Transfers only**, and never equal to `BankAccountId` |
+| ContactId | long? | No FK — Contacts owns it. **Null on a transfer**, which is the one money document with no counterparty |
+| Amount | decimal(18,2) | Required, > 0. Its detail lines must sum to exactly this before it can post |
+| CurrencyCode | string(3) | Required |
+| ExchangeRate | decimal(18,8) | Default 1, > 0. **Snapshot at TransactionDate — never live.** The difference between this and the settled document's rate *is* the realized FX gain or loss |
+| PaymentMethod | enum→string(20) | Cash / Cheque / BankTransfer / Upi / Card / DemandDraft / Wallet / Other |
+| ReferenceNo | string(50)? | Cheque number, UTR, UPI reference |
+| ReferenceDate | DateOnly? | Instrument date, when a cheque carries one |
+| Memo | string? | Unbounded |
+| Status | enum→string(10) | Draft / Posted / Void |
+| PostedAt · PostedBy | DateTimeOffset? · Guid? | |
+| VoidedAt · VoidedBy · VoidReason | DateTimeOffset? · Guid? · string(300)? | A posted document is voided, never deleted — a gap in a document series is what an auditor asks about |
+
+Filtered unique: (OrgId, TransactionTypeCode, TransactionNo) where number not null · Indexes: (OrgId, TransactionDate), (OrgId, BankAccountId, TransactionDate), (OrgId, ContactId)
+
+**Check constraints**: number-on-post · posted stamp agrees with status · void stamp agrees with status · `Amount > 0` · `ExchangeRate > 0` · transfer shape (TRM ⇒ destination and no contact; otherwise no destination) · no transfer to the same account · type is one of the three.
+
+**`bnk.MoneyTransactionDetails`** — what each part of the money *was*, and what it settles.
+
+| Column | Type | Rules |
+|---|---|---|
+| MoneyTransactionDetailId | long | PK, identity |
+| OrgId | Guid | Required |
+| MoneyTransactionId | long | Required, FK, **cascade** |
+| LineNumber | int | Required. Unique within the document |
+| **LedgerSourceId** | int | Required → `mst.LedgerSources`, no FK. **This is where a payment says what kind of payment it is** |
+| MappingTransactionTypeCode | string(3)? | The document settled — `BIL`, `INV`, `CRN`, `DBN`. No FK |
+| MappingTransactionId | long? | Paired with the code: both null, or both set |
+| Amount | decimal(18,2) | Required, > 0. Direction is the document's, so a refund is a different source, never a negative amount |
+| AmountBase | decimal(18,2) | Required, > 0. At the header's rate |
+| LineMemo | string(300)? | |
+
+Unique index: (MoneyTransactionId, LineNumber) · Index: (OrgId, MappingTransactionTypeCode, MappingTransactionId) — "what has been paid against this bill?"
+
+**Check constraints**: amounts > 0 · mapping paired (an id with no type resolves to nothing; a type with no id names every document at once).
+
+**Deferred constraint trigger**, on both tables: the lines must sum to the header's `Amount` — but **only once Posted**, so a draft may be part-allocated while it is being keyed. Two triggers, not one: posting changes the header and never touches the lines, so a line-only trigger would miss the one path that matters most. The same pair `acc.Journals` carries, for the same reason.
+
+**Why the source is on the line and not the header.** A payment of ₹11,000 against a ₹10,000 bill is a bill payment *and* a supplier deposit at once: ₹10,000 settles the bill, ₹1,000 becomes an advance. Record one meaning on the header and a payables report asking for bill payments quietly misses the ₹10,000 that genuinely was one. The same mechanism covers a payment split across several bills — one line per bill, one bank movement.
+
 ### `acc.Journals` ✅
 Manual journal header.
 
@@ -972,7 +1025,9 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 > **Decided (T0.6): the view was not built, and the exception list did not grow.** The account ledger and the trial balance are LINQ projections in Accounting, and the running balance is accumulated in C# over the ordered result. A ledger read is always scoped to one account, ordered, and cut to a date range — which is everything the window function needed — so the view bought less than the exception cost. The `security_invoker` hazard above is the other half of the reason: a view that forgets it reads straight past RLS and hands one branch another branch's general ledger, and that is one migration away from happening by accident.
 
 ### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `bnk.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+
+`bnk.*` is no longer among them — the money documents are designed and built; see the section above.
 
 ---
 
