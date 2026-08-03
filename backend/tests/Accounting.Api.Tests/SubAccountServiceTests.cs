@@ -185,6 +185,118 @@ public class SubAccountServiceTests
         Assert.Equal(3, result.Created);
     }
 
+    /// <summary>
+    /// The posting door has to name the purpose, because the reference alone is
+    /// ambiguous once a contact has three sub-accounts under one parent.
+    ///
+    /// This is the regression that matters: matching on reference type and id
+    /// only would land a supplier deposit on the trade receivable balance —
+    /// silently, with no error, and the two would never reconcile again.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_posting_reaches_the_purpose_it_names_and_not_a_sibling()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.SubAccounts.ProvisionAsync(Contact(6, "Sharma Traders"), ct);
+
+        var postings = new LedgerPostingService(h.Db, h.Tenant, new StubBaseCurrency());
+
+        // Two legs on one document, both against Accounts Receivable for the
+        // same contact, differing only in purpose.
+        PostLedgerResult result = await postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "SPM",
+            TransactionId = 4242,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            Legs =
+            [
+                Leg(h.ReceivableId, 6, SubAccountPurpose.PrepaymentAdvance, 1, debit: 600m),
+                Leg(h.ReceivableId, 6, SubAccountPurpose.OverpaymentAdvance, 2, debit: 400m),
+                Leg(h.ReceivableId, 6, SubAccountPurpose.Primary, 3, credit: 1_000m),
+            ],
+        }, ct);
+
+        Assert.Equal(PostLedgerOutcome.Ok, result.Outcome);
+
+        List<SubAccount> subs = await h.Db.SubAccounts
+            .Where(s => s.ReferenceId == 6 && s.AccountId == h.ReceivableId)
+            .ToListAsync(ct);
+
+        var rows = await h.Db.JournalLedger
+            .Where(l => l.TransactionTypeCode == "SPM" && l.TransactionId == 4242)
+            .ToListAsync(ct);
+
+        // Three legs, three different sub-accounts — not one sub-account three
+        // times, which is what the ambiguous lookup produced.
+        Assert.Equal(3, rows.Select(r => r.SubAccountId).Distinct().Count());
+
+        long PurposeId(SubAccountPurpose purpose) =>
+            subs.Single(s => s.Purpose == purpose).SubAccountId;
+
+        Assert.Equal(
+            600m,
+            rows.Single(r => r.SubAccountId == PurposeId(SubAccountPurpose.PrepaymentAdvance))
+                .DebitAmountBase);
+
+        Assert.Equal(
+            400m,
+            rows.Single(r => r.SubAccountId == PurposeId(SubAccountPurpose.OverpaymentAdvance))
+                .DebitAmountBase);
+    }
+
+    /// <summary>A purpose the contact was never provisioned for is refused, not guessed.</summary>
+    [SkippableFact]
+    public async Task A_purpose_that_was_never_provisioned_is_refused()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.SubAccounts.ProvisionAsync(Contact(7, "Sharma Traders"), ct);
+
+        await h.Db.SubAccounts
+            .Where(s => s.ReferenceId == 7 && s.Purpose == SubAccountPurpose.OverpaymentAdvance)
+            .ExecuteDeleteAsync(ct);
+
+        var postings = new LedgerPostingService(h.Db, h.Tenant, new StubBaseCurrency());
+
+        PostLedgerResult result = await postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "SPM",
+            TransactionId = 4243,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            Legs =
+            [
+                Leg(h.ReceivableId, 7, SubAccountPurpose.OverpaymentAdvance, 1, debit: 100m),
+                Leg(h.ReceivableId, 7, SubAccountPurpose.Primary, 2, credit: 100m),
+            ],
+        }, ct);
+
+        Assert.Equal(PostLedgerOutcome.SubAccountMissing, result.Outcome);
+        Assert.Contains("OverpaymentAdvance", result.Detail);
+    }
+
+    private static LedgerLegRequest Leg(
+        long accountId,
+        long contactId,
+        SubAccountPurpose purpose,
+        long detail,
+        decimal debit = 0m,
+        decimal credit = 0m) =>
+        new()
+        {
+            LedgerTypeId = 3,
+            LedgerSourceId = 1,
+            TransactionDetailId = detail,
+            AccountId = accountId,
+            SubAccountReferenceType = SubAccountReferenceType.Contact,
+            SubAccountReferenceId = contactId,
+            SubAccountPurpose = purpose,
+            DebitAmount = debit,
+            CreditAmount = credit,
+        };
+
     private static ProvisionSubAccountsRequest Contact(long id, string name) => new()
     {
         ReferenceType = SubAccountReferenceType.Contact,
@@ -202,13 +314,17 @@ public class SubAccountServiceTests
 
         public required long PayableId { get; init; }
 
+        public required TenantContext Tenant { get; init; }
+
         public static async Task<Harness> CreateAsync(
             PostgresFixture postgres, bool seedPayable = true, bool seedItemAccounts = false)
         {
             Skip.If(postgres.SkipReason is not null, postgres.SkipReason ?? string.Empty);
 
             var orgId = Guid.NewGuid();
-            AccountingDbContext db = postgres.CreateContext(Guid.NewGuid(), orgId);
+            var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId };
+            AccountingDbContext db = postgres.CreateContext(
+                tenant.CustomerId!.Value, tenant.OrgId!.Value);
 
             async Task<long> Account(string code, SystemAccount system, int typeId)
             {
@@ -244,6 +360,7 @@ public class SubAccountServiceTests
             return new Harness
             {
                 Db = db,
+                Tenant = tenant,
                 SubAccounts = new SubAccountService(db),
                 ReceivableId = receivableId,
                 PayableId = payableId,

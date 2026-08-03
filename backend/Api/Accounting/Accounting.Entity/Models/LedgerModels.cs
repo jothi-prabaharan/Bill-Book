@@ -154,6 +154,25 @@ public class LedgerLegRequest
     public long? SubAccountReferenceId { get; set; }
 
     /// <summary>
+    /// Which of a contact's balances under this control account — the trade
+    /// balance, a prepayment advance or an overpayment advance.
+    ///
+    /// <b>Part of the key, not a refinement of it.</b> A contact has three
+    /// sub-accounts under Accounts Receivable and three under Accounts Payable,
+    /// and the reference type and id alone match all three. Defaults to
+    /// <see cref="SubAccountPurpose.Primary"/>, which is what every leg without
+    /// an opinion means.
+    /// </summary>
+    public SubAccountPurpose SubAccountPurpose { get; set; } = SubAccountPurpose.Primary;
+
+    /// <summary>
+    /// Which component of a tax rate — CGST, SGST or IGST. The same story as
+    /// <see cref="SubAccountPurpose"/>: three sub-accounts share one parent and
+    /// one rate, so the component is what separates them.
+    /// </summary>
+    public TaxComponent SubAccountTaxComponent { get; set; } = TaxComponent.None;
+
+    /// <summary>
     /// The sub-account directly, the counterpart of <see cref="AccountId"/> and
     /// subject to the same rule: inside Accounting only. Checked against the
     /// leg's own account, so a receivable sub-account cannot be hung under a

@@ -167,18 +167,26 @@ public sealed class LedgerPostingService
             else if (leg.SubAccountReferenceType is { } referenceType
                 && leg.SubAccountReferenceId is { } referenceId)
             {
+                // The whole unique key, purpose and component included. Matching
+                // on the reference alone is not narrower, it is ambiguous: a
+                // contact has three sub-accounts under Accounts Receivable and a
+                // tax rate has three under Output GST, so the leg would land on
+                // whichever the database happened to return first.
                 SubAccount? sub = await _db.SubAccounts.FirstOrDefaultAsync(
                     s => s.AccountId == account.AccountId
                         && s.ReferenceType == referenceType
-                        && s.ReferenceId == referenceId,
+                        && s.ReferenceId == referenceId
+                        && s.Purpose == leg.SubAccountPurpose
+                        && s.TaxComponent == leg.SubAccountTaxComponent,
                     ct);
 
                 if (sub is null)
                 {
                     return new PostLedgerResult(
                         PostLedgerOutcome.SubAccountMissing, 0, 0,
-                        $"'{account.AccountName}' has no sub-account for {referenceType} "
-                            + $"{referenceId}. The master that owns it has not been provisioned.");
+                        $"'{account.AccountName}' has no {leg.SubAccountPurpose} sub-account for "
+                            + $"{referenceType} {referenceId}. The master that owns it has not "
+                            + "been provisioned.");
                 }
 
                 subAccountId = sub.SubAccountId;
