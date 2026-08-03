@@ -4,7 +4,7 @@
 
 ## Status
 
-**92 tests, passing.** They compiled and ran green the first time an SDK was
+**98 tests, passing.** They compiled and ran green the first time an SDK was
 available, which is what the scaffolding was written for — the wiring (csproj,
 solution entry, package versions) is the tedious part to retrofit, and having it
 in place meant one command rather than an afternoon.
@@ -69,6 +69,7 @@ and `EnsureCreated` skips all of them.
 | `LedgerPostingServiceTests` | The posting door: a whole document's legs in one call, two services replacing independently on one invoice, and withdrawal |
 | `JournalServiceTests` | The manual journal: draft, post, reverse, line-level reversal pairing, and a refused post leaving the number series where it was |
 | `LedgerReportServiceTests` | The account ledger and the trial balance, read back over postings written through the door |
+| `SubAccountServiceTests` | A contact's six sub-accounts under two parents, the purpose that keeps them from colliding, and per-target idempotence |
 
 ## Adding a test project
 

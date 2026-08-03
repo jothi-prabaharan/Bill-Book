@@ -80,14 +80,31 @@ public class AccountingDbContext : TenantDbContext
         {
             b.HasKey(e => e.SubAccountId);
 
-            // The component completes the key, so CGST/SGST/IGST can share a
-            // parent account and a tax rate.
-            b.HasIndex(e => new { e.AccountId, e.ReferenceType, e.ReferenceId, e.TaxComponent })
-                .IsUnique();
+            // Two discriminators complete the key, each for a master that needs
+            // several sub-accounts under one parent: the component so CGST, SGST
+            // and IGST can share a tax parent, and the purpose so a contact's
+            // trade balance, prepayment and overpayment can share Accounts
+            // Receivable. Without the second, all three of a contact's would key
+            // identically and only the first would ever be written.
+            b.HasIndex(e => new
+            {
+                e.AccountId,
+                e.ReferenceType,
+                e.ReferenceId,
+                e.TaxComponent,
+                e.Purpose,
+            }).IsUnique();
+
             b.HasIndex(e => new { e.OrgId, e.ReferenceType, e.ReferenceId });
+
+            // What a balance sheet reads to split trade balances from the
+            // advances held inside the same control account.
+            b.HasIndex(e => new { e.OrgId, e.Purpose })
+                .HasDatabaseName("IX_SubAccounts_Purpose");
 
             b.Property(e => e.ReferenceType).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.TaxComponent).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Purpose).HasConversion<string>().HasMaxLength(20);
 
             b.HasOne<Account>()
                 .WithMany()

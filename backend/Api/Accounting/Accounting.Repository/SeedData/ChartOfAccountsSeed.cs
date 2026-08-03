@@ -40,21 +40,17 @@ public static class ChartOfAccountsSeed
         Account(orgId, "2300", SystemAccount.BankOverdraftAndCards, Liability, isLock: true),
         Account(orgId, "4900", SystemAccount.RealizedFxGainLoss, Income, isJe: true),
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
-
-        // Where money paid or received ahead of a document sits, and where the
-        // excess goes when a payment runs past what was owed.
-        //
-        // Both are control accounts with a contact sub-account beneath them, so
-        // they stay off the manual-journal picker for the same reason
-        // receivables and payables do: the balance is per contact, and a hand
-        // entry against the control account would break the tie to it.
-        //
-        // Neither may be netted into Accounts Payable or Accounts Receivable.
-        // An unapplied advance is not a settled document, and folding it in
-        // understates the control account and puts the aging out with it.
-        Account(orgId, "1600", SystemAccount.AdvanceToVendor, Asset),
-        Account(orgId, "2400", SystemAccount.AdvanceFromCustomer, Liability),
     ];
+
+    // There are deliberately no separate advance control accounts. A contact's
+    // prepayments and overpayments are sub-accounts beneath Accounts Receivable
+    // and Accounts Payable, told apart by SubAccountPurpose — so the party's
+    // whole position sits under two control accounts rather than four.
+    //
+    // The consequence to know: neither control total is a Schedule III line on
+    // its own. Advances to suppliers and from customers must be reported apart
+    // from trade receivables and payables, and the purpose column is what splits
+    // them back out.
 
     private static Account Account(
         Guid orgId,

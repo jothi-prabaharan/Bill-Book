@@ -31,23 +31,6 @@ public enum SystemAccount
     /// negative asset is what auditors query.
     /// </summary>
     BankOverdraftAndCards = 13,
-
-    /// <summary>
-    /// Money paid to a vendor before their bill arrives, and the excess when a
-    /// payment runs past what was owed. An <b>Asset</b> — they owe us goods.
-    ///
-    /// Kept off Accounts Payable deliberately: a payable is what we owe against a
-    /// document, and netting an unapplied advance into it would understate
-    /// payables and put the aging out by the same amount.
-    /// </summary>
-    AdvanceToVendor = 14,
-
-    /// <summary>
-    /// Money received from a customer before an invoice exists, and the excess
-    /// when a receipt runs past what was owed. A <b>Liability</b> — we owe them
-    /// goods or the money back.
-    /// </summary>
-    AdvanceFromCustomer = 15,
 }
 
 /// <summary>
@@ -72,8 +55,6 @@ public static class SystemAccountNames
         SystemAccount.CashInHand => "Cash in Hand",
         SystemAccount.BankAccounts => "Bank Accounts",
         SystemAccount.BankOverdraftAndCards => "Bank OD & Credit Cards",
-        SystemAccount.AdvanceToVendor => "Advance to Vendor",
-        SystemAccount.AdvanceFromCustomer => "Advance from Customer",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

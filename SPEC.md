@@ -744,7 +744,7 @@ Check constraints: at least one role · TDS ⇒ section · MSME ⇒ Udyam · lim
 
 Validated in C# (spans rows or crosses a service): **GSTIN's first two digits must equal the place-of-supply state's GST code**, verified against `mst.States` through Master's API and cached · GSTIN unique across contacts · at least one active person, exactly one default · the default person must have an email or mobile · one default address per type.
 
-**On create** → four sub-accounts in Accounting via `POST internal/sub-accounts/provision`, idempotent — receivable, payable, and one under each advance control account. Idempotent per target, so re-running it for a contact created before the advances existed backfills just those two.
+**On create** → six sub-accounts in Accounting via `POST internal/sub-accounts/provision` — trade, prepayment advance and overpayment advance beneath each of Accounts Receivable and Accounts Payable, discriminated by `SubAccountPurpose`. Idempotent **per target**, so re-running it for a contact created before the advances existed backfills exactly the four it is missing.
 
 ### `con.ContactAddresses` ✅
 | ContactAddressId long PK · OrgId · ContactId (FK, cascade) · AddressType enum→string(10) Billing/Shipping · IsDefault · Label string(50)? · AddressLine1 string(200) · AddressLine2 string(200)? · Landmark string(100)? · City string(100) · StateId int? · CountryId int · PostalCode string(10)? · Gstin string(15)? · ContactPersonName string(100)? · PhoneNumber · MobileNumber · IsActive |

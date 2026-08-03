@@ -97,25 +97,29 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
   | # | Type | Posting | `LedgerSourceId` |
   |---|---|---|---|
   | 1 | **Bill payment** | `Dr Accounts Payable / Cr Bank` | 2 `BILLPAYMENT` |
-  | 2 | **Prepayment** — advance to a vendor before their bill | `Dr Advance to Vendor / Cr Bank` | 8 `VENDORPREPAYMENT` |
-  | 3 | **Overpayment** — paid past what was owed | `Dr Accounts Payable` (settled) **+** `Dr Advance to Vendor` (excess) `/ Cr Bank` | 2 **and** 16 `VENDOROVERPAYMENT`, per leg |
-  | 4 | **Credit-note refund** — a *sales* return paid back to a customer | `Dr Accounts Receivable / Cr Bank` | 6 `CREDITNOTEREFUND` |
-  | 5 | **Overpayment refund** — a customer's excess given back | `Dr Advance from Customer / Cr Bank` | 18 `CUSTOMEROVERPAYMENTREFUND` |
-  | 6 | **Prepayment refund** — a customer's advance given back | `Dr Advance from Customer / Cr Bank` | 19 `CUSTOMERPREPAYMENTREFUND` |
+  | 2 | **Prepayment** — advance to a vendor before their bill | `Dr Accounts Receivable` › *Prepayment Advance Receivable* `/ Cr Bank` | 8 `VENDORPREPAYMENT` |
+  | 3 | **Overpayment** — paid past what was owed | `Dr Accounts Payable` › *trade* (settled) **+** `Dr Accounts Receivable` › *Overpayment Advance Receivable* (excess) `/ Cr Bank` | 2 **and** 16 `VENDOROVERPAYMENT`, per leg |
+  | 4 | **Credit-note refund** — a *sales* return paid back to a customer | `Dr Accounts Receivable` › *trade* `/ Cr Bank` | 6 `CREDITNOTEREFUND` |
+  | 5 | **Overpayment refund** — a customer's excess given back | `Dr Accounts Payable` › *Overpayment Advance Payable* `/ Cr Bank` | 18 `CUSTOMEROVERPAYMENTREFUND` |
+  | 6 | **Prepayment refund** — a customer's advance given back | `Dr Accounts Payable` › *Prepayment Advance Payable* `/ Cr Bank` | 19 `CUSTOMERPREPAYMENTREFUND` |
+
+  `›` is the sub-account beneath the control account. **There are only two control accounts** — advances are not separate accounts, they are sub-accounts under receivables and payables, keyed by `SubAccountPurpose`.
 
   **Overpayment is not a type of its own — it is two types on one document**, and that is why the ledger source sits on the leg. Stamp the whole document "overpayment" and a payables report filtering on bill payments silently misses the part that *was* a bill payment.
 
-  **Rows 5 and 6 post identically and are told apart only by their source.** They can be, because the receipt that created the balance was itself marked `CUSTOMERPREPAYMENT` or `CUSTOMEROVERPAYMENT` — that distinction upstream is what makes the distinction here mean anything. Both clear the same per-contact balance on Advance from Customer; two accounts were considered and rejected, because a customer would then carry two credit balances and a statement would have to add them up.
+  **Rows 5 and 6 clear different balances**, not the same one with different labels: a contact's prepayment advance and its overpayment advance are separate sub-accounts under Accounts Payable. The ledger source is then provenance rather than the only discriminator. The cost, accepted deliberately: a customer holding both carries two credit balances, so a statement has to add them up.
 
   **A *purchase* credit note is a debit note here, and its refund is money coming in.** The vendor's credit note against goods you returned is recorded as `DBN` — you debit the vendor and reduce payables — and settling it means the vendor pays *you*. So it is a **Receive money** type under `DEBITNOTEREFUND` (7, direction `In`), not a spend-money one. The credit-note refund at row 4 is the sales side: `CRN`, the customer returned goods, you pay them back.
 
   *Done when*: paying a bill clears it from payables aging and the ledger row names the bill it paid; an overpayment settles its bill and leaves the excess readable as an advance against that vendor; and refunding a customer's advance clears exactly that contact's balance.
 
   **Already built, ahead of this task** — none of it needed a bill to exist:
-  - `Advance to Vendor` (Asset, 1600) and `Advance from Customer` (Liability, 2400) seeded into the chart of accounts. Four of the six had nowhere to post before.
+  - **`acc.SubAccounts.Purpose`** (`Primary` / `PrepaymentAdvance` / `OverpaymentAdvance`), in the unique key beside `TaxComponent`. Without it a contact's three sub-accounts under one parent key identically and only the first is ever written.
+  - **A contact now gets six sub-accounts**: the trade balance, a prepayment advance and an overpayment advance beneath **each** of Accounts Receivable and Accounts Payable. Grouped by the direction the balance runs, not by counterparty role, so every sub-account's type matches the parent it hangs from — `AccountTypeId` is copied from the parent, and grouping the other way would have a report by type contradict the same report by account.
+  - **No separate advance control accounts.** `Advance to Vendor` and `Advance from Customer` were seeded and then removed: the whole of a party's position now sits under two control accounts rather than four.
   - `mst.LedgerSources` 16–19. `LedgerSource.Code` widened to 30, because the naming scheme runs past 20 characters and abbreviating a key to fit a column is how a lookup table fills with codes nobody can read.
   - **`LedgerSourceId` moved onto the ledger leg**, the same move T0.1 made for `LedgerTypeId` and for a related reason — see T0.1 in [`TRANSACTIONS.md`](./TRANSACTIONS.md).
-  - **A contact now gets four sub-accounts, not two**: receivable, payable, and one under each advance account. Every one of these balances is answered per contact — you refund a named customer, not a pool.
+  **A consequence to carry into the balance sheet.** Because the advances live inside the AR and AP control accounts, **neither control total is a Schedule III line on its own** — the Act requires advances to suppliers and from customers to be reported apart from trade receivables and payables. `SubAccountPurpose` is what splits them back out, and any balance sheet that ignores it overstates both trade lines by the advances held. Nothing owns that split yet; it belongs to whoever builds the balance sheet.
 
   **Still open here**: the `bnk.*` document itself (T6.1), the screen, and allocation (T5.1). **T6.3 will want sources 20–21** — the vendor-side mirrors, for a vendor refunding your overpayment or returning your advance. They are deliberately not seeded yet: `LedgerSources` ids are contractual, and seeding a code nothing writes is a row that gets used for the wrong thing before its document arrives.
 - [ ] **T6.3 — Receive money (RCM)** — the mirror, against invoices, with customer prepayments landing in Advance from Customer rather than against a document.

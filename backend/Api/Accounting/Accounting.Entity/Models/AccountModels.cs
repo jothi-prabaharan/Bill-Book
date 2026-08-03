@@ -98,6 +98,12 @@ public class SubAccountListItem
 
     public TaxComponent TaxComponent { get; set; }
 
+    /// <summary>
+    /// Which balance this holds beneath the control account. A contact has three
+    /// under each of receivables and payables, and this is what tells them apart.
+    /// </summary>
+    public SubAccountPurpose Purpose { get; set; }
+
     public string SubAccountName { get; set; } = null!;
 
     public bool IsActive { get; set; }
