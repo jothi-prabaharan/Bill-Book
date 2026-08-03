@@ -21,13 +21,23 @@ public class BankingDbContext : TenantDbContext
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
 
     /// <summary>
-    /// Spend, receive and transfer money — three transaction types in one table,
-    /// discriminated by <c>TransactionTypeCode</c>.
+    /// Money out. Its own table rather than a row in a shared one, so a payment
+    /// carries a payee and no destination account.
     /// </summary>
-    public DbSet<MoneyTransaction> MoneyTransactions => Set<MoneyTransaction>();
+    public DbSet<SpendMoney> SpendMoney => Set<SpendMoney>();
 
-    public DbSet<MoneyTransactionDetail> MoneyTransactionDetails =>
-        Set<MoneyTransactionDetail>();
+    public DbSet<SpendMoneyDetail> SpendMoneyDetails => Set<SpendMoneyDetail>();
+
+    /// <summary>Money in. The mirror of <see cref="SpendMoney"/>.</summary>
+    public DbSet<ReceiveMoney> ReceiveMoney => Set<ReceiveMoney>();
+
+    public DbSet<ReceiveMoneyDetail> ReceiveMoneyDetails => Set<ReceiveMoneyDetail>();
+
+    /// <summary>
+    /// Money between the organization's own accounts. No contact, and no detail
+    /// table — a transfer allocates to nothing.
+    /// </summary>
+    public DbSet<TransferMoney> TransferMoney => Set<TransferMoney>();
 
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
@@ -93,37 +103,84 @@ public class BankingDbContext : TenantDbContext
             });
         });
 
-        modelBuilder.Entity<MoneyTransaction>(b =>
-        {
-            b.HasKey(e => e.MoneyTransactionId);
+        // Spend and receive share a shape, so they share a configuration. Three
+        // tables rather than one does not mean three copies of the same twenty
+        // lines — what differs between them is the table, not the rules.
+        ConfigureMoneyDocument<SpendMoney>(modelBuilder, "SpendMoney", e => e.SpendMoneyId);
+        ConfigureMoneyDocument<ReceiveMoney>(modelBuilder, "ReceiveMoney", e => e.ReceiveMoneyId);
 
-            // Filtered, because a draft has no number yet. The uniqueness that
-            // matters is over issued numbers, and the type is in the key because
-            // each of the three has its own series — two series left with no
-            // prefix would otherwise collide at 00001.
-            b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.TransactionNo })
+        modelBuilder.Entity<SpendMoney>(b =>
+        {
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.BankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ReceiveMoney>(b =>
+        {
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.BankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        ConfigureMoneyDetail<SpendMoneyDetail>(modelBuilder, e => e.SpendMoneyDetailId);
+        ConfigureMoneyDetail<ReceiveMoneyDetail>(modelBuilder, e => e.ReceiveMoneyDetailId);
+
+        modelBuilder.Entity<SpendMoneyDetail>(b =>
+        {
+            b.HasIndex(e => new { e.SpendMoneyId, e.LineNumber }).IsUnique();
+
+            // Cascade: a draft's lines have no meaning without their header, and
+            // a posted document is voided rather than deleted.
+            b.HasOne<SpendMoney>()
+                .WithMany()
+                .HasForeignKey(e => e.SpendMoneyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReceiveMoneyDetail>(b =>
+        {
+            b.HasIndex(e => new { e.ReceiveMoneyId, e.LineNumber }).IsUnique();
+
+            b.HasOne<ReceiveMoney>()
+                .WithMany()
+                .HasForeignKey(e => e.ReceiveMoneyId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TransferMoney>(b =>
+        {
+            b.HasKey(e => e.TransferMoneyId);
+
+            b.HasIndex(e => new { e.OrgId, e.TransactionNo })
                 .IsUnique()
                 .HasFilter("\"TransactionNo\" IS NOT NULL")
-                .HasDatabaseName("IX_MoneyTransactions_Number");
+                .HasDatabaseName("IX_TransferMoney_Number");
 
             b.HasIndex(e => new { e.OrgId, e.TransactionDate });
 
-            // Reconciliation: one account over a period.
-            b.HasIndex(e => new { e.OrgId, e.BankAccountId, e.TransactionDate })
-                .HasDatabaseName("IX_MoneyTransactions_Account");
+            // Reconciliation reads both ends: a transfer appears on the source
+            // account's statement and on the destination's.
+            b.HasIndex(e => new { e.OrgId, e.FromBankAccountId, e.TransactionDate })
+                .HasDatabaseName("IX_TransferMoney_From");
 
-            b.HasIndex(e => new { e.OrgId, e.ContactId });
+            b.HasIndex(e => new { e.OrgId, e.ToBankAccountId, e.TransactionDate })
+                .HasDatabaseName("IX_TransferMoney_To");
 
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
             b.Property(e => e.PaymentMethod).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
             b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
 
-            // Restrict, both sides: a bank account with money moved through it
-            // cannot be deleted out from under its own history.
             b.HasOne<BankAccount>()
                 .WithMany()
-                .HasForeignKey(e => e.BankAccountId)
+                .HasForeignKey(e => e.FromBankAccountId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             b.HasOne<BankAccount>()
@@ -133,91 +190,134 @@ public class BankingDbContext : TenantDbContext
 
             b.ToTable(table =>
             {
-                // The number is taken at post. Both halves matter: a draft
-                // holding one has consumed a number it may never use, and a
-                // posted document without one is a ledger row nobody can cite.
                 table.HasCheckConstraint(
-                    "chk_money_number_on_post",
+                    "chk_transfer_number_on_post",
                     "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) "
                         + "OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
 
                 table.HasCheckConstraint(
-                    "chk_money_posted_stamp",
+                    "chk_transfer_posted_stamp",
                     "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
 
                 table.HasCheckConstraint(
-                    "chk_money_void_stamp",
+                    "chk_transfer_void_stamp",
                     "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
 
-                // Zero moves no money, and a negative amount would mean the
-                // direction lives on the number rather than on the document type.
-                table.HasCheckConstraint("chk_money_amount_positive", "\"Amount\" > 0");
-
-                table.HasCheckConstraint("chk_money_rate_positive", "\"ExchangeRate\" > 0");
-
-                // A transfer is the one money document with no counterparty:
-                // both sides are the organization's own accounts. Everything else
-                // has a counterparty and no destination account.
-                table.HasCheckConstraint(
-                    "chk_money_transfer_shape",
-                    "(\"TransactionTypeCode\" = 'TRM' "
-                        + "AND \"ToBankAccountId\" IS NOT NULL AND \"ContactId\" IS NULL) "
-                        + "OR (\"TransactionTypeCode\" <> 'TRM' AND \"ToBankAccountId\" IS NULL)");
+                table.HasCheckConstraint("chk_transfer_amount_positive", "\"Amount\" > 0");
+                table.HasCheckConstraint("chk_transfer_rate_positive", "\"ExchangeRate\" > 0");
 
                 // Moving money to the account it came from posts two legs that
                 // cancel, and reconciles as a transaction that never happened.
                 table.HasCheckConstraint(
-                    "chk_money_transfer_distinct",
-                    "\"ToBankAccountId\" IS NULL OR \"ToBankAccountId\" <> \"BankAccountId\"");
-
-                // Only the three this table is for. A fourth code here would be a
-                // document with no posting path behind it.
-                table.HasCheckConstraint(
-                    "chk_money_transaction_type",
-                    "\"TransactionTypeCode\" IN ('SPM', 'RCM', 'TRM')");
-            });
-        });
-
-        modelBuilder.Entity<MoneyTransactionDetail>(b =>
-        {
-            b.HasKey(e => e.MoneyTransactionDetailId);
-
-            b.HasIndex(e => new { e.MoneyTransactionId, e.LineNumber }).IsUnique();
-
-            // "What has been paid against this bill?" — the read that turns a
-            // pile of payments back into an outstanding balance.
-            b.HasIndex(e => new
-            {
-                e.OrgId,
-                e.MappingTransactionTypeCode,
-                e.MappingTransactionId,
-            }).HasDatabaseName("IX_MoneyTransactionDetails_Mapping");
-
-            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
-            b.Property(e => e.AmountBase).HasColumnType("decimal(18,2)");
-
-            // Cascade: a draft's lines have no meaning without their header, and
-            // a posted document is voided rather than deleted.
-            b.HasOne<MoneyTransaction>()
-                .WithMany()
-                .HasForeignKey(e => e.MoneyTransactionId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            b.ToTable(table =>
-            {
-                table.HasCheckConstraint(
-                    "chk_money_detail_amount_positive",
-                    "\"Amount\" > 0 AND \"AmountBase\" > 0");
-
-                // Half a mapping traces to nothing. Either the line settles a
-                // named document or it settles none — an id with no type cannot
-                // be resolved, and a type with no id names every document at once.
-                table.HasCheckConstraint(
-                    "chk_money_detail_mapping_paired",
-                    "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+                    "chk_transfer_distinct_accounts",
+                    "\"ToBankAccountId\" <> \"FromBankAccountId\"");
             });
         });
 
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <summary>
+    /// Everything a spend and a receive share: numbering, dates, money columns,
+    /// the lifecycle stamps and the constraints that police them.
+    /// </summary>
+    private static void ConfigureMoneyDocument<T>(
+        ModelBuilder modelBuilder,
+        string table,
+        System.Linq.Expressions.Expression<Func<T, object?>> key)
+        where T : class
+    {
+        modelBuilder.Entity<T>(b =>
+        {
+            b.HasKey(key);
+
+            // Filtered, because a draft has no number yet. The uniqueness that
+            // matters is over issued numbers.
+            b.HasIndex(["OrgId", "TransactionNo"])
+                .IsUnique()
+                .HasFilter("\"TransactionNo\" IS NOT NULL")
+                .HasDatabaseName($"IX_{table}_Number");
+
+            b.HasIndex(["OrgId", "TransactionDate"]);
+
+            // Reconciliation: one account over a period.
+            b.HasIndex(["OrgId", "BankAccountId", "TransactionDate"])
+                .HasDatabaseName($"IX_{table}_Account");
+
+            // "Show me the payments against this bill" without opening the lines.
+            b.HasIndex(["OrgId", "MappingTransactionTypeCode", "MappingTransactionId"])
+                .HasDatabaseName($"IX_{table}_Mapping");
+
+            b.Property("Status").HasConversion<string>().HasMaxLength(10);
+            b.Property("PaymentMethod").HasConversion<string>().HasMaxLength(20);
+            b.Property("Amount").HasColumnType("decimal(18,2)");
+            b.Property("ExchangeRate").HasColumnType("decimal(18,8)");
+
+            b.ToTable(t =>
+            {
+                // The number is taken at post. Both halves matter: a draft
+                // holding one has consumed a number it may never use, and a
+                // posted document without one is a ledger row nobody can cite.
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_number_on_post",
+                    "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) "
+                        + "OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_posted_stamp",
+                    "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_void_stamp",
+                    "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
+
+                // Zero moves no money, and a negative amount would put the
+                // direction on the number rather than on the document type.
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_amount_positive", "\"Amount\" > 0");
+
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_rate_positive", "\"ExchangeRate\" > 0");
+
+                // Half a mapping traces to nothing, on the header exactly as on
+                // the line.
+                t.HasCheckConstraint(
+                    $"chk_{table.ToLowerInvariant()}_mapping_paired",
+                    "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+            });
+        });
+    }
+
+    /// <summary>The allocation line, identical on both sides.</summary>
+    private static void ConfigureMoneyDetail<T>(
+        ModelBuilder modelBuilder,
+        System.Linq.Expressions.Expression<Func<T, object?>> key)
+        where T : class
+    {
+        modelBuilder.Entity<T>(b =>
+        {
+            b.HasKey(key);
+
+            // "What has been paid against this bill?" — the read that turns a
+            // pile of payments back into an outstanding balance.
+            b.HasIndex(["OrgId", "MappingTransactionTypeCode", "MappingTransactionId"])
+                .HasDatabaseName($"IX_{typeof(T).Name}_Mapping");
+
+            b.Property("Amount").HasColumnType("decimal(18,2)");
+            b.Property("AmountBase").HasColumnType("decimal(18,2)");
+
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    $"chk_{typeof(T).Name.ToLowerInvariant()}_amount_positive",
+                    "\"Amount\" > 0 AND \"AmountBase\" > 0");
+
+                // Half a mapping traces to nothing. An id with no type cannot be
+                // resolved; a type with no id names every document at once.
+                t.HasCheckConstraint(
+                    $"chk_{typeof(T).Name.ToLowerInvariant()}_mapping_paired",
+                    "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+            });
+        });
     }
 }

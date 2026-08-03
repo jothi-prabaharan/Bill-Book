@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Banking.Repository.Migrations
 {
     [DbContext(typeof(BankingDbContext))]
-    [Migration("20260803084946_AddMoneyTransactions")]
-    partial class AddMoneyTransactions
+    [Migration("20260803093122_AddMoneyDocuments")]
+    partial class AddMoneyDocuments
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -202,13 +202,13 @@ namespace Banking.Repository.Migrations
                         });
                 });
 
-            modelBuilder.Entity("Banking.Entity.TableEntities.MoneyTransaction", b =>
+            modelBuilder.Entity("Banking.Entity.TableEntities.ReceiveMoney", b =>
                 {
-                    b.Property<long>("MoneyTransactionId")
+                    b.Property<long>("ReceiveMoneyId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MoneyTransactionId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ReceiveMoneyId"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
@@ -216,7 +216,7 @@ namespace Banking.Repository.Migrations
                     b.Property<long>("BankAccountId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("ContactId")
+                    b.Property<long>("ContactId")
                         .HasColumnType("bigint");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -232,6 +232,13 @@ namespace Banking.Repository.Migrations
 
                     b.Property<decimal>("ExchangeRate")
                         .HasColumnType("decimal(18,8)");
+
+                    b.Property<long?>("MappingTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MappingTransactionTypeCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
 
                     b.Property<string>("Memo")
                         .HasColumnType("text");
@@ -268,20 +275,12 @@ namespace Banking.Repository.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<long?>("ToBankAccountId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateOnly>("TransactionDate")
                         .HasColumnType("date");
 
                     b.Property<string>("TransactionNo")
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
-
-                    b.Property<string>("TransactionTypeCode")
-                        .IsRequired()
-                        .HasMaxLength(3)
-                        .HasColumnType("character varying(3)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -299,53 +298,50 @@ namespace Banking.Repository.Migrations
                     b.Property<Guid?>("VoidedBy")
                         .HasColumnType("uuid");
 
-                    b.HasKey("MoneyTransactionId");
+                    b.HasKey("ReceiveMoneyId");
 
                     b.HasIndex("BankAccountId");
 
                     b.HasIndex("OrgId");
 
-                    b.HasIndex("ToBankAccountId");
-
                     b.HasIndex("OrgId", "ContactId");
 
                     b.HasIndex("OrgId", "TransactionDate");
 
-                    b.HasIndex("OrgId", "BankAccountId", "TransactionDate")
-                        .HasDatabaseName("IX_MoneyTransactions_Account");
-
-                    b.HasIndex("OrgId", "TransactionTypeCode", "TransactionNo")
+                    b.HasIndex("OrgId", "TransactionNo")
                         .IsUnique()
-                        .HasDatabaseName("IX_MoneyTransactions_Number")
+                        .HasDatabaseName("IX_ReceiveMoney_Number")
                         .HasFilter("\"TransactionNo\" IS NOT NULL");
 
-                    b.ToTable("MoneyTransactions", "bnk", t =>
+                    b.HasIndex("OrgId", "BankAccountId", "TransactionDate")
+                        .HasDatabaseName("IX_ReceiveMoney_Account");
+
+                    b.HasIndex("OrgId", "MappingTransactionTypeCode", "MappingTransactionId")
+                        .HasDatabaseName("IX_ReceiveMoney_Mapping");
+
+                    b.ToTable("ReceiveMoney", "bnk", t =>
                         {
-                            t.HasCheckConstraint("chk_money_amount_positive", "\"Amount\" > 0");
+                            t.HasCheckConstraint("chk_receivemoney_amount_positive", "\"Amount\" > 0");
 
-                            t.HasCheckConstraint("chk_money_number_on_post", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+                            t.HasCheckConstraint("chk_receivemoney_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
 
-                            t.HasCheckConstraint("chk_money_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+                            t.HasCheckConstraint("chk_receivemoney_number_on_post", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
 
-                            t.HasCheckConstraint("chk_money_rate_positive", "\"ExchangeRate\" > 0");
+                            t.HasCheckConstraint("chk_receivemoney_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
 
-                            t.HasCheckConstraint("chk_money_transaction_type", "\"TransactionTypeCode\" IN ('SPM', 'RCM', 'TRM')");
+                            t.HasCheckConstraint("chk_receivemoney_rate_positive", "\"ExchangeRate\" > 0");
 
-                            t.HasCheckConstraint("chk_money_transfer_distinct", "\"ToBankAccountId\" IS NULL OR \"ToBankAccountId\" <> \"BankAccountId\"");
-
-                            t.HasCheckConstraint("chk_money_transfer_shape", "(\"TransactionTypeCode\" = 'TRM' AND \"ToBankAccountId\" IS NOT NULL AND \"ContactId\" IS NULL) OR (\"TransactionTypeCode\" <> 'TRM' AND \"ToBankAccountId\" IS NULL)");
-
-                            t.HasCheckConstraint("chk_money_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
+                            t.HasCheckConstraint("chk_receivemoney_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
                         });
                 });
 
-            modelBuilder.Entity("Banking.Entity.TableEntities.MoneyTransactionDetail", b =>
+            modelBuilder.Entity("Banking.Entity.TableEntities.ReceiveMoneyDetail", b =>
                 {
-                    b.Property<long>("MoneyTransactionDetailId")
+                    b.Property<long>("ReceiveMoneyDetailId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("MoneyTransactionDetailId"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("ReceiveMoneyDetailId"));
 
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
@@ -382,11 +378,11 @@ namespace Banking.Repository.Migrations
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
-                    b.Property<long>("MoneyTransactionId")
-                        .HasColumnType("bigint");
-
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
+
+                    b.Property<long>("ReceiveMoneyId")
+                        .HasColumnType("bigint");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -394,21 +390,353 @@ namespace Banking.Repository.Migrations
                         .HasColumnType("xid")
                         .HasColumnName("xmin");
 
-                    b.HasKey("MoneyTransactionDetailId");
+                    b.HasKey("ReceiveMoneyDetailId");
 
                     b.HasIndex("OrgId");
 
-                    b.HasIndex("MoneyTransactionId", "LineNumber")
+                    b.HasIndex("ReceiveMoneyId", "LineNumber")
                         .IsUnique();
 
                     b.HasIndex("OrgId", "MappingTransactionTypeCode", "MappingTransactionId")
-                        .HasDatabaseName("IX_MoneyTransactionDetails_Mapping");
+                        .HasDatabaseName("IX_ReceiveMoneyDetail_Mapping");
 
-                    b.ToTable("MoneyTransactionDetails", "bnk", t =>
+                    b.ToTable("ReceiveMoneyDetails", "bnk", t =>
                         {
-                            t.HasCheckConstraint("chk_money_detail_amount_positive", "\"Amount\" > 0 AND \"AmountBase\" > 0");
+                            t.HasCheckConstraint("chk_receivemoneydetail_amount_positive", "\"Amount\" > 0 AND \"AmountBase\" > 0");
 
-                            t.HasCheckConstraint("chk_money_detail_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+                            t.HasCheckConstraint("chk_receivemoneydetail_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.SpendMoney", b =>
+                {
+                    b.Property<long>("SpendMoneyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SpendMoneyId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("BankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<long?>("MappingTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MappingTransactionTypeCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PostedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ReferenceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateOnly>("TransactionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TransactionNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset?>("VoidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VoidedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("SpendMoneyId");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("OrgId", "ContactId");
+
+                    b.HasIndex("OrgId", "TransactionDate");
+
+                    b.HasIndex("OrgId", "TransactionNo")
+                        .IsUnique()
+                        .HasDatabaseName("IX_SpendMoney_Number")
+                        .HasFilter("\"TransactionNo\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "BankAccountId", "TransactionDate")
+                        .HasDatabaseName("IX_SpendMoney_Account");
+
+                    b.HasIndex("OrgId", "MappingTransactionTypeCode", "MappingTransactionId")
+                        .HasDatabaseName("IX_SpendMoney_Mapping");
+
+                    b.ToTable("SpendMoney", "bnk", t =>
+                        {
+                            t.HasCheckConstraint("chk_spendmoney_amount_positive", "\"Amount\" > 0");
+
+                            t.HasCheckConstraint("chk_spendmoney_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_spendmoney_number_on_post", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("chk_spendmoney_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_spendmoney_rate_positive", "\"ExchangeRate\" > 0");
+
+                            t.HasCheckConstraint("chk_spendmoney_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.SpendMoneyDetail", b =>
+                {
+                    b.Property<long>("SpendMoneyDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SpendMoneyDetailId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("AmountBase")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("LedgerSourceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LineMemo")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("MappingTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("MappingTransactionTypeCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("SpendMoneyId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SpendMoneyDetailId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("SpendMoneyId", "LineNumber")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "MappingTransactionTypeCode", "MappingTransactionId")
+                        .HasDatabaseName("IX_SpendMoneyDetail_Mapping");
+
+                    b.ToTable("SpendMoneyDetails", "bnk", t =>
+                        {
+                            t.HasCheckConstraint("chk_spendmoneydetail_amount_positive", "\"Amount\" > 0 AND \"AmountBase\" > 0");
+
+                            t.HasCheckConstraint("chk_spendmoneydetail_mapping_paired", "(\"MappingTransactionTypeCode\" IS NULL) = (\"MappingTransactionId\" IS NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.TransferMoney", b =>
+                {
+                    b.Property<long>("TransferMoneyId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TransferMoneyId"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<long>("FromBankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PostedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("ReferenceDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<long>("ToBankAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateOnly>("TransactionDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("TransactionNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTimeOffset?>("VoidedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("VoidedBy")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("TransferMoneyId");
+
+                    b.HasIndex("FromBankAccountId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("ToBankAccountId");
+
+                    b.HasIndex("OrgId", "TransactionDate");
+
+                    b.HasIndex("OrgId", "TransactionNo")
+                        .IsUnique()
+                        .HasDatabaseName("IX_TransferMoney_Number")
+                        .HasFilter("\"TransactionNo\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "FromBankAccountId", "TransactionDate")
+                        .HasDatabaseName("IX_TransferMoney_From");
+
+                    b.HasIndex("OrgId", "ToBankAccountId", "TransactionDate")
+                        .HasDatabaseName("IX_TransferMoney_To");
+
+                    b.ToTable("TransferMoney", "bnk", t =>
+                        {
+                            t.HasCheckConstraint("chk_transfer_amount_positive", "\"Amount\" > 0");
+
+                            t.HasCheckConstraint("chk_transfer_distinct_accounts", "\"ToBankAccountId\" <> \"FromBankAccountId\"");
+
+                            t.HasCheckConstraint("chk_transfer_number_on_post", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("chk_transfer_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_transfer_rate_positive", "\"ExchangeRate\" > 0");
+
+                            t.HasCheckConstraint("chk_transfer_void_stamp", "(\"Status\" = 'Void') = (\"VoidedAt\" IS NOT NULL)");
                         });
                 });
 
@@ -559,26 +887,54 @@ namespace Banking.Repository.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 
-            modelBuilder.Entity("Banking.Entity.TableEntities.MoneyTransaction", b =>
+            modelBuilder.Entity("Banking.Entity.TableEntities.ReceiveMoney", b =>
                 {
                     b.HasOne("Banking.Entity.TableEntities.BankAccount", null)
                         .WithMany()
                         .HasForeignKey("BankAccountId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.ReceiveMoneyDetail", b =>
+                {
+                    b.HasOne("Banking.Entity.TableEntities.ReceiveMoney", null)
+                        .WithMany()
+                        .HasForeignKey("ReceiveMoneyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.SpendMoney", b =>
+                {
+                    b.HasOne("Banking.Entity.TableEntities.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.SpendMoneyDetail", b =>
+                {
+                    b.HasOne("Banking.Entity.TableEntities.SpendMoney", null)
+                        .WithMany()
+                        .HasForeignKey("SpendMoneyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Banking.Entity.TableEntities.TransferMoney", b =>
+                {
+                    b.HasOne("Banking.Entity.TableEntities.BankAccount", null)
+                        .WithMany()
+                        .HasForeignKey("FromBankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("Banking.Entity.TableEntities.BankAccount", null)
                         .WithMany()
                         .HasForeignKey("ToBankAccountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-                });
-
-            modelBuilder.Entity("Banking.Entity.TableEntities.MoneyTransactionDetail", b =>
-                {
-                    b.HasOne("Banking.Entity.TableEntities.MoneyTransaction", null)
-                        .WithMany()
-                        .HasForeignKey("MoneyTransactionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 #pragma warning restore 612, 618

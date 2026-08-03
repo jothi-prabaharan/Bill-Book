@@ -1,11 +1,14 @@
 namespace Banking.Entity.Enums;
 
 /// <summary>
-/// The life of a money document. One direction only, the same shape the manual
-/// journal uses: a posted document is never edited, because a general ledger
-/// whose history can be rewritten is not evidence of anything.
+/// The life of a money document — shared by spend, receive and transfer, which
+/// are three tables but one lifecycle.
+///
+/// One direction only, the same shape the manual journal uses: a posted document
+/// is never edited, because a general ledger whose history can be rewritten is
+/// not evidence of anything.
 /// </summary>
-public enum MoneyTransactionStatus
+public enum MoneyDocumentStatus
 {
     /// <summary>
     /// Being keyed. Its detail lines need not add up to the header amount yet, it
