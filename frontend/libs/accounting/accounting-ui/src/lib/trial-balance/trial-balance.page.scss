@@ -1,0 +1,35 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.link { color: #3557d6; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.error { color: #c0392b; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+
+.filters { display: flex; align-items: flex-end; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
+.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.filters input { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+.filters button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; font-size: .85rem; cursor: pointer; }
+.filters button.ghost { background: #eceef3; color: #4a4f60; }
+
+/* The one thing on this page that must never be quiet. */
+.broken { background: #fdecea; border-left: 3px solid #c0392b; color: #7d241a; padding: .7rem .9rem; font-size: .85rem; }
+
+.grid { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+.grid th, .grid td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid #e2e4ea; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.grid tr.group td { background: #f4f6fb; font-weight: 600; font-size: .82rem; }
+.grid tfoot td { border-top: 2px solid #4a4f60; border-bottom: 0; font-weight: 600; padding-top: .6rem; }
+.grid tfoot tr.broken-row td { color: #c0392b; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.code-col { width: 6rem; color: #6a6f80; font-variant-numeric: tabular-nums; }
+.badge { font-size: .62rem; background: #ffe9c7; color: #8a5a00; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+
+/* At 360px the table becomes a card list: the head row is meaningless once each
+   row is stacked, so each cell carries its own label instead. */
+@media (max-width: 640px) {
+  .grid thead { display: none; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #e2e4ea; }
+  .grid td { display: flex; justify-content: space-between; gap: 1rem; border: 0; padding: .15rem .6rem; }
+  .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; }
+  .grid tr.group td, .grid tfoot td { display: flex; }
+  .num { text-align: right; }
+}

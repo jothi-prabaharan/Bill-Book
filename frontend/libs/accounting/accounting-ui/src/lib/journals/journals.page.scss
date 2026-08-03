@@ -1,0 +1,78 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.head-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.link { color: #3557d6; text-decoration: none; background: none; border: 0; font: inherit; font-size: inherit; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { color: #6a6f80; font-size: .78rem; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.none { color: #c3c7d2; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #eceef3; color: #4a4f60; font: inherit; font-size: .85rem; cursor: pointer; }
+button.primary { background: #3557d6; color: #fff; }
+button.ghost { background: transparent; color: #4a4f60; }
+button:disabled { opacity: .45; cursor: default; }
+button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4rem; }
+.page-head button { background: #3557d6; color: #fff; }
+
+.editor { border: 1px solid #cdd1dc; border-radius: 8px; padding: 1rem; margin: 1rem 0 1.5rem; }
+.editor h2 { font-size: 1rem; margin: 0 0 .8rem; display: flex; gap: .5rem; align-items: baseline; }
+.editor.readonly { background: #fafbfd; }
+.note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 .8rem; }
+
+.head-fields { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.head-fields label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.head-fields label.wide { flex: 1 1 14rem; }
+.head-fields input { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+
+.meta { display: flex; gap: 2rem; margin: 0 0 1rem; flex-wrap: wrap; }
+.meta dt { font-size: .72rem; color: #8a8f9e; }
+.meta dd { margin: 0; font-size: .88rem; }
+
+.lines, .grid { width: 100%; border-collapse: collapse; }
+.lines th, .lines td, .grid th, .grid td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #e2e4ea; vertical-align: middle; }
+.lines th, .grid th { font-size: .78rem; color: #6a6f80; }
+.lines input, .lines select { width: 100%; padding: .35rem .4rem; border: 1px solid #cdd1dc; border-radius: 5px; font: inherit; font-size: .82rem; }
+.lines input[type='number'] { text-align: right; font-variant-numeric: tabular-nums; }
+.lines tfoot td { border-top: 2px solid #4a4f60; border-bottom: 0; font-weight: 600; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.line-col { width: 2rem; color: #8a8f9e; font-size: .78rem; }
+.date-col { width: 6.5rem; color: #6a6f80; font-variant-numeric: tabular-nums; }
+.actions-col { text-align: right; white-space: nowrap; width: 5rem; }
+.grid tr.draft { background: #fffdf5; }
+.sub { display: block; color: #8a8f9e; font-size: .75rem; }
+
+.badge { font-size: .65rem; background: #e3e9fd; color: #2743a8; padding: .1rem .35rem; border-radius: 3px; }
+.badge.reversed { background: #eceef3; color: #6a6f80; }
+.badge.off { background: #fdecea; color: #c0392b; margin-left: .25rem; }
+
+.totals { display: flex; gap: 2rem; justify-content: flex-end; margin-top: 1rem; padding: .6rem .8rem; border-radius: 6px; flex-wrap: wrap; }
+.totals.balanced { background: #eaf7f0; }
+.totals.off { background: #fdf3e6; }
+.totals div { display: flex; flex-direction: column; align-items: flex-end; }
+.totals span { font-size: .7rem; color: #6a6f80; }
+.totals strong { font-variant-numeric: tabular-nums; font-size: 1rem; }
+.totals.off .diff strong { color: #b26a00; }
+.totals.balanced .diff strong { color: #187a4b; }
+
+.editor-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
+
+.filters { display: flex; gap: .75rem; margin: 1rem 0 .5rem; }
+.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.filters select { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+
+/* At ~360px the line grid stops being a grid. Each line becomes a stacked card
+   with its own labels, and the totals panel goes full width — a seven-column
+   table at that size is unusable however narrow the columns get. */
+@media (max-width: 720px) {
+  .lines thead, .grid thead { display: none; }
+  .lines tr, .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .lines td, .grid td { display: flex; justify-content: space-between; align-items: center; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .lines td::before, .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 7rem; }
+  .lines input, .lines select { flex: 1 1 auto; width: auto; }
+  .lines tfoot td, .actions-col { justify-content: flex-end; }
+  .line-col, .date-col, .actions-col { width: auto; }
+  .totals { justify-content: space-between; gap: 1rem; }
+  .editor-actions button { flex: 1 1 auto; }
+}

@@ -17,13 +17,15 @@ The order to build things in, and how to tell when each one is actually done.
 
 ## Where things stand
 
-Verified on 2 August 2026, by reading the repository rather than from memory.
+Verified on 3 August 2026, by reading the repository rather than from memory.
 
-**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 25 pages, and every endpoint behind an authentication and permission check.
+**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 28 pages, and every endpoint behind an authentication and permission check.
 
-**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 58 tests pass, every EF snapshot matches its model, and all 29 migrations are applied to a real PostgreSQL — 21 in a customer database, 8 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
+**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 91 tests pass, every EF snapshot matches its model, and all 30 migrations are applied to a real PostgreSQL — 22 in a customer database, 8 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
-**Nothing is blocked by tooling any more.** What is left is an owner's decision — 5.14, 5.16, 5.19 — and the presentation half of 4.4, which has nowhere to be shown until a ledger screen exists. Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen. The next substantial build is **Sales** — the next thing on the Phase 1 roadmap. `sal.*` is still marked *not designed* in SPEC, so it starts with a schema, and it now arrives to a general ledger that already accepts postings.
+**Nothing is blocked by tooling any more.** What is left is an owner's decision — 5.14, 5.16, 5.19. **4.4 is closed**: the account ledger and the trial balance are built (T0.6), so what is posted finally has somewhere to be read. Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen.
+
+**The transaction plan has started.** T0.1, T0.5, T0.6, T0.7, T1.1 and T1.2 are done — the ledger door now takes a whole document's legs in one call, the manual journal exists, and both ledger screens are in place. The next substantial build is **Sales**, the next thing on the Phase 1 roadmap; `sal.*` is still marked *not designed* in SPEC, so it starts with a schema, and it now arrives to a general ledger that accepts postings **and can be read**. Its own foundations — T0.2 (tax determination), T0.3 (its numbering series) and T0.4 (the lifecycle) — are still unbuilt and come first. See [`TRANSACTIONS.md`](./TRANSACTIONS.md).
 
 ---
 

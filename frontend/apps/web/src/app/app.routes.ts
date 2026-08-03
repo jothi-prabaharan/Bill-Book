@@ -70,10 +70,41 @@ export const appRoutes: Routes = [
           import('@bill-book/platform-ui').then((m) => m.SmtpSettingsPage),
         data: { permission: 'settings.view' },
       },
+      // The nav rail points at /accounting, so it needs somewhere to land. The
+      // ledger is the right default: it is the screen every other posting in the
+      // product is checked on.
+      { path: 'accounting', pathMatch: 'full', redirectTo: 'accounting/trial-balance' },
       {
         path: 'accounting/chart-of-accounts',
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.ChartOfAccountsPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/journals',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.JournalsPage),
+        data: { permission: 'accounting.view' },
+      },
+      // The same page with an entry open, so a posted journal can be linked to
+      // from a ledger row.
+      {
+        path: 'accounting/journals/:journalId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.JournalsPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/trial-balance',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TrialBalancePage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/ledger',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.AccountLedgerPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/ledger/:accountId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.AccountLedgerPage),
         data: { permission: 'accounting.view' },
       },
       {

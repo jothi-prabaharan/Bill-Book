@@ -1,0 +1,288 @@
+<header class="page-head">
+  <h1>Journal entries</h1>
+  <div class="head-actions">
+    <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
+    <button type="button" (click)="startCreate()" [disabled]="busy()">+ New entry</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+@if (editing()) {
+  <section class="editor">
+    <h2>{{ editingId === null ? 'New entry' : 'Draft entry' }}</h2>
+
+    <div class="head-fields">
+      <label>
+        Date
+        <input type="date" [(ngModel)]="journalDate" name="journalDate" />
+      </label>
+      <label class="wide">
+        Reference
+        <input type="text" [(ngModel)]="reference" name="reference" maxlength="200" />
+      </label>
+      <label class="wide">
+        Memo
+        <input type="text" [(ngModel)]="memo" name="memo" placeholder="Why this entry was made" />
+      </label>
+    </div>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="line-col">#</th>
+          <th>Account</th>
+          <th>Sub-account</th>
+          <th>Memo</th>
+          <th class="num">Debit</th>
+          <th class="num">Credit</th>
+          <th class="actions-col"><span class="sr-only">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of lines(); track $index) {
+          <tr>
+            <td class="line-col" data-label="Line">{{ $index + 1 }}</td>
+            <td data-label="Account">
+              <select
+                [(ngModel)]="line.accountId"
+                [name]="'account' + $index"
+                (ngModelChange)="onAccount(line)"
+              >
+                <option [ngValue]="null">Choose…</option>
+                @for (a of postable(); track a.accountId) {
+                  <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
+                }
+              </select>
+            </td>
+            <td data-label="Sub-account">
+              @if (subAccountsFor(line.accountId).length > 0) {
+                <select
+                  [(ngModel)]="line.subAccountId"
+                  [name]="'sub' + $index"
+                  (ngModelChange)="touch()"
+                >
+                  <option [ngValue]="null">—</option>
+                  @for (s of subAccountsFor(line.accountId); track s.subAccountId) {
+                    <option [ngValue]="s.subAccountId">{{ s.subAccountName }}</option>
+                  }
+                </select>
+              } @else {
+                <span class="none">—</span>
+              }
+            </td>
+            <td data-label="Memo">
+              <input
+                type="text"
+                [(ngModel)]="line.lineMemo"
+                [name]="'memo' + $index"
+                maxlength="300"
+                (ngModelChange)="touch()"
+              />
+            </td>
+            <td class="num" data-label="Debit">
+              <input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                [(ngModel)]="line.debit"
+                [name]="'debit' + $index"
+                (ngModelChange)="onDebit(line)"
+              />
+            </td>
+            <td class="num" data-label="Credit">
+              <input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                [(ngModel)]="line.credit"
+                [name]="'credit' + $index"
+                (ngModelChange)="onCredit(line)"
+              />
+            </td>
+            <td class="actions-col">
+              <button type="button" class="icon" (click)="removeLine($index)" title="Remove line">
+                ×
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
+
+    <!-- The difference is the point of this panel. An entry is wrong until it
+         is zero, and showing it only at save time means showing it too late. -->
+    <div class="totals" [class.balanced]="difference() === 0" [class.off]="difference() !== 0">
+      <div>
+        <span>Debits</span>
+        <strong>{{ totalDebit() | number: '1.2-2' }}</strong>
+      </div>
+      <div>
+        <span>Credits</span>
+        <strong>{{ totalCredit() | number: '1.2-2' }}</strong>
+      </div>
+      <div class="diff">
+        <span>Difference</span>
+        <strong>{{ difference() | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+
+    @if (difference() !== 0) {
+      <p class="hint">
+        The entry is out by {{ difference() | number: '1.2-2' }}. It can be saved as a draft as it
+        stands — only posting needs it to balance.
+      </p>
+    }
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Cancel</button>
+      <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="primary" (click)="save(true)" [disabled]="busy() || !canPost()">
+        Post
+      </button>
+    </div>
+  </section>
+}
+
+@if (viewing(); as j) {
+  <section class="editor readonly">
+    <h2>
+      {{ j.journalNo }}
+      <span class="badge" [class.reversed]="j.status === 'Reversed'">{{ j.status }}</span>
+    </h2>
+
+    <p class="note">
+      A posted entry is never edited. Correct it with a reversing entry — the reversal stands beside
+      it and both stay in the ledger.
+    </p>
+
+    <dl class="meta">
+      <div><dt>Date</dt><dd>{{ j.journalDate }}</dd></div>
+      <div><dt>Reference</dt><dd>{{ j.reference ?? '—' }}</dd></div>
+      <div><dt>Memo</dt><dd>{{ j.memo ?? '—' }}</dd></div>
+      @if (j.reversesJournalNo) {
+        <div><dt>Reverses</dt><dd>{{ j.reversesJournalNo }}</dd></div>
+      }
+      @if (j.reversedByJournalNo) {
+        <div><dt>Reversed by</dt><dd>{{ j.reversedByJournalNo }}</dd></div>
+      }
+    </dl>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="line-col">#</th>
+          <th>Account</th>
+          <th>Memo</th>
+          <th class="num">Debit</th>
+          <th class="num">Credit</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of j.lines; track line.journalDetailId) {
+          <tr>
+            <td class="line-col" data-label="Line">{{ line.lineNumber }}</td>
+            <td data-label="Account">
+              <a class="link" [routerLink]="['/accounting/ledger', line.accountId]">
+                {{ line.accountCode }} — {{ line.accountName }}
+              </a>
+              @if (line.subAccountName) {
+                <span class="sub">{{ line.subAccountName }}</span>
+              }
+            </td>
+            <td data-label="Memo">{{ line.lineMemo ?? '' }}</td>
+            <td class="num" data-label="Debit">
+              {{ line.debitAmount ? (line.debitAmount | number: '1.2-2') : '' }}
+            </td>
+            <td class="num" data-label="Credit">
+              {{ line.creditAmount ? (line.creditAmount | number: '1.2-2') : '' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">Total</td>
+          <td class="num">{{ j.totalDebit | number: '1.2-2' }}</td>
+          <td class="num">{{ j.totalCredit | number: '1.2-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Close</button>
+      @if (j.status === 'Posted') {
+        <button type="button" (click)="reverse(j)" [disabled]="busy()">Reverse</button>
+      }
+    </div>
+  </section>
+}
+
+<div class="filters">
+  <label>
+    Status
+    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
+      <option value="">All</option>
+      <option value="Draft">Draft</option>
+      <option value="Posted">Posted</option>
+      <option value="Reversed">Reversed</option>
+    </select>
+  </label>
+</div>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="date-col">Date</th>
+      <th>Number</th>
+      <th>Reference</th>
+      <th class="num">Debit</th>
+      <th class="num">Credit</th>
+      <th>Status</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.journalId) {
+      <tr [class.draft]="row.status === 'Draft'">
+        <td class="date-col" data-label="Date">{{ row.journalDate }}</td>
+        <td data-label="Number">
+          <a class="link" href="javascript:void(0)" (click)="open(row.journalId)">
+            {{ row.journalNo ?? 'Unnumbered draft' }}
+          </a>
+        </td>
+        <td data-label="Reference">{{ row.reference ?? row.memo ?? '' }}</td>
+        <td class="num" data-label="Debit">{{ row.totalDebit | number: '1.2-2' }}</td>
+        <td class="num" data-label="Credit">{{ row.totalCredit | number: '1.2-2' }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.reversed]="row.status === 'Reversed'">{{ row.status }}</span>
+          @if (row.totalDebit !== row.totalCredit) {
+            <span class="badge off" title="Out of balance — cannot be posted as it stands">
+              Unbalanced
+            </span>
+          }
+        </td>
+        <td class="actions-col">
+          @if (row.status === 'Draft') {
+            <button type="button" class="link" (click)="discard(row)">Delete</button>
+          } @else if (row.status === 'Posted') {
+            <button type="button" class="link" (click)="reverse(row)">Reverse</button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="7" class="empty">
+          No journal entries yet. A manual journal is what you write when no other document fits —
+          an accrual, a correction, a transfer between two accounts.
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

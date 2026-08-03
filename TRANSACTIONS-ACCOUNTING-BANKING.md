@@ -55,15 +55,18 @@ These live in [`TRANSACTIONS.md`](./TRANSACTIONS.md) and are prerequisites here.
 
 Two of `TRANSACTIONS.md`'s original T0 items exist only for the manual journal, so they moved with it.
 
-- [ ] **T0.5 — `acc.Journals` and `acc.JournalDetails`**
+- [x] **T0.5 — `acc.Journals` and `acc.JournalDetails`**
   Designed in SPEC, built nowhere. The manual journal document, and the only place a reversal is paired **line by line** — without which a partially reversed journal cannot be told from a fully reversed one, because both balance.
   Entities, `DbSet`s, Fluent config, the two check constraints, the deferred balance trigger on `Posted` only, and RLS. See T0.7 for whether other documents write here.
   *Done when*: a two-line journal saves as a draft while unbalanced, refuses to post unbalanced, and a reversal links both headers and every line.
+  **Done**, and verified against a real PostgreSQL rather than against the model. **Two triggers, not one** — the line trigger never fires when a draft is posted, because posting changes the header and leaves the lines alone, so a second deferred trigger on `Journals` covers the one path that matters most. Four extra check constraints beyond SPEC's two: a draft holds no number and a posted entry must have one (both halves of T0.3's rule), `PostedAt` agrees with the status, the rate is positive, and nothing reverses itself.
+  **Two deliberate deviations from SPEC, both recorded here rather than silently.** `JournalNo` is **nullable** with a filtered unique index — SPEC has it required, but T0.3 says the number is taken at post, and a required column would force a draft to consume one. And `JournalDetails` **carries `OrgId`** where SPEC says it is scoped through its parent: every other detail table in the product carries its own, and CLAUDE.md requires `OrgId` plus a query filter on every per-customer table without exception. Scoping through the parent means no EF query filter at all and an RLS policy that has to subquery the header — strictly weaker than the two lines every other table gets for nothing.
 
-- [ ] **T0.7 — Decide whether a document also writes a `Journals` row** *(owner decision)*
+- [x] **T0.7 — Decide whether a document also writes a `Journals` row** *(owner decision)*
   SPEC's `Journals.TransactionTypeCode` reads "`JRN` when hand-written, else the source document's type", which implies every invoice gets a journal header shadowing it. 5.12 established the opposite mechanism: services post to `JournalLedger` directly, keyed by their own document, with no header in Accounting.
   *Recommendation: manual journals only.* A second header per invoice is a second thing to keep in step with the first, and the ledger rows already carry the document type and id. The cost of being wrong is one nullable column later; the cost of building it is a shadow table under every document in the product.
   **This decision reaches across the split** — a yes to the wider reading puts a `Journals` write into every Sales and Purchase document in the other file, which is precisely the reason to answer it before T1 rather than after T3.
+  **Answered: manual journals only**, as recommended. `acc.Journals` holds `JRN` and nothing else; every other document posts straight to `JournalLedger` under its own type and id. `TransactionTypeCode` and `SourceId` stay on the header so a future document that does want one has somewhere to say so — that is the one nullable column the recommendation priced in. **Nothing in `TRANSACTIONS.md` now writes a `Journals` row**, which is what that file was waiting to hear.
 
 ---
 
@@ -71,10 +74,14 @@ Two of `TRANSACTIONS.md`'s original T0 items exist only for the manual journal, 
 
 The simplest document that posts: no stock, no tax, no contact required. Doing it first proves the extended ledger door on something with nothing else going on. **This is the first stage of the whole plan**, in either file.
 
-- [ ] **T1.1 — Journal entry API** — create, edit while draft, post, reverse. Debit xor credit per line, balance guarded on post, `LedgerSourceId = 12`, `JournalId` set on the ledger rows.
+- [x] **T1.1 — Journal entry API** — create, edit while draft, post, reverse. Debit xor credit per line, balance guarded on post, `LedgerSourceId = 12`, `JournalId` set on the ledger rows.
   *Done when*: posting a balanced journal writes ledger rows that appear on T0.6's screens, an unbalanced post is refused, and a reversal offsets it exactly.
-- [ ] **T1.2 — Journal entry page** — grid of lines with account and sub-account pickers, running debit/credit totals with the difference shown, draft save, post, reverse.
+  **Done.** `JournalService` + `api/journals`, every leg at `LedgerTypeId = 3` (CONTROL) — a hand-written line has no item, tax, cost or rounding dimension behind it, and the whole entry then replaces as one key set on a retried post. The number allocation, the status flip and the ledger rows are **one transaction**: `LedgerPostingService` now joins an open transaction instead of always starting its own, so a refused posting rolls the number back rather than leaving a gap in a series that has to be gapless.
+  **This needed T0.3's JRN series**, which did not exist — Accounting now seeds its own document series at branch creation (`JV/2526/00001`, financial-year reset, no manual override). That discharges T0.3 for Accounting only; Sales and Purchase still seed theirs.
+  Verified against PostgreSQL: 13 tests covering the draft/post/reverse lifecycle, the line-level reversal pairing, consecutive numbering, and a refused post leaving the counter where it was.
+- [x] **T1.2 — Journal entry page** — grid of lines with account and sub-account pickers, running debit/credit totals with the difference shown, draft save, post, reverse.
   *Done when*: a journal can be keyed, saved, posted and reversed without leaving the page, and the totals show the imbalance while it exists.
+  **Done.** List and editor on one page. The account picker offers only what a hand entry may target — a seeded control account is driven by its own subledger, and a picker that offered what the server refuses is a screen arguing with itself. Sub-accounts narrow to the line's own account. Posted entries open read-only with a Reverse action, because a posted entry is never edited.
 
 ---
 
@@ -148,11 +155,11 @@ One requirement copied to two files is one requirement that drifts.
 
 ## Open decisions owned here
 
-| # | Question | Needed by | Recommendation |
-|---|---|---|---|
-| T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only |
-| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 | No — capitalise from `BIL`, dispose under `INV` or `JRN` |
-| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* |
+| # | Question | Needed by | Recommendation | Answer |
+|---|---|---|---|---|
+| T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only | **Manual journals only.** Settled — see T0.7 above |
+| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 | No — capitalise from `BIL`, dispose under `INV` or `JRN` | *open* |
+| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* | *open* |
 
 **On T10.2**, since it is the one raised by this stage rather than inherited. Adding an `FXA`/`FXD` pair to `mst.TransactionTypes` would give the asset register clean provenance under its own codes — but a purchase of a laptop **is** a purchase: same vendor, same input GST, same payment terms, same aging. A new code buys a numbering series, a screen, a lifecycle and a posting path that all duplicate Purchase, to record something Purchase already records. Capitalising from a bill line costs one flag on the line and one register row.
 

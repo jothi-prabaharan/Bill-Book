@@ -800,8 +800,13 @@ Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCred
 
 **Three parent groups added to the org-creation seed**: 1400 Cash in Hand (Asset) · 1500 Bank Accounts (Asset) · 2300 Bank OD & Credit Cards (Liability), all `IsLock = true` so nothing posts to the group.
 
-### `acc.Journals` 🔨
+### `acc.Journals` ✅
 Manual journal header.
+
+**Built, with two deliberate deviations from the columns below** — both recorded in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) T0.5:
+
+- **`JournalNo` is nullable**, with a filtered unique index on the non-null values. The number is taken **at post, not at draft** — a draft that is never posted must not consume one from a series that has to run without gaps. Two check constraints hold both halves: a draft has no number, and anything past Draft must have one.
+- **Only manual journals live here.** T0.7 was answered *manual journals only*: every other document posts straight to `JournalLedger` under its own type and id, with no header shadowing it. `TransactionTypeCode` and `SourceId` stay for a future document that wants one.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -823,8 +828,10 @@ Manual journal header.
 
 Unique index: (OrgId, JournalNo) · Indexes: (OrgId, JournalDate), (OrgId, TransactionTypeCode, SourceId)
 
-### `acc.JournalDetails` 🔨
+### `acc.JournalDetails` ✅
 Journal lines. Debit and credit are mutually exclusive per line.
+
+**Built, and it carries `OrgId`** — contrary to the note further down this section. Every other detail table in the product carries its own, and CLAUDE.md requires `OrgId` plus a query filter on every per-customer table without exception. Scoping through the parent means no EF query filter at all and an RLS policy that has to subquery the header, which is strictly weaker than the two lines every other table gets for nothing.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -847,13 +854,15 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 - `chk_debit_credit_exclusive`: `(DebitAmount > 0 AND CreditAmount = 0) OR (CreditAmount > 0 AND DebitAmount = 0)`
 - `chk_amounts_non_negative`: all four amounts ≥ 0
 
-**No `OrgId`** — scoped via parent Journal.
+~~**No `OrgId`** — scoped via parent Journal.~~ **Superseded**: it carries its own, for the reason at the head of this section.
 
 **Deferred constraint trigger** (raw SQL in migration, no LINQ equivalent): on insert/update/delete, if parent status is `Posted`, sum(DebitAmountBase) must equal sum(CreditAmountBase). `DEFERRABLE INITIALLY DEFERRED` so multi-line inserts don't trip on intermediate state.
 
+**As built there are two triggers, not one.** The trigger above fires on the lines — but posting a draft changes the *header* and leaves the lines untouched, so it never fires for the one path that matters most. A second deferred trigger on `acc.Journals` covers it: without it, an unbalanced draft could be posted simply by flipping its status.
+
 **Reversal is line-paired, not just header-paired.** `Journals` links the two documents; `JournalDetails` links each individual line to the line it offsets. Without the detail-level pair, a partially reversed journal cannot be told apart from a fully reversed one, and a reversal that omits a line still balances — so nothing catches it.
 
-### `acc.JournalLedger` 🔨
+### `acc.JournalLedger` ✅
 **The single posting target.** Every financial document in the system — invoice, bill, payment, refund, journal, opening balance, depreciation, stock adjustment — writes its double-entry legs here and nowhere else. This is what reports read.
 
 | Column | Type | Rules |
@@ -946,7 +955,7 @@ Indexes: (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransacti
 
 Allocations must never exceed the target's outstanding balance. Enforce in C# — the sum spans rows, so no check constraint can express it.
 
-### `acc.vw_LedgerDetail` — combined transaction view 🔨
+### `acc.vw_LedgerDetail` — combined transaction view ❌ *not built, by decision*
 One flattened read model over `JournalLedger`, joining the names that reports and the ledger screen need, so every transaction type is queried the same way regardless of which service wrote it.
 
 Resolves: `mst.TransactionTypes` (code, name), `mst.LedgerTypes`, `mst.LedgerSources`, `acc.Accounts` (code, name, type, subtype), `acc.SubAccounts` (name), and the mapped document's transaction-type code. `ContactId` stays an id — Contacts is another service, so resolve names in C#, **batched**.
@@ -959,6 +968,8 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 - The EF global query filter on `OrgId` applies to the keyless entity as well — belt and braces alongside RLS.
 
 > **⚠ `CREATE VIEW` is not in `CLAUDE.md`'s raw-SQL exception list.** That list is `CREATE DATABASE`, RLS policies, triggers and `set_config`. A view needs raw SQL in a migration, so either the list grows to include views, or this becomes a LINQ projection in the Reporting service instead of a database object. Decide before implementing.
+>
+> **Decided (T0.6): the view was not built, and the exception list did not grow.** The account ledger and the trial balance are LINQ projections in Accounting, and the running balance is accumulated in C# over the ordered result. A ledger read is always scoped to one account, ordered, and cut to a date range — which is everything the window function needed — so the view bought less than the exception cost. The `security_invoker` hazard above is the other half of the reason: a view that forgets it reads straight past RLS and hands one branch another branch's general ledger, and that is one migration away from happening by accident.
 
 ### Not yet designed 📋
 `acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `bnk.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`

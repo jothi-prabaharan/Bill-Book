@@ -16,20 +16,27 @@ public interface IAccountingLedger
     Task<LedgerPostOutcome> PostAsync(LedgerPosting posting, CancellationToken ct);
 }
 
-/// <summary>A posting as Inventory describes it. Accounting decides what lands.</summary>
+/// <summary>
+/// A posting as Inventory describes it. Accounting decides what lands.
+///
+/// The leg type and the document line sit on the leg rather than here: a
+/// document produces several of each at once, and the pair of them is what says
+/// which rows a leg replaces. Inventory only ever sends COGS legs on one line at
+/// a time, but the shape is the ledger's, not this caller's.
+/// </summary>
 public sealed record LedgerPosting(
     Guid CustomerId,
     Guid OrgId,
     string TransactionTypeCode,
     long TransactionId,
-    long TransactionDetailId,
-    int LedgerTypeId,
     int LedgerSourceId,
     DateOnly LedgerDate,
     long? SourceDocumentId,
     IReadOnlyList<LedgerPostingLeg> Legs);
 
 public sealed record LedgerPostingLeg(
+    int LedgerTypeId,
+    long TransactionDetailId,
     string AccountSystemName,
     int? SubAccountReferenceType,
     long? SubAccountReferenceId,

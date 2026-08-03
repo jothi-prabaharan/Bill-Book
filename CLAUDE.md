@@ -202,7 +202,7 @@ Everything — invoices, bills, payments, depreciation, opening balances — pro
 
 - Lines are debit **xor** credit. Never both. Never negative.
 - Lifecycle: Draft → Posted → Reversed. **Never edit a posted entry.** Reverse it with an offsetting entry.
-- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced)
+- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built the interceptor is the missing one** — the other two are in place for both `acc.Journals` and `acc.JournalLedger`, and there are in fact two triggers on the journal, because posting a draft changes the header and never touches the lines
 - Sales/Purchase/Banking **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows.
 
 ### Fixed Assets
@@ -299,7 +299,7 @@ JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `l
 
 ## Current state
 
-~326 C# files across 43 projects. **Still never compiled** — see below.
+~381 C# files across 44 projects. Compiled, tested and migrated — see the caveats below.
 
 ### Built and wired end to end
 
@@ -312,7 +312,7 @@ Schema, API and page all exist for these. Task tracking lives in [`master.md`](.
 | **Identity** | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
 | **Contacts** | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
 | **Inventory** | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
-| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through |
+| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger and the trial balance |
 | **Banking** | Bank, BankAccount | Each bank account provisions its own ledger account |
 
 `NumberingSeries` lives in `Shared.Kernel` and is mapped by four services — Accounting owns the migration, Contacts, Inventory and Banking map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
@@ -325,20 +325,20 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 **Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update, costs them, then drains a second queue on the same table that posts them to the ledger.
 
-**Frontend**: `apps/web` and `apps/docs` build. 25 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
+**Frontend**: `apps/web` and `apps/docs` build. 28 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
 
-**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all three. Component tests need the Angular Vite plugin and are not set up. The backend has one test project, `Shared.Kernel.Tests` — **never compiled**, see `backend/tests/README.md`.
+**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all three. Component tests need the Angular Vite plugin and are not set up. The backend has three test projects: `Shared.Kernel.Tests`, `Inventory.Api.Tests` and `Accounting.Api.Tests`. The last of these needs **a real PostgreSQL** — the ledger's guarantees are half in the database (deferred triggers, `ExecuteDelete`, the guarded numbering update), so an in-memory provider would prove nothing about them. Those tests skip themselves with a reason when no server answers; point `ACCOUNTING_TEST_DB` at one to run them.
 
 ### Still not built
 
 - **Crm, Sales, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
 - **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
 - **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
-- **The ledger screen and the manual journal.** `acc.JournalLedger` accepts postings and stock writes to it, but `acc.Journals`/`acc.JournalDetails` do not exist and nothing displays a ledger or a trial balance — so what is posted is visible only in the stock movement history
+- **Document numbering series beyond `JRN`.** Accounting seeds its own; Sales and Purchase seed theirs when those services land
 
 ### Standing caveats
 
-- **Compiled, tested and migrated as of 2 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 58, every EF snapshot matches its model, and all 29 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 91, every EF snapshot matches its model, and all 30 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
 - **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
 - **Every endpoint is behind a credential and a permission** (master.md 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.

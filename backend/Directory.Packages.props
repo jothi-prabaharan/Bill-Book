@@ -38,6 +38,11 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+    <!-- Runtime skips. The Accounting suite needs a real PostgreSQL for the
+         triggers and the guarded updates, and xunit 2.x has no way to skip a
+         test from inside it. Without this the choice is a suite that fails on a
+         machine with no server, or one that passes without running. -->
+    <PackageVersion Include="Xunit.SkippableFact" Version="1.5.23" />
   </ItemGroup>
 
 </Project>

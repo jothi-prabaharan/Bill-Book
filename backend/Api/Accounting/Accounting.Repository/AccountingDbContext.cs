@@ -32,6 +32,14 @@ public class AccountingDbContext : TenantDbContext
     public DbSet<JournalLedger> JournalLedger => Set<JournalLedger>();
 
     /// <summary>
+    /// Manual journals, and only manual journals. Every other document posts
+    /// straight to <see cref="JournalLedger"/> under its own type and id.
+    /// </summary>
+    public DbSet<Journal> Journals => Set<Journal>();
+
+    public DbSet<JournalDetail> JournalDetails => Set<JournalDetail>();
+
+    /// <summary>
     /// Shared with every service that generates a code. Accounting owns the
     /// migration; the others map the same entity and exclude it from theirs.
     /// </summary>
@@ -244,6 +252,121 @@ public class AccountingDbContext : TenantDbContext
                 // debit written as a minus.
                 table.HasCheckConstraint(
                     "chk_ledger_non_negative",
+                    "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0 "
+                        + "AND \"DebitAmountBase\" >= 0 AND \"CreditAmountBase\" >= 0");
+            });
+        });
+
+        modelBuilder.Entity<Journal>(b =>
+        {
+            b.HasKey(e => e.JournalId);
+
+            // Filtered, because a draft has no number yet. The uniqueness that
+            // matters is over issued numbers, and a series full of nulls would
+            // otherwise allow only one draft per branch.
+            b.HasIndex(e => new { e.OrgId, e.JournalNo })
+                .IsUnique()
+                .HasFilter("\"JournalNo\" IS NOT NULL")
+                .HasDatabaseName("IX_Journals_Number");
+
+            b.HasIndex(e => new { e.OrgId, e.JournalDate });
+            b.HasIndex(e => new { e.OrgId, e.TransactionTypeCode, e.SourceId });
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.ExchangeRate).HasColumnType("decimal(18,8)");
+
+            // Both sides of a reversal, each pointing at the other. Restrict, so
+            // neither half of a pair can be deleted out from under the other.
+            b.HasOne<Journal>()
+                .WithMany()
+                .HasForeignKey(e => e.ReversesJournalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<Journal>()
+                .WithMany()
+                .HasForeignKey(e => e.ReversedByJournalId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // A number is taken at post. Both halves matter: a draft holding
+                // a number has consumed one it may never use, and a posted entry
+                // without one is a ledger row nobody can cite.
+                table.HasCheckConstraint(
+                    "chk_journal_number_on_post",
+                    "(\"Status\" = 'Draft' AND \"JournalNo\" IS NULL) "
+                        + "OR (\"Status\" <> 'Draft' AND \"JournalNo\" IS NOT NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_journal_posted_stamp",
+                    "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_journal_rate_positive",
+                    "\"ExchangeRate\" > 0");
+
+                // Nothing reverses itself. Without this a single row could be
+                // its own reversal and net to zero against nothing.
+                table.HasCheckConstraint(
+                    "chk_journal_reversal_distinct",
+                    "\"ReversesJournalId\" IS NULL OR \"ReversesJournalId\" <> \"JournalId\"");
+            });
+        });
+
+        modelBuilder.Entity<JournalDetail>(b =>
+        {
+            b.HasKey(e => e.JournalDetailId);
+
+            b.HasIndex(e => new { e.JournalId, e.LineNumber }).IsUnique();
+            b.HasIndex(e => e.ReversesJournalDetailId);
+
+            foreach (string amount in new[]
+            {
+                "DebitAmount", "CreditAmount", "DebitAmountBase", "CreditAmountBase",
+            })
+            {
+                b.Property(amount).HasColumnType("decimal(18,2)");
+            }
+
+            // Cascade: a draft's lines have no meaning without their header, and
+            // a posted journal is never deleted at all.
+            b.HasOne<Journal>()
+                .WithMany()
+                .HasForeignKey(e => e.JournalId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<SubAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.SubAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<JournalDetail>()
+                .WithMany()
+                .HasForeignKey(e => e.ReversesJournalDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<JournalDetail>()
+                .WithMany()
+                .HasForeignKey(e => e.ReversedByJournalDetailId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // The same two the ledger carries. A journal line and the ledger
+                // row it produces are the same assertion written twice, so they
+                // are constrained the same way.
+                table.HasCheckConstraint(
+                    "chk_journal_detail_exclusive",
+                    "(\"DebitAmount\" > 0 AND \"CreditAmount\" = 0) "
+                        + "OR (\"CreditAmount\" > 0 AND \"DebitAmount\" = 0)");
+
+                table.HasCheckConstraint(
+                    "chk_journal_detail_non_negative",
                     "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0 "
                         + "AND \"DebitAmountBase\" >= 0 AND \"CreditAmountBase\" >= 0");
             });
