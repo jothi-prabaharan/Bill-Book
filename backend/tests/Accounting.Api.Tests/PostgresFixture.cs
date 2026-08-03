@@ -89,4 +89,6 @@ public sealed class StubCurrentUser(Guid? userId = null) : ICurrentUser
     public Guid? CustomerId => null;
 
     public Guid? OrgId => null;
+
+    public int? RoleId => null;
 }

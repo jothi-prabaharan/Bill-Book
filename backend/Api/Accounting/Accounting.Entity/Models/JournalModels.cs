@@ -186,6 +186,13 @@ public enum SaveJournalOutcome
 
     /// <summary>The ledger refused the posting. The detail says why.</summary>
     PostingRefused = 12,
+
+    /// <summary>
+    /// The books are closed to this caller for that date. Not a validation
+    /// failure — the entry may be perfectly good, and dating it later will post
+    /// it.
+    /// </summary>
+    PeriodClosed = 13,
 }
 
 public sealed record SaveJournalResult(

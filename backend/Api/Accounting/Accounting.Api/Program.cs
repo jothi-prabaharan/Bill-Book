@@ -67,6 +67,7 @@ builder.Services.AddScoped<NumberingSeriesService>();
 builder.Services.AddScoped<PaymentTermService>();
 builder.Services.AddScoped<BankLedgerService>();
 builder.Services.AddScoped<LedgerPostingService>();
+builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 

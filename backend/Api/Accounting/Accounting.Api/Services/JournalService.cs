@@ -46,6 +46,7 @@ public sealed class JournalService
 
     private readonly AccountingDbContext _db;
     private readonly LedgerPostingService _postings;
+    private readonly PeriodLockService _periodLocks;
     private readonly INumberGenerator _numbers;
     private readonly IBaseCurrencyProvider _baseCurrency;
     private readonly ICurrentUser _user;
@@ -55,6 +56,7 @@ public sealed class JournalService
     public JournalService(
         AccountingDbContext db,
         LedgerPostingService postings,
+        PeriodLockService periodLocks,
         INumberGenerator numbers,
         IBaseCurrencyProvider baseCurrency,
         ICurrentUser user,
@@ -63,6 +65,7 @@ public sealed class JournalService
     {
         _db = db;
         _postings = postings;
+        _periodLocks = periodLocks;
         _numbers = numbers;
         _baseCurrency = baseCurrency;
         _user = user;
@@ -299,6 +302,16 @@ public sealed class JournalService
             return new SaveJournalResult(SaveJournalOutcome.NotDraft);
         }
 
+        // The books may be closed to this caller for this date. Checked before
+        // anything else is done, so a refusal costs no number and writes no row.
+        if (await _periodLocks.RefusedByAsync(journal.JournalDate, ct) is DateOnly closed)
+        {
+            return new SaveJournalResult(
+                SaveJournalOutcome.PeriodClosed, journalId,
+                $"The books are closed to you up to {closed:dd MMM yyyy}. "
+                    + "This entry is dated on or before that, so it cannot be posted.");
+        }
+
         List<JournalDetail> lines = await _db.JournalDetails
             .Where(d => d.JournalId == journalId)
             .OrderBy(d => d.LineNumber)
@@ -400,6 +413,17 @@ public sealed class JournalService
         }
 
         DateOnly reversalDate = request.ReversalDate ?? original.JournalDate;
+
+        // The reversal's own date is what reaches the ledger, so that is what the
+        // lock judges — reversing a closed month into an open one is exactly the
+        // move a soft close is meant to allow.
+        if (await _periodLocks.RefusedByAsync(reversalDate, ct) is DateOnly closed)
+        {
+            return new SaveJournalResult(
+                SaveJournalOutcome.PeriodClosed, journalId,
+                $"The books are closed to you up to {closed:dd MMM yyyy}. "
+                    + "Reverse this entry on a later date instead.");
+        }
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 

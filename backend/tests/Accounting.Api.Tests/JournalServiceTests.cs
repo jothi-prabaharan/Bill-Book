@@ -382,6 +382,7 @@ public class JournalServiceTests
                 Journals = new JournalService(
                     db,
                     postings,
+                    new PeriodLockService(db, new StubCurrentUser()),
                     numbers,
                     new StubBaseCurrency(),
                     new StubCurrentUser(),

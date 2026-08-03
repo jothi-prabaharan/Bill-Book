@@ -107,6 +107,14 @@ public sealed class JournalsController : ControllerBase
                 Message = "There is nothing to post — the entry has no lines.",
             }),
 
+            // 409, not 400: the entry itself may be perfectly good, and dating it
+            // later will post it. A validation error would tell the user to fix
+            // the wrong thing.
+            SaveJournalOutcome.PeriodClosed => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "The books are closed for that date.",
+            }),
+
             // Transient, and the caller should come back rather than assume a
             // currency. A 503 says so; a 400 would have the screen give up.
             SaveJournalOutcome.BaseCurrencyUnavailable => StatusCode(

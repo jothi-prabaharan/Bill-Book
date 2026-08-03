@@ -19,4 +19,10 @@ public sealed class SystemUser : ICurrentUser
     public Guid? CustomerId => null;
 
     public Guid? OrgId => null;
+
+    /// <summary>
+    /// No role. The worker is not a person, so no period lock applies to it —
+    /// costing settles movements whose dates are long past by design.
+    /// </summary>
+    public int? RoleId => null;
 }

@@ -23,6 +23,13 @@ public sealed class AccessTokenRequest
 
     public required Guid OrgId { get; init; }
 
+    /// <summary>
+    /// The single role this user holds in this organization. A user has exactly
+    /// one per branch, which is what makes a per-role period lock resolve to one
+    /// date per user with nothing to reconcile.
+    /// </summary>
+    public required int RoleId { get; init; }
+
     public required string DisplayName { get; init; }
 
     public required IReadOnlyList<string> Permissions { get; init; }

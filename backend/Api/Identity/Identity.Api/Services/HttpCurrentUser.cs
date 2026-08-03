@@ -16,6 +16,11 @@ public sealed class HttpCurrentUser : ICurrentUser
 
     public Guid? OrgId => Claim("org_id");
 
+    public int? RoleId =>
+        int.TryParse(_accessor.HttpContext?.User.FindFirst("role_id")?.Value, out int role)
+            ? role
+            : null;
+
     private Guid? Claim(string type)
     {
         string? value = _accessor.HttpContext?.User.FindFirst(type)?.Value;

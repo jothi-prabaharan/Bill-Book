@@ -40,6 +40,13 @@ public class AccountingDbContext : TenantDbContext
     public DbSet<JournalDetail> JournalDetails => Set<JournalDetail>();
 
     /// <summary>
+    /// How far back the books are closed, per role. Accounting owns it because
+    /// closing a period is an accounting act, and every other service reads it
+    /// before posting.
+    /// </summary>
+    public DbSet<PeriodLock> PeriodLocks => Set<PeriodLock>();
+
+    /// <summary>
     /// Shared with every service that generates a code. Accounting owns the
     /// migration; the others map the same entity and exclude it from theirs.
     /// </summary>
@@ -387,6 +394,16 @@ public class AccountingDbContext : TenantDbContext
                     "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0 "
                         + "AND \"DebitAmountBase\" >= 0 AND \"CreditAmountBase\" >= 0");
             });
+        });
+
+        modelBuilder.Entity<PeriodLock>(b =>
+        {
+            b.HasKey(e => e.PeriodLockId);
+
+            // One date per branch per role, enforced rather than merely intended
+            // — two rows for one role would make "how far back is this user
+            // locked" a question with two answers.
+            b.HasIndex(e => new { e.OrgId, e.RoleId }).IsUnique();
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

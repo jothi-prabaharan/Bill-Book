@@ -165,6 +165,7 @@ public sealed class AuthService
             UserId = user.UserId,
             CustomerId = ctx.CustomerId,
             OrgId = orgId,
+            RoleId = assignment.RoleId,
             DisplayName = user.DisplayName,
             Permissions = permissions,
             LicenseStatus = ctx.LicenseStatus,

@@ -83,6 +83,14 @@ The simplest document that posts: no stock, no tax, no contact required. Doing i
   *Done when*: a journal can be keyed, saved, posted and reversed without leaving the page, and the totals show the imbalance while it exists.
   **Done.** List and editor on one page. The account picker offers only what a hand entry may target — a seeded control account is driven by its own subledger, and a picker that offered what the server refuses is a screen arguing with itself. Sub-accounts narrow to the line's own account. Posted entries open read-only with a Reverse action, because a posted entry is never edited.
 
+- [x] **Period locks — closing the books, one date per branch per role** *(owner request, not an original box)*
+  `acc.PeriodLocks`: one `LockedUpto` per role per branch, inclusive, owned by Accounting because closing a period is an accounting act and every other service reads it before posting.
+  **Per role rather than per branch, which is the whole point.** A close is rarely all-or-nothing — the month shuts to everyone who keys documents while staying open to whoever has to make the adjusting entries the close itself produced. A single date for the branch would close the books on the person doing the closing.
+  **It refuses what reaches or leaves the ledger** — post, reverse, void — and nothing else. A draft touches nothing, so it may be written and edited with any date at all; it simply cannot be posted into a closed period. Someone catching up on last month's paperwork can still type it.
+  **A user holds exactly one role per branch** (`idn.UserOrganizationRole` is read singly), so a per-role lock resolves to one date per user with nothing to reconcile. That required a **`role_id` claim on the access token**, which did not exist — the token carried `permission[]` only, and permissions cannot say which role granted them. `ICurrentUser.RoleId` follows it through every service.
+  **A caller with no role gets the branch's strictest lock, not none.** That covers a token minted before the claim existed. Falling open would let a stale token post into a closed period for as long as it lives; falling strictest is safe and still lets ordinary work through.
+  Wired into the manual journal today — post and reverse — and read by `GET api/period-locks/mine`, so a date picker can bind its minimum and prevent the refusal rather than report it. **Banking's money documents will call the same guard when T6.2 builds their API.** Nine tests against a real PostgreSQL.
+
 ---
 
 ## Stage T6 — money: spend, receive, transfer (SPM, RCM, TRM)
