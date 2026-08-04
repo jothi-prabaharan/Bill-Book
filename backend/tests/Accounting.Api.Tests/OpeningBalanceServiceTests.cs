@@ -389,6 +389,228 @@ public class OpeningBalanceServiceTests
             }, ct)).Outcome);
     }
 
+    /// <summary>
+    /// T8.3's <i>Done when</i>, drawn rather than inferred: a trial balance taken
+    /// immediately after finalize balances, and every subledger ties.
+    ///
+    /// Both halves matter and they are not the same claim. The trial balance
+    /// balancing says double-entry held. The subledger tying says the money
+    /// belongs to somebody — and a receivable posted to Accounts Receivable with
+    /// no sub-account beneath it passes the first while failing the second, which
+    /// is exactly the migration nobody catches.
+    /// </summary>
+    [SkippableFact]
+    public async Task After_go_live_the_trial_balance_foots_and_every_subledger_ties()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.Contact(7);
+        await h.Contact(8);
+
+        await h.Openings.SaveAsync(new SaveOpeningBalanceRequest
+        {
+            AsOfDate = new DateOnly(2026, 4, 1),
+            Lines =
+            [
+                h.Gl(h.CashId, debit: 60_000m),
+                Receivable(7, 40_000m, "INV-0912", new DateOnly(2026, 1, 15)),
+                Receivable(8, 15_000m, "INV-1003", new DateOnly(2026, 2, 20)),
+                Payable(8, 25_000m, "BIL-77", new DateOnly(2026, 3, 2)),
+                h.Gl(h.CapitalId, credit: 90_000m),
+            ],
+        }, ct);
+
+        Assert.Equal(OpeningBalanceOutcome.Ok, (await h.Openings.FinalizeAsync(ct)).Outcome);
+
+        var reports = new LedgerReportService(h.Db);
+
+        // The trial balance, actually drawn.
+        TrialBalanceView trial = await reports.GetTrialBalanceAsync(null, null, ct);
+
+        Assert.True(trial.IsBalanced);
+        Assert.Equal(trial.TotalDebit, trial.TotalCredit);
+
+        // Opening Balance Equity has been used and is left holding nothing, which
+        // is what says the migration was complete rather than merely balanced.
+        Assert.DoesNotContain(trial.Rows, r => r.AccountId == h.EquityId);
+
+        // And every control account agrees with the subledger under it.
+        SubLedgerTieView tie = (await h.Openings.TieAsync(ct))!;
+
+        Assert.True(tie.IsTied);
+
+        SubLedgerTieRow receivable = Assert.Single(tie.Rows, r => r.AccountId == h.ReceivableId);
+        Assert.Equal(55_000m, receivable.ControlBalance);
+        Assert.Equal(55_000m, receivable.SubLedgerBalance);
+        Assert.Equal(0m, receivable.Unattributed);
+
+        // Two contacts owed on receivables, one on payables — the subledger is
+        // per contact, so a lump sum would show one.
+        Assert.Equal(2, receivable.SubAccountCount);
+
+        SubLedgerTieRow payable = Assert.Single(tie.Rows, r => r.AccountId == h.PayableId);
+        Assert.Equal(-25_000m, payable.ControlBalance);
+        Assert.Equal(0m, payable.Unattributed);
+
+        // Cash and capital have no subledger, so they are absent rather than
+        // listed as untied by their whole balance.
+        Assert.DoesNotContain(tie.Rows, r => r.AccountId == h.CashId);
+    }
+
+    /// <summary>
+    /// The failure the tie exists for, produced deliberately: a receivable posted
+    /// straight to the control account with nobody beneath it.
+    ///
+    /// The trial balance still foots — the entry is balanced, it is just
+    /// anonymous — so nothing in double-entry says a word. The tie is what says
+    /// ₹5,000 is owed by nobody.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_control_balance_with_nobody_beneath_it_foots_and_still_does_not_tie()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.Contact(7);
+
+        // A hand-written journal straight at the control account, which is what a
+        // migration done outside this screen looks like.
+        var postings = new LedgerPostingService(
+            h.Db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = h.OrgId },
+            new StubBaseCurrency());
+
+        await postings.PostAsync(new PostLedgerRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            OrgId = h.OrgId,
+            TransactionTypeCode = "JRN",
+            TransactionId = 1,
+            LedgerDate = new DateOnly(2026, 3, 1),
+            Legs =
+            [
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.ReceivableId,
+                    SubAccountReferenceType = SubAccountReferenceType.Contact,
+                    SubAccountReferenceId = 7,
+                    DebitAmount = 10_000m,
+                },
+                new LedgerLegRequest
+                {
+                    // The bad one: the control account, and nobody named.
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.ReceivableId,
+                    DebitAmount = 5_000m,
+                },
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.CapitalId,
+                    CreditAmount = 15_000m,
+                },
+            ],
+        }, ct);
+
+        var reports = new LedgerReportService(h.Db);
+
+        // Double-entry is perfectly happy.
+        Assert.True((await reports.GetTrialBalanceAsync(null, null, ct)).IsBalanced);
+
+        // The tie is not.
+        SubLedgerTieView tie = await reports.GetSubLedgerTieAsync(null, ct);
+
+        Assert.False(tie.IsTied);
+
+        SubLedgerTieRow receivable = Assert.Single(tie.Rows, r => r.AccountId == h.ReceivableId);
+        Assert.Equal(15_000m, receivable.ControlBalance);
+        Assert.Equal(10_000m, receivable.SubLedgerBalance);
+        Assert.Equal(5_000m, receivable.Unattributed);
+    }
+
+    /// <summary>
+    /// A branch whose books are already adrift cannot open on top of it. After
+    /// go-live nobody could tell which of the two put the difference there, so the
+    /// migration is refused while the question can still be answered.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_existing_untied_subledger_blocks_go_live()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.Contact(7);
+
+        var postings = new LedgerPostingService(
+            h.Db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = h.OrgId },
+            new StubBaseCurrency());
+
+        await postings.PostAsync(new PostLedgerRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            OrgId = h.OrgId,
+            TransactionTypeCode = "JRN",
+            TransactionId = 2,
+            LedgerDate = new DateOnly(2026, 3, 1),
+            Legs =
+            [
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.ReceivableId,
+                    SubAccountReferenceType = SubAccountReferenceType.Contact,
+                    SubAccountReferenceId = 7,
+                    DebitAmount = 1_000m,
+                },
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.ReceivableId,
+                    DebitAmount = 500m,
+                },
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = 3,
+                    LedgerSourceId = 12,
+                    AccountId = h.CapitalId,
+                    CreditAmount = 1_500m,
+                },
+            ],
+        }, ct);
+
+        await h.Openings.SaveAsync(new SaveOpeningBalanceRequest
+        {
+            AsOfDate = new DateOnly(2026, 4, 1),
+            Lines = [h.Gl(h.CashId, debit: 1_000m), h.Gl(h.CapitalId, credit: 1_000m)],
+        }, ct);
+
+        OpeningBalanceReadinessView readiness = (await h.Openings.ReadinessAsync(ct))!;
+
+        // The figures themselves tie — it is the books underneath that do not.
+        Assert.Equal(0m, readiness.OpeningBalanceEquity);
+        Assert.False(readiness.CanFinalize);
+        Assert.Contains(readiness.Blockers, b => b.Contains("belongs to"));
+
+        Assert.Equal(
+            OpeningBalanceOutcome.NotReady, (await h.Openings.FinalizeAsync(ct)).Outcome);
+    }
+
+    private static SaveOpeningBalanceLineRequest Payable(
+        long contactId, decimal amount, string reference, DateOnly documentDate) => new()
+        {
+            LineType = OpeningBalanceLineType.ContactPayable,
+            ContactId = contactId,
+            CreditAmount = amount,
+            DocumentReference = reference,
+            DocumentDate = documentDate,
+        };
+
     private static SaveOpeningBalanceLineRequest Receivable(
         long contactId, decimal amount, string reference, DateOnly documentDate) => new()
         {
@@ -550,6 +772,7 @@ public class OpeningBalanceServiceTests
                 Openings = new OpeningBalanceService(
                     db,
                     new LedgerPostingService(db, tenant, new StubBaseCurrency()),
+                    new LedgerReportService(db),
                     inventory ?? new RecordingInventory(),
                     new NumberGenerator(
                         db, Options.Create(new NumberingOptions()), new StubFinancialYear()),

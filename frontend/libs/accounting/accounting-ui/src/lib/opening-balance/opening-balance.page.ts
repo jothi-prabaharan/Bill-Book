@@ -55,6 +55,23 @@ interface OpeningBalanceView {
   lines: OpeningBalanceLineView[];
 }
 
+/** One control account against the subledger beneath it. */
+interface TieRow {
+  accountId: number;
+  accountCode: string;
+  accountName: string;
+  controlBalance: number;
+  subLedgerBalance: number;
+  unattributed: number;
+  subAccountCount: number;
+  isTied: boolean;
+}
+
+interface Tie {
+  rows: TieRow[];
+  isTied: boolean;
+}
+
 interface Readiness {
   totalDebit: number;
   totalCredit: number;
@@ -116,6 +133,7 @@ export class OpeningBalancePage implements OnInit {
 
   protected readonly document = signal<OpeningBalanceView | null>(null);
   protected readonly readiness = signal<Readiness | null>(null);
+  protected readonly tie = signal<Tie | null>(null);
   protected readonly accounts = signal<AccountOption[]>([]);
   protected readonly contacts = signal<ContactOption[]>([]);
   protected readonly items = signal<ItemOption[]>([]);
@@ -207,11 +225,22 @@ export class OpeningBalancePage implements OnInit {
       this.lines.set(document.lines.map((l) => this.toForm(l)));
 
       this.readiness.set(await this.req<Readiness>('GET', '/api/opening-balance/readiness'));
+
+      // The tie is what confirms the migration landed, so it is worth reading
+      // once the books are open. Before that it is answering a question about a
+      // ledger the document has not reached yet, and the blockers already say
+      // whatever it would.
+      this.tie.set(
+        document.status === 'Finalized'
+          ? await this.req<Tie>('GET', '/api/opening-balance/tie')
+          : null,
+      );
     } catch (err: unknown) {
       if ((err as HttpErrorResponse)?.status === 404) {
         // No opening balance yet, which is the ordinary state of a new branch.
         this.document.set(null);
         this.readiness.set(null);
+        this.tie.set(null);
         if (this.lines().length === 0) {
           this.lines.set([this.blankLine()]);
         }
@@ -366,6 +395,7 @@ export class OpeningBalancePage implements OnInit {
       await this.req('DELETE', '/api/opening-balance');
       this.document.set(null);
       this.readiness.set(null);
+      this.tie.set(null);
       this.lines.set([this.blankLine()]);
       this.memo = '';
       this.show('Draft deleted.', false);

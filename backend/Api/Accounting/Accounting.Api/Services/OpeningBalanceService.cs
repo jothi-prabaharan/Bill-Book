@@ -57,6 +57,7 @@ public sealed class OpeningBalanceService
 
     private readonly AccountingDbContext _db;
     private readonly LedgerPostingService _postings;
+    private readonly LedgerReportService _reports;
     private readonly IInventoryOpeningStock _inventory;
     private readonly INumberGenerator _numbers;
     private readonly IBaseCurrencyProvider _baseCurrency;
@@ -67,6 +68,7 @@ public sealed class OpeningBalanceService
     public OpeningBalanceService(
         AccountingDbContext db,
         LedgerPostingService postings,
+        LedgerReportService reports,
         IInventoryOpeningStock inventory,
         INumberGenerator numbers,
         IBaseCurrencyProvider baseCurrency,
@@ -76,6 +78,7 @@ public sealed class OpeningBalanceService
     {
         _db = db;
         _postings = postings;
+        _reports = reports;
         _inventory = inventory;
         _numbers = numbers;
         _baseCurrency = baseCurrency;
@@ -313,7 +316,42 @@ public sealed class OpeningBalanceService
             readiness.Blockers.Add(missing);
         }
 
+        // The books this branch already has. Almost always nothing — an opening
+        // balance is the first thing that posts — but a branch that has been
+        // trading while its migration was keyed must not open its books on top of
+        // a subledger that is already adrift, because after go-live nobody could
+        // tell which of the two put it there.
+        SubLedgerTieView tie = await _reports.GetSubLedgerTieAsync(document.AsOfDate, ct);
+
+        foreach (SubLedgerTieRow row in tie.Rows.Where(r => !r.IsTied))
+        {
+            readiness.Blockers.Add(
+                $"'{row.AccountName}' already holds {row.Unattributed:0.00} that belongs to "
+                    + "nobody — it is posted to the control account with no sub-account "
+                    + "beneath it. Fix that before opening the books, or it becomes part of "
+                    + "the opening position.");
+        }
+
         return readiness;
+    }
+
+    /// <summary>
+    /// Every control account against the subledger beneath it, as at go-live.
+    ///
+    /// <b>Read after finalize, which is the point.</b> The blockers say a
+    /// migration <i>may</i> open; this says it landed. A receivable that reached
+    /// Accounts Receivable with no sub-account balances perfectly and leaves the
+    /// contact owing nothing, so double-entry cannot be what confirms it — this
+    /// is the independent check, and it is what T8.3 means by every subledger
+    /// tying.
+    /// </summary>
+    public async Task<SubLedgerTieView?> TieAsync(CancellationToken ct)
+    {
+        OpeningBalance? document = await _db.OpeningBalances.FirstOrDefaultAsync(ct);
+
+        return document is null
+            ? null
+            : await _reports.GetSubLedgerTieAsync(document.AsOfDate, ct);
     }
 
     /// <summary>

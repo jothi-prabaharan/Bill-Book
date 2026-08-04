@@ -74,3 +74,25 @@ button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4
   .totals { justify-content: space-between; gap: 1rem; }
   .editor-actions button { flex: 1 1 auto; }
 }
+
+/* The tie, after go-live. Its own block rather than a row in the totals panel:
+   the totals say the figures add up, this says the money belongs to somebody,
+   and conflating the two is what lets a migration look finished when it is not. */
+.tie { border: 1px solid #cdd1dc; border-radius: 8px; padding: .8rem 1rem; margin-top: 1.5rem; }
+.tie.broken { border-color: #e8b4ae; background: #fdf7f6; }
+.tie h2 { font-size: .9rem; margin: 0 0 .4rem; display: flex; gap: .5rem; align-items: baseline; }
+.tie .hint { margin: 0 0 .8rem; }
+.badge.bad { background: #fdecea; color: #c0392b; }
+
+.grid { width: 100%; border-collapse: collapse; }
+.grid th, .grid td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #e2e4ea; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.grid tr.off { background: #fdf3e6; }
+.grid tr.off td { color: #7a4a00; }
+
+@media (max-width: 860px) {
+  .grid thead { display: none; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .grid td { display: flex; justify-content: space-between; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 8rem; }
+}

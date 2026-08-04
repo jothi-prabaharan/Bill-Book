@@ -62,6 +62,14 @@ If Inventory cannot be reached, or refuses a line, **nothing posts at all** and 
 
 Draw a trial balance immediately. Debits and credits agree, Opening Balance Equity is nil, and every contact you brought across shows on its statement with the right age.
 
+The screen also shows a **Subledgers** panel once the books are open: each control account against the sum of the balances beneath it.
+
+That is a different claim from the trial balance, and it is the one worth reading. A receivable posted to Accounts Receivable with **no contact underneath it** is a perfectly balanced entry — the trial balance foots, and nobody owes the money. The statement is wrong, the aging report is wrong, and the first receipt has nothing to settle against, and double-entry never says a word because nothing in double-entry is broken. The **Belongs to nobody** column is that figure. It should be zero on every row.
+
+Accounts with no subledger — bank, cash, capital — are not listed. They have nothing to tie to, and showing them at a difference equal to their whole balance would bury the two rows that matter.
+
+> The same check runs *before* go-live. A branch whose books are already adrift cannot open on top of it — afterwards nobody could tell which of the two put the difference there.
+
 ## What is not here yet
 
 **Fixed assets.** There is no asset register to migrate into, so a migrated asset currently comes across as an account balance and carries no cost, life or depreciation schedule of its own. When the register lands, migrated assets skip historical depreciation — they arrive at written-down value and depreciate from go-live.

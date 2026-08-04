@@ -231,7 +231,13 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 
   **Blocked, and it is T10.1's to unblock: migrated fixed assets.** There is no asset register to migrate into, so an asset currently comes across as an account balance and carries no cost, life or schedule of its own. "Skips historical depreciation" is a property of a register row, and until T10.1 exists there is nothing to set it on. Recorded in the docs page rather than left to be discovered.
 
-  Nine tests: the balanced migration and its six ledger rows, the plug left holding something, stock tying against capital without Accounting posting its value, the unprovisioned contact, Inventory refusing, Inventory's value disagreeing, read-only after go-live, save replacing rather than duplicating, and a line naming the wrong thing for its kind.
+  **The *Done when* line, closed properly.** It asks for a trial balance drawn immediately after finalize, and for every subledger to tie — and the first was only being inferred from the ledger rows while the second was a proxy: I was checking that each contact had a sub-account *provisioned*, which is not the same claim as the subledger *tying*.
+
+  So there is now a real tie: **`GET api/ledger/sub-ledger-tie`**, each control account against the sum of the balances beneath it, with the difference named as what belongs to nobody. **It is the check double-entry cannot make.** A receivable posted to Accounts Receivable with no sub-account is a perfectly balanced entry — the trial balance foots and nobody owes the money — so the statement, the aging and the first receipt against it are all wrong while nothing in double-entry is broken. Accounts with no sub-accounts are left out rather than listed at a difference equal to their whole balance, which would bury the two rows that matter.
+
+  It runs **both sides of go-live**: as a blocker, so a branch already adrift cannot open its books on top of it (afterwards nobody could tell which of the two put the difference there), and as a read on the screen after finalize, so the migration is confirmed to have landed rather than merely permitted.
+
+  Twelve tests: the balanced migration and its six ledger rows, the plug left holding something, stock tying against capital without Accounting posting its value, the unprovisioned contact, Inventory refusing, Inventory's value disagreeing, read-only after go-live, save replacing rather than duplicating, a line naming the wrong thing for its kind, a trial balance actually drawn after finalize with every subledger tying, a control balance with nobody beneath it that foots and still does not tie, and an existing untied subledger blocking go-live.
 
 ---
 

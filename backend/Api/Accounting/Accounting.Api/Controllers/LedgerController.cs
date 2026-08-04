@@ -45,6 +45,16 @@ public sealed class LedgerController : ControllerBase
         Ok(await _reports.GetTrialBalanceAsync(from, to, ct));
 
     /// <summary>
+    /// Every control account against the subledger beneath it — the check
+    /// double-entry cannot make, because a receivable posted with no sub-account
+    /// balances perfectly while nobody owes the money.
+    /// </summary>
+    [HttpGet("sub-ledger-tie")]
+    public async Task<IActionResult> SubLedgerTie(
+        [FromQuery] DateOnly? asAt, CancellationToken ct) =>
+        Ok(await _reports.GetSubLedgerTieAsync(asAt, ct));
+
+    /// <summary>
     /// What a document was booked at. Banking reads it before settling one in a
     /// foreign currency, so the balance comes off at the rate it went on at and
     /// the difference lands in Realized FX Gain/Loss rather than as a residue on

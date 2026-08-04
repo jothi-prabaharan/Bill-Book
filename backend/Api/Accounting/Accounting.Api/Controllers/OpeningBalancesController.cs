@@ -49,6 +49,19 @@ public sealed class OpeningBalancesController : ControllerBase
     }
 
     /// <summary>
+    /// Every control account against the subledger beneath it, as at go-live.
+    /// Read after finalize: the blockers say the migration <i>may</i> open, this
+    /// says it landed. Double-entry cannot answer it — a receivable posted with
+    /// no sub-account balances perfectly while nobody owes the money.
+    /// </summary>
+    [HttpGet("tie")]
+    public async Task<IActionResult> Tie(CancellationToken ct)
+    {
+        SubLedgerTieView? tie = await _openings.TieAsync(ct);
+        return tie is null ? NotFound() : Ok(tie);
+    }
+
+    /// <summary>
     /// Creates the branch's opening balance or replaces the draft. A PUT rather
     /// than a POST because there is one of them: saving twice does not make two.
     /// </summary>

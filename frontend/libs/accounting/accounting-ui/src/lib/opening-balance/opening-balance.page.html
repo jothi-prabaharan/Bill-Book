@@ -294,6 +294,60 @@
   </dl>
 }
 
+<!-- After go-live only. The blockers above said the migration *may* open; this
+     says it landed — and it is a claim double-entry cannot make, because a
+     receivable posted to the control account with nobody beneath it balances
+     perfectly while no contact owes the money. -->
+@if (tie(); as t) {
+  <section class="tie" [class.broken]="!t.isTied">
+    <h2>
+      Subledgers
+      <span class="badge" [class.done]="t.isTied" [class.bad]="!t.isTied">
+        {{ t.isTied ? 'Tied' : 'Does not tie' }}
+      </span>
+    </h2>
+
+    <p class="hint">
+      Each control account against the sum of the balances beneath it. They have to
+      agree: a balance on a control account with nobody underneath it is money owed
+      by no one, and the trial balance would never notice.
+    </p>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Control account</th>
+          <th class="num">Account</th>
+          <th class="num">Subledger</th>
+          <th class="num">Belongs to nobody</th>
+          <th>Balances</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of t.rows; track row.accountId) {
+          <tr [class.off]="!row.isTied">
+            <td data-label="Account">{{ row.accountCode }} — {{ row.accountName }}</td>
+            <td class="num" data-label="Account">{{ row.controlBalance | number: '1.2-2' }}</td>
+            <td class="num" data-label="Subledger">
+              {{ row.subLedgerBalance | number: '1.2-2' }}
+            </td>
+            <td class="num" data-label="Belongs to nobody">
+              {{ row.unattributed | number: '1.2-2' }}
+            </td>
+            <td data-label="Balances">{{ row.subAccountCount }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty">
+              Nothing posted to a control account yet, so there is no subledger to tie.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
 @if (!finalized()) {
   <div class="editor-actions">
     @if (document()) {

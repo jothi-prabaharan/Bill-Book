@@ -152,3 +152,50 @@ public class TrialBalanceRow
     /// <summary>The net, when it falls on the credit side. Zero otherwise.</summary>
     public decimal CreditBalance { get; set; }
 }
+
+/// <summary>
+/// Whether each control account agrees with the subledger beneath it.
+///
+/// <b>A control account and its subledger can disagree while the books balance
+/// perfectly.</b> A receivable posted to Accounts Receivable with no sub-account
+/// beneath it is a balanced entry: debits equal credits, the trial balance foots,
+/// and no contact owes the money. The statement is wrong, the aging report is
+/// wrong, and the first receipt has nothing to settle against — and nothing in
+/// double-entry catches any of it, because nothing in double-entry is broken.
+///
+/// So this is a second, independent check, and it is the one an opening balance
+/// is judged on: a migration ties everywhere or it is not a migration.
+/// </summary>
+public class SubLedgerTieView
+{
+    public List<SubLedgerTieRow> Rows { get; set; } = [];
+
+    /// <summary>Every control account agreeing with its subledger.</summary>
+    public bool IsTied { get; set; }
+}
+
+/// <summary>One control account against the sum of the sub-accounts hanging from it.</summary>
+public class SubLedgerTieRow
+{
+    public long AccountId { get; set; }
+
+    public string AccountCode { get; set; } = null!;
+
+    public string AccountName { get; set; } = null!;
+
+    /// <summary>Everything posted to the account, sub-account or not.</summary>
+    public decimal ControlBalance { get; set; }
+
+    /// <summary>The part of it that named a sub-account.</summary>
+    public decimal SubLedgerBalance { get; set; }
+
+    /// <summary>
+    /// What is posted to the control account and belongs to nobody. Non-zero is
+    /// the failure this whole view exists to surface.
+    /// </summary>
+    public decimal Unattributed { get; set; }
+
+    public int SubAccountCount { get; set; }
+
+    public bool IsTied { get; set; }
+}
