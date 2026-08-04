@@ -18,4 +18,12 @@ public sealed class GatewayUser : ICurrentUser
     public Guid? CustomerId => null;
 
     public Guid? OrgId => null;
+
+    /// <summary>
+    /// No role, and none to be had: the gateway does not validate tokens, so it
+    /// could not read a role claim even while the request was in flight. A
+    /// period-lock check reads null as the branch's strictest lock, which is the
+    /// safe end to be at for something that only ever writes its own logs.
+    /// </summary>
+    public int? RoleId => null;
 }
