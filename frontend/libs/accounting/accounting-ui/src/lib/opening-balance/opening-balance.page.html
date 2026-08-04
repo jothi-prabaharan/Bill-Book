@@ -1,0 +1,314 @@
+<header class="page-head">
+  <h1>Opening balances</h1>
+  @if (document(); as d) {
+    <span class="badge" [class.done]="finalized()">
+      {{ finalized() ? 'Books open · ' + (d.transactionNo ?? '') : 'Draft' }}
+    </span>
+  }
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+@if (finalized()) {
+  <p class="note done">
+    The books opened on {{ document()?.asOfDate }}. This is a record of what was brought across and
+    cannot be changed — every balance since has been measured from it. Correct an opening figure
+    with a journal entry, which leaves a trail.
+  </p>
+} @else {
+  <p class="note">
+    Everything the branch owned, owed and was owed on the day it started here. Key it over as long
+    as it takes: nothing posts until you open the books, and the panel at the foot says how far off
+    you still are.
+  </p>
+}
+
+<div class="head-fields">
+  <label>
+    Go-live date
+    <input type="date" [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
+  </label>
+  <label class="wide">
+    Memo
+    <input
+      type="text"
+      [(ngModel)]="memo"
+      name="memo"
+      placeholder="Which system these came from, and who signed them off"
+      [disabled]="finalized()"
+    />
+  </label>
+</div>
+
+<table class="lines">
+  <thead>
+    <tr>
+      <th class="line-col">#</th>
+      <th>What</th>
+      <th>Which</th>
+      <th>Document</th>
+      <th class="num">Qty</th>
+      <th class="num">Unit cost</th>
+      <th class="num">Debit</th>
+      <th class="num">Credit</th>
+      <th class="actions-col"><span class="sr-only">Remove</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (line of lines(); track $index) {
+      <tr>
+        <td class="line-col" data-label="Line">{{ $index + 1 }}</td>
+
+        <td data-label="What">
+          <select
+            [(ngModel)]="line.lineType"
+            [name]="'type' + $index"
+            (ngModelChange)="onLineType(line)"
+            [disabled]="finalized()"
+          >
+            <option value="GlAccount">Account balance</option>
+            <option value="ContactReceivable">Owed to us</option>
+            <option value="ContactPayable">We owe</option>
+            <option value="Item">Stock on hand</option>
+          </select>
+        </td>
+
+        <!-- Which thing the line is about. An account balance names an account;
+             a receivable or payable names the contact and posts to receivables
+             or payables, which is not a choice; stock names the item. -->
+        <td data-label="Which">
+          @if (line.lineType === 'GlAccount') {
+            <select
+              [(ngModel)]="line.accountId"
+              [name]="'account' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            >
+              <option [ngValue]="null">Choose…</option>
+              @for (a of postable(); track a.accountId) {
+                <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
+              }
+            </select>
+          } @else if (line.lineType === 'Item') {
+            <select
+              [(ngModel)]="line.itemId"
+              [name]="'item' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            >
+              <option [ngValue]="null">Choose…</option>
+              @for (i of items(); track i.itemId) {
+                <option [ngValue]="i.itemId">{{ i.itemCode }} — {{ i.itemName }}</option>
+              }
+            </select>
+            <span class="sub">Posts to Inventory at this cost</span>
+          } @else {
+            <select
+              [(ngModel)]="line.contactId"
+              [name]="'contact' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            >
+              <option [ngValue]="null">Choose…</option>
+              @for (c of contacts(); track c.contactId) {
+                <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
+              }
+            </select>
+            <span class="sub">
+              {{ line.lineType === 'ContactReceivable' ? 'Accounts Receivable' : 'Accounts Payable' }}
+              — this contact's own balance
+            </span>
+          }
+        </td>
+
+        <!-- The old system's invoice number and date. Not decoration: an aging
+             report ages from this date, and a contact querying the balance asks
+             about this number. -->
+        <td data-label="Document">
+          @if (line.lineType === 'ContactReceivable' || line.lineType === 'ContactPayable') {
+            <input
+              type="text"
+              placeholder="Invoice no."
+              [(ngModel)]="line.documentReference"
+              [name]="'ref' + $index"
+              maxlength="50"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            />
+            <input
+              type="date"
+              [(ngModel)]="line.documentDate"
+              [name]="'docdate' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            />
+          } @else {
+            <input
+              type="text"
+              placeholder="Note"
+              [(ngModel)]="line.lineMemo"
+              [name]="'memo' + $index"
+              maxlength="300"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            />
+          }
+        </td>
+
+        <td class="num" data-label="Qty">
+          @if (line.lineType === 'Item') {
+            <input
+              type="number"
+              inputmode="decimal"
+              step="0.001"
+              min="0"
+              [(ngModel)]="line.quantity"
+              [name]="'qty' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            />
+          } @else {
+            <span class="none">—</span>
+          }
+        </td>
+
+        <td class="num" data-label="Unit cost">
+          @if (line.lineType === 'Item') {
+            <input
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              min="0"
+              [(ngModel)]="line.unitCost"
+              [name]="'cost' + $index"
+              (ngModelChange)="touch()"
+              [disabled]="finalized()"
+            />
+          } @else {
+            <span class="none">—</span>
+          }
+        </td>
+
+        <td class="num" data-label="Debit">
+          @if (line.lineType === 'Item') {
+            <span class="derived">{{ lineValue(line) | number: '1.2-2' }}</span>
+          } @else {
+            <input
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              min="0"
+              [(ngModel)]="line.debit"
+              [name]="'debit' + $index"
+              (ngModelChange)="onDebit(line)"
+              [disabled]="finalized()"
+            />
+          }
+        </td>
+
+        <td class="num" data-label="Credit">
+          @if (line.lineType === 'Item') {
+            <span class="none">—</span>
+          } @else {
+            <input
+              type="number"
+              inputmode="decimal"
+              step="0.01"
+              min="0"
+              [(ngModel)]="line.credit"
+              [name]="'credit' + $index"
+              (ngModelChange)="onCredit(line)"
+              [disabled]="finalized()"
+            />
+          }
+        </td>
+
+        <td class="actions-col">
+          @if (!finalized()) {
+            <button type="button" class="icon" (click)="removeLine($index)" title="Remove line">
+              ×
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="9" class="empty">Nothing keyed yet.</td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+@if (!finalized()) {
+  <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
+}
+
+<!-- The figure this screen exists for. Every line posts against Opening Balance
+     Equity, so whatever it is left holding is exactly the part of the branch's
+     position nobody has keyed yet. Zero means the migration is complete. -->
+<div class="totals" [class.balanced]="equityPlug === 0" [class.off]="equityPlug !== 0">
+  <div>
+    <span>Debits</span>
+    <strong>{{ totalDebit | number: '1.2-2' }}</strong>
+  </div>
+  <div>
+    <span>Credits</span>
+    <strong>{{ totalCredit | number: '1.2-2' }}</strong>
+  </div>
+  <div>
+    <span>Stock</span>
+    <strong>{{ inventoryValue | number: '1.2-2' }}</strong>
+  </div>
+  <div class="diff">
+    <span>Opening Balance Equity</span>
+    <strong>{{ equityPlug | number: '1.2-2' }}</strong>
+  </div>
+</div>
+
+@if (equityPlug !== 0) {
+  <p class="hint">
+    Opening Balance Equity would be left holding {{ equityPlug | number: '1.2-2' }}. It has to reach
+    nothing: that figure is the part of the position not yet keyed, and it is usually capital or
+    retained earnings. The books cannot open until it does.
+  </p>
+}
+
+@if (readiness(); as r) {
+  @if (r.blockers.length > 0 && !finalized()) {
+    <div class="blockers">
+      <h2>Before the books can open</h2>
+      <ul>
+        @for (blocker of r.blockers; track blocker) {
+          <li>{{ blocker }}</li>
+        }
+      </ul>
+    </div>
+  }
+
+  <dl class="meta">
+    <div><dt>Owed to us</dt><dd>{{ r.contactReceivableLines }} document(s)</dd></div>
+    <div><dt>We owe</dt><dd>{{ r.contactPayableLines }} document(s)</dd></div>
+    <div><dt>Stock lines</dt><dd>{{ r.itemLines }}</dd></div>
+  </dl>
+}
+
+@if (!finalized()) {
+  <div class="editor-actions">
+    @if (document()) {
+      <button type="button" class="ghost" (click)="discard()" [disabled]="busy()">
+        Delete draft
+      </button>
+    }
+    <button type="button" (click)="save()" [disabled]="busy()">Save draft</button>
+    <button
+      type="button"
+      class="primary"
+      (click)="finalize()"
+      [disabled]="busy() || !readiness()?.canFinalize"
+    >
+      Open the books
+    </button>
+  </div>
+}

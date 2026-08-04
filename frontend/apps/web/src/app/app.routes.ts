@@ -93,6 +93,11 @@ export const appRoutes: Routes = [
         data: { permission: 'accounting.view' },
       },
       {
+        path: 'accounting/opening-balance',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.OpeningBalancePage),
+        data: { permission: 'accounting.view' },
+      },
+      {
         path: 'accounting/trial-balance',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TrialBalancePage),
         data: { permission: 'accounting.view' },

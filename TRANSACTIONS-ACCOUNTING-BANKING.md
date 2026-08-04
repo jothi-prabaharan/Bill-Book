@@ -201,10 +201,37 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 
 `CLAUDE.md` calls this the highest-risk screen in the system, and it is deliberately late: it is the one document that touches every subledger at once, so it wants all of them finished.
 
-- [ ] **T8.1 — Orchestration** — Accounting drives; Inventory takes opening quantity and unit cost and seeds the weighted average; Contacts takes opening AR and AP **per contact, never a lump sum**, or aging is broken from day one.
-- [ ] **T8.2 — The validation** — Opening Balance Equity nets to zero, and finalize is blocked until AR, AP and Inventory subledgers tie to their control accounts.
-- [ ] **T8.3 — Read-only after go-live**, and migrated fixed assets skip historical depreciation.
+- [x] **T8.1 — Orchestration** — Accounting drives; Inventory takes opening quantity and unit cost and seeds the weighted average; Contacts takes opening AR and AP **per contact, never a lump sum**, or aging is broken from day one.
+
+  **Done.** `acc.OpeningBalances` + `acc.OpeningBalanceLines`, **one per branch enforced by a unique index on `OrgId`**. A branch has one moment it started and every balance since is measured from it; a second row is a second starting position with nothing to say which one anything was measured from.
+
+  **Per contact was only half of it.** The plan gives aging as the reason for not taking AR and AP as a lump, and the same reason keeps going: a contact owing ₹300,000 across invoices of thirty, ninety and a hundred and eighty days ages nothing like one ₹300,000 balance. So the line is **one per document**, carrying the original system's reference and date — the reference is what the contact quotes when they query it, the date is what the aging runs from. A contact has as many lines as they have unpaid documents.
+
+  **Four line kinds, and only one of them picks an account.** `GlAccount` names one; `ContactReceivable` and `ContactPayable` resolve theirs from the kind, because a receivable free to choose its own account is a receivable that can be filed under Sales Revenue; `Item` names neither. Enforced by a check constraint as well as in C#, the constraint for the shape and the C# for the reason.
+
+  **Stock is Inventory's to record, through a new `internal/stock/opening` door.** An item line is a quantity and a unit cost and has nowhere to type a value — the cost seeds the weighted average, so every cost of sale until the next receipt comes from it, and only Inventory can seed it. Inventory then posts `Dr Inventory / Cr Opening Balance Equity` itself, on the path a receipt already takes. A value Accounting posted would be a second figure against the Inventory account, free to disagree with the stock the items actually carry. The door takes the internal key with the tenant in the body rather than forwarding the user's token — otherwise finalizing a migration needs inventory permissions for an accounting act — and it is idempotent on the document and line, so a retried finalize is told the stock is already there rather than doubling it.
+- [x] **T8.2 — The validation** — Opening Balance Equity nets to zero, and finalize is blocked until AR, AP and Inventory subledgers tie to their control accounts.
+
+  **Done, and the shape of the posting is what makes the validation possible.** Every line posts as its own balanced pair against Opening Balance Equity — `Dr Bank / Cr OBE`, `Dr OBE / Cr Accounts Payable` — so the ledger balances after every line and **OBE accumulates precisely what has not been accounted for yet**. Zero is the whole validation. A migration finalized with OBE non-zero invents equity out of a figure somebody forgot, and it balances perfectly while doing it.
+
+  A pair per line rather than one OBE leg for the document, deliberately: a ledger row on the equity side traces back to the line that produced it, which is the only way anyone finds the wrong figure afterwards.
+
+  Three more blockers, each catching something that balances anyway:
+  - **A contact with no sub-account.** The line would reach the control account with nothing beneath it — perfectly balanced, and the contact owes nothing, so the statement, the aging and the first receipt against it are all wrong while the trial balance says everything is fine. The contacts are named, not counted.
+  - **A missing control account**, including Opening Balance Equity itself, which even a document of nothing but bank balances needs.
+  - **Inventory's recorded value disagreeing with the document's.** The one subledger Accounting cannot compute for itself, so it is asked and the answers compared. A migration that ties everywhere except the one place nobody looks is what this is for.
+
+  Readiness is a **read of its own**, not a by-product of pressing Finalize — a migration is keyed over weeks, and finding at the end that it is out by ₹4,300 means auditing weeks of work instead of the line just typed.
+- [x] **T8.3 — Read-only after go-live**, and migrated fixed assets skip historical depreciation.
   *Done when*: a trial balance drawn immediately after finalize balances, every subledger ties, and the screen refuses to reopen.
+
+  **Done, except the fixed-asset half — see below.** `OpeningBalanceStatus` is `Draft → Finalized` and stops there: **no void and no reversal, unlike every other document in the product.** A journal or a payment can be reversed because it is one event among thousands; reversing an opening balance does not restate a transaction, it deletes the starting position every balance since has been measured from. An error found afterwards is corrected the way any error in a closed period is. Save, delete and finalize all refuse once finalized, and the check constraints hold the same line from underneath.
+
+  **The screen is the readiness panel, not the grid.** Accounting › Opening balances shows debits, credits, stock and the equity plug continuously, with every blocker listed rather than summarised. Stacks to cards at ~360px, because this is a screen people key hundreds of rows into.
+
+  **Blocked, and it is T10.1's to unblock: migrated fixed assets.** There is no asset register to migrate into, so an asset currently comes across as an account balance and carries no cost, life or schedule of its own. "Skips historical depreciation" is a property of a register row, and until T10.1 exists there is nothing to set it on. Recorded in the docs page rather than left to be discovered.
+
+  Nine tests: the balanced migration and its six ledger rows, the plug left holding something, stock tying against capital without Accounting posting its value, the unprovisioned contact, Inventory refusing, Inventory's value disagreeing, read-only after go-live, save replacing rather than duplicating, and a line naming the wrong thing for its kind.
 
 ---
 

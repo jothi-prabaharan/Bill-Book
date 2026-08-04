@@ -70,6 +70,17 @@ builder.Services.AddScoped<LedgerPostingService>();
 builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
+builder.Services.AddScoped<OpeningBalanceService>();
+
+// Opening stock is Inventory's to record: the unit cost seeds the weighted
+// average, and only Inventory can seed it. Keyed rather than token-forwarded,
+// so finalizing a migration does not require the person doing it to hold
+// inventory permissions for what is an accounting act.
+builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStock>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // The branch's base currency, for stamping onto ledger rows. Cached per
 // organization for the same reason the financial year is: it changes about
