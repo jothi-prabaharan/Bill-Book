@@ -179,7 +179,21 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
   A void now withdraws `FX` as well as `CONTROL` — a withdrawal that named only the types a document happened to write would strand an exchange difference on a voided payment, unbalanced and attached to nothing.
 
   Eight tests: the loss, the mirrored gain, the same-rate no-op, a settled document with nothing posted yet (not an error — there is no earlier rate to differ from), the unreadable rate, the currency mismatch, the per-leg rate at the door, and the rate read.
-- [ ] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
+- [x] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
+
+  **Half of this was already structural, and the other half was unguarded.** T6.2 put the ledger source and the settled document both on the *line*, so ₹50,000 across three bills was already three lines and three pairs of legs, each traceable to the bill it cleared; and an excess already landed in the overpayment advance rather than as a negative trade balance. What was missing is that nothing checked the lines were saying anything sensible, and both mistakes available here are silent ones.
+
+  **A line naming the wrong kind of document** traces a payment to something it did not pay — worse than a missing link, because a statement reconciling on it reads as answered. The kind now follows from the source rather than being a second choice beside it: `MoneyPostingMap.Settles` says a bill payment settles a `BIL`, an invoice payment an `INV`, a debit-note refund a `DBN`, and an advance nothing at all. A line naming a document its source cannot settle is refused, and so is an advance claiming one.
+
+  **Two lines claiming one document the same way** leave two ledger rows against one balance. Refused — but keyed on the **source** as well as the document, because paying a bill and overpaying against it are two claims on one bill and that is T6.2's whole overpayment story. Two *bill payment* lines against one bill is the keying slip; a bill payment and its excess are not.
+
+  **The header's mapping is now derived from the lines, not taken from the caller.** It is a summary of them: a caller free to disagree with its own lines can save a document whose header names one bill while its body pays three, and a list reads the header first. One document when every line that names one names the same; nothing at all otherwise, because a payment across three bills is about three and picking one would be arbitrary.
+
+  **On the screen**, the unallocated figure now offers to place itself: *Add ₹1,000 as an overpayment* adds the line under the right source and, when exactly one document is being settled, names it. That is the difference between an excess that is recorded and one that is quietly folded into the settled line — where it turns the contact's balance the other way up and every aging report reads it as trade.
+
+  **Not here, and it is T5.1: how much a document actually owes.** That needs the bill and the invoice to exist. Until then a line may settle more than its document is for; this refuses the mistakes catchable without asking anyone what the balance is.
+
+  Seven tests: three bills on one payment, the derived header both ways, the wrong document kind, an advance claiming a document, the repeated claim, the partial-plus-excess split across two control accounts, and an overpayment legally naming the invoice it ran past.
 
 ---
 

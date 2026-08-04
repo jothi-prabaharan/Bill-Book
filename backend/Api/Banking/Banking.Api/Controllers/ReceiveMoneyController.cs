@@ -100,6 +100,15 @@ public sealed class ReceiveMoneyController : ControllerBase
                 StatusCodes.Status503ServiceUnavailable,
                 new MessageResponse { Message = result.Detail ?? "Please try again." }),
 
+            // A line pointing at the wrong kind of document, or at one another
+            // line already settles. 409 rather than 400: the document is
+            // well-formed, it just contradicts itself about what it pays.
+            MoneyDocumentOutcome.MappingNotSettleable
+                or MoneyDocumentOutcome.MappingRepeated => Conflict(new MessageResponse
+                {
+                    Message = result.Detail ?? "The lines disagree about what this settles.",
+                }),
+
             _ => BadRequest(new MessageResponse
             {
                 Message = result.Detail ?? $"The document was refused: {result.Outcome}.",
