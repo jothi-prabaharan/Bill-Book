@@ -143,6 +143,21 @@ public enum MoneyDocumentOutcome
 
     /// <summary>Only a posted document can be voided.</summary>
     NotPosted = 11,
+
+    /// <summary>
+    /// What the settled document was booked at could not be established. Transient,
+    /// for the same reason an unreadable period lock is: a rate that could not be
+    /// read is not a rate that matched.
+    /// </summary>
+    SettlementRateUnavailable = 12,
+
+    /// <summary>
+    /// A line settles a document raised in a different currency from the payment.
+    /// Refused rather than converted — two conversions in one settlement is a
+    /// cross-rate, and guessing one would put a figure in the books that no rate
+    /// on record produces.
+    /// </summary>
+    SettlementCurrencyMismatch = 13,
 }
 
 public sealed record MoneyDocumentResult(

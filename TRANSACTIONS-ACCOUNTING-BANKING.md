@@ -161,8 +161,24 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
   **Done.** `TransferMoneyService` + `api/transfer-money`. Two legs, both naming a bank account by the id Accounting issued when it was created, both under `MONEYTRANSFER`. No detail table and none needed — a transfer settles nothing.
   **The only money document that could be built end to end today**, because it waits on no invoice or bill. A transfer moves no value in or out, so the trial balance is unchanged by one; what changes is which account holds it.
   **Its own screen, not a third mode of the payment screen.** Everything that makes that one complicated — the contact, the allocation lines, the sub-account the account is locked to — is absent here, and a shared screen would carry the machinery anyway to switch it all off. What is left is two account pickers, an amount, and **⇅** to swap the ends, which is the correction people reach for most.
-- [ ] **T6.5 — Realized FX on settlement** — an extra pair to Realized FX Gain/Loss at `LedgerTypeId = 5`, computed from the difference between the document's `ExchangeRate` and the payment's. **Never from a live rate.**
+- [x] **T6.5 — Realized FX on settlement** — an extra pair to Realized FX Gain/Loss at `LedgerTypeId = 5`, computed from the difference between the document's `ExchangeRate` and the payment's. **Never from a live rate.**
   *Done when*: an invoice raised at one rate and settled at another leaves no residual balance on the contact, and the difference sits in Realized FX Gain/Loss.
+
+  **Done.** The property that decides the whole shape: **the balance comes off at the rate it went on at.** Relieve a receivable at today's rate and the ledger still balances — while the contact keeps a residue against an invoice they have paid in full, in a currency they no longer owe. Nobody goes looking for that, which is what makes it the dangerous half of this task rather than the arithmetic.
+
+  So a settlement's three legs do not share one rate, and the ledger door had to stop assuming they did. `LedgerLegRequest` gained an optional `CurrencyCode` and `ExchangeRate`: null on every leg of an ordinary document, set on the two that settlement produces. The control leg converts at the settled document's rate, the bank leg at the payment's, and the FX leg is **denominated in base at rate 1** — the difference never existed in the foreign currency, so recording it in one would invent a figure the counterparty never saw. The balance check is in base, so the request balances *because* the three converted differently; forcing them onto one rate leaves either a residue or an unbalanced posting, and there is no third answer.
+
+  **The rate is read back off the settled document's own ledger rows** — `GET api/ledger/documents/{code}/{id}/rate`, the control leg's, falling back to the lowest-id leg for a document with none. Accounting is the one service holding every document's rate in one table, so Banking asks it rather than integrating with Purchase and Sales separately for a number that is already written down. Nothing consults a rate table anywhere in this path: a historical document that repriced itself would restate settled history.
+
+  **The FX leg takes whichever side the pair is short on**, rather than a sign rule per direction. Spend and receive are mirrors, and a sign asserted twice is a sign that can be right once — this way the gain and the loss are the same call with two arguments swapped, and neither can be inverted while the other is correct.
+
+  Two refusals, both deliberate:
+  - **An unreadable rate refuses the document as transient**, exactly as an unreadable period lock does. "Could not ask" must not look like "no difference", or a lookup that blipped posts the whole payment at today's rate and leaves the residue this task exists to prevent.
+  - **Settling a document raised in another currency is refused, not converted.** Two conversions in one settlement is a cross-rate, and inventing one puts a figure in the books that no recorded rate produces.
+
+  A void now withdraws `FX` as well as `CONTROL` — a withdrawal that named only the types a document happened to write would strand an exchange difference on a voided payment, unbalanced and attached to nothing.
+
+  Eight tests: the loss, the mirrored gain, the same-rate no-op, a settled document with nothing posted yet (not an error — there is no earlier rate to differ from), the unreadable rate, the currency mismatch, the per-leg rate at the door, and the rate read.
 - [ ] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
 
 ---

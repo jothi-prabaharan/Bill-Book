@@ -43,4 +43,27 @@ public sealed class LedgerController : ControllerBase
     public async Task<IActionResult> TrialBalance(
         [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct) =>
         Ok(await _reports.GetTrialBalanceAsync(from, to, ct));
+
+    /// <summary>
+    /// What a document was booked at. Banking reads it before settling one in a
+    /// foreign currency, so the balance comes off at the rate it went on at and
+    /// the difference lands in Realized FX Gain/Loss rather than as a residue on
+    /// the contact.
+    ///
+    /// On the token rather than behind the internal key, because the caller is
+    /// always acting for a signed-in user settling a document — and the tenant
+    /// then comes from the same claims that decided which books they are in.
+    /// </summary>
+    [HttpGet("documents/{transactionTypeCode}/{transactionId:long}/rate")]
+    public async Task<IActionResult> SettlementRate(
+        string transactionTypeCode, long transactionId, CancellationToken ct)
+    {
+        SettlementRateView? rate =
+            await _reports.GetSettlementRateAsync(transactionTypeCode, transactionId, ct);
+
+        // NotFound covers both "never posted" and "not in this branch", and that
+        // is the point: the query filter made the decision, and a caller must not
+        // be able to tell a document in another branch from one that never was.
+        return rate is null ? NotFound() : Ok(rate);
+    }
 }

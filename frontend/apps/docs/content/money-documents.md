@@ -81,7 +81,29 @@ Both ends are your own accounts, so there is no contact, nothing to allocate, an
 
 The two ends must be different accounts. **⇅** swaps them, which is the correction most often needed.
 
+## Foreign currency
+
+Settle a foreign-currency bill or invoice and the rate has usually moved since it was raised. The balance is cleared **at the rate it was raised at**, the bank moves at the rate you are paying at, and the difference between the two is recorded as a realized gain or loss in **Realized FX Gain/Loss**.
+
+That is not a refinement — it is what makes the document actually clear. Relieve the balance at today's rate instead and the books still balance while the contact keeps a leftover balance against a bill they have paid in full, which nobody would think to look for.
+
+A USD 1,000 bill raised when the rate was ₹80, paid when it is ₹100:
+
+| | Debit | Credit |
+|---|---|---|
+| Accounts Payable — the supplier | ₹80,000 | |
+| Realized FX Gain/Loss | ₹20,000 | |
+| Bank | | ₹100,000 |
+
+A receipt works the same way with the sides reversed, so a rate that moved in your favour lands as a gain.
+
+Two things are refused rather than guessed:
+
+- **Paying a document raised in a different currency from the payment.** Converting twice in one settlement means inventing a cross-rate, and no rate on record produces the answer.
+- **A rate that cannot be read.** If the rate the document was raised at cannot be established, the payment is not posted — "could not check" is not the same as "no difference", and treating it as such is how the leftover balance above gets created silently.
+
+Nothing here ever looks a rate up live. Every rate used was recorded at the time, on the document it belongs to.
+
 ## What is not here yet
 
 - **Allocation limits.** Nothing yet checks that a payment against a bill does not exceed what that bill actually owes.
-- **Exchange differences.** A foreign-currency document settled at a different rate than it was raised at does not yet post the difference to exchange gain or loss.

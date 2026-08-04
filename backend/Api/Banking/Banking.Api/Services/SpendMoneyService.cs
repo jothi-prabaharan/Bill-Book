@@ -286,6 +286,27 @@ public sealed class SpendMoneyService
                 "That account has no ledger account behind it, so the payment cannot be posted.");
         }
 
+        // Which lines settle a balance booked at a different rate. Resolved before
+        // any leg is built, because a rate that cannot be read has to stop the
+        // whole document rather than leave one line posted at the wrong one.
+        SettlementRatesResult settlement = await MoneySettlement.ResolveAsync(
+            _ledger, document.CurrencyCode, document.ExchangeRate,
+            lines.Select(l => (l.LineNumber, l.MappingTransactionTypeCode, l.MappingTransactionId)),
+            ct);
+
+        if (settlement.Refusal is { } blocked)
+        {
+            return blocked with { DocumentId = id };
+        }
+
+        string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        if (baseCurrency is null)
+        {
+            return new MoneyDocumentResult(
+                MoneyDocumentOutcome.PostingRefused, id,
+                "The branch's base currency could not be read, so nothing was posted.");
+        }
+
         var legs = new List<LedgerPostingLeg>(lines.Count * 2);
 
         foreach (SpendMoneyDetail line in lines)
@@ -297,17 +318,39 @@ public sealed class SpendMoneyService
                     $"Line {line.LineNumber} is for something money cannot leave under.");
             }
 
+            decimal? settledRate = settlement.For(line.LineNumber);
+
             // The control leg, and the bank leg that pays for it. One pair per
             // line, so each pair balances on its own and every row carries the
             // source that produced it — an overpayment's two halves stay
             // distinguishable in the ledger.
             legs.Add(MoneyPosting.Control(
                 line.LineNumber, line.LedgerSourceId, target, document.ContactId,
-                debit: line.Amount, credit: 0m, line.LineMemo));
+                debit: line.Amount, credit: 0m, line.LineMemo, settledRate));
 
             legs.Add(MoneyPosting.Bank(
                 line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
                 debit: 0m, credit: line.Amount, line.LineMemo));
+
+            // The pair no longer balances once the two ends convert at different
+            // rates, and what it is out by is the realized gain or loss.
+            if (settledRate is decimal booked)
+            {
+                LedgerPostingLeg? fx = MoneyPosting.Fx(
+                    line.LineNumber,
+                    line.LedgerSourceId,
+                    baseCurrency,
+                    controlDebitBase: MoneyPosting.Base(line.Amount, booked),
+                    controlCreditBase: 0m,
+                    bankDebitBase: 0m,
+                    bankCreditBase: MoneyPosting.Base(line.Amount, document.ExchangeRate),
+                    line.LineMemo);
+
+                if (fx is not null)
+                {
+                    legs.Add(fx);
+                }
+            }
         }
 
         LedgerPostOutcome posted = await _ledger.PostAsync(
@@ -373,7 +416,8 @@ public sealed class SpendMoneyService
             new LedgerPosting(
                 TypeCode, id, document.TransactionDate, document.CurrencyCode,
                 document.ExchangeRate, document.ContactId, [],
-                WithdrawLedgerTypeIds: [MoneyPostingMap.ControlLedgerType]),
+                WithdrawLedgerTypeIds:
+                    [MoneyPostingMap.ControlLedgerType, MoneyPosting.FxLedgerType]),
             ct);
 
         if (withdrawn != LedgerPostOutcome.Posted)

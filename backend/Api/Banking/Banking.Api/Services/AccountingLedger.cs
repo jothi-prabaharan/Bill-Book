@@ -29,7 +29,22 @@ public interface IAccountingLedger
     /// is refused with the date rather than by a constraint.
     /// </summary>
     Task<DateOnly?> LockedUptoAsync(CancellationToken ct);
+
+    /// <summary>
+    /// What a document was booked at, read off its ledger rows, or null when it
+    /// has none in this branch. Needed before settling a foreign-currency
+    /// document: the balance has to come off at the rate it went on at.
+    ///
+    /// <b>Null is "no rate on record", not "same rate".</b> A caller treats it as
+    /// nothing to adjust — an unposted document has no exchange difference to
+    /// recognize, because there is nothing yet to be different from.
+    /// </summary>
+    Task<SettlementRate?> SettlementRateAsync(
+        string transactionTypeCode, long transactionId, CancellationToken ct);
 }
+
+/// <summary>What a settled document was booked at.</summary>
+public sealed record SettlementRate(string CurrencyCode, decimal ExchangeRate);
 
 /// <summary>A money document's posting, as Banking describes it.</summary>
 public sealed record LedgerPosting(
@@ -63,7 +78,17 @@ public sealed record LedgerPostingLeg(
     int SubAccountPurpose,
     decimal DebitAmount,
     decimal CreditAmount,
-    string? TransactionDesc);
+    string? TransactionDesc,
+
+    /// <summary>
+    /// What this leg is denominated in, when that is not the document's currency.
+    /// Null on every leg but the two settlement produces — the leg relieving a
+    /// balance booked at an older rate, and the base-currency leg carrying the
+    /// difference.
+    /// </summary>
+    string? CurrencyCode = null,
+
+    decimal? ExchangeRate = null);
 
 /// <summary>What came back from a posting attempt.</summary>
 public enum LedgerPostOutcome
@@ -184,6 +209,8 @@ public sealed class AccountingLedger : IAccountingLedger
                     subAccountPurpose = l.SubAccountPurpose,
                     debitAmount = l.DebitAmount,
                     creditAmount = l.CreditAmount,
+                    currencyCode = l.CurrencyCode,
+                    exchangeRate = l.ExchangeRate,
                     transactionDesc = l.TransactionDesc,
                 }),
             }),
@@ -272,7 +299,52 @@ public sealed class AccountingLedger : IAccountingLedger
         }
     }
 
+    public async Task<SettlementRate?> SettlementRateAsync(
+        string transactionTypeCode, long transactionId, CancellationToken ct)
+    {
+        var request = new HttpRequestMessage(
+            HttpMethod.Get,
+            $"api/ledger/documents/{Uri.EscapeDataString(transactionTypeCode)}/{transactionId}/rate");
+
+        Forward(request);
+
+        try
+        {
+            HttpResponseMessage response = await _http.SendAsync(request, ct);
+
+            // 404 is the ordinary answer for a document with nothing posted
+            // against it yet, so it is not worth a warning.
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _log.LogWarning(
+                    "Settlement rate for {Code}-{Id} returned {Status}.",
+                    transactionTypeCode, transactionId, (int)response.StatusCode);
+
+                throw new SettlementRateUnavailableException();
+            }
+
+            SettlementRateDto? rate = await response.Content.ReadFromJsonAsync<SettlementRateDto>(ct);
+
+            return rate is null ? null : new SettlementRate(rate.CurrencyCode, rate.ExchangeRate);
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
+        {
+            _log.LogWarning(
+                ex, "Settlement rate for {Code}-{Id} could not be delivered.",
+                transactionTypeCode, transactionId);
+
+            throw new SettlementRateUnavailableException();
+        }
+    }
+
     private sealed record PeriodLockStatusDto(DateOnly? LockedUpto, DateOnly? OpenFrom);
+
+    private sealed record SettlementRateDto(string CurrencyCode, decimal ExchangeRate);
 
     /// <summary>
     /// Forwards the caller's token so Accounting resolves the same customer and
@@ -297,6 +369,20 @@ public sealed class PeriodLockUnavailableException : Exception
 {
     public PeriodLockUnavailableException()
         : base("Whether the books are closed could not be established.")
+    {
+    }
+}
+
+/// <summary>
+/// Accounting could not say what a settled document was booked at. Thrown for the
+/// same reason the period lock is: an unreadable rate and a matching rate must not
+/// look the same, or a lookup that blipped would post the whole payment at today's
+/// rate and leave a residue on the contact that nobody would think to look for.
+/// </summary>
+public sealed class SettlementRateUnavailableException : Exception
+{
+    public SettlementRateUnavailableException()
+        : base("What the settled document was booked at could not be established.")
     {
     }
 }

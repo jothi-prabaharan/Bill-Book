@@ -82,6 +82,12 @@ public static class MoneyPosting
     /// The control leg — the contact's side of the movement. Named by system
     /// name, because an account id is a per-branch number Banking does not own.
     /// </summary>
+    /// <param name="settledRate">
+    /// The rate the balance being relieved was booked at, when that is not the
+    /// rate the payment moved at. The control leg comes off at it so the contact
+    /// is left owing nothing rather than a residue in a currency they have
+    /// already settled; <see cref="Fx"/> carries what the two rates differ by.
+    /// </param>
     public static LedgerPostingLeg Control(
         int lineNumber,
         int ledgerSourceId,
@@ -89,7 +95,8 @@ public static class MoneyPosting
         long contactId,
         decimal debit,
         decimal credit,
-        string? memo) =>
+        string? memo,
+        decimal? settledRate = null) =>
         new(
             MoneyPostingMap.ControlLedgerType,
             ledgerSourceId,
@@ -105,7 +112,12 @@ public static class MoneyPosting
             target.SubAccountPurpose,
             debit,
             credit,
-            memo);
+            memo,
+
+            // The currency is unchanged — the balance was always in it. Only the
+            // rate differs, which is the whole of what an exchange difference is.
+            CurrencyCode: null,
+            ExchangeRate: settledRate);
 
     /// <summary>
     /// The bank leg. <b>The one place Banking names an account by id</b>, and
@@ -133,12 +145,85 @@ public static class MoneyPosting
             memo);
 
     /// <summary>
+    /// The exchange difference on one settled line, or null when there is none.
+    ///
+    /// <b>It is whatever is left over, not a formula per direction.</b> The
+    /// balance comes off at the rate it went on at and the bank moves at the rate
+    /// it moved at; those two base amounts do not agree, and the gap is the gain
+    /// or the loss. So the leg simply takes the side the pair is short on — which
+    /// is why this is direction-free, and why it cannot be wrong about the sign
+    /// the way a per-direction rule can.
+    ///
+    /// A loss debits Realized FX Gain/Loss and a gain credits it. The account is
+    /// Income: seeded once per branch, so a gain and a loss are one line that nets
+    /// rather than two that have to be read together.
+    ///
+    /// <b>Denominated in base, at rate 1.</b> The difference never existed in the
+    /// foreign currency — it is the consequence of two rates, not an amount anyone
+    /// paid — so recording it in one would invent a figure the counterparty never
+    /// saw.
+    /// </summary>
+    /// <param name="baseCurrency">The branch's own currency. What the difference is in.</param>
+    public static LedgerPostingLeg? Fx(
+        int lineNumber,
+        int ledgerSourceId,
+        string baseCurrency,
+        decimal controlDebitBase,
+        decimal controlCreditBase,
+        decimal bankDebitBase,
+        decimal bankCreditBase,
+        string? memo)
+    {
+        decimal shortfall =
+            controlDebitBase + bankDebitBase - controlCreditBase - bankCreditBase;
+
+        if (shortfall == 0m)
+        {
+            return null;
+        }
+
+        return new LedgerPostingLeg(
+            FxLedgerType,
+            ledgerSourceId,
+            lineNumber,
+            SystemAccountNames.RealizedFxGainLoss,
+            AccountId: null,
+            SubAccountReferenceType: null,
+            SubAccountReferenceId: null,
+            MoneyPostingMap.Primary,
+
+            // Short on debits means the credits ran ahead: more base left the
+            // bank than the balance was carrying, which is a loss.
+            DebitAmount: shortfall < 0 ? -shortfall : 0m,
+            CreditAmount: shortfall > 0 ? shortfall : 0m,
+            memo,
+            baseCurrency,
+            ExchangeRate: 1m);
+    }
+
+    /// <summary><c>mst.LedgerTypes</c> 5 — FX, the realized exchange gain or loss.</summary>
+    public const int FxLedgerType = 5;
+
+    /// <summary>
     /// The base-currency amount. Two decimals, away from zero — the same rule the
     /// ledger uses, because the two have to agree to the paisa or the balance
     /// trigger refuses the posting.
     /// </summary>
     public static decimal Base(decimal amount, decimal rate) =>
         rate == 1m ? amount : Math.Round(amount / rate, 2, MidpointRounding.AwayFromZero);
+}
+
+/// <summary>
+/// The <c>AccountSystemName</c> values Banking names, spelled once.
+///
+/// Accounting owns the canonical list in its own enum; Banking does not reference
+/// that assembly, so the string is repeated here rather than shared. Repeated
+/// deliberately and in one place: a literal at each call site is how a rename
+/// silently stops resolving on one of them.
+/// </summary>
+public static class SystemAccountNames
+{
+    public const string RealizedFxGainLoss = "Realized FX Gain/Loss";
 }
 
 /// <summary>Shapes a header and its lines into the view the screens read.</summary>

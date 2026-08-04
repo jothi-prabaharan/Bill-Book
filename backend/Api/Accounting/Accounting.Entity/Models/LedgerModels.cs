@@ -188,8 +188,51 @@ public class LedgerLegRequest
         ErrorMessage = "Credit amount cannot be negative.")]
     public decimal CreditAmount { get; set; }
 
+    /// <summary>
+    /// What this leg is denominated in, when that is not what the document is
+    /// denominated in. Null means the posting's currency, which is every leg on
+    /// an ordinary document.
+    ///
+    /// <b>Set together with <see cref="ExchangeRate"/>, and only by settlement.</b>
+    /// A payment in a foreign currency has three legs that do not share one rate:
+    /// the bank moves at today's rate, the balance being relieved has to come off
+    /// at the rate it was booked at — otherwise the contact keeps a residue in a
+    /// currency nobody owes — and the difference between the two is a gain or a
+    /// loss denominated in the branch's own currency, because it never existed in
+    /// the foreign one at all.
+    /// </summary>
+    [MaxLength(3, ErrorMessage = "Currency code must be a 3-letter code.")]
+    public string? CurrencyCode { get; set; }
+
+    /// <summary>
+    /// The rate this leg converts at. Null means the posting's rate.
+    /// <b>Always a rate that was recorded, never one looked up</b> — a settlement
+    /// leg takes the rate off the document it is settling, which Accounting reads
+    /// from that document's own ledger rows.
+    /// </summary>
+    public decimal? ExchangeRate { get; set; }
+
     [MaxLength(500, ErrorMessage = "Transaction description cannot exceed 500 characters.")]
     public string? TransactionDesc { get; set; }
+}
+
+/// <summary>
+/// What a document was booked at, read back off its own ledger rows.
+///
+/// The point of reading it here rather than from the document is that Accounting
+/// is the one service that holds every document's rate in one table. Banking
+/// settles bills and invoices that Purchase and Sales own, and asking each of
+/// them would be three integrations for one number that is already written down.
+/// </summary>
+public class SettlementRateView
+{
+    public string TransactionTypeCode { get; set; } = null!;
+
+    public long TransactionId { get; set; }
+
+    public string CurrencyCode { get; set; } = null!;
+
+    public decimal ExchangeRate { get; set; }
 }
 
 public class PostLedgerResponse
