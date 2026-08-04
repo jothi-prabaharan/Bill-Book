@@ -72,4 +72,6 @@ Accounts with no subledger — bank, cash, capital — are not listed. They have
 
 ## What is not here yet
 
-**Fixed assets.** There is no asset register to migrate into, so a migrated asset currently comes across as an account balance and carries no cost, life or depreciation schedule of its own. When the register lands, migrated assets skip historical depreciation — they arrive at written-down value and depreciate from go-live.
+**Fixed assets**, which are a Phase 2 feature. There is no asset register yet, so an asset you are migrating comes across as an ordinary account balance — bring it in at its written-down value against your Fixed Asset account, the way you would any other balance.
+
+What you do not get until the register lands is the asset's own record: its cost, its life, and a depreciation schedule that runs on its own. When it does, migrated assets skip historical depreciation — they arrive at written-down value and depreciate from go-live, so nothing you bring across now has to be re-entered.

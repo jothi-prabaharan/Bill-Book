@@ -229,7 +229,7 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 
   **The screen is the readiness panel, not the grid.** Accounting › Opening balances shows debits, credits, stock and the equity plug continuously, with every blocker listed rather than summarised. Stacks to cards at ~360px, because this is a screen people key hundreds of rows into.
 
-  **Blocked, and it is T10.1's to unblock: migrated fixed assets.** There is no asset register to migrate into, so an asset currently comes across as an account balance and carries no cost, life or schedule of its own. "Skips historical depreciation" is a property of a register row, and until T10.1 exists there is nothing to set it on. Recorded in the docs page rather than left to be discovered.
+  **Deferred with the register, not blocked: migrated fixed assets.** There is no asset register to migrate into, so an asset comes across as a plain account balance and carries no cost, life or schedule of its own. "Skips historical depreciation" is a property of a register row, so it moves to Phase 2 with T10 — see the note on that stage. Recorded in the docs page in the user's own words rather than left to be discovered. **T8 is otherwise complete for Phase 1.**
 
   **The *Done when* line, closed properly.** It asks for a trial balance drawn immediately after finalize, and for every subledger to tie — and the first was only being inferred from the ledger rows while the second was a proxy: I was checking that each contact had a sub-account *provisioned*, which is not the same claim as the subledger *tying*.
 
@@ -242,6 +242,14 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 ---
 
 ## Stage T10 — fixed assets: acquisition, depreciation, disposal (DEP)
+
+> **Deferred to Phase 2** *(owner decision, 4 August 2026)*. Nothing in this stage is built and nothing else in the plan waits on it. `CLAUDE.md`'s roadmap moves with it — Fixed Assets is out of the Phase 1 line and into Phase 2.
+>
+> **It was already blocked twice over**, which is what makes deferring it cheap rather than a loss: T10.2 capitalises an asset from the bill that bought it, and the bill is **T4.5** in [`TRANSACTIONS.md`](./TRANSACTIONS.md) and does not exist; and two owner decisions in the table below are still open, both of which change the table shape. Building it now would mean guessing at both and reworking the schema when the bill lands.
+>
+> **The one thing that moves with it**: T8.3's "migrated fixed assets skip historical depreciation". That is a property of a register row, so it defers to wherever the register goes. **T8 is otherwise complete for Phase 1** — the docs page says so in the user's own words rather than leaving it to be discovered.
+>
+> The boxes below are kept, not deleted. The analysis in them is the reason acquisition comes before depreciation, and it is the thing most likely to be got wrong by whoever picks this up in Phase 2.
 
 **An earlier draft of this stage had a register, a depreciation run and a disposal, and nothing that put an asset on the books.** That is not a small omission: a depreciation run over an empty register posts nothing at all, and a register filled in by hand depreciates an asset the ledger never bought — so `Dr Depreciation Expense / Cr Accumulated Depreciation` accumulates against a Fixed Asset account holding zero, and the balance sheet carries a negative net book value that balances perfectly and is nonsense. Depreciation is only meaningful as the second act. **T10.2 is the acquisition, and it comes first.**
 
@@ -286,8 +294,8 @@ One requirement copied to two files is one requirement that drifts.
 | # | Question | Needed by | Recommendation | Answer |
 |---|---|---|---|---|
 | T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only | **Manual journals only.** Settled — see T0.7 above |
-| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 | No — capitalise from `BIL`, dispose under `INV` or `JRN` | *open* |
-| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* | *open* |
+| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 — **Phase 2** | No — capitalise from `BIL`, dispose under `INV` or `JRN` | *open, deferred with the stage* |
+| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 — **Phase 2** | *(open in `CLAUDE.md`)* | *open, deferred with the stage* |
 
 **On T10.2**, since it is the one raised by this stage rather than inherited. Adding an `FXA`/`FXD` pair to `mst.TransactionTypes` would give the asset register clean provenance under its own codes — but a purchase of a laptop **is** a purchase: same vendor, same input GST, same payment terms, same aging. A new code buys a numbering series, a screen, a lifecycle and a posting path that all duplicate Purchase, to record something Purchase already records. Capitalising from a bill line costs one flag on the line and one register row.
 
