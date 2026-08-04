@@ -464,6 +464,10 @@ export class MoneyDocumentPage implements OnInit {
   }
 
   async save(post: boolean): Promise<void> {
+    if (!this.validateSave(post)) {
+      return;
+    }
+
     this.busy.set(true);
     try {
       const kept = this.lines().filter((l) => l.ledgerSourceId !== null);
@@ -558,6 +562,30 @@ export class MoneyDocumentPage implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private validateSave(post: boolean): boolean {
+    if (this.bankAccountId === null) {
+      this.show('Choose a bank or cash account.', true);
+      return false;
+    }
+
+    if (this.contactId === null) {
+      this.show('Choose the contact.', true);
+      return false;
+    }
+
+    if (this.money(this.amount) <= 0) {
+      this.show('Amount must be greater than zero.', true);
+      return false;
+    }
+
+    if (post && !this.canPost) {
+      this.show('Complete allocations before posting.', true);
+      return false;
+    }
+
+    return true;
   }
 
   /** Parses a typed amount. Anything unparseable is zero, never NaN in a total. */

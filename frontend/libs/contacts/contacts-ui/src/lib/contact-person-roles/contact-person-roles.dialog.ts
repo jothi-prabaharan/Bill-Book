@@ -79,6 +79,11 @@ export class ContactPersonRolesDialog implements OnInit {
   }
 
   async saveEdit(row: ContactPersonRole): Promise<void> {
+    if (!this.editName.trim()) {
+      this.error.set('Role name is required.');
+      return;
+    }
+
     await this.run(async () => {
       await this.send('PUT', `/api/contact-person-roles/${row.contactPersonRoleId}`, {
         roleName: this.editName.trim(),

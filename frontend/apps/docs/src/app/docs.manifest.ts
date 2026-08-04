@@ -21,6 +21,7 @@ export const DOCS: DocSection[] = [
       { slug: 'index', title: 'Introduction', status: 'built' },
       { slug: 'architecture', title: 'Architecture', status: 'built' },
       { slug: 'status', title: 'Build status', status: 'built' },
+      { slug: 'form-validation', title: 'Form validation', status: 'built' },
     ],
   },
   {

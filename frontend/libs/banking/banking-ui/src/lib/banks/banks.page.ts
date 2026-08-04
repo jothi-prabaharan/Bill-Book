@@ -64,11 +64,22 @@ export class BanksPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (!this.hasText(this.form.bankName)) {
+      this.fail('Bank name is required.');
+      return;
+    }
+
+    const body = {
+      bankCode: this.form.bankCode.trim() || null,
+      bankName: this.form.bankName.trim(),
+      isActive: this.form.isActive,
+    };
+
     await this.run(async () => {
       if (id === 0) {
-        await this.send('POST', '/api/banks', this.form);
+        await this.send('POST', '/api/banks', body);
       } else {
-        await this.send('PUT', `/api/banks/${id}`, this.form);
+        await this.send('PUT', `/api/banks/${id}`, body);
       }
       this.editingId.set(null);
     }, 'Bank saved.');
@@ -121,6 +132,10 @@ export class BanksPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private get<T>(url: string): Promise<T> {

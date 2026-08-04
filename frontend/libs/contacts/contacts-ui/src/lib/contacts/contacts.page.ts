@@ -559,13 +559,68 @@ export class ContactsPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const payload = {
+      ...this.form,
+      contactCode: this.cleanOptional(this.form.contactCode),
+      displayName: this.form.displayName.trim(),
+      legalName: this.cleanOptional(this.form.legalName),
+      gstin: this.cleanOptional(this.form.gstin)?.toUpperCase() ?? null,
+      currencyCode: this.form.currencyCode.trim().toUpperCase(),
+      tdsSection: this.cleanOptional(this.form.tdsSection),
+      udyamNumber: this.cleanOptional(this.form.udyamNumber),
+      notes: this.cleanOptional(this.form.notes),
+      addresses: this.form.addresses.map((address) => ({
+        ...address,
+        label: this.cleanOptional(address.label),
+        addressLine1: address.addressLine1.trim(),
+        addressLine2: this.cleanOptional(address.addressLine2),
+        landmark: this.cleanOptional(address.landmark),
+        city: address.city.trim(),
+        postalCode: this.cleanOptional(address.postalCode),
+        gstin: this.cleanOptional(address.gstin)?.toUpperCase() ?? null,
+        contactPersonName: this.cleanOptional(address.contactPersonName),
+        phoneNumber: this.cleanOptional(address.phoneNumber),
+        mobileNumber: this.cleanOptional(address.mobileNumber),
+      })),
+      persons: this.form.persons.map((person) => ({
+        ...person,
+        firstName: person.firstName.trim(),
+        lastName: this.cleanOptional(person.lastName),
+        designation: this.cleanOptional(person.designation),
+        email: this.cleanOptional(person.email),
+        phoneNumber: this.cleanOptional(person.phoneNumber),
+        mobileNumber: this.cleanOptional(person.mobileNumber),
+        website: this.cleanOptional(person.website),
+      })),
+      bankDetails: this.form.bankDetails.map((bank) => ({
+        ...bank,
+        accountHolderName: bank.accountHolderName.trim(),
+        bankName: bank.bankName.trim(),
+        accountNumber: bank.accountNumber.trim(),
+        ifsc: this.cleanOptional(bank.ifsc)?.toUpperCase() ?? null,
+        branchName: this.cleanOptional(bank.branchName),
+        upiId: this.cleanOptional(bank.upiId),
+      })),
+      licences: this.form.licences.map((licence) => ({
+        ...licence,
+        licenceType: licence.licenceType.trim(),
+        licenceNumber: licence.licenceNumber.trim(),
+        description: this.cleanOptional(licence.description),
+        issuingAuthority: this.cleanOptional(licence.issuingAuthority),
+      })),
+    };
+
     this.busy.set(true);
     try {
       const id = this.editingId();
       if (id === null) {
-        await this.send('POST', '/api/contacts', this.form);
+        await this.send('POST', '/api/contacts', payload);
       } else {
-        await this.send('PUT', `/api/contacts/${id}`, this.form);
+        await this.send('PUT', `/api/contacts/${id}`, payload);
       }
       this.editorOpen.set(false);
       this.succeed('Contact saved.');
@@ -622,6 +677,140 @@ export class ContactsPage implements OnInit {
     }
   }
 
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.displayName)) {
+      this.fail('Display name is required.');
+      return false;
+    }
+
+    if (!this.hasText(this.form.contactCategory)) {
+      this.fail('Contact category is required.');
+      return false;
+    }
+
+    if (!this.hasText(this.form.gstRegistrationType)) {
+      this.fail('GST registration type is required.');
+      return false;
+    }
+
+    if (!this.hasText(this.form.currencyCode)) {
+      this.fail('Currency is required.');
+      return false;
+    }
+
+    if (!this.form.isCustomer && !this.form.isVendor && !this.form.isJobWorker && !this.form.isPrescriber) {
+      this.fail('Select at least one role (Customer, Vendor, Job worker, or Prescriber).');
+      return false;
+    }
+
+    if (this.form.isTdsApplicable && !this.hasText(this.form.tdsSection)) {
+      this.fail('TDS section is required when TDS is applicable.');
+      return false;
+    }
+
+    if (this.form.isMsme && !this.hasText(this.form.udyamNumber)) {
+      this.fail('Udyam number is required for MSME contacts.');
+      return false;
+    }
+
+    if (this.form.persons.length === 0) {
+      this.fail('At least one contact person is required.');
+      return false;
+    }
+
+    const defaultPersons = this.form.persons.filter((person) => person.isDefault);
+    if (defaultPersons.length !== 1) {
+      this.fail('Exactly one default contact person is required.');
+      return false;
+    }
+
+    const primary = defaultPersons[0];
+    if (!this.hasText(primary.email) && !this.hasText(primary.mobileNumber)) {
+      this.fail('Default contact person needs an email or mobile number.');
+      return false;
+    }
+
+    for (let i = 0; i < this.form.persons.length; i += 1) {
+      const person = this.form.persons[i];
+      if (person.contactPersonRoleId <= 0) {
+        this.fail(`Choose a role for person row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(person.firstName)) {
+        this.fail(`First name is required for person row ${i + 1}.`);
+        return false;
+      }
+    }
+
+    const billingDefaults = this.form.addresses.filter(
+      (address) => address.addressType === 'Billing' && address.isDefault,
+    );
+    if (billingDefaults.length > 1) {
+      this.fail('Only one default billing address is allowed.');
+      return false;
+    }
+
+    const shippingDefaults = this.form.addresses.filter(
+      (address) => address.addressType === 'Shipping' && address.isDefault,
+    );
+    if (shippingDefaults.length > 1) {
+      this.fail('Only one default shipping address is allowed.');
+      return false;
+    }
+
+    for (let i = 0; i < this.form.addresses.length; i += 1) {
+      const address = this.form.addresses[i];
+      if (!this.hasText(address.addressLine1)) {
+        this.fail(`Address line 1 is required for address row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(address.city)) {
+        this.fail(`City is required for address row ${i + 1}.`);
+        return false;
+      }
+    }
+
+    for (let i = 0; i < this.form.bankDetails.length; i += 1) {
+      const bank = this.form.bankDetails[i];
+      if (!this.hasText(bank.accountHolderName)) {
+        this.fail(`Account holder name is required for bank row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(bank.bankName)) {
+        this.fail(`Bank name is required for bank row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(bank.accountNumber)) {
+        this.fail(`Account number is required for bank row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(bank.accountKind)) {
+        this.fail(`Account type is required for bank row ${i + 1}.`);
+        return false;
+      }
+    }
+
+    for (let i = 0; i < this.form.licences.length; i += 1) {
+      const licence = this.form.licences[i];
+      if (!this.hasText(licence.licenceType)) {
+        this.fail(`Licence type is required for licence row ${i + 1}.`);
+        return false;
+      }
+
+      if (!this.hasText(licence.licenceNumber)) {
+        this.fail(`Licence number is required for licence row ${i + 1}.`);
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private blank(): ContactDetail {
     return {
       contactId: 0,
@@ -670,6 +859,15 @@ export class ContactsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
+  }
+
+  private cleanOptional(value: string | null | undefined): string | null {
+    const cleaned = (value ?? '').trim();
+    return cleaned.length > 0 ? cleaned : null;
   }
 
   private messageOf(err: unknown, fallback: string): string {

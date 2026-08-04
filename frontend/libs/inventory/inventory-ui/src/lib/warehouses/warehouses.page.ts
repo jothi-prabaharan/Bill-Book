@@ -91,11 +91,29 @@ export class WarehousesPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (!this.hasText(this.form.warehouseName)) {
+      this.fail('Warehouse name is required.');
+      return;
+    }
+
+    if (!this.hasText(this.form.warehouseType) || !this.hasText(this.form.storageType)) {
+      this.fail('Warehouse type and storage type are required.');
+      return;
+    }
+
+    const body = {
+      ...this.form,
+      warehouseCode: this.cleanOptional(this.form.warehouseCode),
+      warehouseName: this.form.warehouseName.trim(),
+      warehouseType: this.form.warehouseType.trim(),
+      storageType: this.form.storageType.trim(),
+    };
+
     await this.run(async () => {
       if (id === 0) {
-        await this.send('POST', '/api/warehouses', this.form);
+        await this.send('POST', '/api/warehouses', body);
       } else {
-        await this.send('PUT', `/api/warehouses/${id}`, this.form);
+        await this.send('PUT', `/api/warehouses/${id}`, body);
       }
       this.editingId.set(null);
     }, 'Warehouse saved.');
@@ -178,6 +196,15 @@ export class WarehousesPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
+  }
+
+  private cleanOptional(value: string | null | undefined): string | null {
+    const cleaned = (value ?? '').trim();
+    return cleaned.length > 0 ? cleaned : null;
   }
 
   private get<T>(url: string): Promise<T> {

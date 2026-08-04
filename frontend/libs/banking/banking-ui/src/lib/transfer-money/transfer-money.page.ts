@@ -176,6 +176,10 @@ export class TransferMoneyPage implements OnInit {
   }
 
   async save(post: boolean): Promise<void> {
+    if (!this.validateSave(post)) {
+      return;
+    }
+
     this.busy.set(true);
     try {
       const body = {
@@ -258,6 +262,35 @@ export class TransferMoneyPage implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private validateSave(post: boolean): boolean {
+    if (this.fromBankAccountId === null) {
+      this.show('Choose the account the money leaves.', true);
+      return false;
+    }
+
+    if (this.toBankAccountId === null) {
+      this.show('Choose the account the money arrives in.', true);
+      return false;
+    }
+
+    if (this.fromBankAccountId === this.toBankAccountId) {
+      this.show('From and To accounts must be different.', true);
+      return false;
+    }
+
+    if (this.money(this.amount) <= 0) {
+      this.show('Amount must be greater than zero.', true);
+      return false;
+    }
+
+    if (post && !this.canPost) {
+      this.show('Fill all mandatory fields before posting.', true);
+      return false;
+    }
+
+    return true;
   }
 
   private money(raw: string): number {

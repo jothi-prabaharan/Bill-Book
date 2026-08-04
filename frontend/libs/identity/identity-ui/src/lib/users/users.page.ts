@@ -61,12 +61,27 @@ export class UsersPage implements OnInit {
   }
 
   async invite(): Promise<void> {
+    if (!this.hasText(this.form.email)) {
+      this.show('Email is required.', true);
+      return;
+    }
+
+    if (!this.hasText(this.form.displayName)) {
+      this.show('Name is required.', true);
+      return;
+    }
+
+    if (this.form.roleId <= 0) {
+      this.show('Select a role.', true);
+      return;
+    }
+
     this.busy.set(true);
     try {
       await this.req('POST', '/api/users', {
-        email: this.form.email,
-        displayName: this.form.displayName,
-        mobileNumber: this.form.mobileNumber || null,
+        email: this.form.email.trim(),
+        displayName: this.form.displayName.trim(),
+        mobileNumber: this.form.mobileNumber.trim() || null,
         roleId: this.form.roleId,
       });
       this.show(`Invitation sent to ${this.form.email}.`, false);
@@ -113,6 +128,10 @@ export class UsersPage implements OnInit {
   private show(text: string, isError: boolean): void {
     this.message.set(text);
     this.messageIsError.set(isError);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private req<T>(method: string, url: string, body?: unknown): Promise<T> {

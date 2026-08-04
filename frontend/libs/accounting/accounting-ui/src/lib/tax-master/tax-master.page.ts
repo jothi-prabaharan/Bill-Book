@@ -78,6 +78,7 @@ export class TaxMasterPage implements OnInit {
 
     return (
       this.form.taxName.trim().length > 0 &&
+      this.form.effectiveFrom.length > 0 &&
       (this.form.isSales || this.form.isPurchase) &&
       this.form.totalRate >= 0
     );
@@ -132,16 +133,22 @@ export class TaxMasterPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.valid()) {
+      this.show('Fill all mandatory fields before saving.', true);
+      return;
+    }
+
     this.busy.set(true);
     this.message.set(null);
+    const body = { ...this.form, taxName: this.form.taxName.trim() };
     try {
       if (this.mode() === 'create') {
-        await this.req('POST', '/api/tax-masters', this.form);
+        await this.req('POST', '/api/tax-masters', body);
       } else if (this.mode() === 'revise') {
-        await this.req('POST', `/api/tax-masters/${this.editingId}/revise`, this.form);
+        await this.req('POST', `/api/tax-masters/${this.editingId}/revise`, body);
       } else {
         await this.req('PUT', `/api/tax-masters/${this.editingId}/name`, {
-          taxName: this.form.taxName,
+          taxName: body.taxName,
         });
       }
 
