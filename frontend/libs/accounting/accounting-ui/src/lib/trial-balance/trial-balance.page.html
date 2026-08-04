@@ -1,0 +1,87 @@
+<header class="page-head">
+  <h1>Trial balance</h1>
+  <a class="link" routerLink="/accounting/journals">Journal entries →</a>
+</header>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+<form class="filters" (ngSubmit)="load()">
+  <label>
+    From
+    <input type="date" [(ngModel)]="from" name="from" />
+  </label>
+  <label>
+    To
+    <input type="date" [(ngModel)]="to" name="to" />
+  </label>
+  <button type="submit" [disabled]="busy()">Show</button>
+  <button type="button" class="ghost" (click)="clear()" [disabled]="busy()">All dates</button>
+</form>
+
+@if (busy()) {
+  <p class="empty">Loading…</p>
+} @else if (report(); as tb) {
+  @if (!tb.isBalanced) {
+    <p class="broken">
+      <strong>The books do not balance.</strong>
+      Debits total {{ tb.totalDebit | number: '1.2-2' }} and credits
+      {{ tb.totalCredit | number: '1.2-2' }} — a difference of
+      {{ tb.totalDebit - tb.totalCredit | number: '1.2-2' }}. Every posting is checked when it is
+      written, so this should be impossible; it wants investigating before anything is filed.
+    </p>
+  }
+
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="code-col">Code</th>
+        <th>Account</th>
+        <th class="num">Debit</th>
+        <th class="num">Credit</th>
+      </tr>
+    </thead>
+    @for (group of grouped(); track group.type.accountTypeId) {
+      <tbody>
+        <tr class="group">
+          <td colspan="2">{{ group.type.displayName }}</td>
+          <td class="num">{{ group.debit | number: '1.2-2' }}</td>
+          <td class="num">{{ group.credit | number: '1.2-2' }}</td>
+        </tr>
+        @for (row of group.rows; track row.accountId) {
+          <tr>
+            <td class="code-col" data-label="Code">{{ row.accountCode }}</td>
+            <td data-label="Account">
+              <a class="link" [routerLink]="['/accounting/ledger', row.accountId]">
+                {{ row.accountName }}
+              </a>
+              @if (row.isContra) {
+                <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+              }
+            </td>
+            <td class="num" data-label="Debit">
+              {{ row.debitBalance ? (row.debitBalance | number: '1.2-2') : '' }}
+            </td>
+            <td class="num" data-label="Credit">
+              {{ row.creditBalance ? (row.creditBalance | number: '1.2-2') : '' }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    }
+    <tfoot>
+      <tr [class.broken-row]="!tb.isBalanced">
+        <td colspan="2">Total</td>
+        <td class="num">{{ tb.totalDebit | number: '1.2-2' }}</td>
+        <td class="num">{{ tb.totalCredit | number: '1.2-2' }}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  @if (tb.rows.length === 0) {
+    <p class="empty">
+      Nothing has been posted yet. Accounts appear here as soon as something reaches the ledger.
+    </p>
+  }
+}

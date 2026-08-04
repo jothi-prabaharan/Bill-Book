@@ -1,0 +1,113 @@
+<header class="page-head">
+  <h1>Account ledger</h1>
+  <a class="link" routerLink="/accounting/trial-balance">Trial balance →</a>
+</header>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+<form class="filters" (ngSubmit)="load()">
+  <label class="wide">
+    Account
+    <select [(ngModel)]="accountId" name="accountId" (ngModelChange)="choose()">
+      <option [ngValue]="null">Choose an account…</option>
+      @for (a of accounts(); track a.accountId) {
+        <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    From
+    <input type="date" [(ngModel)]="from" name="from" />
+  </label>
+  <label>
+    To
+    <input type="date" [(ngModel)]="to" name="to" />
+  </label>
+  <button type="submit" [disabled]="busy() || accountId === null">Show</button>
+</form>
+
+@if (busy()) {
+  <p class="empty">Loading…</p>
+} @else if (accountId === null) {
+  <p class="empty">Choose an account to see its postings.</p>
+} @else if (ledger(); as l) {
+  <section class="summary">
+    <h2>
+      <span class="code">{{ l.accountCode }}</span>
+      {{ l.accountName }}
+      @if (l.isContra) { <span class="badge">Contra</span> }
+    </h2>
+    <dl>
+      <div>
+        <dt>Opening</dt>
+        <dd>{{ presented(l.openingBalance) | number: '1.2-2' }}</dd>
+      </div>
+      <div>
+        <dt>Debits</dt>
+        <dd>{{ l.totalDebit | number: '1.2-2' }}</dd>
+      </div>
+      <div>
+        <dt>Credits</dt>
+        <dd>{{ l.totalCredit | number: '1.2-2' }}</dd>
+      </div>
+      <div class="closing">
+        <dt>Closing ({{ normalBalance() }})</dt>
+        <dd>{{ presented(l.closingBalance) | number: '1.2-2' }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <table class="grid">
+    <thead>
+      <tr>
+        <th class="date-col">Date</th>
+        <th>Document</th>
+        <th>Detail</th>
+        <th class="num">Debit</th>
+        <th class="num">Credit</th>
+        <th class="num">Balance</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of l.rows; track row.ledgerId) {
+        <tr>
+          <td class="date-col" data-label="Date">{{ row.ledgerDate }}</td>
+          <td data-label="Document">
+            <span class="chip">{{ row.transactionTypeCode }}</span>
+            @if (row.journalId) {
+              <a class="link" [routerLink]="['/accounting/journals', row.journalId]">
+                {{ row.journalNo ?? '#' + row.journalId }}
+              </a>
+            } @else {
+              <span class="ref">#{{ row.transactionId }}</span>
+            }
+            @if (row.transactionDetailId) {
+              <span class="ref">· line {{ row.transactionDetailId }}</span>
+            }
+          </td>
+          <td data-label="Detail">
+            {{ row.transactionDesc }}
+            @if (row.subAccountName) {
+              <span class="sub">{{ row.subAccountName }}</span>
+            }
+          </td>
+          <td class="num" data-label="Debit">
+            {{ row.debitAmountBase ? (row.debitAmountBase | number: '1.2-2') : '' }}
+          </td>
+          <td class="num" data-label="Credit">
+            {{ row.creditAmountBase ? (row.creditAmountBase | number: '1.2-2') : '' }}
+          </td>
+          <td class="num balance" data-label="Balance">
+            {{ presented(row.runningBalance) | number: '1.2-2' }}
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="empty">Nothing posted to this account in that range.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}

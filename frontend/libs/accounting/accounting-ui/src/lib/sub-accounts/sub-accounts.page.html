@@ -63,6 +63,11 @@
                 @if (s.taxComponent !== 'None') {
                   <span class="chip tax">{{ s.taxComponent.toUpperCase() }}</span>
                 }
+                @if (s.purpose !== 'Primary') {
+                  <span class="chip advance" title="An advance held under this control account — reported apart from trade balances">
+                    Advance
+                  </span>
+                }
               </td>
               <td class="ref">#{{ s.referenceId }}</td>
             </tr>

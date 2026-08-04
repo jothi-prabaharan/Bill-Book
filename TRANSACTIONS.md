@@ -1,20 +1,23 @@
-# TRANSACTIONS.md — the plan for every transaction document
+# TRANSACTIONS.md — the trading documents
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the sixteen document types** — the half of the product that moves money and stock, none of which is built.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the ten document types owned by Sales, Purchase and Inventory** — the trading half, none of which is built.
+
+The documents owned by **Accounting and Banking** are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) and are not repeated here. **Stage numbers were not renumbered when the two files were split**, so the numbering below skips T1, T6, T8 and T10 — those stages live in that file, and the gaps are deliberate rather than a mistake.
 
 Same rules as `master.md`: take the first unticked box, check it against its **Done when** line, tick it in the same commit as the work, and strike a task rather than deleting it if it turns out to be wrong.
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 
+**Flow documents, beside this plan and not part of it**: [`FLOW-SALES.md`](./FLOW-SALES.md), [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md) and [`FLOW-STOCK.md`](./FLOW-STOCK.md) describe how these documents behave once built. No checkboxes — this file is the work, those are the behaviour.
+
 ---
 
-## Scope — the sixteen types
+## Scope — the ten trading documents
 
-Every row of `mst.TransactionTypes`, which is seeded and applied. Three post nothing; thirteen reach the ledger.
+The rows of `mst.TransactionTypes` owned by Sales, Purchase and Inventory. Three post nothing; seven reach the ledger. All ten trade something — an item, a price, GST, a cost layer — which is what separates them from the money documents in the other file and why they need the foundations below.
 
 | Code | Document | Owner | Posts | Moves stock | Stage |
 |---|---|---|---|---|---|
-| JRN | Manual journal | Accounting | yes | no | T1 |
 | QTE | Quote | Sales | no | no | T2 |
 | SOR | Sales order | Sales | no | reserves | T2 |
 | INV | Invoice | Sales | yes | issues | T3 |
@@ -23,13 +26,8 @@ Every row of `mst.TransactionTypes`, which is seeded and applied. Three post not
 | BIL | Bill | Purchase | yes | no¹ | T4 |
 | CRN | Credit note | Sales | yes | returns | T5 |
 | DBN | Debit note | Purchase | yes | returns | T5 |
-| SPM | Spend money | Banking | yes | no | T6 |
-| RCM | Receive money | Banking | yes | no | T6 |
-| TRM | Transfer money | Banking | yes | no | T6 |
 | POS | POS sale | Sales | yes | issues | T7 |
-| OPB | Opening balance | Accounting | yes | receives | T8 |
 | STA | Stock adjustment | Inventory | yes | adjusts | T9 |
-| DEP | Depreciation | Accounting | yes | no | T10 |
 
 ¹ A bill against a goods receipt moves no stock — the receipt already did. A bill with no receipt behind it does, and is the common case for services and for a trader who never raises a GRN.
 
@@ -49,12 +47,18 @@ Worth stating, because the foundations below are the gaps in it rather than a re
 
 ## Stage T0 — foundations, before the first document
 
-None of these is a document. All six are things a document immediately needs and none of which exists, and each one found later is a schema change in the same commit as a screen.
+None of these is a document. All five are things a document immediately needs and none of which exists, and each one found later is a schema change in the same commit as a screen.
 
-- [ ] **T0.1 — The ledger door takes one leg type per call. A document has four.**
+**T0.5 (`acc.Journals`) and T0.7 (does a document write a `Journals` row?) moved** to [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#foundations-owned-here) — both exist only for the manual journal. The five below stayed because Sales and Purchase need them too, and a shared prerequisite belongs with the shared prerequisites.
+
+- [x] **T0.1 — The ledger door takes one leg type per call. A document has four.**
   `PostLedgerRequest` carries a single `LedgerTypeId` and a single `TransactionDetailId` for the whole request, and refuses the request unless its own legs balance. An invoice's `ITEM` legs are per-line credits to Sales Revenue, its `TAX` legs are per-rate credits to Output GST, and the one debit to Accounts Receivable is a header-level `CONTROL` leg at detail `0`. **No subset of those balances on its own**, so an invoice cannot be posted through the door as it stands. Stock never hit this because a stock posting is exactly two legs, one type, one amount — balanced by construction, as its own comment says.
   Move `LedgerTypeId` and `TransactionDetailId` onto the leg; check balance across the request rather than per key; scope the replace to `(TransactionTypeCode, TransactionId)` intersected with the leg types present in the request. That last part is what preserves the property 5.12 deliberately built — Sales' revenue legs and Inventory's COGS legs sit on one invoice and replace independently. Withdrawal (an empty leg list, used by void) then has to name the leg types explicitly, since there are no legs to infer them from.
   *Done when*: a three-line invoice with two GST rates, one receivable leg and a round-off posts in one call; re-posting it replaces its own rows and leaves the COGS rows Inventory wrote untouched; and voiding it withdraws its four leg types and no others.
+  **Done**, and all three cases are tests against a real PostgreSQL rather than assertions in prose.
+  **One correction to the plan as written.** "Scope the replace to `(TransactionTypeCode, TransactionId)` intersected with the leg types present" would have been a data-loss bug: Inventory posts a document **one movement at a time**, so a document-wide COGS replace has line two delete line one's rows. What was built instead keys the replace on the `(leg type, line)` pairs the request actually names — which still gives Sales and Inventory independent replacement on one invoice, the property this task exists to preserve. **Withdrawal stays document-wide** by leg type, because a void has no legs to name pairs with and its whole claim is that none of those legs exist any more. The asymmetry is deliberate and documented at the call site.
+  Also added: a leg may name its account by **id** as well as by system name. Only seeded control accounts have a system name, and a manual journal posts to accounts that have none — the id stays barred to callers outside Accounting, for the reason the model always gave.
+  **`LedgerSourceId` moved onto the leg too**, in the same shape as `LedgerTypeId` but for a different reason. The leg type moved because no subset of a document's legs balances on its own; the source moved because **one document can be several things at once**. An overpayment settles a bill with part of itself and leaves the rest as an advance — stamp the whole document one source and a payables report filtering on bill payments misses the part that was one. See T6.2 in the other file.
 
 - [ ] **T0.2 — There is no tax determination anywhere**
   `CLAUDE.md` requires **one** component shared by Sales and Purchase. Same state → CGST + SGST, different state → IGST, decided from the branch's own state against the contact's place of supply, falling back to the first two digits of the GSTIN when place of supply is unset. Rates come from `acc.TaxMasters` **as in force on the document date, never today's** — an invoice edited after a rate revision must not reprice itself.
@@ -72,31 +76,14 @@ None of these is a document. All six are things a document immediately needs and
   `RequireModulePermission` maps GET to `.view`, DELETE to `.delete` and **everything else to `.edit`**, which was the right three lines for masters and is not enough here. `sales.void` and `sales.approve` are seeded and granted and would be reachable by anyone holding `sales.edit`. Add an action override to the attribute for the routes that void, approve or print.
   *Done when*: a posted invoice refuses an edit; a void withdraws exactly its own ledger rows and releases exactly its own reservation; and a user holding `sales.edit` but not `sales.void` is refused the void.
 
-- [ ] **T0.5 — `acc.Journals` and `acc.JournalDetails`**
-  Designed in SPEC, built nowhere. The manual journal document, and the only place a reversal is paired **line by line** — without which a partially reversed journal cannot be told from a fully reversed one, because both balance.
-  Entities, `DbSet`s, Fluent config, the two check constraints, the deferred balance trigger on `Posted` only, and RLS. See T0.7 for whether other documents write here.
-  *Done when*: a two-line journal saves as a draft while unbalanced, refuses to post unbalanced, and a reversal links both headers and every line.
-
-- [ ] **T0.6 — Nothing displays a ledger, and everything below writes to one**
+- [x] **T0.6 — Nothing displays a ledger, and everything below writes to one**
   `acc.JournalLedger` accepts postings and stock already writes to it, and there is no screen. Build the account ledger and the trial balance **before the first document**, not after: from here every stage is verified by whether a posting is right, and a posting that can only be read with SQL will be checked by nobody. It also closes the presentation half of master.md 4.4, which has been waiting for somewhere to be shown.
   Account ledger — account, date range, running balance, drill to the document. Trial balance — every account, debit and credit totals, and the two agreeing, which is the one number that says the whole system is sound.
   **Settle `acc.vw_LedgerDetail` here.** SPEC flags it: `CREATE VIEW` is not in `CLAUDE.md`'s raw-SQL exception list, and a view that omits `security_invoker = true` bypasses RLS and leaks the general ledger across branches. *Recommendation: don't add the view.* Do the join as a LINQ projection in Accounting and compute the running balance in C# over the ordered, account-scoped, date-ranged result — a ledger screen is always all three of those, so the window function buys less than the exception costs.
   *Done when*: a trial balance built from the stock postings already in the ledger balances, and every posting in it drills back to the movement that wrote it.
-
-- [ ] **T0.7 — Decide whether a document also writes a `Journals` row** *(owner decision)*
-  SPEC's `Journals.TransactionTypeCode` reads "`JRN` when hand-written, else the source document's type", which implies every invoice gets a journal header shadowing it. 5.12 established the opposite mechanism: services post to `JournalLedger` directly, keyed by their own document, with no header in Accounting.
-  *Recommendation: manual journals only.* A second header per invoice is a second thing to keep in step with the first, and the ledger rows already carry the document type and id. The cost of being wrong is one nullable column later; the cost of building it is a shadow table under every document in the product.
-
----
-
-## Stage T1 — the manual journal (JRN)
-
-The simplest document that posts: no stock, no tax, no contact required. Doing it first proves the extended ledger door on something with nothing else going on.
-
-- [ ] **T1.1 — Journal entry API** — create, edit while draft, post, reverse. Debit xor credit per line, balance guarded on post, `LedgerSourceId = 12`, `JournalId` set on the ledger rows.
-  *Done when*: posting a balanced journal writes ledger rows that appear on T0.6's screens, an unbalanced post is refused, and a reversal offsets it exactly.
-- [ ] **T1.2 — Journal entry page** — grid of lines with account and sub-account pickers, running debit/credit totals with the difference shown, draft save, post, reverse.
-  *Done when*: a journal can be keyed, saved, posted and reversed without leaving the page, and the totals show the imbalance while it exists.
+  **Done.** `LedgerReportService` + `api/ledger`, and two pages under Accounting. **The view was not added**, per the recommendation — both reads are LINQ projections, and the running balance is accumulated in C# over the ordered, account-scoped, date-ranged result.
+  Two things worth recording. Balances are held **in debit terms** — positive is a debit balance — and turned the right way up by the screen, which already loads `mst.AccountTypes` for its normal balance; keeping a second copy of which types are which inside Accounting is exactly how two reports come to disagree. And the trial balance shows each account in **one** column, the side its net falls on, rather than both its totals: two columns of gross totals always agree, because every posting was balanced when it was written, so they would prove nothing.
+  Six tests against a real PostgreSQL, over postings written through the door rather than rows the test inserted — a test that hand-wrote the ledger would be checking its own arithmetic.
 
 ---
 
@@ -145,7 +132,8 @@ Mirrors T2–T3 and reuses the tax component, the numbering and the lifecycle un
 - [ ] **T4.4 — Goods receipt: API and page** — receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input.
   *Done when*: a receipt against an order opens a cost layer at the received cost, and a partial receipt leaves the order partly open.
 - [ ] **T4.5 — Bill: API and page** — with or without a receipt, with the Input GST legs and payment terms driving the due date.
-  *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; and payables aging ties to the Accounts Payable control account.
+  **A bill line is stock, expense or capital**, and the third is how every purchased fixed asset gets onto the books — it posts to a Fixed Asset account and creates the register row, rather than to Inventory. The line flag belongs here; what it then does is [T10.2](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-acquisition-depreciation-disposal-dep) in the other file, and T10 cannot start until this task exists.
+  *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; a capital line moves neither and lands on a Fixed Asset account; and payables aging ties to the Accounts Payable control account.
 
 ---
 
@@ -161,21 +149,6 @@ A sales return and a purchase return. Both reverse value and both put stock back
 
 ---
 
-## Stage T6 — money: spend, receive, transfer (SPM, RCM, TRM)
-
-Where the receivable and payable balances built above are actually cleared. `mst.LedgerSources` already distinguishes payment from refund and prepayment from allocation, which is what makes these three types carry nine different meanings.
-
-- [ ] **T6.1 — `bnk.*` transaction schema** — payments, receipts and transfers, with lines that allocate to documents.
-- [ ] **T6.2 — Spend money (SPM)** — bill payment, vendor prepayment, invoice refund, credit-note refund, chosen by `LedgerSourceId` rather than by transaction type. `Dr Accounts Payable / Cr Bank`, with `MappingTransactionId` and `MappingTransactionTypeCode` pointing at the bill — that pair is the entire mechanism for tracing a payment to what it settles.
-  *Done when*: paying a bill clears it from payables aging, and the ledger row names the bill it paid.
-- [ ] **T6.3 — Receive money (RCM)** — the mirror, against invoices, with customer prepayments landing in Advance from Customer rather than against a document.
-- [ ] **T6.4 — Transfer money (TRM)** — bank to bank or bank to cash. No contact, no sub-account, no control leg; the one source with no counterparty.
-- [ ] **T6.5 — Realized FX on settlement** — an extra pair to Realized FX Gain/Loss at `LedgerTypeId = 5`, computed from the difference between the document's `ExchangeRate` and the payment's. **Never from a live rate.**
-  *Done when*: an invoice raised at one rate and settled at another leaves no residual balance on the contact, and the difference sits in Realized FX Gain/Loss.
-- [ ] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
-
----
-
 ## Stage T7 — POS sale (POS)
 
 An invoice and its receipt in one action, from `apps/desktop`, which today has no source files at all.
@@ -184,17 +157,6 @@ An invoice and its receipt in one action, from `apps/desktop`, which today has n
 - [ ] **T7.2 — POS screen** — keyboard and barcode driven, offline-tolerant, whole thing in `apps/desktop`.
 - [ ] **T7.3 — ESC/POS receipt** — commands, not PDF; fixed-width; desktop only, because a browser cannot reach a USB or serial printer.
   *Done when*: a sale rings up, prints and decrements stock with the network to Accounting down, and reconciles when it returns.
-
----
-
-## Stage T8 — opening balances (OPB)
-
-`CLAUDE.md` calls this the highest-risk screen in the system, and it is deliberately late: it is the one document that touches every subledger at once, so it wants all of them finished.
-
-- [ ] **T8.1 — Orchestration** — Accounting drives; Inventory takes opening quantity and unit cost and seeds the weighted average; Contacts takes opening AR and AP **per contact, never a lump sum**, or aging is broken from day one.
-- [ ] **T8.2 — The validation** — Opening Balance Equity nets to zero, and finalize is blocked until AR, AP and Inventory subledgers tie to their control accounts.
-- [ ] **T8.3 — Read-only after go-live**, and migrated fixed assets skip historical depreciation.
-  *Done when*: a trial balance drawn immediately after finalize balances, every subledger ties, and the screen refuses to reopen.
 
 ---
 
@@ -208,23 +170,13 @@ Movements already post as `STA` when they have no document behind them, each fil
 
 ---
 
-## Stage T10 — fixed assets and depreciation (DEP)
-
-Last because nothing else waits on it, and because it still carries an open question in `CLAUDE.md`.
-
-- [ ] **T10.1 — `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules`** — not designed in SPEC. **The category owns the GL mapping** (Fixed Asset / Accumulated Depreciation / Depreciation Expense); per-asset mapping does not scale.
-- [ ] **T10.2 — Depreciation run** — a period posting `Dr Depreciation Expense / Cr Accumulated Depreciation`, the latter contra so the balance sheet subtracts it.
-- [ ] **T10.3 — Disposal** — proceeds against written-down value, gain or loss to the P&L.
-  *Blocked on an owner decision already recorded in `CLAUDE.md`*: straight-line only, or books **and** tax depreciation? Two schedules per asset is a different table shape, so it is cheaper to answer than to retrofit.
-
----
-
 ## Standing requirements
 
-These apply to every stage above and are not repeated in the tasks.
+These apply to every stage in **both** files and are not repeated in the tasks. This is the only copy — [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) points here rather than restating them, because one requirement copied to two files is one requirement that drifts.
 
 - **Documentation ships in the same commit** — a page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and a bullet under **Unreleased** in `release-notes.md`.
-- **Every per-customer table** gets `OrgId`, a global query filter and an RLS policy. The filter is the first line of defence, not the last.
+- **Every table inherits `AuditableEntity`** — all four audit columns plus the `xmin` concurrency token, on every table these stages add, with **no exemptions**. The ones worth naming because they get overlooked: **detail tables** (every document line table below), join tables, and seeded reference rows all carry them. Per-customer tables inherit `OrgScopedEntity`, which extends `AuditableEntity`, so they get both from one base class. Never set the values by hand — `AuditSaveChangesInterceptor` writes them, and `CreatedBy IS NULL` is what marks a row as seed data rather than something a user typed. CLAUDE.md hard rule 6; column-level detail in [`SPEC.md`](./SPEC.md).
+- **Every per-customer table** gets `OrgId`, a global query filter and an RLS policy — **detail tables included**. SPEC has `acc.JournalDetails` scoped through its parent header instead, and T0.5 overrode that when it built the table: scoping through a parent means no EF query filter at all and an RLS policy that has to subquery the header, which is strictly weaker than the two lines every other table gets for nothing. Every detail table in the product carries its own `OrgId` — follow that, not SPEC. The filter is the first line of defence, not the last.
 - **Every endpoint** carries `[Authorize]` and `RequireModulePermission`, and validates the caller's `OrgId` against the target's, returning `Forbid()` rather than `NotFound()`.
 - **Every posting is idempotent** on its document key, so a retried request replaces rather than doubles.
 - **`ExchangeRate` is a snapshot at document date**, never looked up live, on every document that carries one.
@@ -233,20 +185,20 @@ These apply to every stage above and are not repeated in the tasks.
 
 ## Open decisions, gathered
 
-Answering these before the stage that needs them is much cheaper than after. Four are recommendations above waiting for a yes; two are already in `CLAUDE.md`.
+Answering these before the stage that needs them is much cheaper than after.
 
 | # | Question | Needed by | Recommendation |
 |---|---|---|---|
-| T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only |
 | T2.1 | One discriminated `sal` document table, or a table pair per type? | T2 | One pair, discriminated |
 | T4.1 | Does a goods receipt post to a GRNI clearing account? | T4 | Yes, and seed the account |
-| T0.6 | `acc.vw_LedgerDetail` as a database view, or a LINQ projection? | T0 | LINQ projection; don't grow the raw-SQL exception list |
-| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* |
+| ~~T0.6~~ | ~~`acc.vw_LedgerDetail` as a database view, or a LINQ projection?~~ | ~~T0~~ | **Settled: LINQ projection.** The view was not added and the raw-SQL exception list did not grow |
 | — | Should a branch declare its trade, so documents and settings narrow themselves? | any | *(open in `CLAUDE.md`, master.md 5.14)* |
+
+Two more are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#open-decisions-owned-here), and **one of them reached back into this file**: T0.7, whether every document also writes an `acc.Journals` row. **It has been answered — manual journals only.** Nothing in this file writes a `Journals` row; every document here posts straight to `JournalLedger` under its own type and id, exactly as 5.12 established.
 
 ## Sequencing, and the one place it is arguable
 
-T1 before everything because a posting nobody can read is a posting nobody checks. T2 before T3 because the document machinery is worth getting wrong somewhere that posts nothing.
+T1 — in the other file — before everything, because a posting nobody can read is a posting nobody checks. Then T2 before T3 here, because the document machinery is worth getting wrong somewhere that posts nothing.
 
 **Sales before Purchase is the arguable one.** The natural demonstration is buy then sell, and a goods receipt is a simpler document than an invoice — no reservation, no layer consumption, no COGS. Taking Purchase first would also let the invoice be tested against stock that arrived at a real cost rather than an opening balance.
 

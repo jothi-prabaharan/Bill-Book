@@ -744,7 +744,7 @@ Check constraints: at least one role · TDS ⇒ section · MSME ⇒ Udyam · lim
 
 Validated in C# (spans rows or crosses a service): **GSTIN's first two digits must equal the place-of-supply state's GST code**, verified against `mst.States` through Master's API and cached · GSTIN unique across contacts · at least one active person, exactly one default · the default person must have an email or mobile · one default address per type.
 
-**On create** → two sub-accounts in Accounting via `POST internal/sub-accounts/provision`, idempotent.
+**On create** → six sub-accounts in Accounting via `POST internal/sub-accounts/provision` — trade, prepayment advance and overpayment advance beneath each of Accounts Receivable and Accounts Payable, discriminated by `SubAccountPurpose`. Idempotent **per target**, so re-running it for a contact created before the advances existed backfills exactly the four it is missing.
 
 ### `con.ContactAddresses` ✅
 | ContactAddressId long PK · OrgId · ContactId (FK, cascade) · AddressType enum→string(10) Billing/Shipping · IsDefault · Label string(50)? · AddressLine1 string(200) · AddressLine2 string(200)? · Landmark string(100)? · City string(100) · StateId int? · CountryId int · PostalCode string(10)? · Gstin string(15)? · ContactPersonName string(100)? · PhoneNumber · MobileNumber · IsActive |
@@ -800,8 +800,66 @@ Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCred
 
 **Three parent groups added to the org-creation seed**: 1400 Cash in Hand (Asset) · 1500 Bank Accounts (Asset) · 2300 Bank OD & Credit Cards (Liability), all `IsLock = true` so nothing posts to the group.
 
-### `acc.Journals` 🔨
+### `bnk.MoneyTransactions` / `bnk.MoneyTransactionDetails` ✅
+Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one table pair discriminated by `TransactionTypeCode`**, not three. The three share every column that matters; what differs is a destination account on a transfer and a contact on the other two. The same shape decision T2.1 takes for `sal`.
+
+**`bnk.MoneyTransactions`** — header.
+
+| Column | Type | Rules |
+|---|---|---|
+| MoneyTransactionId | long | PK, identity |
+| OrgId | Guid | Required |
+| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. `SPM` / `RCM` / `TRM` only, by check constraint |
+| TransactionNo | string(30)? | **Null while Draft** — the number is taken at post, never at draft |
+| TransactionDate | DateOnly | Required |
+| BankAccountId | long | Required, FK → `bnk.BankAccounts`, restrict. On a transfer this is the **source** |
+| ToBankAccountId | long? | FK → `bnk.BankAccounts`, restrict. **Transfers only**, and never equal to `BankAccountId` |
+| ContactId | long? | No FK — Contacts owns it. **Null on a transfer**, which is the one money document with no counterparty |
+| Amount | decimal(18,2) | Required, > 0. Its detail lines must sum to exactly this before it can post |
+| CurrencyCode | string(3) | Required |
+| ExchangeRate | decimal(18,8) | Default 1, > 0. **Snapshot at TransactionDate — never live.** The difference between this and the settled document's rate *is* the realized FX gain or loss |
+| PaymentMethod | enum→string(20) | Cash / Cheque / BankTransfer / Upi / Card / DemandDraft / Wallet / Other |
+| ReferenceNo | string(50)? | Cheque number, UTR, UPI reference |
+| ReferenceDate | DateOnly? | Instrument date, when a cheque carries one |
+| Memo | string? | Unbounded |
+| Status | enum→string(10) | Draft / Posted / Void |
+| PostedAt · PostedBy | DateTimeOffset? · Guid? | |
+| VoidedAt · VoidedBy · VoidReason | DateTimeOffset? · Guid? · string(300)? | A posted document is voided, never deleted — a gap in a document series is what an auditor asks about |
+
+Filtered unique: (OrgId, TransactionTypeCode, TransactionNo) where number not null · Indexes: (OrgId, TransactionDate), (OrgId, BankAccountId, TransactionDate), (OrgId, ContactId)
+
+**Check constraints**: number-on-post · posted stamp agrees with status · void stamp agrees with status · `Amount > 0` · `ExchangeRate > 0` · transfer shape (TRM ⇒ destination and no contact; otherwise no destination) · no transfer to the same account · type is one of the three.
+
+**`bnk.MoneyTransactionDetails`** — what each part of the money *was*, and what it settles.
+
+| Column | Type | Rules |
+|---|---|---|
+| MoneyTransactionDetailId | long | PK, identity |
+| OrgId | Guid | Required |
+| MoneyTransactionId | long | Required, FK, **cascade** |
+| LineNumber | int | Required. Unique within the document |
+| **LedgerSourceId** | int | Required → `mst.LedgerSources`, no FK. **This is where a payment says what kind of payment it is** |
+| MappingTransactionTypeCode | string(3)? | The document settled — `BIL`, `INV`, `CRN`, `DBN`. No FK |
+| MappingTransactionId | long? | Paired with the code: both null, or both set |
+| Amount | decimal(18,2) | Required, > 0. Direction is the document's, so a refund is a different source, never a negative amount |
+| AmountBase | decimal(18,2) | Required, > 0. At the header's rate |
+| LineMemo | string(300)? | |
+
+Unique index: (MoneyTransactionId, LineNumber) · Index: (OrgId, MappingTransactionTypeCode, MappingTransactionId) — "what has been paid against this bill?"
+
+**Check constraints**: amounts > 0 · mapping paired (an id with no type resolves to nothing; a type with no id names every document at once).
+
+**Deferred constraint trigger**, on both tables: the lines must sum to the header's `Amount` — but **only once Posted**, so a draft may be part-allocated while it is being keyed. Two triggers, not one: posting changes the header and never touches the lines, so a line-only trigger would miss the one path that matters most. The same pair `acc.Journals` carries, for the same reason.
+
+**Why the source is on the line and not the header.** A payment of ₹11,000 against a ₹10,000 bill is a bill payment *and* a supplier deposit at once: ₹10,000 settles the bill, ₹1,000 becomes an advance. Record one meaning on the header and a payables report asking for bill payments quietly misses the ₹10,000 that genuinely was one. The same mechanism covers a payment split across several bills — one line per bill, one bank movement.
+
+### `acc.Journals` ✅
 Manual journal header.
+
+**Built, with two deliberate deviations from the columns below** — both recorded in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) T0.5:
+
+- **`JournalNo` is nullable**, with a filtered unique index on the non-null values. The number is taken **at post, not at draft** — a draft that is never posted must not consume one from a series that has to run without gaps. Two check constraints hold both halves: a draft has no number, and anything past Draft must have one.
+- **Only manual journals live here.** T0.7 was answered *manual journals only*: every other document posts straight to `JournalLedger` under its own type and id, with no header shadowing it. `TransactionTypeCode` and `SourceId` stay for a future document that wants one.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -823,8 +881,10 @@ Manual journal header.
 
 Unique index: (OrgId, JournalNo) · Indexes: (OrgId, JournalDate), (OrgId, TransactionTypeCode, SourceId)
 
-### `acc.JournalDetails` 🔨
+### `acc.JournalDetails` ✅
 Journal lines. Debit and credit are mutually exclusive per line.
+
+**Built, and it carries `OrgId`** — contrary to the note further down this section. Every other detail table in the product carries its own, and CLAUDE.md requires `OrgId` plus a query filter on every per-customer table without exception. Scoping through the parent means no EF query filter at all and an RLS policy that has to subquery the header, which is strictly weaker than the two lines every other table gets for nothing.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -847,13 +907,15 @@ Unique index: (JournalId, LineNumber) · Indexes: (ReversesJournalDetailId)
 - `chk_debit_credit_exclusive`: `(DebitAmount > 0 AND CreditAmount = 0) OR (CreditAmount > 0 AND DebitAmount = 0)`
 - `chk_amounts_non_negative`: all four amounts ≥ 0
 
-**No `OrgId`** — scoped via parent Journal.
+~~**No `OrgId`** — scoped via parent Journal.~~ **Superseded**: it carries its own, for the reason at the head of this section.
 
 **Deferred constraint trigger** (raw SQL in migration, no LINQ equivalent): on insert/update/delete, if parent status is `Posted`, sum(DebitAmountBase) must equal sum(CreditAmountBase). `DEFERRABLE INITIALLY DEFERRED` so multi-line inserts don't trip on intermediate state.
 
+**As built there are two triggers, not one.** The trigger above fires on the lines — but posting a draft changes the *header* and leaves the lines untouched, so it never fires for the one path that matters most. A second deferred trigger on `acc.Journals` covers it: without it, an unbalanced draft could be posted simply by flipping its status.
+
 **Reversal is line-paired, not just header-paired.** `Journals` links the two documents; `JournalDetails` links each individual line to the line it offsets. Without the detail-level pair, a partially reversed journal cannot be told apart from a fully reversed one, and a reversal that omits a line still balances — so nothing catches it.
 
-### `acc.JournalLedger` 🔨
+### `acc.JournalLedger` ✅
 **The single posting target.** Every financial document in the system — invoice, bill, payment, refund, journal, opening balance, depreciation, stock adjustment — writes its double-entry legs here and nowhere else. This is what reports read.
 
 | Column | Type | Rules |
@@ -946,7 +1008,7 @@ Indexes: (OrgId, TransactionTypeCode, TransactionId) · (OrgId, MappingTransacti
 
 Allocations must never exceed the target's outstanding balance. Enforce in C# — the sum spans rows, so no check constraint can express it.
 
-### `acc.vw_LedgerDetail` — combined transaction view 🔨
+### `acc.vw_LedgerDetail` — combined transaction view ❌ *not built, by decision*
 One flattened read model over `JournalLedger`, joining the names that reports and the ledger screen need, so every transaction type is queried the same way regardless of which service wrote it.
 
 Resolves: `mst.TransactionTypes` (code, name), `mst.LedgerTypes`, `mst.LedgerSources`, `acc.Accounts` (code, name, type, subtype), `acc.SubAccounts` (name), and the mapped document's transaction-type code. `ContactId` stays an id — Contacts is another service, so resolve names in C#, **batched**.
@@ -959,9 +1021,13 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 - The EF global query filter on `OrgId` applies to the keyless entity as well — belt and braces alongside RLS.
 
 > **⚠ `CREATE VIEW` is not in `CLAUDE.md`'s raw-SQL exception list.** That list is `CREATE DATABASE`, RLS policies, triggers and `set_config`. A view needs raw SQL in a migration, so either the list grows to include views, or this becomes a LINQ projection in the Reporting service instead of a database object. Decide before implementing.
+>
+> **Decided (T0.6): the view was not built, and the exception list did not grow.** The account ledger and the trial balance are LINQ projections in Accounting, and the running balance is accumulated in C# over the ordered result. A ledger read is always scoped to one account, ordered, and cut to a date range — which is everything the window function needed — so the view bought less than the exception cost. The `security_invoker` hazard above is the other half of the reason: a view that forgets it reads straight past RLS and hands one branch another branch's general ledger, and that is one migration away from happening by accident.
 
 ### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `bnk.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+
+`bnk.*` is no longer among them — the money documents are designed and built; see the section above.
 
 ---
 

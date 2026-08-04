@@ -2,6 +2,7 @@ using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Kernel.Tenancy;
 
 namespace Accounting.Api.Services;
@@ -20,7 +21,24 @@ namespace Accounting.Api.Services;
 /// writes the new set inside one transaction. That is what makes a caller free
 /// to retry after a dropped response, and what lets a cost that has been
 /// restated correct its own ledger rows rather than needing a second entry
-/// nobody asked for. An empty leg list withdraws the posting.
+/// nobody asked for.
+///
+/// <b>One call carries every leg type a document has</b>, because no subset of
+/// an invoice's legs balances on its own: the revenue credits are per line, the
+/// GST credits are per rate, and the single receivable debit is neither. Balance
+/// is therefore checked across the whole request rather than per key.
+///
+/// <b>Two services write to one document, and neither disturbs the other.</b>
+/// Sales posts an invoice's ITEM, TAX, CONTROL and ROUNDOFF legs; Inventory's
+/// costing worker posts the COGS legs onto the same invoice minutes later. Each
+/// replaces only the keys its own legs name, so the two are independent without
+/// either knowing the other exists.
+///
+/// <b>One document can also be several things at once.</b> A payment that runs
+/// past what was owed settles a bill with part of itself and leaves the rest as
+/// an advance — so the ledger source is a property of the leg, not of the
+/// posting, and a payables report reading bill payments still sees the part that
+/// was one.
 /// </summary>
 public sealed class LedgerPostingService
 {
@@ -66,61 +84,109 @@ public sealed class LedgerPostingService
             rate = 1m;
         }
 
+        if (request.Legs.Count == 0 && request.WithdrawLedgerTypeIds.Count == 0)
+        {
+            return new PostLedgerResult(
+                PostLedgerOutcome.WithdrawalTypesMissing, 0, 0,
+                "A withdrawal has no legs to infer its leg types from, so it has to name them.");
+        }
+
+        string typeCode = request.TransactionTypeCode.ToUpperInvariant();
         var rows = new List<JournalLedger>(request.Legs.Count);
 
         foreach (LedgerLegRequest leg in request.Legs)
         {
+            // How the leg reads back in a refusal. The system name when there is
+            // one, because that is what the caller wrote.
+            string described = leg.AccountSystemName is { Length: > 0 } named
+                ? $"'{named}'"
+                : leg.AccountId is long identified ? $"account {identified}" : "an unnamed account";
+
             // Exactly one side. Checked here as well as by the database so the
             // caller gets a reason rather than a constraint violation.
             if ((leg.DebitAmount == 0) == (leg.CreditAmount == 0))
             {
                 return new PostLedgerResult(
                     PostLedgerOutcome.LegNotExclusive, 0, 0,
-                    $"{leg.AccountSystemName}: a leg is a debit or a credit, never both or neither.");
+                    $"{described}: a leg is a debit or a credit, never both or neither.");
             }
 
             if (leg.DebitAmount < 0 || leg.CreditAmount < 0)
             {
                 return new PostLedgerResult(
                     PostLedgerOutcome.LegNotExclusive, 0, 0,
-                    $"{leg.AccountSystemName}: an amount is negative. A reversal is an "
+                    $"{described}: an amount is negative. A reversal is an "
                         + "offsetting entry, not a negative one.");
             }
 
-            Account? account = await _db.Accounts.FirstOrDefaultAsync(
-                a => a.AccountSystemName == leg.AccountSystemName, ct);
+            // Named either way: an id from Accounting's own documents, a system
+            // name from every other service. Both resolve through the query
+            // filter, so neither can reach another branch's chart.
+            Account? account = leg.AccountId is long accountId
+                ? await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId, ct)
+                : leg.AccountSystemName is { Length: > 0 } systemName
+                    ? await _db.Accounts.FirstOrDefaultAsync(
+                        a => a.AccountSystemName == systemName, ct)
+                    : null;
 
             if (account is null)
             {
                 return new PostLedgerResult(
                     PostLedgerOutcome.AccountMissing, 0, 0,
-                    $"The chart of accounts has no account named '{leg.AccountSystemName}'.");
+                    leg.AccountId is null && leg.AccountSystemName is null or { Length: 0 }
+                        ? "A leg has to name its account, by system name or by id."
+                        : $"The chart of accounts has no {described}.");
             }
 
             if (account.IsLock || !account.IsActive)
             {
                 return new PostLedgerResult(
                     PostLedgerOutcome.AccountLocked, 0, 0,
-                    $"'{leg.AccountSystemName}' is frozen for posting.");
+                    $"'{account.AccountName}' is frozen for posting.");
             }
 
             long? subAccountId = null;
 
-            if (leg.SubAccountReferenceType is { } referenceType
+            if (leg.SubAccountId is long suppliedSubAccountId)
+            {
+                SubAccount? sub = await _db.SubAccounts.FirstOrDefaultAsync(
+                    s => s.SubAccountId == suppliedSubAccountId, ct);
+
+                // Under this leg's own account, or the balance it produces
+                // reconciles against neither account's subledger.
+                if (sub is null || sub.AccountId != account.AccountId)
+                {
+                    return new PostLedgerResult(
+                        PostLedgerOutcome.SubAccountMissing, 0, 0,
+                        $"Sub-account {suppliedSubAccountId} does not sit under "
+                            + $"'{account.AccountName}'.");
+                }
+
+                subAccountId = sub.SubAccountId;
+            }
+            else if (leg.SubAccountReferenceType is { } referenceType
                 && leg.SubAccountReferenceId is { } referenceId)
             {
+                // The whole unique key, purpose and component included. Matching
+                // on the reference alone is not narrower, it is ambiguous: a
+                // contact has three sub-accounts under Accounts Receivable and a
+                // tax rate has three under Output GST, so the leg would land on
+                // whichever the database happened to return first.
                 SubAccount? sub = await _db.SubAccounts.FirstOrDefaultAsync(
                     s => s.AccountId == account.AccountId
                         && s.ReferenceType == referenceType
-                        && s.ReferenceId == referenceId,
+                        && s.ReferenceId == referenceId
+                        && s.Purpose == leg.SubAccountPurpose
+                        && s.TaxComponent == leg.SubAccountTaxComponent,
                     ct);
 
                 if (sub is null)
                 {
                     return new PostLedgerResult(
                         PostLedgerOutcome.SubAccountMissing, 0, 0,
-                        $"'{leg.AccountSystemName}' has no sub-account for {referenceType} "
-                            + $"{referenceId}. The master that owns it has not been provisioned.");
+                        $"'{account.AccountName}' has no {leg.SubAccountPurpose} sub-account for "
+                            + $"{referenceType} {referenceId}. The master that owns it has not "
+                            + "been provisioned.");
                 }
 
                 subAccountId = sub.SubAccountId;
@@ -131,9 +197,9 @@ public sealed class LedgerPostingService
                 LedgerDate = request.LedgerDate,
                 AccountId = account.AccountId,
                 SubAccountId = subAccountId,
-                TransactionTypeCode = request.TransactionTypeCode.ToUpperInvariant(),
+                TransactionTypeCode = typeCode,
                 TransactionId = request.TransactionId,
-                TransactionDetailId = request.TransactionDetailId,
+                TransactionDetailId = leg.TransactionDetailId,
                 DebitAmount = leg.DebitAmount,
                 CreditAmount = leg.CreditAmount,
                 DebitAmountBase = Base(leg.DebitAmount, rate),
@@ -141,10 +207,11 @@ public sealed class LedgerPostingService
                 CurrencyCode = currency,
                 ExchangeRate = rate,
                 ContactId = request.ContactId,
-                LedgerTypeId = request.LedgerTypeId,
-                LedgerSourceId = request.LedgerSourceId,
+                LedgerTypeId = leg.LedgerTypeId,
+                LedgerSourceId = leg.LedgerSourceId,
                 SourceDocumentId = request.SourceDocumentId,
                 TransactionDesc = leg.TransactionDesc,
+                JournalId = request.JournalId,
             });
 
             // First use freezes the account's nature. Set in the same
@@ -167,26 +234,98 @@ public sealed class LedgerPostingService
                 $"Debits total {debits} and credits total {credits}.");
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        // Join the caller's transaction when there is one — a manual journal
+        // allocates its number, flips its status and posts its legs, and those
+        // three are one act. Only open a transaction when nothing else has.
+        IDbContextTransaction? own = _db.Database.CurrentTransaction is null
+            ? await _db.Database.BeginTransactionAsync(ct)
+            : null;
 
-        // The replace. Scoped to this caller's own key, so a document whose
-        // other legs were written by another service keeps them.
-        int replaced = await _db.JournalLedger
-            .Where(l => l.TransactionTypeCode == request.TransactionTypeCode
-                && l.TransactionId == request.TransactionId
-                && l.TransactionDetailId == request.TransactionDetailId
-                && l.LedgerTypeId == request.LedgerTypeId)
-            .ExecuteDeleteAsync(ct);
+        try
+        {
+            int replaced = await ReplaceAsync(request, typeCode, rows, ct);
 
-        _db.JournalLedger.AddRange(rows);
-        await _db.SaveChangesAsync(ct);
+            // ExecuteDelete goes straight to the database and the change tracker
+            // never hears about it. A row this context had already read is now
+            // tracked with nothing behind it, and the SaveChanges below would
+            // try to write it again against a row count of zero.
+            foreach (var stale in _db.ChangeTracker.Entries<JournalLedger>()
+                .Where(e => e.Entity.TransactionTypeCode == typeCode
+                    && e.Entity.TransactionId == request.TransactionId)
+                .ToList())
+            {
+                stale.State = EntityState.Detached;
+            }
 
-        // The balance trigger is deferred, so it fires here rather than on the
-        // first row — which is the only way a multi-leg posting can be inserted
-        // at all.
-        await tx.CommitAsync(ct);
+            _db.JournalLedger.AddRange(rows);
+            await _db.SaveChangesAsync(ct);
 
-        return new PostLedgerResult(PostLedgerOutcome.Ok, rows.Count, replaced);
+            // The balance trigger is deferred, so it fires at commit rather than
+            // on the first row — which is the only way a multi-leg posting can
+            // be inserted at all. When the caller owns the transaction, that
+            // commit is theirs and so is the check.
+            if (own is not null)
+            {
+                await own.CommitAsync(ct);
+            }
+
+            return new PostLedgerResult(PostLedgerOutcome.Ok, rows.Count, replaced);
+        }
+        finally
+        {
+            if (own is not null)
+            {
+                await own.DisposeAsync();
+            }
+        }
+    }
+
+    /// <summary>
+    /// Clears what this posting is about to supersede, and nothing else.
+    ///
+    /// One delete per leg type, each narrowed to the document lines that type
+    /// actually names. A single delete over the union of types and the union of
+    /// lines would be the cross product of the two — it would take an ITEM row on
+    /// a line this request never mentioned.
+    ///
+    /// <b>A withdrawal is document-wide by leg type</b>, because it has no lines
+    /// to narrow by and its whole claim is that none of those legs exist any
+    /// more. A posting cannot be document-wide: Inventory posts a document one
+    /// movement at a time, so line two would erase line one.
+    /// </summary>
+    private async Task<int> ReplaceAsync(
+        PostLedgerRequest request,
+        string typeCode,
+        List<JournalLedger> rows,
+        CancellationToken ct)
+    {
+        if (rows.Count == 0)
+        {
+            List<int> withdrawing = request.WithdrawLedgerTypeIds.Distinct().ToList();
+
+            return await _db.JournalLedger
+                .Where(l => l.TransactionTypeCode == typeCode
+                    && l.TransactionId == request.TransactionId
+                    && withdrawing.Contains(l.LedgerTypeId))
+                .ExecuteDeleteAsync(ct);
+        }
+
+        int replaced = 0;
+
+        foreach (IGrouping<int, JournalLedger> byType in rows.GroupBy(r => r.LedgerTypeId))
+        {
+            int ledgerTypeId = byType.Key;
+            List<long> details = byType.Select(r => r.TransactionDetailId).Distinct().ToList();
+
+            replaced += await _db.JournalLedger
+                .Where(l => l.TransactionTypeCode == typeCode
+                    && l.TransactionId == request.TransactionId
+                    && l.LedgerTypeId == ledgerTypeId
+                    && details.Contains(l.TransactionDetailId))
+                .ExecuteDeleteAsync(ct);
+        }
+
+        return replaced;
     }
 
     /// <summary>

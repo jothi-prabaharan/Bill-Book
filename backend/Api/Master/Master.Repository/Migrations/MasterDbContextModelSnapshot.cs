@@ -1855,8 +1855,8 @@ namespace Master.Repository.Migrations
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -2030,6 +2030,42 @@ namespace Master.Repository.Migrations
                             Direction = "Both",
                             IsActive = true,
                             Name = "Stock adjustment",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            LedgerSourceId = 16,
+                            Code = "VENDOROVERPAYMENT",
+                            Direction = "Out",
+                            IsActive = true,
+                            Name = "Overpayment to vendor",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            LedgerSourceId = 17,
+                            Code = "CUSTOMEROVERPAYMENT",
+                            Direction = "In",
+                            IsActive = true,
+                            Name = "Overpayment from customer",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            LedgerSourceId = 18,
+                            Code = "CUSTOMEROVERPAYMENTREFUND",
+                            Direction = "Out",
+                            IsActive = true,
+                            Name = "Customer overpayment refunded",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            LedgerSourceId = 19,
+                            Code = "CUSTOMERPREPAYMENTREFUND",
+                            Direction = "Out",
+                            IsActive = true,
+                            Name = "Customer advance refunded",
                             Version = 0u
                         });
                 });

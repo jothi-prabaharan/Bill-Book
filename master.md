@@ -2,7 +2,7 @@
 
 The order to build things in, and how to tell when each one is actually done.
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) continues it for the sixteen document types — Stage 6 below, kept in its own file because it is the larger half of the product.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds the tables and pages. This file holds **what to do next**, one item at a time. [`TRANSACTIONS.md`](./TRANSACTIONS.md) and [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) continue it for the sixteen document types — Stage 6 below, in their own files because together they are the larger half of the product.
 
 ## How to use this file
 
@@ -17,13 +17,15 @@ The order to build things in, and how to tell when each one is actually done.
 
 ## Where things stand
 
-Verified on 2 August 2026, by reading the repository rather than from memory.
+Verified on 3 August 2026, by reading the repository rather than from memory.
 
-**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 25 pages, and every endpoint behind an authentication and permission check.
+**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 28 pages, and every endpoint behind an authentication and permission check.
 
-**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 58 tests pass, every EF snapshot matches its model, and all 29 migrations are applied to a real PostgreSQL — 21 in a customer database, 8 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
+**Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 110 tests pass, every EF snapshot matches its model, and all 33 migrations are applied to a real PostgreSQL — 24 in a customer database, 9 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
-**Nothing is blocked by tooling any more.** What is left is an owner's decision — 5.14, 5.16, 5.19 — and the presentation half of 4.4, which has nowhere to be shown until a ledger screen exists. Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen. The next substantial build is **Sales** — the next thing on the Phase 1 roadmap. `sal.*` is still marked *not designed* in SPEC, so it starts with a schema, and it now arrives to a general ledger that already accepts postings.
+**Nothing is blocked by tooling any more.** What is left is an owner's decision — 5.14, 5.16, 5.19. **4.4 is closed**: the account ledger and the trial balance are built (T0.6), so what is posted finally has somewhere to be read. Reserved quantity (5.13) and the stock-to-ledger posting (5.12) were both held for Sales and have been built ahead of it instead: each is a schema change plus a guard, and a schema change is the wrong thing to be doing in the same commit as a first screen.
+
+**The transaction plan has started.** T0.1, T0.5, T0.6, T0.7, T1.1 and T1.2 are done — the ledger door now takes a whole document's legs in one call, the manual journal exists, and both ledger screens are in place. The next substantial build is **Sales**, the next thing on the Phase 1 roadmap; `sal.*` is still marked *not designed* in SPEC, so it starts with a schema, and it now arrives to a general ledger that accepts postings **and can be read**. Its own foundations — T0.2 (tax determination), T0.3 (its numbering series) and T0.4 (the lifecycle) — are still unbuilt and come first. See [`TRANSACTIONS.md`](./TRANSACTIONS.md).
 
 ---
 
@@ -357,12 +359,23 @@ Independent of the stages above; take any of them whenever.
 
 ---
 
-## Stage 6 — Transactions → [`TRANSACTIONS.md`](./TRANSACTIONS.md)
+## Stage 6 — Transactions → two files
 
-The sixteen document types, none of which is built. It lives in its own file because it is larger than everything above it put together, and it keeps its boxes there rather than duplicating them here.
+The sixteen document types, none of which is built. They live in their own files because together they are larger than everything above put together, and they keep their boxes there rather than duplicating them here. Stage numbers run T0–T10 across both, and are **not** renumbered by the split — the gaps in each file say where the missing stage went.
 
-**T0 — foundations** · the ledger door takes one leg type per call and a document has four · no tax determination exists · no document numbering series · one lifecycle for every type · `acc.Journals` · a ledger screen, before the first document rather than after
+**[`TRANSACTIONS.md`](./TRANSACTIONS.md) — the trading documents.** Sales, Purchase and Inventory: ten types, and the shared foundations every document needs.
+**T0 — foundations** · the ledger door takes one leg type per call and a document has four · no tax determination exists · no document numbering series · one lifecycle for every type · a ledger screen, before the first document rather than after
+**T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T7** POS sale · **T9** stock adjustment document
 
-**T1** manual journal · **T2** quote and sales order · **T3** invoice · **T4** purchase order, goods receipt, bill · **T5** credit and debit notes · **T6** spend, receive and transfer money · **T7** POS sale · **T8** opening balances · **T9** stock adjustment document · **T10** fixed assets and depreciation
+**[`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) — the money documents.** Accounting and Banking: the six that trade nothing — no item, no price, no GST, no cost layer.
+**T0.5 / T0.7** `acc.Journals` and whether any other document writes one · **T1** manual journal · **T6** spend, receive and transfer money · **T8** opening balances · **T10** fixed assets — acquisition, depreciation, disposal
 
-Six decisions are gathered at the end of that file, four of them with a recommendation waiting on a yes.
+**T1 is the first stage of the plan, in either file** — a posting nobody can read is a posting nobody checks, and the manual journal is the cheapest document to prove the ledger with.
+
+Six decisions are gathered at the end of the two files, four of them with a recommendation waiting on a yes.
+
+**Three flow documents sit beside the plan and are not part of it** — no checkboxes, nothing to tick. They describe how a transaction behaves rather than what to build, which is the question the plan cannot answer while you are in the middle of writing one of its tasks.
+
+- [`FLOW-SALES.md`](./FLOW-SALES.md) — quote → order → invoice → receipt, plus POS and the credit note
+- [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md) — order → receipt → bill → payment, plus the debit note
+- [`FLOW-STOCK.md`](./FLOW-STOCK.md) — the pool, the guarded move, the two queues, costing and recosting. **Built, so it describes running code** rather than an intention, unlike the other two

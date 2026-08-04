@@ -14,8 +14,14 @@ public class LedgerSource : AuditableEntity
     /// <summary>PK, not identity — explicit ids for seeding.</summary>
     public int LedgerSourceId { get; set; }
 
+    /// <summary>
+    /// The canonical identity, and what reports filter on. 30 rather than 20:
+    /// the scheme is entity + kind + action, and CUSTOMEROVERPAYMENTREFUND is 25
+    /// characters. Abbreviating a key to fit the column is how a lookup table
+    /// ends up full of codes nobody can read.
+    /// </summary>
     [Required(ErrorMessage = "Code is required.")]
-    [MaxLength(20, ErrorMessage = "Code cannot exceed 20 characters.")]
+    [MaxLength(30, ErrorMessage = "Code cannot exceed 30 characters.")]
     public string Code { get; set; } = null!;
 
     [Required(ErrorMessage = "Name is required.")]

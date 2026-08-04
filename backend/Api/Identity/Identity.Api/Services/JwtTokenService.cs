@@ -41,6 +41,12 @@ public sealed class JwtTokenService : ITokenService
             new("org_id", request.OrgId.ToString()),
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
+
+            // The role, beside the permissions it grants. Permissions answer
+            // "may this caller do X"; the role answers "which of the branch's
+            // period locks applies to them", and that is not derivable from a
+            // permission list.
+            new("role_id", request.RoleId.ToString()),
         };
 
         if (request.LicenseExpiry is DateOnly expiry)

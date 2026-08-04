@@ -92,11 +92,25 @@ public class SubAccountListItem
 
     public int AccountTypeId { get; set; }
 
-    public SubAccountReferenceType ReferenceType { get; set; }
+    /// <summary>
+    /// Named, not numbered. Nothing configures a string enum converter here, so
+    /// an enum property would go out as an integer and every screen reading it
+    /// would be comparing against a name that never matches — silently, because a
+    /// mismatched comparison renders as a missing badge rather than an error. The
+    /// money documents send their <c>Status</c> and <c>PaymentMethod</c> the same
+    /// way.
+    /// </summary>
+    public string ReferenceType { get; set; } = null!;
 
     public long ReferenceId { get; set; }
 
-    public TaxComponent TaxComponent { get; set; }
+    public string TaxComponent { get; set; } = null!;
+
+    /// <summary>
+    /// Which balance this holds beneath the control account. A contact has three
+    /// under each of receivables and payables, and this is what tells them apart.
+    /// </summary>
+    public string Purpose { get; set; } = null!;
 
     public string SubAccountName { get; set; } = null!;
 

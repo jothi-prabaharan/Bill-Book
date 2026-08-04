@@ -134,6 +134,197 @@ namespace Accounting.Repository.Migrations
                     b.ToTable("Accounts", "acc");
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Journal", b =>
+                {
+                    b.Property<long>("JournalId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("JournalId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("decimal(18,8)");
+
+                    b.Property<DateOnly>("JournalDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("JournalNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("PostedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<long?>("ReversedByJournalId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ReversesJournalId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SourceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("TransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("JournalId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("ReversedByJournalId");
+
+                    b.HasIndex("ReversesJournalId");
+
+                    b.HasIndex("OrgId", "JournalDate");
+
+                    b.HasIndex("OrgId", "JournalNo")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Journals_Number")
+                        .HasFilter("\"JournalNo\" IS NOT NULL");
+
+                    b.HasIndex("OrgId", "TransactionTypeCode", "SourceId");
+
+                    b.ToTable("Journals", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_journal_number_on_post", "(\"Status\" = 'Draft' AND \"JournalNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"JournalNo\" IS NOT NULL)");
+
+                            t.HasCheckConstraint("chk_journal_posted_stamp", "(\"Status\" = 'Draft') = (\"PostedAt\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_journal_rate_positive", "\"ExchangeRate\" > 0");
+
+                            t.HasCheckConstraint("chk_journal_reversal_distinct", "\"ReversesJournalId\" IS NULL OR \"ReversesJournalId\" <> \"JournalId\"");
+                        });
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.JournalDetail", b =>
+                {
+                    b.Property<long>("JournalDetailId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("JournalDetailId"));
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("CreditAmountBase")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DebitAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DebitAmountBase")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<long>("JournalId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("LineMemo")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long?>("ReversedByJournalDetailId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ReversesJournalDetailId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SubAccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("JournalDetailId");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("ReversedByJournalDetailId");
+
+                    b.HasIndex("ReversesJournalDetailId");
+
+                    b.HasIndex("SubAccountId");
+
+                    b.HasIndex("JournalId", "LineNumber")
+                        .IsUnique();
+
+                    b.ToTable("JournalDetails", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_journal_detail_exclusive", "(\"DebitAmount\" > 0 AND \"CreditAmount\" = 0) OR (\"CreditAmount\" > 0 AND \"DebitAmount\" = 0)");
+
+                            t.HasCheckConstraint("chk_journal_detail_non_negative", "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0 AND \"DebitAmountBase\" >= 0 AND \"CreditAmountBase\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.JournalLedger", b =>
                 {
                     b.Property<long>("LedgerId")
@@ -376,6 +567,54 @@ namespace Accounting.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.PeriodLock", b =>
+                {
+                    b.Property<long>("PeriodLockId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("PeriodLockId"));
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly>("LockedUpto")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Note")
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("RoleId")
+                        .HasColumnType("integer");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("PeriodLockId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("OrgId", "RoleId")
+                        .IsUnique();
+
+                    b.ToTable("PeriodLocks", "acc");
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.SubAccount", b =>
                 {
                     b.Property<long>("SubAccountId")
@@ -408,6 +647,11 @@ namespace Accounting.Repository.Migrations
                     b.Property<Guid>("OrgId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Purpose")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<long>("ReferenceId")
                         .HasColumnType("bigint");
 
@@ -436,9 +680,12 @@ namespace Accounting.Repository.Migrations
 
                     b.HasIndex("OrgId");
 
+                    b.HasIndex("OrgId", "Purpose")
+                        .HasDatabaseName("IX_SubAccounts_Purpose");
+
                     b.HasIndex("OrgId", "ReferenceType", "ReferenceId");
 
-                    b.HasIndex("AccountId", "ReferenceType", "ReferenceId", "TaxComponent")
+                    b.HasIndex("AccountId", "ReferenceType", "ReferenceId", "TaxComponent", "Purpose")
                         .IsUnique();
 
                     b.ToTable("SubAccounts", "acc");
@@ -681,6 +928,49 @@ namespace Accounting.Repository.Migrations
                     b.HasOne("Accounting.Entity.TableEntities.Account", null)
                         .WithMany()
                         .HasForeignKey("ParentAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.Journal", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Journal", null)
+                        .WithMany()
+                        .HasForeignKey("ReversedByJournalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Accounting.Entity.TableEntities.Journal", null)
+                        .WithMany()
+                        .HasForeignKey("ReversesJournalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.JournalDetail", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Accounting.Entity.TableEntities.Journal", null)
+                        .WithMany()
+                        .HasForeignKey("JournalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Accounting.Entity.TableEntities.JournalDetail", null)
+                        .WithMany()
+                        .HasForeignKey("ReversedByJournalDetailId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Accounting.Entity.TableEntities.JournalDetail", null)
+                        .WithMany()
+                        .HasForeignKey("ReversesJournalDetailId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Accounting.Entity.TableEntities.SubAccount", null)
+                        .WithMany()
+                        .HasForeignKey("SubAccountId")
                         .OnDelete(DeleteBehavior.Restrict);
                 });
 

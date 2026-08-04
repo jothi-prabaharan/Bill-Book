@@ -67,6 +67,9 @@ builder.Services.AddScoped<NumberingSeriesService>();
 builder.Services.AddScoped<PaymentTermService>();
 builder.Services.AddScoped<BankLedgerService>();
 builder.Services.AddScoped<LedgerPostingService>();
+builder.Services.AddScoped<PeriodLockService>();
+builder.Services.AddScoped<JournalService>();
+builder.Services.AddScoped<LedgerReportService>();
 
 // The branch's base currency, for stamping onto ledger rows. Cached per
 // organization for the same reason the financial year is: it changes about

@@ -12,4 +12,12 @@ public interface ICurrentUser
     Guid? CustomerId { get; }
 
     Guid? OrgId { get; }
+
+    /// <summary>
+    /// The single role the caller holds in this organization. Null on a token
+    /// minted before the claim existed, and on system contexts — a period-lock
+    /// check treats that as "apply the branch's strictest lock" rather than as
+    /// no lock at all.
+    /// </summary>
+    int? RoleId { get; }
 }

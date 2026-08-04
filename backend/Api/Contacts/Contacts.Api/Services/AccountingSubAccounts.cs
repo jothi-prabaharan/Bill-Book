@@ -3,7 +3,9 @@ using System.Net.Http.Json;
 namespace Contacts.Api.Services;
 
 /// <summary>
-/// Creates a contact's two sub-accounts (receivable and payable) in Accounting.
+/// Creates a contact's six sub-accounts in Accounting — the trade balance, a
+/// prepayment advance and an overpayment advance, beneath each of Accounts
+/// Receivable and Accounts Payable.
 /// Only Accounting writes ledger rows, so this is a call rather than an insert.
 /// </summary>
 public interface IAccountingSubAccounts

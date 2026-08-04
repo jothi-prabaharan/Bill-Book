@@ -1,0 +1,41 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.link { color: #3557d6; text-decoration: none; }
+.link:hover { text-decoration: underline; }
+.error { color: #c0392b; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+
+.filters { display: flex; align-items: flex-end; gap: .75rem; margin: 1rem 0; flex-wrap: wrap; }
+.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.filters label.wide { flex: 1 1 18rem; }
+.filters input, .filters select { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+.filters button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; font-size: .85rem; cursor: pointer; }
+
+.summary { background: #f4f6fb; border-radius: 8px; padding: .8rem 1rem; margin-bottom: 1rem; }
+.summary h2 { font-size: 1rem; margin: 0 0 .5rem; display: flex; gap: .5rem; align-items: baseline; }
+.summary .code { color: #6a6f80; font-weight: 400; font-variant-numeric: tabular-nums; }
+.summary dl { display: flex; gap: 2rem; margin: 0; flex-wrap: wrap; }
+.summary dt { font-size: .72rem; color: #8a8f9e; }
+.summary dd { margin: 0; font-variant-numeric: tabular-nums; font-size: .95rem; }
+.summary .closing dd { font-weight: 600; }
+
+.grid { width: 100%; border-collapse: collapse; }
+.grid th, .grid td { text-align: left; padding: .45rem .6rem; border-bottom: 1px solid #e2e4ea; vertical-align: top; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.balance { font-weight: 500; }
+.date-col { width: 6.5rem; color: #6a6f80; font-variant-numeric: tabular-nums; }
+.chip { font-size: .62rem; background: #e3e9fd; color: #2743a8; padding: .05rem .3rem; border-radius: 3px; margin-right: .3rem; }
+.ref { color: #8a8f9e; font-size: .78rem; }
+.sub { display: block; color: #8a8f9e; font-size: .75rem; }
+.badge { font-size: .62rem; background: #ffe9c7; color: #8a5a00; padding: .05rem .3rem; border-radius: 3px; }
+
+/* At 360px the grid becomes a card list — each cell keeps its own label, since
+   the header row is gone. */
+@media (max-width: 640px) {
+  .summary dl { gap: 1rem; }
+  .grid thead { display: none; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #e2e4ea; }
+  .grid td { display: flex; justify-content: space-between; gap: 1rem; border: 0; padding: .15rem .6rem; }
+  .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 auto; }
+  .date-col { width: auto; }
+}

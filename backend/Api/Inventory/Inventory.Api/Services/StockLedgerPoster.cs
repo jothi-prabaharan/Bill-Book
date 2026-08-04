@@ -168,14 +168,11 @@ public sealed class StockLedgerPoster
             orgId,
             posting.TransactionTypeCode,
             posting.TransactionId,
-            posting.TransactionDetailId,
-            StockLedgerMapping.CogsLedgerType,
-            posting.LedgerSourceId,
             movement.MovementDate,
             movement.StockMovementId,
             [
-                Leg(posting.DebitAccountSystemName, movement.ItemId, amount, isDebit: true, description),
-                Leg(posting.CreditAccountSystemName, movement.ItemId, amount, isDebit: false, description),
+                Leg(posting, movement.ItemId, amount, isDebit: true, description),
+                Leg(posting, movement.ItemId, amount, isDebit: false, description),
             ]);
 
         LedgerPostOutcome outcome = await _ledger.PostAsync(request, ct);
@@ -207,8 +204,20 @@ public sealed class StockLedgerPoster
     }
 
     private static LedgerPostingLeg Leg(
-        string account, long itemId, decimal amount, bool isDebit, string description) =>
-        new(
+        StockPosting posting, long itemId, decimal amount, bool isDebit, string description)
+    {
+        string account = isDebit
+            ? posting.DebitAccountSystemName
+            : posting.CreditAccountSystemName;
+
+        return new LedgerPostingLeg(
+            // Both legs of a stock posting are the document's cost-of-sales leg,
+            // filed against the document's own line. Together those two are the
+            // key this posting replaces, so a recosted movement corrects its own
+            // rows and leaves the rest of the document alone.
+            StockLedgerMapping.CogsLedgerType,
+            posting.LedgerSourceId,
+            posting.TransactionDetailId,
             account,
             // Only the stock accounts have an item beneath them. Opening Balance
             // Equity has no sub-dimension, and asking for one that was never
@@ -218,6 +227,7 @@ public sealed class StockLedgerPoster
             isDebit ? amount : 0m,
             isDebit ? 0m : amount,
             description);
+    }
 
     private async Task SettleAsync(
         StockMovement movement, LedgerStatus status, string? note, CancellationToken ct) =>

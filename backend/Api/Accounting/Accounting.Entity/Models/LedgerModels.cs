@@ -13,13 +13,32 @@ namespace Accounting.Entity.Models;
 /// is a per-organization number in a database the caller does not read, and
 /// resolving one on the far side is how a leg ends up on the wrong account.
 ///
-/// <b>Replace, never append.</b> A posting is identified by
+/// <b>A document has more than one kind of leg, and they only balance
+/// together.</b> An invoice credits Sales Revenue per line, credits Output GST
+/// per rate, and debits Accounts Receivable once for the whole document — no
+/// subset of those balances on its own. So the leg type and the document line
+/// belong to the leg, not to the request, and one call carries the lot.
+///
+/// <b>A document can also be more than one kind of thing at once.</b> Paying
+/// ₹11,000 against a ₹10,000 bill is a bill payment and a vendor prepayment on
+/// one document: ₹10,000 settles the bill and ₹1,000 becomes an advance. Stamp
+/// the whole thing "overpayment" and a payables report filtering on bill
+/// payments silently misses ₹10,000 of a real one — so the source is on the leg
+/// too.
+///
+/// <b>Replace, never append.</b> A leg is identified by
 /// (<see cref="TransactionTypeCode"/>, <see cref="TransactionId"/>,
-/// <see cref="TransactionDetailId"/>, <see cref="LedgerTypeId"/>) and posting
-/// the same key twice replaces the earlier rows rather than doubling them. That
-/// is what makes a caller safe to retry, and what lets a restated cost correct
-/// itself. An empty <see cref="Legs"/> list removes the set, which is how a
-/// posting that should no longer exist is withdrawn.
+/// <see cref="LedgerLegRequest.TransactionDetailId"/>,
+/// <see cref="LedgerLegRequest.LedgerTypeId"/>), and a posting replaces exactly
+/// the keys its legs name rather than doubling them. That is what makes a caller
+/// safe to retry, and what lets a restated cost correct itself.
+///
+/// <b>Withdrawal is the asymmetric case.</b> An empty <see cref="Legs"/> list
+/// has no keys to infer, so it names its leg types in
+/// <see cref="WithdrawLedgerTypeIds"/> and clears them across the whole
+/// document. A posting cannot do the same, because Inventory posts a document
+/// one line at a time — a document-wide replace would have line two erase line
+/// one's rows.
 /// </summary>
 public class PostLedgerRequest
 {
@@ -37,15 +56,6 @@ public class PostLedgerRequest
     public string TransactionTypeCode { get; set; } = null!;
 
     public long TransactionId { get; set; }
-
-    /// <summary>The document line, or 0 when the posting is not line-level.</summary>
-    public long TransactionDetailId { get; set; }
-
-    [Range(1, 6, ErrorMessage = "Ledger type must be one of the six leg types.")]
-    public int LedgerTypeId { get; set; }
-
-    [Range(1, 15, ErrorMessage = "Ledger source must be one of the fifteen sources.")]
-    public int LedgerSourceId { get; set; }
 
     public DateOnly LedgerDate { get; set; }
 
@@ -67,15 +77,72 @@ public class PostLedgerRequest
     /// <summary>The row in the calling service that produced this posting.</summary>
     public long? SourceDocumentId { get; set; }
 
+    /// <summary>
+    /// The manual journal behind this posting. Set only when
+    /// <see cref="LedgerSourceId"/> is 12 (Journal) — it is what lets a ledger
+    /// row drill back to the journal that wrote it rather than only to a
+    /// document type and an id.
+    /// </summary>
+    public long? JournalId { get; set; }
+
+    /// <summary>
+    /// Which leg types to clear when <see cref="Legs"/> is empty. Required for a
+    /// withdrawal and ignored otherwise: with no legs there is nothing to infer
+    /// the types from, and a withdrawal that guessed would either leave rows
+    /// behind or take another writer's.
+    /// </summary>
+    public List<int> WithdrawLedgerTypeIds { get; set; } = [];
+
     public List<LedgerLegRequest> Legs { get; set; } = [];
 }
 
-/// <summary>One leg. Debit xor credit, never both, never negative.</summary>
+/// <summary>
+/// One leg. Debit xor credit, never both, never negative.
+///
+/// The leg carries its own <see cref="LedgerTypeId"/> and
+/// <see cref="TransactionDetailId"/> because a single document produces several
+/// of each at once, and it is the pair of them that says which rows this leg
+/// replaces. It carries its own <see cref="LedgerSourceId"/> because a single
+/// document can be several things at once.
+/// </summary>
 public class LedgerLegRequest
 {
-    [Required(ErrorMessage = "An account system name is required on every leg.")]
+    [Range(1, 6, ErrorMessage = "Ledger type must be one of the six leg types.")]
+    public int LedgerTypeId { get; set; }
+
+    /// <summary>
+    /// What produced this leg, from <c>mst.LedgerSources</c>. On the leg rather
+    /// than the request: an overpayment settles a bill with part of itself and
+    /// leaves the rest as an advance, and those two halves are different sources
+    /// on one document.
+    /// </summary>
+    [Range(1, 19, ErrorMessage = "Ledger source must be one of the nineteen sources.")]
+    public int LedgerSourceId { get; set; }
+
+    /// <summary>The document line, or 0 when the leg is not line-level.</summary>
+    public long TransactionDetailId { get; set; }
+
+    /// <summary>
+    /// How a caller in another service names the account: "Inventory", "Cost of
+    /// Goods Sold". Required from outside Accounting, and the reason is in the
+    /// class summary above.
+    ///
+    /// Only seeded control accounts have one. An account a user added has none,
+    /// which is why <see cref="AccountId"/> exists.
+    /// </summary>
     [MaxLength(200, ErrorMessage = "Account system name cannot exceed 200 characters.")]
-    public string AccountSystemName { get; set; } = null!;
+    public string? AccountSystemName { get; set; }
+
+    /// <summary>
+    /// The account itself, for callers inside Accounting — a manual journal names
+    /// any account in the chart, and most of those have no system name at all.
+    ///
+    /// <b>Not for another service.</b> An account id is a per-organization number
+    /// in a database the caller does not read, and resolving one on the far side
+    /// is how a leg lands on the wrong account. Accounting owns that database, so
+    /// for Accounting the id is the more precise of the two, not the looser.
+    /// </summary>
+    public long? AccountId { get; set; }
 
     /// <summary>
     /// Set together with <see cref="SubAccountReferenceId"/> to post against the
@@ -85,6 +152,33 @@ public class LedgerLegRequest
     public SubAccountReferenceType? SubAccountReferenceType { get; set; }
 
     public long? SubAccountReferenceId { get; set; }
+
+    /// <summary>
+    /// Which of a contact's balances under this control account — the trade
+    /// balance, a prepayment advance or an overpayment advance.
+    ///
+    /// <b>Part of the key, not a refinement of it.</b> A contact has three
+    /// sub-accounts under Accounts Receivable and three under Accounts Payable,
+    /// and the reference type and id alone match all three. Defaults to
+    /// <see cref="SubAccountPurpose.Primary"/>, which is what every leg without
+    /// an opinion means.
+    /// </summary>
+    public SubAccountPurpose SubAccountPurpose { get; set; } = SubAccountPurpose.Primary;
+
+    /// <summary>
+    /// Which component of a tax rate — CGST, SGST or IGST. The same story as
+    /// <see cref="SubAccountPurpose"/>: three sub-accounts share one parent and
+    /// one rate, so the component is what separates them.
+    /// </summary>
+    public TaxComponent SubAccountTaxComponent { get; set; } = TaxComponent.None;
+
+    /// <summary>
+    /// The sub-account directly, the counterpart of <see cref="AccountId"/> and
+    /// subject to the same rule: inside Accounting only. Checked against the
+    /// leg's own account, so a receivable sub-account cannot be hung under a
+    /// payable line.
+    /// </summary>
+    public long? SubAccountId { get; set; }
 
     [Range(typeof(decimal), "0", "79228162514264337593543950335",
         ErrorMessage = "Debit amount cannot be negative.")]
@@ -138,6 +232,12 @@ public enum PostLedgerOutcome
     /// not happened and the caller should try again rather than assume one.
     /// </summary>
     BaseCurrencyUnavailable = 7,
+
+    /// <summary>
+    /// A withdrawal that named no leg types. There are no legs to infer them
+    /// from, so the request says nothing about what should be removed.
+    /// </summary>
+    WithdrawalTypesMissing = 8,
 }
 
 public sealed record PostLedgerResult(

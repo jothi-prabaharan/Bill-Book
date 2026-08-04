@@ -11,6 +11,7 @@ interface SubAccountRow {
   referenceType: string;
   referenceId: number;
   taxComponent: string;
+  purpose: string;
   subAccountName: string;
   isActive: boolean;
 }
@@ -24,6 +25,11 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
  * created as a side effect of the master that owns it — a contact, an item, a tax
  * rate — so there is nothing here for a user to add or edit. This page exists to
  * answer "what is posting under Accounts Receivable?" without a database query.
+ *
+ * A contact has three rows under each of receivables and payables — the trade
+ * balance and two kinds of advance — so the purpose is shown beside the name.
+ * The advances are the part of the control account that is not a trade balance,
+ * which is exactly what a balance sheet has to report separately.
  */
 @Component({
   selector: 'bb-sub-accounts-page',

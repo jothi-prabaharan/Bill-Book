@@ -10,4 +10,7 @@ public sealed class AnonymousCurrentUser : ICurrentUser
     public Guid? CustomerId => null;
 
     public Guid? OrgId => null;
+
+    /// <summary>No role: an anonymous caller holds none.</summary>
+    public int? RoleId => null;
 }

@@ -70,10 +70,41 @@ export const appRoutes: Routes = [
           import('@bill-book/platform-ui').then((m) => m.SmtpSettingsPage),
         data: { permission: 'settings.view' },
       },
+      // The nav rail points at /accounting, so it needs somewhere to land. The
+      // ledger is the right default: it is the screen every other posting in the
+      // product is checked on.
+      { path: 'accounting', pathMatch: 'full', redirectTo: 'accounting/trial-balance' },
       {
         path: 'accounting/chart-of-accounts',
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.ChartOfAccountsPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/journals',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.JournalsPage),
+        data: { permission: 'accounting.view' },
+      },
+      // The same page with an entry open, so a posted journal can be linked to
+      // from a ledger row.
+      {
+        path: 'accounting/journals/:journalId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.JournalsPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/trial-balance',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TrialBalancePage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/ledger',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.AccountLedgerPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
+        path: 'accounting/ledger/:accountId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.AccountLedgerPage),
         data: { permission: 'accounting.view' },
       },
       {
@@ -141,6 +172,9 @@ export const appRoutes: Routes = [
           import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),
         data: { permission: 'inventory.view' },
       },
+      // The nav rail points at /banking, so it needs somewhere to land. Spend
+      // money is the right default: it is the screen this module is opened for.
+      { path: 'banking', pathMatch: 'full', redirectTo: 'banking/spend-money' },
       {
         path: 'banking/banks',
         loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BanksPage),
@@ -149,6 +183,25 @@ export const appRoutes: Routes = [
       {
         path: 'banking/accounts',
         loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BankAccountsPage),
+        data: { permission: 'banking.view' },
+      },
+      // Spend and receive are the same document read in opposite directions, so
+      // they are one component told which way round it is. Two routes rather
+      // than one with a toggle, because they are two things a user goes looking
+      // for by name.
+      {
+        path: 'banking/spend-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        data: { permission: 'banking.view', direction: 'spend' },
+      },
+      {
+        path: 'banking/receive-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        data: { permission: 'banking.view', direction: 'receive' },
+      },
+      {
+        path: 'banking/transfer-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.TransferMoneyPage),
         data: { permission: 'banking.view' },
       },
       // Feature modules mount here as they are built:

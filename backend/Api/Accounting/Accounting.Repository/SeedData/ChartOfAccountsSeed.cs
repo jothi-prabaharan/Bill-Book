@@ -42,6 +42,16 @@ public static class ChartOfAccountsSeed
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
     ];
 
+    // There are deliberately no separate advance control accounts. A contact's
+    // prepayments and overpayments are sub-accounts beneath Accounts Receivable
+    // and Accounts Payable, told apart by SubAccountPurpose — so the party's
+    // whole position sits under two control accounts rather than four.
+    //
+    // The consequence to know: neither control total is a Schedule III line on
+    // its own. Advances to suppliers and from customers must be reported apart
+    // from trade receivables and payables, and the purpose column is what splits
+    // them back out.
+
     private static Account Account(
         Guid orgId,
         string code,
