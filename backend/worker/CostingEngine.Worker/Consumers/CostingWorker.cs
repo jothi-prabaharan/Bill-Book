@@ -176,7 +176,8 @@ public sealed class CostingWorker : BackgroundService
         {
             var poster = scope.ServiceProvider.GetRequiredService<StockLedgerPoster>();
 
-            int posted = await poster.PostPendingAsync(LedgerBatchSize, LedgerMaxAttempts, ct);
+            int posted = await poster.PostPendingAsync(
+                LedgerBatchSize, LedgerMaxAttempts, ClaimTimeout, ct);
 
             if (posted > 0)
             {

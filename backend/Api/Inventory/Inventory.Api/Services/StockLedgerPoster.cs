@@ -47,12 +47,15 @@ public sealed class StockLedgerPoster
     private const int ItemReference = 2;
 
     /// <summary>How many movements were posted. Anything else is left for the next pass.</summary>
-    public async Task<int> PostPendingAsync(int batchSize, int maxAttempts, CancellationToken ct)
+    public async Task<int> PostPendingAsync(
+        int batchSize, int maxAttempts, TimeSpan claimTimeout, CancellationToken ct)
     {
         if (_tenant.CustomerId is not Guid customerId || _tenant.OrgId is not Guid orgId)
         {
             return 0;
         }
+
+        await ReclaimStaleAsync(claimTimeout, ct);
 
         // Only movements whose cost is settled. A movement still being costed
         // has nothing to post, and one whose costing failed is owed a posting it
@@ -79,6 +82,29 @@ public sealed class StockLedgerPoster
         }
 
         return posted;
+    }
+
+    /// <summary>
+    /// Takes back claims from a worker that died holding them, exactly as the
+    /// costing queue does.
+    ///
+    /// Without this a process killed mid-post leaves the movement InProgress
+    /// for ever: the queue only reads Pending, so nothing would look at it
+    /// again, and stock and the general ledger would disagree about that
+    /// movement permanently with nothing on any screen saying why. Bounded by a
+    /// timeout rather than a heartbeat, because the state is a row and the row
+    /// is all a second worker has to go on.
+    /// </summary>
+    private async Task ReclaimStaleAsync(TimeSpan claimTimeout, CancellationToken ct)
+    {
+        DateTimeOffset cutoff = _clock.GetUtcNow() - claimTimeout;
+
+        await _db.StockMovements
+            .Where(m => m.LedgerStatus == LedgerStatus.InProgress
+                && m.ModifiedAt != null
+                && m.ModifiedAt < cutoff)
+            .ExecuteUpdateAsync(
+                m => m.SetProperty(x => x.LedgerStatus, LedgerStatus.Pending), ct);
     }
 
     private async Task<bool> PostOneAsync(
@@ -117,7 +143,13 @@ public sealed class StockLedgerPoster
             .ExecuteUpdateAsync(
                 m => m
                     .SetProperty(x => x.LedgerStatus, LedgerStatus.InProgress)
-                    .SetProperty(x => x.LedgerAttempts, x => x.LedgerAttempts + 1),
+                    .SetProperty(x => x.LedgerAttempts, x => x.LedgerAttempts + 1)
+                    // Stamped by hand because ExecuteUpdate never reaches the
+                    // audit interceptor — it is one SQL statement with no
+                    // change tracker behind it. This one is load-bearing rather
+                    // than bookkeeping: it is what ReclaimStaleAsync measures a
+                    // dead worker's claim against.
+                    .SetProperty(x => x.ModifiedAt, _clock.GetUtcNow()),
                 ct);
 
         if (claimed == 0)

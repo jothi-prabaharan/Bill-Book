@@ -1,6 +1,7 @@
 using Gateway.Logging;
 using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Interfaces;
 using Shared.Kernel.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -20,10 +21,24 @@ RequestLogOptions logOptions =
 
 builder.Services.AddSingleton<IRequestLogQueue>(new RequestLogQueue(logOptions));
 
-builder.Services.AddDbContext<GatewayDbContext>(options =>
-    options.UseNpgsql(RequiredConnectionString("MasterDatabase")));
-
+// The interceptor's two dependencies. Neither was registered, so resolving it
+// would have thrown at the first request log rather than at startup — the
+// gateway builds its context lazily, and the writer swallows what it cannot
+// flush.
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICurrentUser, GatewayUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+
+// The interceptor has to be added to the context as well as registered.
+// Registering it alone compiles, resolves and does nothing at all — every
+// RequestLog would be written with its four audit columns null, which reads
+// exactly like the seed data that is meant to be the only thing with a null
+// CreatedBy.
+builder.Services.AddDbContext<GatewayDbContext>((sp, options) =>
+{
+    options.UseNpgsql(RequiredConnectionString("MasterDatabase"));
+    options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
+});
 builder.Services.AddHostedService<RequestLogWriter>();
 builder.Services.AddHostedService<RequestLogPurger>();
 

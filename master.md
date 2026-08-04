@@ -283,6 +283,8 @@ Independent of the stages above; take any of them whenever.
 
   Movements recorded before this release are backfilled as `Pending` rather than as posted. The ledger is empty, so queueing them is what makes stock and the GL agree, and each posts at its own movement date.
 
+  **One defect found afterwards and fixed**: the posting queue had no stale-claim reclaim. Costing has had one from the start, and copying the claim without copying the reclaim meant a worker killed mid-post left the movement `InProgress` for ever — the queue only reads `Pending`, so nothing would ever look at it again, and that movement's stock and ledger would disagree permanently with the screen showing "Posting…". The claim now stamps `ModifiedAt` by hand and `ReclaimStaleAsync` measures against it, exactly as the costing queue does.
+
 - [x] **5.13 — No reserved quantity**
   `ItemStock` held on-hand only, so an order confirmed but not yet delivered left stock fully available and it could be promised twice. `QuantityReserved` now sits beside it, with `ReserveAsync` and `ReleaseAsync` running the same guarded conditional update every other quantity change runs — a reserve above what is available and a release of what was never reserved both change no rows and are refused, rather than overdrawing.
   **Built ahead of Sales after all.** The original reasoning — that a reserve nothing releases is worse than none — argues for not *calling* it yet, not for the column being absent when the caller arrives. Sales would otherwise land needing a schema change, a migration and a rewrite of both issue guards in the same commit as its own first screen.
