@@ -130,6 +130,49 @@ public sealed class LedgerReportService
     }
 
     /// <summary>
+    /// What a document was booked at, read off its own ledger rows. Null when the
+    /// document has no postings in this branch — which is also the answer for a
+    /// document that does not exist, deliberately, because the query filter is
+    /// what decided and the two must not be distinguishable from outside.
+    ///
+    /// <b>The control leg, when there is one.</b> A document's legs can carry
+    /// different rates once settlement legs exist, and the rate a payment needs is
+    /// the one the balance it is clearing was booked at — which is the control
+    /// leg's. Falling back to any leg covers documents with no control leg at all,
+    /// such as a transfer.
+    ///
+    /// <b>Read, never looked up.</b> This returns a rate that was written down at
+    /// the time; nothing here consults a rate table, because a historical document
+    /// that repriced itself would restate settled history.
+    /// </summary>
+    public async Task<SettlementRateView?> GetSettlementRateAsync(
+        string transactionTypeCode, long transactionId, CancellationToken ct)
+    {
+        string typeCode = transactionTypeCode.ToUpperInvariant();
+
+        JournalLedger? leg = await _db.JournalLedger
+            .Where(l => l.TransactionTypeCode == typeCode && l.TransactionId == transactionId)
+            // Control legs first, then the lowest id, so the answer is the same
+            // one every time rather than whatever the scan returned.
+            .OrderBy(l => l.LedgerTypeId == ControlLedgerType ? 0 : 1)
+            .ThenBy(l => l.LedgerId)
+            .FirstOrDefaultAsync(ct);
+
+        return leg is null
+            ? null
+            : new SettlementRateView
+            {
+                TransactionTypeCode = typeCode,
+                TransactionId = transactionId,
+                CurrencyCode = leg.CurrencyCode,
+                ExchangeRate = leg.ExchangeRate,
+            };
+    }
+
+    /// <summary><c>mst.LedgerTypes</c> 3 — the AP/AR/bank control leg.</summary>
+    private const int ControlLedgerType = 3;
+
+    /// <summary>
     /// Every account with a balance, and the two columns that have to agree.
     ///
     /// Accounts with no postings are left out rather than listed at zero: a

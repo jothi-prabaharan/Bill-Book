@@ -314,9 +314,14 @@ public class MoneyDocumentServiceTests
         Assert.Equal(number, after.TransactionNo);
 
         // The withdrawal names its leg types, because it has no legs to infer
-        // them from.
+        // them from — and it names FX as well as CONTROL even though this
+        // document produced no FX leg. A withdrawal that named only the types
+        // the document happened to write would leave an exchange difference
+        // behind on a voided payment, unbalanced and attached to nothing.
         Assert.Empty(h.Ledger.Last.Legs);
-        Assert.Equal([MoneyPostingMap.ControlLedgerType], h.Ledger.Last.WithdrawLedgerTypeIds);
+        Assert.Equal(
+            [MoneyPostingMap.ControlLedgerType, MoneyPosting.FxLedgerType],
+            h.Ledger.Last.WithdrawLedgerTypeIds);
     }
 
     /// <summary>The period lock reaches Banking through the same guard.</summary>
@@ -395,6 +400,205 @@ public class MoneyDocumentServiceTests
         Assert.Null(after.TransactionNo);
     }
 
+    /// <summary>
+    /// T6.5, and the case it exists for. A USD 1,000 bill booked when the rate
+    /// said ₹80, settled when it says ₹100.
+    ///
+    /// The payable comes off at ₹80,000 — what it was booked at — the bank moves
+    /// ₹100,000, and the ₹20,000 between them is a realized loss. Relieve it at
+    /// today's rate instead and the ledger balances perfectly while the contact
+    /// keeps a ₹20,000 residue against a bill they have paid in full, which is
+    /// exactly the kind of wrong that nobody goes looking for.
+    /// </summary>
+    [SkippableFact]
+    public async Task Paying_a_bill_at_a_worse_rate_posts_a_realized_loss()
+    {
+        var ledger = new RecordingLedger();
+        ledger.SettlementRates[("BIL", 500)] = new SettlementRate("USD", Rate(80m));
+
+        await using Harness h = await Harness.CreateAsync(_postgres, ledger);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(
+            h.Foreign(1_000m, BillPayment, Rate(100m), "BIL", 500), ct);
+
+        Assert.Equal(
+            MoneyDocumentOutcome.Ok, (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        LedgerPosting posting = h.Ledger.Last;
+        Assert.Equal(3, posting.Legs.Count);
+
+        // The payable comes off at the rate it went on at, not today's.
+        LedgerPostingLeg payable =
+            Assert.Single(posting.Legs, l => l.AccountSystemName == "Accounts Payable");
+
+        Assert.Equal(1_000m, payable.DebitAmount);
+        Assert.Equal(Rate(80m), payable.ExchangeRate);
+        Assert.Null(payable.CurrencyCode);
+
+        // The bank moves at the payment's rate — no override, so the document's.
+        LedgerPostingLeg bank = Assert.Single(posting.Legs, l => l.AccountId == h.LedgerAccountId);
+        Assert.Equal(1_000m, bank.CreditAmount);
+        Assert.Null(bank.ExchangeRate);
+
+        // ₹100,000 left the bank against an ₹80,000 liability: a ₹20,000 loss,
+        // denominated in base because it never existed in dollars.
+        LedgerPostingLeg fx = Assert.Single(
+            posting.Legs, l => l.AccountSystemName == "Realized FX Gain/Loss");
+
+        Assert.Equal(MoneyPosting.FxLedgerType, fx.LedgerTypeId);
+        Assert.Equal(20_000m, fx.DebitAmount);
+        Assert.Equal(0m, fx.CreditAmount);
+        Assert.Equal("INR", fx.CurrencyCode);
+        Assert.Equal(1m, fx.ExchangeRate);
+
+        // Provenance stays: the difference came out of a bill payment.
+        Assert.Equal(BillPayment, fx.LedgerSourceId);
+    }
+
+    /// <summary>
+    /// The mirror, and the sign is the part worth proving. A USD invoice raised
+    /// at ₹80 and collected at ₹100 brings in ₹20,000 more than the receivable was
+    /// carrying — a gain, credited.
+    ///
+    /// The leg is built by the same call as the loss above, with the two base
+    /// amounts swapped; it takes whichever side the pair is short on rather than
+    /// asserting a sign per direction, which is why one of these cannot be right
+    /// while the other is inverted.
+    /// </summary>
+    [SkippableFact]
+    public async Task Collecting_an_invoice_at_a_better_rate_posts_a_realized_gain()
+    {
+        var ledger = new RecordingLedger();
+        ledger.SettlementRates[("INV", 900)] = new SettlementRate("USD", Rate(80m));
+
+        await using Harness h = await Harness.CreateAsync(_postgres, ledger);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Receive.CreateAsync(
+            h.Foreign(1_000m, InvoicePayment, Rate(100m), "INV", 900), ct);
+
+        Assert.Equal(
+            MoneyDocumentOutcome.Ok, (await h.Receive.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        LedgerPostingLeg fx = Assert.Single(
+            h.Ledger.Last.Legs, l => l.AccountSystemName == "Realized FX Gain/Loss");
+
+        Assert.Equal(0m, fx.DebitAmount);
+        Assert.Equal(20_000m, fx.CreditAmount);
+        Assert.Equal("INR", fx.CurrencyCode);
+    }
+
+    /// <summary>
+    /// Same currency, same rate, no FX leg — and a document in the branch's own
+    /// currency never asks about a rate at all.
+    /// </summary>
+    [SkippableFact]
+    public async Task Settling_at_the_rate_it_was_booked_at_posts_no_exchange_difference()
+    {
+        var ledger = new RecordingLedger();
+        ledger.SettlementRates[("BIL", 500)] = new SettlementRate("USD", Rate(80m));
+
+        await using Harness h = await Harness.CreateAsync(_postgres, ledger);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(
+            h.Foreign(1_000m, BillPayment, Rate(80m), "BIL", 500), ct);
+
+        await h.Spend.PostAsync(draft.DocumentId, ct);
+
+        Assert.Equal(2, h.Ledger.Last.Legs.Count);
+        Assert.DoesNotContain(
+            h.Ledger.Last.Legs, l => l.AccountSystemName == "Realized FX Gain/Loss");
+
+        // And nothing overrode the control leg's rate, because there was nothing
+        // to override it with.
+        Assert.All(h.Ledger.Last.Legs, l => Assert.Null(l.ExchangeRate));
+    }
+
+    /// <summary>
+    /// A line naming a document with nothing posted against it is not an error.
+    /// There is no earlier rate to differ from, so there is no difference — and
+    /// a payment may legitimately name a document this branch has yet to post.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_settled_document_with_no_postings_yet_is_not_a_refusal()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(
+            h.Foreign(1_000m, BillPayment, Rate(100m), "BIL", 4242), ct);
+
+        Assert.Equal(
+            MoneyDocumentOutcome.Ok, (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        Assert.Equal(2, h.Ledger.Last.Legs.Count);
+    }
+
+    /// <summary>
+    /// An unreadable rate refuses the document as transient, the same way an
+    /// unreadable period lock does. Posting the rest of it without the adjustment
+    /// is precisely the silent residue the whole mechanism exists to prevent, so
+    /// "could not ask" must not look like "no difference".
+    /// </summary>
+    [SkippableFact]
+    public async Task An_unreadable_settlement_rate_refuses_the_document()
+    {
+        var ledger = new RecordingLedger { SettlementRateUnavailable = true };
+
+        await using Harness h = await Harness.CreateAsync(_postgres, ledger);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(
+            h.Foreign(1_000m, BillPayment, Rate(100m), "BIL", 500), ct);
+
+        Assert.Equal(
+            MoneyDocumentOutcome.SettlementRateUnavailable,
+            (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        MoneyDocumentView? after = await h.Spend.GetAsync(draft.DocumentId, ct);
+        Assert.Equal("Draft", after!.Status);
+        Assert.Null(after.TransactionNo);
+    }
+
+    /// <summary>
+    /// Paying a dollar bill with a euro payment is refused rather than converted.
+    /// Two conversions in one settlement is a cross-rate, and inventing one would
+    /// put a figure in the books that no recorded rate produces.
+    /// </summary>
+    [SkippableFact]
+    public async Task Settling_a_document_raised_in_another_currency_is_refused()
+    {
+        var ledger = new RecordingLedger();
+        ledger.SettlementRates[("BIL", 500)] = new SettlementRate("USD", Rate(80m));
+
+        await using Harness h = await Harness.CreateAsync(_postgres, ledger);
+        CancellationToken ct = CancellationToken.None;
+
+        SaveMoneyDocumentRequest request = h.Foreign(1_000m, BillPayment, Rate(50m), "BIL", 500);
+        request.CurrencyCode = "EUR";
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(request, ct);
+
+        Assert.Equal(
+            MoneyDocumentOutcome.SettlementCurrencyMismatch,
+            (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+    }
+
+    /// <summary>
+    /// The ledger's rate is units of the transaction currency per unit of base,
+    /// so a rate quoted the way people say it — ₹80 to the dollar — is its
+    /// reciprocal. Written once here rather than inline, because getting it the
+    /// wrong way up in a test would prove the opposite of what the test claims.
+    ///
+    /// The two rates these tests use are ₹80 and ₹100, which are the reciprocals
+    /// that terminate in decimal. A rate that does not — ₹83 — leaves a base
+    /// amount a hundredth out, and a test failing on the rounding of its own
+    /// fixture teaches nothing about the accounting.
+    /// </summary>
+    private static decimal Rate(decimal rupeesPerUnit) => 1m / rupeesPerUnit;
+
     private sealed class Harness : IAsyncDisposable
     {
         public required BankingDbContext Db { get; init; }
@@ -424,6 +628,34 @@ public class MoneyDocumentServiceTests
             Amount = amount,
             Lines = [new SaveMoneyLineRequest { LedgerSourceId = ledgerSourceId, Amount = amount }],
         };
+
+        /// <summary>
+        /// The same, in a foreign currency and settling a named document — which
+        /// is the pair of conditions an exchange difference needs to exist at all.
+        /// </summary>
+        public SaveMoneyDocumentRequest Foreign(
+            decimal amount, int ledgerSourceId, decimal rate, string settlesType, long settlesId) =>
+            new()
+            {
+                TransactionDate = new DateOnly(2026, 8, 1),
+                BankAccountId = BankAccountId,
+                ContactId = 7,
+                Amount = amount,
+                CurrencyCode = "USD",
+                ExchangeRate = rate,
+                MappingTransactionTypeCode = settlesType,
+                MappingTransactionId = settlesId,
+                Lines =
+                [
+                    new SaveMoneyLineRequest
+                    {
+                        LedgerSourceId = ledgerSourceId,
+                        MappingTransactionTypeCode = settlesType,
+                        MappingTransactionId = settlesId,
+                        Amount = amount,
+                    },
+                ],
+            };
 
         public static async Task<Harness> CreateAsync(
             PostgresFixture postgres, RecordingLedger? ledger = null)

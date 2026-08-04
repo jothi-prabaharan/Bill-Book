@@ -39,6 +39,31 @@ public sealed class RecordingLedger : IAccountingLedger
         return Task.FromResult(Outcome);
     }
 
+    /// <summary>
+    /// What each settled document was booked at, keyed by (type code, id). A
+    /// document not in here answers null — nothing posted against it — which is
+    /// the ordinary case for every test that is not about exchange differences.
+    /// </summary>
+    public Dictionary<(string, long), SettlementRate> SettlementRates { get; } = [];
+
+    /// <summary>Set to make the rate lookup fail the way an unreachable Accounting does.</summary>
+    public bool SettlementRateUnavailable { get; set; }
+
+    public Task<SettlementRate?> SettlementRateAsync(
+        string transactionTypeCode, long transactionId, CancellationToken ct)
+    {
+        if (SettlementRateUnavailable)
+        {
+            throw new SettlementRateUnavailableException();
+        }
+
+        return Task.FromResult(
+            SettlementRates.TryGetValue(
+                (transactionTypeCode.ToUpperInvariant(), transactionId), out SettlementRate? rate)
+                ? rate
+                : null);
+    }
+
     public Task<DateOnly?> LockedUptoAsync(CancellationToken ct) =>
         _lockUnavailable
             ? throw new PeriodLockUnavailableException()

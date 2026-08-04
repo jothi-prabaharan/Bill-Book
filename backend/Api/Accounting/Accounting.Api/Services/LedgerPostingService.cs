@@ -192,6 +192,17 @@ public sealed class LedgerPostingService
                 subAccountId = sub.SubAccountId;
             }
 
+            // A leg usually shares the document's denomination, and a settlement
+            // leg does not. Relieving a foreign balance at today's rate would
+            // leave the contact holding a residue in a currency nobody owes, so
+            // the leg comes off at the rate its document was booked at and the
+            // difference is carried by a leg denominated in base.
+            string legCurrency = leg.CurrencyCode is { Length: 3 } ownCurrency
+                ? ownCurrency.ToUpperInvariant()
+                : currency;
+
+            decimal legRate = leg.ExchangeRate is decimal ownRate && ownRate > 0 ? ownRate : rate;
+
             rows.Add(new JournalLedger
             {
                 LedgerDate = request.LedgerDate,
@@ -202,10 +213,10 @@ public sealed class LedgerPostingService
                 TransactionDetailId = leg.TransactionDetailId,
                 DebitAmount = leg.DebitAmount,
                 CreditAmount = leg.CreditAmount,
-                DebitAmountBase = Base(leg.DebitAmount, rate),
-                CreditAmountBase = Base(leg.CreditAmount, rate),
-                CurrencyCode = currency,
-                ExchangeRate = rate,
+                DebitAmountBase = Base(leg.DebitAmount, legRate),
+                CreditAmountBase = Base(leg.CreditAmount, legRate),
+                CurrencyCode = legCurrency,
+                ExchangeRate = legRate,
                 ContactId = request.ContactId,
                 LedgerTypeId = leg.LedgerTypeId,
                 LedgerSourceId = leg.LedgerSourceId,

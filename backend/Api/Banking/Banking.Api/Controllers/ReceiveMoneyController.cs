@@ -95,7 +95,8 @@ public sealed class ReceiveMoneyController : ControllerBase
 
             // Transient. The caller should come back rather than treat it as a
             // refusal — a lock that could not be read is not a lock that passed.
-            MoneyDocumentOutcome.PeriodLockUnavailable => StatusCode(
+            MoneyDocumentOutcome.PeriodLockUnavailable
+                or MoneyDocumentOutcome.SettlementRateUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable,
                 new MessageResponse { Message = result.Detail ?? "Please try again." }),
 

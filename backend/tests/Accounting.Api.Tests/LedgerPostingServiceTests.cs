@@ -305,6 +305,105 @@ public class LedgerPostingServiceTests
         Assert.Equal(PostLedgerOutcome.WithdrawalTypesMissing, result.Outcome);
     }
 
+    /// <summary>
+    /// A settlement's three legs do not share one rate, and the door has to let
+    /// them not share it.
+    ///
+    /// A USD 1,000 bill booked at ₹80 to the dollar, paid when the rate says
+    /// ₹100: the payable comes off at ₹80,000 because that is what it went on at,
+    /// ₹100,000 leaves the bank, and the ₹20,000 between them is the loss. Force
+    /// all three onto the posting's one rate and either the payable keeps a
+    /// residue or the request does not balance — there is no third answer, which
+    /// is why the rate belongs on the leg.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_leg_can_convert_at_its_own_rate_and_in_its_own_currency()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+
+        LedgerLegRequest payable = Leg(Control, 1, harness.PayableId, debit: 1_000m, ledgerSourceId: BillPayment);
+        payable.ExchangeRate = 1m / 80m;
+
+        LedgerLegRequest bank = Leg(Control, 1, harness.BankId, credit: 1_000m, ledgerSourceId: BillPayment);
+
+        LedgerLegRequest fx = Leg(5, 1, harness.FxId, debit: 20_000m, ledgerSourceId: BillPayment);
+        fx.CurrencyCode = "INR";
+        fx.ExchangeRate = 1m;
+
+        PostLedgerResult result = await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "SPM",
+            TransactionId = 7100,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            CurrencyCode = "USD",
+            ExchangeRate = 1m / 100m,
+            Legs = [payable, bank, fx],
+        }, CancellationToken.None);
+
+        // It balances only because the three converted differently — the balance
+        // check is in base, and this is what makes the three base amounts agree.
+        Assert.Equal(PostLedgerOutcome.Ok, result.Outcome);
+
+        List<JournalLedger> rows = await harness.Db.JournalLedger
+            .Where(l => l.TransactionTypeCode == "SPM" && l.TransactionId == 7100)
+            .ToListAsync(CancellationToken.None);
+
+        JournalLedger payableRow = Assert.Single(rows, r => r.AccountId == harness.PayableId);
+        Assert.Equal(80_000m, payableRow.DebitAmountBase);
+        Assert.Equal("USD", payableRow.CurrencyCode);
+
+        JournalLedger bankRow = Assert.Single(rows, r => r.AccountId == harness.BankId);
+        Assert.Equal(100_000m, bankRow.CreditAmountBase);
+
+        // The difference is denominated in base and stored that way, because it
+        // never existed in dollars.
+        JournalLedger fxRow = Assert.Single(rows, r => r.AccountId == harness.FxId);
+        Assert.Equal(20_000m, fxRow.DebitAmountBase);
+        Assert.Equal("INR", fxRow.CurrencyCode);
+        Assert.Equal(1m, fxRow.ExchangeRate);
+    }
+
+    /// <summary>
+    /// What a document was booked at, read back off its own ledger rows — the
+    /// number a payment needs before it can settle a foreign-currency document.
+    ///
+    /// It is the <b>control</b> leg's rate, not any leg's: once settlement legs
+    /// exist a document's legs carry different rates, and the one that matters is
+    /// the rate the balance being cleared was booked at.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_settlement_rate_is_read_off_the_documents_control_leg()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        LedgerLegRequest revenue = Leg(Item, 1, harness.RevenueId, credit: 1_000m);
+        LedgerLegRequest receivable = Leg(Control, 0, harness.ReceivableId, debit: 1_000m);
+
+        await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "INV",
+            TransactionId = 7200,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            CurrencyCode = "USD",
+            ExchangeRate = 1m / 80m,
+            Legs = [revenue, receivable],
+        }, ct);
+
+        var reports = new LedgerReportService(harness.Db);
+
+        SettlementRateView? rate = await reports.GetSettlementRateAsync("inv", 7200, ct);
+
+        Assert.NotNull(rate);
+        Assert.Equal("INV", rate.TransactionTypeCode);
+        Assert.Equal("USD", rate.CurrencyCode);
+        Assert.Equal(1m / 80m, rate.ExchangeRate);
+
+        // A document with nothing posted against it answers null — which is also
+        // the answer for one in another branch, deliberately.
+        Assert.Null(await reports.GetSettlementRateAsync("INV", 7201, ct));
+    }
+
     private static LedgerLegRequest Leg(
         int ledgerTypeId,
         long detailId,
@@ -350,6 +449,8 @@ public class LedgerPostingServiceTests
 
         public required long AdvanceToVendorId { get; init; }
 
+        public required long FxId { get; init; }
+
         public static async Task<Harness> CreateAsync(PostgresFixture postgres)
         {
             Skip.If(postgres.SkipReason is not null, postgres.SkipReason ?? string.Empty);
@@ -389,6 +490,7 @@ public class LedgerPostingServiceTests
                 PayableId = await Account("2100", "Accounts Payable", 2),
                 BankId = await Account("1510", "Bank — Current", 1),
                 AdvanceToVendorId = await Account("1600", "Advance to Vendor", 1),
+                FxId = await Account("4900", "Realized FX Gain/Loss", 4),
             };
         }
 
