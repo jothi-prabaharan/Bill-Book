@@ -1,0 +1,190 @@
+<header class="page-head">
+  <h1>Transfer money</h1>
+  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New transfer</button>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+@if (editing()) {
+  <section class="editor">
+    <h2>{{ editingId === null ? 'New transfer' : 'Draft transfer' }}</h2>
+
+    <p class="note">
+      Both ends are your own accounts, so nothing is owed to anyone: the transfer credits one and
+      debits the other and stops there. There is no contact and nothing to allocate.
+    </p>
+
+    <div class="head-fields">
+      <label>
+        Date
+        <input type="date" [(ngModel)]="transactionDate" name="transactionDate" />
+      </label>
+      <label class="wide">
+        From
+        <select [(ngModel)]="fromBankAccountId" name="fromBankAccountId">
+          <option [ngValue]="null">Choose…</option>
+          @for (a of usableAccounts(); track a.bankAccountId) {
+            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
+          }
+        </select>
+      </label>
+      <div class="swap-cell">
+        <button
+          type="button"
+          class="ghost"
+          (click)="swap()"
+          title="Swap the two accounts"
+          aria-label="Swap the two accounts"
+        >
+          ⇅
+        </button>
+      </div>
+      <label class="wide">
+        To
+        <select [(ngModel)]="toBankAccountId" name="toBankAccountId">
+          <option [ngValue]="null">Choose…</option>
+          @for (a of usableAccounts(); track a.bankAccountId) {
+            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
+          }
+        </select>
+      </label>
+      <label>
+        Amount
+        <input
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0"
+          [(ngModel)]="amount"
+          name="amount"
+        />
+      </label>
+      <label>
+        Method
+        <select [(ngModel)]="paymentMethod" name="paymentMethod">
+          @for (m of paymentMethods; track m.value) {
+            <option [ngValue]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Reference
+        <input type="text" [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+      </label>
+      <label>
+        Reference date
+        <input type="date" [(ngModel)]="referenceDate" name="referenceDate" />
+      </label>
+      <label class="wide">
+        Memo
+        <input type="text" [(ngModel)]="memo" name="memo" placeholder="Why the money was moved" />
+      </label>
+    </div>
+
+    @if (sameAccount) {
+      <p class="hint error">
+        The two ends are the same account. A transfer to where the money already is would post a
+        debit and a credit to one account and mean nothing.
+      </p>
+    }
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Cancel</button>
+      <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="primary" (click)="save(true)" [disabled]="busy() || !canPost">
+        Post
+      </button>
+    </div>
+  </section>
+}
+
+@if (viewing(); as d) {
+  <section class="editor readonly">
+    <h2>
+      {{ d.transactionNo }}
+      <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
+    </h2>
+
+    <p class="note">
+      A posted transfer is never edited. Void it instead — the ledger rows are withdrawn and the
+      document keeps its number, because a gap in a series is what an auditor asks about.
+    </p>
+
+    <dl class="meta">
+      <div><dt>Date</dt><dd>{{ d.transactionDate }}</dd></div>
+      <div><dt>From</dt><dd>{{ d.bankAccountName }}</dd></div>
+      <div><dt>To</dt><dd>{{ d.toBankAccountName ?? '—' }}</dd></div>
+      <div><dt>Amount</dt><dd>{{ d.amount }} {{ d.currencyCode }}</dd></div>
+      <div><dt>Method</dt><dd>{{ d.paymentMethod }}</dd></div>
+      <div><dt>Reference</dt><dd>{{ d.referenceNo ?? '—' }}</dd></div>
+      <div><dt>Memo</dt><dd>{{ d.memo ?? '—' }}</dd></div>
+    </dl>
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Close</button>
+      @if (d.status === 'Posted') {
+        <button type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+      }
+    </div>
+  </section>
+}
+
+<div class="filters">
+  <label>
+    Status
+    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
+      <option value="">All</option>
+      <option value="Draft">Draft</option>
+      <option value="Posted">Posted</option>
+      <option value="Void">Void</option>
+    </select>
+  </label>
+</div>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="date-col">Date</th>
+      <th>Number</th>
+      <th>From</th>
+      <th>To</th>
+      <th class="num">Amount</th>
+      <th>Status</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.documentId) {
+      <tr [class.draft]="row.status === 'Draft'">
+        <td class="date-col" data-label="Date">{{ row.transactionDate }}</td>
+        <td data-label="Number">
+          <button type="button" class="link" (click)="open(row.documentId)">
+            {{ row.transactionNo ?? 'Unnumbered draft' }}
+          </button>
+        </td>
+        <td data-label="From">{{ row.bankAccountName }}</td>
+        <td data-label="To">{{ row.toBankAccountName ?? '—' }}</td>
+        <td class="num" data-label="Amount">{{ row.amount }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
+        </td>
+        <td class="actions-col">
+          @if (row.status === 'Draft') {
+            <button type="button" class="link" (click)="discard(row)">Delete</button>
+          } @else if (row.status === 'Posted') {
+            <button type="button" class="link" (click)="voidDocument(row)">Void</button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="7" class="empty">
+          No transfers yet. This is where a till banked, or a current account topped up from
+          savings, is recorded.
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

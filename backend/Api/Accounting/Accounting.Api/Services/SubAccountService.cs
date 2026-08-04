@@ -42,10 +42,10 @@ public sealed class SubAccountService
                 AccountName = account.AccountName,
                 AccountCode = account.AccountCode,
                 AccountTypeId = sub.AccountTypeId,
-                ReferenceType = sub.ReferenceType,
+                ReferenceType = sub.ReferenceType.ToString(),
                 ReferenceId = sub.ReferenceId,
-                TaxComponent = sub.TaxComponent,
-                Purpose = sub.Purpose,
+                TaxComponent = sub.TaxComponent.ToString(),
+                Purpose = sub.Purpose.ToString(),
                 SubAccountName = sub.SubAccountName,
                 IsActive = sub.IsActive,
             }).ToListAsync(ct);

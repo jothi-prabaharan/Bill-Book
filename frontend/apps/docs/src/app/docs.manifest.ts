@@ -54,6 +54,7 @@ export const DOCS: DocSection[] = [
     pages: [
       { slug: 'chart-of-accounts', title: 'Chart of accounts', status: 'built' },
       { slug: 'bank-accounts', title: 'Banks & bank accounts', status: 'built' },
+      { slug: 'money-documents', title: 'Spend, receive & transfer money', status: 'built' },
       { slug: 'ledger', title: 'Journal & ledger', status: 'built' },
       { slug: 'gst', title: 'GST & tax', status: 'built' },
     ],

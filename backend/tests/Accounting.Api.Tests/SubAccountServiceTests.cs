@@ -186,6 +186,37 @@ public class SubAccountServiceTests
     }
 
     /// <summary>
+    /// The list sends the enums by name, and that is a contract, not a detail.
+    ///
+    /// Nothing in this product configures a string enum converter, so an enum
+    /// left as an enum on a response model goes out as an integer. The screens
+    /// that read this list — the sub-account list itself, and the money
+    /// documents, which pick the account a payment lands on by matching the
+    /// purpose — compare against names. A number there matches nothing, and the
+    /// failure is silent: a badge that never draws, an account that never
+    /// resolves. Hence the projection to strings, and hence this test.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_list_names_the_purpose_rather_than_numbering_it()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.SubAccounts.ProvisionAsync(Contact(11, "Sharma Traders"), ct);
+
+        IReadOnlyList<SubAccountListItem> rows = await h.SubAccounts.ListAsync(
+            SubAccountReferenceType.Contact, 11, ct);
+
+        Assert.Equal(6, rows.Count);
+        Assert.All(rows, r => Assert.Equal("Contact", r.ReferenceType));
+        Assert.All(rows, r => Assert.Equal("None", r.TaxComponent));
+
+        Assert.Equal(
+            ["OverpaymentAdvance", "PrepaymentAdvance", "Primary"],
+            rows.Select(r => r.Purpose).Distinct().Order());
+    }
+
+    /// <summary>
     /// The posting door has to name the purpose, because the reference alone is
     /// ambiguous once a contact has three sub-accounts under one parent.
     ///

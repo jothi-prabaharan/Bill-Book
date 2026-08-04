@@ -172,6 +172,9 @@ export const appRoutes: Routes = [
           import('@bill-book/inventory-ui').then((m) => m.MetalPuritiesPage),
         data: { permission: 'inventory.view' },
       },
+      // The nav rail points at /banking, so it needs somewhere to land. Spend
+      // money is the right default: it is the screen this module is opened for.
+      { path: 'banking', pathMatch: 'full', redirectTo: 'banking/spend-money' },
       {
         path: 'banking/banks',
         loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BanksPage),
@@ -180,6 +183,25 @@ export const appRoutes: Routes = [
       {
         path: 'banking/accounts',
         loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BankAccountsPage),
+        data: { permission: 'banking.view' },
+      },
+      // Spend and receive are the same document read in opposite directions, so
+      // they are one component told which way round it is. Two routes rather
+      // than one with a toggle, because they are two things a user goes looking
+      // for by name.
+      {
+        path: 'banking/spend-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        data: { permission: 'banking.view', direction: 'spend' },
+      },
+      {
+        path: 'banking/receive-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        data: { permission: 'banking.view', direction: 'receive' },
+      },
+      {
+        path: 'banking/transfer-money',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.TransferMoneyPage),
         data: { permission: 'banking.view' },
       },
       // Feature modules mount here as they are built:

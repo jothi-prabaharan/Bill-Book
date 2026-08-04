@@ -1,0 +1,355 @@
+<header class="page-head">
+  <h1>{{ title() }}</h1>
+  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New</button>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+@if (editing()) {
+  <section class="editor">
+    <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
+
+    <div class="head-fields">
+      <label>
+        Date
+        <input type="date" [(ngModel)]="transactionDate" name="transactionDate" />
+      </label>
+      <label class="wide">
+        {{ direction() === 'spend' ? 'Paid from' : 'Received into' }}
+        <select [(ngModel)]="bankAccountId" name="bankAccountId">
+          <option [ngValue]="null">Choose…</option>
+          @for (a of usableAccounts(); track a.bankAccountId) {
+            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
+          }
+        </select>
+      </label>
+      <label class="wide">
+        {{ contactLabel() }}
+        <select [(ngModel)]="contactId" name="contactId" (ngModelChange)="onContact()">
+          <option [ngValue]="null">Choose…</option>
+          @for (c of contacts(); track c.contactId) {
+            <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
+          }
+        </select>
+      </label>
+      <label>
+        Amount
+        <input
+          type="number"
+          inputmode="decimal"
+          step="0.01"
+          min="0"
+          [(ngModel)]="amount"
+          name="amount"
+        />
+      </label>
+      <label>
+        Method
+        <select [(ngModel)]="paymentMethod" name="paymentMethod">
+          @for (m of paymentMethods; track m.value) {
+            <option [ngValue]="m.value">{{ m.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        Reference
+        <input type="text" [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+      </label>
+      <label>
+        Reference date
+        <input type="date" [(ngModel)]="referenceDate" name="referenceDate" />
+      </label>
+      <label class="wide">
+        Memo
+        <input type="text" [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
+      </label>
+    </div>
+
+    @if (contactId === null) {
+      <p class="note">
+        Choose the contact first. The account each line posts to is that contact's own balance
+        beneath receivables or payables, so until one is chosen there is nothing to point a line at.
+      </p>
+    } @else if (subLedgerMissing) {
+      <p class="note warn">
+        This contact has no ledger accounts yet, so nothing here can be posted. Open the contact and
+        use <strong>Provision accounts</strong>, then come back.
+      </p>
+    }
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="line-col">#</th>
+          <th>What this is for</th>
+          <th>Posts to</th>
+          <th>Settles</th>
+          <th>Memo</th>
+          <th class="num">Amount</th>
+          <th class="actions-col"><span class="sr-only">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of lines(); track $index) {
+          <tr>
+            <td class="line-col" data-label="Line">{{ $index + 1 }}</td>
+
+            <td data-label="What this is for">
+              <select
+                [(ngModel)]="line.ledgerSourceId"
+                [name]="'source' + $index"
+                (ngModelChange)="onSource(line)"
+              >
+                <option [ngValue]="null">Choose…</option>
+                @for (s of sources(); track s.ledgerSourceId) {
+                  <option [ngValue]="s.ledgerSourceId">{{ s.label }}</option>
+                }
+              </select>
+              @if (sourceFor(line.ledgerSourceId); as s) {
+                <span class="sub">{{ s.hint }}</span>
+              }
+            </td>
+
+            <!-- Shown, never chosen. The account follows from the contact and
+                 what the line is for; the server resolves the same one from the
+                 same rule, so a picker here could only disagree with it. -->
+            <td data-label="Posts to">
+              @if (subAccountFor(line); as sub) {
+                <span class="locked" title="Fixed by the contact and what this line is for">
+                  {{ sub.accountCode }} — {{ sub.accountName }}
+                </span>
+                <span class="sub">{{ sub.subAccountName }}</span>
+              } @else if (line.ledgerSourceId === null || contactId === null) {
+                <span class="none">—</span>
+              } @else {
+                <span class="missing">
+                  No {{ sourceFor(line.ledgerSourceId)?.accountSystemName }} account for this
+                  contact
+                </span>
+              }
+            </td>
+
+            <td data-label="Settles">
+              @if (line.mappingTransactionTypeCode) {
+                <span class="chip">{{ line.mappingTransactionTypeCode }}</span>
+                <input
+                  type="number"
+                  inputmode="numeric"
+                  min="1"
+                  step="1"
+                  placeholder="Document #"
+                  [(ngModel)]="line.mappingTransactionId"
+                  [name]="'maps' + $index"
+                  (ngModelChange)="touch()"
+                />
+              } @else {
+                <span class="none">—</span>
+              }
+            </td>
+
+            <td data-label="Memo">
+              <input
+                type="text"
+                [(ngModel)]="line.lineMemo"
+                [name]="'lineMemo' + $index"
+                maxlength="300"
+                (ngModelChange)="touch()"
+              />
+            </td>
+
+            <td class="num" data-label="Amount">
+              <input
+                type="number"
+                inputmode="decimal"
+                step="0.01"
+                min="0"
+                [(ngModel)]="line.amount"
+                [name]="'lineAmount' + $index"
+                (ngModelChange)="touch()"
+              />
+              <button type="button" class="link fill" (click)="fill(line)">Fill rest</button>
+            </td>
+
+            <td class="actions-col">
+              <button type="button" class="icon" (click)="removeLine($index)" title="Remove line">
+                ×
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
+
+    <!-- What is left over is the point of this panel: an overpayment is a
+         payment whose lines stopped short of the amount that moved, and finding
+         that out at save time means finding it out too late. -->
+    <div class="totals" [class.balanced]="unallocated === 0" [class.off]="unallocated !== 0">
+      <div>
+        <span>Amount</span>
+        <strong>{{ amount || 0 | number: '1.2-2' }}</strong>
+      </div>
+      <div>
+        <span>Allocated</span>
+        <strong>{{ allocated | number: '1.2-2' }}</strong>
+      </div>
+      <div class="diff">
+        <span>Unallocated</span>
+        <strong>{{ unallocated | number: '1.2-2' }}</strong>
+      </div>
+    </div>
+
+    @if (unallocated > 0) {
+      <p class="hint">
+        {{ unallocated | number: '1.2-2' }} is not yet accounted for. Add a line for it — an excess
+        over what was owed is an overpayment, and it belongs on the document rather than nowhere.
+      </p>
+    } @else if (unallocated < 0) {
+      <p class="hint">
+        The lines add up to {{ allocated | number: '1.2-2' }}, more than the
+        {{ amount || 0 | number: '1.2-2' }} that moved.
+      </p>
+    }
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Cancel</button>
+      <button type="button" (click)="save(false)" [disabled]="busy()">Save draft</button>
+      <button type="button" class="primary" (click)="save(true)" [disabled]="busy() || !canPost">
+        Post
+      </button>
+    </div>
+  </section>
+}
+
+@if (viewing(); as d) {
+  <section class="editor readonly">
+    <h2>
+      {{ d.transactionNo }}
+      <span class="badge" [class.void]="d.status === 'Void'">{{ d.status }}</span>
+    </h2>
+
+    <p class="note">
+      A posted document is never edited. Void it instead — the ledger rows are withdrawn and the
+      document keeps its number, because a gap in a series is what an auditor asks about.
+    </p>
+
+    <dl class="meta">
+      <div><dt>Date</dt><dd>{{ d.transactionDate }}</dd></div>
+      <div><dt>{{ contactLabel() }}</dt><dd>{{ contactName(d.contactId) }}</dd></div>
+      <div><dt>Account</dt><dd>{{ d.bankAccountName }}</dd></div>
+      <div><dt>Amount</dt><dd>{{ d.amount | number: '1.2-2' }} {{ d.currencyCode }}</dd></div>
+      <div><dt>Method</dt><dd>{{ d.paymentMethod }}</dd></div>
+      <div><dt>Reference</dt><dd>{{ d.referenceNo ?? '—' }}</dd></div>
+      <div><dt>Memo</dt><dd>{{ d.memo ?? '—' }}</dd></div>
+    </dl>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="line-col">#</th>
+          <th>What this is for</th>
+          <th>Settles</th>
+          <th>Memo</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of d.lines; track line.detailId) {
+          <tr>
+            <td class="line-col" data-label="Line">{{ line.lineNumber }}</td>
+            <td data-label="What this is for">
+              {{ sourceFor(line.ledgerSourceId)?.label ?? 'Source ' + line.ledgerSourceId }}
+            </td>
+            <td data-label="Settles">
+              @if (line.mappingTransactionTypeCode) {
+                {{ line.mappingTransactionTypeCode }} #{{ line.mappingTransactionId ?? '—' }}
+              } @else {
+                <span class="none">—</span>
+              }
+            </td>
+            <td data-label="Memo">{{ line.lineMemo ?? '' }}</td>
+            <td class="num" data-label="Amount">{{ line.amount | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="4">Total</td>
+          <td class="num">{{ d.amount | number: '1.2-2' }}</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="close()">Close</button>
+      @if (d.status === 'Posted') {
+        <button type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
+      }
+    </div>
+  </section>
+}
+
+<div class="filters">
+  <label>
+    Status
+    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
+      <option value="">All</option>
+      <option value="Draft">Draft</option>
+      <option value="Posted">Posted</option>
+      <option value="Void">Void</option>
+    </select>
+  </label>
+</div>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="date-col">Date</th>
+      <th>Number</th>
+      <th>{{ contactLabel() }}</th>
+      <th>Account</th>
+      <th class="num">Amount</th>
+      <th>Status</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.documentId) {
+      <tr [class.draft]="row.status === 'Draft'">
+        <td class="date-col" data-label="Date">{{ row.transactionDate }}</td>
+        <td data-label="Number">
+          <button type="button" class="link" (click)="open(row.documentId)">
+            {{ row.transactionNo ?? 'Unnumbered draft' }}
+          </button>
+        </td>
+        <td data-label="Contact">{{ contactName(row.contactId) }}</td>
+        <td data-label="Account">{{ row.bankAccountName }}</td>
+        <td class="num" data-label="Amount">{{ row.amount | number: '1.2-2' }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
+        </td>
+        <td class="actions-col">
+          @if (row.status === 'Draft') {
+            <button type="button" class="link" (click)="discard(row)">Delete</button>
+          } @else if (row.status === 'Posted') {
+            <button type="button" class="link" (click)="voidDocument(row)">Void</button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="7" class="empty">
+          Nothing here yet.
+          {{
+            direction() === 'spend'
+              ? 'Spend money records what left the bank — a bill paid, a deposit placed, a customer refunded.'
+              : 'Receive money records what arrived — an invoice settled, an advance taken, a supplier refunding us.'
+          }}
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

@@ -1,0 +1,60 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.link { color: #3557d6; text-decoration: none; background: none; border: 0; font: inherit; font-size: inherit; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { font-size: .78rem; color: #6a6f80; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #eceef3; color: #4a4f60; font: inherit; font-size: .85rem; cursor: pointer; }
+button.primary { background: #3557d6; color: #fff; }
+button.ghost { background: transparent; color: #4a4f60; }
+button:disabled { opacity: .45; cursor: default; }
+.page-head button { background: #3557d6; color: #fff; }
+
+.editor { border: 1px solid #cdd1dc; border-radius: 8px; padding: 1rem; margin: 1rem 0 1.5rem; }
+.editor h2 { font-size: 1rem; margin: 0 0 .8rem; display: flex; gap: .5rem; align-items: baseline; }
+.editor.readonly { background: #fafbfd; }
+.note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 .8rem; }
+
+.head-fields { display: flex; gap: .75rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+.head-fields label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.head-fields label.wide { flex: 1 1 14rem; }
+.head-fields input, .head-fields select { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+.swap-cell { flex: 0 0 auto; }
+
+.meta { display: flex; gap: 2rem; margin: 0 0 1rem; flex-wrap: wrap; }
+.meta dt { font-size: .72rem; color: #8a8f9e; }
+.meta dd { margin: 0; font-size: .88rem; }
+
+.grid { width: 100%; border-collapse: collapse; }
+.grid th, .grid td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #e2e4ea; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.date-col { width: 6.5rem; color: #6a6f80; font-variant-numeric: tabular-nums; }
+.actions-col { text-align: right; white-space: nowrap; width: 5rem; }
+.grid tr.draft { background: #fffdf5; }
+
+.badge { font-size: .65rem; background: #e3e9fd; color: #2743a8; padding: .1rem .35rem; border-radius: 3px; }
+.badge.void { background: #fdecea; color: #c0392b; }
+
+.editor-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
+
+.filters { display: flex; gap: .75rem; margin: 1rem 0 .5rem; }
+.filters label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.filters select { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+
+/* At ~360px the list becomes stacked cards and the two account pickers go full
+   width, so From and To read as two lines rather than two half-width boxes. */
+@media (max-width: 720px) {
+  .grid thead { display: none; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .grid td { display: flex; justify-content: space-between; align-items: center; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 7rem; }
+  .date-col, .actions-col { width: auto; }
+  .actions-col { justify-content: flex-end; }
+  .head-fields label, .head-fields label.wide { flex: 1 1 100%; }
+  .swap-cell { align-self: flex-end; }
+  .editor-actions button { flex: 1 1 auto; }
+}
