@@ -93,6 +93,24 @@ Backend tests live in `backend/tests/` and run with `dotnet test` — 58 of them
 over pure logic only: number composition, drag-ordering and the phone attributes
 in `Shared.Kernel`, and what a stock movement means in the general ledger.
 
+## Calling the API by hand
+
+`postman/Bill-Book.postman_collection.json` — 204 requests across every service,
+**generated from the controllers** by `python3 postman/generate.py`. Import it,
+set `email` and `password`, then run **① Login** and **② Select organization**:
+they capture the tokens into collection variables and everything else inherits
+the bearer token.
+
+It is generated rather than maintained because a hand-kept collection drifts
+from the API within a fortnight — a route is renamed, a field is added, and the
+collection goes on sending a body the server stopped accepting. Three things it
+works out rather than being told: which host a request belongs to (the gateway
+only proxies some prefixes), which guard applies (anonymous, bearer, or the
+shared internal key, read from the attributes), and what a body looks like
+(built from the C# request model, so a new field appears the day it is added).
+
+Re-run the script after changing a controller, and commit the result with it.
+
 ## Ports
 
 | Port | Service |
