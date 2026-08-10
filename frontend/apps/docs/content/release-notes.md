@@ -31,6 +31,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+### Fixed
+- **Journals, the account ledger, opening balances, period locks and the three money screens were unreachable through the gateway.** Their controllers had been added without the matching gateway routes, so every one of those screens worked when a service was called directly and returned "not found" through the front door every deployment actually uses. Seven routes added. Three services — contacts, inventory and banking — were also missing from the Production, Staging and UAT gateway configuration entirely, so those environments had routes pointing at destinations that were never declared.
+
 ### Changed
 - **Mandatory fields are now validated in the UI before save/post API calls.** Create and edit screens now block obvious missing required data (including nested rows in contacts, items, and money documents) and show immediate field-level guidance, instead of failing only after a server round-trip.
 

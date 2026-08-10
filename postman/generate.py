@@ -14,11 +14,11 @@ controller or this script, then re-run.
 
 Three things it works out rather than being told:
 
-* **Which host a request should go to.** The gateway proxies some prefixes and
-  not others, so a request is pointed at `{{gatewayUrl}}` only when the gateway
-  actually has a route for it, and at the service's own port otherwise. Get this
-  wrong and half the collection 404s against a gateway that was never asked to
-  carry it.
+* **That the gateway can actually reach every endpoint.** Clients only ever see
+  the gateway, so the script refuses to generate anything while an `/api` prefix
+  has no route — otherwise the collection would quietly pass against a service
+  port while the product was broken through the edge, which is the one failure a
+  collection exists to catch.
 * **Which guard applies.** Anonymous, bearer token, or the shared internal key —
   read from the attributes rather than assumed, including per-action
   `[AllowAnonymous]`, which is how sign-in sits inside an otherwise closed
@@ -177,11 +177,28 @@ def main():
     routed = gateway_prefixes()
     svc_var = {s: f"{{{{{s.lower()}Url}}}}" for s in SVC_PORT}
 
+    # Everything a client calls goes through the gateway. It is the only address
+    # a deployment exposes, and a collection that reaches past it tests a path
+    # no user can take — green here and 404 in production.
+    unrouted = sorted({
+        r["path"].split("/")[2] for r in routes
+        if not r["internal"] and r["path"].startswith("/api/")
+        and r["path"].split("/")[2] not in routed
+    })
+    if unrouted:
+        # Loud, because the alternative is a collection that quietly works
+        # against a service port while the product is broken through the edge.
+        raise SystemExit(
+            "These /api prefixes have no gateway route, so no client can reach "
+            "them:\n  " + "\n  ".join("/api/" + p for p in unrouted) +
+            "\n\nAdd them to backend/Gateway/appsettings.json before regenerating.")
+
     def host(r):
-        if r["internal"] or not r["path"].startswith("/api/"):
-            return svc_var[r["service"]]
-        prefix = r["path"].split("/")[2]
-        return "{{gatewayUrl}}" if prefix in routed else svc_var[r["service"]]
+        # internal/* is the exception, and deliberately so: it is
+        # service-to-service, guarded by a shared key rather than a token, and
+        # routing it through the public edge would put a key-only door on the
+        # internet.
+        return svc_var[r["service"]] if r["internal"] else "{{gatewayUrl}}"
 
     def make(r):
         url = host(r) + r["path"]
@@ -197,9 +214,6 @@ def main():
         elif r["anon"]:
             request["auth"] = {"type": "noauth"}
             notes.append("anonymous")
-
-        if not url.startswith("{{gatewayUrl}}") and not r["internal"]:
-            notes.append("direct to the service — the gateway has no route for this prefix")
 
         if r["body"] is not None:
             headers.append({"key": "Content-Type", "value": "application/json"})
@@ -298,8 +312,11 @@ def main():
                 "because one account can hold roles in several branches, and the access "
                 "token has to name one.\n\n"
                 "### Hosts\n"
-                "A request points at `{{gatewayUrl}}` only where the gateway actually "
-                "proxies that prefix, and at the service's own port otherwise.\n\n"
+                "Everything goes through `{{gatewayUrl}}`. It is the only address a "
+                "deployment exposes, so a request that reached past it would test a "
+                "path no user can take. The one exception is the internal folder: "
+                "service-to-service endpoints are key-guarded and deliberately not "
+                "published at the edge.\n\n"
                 "### Bodies\n"
                 "Generated from the C# request models. Placeholders read `<FieldName>` — "
                 "they are shapes, not fixtures."),

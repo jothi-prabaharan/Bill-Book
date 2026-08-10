@@ -2,7 +2,7 @@
  "info": {
   "name": "Bill-Book API",
   "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-  "description": "RetailErp / Bill-Book \u2014 generated from the controllers by `postman/generate.py`. Do not hand-edit; re-run it.\n\n**Run \u2460 Login then \u2461 Select organization first.** Sign-in is two-step because one account can hold roles in several branches, and the access token has to name one.\n\n### Hosts\nA request points at `{{gatewayUrl}}` only where the gateway actually proxies that prefix, and at the service's own port otherwise.\n\n### Bodies\nGenerated from the C# request models. Placeholders read `<FieldName>` \u2014 they are shapes, not fixtures."
+  "description": "RetailErp / Bill-Book \u2014 generated from the controllers by `postman/generate.py`. Do not hand-edit; re-run it.\n\n**Run \u2460 Login then \u2461 Select organization first.** Sign-in is two-step because one account can hold roles in several branches, and the access token has to name one.\n\n### Hosts\nEverything goes through `{{gatewayUrl}}`. It is the only address a deployment exposes, so a request that reached past it would test a path no user can take. The one exception is the internal folder: service-to-service endpoints are key-guarded and deliberately not published at the edge.\n\n### Bodies\nGenerated from the C# request models. Placeholders read `<FieldName>` \u2014 they are shapes, not fixtures."
  },
  "auth": {
   "type": "bearer",
@@ -2039,21 +2039,21 @@
     },
     {
      "name": "List \u2014 GET /api/journals",
-     "description": "`Accounting.JournalsController.List` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.List`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals"
+       "raw": "{{gatewayUrl}}/api/journals"
       }
      }
     },
     {
      "name": "Create \u2014 POST /api/journals",
-     "description": "`Accounting.JournalsController.Create` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Create`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals"
+       "raw": "{{gatewayUrl}}/api/journals"
       },
       "body": {
        "mode": "raw",
@@ -2074,31 +2074,31 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/journals/:journalId",
-     "description": "`Accounting.JournalsController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals/:journalId"
+       "raw": "{{gatewayUrl}}/api/journals/:journalId"
       }
      }
     },
     {
      "name": "Get \u2014 GET /api/journals/:journalId",
-     "description": "`Accounting.JournalsController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Get`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals/:journalId"
+       "raw": "{{gatewayUrl}}/api/journals/:journalId"
       }
      }
     },
     {
      "name": "Update \u2014 PUT /api/journals/:journalId",
-     "description": "`Accounting.JournalsController.Update` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Update`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals/:journalId"
+       "raw": "{{gatewayUrl}}/api/journals/:journalId"
       },
       "body": {
        "mode": "raw",
@@ -2119,21 +2119,21 @@
     },
     {
      "name": "Post \u2014 POST /api/journals/:journalId/post",
-     "description": "`Accounting.JournalsController.Post` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Post`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals/:journalId/post"
+       "raw": "{{gatewayUrl}}/api/journals/:journalId/post"
       }
      }
     },
     {
      "name": "Reverse \u2014 POST /api/journals/:journalId/reverse",
-     "description": "`Accounting.JournalsController.Reverse` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.JournalsController.Reverse`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{accountingUrl}}/api/journals/:journalId/reverse"
+       "raw": "{{gatewayUrl}}/api/journals/:journalId/reverse"
       },
       "body": {
        "mode": "raw",
@@ -2154,41 +2154,41 @@
     },
     {
      "name": "Account ledger \u2014 GET /api/ledger/accounts/:accountId",
-     "description": "`Accounting.LedgerController.AccountLedger` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.LedgerController.AccountLedger`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/ledger/accounts/:accountId"
+       "raw": "{{gatewayUrl}}/api/ledger/accounts/:accountId"
       }
      }
     },
     {
      "name": "Settlement rate \u2014 GET /api/ledger/documents/:transactionTypeCode/:transactionId/rate",
-     "description": "`Accounting.LedgerController.SettlementRate` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.LedgerController.SettlementRate`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/ledger/documents/:transactionTypeCode/:transactionId/rate"
+       "raw": "{{gatewayUrl}}/api/ledger/documents/:transactionTypeCode/:transactionId/rate"
       }
      }
     },
     {
      "name": "Sub ledger tie \u2014 GET /api/ledger/sub-ledger-tie",
-     "description": "`Accounting.LedgerController.SubLedgerTie` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.LedgerController.SubLedgerTie`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/ledger/sub-ledger-tie"
+       "raw": "{{gatewayUrl}}/api/ledger/sub-ledger-tie"
       }
      }
     },
     {
      "name": "Trial balance \u2014 GET /api/ledger/trial-balance",
-     "description": "`Accounting.LedgerController.TrialBalance` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.LedgerController.TrialBalance`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/ledger/trial-balance"
+       "raw": "{{gatewayUrl}}/api/ledger/trial-balance"
       }
      }
     },
@@ -2334,31 +2334,31 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/opening-balance",
-     "description": "`Accounting.OpeningBalancesController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance"
+       "raw": "{{gatewayUrl}}/api/opening-balance"
       }
      }
     },
     {
      "name": "Get \u2014 GET /api/opening-balance",
-     "description": "`Accounting.OpeningBalancesController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Get`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance"
+       "raw": "{{gatewayUrl}}/api/opening-balance"
       }
      }
     },
     {
      "name": "Save \u2014 PUT /api/opening-balance",
-     "description": "`Accounting.OpeningBalancesController.Save` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Save`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance"
+       "raw": "{{gatewayUrl}}/api/opening-balance"
       },
       "body": {
        "mode": "raw",
@@ -2379,31 +2379,31 @@
     },
     {
      "name": "Finalize \u2014 POST /api/opening-balance/finalize",
-     "description": "`Accounting.OpeningBalancesController.Finalize` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Finalize`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance/finalize"
+       "raw": "{{gatewayUrl}}/api/opening-balance/finalize"
       }
      }
     },
     {
      "name": "Readiness \u2014 GET /api/opening-balance/readiness",
-     "description": "`Accounting.OpeningBalancesController.Readiness` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Readiness`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance/readiness"
+       "raw": "{{gatewayUrl}}/api/opening-balance/readiness"
       }
      }
     },
     {
      "name": "Tie \u2014 GET /api/opening-balance/tie",
-     "description": "`Accounting.OpeningBalancesController.Tie` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.OpeningBalancesController.Tie`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/opening-balance/tie"
+       "raw": "{{gatewayUrl}}/api/opening-balance/tie"
       }
      }
     },
@@ -2534,21 +2534,21 @@
     },
     {
      "name": "List \u2014 GET /api/period-locks",
-     "description": "`Accounting.PeriodLocksController.List` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.PeriodLocksController.List`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/period-locks"
+       "raw": "{{gatewayUrl}}/api/period-locks"
       }
      }
     },
     {
      "name": "Set \u2014 PUT /api/period-locks",
-     "description": "`Accounting.PeriodLocksController.Set` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.PeriodLocksController.Set`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{accountingUrl}}/api/period-locks"
+       "raw": "{{gatewayUrl}}/api/period-locks"
       },
       "body": {
        "mode": "raw",
@@ -2569,21 +2569,21 @@
     },
     {
      "name": "Clear \u2014 DELETE /api/period-locks/:roleId",
-     "description": "`Accounting.PeriodLocksController.Clear` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.PeriodLocksController.Clear`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{accountingUrl}}/api/period-locks/:roleId"
+       "raw": "{{gatewayUrl}}/api/period-locks/:roleId"
       }
      }
     },
     {
      "name": "Mine \u2014 GET /api/period-locks/mine",
-     "description": "`Accounting.PeriodLocksController.Mine` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Accounting.PeriodLocksController.Mine`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{accountingUrl}}/api/period-locks/mine"
+       "raw": "{{gatewayUrl}}/api/period-locks/mine"
       }
      }
     },
@@ -2930,21 +2930,21 @@
     },
     {
      "name": "List \u2014 GET /api/receive-money",
-     "description": "`Banking.ReceiveMoneyController.List` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.List`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money"
+       "raw": "{{gatewayUrl}}/api/receive-money"
       }
      }
     },
     {
      "name": "Create \u2014 POST /api/receive-money",
-     "description": "`Banking.ReceiveMoneyController.Create` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Create`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money"
+       "raw": "{{gatewayUrl}}/api/receive-money"
       },
       "body": {
        "mode": "raw",
@@ -2965,31 +2965,31 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money/:id"
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
       }
      }
     },
     {
      "name": "Get \u2014 GET /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Get`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money/:id"
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
       }
      }
     },
     {
      "name": "Update \u2014 PUT /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Update` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Update`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money/:id"
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
       },
       "body": {
        "mode": "raw",
@@ -3010,21 +3010,21 @@
     },
     {
      "name": "Post \u2014 POST /api/receive-money/:id/post",
-     "description": "`Banking.ReceiveMoneyController.Post` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Post`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money/:id/post"
+       "raw": "{{gatewayUrl}}/api/receive-money/:id/post"
       }
      }
     },
     {
      "name": "Void \u2014 POST /api/receive-money/:id/void",
-     "description": "`Banking.ReceiveMoneyController.Void` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.ReceiveMoneyController.Void`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/receive-money/:id/void"
+       "raw": "{{gatewayUrl}}/api/receive-money/:id/void"
       },
       "body": {
        "mode": "raw",
@@ -3045,21 +3045,21 @@
     },
     {
      "name": "List \u2014 GET /api/spend-money",
-     "description": "`Banking.SpendMoneyController.List` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.List`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money"
+       "raw": "{{gatewayUrl}}/api/spend-money"
       }
      }
     },
     {
      "name": "Create \u2014 POST /api/spend-money",
-     "description": "`Banking.SpendMoneyController.Create` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Create`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money"
+       "raw": "{{gatewayUrl}}/api/spend-money"
       },
       "body": {
        "mode": "raw",
@@ -3080,31 +3080,31 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money/:id"
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
       }
      }
     },
     {
      "name": "Get \u2014 GET /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Get`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money/:id"
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
       }
      }
     },
     {
      "name": "Update \u2014 PUT /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Update` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Update`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money/:id"
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
       },
       "body": {
        "mode": "raw",
@@ -3125,21 +3125,21 @@
     },
     {
      "name": "Post \u2014 POST /api/spend-money/:id/post",
-     "description": "`Banking.SpendMoneyController.Post` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Post`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money/:id/post"
+       "raw": "{{gatewayUrl}}/api/spend-money/:id/post"
       }
      }
     },
     {
      "name": "Void \u2014 POST /api/spend-money/:id/void",
-     "description": "`Banking.SpendMoneyController.Void` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.SpendMoneyController.Void`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/spend-money/:id/void"
+       "raw": "{{gatewayUrl}}/api/spend-money/:id/void"
       },
       "body": {
        "mode": "raw",
@@ -3160,21 +3160,21 @@
     },
     {
      "name": "List \u2014 GET /api/transfer-money",
-     "description": "`Banking.TransferMoneyController.List` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.List`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money"
+       "raw": "{{gatewayUrl}}/api/transfer-money"
       }
      }
     },
     {
      "name": "Create \u2014 POST /api/transfer-money",
-     "description": "`Banking.TransferMoneyController.Create` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Create`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money"
+       "raw": "{{gatewayUrl}}/api/transfer-money"
       },
       "body": {
        "mode": "raw",
@@ -3195,31 +3195,31 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money/:id"
+       "raw": "{{gatewayUrl}}/api/transfer-money/:id"
       }
      }
     },
     {
      "name": "Get \u2014 GET /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Get`",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money/:id"
+       "raw": "{{gatewayUrl}}/api/transfer-money/:id"
       }
      }
     },
     {
      "name": "Update \u2014 PUT /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Update` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Update`",
      "request": {
       "method": "PUT",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money/:id"
+       "raw": "{{gatewayUrl}}/api/transfer-money/:id"
       },
       "body": {
        "mode": "raw",
@@ -3240,21 +3240,21 @@
     },
     {
      "name": "Post \u2014 POST /api/transfer-money/:id/post",
-     "description": "`Banking.TransferMoneyController.Post` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Post`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money/:id/post"
+       "raw": "{{gatewayUrl}}/api/transfer-money/:id/post"
       }
      }
     },
     {
      "name": "Void \u2014 POST /api/transfer-money/:id/void",
-     "description": "`Banking.TransferMoneyController.Void` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "description": "`Banking.TransferMoneyController.Void`",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{bankingUrl}}/api/transfer-money/:id/void"
+       "raw": "{{gatewayUrl}}/api/transfer-money/:id/void"
       },
       "body": {
        "mode": "raw",
