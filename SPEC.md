@@ -1024,10 +1024,124 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 >
 > **Decided (T0.6): the view was not built, and the exception list did not grow.** The account ledger and the trial balance are LINQ projections in Accounting, and the running balance is accumulated in C# over the ordered result. A ledger read is always scoped to one account, ordered, and cut to a date range — which is everything the window function needed — so the view bought less than the exception cost. The `security_invoker` hazard above is the other half of the reason: a view that forgets it reads straight past RLS and hands one branch another branch's general ledger, and that is one migration away from happening by accident.
 
-### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sal.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+### `sal.Sales` / `sal.SalesDetails` 🔨
 
-`bnk.*` is no longer among them — the money documents are designed and built; see the section above.
+**One table pair for all five sales documents**, discriminated by `TransactionTypeCode` — `QTE` quote, `SOR` sales order, `INV` invoice, `POS` POS sale, `CRN` credit note. T2.1 decided; names chosen by the owner.
+
+There is therefore **no table called `Invoice`**. An invoice is a row in `sal.Sales` with `TransactionTypeCode = 'INV'`, and conversion along the chain is a copy that sets `SourceSaleId`. The five share about ninety per cent of their columns, so the alternative was ten tables, five near-identical services, and every cross-document report joining all of them. The cost is a wide table whose column applicability lives in C#: `ValidUntil` means nothing on an invoice, `DueDate` nothing on a quote.
+
+#### `sal.Sales` — header
+
+| Column | Type | Rules |
+|---|---|---|
+| SaleId | long | PK, identity |
+| OrgId | Guid | Required |
+| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. **The discriminator** |
+| SaleNo | string(30)? | **Nullable.** Taken at post, never at draft — same rule and same filtered unique index as `acc.Journals.JournalNo` |
+| SaleDate | DateOnly | Required |
+| ContactId | long | Required. No FK — Contacts is another service |
+| ContactName | string(200) | **Snapshot.** A customer renaming themselves must not restate a printed invoice |
+| ContactGstin | string(15)? | Snapshot, for the same reason. Statutory on the document |
+| BillingAddress | string? | Snapshot text |
+| ShippingAddress | string? | Snapshot text |
+| PlaceOfSupplyStateId | int | Required. Snapshot → `mst.States`, unenforced |
+| IsInterState | bool | The determination **result**, stored not re-derived. Re-deriving it years later against a changed contact would silently reclassify CGST/SGST as IGST |
+| CurrencyCode | string(3) | Required |
+| ExchangeRate | decimal(18,8) | Default 1. **Snapshot at SaleDate — never live** |
+| PaymentTermId | long? | → `acc.PaymentTerms`, unenforced id. Another service |
+| DueDate | DateOnly? | Derived from the terms at post. Invoices only |
+| ValidUntil | DateOnly? | Quotes only |
+| DeliveryDate | DateOnly? | Orders only |
+| Status | enum→string(10) | Draft / Posted / Void |
+| FulfilmentStatus | enum→string(15)? | Open / PartlyDelivered / Closed / Cancelled. Orders only |
+| SourceSaleId | long? | Self-FK. The document this converted from |
+| SourceTransactionTypeCode | string(3)? | What it converted from |
+| SubTotal | decimal(18,2) | Σ line gross, before discount |
+| DiscountAmount | decimal(18,2) | |
+| TaxableAmount | decimal(18,2) | |
+| CgstAmount / SgstAmount / IgstAmount | decimal(18,2) | Split held at header as well as line, because the GST return reads both |
+| CessAmount | decimal(18,2) | |
+| RoundOffAmount | decimal(18,2) | Signed. Posts as its own `ROUNDOFF` leg |
+| TotalAmount | decimal(18,2) | |
+| TotalAmountBase | decimal(18,2) | `ROUND(TotalAmount / ExchangeRate, 2)` |
+| Notes | string? | |
+| TermsAndConditions | string? | |
+| PostedAt / PostedBy | DateTimeOffset? / Guid? | |
+| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | |
+
+Unique index: filtered `(OrgId, TransactionTypeCode, SaleNo)` where `SaleNo` is not null · Indexes: (OrgId, SaleDate) · (OrgId, ContactId) · (OrgId, TransactionTypeCode, Status) · (OrgId, SourceSaleId)
+
+**Check constraints**:
+- `chk_sales_draft_no_number` — Draft ⇒ `SaleNo IS NULL`; anything past Draft ⇒ `SaleNo IS NOT NULL`. Both halves of T0.3's rule, as on `acc.Journals`
+- `chk_sales_posted_at` — `PostedAt` set iff the status is past Draft
+- `chk_sales_rate_positive` — `ExchangeRate > 0`
+- `chk_sales_amounts_non_negative` — every amount except `RoundOffAmount`, which is signed
+- `chk_sales_total` — `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`. Same-row arithmetic, so the database can hold it and a calculation bug cannot reach the ledger
+- `chk_sales_not_self_source` — `SourceSaleId <> SaleId`
+
+**Three columns deliberately absent.**
+
+- **No `AmountPaid` or `AmountOutstanding`.** What is owed is derived from the ledger's AR sub-account and the allocations in `acc.TransactionRatio` (T3.3). A stored balance is a second truth that drifts the first time a payment is voided.
+- **No `CostAmount` or COGS.** Cost lives on the stock movement and is settled asynchronously; the line stays a pure revenue row. A cost column here would be a copy that disagrees with the layers.
+- **No `IsPaid` flag**, for the same reason as the first.
+
+#### `sal.SalesDetails` — lines
+
+**Carries its own `OrgId`**, like every other detail table in the product — see `acc.JournalDetails` and T0.5. Scoping through the parent header means no EF query filter and an RLS policy that has to subquery.
+
+| Column | Type | Rules |
+|---|---|---|
+| SaleDetailId | long | PK, identity |
+| SaleId | long | Required, FK, cascade delete |
+| OrgId | Guid | Required |
+| LineNumber | int | Required |
+| ItemId | long | Required. No FK — Inventory is another service |
+| ItemCode / ItemName | string(50) / string(200) | Snapshots |
+| HsnSacCode | string(8)? | Snapshot. Statutory on the invoice |
+| Description | string(500)? | |
+| WarehouseId | long? | Location dimension only — it never partitions stock |
+| Quantity | decimal(18,6) | As entered |
+| UomId | long | The unit the quantity is in |
+| ConversionFactor | decimal(18,6) | **Stored, not re-derived.** Correcting a unit factor later must not restate recorded history |
+| BaseQuantity | decimal(18,6) | In the item's inventory unit |
+| UnitPrice | decimal(18,6) | **Per entered unit**, not per inventory unit |
+| IsPriceInclusive | bool | MRP-inclusive is the Indian retail default, pharma especially |
+| DiscountPercent | decimal(9,6)? | |
+| DiscountAmount | decimal(18,2) | |
+| GrossAmount | decimal(18,2) | `Quantity × UnitPrice` |
+| TaxableAmount | decimal(18,2) | Gross − discount. **Discount reduces the taxable value** |
+| TaxMasterId | long | → `acc.TaxMasters`, unenforced. Another service |
+| TaxGroupId | long | The revision-stable group id, which is what sub-accounts reference |
+| CgstRate / SgstRate / IgstRate / CessRate | decimal(9,4) | **Rate snapshots at SaleDate**, never today's |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
+| LineTotal | decimal(18,2) | Taxable + tax + cess |
+| ItemBatchId | long? | One lot per line — a quantity spanning two lots is two lines |
+| DeliveredQuantity / InvoicedQuantity / ReturnedQuantity | decimal(18,6) | Fulfilment tracking against this line |
+| SourceSaleDetailId | long? | The line this converted from |
+| LineNotes | string(300)? | |
+
+Unique index: (SaleId, LineNumber) · Indexes: (OrgId, ItemId) · (OrgId, ItemBatchId) · (SourceSaleDetailId)
+
+**Check constraints**:
+- `chk_salesdetail_quantity_positive` — `Quantity > 0`
+- `chk_salesdetail_conversion` — `BaseQuantity = Quantity × ConversionFactor`, as `inv.StockMovements` already asserts
+- `chk_salesdetail_discount` — `DiscountAmount <= GrossAmount`
+- `chk_salesdetail_amounts_non_negative`
+- `chk_salesdetail_line_total` — `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess`
+- `chk_salesdetail_fulfilment` — delivered, invoiced and returned each ≤ `Quantity`
+
+**Serial numbers are not on the line.** They go to `inv.StockMovements` with the issue, because a line for ten serial-tracked pieces names ten serials and that is a collection, not a column. The line records quantity; the movement records which pieces left.
+
+**`pur.Purchases` / `pur.PurchaseDetails` mirror this** for `POR` / `GRN` / `BIL` / `DBN`, with the four differences named in [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md): received-versus-billed quantity tracking instead of delivered-versus-invoiced, landed cost, price variance, and the capital-line flag that puts a purchase on the fixed asset register.
+
+**Open on this design** — neither blocks T2.2:
+- **Jewellery and pharma line columns.** Making charge, wastage percentage and the metal rate of the day belong on a jewellery sale line and on nothing else. The item master solves this with a 1:0..1 extension (`inv.ItemJewelleryDetails`); the same shape would give `sal.SalesDetailsJewellery`. Not designed here.
+- **The table name against the quote.** `sal.Sales` holds a `QTE` row, and a quote is not a sale. The name is the owner's and is recorded as such; the alternative was `SalesDocuments`.
+
+### Not yet designed 📋
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+
+`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor is `sal.*` — designed above, not yet built.
 
 ---
 
