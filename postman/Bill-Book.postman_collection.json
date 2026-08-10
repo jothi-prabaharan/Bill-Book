@@ -1955,7 +1955,7 @@
   },
   {
    "name": "6 \u00b7 Accounting",
-   "description": "43 endpoints across 8 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "description": "50 endpoints across 9 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "List \u2014 GET /api/accounts",
@@ -2173,6 +2173,16 @@
      }
     },
     {
+     "name": "Sub ledger tie \u2014 GET /api/ledger/sub-ledger-tie",
+     "description": "`Accounting.LedgerController.SubLedgerTie` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{accountingUrl}}/api/ledger/sub-ledger-tie"
+      }
+     }
+    },
+    {
      "name": "Trial balance \u2014 GET /api/ledger/trial-balance",
      "description": "`Accounting.LedgerController.TrialBalance` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
      "request": {
@@ -2320,6 +2330,81 @@
         "value": "application/json"
        }
       ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/opening-balance",
+     "description": "`Accounting.OpeningBalancesController.Delete` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance"
+      }
+     }
+    },
+    {
+     "name": "Get \u2014 GET /api/opening-balance",
+     "description": "`Accounting.OpeningBalancesController.Get` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance"
+      }
+     }
+    },
+    {
+     "name": "Save \u2014 PUT /api/opening-balance",
+     "description": "`Accounting.OpeningBalancesController.Save` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"asOfDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"lines\": [\n    {\n      \"lineType\": \"<OpeningBalanceLineType>\",\n      \"accountId\": 1,\n      \"contactId\": 1,\n      \"itemId\": 1,\n      \"quantity\": 0,\n      \"unitCost\": 0,\n      \"debitAmount\": 0,\n      \"creditAmount\": 0,\n      \"documentReference\": \"<DocumentReference>\",\n      \"documentDate\": \"2026-08-10\",\n      \"dueDate\": \"2026-08-10\",\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Finalize \u2014 POST /api/opening-balance/finalize",
+     "description": "`Accounting.OpeningBalancesController.Finalize` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance/finalize"
+      }
+     }
+    },
+    {
+     "name": "Readiness \u2014 GET /api/opening-balance/readiness",
+     "description": "`Accounting.OpeningBalancesController.Readiness` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance/readiness"
+      }
+     }
+    },
+    {
+     "name": "Tie \u2014 GET /api/opening-balance/tie",
+     "description": "`Accounting.OpeningBalancesController.Tie` \u2014 direct to the service \u2014 the gateway has no route for this prefix",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{accountingUrl}}/api/opening-balance/tie"
+      }
      }
     },
     {
@@ -3492,6 +3577,39 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Opening \u2014 POST /internal/stock/opening",
+     "description": "`Inventory.InternalStockController.Opening` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{inventoryUrl}}/internal/stock/opening"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"openingBalanceId\": 1,\n  \"asOfDate\": \"2026-08-10\",\n  \"lines\": [\n    {\n      \"lineNumber\": 1,\n      \"itemId\": 1,\n      \"quantity\": 0,\n      \"unitCost\": 0,\n      \"warehouseId\": 1\n    }\n  ]\n}",
        "options": {
         "raw": {
          "language": "json"
