@@ -120,6 +120,11 @@ The flagship screen, and the first document where accounting, stock, tax and num
   *Done when*: an invoice appears as outstanding at its full value the moment it is posted, and the aging buckets tie to the Accounts Receivable control account.
 - [ ] **T3.4 — Document print and archive** — Syncfusion server-side PDF, PDF/A, archived to blob storage keyed by `SourceType` + `SourceId`. `IFileStorage` is done, both implementations.
   *Done when*: a posted invoice prints identically today and after a re-post, and the archived copy is retrievable by document id.
+- [ ] **T3.5 — `sal.SalesRegister`** — the sales register, designed in [`SPEC.md`](./SPEC.md). **Not a ledger and it posts nothing**: `acc.JournalLedger` stays the single posting target and the trial balance still sums one table. This carries taxable value and tax split at the grain a GST return is filed in — `(SaleId, HsnSacCode, GstRate)` — which is why it is stored rather than derived: B2B is reported per invoice per rate and the HSN summary per HSN per rate, and neither falls out of a header row or a line row.
+  Written **inside the post's own transaction**, replaced by `SaleId` on a re-post, deleted on void. That discipline is the only thing standing between a denormalisation and two truths, so it is not optional and not a background job.
+  `SupplyType` is classified once at post rather than at filing — the rule reads the party's GSTIN, the place of supply and the invoice value together, and re-deriving it later against a contact who has since registered would move a supply between return sections.
+  Extended by T5.2, which adds the credit-note rows and the link back to the invoice they amend.
+  *Done when*: an intra-state and an inter-state invoice register with the correct halves of the split and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphan rows; a void leaves none at all; and register taxable value for a period equals the Output GST legs in the ledger for that period.
 
 ---
 

@@ -1138,6 +1138,58 @@ Unique index: (SaleId, LineNumber) · Indexes: (OrgId, ItemId) · (OrgId, ItemBa
 - **Jewellery and pharma line columns.** Making charge, wastage percentage and the metal rate of the day belong on a jewellery sale line and on nothing else. The item master solves this with a 1:0..1 extension (`inv.ItemJewelleryDetails`); the same shape would give `sal.SalesDetailsJewellery`. Not designed here.
 - **The table name against the quote.** `sal.Sales` holds a `QTE` row, and a quote is not a sale. The name is the owner's and is recorded as such; the alternative was `SalesDocuments`.
 
+### `sal.SalesRegister` 🔨
+
+The sales register — what was supplied, to whom, at what rate. The source for **GSTR-1**, the sales report and the day book.
+
+**It is not a ledger and does not post.** `acc.JournalLedger` remains the single posting target for every document in the product, and the trial balance still sums one table. This register carries no debits, no credits and no accounts; it carries taxable value and tax split at the grain a GST return is filed in.
+
+**The grain is `(SaleId, HsnSacCode, GstRate)`** — and that is what makes the table worth storing rather than deriving. GSTR-1 is not filed per document or per line: B2B is reported per invoice **per rate**, and the HSN summary per HSN **per rate** aggregated across every invoice in the period. Both fall out of one `GROUP BY` over this grain, and neither falls out of a header row or a line row.
+
+| Column | Type | Rules |
+|---|---|---|
+| SalesRegisterId | long | PK, identity |
+| OrgId | Guid | Required |
+| SaleId | long | Required, FK → `sal.Sales`, cascade delete |
+| TransactionTypeCode | string(3) | `INV`, `POS` or `CRN`. **`QTE` and `SOR` never register** — neither is a supply |
+| SaleNo | string(30) | Required. A register row only exists for a posted document, and a posted document always has a number |
+| SaleDate | DateOnly | Required. The filing period is a range over this |
+| ContactId | long | |
+| ContactGstin | string(15)? | Null is what makes a supply B2C |
+| PlaceOfSupplyStateId | int | Required |
+| IsInterState | bool | Copied from the document, not re-derived |
+| SupplyType | enum→string(12) | B2B / B2CL / B2CS / Export / SezWithPay / SezWithoutPay / Nil / Exempt / NonGst. **Classified once at post**, because the rule reads the party's GSTIN, the place of supply and the invoice value together, and re-deriving it at filing time against a contact who has since registered would move a supply between return sections |
+| ReverseCharge | bool | |
+| HsnSacCode | string(8)? | Part of the grain |
+| GstRate | decimal(9,4) | The total rate. Part of the grain |
+| Quantity | decimal(18,6) | Summed across the lines in this grain. The HSN summary reports quantity |
+| UqcCode | string(10)? | The **notified** unit, not the display unit — carat and tola are not notified, which is why `inv.UnitOfMeasures` carries this separately |
+| TaxableAmount | decimal(18,2) | |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
+| TotalAmount | decimal(18,2) | |
+| CurrencyCode | string(3) | |
+| ExchangeRate | decimal(18,8) | Snapshot, as on the document |
+| TaxableAmountBase | decimal(18,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
+| OriginalSaleId | long? | Credit notes only |
+| OriginalSaleNo | string(30)? | GSTR-1 links a credit note to the invoice it amends |
+| OriginalSaleDate | DateOnly? | |
+
+Unique index: (SaleId, HsnSacCode, GstRate) — the grain, and what makes replace-by-key exact · Indexes: (OrgId, SaleDate) · (OrgId, SupplyType, SaleDate) · (OrgId, HsnSacCode, GstRate) · (OrgId, ContactId)
+
+**Check constraints**:
+- `chk_register_amounts_non_negative` — **all amounts positive, including a credit note's.** GSTR-1 reports credit notes in their own section as positive values; `TransactionTypeCode` carries the direction, not the sign
+- `chk_register_total` — `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess`
+- `chk_register_tax_split` — intra-state ⇒ `IgstAmount = 0`; inter-state ⇒ `CgstAmount = 0 AND SgstAmount = 0`. **This is the constraint that earns its place.** A tax determination that picks the wrong side still balances, still prints and still posts — the return is where it surfaces, months later, and this refuses it at the row
+
+**Write discipline, which is the whole guard against drift.** The register is a denormalisation of `sal.Sales` and `sal.SalesDetails`, so it is only trustworthy if it cannot diverge:
+
+- Written **inside the same transaction as the post**, never by a later job.
+- A re-post **replaces every row for that `SaleId`** — the same replace-by-key rule the ledger posting uses, for the same reason.
+- A void **deletes them.** A voided document was never a supply.
+- **The period tie**: register taxable value for a period must equal the Output GST legs in `acc.JournalLedger` over the same period. That reconciliation is the check that says the register and the books agree, and it belongs on the GSTR-1 screen the way T8.2 blocks a finalize that does not tie.
+
+**Deliberately not here.** A **filed** return is a different thing again — once GSTR-1 is submitted it is a statutory record that must not change even if the document behind it is later amended. That wants its own snapshot table at filing time, and it is not this one.
+
 ### Not yet designed 📋
 `acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
 
