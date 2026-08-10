@@ -127,12 +127,27 @@ export class OrganizationsPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (
+      !this.hasText(this.form.orgCode) ||
+      !this.hasText(this.form.name) ||
+      !this.hasText(this.form.baseCurrency)
+    ) {
+      this.fail('Branch code, name and base currency are required.');
+      return;
+    }
+
+    const body: OrganizationForm = {
+      ...this.form,
+      orgCode: this.form.orgCode.trim(),
+      name: this.form.name.trim(),
+      baseCurrency: this.form.baseCurrency.trim().toUpperCase(),
+    };
 
     await this.run(async () => {
       if (id === '') {
-        await this.send('POST', '/api/organizations', this.form);
+        await this.send('POST', '/api/organizations', body);
       } else {
-        await this.send('PUT', `/api/organizations/${id}`, this.form);
+        await this.send('PUT', `/api/organizations/${id}`, body);
       }
       this.editingId.set(null);
     }, id === '' ? 'Branch created and its books set up.' : 'Branch saved.');
@@ -227,6 +242,10 @@ export class OrganizationsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private get<T>(url: string): Promise<T> {

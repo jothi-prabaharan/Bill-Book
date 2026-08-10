@@ -173,6 +173,81 @@ public sealed class LedgerReportService
     private const int ControlLedgerType = 3;
 
     /// <summary>
+    /// Every control account against the subledger beneath it, as at a date.
+    ///
+    /// <b>The check double-entry cannot make.</b> A receivable posted to Accounts
+    /// Receivable with no sub-account is a perfectly balanced entry — the trial
+    /// balance foots and no contact owes the money. Nothing in double-entry
+    /// notices, because nothing in double-entry is broken. This compares what
+    /// reached each control account against the part of it that named somebody,
+    /// and the difference is money belonging to nobody.
+    ///
+    /// <b>Only accounts that actually have a subledger.</b> An account with no
+    /// sub-accounts is not untied, it simply has no subledger to be untied from —
+    /// listing bank and rent here at a difference equal to their whole balance
+    /// would bury the two rows that matter.
+    /// </summary>
+    public async Task<SubLedgerTieView> GetSubLedgerTieAsync(DateOnly? asAt, CancellationToken ct)
+    {
+        IQueryable<JournalLedger> query = _db.JournalLedger;
+
+        if (asAt is DateOnly on)
+        {
+            query = query.Where(l => l.LedgerDate <= on);
+        }
+
+        // Summed in the database, and in one pass: the sub-account total is the
+        // same rows filtered, so pulling the ledger back twice would read the
+        // same table twice to compare it with itself.
+        var totals = await (
+            from l in query
+            join a in _db.Accounts on l.AccountId equals a.AccountId
+            group new { l.DebitAmountBase, l.CreditAmountBase, l.SubAccountId } by new
+            {
+                a.AccountId,
+                a.AccountCode,
+                a.AccountName,
+            } into g
+            select new
+            {
+                g.Key.AccountId,
+                g.Key.AccountCode,
+                g.Key.AccountName,
+                Debit = g.Sum(x => x.DebitAmountBase),
+                Credit = g.Sum(x => x.CreditAmountBase),
+                SubDebit = g.Sum(x => x.SubAccountId == null ? 0m : x.DebitAmountBase),
+                SubCredit = g.Sum(x => x.SubAccountId == null ? 0m : x.CreditAmountBase),
+                SubAccounts = g.Count(x => x.SubAccountId != null),
+            }).ToListAsync(ct);
+
+        List<SubLedgerTieRow> rows =
+        [
+            .. totals
+                .Where(t => t.SubAccounts > 0)
+                .Select(t =>
+                {
+                    decimal control = LedgerArithmetic.Net(t.Debit, t.Credit);
+                    decimal subLedger = LedgerArithmetic.Net(t.SubDebit, t.SubCredit);
+
+                    return new SubLedgerTieRow
+                    {
+                        AccountId = t.AccountId,
+                        AccountCode = t.AccountCode,
+                        AccountName = t.AccountName,
+                        ControlBalance = control,
+                        SubLedgerBalance = subLedger,
+                        Unattributed = control - subLedger,
+                        SubAccountCount = t.SubAccounts,
+                        IsTied = control == subLedger,
+                    };
+                })
+                .OrderBy(r => r.AccountCode),
+        ];
+
+        return new SubLedgerTieView { Rows = rows, IsTied = rows.TrueForAll(r => r.IsTied) };
+    }
+
+    /// <summary>
     /// Every account with a balance, and the two columns that have to agree.
     ///
     /// Accounts with no postings are left out rather than listed at zero: a

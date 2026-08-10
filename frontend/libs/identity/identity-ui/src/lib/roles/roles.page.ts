@@ -122,11 +122,16 @@ export class RolesPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.hasText(this.form.displayName)) {
+      this.error.set('Role name is required.');
+      return;
+    }
+
     this.busy.set(true);
     this.error.set(null);
     const body = {
-      displayName: this.form.displayName,
-      description: this.form.description || null,
+      displayName: this.form.displayName.trim(),
+      description: this.form.description.trim() || null,
       permissionIds: [...this.selected()],
     };
     try {
@@ -165,6 +170,10 @@ export class RolesPage implements OnInit {
   cancel(): void {
     this.editing.set(false);
     this.error.set(null);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private req<T>(method: string, url: string, body?: unknown): Promise<T> {

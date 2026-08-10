@@ -86,10 +86,22 @@ export class SmtpSettingsPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const body: Record<string, unknown> = {
+      ...this.form,
+      host: this.form.host.trim(),
+      fromEmail: this.form.fromEmail.trim(),
+      fromName: this.form.fromName.trim(),
+      username: this.form.username.trim(),
+      password: this.form.password,
+    };
+
     this.busy.set(true);
     try {
       // Omit the password entirely when untouched, so the stored one survives.
-      const body: Record<string, unknown> = { ...this.form };
       if (!this.form.password) {
         delete body['password'];
       }
@@ -129,6 +141,44 @@ export class SmtpSettingsPage implements OnInit {
   private show(text: string, isError: boolean): void {
     this.message.set(text);
     this.messageIsError.set(isError);
+  }
+
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.host)) {
+      this.show('SMTP host is required.', true);
+      return false;
+    }
+
+    if (!Number.isFinite(this.form.port) || this.form.port < 1 || this.form.port > 65535) {
+      this.show('Port must be between 1 and 65535.', true);
+      return false;
+    }
+
+    if (!this.hasText(this.form.fromEmail)) {
+      this.show('From address is required.', true);
+      return false;
+    }
+
+    if (!this.hasText(this.form.fromName)) {
+      this.show('From name is required.', true);
+      return false;
+    }
+
+    if (!this.hasText(this.form.username)) {
+      this.show('Username is required.', true);
+      return false;
+    }
+
+    if (!this.hasPassword() && !this.hasText(this.form.password)) {
+      this.show('Password is required for first-time setup.', true);
+      return false;
+    }
+
+    return true;
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private req<T>(method: string, url: string, body?: unknown): Promise<T> {

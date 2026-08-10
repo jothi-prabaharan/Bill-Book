@@ -47,6 +47,16 @@ public class AccountingDbContext : TenantDbContext
     public DbSet<PeriodLock> PeriodLocks => Set<PeriodLock>();
 
     /// <summary>
+    /// Where the branch's books begin. One row per branch, and Accounting drives
+    /// it because an opening balance touches every subledger at once — the
+    /// service that owns the ledger is the only one that can see whether they all
+    /// tie.
+    /// </summary>
+    public DbSet<OpeningBalance> OpeningBalances => Set<OpeningBalance>();
+
+    public DbSet<OpeningBalanceLine> OpeningBalanceLines => Set<OpeningBalanceLine>();
+
+    /// <summary>
     /// Shared with every service that generates a code. Accounting owns the
     /// migration; the others map the same entity and exclude it from theirs.
     /// </summary>
@@ -404,6 +414,102 @@ public class AccountingDbContext : TenantDbContext
             // — two rows for one role would make "how far back is this user
             // locked" a question with two answers.
             b.HasIndex(e => new { e.OrgId, e.RoleId }).IsUnique();
+        });
+
+        modelBuilder.Entity<OpeningBalance>(b =>
+        {
+            b.HasKey(e => e.OpeningBalanceId);
+
+            // One per branch, ever. A branch has one moment it started, and every
+            // balance in the product is measured from it — a second row is a
+            // second starting position, and nothing downstream could say which
+            // one it was measured from.
+            b.HasIndex(e => e.OrgId)
+                .IsUnique()
+                .HasDatabaseName("IX_OpeningBalances_Org");
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+
+            b.ToTable(table =>
+            {
+                // The same pair the journal carries: a draft holding a number has
+                // consumed one it may never use, and a finalized document without
+                // one is a ledger row nobody can cite.
+                table.HasCheckConstraint(
+                    "chk_opening_number_on_finalize",
+                    "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) "
+                        + "OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+
+                table.HasCheckConstraint(
+                    "chk_opening_finalized_stamp",
+                    "(\"Status\" = 'Draft') = (\"FinalizedAt\" IS NULL)");
+            });
+        });
+
+        modelBuilder.Entity<OpeningBalanceLine>(b =>
+        {
+            b.HasKey(e => e.OpeningBalanceLineId);
+
+            b.HasIndex(e => new { e.OpeningBalanceId, e.LineNumber }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+            b.HasIndex(e => new { e.OrgId, e.ItemId });
+
+            b.Property(e => e.LineType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DebitAmount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.CreditAmount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.Quantity).HasColumnType("decimal(18,6)");
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
+
+            // Cascade: a draft's lines have no meaning without their header, and
+            // a finalized document is never deleted at all.
+            b.HasOne<OpeningBalance>()
+                .WithMany()
+                .HasForeignKey(e => e.OpeningBalanceId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.AccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // What each kind of line must name, and must not. Enforced here
+                // rather than only in C# because the whole point of the line type
+                // is that a receivable cannot be filed against Sales Revenue and
+                // a stock line cannot carry a hand-keyed value.
+                table.HasCheckConstraint(
+                    "chk_opening_line_names_its_subject",
+                    "(\"LineType\" = 'GlAccount' AND \"AccountId\" IS NOT NULL "
+                        + "AND \"ContactId\" IS NULL AND \"ItemId\" IS NULL) "
+                        + "OR (\"LineType\" IN ('ContactReceivable', 'ContactPayable') "
+                        + "AND \"ContactId\" IS NOT NULL AND \"AccountId\" IS NULL "
+                        + "AND \"ItemId\" IS NULL) "
+                        + "OR (\"LineType\" = 'Item' AND \"ItemId\" IS NOT NULL "
+                        + "AND \"AccountId\" IS NULL AND \"ContactId\" IS NULL)");
+
+                // An item line's value is quantity times cost, computed and
+                // posted by Inventory. An amount keyed here as well would be a
+                // second figure free to disagree with the stock itself.
+                table.HasCheckConstraint(
+                    "chk_opening_line_item_shape",
+                    "(\"LineType\" = 'Item' AND \"Quantity\" > 0 AND \"UnitCost\" >= 0 "
+                        + "AND \"DebitAmount\" = 0 AND \"CreditAmount\" = 0) "
+                        + "OR (\"LineType\" <> 'Item' AND \"Quantity\" IS NULL "
+                        + "AND \"UnitCost\" IS NULL)");
+
+                // Debit xor credit on everything that carries an amount, which is
+                // every kind but Item.
+                table.HasCheckConstraint(
+                    "chk_opening_line_exclusive",
+                    "\"LineType\" = 'Item' "
+                        + "OR (\"DebitAmount\" > 0 AND \"CreditAmount\" = 0) "
+                        + "OR (\"CreditAmount\" > 0 AND \"DebitAmount\" = 0)");
+
+                table.HasCheckConstraint(
+                    "chk_opening_line_non_negative",
+                    "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0");
+            });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

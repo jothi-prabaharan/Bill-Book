@@ -154,6 +154,15 @@ export class ChartOfAccountsPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (
+      this.form.accountTypeId <= 0 ||
+      !this.hasText(this.form.accountCode) ||
+      !this.hasText(this.form.accountName)
+    ) {
+      this.show('Type, code and name are required.', true);
+      return;
+    }
+
     this.busy.set(true);
     try {
       if (this.editingId === null) {
@@ -192,6 +201,10 @@ export class ChartOfAccountsPage implements OnInit {
   private show(text: string, isError: boolean): void {
     this.message.set(text);
     this.messageIsError.set(isError);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private req<T>(method: string, url: string, body?: unknown): Promise<T> {

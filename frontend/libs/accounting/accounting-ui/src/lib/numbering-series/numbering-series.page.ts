@@ -159,13 +159,27 @@ export class NumberingSeriesPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const body: FormModel = {
+      ...this.form,
+      seriesCode: this.form.seriesCode.trim(),
+      seriesName: this.form.seriesName.trim(),
+      prefix: this.cleanOptional(this.form.prefix),
+      suffix: this.cleanOptional(this.form.suffix),
+      separator: this.cleanOptional(this.form.separator),
+      branchCode: this.form.includeBranchCode ? this.cleanOptional(this.form.branchCode) : null,
+    };
+
     this.busy.set(true);
     try {
       const id = this.editing();
       if (id === null) {
-        await this.send('POST', '/api/numbering-series', this.form);
+        await this.send('POST', '/api/numbering-series', body);
       } else {
-        await this.send('PUT', `/api/numbering-series/${id}`, this.form);
+        await this.send('PUT', `/api/numbering-series/${id}`, body);
       }
       this.formOpen.set(false);
       this.succeed('Series saved.');
@@ -281,6 +295,20 @@ export class NumberingSeriesPage implements OnInit {
     return segments.join(form.separator ?? '') + (form.suffix ?? '');
   }
 
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.seriesCode) || !this.hasText(this.form.seriesName)) {
+      this.fail('Series code and name are required.');
+      return false;
+    }
+
+    if (this.form.includeBranchCode && !this.hasText(this.form.branchCode)) {
+      this.fail('Branch code is required when Include branch code is selected.');
+      return false;
+    }
+
+    return true;
+  }
+
   private financialYear(format: FormModel['financialYearFormat']): string {
     const today = new Date();
     const start =
@@ -348,6 +376,15 @@ export class NumberingSeriesPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
+  }
+
+  private cleanOptional(value: string | null | undefined): string | null {
+    const cleaned = (value ?? '').trim();
+    return cleaned.length > 0 ? cleaned : null;
   }
 
   private messageOf(err: unknown, fallback: string): string {

@@ -43,6 +43,12 @@ public class SaveMoneyDocumentRequest
     /// <summary>
     /// The document this is about, when it is about exactly one. Left null when
     /// the payment is split across several — the lines say which.
+    ///
+    /// <b>Ignored on write: the server derives it from the lines.</b> It is a
+    /// summary of them, not a fact beside them, and a caller free to disagree
+    /// with its own lines is a caller free to save a document whose header says
+    /// one bill while its body pays three. Kept on the model because it is what
+    /// comes back on a read.
     /// </summary>
     [MaxLength(3, ErrorMessage = "Mapped transaction type code must be a 3-letter code.")]
     public string? MappingTransactionTypeCode { get; set; }
@@ -158,6 +164,20 @@ public enum MoneyDocumentOutcome
     /// on record produces.
     /// </summary>
     SettlementCurrencyMismatch = 13,
+
+    /// <summary>
+    /// A line names a document of the wrong kind for what the line is for, or
+    /// names one at all when its purpose settles nothing.
+    /// </summary>
+    MappingNotSettleable = 14,
+
+    /// <summary>
+    /// Two lines claim the same document in the same way. A payment spread across
+    /// several documents names each one once per purpose — twice is a keying slip,
+    /// and it leaves two ledger rows reconciling against one balance. Paying a
+    /// bill and overpaying against it are two different purposes and remain legal.
+    /// </summary>
+    MappingRepeated = 15,
 }
 
 public sealed record MoneyDocumentResult(

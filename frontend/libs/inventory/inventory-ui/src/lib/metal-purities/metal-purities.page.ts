@@ -73,11 +73,27 @@ export class MetalPuritiesPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (!this.hasText(this.form.metalType) || !this.hasText(this.form.purityName)) {
+      this.fail('Metal type and purity name are required.');
+      return;
+    }
+
+    if (this.form.purityFactor < 0.0001 || this.form.purityFactor > 1) {
+      this.fail('Purity factor must be between 0.0001 and 1.');
+      return;
+    }
+
+    const body = {
+      ...this.form,
+      metalType: this.form.metalType.trim(),
+      purityName: this.form.purityName.trim(),
+    };
+
     await this.run(async () => {
       if (id === 0) {
-        await this.send('POST', '/api/metal-purities', this.form);
+        await this.send('POST', '/api/metal-purities', body);
       } else {
-        await this.send('PUT', `/api/metal-purities/${id}`, this.form);
+        await this.send('PUT', `/api/metal-purities/${id}`, body);
       }
       this.editingId.set(null);
     }, 'Purity saved.');
@@ -133,6 +149,10 @@ export class MetalPuritiesPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private get<T>(url: string): Promise<T> {

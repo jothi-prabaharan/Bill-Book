@@ -96,11 +96,22 @@ export class ItemCategoriesPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (!this.hasText(this.form.categoryCode) || !this.hasText(this.form.categoryName)) {
+      this.fail('Category code and name are required.');
+      return;
+    }
+
+    const body = {
+      ...this.form,
+      categoryCode: this.form.categoryCode.trim(),
+      categoryName: this.form.categoryName.trim(),
+    };
+
     await this.run(async () => {
       if (id === 0) {
-        await this.send('POST', '/api/item-categories', this.form);
+        await this.send('POST', '/api/item-categories', body);
       } else {
-        await this.send('PUT', `/api/item-categories/${id}`, this.form);
+        await this.send('PUT', `/api/item-categories/${id}`, body);
       }
       this.editingId.set(null);
     }, 'Category saved.');
@@ -175,6 +186,10 @@ export class ItemCategoriesPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private get<T>(url: string): Promise<T> {

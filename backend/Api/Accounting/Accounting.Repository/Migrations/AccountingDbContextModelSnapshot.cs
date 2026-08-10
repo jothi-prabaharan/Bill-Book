@@ -455,6 +455,175 @@ namespace Accounting.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.OpeningBalance", b =>
+                {
+                    b.Property<long>("OpeningBalanceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("OpeningBalanceId"));
+
+                    b.Property<DateOnly>("AsOfDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<DateTimeOffset?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("FinalizedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Memo")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("TransactionNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("OpeningBalanceId");
+
+                    b.HasIndex("OrgId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_OpeningBalances_Org");
+
+                    b.ToTable("OpeningBalances", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_opening_finalized_stamp", "(\"Status\" = 'Draft') = (\"FinalizedAt\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_opening_number_on_finalize", "(\"Status\" = 'Draft' AND \"TransactionNo\" IS NULL) OR (\"Status\" <> 'Draft' AND \"TransactionNo\" IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.OpeningBalanceLine", b =>
+                {
+                    b.Property<long>("OpeningBalanceLineId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("OpeningBalanceLineId"));
+
+                    b.Property<long?>("AccountId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("CreditAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DebitAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateOnly?>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentReference")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("ItemId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("LineMemo")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LineType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("OpeningBalanceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal?>("Quantity")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<decimal?>("UnitCost")
+                        .HasColumnType("decimal(18,6)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("OpeningBalanceLineId");
+
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("OpeningBalanceId", "LineNumber")
+                        .IsUnique();
+
+                    b.HasIndex("OrgId", "ContactId");
+
+                    b.HasIndex("OrgId", "ItemId");
+
+                    b.ToTable("OpeningBalanceLines", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_opening_line_exclusive", "\"LineType\" = 'Item' OR (\"DebitAmount\" > 0 AND \"CreditAmount\" = 0) OR (\"CreditAmount\" > 0 AND \"DebitAmount\" = 0)");
+
+                            t.HasCheckConstraint("chk_opening_line_item_shape", "(\"LineType\" = 'Item' AND \"Quantity\" > 0 AND \"UnitCost\" >= 0 AND \"DebitAmount\" = 0 AND \"CreditAmount\" = 0) OR (\"LineType\" <> 'Item' AND \"Quantity\" IS NULL AND \"UnitCost\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_opening_line_names_its_subject", "(\"LineType\" = 'GlAccount' AND \"AccountId\" IS NOT NULL AND \"ContactId\" IS NULL AND \"ItemId\" IS NULL) OR (\"LineType\" IN ('ContactReceivable', 'ContactPayable') AND \"ContactId\" IS NOT NULL AND \"AccountId\" IS NULL AND \"ItemId\" IS NULL) OR (\"LineType\" = 'Item' AND \"ItemId\" IS NOT NULL AND \"AccountId\" IS NULL AND \"ContactId\" IS NULL)");
+
+                            t.HasCheckConstraint("chk_opening_line_non_negative", "\"DebitAmount\" >= 0 AND \"CreditAmount\" >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.PaymentTerm", b =>
                 {
                     b.Property<long>("PaymentTermId")
@@ -986,6 +1155,20 @@ namespace Accounting.Repository.Migrations
                         .WithMany()
                         .HasForeignKey("SubAccountId")
                         .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Accounting.Entity.TableEntities.OpeningBalanceLine", b =>
+                {
+                    b.HasOne("Accounting.Entity.TableEntities.Account", null)
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Accounting.Entity.TableEntities.OpeningBalance", null)
+                        .WithMany()
+                        .HasForeignKey("OpeningBalanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Accounting.Entity.TableEntities.SubAccount", b =>

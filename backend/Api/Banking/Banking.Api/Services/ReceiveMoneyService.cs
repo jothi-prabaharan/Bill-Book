@@ -133,6 +133,12 @@ public sealed class ReceiveMoneyService
                 "The branch's base currency could not be read. Nothing was saved.");
         }
 
+        // Derived from the lines rather than taken from the caller: the header's
+        // mapping is a summary of them, and a header free to disagree with its
+        // own lines is a document that says one bill while paying three.
+        (string? TypeCode, long? TransactionId) header =
+            MoneyAllocation.HeaderMapping(request.Lines);
+
         var document = new ReceiveMoney
         {
             TransactionDate = request.TransactionDate,
@@ -145,8 +151,8 @@ public sealed class ReceiveMoneyService
             ReferenceNo = request.ReferenceNo,
             ReferenceDate = request.ReferenceDate,
             Memo = request.Memo,
-            MappingTransactionTypeCode = request.MappingTransactionTypeCode,
-            MappingTransactionId = request.MappingTransactionId,
+            MappingTransactionTypeCode = header.TypeCode,
+            MappingTransactionId = header.TransactionId,
             Status = MoneyDocumentStatus.Draft,
         };
 
@@ -202,8 +208,9 @@ public sealed class ReceiveMoneyService
         document.ReferenceNo = request.ReferenceNo;
         document.ReferenceDate = request.ReferenceDate;
         document.Memo = request.Memo;
-        document.MappingTransactionTypeCode = request.MappingTransactionTypeCode;
-        document.MappingTransactionId = request.MappingTransactionId;
+        (string? headerType, long? headerId) = MoneyAllocation.HeaderMapping(request.Lines);
+        document.MappingTransactionTypeCode = headerType;
+        document.MappingTransactionId = headerId;
 
         await _db.ReceiveMoneyDetails.Where(l => l.ReceiveMoneyId == id).ExecuteDeleteAsync(ct);
 
@@ -465,7 +472,9 @@ public sealed class ReceiveMoneyService
             }
         }
 
-        return null;
+        // What the lines say about the documents they settle: the right kind of
+        // document for what each line is for, and each document named once.
+        return MoneyAllocation.Check(request.Lines, spending: false);
     }
 
     private async Task<(string? Currency, decimal Rate)> ResolveCurrencyAsync(

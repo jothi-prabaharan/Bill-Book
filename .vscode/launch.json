@@ -107,6 +107,81 @@
       "justMyCode": true
     },
     {
+      "name": "Crm.Api (5008)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Crm/Crm.Api/bin/Debug/net10.0/Crm.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Crm/Crm.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5008"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Purchase.Api (5009)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api/bin/Debug/net10.0/Purchase.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5009"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Reporting.Api (5010)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api/bin/Debug/net10.0/Reporting.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5010"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Sales.Api (5011)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Sales/Sales.Api/bin/Debug/net10.0/Sales.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Sales/Sales.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5011"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Support.Api (5012)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-backend",
+      "program": "${workspaceFolder}/backend/Api/Support/Support.Api/bin/Debug/net10.0/Support.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Support/Support.Api",
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_URLS": "http://localhost:5012"
+      },
+      "console": "integratedTerminal",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
       "name": "Gateway (5000)",
       "type": "coreclr",
       "request": "launch",
@@ -258,6 +333,7 @@
     {
       "name": "\ud83d\ude80 Everything (APIs + Gateway + Web)",
       "configurations": [
+        "Gateway (5000)",
         "Identity.Api (5001)",
         "Platform.Api (5002)",
         "Master.Api (5003)",
@@ -265,7 +341,11 @@
         "Contacts.Api (5005)",
         "Inventory.Api (5006)",
         "Banking.Api (5007)",
-        "Gateway (5000)",
+        "Crm.Api (5008)",
+        "Purchase.Api (5009)",
+        "Reporting.Api (5010)",
+        "Sales.Api (5011)",
+        "Support.Api (5012)",
         "Web \u00b7 Development (Chrome, 4200)"
       ],
       "stopAll": true
@@ -273,6 +353,7 @@
     {
       "name": "Backend only (APIs + Gateway)",
       "configurations": [
+        "Gateway (5000)",
         "Identity.Api (5001)",
         "Platform.Api (5002)",
         "Master.Api (5003)",
@@ -280,7 +361,11 @@
         "Contacts.Api (5005)",
         "Inventory.Api (5006)",
         "Banking.Api (5007)",
-        "Gateway (5000)"
+        "Crm.Api (5008)",
+        "Purchase.Api (5009)",
+        "Reporting.Api (5010)",
+        "Sales.Api (5011)",
+        "Support.Api (5012)"
       ],
       "stopAll": true
     },
@@ -295,8 +380,8 @@
     {
       "name": "Frontend only (Web + Docs, Staging)",
       "configurations": [
-        "Web \u00b7 Staging (Chrome, 4200)",
-        "Docs \u00b7 Staging (Chrome, 4300)"
+        "Web \u0e07 Staging (Chrome, 4200)",
+        "Docs \u0e07 Staging (Chrome, 4300)"
       ],
       "stopAll": true
     }

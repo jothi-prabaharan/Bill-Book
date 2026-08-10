@@ -347,11 +347,15 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ## Roadmap
 
-**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Fixed Assets, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, Banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, Platform provisioning
-**Phase 2** — Recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
+**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, Banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, Platform provisioning
+**Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
 **Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
 
 *FIFO/FEFO/LIFO batch allocation was Phase 3 and landed early, with cost layers — it is built. Do not defer work that depends on it.*
+
+*Fixed assets moved Phase 1 → Phase 2 on 4 August 2026, by decision. It was blocked twice over anyway: an asset is capitalised from the bill that bought it, and the bill does not exist yet; and both of its schema-shaping decisions are still open — whether acquisition and disposal get transaction codes of their own, and straight-line only versus books **and** tax depreciation. See Stage T10 in `TRANSACTIONS-ACCOUNTING-BANKING.md`, whose boxes are kept rather than deleted.*
+
+*The consequence to carry: **the opening balance cannot migrate a fixed asset** until the register exists. One comes across as a plain account balance, with no cost, life or schedule of its own, and "migrated assets skip historical depreciation" defers with the register.*
 
 ---
 

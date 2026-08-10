@@ -119,12 +119,33 @@ export class OrganizationSettingsPage implements OnInit {
       return;
     }
 
+    if (
+      !this.hasText(this.form.orgCode) ||
+      !this.hasText(this.form.name) ||
+      !this.hasText(this.form.baseCurrency)
+    ) {
+      this.error.set('Branch code, name and base currency are required.');
+      return;
+    }
+
+    if (this.form.financialYearStartMonth < 1 || this.form.financialYearStartMonth > 12) {
+      this.error.set('Financial year start month must be between 1 and 12.');
+      return;
+    }
+
+    const body: OrganizationSettings = {
+      ...this.form,
+      orgCode: this.form.orgCode.trim(),
+      name: this.form.name.trim(),
+      baseCurrency: this.form.baseCurrency.trim().toUpperCase(),
+    };
+
     this.busy.set(true);
     this.error.set(null);
     this.saved.set(false);
 
     try {
-      await this.put('/api/organizations/current', this.form);
+      await this.put('/api/organizations/current', body);
       this.saved.set(true);
     } catch (error: unknown) {
       const body = (error as { error?: { message?: string } })?.error;
@@ -176,5 +197,9 @@ export class OrganizationSettingsPage implements OnInit {
     return new Promise((resolve, reject) => {
       this.http.put(url, body).subscribe({ next: resolve, error: reject });
     });
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 }

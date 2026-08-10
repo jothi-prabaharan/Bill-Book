@@ -75,6 +75,11 @@ export class OrgCurrenciesPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (this.selectedCurrencyId <= 0) {
+      this.error.set('Select a currency before saving.');
+      return;
+    }
+
     this.busy.set(true);
     this.error.set(null);
     try {

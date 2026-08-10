@@ -115,13 +115,22 @@ export class PaymentTermsPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const body: FormModel = {
+      ...this.form,
+      termName: this.form.termName.trim(),
+    };
+
     this.busy.set(true);
     try {
       const id = this.editing();
       if (id === null) {
-        await this.send('POST', '/api/payment-terms', this.form);
+        await this.send('POST', '/api/payment-terms', body);
       } else {
-        await this.send('PUT', `/api/payment-terms/${id}`, this.form);
+        await this.send('PUT', `/api/payment-terms/${id}`, body);
       }
       this.formOpen.set(false);
       this.succeed('Payment term saved.');
@@ -189,6 +198,35 @@ export class PaymentTermsPage implements OnInit {
     }
   }
 
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.termName)) {
+      this.fail('Term name is required.');
+      return false;
+    }
+
+    if (!this.form.isSales && !this.form.isPurchase) {
+      this.fail('Select Sales, Purchase, or both.');
+      return false;
+    }
+
+    if (this.form.termType === 'DayOfNextMonth' && this.form.dueDayOfMonth === null) {
+      this.fail('Day of next month is required for this term type.');
+      return false;
+    }
+
+    if (this.form.termType === 'Net' && this.form.discountDays > this.form.dueDays) {
+      this.fail('Discount days cannot be greater than due days for Net terms.');
+      return false;
+    }
+
+    if (this.form.discountPercent > 0 && this.form.discountDays <= 0) {
+      this.fail('Discount days are required when discount percent is greater than zero.');
+      return false;
+    }
+
+    return true;
+  }
+
   private blank(): FormModel {
     return {
       termName: '',
@@ -224,6 +262,10 @@ export class PaymentTermsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
   }
 
   private messageOf(err: unknown, fallback: string): string {

@@ -204,8 +204,13 @@
 
     @if (unallocated > 0) {
       <p class="hint">
-        {{ unallocated | number: '1.2-2' }} is not yet accounted for. Add a line for it — an excess
-        over what was owed is an overpayment, and it belongs on the document rather than nowhere.
+        {{ unallocated | number: '1.2-2' }} is not yet accounted for. An excess over what was owed
+        is an overpayment: recorded as one it sits in this contact's overpayment balance, where it
+        can be seen and refunded. Left on the settled line it turns their balance the other way up
+        instead, and every aging report reads it as trade.
+        <button type="button" class="link" (click)="addOverpayment()">
+          Add {{ unallocated | number: '1.2-2' }} as {{ overpaymentLabel.toLowerCase() }}
+        </button>
       </p>
     } @else if (unallocated < 0) {
       <p class="hint">

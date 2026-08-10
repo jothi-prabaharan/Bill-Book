@@ -179,7 +179,21 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
   A void now withdraws `FX` as well as `CONTROL` — a withdrawal that named only the types a document happened to write would strand an exchange difference on a voided payment, unbalanced and attached to nothing.
 
   Eight tests: the loss, the mirrored gain, the same-rate no-op, a settled document with nothing posted yet (not an error — there is no earlier rate to differ from), the unreadable rate, the currency mismatch, the per-leg rate at the door, and the rate read.
-- [ ] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
+- [x] **T6.6 — Partial and over-payment** — a payment across several documents, and a receipt exceeding what is owed becoming a prepayment rather than a negative balance.
+
+  **Half of this was already structural, and the other half was unguarded.** T6.2 put the ledger source and the settled document both on the *line*, so ₹50,000 across three bills was already three lines and three pairs of legs, each traceable to the bill it cleared; and an excess already landed in the overpayment advance rather than as a negative trade balance. What was missing is that nothing checked the lines were saying anything sensible, and both mistakes available here are silent ones.
+
+  **A line naming the wrong kind of document** traces a payment to something it did not pay — worse than a missing link, because a statement reconciling on it reads as answered. The kind now follows from the source rather than being a second choice beside it: `MoneyPostingMap.Settles` says a bill payment settles a `BIL`, an invoice payment an `INV`, a debit-note refund a `DBN`, and an advance nothing at all. A line naming a document its source cannot settle is refused, and so is an advance claiming one.
+
+  **Two lines claiming one document the same way** leave two ledger rows against one balance. Refused — but keyed on the **source** as well as the document, because paying a bill and overpaying against it are two claims on one bill and that is T6.2's whole overpayment story. Two *bill payment* lines against one bill is the keying slip; a bill payment and its excess are not.
+
+  **The header's mapping is now derived from the lines, not taken from the caller.** It is a summary of them: a caller free to disagree with its own lines can save a document whose header names one bill while its body pays three, and a list reads the header first. One document when every line that names one names the same; nothing at all otherwise, because a payment across three bills is about three and picking one would be arbitrary.
+
+  **On the screen**, the unallocated figure now offers to place itself: *Add ₹1,000 as an overpayment* adds the line under the right source and, when exactly one document is being settled, names it. That is the difference between an excess that is recorded and one that is quietly folded into the settled line — where it turns the contact's balance the other way up and every aging report reads it as trade.
+
+  **Not here, and it is T5.1: how much a document actually owes.** That needs the bill and the invoice to exist. Until then a line may settle more than its document is for; this refuses the mistakes catchable without asking anyone what the balance is.
+
+  Seven tests: three bills on one payment, the derived header both ways, the wrong document kind, an advance claiming a document, the repeated claim, the partial-plus-excess split across two control accounts, and an overpayment legally naming the invoice it ran past.
 
 ---
 
@@ -187,14 +201,55 @@ Needs T3.3 and T4.5 from the other file — there has to be something outstandin
 
 `CLAUDE.md` calls this the highest-risk screen in the system, and it is deliberately late: it is the one document that touches every subledger at once, so it wants all of them finished.
 
-- [ ] **T8.1 — Orchestration** — Accounting drives; Inventory takes opening quantity and unit cost and seeds the weighted average; Contacts takes opening AR and AP **per contact, never a lump sum**, or aging is broken from day one.
-- [ ] **T8.2 — The validation** — Opening Balance Equity nets to zero, and finalize is blocked until AR, AP and Inventory subledgers tie to their control accounts.
-- [ ] **T8.3 — Read-only after go-live**, and migrated fixed assets skip historical depreciation.
+- [x] **T8.1 — Orchestration** — Accounting drives; Inventory takes opening quantity and unit cost and seeds the weighted average; Contacts takes opening AR and AP **per contact, never a lump sum**, or aging is broken from day one.
+
+  **Done.** `acc.OpeningBalances` + `acc.OpeningBalanceLines`, **one per branch enforced by a unique index on `OrgId`**. A branch has one moment it started and every balance since is measured from it; a second row is a second starting position with nothing to say which one anything was measured from.
+
+  **Per contact was only half of it.** The plan gives aging as the reason for not taking AR and AP as a lump, and the same reason keeps going: a contact owing ₹300,000 across invoices of thirty, ninety and a hundred and eighty days ages nothing like one ₹300,000 balance. So the line is **one per document**, carrying the original system's reference and date — the reference is what the contact quotes when they query it, the date is what the aging runs from. A contact has as many lines as they have unpaid documents.
+
+  **Four line kinds, and only one of them picks an account.** `GlAccount` names one; `ContactReceivable` and `ContactPayable` resolve theirs from the kind, because a receivable free to choose its own account is a receivable that can be filed under Sales Revenue; `Item` names neither. Enforced by a check constraint as well as in C#, the constraint for the shape and the C# for the reason.
+
+  **Stock is Inventory's to record, through a new `internal/stock/opening` door.** An item line is a quantity and a unit cost and has nowhere to type a value — the cost seeds the weighted average, so every cost of sale until the next receipt comes from it, and only Inventory can seed it. Inventory then posts `Dr Inventory / Cr Opening Balance Equity` itself, on the path a receipt already takes. A value Accounting posted would be a second figure against the Inventory account, free to disagree with the stock the items actually carry. The door takes the internal key with the tenant in the body rather than forwarding the user's token — otherwise finalizing a migration needs inventory permissions for an accounting act — and it is idempotent on the document and line, so a retried finalize is told the stock is already there rather than doubling it.
+- [x] **T8.2 — The validation** — Opening Balance Equity nets to zero, and finalize is blocked until AR, AP and Inventory subledgers tie to their control accounts.
+
+  **Done, and the shape of the posting is what makes the validation possible.** Every line posts as its own balanced pair against Opening Balance Equity — `Dr Bank / Cr OBE`, `Dr OBE / Cr Accounts Payable` — so the ledger balances after every line and **OBE accumulates precisely what has not been accounted for yet**. Zero is the whole validation. A migration finalized with OBE non-zero invents equity out of a figure somebody forgot, and it balances perfectly while doing it.
+
+  A pair per line rather than one OBE leg for the document, deliberately: a ledger row on the equity side traces back to the line that produced it, which is the only way anyone finds the wrong figure afterwards.
+
+  Three more blockers, each catching something that balances anyway:
+  - **A contact with no sub-account.** The line would reach the control account with nothing beneath it — perfectly balanced, and the contact owes nothing, so the statement, the aging and the first receipt against it are all wrong while the trial balance says everything is fine. The contacts are named, not counted.
+  - **A missing control account**, including Opening Balance Equity itself, which even a document of nothing but bank balances needs.
+  - **Inventory's recorded value disagreeing with the document's.** The one subledger Accounting cannot compute for itself, so it is asked and the answers compared. A migration that ties everywhere except the one place nobody looks is what this is for.
+
+  Readiness is a **read of its own**, not a by-product of pressing Finalize — a migration is keyed over weeks, and finding at the end that it is out by ₹4,300 means auditing weeks of work instead of the line just typed.
+- [x] **T8.3 — Read-only after go-live**, and migrated fixed assets skip historical depreciation.
   *Done when*: a trial balance drawn immediately after finalize balances, every subledger ties, and the screen refuses to reopen.
+
+  **Done, except the fixed-asset half — see below.** `OpeningBalanceStatus` is `Draft → Finalized` and stops there: **no void and no reversal, unlike every other document in the product.** A journal or a payment can be reversed because it is one event among thousands; reversing an opening balance does not restate a transaction, it deletes the starting position every balance since has been measured from. An error found afterwards is corrected the way any error in a closed period is. Save, delete and finalize all refuse once finalized, and the check constraints hold the same line from underneath.
+
+  **The screen is the readiness panel, not the grid.** Accounting › Opening balances shows debits, credits, stock and the equity plug continuously, with every blocker listed rather than summarised. Stacks to cards at ~360px, because this is a screen people key hundreds of rows into.
+
+  **Deferred with the register, not blocked: migrated fixed assets.** There is no asset register to migrate into, so an asset comes across as a plain account balance and carries no cost, life or schedule of its own. "Skips historical depreciation" is a property of a register row, so it moves to Phase 2 with T10 — see the note on that stage. Recorded in the docs page in the user's own words rather than left to be discovered. **T8 is otherwise complete for Phase 1.**
+
+  **The *Done when* line, closed properly.** It asks for a trial balance drawn immediately after finalize, and for every subledger to tie — and the first was only being inferred from the ledger rows while the second was a proxy: I was checking that each contact had a sub-account *provisioned*, which is not the same claim as the subledger *tying*.
+
+  So there is now a real tie: **`GET api/ledger/sub-ledger-tie`**, each control account against the sum of the balances beneath it, with the difference named as what belongs to nobody. **It is the check double-entry cannot make.** A receivable posted to Accounts Receivable with no sub-account is a perfectly balanced entry — the trial balance foots and nobody owes the money — so the statement, the aging and the first receipt against it are all wrong while nothing in double-entry is broken. Accounts with no sub-accounts are left out rather than listed at a difference equal to their whole balance, which would bury the two rows that matter.
+
+  It runs **both sides of go-live**: as a blocker, so a branch already adrift cannot open its books on top of it (afterwards nobody could tell which of the two put the difference there), and as a read on the screen after finalize, so the migration is confirmed to have landed rather than merely permitted.
+
+  Twelve tests: the balanced migration and its six ledger rows, the plug left holding something, stock tying against capital without Accounting posting its value, the unprovisioned contact, Inventory refusing, Inventory's value disagreeing, read-only after go-live, save replacing rather than duplicating, a line naming the wrong thing for its kind, a trial balance actually drawn after finalize with every subledger tying, a control balance with nobody beneath it that foots and still does not tie, and an existing untied subledger blocking go-live.
 
 ---
 
 ## Stage T10 — fixed assets: acquisition, depreciation, disposal (DEP)
+
+> **Deferred to Phase 2** *(owner decision, 4 August 2026)*. Nothing in this stage is built and nothing else in the plan waits on it. `CLAUDE.md`'s roadmap moves with it — Fixed Assets is out of the Phase 1 line and into Phase 2.
+>
+> **It was already blocked twice over**, which is what makes deferring it cheap rather than a loss: T10.2 capitalises an asset from the bill that bought it, and the bill is **T4.5** in [`TRANSACTIONS.md`](./TRANSACTIONS.md) and does not exist; and two owner decisions in the table below are still open, both of which change the table shape. Building it now would mean guessing at both and reworking the schema when the bill lands.
+>
+> **The one thing that moves with it**: T8.3's "migrated fixed assets skip historical depreciation". That is a property of a register row, so it defers to wherever the register goes. **T8 is otherwise complete for Phase 1** — the docs page says so in the user's own words rather than leaving it to be discovered.
+>
+> The boxes below are kept, not deleted. The analysis in them is the reason acquisition comes before depreciation, and it is the thing most likely to be got wrong by whoever picks this up in Phase 2.
 
 **An earlier draft of this stage had a register, a depreciation run and a disposal, and nothing that put an asset on the books.** That is not a small omission: a depreciation run over an empty register posts nothing at all, and a register filled in by hand depreciates an asset the ledger never bought — so `Dr Depreciation Expense / Cr Accumulated Depreciation` accumulates against a Fixed Asset account holding zero, and the balance sheet carries a negative net book value that balances perfectly and is nonsense. Depreciation is only meaningful as the second act. **T10.2 is the acquisition, and it comes first.**
 
@@ -239,8 +294,8 @@ One requirement copied to two files is one requirement that drifts.
 | # | Question | Needed by | Recommendation | Answer |
 |---|---|---|---|---|
 | T0.7 | Does every document write an `acc.Journals` row, or only manual journals? | T1 | Manual journals only | **Manual journals only.** Settled — see T0.7 above |
-| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 | No — capitalise from `BIL`, dispose under `INV` or `JRN` | *open* |
-| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 | *(open in `CLAUDE.md`)* | *open* |
+| T10.2 | Do asset acquisition and disposal get transaction type codes of their own? | T10 — **Phase 2** | No — capitalise from `BIL`, dispose under `INV` or `JRN` | *open, deferred with the stage* |
+| — | Fixed assets: straight-line only, or books **and** tax depreciation? | T10 — **Phase 2** | *(open in `CLAUDE.md`)* | *open, deferred with the stage* |
 
 **On T10.2**, since it is the one raised by this stage rather than inherited. Adding an `FXA`/`FXD` pair to `mst.TransactionTypes` would give the asset register clean provenance under its own codes — but a purchase of a laptop **is** a purchase: same vendor, same input GST, same payment terms, same aging. A new code buys a numbering series, a screen, a lifecycle and a posting path that all duplicate Purchase, to record something Purchase already records. Capitalising from a bill line costs one flag on the line and one register row.
 

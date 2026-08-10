@@ -411,7 +411,63 @@ export class MoneyDocumentPage implements OnInit {
     this.touch();
   }
 
+  /**
+   * The source an excess belongs under — an overpayment against a document
+   * rather than a deliberate advance, which is what money left over on a payment
+   * that settles something actually is.
+   */
+  private get overpaymentSource(): MoneySource | null {
+    return this.sourceFor(this.direction() === 'spend' ? 16 : 17);
+  }
+
+  protected get overpaymentLabel(): string {
+    return this.overpaymentSource?.label ?? 'an overpayment';
+  }
+
+  /**
+   * Adds the unallocated remainder as an overpayment.
+   *
+   * <b>This is what stops an excess becoming a negative balance.</b> Left on the
+   * settled line, money paid over what a bill was for turns the supplier's
+   * payable into a debit — which every aging report reads as "they owe us", on a
+   * line that nets against the next bill. As an overpayment it sits in that
+   * contact's overpayment advance instead: visible as money held, refundable on
+   * its own, and separable on a balance sheet where trade balances and advances
+   * are different lines.
+   *
+   * The excess names the document it ran past when there is exactly one, so it
+   * stays traceable to the bill that caused it.
+   */
+  addOverpayment(): void {
+    const source = this.overpaymentSource;
+    const rest = this.unallocated;
+
+    if (source === null || rest <= 0) {
+      return;
+    }
+
+    const settled = this.lines().filter((l) => l.mappingTransactionId.trim() !== '');
+
+    this.lines.update((lines) => [
+      ...lines,
+      {
+        ledgerSourceId: source.ledgerSourceId,
+        mappingTransactionTypeCode: source.settles,
+        mappingTransactionId:
+          settled.length === 1 && settled[0].mappingTransactionTypeCode === source.settles
+            ? settled[0].mappingTransactionId
+            : '',
+        amount: rest.toFixed(2),
+        lineMemo: '',
+      },
+    ]);
+  }
+
   async save(post: boolean): Promise<void> {
+    if (!this.validateSave(post)) {
+      return;
+    }
+
     this.busy.set(true);
     try {
       const kept = this.lines().filter((l) => l.ledgerSourceId !== null);
@@ -427,12 +483,9 @@ export class MoneyDocumentPage implements OnInit {
         referenceNo: this.referenceNo || null,
         referenceDate: this.referenceDate || null,
         memo: this.memo || null,
-        // The header names the document only when the whole payment is about
-        // one. Split across several, the lines are the only honest answer.
-        mappingTransactionTypeCode:
-          kept.length === 1 ? kept[0].mappingTransactionTypeCode : null,
-        mappingTransactionId:
-          kept.length === 1 ? this.reference(kept[0].mappingTransactionId) : null,
+        // No header mapping is sent. The server derives it from the lines,
+        // because it is a summary of them rather than a fact beside them —
+        // sending one from here would only create something to disagree with.
         lines: kept.map((l) => ({
           ledgerSourceId: l.ledgerSourceId,
           mappingTransactionTypeCode: l.mappingTransactionTypeCode,
@@ -509,6 +562,30 @@ export class MoneyDocumentPage implements OnInit {
     } finally {
       this.busy.set(false);
     }
+  }
+
+  private validateSave(post: boolean): boolean {
+    if (this.bankAccountId === null) {
+      this.show('Choose a bank or cash account.', true);
+      return false;
+    }
+
+    if (this.contactId === null) {
+      this.show('Choose the contact.', true);
+      return false;
+    }
+
+    if (this.money(this.amount) <= 0) {
+      this.show('Amount must be greater than zero.', true);
+      return false;
+    }
+
+    if (post && !this.canPost) {
+      this.show('Complete allocations before posting.', true);
+      return false;
+    }
+
+    return true;
   }
 
   /** Parses a typed amount. Anything unparseable is zero, never NaN in a total. */

@@ -465,13 +465,51 @@ export class ItemsPage implements OnInit {
   }
 
   async save(): Promise<void> {
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const pharma = this.form.pharma as Record<string, unknown> | null;
+    const jewellery = this.form.jewellery as Record<string, unknown> | null;
+    const body = {
+      ...this.form,
+      itemCode: this.cleanOptional(this.form.itemCode),
+      itemName: this.form.itemName.trim(),
+      printName: this.cleanOptional(this.form.printName),
+      description: this.cleanOptional(this.form.description),
+      taxPreference: this.form.taxPreference.trim(),
+      jewellery:
+        jewellery === null
+          ? null
+          : {
+              ...jewellery,
+              metalType: this.asText(jewellery['metalType']),
+            },
+      pharma:
+        pharma === null
+          ? null
+          : {
+              ...pharma,
+              genericName: this.asText(pharma['genericName']),
+              strength: this.cleanOptional(this.asText(pharma['strength'])),
+              packSize: this.asText(pharma['packSize']),
+              manufacturerName: this.asText(pharma['manufacturerName']),
+              marketedBy: this.cleanOptional(this.asText(pharma['marketedBy'])),
+            },
+      barcodes: this.form.barcodes.map((barcode) => ({
+        ...barcode,
+        barcode: barcode.barcode.trim(),
+        barcodeType: barcode.barcodeType.trim(),
+      })),
+    };
+
     this.busy.set(true);
     try {
       const id = this.editingId();
       if (id === null) {
-        await this.send('POST', '/api/items', this.form);
+        await this.send('POST', '/api/items', body);
       } else {
-        await this.send('PUT', `/api/items/${id}`, this.form);
+        await this.send('PUT', `/api/items/${id}`, body);
       }
       this.editorOpen.set(false);
       this.succeed('Item saved.');
@@ -519,6 +557,95 @@ export class ItemsPage implements OnInit {
       default:
         return '';
     }
+  }
+
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.itemName)) {
+      this.fail('Item name is required.');
+      return false;
+    }
+
+    if (
+      !this.hasText(this.form.itemProfile) ||
+      !this.hasText(this.form.itemType) ||
+      !this.hasText(this.form.taxPreference) ||
+      !this.hasText(this.form.costingType)
+    ) {
+      this.fail('Profile, type, tax preference and costing method are required.');
+      return false;
+    }
+
+    if (
+      this.form.uomTypeId <= 0 ||
+      this.form.inventoryUomId <= 0 ||
+      this.form.salesUomId <= 0 ||
+      this.form.purchaseUomId <= 0 ||
+      this.form.reportUomId <= 0
+    ) {
+      this.fail('Choose a unit type and all mandatory units.');
+      return false;
+    }
+
+    if (this.form.itemProfile === 'Pharma') {
+      const pharma = this.form.pharma as Record<string, unknown> | null;
+      if (pharma === null) {
+        this.fail('Pharma details are required for Pharma items.');
+        return false;
+      }
+
+      if (!this.hasText(this.asText(pharma['genericName']))) {
+        this.fail('Generic name is required for Pharma items.');
+        return false;
+      }
+
+      if (!this.hasText(this.asText(pharma['packSize']))) {
+        this.fail('Pack size is required for Pharma items.');
+        return false;
+      }
+
+      if (!this.hasText(this.asText(pharma['manufacturerName']))) {
+        this.fail('Manufacturer is required for Pharma items.');
+        return false;
+      }
+    }
+
+    if (this.form.itemProfile === 'Jewellery') {
+      const jewellery = this.form.jewellery as Record<string, unknown> | null;
+      if (jewellery === null) {
+        this.fail('Jewellery details are required for Jewellery items.');
+        return false;
+      }
+
+      if (!this.hasText(this.asText(jewellery['metalType']))) {
+        this.fail('Metal type is required for Jewellery items.');
+        return false;
+      }
+
+      if (!this.hasText(this.asText(jewellery['makingChargeType']))) {
+        this.fail('Making charge type is required for Jewellery items.');
+        return false;
+      }
+
+      const purityId = Number(jewellery['metalPurityId'] ?? 0);
+      if (!Number.isFinite(purityId) || purityId <= 0) {
+        this.fail('Choose a metal purity for Jewellery items.');
+        return false;
+      }
+    }
+
+    const blankBarcodeIndex = this.form.barcodes.findIndex((barcode) => !this.hasText(barcode.barcode));
+    if (blankBarcodeIndex >= 0) {
+      this.fail(`Barcode is required on row ${blankBarcodeIndex + 1}.`);
+      return false;
+    }
+
+    const blankTypeIndex = this.form.barcodes.findIndex((barcode) => !this.hasText(barcode.barcodeType));
+    if (blankTypeIndex >= 0) {
+      this.fail(`Barcode type is required on row ${blankTypeIndex + 1}.`);
+      return false;
+    }
+
+    return true;
   }
 
   private blank(): ItemDetail {
@@ -582,6 +709,19 @@ export class ItemsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
+  }
+
+  private asText(value: unknown): string {
+    return typeof value === 'string' ? value.trim() : '';
+  }
+
+  private cleanOptional(value: string | null | undefined): string | null {
+    const cleaned = (value ?? '').trim();
+    return cleaned.length > 0 ? cleaned : null;
   }
 
   private get<T>(url: string): Promise<T> {

@@ -14,15 +14,15 @@ body {
 /* ---- Auth pages ---------------------------------------------------------- */
 
 .auth-card {
-  max-width: 400px;
-  margin: 8vh auto;
+  max-width: 720px;
+  margin: 60px auto;
   padding: 2rem;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 
   &.wide {
-    max-width: 560px;
+    max-width: 800px;
   }
 
   h1 {
@@ -116,7 +116,7 @@ body {
   }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 720px) {
   .auth-card {
     margin: 0;
     min-height: 100dvh;

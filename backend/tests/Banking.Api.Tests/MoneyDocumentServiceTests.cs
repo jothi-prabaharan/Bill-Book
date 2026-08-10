@@ -401,6 +401,241 @@ public class MoneyDocumentServiceTests
     }
 
     /// <summary>
+    /// T6.6 — one payment across three bills. Three lines, three pairs of legs,
+    /// each traceable to the bill it cleared and each with its own bank leg.
+    ///
+    /// The header names no document, and that is the point: this payment is about
+    /// three, and picking one of them for the header would be picking arbitrarily.
+    /// A list reads the header first.
+    /// </summary>
+    [SkippableFact]
+    public async Task One_payment_across_three_bills_is_three_traceable_lines()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 6_000m,
+            Lines =
+            [
+                Settles(BillPayment, "BIL", 501, 1_000m),
+                Settles(BillPayment, "BIL", 502, 2_000m),
+                Settles(BillPayment, "BIL", 503, 3_000m),
+            ],
+        }, ct);
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, draft.Outcome);
+
+        MoneyDocumentView? saved = await h.Spend.GetAsync(draft.DocumentId, ct);
+
+        Assert.Null(saved!.MappingTransactionTypeCode);
+        Assert.Null(saved.MappingTransactionId);
+        Assert.Equal([501L, 502L, 503L], saved.Lines.Select(l => l.MappingTransactionId));
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, (await h.Spend.PostAsync(draft.DocumentId, ct)).Outcome);
+
+        LedgerPosting posting = h.Ledger.Last;
+
+        // Six legs: a payable and a bank leg per bill, keyed on the line so each
+        // pair is replaceable and traceable on its own.
+        Assert.Equal(6, posting.Legs.Count);
+        Assert.Equal(3, posting.Legs.Select(l => l.TransactionDetailId).Distinct().Count());
+        Assert.Equal(6_000m, posting.Legs.Sum(l => l.DebitAmount));
+        Assert.Equal(6_000m, posting.Legs.Sum(l => l.CreditAmount));
+    }
+
+    /// <summary>
+    /// A payment about exactly one document still says so on its header — the
+    /// mapping is derived from the lines, so one line means one header mapping
+    /// without the caller having to assert it.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_payment_about_one_document_carries_it_on_the_header()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 4_000m,
+
+            // Deliberately wrong, and deliberately ignored: the header is a
+            // summary of the lines, not a fact the caller supplies beside them.
+            MappingTransactionTypeCode = "INV",
+            MappingTransactionId = 999,
+            Lines = [Settles(BillPayment, "BIL", 777, 4_000m)],
+        }, ct);
+
+        MoneyDocumentView? saved = await h.Spend.GetAsync(draft.DocumentId, ct);
+
+        Assert.Equal("BIL", saved!.MappingTransactionTypeCode);
+        Assert.Equal(777, saved.MappingTransactionId);
+    }
+
+    /// <summary>
+    /// A bill payment cannot name an invoice. The kind of document follows from
+    /// what the line is for, and a payment traced to a document it did not pay is
+    /// worse than one traced to nothing: a statement reconciling on that link
+    /// reads as answered.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_line_cannot_settle_the_wrong_kind_of_document()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 1_000m,
+            Lines = [Settles(BillPayment, "INV", 900, 1_000m)],
+        }, CancellationToken.None);
+
+        Assert.Equal(MoneyDocumentOutcome.MappingNotSettleable, draft.Outcome);
+    }
+
+    /// <summary>
+    /// An advance settles nothing — that is what makes it an advance — so it
+    /// cannot claim a document.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_advance_cannot_claim_a_document()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 1_000m,
+            Lines = [Settles(VendorPrepayment, "BIL", 500, 1_000m)],
+        }, CancellationToken.None);
+
+        Assert.Equal(MoneyDocumentOutcome.MappingNotSettleable, draft.Outcome);
+    }
+
+    /// <summary>
+    /// Two lines cannot settle the same bill. Splitting a payment across two
+    /// lines of one document is not partial payment — partial payment is one line
+    /// for less than the document — it is a keying slip, and it leaves two ledger
+    /// rows reconciling against one balance.
+    /// </summary>
+    [SkippableFact]
+    public async Task Two_lines_cannot_settle_the_same_document()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 3_000m,
+            Lines =
+            [
+                Settles(BillPayment, "BIL", 500, 1_000m),
+                Settles(BillPayment, "BIL", 500, 2_000m),
+            ],
+        }, CancellationToken.None);
+
+        Assert.Equal(MoneyDocumentOutcome.MappingRepeated, draft.Outcome);
+    }
+
+    /// <summary>
+    /// The excess on an overpayment lands on the <i>other</i> control account, as
+    /// an advance — never as a debit sitting on the trade payable.
+    ///
+    /// That distinction is the whole of "rather than a negative balance": left on
+    /// the trade balance the excess turns the supplier's payable into a debit,
+    /// which every aging report reads as "they owe us". They do — but not as a
+    /// trade receivable, and not on a line that nets against the next bill.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_partial_payment_and_its_excess_land_on_different_accounts()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Spend.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 12_000m,
+            Lines =
+            [
+                // Part of one bill, all of another, and money over.
+                Settles(BillPayment, "BIL", 501, 4_000m),
+                Settles(BillPayment, "BIL", 502, 6_000m),
+                Settles(MoneyPostingMap.Overpayment(spending: true), "BIL", 502, 2_000m),
+            ],
+        }, ct);
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, draft.Outcome);
+        await h.Spend.PostAsync(draft.DocumentId, ct);
+
+        List<LedgerPostingLeg> control =
+            [.. h.Ledger.Last.Legs.Where(l => l.AccountSystemName is not null)];
+
+        // ₹10,000 against the trade payable, ₹2,000 held as an advance under
+        // receivables. Not ₹12,000 on one account.
+        Assert.Equal(
+            10_000m,
+            control.Where(l => l.AccountSystemName == "Accounts Payable").Sum(l => l.DebitAmount));
+
+        LedgerPostingLeg excess = Assert.Single(
+            control, l => l.AccountSystemName == "Accounts Receivable");
+
+        Assert.Equal(2_000m, excess.DebitAmount);
+        Assert.Equal(MoneyPostingMap.OverpaymentAdvance, excess.SubAccountPurpose);
+    }
+
+    /// <summary>
+    /// The excess and the bill payment may name the same bill, because they are
+    /// different sources — the duplicate check is per document <i>within</i> a
+    /// source's own claim, and an overpayment against a bill is a different claim
+    /// from paying it.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_overpayment_may_name_the_bill_it_ran_past()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+
+        MoneyDocumentResult draft = await h.Receive.CreateAsync(new SaveMoneyDocumentRequest
+        {
+            TransactionDate = new DateOnly(2026, 8, 1),
+            BankAccountId = h.BankAccountId,
+            ContactId = 7,
+            Amount = 11_000m,
+            Lines =
+            [
+                Settles(InvoicePayment, "INV", 900, 10_000m),
+                Settles(CustomerOverpayment, "INV", 900, 1_000m),
+            ],
+        }, CancellationToken.None);
+
+        Assert.Equal(MoneyDocumentOutcome.Ok, draft.Outcome);
+    }
+
+    private static SaveMoneyLineRequest Settles(
+        int ledgerSourceId, string typeCode, long transactionId, decimal amount) => new()
+        {
+            LedgerSourceId = ledgerSourceId,
+            MappingTransactionTypeCode = typeCode,
+            MappingTransactionId = transactionId,
+            Amount = amount,
+        };
+
+    /// <summary>
     /// T6.5, and the case it exists for. A USD 1,000 bill booked when the rate
     /// said ₹80, settled when it says ₹100.
     ///

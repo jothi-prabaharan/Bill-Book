@@ -1,0 +1,98 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { color: #6a6f80; font-size: .78rem; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.none { color: #c3c7d2; }
+.derived { color: #6a6f80; font-variant-numeric: tabular-nums; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #eceef3; color: #4a4f60; font: inherit; font-size: .85rem; cursor: pointer; }
+button.primary { background: #3557d6; color: #fff; }
+button.ghost { background: transparent; color: #4a4f60; }
+button:disabled { opacity: .45; cursor: default; }
+button.icon { background: none; color: #9aa0b0; font-size: 1.1rem; padding: 0 .4rem; }
+
+.note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 1rem; }
+.note.done { background: #eaf7f0; border-left-color: #187a4b; color: #1a5c3c; }
+
+.badge { font-size: .7rem; background: #fdf3e6; color: #b26a00; padding: .2rem .5rem; border-radius: 3px; }
+.badge.done { background: #eaf7f0; color: #187a4b; }
+
+.head-fields { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.head-fields label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.head-fields label.wide { flex: 1 1 20rem; }
+.head-fields input { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+.head-fields input:disabled { background: #f4f5f8; color: #6a6f80; }
+
+.lines { width: 100%; border-collapse: collapse; }
+.lines th, .lines td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #e2e4ea; vertical-align: top; }
+.lines th { font-size: .78rem; color: #6a6f80; }
+.lines input, .lines select { width: 100%; padding: .35rem .4rem; border: 1px solid #cdd1dc; border-radius: 5px; font: inherit; font-size: .82rem; }
+.lines input + input { margin-top: .2rem; }
+.lines input:disabled, .lines select:disabled { background: #f4f5f8; color: #4a4f60; }
+.lines input[type='number'] { text-align: right; font-variant-numeric: tabular-nums; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.line-col { width: 2rem; color: #8a8f9e; font-size: .78rem; }
+.actions-col { text-align: right; white-space: nowrap; width: 3rem; }
+.sub { display: block; color: #8a8f9e; font-size: .72rem; margin-top: .15rem; }
+
+.totals { display: flex; gap: 2rem; justify-content: flex-end; margin-top: 1rem; padding: .6rem .8rem; border-radius: 6px; flex-wrap: wrap; }
+.totals.balanced { background: #eaf7f0; }
+.totals.off { background: #fdf3e6; }
+.totals div { display: flex; flex-direction: column; align-items: flex-end; }
+.totals span { font-size: .7rem; color: #6a6f80; }
+.totals strong { font-variant-numeric: tabular-nums; font-size: 1rem; }
+.totals.off .diff strong { color: #b26a00; }
+.totals.balanced .diff strong { color: #187a4b; }
+
+/* The blockers are the other half of the answer: the plug reaching zero says the
+   figures tie, and this says whether anything else stops go-live. */
+.blockers { border: 1px solid #f0d4a8; background: #fdf9f2; border-radius: 8px; padding: .8rem 1rem; margin-top: 1rem; }
+.blockers h2 { font-size: .85rem; margin: 0 0 .5rem; color: #7a4a00; }
+.blockers ul { margin: 0; padding-left: 1.1rem; }
+.blockers li { font-size: .82rem; color: #4a4f60; margin-bottom: .3rem; }
+
+.meta { display: flex; gap: 2rem; margin: 1rem 0 0; flex-wrap: wrap; }
+.meta dt { font-size: .72rem; color: #8a8f9e; }
+.meta dd { margin: 0; font-size: .88rem; }
+
+.editor-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
+
+/* At ~360px the grid stops being a grid. Each line becomes a stacked card with
+   its own labels — a nine-column table at that size is unusable however narrow
+   the columns get, and this is a screen people key hundreds of rows into. */
+@media (max-width: 860px) {
+  .lines thead { display: none; }
+  .lines tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .lines td { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .lines td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 6rem; padding-top: .3rem; }
+  .lines input, .lines select { flex: 1 1 auto; width: auto; }
+  .lines td > span { flex: 1 1 auto; text-align: right; }
+  .line-col, .actions-col { width: auto; justify-content: flex-end; }
+  .head-fields label, .head-fields label.wide { flex: 1 1 100%; }
+  .totals { justify-content: space-between; gap: 1rem; }
+  .editor-actions button { flex: 1 1 auto; }
+}
+
+/* The tie, after go-live. Its own block rather than a row in the totals panel:
+   the totals say the figures add up, this says the money belongs to somebody,
+   and conflating the two is what lets a migration look finished when it is not. */
+.tie { border: 1px solid #cdd1dc; border-radius: 8px; padding: .8rem 1rem; margin-top: 1.5rem; }
+.tie.broken { border-color: #e8b4ae; background: #fdf7f6; }
+.tie h2 { font-size: .9rem; margin: 0 0 .4rem; display: flex; gap: .5rem; align-items: baseline; }
+.tie .hint { margin: 0 0 .8rem; }
+.badge.bad { background: #fdecea; color: #c0392b; }
+
+.grid { width: 100%; border-collapse: collapse; }
+.grid th, .grid td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid #e2e4ea; }
+.grid th { font-size: .78rem; color: #6a6f80; }
+.grid tr.off { background: #fdf3e6; }
+.grid tr.off td { color: #7a4a00; }
+
+@media (max-width: 860px) {
+  .grid thead { display: none; }
+  .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .grid td { display: flex; justify-content: space-between; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 8rem; }
+}

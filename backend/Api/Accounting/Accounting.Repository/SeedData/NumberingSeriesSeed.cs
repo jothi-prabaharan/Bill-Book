@@ -23,6 +23,12 @@ public static class NumberingSeriesSeed
         Master(orgId, 40, "WAREHOUSE", "Warehouse Code", "WH", 3),
         Master(orgId, 50, "BANK", "Bank Code", "BNK", 3),
         Document(orgId, 100, "JRN", "Journal Number", "JV"),
+
+        // A series that will only ever issue one number, because a branch has one
+        // opening balance. It exists anyway: the document has to be citable, and
+        // a number allocated the same way as every other is one less exception in
+        // the code that reads them.
+        Document(orgId, 110, "OPB", "Opening Balance Number", "OB"),
     ];
 
     /// <summary>

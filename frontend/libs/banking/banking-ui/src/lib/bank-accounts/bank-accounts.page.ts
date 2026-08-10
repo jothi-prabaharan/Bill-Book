@@ -138,6 +138,30 @@ export class BankAccountsPage implements OnInit {
     return ['OverDraft', 'CashCredit', 'CreditCard'].includes(this.form.accountType);
   }
 
+  private validateForm(): boolean {
+    if (!this.hasText(this.form.accountName)) {
+      this.fail('Account name is required.');
+      return false;
+    }
+
+    if (!this.hasText(this.form.accountNumber)) {
+      this.fail('Account number is required.');
+      return false;
+    }
+
+    if (this.needsBank && this.form.bankId === null) {
+      this.fail('Choose a bank for this account type.');
+      return false;
+    }
+
+    if (!this.hasText(this.form.currencyCode)) {
+      this.fail('Currency is required.');
+      return false;
+    }
+
+    return true;
+  }
+
   /** What the ledger account will be: a liability for anything that can be overdrawn. */
   protected get ledgerNote(): string {
     if (this.form.accountType === 'Cash' || this.form.accountType === 'Wallet') {
@@ -151,11 +175,30 @@ export class BankAccountsPage implements OnInit {
 
   async save(): Promise<void> {
     const id = this.editingId();
+    if (!this.validateForm()) {
+      return;
+    }
+
+    const body = {
+      bankId: this.form.bankId,
+      accountName: this.form.accountName.trim(),
+      accountNumber: this.form.accountNumber.trim(),
+      accountType: this.form.accountType,
+      ifsc: this.cleanOptional(this.form.ifsc)?.toUpperCase() ?? null,
+      micr: this.cleanOptional(this.form.micr),
+      swiftCode: this.cleanOptional(this.form.swiftCode)?.toUpperCase() ?? null,
+      iban: this.cleanOptional(this.form.iban),
+      branchName: this.cleanOptional(this.form.branchName),
+      currencyCode: this.form.currencyCode.trim().toUpperCase(),
+      odLimit: this.form.odLimit,
+      isActive: this.form.isActive,
+    };
+
     await this.run(async () => {
       if (id === 0) {
-        await this.send('POST', '/api/bank-accounts', this.form);
+        await this.send('POST', '/api/bank-accounts', body);
       } else {
-        await this.send('PUT', `/api/bank-accounts/${id}`, this.form);
+        await this.send('PUT', `/api/bank-accounts/${id}`, body);
       }
       this.editingId.set(null);
     }, 'Bank account saved.');
@@ -242,6 +285,15 @@ export class BankAccountsPage implements OnInit {
   private fail(text: string): void {
     this.message.set(text);
     this.messageIsError.set(true);
+  }
+
+  private hasText(value: string | null | undefined): boolean {
+    return (value ?? '').trim().length > 0;
+  }
+
+  private cleanOptional(value: string | null | undefined): string | null {
+    const cleaned = (value ?? '').trim();
+    return cleaned.length > 0 ? cleaned : null;
   }
 
   private get<T>(url: string): Promise<T> {

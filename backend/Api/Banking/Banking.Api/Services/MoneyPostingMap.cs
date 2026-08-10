@@ -43,6 +43,48 @@ public static class MoneyPostingMap
     public const int MoneyTransferSource = 11;
 
     /// <summary>
+    /// The kind of document a line under this source settles, or null when it
+    /// settles nothing.
+    ///
+    /// <b>The kind follows from the source; it is not a second choice beside
+    /// it.</b> A bill payment can only ever settle a bill, and an advance placed
+    /// before any document exists settles nothing at all — so a line free to name
+    /// an invoice on a bill payment is a line free to trace a payment to a
+    /// document it did not pay. That link is what a statement reconciles on, and
+    /// a wrong one is worse than a missing one: it looks answered.
+    ///
+    /// Null for a source not in the map at all, which the callers refuse before
+    /// they reach this.
+    /// </summary>
+    public static string? Settles(int ledgerSourceId) => ledgerSourceId switch
+    {
+        2 => "BIL",   // BILLPAYMENT
+        16 => "BIL",  // VENDOROVERPAYMENT — the bill the payment ran past
+        6 => "CRN",   // CREDITNOTEREFUND
+        3 => "INV",   // INVOICEPAYMENT
+        17 => "INV",  // CUSTOMEROVERPAYMENT
+        7 => "DBN",   // DEBITNOTEREFUND
+        4 => "BIL",   // BILLREFUND — a supplier returning what we overpaid on a bill
+
+        // 8, 9, 18, 19 — advances placed and advances given back. There is no
+        // document behind an advance: that is what makes it one.
+        _ => null,
+    };
+
+    /// <summary>
+    /// The source an unallocated remainder belongs under — the excess when a
+    /// payment ran past what the documents on it settle.
+    ///
+    /// <b>An overpayment is an advance, not a negative balance.</b> Left on the
+    /// trade balance it turns the contact's payable into a debit, which reads as
+    /// "they owe us" on every aging report and is not what happened. So the
+    /// remainder goes to the overpayment advance beneath the other control
+    /// account, where it is visible as money held rather than as a balance
+    /// running the wrong way.
+    /// </summary>
+    public static int Overpayment(bool spending) => spending ? 16 : 17;
+
+    /// <summary>
     /// The account a <b>spend</b>-money line debits. Null when the source is not
     /// one money can leave under — which is a refusal, not a default, because a
     /// line that posted to a guessed account would be wrong in a balance nobody

@@ -39,7 +39,29 @@ Money rarely means only one thing. Paying ₹11,000 against a ₹10,000 bill is 
 | Debit note refund from supplier | A supplier paying you back for goods you returned |
 | Refund of our overpayment | A supplier returning what you overpaid |
 
-The panel at the foot shows the amount that moved, how much of it the lines account for, and what is left over. **Unallocated money is not an error to be tidied away** — it is usually an overpayment, and it belongs on the document as a line of its own rather than nowhere. **Fill rest** puts whatever remains onto a line in one click.
+The panel at the foot shows the amount that moved, how much of it the lines account for, and what is left over. **Fill rest** puts whatever remains onto a line in one click.
+
+## One payment, several documents
+
+A payment is spread across documents by adding a line for each — ₹50,000 across three bills is three lines, and each one carries the bill it settles. In the ledger that becomes three separate pairs of entries, so any of the three bills can be traced back to the money that cleared it.
+
+Paying **less** than a document is for is simply a line for less than the document: the rest of that balance stays outstanding.
+
+Three rules the screen and the server both hold to:
+
+- **A line settles the kind of document its purpose implies.** A bill payment settles a bill; an invoice payment settles an invoice; an advance settles nothing at all. You do not choose the kind separately, and a payment cannot be pointed at a document it did not pay.
+- **Each document is named once per purpose.** Splitting a payment across two lines of the same bill is refused — put the whole amount for that bill on one line. Paying a bill and recording an overpayment against the same bill is different, and allowed.
+- **The document shown on the payment as a whole is worked out from the lines.** One document when every line settles the same one; nothing when the payment is spread across several, because it is about all of them.
+
+### Money left over
+
+When the lines stop short of the amount that moved, the panel offers to place the remainder: **Add ₹1,000 as an overpayment**.
+
+That is worth doing rather than folding the extra into the settled line. An overpayment recorded as one sits in that contact's **overpayment balance**: visible as money held, refundable on its own, and reported apart from what is genuinely trade. Folded into the settled line it turns their balance the other way up instead — an aging report then shows a supplier owing you money as though it were a trade receivable, on a line that quietly nets against their next bill.
+
+The excess names the document it ran past when there is exactly one, so it stays traceable to the payment that caused it.
+
+> **What is still owed on a bill is not yet checked.** Nothing stops a line settling more than its document is for — that arrives with allocation.
 
 ## The account is chosen for you
 
