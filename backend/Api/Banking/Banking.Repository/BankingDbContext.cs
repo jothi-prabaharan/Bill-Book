@@ -40,6 +40,18 @@ public class BankingDbContext : TenantDbContext
     public DbSet<TransferMoney> TransferMoney => Set<TransferMoney>();
 
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
+    /// <summary>
+    /// Statements as the bank produced them. Nothing here posts — a statement is
+    /// the bank's account of movements already recorded, and reconciliation is
+    /// the comparison of the two rather than a second set of entries.
+    /// </summary>
+    public DbSet<BankStatement> BankStatements => Set<BankStatement>();
+
+    public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
+
+    /// <summary>How to read the file each account's bank produces. No two agree.</summary>
+    public DbSet<StatementImportProfile> StatementImportProfiles => Set<StatementImportProfile>();
+
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -212,6 +224,112 @@ public class BankingDbContext : TenantDbContext
                     "chk_transfer_distinct_accounts",
                     "\"ToBankAccountId\" <> \"FromBankAccountId\"");
             });
+        });
+
+        modelBuilder.Entity<BankStatement>(b =>
+        {
+            b.HasKey(e => e.BankStatementId);
+
+            b.HasIndex(e => new { e.OrgId, e.BankAccountId, e.FromDate });
+
+            b.Property(e => e.OpeningBalance).HasColumnType("decimal(18,2)");
+            b.Property(e => e.ClosingBalance).HasColumnType("decimal(18,2)");
+
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.BankAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                "chk_statement_period", "\"ToDate\" >= \"FromDate\""));
+        });
+
+        modelBuilder.Entity<BankStatementLine>(b =>
+        {
+            b.HasKey(e => e.BankStatementLineId);
+
+            // What makes re-importing an overlapping period add only what is new.
+            // Per account rather than per statement, because the whole point is
+            // that the same movement arrives in two different files.
+            b.HasIndex(e => new { e.OrgId, e.BankAccountId, e.RowHash })
+                .IsUnique()
+                .HasDatabaseName("IX_BankStatementLines_Row");
+
+            b.HasIndex(e => new { e.BankStatementId, e.LineNumber }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.BankAccountId, e.Status, e.TransactionDate });
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.WithdrawalAmount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.DepositAmount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.RunningBalance).HasColumnType("decimal(18,2)");
+
+            b.HasOne<BankStatement>()
+                .WithMany()
+                .HasForeignKey(e => e.BankStatementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table =>
+            {
+                // In xor out, the same rule the ledger holds. A line that is
+                // both, or neither, is a row the import failed to understand and
+                // should have refused rather than stored.
+                table.HasCheckConstraint(
+                    "chk_statement_line_exclusive",
+                    "(\"WithdrawalAmount\" > 0 AND \"DepositAmount\" = 0) "
+                        + "OR (\"DepositAmount\" > 0 AND \"WithdrawalAmount\" = 0)");
+
+                table.HasCheckConstraint(
+                    "chk_statement_line_non_negative",
+                    "\"WithdrawalAmount\" >= 0 AND \"DepositAmount\" >= 0");
+
+                // A match is a whole match or none of one. Half of it — a status
+                // with no document, or a document with no status — is a line that
+                // reads as reconciled against nothing.
+                table.HasCheckConstraint(
+                    "chk_statement_line_match",
+                    "(\"Status\" = 'Matched' AND \"MatchedTransactionTypeCode\" IS NOT NULL "
+                        + "AND \"MatchedTransactionId\" IS NOT NULL AND \"MatchedAt\" IS NOT NULL) "
+                        + "OR (\"Status\" <> 'Matched' AND \"MatchedTransactionTypeCode\" IS NULL "
+                        + "AND \"MatchedTransactionId\" IS NULL AND \"MatchedAt\" IS NULL)");
+
+                // Setting a line aside is a decision, and a decision with no
+                // reason is indistinguishable from a mistake six months later.
+                table.HasCheckConstraint(
+                    "chk_statement_line_ignored_reason",
+                    "\"Status\" <> 'Ignored' OR \"Note\" IS NOT NULL");
+
+                // Only the three money documents reconcile. Anything else naming
+                // itself here is a bug in whatever wrote it.
+                table.HasCheckConstraint(
+                    "chk_statement_line_matched_type",
+                    "\"MatchedTransactionTypeCode\" IS NULL "
+                        + "OR \"MatchedTransactionTypeCode\" IN ('SPM', 'RCM', 'TRM')");
+            });
+        });
+
+        modelBuilder.Entity<StatementImportProfile>(b =>
+        {
+            b.HasKey(e => e.StatementImportProfileId);
+
+            // One mapping per account. A second would make "how is this file
+            // read" a question with two answers.
+            b.HasIndex(e => new { e.OrgId, e.BankAccountId })
+                .IsUnique()
+                .HasDatabaseName("IX_StatementImportProfiles_Account");
+
+            b.HasOne<BankAccount>()
+                .WithMany()
+                .HasForeignKey(e => e.BankAccountId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.ToTable(table => table.HasCheckConstraint(
+                // Two columns or one signed column, and it has to be one of the
+                // two — a profile naming neither cannot read an amount at all.
+                "chk_import_profile_amount_shape",
+                "(\"WithdrawalColumn\" IS NOT NULL AND \"DepositColumn\" IS NOT NULL "
+                    + "AND \"AmountColumn\" IS NULL) "
+                    + "OR (\"AmountColumn\" IS NOT NULL AND \"WithdrawalColumn\" IS NULL "
+                    + "AND \"DepositColumn\" IS NULL)"));
         });
 
         base.OnModelCreating(modelBuilder);

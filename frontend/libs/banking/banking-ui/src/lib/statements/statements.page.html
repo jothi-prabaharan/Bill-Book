@@ -1,0 +1,309 @@
+<header class="page-head">
+  <h1>Statements</h1>
+  <label class="account">
+    Account
+    <select [(ngModel)]="bankAccountId" name="bankAccountId" (ngModelChange)="onAccountChange()">
+      @for (a of usableAccounts(); track a.bankAccountId) {
+        <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
+      }
+    </select>
+  </label>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="note">
+  What the bank says happened, against what you recorded. Matching a line says the two agree about
+  one movement — <strong>nothing here posts to your accounts</strong>. The money already moved, and
+  the document that recorded it already posted.
+</p>
+
+<!-- The mapping. Every bank lays its export out differently, so this is chosen
+     once per account rather than guessed at every import. -->
+@if (editingProfile()) {
+  <section class="editor">
+    <h2>How to read this bank's file</h2>
+
+    <p class="hint">
+      Name the columns as they appear in the file's header row, or give their positions counting
+      from 0 if there is no header.
+    </p>
+
+    <div class="head-fields">
+      <label>
+        Rows to skip
+        <input type="number" min="0" max="100" [(ngModel)]="form.skipRows" name="skipRows" />
+        <span class="sub">The branch address and summary above the table</span>
+      </label>
+      <label>
+        Date format
+        <input type="text" [(ngModel)]="form.dateFormat" name="dateFormat" maxlength="40" />
+        <span class="sub">e.g. dd/MM/yyyy or dd-MMM-yyyy</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.hasHeaderRow" name="hasHeaderRow" />
+        The first row names the columns
+      </label>
+    </div>
+
+    <div class="head-fields">
+      <label>
+        Date column
+        <input type="text" [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
+      </label>
+      <label>
+        Value date <span class="optional">optional</span>
+        <input
+          type="text"
+          [(ngModel)]="form.valueDateColumn"
+          name="valueDateColumn"
+          maxlength="100"
+        />
+      </label>
+      <label>
+        Description
+        <input
+          type="text"
+          [(ngModel)]="form.descriptionColumn"
+          name="descriptionColumn"
+          maxlength="100"
+        />
+      </label>
+      <label>
+        Reference
+        <input
+          type="text"
+          [(ngModel)]="form.referenceColumn"
+          name="referenceColumn"
+          maxlength="100"
+        />
+        <span class="sub">Cheque or UTR — what matching leans on hardest</span>
+      </label>
+      <label>
+        Balance <span class="optional">optional</span>
+        <input type="text" [(ngModel)]="form.balanceColumn" name="balanceColumn" maxlength="100" />
+      </label>
+    </div>
+
+    <!-- The two layouts, and they are exclusive. Typing in one clears the other,
+         so the screen never offers a shape the server refuses. -->
+    <fieldset class="amounts">
+      <legend>Where the amount is</legend>
+
+      <div class="head-fields">
+        <label>
+          Withdrawal column
+          <input
+            type="text"
+            [(ngModel)]="form.withdrawalColumn"
+            name="withdrawalColumn"
+            maxlength="100"
+            (ngModelChange)="onTwoColumns()"
+          />
+        </label>
+        <label>
+          Deposit column
+          <input
+            type="text"
+            [(ngModel)]="form.depositColumn"
+            name="depositColumn"
+            maxlength="100"
+            (ngModelChange)="onTwoColumns()"
+          />
+        </label>
+      </div>
+
+      <p class="or">or</p>
+
+      <div class="head-fields">
+        <label>
+          One signed amount column
+          <input
+            type="text"
+            [(ngModel)]="form.amountColumn"
+            name="amountColumn"
+            maxlength="100"
+            (ngModelChange)="onAmountShape()"
+          />
+        </label>
+        @if (usesSignedColumn) {
+          <label class="check">
+            <input
+              type="checkbox"
+              [(ngModel)]="form.negativeIsDeposit"
+              name="negativeIsDeposit"
+            />
+            Negative means money in
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="editingProfile.set(false)">Cancel</button>
+      <button type="button" class="primary" (click)="saveProfile()" [disabled]="busy()">
+        Save mapping
+      </button>
+    </div>
+  </section>
+} @else {
+  <section class="import">
+    @if (profile()) {
+      <div class="import-row">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm" (change)="onFile($event)" />
+        <button type="button" class="primary" (click)="import()" [disabled]="busy() || !file">
+          Import
+        </button>
+        <button type="button" class="link" (click)="startProfile()">Edit column mapping</button>
+      </div>
+      <p class="hint">
+        Importing the same period again is fine — anything already here is recognised and not
+        added twice.
+      </p>
+    } @else {
+      <p class="note warn">
+        This account has no column mapping yet. Every bank lays its export out differently, so tell
+        us which column is which once and we will remember it.
+        <button type="button" class="link" (click)="startProfile()">Set it up</button>
+      </p>
+    }
+  </section>
+}
+
+@if (openStatement(); as s) {
+  <section class="editor">
+    <h2>
+      {{ s.bankAccountName }} · {{ s.fromDate }} to {{ s.toDate }}
+      <span class="badge" [class.done]="s.isReconciled">
+        {{ s.isReconciled ? 'Reconciled' : undecided + ' to decide' }}
+      </span>
+    </h2>
+
+    <div class="statement-actions">
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="showAll" name="showAll" />
+        Show matched and set-aside lines too
+      </label>
+      <span class="spacer"></span>
+      <a class="link" [href]="exportUrl('csv')" download>Export CSV</a>
+      <a class="link" [href]="exportUrl('xlsx')" download>Export Excel</a>
+      <button type="button" class="ghost" (click)="close()">Close</button>
+    </div>
+
+    <table class="lines">
+      <thead>
+        <tr>
+          <th class="date-col">Date</th>
+          <th>What the bank says</th>
+          <th class="num">Out</th>
+          <th class="num">In</th>
+          <th>Your record</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of visibleLines; track line.bankStatementLineId) {
+          <tr [class.decided]="line.status !== 'Unmatched'">
+            <td class="date-col" data-label="Date">{{ line.transactionDate }}</td>
+
+            <td data-label="What the bank says">
+              {{ line.description ?? '—' }}
+              @if (line.referenceNo) {
+                <span class="sub">Ref {{ line.referenceNo }}</span>
+              }
+            </td>
+
+            <td class="num" data-label="Out">
+              {{ line.withdrawalAmount ? (line.withdrawalAmount | number: '1.2-2') : '' }}
+            </td>
+            <td class="num" data-label="In">
+              {{ line.depositAmount ? (line.depositAmount | number: '1.2-2') : '' }}
+            </td>
+
+            <td data-label="Your record">
+              @if (line.status === 'Matched') {
+                <span class="matched">
+                  {{ line.matchedTransactionNo ?? line.matchedTransactionTypeCode }}
+                  @if (line.matchedAutomatically) {
+                    <span class="chip">matched for you</span>
+                  }
+                </span>
+                <button type="button" class="link" (click)="unmatch(line)">Undo</button>
+              } @else if (line.status === 'Ignored') {
+                <span class="ignored">Set aside — {{ line.note }}</span>
+                <button type="button" class="link" (click)="unmatch(line)">Undo</button>
+              } @else if (line.candidates.length > 0) {
+                <!-- Candidates rather than a guess. Two documents equally good is
+                     a line a person has to look at: picking one would be a coin
+                     toss filed as a decision. -->
+                @for (c of line.candidates; track c.transactionTypeCode + c.transactionId) {
+                  <div class="candidate">
+                    <button type="button" class="pick" (click)="match(line, c)">
+                      {{ c.transactionNo ?? c.transactionTypeCode + ' #' + c.transactionId }}
+                    </button>
+                    <span class="sub">{{ c.reason }}</span>
+                  </div>
+                }
+                <button type="button" class="link" (click)="ignore(line)">Set aside</button>
+              } @else {
+                <span class="none">
+                  Nothing in your records matches this. It may be a bank charge or interest that
+                  needs recording as a payment or a receipt.
+                </span>
+                <button type="button" class="link" (click)="ignore(line)">Set aside</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty">
+              {{
+                showAll
+                  ? 'This statement has no lines.'
+                  : 'Nothing left to decide on this statement.'
+              }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+}
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th class="date-col">Period</th>
+      <th>File</th>
+      <th class="num">Lines</th>
+      <th class="num">Decided</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (s of statements(); track s.bankStatementId) {
+      <tr>
+        <td class="date-col" data-label="Period">
+          <button type="button" class="link" (click)="open(s)">
+            {{ s.fromDate }} → {{ s.toDate }}
+          </button>
+        </td>
+        <td data-label="File">{{ s.fileName ?? '—' }}</td>
+        <td class="num" data-label="Lines">{{ s.lineCount }}</td>
+        <td class="num" data-label="Decided">{{ s.matchedCount + s.ignoredCount }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.done]="s.isReconciled">
+            {{ s.isReconciled ? 'Reconciled' : 'In progress' }}
+          </span>
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="5" class="empty">
+          No statements imported for this account yet.
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>

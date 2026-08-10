@@ -14,6 +14,19 @@ using Shared.Kernel.Tenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// Fail at startup rather than on the first request that needs the missing
+// registration. Banking shipped without IBaseCurrencyProvider registered — every
+// money document endpoint would have thrown on its first call, and neither the
+// build nor the tests could see it, because the build does not resolve DI and
+// the tests construct their services by hand. This is what closes that gap:
+// ValidateOnBuild walks every registration at startup, so a service asking for
+// something nobody registered is a container that refuses to build.
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateOnBuild = true;
+    options.ValidateScopes = true;
+});
+
 builder.Services.AddControllers();
 
 // Attaches the shared internal key to every service-to-service call, so a
@@ -63,6 +76,16 @@ builder.Services.AddScoped<BankingSeeder>();
 builder.Services.AddScoped<SpendMoneyService>();
 builder.Services.AddScoped<ReceiveMoneyService>();
 builder.Services.AddScoped<TransferMoneyService>();
+builder.Services.AddScoped<BankStatementService>();
+
+// The branch's own currency, for stamping onto a money document that does not
+// name one. Cached per organization: it changes about never, and the
+// alternative is an HTTP call on every save.
+builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Only Accounting writes ledger rows, so the GL account behind a bank account
 // is created by calling it rather than by inserting here.
