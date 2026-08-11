@@ -245,6 +245,28 @@ public sealed class OrganizationService
                 SaveOrganizationOutcome.BaseCurrencyLocked, null, []);
         }
 
+        if (!Enum.TryParse(request.DiscountLevel, ignoreCase: true, out DiscountLevel level))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.InvalidDiscountLevel, null, []);
+        }
+
+        // The same freeze the base currency gets, for the same kind of reason:
+        // these three decide how a document's tax and discount are computed, so
+        // changing one after the branch has traded leaves earlier documents
+        // computed one way beside later ones computed another, with nothing on
+        // either row saying which.
+        bool documentSettingsChanged =
+            organization.AllowFreeTextLines != request.AllowFreeTextLines
+            || organization.DiscountLevel != level
+            || organization.DiscountBeforeTax != request.DiscountBeforeTax;
+
+        if (documentSettingsChanged && await HasTradedAsync(organization.OrgId, ct))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.DocumentSettingsLocked, null, []);
+        }
+
         Apply(organization, request);
         await _db.SaveChangesAsync(ct);
 
@@ -322,12 +344,28 @@ public sealed class OrganizationService
         return SaveOrganizationOutcome.Ok;
     }
 
+    /// <summary>
+    /// Whether this branch has posted its first sales or purchase document.
+    ///
+    /// <b>Deliberately false for now.</b> Neither service exists yet, so nothing
+    /// can have been posted and no document setting can be frozen — which is the
+    /// correct answer today, not a stub returning a convenient one. Point it at
+    /// the real query when <c>sal.*</c> and <c>pur.*</c> land (TRANSACTIONS.md
+    /// T2.2 and T4.2); it is deliberately the only line that has to change, the
+    /// same way <c>HasStockMovementsAsync</c> was.
+    /// </summary>
+    private Task<bool> HasTradedAsync(Guid orgId, CancellationToken ct) =>
+        Task.FromResult(false);
+
     private static void Apply(Organization organization, SaveOrganizationRequest request)
     {
         organization.OrgCode = request.OrgCode.Trim().ToUpperInvariant();
         organization.Name = request.Name.Trim();
         organization.BaseCurrency = request.BaseCurrency.Trim().ToUpperInvariant();
         organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
+        organization.AllowFreeTextLines = request.AllowFreeTextLines;
+        organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
+        organization.DiscountBeforeTax = request.DiscountBeforeTax;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
         organization.Tan = Trimmed(request.Tan)?.ToUpperInvariant();
@@ -356,6 +394,9 @@ public sealed class OrganizationService
         OrgCode = o.OrgCode,
         Name = o.Name,
         BaseCurrency = o.BaseCurrency,
+        AllowFreeTextLines = o.AllowFreeTextLines,
+        DiscountLevel = o.DiscountLevel.ToString(),
+        DiscountBeforeTax = o.DiscountBeforeTax,
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,
         Pan = o.Pan,

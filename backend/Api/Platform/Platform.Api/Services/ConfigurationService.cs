@@ -25,8 +25,6 @@ public sealed class ConfigurationService
             .Where(c => c.OrgId == orgId)
             .ToListAsync(ct);
 
-        bool locked = await HasTradedAsync(orgId, ct);
-
         return defaults
             .Select(d =>
             {
@@ -41,8 +39,6 @@ public sealed class ConfigurationService
                     DefaultValue = d.Value,
                     Value = o?.Value ?? d.Value,
                     IsOverridden = o is not null,
-                    IsOneTime = d.IsOneTime,
-                    IsLocked = d.IsOneTime && locked,
                 };
             })
             .OrderBy(c => c.Category)
@@ -53,25 +49,14 @@ public sealed class ConfigurationService
     /// <summary>
     /// Sets an org's value for a key, creating the override row on first write.
     /// Unknown keys are rejected — a value nothing reads is dead data.
-    ///
-    /// A one-time key is refused once the branch has traded. Returns
-    /// <see cref="SetConfigurationOutcome.Locked"/> rather than a bare false so
-    /// the caller can say why, since "unknown key" and "too late" want different
-    /// answers on screen.
     /// </summary>
-    public async Task<SetConfigurationOutcome> SetAsync(
-        Guid orgId, string code, string value, CancellationToken ct)
+    public async Task<bool> SetAsync(Guid orgId, string code, string value, CancellationToken ct)
     {
         Configuration? systemDefault = await _db.Configurations
             .FirstOrDefaultAsync(c => c.OrgId == null && c.Code == code, ct);
         if (systemDefault is null)
         {
-            return SetConfigurationOutcome.UnknownKey;
-        }
-
-        if (systemDefault.IsOneTime && await HasTradedAsync(orgId, ct))
-        {
-            return SetConfigurationOutcome.Locked;
+            return false;
         }
 
         Configuration? existing = await _db.Configurations
@@ -98,21 +83,8 @@ public sealed class ConfigurationService
         }
 
         await _db.SaveChangesAsync(ct);
-        return SetConfigurationOutcome.Ok;
+        return true;
     }
-
-    /// <summary>
-    /// Whether this branch has posted its first sales or purchase document.
-    ///
-    /// <b>Deliberately false for now.</b> Neither service exists yet, so nothing
-    /// can have been posted and no one-time setting can be locked — which is the
-    /// correct answer today, not a stub returning a convenient one. Point it at
-    /// the real query when <c>sal.*</c> and <c>pur.*</c> land (TRANSACTIONS.md
-    /// T2.2 and T4.2); it is deliberately the only line that has to change, the
-    /// same way <c>HasStockMovementsAsync</c> was.
-    /// </summary>
-    private Task<bool> HasTradedAsync(Guid orgId, CancellationToken ct) =>
-        Task.FromResult(false);
 
     /// <summary>Drops the org override so the key falls back to the system default.</summary>
     public async Task<bool> ResetAsync(Guid orgId, string code, CancellationToken ct)

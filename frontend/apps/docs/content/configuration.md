@@ -29,9 +29,6 @@ Writing an unknown key returns `404` rather than creating it.
 | `quantity.decimals` | Formatting | 2 | Decimal places on quantity inputs |
 | `sales.dueDays` | Documents | 30 | Default payment terms on invoices |
 | `purchase.dueDays` | Documents | 30 | Default payment terms on bills |
-| `documents.allowFreeTextLines` ᵒ | Documents | `true` | Let a line carry a description, quantity and price with no item. Such a line moves no stock and never appears in a sales-by-item report |
-| `documents.discountLevel` ᵒ | Documents | `Line` | Where a discount is entered — `Line`, `Header` or `Both`. A header discount is apportioned across the lines by taxable value **before** tax, because GST is charged per line |
-| `documents.discountBeforeTax` ᵒ | Documents | `true` | On: the discount reduces the taxable value and so reduces GST. Off: tax is charged on the full value and the discount only reduces what is collected |
 
 `DataType` (Number / Text / Boolean / Date / Json) tells the screen which input to render and the reader which cast to apply, so callers never parse strings by hand.
 
@@ -47,10 +44,8 @@ PUT    /api/organizations/{orgId}/configurations/{code}   { value }
 DELETE /api/organizations/{orgId}/configurations/{code}   clears the override
 ```
 
-## One-time settings
+## Not here: the three document settings
 
-Keys marked **ᵒ** are chosen once and then frozen. They stay fully editable until the branch posts its first sales or purchase document; after that the screen disables them and the API answers `409`.
+Whether a line may stand without an item, where a discount is keyed, and whether a discount reduces tax are **not** configuration keys. They live on **Settings › Organization**, beside the base currency and the financial-year start, because they are structural decisions about how this branch's documents are built rather than values that can be tuned.
 
-The freeze is on **first use, not first save** — the same rule an item's costing method and an account's type already follow. The reason is the same too: these three decide how a document's tax and discount are computed, so changing one after the branch has traded leaves earlier documents computed one way sitting beside later ones computed another, with nothing on either saying which.
-
-Set them during setup, before the first invoice.
+They are frozen the same way the base currency is: editable until the branch posts its first sales or purchase document, fixed after that.

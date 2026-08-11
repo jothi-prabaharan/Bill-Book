@@ -132,4 +132,33 @@ public class Organization : AuditableEntity
 
     [MaxLength(200, ErrorMessage = "Website cannot exceed 200 characters.")]
     public string? Website { get; set; }
+
+    /// <summary>
+    /// Whether a sales or purchase line may stand on a description, quantity and
+    /// price with no item behind it. Such a line moves no stock and posts to a
+    /// named account, so it never appears in a sales-by-item report.
+    ///
+    /// <b>Frozen once the branch has traded</b>, like <see cref="BaseCurrency"/>
+    /// and for the same kind of reason: it decides how a document is built, and
+    /// changing it after the fact leaves earlier documents shaped one way and
+    /// later ones another with nothing on either saying which.
+    /// </summary>
+    public bool AllowFreeTextLines { get; set; } = true;
+
+    /// <summary>
+    /// Where a discount is keyed. A header discount is apportioned across the
+    /// lines by taxable value <b>before</b> tax is computed, because GST is
+    /// charged per line and a discount that never reaches a line cannot reduce
+    /// it. Frozen once the branch has traded.
+    /// </summary>
+    public DiscountLevel DiscountLevel { get; set; } = DiscountLevel.Line;
+
+    /// <summary>
+    /// True — the default and the trade-discount case — computes tax on the
+    /// discounted value, so the discount reduces GST. False charges tax on the
+    /// full value and lets the discount reduce only what is collected: a real
+    /// settlement discount, which does <b>not</b> reduce GST liability and must
+    /// still appear on the invoice. Frozen once the branch has traded.
+    /// </summary>
+    public bool DiscountBeforeTax { get; set; } = true;
 }

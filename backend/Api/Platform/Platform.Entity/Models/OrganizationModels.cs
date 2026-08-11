@@ -56,6 +56,12 @@ public class OrganizationListItem
 
     public string? Website { get; set; }
 
+    public bool AllowFreeTextLines { get; set; } = true;
+
+    public string DiscountLevel { get; set; } = "Line";
+
+    public bool DiscountBeforeTax { get; set; } = true;
+
     /// <summary>Provisioning, Active, Suspended — a branch is only usable once Active.</summary>
     public string Status { get; set; } = null!;
 
@@ -136,6 +142,17 @@ public class SaveOrganizationRequest
 
     [MaxLength(200, ErrorMessage = "Website cannot exceed 200 characters.")]
     public string? Website { get; set; }
+
+    /// <summary>Frozen once the branch has traded, like the base currency.</summary>
+    public bool AllowFreeTextLines { get; set; } = true;
+
+    /// <summary>Line, Header or Both. Frozen once the branch has traded.</summary>
+    [Required(ErrorMessage = "Discount level is required.")]
+    [MaxLength(10, ErrorMessage = "Discount level must be Line, Header or Both.")]
+    public string DiscountLevel { get; set; } = "Line";
+
+    /// <summary>Frozen once the branch has traded.</summary>
+    public bool DiscountBeforeTax { get; set; } = true;
 }
 
 public enum SaveOrganizationOutcome
@@ -168,6 +185,16 @@ public enum SaveOrganizationOutcome
     FirstOrganizationLocked = 8,
     /// <summary>Base currency is fixed once the branch exists — every posting converts to it.</summary>
     BaseCurrencyLocked = 9,
+
+    /// <summary>
+    /// A document setting changed after the branch had already traded. These
+    /// decide how a document's tax and discount are computed, so changing one
+    /// leaves earlier documents computed one way and later ones another.
+    /// </summary>
+    DocumentSettingsLocked = 12,
+
+    /// <summary>Discount level was not Line, Header or Both.</summary>
+    InvalidDiscountLevel = 13,
     InvalidValue = 10,
 }
 

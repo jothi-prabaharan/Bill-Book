@@ -23,15 +23,6 @@ public class ConfigurationDto
 
     public bool IsOverridden { get; set; }
 
-    /// <summary>Chosen once, then frozen once the branch has traded.</summary>
-    public bool IsOneTime { get; set; }
-
-    /// <summary>
-    /// True when <see cref="IsOneTime"/> and the freeze has actually bitten.
-    /// The screen reads this rather than <see cref="IsOneTime"/>, so a setting
-    /// stays editable right up until the first document is posted.
-    /// </summary>
-    public bool IsLocked { get; set; }
 }
 
 public class SetConfigurationRequest

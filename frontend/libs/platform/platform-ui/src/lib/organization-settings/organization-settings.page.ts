@@ -20,6 +20,9 @@ interface OrganizationSettings {
   name: string;
   baseCurrency: string;
   financialYearStartMonth: number;
+  allowFreeTextLines: boolean;
+  discountLevel: 'Line' | 'Header' | 'Both';
+  discountBeforeTax: boolean;
   gstin: string | null;
   pan: string | null;
   tan: string | null;

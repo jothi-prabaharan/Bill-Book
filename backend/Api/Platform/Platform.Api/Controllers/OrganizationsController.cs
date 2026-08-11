@@ -226,6 +226,16 @@ public sealed class OrganizationsController : ControllerBase
                 Message = "The base currency is fixed once a branch exists. Every amount already "
                     + "posted was converted to it.",
             }),
+            SaveOrganizationOutcome.DocumentSettingsLocked => Conflict(new MessageResponse
+            {
+                Message = "Free-text lines, discount level and discount-before-tax are set once. "
+                    + "This branch has already posted documents, and changing one now would leave "
+                    + "earlier documents computed one way and later ones another.",
+            }),
+            SaveOrganizationOutcome.InvalidDiscountLevel => BadRequest(new MessageResponse
+            {
+                Message = "Discount level must be Line, Header or Both.",
+            }),
             SaveOrganizationOutcome.InvalidValue => BadRequest(new MessageResponse
             {
                 Message = "One of the selected options is not a recognised value.",

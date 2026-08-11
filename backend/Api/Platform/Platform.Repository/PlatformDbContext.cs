@@ -44,6 +44,9 @@ public class PlatformDbContext : DbContext
             b.HasIndex(e => new { e.CustomerId, e.OrgCode }).IsUnique();
             b.HasIndex(e => e.CustomerId);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DiscountLevel).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.AllowFreeTextLines).HasDefaultValue(true);
+            b.Property(e => e.DiscountBeforeTax).HasDefaultValue(true);
 
             // Read on every login, alongside the customer's licence. Filtered,
             // because most branches have no date of their own and an index over
@@ -159,57 +162,6 @@ public class PlatformDbContext : DbContext
                 Value = "30",
                 Category = "Documents",
                 IsSystem = true,
-            },
-            new Configuration
-            {
-                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000005"),
-                OrgId = null,
-                Code = "documents.allowFreeTextLines",
-                Name = "Allow Lines Without An Item",
-                Description =
-                    "Let a sales or purchase line carry a description, quantity and price with no "
-                        + "item behind it. Such a line moves no stock and posts to a named account, "
-                        + "so it never appears in a sales-by-item report. Turn it off to require "
-                        + "every line to name an item.",
-                DataType = ConfigDataType.Boolean,
-                Value = "true",
-                Category = "Documents",
-                IsSystem = true,
-                IsOneTime = true,
-            },
-            new Configuration
-            {
-                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000006"),
-                OrgId = null,
-                Code = "documents.discountLevel",
-                Name = "Discount Entered At",
-                Description =
-                    "Line, Header, or Both. A header discount is apportioned across the lines by "
-                        + "taxable value before tax is computed, because GST is charged per line "
-                        + "and a discount that never reaches a line cannot reduce it.",
-                DataType = ConfigDataType.Text,
-                Value = "Line",
-                Category = "Documents",
-                IsSystem = true,
-                IsOneTime = true,
-            },
-            new Configuration
-            {
-                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000007"),
-                OrgId = null,
-                Code = "documents.discountBeforeTax",
-                Name = "Discount Reduces Taxable Value",
-                Description =
-                    "On by default: the discount comes off before GST is computed, so it reduces "
-                        + "the tax. Turn it off for a discount applied after tax — the tax is then "
-                        + "charged on the full value and the discount only reduces what is "
-                        + "collected. That is a real settlement or cash discount, but it does not "
-                        + "reduce GST liability, and it must still be shown on the invoice.",
-                DataType = ConfigDataType.Boolean,
-                Value = "true",
-                Category = "Documents",
-                IsSystem = true,
-                IsOneTime = true,
             });
     }
 }

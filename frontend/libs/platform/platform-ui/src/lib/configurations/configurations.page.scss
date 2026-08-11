@@ -20,15 +20,3 @@ h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .05em; color: 
   .control input, .control select { width: 100%; }
 }
 
-/* A one-time setting reads differently before and after it freezes: "set once"
-   is a warning you can still act on, "locked" is a statement that you cannot. */
-.badge.once {
-  background: transparent;
-  border: 1px solid currentColor;
-}
-
-.badge.locked {
-  background: transparent;
-  border: 1px dashed currentColor;
-  opacity: 0.75;
-}

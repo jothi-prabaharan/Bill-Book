@@ -28,23 +28,10 @@ public sealed class ConfigurationsController : ControllerBase
     public async Task<IActionResult> Set(
         Guid orgId, string code, [FromBody] Entity.Models.SetConfigurationRequest request, CancellationToken ct)
     {
-        Entity.Models.SetConfigurationOutcome outcome =
-            await _config.SetAsync(orgId, code, request.Value, ct);
-
-        return outcome switch
-        {
-            Entity.Models.SetConfigurationOutcome.Ok => NoContent(),
-            Entity.Models.SetConfigurationOutcome.Locked => Conflict(new MessageResponse
-            {
-                Message = $"'{code}' is set once and this branch has already posted documents. "
-                    + "Changing it now would leave earlier documents computed one way and later "
-                    + "ones another.",
-            }),
-            _ => NotFound(new MessageResponse
-            {
-                Message = $"Unknown configuration key '{code}'.",
-            }),
-        };
+        bool ok = await _config.SetAsync(orgId, code, request.Value, ct);
+        return ok
+            ? NoContent()
+            : NotFound(new MessageResponse { Message = $"Unknown configuration key '{code}'." });
     }
 
     /// <summary>Clears the org override so the key falls back to the shipped default.</summary>
