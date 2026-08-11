@@ -29,6 +29,9 @@ Writing an unknown key returns `404` rather than creating it.
 | `quantity.decimals` | Formatting | 2 | Decimal places on quantity inputs |
 | `sales.dueDays` | Documents | 30 | Default payment terms on invoices |
 | `purchase.dueDays` | Documents | 30 | Default payment terms on bills |
+| `documents.allowFreeTextLines` | Documents | `true` | Let a line carry a description, quantity and price with no item. Such a line moves no stock and never appears in a sales-by-item report |
+| `documents.discountLevel` | Documents | `Line` | Where a discount is entered — `Line`, `Header` or `Both`. A header discount is apportioned across the lines by taxable value **before** tax, because GST is charged per line |
+| `documents.discountBeforeTax` | Documents | `true` | On: the discount reduces the taxable value and so reduces GST. Off: tax is charged on the full value and the discount only reduces what is collected |
 
 `DataType` (Number / Text / Boolean / Date / Json) tells the screen which input to render and the reader which cast to apply, so callers never parse strings by hand.
 
