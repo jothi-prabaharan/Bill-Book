@@ -256,7 +256,7 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 
 - [ ] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are in the database, not just the model.
-- [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire.
+- [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
   *Done when*: a quote prints, converts, and writes nothing to the ledger or stock. **The batched name lookup lands here** — it is this stage's first real problem, not something to meet at T3.2.
 - [ ] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
   *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
@@ -265,7 +265,7 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 
 - [ ] **T3.1 — Invoice API: post, void, ledger legs.** Stock issued through the guarded decrement. **Issuing reserved stock is release-then-issue in one transaction.**
   *Done when*: an invoice against a confirmed order releases and issues exactly once; the trial balance still balances; gross profit equals revenue minus the COGS the layers produced.
-- [ ] **T3.2 — Invoice page.** Live tax by place of supply, totals panel, draft / ready / post / void, print.
+- [ ] **T3.2 — Invoice page.** `bb-document-line-grid` plus the invoice header, totals panel, draft / ready / post / void, print.
   *Done when*: keyed and posted at 360px, and the tax on screen equals the tax posted.
 - [ ] **T3.3 — Outstanding and aging.** Read from the ledger's AR sub-accounts. The input to Banking's allocation.
   *Done when*: an invoice is outstanding at full value the moment it posts, and the buckets tie to the Accounts Receivable control account.
@@ -289,6 +289,39 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 - [ ] **T7.1 — POS API.** One call: issue stock, post the sale, post the payment. The decrement is synchronous and guarded.
 - [ ] **T7.2 — POS screen.** Keyboard and barcode driven, offline-tolerant, in `apps/desktop`. The bulk of the stage.
 - [ ] **T7.3 — ESC/POS receipt.** Commands, not PDF. Desktop only — a browser cannot reach a USB or serial printer.
+
+---
+
+## UI — one line grid for every document
+
+**`bb-document-line-grid`**, in `libs/shared/ui-components`. **Built.** All nine document types share one line shape, so they share one grid; what differs between an invoice and a goods receipt is the header around it and the columns each *adds*, which the host page renders beside the grid rather than instead of it.
+
+```
+@bill-book/ui-components
+  DocumentLineGridComponent   the grid
+  DocumentLine                the line view-model, mirroring DocumentLineBase
+  line-math                   pure arithmetic, 9 tests
+```
+
+**It owns no data and fetches nothing.** Lines in, changed lines out, and the host opens its own item picker — which is what lets one component serve a sales page and a purchase page without knowing which it is on.
+
+| Input | |
+|---|---|
+| `lines` | the current lines |
+| `context` | `isInterState`, the three organization settings, `readonly`, currency decimals |
+
+| Output | |
+|---|---|
+| `linesChange` | every line, already recalculated |
+| `pickItem` | the host opens the picker |
+
+**Amounts are integer paise, not rupees.** TypeScript has no decimal — `number` is a double and `0.1 + 0.2` is not `0.3`. Money that has to tie to a ledger cannot be computed in floating point, so every amount is a whole number of the smallest unit and is divided only for display.
+
+**The arithmetic is separated from the component** (`line-math.ts`) and tested: exclusive and inclusive pricing, discount before and after tax, exempt writing no rows, zero-rated keeping them at rate 0, the intra/inter split, and header totals tying to the sum of the lines. Two of those tests failed on first run and one was a genuine bug — the inclusive back-out divided by the rate scale where the rate is a *percent*, making every inclusive line a hundredth of its true taxable value. That is precisely the kind of error that prints, posts and balances.
+
+**The order of operations must match `Shared.Kernel` exactly** — see T0.2. Two implementations of one sum diverge by a paisa without either looking wrong, and a GST return is where that surfaces months later. The shared JSON fixture that proves they agree is still to be written.
+
+**Nothing integrates it yet, because there are no transaction pages.** Each page wires it up as it lands: T2.3 quote, T2.4 order, T3.2 invoice, T3.6 challan, T5.2 credit note here; T4.3–T4.5 and T5.3 in the other file.
 
 ---
 

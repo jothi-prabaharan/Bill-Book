@@ -1,0 +1,190 @@
+<div class="line-grid">
+  <table class="lines">
+    <thead>
+      <tr>
+        <th class="num">#</th>
+        <th>Item or description</th>
+        <th class="right">Qty</th>
+        <th class="right">Rate</th>
+        <th class="right">Disc</th>
+        <th>Tax</th>
+        @for (component of components(); track component) {
+          <th class="right">{{ component }}</th>
+        }
+        <th class="right">Total</th>
+        <th class="actions"></th>
+      </tr>
+    </thead>
+
+    <tbody>
+      @for (line of lines(); track line.lineNumber; let i = $index) {
+        <tr>
+          <td class="num">{{ line.lineNumber }}</td>
+
+          <td class="item">
+            @if (line.itemId !== null) {
+              <button type="button" class="link" [disabled]="context().readonly" (click)="pickItem.emit(i)">
+                {{ line.itemLabel }}
+              </button>
+              <button
+                type="button"
+                class="clear"
+                [disabled]="context().readonly"
+                title="Remove the item and make this a free-text line"
+                (click)="onItemCleared(i)"
+              >
+                ×
+              </button>
+            } @else {
+              <input
+                type="text"
+                placeholder="Description"
+                [(ngModel)]="line.description"
+                [disabled]="context().readonly"
+                (blur)="touch(i)"
+              />
+              @if (context().allowFreeTextLines) {
+                <button type="button" class="link" [disabled]="context().readonly" (click)="pickItem.emit(i)">
+                  pick an item
+                </button>
+              }
+            }
+            <input
+              type="text"
+              class="hsn"
+              placeholder="HSN / SAC"
+              [(ngModel)]="line.hsnSacCode"
+              [disabled]="context().readonly"
+              (blur)="touch(i)"
+            />
+          </td>
+
+          <td class="right">
+            <input
+              type="number"
+              [(ngModel)]="line.quantity"
+              [disabled]="context().readonly"
+              (blur)="touch(i)"
+            />
+            <small>{{ line.uomLabel }}</small>
+          </td>
+
+          <td class="right">
+            <input
+              type="number"
+              [(ngModel)]="line.unitPrice"
+              [disabled]="context().readonly"
+              (blur)="touch(i)"
+            />
+            <label class="inclusive">
+              <input
+                type="checkbox"
+                [(ngModel)]="line.isPriceInclusive"
+                [disabled]="context().readonly"
+                (ngModelChange)="touch(i)"
+              />
+              incl.
+            </label>
+          </td>
+
+          <td class="right">
+            @if (context().discountLevel !== 'Header') {
+              <input
+                type="number"
+                [(ngModel)]="line.discountPercent"
+                placeholder="%"
+                [disabled]="context().readonly"
+                (blur)="touch(i)"
+              />
+            } @else {
+              <span class="muted">header</span>
+            }
+          </td>
+
+          <td>
+            <select
+              [(ngModel)]="line.taxTreatment"
+              [disabled]="context().readonly"
+              (ngModelChange)="touch(i)"
+            >
+              @for (treatment of treatments; track treatment) {
+                <option [value]="treatment">{{ treatment }}</option>
+              }
+            </select>
+          </td>
+
+          @for (component of components(); track component) {
+            <td class="right amount">
+              @for (tax of line.taxes; track tax.component) {
+                @if (tax.component === component) {
+                  {{ money(tax.amount) }}
+                }
+              }
+            </td>
+          }
+
+          <td class="right amount total">{{ money(line.lineTotal) }}</td>
+
+          <td class="actions">
+            <button
+              type="button"
+              class="clear"
+              [disabled]="context().readonly"
+              title="Remove this line"
+              (click)="removeLine(i)"
+            >
+              ×
+            </button>
+          </td>
+        </tr>
+
+        @if (needsAccount(line)) {
+          <tr class="sub">
+            <td></td>
+            <td colspan="9">
+              <span class="muted">
+                {{ isFreeText(line) ? 'No item — posts to' : 'Expense line — posts to' }}
+              </span>
+              <input
+                type="number"
+                placeholder="Account"
+                [(ngModel)]="line.accountId"
+                [disabled]="context().readonly"
+                (blur)="touch(i)"
+              />
+              @if (isFreeText(line)) {
+                <span class="muted">moves no stock, and will not appear in a sales-by-item report</span>
+              }
+            </td>
+          </tr>
+        }
+      } @empty {
+        <tr class="empty">
+          <td [attr.colspan]="7 + components().length">No lines yet.</td>
+        </tr>
+      }
+    </tbody>
+
+    <tfoot>
+      <tr>
+        <td colspan="2">
+          <button type="button" class="add" [disabled]="context().readonly" (click)="addLine()">
+            + Add line
+          </button>
+        </td>
+        <td class="right muted">Taxable</td>
+        <td class="right amount">{{ money(totals().taxableAmount) }}</td>
+        <td colspan="2"></td>
+        @for (component of components(); track component) {
+          <td class="right amount">
+            {{ money(component === 'Igst' ? totals().igstAmount
+                   : component === 'Cgst' ? totals().cgstAmount
+                   : totals().sgstAmount) }}
+          </td>
+        }
+        <td class="right amount total">{{ money(totals().totalAmount) }}</td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>

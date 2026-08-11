@@ -190,6 +190,22 @@ Numbering follows `TRANSACTIONS.md`.
 
 ---
 
+## 9a. UI — the same line grid as Sales
+
+**`bb-document-line-grid`** in `libs/shared/ui-components` is **built** and serves purchase documents unchanged — the line shape is identical. Full description in [`SALES.md`](./SALES.md).
+
+What purchase pages add *beside* it, not inside it:
+
+| Page | Adds |
+|---|---|
+| Goods receipt | accepted / rejected quantity and the rejection reason |
+| Bill | `VendorBillNo` and `VendorBillDate` on the header; `LineType` is already in the grid |
+| Purchase order | expected date; **no reservation control** — an order reserves nothing |
+
+Nothing integrates it yet, because there are no purchase pages. T4.3, T4.4, T4.5 and T5.3 each wire it up as they land.
+
+---
+
 ## 10. Standing requirements
 
 Not repeated per task. Full list in `TRANSACTIONS.md`.

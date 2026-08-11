@@ -1,0 +1,135 @@
+/* Wide on desktop, a card per line at ~360px — the house rule for every page.
+   The table scrolls inside its own container rather than pushing the page
+   sideways. */
+.line-grid {
+  overflow-x: auto;
+}
+
+table.lines {
+  width: 100%;
+  min-width: 52rem;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0.4rem 0.5rem;
+  border-bottom: 1px solid var(--bb-line, #e2e5ea);
+  vertical-align: top;
+  text-align: left;
+}
+
+th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.right {
+  text-align: right;
+}
+
+/* Digits that line up in a column read as a column. */
+.amount {
+  font-variant-numeric: tabular-nums;
+}
+
+.total {
+  font-weight: 600;
+}
+
+.num,
+.actions {
+  width: 2rem;
+}
+
+td input[type='number'] {
+  width: 6rem;
+  text-align: right;
+}
+
+td input[type='text'] {
+  width: 100%;
+}
+
+.hsn {
+  max-width: 8rem;
+}
+
+.inclusive {
+  display: block;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+
+.muted {
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+tr.sub td {
+  border-bottom: none;
+  padding-top: 0;
+}
+
+tr.empty td {
+  padding: 1.25rem 0.5rem;
+  opacity: 0.7;
+}
+
+button.link,
+button.clear,
+button.add {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  color: inherit;
+}
+
+button.link {
+  text-decoration: underline;
+}
+
+button.clear {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+button.link:focus-visible,
+button.clear:focus-visible,
+button.add:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 40rem) {
+  table.lines {
+    min-width: 0;
+  }
+
+  table.lines thead {
+    display: none;
+  }
+
+  table.lines tr {
+    display: block;
+    border: 1px solid var(--bb-line, #e2e5ea);
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+  }
+
+  table.lines td {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    border-bottom: none;
+    text-align: left;
+  }
+}
