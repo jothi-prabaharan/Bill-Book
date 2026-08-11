@@ -11,6 +11,10 @@ interface ConfigurationRow {
   defaultValue: string;
   value: string;
   isOverridden: boolean;
+  /** Chosen once, then frozen after the branch trades. */
+  isOneTime: boolean;
+  /** The freeze has bitten. The server refuses a write; the screen stops offering one. */
+  isLocked: boolean;
 }
 
 /**
@@ -72,7 +76,11 @@ export class ConfigurationsPage implements OnInit {
       );
       await this.load();
     } catch {
-      this.error.set(`Could not save ${row.name}.`);
+      this.error.set(
+        row.isOneTime
+          ? `${row.name} is set once, and this branch has already posted documents.`
+          : `Could not save ${row.name}.`,
+      );
     } finally {
       this.busy.set(false);
     }

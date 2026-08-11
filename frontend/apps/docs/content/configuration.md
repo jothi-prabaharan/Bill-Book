@@ -29,9 +29,9 @@ Writing an unknown key returns `404` rather than creating it.
 | `quantity.decimals` | Formatting | 2 | Decimal places on quantity inputs |
 | `sales.dueDays` | Documents | 30 | Default payment terms on invoices |
 | `purchase.dueDays` | Documents | 30 | Default payment terms on bills |
-| `documents.allowFreeTextLines` | Documents | `true` | Let a line carry a description, quantity and price with no item. Such a line moves no stock and never appears in a sales-by-item report |
-| `documents.discountLevel` | Documents | `Line` | Where a discount is entered — `Line`, `Header` or `Both`. A header discount is apportioned across the lines by taxable value **before** tax, because GST is charged per line |
-| `documents.discountBeforeTax` | Documents | `true` | On: the discount reduces the taxable value and so reduces GST. Off: tax is charged on the full value and the discount only reduces what is collected |
+| `documents.allowFreeTextLines` ᵒ | Documents | `true` | Let a line carry a description, quantity and price with no item. Such a line moves no stock and never appears in a sales-by-item report |
+| `documents.discountLevel` ᵒ | Documents | `Line` | Where a discount is entered — `Line`, `Header` or `Both`. A header discount is apportioned across the lines by taxable value **before** tax, because GST is charged per line |
+| `documents.discountBeforeTax` ᵒ | Documents | `true` | On: the discount reduces the taxable value and so reduces GST. Off: tax is charged on the full value and the discount only reduces what is collected |
 
 `DataType` (Number / Text / Boolean / Date / Json) tells the screen which input to render and the reader which cast to apply, so callers never parse strings by hand.
 
@@ -46,3 +46,11 @@ GET    /api/organizations/{orgId}/configurations
 PUT    /api/organizations/{orgId}/configurations/{code}   { value }
 DELETE /api/organizations/{orgId}/configurations/{code}   clears the override
 ```
+
+## One-time settings
+
+Keys marked **ᵒ** are chosen once and then frozen. They stay fully editable until the branch posts its first sales or purchase document; after that the screen disables them and the API answers `409`.
+
+The freeze is on **first use, not first save** — the same rule an item's costing method and an account's type already follow. The reason is the same too: these three decide how a document's tax and discount are computed, so changing one after the branch has traded leaves earlier documents computed one way sitting beside later ones computed another, with nothing on either saying which.
+
+Set them during setup, before the first invoice.

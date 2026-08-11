@@ -32,6 +32,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ## Unreleased
 
 ### Added
+- **One-time settings.** A configuration key can now be marked as chosen-once, and the three document settings below are. They stay editable until the branch posts its first sales or purchase document and are frozen after that — the same first-use rule an item's costing method already follows, because changing how tax or discount is computed mid-stream leaves earlier documents computed one way and later ones another. The screen shows *set once* before the freeze and *locked* after; the API answers `409` with the reason rather than a bare failure.
 - **Three document settings**, under Settings › Configuration. `documents.allowFreeTextLines` lets a sales or purchase line stand on a description, quantity and price with no item behind it — useful for a service or a one-off charge, at the cost that such a line moves no stock and never shows up in a sales-by-item report. `documents.discountLevel` chooses whether a discount is keyed on the line, on the header, or both; a header discount is apportioned across the lines before tax, because GST is charged per line and a discount that never reaches a line cannot reduce it. `documents.discountBeforeTax` decides whether a discount reduces the taxable value — leave it on for a trade discount, turn it off for a settlement discount, which does not reduce GST liability and must still be shown on the invoice.
 
 ### Fixed

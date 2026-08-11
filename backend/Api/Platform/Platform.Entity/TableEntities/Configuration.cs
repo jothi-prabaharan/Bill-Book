@@ -40,4 +40,16 @@ public class Configuration : AuditableEntity
 
     /// <summary>System keys can be overridden but not deleted.</summary>
     public bool IsSystem { get; set; }
+
+    /// <summary>
+    /// A setting that is chosen once and then frozen, because changing it after
+    /// the branch has traded would leave documents computed one way sitting
+    /// beside documents computed another, with nothing on either saying which.
+    ///
+    /// The freeze is on <b>first use, not on first save</b> — the same rule an
+    /// item's costing method and an account's type already follow. Until the
+    /// branch posts its first sales or purchase document these are ordinary
+    /// editable settings; after that the write is refused.
+    /// </summary>
+    public bool IsOneTime { get; set; }
 }

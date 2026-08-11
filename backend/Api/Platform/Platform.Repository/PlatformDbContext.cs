@@ -175,6 +175,7 @@ public class PlatformDbContext : DbContext
                 Value = "true",
                 Category = "Documents",
                 IsSystem = true,
+                IsOneTime = true,
             },
             new Configuration
             {
@@ -190,6 +191,7 @@ public class PlatformDbContext : DbContext
                 Value = "Line",
                 Category = "Documents",
                 IsSystem = true,
+                IsOneTime = true,
             },
             new Configuration
             {
@@ -207,6 +209,7 @@ public class PlatformDbContext : DbContext
                 Value = "true",
                 Category = "Documents",
                 IsSystem = true,
+                IsOneTime = true,
             });
     }
 }

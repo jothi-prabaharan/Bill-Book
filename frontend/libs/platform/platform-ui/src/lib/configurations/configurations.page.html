@@ -18,6 +18,11 @@
           @if (row.isOverridden) {
             <span class="badge">overridden</span>
           }
+          @if (row.isLocked) {
+            <span class="badge locked">locked — this branch has traded</span>
+          } @else if (row.isOneTime) {
+            <span class="badge once">set once</span>
+          }
           @if (row.description) {
             <span class="desc">{{ row.description }}</span>
           }
@@ -26,25 +31,25 @@
         <div class="control">
           @switch (row.dataType) {
             @case ('Boolean') {
-              <select [(ngModel)]="row.value" (ngModelChange)="save(row)">
+              <select [(ngModel)]="row.value" [disabled]="row.isLocked" (ngModelChange)="save(row)">
                 <option value="true">Yes</option>
                 <option value="false">No</option>
               </select>
             }
             @case ('Number') {
-              <input type="number" [(ngModel)]="row.value" (blur)="save(row)" />
+              <input type="number" [(ngModel)]="row.value" [disabled]="row.isLocked" (blur)="save(row)" />
             }
             @case ('Date') {
-              <input type="date" [(ngModel)]="row.value" (blur)="save(row)" />
+              <input type="date" [(ngModel)]="row.value" [disabled]="row.isLocked" (blur)="save(row)" />
             }
             @default {
-              <input type="text" [(ngModel)]="row.value" (blur)="save(row)" />
+              <input type="text" [(ngModel)]="row.value" [disabled]="row.isLocked" (blur)="save(row)" />
             }
           }
           <button
             type="button"
             class="link"
-            [disabled]="!row.isOverridden || busy()"
+            [disabled]="!row.isOverridden || row.isLocked || busy()"
             title="Reset to the shipped default"
             (click)="reset(row)"
           >

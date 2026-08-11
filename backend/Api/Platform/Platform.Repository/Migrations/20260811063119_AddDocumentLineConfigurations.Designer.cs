@@ -12,7 +12,7 @@ using Platform.Repository;
 namespace Platform.Repository.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    [Migration("20260811062217_AddDocumentLineConfigurations")]
+    [Migration("20260811063119_AddDocumentLineConfigurations")]
     partial class AddDocumentLineConfigurations
     {
         /// <inheritdoc />
@@ -55,6 +55,9 @@ namespace Platform.Repository.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("IsOneTime")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");
@@ -103,6 +106,7 @@ namespace Platform.Repository.Migrations
                             Code = "unitPrice.decimals",
                             DataType = "Number",
                             Description = "Decimal places for unit price inputs",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Unit Price Decimals",
                             Value = "2",
@@ -115,6 +119,7 @@ namespace Platform.Repository.Migrations
                             Code = "quantity.decimals",
                             DataType = "Number",
                             Description = "Decimal places for quantity inputs",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Quantity Decimals",
                             Value = "2",
@@ -127,6 +132,7 @@ namespace Platform.Repository.Migrations
                             Code = "sales.dueDays",
                             DataType = "Number",
                             Description = "Default payment terms on invoices",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Sales Due Days",
                             Value = "30",
@@ -139,6 +145,7 @@ namespace Platform.Repository.Migrations
                             Code = "purchase.dueDays",
                             DataType = "Number",
                             Description = "Default payment terms on bills",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Purchase Due Days",
                             Value = "30",
@@ -151,6 +158,7 @@ namespace Platform.Repository.Migrations
                             Code = "documents.allowFreeTextLines",
                             DataType = "Boolean",
                             Description = "Let a sales or purchase line carry a description, quantity and price with no item behind it. Such a line moves no stock and posts to a named account, so it never appears in a sales-by-item report. Turn it off to require every line to name an item.",
+                            IsOneTime = true,
                             IsSystem = true,
                             Name = "Allow Lines Without An Item",
                             Value = "true",
@@ -163,6 +171,7 @@ namespace Platform.Repository.Migrations
                             Code = "documents.discountLevel",
                             DataType = "Text",
                             Description = "Line, Header, or Both. A header discount is apportioned across the lines by taxable value before tax is computed, because GST is charged per line and a discount that never reaches a line cannot reduce it.",
+                            IsOneTime = true,
                             IsSystem = true,
                             Name = "Discount Entered At",
                             Value = "Line",
@@ -175,6 +184,7 @@ namespace Platform.Repository.Migrations
                             Code = "documents.discountBeforeTax",
                             DataType = "Boolean",
                             Description = "On by default: the discount comes off before GST is computed, so it reduces the tax. Turn it off for a discount applied after tax — the tax is then charged on the full value and the discount only reduces what is collected. That is a real settlement or cash discount, but it does not reduce GST liability, and it must still be shown on the invoice.",
+                            IsOneTime = true,
                             IsSystem = true,
                             Name = "Discount Reduces Taxable Value",
                             Value = "true",
