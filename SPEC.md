@@ -1032,13 +1032,14 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 |---|---|---|
 | `QTE` Quote | `sal.Quotes` | `sal.QuoteDetails` |
 | `SOR` Sales order | `sal.SalesOrders` | `sal.SalesOrderDetails` |
-| `INV` Invoice | `sal.Invoices` | `sal.InvoiceDetails` |
-| `POS` POS sale | `sal.PosSales` | `sal.PosSaleDetails` |
+| `INV` Invoice · `POS` POS sale | `sal.Invoices` | `sal.InvoiceDetails` |
 | `CRN` Credit note | `sal.CreditNotes` | `sal.CreditNoteDetails` |
 
-Ten tables. Each header still carries `TransactionTypeCode`, because the ledger posting, the numbering series and the register all key on it.
+Eight tables. Each header still carries `TransactionTypeCode`, because the ledger posting, the numbering series and the register all key on it.
 
-**The columns are the same in all five pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Ten hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
+**A POS sale has no table of its own — it is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'`.** It is the same document: same lines, same GST, same stock issue, same `Dr Accounts Receivable / Cr Sales Revenue`. What differs is the screen and that payment is taken at the same moment. **POS is a UI module, not a data model.** `TransactionTypeCode` is fixed per table everywhere except `sal.Invoices`, which holds `INV` or `POS` — and that distinction still has to be stored, because the two use different numbering series and GSTR-1 usually reports a till sale as B2C.
+
+**The columns are the same in all four pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
 
 ```
 DocumentHeaderBase : OrgScopedEntity     the header columns below
@@ -1079,11 +1080,10 @@ Each concrete table adds only what is its own.
 |---|---|
 | `Quotes` | `ValidUntil` **required** |
 | `SalesOrders` | `DeliveryDate`, `FulfilmentStatus` (Open / PartlyDelivered / Closed / Cancelled) |
-| `Invoices` | `PaymentTermId`, `DueDate` **required**, `QuoteId?`, `SalesOrderId?` |
-| `PosSales` | `TillId`, `CashierUserId`, `PaymentMode`, `TenderedAmount`, `ChangeAmount` |
+| `Invoices` | `PaymentTermId?`, `DueDate?`, `QuoteId?`, `SalesOrderId?`<br>**POS rows only**: `TillId?`, `CashierUserId?`, `PaymentMode?`, `TenderedAmount?`, `ChangeAmount?` |
 | `CreditNotes` | `InvoiceId` **required**, `ReasonCode` |
 
-Each conversion link is now a **real foreign key** — `Invoices.SalesOrderId → SalesOrders`, `CreditNotes.InvoiceId → Invoices` — instead of one polymorphic `SourceSaleId` the database cannot enforce. That is the main gain from ten tables.
+Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → SalesOrders`, `CreditNotes.InvoiceId → Invoices` — instead of one polymorphic `SourceSaleId` the database cannot enforce. That is the main gain from a table per type.
 
 #### Line columns — every pair
 
@@ -1120,7 +1120,6 @@ Each conversion link is now a **real foreign key** — `Invoices.SalesOrderId �
 | `QuoteDetails` | — |
 | `SalesOrderDetails` | `ReservedQuantity`, `DeliveredQuantity` |
 | `InvoiceDetails` | `SalesOrderDetailId?`, `ReturnedQuantity` |
-| `PosSaleDetails` | — |
 | `CreditNoteDetails` | `InvoiceDetailId` **required** — a return must name the line it reverses, which is how stock goes back to its original cost layer |
 
 #### Indexes and constraints — the same set on every pair
@@ -1128,7 +1127,7 @@ Each conversion link is now a **real foreign key** — `Invoices.SalesOrderId �
 Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, DocumentDate) · (OrgId, ContactId) · (OrgId, Status)
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
-Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
+Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
 Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess`
 
 #### Columns deliberately absent, on every pair
@@ -1139,11 +1138,11 @@ Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · 
 
 #### What the split costs
 
-Every cross-document read now unions five tables: the customer's document history, the sales day book, the "what did we sell this month" report, and the sales register below. Write those as one projection over the five, in one place, or the union gets copied into every screen that needs it.
+Every cross-document read now unions four tables: the customer's document history, the sales day book, the "what did we sell this month" report, and the sales register below. Write those as one projection over the five, in one place, or the union gets copied into every screen that needs it.
 
 **`pur.*` mirrors this** — `pur.PurchaseOrders`, `pur.GoodsReceipts`, `pur.Bills`, `pur.DebitNotes`, each with its details, sharing the same two base classes. The four differences are in [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md).
 
-**Open, not blocking**: jewellery lines want making charge, wastage and metal rate. With ten tables that is five extension tables or five sets of columns — the argument for a shared base class again, and worth settling before the first pair is built.
+**Open, not blocking**: jewellery lines want making charge, wastage and metal rate. With a table per type that is four extension tables or four sets of columns — the argument for a shared base class again, and worth settling before the first pair is built.
 
 
 ### `sal.SalesRegister` 🔨
@@ -1158,7 +1157,7 @@ The sales register — what was supplied, to whom, at what rate. The source for 
 |---|---|---|
 | SalesRegisterId | long | PK, identity |
 | OrgId | Guid | Required |
-| SourceId | long | Required. The document header. **No FK** — it may be an `Invoices`, `PosSales` or `CreditNotes` row, and Postgres cannot key across three tables. Cascade delete is lost with it, so a void must delete these rows explicitly |
+| SourceId | long | Required. The document header. **No FK** — it may be an `Invoices` or a `CreditNotes` row, and Postgres cannot key across two tables. Cascade delete is lost with it, so a void must delete these rows explicitly |
 | TransactionTypeCode | string(3) | `INV`, `POS` or `CRN`. **`QTE` and `SOR` never register** — neither is a supply |
 | DocumentNo | string(30) | Required. A register row only exists for a posted document, and a posted document always has a number |
 | DocumentDate | DateOnly | Required. The filing period is a range over this |

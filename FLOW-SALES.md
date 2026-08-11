@@ -109,6 +109,8 @@ A posted invoice is corrected by a **credit note**, not by an edit. Voiding with
 
 An invoice and its receipt in one action, from `apps/desktop`.
 
+**A POS sale is an invoice.** It writes a `sal.Invoices` row with `TransactionTypeCode = 'POS'` — there is no POS table. Same lines, same GST, same stock issue, same ledger legs. POS is a screen, not a document type of its own.
+
 Same postings as `INV` plus the payment legs, in a single call. Two things differ:
 
 - **The stock decrement is synchronous and guarded**, which it already is everywhere — but here it is load-bearing in a way it is not elsewhere, because two tills selling the last unit is a routine event rather than a race nobody hits. Costing and the ledger still follow asynchronously.
