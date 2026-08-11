@@ -13,8 +13,8 @@ This is a **flow document, not a plan**. It has no checkboxes. [`TRANSACTIONS.md
 ## The chain
 
 ```
-QTE ──▶ SOR ──▶ INV ──▶ RCM
-quote   order   invoice  receipt
+QTE ──▶ SOR ──▶ DLC ──▶ INV ──▶ RCM
+quote   order   challan  invoice  receipt
 
         POS  = INV + RCM in one action
         CRN  = the way back out
@@ -26,6 +26,7 @@ quote   order   invoice  receipt
 |---|---|
 | `QTE` | The customer wants a price before committing |
 | `SOR` | Committed, but not yet delivered — the only reason stock gets reserved |
+| `DLC` | Goods go out before they are billed — or go out without being sold at all: job work, approval, branch transfer |
 | `INV` | Counter sale on credit, or a service with nothing to reserve |
 | `POS` | Retail till. Invoice and payment in one action |
 
@@ -58,6 +59,18 @@ What a reservation does and does not do:
 Cancelling releases. Converting to an invoice releases and issues **in one transaction, release first** — issue first and the order's own reservation is counted against it, and the sale is refused for stock it is holding itself.
 
 A partial delivery releases and issues only what shipped, leaving the rest reserved.
+
+---
+
+## DLC — delivery challan
+
+**Stock leaves here, not on the invoice.** The sales mirror of a goods receipt: the challan takes the goods out and releases the order's reservation, and the invoice that follows bills what was delivered and moves no stock.
+
+Skipping it is normal — an invoice raised directly still issues its own stock, exactly as a bill with no receipt behind it still moves stock on the purchase side.
+
+`ChallanType` says what the movement means: **Sale** is goods going to a customer to be billed; **JobWork**, **Approval**, **BranchTransfer** and **Sample** are goods that have left without being sold, and those post nothing at all.
+
+Carries the e-way bill number, vehicle and transporter — the statutory details of the movement, which belong on the document that moved the goods rather than on the one that bills them.
 
 ---
 
@@ -108,6 +121,8 @@ A posted invoice is corrected by a **credit note**, not by an edit. Voiding with
 ## POS — the till
 
 An invoice and its receipt in one action, from `apps/desktop`.
+
+**A POS sale is an invoice.** It writes a `sal.Invoices` row with `TransactionTypeCode = 'POS'` — there is no POS table. Same lines, same GST, same stock issue, same ledger legs. POS is a screen, not a document type of its own.
 
 Same postings as `INV` plus the payment legs, in a single call. Two things differ:
 

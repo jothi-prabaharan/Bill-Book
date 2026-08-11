@@ -122,7 +122,7 @@ GET /api/master/transaction-types          all active types
 GET /api/master/transaction-types/{code}   one type
 ```
 
-**Seed** — 16 types, 13 posting and 3 non-posting:
+**Seed** — 17 types, 14 posting and 3 non-posting:
 
 | Code | Name | Posts |
 |---|---|---|
@@ -142,6 +142,9 @@ GET /api/master/transaction-types/{code}   one type
 | DEP | Depreciation | yes |
 | STA | Stock Adjustment | yes |
 | POS | POS Sale | yes |
+| DLC | Delivery Challan | yes |
+
+`DLC` is the newest and **arrives by EF migration**, like every other row here — a code added at runtime would have no posting logic behind it. It is the sales mirror of `GRN`: stock leaves on the challan, and the invoice that follows bills what was delivered.
 
 The code is both the key and what appears on screen and in document numbers, so a ledger row reads without a join. **A code can never be changed once data exists** — every `JournalLedger`, `Journals` and `TransactionRatio` row stores it as a plain string with no FK to cascade a rename.
 
@@ -1024,119 +1027,136 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 >
 > **Decided (T0.6): the view was not built, and the exception list did not grow.** The account ledger and the trial balance are LINQ projections in Accounting, and the running balance is accumulated in C# over the ordered result. A ledger read is always scoped to one account, ordered, and cut to a date range — which is everything the window function needed — so the view bought less than the exception cost. The `security_invoker` hazard above is the other half of the reason: a view that forgets it reads straight past RLS and hands one branch another branch's general ledger, and that is one migration away from happening by accident.
 
-### `sal.Sales` / `sal.SalesDetails` 🔨
+### `sal.*` — five document pairs 🔨
 
-**One table pair for all five sales documents**, discriminated by `TransactionTypeCode` — `QTE` quote, `SOR` sales order, `INV` invoice, `POS` POS sale, `CRN` credit note. T2.1 decided; names chosen by the owner.
+**One table pair per document type.** T2.1 was decided as a single discriminated pair and then reversed by the owner; the reversal is recorded in `TRANSACTIONS.md`.
 
-There is therefore **no table called `Invoice`**. An invoice is a row in `sal.Sales` with `TransactionTypeCode = 'INV'`, and conversion along the chain is a copy that sets `SourceSaleId`. The five share about ninety per cent of their columns, so the alternative was ten tables, five near-identical services, and every cross-document report joining all of them. The cost is a wide table whose column applicability lives in C#: `ValidUntil` means nothing on an invoice, `DueDate` nothing on a quote.
+| Document | Header | Lines |
+|---|---|---|
+| `QTE` Quote | `sal.Quotes` | `sal.QuoteDetails` |
+| `SOR` Sales order | `sal.SalesOrders` | `sal.SalesOrderDetails` |
+| `DLC` Delivery challan | `sal.DeliveryChallans` | `sal.DeliveryChallanDetails` |
+| `INV` Invoice · `POS` POS sale | `sal.Invoices` | `sal.InvoiceDetails` |
+| `CRN` Credit note | `sal.CreditNotes` | `sal.CreditNoteDetails` |
 
-#### `sal.Sales` — header
+Ten tables. Each header still carries `TransactionTypeCode`, because the ledger posting, the numbering series and the register all key on it.
+
+**`DLC` is the sales mirror of `GRN`, and the reason the sales chain now has three steps like purchase does.** Stock leaves on the challan; the invoice that follows bills what was delivered. Without it stock can only leave on an invoice, which breaks deliver-today-invoice-later, part deliveries, goods sent on approval, branch transfers and job work — and an e-way bill hangs off the challan, not the invoice.
+
+*What it posts is an open decision, and it is the exact mirror of T4.1's GRNI question.* Issuing stock as `Dr Cost of Goods Sold` at delivery would book cost with no revenue against it. **Recommendation: seed a `Goods Delivered Not Invoiced` control account (Asset), post `Dr GDNI / Cr Inventory` on the challan, and `Dr COGS / Cr GDNI` on the invoice.** A balance sitting in GDNI is goods gone and not yet billed, which is a number worth having. A challan for job work or a branch transfer posts nothing at all — nothing was sold.
+
+**A POS sale has no table of its own — it is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'`.** It is the same document: same lines, same GST, same stock issue, same `Dr Accounts Receivable / Cr Sales Revenue`. What differs is the screen and that payment is taken at the same moment. **POS is a UI module, not a data model.** `TransactionTypeCode` is fixed per table everywhere except `sal.Invoices`, which holds `INV` or `POS` — and that distinction still has to be stored, because the two use different numbering series and GSTR-1 usually reports a till sale as B2C.
+
+**The columns are the same in all five pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
+
+```
+DocumentHeaderBase : OrgScopedEntity     the header columns below
+DocumentLineBase   : OrgScopedEntity     the line columns below
+```
+
+Each concrete table adds only what is its own.
+
+#### Header columns — every pair
 
 | Column | Type | Rules |
 |---|---|---|
-| SaleId | long | PK, identity |
+| {Doc}Id | long | PK, identity |
 | OrgId | Guid | Required |
-| TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. **The discriminator** |
-| SaleNo | string(30)? | **Nullable.** Taken at post, never at draft — same rule and same filtered unique index as `acc.Journals.JournalNo` |
-| SaleDate | DateOnly | Required |
+| TransactionTypeCode | string(3) | Required. Fixed per table |
+| DocumentNo | string(30)? | **Nullable.** Taken at post, never at draft. Filtered unique index |
+| DocumentDate | DateOnly | Required |
 | ContactId | long | Required. No FK — Contacts is another service |
-| ContactName | string(200) | **Snapshot.** A customer renaming themselves must not restate a printed invoice |
-| ContactGstin | string(15)? | Snapshot, for the same reason. Statutory on the document |
-| BillingAddress | string? | Snapshot text |
-| ShippingAddress | string? | Snapshot text |
-| PlaceOfSupplyStateId | int | Required. Snapshot → `mst.States`, unenforced |
-| IsInterState | bool | The determination **result**, stored not re-derived. Re-deriving it years later against a changed contact would silently reclassify CGST/SGST as IGST |
+| ContactName | string(200) | Snapshot. A renamed customer must not restate a printed invoice |
+| ContactGstin | string(15)? | Snapshot. Statutory |
+| BillingAddress / ShippingAddress | string? | Snapshots |
+| PlaceOfSupplyStateId | int | Required |
+| IsInterState | bool | Stored, not re-derived |
 | CurrencyCode | string(3) | Required |
-| ExchangeRate | decimal(18,8) | Default 1. **Snapshot at SaleDate — never live** |
-| PaymentTermId | long? | → `acc.PaymentTerms`, unenforced id. Another service |
-| DueDate | DateOnly? | Derived from the terms at post. Invoices only |
-| ValidUntil | DateOnly? | Quotes only |
-| DeliveryDate | DateOnly? | Orders only |
+| ExchangeRate | decimal(18,8) | Default 1. Snapshot at document date |
+| SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
+| RoundOffAmount | decimal(18,2) | Signed |
+| TotalAmount / TotalAmountBase | decimal(18,2) | |
 | Status | enum→string(10) | Draft / Posted / Void |
-| FulfilmentStatus | enum→string(15)? | Open / PartlyDelivered / Closed / Cancelled. Orders only |
-| SourceSaleId | long? | Self-FK. The document this converted from |
-| SourceTransactionTypeCode | string(3)? | What it converted from |
-| SubTotal | decimal(18,2) | Σ line gross, before discount |
-| DiscountAmount | decimal(18,2) | |
-| TaxableAmount | decimal(18,2) | |
-| CgstAmount / SgstAmount / IgstAmount | decimal(18,2) | Split held at header as well as line, because the GST return reads both |
-| CessAmount | decimal(18,2) | |
-| RoundOffAmount | decimal(18,2) | Signed. Posts as its own `ROUNDOFF` leg |
-| TotalAmount | decimal(18,2) | |
-| TotalAmountBase | decimal(18,2) | `ROUND(TotalAmount / ExchangeRate, 2)` |
-| Notes | string? | |
-| TermsAndConditions | string? | |
+| Notes / TermsAndConditions | string? | |
 | PostedAt / PostedBy | DateTimeOffset? / Guid? | |
 | VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | |
 
-Unique index: filtered `(OrgId, TransactionTypeCode, SaleNo)` where `SaleNo` is not null · Indexes: (OrgId, SaleDate) · (OrgId, ContactId) · (OrgId, TransactionTypeCode, Status) · (OrgId, SourceSaleId)
+**Per-table extras**, which is what the split buys — each is `NOT NULL` where it belongs instead of nullable everywhere:
 
-**Check constraints**:
-- `chk_sales_draft_no_number` — Draft ⇒ `SaleNo IS NULL`; anything past Draft ⇒ `SaleNo IS NOT NULL`. Both halves of T0.3's rule, as on `acc.Journals`
-- `chk_sales_posted_at` — `PostedAt` set iff the status is past Draft
-- `chk_sales_rate_positive` — `ExchangeRate > 0`
-- `chk_sales_amounts_non_negative` — every amount except `RoundOffAmount`, which is signed
-- `chk_sales_total` — `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`. Same-row arithmetic, so the database can hold it and a calculation bug cannot reach the ledger
-- `chk_sales_not_self_source` — `SourceSaleId <> SaleId`
+| Table | Adds |
+|---|---|
+| `Quotes` | `ValidUntil` **required** |
+| `SalesOrders` | `DeliveryDate`, `FulfilmentStatus` (Open / PartlyDelivered / Closed / Cancelled) |
+| `DeliveryChallans` | `SalesOrderId?`, `ChallanType` (Sale / JobWork / Approval / BranchTransfer / Sample), `DispatchDate`, `VehicleNo?`, `TransporterName?`, `EwayBillNo?`, `EwayBillDate?` |
+| `Invoices` | `PaymentTermId?`, `DueDate?`, `QuoteId?`, `SalesOrderId?`, `DeliveryChallanId?`<br>**POS rows only**: `TillId?`, `CashierUserId?`, `PaymentMode?`, `TenderedAmount?`, `ChangeAmount?` |
+| `CreditNotes` | `InvoiceId` **required**, `ReasonCode` |
 
-**Three columns deliberately absent.**
+Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → SalesOrders`, `CreditNotes.InvoiceId → Invoices` — instead of one polymorphic `SourceSaleId` the database cannot enforce. That is the main gain from a table per type.
 
-- **No `AmountPaid` or `AmountOutstanding`.** What is owed is derived from the ledger's AR sub-account and the allocations in `acc.TransactionRatio` (T3.3). A stored balance is a second truth that drifts the first time a payment is voided.
-- **No `CostAmount` or COGS.** Cost lives on the stock movement and is settled asynchronously; the line stays a pure revenue row. A cost column here would be a copy that disagrees with the layers.
-- **No `IsPaid` flag**, for the same reason as the first.
-
-#### `sal.SalesDetails` — lines
-
-**Carries its own `OrgId`**, like every other detail table in the product — see `acc.JournalDetails` and T0.5. Scoping through the parent header means no EF query filter and an RLS policy that has to subquery.
+#### Line columns — every pair
 
 | Column | Type | Rules |
 |---|---|---|
-| SaleDetailId | long | PK, identity |
-| SaleId | long | Required, FK, cascade delete |
-| OrgId | Guid | Required |
+| {Doc}DetailId | long | PK, identity |
+| {Doc}Id | long | Required, FK, cascade delete |
+| OrgId | Guid | Required. Detail tables carry their own — see T0.5 |
 | LineNumber | int | Required |
 | ItemId | long | Required. No FK — Inventory is another service |
 | ItemCode / ItemName | string(50) / string(200) | Snapshots |
-| HsnSacCode | string(8)? | Snapshot. Statutory on the invoice |
+| HsnSacCode | string(8)? | Snapshot. Statutory |
 | Description | string(500)? | |
-| WarehouseId | long? | Location dimension only — it never partitions stock |
+| WarehouseId | long? | Location only — never partitions stock |
 | Quantity | decimal(18,6) | As entered |
-| UomId | long | The unit the quantity is in |
-| ConversionFactor | decimal(18,6) | **Stored, not re-derived.** Correcting a unit factor later must not restate recorded history |
+| UomId | long | |
+| ConversionFactor | decimal(18,6) | Stored, not re-derived |
 | BaseQuantity | decimal(18,6) | In the item's inventory unit |
-| UnitPrice | decimal(18,6) | **Per entered unit**, not per inventory unit |
-| IsPriceInclusive | bool | MRP-inclusive is the Indian retail default, pharma especially |
-| DiscountPercent | decimal(9,6)? | |
-| DiscountAmount | decimal(18,2) | |
-| GrossAmount | decimal(18,2) | `Quantity × UnitPrice` |
-| TaxableAmount | decimal(18,2) | Gross − discount. **Discount reduces the taxable value** |
-| TaxMasterId | long | → `acc.TaxMasters`, unenforced. Another service |
-| TaxGroupId | long | The revision-stable group id, which is what sub-accounts reference |
-| CgstRate / SgstRate / IgstRate / CessRate | decimal(9,4) | **Rate snapshots at SaleDate**, never today's |
+| UnitPrice | decimal(18,6) | Per **entered** unit |
+| IsPriceInclusive | bool | MRP-inclusive is the Indian retail default |
+| DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
+| GrossAmount / TaxableAmount | decimal(18,2) | Discount reduces the taxable value |
+| TaxMasterId / TaxGroupId | long | → `acc.TaxMasters`, unenforced |
+| CgstRate / SgstRate / IgstRate / CessRate | decimal(9,4) | Rate snapshots at document date |
 | CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| LineTotal | decimal(18,2) | Taxable + tax + cess |
-| ItemBatchId | long? | One lot per line — a quantity spanning two lots is two lines |
-| DeliveredQuantity / InvoicedQuantity / ReturnedQuantity | decimal(18,6) | Fulfilment tracking against this line |
-| SourceSaleDetailId | long? | The line this converted from |
+| LineTotal | decimal(18,2) | |
+| LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
+| ExpenseAccountId | long? | Required when `LineType = Expense` |
+| FixedAssetCategoryId | long? | Required when `LineType = Capital` |
+| ItemBatchId | long? | One lot per line |
 | LineNotes | string(300)? | |
 
-Unique index: (SaleId, LineNumber) · Indexes: (OrgId, ItemId) · (OrgId, ItemBatchId) · (SourceSaleDetailId)
+**Per-table extras**:
 
-**Check constraints**:
-- `chk_salesdetail_quantity_positive` — `Quantity > 0`
-- `chk_salesdetail_conversion` — `BaseQuantity = Quantity × ConversionFactor`, as `inv.StockMovements` already asserts
-- `chk_salesdetail_discount` — `DiscountAmount <= GrossAmount`
-- `chk_salesdetail_amounts_non_negative`
-- `chk_salesdetail_line_total` — `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess`
-- `chk_salesdetail_fulfilment` — delivered, invoiced and returned each ≤ `Quantity`
+| Table | Adds |
+|---|---|
+| `QuoteDetails` | — |
+| `SalesOrderDetails` | `ReservedQuantity`, `DeliveredQuantity` |
+| `DeliveryChallanDetails` | `SalesOrderDetailId?`, `InvoicedQuantity` |
+| `InvoiceDetails` | `SalesOrderDetailId?`, `ReturnedQuantity` |
+| `CreditNoteDetails` | `InvoiceDetailId` **required** — a return must name the line it reverses, which is how stock goes back to its original cost layer |
 
-**Serial numbers are not on the line.** They go to `inv.StockMovements` with the issue, because a line for ten serial-tracked pieces names ten serials and that is a collection, not a column. The line records quantity; the movement records which pieces left.
+#### Indexes and constraints — the same set on every pair
 
-**`pur.Purchases` / `pur.PurchaseDetails` mirror this** for `POR` / `GRN` / `BIL` / `DBN`, with the four differences named in [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md): received-versus-billed quantity tracking instead of delivered-versus-invoiced, landed cost, price variance, and the capital-line flag that puts a purchase on the fixed asset register.
+Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, DocumentDate) · (OrgId, ContactId) · (OrgId, Status)
+Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
-**Open on this design** — neither blocks T2.2:
-- **Jewellery and pharma line columns.** Making charge, wastage percentage and the metal rate of the day belong on a jewellery sale line and on nothing else. The item master solves this with a 1:0..1 extension (`inv.ItemJewelleryDetails`); the same shape would give `sal.SalesDetailsJewellery`. Not designed here.
-- **The table name against the quote.** `sal.Sales` holds a `QTE` row, and a quote is not a sale. The name is the owner's and is recorded as such; the alternative was `SalesDocuments`.
+Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
+Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
+
+#### Columns deliberately absent, on every pair
+
+- **No `AmountPaid`, `AmountOutstanding` or `IsPaid`.** What is owed is read from the ledger's AR sub-account and `acc.TransactionRatio`. A stored balance drifts the first time a payment is voided.
+- **No cost or COGS.** Cost lives on the stock movement and settles asynchronously. A copy here would disagree with the layers.
+- **No serial numbers.** Ten serial-tracked pieces name ten serials — a collection, not a column. The line records quantity; `inv.StockMovements` records which pieces left.
+
+#### What the split costs
+
+Every cross-document read now unions four tables: the customer's document history, the sales day book, the "what did we sell this month" report, and the sales register below. Write those as one projection over the five, in one place, or the union gets copied into every screen that needs it.
+
+**`pur.*` mirrors this** — `pur.PurchaseOrders`, `pur.GoodsReceipts`, `pur.Bills`, `pur.DebitNotes`, each with its details, sharing the same two base classes. The four differences are in [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md).
+
+**Open, not blocking**: jewellery lines want making charge, wastage and metal rate. With a table per type that is five extension tables or five sets of columns — the argument for a shared base class again, and worth settling before the first pair is built.
+
 
 ### `sal.SalesRegister` 🔨
 
@@ -1144,16 +1164,16 @@ The sales register — what was supplied, to whom, at what rate. The source for 
 
 **It is not a ledger and does not post.** `acc.JournalLedger` remains the single posting target for every document in the product, and the trial balance still sums one table. This register carries no debits, no credits and no accounts; it carries taxable value and tax split at the grain a GST return is filed in.
 
-**The grain is `(SaleId, HsnSacCode, GstRate)`** — and that is what makes the table worth storing rather than deriving. GSTR-1 is not filed per document or per line: B2B is reported per invoice **per rate**, and the HSN summary per HSN **per rate** aggregated across every invoice in the period. Both fall out of one `GROUP BY` over this grain, and neither falls out of a header row or a line row.
+**The grain is `(TransactionTypeCode, SourceId, HsnSacCode, GstRate)`** — and that is what makes the table worth storing rather than deriving. GSTR-1 is not filed per document or per line: B2B is reported per invoice **per rate**, and the HSN summary per HSN **per rate** aggregated across every invoice in the period. Both fall out of one `GROUP BY` over this grain, and neither falls out of a header row or a line row.
 
 | Column | Type | Rules |
 |---|---|---|
 | SalesRegisterId | long | PK, identity |
 | OrgId | Guid | Required |
-| SaleId | long | Required, FK → `sal.Sales`, cascade delete |
+| SourceId | long | Required. The document header. **No FK** — it may be an `Invoices` or a `CreditNotes` row, and Postgres cannot key across two tables. Cascade delete is lost with it, so a void must delete these rows explicitly |
 | TransactionTypeCode | string(3) | `INV`, `POS` or `CRN`. **`QTE` and `SOR` never register** — neither is a supply |
-| SaleNo | string(30) | Required. A register row only exists for a posted document, and a posted document always has a number |
-| SaleDate | DateOnly | Required. The filing period is a range over this |
+| DocumentNo | string(30) | Required. A register row only exists for a posted document, and a posted document always has a number |
+| DocumentDate | DateOnly | Required. The filing period is a range over this |
 | ContactId | long | |
 | ContactGstin | string(15)? | Null is what makes a supply B2C |
 | PlaceOfSupplyStateId | int | Required |
@@ -1170,11 +1190,11 @@ The sales register — what was supplied, to whom, at what rate. The source for 
 | CurrencyCode | string(3) | |
 | ExchangeRate | decimal(18,8) | Snapshot, as on the document |
 | TaxableAmountBase | decimal(18,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
-| OriginalSaleId | long? | Credit notes only |
-| OriginalSaleNo | string(30)? | GSTR-1 links a credit note to the invoice it amends |
-| OriginalSaleDate | DateOnly? | |
+| OriginalInvoiceId | long? | Credit notes only |
+| OriginalInvoiceNo | string(30)? | GSTR-1 links a credit note to the invoice it amends |
+| OriginalInvoiceDate | DateOnly? | |
 
-Unique index: (SaleId, HsnSacCode, GstRate) — the grain, and what makes replace-by-key exact · Indexes: (OrgId, SaleDate) · (OrgId, SupplyType, SaleDate) · (OrgId, HsnSacCode, GstRate) · (OrgId, ContactId)
+Unique index: (OrgId, TransactionTypeCode, SourceId, HsnSacCode, GstRate) — the grain, and what makes replace-by-key exact · Indexes: (OrgId, DocumentDate) · (OrgId, SupplyType, DocumentDate) · (OrgId, HsnSacCode, GstRate) · (OrgId, ContactId)
 
 **Check constraints**:
 - `chk_register_amounts_non_negative` — **all amounts positive, including a credit note's.** GSTR-1 reports credit notes in their own section as positive values; `TransactionTypeCode` carries the direction, not the sign
@@ -1184,16 +1204,71 @@ Unique index: (SaleId, HsnSacCode, GstRate) — the grain, and what makes replac
 **Write discipline, which is the whole guard against drift.** The register is a denormalisation of `sal.Sales` and `sal.SalesDetails`, so it is only trustworthy if it cannot diverge:
 
 - Written **inside the same transaction as the post**, never by a later job.
-- A re-post **replaces every row for that `SaleId`** — the same replace-by-key rule the ledger posting uses, for the same reason.
+- A re-post **replaces every row for that (type, document)** — the same replace-by-key rule the ledger posting uses, for the same reason.
 - A void **deletes them.** A voided document was never a supply.
 - **The period tie**: register taxable value for a period must equal the Output GST legs in `acc.JournalLedger` over the same period. That reconciliation is the check that says the register and the books agree, and it belongs on the GSTR-1 screen the way T8.2 blocks a finalize that does not tie.
 
 **Deliberately not here.** A **filed** return is a different thing again — once GSTR-1 is submitted it is a statutory record that must not change even if the document behind it is later amended. That wants its own snapshot table at filing time, and it is not this one.
 
-### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+### `pur.*` — four document pairs 🔨
 
-`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor is `sal.*` — designed above, not yet built.
+**One table pair per document type**, the same split as `sal.*` and on the same two base classes.
+
+| Document | Header | Lines |
+|---|---|---|
+| `POR` Purchase order | `pur.PurchaseOrders` | `pur.PurchaseOrderDetails` |
+| `GRN` Goods receipt | `pur.GoodsReceipts` | `pur.GoodsReceiptDetails` |
+| `BIL` Bill | `pur.Bills` | `pur.BillDetails` |
+| `DBN` Debit note | `pur.DebitNotes` | `pur.DebitNoteDetails` |
+
+Header and line columns are **the `DocumentHeaderBase` / `DocumentLineBase` set defined under `sal.*`** and are not repeated here. `ContactId` is the vendor. Only the differences follow — and they are differences, not a mirror image. Copying the sales service and renaming it gets all five of these wrong.
+
+#### Header extras
+
+| Table | Adds |
+|---|---|
+| `PurchaseOrders` | `ExpectedDate`, `FulfilmentStatus` (Open / PartlyReceived / Closed / Cancelled) |
+| `GoodsReceipts` | `PurchaseOrderId?`, `VendorDeliveryNoteNo?`, `VendorDeliveryNoteDate?`, `ReceivedBy` |
+| `Bills` | `PurchaseOrderId?`, `GoodsReceiptId?`, **`VendorBillNo` required**, **`VendorBillDate` required**, `PaymentTermId`, `DueDate` required, `LandedCostAmount` |
+| `DebitNotes` | `BillId` **required**, `ReasonCode` |
+
+**`VendorBillNo` is the column with no sales equivalent, and it matters most.** On a sale we issue the number; on a purchase the vendor does. Input tax credit is claimed against *their* number and date, and GSTR-2B reconciles on it — so `DocumentNo` (ours, for internal reference) and `VendorBillNo` (theirs, statutory) are two different things and both are required on a posted bill.
+
+Unique index: `(OrgId, ContactId, VendorBillNo, financial year)` — one vendor cannot bill the same number twice in a year, and catching that at entry is what stops a duplicate ITC claim.
+
+#### Line extras
+
+| Table | Adds |
+|---|---|
+| `PurchaseOrderDetails` | `ReceivedQuantity`, `BilledQuantity` |
+| `GoodsReceiptDetails` | `PurchaseOrderDetailId?`, `AcceptedQuantity`, `RejectedQuantity`, `RejectionReason?` |
+| `BillDetails` | `GoodsReceiptDetailId?`, `PurchaseOrderDetailId?`, `ApportionedLandedCost`, `ReturnedQuantity` |
+| `DebitNoteDetails` | `BillDetailId` **required** — a return must name the line it reverses, so stock goes back to its original cost layer |
+
+**Only the accepted quantity becomes stock.** `chk_grn_accepted` — `AcceptedQuantity + RejectedQuantity = Quantity`, and a rejection needs a reason.
+
+**`LineType` is how a fixed asset gets onto the books**, and it now sits in `DocumentLineBase` rather than here. A `Capital` line on a bill posts to the category's Fixed Asset account and creates the register row (T10.2); a `Stock` line posts to Inventory, an `Expense` line to `ExpenseAccountId`. It is in the base because a **sales** line needs it too: disposing of a fixed asset is a `Capital` line on an invoice, which is what T10.4 posts against. Every other sales line is `Stock` and never says otherwise.
+
+#### The five ways purchase is not a mirror of sales
+
+| | Sales | Purchase |
+|---|---|---|
+| Order touches stock? | **Reserves** it | **Nothing** — it is not there yet |
+| Stock moves on | the invoice | the **receipt**, which usually precedes the bill |
+| Clearing account | none | **GRNI**, because goods and the bill arrive apart |
+| Tax side | Output GST, a liability | Input GST, an **asset** — reclaimable |
+| Line kinds | one | **three** — stock, expense, capital |
+
+#### Open
+
+- **Landed cost.** `LandedCostAmount` on the bill and `ApportionedLandedCost` on the line hold it; how it is apportioned — by value, by weight, by quantity — is not decided.
+- **Price variance.** A receipt opens a cost layer at the order's price and the bill may disagree, after sales have already drawn on that layer. Revalue and let recosting restate, or post the difference to a variance account. See [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md).
+- **`pur.PurchaseRegister`** — the counterpart to `sal.SalesRegister`, at the same grain, for ITC claims and GSTR-2B reconciliation against what the vendor filed. Not designed.
+
+### Not yet designed 📋
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+
+`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor are `sal.*` and `pur.*` — designed above, not yet built.
 
 ---
 

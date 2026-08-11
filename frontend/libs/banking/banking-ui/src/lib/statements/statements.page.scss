@@ -1,0 +1,75 @@
+.page-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; }
+.page-head .account { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.page-head select { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+
+.link { color: #3557d6; text-decoration: none; background: none; border: 0; font: inherit; font-size: inherit; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.error { color: #c0392b; }
+.notice { color: #187a4b; }
+.hint { color: #6a6f80; font-size: .78rem; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.none { color: #8a8f9e; font-size: .8rem; display: block; }
+.optional { color: #a8adbb; font-weight: 400; }
+.spacer { flex: 1 1 auto; }
+
+button { padding: .45rem .9rem; border: 0; border-radius: 6px; background: #eceef3; color: #4a4f60; font: inherit; font-size: .85rem; cursor: pointer; }
+button.primary { background: #3557d6; color: #fff; }
+button.ghost { background: transparent; color: #4a4f60; }
+button:disabled { opacity: .45; cursor: default; }
+
+.note { background: #f4f6fb; border-left: 3px solid #3557d6; padding: .55rem .8rem; font-size: .82rem; color: #4a4f60; margin: 0 0 1rem; }
+.note.warn { background: #fdf3e6; border-left-color: #b26a00; color: #7a4a00; }
+
+.import { margin-bottom: 1.5rem; }
+.import-row { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+.import-row input[type='file'] { font-size: .82rem; }
+
+.editor { border: 1px solid #cdd1dc; border-radius: 8px; padding: 1rem; margin: 1rem 0 1.5rem; }
+.editor h2 { font-size: 1rem; margin: 0 0 .8rem; display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap; }
+.editor-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
+
+.head-fields { display: flex; gap: .75rem; flex-wrap: wrap; margin-bottom: .75rem; }
+.head-fields label { display: flex; flex-direction: column; gap: .2rem; font-size: .78rem; color: #6a6f80; }
+.head-fields label.check { flex-direction: row; align-items: center; gap: .4rem; }
+.head-fields input[type='text'], .head-fields input[type='number'] { padding: .4rem .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; font-size: .85rem; }
+
+.amounts { border: 1px solid #e2e4ea; border-radius: 6px; padding: .75rem; margin: 0 0 .5rem; }
+.amounts legend { font-size: .78rem; color: #6a6f80; padding: 0 .3rem; }
+.or { text-align: center; font-size: .75rem; color: #8a8f9e; margin: .2rem 0; }
+
+.statement-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: .8rem; }
+.statement-actions .check { display: flex; align-items: center; gap: .4rem; font-size: .78rem; color: #6a6f80; }
+
+.lines, .grid { width: 100%; border-collapse: collapse; }
+.lines th, .lines td, .grid th, .grid td { text-align: left; padding: .45rem .5rem; border-bottom: 1px solid #e2e4ea; vertical-align: top; }
+.lines th, .grid th { font-size: .78rem; color: #6a6f80; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.date-col { width: 7rem; color: #6a6f80; font-variant-numeric: tabular-nums; }
+.sub { display: block; color: #8a8f9e; font-size: .72rem; margin-top: .15rem; }
+
+/* Decided lines recede. The working list is what still needs a decision, and a
+   reconciliation is finished when nothing is left in it. */
+.lines tr.decided { background: #fafbfd; color: #6a6f80; }
+.matched { color: #187a4b; font-size: .85rem; margin-right: .5rem; }
+.ignored { color: #8a6a2a; font-size: .82rem; margin-right: .5rem; }
+
+.candidate { display: flex; flex-direction: column; margin-bottom: .4rem; }
+.pick { align-self: flex-start; background: #e3e9fd; color: #2743a8; font-size: .82rem; padding: .25rem .6rem; }
+
+.chip { font-size: .65rem; background: #eceef3; color: #6a6f80; padding: .1rem .35rem; border-radius: 3px; margin-left: .3rem; }
+.badge { font-size: .7rem; background: #fdf3e6; color: #b26a00; padding: .2rem .5rem; border-radius: 3px; }
+.badge.done { background: #eaf7f0; color: #187a4b; }
+
+/* At ~360px both tables stop being tables. The statement is the one that has to
+   survive it — this is a screen people work through line by line on a phone
+   while looking at a banking app. */
+@media (max-width: 860px) {
+  .lines thead, .grid thead { display: none; }
+  .lines tr, .grid tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .lines td, .grid td { display: flex; justify-content: space-between; align-items: flex-start; gap: .75rem; border: 0; padding: .2rem .5rem; }
+  .lines td::before, .grid td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 7rem; }
+  .lines td > span, .lines td > .candidate { flex: 1 1 auto; }
+  .date-col { width: auto; }
+  .head-fields label { flex: 1 1 100%; }
+  .editor-actions button { flex: 1 1 auto; }
+}

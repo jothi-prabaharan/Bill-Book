@@ -11,6 +11,19 @@ using Shared.Kernel.Persistence;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+// Fail at startup rather than on the first request that needs the missing
+// registration. Banking shipped without IBaseCurrencyProvider registered — every
+// money document endpoint would have thrown on its first call, and neither the
+// build nor the tests could see it, because the build does not resolve DI and
+// the tests construct their services by hand. This is what closes that gap:
+// ValidateOnBuild walks every registration at startup, so a service asking for
+// something nobody registered is a container that refuses to build.
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateOnBuild = true;
+    options.ValidateScopes = true;
+});
+
 builder.Services.AddControllers();
 
 // Attaches the shared internal key to every service-to-service call, so a

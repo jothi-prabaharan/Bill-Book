@@ -205,6 +205,11 @@ export const appRoutes: Routes = [
         data: { permission: 'banking.view', direction: 'receive' },
       },
       {
+        path: 'banking/statements',
+        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.StatementsPage),
+        data: { permission: 'banking.view' },
+      },
+      {
         path: 'banking/transfer-money',
         loadComponent: () => import('@bill-book/banking-ui').then((m) => m.TransferMoneyPage),
         data: { permission: 'banking.view' },
