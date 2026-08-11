@@ -1112,10 +1112,11 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | ConversionFactor | decimal(18,6) | Stored, not re-derived |
 | BaseQuantity | decimal(18,6) | In the item's inventory unit |
 | UnitPrice | decimal(18,6) | Per **entered** unit |
-| IsPriceInclusive | bool | MRP-inclusive is the Indian retail default |
+| IsPriceInclusive | bool | Inclusive back-computes `taxable = inclusive ÷ (1 + rate)`. MRP-inclusive is the Indian retail default, pharma especially. **Orthogonal to `TaxTreatment`** — one says how the price was quoted, the other whether tax applies |
 | DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
 | GrossAmount / TaxableAmount | decimal(18,2) | Discount reduces the taxable value |
-| TaxMasterId / TaxGroupId | long | → `acc.TaxMasters`, unenforced |
+| TaxTreatment | enum→string(10) | **Taxable / ZeroRated / NilRated / Exempt / NonGst.** Snapshot of the item's `TaxPreference` at document date. Charging nothing and being outside the tax are different facts, and GSTR-1 reports them in different tables — an item reclassified next year must not restate a document already filed |
+| TaxMasterId / TaxGroupId | long? | → `acc.TaxMasters`, unenforced. Null when `TaxTreatment` is not Taxable or ZeroRated |
 | TaxAmount | decimal(18,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
 | LineTotal | decimal(18,2) | `TaxableAmount + TaxAmount` |
 | LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
@@ -1140,7 +1141,7 @@ Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, Docum
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
 Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
-Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
+Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_tax_treatment` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
 
 #### Tax rows — one child table per detail table
 
@@ -1175,6 +1176,8 @@ All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the 
 Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
 
 **Checks**: `chk_linetax_amounts_non_negative` · `chk_linetax_component` — `Cgst` and `Sgst` may not sit on the same line as `Igst`, because a supply is intra-state or inter-state and never both.
+
+**On the purchase side this column carries a second job.** Input tax credit is not claimable on an exempt supply, and a business making both taxable and exempt supplies has to reverse ITC proportionally. That proportion is computed from the lines, so the treatment has to be on the line and not inferred from a zero amount.
 
 **Two things this fixes that columns could not.**
 
