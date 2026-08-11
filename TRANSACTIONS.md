@@ -1,6 +1,6 @@
 # TRANSACTIONS.md — the trading documents
 
-`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the ten document types owned by Sales, Purchase and Inventory** — the trading half, none of which is built.
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the eleven document types owned by Sales, Purchase and Inventory** — the trading half, none of which is built.
 
 The documents owned by **Accounting and Banking** are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) and are not repeated here. **Stage numbers were not renumbered when the two files were split**, so the numbering below skips T1, T6, T8 and T10 — those stages live in that file, and the gaps are deliberate rather than a mistake.
 
@@ -12,14 +12,15 @@ Same rules as `master.md`: take the first unticked box, check it against its **D
 
 ---
 
-## Scope — the ten trading documents
+## Scope — the eleven trading documents
 
-The rows of `mst.TransactionTypes` owned by Sales, Purchase and Inventory. Three post nothing; seven reach the ledger. All ten trade something — an item, a price, GST, a cost layer — which is what separates them from the money documents in the other file and why they need the foundations below.
+The rows of `mst.TransactionTypes` owned by Sales, Purchase and Inventory. Three post nothing; eight reach the ledger. All eleven trade something — an item, a price, GST, a cost layer — which is what separates them from the money documents in the other file and why they need the foundations below.
 
 | Code | Document | Owner | Posts | Moves stock | Stage |
 |---|---|---|---|---|---|
 | QTE | Quote | Sales | no | no | T2 |
 | SOR | Sales order | Sales | no | reserves | T2 |
+| DLC | Delivery challan | Sales | yes | **issues** | T3 |
 | INV | Invoice | Sales | yes | issues | T3 |
 | POR | Purchase order | Purchase | no | no | T4 |
 | GRN | Goods receipt | Purchase | yes | receives | T4 |
@@ -40,7 +41,7 @@ Worth stating, because the foundations below are the gaps in it rather than a re
 - **`acc.JournalLedger` and `LedgerPostingService`** — the single posting target and the one door into it. Accounts are named, never numbered; a posting is replaced by key, never appended to; balance is checked in the service, by an insert-time constraint and by a deferred trigger at `COMMIT`.
 - **Stock** — a guarded conditional decrement, reserve and release, cost layers under five costing methods, returns to the originating layer, and backdated recosting. `inv.StockMovements` is idempotent on `(OrgId, SourceType, SourceId, SourceLineId)`, which is the key every document below writes through.
 - **`NumberGenerator`** — takes a number inside the caller's transaction, so a failed insert gives the number back.
-- **Masters** — 16 transaction types, 6 ledger types, 15 ledger sources, effective-dated GST rates, payment terms, a chart of accounts with ten control accounts, and AR/AP sub-accounts per contact and Inventory/COGS/Revenue sub-accounts per item, all seeded at branch creation.
+- **Masters** — 16 transaction types seeded (`DLC` is the seventeenth and arrives with T3.6), 6 ledger types, 15 ledger sources, effective-dated GST rates, payment terms, a chart of accounts with ten control accounts, and AR/AP sub-accounts per contact and Inventory/COGS/Revenue sub-accounts per item, all seeded at branch creation.
 - **`sales.*` and `purchase.*` permissions** are already seeded and granted to the system roles. Nothing needs adding to the matrix.
 
 ---
@@ -94,13 +95,13 @@ Neither posts. That is the point of taking them first — the document machinery
 - [x] **T2.1 — Decide the `sal` document shape** *(owner decision, and the largest one here)*
   Five sales documents share perhaps ninety per cent of their columns: contact, dates, currency and rate, addresses, lines with item/quantity/rate/discount/tax, totals, terms, status. *Recommendation: one document table pair discriminated by `TransactionTypeCode`*, with the type-specific columns nullable — validity date on a quote, delivery date on an order, due date on an invoice. One list screen, one numbering path, and conversion becomes a copy.
   The cost is a wide table with nullable columns whose applicability lives in C#. The alternative is ten tables and five near-identical services, and every cross-document report joining all of them.
-  **Answered, then reversed. The decision is a table pair per document type**, not one discriminated pair: `sal.Quotes`, `sal.SalesOrders`, `sal.Invoices`, `sal.CreditNotes`, each with its details. Eight tables — **a POS sale is an `Invoices` row, not a table of its own**; see T7. Columns are in [`SPEC.md`](./SPEC.md).
+  **Answered, then reversed. The decision is a table pair per document type**, not one discriminated pair: `sal.Quotes`, `sal.SalesOrders`, `sal.DeliveryChallans`, `sal.Invoices`, `sal.CreditNotes`, each with its details. Ten tables — **a POS sale is an `Invoices` row, not a table of its own**; see T7. Columns are in [`SPEC.md`](./SPEC.md).
   The first answer was `sal.Sales` / `sal.SalesDetails`; the owner changed it. **Recorded rather than rewritten**, because the reasoning on both sides still applies to `pur.*` in T4.2 and to anyone who revisits this.
   **What a table per type buys.** A conversion link becomes a real foreign key — `Invoices.SalesOrderId`, `CreditNotes.InvoiceId` — instead of one polymorphic column the database cannot enforce. Type-specific columns become `NOT NULL` where they belong: a quote must have `ValidUntil`, an invoice must have `DueDate`, a credit-note line must name the invoice line it reverses.
-  **What they cost, and the thing to get right first.** The columns are identical across all four pairs, so they go in **base classes in `Shared.Kernel`** — `DocumentHeaderBase` and `DocumentLineBase` — and are inherited, never copied. Hand-maintained copies of a GST split is how a column comes to mean one thing on an invoice and another on a credit note. And every cross-document read now unions four tables: customer history, the day book, the monthly sales report, the register. Write that union once as a projection or it gets copied into every screen.
+  **What they cost, and the thing to get right first.** The columns are identical across all five pairs, so they go in **base classes in `Shared.Kernel`** — `DocumentHeaderBase` and `DocumentLineBase` — and are inherited, never copied. Hand-maintained copies of a GST split is how a column comes to mean one thing on an invoice and another on a credit note. And every cross-document read now unions five tables: customer history, the day book, the monthly sales report, the register. Write that union once as a projection or it gets copied into every screen.
   **One knock-on already applied**: `sal.SalesRegister` loses its foreign key. It is fed by two tables now, so it keys on `(TransactionTypeCode, SourceId)` with no FK — which means cascade delete is gone and a void has to delete its register rows explicitly.
-  *Open, not blocking*: jewellery lines want making charge, wastage and metal rate. With a table per type that is four extensions or four sets of columns — settle it before the first pair is built.
-- [ ] **T2.2 — The four `sal.*` pairs: base classes, entities and migration** — per the SPEC entry T2.1 wrote. `DocumentHeaderBase` and `DocumentLineBase` in `Shared.Kernel` first, then the eight tables inheriting them, with `OrgId` on **every** table, query filters, RLS and the document series from T0.3.
+  *Open, not blocking*: jewellery lines want making charge, wastage and metal rate. With a table per type that is five extensions or five sets of columns — settle it before the first pair is built.
+- [ ] **T2.2 — The five `sal.*` pairs: base classes, entities and migration** — per the SPEC entry T2.1 wrote. `DocumentHeaderBase` and `DocumentLineBase` in `Shared.Kernel` first, then the ten tables inheriting them, with `OrgId` on **every** table, query filters, RLS and the document series from T0.3.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are present in the database, not just the model.
 - [ ] **T2.3 — Quote: API and page** — create, edit, print, convert to order, expire.
   *Done when*: a quote prints, converts to an order, and writes nothing to the ledger or to stock.
@@ -129,6 +130,12 @@ The flagship screen, and the first document where accounting, stock, tax and num
   Extended by T5.2, which adds the credit-note rows and the link back to the invoice they amend.
   *Done when*: an intra-state and an inter-state invoice register with the correct halves of the split and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphan rows; a void leaves none at all; and register taxable value for a period equals the Output GST legs in the ledger for that period.
 
+- [ ] **T3.6 — `DLC` delivery challan** — *the step the sales chain was missing*
+  Purchase has order → **receipt** → bill. Sales had only order → invoice, so **stock could leave only on an invoice**. That breaks deliver-today-invoice-later, part deliveries against one order, goods sent on approval, branch transfers and job work — and an e-way bill hangs off the challan, not the invoice.
+  `sal.DeliveryChallans` and `sal.DeliveryChallanDetails`, designed in [`SPEC.md`](./SPEC.md). The challan issues the stock and releases the order's reservation; the invoice that follows bills what was delivered and moves no stock, exactly as a bill against a goods receipt moves none.
+  **Needs a seventeenth `mst.TransactionTypes` row**, `DLC`, added by EF migration — a code added at runtime would have no posting logic behind it. Its own numbering series comes with it.
+  **What it posts is an open decision, and the exact mirror of T4.1.** Issuing as `Dr COGS` at delivery books cost with no revenue against it. *Recommendation: a `Goods Delivered Not Invoiced` control account (Asset) — `Dr GDNI / Cr Inventory` on the challan, `Dr COGS / Cr GDNI` on the invoice.* A challan for job work, approval or a branch transfer posts nothing: nothing was sold.
+  *Done when*: an order part-delivered on a challan issues only what shipped and leaves the rest reserved; the invoice raised against that challan moves no stock; and a job-work challan writes a stock movement and no ledger row.
 ---
 
 ## Stage T4 — purchase: order, receipt, bill (POR, GRN, BIL)

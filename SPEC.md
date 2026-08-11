@@ -122,7 +122,7 @@ GET /api/master/transaction-types          all active types
 GET /api/master/transaction-types/{code}   one type
 ```
 
-**Seed** — 16 types, 13 posting and 3 non-posting:
+**Seed** — 17 types, 14 posting and 3 non-posting:
 
 | Code | Name | Posts |
 |---|---|---|
@@ -142,6 +142,9 @@ GET /api/master/transaction-types/{code}   one type
 | DEP | Depreciation | yes |
 | STA | Stock Adjustment | yes |
 | POS | POS Sale | yes |
+| DLC | Delivery Challan | yes |
+
+`DLC` is the newest and **arrives by EF migration**, like every other row here — a code added at runtime would have no posting logic behind it. It is the sales mirror of `GRN`: stock leaves on the challan, and the invoice that follows bills what was delivered.
 
 The code is both the key and what appears on screen and in document numbers, so a ledger row reads without a join. **A code can never be changed once data exists** — every `JournalLedger`, `Journals` and `TransactionRatio` row stores it as a plain string with no FK to cascade a rename.
 
@@ -1032,14 +1035,19 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 |---|---|---|
 | `QTE` Quote | `sal.Quotes` | `sal.QuoteDetails` |
 | `SOR` Sales order | `sal.SalesOrders` | `sal.SalesOrderDetails` |
+| `DLC` Delivery challan | `sal.DeliveryChallans` | `sal.DeliveryChallanDetails` |
 | `INV` Invoice · `POS` POS sale | `sal.Invoices` | `sal.InvoiceDetails` |
 | `CRN` Credit note | `sal.CreditNotes` | `sal.CreditNoteDetails` |
 
-Eight tables. Each header still carries `TransactionTypeCode`, because the ledger posting, the numbering series and the register all key on it.
+Ten tables. Each header still carries `TransactionTypeCode`, because the ledger posting, the numbering series and the register all key on it.
+
+**`DLC` is the sales mirror of `GRN`, and the reason the sales chain now has three steps like purchase does.** Stock leaves on the challan; the invoice that follows bills what was delivered. Without it stock can only leave on an invoice, which breaks deliver-today-invoice-later, part deliveries, goods sent on approval, branch transfers and job work — and an e-way bill hangs off the challan, not the invoice.
+
+*What it posts is an open decision, and it is the exact mirror of T4.1's GRNI question.* Issuing stock as `Dr Cost of Goods Sold` at delivery would book cost with no revenue against it. **Recommendation: seed a `Goods Delivered Not Invoiced` control account (Asset), post `Dr GDNI / Cr Inventory` on the challan, and `Dr COGS / Cr GDNI` on the invoice.** A balance sitting in GDNI is goods gone and not yet billed, which is a number worth having. A challan for job work or a branch transfer posts nothing at all — nothing was sold.
 
 **A POS sale has no table of its own — it is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'`.** It is the same document: same lines, same GST, same stock issue, same `Dr Accounts Receivable / Cr Sales Revenue`. What differs is the screen and that payment is taken at the same moment. **POS is a UI module, not a data model.** `TransactionTypeCode` is fixed per table everywhere except `sal.Invoices`, which holds `INV` or `POS` — and that distinction still has to be stored, because the two use different numbering series and GSTR-1 usually reports a till sale as B2C.
 
-**The columns are the same in all four pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
+**The columns are the same in all five pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
 
 ```
 DocumentHeaderBase : OrgScopedEntity     the header columns below
@@ -1080,7 +1088,8 @@ Each concrete table adds only what is its own.
 |---|---|
 | `Quotes` | `ValidUntil` **required** |
 | `SalesOrders` | `DeliveryDate`, `FulfilmentStatus` (Open / PartlyDelivered / Closed / Cancelled) |
-| `Invoices` | `PaymentTermId?`, `DueDate?`, `QuoteId?`, `SalesOrderId?`<br>**POS rows only**: `TillId?`, `CashierUserId?`, `PaymentMode?`, `TenderedAmount?`, `ChangeAmount?` |
+| `DeliveryChallans` | `SalesOrderId?`, `ChallanType` (Sale / JobWork / Approval / BranchTransfer / Sample), `DispatchDate`, `VehicleNo?`, `TransporterName?`, `EwayBillNo?`, `EwayBillDate?` |
+| `Invoices` | `PaymentTermId?`, `DueDate?`, `QuoteId?`, `SalesOrderId?`, `DeliveryChallanId?`<br>**POS rows only**: `TillId?`, `CashierUserId?`, `PaymentMode?`, `TenderedAmount?`, `ChangeAmount?` |
 | `CreditNotes` | `InvoiceId` **required**, `ReasonCode` |
 
 Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → SalesOrders`, `CreditNotes.InvoiceId → Invoices` — instead of one polymorphic `SourceSaleId` the database cannot enforce. That is the main gain from a table per type.
@@ -1119,6 +1128,7 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 |---|---|
 | `QuoteDetails` | — |
 | `SalesOrderDetails` | `ReservedQuantity`, `DeliveredQuantity` |
+| `DeliveryChallanDetails` | `SalesOrderDetailId?`, `InvoicedQuantity` |
 | `InvoiceDetails` | `SalesOrderDetailId?`, `ReturnedQuantity` |
 | `CreditNoteDetails` | `InvoiceDetailId` **required** — a return must name the line it reverses, which is how stock goes back to its original cost layer |
 
@@ -1142,7 +1152,7 @@ Every cross-document read now unions four tables: the customer's document histor
 
 **`pur.*` mirrors this** — `pur.PurchaseOrders`, `pur.GoodsReceipts`, `pur.Bills`, `pur.DebitNotes`, each with its details, sharing the same two base classes. The four differences are in [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md).
 
-**Open, not blocking**: jewellery lines want making charge, wastage and metal rate. With a table per type that is four extension tables or four sets of columns — the argument for a shared base class again, and worth settling before the first pair is built.
+**Open, not blocking**: jewellery lines want making charge, wastage and metal rate. With a table per type that is five extension tables or five sets of columns — the argument for a shared base class again, and worth settling before the first pair is built.
 
 
 ### `sal.SalesRegister` 🔨
