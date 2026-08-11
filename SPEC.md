@@ -1070,7 +1070,7 @@ Each concrete table adds only what is its own.
 | ContactGstin | string(15)? | Snapshot. Statutory |
 | BillingAddress / ShippingAddress | string? | Snapshots |
 | PlaceOfSupplyStateId | int | Required |
-| IsInterState | bool | Stored, not re-derived |
+| IsInterState | bool | **Stored, not re-derived.** Set once when the document is created, from the branch's state against the party's place of supply. It decides which components the tax rows carry — CGST + SGST, or IGST — and re-deriving it later against a party who has since moved would silently reclassify a document already filed with a return |
 | CurrencyCode | string(3) | Required |
 | ExchangeRate | decimal(18,8) | Default 1. Snapshot at document date |
 | SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | |
@@ -1116,9 +1116,8 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
 | GrossAmount / TaxableAmount | decimal(18,2) | Discount reduces the taxable value |
 | TaxMasterId / TaxGroupId | long | → `acc.TaxMasters`, unenforced |
-| CgstRate / SgstRate / IgstRate / CessRate | decimal(9,4) | Rate snapshots at document date |
-| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| LineTotal | decimal(18,2) | |
+| TaxAmount | decimal(18,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
+| LineTotal | decimal(18,2) | `TaxableAmount + TaxAmount` |
 | LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
 | ExpenseAccountId | long? | Required when `LineType = Expense` |
 | FixedAssetCategoryId | long? | Required when `LineType = Capital` |
@@ -1141,7 +1140,48 @@ Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, Docum
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
 Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
-Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
+Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
+
+#### Tax rows — one child table per detail table
+
+**A line's tax is rows, not columns.** Intra-state is two components (CGST + SGST), inter-state is one (IGST), and cess is a third on top — so a fixed set of `CgstAmount` / `SgstAmount` / `IgstAmount` columns is a shape that only ever half-applies.
+
+| Detail table | Tax table |
+|---|---|
+| `sal.QuoteDetails` | `sal.QuoteDetailTaxes` |
+| `sal.SalesOrderDetails` | `sal.SalesOrderDetailTaxes` |
+| `sal.DeliveryChallanDetails` | `sal.DeliveryChallanDetailTaxes` |
+| `sal.InvoiceDetails` | `sal.InvoiceDetailTaxes` |
+| `sal.CreditNoteDetails` | `sal.CreditNoteDetailTaxes` |
+| `pur.PurchaseOrderDetails` | `pur.PurchaseOrderDetailTaxes` |
+| `pur.GoodsReceiptDetails` | `pur.GoodsReceiptDetailTaxes` |
+| `pur.BillDetails` | `pur.BillDetailTaxes` |
+| `pur.DebitNoteDetails` | `pur.DebitNoteDetailTaxes` |
+
+All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the same reason the headers and lines do.
+
+| Column | Type | Rules |
+|---|---|---|
+| {Doc}DetailTaxId | long | PK, identity |
+| {Doc}DetailId | long | Required, FK to its own detail table, cascade delete |
+| OrgId | Guid | Required |
+| TaxComponent | enum→string(6) | **Cgst / Sgst / Igst / Cess** |
+| SubAccountId | long | **The resolved GST sub-account** — the tax rate, the component and the direction together. Unenforced; Accounting owns it. This is what the `TAX` ledger leg posts against, so the line records where it went rather than the posting re-deriving it |
+| Rate | decimal(9,4) | Snapshot at document date |
+| TaxableAmount | decimal(18,2) | The base this component was computed on |
+| Amount | decimal(18,2) | |
+| AmountBase | decimal(18,2) | |
+
+Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
+
+**Checks**: `chk_linetax_amounts_non_negative` · `chk_linetax_component` — `Cgst` and `Sgst` may not sit on the same line as `Igst`, because a supply is intra-state or inter-state and never both.
+
+**Two things this fixes that columns could not.**
+
+- **A zero-rated supply is now legible.** With flat columns, a 0% intra-state line and a 0% inter-state line are identical — every amount is zero and nothing says which it was. GSTR-1 needs to know. A tax row at rate 0 still names its component.
+- **Cess as a fixed amount per unit becomes expressible.** `acc.TaxMasters.CessRate` is a percentage and SPEC already notes it cannot express the per-unit case; a `Cess` row can carry an `Amount` without a meaningful `Rate`.
+
+**The cost, stated plainly.** Sales goes from 10 tables to 15 and purchase from 8 to 12 — 27 for the two services. Every line read that needs tax is a join, and the header totals are now two levels above the rows that make them up. The base class is what keeps that from being 27 hand-maintained definitions.
 
 #### Columns deliberately absent, on every pair
 
