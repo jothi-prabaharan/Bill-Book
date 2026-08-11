@@ -55,7 +55,7 @@ State what is built, what is designed but uncoded, and what is not designed — 
 
 ## When asked to add a table
 
-Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new.
+Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new. **Sales and purchase documents are the exception**: `sal.*` lives in [`SALES.md`](./SALES.md) and `pur.*` in [`PURCHASE.md`](./PURCHASE.md), each with its columns, decisions and tasks in one place.
 
 Produce, in this order:
 1. Entity class in `{Module}.Entity/TableEntities/{Name}.cs`
