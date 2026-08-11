@@ -1198,10 +1198,65 @@ Unique index: (OrgId, TransactionTypeCode, SourceId, HsnSacCode, GstRate) — th
 
 **Deliberately not here.** A **filed** return is a different thing again — once GSTR-1 is submitted it is a statutory record that must not change even if the document behind it is later amended. That wants its own snapshot table at filing time, and it is not this one.
 
-### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `pur.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+### `pur.*` — four document pairs 🔨
 
-`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor is `sal.*` — designed above, not yet built.
+**One table pair per document type**, the same split as `sal.*` and on the same two base classes.
+
+| Document | Header | Lines |
+|---|---|---|
+| `POR` Purchase order | `pur.PurchaseOrders` | `pur.PurchaseOrderDetails` |
+| `GRN` Goods receipt | `pur.GoodsReceipts` | `pur.GoodsReceiptDetails` |
+| `BIL` Bill | `pur.Bills` | `pur.BillDetails` |
+| `DBN` Debit note | `pur.DebitNotes` | `pur.DebitNoteDetails` |
+
+Header and line columns are **the `DocumentHeaderBase` / `DocumentLineBase` set defined under `sal.*`** and are not repeated here. `ContactId` is the vendor. Only the differences follow — and they are differences, not a mirror image. Copying the sales service and renaming it gets all five of these wrong.
+
+#### Header extras
+
+| Table | Adds |
+|---|---|
+| `PurchaseOrders` | `ExpectedDate`, `FulfilmentStatus` (Open / PartlyReceived / Closed / Cancelled) |
+| `GoodsReceipts` | `PurchaseOrderId?`, `VendorDeliveryNoteNo?`, `VendorDeliveryNoteDate?`, `ReceivedBy` |
+| `Bills` | `PurchaseOrderId?`, `GoodsReceiptId?`, **`VendorBillNo` required**, **`VendorBillDate` required**, `PaymentTermId`, `DueDate` required, `LandedCostAmount` |
+| `DebitNotes` | `BillId` **required**, `ReasonCode` |
+
+**`VendorBillNo` is the column with no sales equivalent, and it matters most.** On a sale we issue the number; on a purchase the vendor does. Input tax credit is claimed against *their* number and date, and GSTR-2B reconciles on it — so `DocumentNo` (ours, for internal reference) and `VendorBillNo` (theirs, statutory) are two different things and both are required on a posted bill.
+
+Unique index: `(OrgId, ContactId, VendorBillNo, financial year)` — one vendor cannot bill the same number twice in a year, and catching that at entry is what stops a duplicate ITC claim.
+
+#### Line extras
+
+| Table | Adds |
+|---|---|
+| `PurchaseOrderDetails` | `ReceivedQuantity`, `BilledQuantity` |
+| `GoodsReceiptDetails` | `PurchaseOrderDetailId?`, `AcceptedQuantity`, `RejectedQuantity`, `RejectionReason?` |
+| `BillDetails` | `GoodsReceiptDetailId?`, `PurchaseOrderDetailId?`, **`LineType`** (Stock / Expense / Capital), `ExpenseAccountId?`, `FixedAssetCategoryId?`, `ApportionedLandedCost`, `ReturnedQuantity` |
+| `DebitNoteDetails` | `BillDetailId` **required** — a return must name the line it reverses, so stock goes back to its original cost layer |
+
+**Only the accepted quantity becomes stock.** `chk_grn_accepted` — `AcceptedQuantity + RejectedQuantity = Quantity`, and a rejection needs a reason.
+
+**`LineType` is how a fixed asset gets onto the books.** A `Capital` line posts to the category's Fixed Asset account and creates the register row — see T10.2. A `Stock` line posts to Inventory, an `Expense` line to `ExpenseAccountId`. Check: `Capital` ⇒ `FixedAssetCategoryId` set; `Expense` ⇒ `ExpenseAccountId` set; `Stock` ⇒ neither.
+
+#### The five ways purchase is not a mirror of sales
+
+| | Sales | Purchase |
+|---|---|---|
+| Order touches stock? | **Reserves** it | **Nothing** — it is not there yet |
+| Stock moves on | the invoice | the **receipt**, which usually precedes the bill |
+| Clearing account | none | **GRNI**, because goods and the bill arrive apart |
+| Tax side | Output GST, a liability | Input GST, an **asset** — reclaimable |
+| Line kinds | one | **three** — stock, expense, capital |
+
+#### Open
+
+- **Landed cost.** `LandedCostAmount` on the bill and `ApportionedLandedCost` on the line hold it; how it is apportioned — by value, by weight, by quantity — is not decided.
+- **Price variance.** A receipt opens a cost layer at the order's price and the bill may disagree, after sales have already drawn on that layer. Revalue and let recosting restate, or post the difference to a variance account. See [`FLOW-PURCHASE.md`](./FLOW-PURCHASE.md).
+- **`pur.PurchaseRegister`** — the counterpart to `sal.SalesRegister`, at the same grain, for ITC claims and GSTR-2B reconciliation against what the vendor filed. Not designed.
+
+### Not yet designed 📋
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+
+`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor are `sal.*` and `pur.*` — designed above, not yet built.
 
 ---
 
