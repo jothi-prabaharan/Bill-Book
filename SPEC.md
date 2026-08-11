@@ -825,7 +825,7 @@ Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one 
 | ReferenceNo | string(50)? | Cheque number, UTR, UPI reference |
 | ReferenceDate | DateOnly? | Instrument date, when a cheque carries one |
 | Memo | string? | Unbounded |
-| Status | enum→string(10) | Draft / Posted / Void |
+| Status | enum→string(10) | Draft / Posted / Void. **The built money documents keep three** — `ReadyToPost` and `Cancelled` arrived with the sales and purchase design and would need a migration here |
 | PostedAt · PostedBy | DateTimeOffset? · Guid? | |
 | VoidedAt · VoidedBy · VoidReason | DateTimeOffset? · Guid? · string(300)? | A posted document is voided, never deleted — a gap in a document series is what an auditor asks about |
 
@@ -1070,7 +1070,7 @@ Each concrete table adds only what is its own.
 | {Doc}Id | long | PK, identity |
 | OrgId | Guid | Required |
 | TransactionTypeCode | string(3) | Required. Fixed per table |
-| DocumentNo | string(30)? | **Nullable.** Taken at post, never at draft. Filtered unique index |
+| DocumentNo | string(30) | **Required, from creation.** Every document has a number the moment it exists, draft included, so it can be referred to before it is posted. Plain unique index — no filter, because there are no null rows |
 | DocumentDate | DateOnly | Required |
 | ContactId | long | Required. No FK — Contacts is another service |
 | ContactGstin | string(15)? | **Snapshot, unlike the name.** A GSTIN is not a label — a document filed under one registration cannot later claim another, because the return already went out under the first |
@@ -1083,10 +1083,33 @@ Each concrete table adds only what is its own.
 | CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
 | RoundOffAmount | decimal(28,2) | Signed |
 | TotalAmount / TotalAmountBase | decimal(28,2) | |
-| Status | enum→string(10) | Draft / Posted / Void |
+| Status | enum→string(12) | **Draft / ReadyToPost / Posted / Cancelled / Void.** See below |
 | Notes / TermsAndConditions | string? | |
 | PostedAt / PostedBy | DateTimeOffset? / Guid? | |
-| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | |
+| CancelledAt / CancelledBy / CancelReason | DateTimeOffset? / Guid? / string(300)? | Set when a document is abandoned before posting. The reason is required — it is what makes the number's absence from the books answerable |
+| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | Set when a posted document is withdrawn |
+
+#### The five statuses
+
+| Status | What it means | Number | Ledger | Stock |
+|---|---|---|---|---|
+| `Draft` | Being keyed. Incomplete, and nobody has claimed it is finished | held | — | — |
+| `ReadyToPost` | Complete and waiting for whoever posts it. The document is finished; the decision is not | held | — | — |
+| `Posted` | In the books | held | posted | moved |
+| `Cancelled` | Abandoned before it was ever posted | **held, and kept** | — | — |
+| `Void` | Was posted, then withdrawn | held | withdrawn | reversed |
+
+`ReadyToPost` is what `sales.approve` and `purchase.approve` are for. Both permissions have been seeded and granted since the beginning and nothing has ever read one — this is the state that gives them a job. A branch that does not want the step simply posts from `Draft`; nothing forces a document through it.
+
+**`Cancelled` is the price of numbering at creation, and it is not optional.** A number issued the moment a document exists is a number that has been spent, so an abandoned draft cannot simply be deleted — that leaves a hole in a series which has to be explainable, and consecutive numbering on an Indian invoice is statutory rather than tidy. So:
+
+- **A document row is never deleted.** Abandoning one sets `Cancelled` and keeps the row, which turns an unexplained gap into an answerable "INV-0042 was cancelled on the 3rd, by this user, for this reason".
+- `CancelReason` is required, for the same reason `VoidReason` is.
+- `Cancelled` and `Void` are deliberately not one status. One says *this never entered the books*, the other says *it did and was taken back out* — and only the second has ledger rows to withdraw and stock to put back.
+
+**What this changed.** The number used to be taken at post, so a draft carried none and the unique index was filtered. Numbering at creation is simpler to use — a draft can be quoted over the phone — and moves the cost from "a draft has no identity" to "nothing may ever be deleted". The gapless property survives either way; what differs is whether the gap is prevented or explained.
+
+**The journal is now the odd one out.** `acc.Journals` is built with `JournalNo` nullable under the old rule (recorded in `TRANSACTIONS-ACCOUNTING-BANKING.md` T0.5), so a journal draft holds no number while a sales draft does. Aligning it is a migration on a live table plus its two check constraints, and it is not free — worth doing deliberately rather than as a side effect of this change.
 
 **Per-table extras**, which is what the split buys — each is `NOT NULL` where it belongs instead of nullable everywhere:
 
@@ -1145,7 +1168,7 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, DocumentDate) · (OrgId, ContactId) · (OrgId, Status)
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
-Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
+Header checks: `PostedAt` set iff the status is `Posted` or `Void` · `CancelledAt` set iff `Cancelled` · a `Cancelled` row never became `Posted` · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
 Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_tax_treatment` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
 
 #### Tax rows — one child table per detail table
