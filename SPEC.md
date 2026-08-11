@@ -1066,8 +1066,7 @@ Each concrete table adds only what is its own.
 | DocumentNo | string(30)? | **Nullable.** Taken at post, never at draft. Filtered unique index |
 | DocumentDate | DateOnly | Required |
 | ContactId | long | Required. No FK — Contacts is another service |
-| ContactName | string(200) | Snapshot. A renamed customer must not restate a printed invoice |
-| ContactGstin | string(15)? | Snapshot. Statutory |
+| ContactGstin | string(15)? | **Snapshot, unlike the name.** A GSTIN is not a label — a document filed under one registration cannot later claim another, because the return already went out under the first |
 | BillingAddress / ShippingAddress | string? | Snapshots |
 | PlaceOfSupplyStateId | int | Required |
 | IsInterState | bool | **Stored, not re-derived.** Set once when the document is created, from the branch's state against the party's place of supply. It decides which components the tax rows carry — CGST + SGST, or IGST — and re-deriving it later against a party who has since moved would silently reclassify a document already filed with a return |
@@ -1103,8 +1102,7 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | OrgId | Guid | Required. Detail tables carry their own — see T0.5 |
 | LineNumber | int | Required |
 | ItemId | long? | **Nullable.** No FK — Inventory is another service. Null makes this a **free-text line**: a service, freight, a one-off charge, anything not in the item master |
-| ItemCode / ItemName | string(50)? / string(200)? | Snapshots. Null on a free-text line |
-| HsnSacCode | string(8)? | Snapshot from the item, or **typed directly** on a free-text line — an SAC code is statutory on a service invoice whether or not the service is a catalogued item |
+| HsnSacCode | string(8)? | **Snapshot**, from the item or typed directly on a free-text line. Not a label: it decides the rate reported in the return, and a correction to the item must not restate a return already filed |
 | Description | string(500)? | **Required when `ItemId` is null.** It is the only thing naming what was sold |
 | WarehouseId | long? | Location only — never partitions stock. Null on a free-text line |
 | Quantity | decimal(18,6) | As entered |
@@ -1176,6 +1174,27 @@ All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the 
 Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
 
 **Checks**: `chk_linetax_amounts_non_negative` · `chk_linetax_component` — `Cgst` and `Sgst` may not sit on the same line as `Igst`, because a supply is intra-state or inter-state and never both.
+
+#### Names are read from the masters, not stored
+
+**`ContactName`, `ItemCode` and `ItemName` are deliberately not on these tables.** A name is a label on a thing that already has an id, and when someone fixes a spelling or completes a legal suffix they mean it everywhere — including on documents already raised. Storing the name would show the old one forever and give no way to tell a correction from a genuine change of party.
+
+So `ContactId` and `ItemId` are the record, and the name is resolved when a document is read.
+
+**The cost, which is real and has to be designed for.** Contacts and Inventory are separate services, so Sales cannot join to `con.Contacts` or `inv.Items` — CLAUDE.md rule 8. Every list, print and report resolves names over the API, and **that resolution must be batched**: one call for the fifty contacts on an invoice list, never one call per row. This is the N+1 that `CLAUDE.md` already warns about for user names, arriving now on the busiest screens in the product.
+
+**What stays snapshotted, and why it is not the same question.** Four things on a document are not labels — they are what was filed:
+
+| Kept | Because |
+|---|---|
+| `ContactGstin` | A document filed under one registration cannot later claim another. The return already went out under the first |
+| `HsnSacCode` | It decides the rate reported in the return |
+| The four tax rates on each tax row | An invoice reopened after a rate revision must not reprice itself |
+| `BillingAddress` / `ShippingAddress` | Where the goods actually went. A customer who moves has not changed where last year's delivery was made |
+
+The rule that separates the two lists: **if changing it would restate something already filed with a return or already delivered, snapshot it; if it is only what the thing is called, read it from the master.**
+
+The printed document is preserved regardless — T3.4 archives a PDF of every posted document, so what the customer received is a fact on file even though the name on screen follows the master.
 
 #### Free-text lines
 
