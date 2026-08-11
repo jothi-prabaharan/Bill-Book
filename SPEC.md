@@ -1119,6 +1119,9 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | CgstRate / SgstRate / IgstRate / CessRate | decimal(9,4) | Rate snapshots at document date |
 | CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
 | LineTotal | decimal(18,2) | |
+| LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
+| ExpenseAccountId | long? | Required when `LineType = Expense` |
+| FixedAssetCategoryId | long? | Required when `LineType = Capital` |
 | ItemBatchId | long? | One lot per line |
 | LineNotes | string(300)? | |
 
@@ -1138,7 +1141,7 @@ Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, Docum
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
 Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
-Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess`
+Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + Cgst + Sgst + Igst + Cess` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
 
 #### Columns deliberately absent, on every pair
 
@@ -1239,12 +1242,12 @@ Unique index: `(OrgId, ContactId, VendorBillNo, financial year)` — one vendor 
 |---|---|
 | `PurchaseOrderDetails` | `ReceivedQuantity`, `BilledQuantity` |
 | `GoodsReceiptDetails` | `PurchaseOrderDetailId?`, `AcceptedQuantity`, `RejectedQuantity`, `RejectionReason?` |
-| `BillDetails` | `GoodsReceiptDetailId?`, `PurchaseOrderDetailId?`, **`LineType`** (Stock / Expense / Capital), `ExpenseAccountId?`, `FixedAssetCategoryId?`, `ApportionedLandedCost`, `ReturnedQuantity` |
+| `BillDetails` | `GoodsReceiptDetailId?`, `PurchaseOrderDetailId?`, `ApportionedLandedCost`, `ReturnedQuantity` |
 | `DebitNoteDetails` | `BillDetailId` **required** — a return must name the line it reverses, so stock goes back to its original cost layer |
 
 **Only the accepted quantity becomes stock.** `chk_grn_accepted` — `AcceptedQuantity + RejectedQuantity = Quantity`, and a rejection needs a reason.
 
-**`LineType` is how a fixed asset gets onto the books.** A `Capital` line posts to the category's Fixed Asset account and creates the register row — see T10.2. A `Stock` line posts to Inventory, an `Expense` line to `ExpenseAccountId`. Check: `Capital` ⇒ `FixedAssetCategoryId` set; `Expense` ⇒ `ExpenseAccountId` set; `Stock` ⇒ neither.
+**`LineType` is how a fixed asset gets onto the books**, and it now sits in `DocumentLineBase` rather than here. A `Capital` line on a bill posts to the category's Fixed Asset account and creates the register row (T10.2); a `Stock` line posts to Inventory, an `Expense` line to `ExpenseAccountId`. It is in the base because a **sales** line needs it too: disposing of a fixed asset is a `Capital` line on an invoice, which is what T10.4 posts against. Every other sales line is `Stock` and never says otherwise.
 
 #### The five ways purchase is not a mirror of sales
 
