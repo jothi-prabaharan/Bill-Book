@@ -825,7 +825,7 @@ Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one 
 | ReferenceNo | string(50)? | Cheque number, UTR, UPI reference |
 | ReferenceDate | DateOnly? | Instrument date, when a cheque carries one |
 | Memo | string? | Unbounded |
-| Status | enum→string(10) | Draft / Posted / Void. **The built money documents keep three** — `ReadyToPost` and `Cancelled` arrived with the sales and purchase design and would need a migration here |
+| Status | enum→string(10) | Draft / Posted / Void. **The built money documents keep three** — `ReadyToPost` arrived with the sales and purchase design and would need a migration here |
 | PostedAt · PostedBy | DateTimeOffset? · Guid? | |
 | VoidedAt · VoidedBy · VoidReason | DateTimeOffset? · Guid? · string(300)? | A posted document is voided, never deleted — a gap in a document series is what an auditor asks about |
 
@@ -1083,29 +1083,25 @@ Each concrete table adds only what is its own.
 | CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
 | RoundOffAmount | decimal(28,2) | Signed |
 | TotalAmount / TotalAmountBase | decimal(28,2) | |
-| Status | enum→string(12) | **Draft / ReadyToPost / Posted / Cancelled / Void.** See below |
+| Status | enum→string(12) | **Draft / ReadyToPost / Posted / Void.** See below |
 | Notes / TermsAndConditions | string? | |
 | PostedAt / PostedBy | DateTimeOffset? / Guid? | |
-| CancelledAt / CancelledBy / CancelReason | DateTimeOffset? / Guid? / string(300)? | Set when a document is abandoned before posting. The reason is required — it is what makes the number's absence from the books answerable |
-| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | Set when a posted document is withdrawn |
+| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | **The reason is required.** A void is what makes a number's absence from the books answerable |
 
-#### The five statuses
+#### The four statuses
 
-| Status | What it means | Number | Ledger | Stock |
-|---|---|---|---|---|
-| `Draft` | Being keyed. Incomplete, and nobody has claimed it is finished | held | — | — |
-| `ReadyToPost` | Complete and waiting for whoever posts it. The document is finished; the decision is not | held | — | — |
-| `Posted` | In the books | held | posted | moved |
-| `Cancelled` | Abandoned before it was ever posted | **held, and kept** | — | — |
-| `Void` | Was posted, then withdrawn | held | withdrawn | reversed |
+| Status | What it means | Ledger | Stock |
+|---|---|---|---|
+| `Draft` | Being keyed. Nobody has claimed it is finished | — | — |
+| `ReadyToPost` | Complete and waiting for whoever posts it. The document is finished; the decision is not | — | — |
+| `Posted` | In the books | posted | moved |
+| `Void` | Withdrawn. Covers **both** an abandoned draft and a posted document taken back out | withdrawn, if there was one | reversed, if it moved |
 
 `ReadyToPost` is what `sales.approve` and `purchase.approve` are for. Both permissions have been seeded and granted since the beginning and nothing has ever read one — this is the state that gives them a job. A branch that does not want the step simply posts from `Draft`; nothing forces a document through it.
 
-**`Cancelled` is the price of numbering at creation, and it is not optional.** A number issued the moment a document exists is a number that has been spent, so an abandoned draft cannot simply be deleted — that leaves a hole in a series which has to be explainable, and consecutive numbering on an Indian invoice is statutory rather than tidy. So:
+**`Void` carries two meanings, and `PostedAt` separates them.** A voided row with `PostedAt` null never reached the books and has nothing to withdraw; one with `PostedAt` set was posted and its ledger rows and stock movements are reversed. The distinction is preserved without a fifth status, so no information is lost by having four.
 
-- **A document row is never deleted.** Abandoning one sets `Cancelled` and keeps the row, which turns an unexplained gap into an answerable "INV-0042 was cancelled on the 3rd, by this user, for this reason".
-- `CancelReason` is required, for the same reason `VoidReason` is.
-- `Cancelled` and `Void` are deliberately not one status. One says *this never entered the books*, the other says *it did and was taken back out* — and only the second has ledger rows to withdraw and stock to put back.
+**A document row is never deleted**, whichever kind of void it is. A number issued at creation has been spent, and deleting the row leaves a hole in a series that has to be explainable — consecutive numbering on an Indian invoice is statutory rather than tidy. Voiding keeps the row, which turns an unexplained gap into an answerable "INV-0042 was voided on the 3rd, by this user, for this reason". `VoidReason` is required for exactly that.
 
 **What this changed.** The number used to be taken at post, so a draft carried none and the unique index was filtered. Numbering at creation is simpler to use — a draft can be quoted over the phone — and moves the cost from "a draft has no identity" to "nothing may ever be deleted". The gapless property survives either way; what differs is whether the gap is prevented or explained.
 
@@ -1168,7 +1164,7 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, DocumentDate) · (OrgId, ContactId) · (OrgId, Status)
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
-Header checks: `PostedAt` set iff the status is `Posted` or `Void` · `CancelledAt` set iff `Cancelled` · a `Cancelled` row never became `Posted` · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
+Header checks: `PostedAt` set iff the document ever posted · `VoidedAt` and `VoidReason` set iff `Void`, and set together · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
 Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_tax_treatment` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
 
 #### Tax rows — one child table per detail table

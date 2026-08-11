@@ -112,11 +112,11 @@ Determined by the branch's state against the customer's place of supply, falling
 
 Taken **at creation**, so a document has its number from the moment it exists — a draft can be quoted over the phone.
 
-The series stays gapless because **no document row is ever deleted**: an abandoned draft is `Cancelled` and keeps its number, which makes the number answerable rather than missing. Consecutive numbering on an Indian invoice is statutory, not a preference.
+The series stays gapless because **no document row is ever deleted**: an abandoned draft is **voided** and keeps its number, which makes the number answerable rather than missing. Consecutive numbering on an Indian invoice is statutory, not a preference.
 
 ### Statuses
 
-**Draft → ReadyToPost → Posted → Void**, and **Cancelled** for one abandoned before it ever posted.
+**Draft → ReadyToPost → Posted → Void.** A void covers both an abandoned draft and a posted document taken back out; `PostedAt` being null is what tells them apart.
 
 `ReadyToPost` is a finished document waiting for whoever posts it — the state `sales.approve` exists for. Skip it and post straight from `Draft` if the branch does not want the step.
 
