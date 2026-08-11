@@ -825,7 +825,7 @@ Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one 
 | ReferenceNo | string(50)? | Cheque number, UTR, UPI reference |
 | ReferenceDate | DateOnly? | Instrument date, when a cheque carries one |
 | Memo | string? | Unbounded |
-| Status | enum→string(10) | Draft / Posted / Void |
+| Status | enum→string(10) | Draft / Posted / Void. **The built money documents keep three** — `ReadyToPost` arrived with the sales and purchase design and would need a migration here |
 | PostedAt · PostedBy | DateTimeOffset? · Guid? | |
 | VoidedAt · VoidedBy · VoidReason | DateTimeOffset? · Guid? · string(300)? | A posted document is voided, never deleted — a gap in a document series is what an auditor asks about |
 
@@ -1047,14 +1047,21 @@ Ten tables. Each header still carries `TransactionTypeCode`, because the ledger 
 
 **A POS sale has no table of its own — it is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'`.** It is the same document: same lines, same GST, same stock issue, same `Dr Accounts Receivable / Cr Sales Revenue`. What differs is the screen and that payment is taken at the same moment. **POS is a UI module, not a data model.** `TransactionTypeCode` is fixed per table everywhere except `sal.Invoices`, which holds `INV` or `POS` — and that distinction still has to be stored, because the two use different numbering series and GSTR-1 usually reports a till sale as B2C.
 
+**Money is `decimal(28,2)`; a unit price is `decimal(28,6)`.** Twenty-eight is the ceiling, and it is C#'s rather than Postgres's — `numeric` goes to 1000 digits, but a C# `decimal` holds 28–29 significant digits and anything wider overflows the moment it is read back. Postgres `numeric` is variable-length, so a wide declaration costs nothing in storage or index size for the values actually stored; what it costs is that the column stops being a sanity check, and a fat-fingered amount has to be caught by a check constraint or a screen instead.
+
 **The columns are the same in all five pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
 
 ```
-DocumentHeaderBase : OrgScopedEntity     the header columns below
-DocumentLineBase   : OrgScopedEntity     the line columns below
+AuditableEntity                          CreatedBy · CreatedAt · ModifiedBy · ModifiedAt · xmin
+  └─ OrgScopedEntity                     OrgId
+       ├─ DocumentHeaderBase             the header columns below
+       ├─ DocumentLineBase               the line columns below
+       └─ DocumentLineTaxBase            the tax-row columns below
 ```
 
 Each concrete table adds only what is its own.
+
+**The audit columns and `OrgId` arrive through that chain**, which is why neither appears again in the lists below — the same convention the rest of this file follows. Inheriting `OrgScopedEntity` rather than `AuditableEntity` directly is what makes the query filter apply by reflection, so a document table cannot be added without one.
 
 #### Header columns — every pair
 
@@ -1063,24 +1070,42 @@ Each concrete table adds only what is its own.
 | {Doc}Id | long | PK, identity |
 | OrgId | Guid | Required |
 | TransactionTypeCode | string(3) | Required. Fixed per table |
-| DocumentNo | string(30)? | **Nullable.** Taken at post, never at draft. Filtered unique index |
+| DocumentNo | string(30) | **Required, from creation.** Every document has a number the moment it exists, draft included, so it can be referred to before it is posted. Plain unique index — no filter, because there are no null rows |
 | DocumentDate | DateOnly | Required |
 | ContactId | long | Required. No FK — Contacts is another service |
-| ContactName | string(200) | Snapshot. A renamed customer must not restate a printed invoice |
-| ContactGstin | string(15)? | Snapshot. Statutory |
+| ContactGstin | string(15)? | **Snapshot, unlike the name.** A GSTIN is not a label — a document filed under one registration cannot later claim another, because the return already went out under the first |
 | BillingAddress / ShippingAddress | string? | Snapshots |
 | PlaceOfSupplyStateId | int | Required |
 | IsInterState | bool | **Stored, not re-derived.** Set once when the document is created, from the branch's state against the party's place of supply. It decides which components the tax rows carry — CGST + SGST, or IGST — and re-deriving it later against a party who has since moved would silently reclassify a document already filed with a return |
 | CurrencyCode | string(3) | Required |
 | ExchangeRate | decimal(18,8) | Default 1. Snapshot at document date |
-| SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | |
-| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| RoundOffAmount | decimal(18,2) | Signed |
-| TotalAmount / TotalAmountBase | decimal(18,2) | |
-| Status | enum→string(10) | Draft / Posted / Void |
+| SubTotal / DiscountAmount / TaxableAmount | decimal(28,2) | A **header** discount is apportioned across the lines by taxable value before tax is computed, and the line's own `DiscountAmount` carries its share. GST is charged per line, so a discount that never reaches a line cannot reduce it. Governed by `plt.Organizations.DiscountLevel`, which is set once per branch |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
+| RoundOffAmount | decimal(28,2) | Signed |
+| TotalAmount / TotalAmountBase | decimal(28,2) | |
+| Status | enum→string(12) | **Draft / ReadyToPost / Posted / Void.** See below |
 | Notes / TermsAndConditions | string? | |
 | PostedAt / PostedBy | DateTimeOffset? / Guid? | |
-| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | |
+| VoidedAt / VoidedBy / VoidReason | DateTimeOffset? / Guid? / string(300)? | **The reason is required.** A void is what makes a number's absence from the books answerable |
+
+#### The four statuses
+
+| Status | What it means | Ledger | Stock |
+|---|---|---|---|
+| `Draft` | Being keyed. Nobody has claimed it is finished | — | — |
+| `ReadyToPost` | Complete and waiting for whoever posts it. The document is finished; the decision is not | — | — |
+| `Posted` | In the books | posted | moved |
+| `Void` | Withdrawn. Covers **both** an abandoned draft and a posted document taken back out | withdrawn, if there was one | reversed, if it moved |
+
+`ReadyToPost` is what `sales.approve` and `purchase.approve` are for. Both permissions have been seeded and granted since the beginning and nothing has ever read one — this is the state that gives them a job. A branch that does not want the step simply posts from `Draft`; nothing forces a document through it.
+
+**`Void` carries two meanings, and `PostedAt` separates them.** A voided row with `PostedAt` null never reached the books and has nothing to withdraw; one with `PostedAt` set was posted and its ledger rows and stock movements are reversed. The distinction is preserved without a fifth status, so no information is lost by having four.
+
+**A document row is never deleted**, whichever kind of void it is. A number issued at creation has been spent, and deleting the row leaves a hole in a series that has to be explainable — consecutive numbering on an Indian invoice is statutory rather than tidy. Voiding keeps the row, which turns an unexplained gap into an answerable "INV-0042 was voided on the 3rd, by this user, for this reason". `VoidReason` is required for exactly that.
+
+**What this changed.** The number used to be taken at post, so a draft carried none and the unique index was filtered. Numbering at creation is simpler to use — a draft can be quoted over the phone — and moves the cost from "a draft has no identity" to "nothing may ever be deleted". The gapless property survives either way; what differs is whether the gap is prevented or explained.
+
+**The journal is now the odd one out.** `acc.Journals` is built with `JournalNo` nullable under the old rule (recorded in `TRANSACTIONS-ACCOUNTING-BANKING.md` T0.5), so a journal draft holds no number while a sales draft does. Aligning it is a migration on a live table plus its two check constraints, and it is not free — worth doing deliberately rather than as a side effect of this change.
 
 **Per-table extras**, which is what the split buys — each is `NOT NULL` where it belongs instead of nullable everywhere:
 
@@ -1102,24 +1127,24 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | {Doc}Id | long | Required, FK, cascade delete |
 | OrgId | Guid | Required. Detail tables carry their own — see T0.5 |
 | LineNumber | int | Required |
-| ItemId | long | Required. No FK — Inventory is another service |
-| ItemCode / ItemName | string(50) / string(200) | Snapshots |
-| HsnSacCode | string(8)? | Snapshot. Statutory |
-| Description | string(500)? | |
-| WarehouseId | long? | Location only — never partitions stock |
+| ItemId | long? | **Nullable.** No FK — Inventory is another service. Null makes this a **free-text line**: a service, freight, a one-off charge, anything not in the item master |
+| HsnSacCode | string(8)? | **Snapshot**, from the item or typed directly on a free-text line. Not a label: it decides the rate reported in the return, and a correction to the item must not restate a return already filed |
+| Description | string(500)? | **Required when `ItemId` is null.** It is the only thing naming what was sold |
+| WarehouseId | long? | Location only — never partitions stock. Null on a free-text line |
 | Quantity | decimal(18,6) | As entered |
 | UomId | long | |
 | ConversionFactor | decimal(18,6) | Stored, not re-derived |
-| BaseQuantity | decimal(18,6) | In the item's inventory unit |
-| UnitPrice | decimal(18,6) | Per **entered** unit |
-| IsPriceInclusive | bool | MRP-inclusive is the Indian retail default |
-| DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
-| GrossAmount / TaxableAmount | decimal(18,2) | Discount reduces the taxable value |
-| TaxMasterId / TaxGroupId | long | → `acc.TaxMasters`, unenforced |
-| TaxAmount | decimal(18,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
-| LineTotal | decimal(18,2) | `TaxableAmount + TaxAmount` |
+| BaseQuantity | decimal(18,6) | In the item's inventory unit. Equals `Quantity` on a free-text line |
+| UnitPrice | decimal(28,6) | Per **entered** unit |
+| IsPriceInclusive | bool | Inclusive back-computes `taxable = inclusive ÷ (1 + rate)`. MRP-inclusive is the Indian retail default, pharma especially. **Orthogonal to `TaxTreatment`** — one says how the price was quoted, the other whether tax applies |
+| DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(28,2) | |
+| GrossAmount / TaxableAmount | decimal(28,2) | Discount reduces the taxable value |
+| TaxTreatment | enum→string(10) | **Taxable / ZeroRated / NilRated / Exempt / NonGst.** Snapshot of the item's `TaxPreference` at document date. Charging nothing and being outside the tax are different facts, and GSTR-1 reports them in different tables — an item reclassified next year must not restate a document already filed |
+| TaxMasterId / TaxGroupId | long? | → `acc.TaxMasters`, unenforced. Null when `TaxTreatment` is not Taxable or ZeroRated |
+| TaxAmount | decimal(28,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
+| LineTotal | decimal(28,2) | `TaxableAmount + TaxAmount` |
 | LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
-| ExpenseAccountId | long? | Required when `LineType = Expense` |
+| AccountId | long? | **The account this line posts to when there is no item to post through.** Required on a free-text line and on any `Expense` line; ignored when the line is item-backed, because an item already resolves its own revenue, inventory and COGS sub-accounts. One column rather than a separate expense and income one — a line posts to exactly one account either way |
 | FixedAssetCategoryId | long? | Required when `LineType = Capital` |
 | ItemBatchId | long? | One lot per line |
 | LineNotes | string(300)? | |
@@ -1139,8 +1164,8 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 Header — filtered unique `(OrgId, DocumentNo)` where not null · (OrgId, DocumentDate) · (OrgId, ContactId) · (OrgId, Status)
 Lines — unique `({Doc}Id, LineNumber)` · (OrgId, ItemId) · (OrgId, ItemBatchId)
 
-Header checks: draft has no number and anything past draft has one · `PostedAt` set iff past draft · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
-Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
+Header checks: `PostedAt` set iff the document ever posted · `VoidedAt` and `VoidReason` set iff `Void`, and set together · on `sal.Invoices`, `TransactionTypeCode IN ('INV','POS')`, and a `POS` row needs `TillId` and `PaymentMode` while an `INV` row needs `DueDate` · `ExchangeRate > 0` · amounts non-negative except `RoundOffAmount` · `TotalAmount = TaxableAmount + Cgst + Sgst + Igst + Cess + RoundOff`
+Line checks: `Quantity > 0` · `BaseQuantity = Quantity × ConversionFactor` · `DiscountAmount <= GrossAmount` · amounts non-negative · `LineTotal = TaxableAmount + TaxAmount` · `chk_line_tax_treatment` · `chk_line_type` — `Expense` ⇒ `ExpenseAccountId` set, `Capital` ⇒ `FixedAssetCategoryId` set, `Stock` ⇒ neither
 
 #### Tax rows — one child table per detail table
 
@@ -1168,13 +1193,48 @@ All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the 
 | TaxComponent | enum→string(6) | **Cgst / Sgst / Igst / Cess** |
 | SubAccountId | long | **The resolved GST sub-account** — the tax rate, the component and the direction together. Unenforced; Accounting owns it. This is what the `TAX` ledger leg posts against, so the line records where it went rather than the posting re-deriving it |
 | Rate | decimal(9,4) | Snapshot at document date |
-| TaxableAmount | decimal(18,2) | The base this component was computed on |
-| Amount | decimal(18,2) | |
-| AmountBase | decimal(18,2) | |
+| TaxableAmount | decimal(28,2) | The base this component was computed on |
+| Amount | decimal(28,2) | |
+| AmountBase | decimal(28,2) | |
 
 Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
 
 **Checks**: `chk_linetax_amounts_non_negative` · `chk_linetax_component` — `Cgst` and `Sgst` may not sit on the same line as `Igst`, because a supply is intra-state or inter-state and never both.
+
+#### Names are read from the masters, not stored
+
+**`ContactName`, `ItemCode` and `ItemName` are deliberately not on these tables.** A name is a label on a thing that already has an id, and when someone fixes a spelling or completes a legal suffix they mean it everywhere — including on documents already raised. Storing the name would show the old one forever and give no way to tell a correction from a genuine change of party.
+
+So `ContactId` and `ItemId` are the record, and the name is resolved when a document is read.
+
+**The cost, which is real and has to be designed for.** Contacts and Inventory are separate services, so Sales cannot join to `con.Contacts` or `inv.Items` — CLAUDE.md rule 8. Every list, print and report resolves names over the API, and **that resolution must be batched**: one call for the fifty contacts on an invoice list, never one call per row. This is the N+1 that `CLAUDE.md` already warns about for user names, arriving now on the busiest screens in the product.
+
+**What stays snapshotted, and why it is not the same question.** Four things on a document are not labels — they are what was filed:
+
+| Kept | Because |
+|---|---|
+| `ContactGstin` | A document filed under one registration cannot later claim another. The return already went out under the first |
+| `HsnSacCode` | It decides the rate reported in the return |
+| The four tax rates on each tax row | An invoice reopened after a rate revision must not reprice itself |
+| `BillingAddress` / `ShippingAddress` | Where the goods actually went. A customer who moves has not changed where last year's delivery was made |
+
+The rule that separates the two lists: **if changing it would restate something already filed with a return or already delivered, snapshot it; if it is only what the thing is called, read it from the master.**
+
+The printed document is preserved regardless — T3.4 archives a PDF of every posted document, so what the customer received is a fact on file even though the name on screen follows the master.
+
+#### Free-text lines
+
+**A line does not need an item.** `ItemId` is nullable, and a line with none carries a description, a quantity and a unit price — a service, freight, a delivery charge, a one-off. Three consequences, and all three are the point rather than a limitation:
+
+- **It never touches stock.** No item means nothing to issue or receive, so no `inv.StockMovements` row and no reservation. `chk_line_free_text` refuses `LineType = Stock` outright.
+- **It gets no COGS leg.** Cost of goods comes from cost layers, and there are none. Gross profit on a free-text line is simply its revenue, which is correct for a service.
+- **It posts to `AccountId`, not to a sub-account.** An item-backed line resolves its own revenue, inventory and COGS sub-accounts from the item; a free-text line has no such dimension, so it names the account directly. The consequence to carry: **item-level revenue reporting will not see these lines**, because they have no item to group by. They roll up under their account and nowhere else.
+
+Tax still works normally — `TaxTreatment`, `TaxMasterId` and the tax rows are all on the line already, so a free-text line is taxed by what the user picks rather than by what an item would have implied. `HsnSacCode` is typed rather than snapshotted, which is what a service invoice needs anyway.
+
+**A service that recurs belongs in the item master** as an `ItemType = Service` item — it gets a code, a default rate, a default SAC and a revenue sub-account, and it reports properly. Free-text is for the genuinely one-off; an item is for the thing you will sell again.
+
+**On the purchase side this column carries a second job.** Input tax credit is not claimable on an exempt supply, and a business making both taxable and exempt supplies has to reverse ITC proportionally. That proportion is computed from the lines, so the treatment has to be on the line and not inferred from a zero amount.
 
 **Two things this fixes that columns could not.**
 
@@ -1224,12 +1284,12 @@ The sales register — what was supplied, to whom, at what rate. The source for 
 | GstRate | decimal(9,4) | The total rate. Part of the grain |
 | Quantity | decimal(18,6) | Summed across the lines in this grain. The HSN summary reports quantity |
 | UqcCode | string(10)? | The **notified** unit, not the display unit — carat and tola are not notified, which is why `inv.UnitOfMeasures` carries this separately |
-| TaxableAmount | decimal(18,2) | |
-| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| TotalAmount | decimal(18,2) | |
+| TaxableAmount | decimal(28,2) | |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
+| TotalAmount | decimal(28,2) | |
 | CurrencyCode | string(3) | |
 | ExchangeRate | decimal(18,8) | Snapshot, as on the document |
-| TaxableAmountBase | decimal(18,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
+| TaxableAmountBase | decimal(28,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
 | OriginalInvoiceId | long? | Credit notes only |
 | OriginalInvoiceNo | string(30)? | GSTR-1 links a credit note to the invoice it amends |
 | OriginalInvoiceDate | DateOnly? | |

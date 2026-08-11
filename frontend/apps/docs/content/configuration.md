@@ -43,3 +43,9 @@ GET    /api/organizations/{orgId}/configurations
 PUT    /api/organizations/{orgId}/configurations/{code}   { value }
 DELETE /api/organizations/{orgId}/configurations/{code}   clears the override
 ```
+
+## Not here: the three document settings
+
+Whether a line may stand without an item, where a discount is keyed, and whether a discount reduces tax are **not** configuration keys. They live on **Settings › Organization**, beside the base currency and the financial-year start, because they are structural decisions about how this branch's documents are built rather than values that can be tuned.
+
+They are frozen the same way the base currency is: editable until the branch posts its first sales or purchase document, fixed after that.

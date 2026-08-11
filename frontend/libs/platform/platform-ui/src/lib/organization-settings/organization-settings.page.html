@@ -191,6 +191,53 @@
       </label>
     </div>
 
+    <h3>Documents</h3>
+    <p class="hint">
+      These three decide how every invoice and bill is built. Like the base currency
+      they are <strong>set once</strong> — they stay editable until this branch posts
+      its first sales or purchase document, and are fixed after that.
+    </p>
+
+    <div class="grid">
+      <label>
+        Lines without an item
+        <select name="allowFreeTextLines" [(ngModel)]="org.allowFreeTextLines">
+          <option [ngValue]="true">Allowed</option>
+          <option [ngValue]="false">Every line must name an item</option>
+        </select>
+        <small>
+          A line with no item carries a description, quantity and price — useful for a
+          service or a one-off charge. It moves no stock and never appears in a
+          sales-by-item report.
+        </small>
+      </label>
+
+      <label>
+        Discount entered at
+        <select name="discountLevel" [(ngModel)]="org.discountLevel">
+          <option value="Line">Line</option>
+          <option value="Header">Header</option>
+          <option value="Both">Both</option>
+        </select>
+        <small>
+          A header discount is spread across the lines by taxable value before tax,
+          because GST is charged per line.
+        </small>
+      </label>
+
+      <label>
+        Discount reduces tax
+        <select name="discountBeforeTax" [(ngModel)]="org.discountBeforeTax">
+          <option [ngValue]="true">Yes — taken off before GST</option>
+          <option [ngValue]="false">No — GST on the full value</option>
+        </select>
+        <small>
+          Yes is the trade-discount case. No is a settlement discount: it does not
+          reduce GST liability and must still be shown on the invoice.
+        </small>
+      </label>
+    </div>
+
     <p class="hint">
       Which currencies this branch trades in is set on Settings › Currencies;
       number formats and default terms on Settings › Configuration.

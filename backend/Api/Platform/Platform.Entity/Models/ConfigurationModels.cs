@@ -22,6 +22,7 @@ public class ConfigurationDto
     public string Value { get; set; } = null!;
 
     public bool IsOverridden { get; set; }
+
 }
 
 public class SetConfigurationRequest

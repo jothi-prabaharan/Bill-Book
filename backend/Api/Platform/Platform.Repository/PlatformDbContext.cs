@@ -44,6 +44,9 @@ public class PlatformDbContext : DbContext
             b.HasIndex(e => new { e.CustomerId, e.OrgCode }).IsUnique();
             b.HasIndex(e => e.CustomerId);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DiscountLevel).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.AllowFreeTextLines).HasDefaultValue(true);
+            b.Property(e => e.DiscountBeforeTax).HasDefaultValue(true);
 
             // Read on every login, alongside the customer's licence. Filtered,
             // because most branches have no date of their own and an index over

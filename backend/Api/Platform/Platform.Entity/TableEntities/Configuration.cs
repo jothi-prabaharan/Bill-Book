@@ -40,4 +40,5 @@ public class Configuration : AuditableEntity
 
     /// <summary>System keys can be overridden but not deleted.</summary>
     public bool IsSystem { get; set; }
+
 }

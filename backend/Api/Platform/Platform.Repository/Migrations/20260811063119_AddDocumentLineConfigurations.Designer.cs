@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Platform.Repository;
@@ -11,9 +12,11 @@ using Platform.Repository;
 namespace Platform.Repository.Migrations
 {
     [DbContext(typeof(PlatformDbContext))]
-    partial class PlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260811063119_AddDocumentLineConfigurations")]
+    partial class AddDocumentLineConfigurations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -52,6 +55,9 @@ namespace Platform.Repository.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<bool>("IsOneTime")
+                        .HasColumnType("boolean");
 
                     b.Property<bool>("IsSystem")
                         .HasColumnType("boolean");
@@ -100,6 +106,7 @@ namespace Platform.Repository.Migrations
                             Code = "unitPrice.decimals",
                             DataType = "Number",
                             Description = "Decimal places for unit price inputs",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Unit Price Decimals",
                             Value = "2",
@@ -112,6 +119,7 @@ namespace Platform.Repository.Migrations
                             Code = "quantity.decimals",
                             DataType = "Number",
                             Description = "Decimal places for quantity inputs",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Quantity Decimals",
                             Value = "2",
@@ -124,6 +132,7 @@ namespace Platform.Repository.Migrations
                             Code = "sales.dueDays",
                             DataType = "Number",
                             Description = "Default payment terms on invoices",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Sales Due Days",
                             Value = "30",
@@ -136,9 +145,49 @@ namespace Platform.Repository.Migrations
                             Code = "purchase.dueDays",
                             DataType = "Number",
                             Description = "Default payment terms on bills",
+                            IsOneTime = false,
                             IsSystem = true,
                             Name = "Purchase Due Days",
                             Value = "30",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000005"),
+                            Category = "Documents",
+                            Code = "documents.allowFreeTextLines",
+                            DataType = "Boolean",
+                            Description = "Let a sales or purchase line carry a description, quantity and price with no item behind it. Such a line moves no stock and posts to a named account, so it never appears in a sales-by-item report. Turn it off to require every line to name an item.",
+                            IsOneTime = true,
+                            IsSystem = true,
+                            Name = "Allow Lines Without An Item",
+                            Value = "true",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000006"),
+                            Category = "Documents",
+                            Code = "documents.discountLevel",
+                            DataType = "Text",
+                            Description = "Line, Header, or Both. A header discount is apportioned across the lines by taxable value before tax is computed, because GST is charged per line and a discount that never reaches a line cannot reduce it.",
+                            IsOneTime = true,
+                            IsSystem = true,
+                            Name = "Discount Entered At",
+                            Value = "Line",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            ConfigId = new Guid("a0000000-0000-0000-0000-000000000007"),
+                            Category = "Documents",
+                            Code = "documents.discountBeforeTax",
+                            DataType = "Boolean",
+                            Description = "On by default: the discount comes off before GST is computed, so it reduces the tax. Turn it off for a discount applied after tax — the tax is then charged on the full value and the discount only reduces what is collected. That is a real settlement or cash discount, but it does not reduce GST liability, and it must still be shown on the invoice.",
+                            IsOneTime = true,
+                            IsSystem = true,
+                            Name = "Discount Reduces Taxable Value",
+                            Value = "true",
                             Version = 0u
                         });
                 });
@@ -375,11 +424,6 @@ namespace Platform.Repository.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
-                    b.Property<bool>("AllowFreeTextLines")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
                     b.Property<string>("BaseCurrency")
                         .IsRequired()
                         .HasMaxLength(3)
@@ -404,16 +448,6 @@ namespace Platform.Repository.Migrations
 
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("uuid");
-
-                    b.Property<bool>("DiscountBeforeTax")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(true);
-
-                    b.Property<string>("DiscountLevel")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("Email")
                         .HasMaxLength(200)

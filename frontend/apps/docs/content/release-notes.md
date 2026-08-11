@@ -31,6 +31,11 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 
 ## Unreleased
 
+### Added
+- **Three document settings on Settings › Organization**, beside the base currency and the financial-year start. **Lines without an item** lets a sales or purchase line stand on a description, quantity and price with no item behind it — useful for a service or a one-off charge, at the cost that such a line moves no stock and never shows up in a sales-by-item report. **Discount entered at** chooses whether a discount is keyed on the line, on the header, or both; a header discount is apportioned across the lines before tax, because GST is charged per line and a discount that never reaches a line cannot reduce it. **Discount reduces tax** decides whether a discount reduces the taxable value — leave it on for a trade discount, turn it off for a settlement discount, which does not reduce GST liability and must still be shown on the invoice.
+
+  All three are **set once**, frozen the same way the base currency is: editable until the branch posts its first sales or purchase document, fixed after that. They started life as configuration keys and were moved — they are structural decisions about how documents are built, not values to be tuned, and they belong beside the other branch-level choices.
+
 ### Fixed
 - **Bank statements were unreachable through the gateway**, the same way the screens below were: the controller shipped without its route. Caught automatically this time — the Postman generator now refuses to run while any endpoint has no route through the front door.
 - **Journals, the account ledger, opening balances, period locks and the three money screens were unreachable through the gateway.** Their controllers had been added without the matching gateway routes, so every one of those screens worked when a service was called directly and returned "not found" through the front door every deployment actually uses. Seven routes added. Three services — contacts, inventory and banking — were also missing from the Production, Staging and UAT gateway configuration entirely, so those environments had routes pointing at destinations that were never declared.
