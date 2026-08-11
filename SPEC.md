@@ -1073,7 +1073,7 @@ Each concrete table adds only what is its own.
 | IsInterState | bool | **Stored, not re-derived.** Set once when the document is created, from the branch's state against the party's place of supply. It decides which components the tax rows carry — CGST + SGST, or IGST — and re-deriving it later against a party who has since moved would silently reclassify a document already filed with a return |
 | CurrencyCode | string(3) | Required |
 | ExchangeRate | decimal(18,8) | Default 1. Snapshot at document date |
-| SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | A **header** discount is apportioned across the lines by taxable value before tax is computed, and the line's own `DiscountAmount` carries its share. GST is charged per line, so a discount that never reaches a line cannot reduce it. Governed by `documents.discountLevel` |
+| SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | A **header** discount is apportioned across the lines by taxable value before tax is computed, and the line's own `DiscountAmount` carries its share. GST is charged per line, so a discount that never reaches a line cannot reduce it. Governed by `plt.Organizations.DiscountLevel`, which is set once per branch |
 | CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
 | RoundOffAmount | decimal(18,2) | Signed |
 | TotalAmount / TotalAmountBase | decimal(18,2) | |
