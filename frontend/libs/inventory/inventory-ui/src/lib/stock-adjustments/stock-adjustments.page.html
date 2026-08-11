@@ -1,0 +1,307 @@
+<header class="page-head">
+  <h1>Stock adjustments</h1>
+  <div class="head-actions">
+    <button type="button" (click)="newSheet('Adjustment')" [disabled]="busy()">
+      Write-off
+    </button>
+    <button type="button" (click)="newSheet('PhysicalCount')" [disabled]="busy()">
+      Physical count
+    </button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  A sheet posts as one document, however many items are on it — so the accounts show one
+  adjustment for a count, not one per line. A draft moves nothing and holds no number; both
+  arrive together when it posts. A posted sheet is never edited or deleted, because its stock
+  has already moved: correct it by reversing, which writes the mirror of it.
+</p>
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Number</th>
+      <th>Date</th>
+      <th>Kind</th>
+      <th>Reason</th>
+      <th class="num">Lines</th>
+      <th class="num">Net value</th>
+      <th>Status</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.stockAdjustmentId) {
+      <tr>
+        <td>
+          @if (row.adjustmentNo) {
+            <code>{{ row.adjustmentNo }}</code>
+          } @else {
+            <span class="muted">— not yet numbered</span>
+          }
+        </td>
+        <td>{{ row.adjustmentDate }}</td>
+        <td>{{ row.kind === 'PhysicalCount' ? 'Count' : 'Write-off' }}</td>
+        <td>{{ labelFor(row.reason) }}</td>
+        <td class="num">{{ row.lineCount }}</td>
+        <td class="num">
+          @if (row.netValue === null) {
+            <span class="badge low" title="Costing settles a moment behind">Costing…</span>
+          } @else {
+            <span [class.down]="row.netValue < 0">{{ row.netValue }}</span>
+          }
+        </td>
+        <td>
+          @switch (row.status) {
+            @case ('Posted') {
+              <span class="badge posted">Posted</span>
+            }
+            @case ('Reversed') {
+              <span class="badge out" [title]="'Reversed by sheet ' + row.reversedByStockAdjustmentId">
+                Reversed
+              </span>
+            }
+            @default {
+              <span class="badge low">Draft</span>
+            }
+          }
+          @if (row.reversesStockAdjustmentId) {
+            <span class="sub">reverses #{{ row.reversesStockAdjustmentId }}</span>
+          }
+        </td>
+        <td class="actions-col">
+          @if (row.status === 'Draft') {
+            <button type="button" class="link" (click)="edit(row)" [disabled]="busy()">Edit</button>
+            <button type="button" class="link" (click)="post(row)" [disabled]="busy()">Post</button>
+            <button type="button" class="link" (click)="remove(row)" [disabled]="busy()">
+              Discard
+            </button>
+          } @else {
+            <button type="button" class="link" (click)="view(row)" [disabled]="busy()">View</button>
+            @if (row.status === 'Posted') {
+              <button type="button" class="link" (click)="reverse(row)" [disabled]="busy()">
+                Reverse
+              </button>
+            }
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="8">No adjustments yet.</td></tr>
+    }
+  </tbody>
+</table>
+
+@if (editing(); as sheet) {
+  <div class="sheet">
+    <h2>{{ isCount ? 'Physical count' : 'Write-off' }}</h2>
+
+    <p class="hint">
+      @if (isCount) {
+        Key what was actually on the shelf. The difference against what the system holds is
+        worked out for you, and lines that agree are dropped rather than posted as zero — on a
+        real count most of them agree.
+      } @else {
+        Key what to write off or add back. Stock coming in needs a cost; stock going out is
+        valued at what it already cost, so no cost is asked for.
+      }
+    </p>
+
+    <div class="fields">
+      <label>
+        Date
+        <input type="date" [(ngModel)]="form.adjustmentDate" />
+        <small>The date it happened, not the date it was typed.</small>
+      </label>
+
+      <label>
+        Reason
+        <select [(ngModel)]="form.reason">
+          @for (reason of reasons; track reason.value) {
+            <option [value]="reason.value">{{ reason.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Warehouse
+        <select [(ngModel)]="form.warehouseId">
+          <option [ngValue]="null">Not recorded</option>
+          @for (warehouse of warehouses(); track warehouse.warehouseId) {
+            <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
+          }
+        </select>
+        <small>Where it was counted. Stock is one pool per branch either way.</small>
+      </label>
+
+      <label class="wide">
+        Notes
+        <input type="text" [(ngModel)]="form.notes" maxlength="500" />
+      </label>
+    </div>
+
+    <table class="grid lines">
+      <thead>
+        <tr>
+          <th>Item</th>
+          @if (isCount) {
+            <th class="num">Counted</th>
+          } @else {
+            <th class="num">Quantity</th>
+            <th>Direction</th>
+          }
+          <th class="num">Cost per unit</th>
+          <th>Batch</th>
+          <th>Note</th>
+          <th class="actions-col"><span class="sr-only">Remove</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of lines; track $index) {
+          <tr>
+            <td>
+              <select [(ngModel)]="line.itemId" [name]="'item' + $index">
+                <option [ngValue]="null">Choose an item</option>
+                @for (item of items(); track item.itemId) {
+                  <option [ngValue]="item.itemId">{{ item.itemCode }} — {{ item.itemName }}</option>
+                }
+              </select>
+            </td>
+
+            @if (isCount) {
+              <td class="num">
+                <input
+                  type="number"
+                  [(ngModel)]="line.countedQuantity"
+                  [name]="'counted' + $index"
+                  min="0"
+                  step="0.001"
+                />
+              </td>
+            } @else {
+              <td class="num">
+                <input
+                  type="number"
+                  [(ngModel)]="line.quantity"
+                  [name]="'qty' + $index"
+                  min="0"
+                  step="0.001"
+                />
+              </td>
+              <td>
+                <select [(ngModel)]="line.direction" [name]="'dir' + $index">
+                  <option value="Out">Out — written off</option>
+                  <option value="In">In — added back</option>
+                </select>
+              </td>
+            }
+
+            <td class="num">
+              @if (line.direction === 'In' && !isCount) {
+                <input
+                  type="number"
+                  [(ngModel)]="line.unitCost"
+                  [name]="'cost' + $index"
+                  min="0"
+                  step="0.000001"
+                />
+              } @else {
+                <span class="muted">—</span>
+              }
+            </td>
+
+            <td>
+              <input
+                type="text"
+                [(ngModel)]="line.batchNumber"
+                [name]="'batch' + $index"
+                maxlength="50"
+              />
+            </td>
+
+            <td>
+              <input
+                type="text"
+                [(ngModel)]="line.notes"
+                [name]="'note' + $index"
+                maxlength="300"
+              />
+            </td>
+
+            <td class="actions-col">
+              <button type="button" class="link" (click)="removeLine($index)">Remove</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="sheet-actions">
+      <button type="button" class="link" (click)="addLine()">Add a line</button>
+      <button type="button" (click)="save()" [disabled]="busy() || !canSave">Save draft</button>
+      <button type="button" class="link" (click)="editing.set(null)">Cancel</button>
+    </div>
+    <span class="sr-only">{{ sheet.stockAdjustmentId }}</span>
+  </div>
+}
+
+@if (viewing(); as sheet) {
+  <div class="sheet">
+    <h2>{{ sheet.adjustmentNo }} — {{ labelFor(sheet.reason) }}</h2>
+
+    <p class="hint">
+      Posted {{ sheet.postedAt }}. {{ sheet.lineCount }} line(s), dated {{ sheet.adjustmentDate }}.
+      @if (sheet.notes) {
+        {{ sheet.notes }}
+      }
+    </p>
+
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Item</th>
+          @if (sheet.kind === 'PhysicalCount') {
+            <th class="num">System held</th>
+            <th class="num">Counted</th>
+          }
+          <th class="num">Moved</th>
+          <th class="num">Cost</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of sheet.lines; track line.stockAdjustmentLineId) {
+          <tr>
+            <td>{{ line.lineNumber }}</td>
+            <td><code>{{ line.itemCode }}</code> {{ line.itemName }}</td>
+            @if (sheet.kind === 'PhysicalCount') {
+              <td class="num">{{ line.systemQuantity }}</td>
+              <td class="num">{{ line.countedQuantity }}</td>
+            }
+            <td class="num">
+              {{ line.direction === 'Out' ? '−' : '+' }}{{ line.quantity }}
+              {{ line.inventoryUomCode }}
+            </td>
+            <td class="num">
+              @if (line.movementTotalCost === null) {
+                <span class="badge low">Costing…</span>
+              } @else {
+                {{ line.movementTotalCost }}
+              }
+            </td>
+            <td>{{ line.notes ?? '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="sheet-actions">
+      <button type="button" class="link" (click)="viewing.set(null)">Close</button>
+    </div>
+  </div>
+}

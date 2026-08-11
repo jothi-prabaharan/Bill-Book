@@ -157,6 +157,12 @@ export const appRoutes: Routes = [
         data: { permission: 'inventory.view' },
       },
       {
+        path: 'inventory/stock-adjustments',
+        loadComponent: () =>
+          import('@bill-book/inventory-ui').then((m) => m.StockAdjustmentsPage),
+        data: { permission: 'inventory.view' },
+      },
+      {
         path: 'inventory/warehouses',
         loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.WarehousesPage),
         data: { permission: 'inventory.view' },

@@ -4,3 +4,4 @@ export * from './lib/metal-purities/metal-purities.page';
 export * from './lib/warehouses/warehouses.page';
 export * from './lib/items/items.page';
 export * from './lib/stock/stock.page';
+export * from './lib/stock-adjustments/stock-adjustments.page';

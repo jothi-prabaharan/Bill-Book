@@ -44,6 +44,7 @@ public sealed class InternalSeedController : ControllerBase
 
         var uom = _services.GetRequiredService<UomService>();
         var purities = _services.GetRequiredService<MetalPurityService>();
+        var seeder = _services.GetRequiredService<InventorySeeder>();
 
         var response = new SeedOrganizationResponse
         {
@@ -51,6 +52,7 @@ public sealed class InternalSeedController : ControllerBase
             {
                 ["unitTypesAndUnits"] = await uom.SeedForOrganizationAsync(request.OrgId, ct),
                 ["metalPurities"] = await purities.SeedForOrganizationAsync(request.OrgId, ct),
+                ["numberingSeries"] = await seeder.SeedNumberingSeriesAsync(request.OrgId, ct),
             },
         };
 

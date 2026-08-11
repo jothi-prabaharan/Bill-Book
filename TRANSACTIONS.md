@@ -189,9 +189,14 @@ An invoice and its receipt in one action, from `apps/desktop`, which today has n
 
 Movements already post as `STA` when they have no document behind them, each filed under its own movement id. What is missing is the document: a sheet of lines with a reason and an approval, rather than one movement at a time.
 
-- [ ] **T9.1 — `inv.StockAdjustments` header and lines**, with a reason and an approver, posting through the existing mapping under one document id instead of per movement.
-- [ ] **T9.2 — Physical count** — enter counted quantities, adjust to the difference, and post the sheet as one document.
+- [x] **T9.1 — `inv.StockAdjustments` header and lines**, with a reason and an approver, posting through the existing mapping under one document id instead of per movement.
+  Built. **The approver is `PostedBy`** — no separate column, because `CreatedBy` (who keyed it) and `PostedBy` (who authorised it) already are the segregation of duties, and a third column repeating one of them is the `BranchId`-beside-`OrgId` mistake. The reason is an enum rather than a per-branch master: the list is the same in every branch, and it is what a shrinkage report groups by, so letting two branches spell "Damage" differently would make that report meaningless across a customer.
+  **It posts nothing itself.** Each line writes an ordinary movement carrying the sheet's id and line number, and `StockLedgerMapping` already files a sourced movement under its document — so the accounting fell out of machinery that was already tested, and there is still exactly one place that decides what a movement means in the ledger.
+  **No void, unlike a money document.** Voiding a payment withdraws ledger rows and nothing else happened; this would have to un-move stock that moved. Reversing writes a mirror sheet instead, linked from both ends.
+- [x] **T9.2 — Physical count** — enter counted quantities, adjust to the difference, and post the sheet as one document.
   *Done when*: a count sheet of twenty items posts as one document with twenty movements, and the ledger shows one adjustment rather than twenty.
+  Done, and tested against a real PostgreSQL rather than asserted: a three-item count posts as one document whose movements all carry the sheet's id with their own line numbers — which is the ledger key, and therefore the actual claim. Lines that agree with the books are dropped rather than posted as zero, and the quantity the system held at the moment of counting is snapshotted so the difference can be re-checked later.
+  **Building it found a real defect in `StockService`**: it opened its own transaction per movement, so a sheet posting several lines inside one transaction threw on the second. It now joins an ambient transaction when there is one and commits only what it opened — without which the all-or-nothing guarantee was not merely untested but impossible.
 
 ---
 

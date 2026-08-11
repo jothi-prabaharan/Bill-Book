@@ -50,6 +50,15 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<RecostingAdjustment> RecostingAdjustments => Set<RecostingAdjustment>();
 
     /// <summary>
+    /// Adjustment sheets — a count or a write-off posted as one document. The
+    /// movements they write are ordinary <see cref="StockMovements"/> rows; this
+    /// is what groups them and says why.
+    /// </summary>
+    public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
+
+    public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
+
+    /// <summary>
     /// Mapped, not migrated. Accounting owns this table; Inventory maps the same
     /// Shared.Kernel entity so an item code is allocated inside the same
     /// transaction as the item insert.
@@ -642,6 +651,124 @@ public class InventoryDbContext : TenantDbContext
             b.ToTable(table => table.HasCheckConstraint(
                 "chk_recosting_delta",
                 "\"Delta\" = \"NewCost\" - \"PreviousCost\""));
+        });
+
+        modelBuilder.Entity<StockAdjustment>(b =>
+        {
+            b.HasKey(e => e.StockAdjustmentId);
+
+            // The document number, once taken. Filtered because a draft has none
+            // and several drafts would otherwise collide on null.
+            b.HasIndex(e => new { e.OrgId, e.AdjustmentNo })
+                .IsUnique()
+                .HasFilter("\"AdjustmentNo\" IS NOT NULL")
+                .HasDatabaseName("IX_StockAdjustments_Number");
+
+            // The list screen: newest first within a branch.
+            b.HasIndex(e => new { e.OrgId, e.AdjustmentDate, e.StockAdjustmentId })
+                .HasDatabaseName("IX_StockAdjustments_Date");
+
+            b.HasIndex(e => new { e.OrgId, e.Status })
+                .HasDatabaseName("IX_StockAdjustments_Status");
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(15);
+            b.Property(e => e.Reason).HasConversion<string>().HasMaxLength(20);
+
+            b.HasOne<Warehouse>()
+                .WithMany()
+                .HasForeignKey(e => e.WarehouseId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // Both ends of the reversal pair. Restrict rather than cascade: a
+            // document that undid another must not disappear when the other
+            // does, because then only half the story would be left.
+            b.HasOne<StockAdjustment>()
+                .WithMany()
+                .HasForeignKey(e => e.ReversesStockAdjustmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // A number and a poster arrive together, and only once posted.
+                // Without this a draft could carry a number, which is the one
+                // way a gapless series springs a leak.
+                table.HasCheckConstraint(
+                    "chk_adjustment_posted",
+                    "(\"Status\" = 'Draft' AND \"AdjustmentNo\" IS NULL AND \"PostedAt\" IS NULL) "
+                        + "OR (\"Status\" <> 'Draft' AND \"AdjustmentNo\" IS NOT NULL "
+                        + "AND \"PostedAt\" IS NOT NULL)");
+
+                // A document cannot reverse itself. Cheap to state, and the
+                // alternative is a pair that looks linked and points nowhere.
+                table.HasCheckConstraint(
+                    "chk_adjustment_not_self_reversing",
+                    "\"ReversesStockAdjustmentId\" IS NULL "
+                        + "OR \"ReversesStockAdjustmentId\" <> \"StockAdjustmentId\"");
+            });
+        });
+
+        modelBuilder.Entity<StockAdjustmentLine>(b =>
+        {
+            b.HasKey(e => e.StockAdjustmentLineId);
+
+            // The line's identity within its sheet, and what becomes the
+            // movement's SourceLineId. Unique so two lines cannot claim one
+            // ledger key.
+            b.HasIndex(e => new { e.StockAdjustmentId, e.LineNumber })
+                .IsUnique()
+                .HasDatabaseName("IX_StockAdjustmentLines_Line");
+
+            b.HasIndex(e => new { e.OrgId, e.ItemId })
+                .HasDatabaseName("IX_StockAdjustmentLines_Item");
+
+            b.Property(e => e.Direction).HasConversion<string>().HasMaxLength(3);
+
+            foreach (string qty in new[] { "Quantity", "SystemQuantity", "CountedQuantity" })
+            {
+                b.Property(qty).HasColumnType("decimal(18,3)");
+            }
+
+            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
+
+            b.HasOne<StockAdjustment>()
+                .WithMany()
+                .HasForeignKey(e => e.StockAdjustmentId)
+                // Cascade, and only here: a draft's lines have no meaning apart
+                // from the sheet, and a posted sheet cannot be deleted at all.
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<Item>()
+                .WithMany()
+                .HasForeignKey(e => e.ItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<StockMovement>()
+                .WithMany()
+                .HasForeignKey(e => e.StockMovementId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.ToTable(table =>
+            {
+                // Positive quantities only; Direction carries the sign, exactly
+                // as on a movement.
+                table.HasCheckConstraint(
+                    "chk_adjustment_line_quantity",
+                    "\"Quantity\" > 0");
+
+                // A counted line keeps both halves of its arithmetic or neither.
+                // One without the other is a difference nobody can re-check.
+                table.HasCheckConstraint(
+                    "chk_adjustment_line_count",
+                    "(\"CountedQuantity\" IS NULL AND \"SystemQuantity\" IS NULL) "
+                        + "OR (\"CountedQuantity\" IS NOT NULL AND \"SystemQuantity\" IS NOT NULL)");
+
+                // Cost belongs to stock coming in. On the way out it is settled
+                // from the layers, so a figure here would be silently ignored.
+                table.HasCheckConstraint(
+                    "chk_adjustment_line_cost",
+                    "\"UnitCost\" IS NULL OR \"Direction\" = 'In'");
+            });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

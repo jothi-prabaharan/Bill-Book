@@ -74,6 +74,8 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
 builder.Services.AddScoped<UomService>();
 builder.Services.AddScoped<ItemCategoryService>();
 builder.Services.AddScoped<MetalPurityService>();
+builder.Services.AddScoped<InventorySeeder>();
+builder.Services.AddScoped<StockAdjustmentService>();
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<CostingService>();

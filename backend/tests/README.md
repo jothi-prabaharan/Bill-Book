@@ -25,6 +25,7 @@ Everything here is **pure logic**: no `DbContext`, no HTTP, no mocks.
 | `NumberFormatTests` | Code composition, financial-year rendering, reset timing | Fails silently — a wrong year segment produces a number that reads perfectly and is only caught at audit |
 | `ReorderingTests` | Drag-and-drop display order, including the renumber path | The renumber branch only runs when neighbours have no gap between them, so nobody exercises it by hand |
 | `PhoneAttributeTests` | Landline pattern, mobile length | A regex that forgets the leading `+` rejects every overseas number |
+| `StockAdjustmentServiceTests` | An adjustment sheet against a real PostgreSQL: one document, all-or-nothing posting, numbering at post, reversal by mirror | Half of what a sheet guarantees lives in the database — five check constraints, the guarded decrement, and a number allocated inside the caller's transaction. It found a real defect the first time it ran |
 | `StockLedgerMappingTests` | What a stock movement means in the general ledger | The clearest case of failing silently in the product: a wrong guard refuses a sale and somebody rings up, but a wrong account produces a balance sheet that still balances and a gross margin that is simply untrue |
 
 That line is what decides whether something belongs in the pure set.

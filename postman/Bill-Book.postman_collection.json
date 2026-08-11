@@ -1264,7 +1264,7 @@
   },
   {
    "name": "5 \u00b7 Inventory",
-   "description": "40 endpoints across 6 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "description": "47 endpoints across 7 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "List \u2014 GET /api/item-categories",
@@ -1547,6 +1547,121 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/stock-adjustments",
+     "description": "`Inventory.StockAdjustmentsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/stock-adjustments",
+     "description": "`Inventory.StockAdjustmentsController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"adjustmentDate\": \"2026-08-10\",\n  \"kind\": \"<Kind>\",\n  \"reason\": \"<Reason>\",\n  \"warehouseId\": 1,\n  \"notes\": \"<Notes>\",\n  \"lines\": [\n    {\n      \"itemId\": 1,\n      \"uomId\": 1,\n      \"countedQuantity\": 0,\n      \"quantity\": 0,\n      \"direction\": \"<Direction>\",\n      \"unitCost\": 0,\n      \"batchNumber\": \"<BatchNumber>\",\n      \"batchExpiryDate\": \"2026-08-10\",\n      \"notes\": \"<Notes>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/stock-adjustments/:stockAdjustmentId",
+     "description": "`Inventory.StockAdjustmentsController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments/:stockAdjustmentId"
+      }
+     }
+    },
+    {
+     "name": "Get \u2014 GET /api/stock-adjustments/:stockAdjustmentId",
+     "description": "`Inventory.StockAdjustmentsController.Get`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments/:stockAdjustmentId"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/stock-adjustments/:stockAdjustmentId",
+     "description": "`Inventory.StockAdjustmentsController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments/:stockAdjustmentId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"adjustmentDate\": \"2026-08-10\",\n  \"kind\": \"<Kind>\",\n  \"reason\": \"<Reason>\",\n  \"warehouseId\": 1,\n  \"notes\": \"<Notes>\",\n  \"lines\": [\n    {\n      \"itemId\": 1,\n      \"uomId\": 1,\n      \"countedQuantity\": 0,\n      \"quantity\": 0,\n      \"direction\": \"<Direction>\",\n      \"unitCost\": 0,\n      \"batchNumber\": \"<BatchNumber>\",\n      \"batchExpiryDate\": \"2026-08-10\",\n      \"notes\": \"<Notes>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Post \u2014 POST /api/stock-adjustments/:stockAdjustmentId/post",
+     "description": "`Inventory.StockAdjustmentsController.Post`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments/:stockAdjustmentId/post"
+      }
+     }
+    },
+    {
+     "name": "Reverse \u2014 POST /api/stock-adjustments/:stockAdjustmentId/reverse",
+     "description": "`Inventory.StockAdjustmentsController.Reverse`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/stock-adjustments/:stockAdjustmentId/reverse"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"notes\": \"<Notes>\"\n}",
        "options": {
         "raw": {
          "language": "json"

@@ -35,6 +35,33 @@ public sealed class StockService
     /// <summary>Quantities are held to three decimals; the movement check constraint asserts the same.</summary>
     private const int QuantityScale = 3;
 
+    /// <summary>
+    /// Commits only a transaction this service opened. Null means the caller
+    /// owns it, and the caller decides — committing someone else's transaction
+    /// from inside one of its steps is how a sheet of twenty ends up half
+    /// posted.
+    /// </summary>
+    private static async Task Settle(IDbContextTransaction? owned, CancellationToken ct)
+    {
+        if (owned is not null)
+        {
+            await owned.CommitAsync(ct);
+        }
+    }
+
+    /// <summary>
+    /// Rolls back only a transaction this service opened. When the caller owns
+    /// it, returning the failure outcome is enough — the caller rolls back, and
+    /// unwinding from here would abort work it had not finished deciding about.
+    /// </summary>
+    private static async Task Unwind(IDbContextTransaction? owned, CancellationToken ct)
+    {
+        if (owned is not null)
+        {
+            await owned.RollbackAsync(ct);
+        }
+    }
+
     public async Task<StockPosition?> GetAsync(long itemId, CancellationToken ct)
     {
         List<StockPosition> rows = await QueryPositions(_db.Items.Where(i => i.ItemId == itemId))
@@ -381,7 +408,20 @@ public sealed class StockService
         RecordStockMovementRequest request,
         CancellationToken ct)
     {
-        await using IDbContextTransaction tx = await _db.Database.BeginTransactionAsync(ct);
+        // Join the caller's transaction when there is one, rather than opening a
+        // second. A stock adjustment sheet posts its lines inside one
+        // transaction so that a sheet of twenty is all-or-nothing, and a
+        // movement that insisted on its own would both refuse to start and, if
+        // it could, commit line sixteen while line seventeen was still to fail.
+        //
+        // The one that opened it is the one that finishes it: `owned` is null
+        // when this call is a participant, and every commit and rollback below
+        // is a no-op in that case, leaving the outcome to the caller.
+        IDbContextTransaction? owned = _db.Database.CurrentTransaction is null
+            ? await _db.Database.BeginTransactionAsync(ct)
+            : null;
+
+        await using IDbContextTransaction? tx = owned;
 
         decimal? resultingCost = null;
 
@@ -401,7 +441,7 @@ public sealed class StockService
                 if (moved == 0)
                 {
                     // No row, or not enough in it. Either way nothing changed.
-                    await tx.RollbackAsync(ct);
+                    await Unwind(owned, ct);
                     return Fail(StockOutcome.InsufficientStock);
                 }
             }
@@ -420,7 +460,7 @@ public sealed class StockService
 
             if (!enough)
             {
-                await tx.RollbackAsync(ct);
+                await Unwind(owned, ct);
                 return Fail(StockOutcome.InsufficientStock);
             }
         }
@@ -476,7 +516,7 @@ public sealed class StockService
 
         if (prepared != StockOutcome.Ok)
         {
-            await tx.RollbackAsync(ct);
+            await Unwind(owned, ct);
             return Fail(prepared);
         }
 
@@ -500,7 +540,7 @@ public sealed class StockService
                     s => s.SetProperty(x => x.LastMovementAt, _clock.GetUtcNow()), ct);
         }
 
-        await tx.CommitAsync(ct);
+        await Settle(owned, ct);
 
         return new RecordStockMovementResult(
             StockOutcome.Ok, movement.StockMovementId, await GetAsync(item.ItemId, ct));
