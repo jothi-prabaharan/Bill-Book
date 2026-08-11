@@ -32,6 +32,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ## Unreleased
 
 ### Fixed
+- **Bank statements were unreachable through the gateway**, the same way the screens below were: the controller shipped without its route. Caught automatically this time — the Postman generator now refuses to run while any endpoint has no route through the front door.
 - **Journals, the account ledger, opening balances, period locks and the three money screens were unreachable through the gateway.** Their controllers had been added without the matching gateway routes, so every one of those screens worked when a service was called directly and returned "not found" through the front door every deployment actually uses. Seven routes added. Three services — contacts, inventory and banking — were also missing from the Production, Staging and UAT gateway configuration entirely, so those environments had routes pointing at destinations that were never declared.
 
 ### Changed

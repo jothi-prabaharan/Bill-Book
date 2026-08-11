@@ -2716,7 +2716,7 @@
   },
   {
    "name": "7 \u00b7 Banking",
-   "description": "33 endpoints across 5 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "description": "42 endpoints across 6 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "List \u2014 GET /api/bank-accounts",
@@ -2831,6 +2831,141 @@
         "value": "application/json"
        }
       ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/statements",
+     "description": "`Banking.BankStatementsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements"
+      }
+     }
+    },
+    {
+     "name": "Export \u2014 GET /api/statements/:bankStatementId/export",
+     "description": "`Banking.BankStatementsController.Export`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/export"
+      }
+     }
+    },
+    {
+     "name": "Lines \u2014 GET /api/statements/:bankStatementId/lines",
+     "description": "`Banking.BankStatementsController.Lines`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/lines"
+      }
+     }
+    },
+    {
+     "name": "Import \u2014 POST /api/statements/import",
+     "description": "`Banking.BankStatementsController.Import`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/import"
+      }
+     }
+    },
+    {
+     "name": "Ignore \u2014 POST /api/statements/lines/:bankStatementLineId/ignore",
+     "description": "`Banking.BankStatementsController.Ignore`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/ignore"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"note\": \"<Note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Match \u2014 POST /api/statements/lines/:bankStatementLineId/match",
+     "description": "`Banking.BankStatementsController.Match`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/match"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionTypeCode\": \"<TransactionTypeCode>\",\n  \"transactionId\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Unmatch \u2014 POST /api/statements/lines/:bankStatementLineId/unmatch",
+     "description": "`Banking.BankStatementsController.Unmatch`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/unmatch"
+      }
+     }
+    },
+    {
+     "name": "Save profile \u2014 PUT /api/statements/profiles",
+     "description": "`Banking.BankStatementsController.SaveProfile`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/profiles"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankAccountId\": 1,\n  \"skipRows\": 1,\n  \"hasHeaderRow\": false,\n  \"dateFormat\": \"<DateFormat>\",\n  \"dateColumn\": \"<DateColumn>\",\n  \"valueDateColumn\": \"<ValueDateColumn>\",\n  \"descriptionColumn\": \"<DescriptionColumn>\",\n  \"referenceColumn\": \"<ReferenceColumn>\",\n  \"withdrawalColumn\": \"<WithdrawalColumn>\",\n  \"depositColumn\": \"<DepositColumn>\",\n  \"amountColumn\": \"<AmountColumn>\",\n  \"negativeIsDeposit\": false,\n  \"balanceColumn\": \"<BalanceColumn>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Profile \u2014 GET /api/statements/profiles/:bankAccountId",
+     "description": "`Banking.BankStatementsController.Profile`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/profiles/:bankAccountId"
+      }
      }
     },
     {
