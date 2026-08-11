@@ -18,12 +18,40 @@ PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." &
 DOTNET_DIR="${DOTNET_ROOT:-$HOME/.dotnet}"
 
 # ---------------------------------------------------------------- frontend
-# npm install rather than npm ci: the container image is cached after this
-# script finishes, and install reuses that cache where ci would discard it.
+# `npm ci`, not `npm install`, and only when the tree does not already match the
+# lockfile.
+#
+# install was here first, for the right reason — the container image is cached
+# after this script finishes, so a warm start should not reinstall. But install
+# *rewrites* `package-lock.json` as a side effect: it re-resolves anything the
+# lock leaves room for and rewrites peer markers, so every session began with a
+# dirty working tree and a lockfile diff nobody asked for. That defeats the
+# reason the lockfile is committed at all (master.md 5.15) — a lock that changes
+# on its own is not a lock.
+#
+# The stamp keeps the speed. `npm ci` runs on a cold container or after the
+# lockfile genuinely changes, and a warm start with an unchanged lock does
+# nothing at all, which is faster than install's no-op.
 if [ -f "$PROJECT_DIR/frontend/package.json" ]; then
-  echo "==> Installing frontend packages"
-  (cd "$PROJECT_DIR/frontend" && npm install --no-audit --no-fund) \
-    || echo "!! npm install failed — the Angular apps will not build."
+  FRONTEND="$PROJECT_DIR/frontend"
+  LOCK_HASH="$(sha256sum "$FRONTEND/package-lock.json" 2>/dev/null | cut -d' ' -f1)"
+  STAMP="$FRONTEND/node_modules/.installed-lock-hash"
+
+  if [ -n "$LOCK_HASH" ] && [ -d "$FRONTEND/node_modules" ] \
+      && [ "$(cat "$STAMP" 2>/dev/null)" = "$LOCK_HASH" ]; then
+    echo "==> Frontend packages already match the lockfile"
+  else
+    echo "==> Installing frontend packages"
+    if (cd "$FRONTEND" && npm ci --no-audit --no-fund); then
+      [ -n "$LOCK_HASH" ] && printf '%s\n' "$LOCK_HASH" > "$STAMP"
+    else
+      # ci refuses when package.json and the lock disagree. Say which it is
+      # rather than falling back to install and quietly editing the lock.
+      echo "!! npm ci failed — the Angular apps will not build."
+      echo "!! If it reported the lockfile is out of sync, run 'npm install' in"
+      echo "!! frontend/ by hand and commit the updated package-lock.json."
+    fi
+  fi
 fi
 
 # ---------------------------------------------------------------- .NET SDK
