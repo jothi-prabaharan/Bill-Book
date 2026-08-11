@@ -1102,15 +1102,15 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | {Doc}Id | long | Required, FK, cascade delete |
 | OrgId | Guid | Required. Detail tables carry their own — see T0.5 |
 | LineNumber | int | Required |
-| ItemId | long | Required. No FK — Inventory is another service |
-| ItemCode / ItemName | string(50) / string(200) | Snapshots |
-| HsnSacCode | string(8)? | Snapshot. Statutory |
-| Description | string(500)? | |
-| WarehouseId | long? | Location only — never partitions stock |
+| ItemId | long? | **Nullable.** No FK — Inventory is another service. Null makes this a **free-text line**: a service, freight, a one-off charge, anything not in the item master |
+| ItemCode / ItemName | string(50)? / string(200)? | Snapshots. Null on a free-text line |
+| HsnSacCode | string(8)? | Snapshot from the item, or **typed directly** on a free-text line — an SAC code is statutory on a service invoice whether or not the service is a catalogued item |
+| Description | string(500)? | **Required when `ItemId` is null.** It is the only thing naming what was sold |
+| WarehouseId | long? | Location only — never partitions stock. Null on a free-text line |
 | Quantity | decimal(18,6) | As entered |
 | UomId | long | |
 | ConversionFactor | decimal(18,6) | Stored, not re-derived |
-| BaseQuantity | decimal(18,6) | In the item's inventory unit |
+| BaseQuantity | decimal(18,6) | In the item's inventory unit. Equals `Quantity` on a free-text line |
 | UnitPrice | decimal(18,6) | Per **entered** unit |
 | IsPriceInclusive | bool | Inclusive back-computes `taxable = inclusive ÷ (1 + rate)`. MRP-inclusive is the Indian retail default, pharma especially. **Orthogonal to `TaxTreatment`** — one says how the price was quoted, the other whether tax applies |
 | DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
@@ -1120,7 +1120,7 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | TaxAmount | decimal(18,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
 | LineTotal | decimal(18,2) | `TaxableAmount + TaxAmount` |
 | LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
-| ExpenseAccountId | long? | Required when `LineType = Expense` |
+| AccountId | long? | **The account this line posts to when there is no item to post through.** Required on a free-text line and on any `Expense` line; ignored when the line is item-backed, because an item already resolves its own revenue, inventory and COGS sub-accounts. One column rather than a separate expense and income one — a line posts to exactly one account either way |
 | FixedAssetCategoryId | long? | Required when `LineType = Capital` |
 | ItemBatchId | long? | One lot per line |
 | LineNotes | string(300)? | |
@@ -1176,6 +1176,18 @@ All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the 
 Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
 
 **Checks**: `chk_linetax_amounts_non_negative` · `chk_linetax_component` — `Cgst` and `Sgst` may not sit on the same line as `Igst`, because a supply is intra-state or inter-state and never both.
+
+#### Free-text lines
+
+**A line does not need an item.** `ItemId` is nullable, and a line with none carries a description, a quantity and a unit price — a service, freight, a delivery charge, a one-off. Three consequences, and all three are the point rather than a limitation:
+
+- **It never touches stock.** No item means nothing to issue or receive, so no `inv.StockMovements` row and no reservation. `chk_line_free_text` refuses `LineType = Stock` outright.
+- **It gets no COGS leg.** Cost of goods comes from cost layers, and there are none. Gross profit on a free-text line is simply its revenue, which is correct for a service.
+- **It posts to `AccountId`, not to a sub-account.** An item-backed line resolves its own revenue, inventory and COGS sub-accounts from the item; a free-text line has no such dimension, so it names the account directly. The consequence to carry: **item-level revenue reporting will not see these lines**, because they have no item to group by. They roll up under their account and nowhere else.
+
+Tax still works normally — `TaxTreatment`, `TaxMasterId` and the tax rows are all on the line already, so a free-text line is taxed by what the user picks rather than by what an item would have implied. `HsnSacCode` is typed rather than snapshotted, which is what a service invoice needs anyway.
+
+**A service that recurs belongs in the item master** as an `ItemType = Service` item — it gets a code, a default rate, a default SAC and a revenue sub-account, and it reports properly. Free-text is for the genuinely one-off; an item is for the thing you will sell again.
 
 **On the purchase side this column carries a second job.** Input tax credit is not claimable on an exempt supply, and a business making both taxable and exempt supplies has to reverse ITC proportionally. That proportion is computed from the lines, so the treatment has to be on the line and not inferred from a zero amount.
 
