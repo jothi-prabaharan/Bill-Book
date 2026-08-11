@@ -1047,14 +1047,21 @@ Ten tables. Each header still carries `TransactionTypeCode`, because the ledger 
 
 **A POS sale has no table of its own — it is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'`.** It is the same document: same lines, same GST, same stock issue, same `Dr Accounts Receivable / Cr Sales Revenue`. What differs is the screen and that payment is taken at the same moment. **POS is a UI module, not a data model.** `TransactionTypeCode` is fixed per table everywhere except `sal.Invoices`, which holds `INV` or `POS` — and that distinction still has to be stored, because the two use different numbering series and GSTR-1 usually reports a till sale as B2C.
 
+**Money is `decimal(28,2)`; a unit price is `decimal(28,6)`.** Twenty-eight is the ceiling, and it is C#'s rather than Postgres's — `numeric` goes to 1000 digits, but a C# `decimal` holds 28–29 significant digits and anything wider overflows the moment it is read back. Postgres `numeric` is variable-length, so a wide declaration costs nothing in storage or index size for the values actually stored; what it costs is that the column stops being a sanity check, and a fat-fingered amount has to be caught by a check constraint or a screen instead.
+
 **The columns are the same in all five pairs.** Write them once as base classes in `Shared.Kernel` and inherit — not copy. Hand-maintained copies of a tax split is how a GST column comes to mean one thing on an invoice and another on a credit note.
 
 ```
-DocumentHeaderBase : OrgScopedEntity     the header columns below
-DocumentLineBase   : OrgScopedEntity     the line columns below
+AuditableEntity                          CreatedBy · CreatedAt · ModifiedBy · ModifiedAt · xmin
+  └─ OrgScopedEntity                     OrgId
+       ├─ DocumentHeaderBase             the header columns below
+       ├─ DocumentLineBase               the line columns below
+       └─ DocumentLineTaxBase            the tax-row columns below
 ```
 
 Each concrete table adds only what is its own.
+
+**The audit columns and `OrgId` arrive through that chain**, which is why neither appears again in the lists below — the same convention the rest of this file follows. Inheriting `OrgScopedEntity` rather than `AuditableEntity` directly is what makes the query filter apply by reflection, so a document table cannot be added without one.
 
 #### Header columns — every pair
 
@@ -1072,10 +1079,10 @@ Each concrete table adds only what is its own.
 | IsInterState | bool | **Stored, not re-derived.** Set once when the document is created, from the branch's state against the party's place of supply. It decides which components the tax rows carry — CGST + SGST, or IGST — and re-deriving it later against a party who has since moved would silently reclassify a document already filed with a return |
 | CurrencyCode | string(3) | Required |
 | ExchangeRate | decimal(18,8) | Default 1. Snapshot at document date |
-| SubTotal / DiscountAmount / TaxableAmount | decimal(18,2) | A **header** discount is apportioned across the lines by taxable value before tax is computed, and the line's own `DiscountAmount` carries its share. GST is charged per line, so a discount that never reaches a line cannot reduce it. Governed by `plt.Organizations.DiscountLevel`, which is set once per branch |
-| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| RoundOffAmount | decimal(18,2) | Signed |
-| TotalAmount / TotalAmountBase | decimal(18,2) | |
+| SubTotal / DiscountAmount / TaxableAmount | decimal(28,2) | A **header** discount is apportioned across the lines by taxable value before tax is computed, and the line's own `DiscountAmount` carries its share. GST is charged per line, so a discount that never reaches a line cannot reduce it. Governed by `plt.Organizations.DiscountLevel`, which is set once per branch |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
+| RoundOffAmount | decimal(28,2) | Signed |
+| TotalAmount / TotalAmountBase | decimal(28,2) | |
 | Status | enum→string(10) | Draft / Posted / Void |
 | Notes / TermsAndConditions | string? | |
 | PostedAt / PostedBy | DateTimeOffset? / Guid? | |
@@ -1109,14 +1116,14 @@ Each conversion link is a **real foreign key** — `Invoices.SalesOrderId → Sa
 | UomId | long | |
 | ConversionFactor | decimal(18,6) | Stored, not re-derived |
 | BaseQuantity | decimal(18,6) | In the item's inventory unit. Equals `Quantity` on a free-text line |
-| UnitPrice | decimal(18,6) | Per **entered** unit |
+| UnitPrice | decimal(28,6) | Per **entered** unit |
 | IsPriceInclusive | bool | Inclusive back-computes `taxable = inclusive ÷ (1 + rate)`. MRP-inclusive is the Indian retail default, pharma especially. **Orthogonal to `TaxTreatment`** — one says how the price was quoted, the other whether tax applies |
-| DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(18,2) | |
-| GrossAmount / TaxableAmount | decimal(18,2) | Discount reduces the taxable value |
+| DiscountPercent / DiscountAmount | decimal(9,6)? / decimal(28,2) | |
+| GrossAmount / TaxableAmount | decimal(28,2) | Discount reduces the taxable value |
 | TaxTreatment | enum→string(10) | **Taxable / ZeroRated / NilRated / Exempt / NonGst.** Snapshot of the item's `TaxPreference` at document date. Charging nothing and being outside the tax are different facts, and GSTR-1 reports them in different tables — an item reclassified next year must not restate a document already filed |
 | TaxMasterId / TaxGroupId | long? | → `acc.TaxMasters`, unenforced. Null when `TaxTreatment` is not Taxable or ZeroRated |
-| TaxAmount | decimal(18,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
-| LineTotal | decimal(18,2) | `TaxableAmount + TaxAmount` |
+| TaxAmount | decimal(28,2) | **Total of this line's tax rows.** The component split lives in the tax child table, not in columns here |
+| LineTotal | decimal(28,2) | `TaxableAmount + TaxAmount` |
 | LineType | enum→string(10) | **Stock** / **Expense** / **Capital**. Default Stock. On a bill it decides which account the line posts to; on an invoice `Capital` is a fixed-asset **disposal**, which is why this sits in the base rather than on `BillDetails` alone |
 | AccountId | long? | **The account this line posts to when there is no item to post through.** Required on a free-text line and on any `Expense` line; ignored when the line is item-backed, because an item already resolves its own revenue, inventory and COGS sub-accounts. One column rather than a separate expense and income one — a line posts to exactly one account either way |
 | FixedAssetCategoryId | long? | Required when `LineType = Capital` |
@@ -1167,9 +1174,9 @@ All nine share one base class, `DocumentLineTaxBase : OrgScopedEntity`, for the 
 | TaxComponent | enum→string(6) | **Cgst / Sgst / Igst / Cess** |
 | SubAccountId | long | **The resolved GST sub-account** — the tax rate, the component and the direction together. Unenforced; Accounting owns it. This is what the `TAX` ledger leg posts against, so the line records where it went rather than the posting re-deriving it |
 | Rate | decimal(9,4) | Snapshot at document date |
-| TaxableAmount | decimal(18,2) | The base this component was computed on |
-| Amount | decimal(18,2) | |
-| AmountBase | decimal(18,2) | |
+| TaxableAmount | decimal(28,2) | The base this component was computed on |
+| Amount | decimal(28,2) | |
+| AmountBase | decimal(28,2) | |
 
 Unique index: `({Doc}DetailId, TaxComponent)` — a line cannot carry CGST twice · Index: (OrgId, SubAccountId)
 
@@ -1258,12 +1265,12 @@ The sales register — what was supplied, to whom, at what rate. The source for 
 | GstRate | decimal(9,4) | The total rate. Part of the grain |
 | Quantity | decimal(18,6) | Summed across the lines in this grain. The HSN summary reports quantity |
 | UqcCode | string(10)? | The **notified** unit, not the display unit — carat and tola are not notified, which is why `inv.UnitOfMeasures` carries this separately |
-| TaxableAmount | decimal(18,2) | |
-| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(18,2) | |
-| TotalAmount | decimal(18,2) | |
+| TaxableAmount | decimal(28,2) | |
+| CgstAmount / SgstAmount / IgstAmount / CessAmount | decimal(28,2) | |
+| TotalAmount | decimal(28,2) | |
 | CurrencyCode | string(3) | |
 | ExchangeRate | decimal(18,8) | Snapshot, as on the document |
-| TaxableAmountBase | decimal(18,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
+| TaxableAmountBase | decimal(28,2) | **A return is filed in INR.** A foreign-currency export needs the base figure held, not converted at filing time |
 | OriginalInvoiceId | long? | Credit notes only |
 | OriginalInvoiceNo | string(30)? | GSTR-1 links a credit note to the invoice it amends |
 | OriginalInvoiceDate | DateOnly? | |
