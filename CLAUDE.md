@@ -25,11 +25,11 @@ These are non-negotiable. Violating them means the code gets rejected.
 
 ## Git — how work reaches main
 
-> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.**
+> **Note. Never create a new branch. Commit every change directly to the default branch, `main`.**
 
-One branch is named for the session's work; every commit goes there, and it is merged into `main` when the work is done. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind — which is how a change that was written and reviewed is missing from the product.
+There is one branch, and it is `main`. Every commit goes there as the work is done — no feature branch, no session branch, nothing to merge afterwards. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind, which is how a change that was written and reviewed goes missing from the product.
 
-The same applies to a follow-up: reuse the designated branch rather than opening a second one beside it.
+The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
 
 ---
 
