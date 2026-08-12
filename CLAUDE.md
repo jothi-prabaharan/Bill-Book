@@ -253,7 +253,7 @@ GL postings are always in base currency; original currency and rate stay on the 
 ## Indian GST
 
 - Item master: HSN/SAC + rate slab. Contact master: GSTIN (first 2 digits = state code).
-- **One shared tax-determination component** used by Sales and Purchase. Same state → CGST+SGST. Different → IGST. Never duplicate this logic per service.
+- **One shared tax-determination component** used by Sales and Purchase — `Shared.Kernel.Tax`: `GstCalculator` is pure and takes rates already resolved for the document's date, `PlaceOfSupply` decides intra against inter, `ITaxRateProvider` reads them from Accounting cached per branch **and date**. Same state → CGST+SGST. Different → IGST. Never duplicate this logic per service; the TypeScript copy in `line-math.ts` exists because the browser needs it and is held to the same answers by `shared-fixtures/tax-fixture.json`.
 - Tax Master is **effective-dated** (rates get revised), with CGST/SGST/IGST split and the **3% gold/silver bullion rate** (outside the standard 0/5/12/18/28 slabs)
 - Validate `StateCode` matches the GSTIN's first two digits, or CGST/SGST vs IGST goes silently wrong
 - Tax Master is a **Settings screen** but the data is owned by the **Accounting service**
@@ -339,6 +339,7 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ### Standing caveats
 
+- **T0.2 — tax determination — is written but not verified.** `Shared.Kernel.Tax` holds the pure calculator, the place-of-supply resolver and the cached rate client; Accounting serves `GET internal/tax/rates?on={date}`. The three sub-decisions are settled and written down in `TRANSACTIONS.md`: inclusive **and** exclusive pricing per line, discount reduces the taxable value when the branch says so, tax rounds per component then sums. `shared-fixtures/tax-fixture.json` is read by both `Shared.Kernel.Tests` and `tax-fixture.spec.ts`, so a divergence between the C# and TypeScript implementations is a failing test rather than a wrong GST return — but neither suite has been run.
 - **T2.2 — the `sal` schema — is written but not verified, and `sal` has no migration.** It was built in a session with no .NET SDK reachable: `dot.net`, `builds.dotnet.microsoft.com`, `packages.microsoft.com` and `api.nuget.org` all refused through the egress proxy, so `dotnet build`, `dotnet test` and `dotnet ef migrations add` could none of them run. Generate the migration per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md` — it carries the RLS block EF will not write, and the second `migrations add` that has to come back empty. The boxes in `SALES.md` stay unticked until both checks are green.
 
 - **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 110, every EF snapshot matches its model, and all 33 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.

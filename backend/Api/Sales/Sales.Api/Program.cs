@@ -10,6 +10,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
+using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -81,6 +82,16 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// GST rates, read from Accounting and cached per organization and date. The
+// calculator that uses them is pure and lives in Shared.Kernel.Tax, shared with
+// Purchase — one component, because the same sale computed two ways is two
+// answers and only one of them goes on the return.
+builder.Services.AddHttpClient<ITaxRateProvider, HttpTaxRateProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

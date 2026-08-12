@@ -327,7 +327,7 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 
 **The arithmetic is separated from the component** (`line-math.ts`) and tested: exclusive and inclusive pricing, discount before and after tax, exempt writing no rows, zero-rated keeping them at rate 0, the intra/inter split, and header totals tying to the sum of the lines. Two of those tests failed on first run and one was a genuine bug — the inclusive back-out divided by the rate scale where the rate is a *percent*, making every inclusive line a hundredth of its true taxable value. That is precisely the kind of error that prints, posts and balances.
 
-**The order of operations must match `Shared.Kernel` exactly** — see T0.2. Two implementations of one sum diverge by a paisa without either looking wrong, and a GST return is where that surfaces months later. The shared JSON fixture that proves they agree is still to be written.
+**The order of operations must match `Shared.Kernel` exactly** — see T0.2. Two implementations of one sum diverge by a paisa without either looking wrong, and a GST return is where that surfaces months later. **The shared fixture that proves they agree is now written**: `shared-fixtures/tax-fixture.json`, read by `Shared.Kernel.Tests/GstCalculatorFixtureTests.cs` and by `tax-fixture.spec.ts` beside `line-math.ts`. Add a case there first, watch both suites fail, then fix both.
 
 **Nothing integrates it yet, because there are no transaction pages.** Each page wires it up as it lands: T2.3 quote, T2.4 order, T3.2 invoice, T3.6 challan, T5.2 credit note here; T4.3–T4.5 and T5.3 in the other file.
 
