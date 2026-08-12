@@ -15,8 +15,9 @@ using Shared.Kernel.Tenancy;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Fail at startup rather than on the first request that needs the missing
-// registration. Banking shipped without IBaseCurrencyProvider registered — every
-// money document endpoint would have thrown on its first call, and neither the
+// registration. The money documents shipped without IBaseCurrencyProvider
+// registered — every one of their endpoints would have thrown on its first call,
+// and neither the
 // build nor the tests could see it, because the build does not resolve DI and
 // the tests construct their services by hand. This is what closes that gap:
 // ValidateOnBuild walks every registration at startup, so a service asking for
@@ -84,6 +85,20 @@ builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
+
+// The money documents, formerly the Banking service. Registered alongside the
+// ledger rather than behind an HTTP client onto it, which is the whole point of
+// the merge: a payment and the ledger rows it produces now share a transaction.
+builder.Services.AddScoped<BankService>();
+builder.Services.AddScoped<SpendMoneyService>();
+builder.Services.AddScoped<ReceiveMoneyService>();
+builder.Services.AddScoped<TransferMoneyService>();
+builder.Services.AddScoped<BankStatementService>();
+
+// The seam the money documents reach the ledger through. Still an interface —
+// it is where the tests substitute, and it marks the line they may not write
+// across — but the implementation is now a call rather than a round trip.
+builder.Services.AddScoped<IAccountingLedger, InProcessAccountingLedger>();
 
 // Opening stock is Inventory's to record: the unit cost seeds the weighted
 // average, and only Inventory can seed it. Keyed rather than token-forwarded,

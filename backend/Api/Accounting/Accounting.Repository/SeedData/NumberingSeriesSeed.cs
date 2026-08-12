@@ -7,6 +7,11 @@ namespace Accounting.Repository.SeedData;
 /// seeds its own document series here; Sales and Purchase seed theirs as those
 /// services land, because each service owns its own transaction type codes.
 ///
+/// The money-document series — SPM, RCM, TRM — are seeded here too. They were
+/// Banking's while Banking was its own service; the merge did not make them
+/// Accounting's by accident, it made Accounting the service that owns those
+/// transaction types.
+///
 /// <b>Master series allow a manual override; document series do not.</b> A
 /// jeweller who already runs an item code scheme should be able to key their
 /// own. A hand-typed journal number is a different thing — the series has to run
@@ -29,6 +34,11 @@ public static class NumberingSeriesSeed
         // a number allocated the same way as every other is one less exception in
         // the code that reads them.
         Document(orgId, 110, "OPB", "Opening Balance Number", "OB"),
+
+        // The money documents.
+        Document(orgId, 200, "SPM", "Payment Number", "PAY"),
+        Document(orgId, 210, "RCM", "Receipt Number", "REC"),
+        Document(orgId, 220, "TRM", "Transfer Number", "TRF"),
     ];
 
     /// <summary>

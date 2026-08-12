@@ -43,7 +43,7 @@ public sealed class BankLedgerService
                 BankLedgerOutcome.Ok, existing.AccountId, existing.AccountCode);
         }
 
-        if (!Enum.TryParse(request.AccountType, ignoreCase: true, out BankAccountKind kind))
+        if (!Enum.TryParse(request.AccountType, ignoreCase: true, out BankAccountType kind))
         {
             return new BankLedgerResult(BankLedgerOutcome.InvalidValue, null, null);
         }
@@ -117,12 +117,16 @@ public sealed class BankLedgerService
     /// Which group the account hangs under, and what it is. Overdrafts, cash
     /// credit and credit cards are Liabilities: an overdrawn account is
     /// borrowing, and reporting it as a negative asset is what gets queried.
+    ///
+    /// Takes the bank account's own enum. It took a hand-kept copy of it while
+    /// Banking was a separate assembly, and a copy of an enum is a thing that
+    /// silently stops matching.
     /// </summary>
-    private static (SystemAccount Parent, int AccountTypeId) MappingFor(BankAccountKind kind) =>
+    private static (SystemAccount Parent, int AccountTypeId) MappingFor(BankAccountType kind) =>
         kind switch
         {
-            BankAccountKind.Cash or BankAccountKind.Wallet => (SystemAccount.CashInHand, AssetTypeId),
-            BankAccountKind.OverDraft or BankAccountKind.CashCredit or BankAccountKind.CreditCard =>
+            BankAccountType.Cash or BankAccountType.Wallet => (SystemAccount.CashInHand, AssetTypeId),
+            BankAccountType.OverDraft or BankAccountType.CashCredit or BankAccountType.CreditCard =>
                 (SystemAccount.BankOverdraftAndCards, LiabilityTypeId),
             _ => (SystemAccount.BankAccounts, AssetTypeId),
         };
@@ -155,16 +159,4 @@ public sealed class BankLedgerService
     // mst.AccountTypes ids — contractual, same constants the seed uses.
     private const int AssetTypeId = 1;
     private const int LiabilityTypeId = 2;
-}
-
-/// <summary>The kinds of bank account Banking can ask for. Mirrors bnk.BankAccounts.AccountType.</summary>
-public enum BankAccountKind
-{
-    Savings = 0,
-    Current = 1,
-    OverDraft = 2,
-    CashCredit = 3,
-    CreditCard = 4,
-    Wallet = 5,
-    Cash = 6,
 }
