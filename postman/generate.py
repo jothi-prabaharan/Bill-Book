@@ -64,8 +64,7 @@ SVC_PORT = service_ports()
 
 # Folder order follows CLAUDE.md's status order: reference data first, then the
 # services that depend on it.
-ORDER = ["Master", "Platform", "Identity", "Contacts", "Inventory", "Accounting", "Banking",
-         "Sales", "Purchase", "Crm", "Support", "Reporting"]
+ORDER = ["Master", "Inventory", "Accounting", "Sales", "Purchase", "Customer", "Reporting"]
 
 
 # --------------------------------------------------------------- request models

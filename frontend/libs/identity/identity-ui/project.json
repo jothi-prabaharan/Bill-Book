@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "identity-ui",
-  "projectType": "library",
-  "sourceRoot": "libs/identity/identity-ui/src",
-  "tags": ["scope:identity", "type:ui"],
-  "targets": {}
-}

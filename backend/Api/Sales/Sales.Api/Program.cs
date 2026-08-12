@@ -46,9 +46,9 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -81,7 +81,7 @@ builder.Services.AddScoped<SalesSeeder>();
 // HTTP call on every save.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -104,7 +104,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -113,7 +113,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Sales only
+// Must match Master's key exactly: Master mints the tokens, Sales only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "platform-ui",
-  "projectType": "library",
-  "sourceRoot": "libs/platform/platform-ui/src",
-  "tags": ["scope:platform", "type:ui"],
-  "targets": {}
-}

@@ -16,10 +16,9 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Fail at startup rather than on the first request that needs the missing
 // registration. The money documents shipped without IBaseCurrencyProvider
-// registered — every one of their endpoints would have thrown on its first call,
-// and neither the
-// build nor the tests could see it, because the build does not resolve DI and
-// the tests construct their services by hand. This is what closes that gap:
+// registered — every one of their endpoints would have thrown on its first
+// call, and neither the build nor the tests could see it, because the build
+// does not resolve DI and the tests construct their services by hand. This is what closes that gap:
 // ValidateOnBuild walks every registration at startup, so a service asking for
 // something nobody registered is a container that refuses to build.
 builder.Host.UseDefaultServiceProvider(options =>
@@ -46,9 +45,9 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -115,7 +114,7 @@ builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStock>(cl
 // never, and the alternative is an HTTP call on every posting.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -128,7 +127,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -137,7 +136,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Accounting only
+// Must match Master's key exactly: Master mints the tokens, Accounting only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

@@ -2,19 +2,19 @@ using System.Net;
 using System.Net.Http.Json;
 using Shared.Kernel.Tenancy;
 
-namespace Accounting.Api.Services;
+namespace Inventory.Api.Services;
 
 /// <summary>
-/// The tenant directory, read from Platform's internal API. No service reads the
-/// plt schema directly, and the response carries only the Key Vault reference —
+/// The tenant directory, read from Master's internal API. No service reads the
+/// mst tenant tables directly, and the response carries only the Key Vault ref —
 /// the connection string itself is resolved locally from the secret store, so
 /// the credential never travels over HTTP.
 /// </summary>
-public sealed class PlatformTenantDirectory : ITenantDirectory
+public sealed class MasterTenantDirectory : ITenantDirectory
 {
     private readonly HttpClient _http;
 
-    public PlatformTenantDirectory(HttpClient http) => _http = http;
+    public MasterTenantDirectory(HttpClient http) => _http = http;
 
     public async Task<TenantDatabase?> LookupAsync(Guid customerId, CancellationToken ct = default)
     {

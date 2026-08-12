@@ -33,41 +33,41 @@ export const appRoutes: Routes = [
       {
         path: 'settings/currencies',
         loadComponent: () =>
-          import('@bill-book/platform-ui').then((m) => m.OrgCurrenciesPage),
+          import('@bill-book/master-ui').then((m) => m.OrgCurrenciesPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/organization',
         loadComponent: () =>
-          import('@bill-book/platform-ui').then((m) => m.OrganizationSettingsPage),
+          import('@bill-book/master-ui').then((m) => m.OrganizationSettingsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/branches',
         loadComponent: () =>
-          import('@bill-book/platform-ui').then((m) => m.OrganizationsPage),
+          import('@bill-book/master-ui').then((m) => m.OrganizationsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/configuration',
         loadComponent: () =>
-          import('@bill-book/platform-ui').then((m) => m.ConfigurationsPage),
+          import('@bill-book/master-ui').then((m) => m.ConfigurationsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/roles',
-        loadComponent: () => import('@bill-book/identity-ui').then((m) => m.RolesPage),
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.RolesPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/users',
-        loadComponent: () => import('@bill-book/identity-ui').then((m) => m.UsersPage),
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.UsersPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/email',
         loadComponent: () =>
-          import('@bill-book/platform-ui').then((m) => m.SmtpSettingsPage),
+          import('@bill-book/master-ui').then((m) => m.SmtpSettingsPage),
         data: { permission: 'settings.view' },
       },
       // The nav rail points at /accounting, so it needs somewhere to land. The
@@ -137,7 +137,7 @@ export const appRoutes: Routes = [
       },
       {
         path: 'contacts',
-        loadComponent: () => import('@bill-book/contacts-ui').then((m) => m.ContactsPage),
+        loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { permission: 'contacts.view' },
       },
       {
@@ -188,12 +188,12 @@ export const appRoutes: Routes = [
       { path: 'banking', pathMatch: 'full', redirectTo: 'banking/spend-money' },
       {
         path: 'banking/banks',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BanksPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BanksPage),
         data: { permission: 'banking.view' },
       },
       {
         path: 'banking/accounts',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.BankAccountsPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.BankAccountsPage),
         data: { permission: 'banking.view' },
       },
       // Spend and receive are the same document read in opposite directions, so
@@ -202,22 +202,22 @@ export const appRoutes: Routes = [
       // for by name.
       {
         path: 'banking/spend-money',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentPage),
         data: { permission: 'banking.view', direction: 'spend' },
       },
       {
         path: 'banking/receive-money',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.MoneyDocumentPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.MoneyDocumentPage),
         data: { permission: 'banking.view', direction: 'receive' },
       },
       {
         path: 'banking/statements',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.StatementsPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.StatementsPage),
         data: { permission: 'banking.view' },
       },
       {
         path: 'banking/transfer-money',
-        loadComponent: () => import('@bill-book/banking-ui').then((m) => m.TransferMoneyPage),
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TransferMoneyPage),
         data: { permission: 'banking.view' },
       },
       // Feature modules mount here as they are built:

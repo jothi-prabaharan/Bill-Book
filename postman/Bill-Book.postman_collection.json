@@ -21,32 +21,16 @@
    "description": "YARP gateway \u2014 what the browser talks to."
   },
   {
-   "key": "identityUrl",
-   "value": "http://localhost:5001"
-  },
-  {
-   "key": "platformUrl",
-   "value": "http://localhost:5002"
-  },
-  {
    "key": "masterUrl",
-   "value": "http://localhost:5003"
+   "value": "http://localhost:5001"
   },
   {
    "key": "accountingUrl",
    "value": "http://localhost:5004"
   },
   {
-   "key": "contactsUrl",
-   "value": "http://localhost:5005"
-  },
-  {
    "key": "inventoryUrl",
    "value": "http://localhost:5006"
-  },
-  {
-   "key": "bankingUrl",
-   "value": "http://localhost:5007"
   },
   {
    "key": "salesUrl",
@@ -185,8 +169,486 @@
   },
   {
    "name": "1 \u00b7 Master",
-   "description": "13 endpoints across 1 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "description": "69 endpoints across 12 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
+    {
+     "name": "Accept invitation \u2014 POST /api/auth/accept-invitation",
+     "description": "`Master.AuthController.AcceptInvitation` \u2014 anonymous",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/accept-invitation"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"token\": \"<Token>\",\n  \"password\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Forgot password \u2014 POST /api/auth/forgot-password",
+     "description": "`Master.AuthController.ForgotPassword` \u2014 anonymous",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/forgot-password"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"channel\": \"<OtpChannel>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Organizations \u2014 GET /api/auth/organizations",
+     "description": "`Master.AuthController.Organizations`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/organizations"
+      }
+     }
+    },
+    {
+     "name": "Reset password \u2014 POST /api/auth/reset-password",
+     "description": "`Master.AuthController.ResetPassword` \u2014 anonymous",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/reset-password"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"code\": \"<Code>\",\n  \"newPassword\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Switch organization \u2014 POST /api/auth/switch-organization",
+     "description": "`Master.AuthController.SwitchOrganization`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/switch-organization"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Verify otp \u2014 POST /api/auth/verify-otp",
+     "description": "`Master.AuthController.VerifyOtp` \u2014 anonymous",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/auth/verify-otp"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"code\": \"<Code>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/organizations/:orgId/configurations",
+     "description": "`Master.ConfigurationsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations"
+      }
+     }
+    },
+    {
+     "name": "Reset \u2014 DELETE /api/organizations/:orgId/configurations/:code",
+     "description": "`Master.ConfigurationsController.Reset`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations/:code"
+      }
+     }
+    },
+    {
+     "name": "Set \u2014 PUT /api/organizations/:orgId/configurations/:code",
+     "description": "`Master.ConfigurationsController.Set`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations/:code"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/contacts/:contactId/attachments",
+     "description": "`Master.ContactAttachmentsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId/attachments"
+      }
+     }
+    },
+    {
+     "name": "Upload \u2014 POST /api/contacts/:contactId/attachments",
+     "description": "`Master.ContactAttachmentsController.Upload`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId/attachments"
+      }
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/contacts/attachments/:attachmentId",
+     "description": "`Master.ContactAttachmentsController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/attachments/:attachmentId"
+      }
+     }
+    },
+    {
+     "name": "Download \u2014 GET /api/contacts/attachments/:attachmentId/download",
+     "description": "`Master.ContactAttachmentsController.Download`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/attachments/:attachmentId/download"
+      }
+     }
+    },
+    {
+     "name": "Expiring licences \u2014 GET /api/contacts/licences/expiring",
+     "description": "`Master.ContactAttachmentsController.ExpiringLicences`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/licences/expiring"
+      }
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/contact-person-roles",
+     "description": "`Master.ContactPersonRolesController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/contact-person-roles",
+     "description": "`Master.ContactPersonRolesController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"roleName\": \"<RoleName>\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/contact-person-roles/:roleId",
+     "description": "`Master.ContactPersonRolesController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/contact-person-roles/:roleId",
+     "description": "`Master.ContactPersonRolesController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"roleName\": \"<RoleName>\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Set default \u2014 PUT /api/contact-person-roles/:roleId/default",
+     "description": "`Master.ContactPersonRolesController.SetDefault`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId/default"
+      }
+     }
+    },
+    {
+     "name": "Reorder \u2014 PATCH /api/contact-person-roles/reorder",
+     "description": "`Master.ContactPersonRolesController.Reorder`",
+     "request": {
+      "method": "PATCH",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contact-person-roles/reorder"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/contacts",
+     "description": "`Master.ContactsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/contacts",
+     "description": "`Master.ContactsController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"contactCode\": \"<ContactCode>\",\n  \"isCustomer\": false,\n  \"isVendor\": false,\n  \"isJobWorker\": false,\n  \"isPrescriber\": false,\n  \"contactCategory\": \"<ContactCategory>\",\n  \"displayName\": \"<DisplayName>\",\n  \"legalName\": \"<LegalName>\",\n  \"gstin\": \"<Gstin>\",\n  \"gstRegistrationType\": \"<GstRegistrationType>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"placeOfSupplyStateId\": 1,\n  \"countryId\": 1,\n  \"currencyCode\": \"INR\",\n  \"paymentTermId\": 1,\n  \"creditLimit\": 0,\n  \"maxOutstandingDays\": 1,\n  \"maxDiscountPercent\": 0,\n  \"receivableAccountId\": 1,\n  \"payableAccountId\": 1,\n  \"isTdsApplicable\": false,\n  \"tdsSection\": \"<TdsSection>\",\n  \"isMsme\": false,\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"notes\": \"<Notes>\",\n  \"isActive\": false,\n  \"addresses\": [\n    {\n      \"contactAddressId\": 1,\n      \"addressType\": \"<AddressType>\",\n      \"isDefault\": false,\n      \"label\": \"<Label>\",\n      \"addressLine1\": \"<AddressLine1>\",\n      \"addressLine2\": \"<AddressLine2>\",\n      \"landmark\": \"<Landmark>\",\n      \"city\": \"<City>\",\n      \"stateId\": 1,\n      \"countryId\": 1,\n      \"postalCode\": \"<PostalCode>\",\n      \"gstin\": \"<Gstin>\",\n      \"contactPersonName\": \"<ContactPersonName>\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"isActive\": false\n    }\n  ],\n  \"persons\": [\n    {\n      \"contactPersonId\": 1,\n      \"contactPersonRoleId\": 1,\n      \"roleName\": \"<RoleName>\",\n      \"salutation\": \"<Salutation>\",\n      \"firstName\": \"<FirstName>\",\n      \"lastName\": \"<LastName>\",\n      \"designation\": \"<Designation>\",\n      \"email\": \"owner@example.com\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"website\": \"<Website>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"bankDetails\": [\n    {\n      \"contactBankDetailId\": 1,\n      \"accountHolderName\": \"<AccountHolderName>\",\n      \"bankName\": \"<BankName>\",\n      \"accountNumber\": \"<AccountNumber>\",\n      \"ifsc\": \"<Ifsc>\",\n      \"branchName\": \"<BranchName>\",\n      \"accountKind\": \"<AccountKind>\",\n      \"upiId\": \"<UpiId>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"licences\": [\n    {\n      \"contactLicenceId\": 1,\n      \"licenceType\": \"<LicenceType>\",\n      \"licenceNumber\": \"<LicenceNumber>\",\n      \"description\": \"<Description>\",\n      \"issuingAuthority\": \"<IssuingAuthority>\",\n      \"issuedOn\": \"2026-08-10\",\n      \"expiresOn\": \"2026-08-10\",\n      \"isActive\": false,\n      \"daysUntilExpiry\": 1\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Deactivate \u2014 DELETE /api/contacts/:contactId",
+     "description": "`Master.ContactsController.Deactivate`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
+      }
+     }
+    },
+    {
+     "name": "Get \u2014 GET /api/contacts/:contactId",
+     "description": "`Master.ContactsController.Get`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/contacts/:contactId",
+     "description": "`Master.ContactsController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"contactCode\": \"<ContactCode>\",\n  \"isCustomer\": false,\n  \"isVendor\": false,\n  \"isJobWorker\": false,\n  \"isPrescriber\": false,\n  \"contactCategory\": \"<ContactCategory>\",\n  \"displayName\": \"<DisplayName>\",\n  \"legalName\": \"<LegalName>\",\n  \"gstin\": \"<Gstin>\",\n  \"gstRegistrationType\": \"<GstRegistrationType>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"placeOfSupplyStateId\": 1,\n  \"countryId\": 1,\n  \"currencyCode\": \"INR\",\n  \"paymentTermId\": 1,\n  \"creditLimit\": 0,\n  \"maxOutstandingDays\": 1,\n  \"maxDiscountPercent\": 0,\n  \"receivableAccountId\": 1,\n  \"payableAccountId\": 1,\n  \"isTdsApplicable\": false,\n  \"tdsSection\": \"<TdsSection>\",\n  \"isMsme\": false,\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"notes\": \"<Notes>\",\n  \"isActive\": false,\n  \"addresses\": [\n    {\n      \"contactAddressId\": 1,\n      \"addressType\": \"<AddressType>\",\n      \"isDefault\": false,\n      \"label\": \"<Label>\",\n      \"addressLine1\": \"<AddressLine1>\",\n      \"addressLine2\": \"<AddressLine2>\",\n      \"landmark\": \"<Landmark>\",\n      \"city\": \"<City>\",\n      \"stateId\": 1,\n      \"countryId\": 1,\n      \"postalCode\": \"<PostalCode>\",\n      \"gstin\": \"<Gstin>\",\n      \"contactPersonName\": \"<ContactPersonName>\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"isActive\": false\n    }\n  ],\n  \"persons\": [\n    {\n      \"contactPersonId\": 1,\n      \"contactPersonRoleId\": 1,\n      \"roleName\": \"<RoleName>\",\n      \"salutation\": \"<Salutation>\",\n      \"firstName\": \"<FirstName>\",\n      \"lastName\": \"<LastName>\",\n      \"designation\": \"<Designation>\",\n      \"email\": \"owner@example.com\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"website\": \"<Website>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"bankDetails\": [\n    {\n      \"contactBankDetailId\": 1,\n      \"accountHolderName\": \"<AccountHolderName>\",\n      \"bankName\": \"<BankName>\",\n      \"accountNumber\": \"<AccountNumber>\",\n      \"ifsc\": \"<Ifsc>\",\n      \"branchName\": \"<BranchName>\",\n      \"accountKind\": \"<AccountKind>\",\n      \"upiId\": \"<UpiId>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"licences\": [\n    {\n      \"contactLicenceId\": 1,\n      \"licenceType\": \"<LicenceType>\",\n      \"licenceNumber\": \"<LicenceNumber>\",\n      \"description\": \"<Description>\",\n      \"issuingAuthority\": \"<IssuingAuthority>\",\n      \"issuedOn\": \"2026-08-10\",\n      \"expiresOn\": \"2026-08-10\",\n      \"isActive\": false,\n      \"daysUntilExpiry\": 1\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Link sub ledger \u2014 POST /api/contacts/:contactId/link-sub-ledger",
+     "description": "`Master.ContactsController.LinkSubLedger`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/contacts/:contactId/link-sub-ledger"
+      }
+     }
+    },
+    {
+     "name": "Get status \u2014 GET /api/customers/:customerId/status",
+     "description": "`Master.CustomersController.GetStatus` \u2014 anonymous",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/customers/:customerId/status"
+      },
+      "auth": {
+       "type": "noauth"
+      }
+     }
+    },
+    {
+     "name": "Signup \u2014 POST /api/customers/signup",
+     "description": "`Master.CustomersController.Signup` \u2014 anonymous",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/customers/signup"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"displayName\": \"<DisplayName>\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"mobileNumber\": \"<MobileNumber>\",\n  \"companyName\": \"<CompanyName>\",\n  \"organizationName\": \"<OrganizationName>\",\n  \"financialYearStartMonth\": 1,\n  \"baseCurrency\": \"<BaseCurrency>\",\n  \"gstin\": \"<Gstin>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"tin\": \"<Tin>\",\n  \"cin\": \"<Cin>\",\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"countryId\": 1,\n  \"stateId\": 1,\n  \"city\": \"<City>\",\n  \"postalCode\": \"<PostalCode>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
     {
      "name": "Get account types \u2014 GET /api/master/account-types",
      "description": "`Master.MasterController.GetAccountTypes`",
@@ -322,102 +784,10 @@
        "raw": "{{gatewayUrl}}/api/master/transaction-types/:code"
       }
      }
-    }
-   ]
-  },
-  {
-   "name": "2 \u00b7 Platform",
-   "description": "23 endpoints across 5 controllers. Bearer token via the gateway unless a request says otherwise.",
-   "item": [
-    {
-     "name": "List \u2014 GET /api/organizations/:orgId/configurations",
-     "description": "`Platform.ConfigurationsController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations"
-      }
-     }
-    },
-    {
-     "name": "Reset \u2014 DELETE /api/organizations/:orgId/configurations/:code",
-     "description": "`Platform.ConfigurationsController.Reset`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations/:code"
-      }
-     }
-    },
-    {
-     "name": "Set \u2014 PUT /api/organizations/:orgId/configurations/:code",
-     "description": "`Platform.ConfigurationsController.Set`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/organizations/:orgId/configurations/:code"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Get status \u2014 GET /api/customers/:customerId/status",
-     "description": "`Platform.CustomersController.GetStatus` \u2014 anonymous",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/customers/:customerId/status"
-      },
-      "auth": {
-       "type": "noauth"
-      }
-     }
-    },
-    {
-     "name": "Signup \u2014 POST /api/customers/signup",
-     "description": "`Platform.CustomersController.Signup` \u2014 anonymous",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/customers/signup"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"displayName\": \"<DisplayName>\",\n  \"email\": \"owner@example.com\",\n  \"password\": \"P@ssw0rd!\",\n  \"mobileNumber\": \"<MobileNumber>\",\n  \"companyName\": \"<CompanyName>\",\n  \"organizationName\": \"<OrganizationName>\",\n  \"financialYearStartMonth\": 1,\n  \"baseCurrency\": \"<BaseCurrency>\",\n  \"gstin\": \"<Gstin>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"tin\": \"<Tin>\",\n  \"cin\": \"<Cin>\",\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"countryId\": 1,\n  \"stateId\": 1,\n  \"city\": \"<City>\",\n  \"postalCode\": \"<PostalCode>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
     },
     {
      "name": "List \u2014 GET /api/organizations/:orgId/currencies",
-     "description": "`Platform.OrgCurrenciesController.List`",
+     "description": "`Master.OrgCurrenciesController.List`",
      "request": {
       "method": "GET",
       "url": {
@@ -427,7 +797,7 @@
     },
     {
      "name": "Add \u2014 POST /api/organizations/:orgId/currencies",
-     "description": "`Platform.OrgCurrenciesController.Add`",
+     "description": "`Master.OrgCurrenciesController.Add`",
      "request": {
       "method": "POST",
       "url": {
@@ -452,7 +822,7 @@
     },
     {
      "name": "Set active \u2014 PUT /api/organizations/:orgId/currencies/:orgCurrencyId/active",
-     "description": "`Platform.OrgCurrenciesController.SetActive`",
+     "description": "`Master.OrgCurrenciesController.SetActive`",
      "request": {
       "method": "PUT",
       "url": {
@@ -477,7 +847,7 @@
     },
     {
      "name": "Available \u2014 GET /api/organizations/:orgId/currencies/available",
-     "description": "`Platform.OrgCurrenciesController.Available`",
+     "description": "`Master.OrgCurrenciesController.Available`",
      "request": {
       "method": "GET",
       "url": {
@@ -487,7 +857,7 @@
     },
     {
      "name": "List \u2014 GET /api/organizations",
-     "description": "`Platform.OrganizationsController.List`",
+     "description": "`Master.OrganizationsController.List`",
      "request": {
       "method": "GET",
       "url": {
@@ -497,7 +867,7 @@
     },
     {
      "name": "Create \u2014 POST /api/organizations",
-     "description": "`Platform.OrganizationsController.Create`",
+     "description": "`Master.OrganizationsController.Create`",
      "request": {
       "method": "POST",
       "url": {
@@ -522,7 +892,7 @@
     },
     {
      "name": "Suspend \u2014 DELETE /api/organizations/:orgId",
-     "description": "`Platform.OrganizationsController.Suspend`",
+     "description": "`Master.OrganizationsController.Suspend`",
      "request": {
       "method": "DELETE",
       "url": {
@@ -532,7 +902,7 @@
     },
     {
      "name": "Get \u2014 GET /api/organizations/:orgId",
-     "description": "`Platform.OrganizationsController.Get`",
+     "description": "`Master.OrganizationsController.Get`",
      "request": {
       "method": "GET",
       "url": {
@@ -542,7 +912,7 @@
     },
     {
      "name": "Update \u2014 PUT /api/organizations/:orgId",
-     "description": "`Platform.OrganizationsController.Update`",
+     "description": "`Master.OrganizationsController.Update`",
      "request": {
       "method": "PUT",
       "url": {
@@ -567,7 +937,7 @@
     },
     {
      "name": "Retry seeding \u2014 POST /api/organizations/:orgId/retry-seeding",
-     "description": "`Platform.OrganizationsController.RetrySeeding`",
+     "description": "`Master.OrganizationsController.RetrySeeding`",
      "request": {
       "method": "POST",
       "url": {
@@ -577,7 +947,7 @@
     },
     {
      "name": "Current \u2014 GET /api/organizations/current",
-     "description": "`Platform.OrganizationsController.Current`",
+     "description": "`Master.OrganizationsController.Current`",
      "request": {
       "method": "GET",
       "url": {
@@ -587,7 +957,7 @@
     },
     {
      "name": "Update current \u2014 PUT /api/organizations/current",
-     "description": "`Platform.OrganizationsController.UpdateCurrent`",
+     "description": "`Master.OrganizationsController.UpdateCurrent`",
      "request": {
       "method": "PUT",
       "url": {
@@ -611,266 +981,8 @@
      }
     },
     {
-     "name": "Delete override \u2014 DELETE /api/smtp-settings/customers/:customerId",
-     "description": "`Platform.SmtpSettingsController.DeleteOverride`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
-      }
-     }
-    },
-    {
-     "name": "Get for customer \u2014 GET /api/smtp-settings/customers/:customerId",
-     "description": "`Platform.SmtpSettingsController.GetForCustomer`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
-      }
-     }
-    },
-    {
-     "name": "Save for customer \u2014 PUT /api/smtp-settings/customers/:customerId",
-     "description": "`Platform.SmtpSettingsController.SaveForCustomer`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"host\": \"<Host>\",\n  \"port\": 1,\n  \"useSsl\": false,\n  \"fromEmail\": \"owner@example.com\",\n  \"fromName\": \"<FromName>\",\n  \"username\": \"<Username>\",\n  \"password\": \"P@ssw0rd!\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Get default \u2014 GET /api/smtp-settings/default",
-     "description": "`Platform.SmtpSettingsController.GetDefault`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/default"
-      }
-     }
-    },
-    {
-     "name": "Save default \u2014 PUT /api/smtp-settings/default",
-     "description": "`Platform.SmtpSettingsController.SaveDefault`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/default"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"host\": \"<Host>\",\n  \"port\": 1,\n  \"useSsl\": false,\n  \"fromEmail\": \"owner@example.com\",\n  \"fromName\": \"<FromName>\",\n  \"username\": \"<Username>\",\n  \"password\": \"P@ssw0rd!\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Send test \u2014 POST /api/smtp-settings/test",
-     "description": "`Platform.SmtpSettingsController.SendTest`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/smtp-settings/test"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"toEmail\": \"owner@example.com\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    }
-   ]
-  },
-  {
-   "name": "3 \u00b7 Identity",
-   "description": "16 endpoints across 3 controllers. Bearer token via the gateway unless a request says otherwise.",
-   "item": [
-    {
-     "name": "Accept invitation \u2014 POST /api/auth/accept-invitation",
-     "description": "`Identity.AuthController.AcceptInvitation` \u2014 anonymous",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/accept-invitation"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"token\": \"<Token>\",\n  \"password\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Forgot password \u2014 POST /api/auth/forgot-password",
-     "description": "`Identity.AuthController.ForgotPassword` \u2014 anonymous",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/forgot-password"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"channel\": \"<OtpChannel>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Organizations \u2014 GET /api/auth/organizations",
-     "description": "`Identity.AuthController.Organizations`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/organizations"
-      }
-     }
-    },
-    {
-     "name": "Reset password \u2014 POST /api/auth/reset-password",
-     "description": "`Identity.AuthController.ResetPassword` \u2014 anonymous",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/reset-password"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"code\": \"<Code>\",\n  \"newPassword\": \"P@ssw0rd!\",\n  \"confirmPassword\": \"P@ssw0rd!\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Switch organization \u2014 POST /api/auth/switch-organization",
-     "description": "`Identity.AuthController.SwitchOrganization`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/switch-organization"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Verify otp \u2014 POST /api/auth/verify-otp",
-     "description": "`Identity.AuthController.VerifyOtp` \u2014 anonymous",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/auth/verify-otp"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"email\": \"owner@example.com\",\n  \"code\": \"<Code>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
      "name": "List \u2014 GET /api/roles",
-     "description": "`Identity.RolesController.List`",
+     "description": "`Master.RolesController.List`",
      "request": {
       "method": "GET",
       "url": {
@@ -880,7 +992,7 @@
     },
     {
      "name": "Create \u2014 POST /api/roles",
-     "description": "`Identity.RolesController.Create`",
+     "description": "`Master.RolesController.Create`",
      "request": {
       "method": "POST",
       "url": {
@@ -905,7 +1017,7 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/roles/:roleId",
-     "description": "`Identity.RolesController.Delete`",
+     "description": "`Master.RolesController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
@@ -915,7 +1027,7 @@
     },
     {
      "name": "Get \u2014 GET /api/roles/:roleId",
-     "description": "`Identity.RolesController.Get`",
+     "description": "`Master.RolesController.Get`",
      "request": {
       "method": "GET",
       "url": {
@@ -925,7 +1037,7 @@
     },
     {
      "name": "Update \u2014 PUT /api/roles/:roleId",
-     "description": "`Identity.RolesController.Update`",
+     "description": "`Master.RolesController.Update`",
      "request": {
       "method": "PUT",
       "url": {
@@ -950,7 +1062,7 @@
     },
     {
      "name": "Permissions \u2014 GET /api/roles/permissions",
-     "description": "`Identity.RolesController.Permissions`",
+     "description": "`Master.RolesController.Permissions`",
      "request": {
       "method": "GET",
       "url": {
@@ -959,8 +1071,113 @@
      }
     },
     {
+     "name": "Delete override \u2014 DELETE /api/smtp-settings/customers/:customerId",
+     "description": "`Master.SmtpSettingsController.DeleteOverride`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
+      }
+     }
+    },
+    {
+     "name": "Get for customer \u2014 GET /api/smtp-settings/customers/:customerId",
+     "description": "`Master.SmtpSettingsController.GetForCustomer`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
+      }
+     }
+    },
+    {
+     "name": "Save for customer \u2014 PUT /api/smtp-settings/customers/:customerId",
+     "description": "`Master.SmtpSettingsController.SaveForCustomer`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/customers/:customerId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"host\": \"<Host>\",\n  \"port\": 1,\n  \"useSsl\": false,\n  \"fromEmail\": \"owner@example.com\",\n  \"fromName\": \"<FromName>\",\n  \"username\": \"<Username>\",\n  \"password\": \"P@ssw0rd!\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Get default \u2014 GET /api/smtp-settings/default",
+     "description": "`Master.SmtpSettingsController.GetDefault`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/default"
+      }
+     }
+    },
+    {
+     "name": "Save default \u2014 PUT /api/smtp-settings/default",
+     "description": "`Master.SmtpSettingsController.SaveDefault`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/default"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"host\": \"<Host>\",\n  \"port\": 1,\n  \"useSsl\": false,\n  \"fromEmail\": \"owner@example.com\",\n  \"fromName\": \"<FromName>\",\n  \"username\": \"<Username>\",\n  \"password\": \"P@ssw0rd!\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Send test \u2014 POST /api/smtp-settings/test",
+     "description": "`Master.SmtpSettingsController.SendTest`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/smtp-settings/test"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"toEmail\": \"owner@example.com\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
      "name": "List \u2014 GET /api/users",
-     "description": "`Identity.UsersController.List`",
+     "description": "`Master.UsersController.List`",
      "request": {
       "method": "GET",
       "url": {
@@ -970,7 +1187,7 @@
     },
     {
      "name": "Invite \u2014 POST /api/users",
-     "description": "`Identity.UsersController.Invite`",
+     "description": "`Master.UsersController.Invite`",
      "request": {
       "method": "POST",
       "url": {
@@ -995,7 +1212,7 @@
     },
     {
      "name": "Revoke \u2014 DELETE /api/users/:userId",
-     "description": "`Identity.UsersController.Revoke`",
+     "description": "`Master.UsersController.Revoke`",
      "request": {
       "method": "DELETE",
       "url": {
@@ -1005,7 +1222,7 @@
     },
     {
      "name": "Resend invite \u2014 POST /api/users/:userId/resend-invite",
-     "description": "`Identity.UsersController.ResendInvite`",
+     "description": "`Master.UsersController.ResendInvite`",
      "request": {
       "method": "POST",
       "url": {
@@ -1016,258 +1233,7 @@
    ]
   },
   {
-   "name": "4 \u00b7 Contacts",
-   "description": "17 endpoints across 3 controllers. Bearer token via the gateway unless a request says otherwise.",
-   "item": [
-    {
-     "name": "List \u2014 GET /api/contacts/:contactId/attachments",
-     "description": "`Contacts.ContactAttachmentsController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId/attachments"
-      }
-     }
-    },
-    {
-     "name": "Upload \u2014 POST /api/contacts/:contactId/attachments",
-     "description": "`Contacts.ContactAttachmentsController.Upload`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId/attachments"
-      }
-     }
-    },
-    {
-     "name": "Delete \u2014 DELETE /api/contacts/attachments/:attachmentId",
-     "description": "`Contacts.ContactAttachmentsController.Delete`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/attachments/:attachmentId"
-      }
-     }
-    },
-    {
-     "name": "Download \u2014 GET /api/contacts/attachments/:attachmentId/download",
-     "description": "`Contacts.ContactAttachmentsController.Download`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/attachments/:attachmentId/download"
-      }
-     }
-    },
-    {
-     "name": "Expiring licences \u2014 GET /api/contacts/licences/expiring",
-     "description": "`Contacts.ContactAttachmentsController.ExpiringLicences`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/licences/expiring"
-      }
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/contact-person-roles",
-     "description": "`Contacts.ContactPersonRolesController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/contact-person-roles",
-     "description": "`Contacts.ContactPersonRolesController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"roleName\": \"<RoleName>\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Delete \u2014 DELETE /api/contact-person-roles/:roleId",
-     "description": "`Contacts.ContactPersonRolesController.Delete`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/contact-person-roles/:roleId",
-     "description": "`Contacts.ContactPersonRolesController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"roleName\": \"<RoleName>\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Set default \u2014 PUT /api/contact-person-roles/:roleId/default",
-     "description": "`Contacts.ContactPersonRolesController.SetDefault`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles/:roleId/default"
-      }
-     }
-    },
-    {
-     "name": "Reorder \u2014 PATCH /api/contact-person-roles/reorder",
-     "description": "`Contacts.ContactPersonRolesController.Reorder`",
-     "request": {
-      "method": "PATCH",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contact-person-roles/reorder"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/contacts",
-     "description": "`Contacts.ContactsController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/contacts",
-     "description": "`Contacts.ContactsController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"contactCode\": \"<ContactCode>\",\n  \"isCustomer\": false,\n  \"isVendor\": false,\n  \"isJobWorker\": false,\n  \"isPrescriber\": false,\n  \"contactCategory\": \"<ContactCategory>\",\n  \"displayName\": \"<DisplayName>\",\n  \"legalName\": \"<LegalName>\",\n  \"gstin\": \"<Gstin>\",\n  \"gstRegistrationType\": \"<GstRegistrationType>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"placeOfSupplyStateId\": 1,\n  \"countryId\": 1,\n  \"currencyCode\": \"INR\",\n  \"paymentTermId\": 1,\n  \"creditLimit\": 0,\n  \"maxOutstandingDays\": 1,\n  \"maxDiscountPercent\": 0,\n  \"receivableAccountId\": 1,\n  \"payableAccountId\": 1,\n  \"isTdsApplicable\": false,\n  \"tdsSection\": \"<TdsSection>\",\n  \"isMsme\": false,\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"notes\": \"<Notes>\",\n  \"isActive\": false,\n  \"addresses\": [\n    {\n      \"contactAddressId\": 1,\n      \"addressType\": \"<AddressType>\",\n      \"isDefault\": false,\n      \"label\": \"<Label>\",\n      \"addressLine1\": \"<AddressLine1>\",\n      \"addressLine2\": \"<AddressLine2>\",\n      \"landmark\": \"<Landmark>\",\n      \"city\": \"<City>\",\n      \"stateId\": 1,\n      \"countryId\": 1,\n      \"postalCode\": \"<PostalCode>\",\n      \"gstin\": \"<Gstin>\",\n      \"contactPersonName\": \"<ContactPersonName>\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"isActive\": false\n    }\n  ],\n  \"persons\": [\n    {\n      \"contactPersonId\": 1,\n      \"contactPersonRoleId\": 1,\n      \"roleName\": \"<RoleName>\",\n      \"salutation\": \"<Salutation>\",\n      \"firstName\": \"<FirstName>\",\n      \"lastName\": \"<LastName>\",\n      \"designation\": \"<Designation>\",\n      \"email\": \"owner@example.com\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"website\": \"<Website>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"bankDetails\": [\n    {\n      \"contactBankDetailId\": 1,\n      \"accountHolderName\": \"<AccountHolderName>\",\n      \"bankName\": \"<BankName>\",\n      \"accountNumber\": \"<AccountNumber>\",\n      \"ifsc\": \"<Ifsc>\",\n      \"branchName\": \"<BranchName>\",\n      \"accountKind\": \"<AccountKind>\",\n      \"upiId\": \"<UpiId>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"licences\": [\n    {\n      \"contactLicenceId\": 1,\n      \"licenceType\": \"<LicenceType>\",\n      \"licenceNumber\": \"<LicenceNumber>\",\n      \"description\": \"<Description>\",\n      \"issuingAuthority\": \"<IssuingAuthority>\",\n      \"issuedOn\": \"2026-08-10\",\n      \"expiresOn\": \"2026-08-10\",\n      \"isActive\": false,\n      \"daysUntilExpiry\": 1\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Deactivate \u2014 DELETE /api/contacts/:contactId",
-     "description": "`Contacts.ContactsController.Deactivate`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
-      }
-     }
-    },
-    {
-     "name": "Get \u2014 GET /api/contacts/:contactId",
-     "description": "`Contacts.ContactsController.Get`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/contacts/:contactId",
-     "description": "`Contacts.ContactsController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"contactCode\": \"<ContactCode>\",\n  \"isCustomer\": false,\n  \"isVendor\": false,\n  \"isJobWorker\": false,\n  \"isPrescriber\": false,\n  \"contactCategory\": \"<ContactCategory>\",\n  \"displayName\": \"<DisplayName>\",\n  \"legalName\": \"<LegalName>\",\n  \"gstin\": \"<Gstin>\",\n  \"gstRegistrationType\": \"<GstRegistrationType>\",\n  \"pan\": \"<Pan>\",\n  \"tan\": \"<Tan>\",\n  \"placeOfSupplyStateId\": 1,\n  \"countryId\": 1,\n  \"currencyCode\": \"INR\",\n  \"paymentTermId\": 1,\n  \"creditLimit\": 0,\n  \"maxOutstandingDays\": 1,\n  \"maxDiscountPercent\": 0,\n  \"receivableAccountId\": 1,\n  \"payableAccountId\": 1,\n  \"isTdsApplicable\": false,\n  \"tdsSection\": \"<TdsSection>\",\n  \"isMsme\": false,\n  \"udyamNumber\": \"<UdyamNumber>\",\n  \"notes\": \"<Notes>\",\n  \"isActive\": false,\n  \"addresses\": [\n    {\n      \"contactAddressId\": 1,\n      \"addressType\": \"<AddressType>\",\n      \"isDefault\": false,\n      \"label\": \"<Label>\",\n      \"addressLine1\": \"<AddressLine1>\",\n      \"addressLine2\": \"<AddressLine2>\",\n      \"landmark\": \"<Landmark>\",\n      \"city\": \"<City>\",\n      \"stateId\": 1,\n      \"countryId\": 1,\n      \"postalCode\": \"<PostalCode>\",\n      \"gstin\": \"<Gstin>\",\n      \"contactPersonName\": \"<ContactPersonName>\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"isActive\": false\n    }\n  ],\n  \"persons\": [\n    {\n      \"contactPersonId\": 1,\n      \"contactPersonRoleId\": 1,\n      \"roleName\": \"<RoleName>\",\n      \"salutation\": \"<Salutation>\",\n      \"firstName\": \"<FirstName>\",\n      \"lastName\": \"<LastName>\",\n      \"designation\": \"<Designation>\",\n      \"email\": \"owner@example.com\",\n      \"phoneNumber\": \"<PhoneNumber>\",\n      \"mobileNumber\": \"<MobileNumber>\",\n      \"website\": \"<Website>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"bankDetails\": [\n    {\n      \"contactBankDetailId\": 1,\n      \"accountHolderName\": \"<AccountHolderName>\",\n      \"bankName\": \"<BankName>\",\n      \"accountNumber\": \"<AccountNumber>\",\n      \"ifsc\": \"<Ifsc>\",\n      \"branchName\": \"<BranchName>\",\n      \"accountKind\": \"<AccountKind>\",\n      \"upiId\": \"<UpiId>\",\n      \"isDefault\": false,\n      \"isActive\": false\n    }\n  ],\n  \"licences\": [\n    {\n      \"contactLicenceId\": 1,\n      \"licenceType\": \"<LicenceType>\",\n      \"licenceNumber\": \"<LicenceNumber>\",\n      \"description\": \"<Description>\",\n      \"issuingAuthority\": \"<IssuingAuthority>\",\n      \"issuedOn\": \"2026-08-10\",\n      \"expiresOn\": \"2026-08-10\",\n      \"isActive\": false,\n      \"daysUntilExpiry\": 1\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Link sub ledger \u2014 POST /api/contacts/:contactId/link-sub-ledger",
-     "description": "`Contacts.ContactsController.LinkSubLedger`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/contacts/:contactId/link-sub-ledger"
-      }
-     }
-    }
-   ]
-  },
-  {
-   "name": "5 \u00b7 Inventory",
+   "name": "2 \u00b7 Inventory",
    "description": "47 endpoints across 7 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
@@ -2073,8 +2039,8 @@
    ]
   },
   {
-   "name": "6 \u00b7 Accounting",
-   "description": "50 endpoints across 9 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "name": "3 \u00b7 Accounting",
+   "description": "92 endpoints across 15 controllers. Bearer token via the gateway unless a request says otherwise.",
    "item": [
     {
      "name": "List \u2014 GET /api/accounts",
@@ -2142,6 +2108,351 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"accountTypeId\": 1,\n  \"accountCode\": \"<AccountCode>\",\n  \"accountName\": \"<AccountName>\",\n  \"parentAccountId\": 1,\n  \"currencyCode\": \"INR\",\n  \"isContra\": false,\n  \"isActive\": false,\n  \"isLock\": false,\n  \"isSales\": false,\n  \"isPurchase\": false,\n  \"isPayment\": false,\n  \"isBank\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/bank-accounts",
+     "description": "`Accounting.BankAccountsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/bank-accounts",
+     "description": "`Accounting.BankAccountsController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankId\": 1,\n  \"accountName\": \"<AccountName>\",\n  \"accountNumber\": \"<AccountNumber>\",\n  \"accountType\": \"<AccountType>\",\n  \"ifsc\": \"<Ifsc>\",\n  \"micr\": \"<Micr>\",\n  \"swiftCode\": \"<SwiftCode>\",\n  \"iban\": \"<Iban>\",\n  \"branchName\": \"<BranchName>\",\n  \"currencyCode\": \"INR\",\n  \"odLimit\": 0,\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Deactivate \u2014 DELETE /api/bank-accounts/:bankAccountId",
+     "description": "`Accounting.BankAccountsController.Deactivate`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/bank-accounts/:bankAccountId",
+     "description": "`Accounting.BankAccountsController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankId\": 1,\n  \"accountName\": \"<AccountName>\",\n  \"accountNumber\": \"<AccountNumber>\",\n  \"accountType\": \"<AccountType>\",\n  \"ifsc\": \"<Ifsc>\",\n  \"micr\": \"<Micr>\",\n  \"swiftCode\": \"<SwiftCode>\",\n  \"iban\": \"<Iban>\",\n  \"branchName\": \"<BranchName>\",\n  \"currencyCode\": \"INR\",\n  \"odLimit\": 0,\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Set default \u2014 PUT /api/bank-accounts/:bankAccountId/default",
+     "description": "`Accounting.BankAccountsController.SetDefault`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId/default"
+      }
+     }
+    },
+    {
+     "name": "Link ledger \u2014 POST /api/bank-accounts/:bankAccountId/link-ledger",
+     "description": "`Accounting.BankAccountsController.LinkLedger`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId/link-ledger"
+      }
+     }
+    },
+    {
+     "name": "Reorder \u2014 PATCH /api/bank-accounts/reorder",
+     "description": "`Accounting.BankAccountsController.Reorder`",
+     "request": {
+      "method": "PATCH",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/bank-accounts/reorder"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/statements",
+     "description": "`Accounting.BankStatementsController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements"
+      }
+     }
+    },
+    {
+     "name": "Export \u2014 GET /api/statements/:bankStatementId/export",
+     "description": "`Accounting.BankStatementsController.Export`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/export"
+      }
+     }
+    },
+    {
+     "name": "Lines \u2014 GET /api/statements/:bankStatementId/lines",
+     "description": "`Accounting.BankStatementsController.Lines`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/lines"
+      }
+     }
+    },
+    {
+     "name": "Import \u2014 POST /api/statements/import",
+     "description": "`Accounting.BankStatementsController.Import`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/import"
+      }
+     }
+    },
+    {
+     "name": "Ignore \u2014 POST /api/statements/lines/:bankStatementLineId/ignore",
+     "description": "`Accounting.BankStatementsController.Ignore`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/ignore"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"note\": \"<Note>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Match \u2014 POST /api/statements/lines/:bankStatementLineId/match",
+     "description": "`Accounting.BankStatementsController.Match`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/match"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionTypeCode\": \"<TransactionTypeCode>\",\n  \"transactionId\": 1\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Unmatch \u2014 POST /api/statements/lines/:bankStatementLineId/unmatch",
+     "description": "`Accounting.BankStatementsController.Unmatch`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/unmatch"
+      }
+     }
+    },
+    {
+     "name": "Save profile \u2014 PUT /api/statements/profiles",
+     "description": "`Accounting.BankStatementsController.SaveProfile`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/profiles"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankAccountId\": 1,\n  \"skipRows\": 1,\n  \"hasHeaderRow\": false,\n  \"dateFormat\": \"<DateFormat>\",\n  \"dateColumn\": \"<DateColumn>\",\n  \"valueDateColumn\": \"<ValueDateColumn>\",\n  \"descriptionColumn\": \"<DescriptionColumn>\",\n  \"referenceColumn\": \"<ReferenceColumn>\",\n  \"withdrawalColumn\": \"<WithdrawalColumn>\",\n  \"depositColumn\": \"<DepositColumn>\",\n  \"amountColumn\": \"<AmountColumn>\",\n  \"negativeIsDeposit\": false,\n  \"balanceColumn\": \"<BalanceColumn>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Profile \u2014 GET /api/statements/profiles/:bankAccountId",
+     "description": "`Accounting.BankStatementsController.Profile`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/statements/profiles/:bankAccountId"
+      }
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/banks",
+     "description": "`Accounting.BanksController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/banks"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/banks",
+     "description": "`Accounting.BanksController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/banks"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankCode\": \"<BankCode>\",\n  \"bankName\": \"<BankName>\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/banks/:bankId",
+     "description": "`Accounting.BanksController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/banks/:bankId"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/banks/:bankId",
+     "description": "`Accounting.BanksController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/banks/:bankId"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"bankCode\": \"<BankCode>\",\n  \"bankName\": \"<BankName>\",\n  \"isActive\": false\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Reorder \u2014 PATCH /api/banks/reorder",
+     "description": "`Accounting.BanksController.Reorder`",
+     "request": {
+      "method": "PATCH",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/banks/reorder"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
        "options": {
         "raw": {
          "language": "json"
@@ -2707,6 +3018,236 @@
      }
     },
     {
+     "name": "List \u2014 GET /api/receive-money",
+     "description": "`Accounting.ReceiveMoneyController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/receive-money",
+     "description": "`Accounting.ReceiveMoneyController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/receive-money/:id",
+     "description": "`Accounting.ReceiveMoneyController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
+      }
+     }
+    },
+    {
+     "name": "Get \u2014 GET /api/receive-money/:id",
+     "description": "`Accounting.ReceiveMoneyController.Get`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/receive-money/:id",
+     "description": "`Accounting.ReceiveMoneyController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money/:id"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Post \u2014 POST /api/receive-money/:id/post",
+     "description": "`Accounting.ReceiveMoneyController.Post`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money/:id/post"
+      }
+     }
+    },
+    {
+     "name": "Void \u2014 POST /api/receive-money/:id/void",
+     "description": "`Accounting.ReceiveMoneyController.Void`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/receive-money/:id/void"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "List \u2014 GET /api/spend-money",
+     "description": "`Accounting.SpendMoneyController.List`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/spend-money",
+     "description": "`Accounting.SpendMoneyController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Delete \u2014 DELETE /api/spend-money/:id",
+     "description": "`Accounting.SpendMoneyController.Delete`",
+     "request": {
+      "method": "DELETE",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
+      }
+     }
+    },
+    {
+     "name": "Get \u2014 GET /api/spend-money/:id",
+     "description": "`Accounting.SpendMoneyController.Get`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/spend-money/:id",
+     "description": "`Accounting.SpendMoneyController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money/:id"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Post \u2014 POST /api/spend-money/:id/post",
+     "description": "`Accounting.SpendMoneyController.Post`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money/:id/post"
+      }
+     }
+    },
+    {
+     "name": "Void \u2014 POST /api/spend-money/:id/void",
+     "description": "`Accounting.SpendMoneyController.Void`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/spend-money/:id/void"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
      "name": "List \u2014 GET /api/sub-accounts",
      "description": "`Accounting.SubAccountsController.List`",
      "request": {
@@ -2830,591 +3371,10 @@
        "raw": "{{gatewayUrl}}/api/tax-masters/resolve/:taxGroupId"
       }
      }
-    }
-   ]
-  },
-  {
-   "name": "7 \u00b7 Banking",
-   "description": "42 endpoints across 6 controllers. Bearer token via the gateway unless a request says otherwise.",
-   "item": [
-    {
-     "name": "List \u2014 GET /api/bank-accounts",
-     "description": "`Banking.BankAccountsController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/bank-accounts",
-     "description": "`Banking.BankAccountsController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"bankId\": 1,\n  \"accountName\": \"<AccountName>\",\n  \"accountNumber\": \"<AccountNumber>\",\n  \"accountType\": \"<AccountType>\",\n  \"ifsc\": \"<Ifsc>\",\n  \"micr\": \"<Micr>\",\n  \"swiftCode\": \"<SwiftCode>\",\n  \"iban\": \"<Iban>\",\n  \"branchName\": \"<BranchName>\",\n  \"currencyCode\": \"INR\",\n  \"odLimit\": 0,\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Deactivate \u2014 DELETE /api/bank-accounts/:bankAccountId",
-     "description": "`Banking.BankAccountsController.Deactivate`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/bank-accounts/:bankAccountId",
-     "description": "`Banking.BankAccountsController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"bankId\": 1,\n  \"accountName\": \"<AccountName>\",\n  \"accountNumber\": \"<AccountNumber>\",\n  \"accountType\": \"<AccountType>\",\n  \"ifsc\": \"<Ifsc>\",\n  \"micr\": \"<Micr>\",\n  \"swiftCode\": \"<SwiftCode>\",\n  \"iban\": \"<Iban>\",\n  \"branchName\": \"<BranchName>\",\n  \"currencyCode\": \"INR\",\n  \"odLimit\": 0,\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Set default \u2014 PUT /api/bank-accounts/:bankAccountId/default",
-     "description": "`Banking.BankAccountsController.SetDefault`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId/default"
-      }
-     }
-    },
-    {
-     "name": "Link ledger \u2014 POST /api/bank-accounts/:bankAccountId/link-ledger",
-     "description": "`Banking.BankAccountsController.LinkLedger`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts/:bankAccountId/link-ledger"
-      }
-     }
-    },
-    {
-     "name": "Reorder \u2014 PATCH /api/bank-accounts/reorder",
-     "description": "`Banking.BankAccountsController.Reorder`",
-     "request": {
-      "method": "PATCH",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/bank-accounts/reorder"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/statements",
-     "description": "`Banking.BankStatementsController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements"
-      }
-     }
-    },
-    {
-     "name": "Export \u2014 GET /api/statements/:bankStatementId/export",
-     "description": "`Banking.BankStatementsController.Export`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/export"
-      }
-     }
-    },
-    {
-     "name": "Lines \u2014 GET /api/statements/:bankStatementId/lines",
-     "description": "`Banking.BankStatementsController.Lines`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/:bankStatementId/lines"
-      }
-     }
-    },
-    {
-     "name": "Import \u2014 POST /api/statements/import",
-     "description": "`Banking.BankStatementsController.Import`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/import"
-      }
-     }
-    },
-    {
-     "name": "Ignore \u2014 POST /api/statements/lines/:bankStatementLineId/ignore",
-     "description": "`Banking.BankStatementsController.Ignore`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/ignore"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"note\": \"<Note>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Match \u2014 POST /api/statements/lines/:bankStatementLineId/match",
-     "description": "`Banking.BankStatementsController.Match`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/match"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"transactionTypeCode\": \"<TransactionTypeCode>\",\n  \"transactionId\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Unmatch \u2014 POST /api/statements/lines/:bankStatementLineId/unmatch",
-     "description": "`Banking.BankStatementsController.Unmatch`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/lines/:bankStatementLineId/unmatch"
-      }
-     }
-    },
-    {
-     "name": "Save profile \u2014 PUT /api/statements/profiles",
-     "description": "`Banking.BankStatementsController.SaveProfile`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/profiles"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"bankAccountId\": 1,\n  \"skipRows\": 1,\n  \"hasHeaderRow\": false,\n  \"dateFormat\": \"<DateFormat>\",\n  \"dateColumn\": \"<DateColumn>\",\n  \"valueDateColumn\": \"<ValueDateColumn>\",\n  \"descriptionColumn\": \"<DescriptionColumn>\",\n  \"referenceColumn\": \"<ReferenceColumn>\",\n  \"withdrawalColumn\": \"<WithdrawalColumn>\",\n  \"depositColumn\": \"<DepositColumn>\",\n  \"amountColumn\": \"<AmountColumn>\",\n  \"negativeIsDeposit\": false,\n  \"balanceColumn\": \"<BalanceColumn>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Profile \u2014 GET /api/statements/profiles/:bankAccountId",
-     "description": "`Banking.BankStatementsController.Profile`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/statements/profiles/:bankAccountId"
-      }
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/banks",
-     "description": "`Banking.BanksController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/banks"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/banks",
-     "description": "`Banking.BanksController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/banks"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"bankCode\": \"<BankCode>\",\n  \"bankName\": \"<BankName>\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Delete \u2014 DELETE /api/banks/:bankId",
-     "description": "`Banking.BanksController.Delete`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/banks/:bankId"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/banks/:bankId",
-     "description": "`Banking.BanksController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/banks/:bankId"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"bankCode\": \"<BankCode>\",\n  \"bankName\": \"<BankName>\",\n  \"isActive\": false\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Reorder \u2014 PATCH /api/banks/reorder",
-     "description": "`Banking.BanksController.Reorder`",
-     "request": {
-      "method": "PATCH",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/banks/reorder"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"movedId\": 1,\n  \"previousId\": 1,\n  \"nextId\": 1\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/receive-money",
-     "description": "`Banking.ReceiveMoneyController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/receive-money",
-     "description": "`Banking.ReceiveMoneyController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Delete \u2014 DELETE /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Delete`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money/:id"
-      }
-     }
-    },
-    {
-     "name": "Get \u2014 GET /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Get`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money/:id"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/receive-money/:id",
-     "description": "`Banking.ReceiveMoneyController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money/:id"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Post \u2014 POST /api/receive-money/:id/post",
-     "description": "`Banking.ReceiveMoneyController.Post`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money/:id/post"
-      }
-     }
-    },
-    {
-     "name": "Void \u2014 POST /api/receive-money/:id/void",
-     "description": "`Banking.ReceiveMoneyController.Void`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/receive-money/:id/void"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "List \u2014 GET /api/spend-money",
-     "description": "`Banking.SpendMoneyController.List`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money"
-      }
-     }
-    },
-    {
-     "name": "Create \u2014 POST /api/spend-money",
-     "description": "`Banking.SpendMoneyController.Create`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Delete \u2014 DELETE /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Delete`",
-     "request": {
-      "method": "DELETE",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money/:id"
-      }
-     }
-    },
-    {
-     "name": "Get \u2014 GET /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Get`",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money/:id"
-      }
-     }
-    },
-    {
-     "name": "Update \u2014 PUT /api/spend-money/:id",
-     "description": "`Banking.SpendMoneyController.Update`",
-     "request": {
-      "method": "PUT",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money/:id"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"transactionDate\": \"2026-08-10\",\n  \"bankAccountId\": 1,\n  \"contactId\": 1,\n  \"amount\": 0,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"paymentMethod\": \"<PaymentMethod>\",\n  \"referenceNo\": \"<ReferenceNo>\",\n  \"referenceDate\": \"2026-08-10\",\n  \"memo\": \"<Memo>\",\n  \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n  \"mappingTransactionId\": 1,\n  \"lines\": [\n    {\n      \"ledgerSourceId\": 1,\n      \"mappingTransactionTypeCode\": \"<MappingTransactionTypeCode>\",\n      \"mappingTransactionId\": 1,\n      \"amount\": 0,\n      \"lineMemo\": \"<LineMemo>\"\n    }\n  ]\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Post \u2014 POST /api/spend-money/:id/post",
-     "description": "`Banking.SpendMoneyController.Post`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money/:id/post"
-      }
-     }
-    },
-    {
-     "name": "Void \u2014 POST /api/spend-money/:id/void",
-     "description": "`Banking.SpendMoneyController.Void`",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{gatewayUrl}}/api/spend-money/:id/void"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
     },
     {
      "name": "List \u2014 GET /api/transfer-money",
-     "description": "`Banking.TransferMoneyController.List`",
+     "description": "`Accounting.TransferMoneyController.List`",
      "request": {
       "method": "GET",
       "url": {
@@ -3424,7 +3384,7 @@
     },
     {
      "name": "Create \u2014 POST /api/transfer-money",
-     "description": "`Banking.TransferMoneyController.Create`",
+     "description": "`Accounting.TransferMoneyController.Create`",
      "request": {
       "method": "POST",
       "url": {
@@ -3449,7 +3409,7 @@
     },
     {
      "name": "Delete \u2014 DELETE /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Delete`",
+     "description": "`Accounting.TransferMoneyController.Delete`",
      "request": {
       "method": "DELETE",
       "url": {
@@ -3459,7 +3419,7 @@
     },
     {
      "name": "Get \u2014 GET /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Get`",
+     "description": "`Accounting.TransferMoneyController.Get`",
      "request": {
       "method": "GET",
       "url": {
@@ -3469,7 +3429,7 @@
     },
     {
      "name": "Update \u2014 PUT /api/transfer-money/:id",
-     "description": "`Banking.TransferMoneyController.Update`",
+     "description": "`Accounting.TransferMoneyController.Update`",
      "request": {
       "method": "PUT",
       "url": {
@@ -3494,7 +3454,7 @@
     },
     {
      "name": "Post \u2014 POST /api/transfer-money/:id/post",
-     "description": "`Banking.TransferMoneyController.Post`",
+     "description": "`Accounting.TransferMoneyController.Post`",
      "request": {
       "method": "POST",
       "url": {
@@ -3504,7 +3464,7 @@
     },
     {
      "name": "Void \u2014 POST /api/transfer-money/:id/void",
-     "description": "`Banking.TransferMoneyController.Void`",
+     "description": "`Accounting.TransferMoneyController.Void`",
      "request": {
       "method": "POST",
       "url": {
@@ -3740,105 +3700,6 @@
     },
     {
      "name": "Seed organization \u2014 POST /internal/seed/organization",
-     "description": "`Banking.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{bankingUrl}}/internal/seed/organization"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "X-Internal-Key",
-        "value": "{{internalKey}}",
-        "description": "Shared service-to-service key. Not a user token."
-       },
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Seed organization \u2014 POST /internal/seed/organization",
-     "description": "`Contacts.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{contactsUrl}}/internal/seed/organization"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "X-Internal-Key",
-        "value": "{{internalKey}}",
-        "description": "Shared service-to-service key. Not a user token."
-       },
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Create owner \u2014 POST /internal/users/owner",
-     "description": "`Identity.InternalUsersController.CreateOwner` \u2014 shared key, no user token",
-     "request": {
-      "method": "POST",
-      "url": {
-       "raw": "{{identityUrl}}/internal/users/owner"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "body": {
-       "mode": "raw",
-       "raw": "{\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"email\": \"owner@example.com\",\n  \"displayName\": \"<DisplayName>\",\n  \"mobileNumber\": \"<MobileNumber>\",\n  \"password\": \"P@ssw0rd!\"\n}",
-       "options": {
-        "raw": {
-         "language": "json"
-        }
-       }
-      },
-      "header": [
-       {
-        "key": "X-Internal-Key",
-        "value": "{{internalKey}}",
-        "description": "Shared service-to-service key. Not a user token."
-       },
-       {
-        "key": "Content-Type",
-        "value": "application/json"
-       }
-      ]
-     }
-    },
-    {
-     "name": "Seed organization \u2014 POST /internal/seed/organization",
      "description": "`Inventory.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
      "request": {
       "method": "POST",
@@ -3904,6 +3765,46 @@
      }
     },
     {
+     "name": "Get database \u2014 GET /internal/customers/:customerId/database",
+     "description": "`Master.InternalCustomersController.GetDatabase` \u2014 shared key, no user token",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{masterUrl}}/internal/customers/:customerId/database"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       }
+      ]
+     }
+    },
+    {
+     "name": "Active organizations \u2014 GET /internal/customers/active-organizations",
+     "description": "`Master.InternalCustomersController.ActiveOrganizations` \u2014 shared key, no user token",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{masterUrl}}/internal/customers/active-organizations"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       }
+      ]
+     }
+    },
+    {
      "name": "Import \u2014 POST /internal/hsn-sac/import",
      "description": "`Master.InternalHsnImportController.Import` \u2014 shared key, no user token",
      "request": {
@@ -3964,52 +3865,12 @@
      }
     },
     {
-     "name": "Get database \u2014 GET /internal/customers/:customerId/database",
-     "description": "`Platform.InternalCustomersController.GetDatabase` \u2014 shared key, no user token",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{platformUrl}}/internal/customers/:customerId/database"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "header": [
-       {
-        "key": "X-Internal-Key",
-        "value": "{{internalKey}}",
-        "description": "Shared service-to-service key. Not a user token."
-       }
-      ]
-     }
-    },
-    {
-     "name": "Active organizations \u2014 GET /internal/customers/active-organizations",
-     "description": "`Platform.InternalCustomersController.ActiveOrganizations` \u2014 shared key, no user token",
-     "request": {
-      "method": "GET",
-      "url": {
-       "raw": "{{platformUrl}}/internal/customers/active-organizations"
-      },
-      "auth": {
-       "type": "noauth"
-      },
-      "header": [
-       {
-        "key": "X-Internal-Key",
-        "value": "{{internalKey}}",
-        "description": "Shared service-to-service key. Not a user token."
-       }
-      ]
-     }
-    },
-    {
      "name": "Send email \u2014 POST /internal/notifications/email",
-     "description": "`Platform.InternalNotificationsController.SendEmail` \u2014 shared key, no user token",
+     "description": "`Master.InternalNotificationsController.SendEmail` \u2014 shared key, no user token",
      "request": {
       "method": "POST",
       "url": {
-       "raw": "{{platformUrl}}/internal/notifications/email"
+       "raw": "{{masterUrl}}/internal/notifications/email"
       },
       "auth": {
        "type": "noauth"
@@ -4038,11 +3899,11 @@
     },
     {
      "name": "Get context \u2014 GET /internal/orgs/:orgId/context",
-     "description": "`Platform.InternalOrgsController.GetContext` \u2014 shared key, no user token",
+     "description": "`Master.InternalOrgsController.GetContext` \u2014 shared key, no user token",
      "request": {
       "method": "GET",
       "url": {
-       "raw": "{{platformUrl}}/internal/orgs/:orgId/context"
+       "raw": "{{masterUrl}}/internal/orgs/:orgId/context"
       },
       "auth": {
        "type": "noauth"
@@ -4052,6 +3913,72 @@
         "key": "X-Internal-Key",
         "value": "{{internalKey}}",
         "description": "Shared service-to-service key. Not a user token."
+       }
+      ]
+     }
+    },
+    {
+     "name": "Seed organization \u2014 POST /internal/seed/organization",
+     "description": "`Master.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{masterUrl}}/internal/seed/organization"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Create owner \u2014 POST /internal/users/owner",
+     "description": "`Master.InternalUsersController.CreateOwner` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{masterUrl}}/internal/users/owner"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"email\": \"owner@example.com\",\n  \"displayName\": \"<DisplayName>\",\n  \"mobileNumber\": \"<MobileNumber>\",\n  \"password\": \"P@ssw0rd!\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
        }
       ]
      }
