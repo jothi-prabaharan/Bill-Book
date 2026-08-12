@@ -6,7 +6,9 @@ Everything needed to build Sales: the document chain, every table and column, ev
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: designed, nothing built.** `backend/Api/Sales/` contains one `Program.cs` and no entities. The stock machinery underneath — reservation, the guarded issue, cost layers, returns to the originating layer, the COGS posting — is **built and has never been called by a document**.
+**Status: the schema is written, nothing runs yet.** The fifteen tables and the three base classes beneath them exist (T2.2); no service, no controller and no page do. The stock machinery underneath — reservation, the guarded issue, cost layers, returns to the originating layer, the COGS posting — is **built and has never been called by a document**.
+
+**T2.2 is written but unverified**, and the boxes below stay unticked until it is: see the standing caveat in `CLAUDE.md`. `sal` has no migration — generate it per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md`, which also carries the RLS block EF will not write.
 
 ---
 
@@ -256,6 +258,12 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 
 - [ ] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are in the database, not just the model.
+  **Written, unverified.** The three base classes are in `Shared.Kernel/Documents/` with the four enums they carry; the fifteen tables are in `Sales.Entity/TableEntities/`; `SalesDbContext` configures them through three helpers rather than fifteen hand-written blocks, because fifteen blocks is twelve chances to give one table a different precision or drop one check.
+  Four things settled in the writing, none of which the spec had to say:
+  **`TaxComponent` is a new enum in `Shared.Kernel`, not Accounting's.** Accounting's discriminates a sub-account and therefore needs a `None` — a contact's receivable is not a tax of any kind — and has no `Cess`. Merging them would give each a member the other must never hold.
+  **The line-number index is unique on `(document, LineNumber)`.** The ledger's `ITEM` leg keys on the line number, so two lines claiming position three would leave a posting pointing at whichever the database returned first.
+  **`DLC` gets no numbering series here.** It needs a seventeenth `mst.TransactionTypes` row that does not exist, and a series naming a type the master has never heard of is a number that resolves to nothing. T3.6 seeds both together. `QTE`, `SOR`, `INV`, `CRN` and `POS` are seeded.
+  **Header checks are in the database, not just C#** — the total footing to its parts, the tax split matching `IsInterState`, void stamped with a reason, `PostedAt` set iff it posted. Each is a thing that still prints and still posts when it is wrong.
 - [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
   *Done when*: a quote prints, converts, and writes nothing to the ledger or stock. **The batched name lookup lands here** — it is this stage's first real problem, not something to meet at T3.2.
 - [ ] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
