@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -92,6 +93,23 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
 builder.Services.AddHttpClient<ITaxRateProvider, HttpTaxRateProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// The names a document deliberately does not store. SALES.md keeps ContactName,
+// ItemCode and ItemName off the row so a correction shows everywhere, including
+// on documents already raised — and that only stays affordable if the names come
+// back in one call per page rather than one per row. Contacts live in Master
+// since the service merge; items in Inventory.
+builder.Services.AddHttpClient<IContactNameLookup, HttpContactNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IItemNameLookup, HttpItemNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

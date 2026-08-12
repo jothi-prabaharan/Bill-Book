@@ -6,7 +6,7 @@ Everything needed to build Sales: the document chain, every table and column, ev
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: the schema is written, nothing runs yet.** The fifteen tables and the three base classes beneath them exist (T2.2); no service, no controller and no page do. The stock machinery underneath — reservation, the guarded issue, cost layers, returns to the originating layer, the COGS posting — is **built and has never been called by a document**.
+**Status: the schema and the foundations are written; nothing runs yet.** The fifteen tables and the three base classes beneath them exist (T2.2), and so do the three things T2 was blocked on — tax determination (T0.2), the document series (T0.3) and the lifecycle (T0.4). The quote's own service, controller and page do not exist; see T2.3 below for exactly how far it got and what the next session needs to know. The stock machinery underneath — reservation, the guarded issue, cost layers, returns to the originating layer, the COGS posting — is **built and has never been called by a document**.
 
 **T2.2 is written but unverified**, and the boxes below stay unticked until it is: see the standing caveat in `CLAUDE.md`. `sal` has no migration — generate it per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md`, which also carries the RLS block EF will not write.
 
@@ -252,7 +252,7 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 
 ### Blocked on foundations
 
-These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** tax determination · **T0.3** document numbering series · **T0.4** the lifecycle. **T0.1** (the ledger door) and **T0.6** (ledger screens) are done.
+These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger screens) were already done; **T0.2** tax determination, **T0.3** document numbering series and **T0.4** the lifecycle are now written too — all three unverified, per the standing caveats in `CLAUDE.md`. Nothing in T2 is blocked any longer.
 
 ### T2 — quote and sales order
 
@@ -266,6 +266,26 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
   **Header checks are in the database, not just C#** — the total footing to its parts, the tax split matching `IsInterState`, void stamped with a reason, `PostedAt` set iff it posted. Each is a thing that still prints and still posts when it is wrong.
 - [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
   *Done when*: a quote prints, converts, and writes nothing to the ledger or stock. **The batched name lookup lands here** — it is this stage's first real problem, not something to meet at T3.2.
+
+  **Part-built. Read this before continuing.**
+
+  **Done (T2.3a — the batched name lookup).** The thing this task calls its first real problem is in place: `Shared.Kernel.Documents.INameLookup` defines `IContactNameLookup` and `IItemNameLookup`, both taking a *collection* and with no single-id overload, so the N+1 cannot be written by accident. `HttpNameLookup` batches, caches per organization and id for five minutes, and **swallows failures** — a name that cannot be read leaves one column showing an id rather than turning a list screen into a 500. That is the opposite of `ITaxRateProvider`, which answers null and stops the save, and deliberately so: a rate is written into the books, a name is only drawn on a screen. Served by `internal/contacts/names` on **Master** (contacts moved there in the service merge) and `internal/items/names` on Inventory. Both POST with the ids in the body, capped at 500 — that many ids in a query string meets a proxy's URL limit before the framework's, and the failure would be a silently truncated list. Both registered in Sales' `Program.cs`.
+
+  **Done (the request/response shapes).** `Sales.Entity/Models/QuoteModels.cs` — `SaveQuoteRequest`, `SaveQuoteLineRequest`, `QuoteListItem`, `QuoteView`, `QuoteLineView`, `QuoteLineTaxView`, `VoidQuoteRequest`, and a `QuoteOutcome` whose every value is something a user can act on. Two things the shapes settle: **the caller sends no totals and no tax amounts**, because a caller free to send its own totals can save a document whose foot disagrees with its body and one free to send its own tax can file the wrong return; and **a line names a `TaxGroupId`, never a rate**, because a caller that could send a rate could send yesterday's.
+
+  **Not started.** `QuoteService`, `QuotesController`, and the whole page. Nothing in `libs/sales` but two `.gitkeep` files.
+
+  **What the service has to wire together**, all of which now exists:
+  - numbering — `INumberGenerator.NextAsync("QTE", documentDate, ct)`, **at creation**, inside the insert's transaction (T0.3 as revised);
+  - lifecycle — `DocumentLifecycle.CanEdit/CanApprove/CanPost/CanVoid/CanDelete`, and **never a delete** (T0.4);
+  - the intra/inter decision — `PlaceOfSupply.Resolve(branchState, placeOfSupply, gstin)`, storing the answer in `IsInterState` rather than re-deriving it on read;
+  - tax — `ITaxRateProvider.GetRatesAsync(documentDate)` then `GstCalculator.Compute` per line and `GstCalculator.Totals` for the header, writing a `QuoteDetailTax` row per component (T0.2);
+  - the round-off — the calculator returns the total *before* rounding to the rupee; the document owns `RoundOffAmount`, and `chk_quotes_total` will refuse a header that does not foot;
+  - names — resolve contact and item names in **one call each per page**, never per row.
+
+  **The controller needs `[PermissionAction]`** on void, approve and print — `sales.void` and `sales.approve` have been seeded and granted since the beginning and nothing has ever read one (T0.4).
+
+  **One thing found and deliberately not fixed.** `Master:BaseUrl` is `http://localhost:5002` in Accounting's, Inventory's and Sales' `appsettings.Development.json`, but Master listens on **5003** — both `.vscode/launch.json` and the gateway's `master` cluster say so. 5002 was Platform's port before the merge folded it into Master. Every service-to-service call to Master in development — tenant directory, base currency, financial year, and now contact names — gets connection-refused. It is one line in each of three files, but it is not the quote's to decide, so it is recorded here rather than changed.
 - [ ] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
   *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
 
