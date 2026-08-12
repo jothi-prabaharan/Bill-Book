@@ -66,6 +66,12 @@ None of these is a document. All five are things a document immediately needs an
   Split it: a **pure calculator in `Shared.Kernel.Tax`** that takes lines, rates and the two state codes and returns the per-line and per-rate breakdown, and a rate lookup served by Accounting (`GET internal/tax/rates?on={date}`) cached per branch and date. Pure because this is the piece that fails silently — a wrong split still balances, still prints, and is only caught by a GSTR-1 that a human has to reconcile.
   Three sub-decisions to settle here rather than per document: inclusive vs exclusive pricing, whether a line discount reduces the taxable value (it does), and whether tax rounds per line then sums or sums then rounds. Pick one, test it, and write it down.
   *Done when*: the same item and rate produce CGST + SGST intra-state and IGST inter-state, at the rate in force on the document date; the sum of line taxes equals the header tax to the paise; and a contact whose GSTIN state code contradicts its place of supply is refused rather than posted.
+  **Written, unverified.** `Shared.Kernel.Tax` holds the pure calculator (`GstCalculator`), the place-of-supply resolver (`PlaceOfSupply`) and the cached rate client (`ITaxRateProvider`); Accounting serves `GET internal/tax/rates?on={date}`. Sales registers the provider; Purchase registers the same one when it lands.
+  **The three sub-decisions, settled:** prices may be **exclusive or inclusive** per line, because MRP pricing is the Indian retail default rather than an edge case; a discount **reduces the taxable value when the branch's `DiscountBeforeTax` says so**, which is a trade discount against a settlement discount; and tax **rounds per component, then sums**, because GSTR-1 reconciles per line and per rate, so the component is the rounded unit and the tax printed against a line is the tax that was filed.
+  **The date is the only way in.** There is no "current rates" route: a caller that could omit the date would eventually omit it, and a backdated document taxed at today's figures is a return that has to be amended.
+  **A GSTIN contradicting the place of supply is refused, not resolved** — the third of the *Done when* clauses. One of the two is wrong and nothing here can tell which; choosing silently produces a document that balances, prints and posts under the wrong head of tax.
+  **`shared-fixtures/tax-fixture.json` is the answer to "how do we know the two implementations agree".** Twelve line cases, two document cases and nine place-of-supply cases, read by `Shared.Kernel.Tests` and by `tax-fixture.spec.ts` beside `line-math.ts`. C# works in `decimal` and TypeScript in integer paise; the rupees-to-paise conversion is the only thing the two sides are allowed to do differently.
+  Neither suite has been run — no .NET SDK and no usable `node_modules` in the session that wrote them. Both algorithms were instead re-implemented independently and checked against the fixture, which is a third opinion rather than a substitute for the two.
 
 - [ ] **T0.3 — No document numbering series exist**
   `NumberingSeriesSeed` seeds five master series and says outright that document series arrive with the services that own them. Each service seeds its own on branch creation: `SeriesFor.Document`, `AllowManualOverride = false` — a hand-keyed invoice number is not allowed on an Indian invoice — and reset by financial year, whose start month 5.3 already resolves per branch.
@@ -92,104 +98,13 @@ None of these is a document. All five are things a document immediately needs an
 
 ---
 
-## Stage T2 — the sales skeleton: quote and order (QTE, SOR)
+## Stages T2–T7 — sales and purchase → [`SALES.md`](./SALES.md) · [`PURCHASE.md`](./PURCHASE.md)
 
-Neither posts. That is the point of taking them first — the document machinery (header/lines, numbering, lifecycle, tax, totals, print, conversion) gets built and tested with no accounting risk at all.
+**Moved.** The quote, sales order, delivery challan, invoice, POS sale and credit note are in [`SALES.md`](./SALES.md); the purchase order, goods receipt, bill and debit note in [`PURCHASE.md`](./PURCHASE.md). Each file carries its own tables, columns, decisions, open questions and tasks, so one module can be built without reading around it.
 
-- [x] **T2.1 — Decide the `sal` document shape** *(owner decision, and the largest one here)*
-  Five sales documents share perhaps ninety per cent of their columns: contact, dates, currency and rate, addresses, lines with item/quantity/rate/discount/tax, totals, terms, status. *Recommendation: one document table pair discriminated by `TransactionTypeCode`*, with the type-specific columns nullable — validity date on a quote, delivery date on an order, due date on an invoice. One list screen, one numbering path, and conversion becomes a copy.
-  The cost is a wide table with nullable columns whose applicability lives in C#. The alternative is ten tables and five near-identical services, and every cross-document report joining all of them.
-  **Answered, then reversed. The decision is a table pair per document type**, not one discriminated pair: `sal.Quotes`, `sal.SalesOrders`, `sal.DeliveryChallans`, `sal.Invoices`, `sal.CreditNotes`, each with its details **and a tax child table under those details**. Fifteen tables — **a POS sale is an `Invoices` row, not a table of its own**; see T7. Columns are in [`SPEC.md`](./SPEC.md).
-  The first answer was `sal.Sales` / `sal.SalesDetails`; the owner changed it. **Recorded rather than rewritten**, because the reasoning on both sides still applies to `pur.*` in T4.2 and to anyone who revisits this.
-  **What a table per type buys.** A conversion link becomes a real foreign key — `Invoices.SalesOrderId`, `CreditNotes.InvoiceId` — instead of one polymorphic column the database cannot enforce. Type-specific columns become `NOT NULL` where they belong: a quote must have `ValidUntil`, an invoice must have `DueDate`, a credit-note line must name the invoice line it reverses.
-  **What they cost, and the thing to get right first.** The columns are identical across all five pairs, so they go in **base classes in `Shared.Kernel`** — `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` — and are inherited, never copied. Hand-maintained copies of a GST split is how a column comes to mean one thing on an invoice and another on a credit note. And every cross-document read now unions five tables: customer history, the day book, the monthly sales report, the register. Write that union once as a projection or it gets copied into every screen.
-  **One knock-on already applied**: `sal.SalesRegister` loses its foreign key. It is fed by two tables now, so it keys on `(TransactionTypeCode, SourceId)` with no FK — which means cascade delete is gone and a void has to delete its register rows explicitly.
-  **Names are not stored on documents.** `ContactName`, `ItemCode` and `ItemName` are read from Contacts and Inventory when a document is read, so a corrected name shows everywhere including on documents already raised. The cost is a cross-service lookup on every list, print and report, and **it must be batched** — one call for the fifty contacts on an invoice list, never one per row. That is the N+1 `CLAUDE.md` warns about, arriving on the busiest screens in the product, and it is T2.3's first real problem rather than something to discover at T3.2.
-  What stays snapshotted is what was *filed*, not what a thing is called: GSTIN, HSN/SAC, the tax rates, and the billing and shipping addresses.
-  **A line does not need an item.** `ItemId` is nullable, so a line can be a description, a quantity and a unit price — a service, freight, a one-off charge. Such a line touches no stock, gets no COGS leg, and posts to a named `AccountId` rather than through an item's sub-accounts, which means **item-level revenue reporting will not see it**. A service you sell repeatedly belongs in the item master as `ItemType = Service` instead, where it gets a code, a default rate and a sub-account.
-  **`TaxTreatment` on every line — Taxable / ZeroRated / NilRated / Exempt / NonGst**, snapshotting the item's `TaxPreference`. Charging nothing and being outside the tax are different facts and GSTR-1 reports them in different tables, so a zero amount cannot stand in for either. It is orthogonal to `IsPriceInclusive`, which says only how the price was quoted. On purchase it does a second job: ITC is not claimable on an exempt supply, and the proportional reversal is computed from the lines.
-  **A line's tax is rows, not columns.** Intra-state is two components and inter-state is one, so fixed `Cgst`/`Sgst`/`Igst` columns are a shape that only ever half-applies. Each detail table gets a tax child table carrying the component, the **resolved GST sub-account**, the rate and the amount — which is what the `TAX` ledger leg posts against, so the line records where it went instead of the posting re-deriving it. It also makes a **zero-rated supply legible**: with flat columns a 0% intra-state line and a 0% inter-state line are identical, and GSTR-1 has to tell them apart.
-  *Open, not blocking*: jewellery lines want making charge, wastage and metal rate. With a table per type that is five extensions or five sets of columns — settle it before the first pair is built.
-- [ ] **T2.2 — The five `sal.*` pairs and their tax rows: base classes, entities and migration** — per the SPEC entry T2.1 wrote. `DocumentHeaderBase` and `DocumentLineBase` in `Shared.Kernel` first, then the fifteen tables inheriting them — five header/detail pairs plus a tax child table per detail, with `OrgId` on **every** table, query filters, RLS and the document series from T0.3.
-  *Done when*: `migrations add` produces an empty migration and the RLS policies are present in the database, not just the model.
-- [ ] **T2.3 — Quote: API and page** — create, edit, print, convert to order, expire.
-  *Done when*: a quote prints, converts to an order, and writes nothing to the ledger or to stock.
-- [ ] **T2.4 — Sales order: API and page, reserving stock** — confirming an order calls Inventory's `ReserveAsync`; cancelling or converting releases. 5.13 built the guarded reserve for exactly this and nothing has called it yet.
-  *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched; and cancelling gives it back.
+Task numbers did not change — T2, T3, T4, T5 and T7 are the same tasks, in a different file. **T5.1 (`acc.TransactionRatio`) and T5.4 (the allocation UI) are shared**, and are built once by whichever module reaches them first.
 
----
-
-## Stage T3 — the invoice (INV)
-
-The flagship screen, and the first document where accounting, stock, tax and numbering all run at once.
-
-- [ ] **T3.1 — Invoice API: post, void, and the ledger legs**
-  `Dr Accounts Receivable` (CONTROL, contact sub-account) / `Cr Sales Revenue` per line (ITEM, item sub-account) / `Cr Output GST` per rate (TAX, rate sub-account), plus ROUNDOFF where the total rounds. Stock is issued synchronously through the existing guarded decrement; Inventory's costing worker settles COGS and posts the `Dr COGS / Cr Inventory` legs onto the same document, which is the two-writers case T0.1 preserves.
-  **Issuing reserved stock is release-then-issue in one transaction** — issue first and the order's own reservation is counted against it.
-  *Done when*: an invoice raised against a confirmed order releases its reservation and issues the stock exactly once; the trial balance still balances; and gross profit on the item equals revenue minus the COGS the layers actually produced.
-- [ ] **T3.2 — Invoice page** — contact, item lines with live tax by place of supply, totals panel, draft/post/void, print.
-  *Done when*: an invoice can be keyed and posted at 360px, and the tax shown on screen equals the tax posted.
-- [ ] **T3.3 — Outstanding and aging** — what a contact owes, per document, read from the ledger's AR sub-accounts. The input to T6's allocation.
-  *Done when*: an invoice appears as outstanding at its full value the moment it is posted, and the aging buckets tie to the Accounts Receivable control account.
-- [ ] **T3.4 — Document print and archive** — Syncfusion server-side PDF, PDF/A, archived to blob storage keyed by `SourceType` + `SourceId`. `IFileStorage` is done, both implementations.
-  *Done when*: a posted invoice prints identically today and after a re-post, and the archived copy is retrievable by document id.
-- [ ] **T3.5 — `sal.SalesRegister`** — the sales register, designed in [`SPEC.md`](./SPEC.md). **Not a ledger and it posts nothing**: `acc.JournalLedger` stays the single posting target and the trial balance still sums one table. This carries taxable value and tax split at the grain a GST return is filed in — `(SaleId, HsnSacCode, GstRate)` — which is why it is stored rather than derived: B2B is reported per invoice per rate and the HSN summary per HSN per rate, and neither falls out of a header row or a line row.
-  Written **inside the post's own transaction**, replaced by `(type, document)` on a re-post, deleted on void. That discipline is the only thing standing between a denormalisation and two truths, so it is not optional and not a background job.
-  `SupplyType` is classified once at post rather than at filing — the rule reads the party's GSTIN, the place of supply and the invoice value together, and re-deriving it later against a contact who has since registered would move a supply between return sections.
-  Extended by T5.2, which adds the credit-note rows and the link back to the invoice they amend.
-  *Done when*: an intra-state and an inter-state invoice register with the correct halves of the split and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphan rows; a void leaves none at all; and register taxable value for a period equals the Output GST legs in the ledger for that period.
-
-- [ ] **T3.6 — `DLC` delivery challan** — *the step the sales chain was missing*
-  Purchase has order → **receipt** → bill. Sales had only order → invoice, so **stock could leave only on an invoice**. That breaks deliver-today-invoice-later, part deliveries against one order, goods sent on approval, branch transfers and job work — and an e-way bill hangs off the challan, not the invoice.
-  `sal.DeliveryChallans` and `sal.DeliveryChallanDetails`, designed in [`SPEC.md`](./SPEC.md). The challan issues the stock and releases the order's reservation; the invoice that follows bills what was delivered and moves no stock, exactly as a bill against a goods receipt moves none.
-  **Needs a seventeenth `mst.TransactionTypes` row**, `DLC`, added by EF migration — a code added at runtime would have no posting logic behind it. Its own numbering series comes with it.
-  **What it posts is an open decision, and the exact mirror of T4.1.** Issuing as `Dr COGS` at delivery books cost with no revenue against it. *Recommendation: a `Goods Delivered Not Invoiced` control account (Asset) — `Dr GDNI / Cr Inventory` on the challan, `Dr COGS / Cr GDNI` on the invoice.* A challan for job work, approval or a branch transfer posts nothing: nothing was sold.
-  *Done when*: an order part-delivered on a challan issues only what shipped and leaves the rest reserved; the invoice raised against that challan moves no stock; and a job-work challan writes a stock movement and no ledger row.
----
-
-## Stage T4 — purchase: order, receipt, bill (POR, GRN, BIL)
-
-Mirrors T2–T3 and reuses the tax component, the numbering and the lifecycle unchanged. The one genuinely new question is what a receipt posts before its bill arrives.
-
-- [ ] **T4.1 — Decide goods-received-not-invoiced** *(owner decision)*
-  A receipt puts stock on the shelf; the bill that values it may come days later. Posting nothing at receipt leaves the inventory asset understated for those days — the stock exists and the books do not know. *Recommendation: seed a **Goods Received Not Invoiced** control account (Liability), post `Dr Inventory / Cr GRNI` at receipt, and `Dr GRNI / Cr Accounts Payable` (plus `Dr Input GST`) at the bill.* A bill with no receipt behind it debits Inventory directly.
-  This changes `StockLedgerMapping`, which today returns no posting for a sourced receipt on the grounds that Purchase will post it — that stays true, but Purchase now posts at the receipt rather than only at the bill. It also adds an account to the chart-of-accounts seed, which is idempotent per account since 1.4, so existing branches pick it up by re-running the seed.
-- [ ] **T4.2 — `pur.*` schema, entities and migration** — the same per-type split as T2.1: `pur.PurchaseOrders`, `pur.GoodsReceipts`, `pur.Bills`, `pur.DebitNotes`, each with its details and tax rows — twelve tables, all on T2.2's three base classes. Columns are designed in [`SPEC.md`](./SPEC.md).
-  **`VendorBillNo` is the column with no sales equivalent.** On a sale we issue the number; on a purchase the vendor does, and input tax credit is claimed against theirs. So a posted bill needs both — `DocumentNo` for internal reference and `VendorBillNo` + `VendorBillDate` for the return — with a unique index on `(OrgId, ContactId, VendorBillNo, financial year)` so one vendor cannot bill the same number twice and a duplicate ITC claim is refused at entry.
-  **`LineType` is stock, expense or capital, and lives in `DocumentLineBase`, not on `BillDetails` alone.** On a bill the third puts a purchase on the fixed asset register (T10.2); on an **invoice** it is how a fixed asset is disposed of (T10.4). Every other sales line is `Stock`. Only the *accepted* quantity on a receipt becomes stock.
-  *Done when*: `migrations add` produces an empty migration, RLS policies are in the database, and a second bill carrying a vendor number already used that year is refused.
-- [ ] **T4.3 — Purchase order: API and page** — no posting, no reservation. Ordering stock does not reserve anything; it is not there yet.
-- [ ] **T4.4 — Goods receipt: API and page** — receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input.
-  *Done when*: a receipt against an order opens a cost layer at the received cost, and a partial receipt leaves the order partly open.
-- [ ] **T4.5 — Bill: API and page** — with or without a receipt, with the Input GST legs and payment terms driving the due date.
-  **A bill line is stock, expense or capital**, and the third is how every purchased fixed asset gets onto the books — it posts to a Fixed Asset account and creates the register row, rather than to Inventory. The line flag belongs here; what it then does is [T10.2](./TRANSACTIONS-ACCOUNTING-BANKING.md#stage-t10--fixed-assets-acquisition-depreciation-disposal-dep) in the other file. **T10 is now Phase 2**, so this task no longer blocks it — but the flag is still Phase 1, because a bill has to be able to say a line is capital whether or not the register exists to receive it yet.
-  *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; a capital line moves neither and lands on a Fixed Asset account; and payables aging ties to the Accounts Payable control account.
-
----
-
-## Stage T5 — credit and debit notes (CRN, DBN)
-
-A sales return and a purchase return. Both reverse value and both put stock back **on the layers it came from** — 4.5 built that and nothing calls it yet.
-
-- [ ] **T5.1 — `acc.TransactionRatio`** — allocation between documents, designed in SPEC and unbuilt. Built here rather than in T0 because an allocation table with nothing allocating cannot be tested. Allocations must never exceed the target's outstanding balance, and the sum spans rows, so that is a C# guard and cannot be a check constraint.
-- [ ] **T5.2 — Credit note** — `Dr Sales Returns` (contra Income, so the report subtracts it) `/ Cr Accounts Receivable`, with the GST reversed on the same rates as the invoice, and stock returned via `ReturnsStockMovementId` to the originating layers.
-  *Done when*: buy, sell, credit-note leaves stock value exactly where it started and the ledger with it; and the note allocates against the invoice rather than floating as an unapplied balance.
-- [ ] **T5.3 — Debit note** — the purchase mirror: `Dr Accounts Payable / Cr Purchase Returns` (contra Expense), Input GST reversed, stock returned to its layers.
-- [ ] **T5.4 — Allocation UI** — apply a note across one or several documents, with the outstanding balance shown and over-allocation refused at the point of typing rather than at save.
-
----
-
-## Stage T7 — POS sale (POS)
-
-An invoice and its receipt in one action, from `apps/desktop`, which today has no source files at all.
-
-**No new tables. POS is a UI module.** A till sale is a row in `sal.Invoices` with `TransactionTypeCode = 'POS'` — same lines, same GST, same stock issue, same ledger legs as an invoice. `sal.PosSales` was designed and then removed at the owner's direction, and the reasoning holds: two tables for one document means two places to fix a GST bug. The POS-only columns — till, cashier, payment mode, tendered, change — are nullable on `sal.Invoices`.
-
-- [ ] **T7.1 — POS API** — one call that issues stock, posts the sale and posts the payment, writing an `Invoices` row. The stock decrement is **synchronous and guarded**, per `CLAUDE.md`, or two tills oversell the last unit; costing and the ledger follow asynchronously as they already do.
-  It reuses T3.1's invoice posting rather than repeating it. What is genuinely new is the payment in the same call and the till fields, not the document.
-- [ ] **T7.2 — POS screen** — keyboard and barcode driven, offline-tolerant, whole thing in `apps/desktop`. This is the bulk of the stage.
-- [ ] **T7.3 — ESC/POS receipt** — commands, not PDF; fixed-width; desktop only, because a browser cannot reach a USB or serial printer.
-  *Done when*: a sale rings up, prints and decrements stock with the network to Accounting down, and reconciles when it returns.
+What stays here: **T0**, the foundations both modules wait on, and **T9**, the stock adjustment document, which is Inventory's.
 
 ---
 

@@ -25,11 +25,11 @@ These are non-negotiable. Violating them means the code gets rejected.
 
 ## Git — how work reaches main
 
-> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.**
+> **Note. Never create a new branch. Commit every change directly to the default branch, `main`.**
 
-One branch is named for the session's work; every commit goes there, and it is merged into `main` when the work is done. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind — which is how a change that was written and reviewed is missing from the product.
+There is one branch, and it is `main`. Every commit goes there as the work is done — no feature branch, no session branch, nothing to merge afterwards. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind, which is how a change that was written and reviewed goes missing from the product.
 
-The same applies to a follow-up: reuse the designated branch rather than opening a second one beside it.
+The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
 
 ---
 
@@ -55,7 +55,7 @@ State what is built, what is designed but uncoded, and what is not designed — 
 
 ## When asked to add a table
 
-Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new.
+Column-level schemas and page specs live in [`SPEC.md`](./SPEC.md) — check there before designing anything new. **Sales and purchase documents are the exception**: `sal.*` lives in [`SALES.md`](./SALES.md) and `pur.*` in [`PURCHASE.md`](./PURCHASE.md), each with its columns, decisions and tasks in one place.
 
 Produce, in this order:
 1. Entity class in `{Module}.Entity/TableEntities/{Name}.cs`
@@ -253,7 +253,7 @@ GL postings are always in base currency; original currency and rate stay on the 
 ## Indian GST
 
 - Item master: HSN/SAC + rate slab. Contact master: GSTIN (first 2 digits = state code).
-- **One shared tax-determination component** used by Sales and Purchase. Same state → CGST+SGST. Different → IGST. Never duplicate this logic per service.
+- **One shared tax-determination component** used by Sales and Purchase — `Shared.Kernel.Tax`: `GstCalculator` is pure and takes rates already resolved for the document's date, `PlaceOfSupply` decides intra against inter, `ITaxRateProvider` reads them from Accounting cached per branch **and date**. Same state → CGST+SGST. Different → IGST. Never duplicate this logic per service; the TypeScript copy in `line-math.ts` exists because the browser needs it and is held to the same answers by `shared-fixtures/tax-fixture.json`.
 - Tax Master is **effective-dated** (rates get revised), with CGST/SGST/IGST split and the **3% gold/silver bullion rate** (outside the standard 0/5/12/18/28 slabs)
 - Validate `StateCode` matches the GSTIN's first two digits, or CGST/SGST vs IGST goes silently wrong
 - Tax Master is a **Settings screen** but the data is owned by the **Accounting service**
@@ -315,7 +315,7 @@ Schema, API and page all exist for these. Task tracking lives in [`master.md`](.
 | **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger and the trial balance |
 | **Banking** | Bank, BankAccount, MoneyTransaction, MoneyTransactionDetail | Each bank account provisions its own ledger account; the money document's schema for spend, receive and transfer — **schema only, no API or screen yet** |
 
-`NumberingSeries` lives in `Shared.Kernel` and is mapped by four services — Accounting owns the migration, Contacts, Inventory and Banking map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
+`NumberingSeries` lives in `Shared.Kernel` and is mapped by five services — Accounting owns the migration, Contacts, Inventory, Banking and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
 
 The reason is the allocation. `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction — so an item insert that fails gives its code back, and a document series stays gapless. Both properties need the table in the caller's `DbContext`. Ask another service for a number over HTTP and the transaction ends at the wire: the number is spent whether or not the insert succeeds.
 
@@ -331,12 +331,16 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ### Still not built
 
-- **Crm, Sales, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
+- **Crm, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
+- **Sales beyond the schema** — the fifteen `sal` tables and the three document base classes in `Shared.Kernel` are written (T2.2). No service, no controller, no page: the quote is T2.3 and wires up `bb-document-line-grid` rather than writing a grid
 - **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
 - **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
 - **Document numbering series beyond `JRN`, `SPM`, `RCM` and `TRM`.** Accounting and Banking seed their own; Sales and Purchase seed theirs when those services land
 
 ### Standing caveats
+
+- **T0.2 — tax determination — is written but not verified.** `Shared.Kernel.Tax` holds the pure calculator, the place-of-supply resolver and the cached rate client; Accounting serves `GET internal/tax/rates?on={date}`. The three sub-decisions are settled and written down in `TRANSACTIONS.md`: inclusive **and** exclusive pricing per line, discount reduces the taxable value when the branch says so, tax rounds per component then sums. `shared-fixtures/tax-fixture.json` is read by both `Shared.Kernel.Tests` and `tax-fixture.spec.ts`, so a divergence between the C# and TypeScript implementations is a failing test rather than a wrong GST return — but neither suite has been run.
+- **T2.2 — the `sal` schema — is written but not verified, and `sal` has no migration.** It was built in a session with no .NET SDK reachable: `dot.net`, `builds.dotnet.microsoft.com`, `packages.microsoft.com` and `api.nuget.org` all refused through the egress proxy, so `dotnet build`, `dotnet test` and `dotnet ef migrations add` could none of them run. Generate the migration per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md` — it carries the RLS block EF will not write, and the second `migrations add` that has to come back empty. The boxes in `SALES.md` stay unticked until both checks are green.
 
 - **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 110, every EF snapshot matches its model, and all 33 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
 - **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.

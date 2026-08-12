@@ -15,4 +15,15 @@
     <ProjectReference Include="..\..\shared\Shared.Kernel\Shared.Kernel.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!--
+      The fixture both tax implementations are checked against. Linked rather
+      than copied: one file, read by this suite and by line-math's Vitest spec,
+      because two copies of the expected answers is two answers.
+    -->
+    <Content Include="..\..\..\shared-fixtures\tax-fixture.json"
+             Link="tax-fixture.json"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
