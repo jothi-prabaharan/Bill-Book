@@ -49,7 +49,9 @@
         <td>{{ labelFor(row.reason) }}</td>
         <td class="num">{{ row.lineCount }}</td>
         <td class="num">
-          @if (row.netValue === null) {
+          @if (row.status === 'Draft') {
+            <span class="muted">—</span>
+          } @else if (row.netValue === null) {
             <span class="badge low" title="Costing settles a moment behind">Costing…</span>
           } @else {
             <span [class.down]="row.netValue < 0">{{ row.netValue }}</span>

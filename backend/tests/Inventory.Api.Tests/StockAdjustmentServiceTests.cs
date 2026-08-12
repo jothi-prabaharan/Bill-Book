@@ -233,6 +233,39 @@ public class StockAdjustmentServiceTests
             (await h.Adjustments.DeleteAsync(id, ct)).Outcome);
     }
 
+    /// <summary>
+    /// The list and the detail read, which the other tests never touch. Worth its
+    /// own case because both project through subqueries EF has to translate — a
+    /// projection that cannot be translated compiles perfectly and throws the
+    /// first time a screen opens.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_list_and_the_detail_both_read()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        long item = await h.Item("LISTED", onHand: 12m);
+        StockAdjustmentResult draft = await h.Adjustments.SaveAsync(null, h.WriteOff(item, 3m), ct);
+        long id = draft.StockAdjustmentId!.Value;
+
+        IReadOnlyList<StockAdjustmentListItem> drafts = await h.Adjustments.ListAsync("Draft", ct);
+        Assert.Contains(drafts, a => a.StockAdjustmentId == id);
+        Assert.Empty(await h.Adjustments.ListAsync("Posted", ct));
+
+        StockAdjustmentDetail? detail = await h.Adjustments.GetAsync(id, ct);
+        Assert.NotNull(detail);
+        Assert.Single(detail!.Lines);
+        Assert.Equal("LISTED", detail.Lines[0].ItemCode);
+        Assert.Equal(1, detail.LineCount);
+
+        await h.Adjustments.PostAsync(id, ct);
+
+        StockAdjustmentDetail after = (await h.Adjustments.GetAsync(id, ct))!;
+        Assert.NotNull(after.Lines[0].StockMovementId);
+        Assert.Single(await h.Adjustments.ListAsync("Posted", ct));
+    }
+
     private sealed class Harness : IAsyncDisposable
     {
         public required InventoryDbContext Db { get; init; }

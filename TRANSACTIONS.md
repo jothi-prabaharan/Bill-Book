@@ -204,6 +204,7 @@ Movements already post as `STA` when they have no document behind them, each fil
 - [x] **T9.2 — Physical count** — enter counted quantities, adjust to the difference, and post the sheet as one document.
   *Done when*: a count sheet of twenty items posts as one document with twenty movements, and the ledger shows one adjustment rather than twenty.
   Done, and tested against a real PostgreSQL rather than asserted: a three-item count posts as one document whose movements all carry the sheet's id with their own line numbers — which is the ledger key, and therefore the actual claim. Lines that agree with the books are dropped rather than posted as zero, and the quantity the system held at the moment of counting is snapshotted so the difference can be re-checked later.
+  **A second defect, found by testing the read path rather than the write path**: `NetValue` was computed by an instance method called inside an EF projection, which EF refuses at runtime — so both the list and the detail would have thrown the first time the screen opened, and neither the build nor any write-path test could see it. It is one batched query now, which also removes an N+1 that would have run per row.
   **Building it found a real defect in `StockService`**: it opened its own transaction per movement, so a sheet posting several lines inside one transaction threw on the second. It now joins an ambient transaction when there is one and commits only what it opened — without which the all-or-nothing guarantee was not merely untested but impossible.
 
 ---

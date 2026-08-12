@@ -59,7 +59,7 @@ public sealed class StockAdjustmentService
             query = query.Where(a => a.Status == wanted);
         }
 
-        return await query
+        List<StockAdjustmentListItem> sheets = await query
             .OrderByDescending(a => a.AdjustmentDate)
             .ThenByDescending(a => a.StockAdjustmentId)
             .Select(a => new StockAdjustmentListItem
@@ -77,34 +77,61 @@ public sealed class StockAdjustmentService
                     .FirstOrDefault(),
                 LineCount = _db.StockAdjustmentLines
                     .Count(l => l.StockAdjustmentId == a.StockAdjustmentId),
-                NetValue = NetValueOf(a.StockAdjustmentId),
                 Notes = a.Notes,
                 ReversedByStockAdjustmentId = a.ReversedByStockAdjustmentId,
                 ReversesStockAdjustmentId = a.ReversesStockAdjustmentId,
                 PostedAt = a.PostedAt,
             })
             .ToListAsync(ct);
+
+        Dictionary<long, decimal?> values =
+            await NetValuesAsync([.. sheets.Select(a => a.StockAdjustmentId)], ct);
+
+        foreach (StockAdjustmentListItem sheet in sheets)
+        {
+            sheet.NetValue = values.GetValueOrDefault(sheet.StockAdjustmentId);
+        }
+
+        return sheets;
     }
 
     /// <summary>
-    /// What the sheet is worth, from the movements it wrote. Null while any line
-    /// is still uncosted — costing settles a moment behind, and a partial total
-    /// reads exactly like a complete one.
+    /// What each sheet is worth, from the movements it wrote: stock added less
+    /// stock written off.
+    ///
+    /// <b>One query for the whole page, and none of it inside a projection.</b>
+    /// EF refuses a method call on the service from within a projection, and a
+    /// correlated subquery per row would be an N+1 on the largest table here. A
+    /// sheet with an uncosted line answers null rather than a partial total,
+    /// because a partial total reads exactly like a complete one.
     /// </summary>
-    private decimal? NetValueOf(long adjustmentId) =>
-        _db.StockAdjustmentLines
-            .Where(l => l.StockAdjustmentId == adjustmentId && l.StockMovementId != null)
-            .Join(_db.StockMovements, l => l.StockMovementId, m => m.StockMovementId,
-                (l, m) => new { l.Direction, m.TotalCost })
-            .Any(x => x.TotalCost == null)
-            ? null
-            : _db.StockAdjustmentLines
-                .Where(l => l.StockAdjustmentId == adjustmentId && l.StockMovementId != null)
-                .Join(_db.StockMovements, l => l.StockMovementId, m => m.StockMovementId,
-                    (l, m) => l.Direction == StockDirection.In
-                        ? m.TotalCost
-                        : -m.TotalCost)
-                .Sum();
+    private async Task<Dictionary<long, decimal?>> NetValuesAsync(
+        IReadOnlyCollection<long> adjustmentIds, CancellationToken ct)
+    {
+        if (adjustmentIds.Count == 0)
+        {
+            return [];
+        }
+
+        var rows = await _db.StockAdjustmentLines
+            .Where(l => adjustmentIds.Contains(l.StockAdjustmentId) && l.StockMovementId != null)
+            .Join(
+                _db.StockMovements,
+                l => l.StockMovementId,
+                m => m.StockMovementId,
+                (l, m) => new { l.StockAdjustmentId, l.Direction, m.TotalCost })
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(r => r.StockAdjustmentId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Any(r => r.TotalCost is null)
+                    ? (decimal?)null
+                    : g.Sum(r => r.Direction == StockDirection.In
+                        ? r.TotalCost!.Value
+                        : -r.TotalCost!.Value));
+    }
 
     public async Task<StockAdjustmentDetail?> GetAsync(long id, CancellationToken ct)
     {
@@ -128,7 +155,6 @@ public sealed class StockAdjustmentService
                     .FirstOrDefault(),
                 LineCount = _db.StockAdjustmentLines
                     .Count(l => l.StockAdjustmentId == a.StockAdjustmentId),
-                NetValue = NetValueOf(a.StockAdjustmentId),
                 Notes = a.Notes,
                 ReversedByStockAdjustmentId = a.ReversedByStockAdjustmentId,
                 ReversesStockAdjustmentId = a.ReversesStockAdjustmentId,
@@ -140,6 +166,8 @@ public sealed class StockAdjustmentService
         {
             return null;
         }
+
+        header.NetValue = (await NetValuesAsync([id], ct)).GetValueOrDefault(id);
 
         List<StockAdjustmentLineDetail> lines = await _db.StockAdjustmentLines
             .Where(l => l.StockAdjustmentId == id)
