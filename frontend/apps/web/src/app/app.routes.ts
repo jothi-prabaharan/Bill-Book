@@ -130,6 +130,18 @@ export const appRoutes: Routes = [
         data: { permission: 'accounting.view' },
       },
       {
+        path: 'settings/contact-person-roles',
+        loadComponent: () =>
+          import('@bill-book/master-ui').then((m) => m.ContactPersonRolesPage),
+        data: { permission: 'contacts.view' },
+      },
+      {
+        path: 'settings/closing-dates',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.ClosingDatesPage),
+        data: { permission: 'accounting.view' },
+      },
+      {
         path: 'settings/payment-terms',
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.PaymentTermsPage),
