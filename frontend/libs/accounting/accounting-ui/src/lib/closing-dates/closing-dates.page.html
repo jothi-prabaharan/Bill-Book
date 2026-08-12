@@ -1,0 +1,100 @@
+<header class="page-head">
+  <h1>Closing dates</h1>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  How far back the books are closed, <strong>per role</strong>. The date is inclusive: closing
+  to 31 March means nothing posts on or before that day.
+</p>
+
+<p class="hint">
+  It is a soft close, and per role for a reason — a month is usually shut to everyone who keys
+  documents while staying open to whoever has to make the adjusting entries the close itself
+  produced. One date for the whole branch would close the books on the person doing the
+  closing.
+</p>
+
+<p class="hint">
+  <strong>A role with no date is not closed at all.</strong> What is refused is anything that
+  reaches or leaves the ledger — posting, reversing, voiding — never the keying. Somebody
+  catching up on last month's paperwork can still type it, and finds out when they post.
+</p>
+
+@if (mine(); as my) {
+  @if (my.lockedUpto) {
+    <p class="notice">
+      <strong>You are closed up to {{ my.lockedUpto }}</strong> — the first date you can post on
+      is {{ my.openFrom }}. Changing your own role's date here changes that.
+    </p>
+  }
+}
+
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Role</th>
+      <th>Closed up to</th>
+      <th>Why</th>
+      <th class="actions-col"><span class="sr-only">Actions</span></th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (row of rows(); track row.role.roleId) {
+      <tr>
+        <td>
+          {{ row.role.displayName }}
+          @if (row.role.isSystemRole) {
+            <span class="sub">system role</span>
+          }
+          @if (row.role.userCount > 0) {
+            <span class="sub">{{ row.role.userCount }} user(s)</span>
+          }
+        </td>
+
+        <td>
+          <input
+            type="date"
+            [(ngModel)]="row.editing"
+            [name]="'lock' + row.role.roleId"
+            [attr.aria-label]="'Closed up to, for ' + row.role.displayName"
+          />
+          @if (row.lock === null) {
+            <span class="sub">not closed — every period is open</span>
+          } @else if (reopens(row)) {
+            <span class="sub warn">
+              earlier than {{ row.lock.lockedUpto }} — this reopens a closed period
+            </span>
+          }
+        </td>
+
+        <td>
+          <input
+            type="text"
+            [(ngModel)]="row.note"
+            [name]="'note' + row.role.roleId"
+            maxlength="300"
+            placeholder="Year-end closed, audit signed off…"
+            [attr.aria-label]="'Why, for ' + row.role.displayName"
+          />
+        </td>
+
+        <td class="actions-col">
+          <button type="button" class="link" (click)="save(row)" [disabled]="busy()">
+            {{ row.lock === null ? 'Close' : 'Update' }}
+          </button>
+          @if (row.lock !== null) {
+            <button type="button" class="link" (click)="clear(row)" [disabled]="busy()">
+              Reopen all
+            </button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr><td colspan="4">No active roles.</td></tr>
+    }
+  </tbody>
+</table>

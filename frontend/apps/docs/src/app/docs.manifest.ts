@@ -48,6 +48,7 @@ export const DOCS: DocSection[] = [
       { slug: 'stock', title: 'Stock, batches & costing', status: 'partial' },
       { slug: 'stock-adjustments', title: 'Stock adjustments', status: 'built' },
       { slug: 'payment-terms', title: 'Payment terms', status: 'built' },
+      { slug: 'closing-dates', title: 'Closing dates', status: 'built' },
       { slug: 'configuration', title: 'Configuration', status: 'built' },
     ],
   },
