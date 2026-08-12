@@ -36,15 +36,36 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 BACKEND = ROOT / "backend"
 OUT = pathlib.Path(__file__).resolve().parent / "Bill-Book.postman_collection.json"
 
-# Matches the ports in each service's launch profile and in the docs.
-SVC_PORT = {
-    "Identity": 5001, "Platform": 5002, "Master": 5003, "Accounting": 5004,
-    "Banking": 5005, "Contacts": 5006, "Inventory": 5007,
-}
+def service_ports():
+    """
+    The per-service ports, read from the gateway's own development config.
+
+    Hardcoded once, and three of them were wrong — contacts, inventory and
+    banking were transposed, so every internal request in the collection pointed
+    at a different service than it named. Nothing catches that: each port
+    answers, and the wrong service returns a 404 that reads like a missing
+    endpoint. The gateway already has to know these addresses to proxy anything,
+    so it is the one place they cannot drift from.
+    """
+    config = json.loads(
+        (BACKEND / "Gateway" / "appsettings.Development.json").read_text())
+
+    ports = {}
+    for cluster, value in config["ReverseProxy"]["Clusters"].items():
+        address = next(iter(value["Destinations"].values()))["Address"]
+        port = re.search(r":(\d+)", address)
+        if port:
+            ports[cluster.capitalize()] = int(port.group(1))
+
+    return ports
+
+
+SVC_PORT = service_ports()
 
 # Folder order follows CLAUDE.md's status order: reference data first, then the
 # services that depend on it.
-ORDER = ["Master", "Platform", "Identity", "Contacts", "Inventory", "Accounting", "Banking"]
+ORDER = ["Master", "Platform", "Identity", "Contacts", "Inventory", "Accounting", "Banking",
+         "Sales", "Purchase", "Crm", "Support", "Reporting"]
 
 
 # --------------------------------------------------------------- request models
@@ -283,7 +304,7 @@ def main():
             continue
         (internal if r["internal"] else by_service[r["service"]]).append(r)
 
-    for i, service in enumerate(ORDER, 1):
+    for i, service in enumerate([s for s in ORDER if by_service[s]], 1):
         rs = sorted(by_service[service], key=lambda r: (r["controller"], r["path"], r["verb"]))
         items.append({
             "name": f"{i} · {service}",

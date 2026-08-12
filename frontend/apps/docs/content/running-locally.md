@@ -52,7 +52,7 @@ dotnet ef database update        --project Api/Master/Master.Repository     --st
 # repeat for Identity, Platform and Accounting
 ```
 
-Then run the services — Identity on 5001, Platform on 5002, Master on 5003, Accounting on 5004, Gateway on 5000 — with `ASPNETCORE_ENVIRONMENT=Development` set. That is what picks up `appsettings.Development.json`, the only one of the four environment files carrying real local values; the others are blank on purpose. The local connection string lives there, not in `appsettings.json`, so there is nothing to edit before the first run. See [Environments](#/environments).
+Then run the services — see the port table below, Gateway on 5000 — with `ASPNETCORE_ENVIRONMENT=Development` set. That is what picks up `appsettings.Development.json`, the only one of the four environment files carrying real local values; the others are blank on purpose. The local connection string lives there, not in `appsettings.json`, so there is nothing to edit before the first run. See [Environments](#/environments).
 
 ```bash
 cd frontend
@@ -120,6 +120,10 @@ Re-run the script after changing a controller, and commit the result with it.
 | 5002 | Platform |
 | 5003 | Master |
 | 5004 | Accounting |
+| 5005 | Contacts |
+| 5006 | Inventory |
+| 5007 | Banking |
+| 5011 | Sales |
 | 4200 | Web app |
 | 4300 | Docs (this site) |
 

@@ -37,16 +37,20 @@
    "value": "http://localhost:5004"
   },
   {
-   "key": "bankingUrl",
+   "key": "contactsUrl",
    "value": "http://localhost:5005"
   },
   {
-   "key": "contactsUrl",
+   "key": "inventoryUrl",
    "value": "http://localhost:5006"
   },
   {
-   "key": "inventoryUrl",
+   "key": "bankingUrl",
    "value": "http://localhost:5007"
+  },
+  {
+   "key": "salesUrl",
+   "value": "http://localhost:5011"
   },
   {
    "key": "email",
@@ -3715,6 +3719,26 @@
      }
     },
     {
+     "name": "Rates \u2014 GET /internal/tax/rates",
+     "description": "`Accounting.InternalTaxController.Rates` \u2014 shared key, no user token",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{accountingUrl}}/internal/tax/rates"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       }
+      ]
+     }
+    },
+    {
      "name": "Seed organization \u2014 POST /internal/seed/organization",
      "description": "`Banking.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
      "request": {
@@ -4028,6 +4052,39 @@
         "key": "X-Internal-Key",
         "value": "{{internalKey}}",
         "description": "Shared service-to-service key. Not a user token."
+       }
+      ]
+     }
+    },
+    {
+     "name": "Seed organization \u2014 POST /internal/seed/organization",
+     "description": "`Sales.InternalSeedController.SeedOrganization` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{salesUrl}}/internal/seed/organization"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
        }
       ]
      }

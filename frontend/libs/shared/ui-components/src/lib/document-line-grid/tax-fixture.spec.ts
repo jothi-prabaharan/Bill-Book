@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   DocumentLine,
@@ -91,12 +92,33 @@ const RATE_SCALE = 10_000;
 /** Rupees to paise. The fixture is authored in rupees because C# holds decimals. */
 const paise = (rupees: number): number => Math.round(rupees * 100);
 
-const fixture: Fixture = JSON.parse(
-  readFileSync(
-    new URL('../../../../../../../shared-fixtures/tax-fixture.json', import.meta.url),
-    'utf-8',
-  ),
-) as Fixture;
+/**
+ * Walks up from the working directory until `shared-fixtures` appears.
+ *
+ * Not `new URL(..., import.meta.url)`: these specs run under jsdom, where
+ * `import.meta.url` is an http URL rather than a file one, so `readFileSync`
+ * refuses it outright — "The URL must be of scheme file". Counting `../`
+ * segments from the spec is also brittle, because the count changes the moment
+ * the file moves. Searching upward is stable under both.
+ */
+const fixturePath = (): string => {
+  for (let dir = process.cwd(); ; dir = dirname(dir)) {
+    const candidate = join(dir, 'shared-fixtures', 'tax-fixture.json');
+
+    try {
+      readFileSync(candidate);
+      return candidate;
+    } catch {
+      if (dirname(dir) === dir) {
+        throw new Error(
+          `shared-fixtures/tax-fixture.json was not found above ${resolve(process.cwd())}.`,
+        );
+      }
+    }
+  }
+};
+
+const fixture: Fixture = JSON.parse(readFileSync(fixturePath(), 'utf-8')) as Fixture;
 
 /**
  * Builds the tax rows a line carries, the way a host page does.
