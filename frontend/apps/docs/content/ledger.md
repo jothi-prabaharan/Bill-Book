@@ -117,4 +117,4 @@ The query filter is the first line of defence, not the last: it is a property of
 
 ## Who posts today
 
-**Stock and manual journals.** Every stock movement that changes what the branch owns posts its cost — see [Reaching the accounts](#/stock) — and a person can post an entry by hand. Sales, Purchase and Banking follow as those services are built.
+**Stock, money documents and manual journals.** Every stock movement that changes what the branch owns posts its cost — see [Reaching the accounts](#/stock) — the money documents post their own legs in the transaction that writes them, and a person can post an entry by hand. Sales and Purchase follow as those services are built.

@@ -25,7 +25,7 @@ public interface IFinancialYearProvider
 /// <summary>
 /// Reads it from Platform's org context, cached per organization.
 ///
-/// The value lives in <c>plt.Organizations</c>, in the master database, which no
+/// The value lives in <c>mst.Organizations</c>, in the master database, which no
 /// service may read directly. It changes about never, so it is cached for hours
 /// rather than fetched per number — the alternative is an HTTP call on every
 /// save that allocates a code.

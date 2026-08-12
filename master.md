@@ -121,8 +121,8 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
 
 ~~Until this lands, an item is a catalogue entry that cannot hold stock, and the "locked once stock has moved" rule is inert — `HasStockMovementsAsync` returns `false` unconditionally.~~ **Done.** Items hold stock, and the lock is live.
 
-- [x] ~~**3.1 — `plt.Branches`**~~ — **struck: it was a duplicate**
-  Built, then removed the same day at the owner's direction. The intended model is **two levels, not three**: the Customer is the head office and an **Organization is a branch**. `plt.Branches` duplicated `plt.Organizations` almost column for column — GSTIN, both address lines, city, state, postal code, country, phone, mobile, email — while `OrgId`, not `BranchId`, was the only thing that ever scoped a row.
+- [x] ~~**3.1 — `mst.Branches`**~~ — **struck: it was a duplicate**
+  Built, then removed the same day at the owner's direction. The intended model is **two levels, not three**: the Customer is the head office and an **Organization is a branch**. `mst.Branches` duplicated `mst.Organizations` almost column for column — GSTIN, both address lines, city, state, postal code, country, phone, mobile, email — while `OrgId`, not `BranchId`, was the only thing that ever scoped a row.
   Reverted in full: the table, its API and its page are gone, `BranchId` is dropped from `inv.Warehouses`, `inv.StockMovements` and `acc.NumberingSeries`, and `Organization` gained `OrgCode` to carry the branch code that numbering needs. `CLAUDE.md` now states the two-level model and forbids a `BranchId` column outright.
   **The consequence to keep in mind**: a branch is a hard data boundary, so each one has its own items, contacts, stock and books. Cross-branch consolidated reporting is a deliberate read across organizations, not a filter that can be relaxed.
 
@@ -142,7 +142,7 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
   It was one line, as designed.
 
 - [x] **3.5 — The Organization master itself** — *found while collapsing Branch into Organization*
-  An Organization is now a branch, and there is **no way to create a second one**. `SignupService` writes the first; nothing else in the codebase writes `plt.Organizations` at all. No list endpoint, no create, no update, and no page — `platform-ui` has only configurations, currencies and SMTP. The Branches page that was deleted was the only branch-management screen ever built, and it wrote to a table that scoped nothing.
+  An Organization is now a branch, and there is **no way to create a second one**. `SignupService` writes the first; nothing else in the codebase writes `mst.Organizations` at all. No list endpoint, no create, no update, and no page — `platform-ui` has only configurations, currencies and SMTP. The Branches page that was deleted was the only branch-management screen ever built, and it wrote to a table that scoped nothing.
   Needs `GET/POST/PUT api/organizations` with the caller's `customer_id` checked, a Settings page, and a branch switcher in the shell (`org_id` is already in the JWT and `select-organization` already exists).
   **Creating one must run the same seeding provisioning runs** — chart of accounts, tax rates, numbering, units, payment terms — or a new branch comes up empty and cannot save an item. That is the exact bug 1.1 fixed for new customers.
   Also unenforced: `License.MaxOrganizations` defaults to 1 and `TrialMaxOrganizations = 1`, stored and checked by nothing.
@@ -259,7 +259,7 @@ Independent of the stages above; take any of them whenever.
   Two things needed. **Clearing the trial** — whatever records a payment must set `IsTrial = false`, move `ExpiryDate` onto the licence's, and raise `License.MaxOrganizations` so the next branch is covered too. And **a cap or not**: nothing limits how many trial branches an account may open, so thirty of them is currently allowed. Leaving it uncapped was deliberate rather than overlooked — an invented limit blocks a legitimate customer, and a real one is a commercial decision.
 
 - [ ] **5.16 — A licence renewal has to move the branch expiry dates**
-  `plt.Organizations.ExpiryDate` is a **copy** taken when the branch is created, not a reference to the licence. Login enforces the earlier of the two, so extending a licence without extending its branches leaves every one of them closed under an account that is perfectly valid — and the licence screen would show nothing wrong.
+  `mst.Organizations.ExpiryDate` is a **copy** taken when the branch is created, not a reference to the licence. Login enforces the earlier of the two, so extending a licence without extending its branches leaves every one of them closed under an account that is perfectly valid — and the licence screen would show nothing wrong.
   Nothing can trigger it today: there is no renewal endpoint, only creation at signup, and existing branches were deliberately left null (null means "the licence decides"). It becomes live the moment anyone writes a renewal.
   Whoever does: move the branch dates forward with the licence, and only those that were tracking it — a branch deliberately wound down early must keep its own date, or renewing would silently reopen a closed branch. Recorded on the property and in `organizations.md` as well as here, because it is the kind of thing that is only obvious while writing it.
 
@@ -297,7 +297,7 @@ Independent of the stages above; take any of them whenever.
 
 
 - [x] **5.10 — Platform's other org-scoped endpoints are unauthenticated**
-  `Platform.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.
+  `Master.Api` had no authentication at all until Branches needed it. Currencies, configurations and SMTP settings still take the org id straight from the route with no `[Authorize]` and no claim check, which means any caller who can reach the gateway can read or edit any organization's settings. Branches added the JWT scheme and checks the claim; the rest were left alone deliberately, because tightening signup and the internal endpoints without a compiler is how a working provisioning flow stops working. Do it in one pass, with `[AllowAnonymous]` on signup and the internal controllers, once the SDK is available.
 
   **The three named endpoints were the smaller half.** Auditing every route first turned up that **seven of the ten `internal/` endpoints had no guard at all** — `InternalOnly` was on the three seeding controllers and nowhere else. `POST internal/users/owner` mints an owner account; `internal/customers/{id}/database` hands back a tenant's connection reference; `internal/orgs/{id}/context` returns customer and licence; `internal/sub-accounts/provision` writes ledger rows. All reachable by anything that could open the port. `internal/sub-accounts` was missed on the first sweep because its file is not named `Internal*` — the second matched on `Route("internal/` instead.
 

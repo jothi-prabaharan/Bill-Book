@@ -22,7 +22,7 @@ Western grouping is in threes — `###,###,##0.00` renders `1,234,567.89`. **Ind
 
 ## Per-organization activation
 
-An organization transacts in a subset of the ~180 world currencies, held in `plt.OrgCurrencies`.
+An organization transacts in a subset of the ~180 world currencies, held in `mst.OrgCurrencies`.
 
 - The **base currency is enabled and active from organization creation** and **cannot be deactivated** — every posting converts to it, so switching it off would break base-currency amounts on every future transaction.
 - The list page shows **active currencies only** by default; a "Show inactive" toggle reveals the rest.

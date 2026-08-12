@@ -17,10 +17,10 @@ A deployed Angular bundle **is** its environment — there is no runtime switch,
 
 ## Backend
 
-The five runnable projects — Identity, Platform, Master, Accounting and the Gateway — each carry five files:
+The four runnable projects with real configuration — Master, Accounting, Inventory and the Gateway — each carry five files:
 
 ```
-Identity.Api/
+Master.Api/
   appsettings.json                shared, non-secret defaults + blank placeholders
   appsettings.Development.json    real local values
   appsettings.Staging.json        blank placeholders
@@ -52,29 +52,34 @@ ASP.NET Core maps environment variables onto configuration keys by replacing `:`
 
 | Configuration key | Environment variable | Set for |
 |---|---|---|
-| `ConnectionStrings:MasterDatabase` | `ConnectionStrings__MasterDatabase` | Identity, Platform, Master |
-| `ConnectionStrings:DesignTimeDatabase` | `ConnectionStrings__DesignTimeDatabase` | Accounting |
-| `ConnectionStrings:TenantFallback` | `ConnectionStrings__TenantFallback` | Accounting |
-| `TenantDatabase:ConnectionTemplate` | `TenantDatabase__ConnectionTemplate` | Platform |
-| `Jwt:SigningKey` | `Jwt__SigningKey` | Identity, Accounting |
-| `Encryption:Key` | `Encryption__Key` | Platform |
-| `Platform:BaseUrl` | `Platform__BaseUrl` | Identity, Accounting |
-| `Identity:BaseUrl` | `Identity__BaseUrl` | Platform |
-| `Master:BaseUrl` | `Master__BaseUrl` | Platform |
-| `App:BaseUrl` | `App__BaseUrl` | Identity |
+| `ConnectionStrings:MasterDatabase` | `ConnectionStrings__MasterDatabase` | Master |
+| `ConnectionStrings:DesignTimeDatabase` | `ConnectionStrings__DesignTimeDatabase` | Master, Accounting, Inventory |
+| `ConnectionStrings:TenantFallback` | `ConnectionStrings__TenantFallback` | Master, Accounting, Inventory |
+| `TenantDatabase:ConnectionTemplate` | `TenantDatabase__ConnectionTemplate` | Master |
+| `Jwt:SigningKey` | `Jwt__SigningKey` | every service |
+| `Encryption:Key` | `Encryption__Key` | Master |
+| `Master:BaseUrl` | `Master__BaseUrl` | Accounting, Inventory, Sales, CostingEngine |
+| `Accounting:BaseUrl` | `Accounting__BaseUrl` | Master, Sales, CostingEngine |
+| `Inventory:BaseUrl` | `Inventory__BaseUrl` | Accounting |
+| `App:BaseUrl` | `App__BaseUrl` | Master |
+
+Master takes both connection strings, and that is the merge showing through the
+configuration: `MasterDatabase` is the shared master database its `mst` schema
+lives in, and `DesignTimeDatabase` is the fallback its contacts context uses when
+no tenant has been resolved.
 
 The Gateway's destinations follow the same rule, one level deeper — a cluster id and a destination id sit in the path:
 
 ```
-ReverseProxy__Clusters__identity__Destinations__d1__Address
-ReverseProxy__Clusters__platform__Destinations__d1__Address
 ReverseProxy__Clusters__master__Destinations__d1__Address
 ReverseProxy__Clusters__accounting__Destinations__d1__Address
+ReverseProxy__Clusters__inventory__Destinations__d1__Address
+ReverseProxy__Clusters__sales__Destinations__d1__Address
 ```
 
 The **routes** are not environment-dependent and stay in `appsettings.json`. Only where each cluster points changes between environments.
 
-`Jwt:Issuer`, `Jwt:Audience` and the token lifetimes are non-secret product decisions, so they live in `appsettings.json` and are the same everywhere. `Jwt__SigningKey` must be **identical across Identity and Accounting** in a given environment — Identity issues the token, Accounting validates it.
+`Jwt:Issuer`, `Jwt:Audience` and the token lifetimes are non-secret product decisions, so they live in `appsettings.json` and are the same everywhere. `Jwt__SigningKey` must be **identical across every service** in a given environment — Master issues the token and everything else validates it.
 
 ## Frontend
 
@@ -151,15 +156,18 @@ Each launch configuration has a matching task — `serve-web`, `serve-web-stagin
 
 `apps/portal`, `apps/admin` and `apps/desktop` are empty shells with no build targets. They get environment files and debug configurations when they get something to build.
 
-The eight backend services that are not yet implemented — Contacts, Crm, Inventory, Sales, Purchase, Banking, Support, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
+The backend services that are not yet implemented — Customer, Purchase, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
 
 ## Service-to-service key
 
-Services call each other for things no user token covers: Platform's provisioning
-worker writes each service's master data for a new organization, Identity asks
-Platform which account an organization belongs to on every sign-in, and Contacts,
-Accounting, Banking and Inventory ask Platform which database to open on every
-request. None of those callers has a user token, so those endpoints take the
+Services call each other for things no user token covers: Master's provisioning
+worker writes each service's master data for a new organization, and Accounting,
+Inventory and Sales ask Master which database to open on every request.
+
+Two of the calls that used to be on this list are gone. Resolving an
+organization's account on sign-in was Identity asking Platform, and reading the
+tenant directory for contacts was Contacts asking Platform; all three are Master
+now, so both are queries. None of those callers has a user token, so those endpoints take the
 organization or customer to act on as a parameter — which is exactly what makes
 them dangerous, and why they are guarded by a shared key instead.
 

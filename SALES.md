@@ -234,7 +234,7 @@ Columns: `SourceId` (no FK — fed by `Invoices` and `CreditNotes`), `DocumentNo
 | `ItemId` nullable | Services and one-off charges. Such a line moves no stock, gets no COGS, posts to a named account |
 | `TaxTreatment` on every line | Exempt is not zero; GSTR-1 reports them in different tables |
 | `decimal(28,2)` money, `decimal(28,6)` unit price | 28 is C#'s decimal ceiling, not Postgres's |
-| `AllowFreeTextLines`, `DiscountLevel`, `DiscountBeforeTax` on `plt.Organizations` | Structural branch decisions, frozen once the branch has traded. **Built already** |
+| `AllowFreeTextLines`, `DiscountLevel`, `DiscountBeforeTax` on `mst.Organizations` | Structural branch decisions, frozen once the branch has traded. **Built already** |
 
 ---
 

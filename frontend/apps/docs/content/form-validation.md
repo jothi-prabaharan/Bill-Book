@@ -16,8 +16,8 @@ Validation guards were added for these UI areas:
 
 - **Accounting**: chart of accounts, numbering series, payment terms, tax master
 - **Banking**: banks, bank accounts, spend/receive money, transfer money
-- **Contacts & Identity**: contacts, contact person roles, roles, users
+- **Master**: contacts, contact person roles, roles, users
 - **Inventory**: categories, items, metal purities, warehouses
-- **Platform**: organizations, organization settings, currencies, SMTP settings
+- **Settings**: organizations, organization settings, currencies, SMTP settings
 
 The API remains authoritative, but the client now blocks obvious mandatory-field misses earlier.

@@ -8,9 +8,9 @@ using Microsoft.AspNetCore.Builder;
 // ticket wanting the campaign that won the account, or a lead wanting its open
 // tickets, is a join rather than an HTTP call. Its schema is cus.
 //
-// The name overlaps plt.Customers, which means the head office that holds the
+// The name overlaps mst.Customers, which means the head office that holds the
 // account. This service is about the people that head office sells to and
-// supports — read Customer.Api as the trading relationship, plt.Customer as
+// supports — read Customer.Api as the trading relationship, mst.Customer as
 // the tenant.
 //
 // This file exists so the project compiles and the solution builds. It is a

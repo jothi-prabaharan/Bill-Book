@@ -21,7 +21,7 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 
 **All four are nullable.** A row with `CreatedBy = null` is system/default master data — seeded at provisioning by no human — and that null is the signal, so `CreatedBy IS NULL` cleanly distinguishes shipped reference data from anything a user added. When a user creates or edits a row, the interceptor stamps their id and the timestamp.
 
-No table is exempt — this includes reference/seed masters (`mst.Currencies`, `mst.Countries`, `AccountTypes`, `TransactionTypes`, …), join tables (`idn.RolePermissions`), and child/detail tables (`acc.JournalDetails`, `acc.JournalEntryLines`).
+No table is exempt — this includes reference/seed masters (`mst.Currencies`, `mst.Countries`, `AccountTypes`, `TransactionTypes`, …), join tables (`mst.RolePermissions`), and child/detail tables (`acc.JournalDetails`, `acc.JournalEntryLines`).
 
 The **only** exception is `acc.vw_LedgerDetail`, because it is a database **view**, not a table — it has no rows of its own to audit.
 
@@ -47,7 +47,7 @@ Enforcement: on update of a row where `IsSystem = true`, reject any change to `S
 ## MASTER DATABASE
 
 ### `mst.Countries` ✅
-Seeded reference data. Referenced by `plt.Organizations` (real FK, same database) and by per-customer Contacts (unenforced id — cross-database FK impossible).
+Seeded reference data. Referenced by `mst.Organizations` (real FK, same database) and by per-customer Contacts (unenforced id — cross-database FK impossible).
 
 | Column | Type | Rules |
 |---|---|---|
@@ -76,7 +76,7 @@ Unique index: (CountryId, StateCode)
 **Seed** — all 37 Indian states/UTs by GST code: 01 Jammu and Kashmir, 02 Himachal Pradesh, 03 Punjab, 04 Chandigarh, 05 Uttarakhand, 06 Haryana, 07 Delhi, 08 Rajasthan, 09 Uttar Pradesh, 10 Bihar, 11 Sikkim, 12 Arunachal Pradesh, 13 Nagaland, 14 Manipur, 15 Mizoram, 16 Tripura, 17 Meghalaya, 18 Assam, 19 West Bengal, 20 Jharkhand, 21 Odisha, 22 Chhattisgarh, 23 Madhya Pradesh, 24 Gujarat, 26 Dadra and Nagar Haveli and Daman and Diu, 27 Maharashtra, 29 Karnataka, 30 Goa, 31 Lakshadweep, 32 Kerala, 33 Tamil Nadu, 34 Puducherry, 35 Andaman and Nicobar Islands, 36 Telangana, 37 Andhra Pradesh, 38 Ladakh, 97 Other Territory
 
 ### `mst.Currencies` ✅
-Seeded reference data. The single source for currency code, symbol and display formatting — feeds `libs/shared/currency-format` on the frontend and base-currency conversion on the backend. Referenced by `mst.Countries.CurrencyCode` and `plt.Organizations.BaseCurrency` (real FKs, same DB) and by every per-customer transaction's `CurrencyCode` (unenforced string — cross-database).
+Seeded reference data. The single source for currency code, symbol and display formatting — feeds `libs/shared/currency-format` on the frontend and base-currency conversion on the backend. Referenced by `mst.Countries.CurrencyCode` and `mst.Organizations.BaseCurrency` (real FKs, same DB) and by every per-customer transaction's `CurrencyCode` (unenforced string — cross-database).
 
 | Column | Type | Rules |
 |---|---|---|
@@ -243,7 +243,7 @@ Payment and refund are deliberately **paired in opposite directions**: `BILLPAYM
 
 ---
 
-### `plt.Customers` ✅
+### `mst.Customers` ✅
 The account/billing entity. **One Customer = one physical database.**
 
 | Column | Type | Rules |
@@ -260,7 +260,7 @@ Navigation: `ICollection<Organization> Organizations`, `CustomerDatabase? Custom
 
 Database name = `CountryPrefix + CustomerCode` → `IN0000000001`
 
-### `plt.Licenses` 🔨
+### `mst.Licenses` 🔨
 One per Customer. A **Trial** licence is created automatically at signup — the customer never picks it.
 
 | Column | Type | Rules |
@@ -277,7 +277,7 @@ One per Customer. A **Trial** licence is created automatically at signup — the
 
 A licence is **expired** when `today > ExpiryDate + GraceDays`. Expiry is evaluated at login and stamped onto `Customers.Status = Expired`; it does not need a nightly job, though one may flip status proactively for reporting. **Expiry blocks the app, never the login** — see the trial-expiry flow.
 
-### `plt.Organizations` ✅
+### `mst.Organizations` ✅
 A set of books. Many per Customer, sharing that Customer's database, separated by `OrgId`.
 
 | Column | Type | Rules |
@@ -310,7 +310,7 @@ Unique index: (CustomerId, Name)
 
 **Validate `StateId`'s StateCode matches Gstin's first 2 digits** — a mismatch silently breaks CGST/SGST vs IGST.
 
-### `plt.OrgCurrencies` 🔨
+### `mst.OrgCurrencies` 🔨
 The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Lives in `plt` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither. Audit columns apply as everywhere — the trail of who enabled a currency and when is genuinely useful here.
 
 | Column | Type | Rules |
@@ -327,7 +327,7 @@ Unique index: `(OrgId, CurrencyId)`, plus partial `UNIQUE (OrgId) WHERE IsBaseCu
 - This is what the **currency picker** on every transaction lists — an org sees only its active currencies, not all ~180.
 - It also scopes **exchange-rate sync**: `rat.CurrencyRates` only needs rates for pairs an org has enabled here.
 
-### `plt.Configurations` 🔨
+### `mst.Configurations` 🔨
 Generic key-value settings — the long tail of tunables (decimal places, default due days, document prefixes, feature toggles) without a column each. A **system default row** (`OrgId = null`) ships the shipped value; a per-org row overrides it.
 
 | Column | Type | Rules |
@@ -355,9 +355,9 @@ Unique index: `(OrgId, Code)`, plus partial `UNIQUE (Code) WHERE OrgId IS NULL` 
 | `sales.dueDays` | Sales Due Days | Default payment terms on invoices | Number | `30` |
 | `purchase.dueDays` | Purchase Due Days | Default payment terms on bills | Number | `30` |
 
-> **This supersedes the two typed decimal columns** that were briefly on `plt.Organizations` (`QuantityDecimalPlaces`, `PriceDecimalPlaces`). Keeping both would be two sources of truth for the same number; the config table is the single home. `mst.Currencies.DecimalPlaces` stays where it is — money precision is a property of the currency, not an org tunable.
+> **This supersedes the two typed decimal columns** that were briefly on `mst.Organizations` (`QuantityDecimalPlaces`, `PriceDecimalPlaces`). Keeping both would be two sources of truth for the same number; the config table is the single home. `mst.Currencies.DecimalPlaces` stays where it is — money precision is a property of the currency, not an org tunable.
 
-### `plt.CustomerDatabases` ✅
+### `mst.CustomerDatabases` ✅
 Tenant directory.
 
 | Column | Type | Rules |
@@ -368,7 +368,7 @@ Tenant directory.
 | Status | enum→string(20) | Provisioning / Ready / Failed |
 | ProvisionedAt | DateTimeOffset? | |
 
-### `plt.ApiClients` 📋
+### `mst.ApiClients` 📋
 | Column | Type | Rules |
 |---|---|---|
 | ApiClientId | Guid | PK |
@@ -380,10 +380,10 @@ Tenant directory.
 | RateLimitTier | string(30) | |
 | IsActive | bool | Default true |
 
-### `plt.PlatformAdminUsers` 📋
+### `mst.PlatformAdminUsers` 📋
 Operator staff, separate from tenant users in `idn`.
 
-### `plt.SmtpSettings` 🔨
+### `mst.SmtpSettings` 🔨
 The outbound mail account used to send invitations, OTPs and password-reset mail. One system default (`CustomerId = null`); a customer may override with its own mailbox.
 
 | Column | Type | Rules |
@@ -405,7 +405,7 @@ Unique index: `(CustomerId)` — one row per customer, one system row where null
 
 ---
 
-### `idn.Users` ✅
+### `mst.Users` ✅
 | Column | Type | Rules |
 |---|---|---|
 | UserId | Guid | PK |
@@ -422,7 +422,7 @@ Unique index: `(CustomerId)` — one row per customer, one system row where null
 | LockedOutUntil | DateTimeOffset? | 15-minute lockout |
 | LastLoginAt | DateTimeOffset? | |
 
-### `idn.Roles` ✅
+### `mst.Roles` ✅
 | Column | Type | Rules |
 |---|---|---|
 | RoleId | int | PK, identity |
@@ -439,7 +439,7 @@ Unique index: `(CustomerId, SystemName)`, plus partial `UNIQUE (SystemName) WHER
 
 A system role's **permission set** is fixed, but the customer may rename it — calling "Accountant" → "Finance Lead" for display — without altering what it grants.
 
-### `idn.Permissions` ✅
+### `mst.Permissions` ✅
 | Column | Type | Rules |
 |---|---|---|
 | PermissionId | int | PK, identity |
@@ -457,7 +457,7 @@ Role grants: Owner + Administrator → everything except `platform.*` · Viewer 
 
 `AllUserData` is a **data-scope** permission, not an action: without it a user sees only records they created, with it they see the whole organization's. It rides the same `{module}.{action}` format for consistency, but the authorization check is a query filter, not a gate on an endpoint.
 
-### `idn.RolePermissions` ✅
+### `mst.RolePermissions` ✅
 | Column | Type | Rules |
 |---|---|---|
 | RolePermissionId | long | PK, identity |
@@ -466,7 +466,7 @@ Role grants: Owner + Administrator → everything except `platform.*` · Viewer 
 
 Unique index: (RoleId, PermissionId)
 
-### `idn.UserOrganizationRoles` ✅
+### `mst.UserOrganizationRoles` ✅
 **The pivot that makes multi-org access work.** One login, different roles per organization.
 
 | Column | Type | Rules |
@@ -479,7 +479,7 @@ Unique index: (RoleId, PermissionId)
 
 Unique index: (UserId, OrgId, RoleId)
 
-### `idn.RefreshTokens` ✅
+### `mst.RefreshTokens` ✅
 | Column | Type | Rules |
 |---|---|---|
 | RefreshTokenId | long | PK, identity |
@@ -490,7 +490,7 @@ Unique index: (UserId, OrgId, RoleId)
 | IpAddress | string(45)? | |
 | UserAgent | string(300)? | |
 
-### `idn.LoginHistories` ✅
+### `mst.LoginHistories` ✅
 | Column | Type | Rules |
 |---|---|---|
 | LoginHistoryId | long | PK, identity |
@@ -502,7 +502,7 @@ Unique index: (UserId, OrgId, RoleId)
 | IpAddress | string(45)? | |
 | UserAgent | string(300)? | |
 
-### `idn.PasswordResetTokens` ✅
+### `mst.PasswordResetTokens` ✅
 Also used for **user invitations** — same mechanism, longer expiry.
 
 | Column | Type | Rules |
@@ -515,7 +515,7 @@ Also used for **user invitations** — same mechanism, longer expiry.
 
 Invitations stay **link-based** (a long token in a URL). Forgot-password is now **OTP-based** — see below.
 
-### `idn.OtpVerifications` 🔨
+### `mst.OtpVerifications` 🔨
 A short numeric code sent to email or mobile. Used by forgot-password, and reusable for mobile/email confirmation.
 
 | Column | Type | Rules |
@@ -789,10 +789,10 @@ Checks: `TrackInventory` ⇔ `CostingType <> None` · expiry ⇒ batch · Fefo �
 
 **`inv.Warehouses`** — location dimension only; stock is one shared pool and WAC is company-wide. Own GSTIN, `StorageType`, one default per org.
 
-### `bnk.Banks` / `bnk.BankAccounts` ✅
-**`bnk.Banks`** — BankId · OrgId · BankCode (unique) · BankName · DisplayOrder · IsSystem · IsActive. The institution, so its name is entered once.
+### `acc.Banks` / `acc.BankAccounts` ✅
+**`acc.Banks`** — BankId · OrgId · BankCode (unique) · BankName · DisplayOrder · IsSystem · IsActive. The institution, so its name is entered once.
 
-**`bnk.BankAccounts`** — BankAccountId · OrgId · BankId? (FK, restrict — null only for Cash and Wallet) · **LedgerAccountId?** · AccountName · AccountNumber · AccountType enum→string(15) · Ifsc? · Micr? · SwiftCode? · Iban? · BranchName? · CurrencyCode · OdLimit? · IsDefault · DisplayOrder · IsActive.
+**`acc.BankAccounts`** — BankAccountId · OrgId · BankId? (FK, restrict — null only for Cash and Wallet) · **LedgerAccountId?** · AccountName · AccountNumber · AccountType enum→string(15) · Ifsc? · Micr? · SwiftCode? · Iban? · BranchName? · CurrencyCode · OdLimit? · IsDefault · DisplayOrder · IsActive.
 
 Indexes: unique (OrgId, BankId, AccountNumber) · filtered unique `(OrgId, LedgerAccountId)` where not null — **one GL account per bank account, never shared**, or reconciliation cannot tell two apart · filtered unique default · order index.
 Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCredit/CreditCard.
@@ -803,10 +803,10 @@ Checks: Cash/Wallet ⇔ BankId may be null · OdLimit only on OverDraft/CashCred
 
 **Three parent groups added to the org-creation seed**: 1400 Cash in Hand (Asset) · 1500 Bank Accounts (Asset) · 2300 Bank OD & Credit Cards (Liability), all `IsLock = true` so nothing posts to the group.
 
-### `bnk.MoneyTransactions` / `bnk.MoneyTransactionDetails` ✅
+### `acc.MoneyTransactions` / `acc.MoneyTransactionDetails` ✅
 Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one table pair discriminated by `TransactionTypeCode`**, not three. The three share every column that matters; what differs is a destination account on a transfer and a contact on the other two. The same shape decision T2.1 takes for `sal`.
 
-**`bnk.MoneyTransactions`** — header.
+**`acc.MoneyTransactions`** — header.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -815,8 +815,8 @@ Spend money (`SPM`), receive money (`RCM`) and transfer money (`TRM`) — **one 
 | TransactionTypeCode | string(3) | Required → `mst.TransactionTypes`, no FK. `SPM` / `RCM` / `TRM` only, by check constraint |
 | TransactionNo | string(30)? | **Null while Draft** — the number is taken at post, never at draft |
 | TransactionDate | DateOnly | Required |
-| BankAccountId | long | Required, FK → `bnk.BankAccounts`, restrict. On a transfer this is the **source** |
-| ToBankAccountId | long? | FK → `bnk.BankAccounts`, restrict. **Transfers only**, and never equal to `BankAccountId` |
+| BankAccountId | long | Required, FK → `acc.BankAccounts`, restrict. On a transfer this is the **source** |
+| ToBankAccountId | long? | FK → `acc.BankAccounts`, restrict. **Transfers only**, and never equal to `BankAccountId` |
 | ContactId | long? | No FK — Contacts owns it. **Null on a transfer**, which is the one money document with no counterparty |
 | Amount | decimal(18,2) | Required, > 0. Its detail lines must sum to exactly this before it can post |
 | CurrencyCode | string(3) | Required |
@@ -833,7 +833,7 @@ Filtered unique: (OrgId, TransactionTypeCode, TransactionNo) where number not nu
 
 **Check constraints**: number-on-post · posted stamp agrees with status · void stamp agrees with status · `Amount > 0` · `ExchangeRate > 0` · transfer shape (TRM ⇒ destination and no contact; otherwise no destination) · no transfer to the same account · type is one of the three.
 
-**`bnk.MoneyTransactionDetails`** — what each part of the money *was*, and what it settles.
+**`acc.MoneyTransactionDetails`** — what each part of the money *was*, and what it settles.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -1039,9 +1039,9 @@ Mapped as an EF Core **keyless entity**. Two things it must have:
 Three base classes carry the shared columns — `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel`, all descending from `OrgScopedEntity` and so from `AuditableEntity`.
 
 ### Not yet designed 📋
-`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `crm.*` · `inv.*` · `sup.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
+`acc.FixedAssets`, `acc.FixedAssetCategories`, `acc.DepreciationSchedules` · `con.*` Contacts · `cus.*` (CRM and the helpdesk, one schema since the merge) · `inv.*` · `rpt.*` · `ntf.*` · `aud.AuditLog`
 
-`bnk.*` is no longer among them — the money documents are designed and built; see the section above. Nor are `sal.*` and `pur.*` — designed in [`SALES.md`](./SALES.md) and [`PURCHASE.md`](./PURCHASE.md), not yet built.
+The money documents are no longer among them — designed, built, and now part of `acc.*` rather than a schema of their own; see the section above. Nor are `sal.*` and `pur.*` — designed in [`SALES.md`](./SALES.md) and [`PURCHASE.md`](./PURCHASE.md), not yet built.
 
 ---
 
@@ -1090,7 +1090,7 @@ Three base classes carry the shared columns — `DocumentHeaderBase`, `DocumentL
 - Org switcher and profile move into the "More" sheet / top-bar overflow.
 - Breakpoint = Angular CDK handset. Same nav model both ways — only the chrome changes.
 
-- Theme toggle: Light / Dark / System, persisted to `idn.Users.ThemePreference`
+- Theme toggle: Light / Dark / System, persisted to `mst.Users.ThemePreference`
 - Built on Angular CDK (layout, overlay) + Signals — no Syncfusion in the shell, so it runs in the Ionic apps too
 
 **Every page must work at ~360px**: grids → card lists, multi-column forms → single column, modals → full-screen sheets.
@@ -1129,7 +1129,7 @@ Every component:
 | `bb-date` | Single date | native picker on mobile; display format from org/locale; `minDate` / `maxDate` |
 | `bb-daterange` | From–to range | `presets` (This month, This FY, Last quarter…); enforces `from ≤ to`; optional `maxSpanDays` |
 
-`bb-money`, `bb-quantity` and `bb-unitprice` read their format from a shared **`OrgFormatService`** (in `libs/shared/currency-format`), which caches the org's currency and the `quantity.decimals` / `unitPrice.decimals` config values — so precision is defined in one place and every numeric field obeys it. Money precision comes from the **currency** (`mst.Currencies`); quantity and price precision from **`plt.Configurations`**; the three are deliberately independent.
+`bb-money`, `bb-quantity` and `bb-unitprice` read their format from a shared **`OrgFormatService`** (in `libs/shared/currency-format`), which caches the org's currency and the `quantity.decimals` / `unitPrice.decimals` config values — so precision is defined in one place and every numeric field obeys it. Money precision comes from the **currency** (`mst.Currencies`); quantity and price precision from **`mst.Configurations`**; the three are deliberately independent.
 
 ### Shared validation model
 
@@ -1157,7 +1157,7 @@ All components accept one declarative `validation` object rather than hand-wired
 `POST /api/auth/login` → email + password. Verified against `PasswordHash` with BCrypt. On success shows the org list; if only one org, auto-selects it.
 - Errors: invalid credentials (generic message — never say which field), account locked (show unlock time), no org access
 - **Licence is checked at login, not before.** An expired customer still authenticates — the response carries `licenseStatus: "Expired"`, and the app gates on it (trial-expiry flow below). Login itself never fails for expiry.
-- 5 failed attempts → 15-minute lockout (`FailedLoginCount`, `LockedOutUntil`); every attempt writes `idn.LoginHistories`
+- 5 failed attempts → 15-minute lockout (`FailedLoginCount`, `LockedOutUntil`); every attempt writes `mst.LoginHistories`
 - Link to Forgot password
 
 ### Organization selector
@@ -1169,14 +1169,14 @@ All components accept one declarative `validation` object rather than hand-wired
 ### Forgot password — OTP
 Three steps, all on one route with a wizard:
 
-1. **Request** — `POST /api/auth/forgot-password` with email (or mobile). **Always returns 200 with the same message** and always advances to step 2, even for an unknown account — never reveal whether it exists. If the account *does* exist, a 6-digit OTP (`idn.OtpVerifications`, 10-min expiry) is sent via the Notification worker to email, or SMS if the user chose mobile and has a confirmed number.
+1. **Request** — `POST /api/auth/forgot-password` with email (or mobile). **Always returns 200 with the same message** and always advances to step 2, even for an unknown account — never reveal whether it exists. If the account *does* exist, a 6-digit OTP (`mst.OtpVerifications`, 10-min expiry) is sent via the Notification worker to email, or SMS if the user chose mobile and has a confirmed number.
 2. **Verify** — `POST /api/auth/verify-otp` with the code. Wrong code increments `AttemptCount`; **5 wrong tries locks the code** and forces a new request. Expired code → ask to resend.
 3. **Reset** — `POST /api/auth/reset-password` with the verified OTP reference + new password (min 8 chars, confirm field). On success **all refresh tokens are revoked** — redirect to login.
 
 > **SMS delivery is not yet wired.** The stack has the Notification worker and SMTP for email; there is no SMS provider. Mobile OTP is specced but, until a provider (e.g. an SMS gateway) is added, only the **email** channel actually delivers. The mobile option should be hidden until then.
 
 ### Accept invitation
-Invitations are **link-based**, not OTP: the user opens the tokenised URL from the invite mail (`idn.PasswordResetTokens`, 7-day expiry) and sets a password. Invited users have a null/empty `PasswordHash` until this completes, and cannot log in before it.
+Invitations are **link-based**, not OTP: the user opens the tokenised URL from the invite mail (`mst.PasswordResetTokens`, 7-day expiry) and sets a password. Invited users have a null/empty `PasswordHash` until this completes, and cannot log in before it.
 
 ---
 
@@ -1191,10 +1191,10 @@ Invitations are **link-based**, not OTP: the user opens the tokenised URL from t
 Validate GSTIN's first two digits against the chosen state's `StateCode` when GSTIN is supplied.
 
 **What the server does on submit** (see the signup flow for the full sequence):
-1. Create `plt.Customers` (Status = Provisioning) + generate `CustomerCode`
-2. Create a **Trial `plt.Licenses`** — 14 days, 3 users, 1 org — automatically
+1. Create `mst.Customers` (Status = Provisioning) + generate `CustomerCode`
+2. Create a **Trial `mst.Licenses`** — 14 days, 3 users, 1 org — automatically
 3. `CREATE DATABASE`, run every service's migrations, seed the org's default Accounts and the 6 TaxMasters (AccountTypes and the other reference masters live in the master database), create the first Organization and its Chart of Accounts
-4. Create the owner `idn.Users` with the Owner role, password already hashed
+4. Create the owner `mst.Users` with the Owner role, password already hashed
 5. Flip Customer + CustomerDatabase to Active/Ready
 
 **After submit**: shows a "setting up your account" state and polls `GET /api/customers/{id}/status` until `CanLogin = true`. Provisioning creates a physical database — this is eventually consistent and login must be blocked until ready.
@@ -1204,9 +1204,9 @@ Validate GSTIN's first two digits against the chosen state's `StateCode` when GS
 ## User management (`apps/web` → Settings) 🔨
 - **List**: `GET /api/users` — scoped to current org. Columns: DisplayName, Email, Role, MobileNumber, LastLoginAt, status (Invited / Active / Locked / Inactive). Mobile → card list.
 - **Add / invite**: `POST /api/users` — full form: Email, DisplayName, MobileNumber, RoleId (dropdown from Role master), optional per-org role rows if the customer has more than one org. On save:
-  1. Creates `idn.Users` with an empty `PasswordHash` and `EmailConfirmed = false`
-  2. Writes the `idn.UserOrganizationRoles` pivot for the selected org(s)
-  3. Issues an invitation token (`idn.PasswordResetTokens`, 7-day) and **sends the invite mail via the Notification worker + SMTP** — never a temporary password
+  1. Creates `mst.Users` with an empty `PasswordHash` and `EmailConfirmed = false`
+  2. Writes the `mst.UserOrganizationRoles` pivot for the selected org(s)
+  3. Issues an invitation token (`mst.PasswordResetTokens`, 7-day) and **sends the invite mail via the Notification worker + SMTP** — never a temporary password
   4. Blocks against the licence `MaxUsers` — over the cap returns `409` with an upgrade prompt
 - **Edit**: change DisplayName, MobileNumber, role assignment. Cannot change Email (it's the identity).
 - **Resend invite** / **Reset password (send OTP)** actions per row.
@@ -1221,14 +1221,14 @@ Validate GSTIN's first two digits against the chosen state's `StateCode` when GS
 ## SMTP settings (`apps/admin`, and `apps/web` → Settings for per-customer override) 🔨
 Backs the invite / OTP / reset mail.
 - Fields: Host, Port, UseSsl, FromEmail, FromName, Username, Password.
-- **The password field is write-only** — the API accepts a new value and stores it AES-encrypted (`plt.SmtpSettings.PasswordEncrypted`); it is never returned to the client, shown as `••••••` with a "change" affordance.
+- **The password field is write-only** — the API accepts a new value and stores it AES-encrypted (`mst.SmtpSettings.PasswordEncrypted`); it is never returned to the client, shown as `••••••` with a "change" affordance.
 - **Send test email** button verifies the settings before save.
 - Platform admin edits the system default (`CustomerId = null`); a customer may set its own row to send from its own mailbox.
 
 ## Organization settings (`apps/web` → Settings) 📋
 Tabs: Profile (name, logo upload, address, contact) · Statutory (GSTIN, PAN, TAN, TIN, CIN, Udyam) · Financial (base currency, active currencies, FY start month, AP/AR due days, discount type) · Preferences (theme).
 
-Number-format and other tunables (`quantity.decimals`, `unitPrice.decimals`, due days, …) are edited on a **Settings → Configuration** screen driven by `plt.Configurations`, grouped by `Category`, rendered with the matching `bb-*` input per `DataType`. Changing `unitPrice.decimals` there reformats every price field app-wide.
+Number-format and other tunables (`quantity.decimals`, `unitPrice.decimals`, due days, …) are edited on a **Settings → Configuration** screen driven by `mst.Configurations`, grouped by `Category`, rendered with the matching `bb-*` input per `DataType`. Changing `unitPrice.decimals` there reformats every price field app-wide.
 
 Validate `StateId`'s code matches GSTIN's first two digits.
 
@@ -1493,7 +1493,7 @@ The single rule: **hash what you only verify; encrypt only what you must replay.
 ## Build-order note for these flows
 
 These slot into build step 1 (Identity/Platform) and step 7 (Notification worker):
-- `plt.Licenses`, `plt.SmtpSettings`, `idn.OtpVerifications` migrations, and the `license_status` claim
-- `IEmailSender` backed by real SMTP reading `plt.SmtpSettings` (decrypting the password)
+- `mst.Licenses`, `mst.SmtpSettings`, `mst.OtpVerifications` migrations, and the `license_status` claim
+- `IEmailSender` backed by real SMTP reading `mst.SmtpSettings` (decrypting the password)
 - `licenseActiveGuard` (frontend) + the `403 LicenseExpired` middleware (every service)
 - SMS delivery is **deferred** until an SMS provider is chosen — mobile OTP stays hidden until then

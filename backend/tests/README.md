@@ -71,7 +71,16 @@ and `EnsureCreated` skips all of them.
 | `JournalServiceTests` | The manual journal: draft, post, reverse, line-level reversal pairing, and a refused post leaving the number series where it was |
 | `LedgerReportServiceTests` | The account ledger and the trial balance, read back over postings written through the door |
 | `SubAccountServiceTests` | A contact's six sub-accounts under two parents, the purpose that keeps them from colliding, and per-target idempotence |
-| `MoneyTransactionSchemaTests` (Banking) | The money document: a draft may be part-allocated, a posted one may not; transfer and payment shapes; number-on-post. Set `BANKING_TEST_DB` |
+| `MoneyDocumentSchemaTests` | The money document: a draft may be part-allocated, a posted one may not; transfer and payment shapes; number-on-post |
+| `MoneyDocumentServiceTests` | Spend, receive and transfer end to end — allocation, settlement, FX and voiding, against `RecordingLedger` |
+| `StatementImportTests` | Reading a bank's CSV and XLSX, the two amount layouts, and re-importing an overlapping period |
+| `StatementMatcherTests` | Tying a statement line to a document, and refusing to guess between identical candidates |
+| `OpeningBalanceServiceTests` | The migration screen: per-contact AR/AP, the equity net-to-zero check, and the subledger tie |
+| `PeriodLockTests` | How far back the books are closed, per role, and what a closed period refuses |
+
+These were two suites until Banking merged into Accounting; the money-document
+tests came with it, and `BANKING_TEST_DB` went with them — there is one
+`ACCOUNTING_TEST_DB` now.
 
 ## Adding a test project
 

@@ -26,7 +26,7 @@ The background provisioner then:
 
 1. `CREATE DATABASE … ENCODING 'UTF8'` — UTF-8 matters, it is why Tamil and Chinese work
 2. Store the tenant connection string in the secret store
-3. Create the owner user with the Owner role, through Identity's internal API
+3. Create the owner user with the Owner role
 4. Publish `CustomerProvisioned` so each service migrates its own schema and seeds its data
 5. Flip the Customer to Trial and the database to Ready
 

@@ -47,9 +47,15 @@ createdb -E UTF8 retailerp_master
 
 cd backend
 dotnet build
-dotnet ef migrations add Initial --project Api/Master/Master.Repository     --startup-project Api/Master/Master.Api
-dotnet ef database update        --project Api/Master/Master.Repository     --startup-project Api/Master/Master.Api
-# repeat for Identity, Platform and Accounting
+# Master maps two contexts, so it needs --context on each.
+dotnet ef database update --project Api/Master/Master.Repository \
+  --startup-project Api/Master/Master.Api --context MasterDbContext
+dotnet ef database update --project Api/Master/Master.Repository \
+  --startup-project Api/Master/Master.Api --context ContactsDbContext
+dotnet ef database update --project Api/Inventory/Inventory.Repository \
+  --startup-project Api/Inventory/Inventory.Api
+dotnet ef database update --project Api/Accounting/Accounting.Repository \
+  --startup-project Api/Accounting/Accounting.Api
 ```
 
 Then run the services — see the port table below, Gateway on 5000 — with `ASPNETCORE_ENVIRONMENT=Development` set. That is what picks up `appsettings.Development.json`, the only one of the four environment files carrying real local values; the others are blank on purpose. The local connection string lives there, not in `appsettings.json`, so there is nothing to edit before the first run. See [Environments](#/environments).
@@ -116,16 +122,19 @@ Re-run the script after changing a controller, and commit the result with it.
 | Port | Service |
 |---|---|
 | 5000 | Gateway (YARP) — has a status home page at `/` |
-| 5001 | Identity |
-| 5002 | Platform |
-| 5003 | Master |
-| 5004 | Accounting |
-| 5005 | Contacts |
+| 5003 | Master — reference data, tenancy, auth, contacts |
+| 5004 | Accounting — the ledger and the money documents |
 | 5006 | Inventory |
-| 5007 | Banking |
-| 5011 | Sales |
+| 5008 | Customer *(scaffold)* |
+| 5009 | Purchase *(scaffold)* |
+| 5010 | Reporting *(scaffold)* |
+| 5011 | Sales *(schema only)* |
 | 4200 | Web app |
 | 4300 | Docs (this site) |
+
+Each surviving service kept the port it already had, so 5001, 5002, 5005, 5007
+and 5012 are now free — they belonged to Identity, Platform, Contacts, Banking
+and Support.
 
 ## First run caveats
 

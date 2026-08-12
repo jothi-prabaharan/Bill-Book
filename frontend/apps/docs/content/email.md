@@ -26,13 +26,13 @@ The API **never returns it**. The screen shows `••••••` when one is 
 
 ## Where credentials live, and why sending is centralised
 
-Platform owns `plt.SmtpSettings`, so **Platform does the sending**. Other services post the message to an internal endpoint:
+Master owns `mst.SmtpSettings`, so **Master does the sending**. Services that are not Master post the message to an internal endpoint:
 
 ```
 POST /internal/notifications/email   { toEmail, subject, htmlBody, ... }
 ```
 
-Identity uses this for invitations and OTP codes. The decrypted password never crosses a service boundary — only the message does.
+Invitations and OTP codes go the same way. The decrypted password never leaves the process that holds the settings — and since auth and SMTP are one service now, sending an invitation does not cross a boundary at all.
 
 ## Sending happens in the background
 

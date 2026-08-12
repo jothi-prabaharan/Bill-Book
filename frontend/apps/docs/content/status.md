@@ -1,34 +1,36 @@
 # Build status
 
-An honest inventory. The implemented services compile; nothing has been run against a database yet — see [Running locally](#/running-locally). The full solution does **not** build, because the eight unbuilt services are empty project shells with no entry point — build `Bill-Book.Debug.slnf` instead.
+An honest inventory.
 
-## Built
+The backend builds clean with zero warnings under `TreatWarningsAsErrors`, and 214 tests pass with none skipped — against a real PostgreSQL 16, because the ledger's guarantees are half in the database. All 14 migrations apply. The frontend's `npm run check` runs lint, typecheck, 66 tests and both app builds.
+
+The full solution builds, including the three services that are still empty shells: each carries a `Program.cs` that starts and reports what it is, so there is nothing to exclude. `Bill-Book.Debug.slnf` still exists for a faster inner loop.
+
+## Built — schema, API and screens
 
 | Area | What exists |
 |---|---|
-| `Shared.Kernel` | `AuditableEntity`, audit interceptor, `ICurrentUser`, secret/event/email interfaces |
-| Identity | 9 entities, DbContext, 5 roles + 120 permissions seeded |
-| Platform | 7 entities, DbContext, config seed |
-| Master | Countries, states, currencies + 4 reference masters and HSN/SAC, all seeded, read-only API |
-| Auth | Login, org selection, OTP forgot-password, reset — services and controller |
-| Signup | Public signup, Trial licence, background provisioner, status polling |
-| Currencies | Per-org activation with base-currency protection |
-| Accounting | Chart of accounts, sub-accounts, tax master — entities, per-request tenant resolution, APIs and screens |
-| Frontend | Teams-style shell, login, signup, OTP wizard, trial-expired page, currency settings, chart of accounts, sub-accounts, tax master |
-| Tooling | 41-project solution, 34 Nx projects, VS Code one-press debug, YARP gateway |
+| `Shared.Kernel` | `AuditableEntity`, audit interceptor, `ICurrentUser`, tenancy, numbering, GST calculation, secret/event/email/storage interfaces |
+| Master · reference | Countries, states, currencies, 4 reference masters and HSN/SAC with a CBIC CSV importer |
+| Master · tenancy | Customers, organizations, licences, the tenant directory, SMTP, config, org currencies; public signup, background provisioning, status polling |
+| Master · auth | Users, roles, 120 permissions, tokens, OTP; two-step login, org switching, invitations, password reset |
+| Master · contacts | Contacts with roles, addresses, bank details, licences and attachments; the GSTIN versus place-of-supply check |
+| Inventory | Item master with pharma and jewellery profiles, guarded stock decrement, weighted average and FIFO/LIFO/FEFO/specific cost layers, batches, serials, backdated recosting |
+| Accounting · ledger | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series; the general ledger with a deferred balance trigger, the manual journal, the account ledger, the trial balance, period locks and opening balances |
+| Accounting · banking | Banks, bank accounts each provisioning their own ledger account, spend/receive/transfer money with allocation, settlement and FX, CSV and XLSX statement import with matching |
+| Workers | CostingEngine — claims movements from `inv.StockMovements`, costs them, then posts them to the ledger |
+| Tooling | 31-project solution, 25 Nx projects, VS Code one-press debug, YARP gateway, a Postman collection generated from the controllers |
 
 ## Not built
 
-- **Eight of twelve services** — Contacts, Crm, Inventory, Sales, Purchase, Banking, Support, Reporting
-- **The rest of Accounting** — journals, the ledger and its combined view, fixed assets, opening balances
-- **Three workers** — Notification, CostingEngine, RateSync
-- Real SMTP, Key Vault and Service Bus implementations
-- Migrations — none generated yet
-- A context pane in the shell, so `/accounting/chart-of-accounts` and `/accounting/sub-accounts` are reachable only by typing the URL
+- **Sales beyond its schema** — the fifteen `sal` tables and three document base classes are written; no service, no controller, no page
+- **Purchase, Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
+- **Notification and RateSync workers** — a `.csproj` and an empty `Consumers/` folder. Mail currently sends from Master, queued in process
+- **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
 
 ## Known gaps
 
+- `ISecretStore` and `IEventPublisher` have development stand-ins only. The secret store keeps what it was given in memory and reads through to configuration for anything else; the event publisher logs and delivers nothing, so nothing that reads an event works yet. Key Vault and Service Bus are still to write
 - `JournalDetails` is the only per-customer table without `OrgId` (it scopes via its parent journal)
-- `acc.vw_LedgerDetail` must set `security_invoker = true` or it bypasses row-level security
-- `CREATE VIEW` is not in the raw-SQL exception list, so the ledger view needs a decision
 - No SMS provider, so mobile OTP cannot deliver
+- Component tests need the Angular Vite plugin and are not set up

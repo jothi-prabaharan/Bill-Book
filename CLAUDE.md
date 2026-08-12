@@ -17,7 +17,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 5. **PostgreSQL only.** Never add SQL Server compatibility, never avoid a Postgres feature for portability. RLS, `xmin`, and JSONB are all in use deliberately.
 6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it. All four audit columns are **nullable**; `CreatedBy IS NULL` marks system/seed master data (written by no user).
 7. **Enums, not magic strings**, for any fixed set of values.
-8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event.
+8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event. Master maps two contexts, and that is a database boundary rather than a service one — `mst` and `con` are different Postgres databases, so there is still no foreign key between them and ids across them are still validated in C#.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
 10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
 
@@ -65,7 +65,7 @@ Produce, in this order:
 
 Do **not** write CREATE TABLE SQL. This is EF Core code-first — migrations generate the schema.
 
-Every per-customer table needs `OrgId` plus a global query filter. Master-database tables (`mst`, `plt`) do not.
+Every per-customer table needs `OrgId` plus a global query filter. Master-database tables (the `mst` schema) do not.
 
 ---
 
@@ -86,7 +86,7 @@ Two top-level halves. Inside `backend/`, four groups — `Api/`, `shared/`, `wor
 backend/
 ├── Bill-Book.sln
 ├── Api/
-│   └── {Module}/                one folder per service (×12)
+│   └── {Module}/                one folder per service (×7)
 │       ├── {Module}.Entity/
 │       ├── {Module}.Repository/
 │       └── {Module}.Api/
@@ -116,9 +116,19 @@ Three projects per service, no more — all three under `backend/Api/{Module}/`:
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
-**Services** (12): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
+**Services** (7): Master, Inventory, Accounting, Sales, Purchase, Customer, Reporting
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
+
+There were twelve. Three merges took them to seven, and the reason each time was that two services were two halves of one job:
+
+| Now | Was | Because |
+|---|---|---|
+| **Master** (`mst`, `con`) | Master + Platform + Identity + Contacts | Signing in reads a user, their branches and the customer's licence — one query now, two service hops before |
+| **Accounting** (`acc`) | Accounting + Banking | A money document exists to move a balance in the ledger; the two could not share a transaction while they were separate |
+| **Customer** (`cus`) | Crm + Support | A lead becomes a customer and a customer raises a ticket — one subject, one lifecycle. Both were empty scaffolds |
+
+**Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `MasterDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
 
 **Frontend** (Nx): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
@@ -140,27 +150,31 @@ Every page must work at ~360px — grids become card lists, forms stack, modals 
 | Customer ↔ Customer (head office ↔ head office) | Separate physical databases |
 | Organization ↔ Organization (branch ↔ branch) | `OrgId` + EF Core query filter + Postgres RLS |
 
-**There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `plt.Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
+**There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
 
 **A branch is a hard data boundary, not a reporting tag.** Each branch has its own items, contacts, stock, chart of accounts and numbering series. Nothing crosses between them. Consolidated reporting across branches is a **read across organizations**, done deliberately and above the query filter — never by relaxing it.
 
 **`OrgId` is load-bearing for security.** A missing query filter leaks data between branches. Never omit it on a per-customer table.
 
-Per request: resolve `CustomerId` from JWT → pick the database via the `plt` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
+Per request: resolve `CustomerId` from JWT → pick the database via the `mst` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
 
 ### Schemas
 
-Master database: `mst` (countries/states), `plt` (customers/orgs/tenant directory), `idn` (users/roles/tokens), `rat` (currency + metal rates)
+Master database: `mst` (countries and states, the tenant directory, users and roles), `rat` (currency + metal rates)
 
-Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `ntf`
+Per-customer database: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
+
+`plt` and `idn` were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `OrgId` with a query filter and an RLS policy.
+
+**`con` did not move into `mst` and must not.** A contact belongs to one branch's books and lives in that customer's own database; the tables in `mst` are shared by every customer. They are in different Postgres databases, which is why Master holds two DbContexts rather than one.
 
 ### Provisioning
 - **New Customer**: create row → generate `CustomerCode` → `CREATE DATABASE` → store connection in Key Vault → publish `CustomerProvisioned` → each service migrates its own schema → mark Active. Block login until ready.
 - **New Organization (a new branch)** under an existing Customer: insert row with its own `OrgCode`, seed its full master data — Chart of Accounts, Tax Master, numbering series, units, payment terms. No new database. A branch starts empty and is seeded exactly like the first one, because it is a complete set of books.
 
 ### Cross-database FKs are impossible in Postgres
-- `CreatedBy`/`ModifiedBy` (Users are in master) → plain nullable `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
-- Contacts referencing `mst` Countries/States → unenforced ids, validate in C#
+- `CreatedBy`/`ModifiedBy` (Users are in the master database) → plain nullable `Guid`, no FK. Resolve names from `mst.Users` in C#, **batched** — watch for N+1 on list screens.
+- Contacts referencing `mst` Countries/States → unenforced ids, validate in C#. **Master holding both contexts does not make this a foreign key** — they are still two databases, and one service mapping both is not one database.
 
 ---
 
@@ -203,14 +217,14 @@ Everything — invoices, bills, payments, depreciation, opening balances — pro
 - Lines are debit **xor** credit. Never both. Never negative.
 - Lifecycle: Draft → Posted → Reversed. **Never edit a posted entry.** Reverse it with an offsetting entry.
 - Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built the interceptor is the missing one** — the other two are in place for both `acc.Journals` and `acc.JournalLedger`, and there are in fact two triggers on the journal, because posting a draft changes the header and never touches the lines
-- Sales/Purchase/Banking **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows.
+- Sales and Purchase **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows. The money documents are Accounting's own now, so they post through `LedgerPostingService` directly — in the same transaction, which is what the merge was for.
 
 ### Fixed Assets
 The **category** owns the GL mapping (Fixed Asset / Accumulated Depreciation / Depreciation Expense), not the individual asset. Per-asset mapping doesn't scale.
 
 ### Opening balance / migration screen
 Highest-risk screen in the system:
-- Accounting orchestrates; calls Inventory (opening qty + unit cost → seeds WAC) and Contacts (opening AR/AP **per contact**, never a lump sum — aging breaks otherwise)
+- Accounting orchestrates; calls Inventory (opening qty + unit cost → seeds WAC) and Master for contacts (opening AR/AP **per contact**, never a lump sum — aging breaks otherwise)
 - Opening Balance Equity must net to zero — that's the validation
 - Block finalize until AR, AP, and Inventory subledgers tie to their control accounts
 - Migrated fixed assets skip historical depreciation
@@ -266,7 +280,7 @@ Two-step login, because one account spans multiple organizations:
 1. `POST /api/auth/login` — credentials → pre-auth token (5 min, no org context) + accessible orgs
 2. `POST /api/auth/select-organization` — → access token (15 min) + refresh token (7 days)
 
-JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `license_expiry` (when set), `permission[]`. The licence claims are what let a page and its API both refuse an expired customer without either asking Platform per request.
+JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `license_expiry` (when set), `permission[]`. The licence claims are what let a page and its API both refuse an expired customer without either asking Master per request.
 
 - BCrypt work factor 12; refresh tokens **rotate** on use; all tokens stored **hashed**
 - Lockout: 5 failed attempts → 15 min
@@ -299,51 +313,57 @@ JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `l
 
 ## Current state
 
-~381 C# files across 44 projects. Compiled, tested and migrated — see the caveats below.
+~429 C# files across 31 projects. Compiled, tested and migrated — see the caveats below.
 
 ### Built and wired end to end
 
 Schema, API and page all exist for these. Task tracking lives in [`master.md`](./master.md); this is the shape of the thing, not the to-do list.
 
-| Service | Tables | What works |
-|---|---|---|
-| **Master** | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
-| **Platform** | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
-| **Identity** | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
-| **Contacts** | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
-| **Inventory** | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
-| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger and the trial balance |
-| **Banking** | Bank, BankAccount, MoneyTransaction, MoneyTransactionDetail | Each bank account provisions its own ledger account; the money document's schema for spend, receive and transfer — **schema only, no API or screen yet** |
+| Service | Schema | Tables | What works |
+|---|---|---|---|
+| **Master** | `mst` | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
+| **Master** | `mst` | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
+| **Master** | `mst` | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
+| **Master** | `con` | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
+| **Inventory** | `inv` | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
+| **Accounting** | `acc` | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail, PeriodLock, OpeningBalance, OpeningBalanceLine | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger, the trial balance, period locks and the opening balance |
+| **Accounting** | `acc` | Bank, BankAccount, SpendMoney, SpendMoneyDetail, ReceiveMoney, ReceiveMoneyDetail, TransferMoney, BankStatement, BankStatementLine, StatementImportProfile | Each bank account provisions its own ledger account; spend, receive and transfer money with allocation, settlement and FX; CSV and XLSX statement import with matching |
 
-`NumberingSeries` lives in `Shared.Kernel` and is mapped by five services — Accounting owns the migration, Contacts, Inventory, Banking and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
+The four **Master** rows are one service and one API host, but **two databases**: the first three are `mst` in the shared master database, the fourth is `con` in each customer's own.
+
+`NumberingSeries` lives in `Shared.Kernel` and is mapped by three services — Accounting owns the migration; Master (on its contacts context), Inventory and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
 
 The reason is the allocation. `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction — so an item insert that fails gives its code back, and a document series stays gapless. Both properties need the table in the caller's `DbContext`. Ask another service for a number over HTTP and the transaction ends at the wire: the number is spent whether or not the insert succeeds.
 
-A table per service would also break the screen. Settings › Numbering series is one list of every series, and splitting the table means four services to query and no single place to enforce one default per code.
+A table per service would also break the screen. Settings › Numbering series is one list of every series, and splitting the table means three services to query and no single place to enforce one default per code.
 
 If this is ever revisited, the thing to preserve is the transaction, not the table.
 
+The Accounting/Banking merge is what that argument predicted: Banking mapped this table for exactly this reason, and merging the two made its mapping simply Accounting's own.
+
 **Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update, costs them, then drains a second queue on the same table that posts them to the ledger.
 
-**Frontend**: `apps/web` and `apps/docs` build. 28 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
+**Frontend**: `apps/web` and `apps/docs` build. 28 pages across `master-ui` (contacts, users, roles, branches, org settings, currencies, configuration, SMTP, HSN/SAC), `accounting-ui` (the ledger screens and the banking ones) and `inventory-ui`, plus shared auth. The libs mirror the services: `libs/{master, inventory, accounting, sales, purchase, customer, reporting}`. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all seven `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
 
-**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all three. Component tests need the Angular Vite plugin and are not set up. The backend has four test projects: `Shared.Kernel.Tests`, `Inventory.Api.Tests`, `Accounting.Api.Tests` and `Banking.Api.Tests`. The last of these needs **a real PostgreSQL** — the ledger's guarantees are half in the database (deferred triggers, `ExecuteDelete`, the guarded numbering update), so an in-memory provider would prove nothing about them. The last two need a real PostgreSQL and skip themselves with a reason when no server answers; point `ACCOUNTING_TEST_DB` and `BANKING_TEST_DB` at one to run them.
+**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all four (lint, typecheck, 66 tests, both builds). Component tests need the Angular Vite plugin and are not set up. The backend has three test projects: `Shared.Kernel.Tests`, `Inventory.Api.Tests` and `Accounting.Api.Tests` — the last absorbed `Banking.Api.Tests` with the merge, so there is now one `ACCOUNTING_TEST_DB` rather than two environment variables.
+
+`Accounting.Api.Tests` needs **a real PostgreSQL** and skips itself with a reason when no server answers. The ledger's guarantees are half in the database — deferred triggers, `ExecuteDelete`, the guarded numbering update, and the allocation triggers on the money documents — so an in-memory provider would prove nothing about them.
 
 ### Still not built
 
-- **Crm, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
+- **Customer, Purchase, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages. Customer is where CRM and the support helpdesk will both be built
 - **Sales beyond the schema** — the fifteen `sal` tables and the three document base classes in `Shared.Kernel` are written (T2.2). No service, no controller, no page: the quote is T2.3 and wires up `bb-document-line-grid` rather than writing a grid
-- **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
+- **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Master (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
 - **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
-- **Document numbering series beyond `JRN`, `SPM`, `RCM` and `TRM`.** Accounting and Banking seed their own; Sales and Purchase seed theirs when those services land
+- **Document numbering series beyond `JRN`, `OPB`, `SPM`, `RCM` and `TRM`.** Accounting seeds all five; Sales and Purchase seed theirs when those services land
 
 ### Standing caveats
 
 - **T0.2 — tax determination — is written but not verified.** `Shared.Kernel.Tax` holds the pure calculator, the place-of-supply resolver and the cached rate client; Accounting serves `GET internal/tax/rates?on={date}`. The three sub-decisions are settled and written down in `TRANSACTIONS.md`: inclusive **and** exclusive pricing per line, discount reduces the taxable value when the branch says so, tax rounds per component then sums. `shared-fixtures/tax-fixture.json` is read by both `Shared.Kernel.Tests` and `tax-fixture.spec.ts`, so a divergence between the C# and TypeScript implementations is a failing test rather than a wrong GST return — but neither suite has been run.
 - **T2.2 — the `sal` schema — is written but not verified, and `sal` has no migration.** It was built in a session with no .NET SDK reachable: `dot.net`, `builds.dotnet.microsoft.com`, `packages.microsoft.com` and `api.nuget.org` all refused through the egress proxy, so `dotnet build`, `dotnet test` and `dotnet ef migrations add` could none of them run. Generate the migration per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md` — it carries the RLS block EF will not write, and the second `migrations add` that has to come back empty. The boxes in `SALES.md` stay unticked until both checks are green.
 
-- **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 110, every EF snapshot matches its model, and all 33 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
-- **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
+- **Compiled, tested and migrated as of 12 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 214 with none skipped, every EF snapshot matches its model, and all 14 migrations apply to PostgreSQL 16. There are 14 rather than 33 because the three merged services squashed their chains to one migration each — the product has no released deployment to upgrade, so a clean history was worth more than a preserved one. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 66 tests and both builds. The backend's database-backed tests need a PostgreSQL: `ACCOUNTING_TEST_DB` points at it, and without one those tests skip rather than fail.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
 - **Every endpoint is behind a credential and a permission** (master.md 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.
 
@@ -351,7 +371,7 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ## Roadmap
 
-**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, Banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, Platform provisioning
+**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, tenant provisioning
 **Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
 **Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
 

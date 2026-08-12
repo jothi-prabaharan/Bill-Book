@@ -37,7 +37,7 @@ Every other schema is **replicated per customer database**: `con` `crm` `inv` `s
 
 ```
 JWT → customer_id
-    → tenant directory (plt.CustomerDatabases, cached)
+    → tenant directory (mst.CustomerDatabases, cached)
     → connection string from Key Vault
     → set_config('app.current_org_id', <org>, true)
 ```

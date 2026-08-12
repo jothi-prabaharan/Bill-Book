@@ -8,7 +8,7 @@ namespace Shared.Kernel.Tenancy;
 /// The currency the branch keeps its books in.
 ///
 /// Every general-ledger row is denominated in it, and the base-currency columns
-/// are what every report sums. It lives in <c>plt.Organizations</c>, in the
+/// are what every report sums. It lives in <c>mst.Organizations</c>, in the
 /// master database, which no per-customer service may read.
 /// </summary>
 public interface IBaseCurrencyProvider

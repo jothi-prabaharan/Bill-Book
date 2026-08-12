@@ -2,36 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Identity.Api (5001)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Identity/Identity.Api/bin/Debug/net10.0/Identity.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Identity/Identity.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5001"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Platform.Api (5002)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Platform/Platform.Api/bin/Debug/net10.0/Platform.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Platform/Platform.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5002"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
       "name": "Master.Api (5003)",
       "type": "coreclr",
       "request": "launch",
@@ -62,21 +32,6 @@
       "justMyCode": true
     },
     {
-      "name": "Contacts.Api (5005)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Contacts/Contacts.Api/bin/Debug/net10.0/Contacts.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Contacts/Contacts.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5005"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
       "name": "Inventory.Api (5006)",
       "type": "coreclr",
       "request": "launch",
@@ -92,27 +47,12 @@
       "justMyCode": true
     },
     {
-      "name": "Banking.Api (5007)",
+      "name": "Customer.Api (5008)",
       "type": "coreclr",
       "request": "launch",
       "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Banking/Banking.Api/bin/Debug/net10.0/Banking.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Banking/Banking.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5007"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Crm.Api (5008)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Crm/Crm.Api/bin/Debug/net10.0/Crm.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Crm/Crm.Api",
+      "program": "${workspaceFolder}/backend/Api/Customer/Customer.Api/bin/Debug/net10.0/Customer.Api.dll",
+      "cwd": "${workspaceFolder}/backend/Api/Customer/Customer.Api",
       "env": {
         "ASPNETCORE_ENVIRONMENT": "Development",
         "ASPNETCORE_URLS": "http://localhost:5008"
@@ -167,21 +107,6 @@
       "justMyCode": true
     },
     {
-      "name": "Support.Api (5012)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Support/Support.Api/bin/Debug/net10.0/Support.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Support/Support.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5012"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
       "name": "Gateway (5000)",
       "type": "coreclr",
       "request": "launch",
@@ -203,7 +128,7 @@
       "processId": "${command:pickProcess}"
     },
     {
-      "name": "Web \u00b7 Development (Chrome, 4200)",
+      "name": "Web · Development (Chrome, 4200)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-web",
@@ -228,7 +153,7 @@
       ]
     },
     {
-      "name": "Web \u00b7 Staging (Chrome, 4200)",
+      "name": "Web · Staging (Chrome, 4200)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-web-staging",
@@ -253,7 +178,7 @@
       ]
     },
     {
-      "name": "Docs \u00b7 Development (Chrome, 4300)",
+      "name": "Docs · Development (Chrome, 4300)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-docs",
@@ -278,7 +203,7 @@
       ]
     },
     {
-      "name": "Docs \u00b7 Staging (Chrome, 4300)",
+      "name": "Docs · Staging (Chrome, 4300)",
       "type": "chrome",
       "request": "launch",
       "preLaunchTask": "serve-docs-staging",
@@ -331,22 +256,17 @@
   ],
   "compounds": [
     {
-      "name": "\ud83d\ude80 Everything (APIs + Gateway + Web)",
+      "name": "🚀 Everything (APIs + Gateway + Web)",
       "configurations": [
         "Gateway (5000)",
-        "Identity.Api (5001)",
-        "Platform.Api (5002)",
         "Master.Api (5003)",
         "Accounting.Api (5004)",
-        "Contacts.Api (5005)",
         "Inventory.Api (5006)",
-        "Banking.Api (5007)",
-        "Crm.Api (5008)",
+        "Customer.Api (5008)",
         "Purchase.Api (5009)",
         "Reporting.Api (5010)",
         "Sales.Api (5011)",
-        "Support.Api (5012)",
-        "Web \u00b7 Development (Chrome, 4200)"
+        "Web · Development (Chrome, 4200)"
       ],
       "stopAll": true
     },
@@ -354,34 +274,29 @@
       "name": "Backend only (APIs + Gateway)",
       "configurations": [
         "Gateway (5000)",
-        "Identity.Api (5001)",
-        "Platform.Api (5002)",
         "Master.Api (5003)",
         "Accounting.Api (5004)",
-        "Contacts.Api (5005)",
         "Inventory.Api (5006)",
-        "Banking.Api (5007)",
-        "Crm.Api (5008)",
+        "Customer.Api (5008)",
         "Purchase.Api (5009)",
         "Reporting.Api (5010)",
-        "Sales.Api (5011)",
-        "Support.Api (5012)"
+        "Sales.Api (5011)"
       ],
       "stopAll": true
     },
     {
       "name": "Frontend only (Web + Docs, Development)",
       "configurations": [
-        "Web \u00b7 Development (Chrome, 4200)",
-        "Docs \u00b7 Development (Chrome, 4300)"
+        "Web · Development (Chrome, 4200)",
+        "Docs · Development (Chrome, 4300)"
       ],
       "stopAll": true
     },
     {
       "name": "Frontend only (Web + Docs, Staging)",
       "configurations": [
-        "Web \u0e07 Staging (Chrome, 4200)",
-        "Docs \u0e07 Staging (Chrome, 4300)"
+        "Web · Staging (Chrome, 4200)",
+        "Docs · Staging (Chrome, 4300)"
       ],
       "stopAll": true
     }
