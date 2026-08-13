@@ -1,15 +1,1 @@
-# Inventory status (claim file)
-
-Working:
-
-- Working: none
-
-Checklist:
-- [ ] Finalise POS sync contract
-- [ ] Add integration tests for costing engine
-
-When you start work, edit this file and add:
-
-Working: <your-username> @ <ISO-8601 timestamp>
-
-When done, replace the Working line with Done: <your-username> @ <timestamp> and a short note.
+REMOVED: This file was added in commit 81fe9bc7fb081d6d6d4e8f6813c5fa1754474247 and is removed by a follow-up revert commit to restore repository state. The content has been discarded.

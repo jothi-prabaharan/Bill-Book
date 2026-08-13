@@ -1,11 +1,1 @@
-# Inventory module
-
-Owner: TODO (@owner)
-
-Status: core inventory schema and costing features implemented; POS sync and some integration tests pending.
-
-Purpose: Items, stock, costing layers, batches and serial handling.
-
-Links:
-- Schema: ../schema/Inventory.md (create if needed)
-- Status: ../status/Inventory.md
+REMOVED: This file was added in commit 81fe9bc7fb081d6d6d4e8f6813c5fa1754474247 and is removed by a follow-up revert commit to restore repository state. The content has been discarded.

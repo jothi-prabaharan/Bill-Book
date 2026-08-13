@@ -1,13 +1,1 @@
-# Master module
-
-Owner: TODO (@owner)
-
-Status: built end-to-end for country/state/currency masters, customers and organizations; provisioning and onboarding flows scaffolded and partially implemented.
-
-Purpose: Master provides the tenant directory, user and role management, contact objects and the provisioning machinery that creates per-customer databases.
-
-What to update here:
-- Short status paragraph
-- Checklist of next tasks
-- Links to schema: ../schema/Master.md (create if needed)
-- Link to status file: ../status/Master.md
+REMOVED: This file was added in commit 81fe9bc7fb081d6d6d4e8f6813c5fa1754474247 and is removed by a follow-up revert commit to restore repository state. The content has been discarded.

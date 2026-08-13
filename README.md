@@ -221,12 +221,6 @@ Sales beyond its schema. Purchase, Customer and Reporting services. The Notifica
 
 ---
 
-## Documentation
-
-Living documentation and the single source-of-truth for schemas, validations and task status live under `docs/`. See `docs/index.md` for an index of maintained docs and instructions for claiming work and updating docs.
-
----
-
 ## Contributing
 
 Read **[CLAUDE.md](./CLAUDE.md)** before writing any code. It holds the binding conventions — LINQ-only data access, entity shape, tenancy rules, the accounting model, and the recipes for addin[...]

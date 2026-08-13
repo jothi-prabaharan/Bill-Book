@@ -1,10 +1,1 @@
-# Project architecture
-
-Short summary:
-
-- Backend: .NET 10 services (one per module), EF Core code-first, PostgreSQL with RLS and JSONB. Services own their migrations.
-- Frontend: Angular/Nx with Ionic for mobile-compatible pages; libs contain `-core` view-models and `-ui` pages.
-- Workers: Notification, CostingEngine, RateSync. A YARP gateway fronts the APIs.
-- Integrations: Azure Service Bus, Key Vault, Blob Storage, SignalR; local alternatives available for dev.
-
-Use this doc as a landing place for architecture diagrams and quick orientation notes for new contributors.
+REMOVED: This file was added in commit 81fe9bc7fb081d6d6d4e8f6813c5fa1754474247 and is removed by a follow-up revert commit to restore repository state. The content has been discarded.
