@@ -34,6 +34,14 @@ public sealed class SignupService
     {
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
+        var country = await _db.Countries
+            .Where(c => c.CountryId == request.CountryId)
+            .Select(c => new { c.CountryCode, c.CurrencyCode })
+            .FirstOrDefaultAsync(ct);
+
+        string countryPrefix = country?.CountryCode ?? "IN";
+        string defaultCurrency = country?.CurrencyCode ?? "INR";
+
         Customer customer = null!;
 
         // CustomerCode is read-max-then-increment; the unique index makes the
@@ -46,7 +54,7 @@ public sealed class SignupService
             {
                 CustomerId = Guid.NewGuid(),
                 CustomerCode = code,
-                CountryPrefix = "IN",
+                CountryPrefix = countryPrefix,
                 Name = request.CompanyName,
                 BillingEmail = request.Email,
                 Status = TenantStatus.Provisioning,
@@ -88,7 +96,7 @@ public sealed class SignupService
             // it takes the head-office code rather than asking for one during
             // signup. Later branches are named by the customer.
             OrgCode = "HO",
-            BaseCurrency = request.BaseCurrency ?? "INR",
+            BaseCurrency = request.BaseCurrency ?? defaultCurrency,
             FinancialYearStartMonth = request.FinancialYearStartMonth,
             Gstin = request.Gstin,
             Pan = request.Pan,
