@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
 
@@ -27,7 +27,8 @@ export class ForgotPasswordPage {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  async request(): Promise<void> {
+  async request(form?: NgForm): Promise<void> {
+    if (form?.invalid) return;
     this.busy.set(true);
     this.error.set(null);
     try {
@@ -39,7 +40,8 @@ export class ForgotPasswordPage {
     }
   }
 
-  async verify(): Promise<void> {
+  async verify(form: NgForm): Promise<void> {
+    if (form.invalid) return;
     this.busy.set(true);
     this.error.set(null);
     try {
@@ -52,7 +54,8 @@ export class ForgotPasswordPage {
     }
   }
 
-  async reset(): Promise<void> {
+  async reset(form: NgForm): Promise<void> {
+    if (form.invalid) return;
     if (this.newPassword !== this.confirmPassword) {
       this.error.set('Passwords do not match.');
       return;

@@ -8,7 +8,7 @@
     <p><a routerLink="/login">Back to sign in</a></p>
   } @else {
     <p class="hint">Welcome{{ email() ? ', ' + email() : '' }}. Choose a password to finish.</p>
-    <form (ngSubmit)="submit()">
+    <form #acceptForm="ngForm" (ngSubmit)="submit(acceptForm)">
       <label>
         New password
         <input name="password" type="password" minlength="8" [(ngModel)]="password" required />

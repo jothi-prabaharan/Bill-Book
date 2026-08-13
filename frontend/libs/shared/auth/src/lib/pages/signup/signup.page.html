@@ -7,7 +7,7 @@
       <p class="hint">We are creating your database and books. This takes a moment.</p>
     </div>
   } @else {
-    <form (ngSubmit)="submit()">
+    <form #signupForm="ngForm" (ngSubmit)="submit(signupForm)">
       <div class="columns">
         <div class="column">
           <fieldset>

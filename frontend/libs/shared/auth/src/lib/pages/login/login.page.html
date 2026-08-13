@@ -2,7 +2,7 @@
   <h1>Bill-Book</h1>
 
   @if (step() === 'credentials') {
-    <form (ngSubmit)="submit()">
+    <form #loginForm="ngForm" (ngSubmit)="submit(loginForm)">
       <label>
         Email
         <input name="email" type="email" [(ngModel)]="email" required autocomplete="username" />

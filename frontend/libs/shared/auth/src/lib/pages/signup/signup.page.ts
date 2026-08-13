@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Country, StateRow } from '../../auth.models';
 import { AuthService } from '../../auth.service';
@@ -64,7 +64,8 @@ export class SignupPage implements OnInit {
     this.states.set(countryId ? await this.auth.states(countryId) : []);
   }
 
-  async submit(): Promise<void> {
+  async submit(form: NgForm): Promise<void> {
+    if (form.invalid) return;
     this.busy.set(true);
     this.error.set(null);
     try {
