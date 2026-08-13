@@ -66,6 +66,12 @@ public class SignupRequest
 
     public int? StateId { get; set; }
 
+    [MaxLength(200, ErrorMessage = "Address line 1 cannot exceed 200 characters.")]
+    public string? AddressLine1 { get; set; }
+
+    [MaxLength(200, ErrorMessage = "Address line 2 cannot exceed 200 characters.")]
+    public string? AddressLine2 { get; set; }
+
     [MaxLength(100, ErrorMessage = "City cannot exceed 100 characters.")]
     public string? City { get; set; }
 

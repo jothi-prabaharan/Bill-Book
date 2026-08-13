@@ -18,7 +18,7 @@
 
       <form #signupForm="ngForm" (ngSubmit)="submit(signupForm)">
         <div class="tab-content">
-          @if (currentTab() === 0) {
+          <div [hidden]="currentTab() !== 0">
             <fieldset>
               <legend>You</legend>
               <label>Name <input name="displayName" [(ngModel)]="m.displayName" required /></label>
@@ -26,9 +26,9 @@
               <label>Mobile <input name="mobileNumber" [(ngModel)]="m.mobileNumber" /></label>
               <label>Password <input name="password" type="password" minlength="8" [(ngModel)]="m.password" required /></label>
             </fieldset>
-          }
+          </div>
 
-          @if (currentTab() === 1) {
+          <div [hidden]="currentTab() !== 1">
             <fieldset>
               <legend>Company</legend>
               <label>Company name <input name="companyName" [(ngModel)]="m.companyName" required /></label>
@@ -42,11 +42,13 @@
                 </select>
               </label>
             </fieldset>
-          }
+          </div>
 
-          @if (currentTab() === 2) {
+          <div [hidden]="currentTab() !== 2">
             <fieldset>
               <legend>Location</legend>
+              <label>Address Line 1 <input name="addressLine1" [(ngModel)]="m.addressLine1" /></label>
+              <label>Address Line 2 <input name="addressLine2" [(ngModel)]="m.addressLine2" /></label>
               <label>
                 Country
                 <select name="countryId" [(ngModel)]="m.countryId" (ngModelChange)="loadStates($event)" required>
@@ -65,10 +67,11 @@
                 </select>
               </label>
               <label>City <input name="city" [(ngModel)]="m.city" /></label>
+              <label>Postal Code <input name="postalCode" [(ngModel)]="m.postalCode" /></label>
             </fieldset>
-          }
+          </div>
 
-          @if (currentTab() === 3) {
+          <div [hidden]="currentTab() !== 3">
             <fieldset>
               <legend>Statutory (optional)</legend>
               <label>GSTIN <input name="gstin" maxlength="15" [(ngModel)]="m.gstin" /></label>
@@ -78,7 +81,7 @@
               <label>CIN <input name="cin" maxlength="21" [(ngModel)]="m.cin" /></label>
               <label>Udyam <input name="udyamNumber" maxlength="20" [(ngModel)]="m.udyamNumber" /></label>
             </fieldset>
-          }
+          </div>
         </div>
 
         @if (error()) {

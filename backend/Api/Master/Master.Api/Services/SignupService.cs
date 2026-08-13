@@ -113,6 +113,8 @@ public sealed class SignupService
             ExpiryDate = license.ExpiryDate,
             CountryId = request.CountryId,
             StateId = request.StateId,
+            AddressLine1 = request.AddressLine1,
+            AddressLine2 = request.AddressLine2,
             City = request.City,
             PostalCode = request.PostalCode,
             MobileNumber = request.MobileNumber,

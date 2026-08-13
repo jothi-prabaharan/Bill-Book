@@ -47,6 +47,8 @@ export interface SignupRequest {
   udyamNumber?: string;
   countryId: number;
   stateId?: number;
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
   postalCode?: string;
 }

@@ -78,6 +78,7 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
 builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
+builder.Services.AddScoped<InvoiceService>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
@@ -118,6 +119,12 @@ builder.Services.AddHttpClient<IContactNameLookup, HttpContactNameLookup>(client
 builder.Services.AddHttpClient<IItemNameLookup, HttpItemNameLookup>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

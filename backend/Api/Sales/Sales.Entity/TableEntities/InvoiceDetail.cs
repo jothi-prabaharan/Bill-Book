@@ -20,4 +20,5 @@ public class InvoiceDetail : DocumentLineBase
     /// here is what the guard checks against.
     /// </summary>
     public decimal ReturnedQuantity { get; set; }
+    public List<InvoiceDetailTax> Taxes { get; set; } = [];
 }

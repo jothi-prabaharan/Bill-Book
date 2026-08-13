@@ -6,6 +6,7 @@ namespace Sales.Api.Services;
 public interface IInventoryClient
 {
     Task<ReserveStockResponse> ReserveAsync(ReserveStockRequest request, CancellationToken ct);
+    Task<IssueStockResponse> IssueAsync(IssueStockRequest request, CancellationToken ct);
     Task<ReleaseStockResponse> ReleaseAsync(ReleaseStockRequest request, CancellationToken ct);
 }
 
@@ -33,6 +34,18 @@ public sealed class InventoryClient : IInventoryClient
         return new ReserveStockResponse { Success = false };
     }
 
+    public async Task<IssueStockResponse> IssueAsync(IssueStockRequest request, CancellationToken ct)
+    {
+        var response = await _http.PostAsJsonAsync("internal/stock/issue", request, ct);
+        if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            var result = await response.Content.ReadFromJsonAsync<IssueStockResponse>(cancellationToken: ct);
+            return result ?? new IssueStockResponse { Success = false };
+        }
+        
+        response.EnsureSuccessStatusCode();
+        return new IssueStockResponse { Success = false };
+    }
     public async Task<ReleaseStockResponse> ReleaseAsync(ReleaseStockRequest request, CancellationToken ct)
     {
         var response = await _http.PostAsJsonAsync("internal/stock/release", request, ct);
@@ -100,4 +113,41 @@ public sealed record ReleaseStockLineResult
     public decimal RequestedQuantity { get; init; }
     public bool Success { get; init; }
     public string Outcome { get; init; } = string.Empty;
+}
+
+public sealed record IssueStockRequest
+{
+    public Guid OrgId { get; init; }
+    public Guid CustomerId { get; init; }
+    public DateOnly MovementDate { get; init; }
+    public string SourceType { get; init; } = null!;
+    public long SourceId { get; init; }
+    public List<IssueStockLine> Lines { get; init; } = [];
+}
+
+public sealed record IssueStockLine
+{
+    public long SourceLineId { get; init; }
+    public long ItemId { get; init; }
+    public decimal Quantity { get; init; }
+    public long? WarehouseId { get; init; }
+    public bool ReleaseReservation { get; init; }
+}
+
+public sealed record IssueStockResponse
+{
+    public bool Success { get; set; }
+    public decimal TotalValue { get; set; }
+    public List<IssueStockLineResult> Lines { get; set; } = [];
+}
+
+public sealed record IssueStockLineResult
+{
+    public long SourceLineId { get; init; }
+    public long ItemId { get; init; }
+    public decimal RequestedQuantity { get; init; }
+    public bool Success { get; init; }
+    public string Outcome { get; init; } = string.Empty;
+    public decimal UnitCost { get; init; }
+    public decimal LineValue { get; init; }
 }

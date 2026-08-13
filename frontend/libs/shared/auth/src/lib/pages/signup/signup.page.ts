@@ -53,7 +53,8 @@ export class SignupPage implements OnInit {
     companyName: '', organizationName: '', financialYearStartMonth: 4,
     baseCurrency: undefined as string | undefined,
     gstin: '', pan: '', tan: '', tin: '', cin: '', udyamNumber: '',
-    countryId: 1, stateId: undefined as number | undefined, city: '', postalCode: '',
+    countryId: 1, stateId: undefined as number | undefined,
+    addressLine1: '', addressLine2: '', city: '', postalCode: '',
   };
 
   ngOnInit(): void {

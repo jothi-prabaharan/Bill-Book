@@ -50,4 +50,5 @@ public class Invoice : DocumentHeaderBase
 
     /// <summary>What was given back. Kept because a till reconciles against it at close.</summary>
     public decimal? ChangeAmount { get; set; }
+    public List<InvoiceDetail> Lines { get; set; } = [];
 }

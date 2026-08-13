@@ -212,5 +212,76 @@ public sealed class InternalStockController : ControllerBase
     }
 
     /// <summary><c>mst.TransactionTypes</c> OPB.</summary>
+    [HttpPost("issue")]
+    public async Task<IActionResult> Issue(
+        [FromBody] IssueStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required."
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new IssueStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            if (line.ReleaseReservation)
+            {
+                // Release the reserved quantity before issuing
+                await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
+            }
+
+            var recordResult = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Inventory.Entity.Enums.StockMovementType.Issue),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId
+                },
+                ct);
+
+            bool ok = recordResult.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+
+            decimal unitCost = recordResult.Position?.WeightedAverageCost ?? 0m;
+            decimal lineValue = ok ? line.Quantity * unitCost : 0m;
+
+            response.Lines.Add(new IssueStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = recordResult.Outcome.ToString(),
+                UnitCost = unitCost,
+                LineValue = lineValue
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
     private const string OpeningBalanceCode = "OPB";
 }
