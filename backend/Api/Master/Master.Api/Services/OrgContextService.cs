@@ -24,6 +24,8 @@ public sealed class OrgContextService
             join c in _db.Customers on o.CustomerId equals c.CustomerId
             join d in _db.CustomerDatabases on c.CustomerId equals d.CustomerId
             join l in _db.Licenses on c.CustomerId equals l.CustomerId
+            join s in _db.States on o.StateId equals s.StateId into sGroup
+            from s in sGroup.DefaultIfEmpty()
             where o.OrgId == orgId
             select new
             {
@@ -32,6 +34,8 @@ public sealed class OrgContextService
                 OrgName = o.Name,
                 o.FinancialYearStartMonth,
                 o.BaseCurrency,
+                o.DiscountBeforeTax,
+                StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
                 DbStatus = d.Status,
@@ -108,6 +112,8 @@ public sealed class OrgContextService
             MaxUsers = row.MaxUsers,
             FinancialYearStartMonth = row.FinancialYearStartMonth,
             BaseCurrency = row.BaseCurrency,
+            StateCode = row.StateCode,
+            DiscountBeforeTax = row.DiscountBeforeTax,
         };
     }
 }

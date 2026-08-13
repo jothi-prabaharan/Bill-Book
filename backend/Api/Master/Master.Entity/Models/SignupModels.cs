@@ -139,4 +139,15 @@ public class OrgContextResponse
     /// in the master database that no per-customer service can read.
     /// </summary>
     public string BaseCurrency { get; set; } = null!;
+
+    /// <summary>
+    /// The 2-digit state code of the branch. Needed for GST place of supply calculations
+    /// on documents, which happen in per-customer services that cannot read mst.Organizations.
+    /// </summary>
+    public string? StateCode { get; set; }
+
+    /// <summary>
+    /// Whether a discount reduces the taxable value.
+    /// </summary>
+    public bool DiscountBeforeTax { get; set; }
 }

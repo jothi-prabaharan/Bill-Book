@@ -12,4 +12,6 @@ public class QuoteDetail : DocumentLineBase
     public long QuoteDetailId { get; set; }
 
     public long QuoteId { get; set; }
+
+    public List<QuoteDetailTax> Taxes { get; set; } = [];
 }

@@ -76,11 +76,18 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeeder>();
+builder.Services.AddScoped<QuoteService>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
 // HTTP call on every save.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IBranchSettingsProvider, HttpBranchSettingsProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
