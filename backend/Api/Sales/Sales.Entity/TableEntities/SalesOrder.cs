@@ -28,4 +28,6 @@ public class SalesOrder : DocumentHeaderBase
     /// fully delivered are different facts that produce the same sums.
     /// </summary>
     public FulfilmentStatus FulfilmentStatus { get; set; } = FulfilmentStatus.Open;
+
+    public List<SalesOrderDetail> Lines { get; set; } = [];
 }

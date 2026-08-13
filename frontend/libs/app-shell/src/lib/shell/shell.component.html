@@ -1,46 +1,65 @@
 <div class="shell">
+  <!-- Checkbox hack for mobile "More" menu without JS -->
+  <input type="checkbox" id="mobile-more-toggle" class="more-toggle-input">
+
   <nav class="rail" aria-label="Modules">
-    @for (item of nav(); track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
-        <span class="icon">{{ item.icon }}</span>
-        <span class="label">{{ item.label }}</span>
-      </a>
-    }
+    <div class="rail-header">
+      <div class="brand-icon">B</div>
+    </div>
+    <div class="rail-items">
+      @for (item of nav(); track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
+          <span class="icon">{{ item.icon }}</span>
+          <span class="label">{{ item.label }}</span>
+        </a>
+      }
+    </div>
     <div class="spacer"></div>
-    <button type="button" class="rail-btn" title="Sign out" (click)="logout()">⎋</button>
+    <button type="button" class="rail-btn logout-btn" title="Sign out" (click)="logout()">
+      <span class="icon">⎋</span>
+      <span class="label">Sign out</span>
+    </button>
   </nav>
 
   <main class="content">
-    <router-outlet />
+    <div class="content-wrapper">
+      <router-outlet />
+    </div>
   </main>
 
   <nav class="tabs" aria-label="Modules">
     @for (item of nav().slice(0, 4); track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="active">
+      <a [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false">
         <span class="icon">{{ item.icon }}</span>
         <span class="label">{{ item.label }}</span>
       </a>
     }
-    <button type="button" (click)="moreOpen = !moreOpen">
+    <label for="mobile-more-toggle" class="tab-btn more-btn">
       <span class="icon">⋯</span>
       <span class="label">More</span>
-    </button>
+    </label>
   </nav>
 
-  @if (moreOpen) {
-    <!-- Tap-outside-to-close. The keyboard equivalent is Escape, handled on the
-         component host; the sheet's own links and buttons are what a keyboard
-         user reaches. -->
-    <!-- eslint-disable-next-line @angular-eslint/template/click-events-have-key-events, @angular-eslint/template/interactive-supports-focus -->
-    <div class="more-sheet" (click)="moreOpen = false">
-      <div class="sheet-body">
+  <!-- The More Sheet controlled by the checkbox -->
+  <div class="more-sheet">
+    <label for="mobile-more-toggle" class="sheet-overlay"></label>
+    <div class="sheet-body">
+      <div class="sheet-header">
+        <h3>More</h3>
+      </div>
+      <div class="sheet-items">
         @for (item of nav().slice(4); track item.path) {
-          <a [routerLink]="item.path" (click)="moreOpen = false">
-            <span class="icon">{{ item.icon }}</span> {{ item.label }}
+          <a [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false">
+            <span class="icon">{{ item.icon }}</span>
+            <span class="label">{{ item.label }}</span>
           </a>
         }
-        <button type="button" (click)="logout()">⎋ Sign out</button>
+      </div>
+      <div class="sheet-footer">
+        <button type="button" class="logout-sheet-btn" (click)="logout()">
+          <span class="icon">⎋</span> Sign out
+        </button>
       </div>
     </div>
-  }
+  </div>
 </div>

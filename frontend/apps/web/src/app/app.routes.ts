@@ -234,6 +234,10 @@ export const appRoutes: Routes = [
       },
       // Feature modules mount here as they are built:
       // sales, purchase, banking, contacts, inventory, accounting, reports
+      {
+        path: 'sales',
+        loadChildren: () => import('@bill-book/sales-ui').then((m) => m.salesRoutes),
+      },
       { path: '**', component: DashboardPage },
     ],
   },

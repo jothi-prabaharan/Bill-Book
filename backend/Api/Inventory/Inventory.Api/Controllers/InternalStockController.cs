@@ -121,6 +121,96 @@ public sealed class InternalStockController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("reserve")]
+    public async Task<IActionResult> Reserve(
+        [FromBody] ReserveStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReserveStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            var outcome = await stock.ReserveAsync(line.ItemId, line.Quantity, ct);
+            bool ok = outcome == StockOutcome.Ok;
+
+            response.Lines.Add(new ReserveStockLineResult
+            {
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = outcome.ToString()
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    [HttpPost("release")]
+    public async Task<IActionResult> Release(
+        [FromBody] ReleaseStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReleaseStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            var outcome = await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
+            bool ok = outcome == StockOutcome.Ok;
+
+            response.Lines.Add(new ReleaseStockLineResult
+            {
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = outcome.ToString()
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
     /// <summary><c>mst.TransactionTypes</c> OPB.</summary>
     private const string OpeningBalanceCode = "OPB";
 }

@@ -26,6 +26,21 @@ export class SignupPage implements OnInit {
   protected readonly provisioning = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  protected readonly currentTab = signal<number>(0);
+  protected readonly tabs = ['Personal', 'Company', 'Location', 'Statutory'];
+
+  nextTab(): void {
+    if (this.currentTab() < this.tabs.length - 1) {
+      this.currentTab.update(v => v + 1);
+    }
+  }
+
+  prevTab(): void {
+    if (this.currentTab() > 0) {
+      this.currentTab.update(v => v - 1);
+    }
+  }
+
   protected readonly months = [
     { value: 1, name: 'January' }, { value: 2, name: 'February' }, { value: 3, name: 'March' },
     { value: 4, name: 'April' }, { value: 5, name: 'May' }, { value: 6, name: 'June' },

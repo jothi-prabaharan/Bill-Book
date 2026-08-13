@@ -286,8 +286,9 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
   **The controller needs `[PermissionAction]`** on void, approve and print — `sales.void` and `sales.approve` have been seeded and granted since the beginning and nothing has ever read one (T0.4).
 
   **One thing found and deliberately not fixed.** `Master:BaseUrl` is `http://localhost:5002` in Accounting's, Inventory's and Sales' `appsettings.Development.json`, but Master listens on **5003** — both `.vscode/launch.json` and the gateway's `master` cluster say so. 5002 was Platform's port before the merge folded it into Master. Every service-to-service call to Master in development — tenant directory, base currency, financial year, and now contact names — gets connection-refused. It is one line in each of three files, but it is not the quote's to decide, so it is recorded here rather than changed.
-- [ ] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
-  *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
+- [x] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
+    *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
+    **Done.** Built `SalesOrderService` calling `IInventoryClient.ReserveAsync`/`ReleaseAsync`, scaffolded `sales-order-form` and `sales-order-list`, and successfully integrated routing into the Angular web app.
 
 ### T3 — invoice
 

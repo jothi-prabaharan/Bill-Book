@@ -1,78 +1,103 @@
-<div class="auth-card wide">
-  <h1>Start your 14-day free trial</h1>
+<div class="auth-layout">
+  <div class="auth-card wide">
+    <h1>Start your 14-day free trial</h1>
 
-  @if (provisioning()) {
-    <div class="provisioning">
-      <p>Setting up your account…</p>
-      <p class="hint">We are creating your database and books. This takes a moment.</p>
-    </div>
-  } @else {
-    <form #signupForm="ngForm" (ngSubmit)="submit(signupForm)">
-      <div class="columns">
-        <div class="column">
-          <fieldset>
-            <legend>You</legend>
-            <label>Name <input name="displayName" [(ngModel)]="m.displayName" required /></label>
-            <label>Email <input name="email" type="email" [(ngModel)]="m.email" required /></label>
-            <label>Mobile <input name="mobileNumber" [(ngModel)]="m.mobileNumber" /></label>
-            <label>Password <input name="password" type="password" minlength="8" [(ngModel)]="m.password" required /></label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Company</legend>
-            <label>Company name <input name="companyName" [(ngModel)]="m.companyName" required /></label>
-            <label>Organization name <input name="organizationName" [(ngModel)]="m.organizationName" required /></label>
-            <label>
-              Financial year starts
-              <select name="fyStart" [(ngModel)]="m.financialYearStartMonth">
-                @for (month of months; track month.value) {
-                  <option [ngValue]="month.value">{{ month.name }}</option>
-                }
-              </select>
-            </label>
-          </fieldset>
-        </div>
-        <div class="column">
-          <fieldset>
-            <legend>Location</legend>
-            <label>
-              Country
-              <select name="countryId" [(ngModel)]="m.countryId" (ngModelChange)="loadStates($event)" required>
-                @for (c of countries(); track c.countryId) {
-                  <option [ngValue]="c.countryId">{{ c.countryName }}</option>
-                }
-              </select>
-            </label>
-            <label>
-              State
-              <select name="stateId" [(ngModel)]="m.stateId">
-                <option [ngValue]="undefined">—</option>
-                @for (s of states(); track s.stateId) {
-                  <option [ngValue]="s.stateId">{{ s.stateName }}</option>
-                }
-              </select>
-            </label>
-            <label>City <input name="city" [(ngModel)]="m.city" /></label>
-          </fieldset>
-
-          <fieldset>
-            <legend>Statutory (optional)</legend>
-            <label>GSTIN <input name="gstin" maxlength="15" [(ngModel)]="m.gstin" /></label>
-            <label>PAN <input name="pan" maxlength="10" [(ngModel)]="m.pan" /></label>
-            <label>TAN <input name="tan" maxlength="10" [(ngModel)]="m.tan" /></label>
-            <label>TIN <input name="tin" maxlength="15" [(ngModel)]="m.tin" /></label>
-            <label>CIN <input name="cin" maxlength="21" [(ngModel)]="m.cin" /></label>
-            <label>Udyam <input name="udyamNumber" maxlength="20" [(ngModel)]="m.udyamNumber" /></label>
-          </fieldset>
-        </div>
+    @if (provisioning()) {
+      <div class="provisioning">
+        <p>Setting up your account…</p>
+        <p class="hint">We are creating your database and books. This takes a moment.</p>
+      </div>
+    } @else {
+      <div class="auth-tabs">
+        @for (tab of tabs; track tab; let i = $index) {
+          <button type="button" class="tab-btn" [class.active]="currentTab() === i" (click)="currentTab.set(i)">
+            {{ tab }}
+          </button>
+        }
       </div>
 
-      @if (error()) {
-        <p class="error">{{ error() }}</p>
-      }
+      <form #signupForm="ngForm" (ngSubmit)="submit(signupForm)">
+        <div class="tab-content">
+          @if (currentTab() === 0) {
+            <fieldset>
+              <legend>You</legend>
+              <label>Name <input name="displayName" [(ngModel)]="m.displayName" required /></label>
+              <label>Email <input name="email" type="email" [(ngModel)]="m.email" required /></label>
+              <label>Mobile <input name="mobileNumber" [(ngModel)]="m.mobileNumber" /></label>
+              <label>Password <input name="password" type="password" minlength="8" [(ngModel)]="m.password" required /></label>
+            </fieldset>
+          }
 
-      <button type="submit" [disabled]="busy()">Create my account</button>
-    </form>
-    <p>Already have an account? <a routerLink="/login">Sign in</a></p>
-  }
+          @if (currentTab() === 1) {
+            <fieldset>
+              <legend>Company</legend>
+              <label>Company name <input name="companyName" [(ngModel)]="m.companyName" required /></label>
+              <label>Organization name <input name="organizationName" [(ngModel)]="m.organizationName" required /></label>
+              <label>
+                Financial year starts
+                <select name="fyStart" [(ngModel)]="m.financialYearStartMonth">
+                  @for (month of months; track month.value) {
+                    <option [ngValue]="month.value">{{ month.name }}</option>
+                  }
+                </select>
+              </label>
+            </fieldset>
+          }
+
+          @if (currentTab() === 2) {
+            <fieldset>
+              <legend>Location</legend>
+              <label>
+                Country
+                <select name="countryId" [(ngModel)]="m.countryId" (ngModelChange)="loadStates($event)" required>
+                  @for (c of countries(); track c.countryId) {
+                    <option [ngValue]="c.countryId">{{ c.countryName }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                State
+                <select name="stateId" [(ngModel)]="m.stateId">
+                  <option [ngValue]="undefined">—</option>
+                  @for (s of states(); track s.stateId) {
+                    <option [ngValue]="s.stateId">{{ s.stateName }}</option>
+                  }
+                </select>
+              </label>
+              <label>City <input name="city" [(ngModel)]="m.city" /></label>
+            </fieldset>
+          }
+
+          @if (currentTab() === 3) {
+            <fieldset>
+              <legend>Statutory (optional)</legend>
+              <label>GSTIN <input name="gstin" maxlength="15" [(ngModel)]="m.gstin" /></label>
+              <label>PAN <input name="pan" maxlength="10" [(ngModel)]="m.pan" /></label>
+              <label>TAN <input name="tan" maxlength="10" [(ngModel)]="m.tan" /></label>
+              <label>TIN <input name="tin" maxlength="15" [(ngModel)]="m.tin" /></label>
+              <label>CIN <input name="cin" maxlength="21" [(ngModel)]="m.cin" /></label>
+              <label>Udyam <input name="udyamNumber" maxlength="20" [(ngModel)]="m.udyamNumber" /></label>
+            </fieldset>
+          }
+        </div>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+
+        <div class="actions tab-actions">
+          @if (currentTab() > 0) {
+            <button type="button" class="secondary-btn" (click)="prevTab()">Back</button>
+          }
+          <div class="spacer"></div>
+          @if (currentTab() < tabs.length - 1) {
+            <button type="button" class="primary-btn" (click)="nextTab()">Next</button>
+          } @else {
+            <button type="submit" class="primary-btn" [disabled]="busy()">Create my account</button>
+          }
+        </div>
+      </form>
+      <p class="footer-link">Already have an account? <a routerLink="/login">Sign in</a></p>
+    }
+  </div>
 </div>
