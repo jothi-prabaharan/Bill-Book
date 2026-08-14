@@ -31,6 +31,21 @@ public enum SystemAccount
     /// negative asset is what auditors query.
     /// </summary>
     BankOverdraftAndCards = 13,
+
+    /// <summary>
+    /// Goods received but not yet billed — a Liability, and a clearing account
+    /// rather than a resting place.
+    ///
+    /// The goods receipt opens the obligation (<c>Dr Inventory / Cr GRNI</c>) and
+    /// the bill closes it (<c>Dr GRNI / Cr Accounts Payable</c>). A balance
+    /// sitting here is stock on the shelf that no vendor has invoiced yet, which
+    /// is a figure a controller actually wants — and the alternative, posting
+    /// nothing at the receipt, understates the inventory asset for as long as the
+    /// bill takes to arrive.
+    ///
+    /// Decision T4.1, in <c>docs/modules/Purchase.md</c> §8.
+    /// </summary>
+    GoodsReceivedNotInvoiced = 14,
 }
 
 /// <summary>
@@ -55,6 +70,7 @@ public static class SystemAccountNames
         SystemAccount.CashInHand => "Cash in Hand",
         SystemAccount.BankAccounts => "Bank Accounts",
         SystemAccount.BankOverdraftAndCards => "Bank OD & Credit Cards",
+        SystemAccount.GoodsReceivedNotInvoiced => "Goods Received Not Invoiced",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

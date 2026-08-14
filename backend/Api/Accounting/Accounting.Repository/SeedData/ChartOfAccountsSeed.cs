@@ -27,6 +27,13 @@ public static class ChartOfAccountsSeed
         Account(orgId, "1200", SystemAccount.Inventory, Asset),
         Account(orgId, "1300", SystemAccount.InputGst, Asset),
         Account(orgId, "2100", SystemAccount.AccountsPayable, Liability),
+
+        // Goods received and not yet billed. Off the manual-journal picker for
+        // the same reason AR and AP are: it is cleared by the bill that matches
+        // the receipt, and a hand posting would leave a residue that no document
+        // can ever clear. Decision T4.1 — docs/modules/Purchase.md §8.
+        Account(orgId, "2150", SystemAccount.GoodsReceivedNotInvoiced, Liability),
+
         Account(orgId, "2200", SystemAccount.OutputGst, Liability),
         Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),

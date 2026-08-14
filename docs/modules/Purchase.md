@@ -6,7 +6,9 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: designed, nothing built.** `backend/Api/Purchase/` has project files and no entities. Stock receipt, cost layers, batch and serial capture and backdated recosting are **built and have never been called by a document** — so every receipt today lands as an opening balance.
+**Status: schema built and verified; no API, no pages.** T4.2 is done — the twelve `pur` tables, the migration and its RLS policies exist and were checked against a real PostgreSQL 16. T4.1 is answered. Everything from T4.3 on is still designed and uncoded.
+
+Stock receipt, cost layers, batch and serial capture and backdated recosting remain **built and never called by a document** — so every receipt today still lands as an opening balance. The schema landing does not change that; T4.4 does.
 
 ---
 
@@ -156,7 +158,7 @@ Everything in [`SALES.md` §8](./SALES.md) applies here too — the base classes
 
 ## 8. Open — answer before the stage that needs them
 
-- **Goods received not invoiced.** *Recommendation: seed a GRNI control account (Liability) and post as §6 shows.* The alternative — posting nothing at receipt — leaves the inventory asset understated for as long as the bill takes to arrive, while the stock sits on the shelf. Adds one account to the chart-of-accounts seed, which has been idempotent per account since master 1.4, so existing branches pick it up by re-running the seed.
+- ~~**Goods received not invoiced.**~~ **Settled — T4.1 answered yes.** `acc.Accounts` code **2150**, `GoodsReceivedNotInvoiced`, a Liability, seeded off the manual-journal picker for the same reason AR and AP are: it is cleared by the bill that matches the receipt, and a hand posting leaves a residue no document can clear. Postings are as §6 shows. The seed is idempotent per account, which was checked rather than assumed — `AccountService` filters the seed by both `AccountSystemName` and `AccountCode` against what the branch already has — so existing branches pick it up by re-running it. Nothing posts to it yet; T4.4 is what makes it move.
 - **Landed cost apportionment.** `LandedCostAmount` on the bill and `ApportionedLandedCost` on the line hold it; whether it is spread by value, weight or quantity is not decided.
 - **Purchase price variance.** A receipt opens a cost layer at the order's price; the bill may disagree, after sales have already drawn on that layer. Either **revalue the layer** and let the recosting engine restate those sales, or **post the difference to a variance account** and accept a slightly untrue margin. The recosting machinery already existing tilts this toward revaluation — the expensive half is built.
 - **`pur.PurchaseRegister`** — the counterpart to `sal.SalesRegister`, same grain, for ITC claims and GSTR-2B reconciliation against what the vendor filed. Not designed.
@@ -173,9 +175,18 @@ Numbering follows `TRANSACTIONS.md`.
 
 ### T4 — order, receipt, bill
 
-- [ ] **T4.1 — Decide goods-received-not-invoiced** *(owner decision — blocks T4.4 and T4.5)*
-- [ ] **T4.2 — `pur.*` schema, entities and migration.** Twelve tables on T2.2's three base classes, with `OrgId` on every one, query filters, RLS and the document series.
+- [x] **T4.1 — Decide goods-received-not-invoiced.** Answered **yes**; see §8. Account 2150 is in the chart-of-accounts seed. No longer blocks T4.4 or T4.5.
+- [x] **T4.2 — `pur.*` schema, entities and migration.** Twelve tables on T2.2's three base classes, with `OrgId` on every one, query filters, RLS and the document series.
   *Done when*: `migrations add` produces an empty migration, RLS policies are in the database, and a second bill carrying a vendor number already used that year is refused.
+
+  **All three checked against PostgreSQL 16, not asserted.** The second `migrations add` came back empty; all twelve tables report `rowsecurity = t` with one policy each; and a duplicate `(vendor, number, year)` is refused by `IX_Bills_VendorBillNo` while the same number in the next financial year is accepted. The RLS policy was exercised as a non-owner role, since RLS does not apply to the table owner — unset org sees 0 rows, the owning org sees its own, another org sees 0.
+
+  Four things worth carrying forward:
+
+  - **The Fluent configuration is shared, not copied.** `Shared.Kernel.Documents.DocumentModelConfiguration` holds the three header/line/tax helpers that were private to `SalesDbContext`; both contexts now call them, so all twenty-seven document tables get their precision, indexes and constraints from one place. Verified schema-neutral for Sales: a probe migration after the refactor came back empty and the `sal` snapshot is unchanged. "Purchase follows the same schema as sales" is now generated rather than asserted.
+  - **`Bills.VendorBillFinancialYear` is a stored computed column**, because the unique index needs a year and a vendor legitimately reuses a number after April. Postgres derives it from `VendorBillDate`; C# never writes it. **April is hardcoded** where `Numbering:FinancialYearStartMonth` is configurable — the column exists for input tax credit and the GST year is statutorily April–March, so a branch keeping its books on a different year does not get a different GST year. The March-2027-is-still-FY-2026 boundary is covered.
+  - **Parent-child relationships name their navigation.** `HasOne<X>().WithMany(h => h.Lines)`, not `WithMany()`. The empty form declares a *second* relationship beside the collection navigation and EF invents a shadow FK for it — see §11.
+  - **`base.OnModelCreating` is called last**, as Inventory and Accounting do. Without it `TenantDbContext` never runs: no OrgId query filter, no OrgId index, and `Version` mapped as a plain `bigint` rather than the `xmin` system column. See §11.
 - [ ] **T4.3 — Purchase order: API and page.** No posting, **no reservation** — ordering stock does not reserve anything, it is not there yet.
 - [ ] **T4.4 — Goods receipt: API and page.** Receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input and belong in the answer to the caller rather than in a background failure.
   *Done when*: a receipt against an order opens a cost layer at the received cost, a partial receipt leaves the order partly open, and only the accepted quantity becomes stock.
@@ -211,3 +222,21 @@ Nothing integrates it yet, because there are no purchase pages. T4.3, T4.4, T4.5
 Not repeated per task. Full list in `TRANSACTIONS.md`.
 
 Documentation in the same commit · `OrgId` + query filter + RLS on every table including details · `[Authorize]` and `RequireModulePermission` on every endpoint · postings idempotent on their document key · `ExchangeRate` a snapshot · `dotnet build && dotnet test` and `npm run check` green before a box is ticked · every page working at ~360px.
+
+---
+
+## 11. Three defects in `sal` that building `pur` found — **not fixed, and they should be**
+
+Building this schema against the sales one surfaced three problems in `sal`. None is Purchase's to fix, none is fixed here, and all three are live on `main`. They are written down because the next person to copy `SalesDbContext` inherits all three.
+
+**1. `sal` has no row-level security at all.** `Migrations/README-RowLevelSecurity.md` carries the block to paste and it was never pasted: `grep -c "ROW LEVEL SECURITY"` over `20260814075501_AddSalesRegister.cs` returns 0. Every sales document table is unprotected at the database level.
+
+**2. `SalesDbContext` never calls `base.OnModelCreating`.** Inventory and Accounting both end their `OnModelCreating` with it; Sales does not, so `TenantDbContext` never runs over the `sal` model. The consequences: **no global `OrgId` query filter on any sales table**, no `OrgId` index, and `Version` mapped as an ordinary `bigint` instead of the `xmin` system column, so optimistic concurrency silently does nothing.
+
+Taken together, 1 and 2 mean **`sal` currently has neither of the two isolation layers a per-customer schema is supposed to have.** CLAUDE.md calls a missing query filter "the highest-consequence mistake available here", and both defences are absent at once. The fix is one line in the context plus a migration carrying the RLS block; the migration is small, the verification is the `pg_policies` query in §T4.2.
+
+**3. Ten shadow foreign-key columns.** `HasOne<Quote>().WithMany()` with no navigation argument declares a relationship *separate* from the `Lines` collection, so EF adds a second FK column for the navigation. `sal` therefore carries `QuoteId1`, `SalesOrderId1`, `DeliveryChallanId1`, `InvoiceId1`, `CreditNoteId1` and their five detail-tax equivalents — nullable, unindexed, and written instead of the intended column when a header is saved with its `Lines` populated. `pur` avoids it by naming the navigation.
+
+`pur` is clean on all three: RLS verified in the database, `base.OnModelCreating` called last, and the migration contains no `*Id1` column.
+
+---

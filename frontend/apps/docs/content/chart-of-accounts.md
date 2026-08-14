@@ -44,9 +44,13 @@ The account's **currency** is frozen with the rest of the configuration. Changin
 
 ## Seeded accounts
 
-Ten written when an organization is created, all `IsSystemDefault`, so locked from birth:
+Eleven written when an organization is created, all `IsSystemDefault`, so locked from birth:
 
-Accounts Receivable · Inventory · Input GST · Accounts Payable · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+Accounts Receivable · Inventory · Input GST · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+
+**Goods Received Not Invoiced** is a clearing account, not a resting place. When goods arrive before the vendor's bill does, the receipt debits Inventory and credits this; the bill then clears it and credits Accounts Payable. What is left sitting in it is stock on the shelf that nobody has invoiced yet — which is a figure worth looking at, and the reason the alternative was rejected: posting nothing until the bill arrives understates the inventory asset for however long the paperwork takes. It is off the manual-journal picker for the same reason Accounts Receivable and Accounts Payable are — a hand posting to it leaves a residue that no document can ever clear.
+
+A branch created before this account existed picks it up the next time its chart of accounts is seeded; the seed adds only what is missing and leaves everything else alone.
 
 There is deliberately **no separate account for advances**. Money that moved before a document existed — a deposit paid to a supplier, a customer's advance, the excess when a payment is rounded up — sits as a *sub-account* beneath Accounts Receivable or Accounts Payable, so a party's whole position lives under two control accounts rather than four. See below.
 
