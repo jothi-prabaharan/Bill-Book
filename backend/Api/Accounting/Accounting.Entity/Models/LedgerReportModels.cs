@@ -199,3 +199,27 @@ public class SubLedgerTieRow
 
     public bool IsTied { get; set; }
 }
+
+/// <summary>
+/// An outstanding balance for a specific document.
+/// </summary>
+public class OutstandingBalanceView
+{
+    public long ContactId { get; set; }
+    
+    public string TransactionTypeCode { get; set; } = null!;
+    
+    public long TransactionId { get; set; }
+    
+    public string DocumentNo { get; set; } = null!;
+    
+    public DateOnly DocumentDate { get; set; }
+    
+    public DateOnly? DueDate { get; set; }
+    
+    public decimal TotalAmount { get; set; }
+    
+    public decimal PaidAmount { get; set; }
+    
+    public decimal OutstandingAmount { get; set; }
+}

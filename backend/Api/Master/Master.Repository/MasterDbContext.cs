@@ -371,6 +371,7 @@ public class MasterDbContext : DbContext
             ("POR", "Purchase Order", false),
             ("GRN", "Goods Receipt", true),
             ("SOR", "Sales Order", false),
+            ("DLC", "Delivery Challan", true),
             ("INV", "Invoice", true),
             ("CRN", "Credit Note", true),
             ("DBN", "Debit Note", true),

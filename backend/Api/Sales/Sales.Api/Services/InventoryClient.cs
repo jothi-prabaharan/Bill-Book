@@ -8,6 +8,7 @@ public interface IInventoryClient
     Task<ReserveStockResponse> ReserveAsync(ReserveStockRequest request, CancellationToken ct);
     Task<IssueStockResponse> IssueAsync(IssueStockRequest request, CancellationToken ct);
     Task<ReleaseStockResponse> ReleaseAsync(ReleaseStockRequest request, CancellationToken ct);
+    Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct);
 }
 
 public sealed class InventoryClient : IInventoryClient
@@ -46,6 +47,7 @@ public sealed class InventoryClient : IInventoryClient
         response.EnsureSuccessStatusCode();
         return new IssueStockResponse { Success = false };
     }
+
     public async Task<ReleaseStockResponse> ReleaseAsync(ReleaseStockRequest request, CancellationToken ct)
     {
         var response = await _http.PostAsJsonAsync("internal/stock/release", request, ct);
@@ -57,6 +59,19 @@ public sealed class InventoryClient : IInventoryClient
         
         response.EnsureSuccessStatusCode();
         return new ReleaseStockResponse { Success = false };
+    }
+
+    public async Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct)
+    {
+        var response = await _http.PostAsJsonAsync("internal/stock/receive", request, ct);
+        if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Conflict)
+        {
+            var result = await response.Content.ReadFromJsonAsync<ReceiveStockResponse>(cancellationToken: ct);
+            return result ?? new ReceiveStockResponse { Success = false };
+        }
+        
+        response.EnsureSuccessStatusCode();
+        return new ReceiveStockResponse { Success = false };
     }
 }
 
@@ -150,4 +165,40 @@ public sealed record IssueStockLineResult
     public string Outcome { get; init; } = string.Empty;
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
+}
+
+public sealed record ReceiveStockRequest
+{
+    public Guid OrgId { get; init; }
+    public Guid CustomerId { get; init; }
+    public DateOnly MovementDate { get; init; }
+    public string SourceType { get; init; } = null!;
+    public long SourceId { get; init; }
+    public long? ReturnsStockMovementId { get; init; }
+    public List<ReceiveStockLine> Lines { get; init; } = [];
+}
+
+public sealed record ReceiveStockLine
+{
+    public long SourceLineId { get; init; }
+    public long ItemId { get; init; }
+    public decimal Quantity { get; init; }
+    public long? WarehouseId { get; init; }
+    public decimal UnitCost { get; init; }
+}
+
+public sealed record ReceiveStockResponse
+{
+    public bool Success { get; set; }
+    public decimal TotalValue { get; set; }
+    public List<ReceiveStockLineResult> Lines { get; set; } = [];
+}
+
+public sealed record ReceiveStockLineResult
+{
+    public long SourceLineId { get; init; }
+    public long ItemId { get; init; }
+    public decimal Quantity { get; init; }
+    public bool Success { get; init; }
+    public string Outcome { get; init; } = string.Empty;
 }

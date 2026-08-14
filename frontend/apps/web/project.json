@@ -14,6 +14,9 @@
         "browser": "apps/web/src/main.ts",
         "tsConfig": "apps/web/tsconfig.json",
         "polyfills": ["zone.js"],
+        "assets": [
+          { "glob": "**/*", "input": "apps/web/src/assets", "output": "assets" }
+        ],
         "styles": ["apps/web/src/styles.scss"]
       },
       "configurations": {

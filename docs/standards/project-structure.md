@@ -4,7 +4,7 @@ This is a multi-tenant retail ERP and accounting system.
 
 ## Root Directories
 - `backend/`: The .NET 10 solution containing the API and various bounded context modules.
-- `frontend/`: The client application (Angular + Nx monorepo style).
+- `frontend/`: The client application (Angular v20/Nx monorepo style).
 - `docs/`: Unified documentation containing architecture flows, module schemas, and project standards.
 - `scripts/`: Powershell and SQL scripts for local developer setup (e.g., setting up the dev database and seeding it).
 

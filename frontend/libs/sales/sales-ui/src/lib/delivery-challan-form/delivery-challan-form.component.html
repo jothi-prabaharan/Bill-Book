@@ -1,0 +1,62 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>{{ isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan' }}</h1>
+    <button class="primary" (click)="save()">Save</button>
+  </header>
+
+  <form [formGroup]="form" class="form-grid">
+    <div class="field">
+      <label for="docDate">Document Date</label>
+      <input id="docDate" type="date" class="input" formControlName="documentDate" />
+    </div>
+    <div class="field">
+      <label for="contactId">Contact (ID)</label>
+      <input id="contactId" type="number" class="input" formControlName="contactId" />
+    </div>
+    <div class="field">
+      <label for="challanType">Challan Type</label>
+      <select id="challanType" formControlName="challanType">
+        <option [value]="0">Sale</option>
+        <option [value]="1">Job Work</option>
+        <option [value]="2">Transfer</option>
+      </select>
+    </div>
+    <div class="field">
+      <label for="dispatchDate">Dispatch Date</label>
+      <input id="dispatchDate" formControlName="dispatchDate" />
+    </div>
+    <div class="field">
+      <label for="vehicleNo">Vehicle No.</label>
+      <input id="vehicleNo" formControlName="vehicleNo" />
+    </div>
+    <div class="field">
+      <label for="currencyCode">Currency</label>
+      <input id="currencyCode" formControlName="currencyCode" maxlength="3" />
+    </div>
+    <div class="field">
+      <label for="exchangeRate">Exchange Rate</label>
+      <input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
+    </div>
+    <div class="field">
+      <label for="billingAddress">Billing Address</label>
+      <textarea id="billingAddress" formControlName="billingAddress" rows="2"></textarea>
+    </div>
+    <div class="field">
+      <label for="shippingAddress">Shipping Address</label>
+      <textarea id="shippingAddress" formControlName="shippingAddress" rows="2"></textarea>
+    </div>
+    <div class="field full-width">
+      <label for="notes">Notes</label>
+      <textarea id="notes" formControlName="notes" rows="2"></textarea>
+    </div>
+  </form>
+
+  <div class="line-grid-container">
+    <bb-document-line-grid
+      [lines]="lines"
+      [context]="context"
+      (linesChange)="onLinesChange($event)"
+      (pickItem)="onPickItem($event)"
+    ></bb-document-line-grid>
+  </div>
+</div>

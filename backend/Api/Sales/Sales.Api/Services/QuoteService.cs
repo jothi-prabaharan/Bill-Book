@@ -61,11 +61,6 @@ public sealed class QuoteService
             return new QuoteResult(QuoteOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
         }
 
-        if (request.ValidUntil < request.DocumentDate)
-        {
-            return new QuoteResult(QuoteOutcome.ValidityInvalid, Detail: "Validity date cannot be before the document date.");
-        }
-
         PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
             settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
 
@@ -78,7 +73,7 @@ public sealed class QuoteService
 
         NumberAllocation alloc = await _numbering.NextAsync("QTE", request.DocumentDate, ct);
 
-        Quote quote = new()
+        Quote Quote = new()
         {
             TransactionTypeCode = "QTE",
             DocumentNo = alloc.Code,
@@ -88,7 +83,7 @@ public sealed class QuoteService
             ContactGstin = request.ContactGstin,
             BillingAddress = request.BillingAddress,
             ShippingAddress = request.ShippingAddress,
-            PlaceOfSupplyStateId = 0, // Master data missing PlaceOfSupplyStateId lookup for now; using 0 since it's unenforced
+            PlaceOfSupplyStateId = 0,
             IsInterState = pos.IsInterState,
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
@@ -173,62 +168,57 @@ public sealed class QuoteService
                     Rate = comp.Rate,
                     TaxableAmount = comp.TaxableAmount,
                     Amount = comp.Amount,
-                    AmountBase = comp.Amount * quote.ExchangeRate,
+                    AmountBase = comp.Amount * Quote.ExchangeRate,
                 });
             }
 
-            quote.Lines.Add(detail);
+            Quote.Lines.Add(detail);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
 
-        quote.SubTotal = totals.SubTotal;
-        quote.DiscountAmount = totals.DiscountAmount;
-        quote.TaxableAmount = totals.TaxableAmount;
-        quote.CgstAmount = totals.CgstAmount;
-        quote.SgstAmount = totals.SgstAmount;
-        quote.IgstAmount = totals.IgstAmount;
-        quote.CessAmount = totals.CessAmount;
-        quote.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
-        quote.TotalAmount = totals.TotalAmount + quote.RoundOffAmount;
-        quote.TotalAmountBase = quote.TotalAmount * quote.ExchangeRate;
+        Quote.SubTotal = totals.SubTotal;
+        Quote.DiscountAmount = totals.DiscountAmount;
+        Quote.TaxableAmount = totals.TaxableAmount;
+        Quote.CgstAmount = totals.CgstAmount;
+        Quote.SgstAmount = totals.SgstAmount;
+        Quote.IgstAmount = totals.IgstAmount;
+        Quote.CessAmount = totals.CessAmount;
+        Quote.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        Quote.TotalAmount = totals.TotalAmount + Quote.RoundOffAmount;
+        Quote.TotalAmountBase = Quote.TotalAmount * Quote.ExchangeRate;
 
-        quote.Status = DocumentStatus.Draft;
-        quote.PostedAt = _clock.GetUtcNow();
-        quote.PostedBy = _user.UserId;
+        Quote.Status = DocumentStatus.Draft;
+        Quote.PostedAt = _clock.GetUtcNow();
+        Quote.PostedBy = _user.UserId;
         
-        _db.Quotes.Add(quote);
+        _db.Quotes.Add(Quote);
         await _db.SaveChangesAsync(ct);
 
-        return new QuoteResult(QuoteOutcome.Ok, quote.QuoteId);
+        return new QuoteResult(QuoteOutcome.Ok, Quote.QuoteId);
     }
 
-    public async Task<QuoteResult> UpdateAsync(long quoteId, SaveQuoteRequest request, CancellationToken ct)
+    public async Task<QuoteResult> UpdateAsync(long QuoteId, SaveQuoteRequest request, CancellationToken ct)
     {
-        Quote? quote = await _db.Quotes
+        Quote? Quote = await _db.Quotes
             .Include(q => q.Lines)
             .ThenInclude(l => l.Taxes)
-            .FirstOrDefaultAsync(q => q.QuoteId == quoteId, ct);
+            .FirstOrDefaultAsync(q => q.QuoteId == QuoteId, ct);
 
-        if (quote is null)
+        if (Quote is null)
         {
             return new QuoteResult(QuoteOutcome.NotFound);
         }
 
-        if (quote.Status != DocumentStatus.Draft)
+        if (Quote.Status != DocumentStatus.Draft)
         {
-            return new QuoteResult(QuoteOutcome.LifecycleRefused, Detail: "Only draft quotes can be updated.");
+            return new QuoteResult(QuoteOutcome.LifecycleRefused, Detail: "Only draft Quotes can be updated.");
         }
 
         BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
         if (settings is null)
         {
             return new QuoteResult(QuoteOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
-        }
-
-        if (request.ValidUntil < request.DocumentDate)
-        {
-            return new QuoteResult(QuoteOutcome.ValidityInvalid, Detail: "Validity date cannot be before the document date.");
         }
 
         PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
@@ -241,28 +231,28 @@ public sealed class QuoteService
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
 
-        quote.DocumentDate = request.DocumentDate;
-        quote.ValidUntil = request.ValidUntil;
-        quote.ContactId = request.ContactId;
-        quote.ContactGstin = request.ContactGstin;
-        quote.BillingAddress = request.BillingAddress;
-        quote.ShippingAddress = request.ShippingAddress;
-        quote.IsInterState = pos.IsInterState;
+        Quote.DocumentDate = request.DocumentDate;
+        Quote.ValidUntil = request.ValidUntil;
+        Quote.ContactId = request.ContactId;
+        Quote.ContactGstin = request.ContactGstin;
+        Quote.BillingAddress = request.BillingAddress;
+        Quote.ShippingAddress = request.ShippingAddress;
+        Quote.IsInterState = pos.IsInterState;
         
         if (request.CurrencyCode != null)
         {
-            quote.CurrencyCode = request.CurrencyCode;
+            Quote.CurrencyCode = request.CurrencyCode;
         }
         if (request.ExchangeRate.HasValue)
         {
-            quote.ExchangeRate = request.ExchangeRate.Value;
+            Quote.ExchangeRate = request.ExchangeRate.Value;
         }
 
-        quote.Notes = request.Notes;
-        quote.TermsAndConditions = request.TermsAndConditions;
+        Quote.Notes = request.Notes;
+        Quote.TermsAndConditions = request.TermsAndConditions;
 
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
-        quote.Lines.Clear();
+        Quote.Lines.Clear();
 
         for (int i = 0; i < request.Lines.Count; i++)
         {
@@ -339,64 +329,89 @@ public sealed class QuoteService
                     Rate = comp.Rate,
                     TaxableAmount = comp.TaxableAmount,
                     Amount = comp.Amount,
-                    AmountBase = comp.Amount * quote.ExchangeRate,
+                    AmountBase = comp.Amount * Quote.ExchangeRate,
                 });
             }
 
-            quote.Lines.Add(detail);
+            Quote.Lines.Add(detail);
         }
 
         TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
 
-        quote.SubTotal = totals.SubTotal;
-        quote.DiscountAmount = totals.DiscountAmount;
-        quote.TaxableAmount = totals.TaxableAmount;
-        quote.CgstAmount = totals.CgstAmount;
-        quote.SgstAmount = totals.SgstAmount;
-        quote.IgstAmount = totals.IgstAmount;
-        quote.CessAmount = totals.CessAmount;
-        quote.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
-        quote.TotalAmount = totals.TotalAmount + quote.RoundOffAmount;
-        quote.TotalAmountBase = quote.TotalAmount * quote.ExchangeRate;
+        Quote.SubTotal = totals.SubTotal;
+        Quote.DiscountAmount = totals.DiscountAmount;
+        Quote.TaxableAmount = totals.TaxableAmount;
+        Quote.CgstAmount = totals.CgstAmount;
+        Quote.SgstAmount = totals.SgstAmount;
+        Quote.IgstAmount = totals.IgstAmount;
+        Quote.CessAmount = totals.CessAmount;
+        Quote.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        Quote.TotalAmount = totals.TotalAmount + Quote.RoundOffAmount;
+        Quote.TotalAmountBase = Quote.TotalAmount * Quote.ExchangeRate;
 
         await _db.SaveChangesAsync(ct);
 
-        return new QuoteResult(QuoteOutcome.Ok, quote.QuoteId);
+        return new QuoteResult(QuoteOutcome.Ok, Quote.QuoteId);
     }
 
-    public async Task<QuoteResult> VoidAsync(long quoteId, VoidQuoteRequest request, CancellationToken ct)
+    public async Task<QuoteResult> VoidAsync(long QuoteId, VoidQuoteRequest request, CancellationToken ct)
     {
-        Quote? quote = await _db.Quotes.FindAsync(new object[] { quoteId }, ct);
+        Quote? Quote = await _db.Quotes.FindAsync(new object[] { QuoteId }, ct);
 
-        if (quote is null)
+        if (Quote is null)
         {
             return new QuoteResult(QuoteOutcome.NotFound);
         }
 
-        bool hasDownstream = await _db.SalesOrders.AnyAsync(o => o.QuoteId == quoteId, ct)
-            || await _db.Invoices.AnyAsync(i => i.QuoteId == quoteId, ct);
+        bool hasDownstream = await _db.SalesOrders.AnyAsync(o => o.QuoteId == QuoteId, ct);
 
-        DocumentTransition transition = DocumentLifecycle.CanVoid(quote.Status, hasDownstream, request.Reason);
+        DocumentTransition transition = DocumentLifecycle.CanVoid(Quote.Status, hasDownstream, request.Reason);
         if (!transition.IsAllowed)
         {
             return new QuoteResult(QuoteOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
-        quote.Status = DocumentStatus.Void;
-        quote.VoidedAt = _clock.GetUtcNow();
-        quote.VoidedBy = _user.UserId;
-        quote.VoidReason = request.Reason;
+        Quote.Status = DocumentStatus.Void;
+        Quote.VoidedAt = _clock.GetUtcNow();
+        Quote.VoidedBy = _user.UserId;
+        Quote.VoidReason = request.Reason;
 
         await _db.SaveChangesAsync(ct);
         return new QuoteResult(QuoteOutcome.Ok);
     }
 
-    public async Task<QuoteView?> GetAsync(long quoteId, CancellationToken ct)
+    public async Task<QuoteResult> PostAsync(long QuoteId, CancellationToken ct)
     {
-        var quote = await _db.Quotes
+        Quote? Quote = await _db.Quotes
+            .Include(q => q.Lines)
+            .FirstOrDefaultAsync(q => q.QuoteId == QuoteId, ct);
+
+        if (Quote is null)
+        {
+            return new QuoteResult(QuoteOutcome.NotFound);
+        }
+
+        DocumentTransition transition = DocumentLifecycle.CanPost(Quote.Status, Quote.Lines.Count);
+        if (!transition.IsAllowed)
+        {
+            return new QuoteResult(QuoteOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        Quote.Status = DocumentStatus.Posted;
+        Quote.PostedAt = _clock.GetUtcNow();
+        Quote.PostedBy = _user.UserId;
+
+        await _db.SaveChangesAsync(ct);
+        return new QuoteResult(QuoteOutcome.Ok);
+    }
+
+    public async Task<QuoteView?> GetAsync(long QuoteId, CancellationToken ct)
+    {
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().Date);
+        var Quote = await _db.Quotes
             .Include(q => q.Lines)
             .ThenInclude(l => l.Taxes)
-            .Where(q => q.QuoteId == quoteId)
+            .Where(q => q.QuoteId == QuoteId)
             .Select(q => new QuoteView
             {
                 QuoteId = q.QuoteId,
@@ -410,6 +425,7 @@ public sealed class QuoteService
                 Status = q.Status.ToString(),
                 IsInterState = q.IsInterState,
                 ConvertedToSalesOrderId = _db.SalesOrders.Where(o => o.QuoteId == q.QuoteId).Select(o => (long?)o.SalesOrderId).FirstOrDefault(),
+                HasLapsed = q.Status == DocumentStatus.Posted && q.ValidUntil < today,
                 ContactGstin = q.ContactGstin,
                 PlaceOfSupplyStateId = q.PlaceOfSupplyStateId,
                 BillingAddress = q.BillingAddress,
@@ -469,23 +485,20 @@ public sealed class QuoteService
                 }).ToList()
             }).FirstOrDefaultAsync(ct);
 
-        if (quote is null) return null;
+        if (Quote is null) return null;
 
-        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        quote.HasLapsed = quote.Status == DocumentStatus.Draft.ToString() && quote.ValidUntil < today;
-
-        IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync([quote.ContactId], ct);
-        if (contacts.TryGetValue(quote.ContactId, out NamedRef? contactName))
+        IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync([Quote.ContactId], ct);
+        if (contacts.TryGetValue(Quote.ContactId, out NamedRef? contactName))
         {
-            quote.ContactName = contactName.Name;
-            quote.ContactCode = contactName.Code;
+            Quote.ContactName = contactName.Name;
+            Quote.ContactCode = contactName.Code;
         }
 
-        var itemIds = quote.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToList();
+        var itemIds = Quote.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToList();
         if (itemIds.Count > 0)
         {
             IReadOnlyDictionary<long, NamedRef> items = await _itemNames.ResolveAsync(itemIds, ct);
-            foreach (var line in quote.Lines)
+            foreach (var line in Quote.Lines)
             {
                 if (line.ItemId.HasValue && items.TryGetValue(line.ItemId.Value, out NamedRef? itemName))
                 {
@@ -494,12 +507,13 @@ public sealed class QuoteService
             }
         }
 
-        return quote;
+        return Quote;
     }
 
     public async Task<List<QuoteListItem>> ListAsync(CancellationToken ct)
     {
-        var quotes = await _db.Quotes
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().Date);
+        var Quotes = await _db.Quotes
             .OrderByDescending(q => q.DocumentDate)
             .ThenByDescending(q => q.DocumentNo)
             .Select(q => new QuoteListItem
@@ -515,19 +529,14 @@ public sealed class QuoteService
                 Status = q.Status.ToString(),
                 IsInterState = q.IsInterState,
                 ConvertedToSalesOrderId = _db.SalesOrders.Where(o => o.QuoteId == q.QuoteId).Select(o => (long?)o.SalesOrderId).FirstOrDefault(),
+                HasLapsed = q.Status == DocumentStatus.Posted && q.ValidUntil < today,
             }).ToListAsync(ct);
 
-        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
-        foreach (var q in quotes)
-        {
-            q.HasLapsed = q.Status == DocumentStatus.Draft.ToString() && q.ValidUntil < today;
-        }
-
-        var contactIds = quotes.Select(q => q.ContactId).Distinct().ToList();
+        var contactIds = Quotes.Select(q => q.ContactId).Distinct().ToList();
         if (contactIds.Count > 0)
         {
             IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync(contactIds, ct);
-            foreach (var q in quotes)
+            foreach (var q in Quotes)
             {
                 if (contacts.TryGetValue(q.ContactId, out NamedRef? contactName))
                 {
@@ -537,6 +546,6 @@ public sealed class QuoteService
             }
         }
 
-        return quotes;
+        return Quotes;
     }
 }

@@ -1,65 +1,105 @@
-<div class="shell">
-  <!-- Checkbox hack for mobile "More" menu without JS -->
+﻿<div style="height:100dvh;display:flex;flex-direction:column;background:var(--color-bg);color:var(--color-text);font-family:var(--font-body);overflow:hidden">
+  
   <input type="checkbox" id="mobile-more-toggle" class="more-toggle-input">
 
-  <nav class="rail" aria-label="Modules">
-    <div class="rail-header">
-      <div class="brand-icon">B</div>
-    </div>
-    <div class="rail-items">
+  <div style="flex:1;min-height:0;display:flex">
+    
+    <!-- Desktop Left Nav -->
+    <nav aria-label="Modules" class="desktop-nav" style="width:65px;flex:none;display:flex;flex-direction:column;gap:2px;padding:var(--space-2) 4px;border-right:1px solid var(--color-divider);overflow-y:auto;scrollbar-width:thin">
+      <img src="assets/bill-book-mark.svg" alt="Bill-Book" style="width:26px;height:auto;margin:0 auto var(--space-2)">
+      
       @for (item of nav(); track item.path) {
-        <a [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
-          <span class="icon">{{ item.icon }}</span>
-          <span class="label">{{ item.label }}</span>
+        <a class="rail-item" [routerLink]="item.path" routerLinkActive="active" [title]="item.label">
+          @switch (item.icon) {
+            @case ('home') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> }
+            @case ('sales') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg> }
+            @case ('purchase') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg> }
+            @case ('banking') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v-7"/><path d="M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M3 22h18"/><path d="M6 18v-7"/></svg> }
+            @case ('contacts') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg> }
+            @case ('inventory') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg> }
+            @case ('accounting') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg> }
+            @case ('reports') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v5"/><path d="M16 14v7"/><path d="M20 10v11"/><path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/><path d="M4 18v3"/><path d="M8 14v7"/></svg> }
+            @case ('settings') { <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg> }
+          }
+          {{ item.label }}
         </a>
       }
-    </div>
-    <div class="spacer"></div>
-    <button type="button" class="rail-btn logout-btn" title="Sign out" (click)="logout()">
-      <span class="icon">⎋</span>
-      <span class="label">Sign out</span>
-    </button>
-  </nav>
+      
+      <div style="flex:1"></div>
+      <!-- Placeholder branding/user for desktop -->
+      <a class="rail-item" href="#" title="User Name" style="padding-bottom:var(--space-1)">
+        <span style="width:30px;height:30px;border-radius:50%;border:1px solid var(--color-divider);display:grid;place-items:center;font-family:var(--font-heading);font-size:12px">US</span>
+        Me
+      </a>
+      <div style="height:1px;background:var(--color-divider);margin:var(--space-2) 4px"></div>
+      <button type="button" class="rail-item" style="width:100%;border:0;background:transparent;cursor:pointer" (click)="logout()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+        Sign out
+      </button>
+    </nav>
 
-  <main class="content">
-    <div class="content-wrapper">
-      <router-outlet />
-    </div>
-  </main>
+    <!-- Main Content Area -->
+    <div style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
+      
+      <header style="height:55px;flex:none;display:flex;align-items:center;gap:var(--space-3);padding:0 var(--space-4);border-bottom:1px solid var(--color-divider)">
+        <img class="mobile-header-elements" src="assets/bill-book-mark.svg" alt="" style="width:26px;height:auto;flex:none">
+        
+        <div style="min-width:0">
+          <div style="font-family:var(--font-heading);font-weight:600;font-size:17px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Eternal Pathway</div>
+          <div class="text-muted" style="font-size:11px;letter-spacing:.06em;text-transform:uppercase;font-variant-numeric:tabular-nums">Head Office · FY 2026-27</div>
+        </div>
 
-  <nav class="tabs" aria-label="Modules">
+        <div class="mobile-header-elements" style="margin-left:auto;width:32px;height:32px;flex:none;border-radius:50%;border:1px solid var(--color-divider);display:grid;place-items:center;font-family:var(--font-heading);font-size:12px">PR</div>
+      </header>
+
+      <main style="flex:1;min-height:0;overflow-y:auto;padding:var(--space-4) var(--space-4) var(--space-6)">
+        <router-outlet />
+      </main>
+      
+    </div>
+  </div>
+
+  <!-- Mobile Bottom Nav -->
+  <nav class="mobile-nav" aria-label="Modules" style="display:flex;align-items:stretch;border-top:1px solid var(--color-divider);padding-bottom:env(safe-area-inset-bottom)">
     @for (item of nav().slice(0, 4); track item.path) {
-      <a [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false">
-        <span class="icon">{{ item.icon }}</span>
-        <span class="label">{{ item.label }}</span>
+      <a class="tab-item" [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false">
+        @switch (item.icon) {
+          @case ('home') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg> }
+          @case ('sales') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></svg> }
+          @case ('purchase') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"/><path d="M12 22V12"/><path d="m3.3 7 7.703 4.734a2 2 0 0 0 1.994 0L20.7 7"/><path d="m7.5 4.27 9 5.15"/></svg> }
+          @case ('banking') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 18v-7"/><path d="M11.12 2.198a2 2 0 0 1 1.76.006l7.866 3.847c.476.233.31.949-.22.949H3.474c-.53 0-.695-.716-.22-.949z"/><path d="M14 18v-7"/><path d="M18 18v-7"/><path d="M3 22h18"/><path d="M6 18v-7"/></svg> }
+          @case ('contacts') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 21a8 8 0 0 0-16 0"/><circle cx="10" cy="8" r="5"/><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3"/></svg> }
+          @case ('inventory') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"/><path d="m7 16.5-4.74-2.85"/><path d="m7 16.5 5-3"/><path d="M7 16.5v5.17"/><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"/><path d="m17 16.5-5-3"/><path d="m17 16.5 4.74-2.85"/><path d="M17 16.5v5.17"/><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"/><path d="M12 8 7.26 5.15"/><path d="m12 8 4.74-2.85"/><path d="M12 13.5V8"/></svg> }
+          @case ('accounting') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg> }
+          @case ('reports') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16v5"/><path d="M16 14v7"/><path d="M20 10v11"/><path d="m22 3-8.646 8.646a.5.5 0 0 1-.708 0L9.354 8.354a.5.5 0 0 0-.707 0L2 15"/><path d="M4 18v3"/><path d="M8 14v7"/></svg> }
+          @case ('settings') { <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg> }
+        }
+        {{ item.label }}
       </a>
     }
-    <label for="mobile-more-toggle" class="tab-btn more-btn">
-      <span class="icon">⋯</span>
-      <span class="label">More</span>
+    
+    <label for="mobile-more-toggle" class="tab-item">
+      <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+      More
     </label>
   </nav>
 
-  <!-- The More Sheet controlled by the checkbox -->
-  <div class="more-sheet">
+  <!-- Mobile More Overlay -->
+  <div class="more-sheet" style="position:fixed;inset:0;background:color-mix(in srgb,var(--color-neutral-900) 45%,transparent);align-items:flex-end;justify-content:center;z-index:20">
     <label for="mobile-more-toggle" class="sheet-overlay"></label>
-    <div class="sheet-body">
-      <div class="sheet-header">
-        <h3>More</h3>
-      </div>
-      <div class="sheet-items">
+    <div style="width:100%;background:var(--color-surface);border-top:1px solid var(--color-divider);border-radius:var(--radius-lg) var(--radius-lg) 0 0;padding:var(--space-4) var(--space-4) var(--space-6);position:relative;z-index:21">
+      <div style="width:38px;height:3px;border-radius:2px;background:var(--color-divider);margin:0 auto var(--space-4)"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2)">
         @for (item of nav().slice(4); track item.path) {
-          <a [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false">
-            <span class="icon">{{ item.icon }}</span>
-            <span class="label">{{ item.label }}</span>
+          <a [routerLink]="item.path" routerLinkActive="active" onclick="document.getElementById('mobile-more-toggle').checked = false" style="padding:var(--space-3);border:1px solid var(--color-divider);border-radius:var(--radius-md);color:var(--color-text);font-size:14px;text-align:center">
+            {{ item.label }}
           </a>
         }
-      </div>
-      <div class="sheet-footer">
-        <button type="button" class="logout-sheet-btn" (click)="logout()">
-          <span class="icon">⎋</span> Sign out
+        <button type="button" (click)="logout()" style="padding:var(--space-3);border:1px solid var(--color-divider);border-radius:var(--radius-md);font-size:14px;background:transparent;cursor:pointer;color:#d32f2f">
+          Sign out
         </button>
       </div>
     </div>
   </div>
+
 </div>

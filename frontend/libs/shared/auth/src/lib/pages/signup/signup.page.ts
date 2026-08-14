@@ -27,7 +27,7 @@ export class SignupPage implements OnInit {
   protected readonly error = signal<string | null>(null);
 
   protected readonly currentTab = signal<number>(0);
-  protected readonly tabs = ['Personal', 'Company', 'Location', 'Statutory'];
+  protected readonly tabs = ['Your account', 'Company & books', 'Statutory details'];
 
   nextTab(): void {
     if (this.currentTab() < this.tabs.length - 1) {

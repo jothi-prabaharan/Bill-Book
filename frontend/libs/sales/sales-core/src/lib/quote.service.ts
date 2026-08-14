@@ -6,9 +6,12 @@ export interface SaveQuoteRequest {
   documentDate: string;
   validUntil: string;
   contactId: number;
-  placeOfSupplyStateId: number;
-  currencyCode: string;
-  exchangeRate: number;
+  contactGstin?: string;
+  placeOfSupplyStateCode?: string;
+  billingAddress?: string;
+  shippingAddress?: string;
+  currencyCode?: string;
+  exchangeRate?: number;
   notes?: string;
   termsAndConditions?: string;
   lines: QuoteLineRequest[];

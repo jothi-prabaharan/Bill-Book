@@ -1,34 +1,65 @@
-<div class="auth-layout">
-  <div class="auth-card">
-    @if (branchEnded()) {
-      <h1>This branch has closed</h1>
-      <p>
-        @if (endedOn(); as ended) {
-          Access to this branch ended on {{ ended }}. Your account is unaffected —
-          your other branches carry on as normal.
-        } @else {
-          Access to this branch has ended. Your account is unaffected — your other
-          branches carry on as normal.
-        }
-      </p>
-      <p>Your data is safe. Your head office can reopen the branch.</p>
-      <div class="actions">
-        <button type="button" (click)="logout()">Sign out and choose another branch</button>
+<div class="auth-shell">
+  <aside class="auth-aside">
+    <div style="font-family:var(--font-body);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-mark);font-variant-numeric:tabular-nums">Retail ERP &amp; Accounting</div>
+
+    <div>
+      <div class="auth-brand">
+        <img src="assets/bill-book-mark.svg" alt="Bill-Book Logo">
+        <span>Bill-Book</span>
       </div>
-    } @else {
-      <h1>Your trial has expired</h1>
-      <p>
-        @if (endedOn(); as ended) {
-          Your licence ended on {{ ended }}. Your data is safe, but access is
-          paused until you renew.
-        } @else {
-          Your data is safe, but access is paused until you renew.
-        }
-      </p>
-      <div class="actions">
-        <button type="button" (click)="renew()">Renew / Upgrade</button>
-        <button type="button" class="link" (click)="logout()">Sign out</button>
+      <div class="auth-rule"></div>
+      <p style="font-size:15px;line-height:1.7;color:rgba(243,242,242,.72);margin:0;max-width:26ch;text-wrap:pretty">Billing, inventory, double-entry accounting and GST compliance — one set of books for every organization you run.</p>
+    </div>
+
+    <div style="display:flex;flex-direction:column">
+      <div class="auth-stats">
+        <div><div>14</div>days free</div>
+        <div><div>3</div>users</div>
+        <div><div>1</div>organization</div>
       </div>
-    }
-  </div>
+      <div class="auth-rule" style="margin:var(--space-4) 0 var(--space-3)"></div>
+      <div class="auth-switch">
+        <a routerLink="/login">Sign in</a>
+        <a routerLink="/signup">Sign up</a>
+        <a routerLink="/forgot-password">Forgot</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="auth-pane">
+    <div style="width:100%;max-width:420px;text-align:center">
+      @if (branchEnded()) {
+        <h6 style="color:var(--color-accent-700);margin:0 0 var(--space-2)">Suspended</h6>
+        <h2 style="font-size:clamp(26px,6vw,34px);margin:0 0 var(--space-2)">This branch has closed.</h2>
+        <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">
+          @if (endedOn(); as ended) {
+            Access to this branch ended on {{ ended }}. Your account is unaffected —
+            your other branches carry on as normal.
+          } @else {
+            Access to this branch has ended. Your account is unaffected — your other
+            branches carry on as normal.
+          }
+        </p>
+        <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-6)">Your data is safe. Your head office can reopen the branch.</p>
+        
+        <button class="btn btn-secondary btn-block" type="button" (click)="logout()">Sign out and choose another branch</button>
+      } @else {
+        <h6 style="color:var(--color-accent-700);margin:0 0 var(--space-2)">Expired</h6>
+        <h2 style="font-size:clamp(26px,6vw,34px);margin:0 0 var(--space-2)">Your trial has expired.</h2>
+        <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-6)">
+          @if (endedOn(); as ended) {
+            Your licence ended on {{ ended }}. Your data is safe, but access is
+            paused until you renew.
+          } @else {
+            Your data is safe, but access is paused until you renew.
+          }
+        </p>
+        
+        <div style="display:flex;flex-direction:column;gap:var(--space-2)">
+          <button class="btn btn-primary btn-block" type="button" (click)="renew()">Renew / Upgrade</button>
+          <button class="btn btn-secondary btn-block" type="button" (click)="logout()">Sign out</button>
+        </div>
+      }
+    </div>
+  </main>
 </div>

@@ -1,0 +1,63 @@
+.page-container { padding: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+.header-actions { display: flex; gap: 8px; }
+
+.status-banner { padding: 12px 16px; border-radius: 6px; margin-bottom: 16px; font-weight: 500; }
+.status-banner.posted { background: #e8f5e9; color: #2e7d32; }
+.status-banner.voided { background: #fbe9e7; color: #c62828; }
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    
+    label { font-size: 14px; font-weight: 500; color: #555; }
+    .input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+    .input[readonly] { background-color: #f9f9f9; cursor: pointer; }
+    .input:disabled { background-color: #f0f0f0; cursor: not-allowed; }
+  }
+}
+
+.line-grid-container { margin-top: 24px; border: 1px solid #eee; border-radius: 8px; }
+
+.totals-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin-top: 24px;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1px solid #eee;
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    width: 300px;
+    padding: 4px 0;
+    font-size: 14px;
+    
+    &.tax { color: #666; }
+    &.grand-total {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #ddd;
+      font-size: 16px;
+      font-weight: 600;
+    }
+  }
+}
+
+.primary { background: #1976d2; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.primary:disabled { background: #90caf9; cursor: not-allowed; }
+.success { background: #2e7d32; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.success:disabled { background: #a5d6a7; cursor: not-allowed; }
+.danger { background: #d32f2f; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+.danger:disabled { background: #ef9a9a; cursor: not-allowed; }
+.secondary { background: transparent; border: 1px solid #ccc; padding: 8px 16px; border-radius: 4px; cursor: pointer; }

@@ -20,4 +20,6 @@ public class DeliveryChallanDetail : DocumentLineBase
     /// being inferred from a one-to-one link that does not exist.
     /// </summary>
     public decimal InvoicedQuantity { get; set; }
+    public List<DeliveryChallanDetailTax> Taxes { get; set; } = [];
 }
+

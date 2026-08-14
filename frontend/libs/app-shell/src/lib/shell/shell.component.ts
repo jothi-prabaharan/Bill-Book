@@ -30,17 +30,15 @@ export class ShellComponent {
   private readonly router = inject(Router);
 
   private readonly all: NavItem[] = [
-    // Home has no module: it is where everyone lands, including roles with no
-    // dashboard permission, and it holds nothing of its own to protect.
-    { path: '/dashboard', label: 'Home', icon: '🏠', module: null },
-    { path: '/sales', label: 'Sales', icon: '🧾', module: 'sales' },
-    { path: '/purchase', label: 'Purchase', icon: '📦', module: 'purchase' },
-    { path: '/banking', label: 'Banking', icon: '🏦', module: 'banking' },
-    { path: '/contacts', label: 'Contacts', icon: '👥', module: 'contacts' },
-    { path: '/inventory', label: 'Inventory', icon: '📋', module: 'inventory' },
-    { path: '/accounting', label: 'Accounting', icon: '📒', module: 'accounting' },
-    { path: '/reports', label: 'Reports', icon: '📊', module: 'reports' },
-    { path: '/settings', label: 'Settings', icon: '⚙️', module: 'settings' },
+    { path: '/dashboard', label: 'Dashboard', icon: 'home', module: null },
+    { path: '/sales', label: 'Sales', icon: 'sales', module: 'sales' },
+    { path: '/purchase', label: 'Purchase', icon: 'purchase', module: 'purchase' },
+    { path: '/banking', label: 'Banking', icon: 'banking', module: 'banking' },
+    { path: '/contacts', label: 'Contacts', icon: 'contacts', module: 'contacts' },
+    { path: '/inventory', label: 'Inventory', icon: 'inventory', module: 'inventory' },
+    { path: '/accounting', label: 'Books', icon: 'accounting', module: 'accounting' },
+    { path: '/reports', label: 'Reports', icon: 'reports', module: 'reports' },
+    { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
   ];
 
   /**

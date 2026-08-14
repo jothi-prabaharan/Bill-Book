@@ -6588,6 +6588,14 @@ namespace Master.Repository.Migrations.Master
                         },
                         new
                         {
+                            Code = "DLC",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Delivery Challan",
+                            Version = 0u
+                        },
+                        new
+                        {
                             Code = "INV",
                             IsActive = true,
                             IsLedgerPosting = true,

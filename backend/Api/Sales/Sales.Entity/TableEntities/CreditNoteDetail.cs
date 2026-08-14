@@ -20,4 +20,6 @@ public class CreditNoteDetail : DocumentLineBase
 
     /// <summary>The invoice line being reversed. Required, and a real foreign key.</summary>
     public long InvoiceDetailId { get; set; }
+    public List<CreditNoteDetailTax> Taxes { get; set; } = [];
 }
+

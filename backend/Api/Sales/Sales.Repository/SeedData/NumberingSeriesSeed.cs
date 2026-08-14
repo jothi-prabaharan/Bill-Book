@@ -29,6 +29,7 @@ public static class NumberingSeriesSeed
     [
         Document(orgId, 300, "QTE", "Quote Number", "QT"),
         Document(orgId, 310, "SOR", "Sales Order Number", "SO"),
+        Document(orgId, 315, "DLC", "Delivery Challan Number", "DC"),
         Document(orgId, 320, "INV", "Invoice Number", "INV"),
         Document(orgId, 330, "CRN", "Credit Note Number", "CN"),
 

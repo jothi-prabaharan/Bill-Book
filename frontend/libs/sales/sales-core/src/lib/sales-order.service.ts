@@ -6,9 +6,13 @@ export interface SaveSalesOrderRequest {
   documentDate: string;
   deliveryDate: string;
   contactId: number;
-  placeOfSupplyStateId: number;
-  currencyCode: string;
-  exchangeRate: number;
+  quoteId?: number;
+  contactGstin?: string;
+  placeOfSupplyStateCode?: string;
+  billingAddress?: string;
+  shippingAddress?: string;
+  currencyCode?: string;
+  exchangeRate?: number;
   notes?: string;
   termsAndConditions?: string;
   lines: SalesOrderLineRequest[];

@@ -105,6 +105,8 @@ public class AccountingDbContext : TenantDbContext
     /// <summary>How to read the file each account's bank produces. No two agree.</summary>
     public DbSet<StatementImportProfile> StatementImportProfiles => Set<StatementImportProfile>();
 
+    public DbSet<TransactionRatio> TransactionRatios => Set<TransactionRatio>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("acc");
@@ -827,6 +829,18 @@ public class AccountingDbContext : TenantDbContext
                     + "AND \"AmountColumn\" IS NULL) "
                     + "OR (\"AmountColumn\" IS NOT NULL AND \"WithdrawalColumn\" IS NULL "
                     + "AND \"DepositColumn\" IS NULL)"));
+        });
+
+        modelBuilder.Entity<TransactionRatio>(b =>
+        {
+            b.HasKey(e => e.TransactionRatioId);
+            b.HasIndex(e => new { e.OrgId, e.SourceTransactionTypeCode, e.SourceTransactionId });
+            b.HasIndex(e => new { e.OrgId, e.TargetTransactionTypeCode, e.TargetTransactionId });
+            
+            b.ToTable(t => t.HasCheckConstraint(
+                "chk_transactionratio_amount",
+                "\"Amount\" > 0"
+            ));
         });
 
         base.OnModelCreating(modelBuilder);

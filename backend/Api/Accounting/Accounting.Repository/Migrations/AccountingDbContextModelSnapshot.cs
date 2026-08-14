@@ -1828,6 +1828,71 @@ namespace Accounting.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Accounting.Entity.TableEntities.TransactionRatio", b =>
+                {
+                    b.Property<long>("TransactionRatioId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("TransactionRatioId"));
+
+                    b.Property<DateTime>("AllocatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("numeric");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<long>("SourceTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SourceTransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<long>("TargetTransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("TargetTransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("TransactionRatioId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("OrgId", "SourceTransactionTypeCode", "SourceTransactionId");
+
+                    b.HasIndex("OrgId", "TargetTransactionTypeCode", "TargetTransactionId");
+
+                    b.ToTable("TransactionRatios", "acc", t =>
+                        {
+                            t.HasCheckConstraint("chk_transactionratio_amount", "\"Amount\" > 0");
+                        });
+                });
+
             modelBuilder.Entity("Accounting.Entity.TableEntities.TransferMoney", b =>
                 {
                     b.Property<long>("TransferMoneyId")

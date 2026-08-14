@@ -57,6 +57,8 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<CreditNoteDetailTax> CreditNoteDetailTaxes => Set<CreditNoteDetailTax>();
 
+    public DbSet<SalesRegister> SalesRegister => Set<SalesRegister>();
+
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
@@ -282,6 +284,21 @@ public class SalesDbContext : TenantDbContext
             ConfigureTax(b, "CreditNoteDetailTaxes", "CreditNoteDetailId");
             b.HasOne<CreditNoteDetail>().WithMany().HasForeignKey(e => e.CreditNoteDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // ---- Sales Register -----------------------------------------------
+        
+        modelBuilder.Entity<SalesRegister>(b =>
+        {
+            b.ToTable("SalesRegister", t =>
+            {
+                t.HasCheckConstraint(
+                    "chk_salesregister_tax_split",
+                    "(\"IsInterState\" AND \"CgstAmount\" = 0 AND \"SgstAmount\" = 0) "
+                        + "OR (NOT \"IsInterState\" AND \"IgstAmount\" = 0)");
+            });
+
+            b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId }).IsUnique();
         });
     }
 

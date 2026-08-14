@@ -12,49 +12,60 @@ namespace Sales.Api.Controllers;
 [Route("api/sales/quotes")]
 public sealed class QuotesController : ControllerBase
 {
-    private readonly QuoteService _quotes;
+    private readonly QuoteService _Quotes;
 
-    public QuotesController(QuoteService quotes) => _quotes = quotes;
+    public QuotesController(QuoteService Quotes) => _Quotes = Quotes;
 
     [HttpGet]
     public async Task<IActionResult> List(CancellationToken ct)
     {
-        List<QuoteListItem> quotes = await _quotes.ListAsync(ct);
-        return Ok(quotes);
+        List<QuoteListItem> Quotes = await _Quotes.ListAsync(ct);
+        return Ok(Quotes);
     }
 
-    [HttpGet("{quoteId:long}")]
-    public async Task<IActionResult> Get(long quoteId, CancellationToken ct)
+    [HttpGet("{QuoteId:long}")]
+    public async Task<IActionResult> Get(long QuoteId, CancellationToken ct)
     {
-        QuoteView? quote = await _quotes.GetAsync(quoteId, ct);
-        return quote is null ? NotFound() : Ok(quote);
+        QuoteView? Quote = await _Quotes.GetAsync(QuoteId, ct);
+        return Quote is null ? NotFound() : Ok(Quote);
     }
 
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveQuoteRequest request, CancellationToken ct)
     {
-        QuoteResult result = await _quotes.CreateAsync(request, ct);
+        QuoteResult result = await _Quotes.CreateAsync(request, ct);
 
         return result.Outcome == QuoteOutcome.Ok
-            ? CreatedAtAction(nameof(Get), new { quoteId = result.QuoteId }, result)
+            ? CreatedAtAction(nameof(Get), new { QuoteId = result.QuoteId }, result)
             : Respond(result.Outcome, result.Detail);
     }
 
-    [HttpPut("{quoteId:long}")]
-    public async Task<IActionResult> Update(long quoteId, [FromBody] SaveQuoteRequest request, CancellationToken ct)
+    [HttpPut("{QuoteId:long}")]
+    public async Task<IActionResult> Update(long QuoteId, [FromBody] SaveQuoteRequest request, CancellationToken ct)
     {
-        QuoteResult result = await _quotes.UpdateAsync(quoteId, request, ct);
+        QuoteResult result = await _Quotes.UpdateAsync(QuoteId, request, ct);
 
         return result.Outcome == QuoteOutcome.Ok
             ? NoContent()
             : Respond(result.Outcome, result.Detail);
     }
 
-    [HttpPost("{quoteId:long}/void")]
-    [PermissionAction("void")]
-    public async Task<IActionResult> Void(long quoteId, [FromBody] VoidQuoteRequest request, CancellationToken ct)
+    [HttpPost("{QuoteId:long}/approve")]
+    [PermissionAction("sales.approve")]
+    public async Task<IActionResult> Approve(long QuoteId, CancellationToken ct)
     {
-        QuoteResult result = await _quotes.VoidAsync(quoteId, request, ct);
+        QuoteResult result = await _Quotes.PostAsync(QuoteId, ct);
+
+        return result.Outcome == QuoteOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    [HttpPost("{QuoteId:long}/void")]
+    [PermissionAction("sales.void")]
+    public async Task<IActionResult> Void(long QuoteId, [FromBody] VoidQuoteRequest request, CancellationToken ct)
+    {
+        QuoteResult result = await _Quotes.VoidAsync(QuoteId, request, ct);
 
         return result.Outcome == QuoteOutcome.Ok
             ? NoContent()
@@ -70,13 +81,8 @@ public sealed class QuotesController : ControllerBase
             QuoteOutcome.ValidityInvalid => BadRequest(new MessageResponse { Message = detail ?? "Validity date is invalid." }),
             QuoteOutcome.PlaceOfSupplyRefused => BadRequest(new MessageResponse { Message = detail ?? "Place of supply could not be determined." }),
             QuoteOutcome.RatesUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = detail ?? "Tax rates or base currency are temporarily unavailable." }),
-            QuoteOutcome.AlreadyConverted => Conflict(new MessageResponse { Message = "This quote has already been converted to an order." }),
-            QuoteOutcome.Lapsed => BadRequest(new MessageResponse { Message = "A lapsed quote cannot be converted." }),
+            QuoteOutcome.AlreadyConverted => Conflict(new MessageResponse { Message = "This Quote has already been converted." }),
+            QuoteOutcome.Lapsed => Conflict(new MessageResponse { Message = detail ?? "This Quote has lapsed." }),
             _ => StatusCode(StatusCodes.Status500InternalServerError)
         };
-}
-
-public sealed class MessageResponse
-{
-    public required string Message { get; init; }
 }

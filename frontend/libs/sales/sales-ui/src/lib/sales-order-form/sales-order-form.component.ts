@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SalesOrderService, SaveSalesOrderRequest } from '@bill-book/sales-core';
 import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
@@ -7,36 +8,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 @Component({
   selector: 'bb-sales-order-form',
   standalone: true,
-  imports: [CommonModule, DocumentLineGridComponent, RouterModule],
-  template: `
-    <div class="page-container">
-      <header class="page-header">
-        <h1>{{ isEdit ? 'Edit SalesOrder' : 'New SalesOrder' }}</h1>
-        <button class="primary" (click)="save()">Save</button>
-      </header>
-
-      <!-- Minimal form scaffold, skipping reactive forms for brevity -->
-      <div class="form-grid">
-        <!-- Date, Contact, Valid Until, etc would go here -->
-      </div>
-
-      <div class="line-grid-container">
-        <bb-document-line-grid
-          [lines]="lines"
-          [context]="context"
-          (linesChange)="onLinesChange($event)"
-          (pickItem)="onPickItem($event)"
-        ></bb-document-line-grid>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .page-container { padding: 24px; }
-    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .line-grid-container { margin-top: 24px; border: 1px solid #eee; border-radius: 8px; }
-  `]
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule],
+  templateUrl: './sales-order-form.component.html',
+  styleUrls: ['./sales-order-form.component.scss']
 })
 export class SalesOrderFormComponent implements OnInit {
+  private fb = inject(FormBuilder);
   private salesOrderService = inject(SalesOrderService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -44,6 +21,20 @@ export class SalesOrderFormComponent implements OnInit {
   isEdit = false;
   salesOrderId: number | null = null;
   
+  form = this.fb.group({
+    documentDate: [new Date().toISOString().split('T')[0], Validators.required],
+    deliveryDate: [new Date().toISOString().split('T')[0], Validators.required],
+    contactId: [1, Validators.required], 
+    contactGstin: [''],
+    placeOfSupplyStateCode: [''],
+    currencyCode: ['INR', Validators.required],
+    exchangeRate: [1, [Validators.required, Validators.min(0.0001)]],
+    billingAddress: [''],
+    shippingAddress: [''],
+    notes: [''],
+    termsAndConditions: ['']
+  });
+
   lines: DocumentLine[] = [];
   context: DocumentLineContext = {
     isInterState: false,
@@ -65,8 +56,31 @@ export class SalesOrderFormComponent implements OnInit {
 
   loadSalesOrder() {
     if (!this.salesOrderId) return;
-    this.salesOrderService.get(this.salesOrderId).subscribe(_q => {
-      // mapping logic...
+    this.salesOrderService.get(this.salesOrderId).subscribe(so => {
+      this.form.patchValue({
+        documentDate: so.documentDate,
+        deliveryDate: so.deliveryDate,
+        contactId: so.contactId,
+        contactGstin: so.contactGstin || '',
+        placeOfSupplyStateCode: (so as any).placeOfSupplyStateCode || (so as any).placeOfSupplyStateId?.toString() || '',
+        currencyCode: so.currencyCode,
+        exchangeRate: so.exchangeRate,
+        billingAddress: so.billingAddress || '',
+        shippingAddress: so.shippingAddress || '',
+        notes: so.notes,
+        termsAndConditions: so.termsAndConditions
+      });
+      this.lines = (so.lines || []).map(l => ({
+        itemId: l.itemId,
+        description: l.description,
+        hsnSacCode: l.hsnSacCode,
+        accountId: l.accountId,
+        taxTreatment: l.taxTreatment || 'Taxable',
+        taxMasterId: l.taxMasterId,
+        quantity: l.quantity,
+        unitPrice: l.unitPrice,
+        discountPercent: l.discountPercent || 0
+      } as any));
     });
   }
 
@@ -79,13 +93,21 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   save() {
+    if (this.form.invalid) return;
+
+    const val = this.form.value;
     const request: SaveSalesOrderRequest = {
-      documentDate: new Date().toISOString().split('T')[0],
-      deliveryDate: new Date().toISOString().split('T')[0],
-      contactId: 1, // mock
-      placeOfSupplyStateId: 1, // mock
-      currencyCode: 'INR',
-      exchangeRate: 1,
+      documentDate: val.documentDate!,
+      deliveryDate: val.deliveryDate!,
+      contactId: val.contactId!,
+      contactGstin: val.contactGstin || undefined,
+      placeOfSupplyStateCode: val.placeOfSupplyStateCode || undefined,
+      currencyCode: val.currencyCode!,
+      exchangeRate: val.exchangeRate!,
+      billingAddress: val.billingAddress || undefined,
+      shippingAddress: val.shippingAddress || undefined,
+      notes: val.notes || undefined,
+      termsAndConditions: val.termsAndConditions || undefined,
       lines: this.lines.map(l => ({
         itemId: l.itemId ?? undefined,
         description: l.description ?? undefined,
@@ -96,7 +118,7 @@ export class SalesOrderFormComponent implements OnInit {
         quantity: l.quantity,
         unitPrice: l.unitPrice,
         discountPercent: l.discountPercent ?? 0
-      }))
+      } as any))
     };
 
     if (this.isEdit && this.salesOrderId) {

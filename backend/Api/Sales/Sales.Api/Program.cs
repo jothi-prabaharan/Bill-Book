@@ -79,6 +79,8 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<DeliveryChallanService>();
+builder.Services.AddScoped<CreditNoteService>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
@@ -213,3 +215,5 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
+

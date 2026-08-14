@@ -1,0 +1,22 @@
+<div class="credit-note-list">
+  <h2>Credit Notes</h2>
+  <a routerLink="new">New Credit Note</a>
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Number</th>
+        <th>Contact</th>
+        <th>Total Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let crn of creditNotes">
+        <td>{{ crn.documentDate }}</td>
+        <td>{{ crn.documentNo }}</td>
+        <td>{{ crn.contactName }}</td>
+        <td>{{ crn.totalAmount }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

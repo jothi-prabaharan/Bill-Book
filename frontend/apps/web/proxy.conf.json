@@ -38,5 +38,9 @@
   "/api/tax-masters": {
     "target": "http://localhost:5004",
     "secure": false
+  }  ,
+  "/api/sales": {
+    "target": "http://localhost:5011",
+    "secure": false
   }
 }

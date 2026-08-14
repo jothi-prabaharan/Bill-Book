@@ -377,6 +377,38 @@ public sealed class InvoiceService
         if (!posted)
             throw new InvalidOperationException("Ledger post failed.");
 
+        foreach (var l in invoice.Lines)
+        {
+            var rate = l.Taxes.FirstOrDefault()?.Rate ?? 0;
+            _db.SalesRegister.Add(new SalesRegister
+            {
+                OrgId = invoice.OrgId,
+                TransactionTypeCode = invoice.TransactionTypeCode,
+                SourceId = invoice.InvoiceId,
+                DocumentNo = invoice.DocumentNo,
+                DocumentDate = invoice.DocumentDate,
+                ContactId = invoice.ContactId,
+                ContactGstin = invoice.ContactGstin,
+                PlaceOfSupplyStateId = invoice.PlaceOfSupplyStateId,
+                IsInterState = invoice.IsInterState,
+                SupplyType = invoice.ContactGstin != null ? "B2B" : "B2CS",
+                ReverseCharge = false,
+                HsnSacCode = l.HsnSacCode,
+                GstRate = rate,
+                Quantity = l.Quantity,
+                UqcCode = null,
+                TaxableAmount = l.LineTotal,
+                CgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Cgst")?.Amount ?? 0,
+                SgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Sgst")?.Amount ?? 0,
+                IgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Igst")?.Amount ?? 0,
+                CessAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Cess")?.Amount ?? 0,
+                TotalAmount = l.LineTotal + l.TaxAmount,
+                CurrencyCode = invoice.CurrencyCode,
+                ExchangeRate = invoice.ExchangeRate,
+                TaxableAmountBase = l.LineTotal * invoice.ExchangeRate
+            });
+        }
+
         invoice.Status = DocumentStatus.Posted;
         invoice.PostedAt = _clock.GetUtcNow();
         await _db.SaveChangesAsync(ct);
@@ -393,6 +425,12 @@ public sealed class InvoiceService
 
         invoice.Status = DocumentStatus.Void;
         invoice.VoidedAt = _clock.GetUtcNow();
+
+        var registers = await _db.SalesRegister
+            .Where(r => r.SourceId == invoiceId && r.TransactionTypeCode == invoice.TransactionTypeCode)
+            .ToListAsync(ct);
+        _db.SalesRegister.RemoveRange(registers);
+
         await _db.SaveChangesAsync(ct);
     }
 }
