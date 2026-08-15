@@ -292,6 +292,13 @@ public sealed class DeliveryChallanService
         if (!issueResult.Success)
             throw new InvalidOperationException("Stock issue failed.");
 
+        foreach (var issueLine in issueResult.Lines)
+        {
+            var line = deliveryChallan.Lines.First(l => l.DeliveryChallanDetailId == issueLine.SourceLineId);
+            line.StockMovementId = issueLine.StockMovementId;
+            line.UnitCost = issueLine.UnitCost;
+        }
+
         // 2. Post Ledger (Only if Sale)
         if (deliveryChallan.ChallanType == ChallanType.Sale)
         {

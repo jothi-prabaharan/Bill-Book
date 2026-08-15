@@ -6,6 +6,7 @@ namespace Sales.Api.Services;
 public interface ILedgerClient
 {
     Task<bool> PostAsync(PostLedgerRequest request, CancellationToken ct);
+    Task<bool> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct);
 }
 
 public sealed class LedgerClient : ILedgerClient
@@ -17,6 +18,16 @@ public sealed class LedgerClient : ILedgerClient
     {
         _http = http;
         _tenant = tenant;
+    }
+
+    public async Task<bool> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct)
+    {
+        var response = await _http.PostAsJsonAsync("internal/allocations", request, ct);
+        if (response.IsSuccessStatusCode)
+            return true;
+        
+        var content = await response.Content.ReadAsStringAsync(ct);
+        throw new InvalidOperationException($"Allocation failed: {response.StatusCode} {content}");
     }
 
     public async Task<bool> PostAsync(PostLedgerRequest request, CancellationToken ct)
@@ -56,5 +67,14 @@ public sealed class LedgerLegRequest
     public string? AccountSystemName { get; set; }
     public long? AccountId { get; set; }
     public long? SubAccountReferenceId { get; set; }
+    public decimal Amount { get; set; }
+}
+
+public sealed class AllocateTransactionRequest
+{
+    public string SourceTransactionTypeCode { get; set; } = null!;
+    public long SourceTransactionId { get; set; }
+    public string TargetTransactionTypeCode { get; set; } = null!;
+    public long TargetTransactionId { get; set; }
     public decimal Amount { get; set; }
 }

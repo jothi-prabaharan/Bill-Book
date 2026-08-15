@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Sales.Repository;
@@ -11,9 +12,11 @@ using Sales.Repository;
 namespace Sales.Repository.Migrations
 {
     [DbContext(typeof(SalesDbContext))]
-    partial class SalesDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260815125639_AddSalesDocuments")]
+    partial class AddSalesDocuments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -692,9 +695,6 @@ namespace Sales.Repository.Migrations
                     b.Property<long?>("SalesOrderDetailId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("StockMovementId")
-                        .HasColumnType("bigint");
-
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(28,2)");
 
@@ -711,9 +711,6 @@ namespace Sales.Repository.Migrations
 
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("decimal(28,2)");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(28,6)");
@@ -1127,9 +1124,6 @@ namespace Sales.Repository.Migrations
                     b.Property<long?>("SalesOrderDetailId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("StockMovementId")
-                        .HasColumnType("bigint");
-
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(28,2)");
 
@@ -1146,9 +1140,6 @@ namespace Sales.Repository.Migrations
 
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("decimal(28,2)");
-
-                    b.Property<decimal>("UnitCost")
-                        .HasColumnType("numeric");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(28,6)");

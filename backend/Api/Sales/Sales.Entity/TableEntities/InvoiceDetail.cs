@@ -20,5 +20,11 @@ public class InvoiceDetail : DocumentLineBase
     /// here is what the guard checks against.
     /// </summary>
     public decimal ReturnedQuantity { get; set; }
+    
+    /// <summary>The inventory movement generated when this line was issued.</summary>
+    public long? StockMovementId { get; set; }
+    
+    public decimal UnitCost { get; set; }
+    
     public List<InvoiceDetailTax> Taxes { get; set; } = [];
 }

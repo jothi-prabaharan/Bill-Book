@@ -259,6 +259,11 @@ public sealed class CreditNoteService
         if (creditNote.Lines.Count == 0)
             throw new InvalidOperationException("CreditNote has no lines.");
 
+        var invoiceDetailIds = creditNote.Lines.Select(l => l.InvoiceDetailId).ToList();
+        var invoiceDetails = await _db.InvoiceDetails
+            .Where(x => invoiceDetailIds.Contains(x.InvoiceDetailId))
+            .ToDictionaryAsync(x => x.InvoiceDetailId, ct);
+
         decimal totalCogs = 0;
         // 1. Receive Stock
         
@@ -271,14 +276,14 @@ public sealed class CreditNoteService
                 MovementDate = creditNote.DocumentDate,
                 SourceType = creditNote.TransactionTypeCode,
                 SourceId = creditNote.CreditNoteId,
-                ReturnsStockMovementId = creditNote.InvoiceId, // Return from original invoice movement
                 Lines = creditNote.Lines.Select(l => new ReceiveStockLine
                 {
                     SourceLineId = l.CreditNoteDetailId,
                     ItemId = l.ItemId ?? 0,
                     Quantity = l.Quantity,
                     WarehouseId = null,
-                    UnitCost = l.UnitPrice // Approximate if the backend derives actual
+                    UnitCost = l.UnitPrice, // Approximate if the backend derives actual
+                    ReturnsStockMovementId = invoiceDetails.TryGetValue(l.InvoiceDetailId, out var invLine) ? invLine.StockMovementId : null
                 }).ToList()
             };
 
@@ -378,6 +383,19 @@ public sealed class CreditNoteService
         }
 
         await _ledgerClient.PostAsync(postRequest, ct);
+
+        // Allocate credit note against the invoice
+        if (creditNote.InvoiceId > 0)
+        {
+            await _ledgerClient.AllocateAsync(new AllocateTransactionRequest
+            {
+                SourceTransactionTypeCode = creditNote.TransactionTypeCode,
+                SourceTransactionId = creditNote.CreditNoteId,
+                TargetTransactionTypeCode = "INV", // Assuming invoice type code is INV
+                TargetTransactionId = creditNote.InvoiceId,
+                Amount = creditNote.TotalAmount
+            }, ct);
+        }
 
         foreach (var l in creditNote.Lines)
         {

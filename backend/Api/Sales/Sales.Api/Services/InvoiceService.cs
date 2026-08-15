@@ -275,27 +275,60 @@ public sealed class InvoiceService
         if (invoice.Lines.Count == 0)
             throw new InvalidOperationException("Invoice has no lines.");
 
-        // 1. Issue Stock
-        var issueRequest = new IssueStockRequest
-        {
-            OrgId = invoice.OrgId,
-            CustomerId = customerId,
-            MovementDate = invoice.DocumentDate,
-            SourceType = invoice.TransactionTypeCode,
-            SourceId = invoice.InvoiceId,
-            Lines = invoice.Lines.Select(l => new IssueStockLine
-            {
-                SourceLineId = l.InvoiceDetailId,
-                ItemId = l.ItemId ?? 0,
-                Quantity = l.Quantity,
-                WarehouseId = null,
-                ReleaseReservation = invoice.SalesOrderId.HasValue
-            }).ToList()
-        };
+        decimal totalCogs = 0;
 
-        var issueResult = await _inventoryClient.IssueAsync(issueRequest, ct);
-        if (!issueResult.Success)
-            throw new InvalidOperationException("Stock issue failed.");
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            var challan = await _db.DeliveryChallans.Include(c => c.Lines)
+                .FirstOrDefaultAsync(c => c.DeliveryChallanId == invoice.DeliveryChallanId.Value, ct);
+            if (challan != null)
+            {
+                foreach (var line in invoice.Lines)
+                {
+                    // Match by ItemId (simplified since one item per line typically)
+                    var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
+                    if (challanLine != null)
+                    {
+                        line.UnitCost = challanLine.UnitCost;
+                        line.StockMovementId = challanLine.StockMovementId;
+                        totalCogs += line.UnitCost * line.Quantity;
+                    }
+                }
+            }
+        }
+        else
+        {
+            // 1. Issue Stock
+            var issueRequest = new IssueStockRequest
+            {
+                OrgId = invoice.OrgId,
+                CustomerId = customerId,
+                MovementDate = invoice.DocumentDate,
+                SourceType = invoice.TransactionTypeCode,
+                SourceId = invoice.InvoiceId,
+                Lines = invoice.Lines.Select(l => new IssueStockLine
+                {
+                    SourceLineId = l.InvoiceDetailId,
+                    ItemId = l.ItemId ?? 0,
+                    Quantity = l.Quantity,
+                    WarehouseId = null,
+                    ReleaseReservation = invoice.SalesOrderId.HasValue
+                }).ToList()
+            };
+
+            var issueResult = await _inventoryClient.IssueAsync(issueRequest, ct);
+            if (!issueResult.Success)
+                throw new InvalidOperationException("Stock issue failed.");
+
+            foreach (var issueLine in issueResult.Lines)
+            {
+                var line = invoice.Lines.First(l => l.InvoiceDetailId == issueLine.SourceLineId);
+                line.StockMovementId = issueLine.StockMovementId;
+                line.UnitCost = issueLine.UnitCost;
+            }
+
+            totalCogs = issueResult.TotalValue;
+        }
 
         // 2. Post Ledger
         var baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
@@ -315,7 +348,6 @@ public sealed class InvoiceService
 
         decimal totalAmount = invoice.TotalAmount;
         decimal totalRevenue = invoice.SubTotal - invoice.DiscountAmount;
-        decimal totalCogs = issueResult.TotalValue;
 
         postRequest.Legs.Add(new LedgerLegRequest
         {
@@ -365,10 +397,10 @@ public sealed class InvoiceService
 
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = 1, // Asset
+                LedgerTypeId = invoice.DeliveryChallanId.HasValue ? 5 : 1, // 5 = GDNI, 1 = Asset
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
-                AccountSystemName = "Inventory",
+                AccountSystemName = invoice.DeliveryChallanId.HasValue ? "Goods Delivered Not Invoiced" : "Inventory",
                 Amount = totalCogs
             });
         }

@@ -163,6 +163,7 @@ public sealed record IssueStockLineResult
     public decimal RequestedQuantity { get; init; }
     public bool Success { get; init; }
     public string Outcome { get; init; } = string.Empty;
+    public long? StockMovementId { get; init; }
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
@@ -174,7 +175,6 @@ public sealed record ReceiveStockRequest
     public DateOnly MovementDate { get; init; }
     public string SourceType { get; init; } = null!;
     public long SourceId { get; init; }
-    public long? ReturnsStockMovementId { get; init; }
     public List<ReceiveStockLine> Lines { get; init; } = [];
 }
 
@@ -185,6 +185,7 @@ public sealed record ReceiveStockLine
     public decimal Quantity { get; init; }
     public long? WarehouseId { get; init; }
     public decimal UnitCost { get; init; }
+    public long? ReturnsStockMovementId { get; init; }
 }
 
 public sealed record ReceiveStockResponse
@@ -201,4 +202,5 @@ public sealed record ReceiveStockLineResult
     public decimal Quantity { get; init; }
     public bool Success { get; init; }
     public string Outcome { get; init; } = string.Empty;
+    public long? StockMovementId { get; init; }
 }
