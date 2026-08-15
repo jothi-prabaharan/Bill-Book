@@ -71,10 +71,29 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-// T4.3 is the purchase order. The goods receipt (T4.4), the bill (T4.5) and the
-// debit note (T5.3) register their services here as they land.
+// The bill (T4.5) and the debit note (T5.3) register their services here as
+// they land.
 builder.Services.AddScoped<PurchaseSeeder>();
 builder.Services.AddScoped<PurchaseOrderService>();
+builder.Services.AddScoped<GoodsReceiptService>();
+
+// Stock, moved synchronously. A receipt applies its quantity and opens its cost
+// layer inside the request — two people receiving the same delivery is a real
+// thing, and an eventual answer cannot refuse the second one.
+builder.Services.AddHttpClient<IInventoryClient, InventoryClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// The general ledger. Purchase decides which accounts a receipt touches —
+// it is the only service that knows the vendor and which part of the figure is
+// reclaimable tax — and Accounting decides whether the result is a legal posting.
+builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an

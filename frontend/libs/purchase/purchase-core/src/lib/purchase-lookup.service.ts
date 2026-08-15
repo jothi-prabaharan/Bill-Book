@@ -22,6 +22,19 @@ export interface ItemOption {
   isActive: boolean;
 }
 
+/** A purchase order, as the orders list serves it — enough to pick one. */
+export interface OrderOption {
+  purchaseOrderId: number;
+  documentNo: string;
+  documentDate: string;
+  contactId: number;
+  contactName?: string | null;
+  status: string;
+  fulfilmentStatus: string;
+  totalAmount: number;
+  currencyCode: string;
+}
+
 /** A GST rate, as the tax master serves it. */
 export interface TaxRateOption {
   taxMasterId: number;
@@ -77,6 +90,31 @@ export class PurchaseLookupService {
     );
 
     return rows.filter((row) => row.isVendor);
+  }
+
+  /**
+   * Orders a receipt can be raised against: issued, not voided, and not already
+   * fully received. A draft order has not been committed to the vendor, so goods
+   * arriving against one mean somebody skipped a step rather than that the
+   * order should be receivable.
+   */
+  async openOrders(search: string, contactId: number | null): Promise<OrderOption[]> {
+    const rows = await firstValueFrom(
+      this.http.get<OrderOption[]>('/api/purchase/purchase-orders'),
+    );
+
+    const term = search.trim().toLowerCase();
+
+    return rows.filter(
+      (row) =>
+        row.status === 'Posted' &&
+        row.fulfilmentStatus !== 'Closed' &&
+        row.fulfilmentStatus !== 'Cancelled' &&
+        (contactId === null || row.contactId === contactId) &&
+        (term === '' ||
+          row.documentNo.toLowerCase().includes(term) ||
+          (row.contactName ?? '').toLowerCase().includes(term)),
+    );
   }
 
   async items(search: string): Promise<ItemOption[]> {

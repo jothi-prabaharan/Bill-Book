@@ -69,6 +69,7 @@ export const DOCS: DocSection[] = [
     title: 'Purchase',
     pages: [
       { slug: 'purchase-orders', title: 'Purchase orders', status: 'built' },
+      { slug: 'goods-receipts', title: 'Goods receipts', status: 'built' },
     ],
   },
   {

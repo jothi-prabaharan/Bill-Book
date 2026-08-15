@@ -6,9 +6,9 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: schema and the purchase order built and verified.** T4.1, T4.2 and T4.3 are done — the twelve `pur` tables with RLS, and the purchase order end to end: API, pages, Gateway route and twelve tests against a real PostgreSQL 16. The goods receipt (T4.4), the bill (T4.5) and the debit note (T5.3) are still designed and uncoded.
+**Status: schema, purchase order and goods receipt built and verified.** T4.1 through T4.4 are done — the twelve `pur` tables with RLS, the purchase order, and the goods receipt end to end: APIs, pages, Gateway route and twenty-three tests against a real PostgreSQL 16. The bill (T4.5) and the debit note (T5.3) are still designed and uncoded.
 
-Stock receipt, cost layers, batch and serial capture and backdated recosting remain **built and never called by a document** — so every receipt today still lands as an opening balance. The schema landing does not change that; T4.4 does.
+**Stock receipt, cost layers and batch capture are now called by a document.** They had been built and never invoked, so every receipt landed as an opening balance; T4.4 closed that. What is still not exercised is the *bill* side — GRNI is credited by every receipt and nothing clears it yet, so that balance will grow until T4.5 lands. That is the expected state, not a defect, but it means the clearing account is currently a one-way street.
 
 ---
 
@@ -210,8 +210,29 @@ Numbering follows `TRANSACTIONS.md`.
   - **The item picker was gated backwards.** "Pick an item" only rendered when `allowFreeTextLines` was on — so a branch that requires an item on every line got a description box it may not use and no way to choose one. The description is now what the setting gates; picking an item is always offered.
 
   Also on the grid: an optional `showLineType` input, off by default. A sale has one kind of line in practice; purchase uses all three, and a capital line is how a fixed asset reaches the register.
-- [ ] **T4.4 — Goods receipt: API and page.** Receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input and belong in the answer to the caller rather than in a background failure.
+- [x] **T4.4 — Goods receipt: API and page.** Receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input and belong in the answer to the caller rather than in a background failure.
   *Done when*: a receipt against an order opens a cost layer at the received cost, a partial receipt leaves the order partly open, and only the accepted quantity becomes stock.
+
+  All three are asserted by `GoodsReceiptServiceTests` against PostgreSQL 16 — eleven tests, twenty-three in the project.
+
+  **`POST internal/stock/receipt` is new on Inventory.** It had `opening`, `reserve`, `release` and `issue` and nothing that received against a purchase document. It records `MovementType = Receipt` carrying `SourceType = GRN`, which is exactly the shape `StockLedgerMapping` already refused a posting for — so the mapping did not change, and the branch its comment described as "Purchase supersedes this the day it lands" is now the one that runs.
+
+  **The order of the three side effects is the design of the service:**
+
+  1. **stock first**, because it is the one that can genuinely refuse — an unknown item, a batch-tracked item with no batch — and refusing before anything else has happened leaves nothing to undo;
+  2. **the ledger second**, and from figures taken off the document rather than out of Inventory's reply. A retry after a failed posting finds every movement already recorded and would be told the value was zero; what is owed to the clearing account is a property of the receipt, not of how many times it has been sent. A test posts, refuses, and posts again, and asserts the second attempt still credits GRNI the full amount;
+  3. **the order's received quantities and the document's status last**, in one `SaveChanges`, so a failure anywhere above leaves a draft that can simply be posted again.
+
+  **What posts:** `Dr Inventory / Cr Goods Received Not Invoiced`, at the accepted quantity times the net unit cost. **No GST leg** — input credit is claimed against the *vendor's* invoice number, which a receipt does not have, so the tax arrives with the bill. The lines still carry their tax figures so the document reads correctly and the bill can match against it.
+
+  Four decisions worth carrying forward:
+
+  - **The net unit cost is divided by the delivered quantity, not the accepted one.** The discount was agreed against the whole line; spreading it over only what was kept would make rejecting a carton quietly raise the cost of every carton accepted.
+  - **Only accepted quantity advances the order.** Ten ordered, ten delivered, two refused leaves the order at eight received and **PartlyReceived** — which is the honest answer, because two are still owed.
+  - **An expense or capital line is refused on a receipt.** A goods receipt records goods arriving; freight is landed cost on the bill and an asset is capitalised from the document that buys it. Half-supporting them would have meant a receipt that posts to accounts nobody expected.
+  - **A posted receipt cannot be voided.** It has moved stock and written a posting, and voiding cannot un-receive goods — the refusal says so and points at the debit note, which reverses both halves. A draft still voids normally.
+
+  **A fully rejected delivery posts nothing and moves nothing**, and is still a document: it records that the goods came and were refused, which is the reason to raise it.
 - [ ] **T4.5 — Bill: API and page.** With or without a receipt, with Input GST legs and payment terms driving the due date.
   *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; a capital line moves neither and lands on a Fixed Asset account; and payables aging ties to the Accounts Payable control account.
 

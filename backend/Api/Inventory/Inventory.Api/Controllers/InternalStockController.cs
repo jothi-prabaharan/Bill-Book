@@ -283,5 +283,112 @@ public sealed class InternalStockController : ControllerBase
 
         return Ok(response);
     }
+
+    /// <summary>
+    /// Goods arriving against a purchase document: quantity in, cost layer
+    /// opened, weighted average moved.
+    ///
+    /// <b>It posts nothing to the ledger, and that is deliberate.</b> These
+    /// movements carry a source type, and <c>StockLedgerMapping</c> refuses a
+    /// posting for a sourced receipt — the other leg is Goods Received Not
+    /// Invoiced or Accounts Payable, and only Purchase knows which vendor and
+    /// how much of the figure is reclaimable tax. Posting the stock half here as
+    /// well would double the inventory asset.
+    ///
+    /// The response carries what each line was worth, because Purchase debits
+    /// Inventory by exactly that and would otherwise have to recompute a figure
+    /// Inventory has already decided.
+    /// </summary>
+    [HttpPost("receipt")]
+    public async Task<IActionResult> Receipt(
+        [FromBody] ReceiveStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to receive stock.",
+            });
+        }
+
+        // Set before anything resolves a DbContext: the context is built from
+        // the tenant, so resolving the service first would bind it to no tenant.
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReceiveStockResponse { Success = true };
+
+        foreach (ReceiveStockLine line in request.Lines)
+        {
+            RecordStockMovementResult result = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Entity.Enums.StockMovementType.Receipt),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    UnitCost = line.UnitCost,
+                    UomId = line.UomId,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId,
+                    ItemBatchId = line.ItemBatchId,
+                    BatchNumber = line.BatchNumber,
+                    BatchExpiryDate = line.BatchExpiryDate,
+                    BatchManufactureDate = line.BatchManufactureDate,
+                },
+                ct);
+
+            // Already recorded is success, not failure: it means an earlier
+            // attempt at this same post got this far. Treating it as an error
+            // would make a retry impossible for exactly the documents that most
+            // need one.
+            bool already = result.Outcome == StockOutcome.DuplicateSource;
+            bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+
+            response.Lines.Add(new ReceiveStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                Success = ok,
+                AlreadyRecorded = already,
+                Outcome = result.Outcome.ToString(),
+                UnitCost = line.UnitCost,
+
+                // Nothing new landed on a replay, so it contributes nothing to
+                // the value being posted — the first attempt already did.
+                LineValue = ok && !already ? line.Quantity * line.UnitCost : 0m,
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            _log.LogWarning(
+                "Receipt {SourceType}/{SourceId} in {OrgId}: {Failed} of {Total} lines refused.",
+                request.SourceType,
+                request.SourceId,
+                request.OrgId,
+                response.Lines.Count(l => !l.Success),
+                response.Lines.Count);
+
+            // 409, not 400: the request is well-formed and some of it landed.
+            // The caller has to see which lines, because a partly received
+            // document is exactly the state it must not treat as done.
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
     private const string OpeningBalanceCode = "OPB";
 }
