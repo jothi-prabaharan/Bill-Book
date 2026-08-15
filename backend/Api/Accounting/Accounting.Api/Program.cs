@@ -74,6 +74,7 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 });
 
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<AllocationService>();
 builder.Services.AddScoped<SubAccountService>();
 builder.Services.AddScoped<TaxMasterService>();
 builder.Services.AddScoped<NumberingSeriesService>();
