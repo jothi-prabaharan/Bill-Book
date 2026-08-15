@@ -305,5 +305,22 @@ public class SalesDbContext : TenantDbContext
 
             b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId }).IsUnique();
         });
+
+        // Base class applies the OrgId query filters, the OrgId indexes and xmin
+        // last, so it sees every entity configured above.
+        //
+        // <b>This call was missing.</b> Every table in this schema was built and
+        // migrated without it, which left them with no OrgId query filter, no
+        // OrgId index and no xmin concurrency token — see the summary above,
+        // which described behaviour the class did not have. RLS still refused a
+        // cross-branch read at the database, so nothing leaked; but the query
+        // filter is the first line of defence and it was absent everywhere, and
+        // one query written with IgnoreQueryFilters would have gone straight
+        // past the only guard left.
+        //
+        // It stayed invisible because nothing queried these tables while the
+        // schema was being written. <c>PurchaseDbContext</c> has always had the
+        // call, and <c>SalesQueryFilterTests</c> now fails if either loses it.
+        base.OnModelCreating(modelBuilder);
     }
 }
