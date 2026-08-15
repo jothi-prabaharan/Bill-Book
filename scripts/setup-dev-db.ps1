@@ -55,11 +55,11 @@ function Write-Skip  ([string] $Message) { Write-Host "    $Message" -Foreground
 
 # Services that actually have a DbContext, and which database each migrates into.
 #
-#   master  -> EP_Admin, via the MasterDatabase connection string
+#   master  -> EP_Admin, via the AdminDatabase connection string
 #   tenant  -> EP_Design, via DesignTimeDatabase; these are the per-customer
 #              schemas, which in production live in each Customer's own database
 $services = @(
-    [pscustomobject]@{ Name = 'Master';     Target = 'master'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'MasterDbContext'; OutputDir = 'Migrations/Master' }
+    [pscustomobject]@{ Name = 'Master';     Target = 'master'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'AdminDbContext'; OutputDir = 'Migrations/Master' }
     [pscustomobject]@{ Name = 'Contacts';   Target = 'tenant'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'ContactsDbContext'; OutputDir = 'Migrations/Contacts' }
     [pscustomobject]@{ Name = 'Accounting'; Target = 'tenant'; Repository = 'Api/Accounting/Accounting.Repository'; Startup = 'Api/Accounting/Accounting.Api'; Context = 'AccountingDbContext'; OutputDir = 'Migrations' }
 )

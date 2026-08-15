@@ -165,7 +165,7 @@ Each service owns and migrates its own schema:
 ```bash
 cd backend
 dotnet ef database update --project Api/Master/Master.Repository \
-  --startup-project Api/Master/Master.Api --context MasterDbContext
+  --startup-project Api/Master/Master.Api --context AdminDbContext
 dotnet ef database update --project Api/Master/Master.Repository \
   --startup-project Api/Master/Master.Api --context ContactsDbContext
 dotnet ef database update --project Api/Inventory/Inventory.Repository \
@@ -174,7 +174,7 @@ dotnet ef database update --project Api/Accounting/Accounting.Repository \
   --startup-project Api/Accounting/Accounting.Api
 ```
 
-Master needs `--context` because it maps two: `MasterDbContext` against the shared master database, `ContactsDbContext` against a customer's own.
+Master needs `--context` because it maps two: `AdminDbContext` against the shared master database, `ContactsDbContext` against a customer's own.
 
 ### Run
 

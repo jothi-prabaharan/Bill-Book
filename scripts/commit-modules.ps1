@@ -45,7 +45,10 @@ function New-ModuleCommit {
         foreach ($path in $Paths) {
             # Globs that match nothing are not an error: a module may be partly
             # committed already if the script was interrupted.
+            $oldPreference = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
             $matched = @(git ls-files --others --exclude-standard --modified --deleted -- $path 2>$null)
+            $ErrorActionPreference = $oldPreference
             if ($matched.Count -eq 0) {
                 Write-Host "    nothing pending for $path" -ForegroundColor DarkGray
                 continue
@@ -143,7 +146,7 @@ The base file lists every key but leaves environment-specific values blank, so
 the shape is discoverable without any value leaking across environments.
 Development carries the real local values; Staging, UAT and Production ship blank
 and are filled at runtime from environment variables using the double-underscore
-convention (ConnectionStrings__MasterDatabase, Jwt__SigningKey, and so on).
+convention (ConnectionStrings__AdminDatabase, Jwt__SigningKey, and so on).
 
 Blank rather than absent is deliberate. An absent key would let the `??`
 fallbacks in Program.cs fire and silently point a deployed environment at
