@@ -121,14 +121,14 @@ Re-run the script after changing a controller, and commit the result with it.
 
 | Port | Service |
 |---|---|
-| 5000 | Gateway (YARP) — has a status home page at `/` |
-| 5003 | Master — reference data, tenancy, auth, contacts |
-| 5004 | Accounting — the ledger and the money documents |
-| 5006 | Inventory |
+| 4500 | Gateway (YARP) — has a status home page at `/` |
+| 4503 | Master — reference data, tenancy, auth, contacts |
+| 4504 | Accounting — the ledger and the money documents |
+| 4506 | Inventory |
 | 5008 | Customer *(scaffold)* |
 | 5009 | Purchase *(scaffold)* |
 | 5010 | Reporting *(scaffold)* |
-| 5011 | Sales *(schema only)* |
+| 4507 | Sales *(schema only)* |
 | 4200 | Web app |
 | 4300 | Docs (this site) |
 
@@ -147,3 +147,4 @@ apt-get update && apt-get install -y dotnet-sdk-10.0
 ```
 
 Two development stand-ins are in place and clearly marked in code: the email sender **logs the OTP to the console instead of sending mail** (convenient for testing the reset flow), and the secret store and event publisher are in-memory. Replace with SMTP, Key Vault and Service Bus for anything real.
+

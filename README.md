@@ -183,6 +183,20 @@ cd backend && dotnet run --project Gateway          # then each Api/{Module}/{Mo
 cd frontend && npx nx serve web
 ```
 
+### Local IIS Deployment
+
+To deploy the system locally to IIS with full environment support (Staging, UAT, Production):
+
+1. **Create the IIS Sites and Pools** (Run once per environment as Administrator):
+   ```powershell
+   .\scripts\create-iis-site.ps1 -Environment Staging
+   ```
+
+2. **Build and Deploy the Code** (Run every time you want to deploy as Administrator):
+   ```powershell
+   .\scripts\deploy-local.ps1 -Environment Staging
+   ```
+
 ---
 
 ## Current status

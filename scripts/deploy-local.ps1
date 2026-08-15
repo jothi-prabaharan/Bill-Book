@@ -1,143 +1,72 @@
-<#
-.SYNOPSIS
-Deploys the Bill-Book application locally to IIS.
-
-.DESCRIPTION
-This script builds all backend and frontend projects, creates IIS application pools,
-provisions the necessary websites with correct port bindings, and opens Windows Firewall ports.
-
-.NOTES
-MUST BE RUN AS ADMINISTRATOR.
-#>
+[CmdletBinding()]
+param(
+    [ValidateSet("Staging", "UAT", "Production")]
+    [string]$Environment = "Staging"
+)
 
 $ErrorActionPreference = "Stop"
 
-# 1. Prerequisite Check (Elevation)
-if (-NOT ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    Write-Warning "You do not have Administrator rights to run this script!`nPlease right-click PowerShell and select 'Run as Administrator', then execute this script again."
-    Exit
+switch ($Environment) {
+    "Staging"    { $BackendPort = 5500 }
+    "UAT"        { $BackendPort = 6500 }
+    "Production" { $BackendPort = 7500 }
 }
 
-# Ensure WebAdministration module is available
-Import-Module WebAdministration
-
-# 2. Configuration
-$basePath = "C:\inetpub\wwwroot\BillBook"
+$basePath = "C:\inetpub\wwwroot\BillBook\$Environment"
 $repoPath = (Get-Item .).FullName
-
-# Make sure we are in the repository root (in case script was run from somewhere else)
 if (-Not (Test-Path (Join-Path $repoPath "Bill-Book.sln"))) {
-    $repoPath = (Split-Path -Parent $MyInvocation.MyCommand.Path)
-    $repoPath = (Split-Path -Parent $repoPath) # Go up from /scripts to root
+    $repoPath = (Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path))
     Set-Location $repoPath
 }
 
 $backendApps = @(
-    @{ Name = "Gateway"; Path = "backend\Gateway\Gateway.csproj"; Port = 5000 },
-    @{ Name = "Master"; Path = "backend\Api\Master\Master.Api\Master.Api.csproj"; Port = 5004 },
-    @{ Name = "Inventory"; Path = "backend\Api\Inventory\Inventory.Api\Inventory.Api.csproj"; Port = 5003 },
-    @{ Name = "Accounting"; Path = "backend\Api\Accounting\Accounting.Api\Accounting.Api.csproj"; Port = 5001 },
-    @{ Name = "Customer"; Path = "backend\Api\Customer\Customer.Api\Customer.Api.csproj"; Port = 5002 },
-    @{ Name = "Reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj"; Port = 5006 },
-    @{ Name = "Sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj"; Port = 5007 },
-    @{ Name = "Purchase"; Path = "backend\Api\Purchase\Purchase.Api\Purchase.Api.csproj"; Port = 5005 }
+    @{ Name = "accounting"; Path = "backend\Api\Accounting\Accounting.Api\Accounting.Api.csproj" },
+    @{ Name = "customer"; Path = "backend\Api\Customer\Customer.Api\Customer.Api.csproj" },
+    @{ Name = "inventory"; Path = "backend\Api\Inventory\Inventory.Api\Inventory.Api.csproj" },
+    @{ Name = "master"; Path = "backend\Api\Master\Master.Api\Master.Api.csproj" },
+    @{ Name = "purchase"; Path = "backend\Api\Purchase\Purchase.Api\Purchase.Api.csproj" },
+    @{ Name = "reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj" },
+    @{ Name = "sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj" }
 )
+$gatewayApp = @{ Name = "gateway"; Path = "backend\Gateway\Gateway.csproj" }
+$frontendApps = @("web", "admin", "portal", "docs")
 
-$frontendApps = @(
-    @{ Name = "web"; Port = 4200 },
-    # @{ Name = "admin"; Port = 4203 },
-    # @{ Name = "portal"; Port = 4204 },
-    @{ Name = "docs"; Port = 4202 }
-)
+# Verify infrastructure exists
+if (-Not (Test-Path $basePath)) {
+    Write-Warning "Target directory $basePath does not exist! Please run create-iis-site.ps1 -Environment $Environment first."
+    Exit 1
+}
 
-$backendAppPool = "BillBook_Backend_Pool"
-$frontendAppPool = "BillBook_Frontend_Pool"
-
-# 3. Clean Publish Directory
-Write-Host "`n--- PREPARING DIRECTORIES ---"
-
-# Stop App Pools if they exist to prevent file locking during deletion
-if (Test-Path "IIS:\AppPools\$backendAppPool") { Stop-WebAppPool -Name $backendAppPool -ErrorAction SilentlyContinue }
-if (Test-Path "IIS:\AppPools\$frontendAppPool") { Stop-WebAppPool -Name $frontendAppPool -ErrorAction SilentlyContinue }
+Write-Host "`n--- STOPPING APP POOLS ---"
+Stop-WebAppPool -Name "BillBook_Backend_Pool_$Environment" -ErrorAction SilentlyContinue
+Stop-WebAppPool -Name "BillBook_Frontend_Pool_$Environment" -ErrorAction SilentlyContinue
 Start-Sleep -Seconds 2
 
-Write-Host "Publish directory: $basePath"
-if (Test-Path $basePath) {
-    Remove-Item -Recurse -Force $basePath
-}
-New-Item -ItemType Directory -Force -Path $basePath | Out-Null
-
-# 4. Build and Publish Backend
 Write-Host "`n--- BUILDING BACKEND APIs ---"
 foreach ($app in $backendApps) {
-    $outPath = Join-Path $basePath "backend\$($app.Name)"
-    Write-Host "Publishing $($app.Name) to $outPath..."
-    dotnet publish $app.Path -c Release -o $outPath
+    $outPath = "$basePath\backend\$($app.Name)"
+    dotnet publish $app.Path -c Release -p:EnvironmentName=$Environment -o $outPath
 }
 
-# 5. Build and Publish Frontend
+$gatewayOutPath = "$basePath\backend\$($gatewayApp.Name)"
+dotnet publish $gatewayApp.Path -c Release -p:EnvironmentName=$Environment -o $gatewayOutPath
+
 Write-Host "`n--- BUILDING FRONTEND SPAs ---"
 Set-Location -Path "frontend"
 foreach ($app in $frontendApps) {
-    Write-Host "Building frontend: $($app.Name)..."
-    npx nx build $app.Name
-    
-    $outPath = Join-Path $basePath "frontend\$($app.Name)"
-    $distPath = Join-Path $repoPath "frontend\dist\apps\$($app.Name)"
-    
-    # Copy build output to IIS folder
-    Copy-Item -Path $distPath -Destination $outPath -Recurse -Force
-}
-Set-Location -Path $repoPath
-
-# 6. Verify IIS App Pools Exist
-Write-Host "`n--- VERIFYING IIS APP POOLS ---"
-if (-Not (Test-Path "IIS:\AppPools\$backendAppPool")) {
-    Write-Warning "Backend App Pool ($backendAppPool) does not exist! Please run create-iis-pools.ps1 first."
-    Exit
-}
-if (-Not (Test-Path "IIS:\AppPools\$frontendAppPool")) {
-    Write-Warning "Frontend App Pool ($frontendAppPool) does not exist! Please run create-iis-pools.ps1 first."
-    Exit
-}
-
-# 7. Configure IIS Sites and Firewall Rules
-Write-Host "`n--- CONFIGURING IIS SITES & FIREWALL ---"
-
-function Setup-Site {
-    param ($SiteName, $Port, $PhysicalPath, $AppPool)
-    
-    $fullSiteName = "BillBook_$SiteName"
-    
-    # Remove existing site if present
-    if (Test-Path "IIS:\Sites\$fullSiteName") {
-        Remove-WebSite -Name $fullSiteName
+    # Dynamically point the Angular App to the Backend Gateway Port for this environment
+    $envName = $Environment.ToLower()
+    $envFile = "$repoPath\frontend\apps\$app\src\environments\environment.$envName.ts"
+    if (Test-Path $envFile) {
+        $envContent = Get-Content $envFile -Raw
+        $envContent = $envContent -replace "apiBaseUrl: '.*'", "apiBaseUrl: 'http://localhost:$BackendPort'"
+        Set-Content -Path $envFile -Value $envContent
+        Write-Host "Patched $envName API URL to Port $BackendPort for $app"
     }
+
+    npx nx build $app -c $envName --base-href "/$app/"
+    Copy-Item -Path "$repoPath\frontend\dist\apps\$app" -Destination "$basePath\frontend\$app" -Recurse -Force
     
-    Write-Host "Creating IIS Site: $fullSiteName on Port $Port -> $PhysicalPath"
-    New-WebSite -Name $fullSiteName -Port $Port -PhysicalPath $PhysicalPath -ApplicationPool $AppPool | Out-Null
-
-    # Firewall Rule
-    $fwRuleName = "BillBook_Port_$Port"
-    if (-Not (Get-NetFirewallRule -DisplayName $fwRuleName -ErrorAction SilentlyContinue)) {
-        Write-Host "  -> Opening Windows Firewall for Port $Port"
-        New-NetFirewallRule -DisplayName $fwRuleName -Direction Inbound -LocalPort $Port -Protocol TCP -Action Allow | Out-Null
-    }
-}
-
-# Setup Backend Sites
-foreach ($app in $backendApps) {
-    $path = Join-Path $basePath "backend\$($app.Name)"
-    Setup-Site -SiteName $app.Name -Port $app.Port -PhysicalPath $path -AppPool $backendAppPool
-}
-
-# Setup Frontend Sites
-foreach ($app in $frontendApps) {
-    $path = Join-Path $basePath "frontend\$($app.Name)"
-    Setup-Site -SiteName "Frontend_$($app.Name)" -Port $app.Port -PhysicalPath $path -AppPool $frontendAppPool
-    
-    # Create web.config for Angular SPA URL Rewrite
-    $webConfigPath = Join-Path $path "web.config"
     $webConfigContent = @"
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
@@ -150,22 +79,19 @@ foreach ($app in $frontendApps) {
             <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
             <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
           </conditions>
-          <action type="Rewrite" url="/" />
+          <action type="Rewrite" url="/$app/" />
         </rule>
       </rules>
     </rewrite>
   </system.webServer>
 </configuration>
 "@
-    Set-Content -Path $webConfigPath -Value $webConfigContent
+    Set-Content -Path "$basePath\frontend\$app\web.config" -Value $webConfigContent
 }
+Set-Location -Path $repoPath
 
 Write-Host "`n--- STARTING APP POOLS ---"
-Start-WebAppPool -Name $backendAppPool -ErrorAction SilentlyContinue
-Start-WebAppPool -Name $frontendAppPool -ErrorAction SilentlyContinue
+Start-WebAppPool -Name "BillBook_Backend_Pool_$Environment" -ErrorAction SilentlyContinue
+Start-WebAppPool -Name "BillBook_Frontend_Pool_$Environment" -ErrorAction SilentlyContinue
 
-Write-Host "`n======================================================="
-Write-Host "DEPLOYMENT COMPLETE!"
-Write-Host "The Gateway is accessible at: http://localhost:5000"
-Write-Host "The Main Web App is accessible at: http://localhost:4200"
-Write-Host "======================================================="
+Write-Host "`nDEPLOYMENT COMPLETE for $Environment Environment"
