@@ -238,6 +238,11 @@ export const appRoutes: Routes = [
         path: 'sales',
         loadChildren: () => import('@bill-book/sales-ui').then((m) => m.salesRoutes),
       },
+      {
+        path: 'purchase',
+        loadChildren: () =>
+          import('@bill-book/purchase-ui').then((m) => m.purchaseRoutes),
+      },
       { path: '**', component: DashboardPage },
     ],
   },

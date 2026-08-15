@@ -6,7 +6,7 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: schema built and verified; no API, no pages.** T4.2 is done — the twelve `pur` tables, the migration and its RLS policies exist and were checked against a real PostgreSQL 16. T4.1 is answered. Everything from T4.3 on is still designed and uncoded.
+**Status: schema and the purchase order built and verified.** T4.1, T4.2 and T4.3 are done — the twelve `pur` tables with RLS, and the purchase order end to end: API, pages, Gateway route and twelve tests against a real PostgreSQL 16. The goods receipt (T4.4), the bill (T4.5) and the debit note (T5.3) are still designed and uncoded.
 
 Stock receipt, cost layers, batch and serial capture and backdated recosting remain **built and never called by a document** — so every receipt today still lands as an opening balance. The schema landing does not change that; T4.4 does.
 
@@ -187,7 +187,19 @@ Numbering follows `TRANSACTIONS.md`.
   - **`Bills.VendorBillFinancialYear` is a stored computed column**, because the unique index needs a year and a vendor legitimately reuses a number after April. Postgres derives it from `VendorBillDate`; C# never writes it. **April is hardcoded** where `Numbering:FinancialYearStartMonth` is configurable — the column exists for input tax credit and the GST year is statutorily April–March, so a branch keeping its books on a different year does not get a different GST year. The March-2027-is-still-FY-2026 boundary is covered.
   - **Parent-child relationships name their navigation.** `HasOne<X>().WithMany(h => h.Lines)`, not `WithMany()`. The empty form declares a *second* relationship beside the collection navigation and EF invents a shadow FK for it — see §11.
   - **`base.OnModelCreating` is called last**, as Inventory and Accounting do. Without it `TenantDbContext` never runs: no OrgId query filter, no OrgId index, and `Version` mapped as a plain `bigint` rather than the `xmin` system column. See §11.
-- [ ] **T4.3 — Purchase order: API and page.** No posting, **no reservation** — ordering stock does not reserve anything, it is not there yet.
+- [x] **T4.3 — Purchase order: API and page.** No posting, **no reservation** — ordering stock does not reserve anything, it is not there yet.
+
+  `PurchaseOrdersController` (list, get, create, update, approve, confirm, void), `PurchaseOrderService`, the `purchase-ui` list and form pages on the shared `bb-document-line-grid`, the Gateway route, and `Purchase.Api.Tests` — twelve tests against a real PostgreSQL 16, all passing.
+
+  The service has **no `IInventoryClient` and no `ILedgerClient`**, and that absence is the task: a sales order has both, ordering from a vendor needs neither. What it does exercise is everything the later documents need — tax determination, numbering, the lifecycle, the batched name lookups — proved somewhere a mistake cannot reach the books.
+
+  Five things worth carrying forward:
+
+  - **`approve` and `confirm` are separate transitions.** `approve` is Draft → ReadyToPost, the review step; `confirm` is → Posted, meaning issued to the vendor. Both carry `[PermissionAction("approve")]`, so both need `purchase.approve` rather than the `purchase.edit` a bare POST would derive. There is no `purchase.post` seeded, and issuing is deliberately filed under approve: committing the company to a spend is the authority being exercised, not editing. `POR` is `IsLedgerPosting = false` in `mst.TransactionTypes`, so "Posted" here means issued and reaches no account.
+  - **A draft leaves `PostedAt` null.** `SalesOrderService.CreateAsync` stamps `PostedAt` and `PostedBy` on a document it then saves as `Draft`, which its own `chk_salesorders_posted_stamp` constraint refuses — see §11. A test asserts the purchase side does not.
+  - **Create and update share one `ApplyAsync`.** The sales equivalent writes the same hundred lines twice and the two copies have already drifted — only one of them re-resolves the place of supply. Two copies of the arithmetic behind a GST return is one copy that gets corrected and one that does not.
+  - **The number is allocated last**, after every validation, so a refused request never spends one. A test asserts a refused order leaves the table empty.
+  - **Place of supply matters more here than on the sales side.** A vendor who is unregistered or on the composition scheme has no GSTIN, so there is nothing to fall back to and the order is refused until a place of supply is stated. Correct — intra cannot be told from inter without one — but it makes that field load-bearing on the purchase form in a way it is not on an invoice, and the form says so.
 - [ ] **T4.4 — Goods receipt: API and page.** Receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input and belong in the answer to the caller rather than in a background failure.
   *Done when*: a receipt against an order opens a cost layer at the received cost, a partial receipt leaves the order partly open, and only the accepted quantity becomes stock.
 - [ ] **T4.5 — Bill: API and page.** With or without a receipt, with Input GST legs and payment terms driving the due date.
@@ -213,7 +225,9 @@ What purchase pages add *beside* it, not inside it:
 | Bill | `VendorBillNo` and `VendorBillDate` on the header; `LineType` is already in the grid |
 | Purchase order | expected date; **no reservation control** — an order reserves nothing |
 
-Nothing integrates it yet, because there are no purchase pages. T4.3, T4.4, T4.5 and T5.3 each wire it up as they land.
+**T4.3 wired it up first**, on the purchase order form, and it served the purchase side unchanged as predicted — no fork, no purchase-specific variant. The form converts between the grid's integer paise and the API's decimals in one place and sends no totals at all, because the server computes them.
+
+The goods receipt (T4.4), the bill (T4.5) and the debit note (T5.3) each wire it up as they land, adding their own columns beside it rather than inside it.
 
 ---
 
@@ -225,9 +239,9 @@ Documentation in the same commit · `OrgId` + query filter + RLS on every table 
 
 ---
 
-## 11. Three defects in `sal` that building `pur` found — **not fixed, and they should be**
+## 11. Four defects in `sal` that building `pur` found — **not fixed, and they should be**
 
-Building this schema against the sales one surfaced three problems in `sal`. None is Purchase's to fix, none is fixed here, and all three are live on `main`. They are written down because the next person to copy `SalesDbContext` inherits all three.
+Building this module against the sales one surfaced four problems in `sal`. None is Purchase's to fix, none is fixed here, and all four are live on `main`. They are written down because the next person to copy from Sales inherits all four.
 
 **1. `sal` has no row-level security at all.** `Migrations/README-RowLevelSecurity.md` carries the block to paste and it was never pasted: `grep -c "ROW LEVEL SECURITY"` over `20260814075501_AddSalesRegister.cs` returns 0. Every sales document table is unprotected at the database level.
 
@@ -237,6 +251,8 @@ Taken together, 1 and 2 mean **`sal` currently has neither of the two isolation 
 
 **3. Ten shadow foreign-key columns.** `HasOne<Quote>().WithMany()` with no navigation argument declares a relationship *separate* from the `Lines` collection, so EF adds a second FK column for the navigation. `sal` therefore carries `QuoteId1`, `SalesOrderId1`, `DeliveryChallanId1`, `InvoiceId1`, `CreditNoteId1` and their five detail-tax equivalents — nullable, unindexed, and written instead of the intended column when a header is saved with its `Lines` populated. `pur` avoids it by naming the navigation.
 
-`pur` is clean on all three: RLS verified in the database, `base.OnModelCreating` called last, and the migration contains no `*Id1` column.
+**4. `SalesOrderService.CreateAsync` stamps a draft as posted.** It sets `PostedAt` and `PostedBy` and then saves the document with `Status = Draft`. The header check constraint is `(Status IN ('Posted','Void')) OR PostedAt IS NULL`, so that row cannot be inserted: creating a sales order should throw at the database every time. `PostedAt` being null is also what tells a void draft from a void posting, which is the reason there is no fifth status — so this is not only a failed insert but a lost distinction. Found by writing the equivalent purchase test, which asserts the opposite.
+
+`pur` is clean on all four: RLS verified in the database, `base.OnModelCreating` called last, no `*Id1` column in the migration, and a test asserting a draft carries no posting stamp.
 
 ---
