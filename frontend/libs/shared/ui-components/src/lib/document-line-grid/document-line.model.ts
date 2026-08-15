@@ -86,6 +86,26 @@ export type TaxTreatment =
 export type LineType = 'Stock' | 'Expense' | 'Capital';
 
 /**
+ * A tax group the user can put a line on, as `acc.TaxMasters` serves it.
+ *
+ * **Rates are percents here, not scaled**, because that is how the API sends
+ * them; the grid scales to `RATE_SCALE` when it builds the line's tax rows. Both
+ * splits are carried — CGST/SGST and IGST — and which one is used follows the
+ * document's `isInterState`, exactly as the C# `TaxRate` record does. Asking the
+ * caller to pre-resolve one would put the intra/inter decision in two places.
+ */
+export interface TaxGroupOption {
+  taxGroupId: number;
+  taxMasterId: number;
+  /** What the user reads — "GST 18%". */
+  label: string;
+  cgstRate: number;
+  sgstRate: number;
+  igstRate: number;
+  cessRate: number;
+}
+
+/**
  * What the grid needs from the document around it. Passed in rather than
  * fetched, so the grid stays free of HTTP and can be tested without a server.
  */

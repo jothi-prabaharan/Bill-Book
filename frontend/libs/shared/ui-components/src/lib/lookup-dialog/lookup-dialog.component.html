@@ -1,0 +1,55 @@
+@if (open()) {
+  <div class="backdrop" (click)="onDismiss()" (keydown)="onKeydown($event)" tabindex="-1">
+    <!-- Stop the click reaching the backdrop, or choosing a row would also
+         dismiss through the overlay behind it. -->
+    <div
+      class="dialog"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="title()"
+      (click)="$event.stopPropagation()"
+      (keydown)="onKeydown($event)"
+      tabindex="-1"
+    >
+      <header class="dialog__header">
+        <h2 class="dialog__title">{{ title() }}</h2>
+        <button type="button" class="dialog__close" aria-label="Close" (click)="onDismiss()">
+          ×
+        </button>
+      </header>
+
+      <div class="dialog__search">
+        <input
+          type="search"
+          class="dialog__input"
+          [placeholder]="placeholder()"
+          [ngModel]="term()"
+          (ngModelChange)="onTerm($event)"
+          [attr.aria-label]="placeholder()"
+        />
+      </div>
+
+      <div class="dialog__body">
+        @if (loading()) {
+          <p class="dialog__state">Searching&hellip;</p>
+        } @else if (rows().length === 0) {
+          <p class="dialog__state">{{ emptyText() }}</p>
+        } @else {
+          <ul class="results">
+            @for (row of rows(); track row.id) {
+              <li>
+                <button type="button" class="result" (click)="onChoose(row)">
+                  <span class="result__code">{{ row.code }}</span>
+                  <span class="result__name">{{ row.name }}</span>
+                  @if (row.meta) {
+                    <span class="result__meta">{{ row.meta }}</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+    </div>
+  </div>
+}

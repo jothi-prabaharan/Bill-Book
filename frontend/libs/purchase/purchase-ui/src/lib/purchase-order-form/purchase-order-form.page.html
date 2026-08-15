@@ -13,9 +13,7 @@
           <span class="pill">{{ status() }}</span>
           <span class="pill">{{ fulfilmentStatus() }}</span>
           @if (receiptCount() > 0) {
-            <span class="pill pill--info">
-              {{ receiptCount() }} receipt(s)
-            </span>
+            <span class="pill pill--info">{{ receiptCount() }} receipt(s)</span>
           }
         </p>
       }
@@ -26,11 +24,18 @@
   @if (error()) {
     <div class="banner banner--error" role="alert">{{ error() }}</div>
   }
+  @if (notice()) {
+    <div class="banner banner--ok">{{ notice() }}</div>
+  }
 
   @if (readonlyDoc()) {
     <div class="banner banner--info">
-      This order has been issued, so it is no longer editable. Raise a goods
-      receipt against it when the stock arrives.
+      @if (status() === 'Void') {
+        This order has been voided. Its number stays on record; raise a new one.
+      } @else {
+        This order has been issued, so it is no longer editable. Raise a goods
+        receipt against it when the stock arrives.
+      }
     </div>
   }
 
@@ -41,20 +46,17 @@
       <h2 class="card__title">Vendor &amp; dates</h2>
 
       <div class="grid">
-        <label class="field">
+        <div class="field">
           <span class="field__label">Vendor</span>
-          <!-- A number box until the contact picker lands with T4.5; the id is
-               validated server-side either way. -->
-          <input
-            type="number"
-            class="input"
+          <button
+            type="button"
+            class="picker"
             [disabled]="readonlyDoc()"
-            [ngModel]="contactId()"
-            (ngModelChange)="contactId.set($event)"
-            name="contactId"
-            placeholder="Contact id"
-          />
-        </label>
+            (click)="openVendorPicker()"
+          >
+            {{ contactLabel() || 'Choose a vendor' }}
+          </button>
+        </div>
 
         <label class="field">
           <span class="field__label">Vendor GSTIN</span>
@@ -91,10 +93,7 @@
             (ngModelChange)="expectedDate.set($event)"
             name="expectedDate"
           />
-          <span class="field__hint">
-            When the vendor is expected to deliver. Cannot fall before the order
-            date.
-          </span>
+          <span class="field__hint">Cannot fall before the order date.</span>
         </label>
 
         <label class="field">
@@ -146,20 +145,28 @@
     </section>
 
     <section class="card">
-      <div class="card__header">
-        <h2 class="card__title">Lines</h2>
-        @if (!readonlyDoc()) {
-          <button type="button" class="btn" (click)="addLine()">Add line</button>
-        }
-      </div>
+      <h2 class="card__title">Lines</h2>
 
-      <!-- The same grid every sales and purchase document uses. There is no
-           reservation column here: an order holds no stock. -->
+      <!-- The same grid every sales and purchase document uses. Adding and
+           removing lines is the grid's own; this page answers pickItem, because
+           the grid deliberately does not know how to fetch anything.
+           showLineType is on: purchase is where Stock, Expense and Capital are
+           all used. There is no reservation column — an order holds no stock. -->
       <bb-document-line-grid
         [lines]="lines()"
         [context]="gridContext()"
+        [taxGroups]="taxGroups()"
+        [showLineType]="true"
         (linesChange)="onLinesChange($event)"
+        (pickItem)="onPickItem($event)"
       />
+
+      @if (taxGroups().length === 0) {
+        <p class="field__hint">
+          No purchase tax rates are set up, so no rate can be put on a line. Add
+          them under Settings &rsaquo; Tax master.
+        </p>
+      }
     </section>
 
     <section class="card">
@@ -203,13 +210,23 @@
         </button>
 
         @if (!isNew()) {
+          @if (canApprove()) {
+            <button type="button" class="btn" [disabled]="saving()" (click)="approve()">
+              Approve
+            </button>
+          }
+          @if (canConfirm()) {
+            <button type="button" class="btn" [disabled]="saving()" (click)="confirm()">
+              Issue to vendor
+            </button>
+          }
           <button
             type="button"
-            class="btn"
+            class="btn btn--danger"
             [disabled]="saving()"
-            (click)="confirm()"
+            (click)="voidOpen.set(true)"
           >
-            Issue to vendor
+            Void
           </button>
           <span class="actions__hint">
             Issuing freezes the order so a goods receipt can be raised against
@@ -217,6 +234,52 @@
           </span>
         }
       </footer>
+
+      @if (voidOpen()) {
+        <section class="card card--void">
+          <h2 class="card__title">Void this order</h2>
+          <p class="field__hint">
+            The order and its number stay on record. The reason is required —
+            it is what makes the gap in the sequence answerable.
+          </p>
+          <label class="field field--wide">
+            <span class="field__label">Reason</span>
+            <input
+              type="text"
+              class="input"
+              maxlength="300"
+              [ngModel]="voidReason()"
+              (ngModelChange)="voidReason.set($event)"
+              name="voidReason"
+            />
+          </label>
+          <div class="actions">
+            <button
+              type="button"
+              class="btn btn--danger"
+              [disabled]="saving()"
+              (click)="voidOrder()"
+            >
+              Void the order
+            </button>
+            <button type="button" class="btn" (click)="voidOpen.set(false)">
+              Cancel
+            </button>
+          </div>
+        </section>
+      }
     }
   }
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [emptyText]="pickerEmptyText()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
 </div>

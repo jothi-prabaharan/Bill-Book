@@ -133,3 +133,13 @@ button:disabled {
     text-align: left;
   }
 }
+
+/* Added with the tax-group and line-type selectors: both sit under the field
+   they qualify rather than claiming a column of their own, which would have
+   changed every colspan in the footer. */
+.tax-group,
+.line-type {
+  display: block;
+  margin-top: 0.25rem;
+  max-width: 100%;
+}

@@ -30,16 +30,24 @@ Settings → **Purchase → Purchase orders → New purchase order**.
 
 | Field | Notes |
 |---|---|
-| Vendor | Who you are ordering from. |
+| Vendor | Chosen from a search — only contacts marked as vendors appear. Picking one fills the GSTIN if it is blank. |
 | Vendor GSTIN | Optional. When set, it decides the place of supply. |
 | Order date | The document's own date, and the date every rate on it is taken at. |
 | Expected delivery | When the vendor is expected to deliver. Cannot fall before the order date. |
 | Place of supply | The two-digit state code the supply is made in. |
 
-Lines use the same grid as every other sales and purchase document: an item or a
-free-text description, quantity, price, discount and tax treatment. Totals and
-tax are computed by the server from the lines, at the rates in force on the order
-date — they are never keyed and never sent from the screen.
+Lines use the same grid as every other sales and purchase document. On each line
+you choose an item — or type a description, if your branch allows lines without
+one — then the quantity, price, discount, tax treatment and the **GST rate**.
+
+Totals and tax are computed by the server from the lines, at the rates in force
+on the order date. The figures on screen update as you type so you can see what
+you are agreeing to, but they are never what gets saved — the server recomputes
+all of them, so a stale or tampered screen cannot produce a document whose foot
+disagrees with its body.
+
+If no rate can be chosen, no purchase GST rates are set up yet: add them under
+**Settings → Tax master**. A rate marked sales-only will not be offered here.
 
 ### Place of supply matters more here than on an invoice
 
@@ -110,3 +118,10 @@ The goods receipt, the bill and the debit note are designed but not coded, so
 today an order can be raised, issued and voided but nothing can be received
 against it. Until the goods receipt lands, stock still arrives through an opening
 balance.
+
+A few things on the form are still simpler than they will be: the warehouse, the
+unit of measure and the batch are not yet selectable on a line, and an expense or
+capital line takes an account or category by its id rather than from a picker.
+Nothing there blocks raising an order — the server fills in sensible defaults —
+but they arrive with the goods receipt, which is the first document that needs
+them for real.

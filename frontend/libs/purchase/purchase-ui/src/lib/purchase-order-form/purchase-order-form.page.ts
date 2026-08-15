@@ -6,9 +6,13 @@ import {
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
+  LookupDialogComponent,
+  LookupRow,
+  TaxGroupOption,
   recalculate,
 } from '@bill-book/ui-components';
 import {
+  PurchaseLookupService,
   PurchaseOrderService,
   PurchaseOrderView,
   SavePurchaseOrderLineRequest,
@@ -22,6 +26,10 @@ import {
  */
 const QTY_SCALE = 1_000_000;
 const PAISE = 100;
+const RATE_SCALE = 10_000;
+
+/** Which lookup, if any, is currently open. */
+type Picker = 'none' | 'vendor' | 'item';
 
 /**
  * Raise or amend a purchase order.
@@ -31,16 +39,27 @@ const PAISE = 100;
  * from a vendor holds nothing, because the goods are not here. What this page
  * adds beside the shared line grid is the expected delivery date — see
  * `docs/modules/Purchase.md` §9a.
+ *
+ * The pickers are the host's job by design: `bb-document-line-grid` and
+ * `bb-lookup-dialog` both fetch nothing, so this page owns every HTTP call and
+ * they stay testable without a server.
  */
 @Component({
   selector: 'bb-purchase-order-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, DocumentLineGridComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    DocumentLineGridComponent,
+    LookupDialogComponent,
+  ],
   templateUrl: './purchase-order-form.page.html',
   styleUrl: './purchase-order-form.page.scss',
 })
 export class PurchaseOrderFormPage {
   private readonly orders = inject(PurchaseOrderService);
+  private readonly lookups = inject(PurchaseLookupService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -53,6 +72,7 @@ export class PurchaseOrderFormPage {
   protected readonly documentDate = signal(this.today());
   protected readonly expectedDate = signal<string>('');
   protected readonly contactId = signal<number | null>(null);
+  protected readonly contactLabel = signal<string>('');
   protected readonly contactGstin = signal('');
   protected readonly placeOfSupplyStateCode = signal('');
   protected readonly billingAddress = signal('');
@@ -62,33 +82,94 @@ export class PurchaseOrderFormPage {
   protected readonly isInterState = signal(false);
 
   protected readonly lines = signal<readonly DocumentLine[]>([]);
+  protected readonly taxGroups = signal<readonly TaxGroupOption[]>([]);
 
   protected readonly saving = signal(false);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
+  protected readonly notice = signal<string | null>(null);
 
-  /** Posted and void orders are read-only; a draft and a ready-to-post one are not. */
+  // ---- Lookups ----------------------------------------------------------
+
+  protected readonly picker = signal<Picker>('none');
+  protected readonly pickerRows = signal<readonly LookupRow[]>([]);
+  protected readonly pickerLoading = signal(false);
+
+  /** Which line the item picker was opened for. */
+  private pickingLine = -1;
+
+  /** Guards against an earlier search landing after a later one. */
+  private searchToken = 0;
+
+  // ---- Branch settings --------------------------------------------------
+
+  private readonly allowFreeTextLines = signal(true);
+  private readonly discountBeforeTax = signal(true);
+  private readonly discountLevel = signal<'Line' | 'Header' | 'Both'>('Line');
+
   protected readonly readonlyDoc = computed(
     () => this.status() === 'Posted' || this.status() === 'Void',
   );
 
   protected readonly isNew = computed(() => this.purchaseOrderId() === null);
 
+  protected readonly canApprove = computed(() => this.status() === 'Draft');
+
+  protected readonly canConfirm = computed(
+    () => this.status() === 'Draft' || this.status() === 'ReadyToPost',
+  );
+
   protected readonly gridContext = computed<DocumentLineContext>(() => ({
     isInterState: this.isInterState(),
-    // Branch settings arrive with T4.5's header work; these are the shipped
-    // defaults until then, and they only affect what the grid lets you key.
-    allowFreeTextLines: true,
-    discountBeforeTax: true,
-    discountLevel: 'Line',
+    allowFreeTextLines: this.allowFreeTextLines(),
+    discountBeforeTax: this.discountBeforeTax(),
+    discountLevel: this.discountLevel(),
     readonly: this.readonlyDoc(),
     currencyDecimals: 2,
   }));
 
   constructor() {
+    void this.loadReferenceData();
+
     const id = this.route.snapshot.paramMap.get('id');
     if (id !== null && id !== 'new') {
       void this.load(Number(id));
+    }
+  }
+
+  /**
+   * The branch's settings and the rates a line may use.
+   *
+   * Failures here are not fatal: the settings fall back to the shipped defaults
+   * and the rate list stays empty, which leaves the grid usable and the tax
+   * column blank rather than turning the whole screen into an error. The server
+   * recomputes every figure on save regardless.
+   */
+  private async loadReferenceData(): Promise<void> {
+    try {
+      const settings = await this.lookups.settings();
+      this.allowFreeTextLines.set(settings.allowFreeTextLines);
+      this.discountBeforeTax.set(settings.discountBeforeTax);
+      this.discountLevel.set(settings.discountLevel);
+    } catch {
+      // Defaults already set on the signals.
+    }
+
+    try {
+      const rates = await this.lookups.purchaseTaxRates();
+      this.taxGroups.set(
+        rates.map((rate) => ({
+          taxGroupId: rate.taxGroupId,
+          taxMasterId: rate.taxMasterId,
+          label: `${rate.taxName} (${rate.totalRate}%)`,
+          cgstRate: rate.cgstRate,
+          sgstRate: rate.sgstRate,
+          igstRate: rate.igstRate,
+          cessRate: rate.cessRate,
+        })),
+      );
+    } catch {
+      this.taxGroups.set([]);
     }
   }
 
@@ -107,6 +188,11 @@ export class PurchaseOrderFormPage {
       this.documentDate.set(view.documentDate);
       this.expectedDate.set(view.expectedDate ?? '');
       this.contactId.set(view.contactId);
+      this.contactLabel.set(
+        view.contactName
+          ? `${view.contactCode ?? ''} ${view.contactName}`.trim()
+          : String(view.contactId),
+      );
       this.contactGstin.set(view.contactGstin ?? '');
       this.billingAddress.set(view.billingAddress ?? '');
       this.shippingAddress.set(view.shippingAddress ?? '');
@@ -141,7 +227,7 @@ export class PurchaseOrderFormPage {
           taxes: line.taxes.map((tax) => ({
             component: tax.taxComponent as 'Cgst' | 'Sgst' | 'Igst' | 'Cess',
             subAccountId: tax.subAccountId,
-            rate: Math.round(tax.rate * 10_000),
+            rate: Math.round(tax.rate * RATE_SCALE),
             taxableAmount: Math.round(tax.taxableAmount * PAISE),
             amount: Math.round(tax.amount * PAISE),
           })),
@@ -164,44 +250,123 @@ export class PurchaseOrderFormPage {
     this.lines.set(lines);
   }
 
-  protected addLine(): void {
-    const next: DocumentLine = recalculate(
-      {
-        detailId: 0,
-        lineNumber: this.lines().length + 1,
-        itemId: null,
-        itemLabel: null,
-        hsnSacCode: null,
-        description: null,
-        warehouseId: null,
-        quantity: QTY_SCALE,
-        uomId: null,
-        uomLabel: null,
-        conversionFactor: QTY_SCALE,
-        baseQuantity: QTY_SCALE,
-        unitPrice: 0,
-        isPriceInclusive: false,
-        discountPercent: null,
-        discountAmount: 0,
-        grossAmount: 0,
-        taxableAmount: 0,
-        taxTreatment: 'Taxable',
-        taxMasterId: null,
-        taxGroupId: null,
-        taxAmount: 0,
-        taxes: [],
-        lineType: 'Stock',
-        accountId: null,
-        fixedAssetCategoryId: null,
-        lineTotal: 0,
-        itemBatchId: null,
-        lineNotes: null,
-      },
-      this.gridContext(),
-    );
+  // ---- Vendor picker ----------------------------------------------------
 
-    this.lines.set([...this.lines(), next]);
+  protected openVendorPicker(): void {
+    if (this.readonlyDoc()) {
+      return;
+    }
+
+    this.picker.set('vendor');
+    void this.runSearch('');
   }
+
+  // ---- Item picker ------------------------------------------------------
+
+  /** The grid asks; this page answers. The grid does not know how to fetch. */
+  protected onPickItem(lineIndex: number): void {
+    if (this.readonlyDoc()) {
+      return;
+    }
+
+    this.pickingLine = lineIndex;
+    this.picker.set('item');
+    void this.runSearch('');
+  }
+
+  protected onPickerSearch(term: string): void {
+    void this.runSearch(term);
+  }
+
+  private async runSearch(term: string): Promise<void> {
+    const token = ++this.searchToken;
+    this.pickerLoading.set(true);
+
+    try {
+      const rows: LookupRow[] =
+        this.picker() === 'vendor'
+          ? (await this.lookups.vendors(term)).map((vendor) => ({
+              id: vendor.contactId,
+              code: vendor.contactCode,
+              name: vendor.displayName,
+              meta: vendor.gstin,
+            }))
+          : (await this.lookups.items(term)).map((item) => ({
+              id: item.itemId,
+              code: item.itemCode,
+              name: item.itemName,
+              meta: item.inventoryUomCode,
+            }));
+
+      // A slower earlier search must not overwrite a newer one's results.
+      if (token === this.searchToken) {
+        this.pickerRows.set(rows);
+      }
+    } catch {
+      if (token === this.searchToken) {
+        this.pickerRows.set([]);
+      }
+    } finally {
+      if (token === this.searchToken) {
+        this.pickerLoading.set(false);
+      }
+    }
+  }
+
+  protected onPickerChoose(row: LookupRow): void {
+    if (this.picker() === 'vendor') {
+      this.contactId.set(row.id);
+      this.contactLabel.set(`${row.code} ${row.name}`.trim());
+
+      // The GSTIN comes with the vendor, and it is what decides the place of
+      // supply. Only filled when the field is empty, so a deliberate override
+      // is not undone by changing vendor.
+      if (row.meta && !this.contactGstin()) {
+        this.contactGstin.set(row.meta);
+      }
+    } else {
+      this.applyItem(this.pickingLine, row);
+    }
+
+    this.closePicker();
+  }
+
+  private applyItem(lineIndex: number, row: LookupRow): void {
+    this.lines.set(
+      this.lines().map((line, at) =>
+        at === lineIndex
+          ? recalculate(
+              { ...line, itemId: row.id, itemLabel: `${row.code} - ${row.name}` },
+              this.gridContext(),
+            )
+          : line,
+      ),
+    );
+  }
+
+  protected closePicker(): void {
+    this.picker.set('none');
+    this.pickerRows.set([]);
+    this.pickingLine = -1;
+  }
+
+  protected pickerTitle(): string {
+    return this.picker() === 'vendor' ? 'Choose a vendor' : 'Choose an item';
+  }
+
+  protected pickerPlaceholder(): string {
+    return this.picker() === 'vendor'
+      ? 'Search vendors by code or name'
+      : 'Search items by code or name';
+  }
+
+  protected pickerEmptyText(): string {
+    return this.picker() === 'vendor'
+      ? 'No vendors match. A contact has to be marked as a vendor to appear here.'
+      : 'No items match.';
+  }
+
+  // ---- Actions ----------------------------------------------------------
 
   protected async save(): Promise<void> {
     const contactId = this.contactId();
@@ -212,6 +377,7 @@ export class PurchaseOrderFormPage {
 
     this.saving.set(true);
     this.error.set(null);
+    this.notice.set(null);
 
     try {
       const request = this.toRequest(contactId);
@@ -225,6 +391,7 @@ export class PurchaseOrderFormPage {
       } else {
         await this.orders.update(id, request);
         await this.load(id);
+        this.notice.set('Saved.');
       }
     } catch (err) {
       this.error.set(this.messageFrom(err));
@@ -233,7 +400,32 @@ export class PurchaseOrderFormPage {
     }
   }
 
-  protected async confirm(): Promise<void> {
+  protected approve(): Promise<void> {
+    return this.act((id) => this.orders.approve(id), 'Approved and ready to issue.');
+  }
+
+  protected confirm(): Promise<void> {
+    return this.act((id) => this.orders.confirm(id), 'Issued to the vendor.');
+  }
+
+  protected async voidOrder(): Promise<void> {
+    const reason = this.voidReason().trim();
+    if (!reason) {
+      this.error.set('Say why this order is being voided.');
+      return;
+    }
+
+    await this.act((id) => this.orders.void(id, { reason }), 'Order voided.');
+    this.voidOpen.set(false);
+  }
+
+  protected readonly voidOpen = signal(false);
+  protected readonly voidReason = signal('');
+
+  private async act(
+    call: (id: number) => Promise<void>,
+    done: string,
+  ): Promise<void> {
     const id = this.purchaseOrderId();
     if (id === null) {
       return;
@@ -241,10 +433,12 @@ export class PurchaseOrderFormPage {
 
     this.saving.set(true);
     this.error.set(null);
+    this.notice.set(null);
 
     try {
-      await this.orders.confirm(id);
+      await call(id);
       await this.load(id);
+      this.notice.set(done);
     } catch (err) {
       this.error.set(this.messageFrom(err));
     } finally {

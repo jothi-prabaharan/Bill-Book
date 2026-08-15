@@ -191,6 +191,8 @@ Numbering follows `TRANSACTIONS.md`.
 
   `PurchaseOrdersController` (list, get, create, update, approve, confirm, void), `PurchaseOrderService`, the `purchase-ui` list and form pages on the shared `bb-document-line-grid`, the Gateway route, and `Purchase.Api.Tests` — twelve tests against a real PostgreSQL 16, all passing.
 
+  **The UI landed in two passes, and the first one did not work.** The page built, linted and bundled, so it was reported as done; it could not actually raise an order. The grid delegates item choice to its host by emitting `pickItem`, the form ignored that event, and a `Stock` line without an item is refused by the server — so the ordinary case was unreachable through the screen. Building and bundling is not evidence that a screen works, and nothing in the checks that were run could have caught it. The second pass added the pickers and the missing selectors; what is written below describes the finished state.
+
   The service has **no `IInventoryClient` and no `ILedgerClient`**, and that absence is the task: a sales order has both, ordering from a vendor needs neither. What it does exercise is everything the later documents need — tax determination, numbering, the lifecycle, the batched name lookups — proved somewhere a mistake cannot reach the books.
 
   Five things worth carrying forward:
@@ -200,6 +202,14 @@ Numbering follows `TRANSACTIONS.md`.
   - **Create and update share one `ApplyAsync`.** The sales equivalent writes the same hundred lines twice and the two copies have already drifted — only one of them re-resolves the place of supply. Two copies of the arithmetic behind a GST return is one copy that gets corrected and one that does not.
   - **The number is allocated last**, after every validation, so a refused request never spends one. A test asserts a refused order leaves the table empty.
   - **Place of supply matters more here than on the sales side.** A vendor who is unregistered or on the composition scheme has no GSTIN, so there is nothing to fall back to and the order is refused until a place of supply is stated. Correct — intra cannot be told from inter without one — but it makes that field load-bearing on the purchase form in a way it is not on an invoice, and the form says so.
+
+  **Three things in `libs/shared/ui-components` changed, and all three were needed by Sales just as much:**
+
+  - **`bb-lookup-dialog`** — a new picker: search a master, choose a row. It fetches nothing, the same contract the line grid holds, so the host owns the HTTP and `ui-components` stays Ionic-safe. The purchase form uses it for both the vendor and the item.
+  - **A tax-group selector on the line grid.** `taxGroupId` was editable nowhere in the product, so every line carried no tax rows and therefore no tax — on the sales screens as much as the purchase ones. It is an optional `taxGroups` input defaulting to empty, so a caller that passes none gets the grid exactly as it was. Choosing a group builds the line's tax rows from the branch's intra/inter decision, which is the same rule `componentsFor` already encoded.
+  - **The item picker was gated backwards.** "Pick an item" only rendered when `allowFreeTextLines` was on — so a branch that requires an item on every line got a description box it may not use and no way to choose one. The description is now what the setting gates; picking an item is always offered.
+
+  Also on the grid: an optional `showLineType` input, off by default. A sale has one kind of line in practice; purchase uses all three, and a capital line is how a fixed asset reaches the register.
 - [ ] **T4.4 — Goods receipt: API and page.** Receives stock at the order's cost, opens the cost layer, posts per T4.1. Batch, expiry and serial capture belong here, in the request, because they are user input and belong in the answer to the caller rather than in a background failure.
   *Done when*: a receipt against an order opens a cost layer at the received cost, a partial receipt leaves the order partly open, and only the accepted quantity becomes stock.
 - [ ] **T4.5 — Bill: API and page.** With or without a receipt, with Input GST legs and payment terms driving the due date.

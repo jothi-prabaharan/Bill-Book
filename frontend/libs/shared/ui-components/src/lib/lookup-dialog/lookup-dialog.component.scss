@@ -1,0 +1,126 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 100;
+}
+
+.dialog {
+  background: var(--bb-surface, #fff);
+  border-radius: 0.5rem;
+  width: 100%;
+  max-width: 32rem;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgb(15 23 42 / 25%);
+}
+
+.dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--bb-border, #e7eaee);
+}
+
+.dialog__title {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.dialog__close {
+  border: 0;
+  background: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  color: inherit;
+}
+
+.dialog__search {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--bb-border, #e7eaee);
+}
+
+.dialog__input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--bb-border, #d5d9e0);
+  border-radius: 0.375rem;
+  font: inherit;
+}
+
+.dialog__body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.dialog__state {
+  padding: 1.5rem 1rem;
+  text-align: center;
+  color: var(--bb-text-muted, #5b6472);
+  margin: 0;
+}
+
+.results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.result {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.15rem 0.6rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.6rem 1rem;
+  border: 0;
+  border-bottom: 1px solid var(--bb-border, #f0f2f5);
+  background: none;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--bb-hover, #f5f7fa);
+  }
+}
+
+.result__code {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.result__name {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.result__meta {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: var(--bb-text-muted, #5b6472);
+}
+
+/* Full-screen sheet on a phone, per the house rule for modals. */
+@media (max-width: 640px) {
+  .backdrop {
+    padding: 0;
+  }
+
+  .dialog {
+    max-width: none;
+    max-height: none;
+    height: 100%;
+    border-radius: 0;
+  }
+}
