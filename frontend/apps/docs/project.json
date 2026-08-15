@@ -59,7 +59,7 @@
     "serve": {
       "executor": "@angular/build:dev-server",
       "options": {
-        "port": 4300
+        "port": 4202
       },
       "configurations": {
         "development": { "buildTarget": "docs:build:development" },
