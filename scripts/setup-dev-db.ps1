@@ -1,48 +1,18 @@
 <#
 .SYNOPSIS
-    Creates the local databases, generates EF Core migrations and applies them.
+    Generates EF Core migrations if missing. Databases are created and migrated automatically by the APIs on startup.
 
 .DESCRIPTION
-    One command to go from a fresh clone to a running local stack:
-
-        1. Creates EP_Admin, EP_Design, EP_Test and
-           IN0000000001 via scripts/setup-dev-db.sql.
-        2. Adds an InitialCreate migration to each service that has a DbContext,
-           but only where no migration exists yet.
-        3. Applies the migrations to the right database for each service.
-
-    Safe to re-run. Step 1 skips databases that exist, step 2 skips services that
-    already have a migration, and step 3 is a no-op once the schema is current.
-
-    Only four services have a DbContext today: Master, Platform, Identity and
-    Accounting. The other eight (Banking, Contacts, Crm, Inventory, Purchase,
-    Reporting, Sales, Support) have empty Repository projects, so EF has nothing
-    to generate. They are listed as skipped rather than silently ignored.
-
-.PARAMETER PostgresUser
-    Postgres superuser. Defaults to postgres.
-
-.PARAMETER PostgresPassword
-    Password for that user. Defaults to the local development password.
-
-.PARAMETER SkipMigrations
-    Create the databases only; do not touch EF Core.
+    One command to go from a fresh clone to having migration files ready.
+    The APIs (Master and Accounting) will handle creating EP_Admin, EP_Design, EP_Test and IN0000000001,
+    applying migrations, and seeding data on startup.
 
 .EXAMPLE
     ./scripts/setup-dev-db.ps1
-
-.EXAMPLE
-    ./scripts/setup-dev-db.ps1 -PostgresPassword 'something-else'
 #>
 
 [CmdletBinding()]
-param(
-    [string] $PostgresHost = 'localhost',
-    [int]    $PostgresPort = 5432,
-    [string] $PostgresUser = 'postgres',
-    [string] $PostgresPassword = '123',
-    [switch] $SkipMigrations
-)
+param()
 
 $ErrorActionPreference = 'Stop'
 
@@ -53,11 +23,6 @@ function Write-Step  ([string] $Message) { Write-Host "`n=== $Message" -Foregrou
 function Write-Ok    ([string] $Message) { Write-Host "    $Message" -ForegroundColor Green }
 function Write-Skip  ([string] $Message) { Write-Host "    $Message" -ForegroundColor DarkGray }
 
-# Services that actually have a DbContext, and which database each migrates into.
-#
-#   master  -> EP_Admin, via the AdminDatabase connection string
-#   tenant  -> EP_Design, via DesignTimeDatabase; these are the per-customer
-#              schemas, which in production live in each Customer's own database
 $services = @(
     [pscustomobject]@{ Name = 'Master';     Target = 'master'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'AdminDbContext'; OutputDir = 'Migrations/Master' }
     [pscustomobject]@{ Name = 'Contacts';   Target = 'tenant'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'ContactsDbContext'; OutputDir = 'Migrations/Contacts' }
@@ -69,64 +34,29 @@ $notYetBuilt = @('Banking', 'Contacts', 'Crm', 'Inventory', 'Purchase', 'Reporti
 # --------------------------------------------------------------- prerequisites
 Write-Step 'Checking prerequisites'
 
-if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
-    throw "psql is not on PATH. It ships with PostgreSQL; add its bin directory " +
-          "(typically C:\Program Files\PostgreSQL\17\bin) to PATH and reopen the terminal."
-}
-Write-Ok "psql found: $((Get-Command psql).Source)"
-
 if (-not (Get-Command dotnet -ErrorAction SilentlyContinue)) {
     throw 'dotnet is not on PATH. Install the .NET 10 SDK.'
 }
 Write-Ok "dotnet found: $(dotnet --version)"
 
-if (-not $SkipMigrations) {
-    # `dotnet ef` is a local or global tool, not part of the SDK.
-    $efInstalled = (dotnet tool list --global 2>$null | Select-String -SimpleMatch 'dotnet-ef')
-    if (-not $efInstalled) {
-        Write-Host '    dotnet-ef not installed; installing globally...' -ForegroundColor Yellow
-        dotnet tool install --global dotnet-ef
-        if ($LASTEXITCODE -ne 0) { throw 'Failed to install dotnet-ef.' }
-    }
-    Write-Ok 'dotnet-ef available'
+# `dotnet ef` is a local or global tool, not part of the SDK.
+$efInstalled = (dotnet tool list --global 2>$null | Select-String -SimpleMatch 'dotnet-ef')
+if (-not $efInstalled) {
+    Write-Host '    dotnet-ef not installed; installing globally...' -ForegroundColor Yellow
+    dotnet tool install --global dotnet-ef
+    if ($LASTEXITCODE -ne 0) { throw 'Failed to install dotnet-ef.' }
 }
-
-# ------------------------------------------------------------------- databases
-Write-Step 'Creating databases'
-
-# PGPASSWORD rather than a password in the connection string: it does not appear
-# in the process list. Scoped to this process only.
-$env:PGPASSWORD = $PostgresPassword
-
-$dbSetupProj = Join-Path $backend "Tools\DatabaseSetup\DatabaseSetup.csproj"
-Write-Host "    Compiling and running C# DatabaseSetup tool..." -ForegroundColor Yellow
-dotnet run --project $dbSetupProj -- create $PostgresHost $PostgresPort $PostgresUser $PostgresPassword
-if ($LASTEXITCODE -ne 0) {
-    throw "Database creation failed. Check that PostgreSQL is running on ${PostgresHost}:${PostgresPort} and that the credentials are correct."
-}
-Write-Ok 'Databases ready'
-
-if ($SkipMigrations) {
-    Write-Step 'Done (migrations skipped)'
-    return
-}
+Write-Ok 'dotnet-ef available'
 
 # ------------------------------------------------------------------ migrations
 Write-Step 'Generating migrations'
 
-# Must be set before `migrations add`, not just before `database update`. EF builds
-# the application host to find the DbContext, and a WebApplication with no
-# environment set defaults to Production — where every connection string is blank
-# by design, so the startup guard throws and EF reports only "Unable to create a
-# DbContext", which points nowhere near the real cause.
 $env:ASPNETCORE_ENVIRONMENT = 'Development'
 
 foreach ($service in $services) {
     $repositoryPath = Join-Path $backend $service.Repository
     $migrationsPath = Join-Path $repositoryPath $service.OutputDir
 
-    # An empty Migrations directory is committed for each service, so test for
-    # actual migration files rather than for the directory.
     $existing = @(Get-ChildItem -Path $migrationsPath -Filter '*.cs' -ErrorAction SilentlyContinue)
     if ($existing.Count -gt 0) {
         Write-Skip "$($service.Name): migration already exists, skipping"
@@ -143,30 +73,9 @@ foreach ($service in $services) {
     Write-Ok "$($service.Name): InitialCreate added"
 }
 
-# ---------------------------------------------------------------------- update
-Write-Step 'Applying migrations'
-
-foreach ($service in $services) {
-    $database = if ($service.Target -eq 'master') { 'EP_Admin' } else { 'EP_Design' }
-    Write-Host "    $($service.Name) -> $database" -ForegroundColor Yellow
-
-    dotnet ef database update `
-        --project   (Join-Path $backend $service.Repository) `
-        --startup-project (Join-Path $backend $service.Startup) `
-        --context   $service.Context
-    if ($LASTEXITCODE -ne 0) { throw "Failed to apply migrations for $($service.Name)." }
-    Write-Ok "$($service.Name): schema current, seed data applied"
-}
-
-# ----------------------------------------------------------------- verification
-Write-Step 'Verifying seed data'
-
-# Verifies the seed data by printing the counts directly from the C# tool
-dotnet run --project $dbSetupProj -- verify $PostgresHost $PostgresPort $PostgresUser $PostgresPassword
-
 Write-Step 'Not yet built'
 Write-Skip "No DbContext, so no migration: $($notYetBuilt -join ', ')"
-Write-Skip 'Chart of Accounts and Tax Master seed per organization at signup, not via HasData.'
 
 Write-Step 'Done'
-Write-Host '    Press F5 in VS Code and pick "Everything (APIs + Gateway + Web)".' -ForegroundColor Green
+Write-Host '    Migrations are ready. Press F5 in VS Code and pick "Everything (APIs + Gateway + Web)".' -ForegroundColor Green
+Write-Host '    The APIs will automatically create the databases, apply migrations, and seed data on startup.' -ForegroundColor Green

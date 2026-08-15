@@ -165,6 +165,9 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+// Runs EF core migrations on startup
+builder.Services.AddHostedService<DatabaseMigrationService>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())

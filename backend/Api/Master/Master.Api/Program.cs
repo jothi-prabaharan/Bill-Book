@@ -60,9 +60,9 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 // One connection string, fixed. Nothing here is per-customer, so there is no
 // tenant to resolve and no RLS to set — this is the database that says which
 // other databases exist.
-builder.Services.AddDbContext<MasterDbContext>((sp, options) =>
+builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
 {
-    options.UseNpgsql(builder.Configuration.GetConnectionString("MasterDatabase"));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("AdminDatabase"));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
@@ -130,6 +130,9 @@ builder.Services.AddScoped<IEmailSender, QueuedEmailSender>();
 builder.Services.AddHostedService<EmailDispatchWorker>();
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
+
+// Runs database setup and EF core migrations on startup
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 // Writes each service's master data for a new organization. A named client
 // rather than a typed one, because one seeder talks to several services and
