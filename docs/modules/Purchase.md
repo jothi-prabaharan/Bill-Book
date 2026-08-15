@@ -309,9 +309,9 @@ Documentation in the same commit · `OrgId` + query filter + RLS on every table 
 
 ---
 
-## 11. Four defects in `sal` that building `pur` found — **not fixed, and they should be**
+## 11. Five defects in `sal` that building `pur` found — **not fixed, and they should be**
 
-Building this module against the sales one surfaced four problems in `sal`. None is Purchase's to fix, none is fixed here, and all four are live on `main`. They are written down because the next person to copy from Sales inherits all four.
+Building this module against the sales one surfaced five problems in `sal`. None is Purchase's to fix, none is fixed here, and all five are live on `main`. They are written down because the next person to copy from Sales inherits all five.
 
 **1. `sal` has no row-level security at all.** `Migrations/README-RowLevelSecurity.md` carries the block to paste and it was never pasted: `grep -c "ROW LEVEL SECURITY"` over `20260814075501_AddSalesRegister.cs` returns 0. Every sales document table is unprotected at the database level.
 
@@ -323,6 +323,10 @@ Taken together, 1 and 2 mean **`sal` currently has neither of the two isolation 
 
 **4. `SalesOrderService.CreateAsync` stamps a draft as posted.** It sets `PostedAt` and `PostedBy` and then saves the document with `Status = Draft`. The header check constraint is `(Status IN ('Posted','Void')) OR PostedAt IS NULL`, so that row cannot be inserted: creating a sales order should throw at the database every time. `PostedAt` being null is also what tells a void draft from a void posting, which is the reason there is no fifth status — so this is not only a failed insert but a lost distinction. Found by writing the equivalent purchase test, which asserts the opposite.
 
-`pur` is clean on all four: RLS verified in the database, `base.OnModelCreating` called last, no `*Id1` column in the migration, and a test asserting a draft carries no posting stamp.
+**5. Sales' ledger client speaks a contract Accounting refuses.** `Sales.Api/Services/LedgerClient.cs` declares its own `LedgerLegRequest` with a single `decimal Amount`. Accounting's leg has `DebitAmount` and `CreditAmount` and no `Amount` at all, so the value deserializes into nothing and both sides arrive zero — and `LedgerPostingService` throws on exactly that: `if ((leg.DebitAmount == 0) == (leg.CreditAmount == 0))` → "a leg is a debit or a credit, never both or neither." **Sales has never successfully posted to the general ledger**: not an invoice, not a credit note, not a delivery challan. The same client sends `SubAccountReferenceId` without the `SubAccountReferenceType` that completes the key. `pur`'s client was written against the real contract, which is how the difference showed up.
+
+`pur` is clean on all five: RLS verified in the database, `base.OnModelCreating` called last, no `*Id1` column in the migration, a test asserting a draft carries no posting stamp, and debit-xor-credit legs proven against a real Accounting by `Purchase.Api.Tests`.
+
+**Two more, found by the checklist audit of 15 August rather than by building `pur`**, written up in full in `Sales.md` under the tasks they block: `CreditNoteService` passes an invoice id where Inventory requires a stock-movement id (T5.2), and `InvoiceService.PostAsync` issues stock without checking `DeliveryChallanId`, so invoicing a challan that already shipped takes the stock down twice (T3.6).
 
 ---

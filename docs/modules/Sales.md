@@ -250,6 +250,22 @@ Columns: `SourceId` (no FK — fed by `Invoices` and `CreditNotes`), `DocumentNo
 
 Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this file still resolves.
 
+**The boxes below were marked against the code on 15 August 2026, not against memory.** Three of fifteen are ticked. The gap between how much is *written* and how little is *ticked* is the point of the exercise: nearly every screen and service in T3 and T5 exists, and four of them fail on one shared line.
+
+| | |
+|---|---|
+| **Ticked** | T2.3 quote, T2.4 sales order, T3.5 sales register |
+| **Written, blocked on the ledger leg contract** | T3.1 invoice API, T3.2 invoice page, T3.6 delivery challan, T5.2 credit note |
+| **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
+| **Schema or component only** | T5.1 allocation table, T5.4 allocation grid |
+| **Part built** | T3.3 outstanding, no aging buckets |
+| **Not built** | T3.4 print and archive, T7.1 POS API |
+| **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
+
+**One defect accounts for four of those boxes.** `Sales.Api`'s `LedgerLegRequest` carries a single `Amount`; Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither. Sales has never successfully posted to the general ledger. It is written up under T3.1.
+
+**There is no `Sales.Api.Tests` project.** Accounting, Inventory, Purchase and `Shared.Kernel` each have one. Sales posts documents to the ledger and moves stock, and has no tests at all — which is how a contract mismatch this size stayed hidden.
+
 ### Blocked on foundations
 
 These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger screens) were already done; **T0.2** tax determination, **T0.3** document numbering series and **T0.4** the lifecycle are now written too — all three unverified, per the standing caveats in `CLAUDE.md`. Nothing in T2 is blocked any longer.
@@ -258,34 +274,36 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 - [ ] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are in the database, not just the model.
-  **Written, unverified.** The three base classes are in `Shared.Kernel/Documents/` with the four enums they carry; the fifteen tables are in `Sales.Entity/TableEntities/`; `SalesDbContext` configures them through three helpers rather than fifteen hand-written blocks, because fifteen blocks is twelve chances to give one table a different precision or drop one check.
-  Four things settled in the writing, none of which the spec had to say:
+
+  **Code complete; the box stays unticked because the Done-when is not met, and the gap is a security one.** The base classes, the fifteen tables and the migration (`20260814075501_AddSalesRegister`, sixteen tables) all exist. What does not:
+
+  - **The migration contains no RLS.** `grep -c "ROW LEVEL SECURITY"` over it returns 0, though `Migrations/README-RowLevelSecurity.md` carries the block to paste. The Done-when asks for policies *in the database*; there are none.
+  - **`SalesDbContext` never calls `base.OnModelCreating`.** Inventory, Accounting and Purchase all end theirs with it. Without it `TenantDbContext` never runs, so there is **no `OrgId` query filter on any `sal` table**, no OrgId index, and `Version` is mapped as a plain `bigint` instead of the `xmin` system column — optimistic concurrency silently does nothing.
+
+  Together those two mean **`sal` has neither of the two isolation layers a per-customer schema is supposed to have.** CLAUDE.md calls a missing query filter "the highest-consequence mistake available here". The fix is one line plus a migration carrying the RLS block; verify it the way `pur` was, by querying `pg_policies` and exercising a policy as a non-owner role.
+
+  Two further defects in the same code, neither blocking the box on its own:
+
+  - **Ten shadow foreign-key columns.** `HasOne<Quote>().WithMany()` with no navigation argument declares a relationship separate from the `Lines` collection, so EF adds a second FK column. `sal` carries `QuoteId1`, `SalesOrderId1`, `DeliveryChallanId1`, `InvoiceId1`, `CreditNoteId1` and their five detail-tax equivalents.
+  - **The Fluent configuration now lives in `Shared.Kernel.Documents.DocumentModelConfiguration`**, shared with `pur`, so all twenty-seven document tables take their precision, indexes and constraints from one place. Verified schema-neutral when it moved: a probe migration came back empty.
+
+  Four things settled in the original writing, still true:
   **`TaxComponent` is a new enum in `Shared.Kernel`, not Accounting's.** Accounting's discriminates a sub-account and therefore needs a `None` — a contact's receivable is not a tax of any kind — and has no `Cess`. Merging them would give each a member the other must never hold.
   **The line-number index is unique on `(document, LineNumber)`.** The ledger's `ITEM` leg keys on the line number, so two lines claiming position three would leave a posting pointing at whichever the database returned first.
-  **`DLC` gets no numbering series here.** It needs a seventeenth `mst.TransactionTypes` row that does not exist, and a series naming a type the master has never heard of is a number that resolves to nothing. T3.6 seeds both together. `QTE`, `SOR`, `INV`, `CRN` and `POS` are seeded.
+  **`DLC` now has its numbering series and its `mst.TransactionTypes` row** — both seeded, by T3.6. The note that once said otherwise is spent.
   **Header checks are in the database, not just C#** — the total footing to its parts, the tax split matching `IsInterState`, void stamped with a reason, `PostedAt` set iff it posted. Each is a thing that still prints and still posts when it is wrong.
-- [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
+
+- [x] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
   *Done when*: a quote prints, converts, and writes nothing to the ledger or stock. **The batched name lookup lands here** — it is this stage's first real problem, not something to meet at T3.2.
 
-  **Part-built. Read this before continuing.**
+  **Built.** `QuoteService`, `QuotesController` (with `[PermissionAction]` on approve and void), `Sales.Entity/Models/QuoteModels.cs`, and `quote-form` / `quote-list` in `libs/sales/sales-ui`. **Print is not built** — see T3.4, which owns it for every document.
 
-  **Done (T2.3a — the batched name lookup).** The thing this task calls its first real problem is in place: `Shared.Kernel.Documents.INameLookup` defines `IContactNameLookup` and `IItemNameLookup`, both taking a *collection* and with no single-id overload, so the N+1 cannot be written by accident. `HttpNameLookup` batches, caches per organization and id for five minutes, and **swallows failures** — a name that cannot be read leaves one column showing an id rather than turning a list screen into a 500. That is the opposite of `ITaxRateProvider`, which answers null and stops the save, and deliberately so: a rate is written into the books, a name is only drawn on a screen. Served by `internal/contacts/names` on **Master** (contacts moved there in the service merge) and `internal/items/names` on Inventory. Both POST with the ids in the body, capped at 500 — that many ids in a query string meets a proxy's URL limit before the framework's, and the failure would be a silently truncated list. Both registered in Sales' `Program.cs`.
+  **The batched name lookup is done.** `Shared.Kernel.Documents.INameLookup` defines `IContactNameLookup` and `IItemNameLookup`, both taking a *collection* and with no single-id overload, so the N+1 cannot be written by accident. `HttpNameLookup` batches, caches per organization and id for five minutes, and **swallows failures** — a name that cannot be read leaves one column showing an id rather than turning a list screen into a 500. That is the opposite of `ITaxRateProvider`, which answers null and stops the save, and deliberately so: a rate is written into the books, a name is only drawn on a screen. Served by `internal/contacts/names` on Master and `internal/items/names` on Inventory, both POST with the ids in the body, capped at 500.
 
-  **Done (the request/response shapes).** `Sales.Entity/Models/QuoteModels.cs` — `SaveQuoteRequest`, `SaveQuoteLineRequest`, `QuoteListItem`, `QuoteView`, `QuoteLineView`, `QuoteLineTaxView`, `VoidQuoteRequest`, and a `QuoteOutcome` whose every value is something a user can act on. Two things the shapes settle: **the caller sends no totals and no tax amounts**, because a caller free to send its own totals can save a document whose foot disagrees with its body and one free to send its own tax can file the wrong return; and **a line names a `TaxGroupId`, never a rate**, because a caller that could send a rate could send yesterday's.
+  **The request shapes settle two things**: the caller sends no totals and no tax amounts, because a caller free to send its own totals can save a document whose foot disagrees with its body; and a line names a `TaxGroupId`, never a rate, because a caller that could send a rate could send yesterday's.
 
-  **Not started.** `QuoteService`, `QuotesController`, and the whole page. Nothing in `libs/sales` but two `.gitkeep` files.
+  **The `Master:BaseUrl` port defect recorded here is fixed** — Sales and Accounting both point at 5003 now.
 
-  **What the service has to wire together**, all of which now exists:
-  - numbering — `INumberGenerator.NextAsync("QTE", documentDate, ct)`, **at creation**, inside the insert's transaction (T0.3 as revised);
-  - lifecycle — `DocumentLifecycle.CanEdit/CanApprove/CanPost/CanVoid/CanDelete`, and **never a delete** (T0.4);
-  - the intra/inter decision — `PlaceOfSupply.Resolve(branchState, placeOfSupply, gstin)`, storing the answer in `IsInterState` rather than re-deriving it on read;
-  - tax — `ITaxRateProvider.GetRatesAsync(documentDate)` then `GstCalculator.Compute` per line and `GstCalculator.Totals` for the header, writing a `QuoteDetailTax` row per component (T0.2);
-  - the round-off — the calculator returns the total *before* rounding to the rupee; the document owns `RoundOffAmount`, and `chk_quotes_total` will refuse a header that does not foot;
-  - names — resolve contact and item names in **one call each per page**, never per row.
-
-  **The controller needs `[PermissionAction]`** on void, approve and print — `sales.void` and `sales.approve` have been seeded and granted since the beginning and nothing has ever read one (T0.4).
-
-  **One thing found and deliberately not fixed.** `Master:BaseUrl` is `http://localhost:5002` in Accounting's, Inventory's and Sales' `appsettings.Development.json`, but Master listens on **5003** — both `.vscode/launch.json` and the gateway's `master` cluster say so. 5002 was Platform's port before the merge folded it into Master. Every service-to-service call to Master in development — tenant directory, base currency, financial year, and now contact names — gets connection-refused. It is one line in each of three files, but it is not the quote's to decide, so it is recorded here rather than changed.
 - [x] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
     *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
     **Done.** Built `SalesOrderService` calling `IInventoryClient.ReserveAsync`/`ReleaseAsync`, scaffolded `sales-order-form` and `sales-order-list`, and successfully integrated routing into the Angular web app.
@@ -294,30 +312,76 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 - [ ] **T3.1 — Invoice API: post, void, ledger legs.** Stock issued through the guarded decrement. **Issuing reserved stock is release-then-issue in one transaction.**
   *Done when*: an invoice against a confirmed order releases and issues exactly once; the trial balance still balances; gross profit equals revenue minus the COGS the layers produced.
+
+  **Code complete; the box stays unticked because the ledger post cannot succeed.** `InvoiceService.PostAsync` / `VoidAsync`, `InvoicesController` (`GET`, `GET/{id}`, `POST`, `PUT/{id}`, `POST/{id}/post`, `POST/{id}/void`), and the release-then-issue is there — `IssueStockLine.ReleaseReservation` is set from `invoice.SalesOrderId.HasValue`, so an order-sourced invoice releases and issues in Inventory's one guarded call.
+
+  **What blocks it is the ledger contract.** `Sales.Api/Services/LedgerClient.cs` declares its own `LedgerLegRequest` carrying a single `decimal Amount`. Accounting's leg has `DebitAmount` and `CreditAmount` and no `Amount` at all, so `Amount` deserializes into nothing and both sides arrive zero — and `LedgerPostingService` refuses that outright: `if ((leg.DebitAmount == 0) == (leg.CreditAmount == 0)) throw` — "a leg is a debit or a credit, never both or neither." **Every sales ledger post is rejected on the wire**, so no invoice, credit note or delivery challan reaches the general ledger. The same client also sends `SubAccountReferenceId` without the `SubAccountReferenceType` that completes the key.
+
+  The fix is Purchase's client, which was written against the real contract: a debit-xor-credit leg with the reference type set. Until it lands, T3.1, T3.5, T3.6 and T5.2 all fail at the same line.
+
+  **Unverifiable either way today: there is no `Sales.Api.Tests` project.** `backend/tests/` holds `Accounting.Api.Tests`, `Inventory.Api.Tests`, `Purchase.Api.Tests` and `Shared.Kernel.Tests`. Sales is the only service with document posting and no tests over it — which is why a contract mismatch this size survived to be found by reading.
+
 - [ ] **T3.2 — Invoice page.** `bb-document-line-grid` plus the invoice header, totals panel, draft / ready / post / void, print.
   *Done when*: keyed and posted at 360px, and the tax on screen equals the tax posted.
+
+  **The page is built; the Done-when needs T3.1.** `invoice-form` and `invoice-list` in `libs/sales/sales-ui`, wiring `DocumentLineGridComponent` and `totalsOf`, with post, void (reason prompted) and print. Nothing is posted at any width until the leg contract above is fixed, so "the tax on screen equals the tax posted" has no posted side to compare against.
+
+  Two things to carry when it is: the form drives the API through piped `.subscribe(...)`, where the house rule is `async`/`await` over promises; and the void reason comes from `prompt()`, which is not a 360px dialog.
+
 - [ ] **T3.3 — Outstanding and aging.** Read from the ledger's AR sub-accounts. The input to Banking's allocation.
   *Done when*: an invoice is outstanding at full value the moment it posts, and the buckets tie to the Accounts Receivable control account.
+
+  **Outstanding is built; aging is not.** `GET ledger/contacts/{contactId}/outstanding-balances/{ledgerTypeId}` → `LedgerReportService.GetOutstandingBalancesAsync` groups `acc.JournalLedger` by `(TransactionTypeCode, TransactionId)` and returns debit minus credit per document. **There are no buckets** — no 0–30 / 31–60 / 61–90 / 90+, which is the half the Done-when names. `DueDate` comes back null and `DocumentNo` is the fallback string `"{code}-{id}"`, so nothing can age and nothing shows a document number a person would recognise. Both want the payment term the document was raised on.
+
 - [ ] **T3.4 — Print and archive.** Syncfusion server-side PDF, PDF/A, blob storage keyed by `SourceType` + `SourceId`.
-- [ ] **T3.5 — `sal.SalesRegister`.** Written inside the post's transaction, replaced by key, deleted on void.
+
+  **Not built.** No Syncfusion package reference and no `PdfDocument` anywhere in `backend/`. The `print()` on the sales pages is `window.print()` — the browser's rendering of the screen, not a generated document, and nothing is archived. This stage owns print for **every** document, sales and purchase alike, which is why T2.3's page is ticked with print excluded.
+
+- [x] **T3.5 — `sal.SalesRegister`.** Written inside the post's transaction, replaced by key, deleted on void.
   *Done when*: intra- and inter-state invoices register the right halves and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphans; period taxable value equals the Output GST legs.
+
+  **Built, and the table is what T3.5 asked for.** All three writers keep it: `InvoiceService` adds rows after the post and `RemoveRange`s them on void, `DeliveryChallanService` the same, and `CreditNoteService` registers negative amounts so a period nets. The check constraint is in the migration.
+
+  **The Done-when is unproven**, and for the reason above: the register is written *after* `_ledgerClient.PostAsync`, which currently throws, so no row has ever been written by a real post. Tick the box for the code, and re-run the Done-when the day T3.1's contract is fixed.
+
 - [ ] **T3.6 — `DLC` delivery challan.** Needs a seventeenth `mst.TransactionTypes` row, added by EF migration, and its own numbering series.
   *Done when*: an order part-delivered issues only what shipped and leaves the rest reserved; the invoice against that challan moves no stock; a job-work challan writes a movement and no ledger row.
+
+  **Seeded and served, but one clause of the Done-when is contradicted by the code.** The `mst.TransactionTypes` row and the `DLC` series are both seeded (`NumberingSeriesSeed`, id 315, prefix `DC`), `DeliveryChallanService` issues stock with `ReleaseReservation` when the challan came from an order, and posts a ledger only when the challan is a sale — a job-work challan writes the movement and no ledger row, as asked.
+
+  **"The invoice against that challan moves no stock" is not true.** `Invoice.DeliveryChallanId` is stored and returned, but `InvoiceService.PostAsync` issues stock unconditionally — nothing reads `DeliveryChallanId` before building the issue request. Invoicing a challan that already shipped **issues the same quantity twice**, taking stock the branch still holds down by double. The gate belongs beside the existing `SalesOrderId` check in the same method.
 
 ### T5 — credit note
 
 - [ ] **T5.1 — `acc.TransactionRatio`** (shared with Purchase). Allocation between documents. Allocations must never exceed the target's outstanding balance — a C# guard, since the sum spans rows.
+
+  **Schema only.** `TransactionRatio.cs` exists and `AccountingDbContext` maps it with a `DbSet`. `AccountingDbContext` is the **only** file in `backend/Api` that mentions `TransactionRatios` — nothing writes a row, and the C# guard the task exists for is not written. The table is real; the allocation is not.
+
 - [ ] **T5.2 — Credit note.** Stock returned via `ReturnsStockMovementId` to the originating layers at their original cost.
   *Done when*: buy, sell, credit-note leaves stock value exactly where it started, and the note allocates against the invoice rather than floating.
+
+  **Built and wrong in one line.** `CreditNoteService` has the service, the register rows, the ledger legs and the stock return through `IInventoryClient.ReceiveAsync`. But it sends `ReturnsStockMovementId = creditNote.InvoiceId` — **an invoice id where an `inv.StockMovements` id is required**. Inventory validates it: `ValidateReturnedMovementAsync` looks for a movement with that id, *on the same item*, with `Direction == Out`, and answers `ReturnedMovementNotFound` otherwise. So the return is refused; and in the rare case the two ids collide on an item that was issued, the stock goes back onto **another document's cost layers** at another document's cost, which is worse than being refused because it is silent.
+
+  The id wanted is the movement the invoice's own line produced. Inventory's issue response already returns movement ids per line — the invoice needs to keep them (`sal.InvoiceDetails` has no column for one today), and the credit note line needs to name the invoice line it credits.
+
+  The allocation half of the Done-when — "allocates against the invoice rather than floating" — is T5.1, which is schema only.
+
 - [ ] **T5.4 — Allocation UI** (shared with Purchase). Over-allocation refused while typing, not at save.
+
+  **The component exists and no page uses it.** `libs/shared/ui-components/src/lib/allocation-grid/allocation-grid.component.ts` is written and exported from the lib's `index.ts`; `AllocationGrid` appears in no other file in `frontend/`. It has nothing to allocate against until T5.1 writes rows, and payment work is deferred by decision.
 
 ### T7 — POS
 
 **No new tables.** T7.1 reuses T3.1's posting.
 
 - [ ] **T7.1 — POS API.** One call: issue stock, post the sale, post the payment. The decrement is synchronous and guarded.
+
+  **Not built.** No POS controller, service or endpoint in `Sales.Api`. It reuses T3.1's posting, which is itself blocked on the leg contract.
+
 - [ ] **T7.2 — POS screen.** Keyboard and barcode driven, offline-tolerant, in `apps/desktop`. The bulk of the stage.
 - [ ] **T7.3 — ESC/POS receipt.** Commands, not PDF. Desktop only — a browser cannot reach a USB or serial printer.
+
+  **Source exists for both and neither is built.** `apps/desktop/src/app/pos-terminal/` holds `pos-terminal.component.{ts,html,scss}` and `esc-pos.service.ts`. **`apps/desktop/project.json` declares `"targets": {}`** and `desktop` appears in neither `tsconfig.base.json` nor `nx.json`, so nothing compiles, typechecks or lints this code — `npm run check` passes over it without reading it. Treat it as a sketch: it has never been through a compiler, and there is no API behind it either way.
 
 ---
 
