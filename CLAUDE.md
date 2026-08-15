@@ -20,6 +20,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event. Master maps two contexts, and that is a database boundary rather than a service one — `mst` and `con` are different Postgres databases, so there is still no foreign key between them and ids across them are still validated in C#.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
 10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
+11. **Every feature task commits to `main`.** Not a feature branch, not a session branch, not a branch per stage — `main`, as each piece of the task is finished. See below.
 
 ---
 
@@ -30,6 +31,22 @@ These are non-negotiable. Violating them means the code gets rejected.
 There is one branch, and it is `main`. Every commit goes there as the work is done — no feature branch, no session branch, nothing to merge afterwards. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind, which is how a change that was written and reviewed goes missing from the product.
 
 The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
+
+### This covers every feature task, without exception
+
+A task with a stage number — **T2.3**, **T4.4**, **T5.3** — is not a reason to open a branch. Neither is a task that spans a schema, an API, a page and a ledger posting, and neither is one that will take several sessions. **Each of those commits to `main` as it is finished**, in whatever pieces it naturally divides into:
+
+- schema and migration, then the service, then the controller, then the page — each its own commit on `main` when it is written and building, rather than one branch holding all four until the end
+- a fix to work already on `main` goes on `main` beside it
+- documentation goes in the **same** commit as the code it describes (hard rule 10), which is only possible when both land on the same branch
+
+**Commit at the point the work stands up, not at the point the task is finished.** A stage that builds and whose tests pass is worth committing even if the stage after it has not been started — the next session picks up from `main` and needs no instructions about where the work is. Work parked on a branch is work the next session cannot find.
+
+**If a session is started on a branch by its harness**, do the work there if the harness requires it, but merge it into `main` before the session ends and say plainly that you did. A branch that outlives its session is the failure this rule exists to prevent.
+
+**Never open a pull request unless it is asked for.** The branch model has nothing for a PR to do — there is no second branch to merge from.
+
+The one thing this rule does not override: **push only where you have been told to push.** Committing to `main` locally is always right; pushing to any remote branch other than the one you were given needs saying so first.
 
 ---
 
