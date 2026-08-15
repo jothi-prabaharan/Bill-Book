@@ -99,10 +99,11 @@ Write-Step 'Creating databases'
 # in the process list. Scoped to this process only.
 $env:PGPASSWORD = $PostgresPassword
 
-$sqlFile = Join-Path $PSScriptRoot 'setup-dev-db.sql'
-psql -h $PostgresHost -p $PostgresPort -U $PostgresUser -d postgres -v ON_ERROR_STOP=1 -f $sqlFile
+$dbSetupProj = Join-Path $backend "Tools\DatabaseSetup\DatabaseSetup.csproj"
+Write-Host "    Compiling and running C# DatabaseSetup tool..." -ForegroundColor Yellow
+dotnet run --project $dbSetupProj -- create $PostgresHost $PostgresPort $PostgresUser $PostgresPassword
 if ($LASTEXITCODE -ne 0) {
-    throw "psql failed. Check that PostgreSQL is running on ${PostgresHost}:${PostgresPort} and that the password is correct."
+    throw "Database creation failed. Check that PostgreSQL is running on ${PostgresHost}:${PostgresPort} and that the credentials are correct."
 }
 Write-Ok 'Databases ready'
 
@@ -159,10 +160,8 @@ foreach ($service in $services) {
 # ----------------------------------------------------------------- verification
 Write-Step 'Verifying seed data'
 
-# Query lives in a file: identifiers are PascalCase and need double quotes,
-# which PowerShell mangles on the way to psql.exe when passed with -c.
-psql -h $PostgresHost -p $PostgresPort -U $PostgresUser -d retailerp_master `
-     -f (Join-Path $PSScriptRoot 'verify-seed.sql')
+# Verifies the seed data by printing the counts directly from the C# tool
+dotnet run --project $dbSetupProj -- verify $PostgresHost $PostgresPort $PostgresUser $PostgresPassword
 
 Write-Step 'Not yet built'
 Write-Skip "No DbContext, so no migration: $($notYetBuilt -join ', ')"
