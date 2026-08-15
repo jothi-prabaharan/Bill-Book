@@ -264,6 +264,7 @@ public sealed class InternalStockController : ControllerBase
                 RequestedQuantity = line.Quantity,
                 Success = ok,
                 Outcome = recordResult.Outcome.ToString(),
+                StockMovementId = recordResult.StockMovementId,
                 UnitCost = unitCost,
                 LineValue = lineValue
             });
@@ -338,6 +339,7 @@ public sealed class InternalStockController : ControllerBase
                     BatchNumber = line.BatchNumber,
                     BatchExpiryDate = line.BatchExpiryDate,
                     BatchManufactureDate = line.BatchManufactureDate,
+                    ReturnsStockMovementId = line.ReturnsStockMovementId,
                 },
                 ct);
 
@@ -347,6 +349,7 @@ public sealed class InternalStockController : ControllerBase
             // need one.
             bool already = result.Outcome == StockOutcome.DuplicateSource;
             bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+            decimal lineValue = ok && !already ? line.Quantity * line.UnitCost : 0m;
 
             response.Lines.Add(new ReceiveStockLineResult
             {
@@ -356,11 +359,12 @@ public sealed class InternalStockController : ControllerBase
                 Success = ok,
                 AlreadyRecorded = already,
                 Outcome = result.Outcome.ToString(),
+                StockMovementId = result.StockMovementId,
                 UnitCost = line.UnitCost,
 
                 // Nothing new landed on a replay, so it contributes nothing to
                 // the value being posted — the first attempt already did.
-                LineValue = ok && !already ? line.Quantity * line.UnitCost : 0m,
+                LineValue = lineValue,
             });
 
             if (!ok)
@@ -445,6 +449,7 @@ public sealed class InternalStockController : ControllerBase
             // this rather than by the bill's price, so the layer and the ledger
             // agree about what left.
             decimal unitCost = result.Position?.WeightedAverageCost ?? 0m;
+            decimal lineValue = ok && !already ? line.Quantity * unitCost : 0m;
 
             response.Lines.Add(new ReturnStockLineResult
             {
@@ -454,8 +459,9 @@ public sealed class InternalStockController : ControllerBase
                 Success = ok,
                 AlreadyRecorded = already,
                 Outcome = result.Outcome.ToString(),
+                StockMovementId = result.StockMovementId,
                 UnitCost = unitCost,
-                LineValue = ok && !already ? line.Quantity * unitCost : 0m,
+                LineValue = lineValue,
             });
 
             if (!ok)

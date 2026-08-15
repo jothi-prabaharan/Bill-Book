@@ -127,6 +127,7 @@ public sealed record IssueStockLineResult
     public decimal RequestedQuantity { get; init; }
     public bool Success { get; init; }
     public string Outcome { get; init; } = string.Empty;
+    public long? StockMovementId { get; init; }
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
@@ -193,6 +194,8 @@ public sealed record ReceiveStockLine
     /// <summary>The unit the quantity was keyed in. Defaults to the item's own.</summary>
     public long? UomId { get; init; }
 
+    public long? ReturnsStockMovementId { get; init; }
+
     // Batch, expiry and serial are captured here, in the request, rather than
     // settled afterwards: they are user input, and a background failure over
     // them would surface long after the person who knew the answer had gone.
@@ -228,6 +231,7 @@ public sealed record ReceiveStockLineResult
     public bool AlreadyRecorded { get; init; }
 
     public string Outcome { get; init; } = string.Empty;
+    public long? StockMovementId { get; init; }
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
@@ -290,6 +294,7 @@ public sealed record ReturnStockLineResult
     public bool Success { get; init; }
     public bool AlreadyRecorded { get; init; }
     public string Outcome { get; init; } = string.Empty;
+    public long? StockMovementId { get; init; }
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
