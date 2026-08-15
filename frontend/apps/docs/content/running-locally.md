@@ -43,7 +43,7 @@ No inline `template:` or `styles:` blocks. Components with no styling of their o
 
 ```bash
 # Database — UTF-8 matters, multi-language support depends on it
-createdb -E UTF8 retailerp_master
+createdb -E UTF8 EP_Admin
 
 cd backend
 dotnet build

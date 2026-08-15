@@ -9,16 +9,16 @@ PostgreSQL          localhost:5432
 Username            postgres
 Password            123
 
-Development DB      retailerp_master     mst, rat schemas
-Testing DB          retailerp_test       drop and recreate freely
-Design-time DB      retailerp_design     per-customer schemas, for dotnet ef
+Development DB      EP_Admin     mst, rat schemas
+Testing DB          EP_Test       drop and recreate freely
+Design-time DB      EP_Design     per-customer schemas, for dotnet ef
 Sample customer DB  IN0000000001         stands in for a provisioned tenant
 ```
 
 Connection string:
 
 ```text
-Host=localhost;Port=5432;Database=retailerp_master;Username=postgres;Password=123
+Host=localhost;Port=5432;Database=EP_Admin;Username=postgres;Password=123
 ```
 
 First run:
@@ -151,7 +151,7 @@ Each of the seven services gets its own folder under `backend/Api/`, holding exa
 Create the master database with UTF-8 encoding — multi-language support (Tamil, Chinese) depends on it:
 
 ```bash
-createdb -E UTF8 retailerp_master
+createdb -E UTF8 EP_Admin
 ```
 
 Per-customer databases are created at runtime by Master during provisioning, not by hand.

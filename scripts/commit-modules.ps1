@@ -271,7 +271,7 @@ New-ModuleCommit -Title 'Local database setup' -Paths @(
 Add the local database setup script and document the credentials
 
 setup-dev-db.ps1 takes a fresh clone to a running stack: it creates
-retailerp_master, retailerp_design, retailerp_test and a stand-in customer
+EP_Admin, EP_Design, EP_Test and a stand-in customer
 database, generates the InitialCreate migration for each service that has a
 DbContext, applies them, then prints the seeded master row counts so a failed
 seed is visible rather than assumed.

@@ -35,7 +35,7 @@ Master.Api/
 Development is the only file with anything in it, because the values are the same on every machine and none of them are secret:
 
 ```
-Host=localhost;Port=5432;Database=retailerp_master;Username=postgres;Password=123
+Host=localhost;Port=5432;Database=EP_Admin;Username=postgres;Password=123
 ```
 
 Clone, `createdb`, press **F5**. Nothing to set up by hand. The launch configurations in `.vscode/launch.json` all set `ASPNETCORE_ENVIRONMENT=Development`, so this is what you get unless you go out of your way.

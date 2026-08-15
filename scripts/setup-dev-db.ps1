@@ -5,7 +5,7 @@
 .DESCRIPTION
     One command to go from a fresh clone to a running local stack:
 
-        1. Creates retailerp_master, retailerp_design, retailerp_test and
+        1. Creates EP_Admin, EP_Design, EP_Test and
            IN0000000001 via scripts/setup-dev-db.sql.
         2. Adds an InitialCreate migration to each service that has a DbContext,
            but only where no migration exists yet.
@@ -55,14 +55,13 @@ function Write-Skip  ([string] $Message) { Write-Host "    $Message" -Foreground
 
 # Services that actually have a DbContext, and which database each migrates into.
 #
-#   master  -> retailerp_master, via the MasterDatabase connection string
-#   tenant  -> retailerp_design, via DesignTimeDatabase; these are the per-customer
+#   master  -> EP_Admin, via the MasterDatabase connection string
+#   tenant  -> EP_Design, via DesignTimeDatabase; these are the per-customer
 #              schemas, which in production live in each Customer's own database
 $services = @(
-    [pscustomobject]@{ Name = 'Master';     Target = 'master'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api' }
-    [pscustomobject]@{ Name = 'Platform';   Target = 'master'; Repository = 'Api/Platform/Platform.Repository';     Startup = 'Api/Platform/Platform.Api' }
-    [pscustomobject]@{ Name = 'Identity';   Target = 'master'; Repository = 'Api/Identity/Identity.Repository';     Startup = 'Api/Identity/Identity.Api' }
-    [pscustomobject]@{ Name = 'Accounting'; Target = 'tenant'; Repository = 'Api/Accounting/Accounting.Repository'; Startup = 'Api/Accounting/Accounting.Api' }
+    [pscustomobject]@{ Name = 'Master';     Target = 'master'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'MasterDbContext'; OutputDir = 'Migrations/Master' }
+    [pscustomobject]@{ Name = 'Contacts';   Target = 'tenant'; Repository = 'Api/Master/Master.Repository';         Startup = 'Api/Master/Master.Api'; Context = 'ContactsDbContext'; OutputDir = 'Migrations/Contacts' }
+    [pscustomobject]@{ Name = 'Accounting'; Target = 'tenant'; Repository = 'Api/Accounting/Accounting.Repository'; Startup = 'Api/Accounting/Accounting.Api'; Context = 'AccountingDbContext'; OutputDir = 'Migrations' }
 )
 
 $notYetBuilt = @('Banking', 'Contacts', 'Crm', 'Inventory', 'Purchase', 'Reporting', 'Sales', 'Support')
@@ -124,7 +123,7 @@ $env:ASPNETCORE_ENVIRONMENT = 'Development'
 
 foreach ($service in $services) {
     $repositoryPath = Join-Path $backend $service.Repository
-    $migrationsPath = Join-Path $repositoryPath 'Migrations'
+    $migrationsPath = Join-Path $repositoryPath $service.OutputDir
 
     # An empty Migrations directory is committed for each service, so test for
     # actual migration files rather than for the directory.
@@ -138,7 +137,8 @@ foreach ($service in $services) {
     dotnet ef migrations add InitialCreate `
         --project   (Join-Path $backend $service.Repository) `
         --startup-project (Join-Path $backend $service.Startup) `
-        --output-dir Migrations
+        --context   $service.Context `
+        --output-dir $service.OutputDir
     if ($LASTEXITCODE -ne 0) { throw "Failed to add migration for $($service.Name)." }
     Write-Ok "$($service.Name): InitialCreate added"
 }
@@ -147,12 +147,13 @@ foreach ($service in $services) {
 Write-Step 'Applying migrations'
 
 foreach ($service in $services) {
-    $database = if ($service.Target -eq 'master') { 'retailerp_master' } else { 'retailerp_design' }
+    $database = if ($service.Target -eq 'master') { 'EP_Admin' } else { 'EP_Design' }
     Write-Host "    $($service.Name) -> $database" -ForegroundColor Yellow
 
     dotnet ef database update `
         --project   (Join-Path $backend $service.Repository) `
-        --startup-project (Join-Path $backend $service.Startup)
+        --startup-project (Join-Path $backend $service.Startup) `
+        --context   $service.Context
     if ($LASTEXITCODE -ne 0) { throw "Failed to apply migrations for $($service.Name)." }
     Write-Ok "$($service.Name): schema current, seed data applied"
 }

@@ -52,7 +52,7 @@ public class Program
     {
         string connectionString = $"Host={host};Port={port};Username={user};Password={password};Database=postgres";
         
-        string[] databases = { "retailerp_master", "retailerp_design", "retailerp_test", "IN0000000001" };
+        string[] databases = { "EP_Admin", "EP_Design", "EP_Test", "IN0000000001" };
 
         Console.WriteLine("\n=== Creating databases ===");
 
@@ -84,7 +84,7 @@ public class Program
 
     private static async Task RunVerifySeedData(string host, string port, string user, string password)
     {
-        string connectionString = $"Host={host};Port={port};Username={user};Password={password};Database=retailerp_master";
+        string connectionString = $"Host={host};Port={port};Username={user};Password={password};Database=EP_Admin";
 
         Console.WriteLine("\n=== Verifying seed data ===");
 
@@ -101,11 +101,11 @@ public class Program
         await PrintTableCount(connection, "mst", "LedgerSources");
         await PrintTableCount(connection, "mst", "HsnSacCodes");
 
-        Console.WriteLine("\nIdentity and Platform seed data (idn, plt):");
-        await PrintTableCount(connection, "idn", "Roles");
-        await PrintTableCount(connection, "idn", "Permissions");
-        await PrintTableCount(connection, "idn", "RolePermissions");
-        await PrintTableCount(connection, "plt", "Configurations");
+        Console.WriteLine("\nIdentity and Platform seed data (now in mst):");
+        await PrintTableCount(connection, "mst", "Roles");
+        await PrintTableCount(connection, "mst", "Permissions");
+        await PrintTableCount(connection, "mst", "RolePermissions");
+        await PrintTableCount(connection, "mst", "Configurations");
     }
 
     private static async Task PrintTableCount(NpgsqlConnection connection, string schema, string table)

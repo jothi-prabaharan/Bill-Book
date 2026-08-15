@@ -60,7 +60,7 @@ Until this stage is finished, every claim about this repository is "written", no
   *Done when*: `dotnet ef migrations add` produces an empty migration for every context, proving each snapshot matches its model.
 
 - [x] **0.5 — Apply every migration to a local database**
-  PostgreSQL 16 started, `retailerp_master` and `retailerp_design` created, all eleven migrations applied clean.
+  PostgreSQL 16 started, `EP_Admin` and `EP_Design` created, all eleven migrations applied clean.
   Verified against the catalogue rather than the exit code: schemas `mst plt idn` and `acc bnk con inv`; 47 tables; **30 tables with RLS enabled and 30 policies**; 41 check constraints; and the four filtered role indexes on `con.Contacts` all present — the ones the model had been collapsing into one.
   Seed data landed: 37 states, 129 HSN/SAC rows, 16 transaction types, 5 account types, 120 permissions and 304 role grants, including the three cross-module `.view` grants from 5.17.
   *Done when*: `scripts/setup-dev-db` runs clean and all schemas exist with their RLS policies.
