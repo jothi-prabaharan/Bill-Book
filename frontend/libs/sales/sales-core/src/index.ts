@@ -1,3 +1,4 @@
+export * from './lib/document-line-scale';
 export * from './lib/quote.service';
 export * from './lib/sales-order.service';
 

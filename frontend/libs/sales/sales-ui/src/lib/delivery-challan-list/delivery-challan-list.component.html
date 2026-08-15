@@ -1,0 +1,54 @@
+<div class="page-container">
+  <header class="page-header">
+    <h1>Delivery challans</h1>
+    <button class="primary" routerLink="new">New Challan</button>
+  </header>
+
+  <p class="hint">
+    The document the goods leave on. Dispatching issues the stock and releases the order's
+    reservation; only a sale posts to the ledger — job work, approval, branch transfers and
+    samples move stock without selling anything.
+  </p>
+
+  <p class="error" *ngIf="error">{{ error }}</p>
+
+  <p class="empty" *ngIf="!loading && challans.length === 0">No delivery challans yet.</p>
+
+  <table class="data-table" *ngIf="challans.length > 0">
+    <thead>
+      <tr>
+        <th>Document No</th>
+        <th>Date</th>
+        <th>Customer</th>
+        <th>Dispatched</th>
+        <th class="num">Amount</th>
+        <th>Status</th>
+        <th class="actions"><span class="sr-only">Actions</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let ch of challans">
+        <td data-label="Document No">
+          <a [routerLink]="[ch.deliveryChallanId]">{{ ch.documentNo }}</a>
+        </td>
+        <td data-label="Date">{{ ch.documentDate }}</td>
+        <td data-label="Customer">{{ ch.contactName }}</td>
+        <td data-label="Dispatched">{{ ch.dispatchDate }}</td>
+        <td class="num" data-label="Amount">{{ ch.totalAmount }}</td>
+        <td data-label="Status">
+          <span class="badge" [class.posted]="ch.status === 'Posted'"
+                [class.off]="ch.status === 'Void'">{{ ch.status }}</span>
+        </td>
+        <td class="actions" data-label="">
+          <!-- Only a draft still has both options. Once it has posted the goods
+               have physically gone, and voiding would leave the stock issued
+               with nothing pointing at it. -->
+          <ng-container *ngIf="isDraft(ch)">
+            <button type="button" class="link" (click)="dispatch(ch)">Dispatch</button>
+            <button type="button" class="link" (click)="withdraw(ch)">Withdraw</button>
+          </ng-container>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -47,6 +47,11 @@ export default defineConfig({
       '@bill-book/api-client': fileURLToPath(
         new URL('./libs/shared/api-client/src/index.ts', import.meta.url),
       ),
+      // The line grid, so the scale boundary in sales-core can be tested against
+      // the arithmetic it actually feeds rather than against a copy of it.
+      '@bill-book/ui-components': fileURLToPath(
+        new URL('./libs/shared/ui-components/src/index.ts', import.meta.url),
+      ),
     },
   },
 });

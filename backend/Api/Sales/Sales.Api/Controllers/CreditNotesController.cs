@@ -5,7 +5,7 @@ using Sales.Entity.Models;
 namespace Sales.Api.Controllers;
 
 [ApiController]
-[Route("CreditNotes")]
+[Route("api/sales/CreditNotes")]
 public sealed class CreditNotesController : ControllerBase
 {
     private readonly CreditNoteService _service;

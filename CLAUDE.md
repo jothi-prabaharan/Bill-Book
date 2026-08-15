@@ -402,7 +402,13 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 **Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, tenant provisioning
 **Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
-**Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+**Phase 3** — **POS (till API, screen, ESC/POS receipt)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+
+*POS moved Phase 1 → Phase 3 on 15 August 2026, by decision. Its stage — T7 in [`docs/modules/Sales.md`](./docs/modules/Sales.md) — stays where it is, boxes kept rather than deleted.*
+
+*It was the most expensive thing left in Phase 1 and the least shared: the till screen is the bulk of the stage, it is keyboard- and barcode-driven, it has to tolerate being offline, and it lives in `apps/desktop` — which is still a scaffold with no source. The receipt is **ESC/POS commands rather than PDF** and can only be printed from the desktop app, because a browser cannot reach a USB or serial printer, so none of the printing work already done applies to it.*
+
+*What it does **not** block is the reason it can wait: **a POS sale is an `sal.Invoices` row** with `TransactionTypeCode = 'POS'`, and T7.1 reuses T3.1's posting rather than adding one. The tables, the numbering series and the GST determination are all in place already. Nothing else in the product is waiting on POS — the counter sale it replaces is an invoice raised directly, which is the common case in a shop anyway.*
 
 *FIFO/FEFO/LIFO batch allocation was Phase 3 and landed early, with cost layers — it is built. Do not defer work that depends on it.*
 

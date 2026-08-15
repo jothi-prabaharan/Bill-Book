@@ -5,7 +5,7 @@ using Sales.Entity.Models;
 namespace Sales.Api.Controllers;
 
 [ApiController]
-[Route("invoices")]
+[Route("api/sales/invoices")]
 public sealed class InvoicesController : ControllerBase
 {
     private readonly InvoiceService _service;

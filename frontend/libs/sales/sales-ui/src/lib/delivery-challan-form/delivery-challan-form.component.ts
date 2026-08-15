@@ -1,7 +1,13 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { DeliveryChallanService, SaveDeliveryChallanRequest } from '@bill-book/sales-core';
+import {
+  DeliveryChallanService,
+  SaveDeliveryChallanLineRequest,
+  SaveDeliveryChallanRequest,
+  toApiLine,
+  toGridLine,
+} from '@bill-book/sales-core';
 import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -68,17 +74,11 @@ export class DeliveryChallanFormComponent implements OnInit {
         shippingAddress: ch.shippingAddress,
         notes: ch.notes
       });
-      this.lines = (ch.lines || []).map(l => ({
-        itemId: l.itemId,
-        description: l.description,
-        hsnSacCode: l.hsnSacCode,
-        accountId: l.accountId,
-        taxTreatment: l.taxTreatment || 'Taxable',
-        taxMasterId: l.taxMasterId,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent || 0
-      }));
+      // Scaled through the boundary rather than handed over raw. The grid works
+      // in integer paise with quantity at six decimals; passing the API's rupees
+      // straight in makes it compute 10 × 100 ÷ 1,000,000 and show a total of
+      // nothing, which reads as an empty document rather than a wrong one.
+      this.lines = (ch.lines || []).map((l, i) => toGridLine(l, i + 1));
     });
   }
 
@@ -105,17 +105,17 @@ export class DeliveryChallanFormComponent implements OnInit {
       billingAddress: val.billingAddress || undefined,
       shippingAddress: val.shippingAddress || undefined,
       notes: val.notes || undefined,
-      lines: this.lines.map(l => ({
-        itemId: l.itemId ?? 0,
-        description: l.description ?? undefined,
-        hsnSacCode: l.hsnSacCode ?? undefined,
-        accountId: l.accountId ?? undefined,
-        taxTreatment: l.taxTreatment as any,
-        taxMasterId: l.taxMasterId ?? undefined,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent ?? 0
-      }))
+      // Back through the same boundary, and without the computed amounts: the
+      // server recomputes every figure against the rates in force on the
+      // document's date, so sending the grid's would put two answers on the wire.
+      lines: this.lines.map(l => {
+        const line = toApiLine(l);
+        return {
+          ...line,
+          itemId: line.itemId ?? 0,
+          taxTreatment: line.taxTreatment as SaveDeliveryChallanLineRequest['taxTreatment'],
+        } as SaveDeliveryChallanLineRequest;
+      })
     };
 
     if (this.isEdit && this.challanId) {

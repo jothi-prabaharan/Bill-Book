@@ -382,7 +382,7 @@ public sealed class DeliveryChallanService
         await _db.SaveChangesAsync(ct);
     }
 
-    public async Task VoidAsync(long deliveryChallanId, CancellationToken ct)
+    public async Task VoidAsync(long deliveryChallanId, string reason, CancellationToken ct)
     {
         var deliveryChallan = await _db.DeliveryChallans
             .FirstOrDefaultAsync(x => x.DeliveryChallanId == deliveryChallanId, ct)
@@ -391,8 +391,28 @@ public sealed class DeliveryChallanService
         if (deliveryChallan.Status == DocumentStatus.Void)
             return;
 
+        // A posted challan has already taken stock off the shelf and, if it was a
+        // sale, posted against GDNI. Flipping the status would leave both behind
+        // with nothing pointing at them — the goods gone from inventory and the
+        // clearing account carrying a balance no bill will ever close. Reversing
+        // those is its own document, not a status change, so it is refused here
+        // rather than half-done.
+        if (deliveryChallan.Status == DocumentStatus.Posted)
+        {
+            throw new InvalidOperationException(
+                "This challan has already dispatched its goods. Voiding it would leave the "
+                    + "stock issued and the clearing account holding a balance nothing will "
+                    + "close. Raise a return instead.");
+        }
+
         deliveryChallan.Status = DocumentStatus.Void;
         deliveryChallan.VoidedAt = _clock.GetUtcNow();
+
+        // Set together with the timestamp, because chk_deliverychallans_void_stamp
+        // requires exactly that — a void carrying only the stamp was refused by
+        // the database, so this path threw before the reason was passed in.
+        deliveryChallan.VoidReason = reason;
+        deliveryChallan.VoidedBy = _user.UserId;
 
         var registers = await _db.SalesRegister
             .Where(r => r.SourceId == deliveryChallanId && r.TransactionTypeCode == deliveryChallan.TransactionTypeCode)

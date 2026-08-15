@@ -1,0 +1,28 @@
+.page-container { padding: 24px; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 1rem; }
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+
+.hint { color: #6a6f80; font-size: .82rem; margin: 0 0 1rem; }
+.error { color: #c0392b; }
+.empty { color: #8a8f9e; font-size: .85rem; }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+.actions { text-align: right; white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+.link { color: #3557d6; background: none; border: 0; font: inherit; font-size: .85rem; padding: 0; cursor: pointer; }
+.link:hover { text-decoration: underline; }
+.link + .link { margin-left: .6rem; }
+
+.badge { font-size: .65rem; background: #eceef3; color: #4a4f60; padding: .1rem .35rem; border-radius: 3px; }
+.badge.posted { background: #eaf7f0; color: #187a4b; }
+.badge.off { background: #fdecea; color: #c0392b; }
+
+/* At ~360px the table becomes a card per challan, per the house rule. */
+@media (max-width: 720px) {
+  .data-table thead { display: none; }
+  .data-table tr { display: block; padding: .5rem 0; border-bottom: 1px solid #cdd1dc; }
+  .data-table td { display: flex; justify-content: space-between; align-items: baseline; gap: .75rem; border: 0; padding: .25rem 12px; }
+  .data-table td::before { content: attr(data-label); color: #8a8f9e; font-size: .72rem; flex: 0 0 6rem; }
+  .actions { justify-content: flex-end; }
+}

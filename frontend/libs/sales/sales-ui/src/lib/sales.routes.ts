@@ -49,6 +49,22 @@ export const salesRoutes: Routes = [
   {
     path: 'credit-notes/:id',
     loadComponent: () => import('./credit-note-form/credit-note-form.component').then(m => m.CreditNoteFormComponent)
+  },
+
+  // The delivery challan. Its form existed for a while with no route and no
+  // export, so it was in the repository and unreachable from the application —
+  // built and invisible, which is the same as not built.
+  {
+    path: 'delivery-challans',
+    loadComponent: () => import('./delivery-challan-list/delivery-challan-list.component').then(m => m.DeliveryChallanListComponent)
+  },
+  {
+    path: 'delivery-challans/new',
+    loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)
+  },
+  {
+    path: 'delivery-challans/:id',
+    loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)
   }
 ];
 

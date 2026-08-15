@@ -349,7 +349,16 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **Seeded and served, but one clause of the Done-when is contradicted by the code.** The `mst.TransactionTypes` row and the `DLC` series are both seeded (`NumberingSeriesSeed`, id 315, prefix `DC`), `DeliveryChallanService` issues stock with `ReleaseReservation` when the challan came from an order, and posts a ledger only when the challan is a sale — a job-work challan writes the movement and no ledger row, as asked.
 
-  **"The invoice against that challan moves no stock" is not true.** `Invoice.DeliveryChallanId` is stored and returned, but `InvoiceService.PostAsync` issues stock unconditionally — nothing reads `DeliveryChallanId` before building the issue request. Invoicing a challan that already shipped **issues the same quantity twice**, taking stock the branch still holds down by double. The gate belongs beside the existing `SalesOrderId` check in the same method.
+  **"The invoice against that challan moves no stock" now holds.** `InvoiceService.PostAsync` branches on `DeliveryChallanId`: with a challan behind it the invoice reads the cost and the movement id off the challan's lines and issues nothing, and only the `else` branch builds an `IssueStockRequest`. The note that said otherwise described a real double-issue and is spent.
+
+  **The screen is reachable now, which it was not.** `DeliveryChallanFormComponent` existed with no route and no export — in the repository and invisible to the application, which is the same as not built. It has a list beside it (`DeliveryChallanListComponent`), three routes under `sales/delivery-challans`, and both are exported.
+
+  **Three things were wrong on the way in, and each would have failed on first use:**
+  - **Voiding threw.** `VoidAsync` set `VoidedAt` and never `VoidReason`, and `chk_deliverychallans_void_stamp` ties the two together. It takes a reason now, and refuses a *posted* challan outright — the goods have physically gone, and flipping the status would leave the stock issued and GDNI holding a balance nothing will close.
+  - **The route was `DeliveryChallans`** while the frontend called `/api/sales/delivery-challans`. Both ends now agree, and `invoices` and `CreditNotes` were moved under `api/sales/` for the same reason — the frontend was already calling them there.
+  - **No gateway route pointed at the sales cluster at all.** The cluster was declared and nothing reached it, so every sales screen was unreachable through the front door. `/api/sales/{**catch-all}` added.
+
+  **What still blocks the box** is the ledger contract shared with T3.1 and T5.2 — see T3.1. A `Sale` challan's `Dr GDNI / Cr Inventory` pair is refused on the wire like every other sales posting, so the Done-when cannot be run end to end yet. Job work, approval, branch transfer and sample post nothing and are unaffected.
 
 ### T5 — credit note
 
@@ -370,7 +379,13 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **The component exists and no page uses it.** `libs/shared/ui-components/src/lib/allocation-grid/allocation-grid.component.ts` is written and exported from the lib's `index.ts`; `AllocationGrid` appears in no other file in `frontend/`. It has nothing to allocate against until T5.1 writes rows, and payment work is deferred by decision.
 
-### T7 — POS
+### T7 — POS · **Phase 3**
+
+**Moved Phase 1 → Phase 3 on 15 August 2026, by decision.** The boxes below are kept rather than deleted, and nothing about the design changes — only when it is built.
+
+It was the most expensive stage left in Phase 1 and the least shared with anything else: the till screen is the bulk of it, keyboard- and barcode-driven, offline-tolerant, and it lives in `apps/desktop`, which is still a scaffold with no source. The receipt is ESC/POS commands rather than PDF and prints only from the desktop app, so none of the document printing already built applies.
+
+**Nothing waits on it.** A POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'` — the tables, the numbering series and the tax determination all exist, and the counter sale it replaces is an invoice raised directly, which is the common case in a shop regardless.
 
 **No new tables.** T7.1 reuses T3.1's posting.
 
