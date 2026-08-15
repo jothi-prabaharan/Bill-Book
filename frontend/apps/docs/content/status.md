@@ -18,15 +18,17 @@ The full solution builds, including the three services that are still empty shel
 | Inventory | Item master with pharma and jewellery profiles, guarded stock decrement, weighted average and FIFO/LIFO/FEFO/specific cost layers, batches, serials, backdated recosting |
 | Accounting · ledger | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series; the general ledger with a deferred balance trigger, the manual journal, the account ledger, the trial balance, period locks and opening balances |
 | Accounting · banking | Banks, bank accounts each provisioning their own ledger account, spend/receive/transfer money with allocation, settlement and FX, CSV and XLSX statement import with matching |
+| Purchase | Purchase Orders, Goods Receipts, Bills, and Debit Notes with full UI screens and API integration |
+| Sales | Quotes, Sales Orders, Delivery Challans, Invoices, and Credit Notes with full UI forms, lists, and API integration |
 | Workers | CostingEngine — claims movements from `inv.StockMovements`, costs them, then posts them to the ledger |
 | Tooling | 31-project solution, 25 Nx projects, VS Code one-press debug, YARP gateway, a Postman collection generated from the controllers |
 
 ## Not built
 
-- **Sales beyond its schema** — the fifteen `sal` tables and three document base classes are written; no service, no controller, no page
-- **Purchase, Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
+- **Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
 - **Notification and RateSync workers** — a `.csproj` and an empty `Consumers/` folder. Mail currently sends from Master, queued in process
-- **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
+- **`apps/portal`, `apps/admin`** — scaffolded, zero source files
+- **`apps/desktop`** — POS terminal module and ESC/POS thermal printing service built; full CRUD, inventory sync, and offline database support pending
 
 ## Known gaps
 

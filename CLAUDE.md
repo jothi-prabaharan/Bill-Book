@@ -145,7 +145,7 @@ There were twelve. Three merges took them to seven, and the reason each time was
 | **Accounting** (`acc`) | Accounting + Banking | A money document exists to move a balance in the ledger; the two could not share a transaction while they were separate |
 | **Customer** (`cus`) | Crm + Support | A lead becomes a customer and a customer raises a ticket — one subject, one lifecycle. Both were empty scaffolds |
 
-**Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `MasterDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
+**Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `AdminDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
 
 **Frontend** (Nx, Angular v20): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
