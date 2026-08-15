@@ -1,14 +1,7 @@
 {
   "version": "2.0.0",
   "tasks": [
-    {
-      "label": "build-backend",
-      "type": "shell",
-      "command": "dotnet",
-      "args": ["build", "${workspaceFolder}/backend/Bill-Book.Debug.slnf"],
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": "$msCompile"
-    },
+
     {
       "label": "web-install",
       "type": "shell",

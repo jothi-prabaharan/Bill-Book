@@ -2,134 +2,8 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Master.Api (5003)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Master/Master.Api/bin/Debug/net10.0/Master.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Master/Master.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5003"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Accounting.Api (5004)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api/bin/Debug/net10.0/Accounting.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Accounting/Accounting.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5004"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Inventory.Api (5006)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api/bin/Debug/net10.0/Inventory.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Inventory/Inventory.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5006"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Customer.Api (5008)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Customer/Customer.Api/bin/Debug/net10.0/Customer.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Customer/Customer.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5008"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Purchase.Api (5009)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api/bin/Debug/net10.0/Purchase.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Purchase/Purchase.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5009"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Reporting.Api (5010)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api/bin/Debug/net10.0/Reporting.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Reporting/Reporting.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5010"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Sales.Api (5011)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Api/Sales/Sales.Api/bin/Debug/net10.0/Sales.Api.dll",
-      "cwd": "${workspaceFolder}/backend/Api/Sales/Sales.Api",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5011"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Gateway (5000)",
-      "type": "coreclr",
-      "request": "launch",
-      "preLaunchTask": "build-backend",
-      "program": "${workspaceFolder}/backend/Gateway/bin/Debug/net10.0/Gateway.dll",
-      "cwd": "${workspaceFolder}/backend/Gateway",
-      "env": {
-        "ASPNETCORE_ENVIRONMENT": "Development",
-        "ASPNETCORE_URLS": "http://localhost:5000"
-      },
-      "console": "integratedTerminal",
-      "stopAtEntry": false,
-      "justMyCode": true
-    },
-    {
-      "name": "Attach to .NET process",
-      "type": "coreclr",
-      "request": "attach",
-      "processId": "${command:pickProcess}"
-    },
-    {
-      "name": "Web · Development (Chrome, 4200)",
-      "type": "chrome",
+      "name": "Web · Development (Edge, 4200)",
+      "type": "msedge",
       "request": "launch",
       "preLaunchTask": "serve-web",
       "url": "http://localhost:4200",
@@ -147,14 +21,14 @@
         "${workspaceFolder}/frontend/**",
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
-      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
+      "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/web",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
       ]
     },
     {
-      "name": "Web · Staging (Chrome, 4200)",
-      "type": "chrome",
+      "name": "Web · Staging (Edge, 4200)",
+      "type": "msedge",
       "request": "launch",
       "preLaunchTask": "serve-web-staging",
       "url": "http://localhost:4200",
@@ -172,14 +46,14 @@
         "${workspaceFolder}/frontend/**",
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
-      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/web",
+      "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/web",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
       ]
     },
     {
-      "name": "Docs · Development (Chrome, 4300)",
-      "type": "chrome",
+      "name": "Docs · Development (Edge, 4300)",
+      "type": "msedge",
       "request": "launch",
       "preLaunchTask": "serve-docs",
       "url": "http://localhost:4300",
@@ -197,14 +71,14 @@
         "${workspaceFolder}/frontend/**",
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
-      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
+      "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/docs",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
       ]
     },
     {
-      "name": "Docs · Staging (Chrome, 4300)",
-      "type": "chrome",
+      "name": "Docs · Staging (Edge, 4300)",
+      "type": "msedge",
       "request": "launch",
       "preLaunchTask": "serve-docs-staging",
       "url": "http://localhost:4300",
@@ -222,81 +96,40 @@
         "${workspaceFolder}/frontend/**",
         "!${workspaceFolder}/frontend/node_modules/**"
       ],
-      "userDataDir": "${workspaceFolder}/.vscode/.chrome-debug-profile/docs",
+      "userDataDir": "${workspaceFolder}/.vscode/.edge-debug-profile/docs",
       "runtimeArgs": [
         "--disable-features=CalculateNativeWinOcclusion"
       ]
     },
     {
-      "name": "Web (Chrome, attach 9222)",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
-      "url": "http://localhost:4200/*",
-      "webRoot": "${workspaceFolder}/frontend",
+      "name": "Desktop (Electron)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "nx",
+        "run",
+        "desktop:serve"
+      ],
       "sourceMaps": true,
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/frontend/**",
-        "!${workspaceFolder}/frontend/node_modules/**"
-      ]
-    },
-    {
-      "name": "Docs (Chrome, attach 9222)",
-      "type": "chrome",
-      "request": "attach",
-      "port": 9222,
-      "url": "http://localhost:4300/*",
-      "webRoot": "${workspaceFolder}/frontend",
-      "sourceMaps": true,
-      "resolveSourceMapLocations": [
-        "${workspaceFolder}/frontend/**",
-        "!${workspaceFolder}/frontend/node_modules/**"
-      ]
+      "console": "integratedTerminal"
     }
   ],
   "compounds": [
     {
-      "name": "🚀 Everything (APIs + Gateway + Web)",
-      "configurations": [
-        "Gateway (5000)",
-        "Master.Api (5003)",
-        "Accounting.Api (5004)",
-        "Inventory.Api (5006)",
-        "Customer.Api (5008)",
-        "Purchase.Api (5009)",
-        "Reporting.Api (5010)",
-        "Sales.Api (5011)",
-        "Web · Development (Chrome, 4200)"
-      ],
-      "stopAll": true
-    },
-    {
-      "name": "Backend only (APIs + Gateway)",
-      "configurations": [
-        "Gateway (5000)",
-        "Master.Api (5003)",
-        "Accounting.Api (5004)",
-        "Inventory.Api (5006)",
-        "Customer.Api (5008)",
-        "Purchase.Api (5009)",
-        "Reporting.Api (5010)",
-        "Sales.Api (5011)"
-      ],
-      "stopAll": true
-    },
-    {
       "name": "Frontend only (Web + Docs, Development)",
       "configurations": [
-        "Web · Development (Chrome, 4200)",
-        "Docs · Development (Chrome, 4300)"
+        "Web · Development (Edge, 4200)",
+        "Docs · Development (Edge, 4300)"
       ],
       "stopAll": true
     },
     {
       "name": "Frontend only (Web + Docs, Staging)",
       "configurations": [
-        "Web · Staging (Chrome, 4200)",
-        "Docs · Staging (Chrome, 4300)"
+        "Web · Staging (Edge, 4200)",
+        "Docs · Staging (Edge, 4300)"
       ],
       "stopAll": true
     }

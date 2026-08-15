@@ -213,6 +213,8 @@ public sealed class ReceiveStockLineResult
 
     public string Outcome { get; set; } = string.Empty;
 
+    public long? StockMovementId { get; set; }
+
     public decimal UnitCost { get; set; }
 
     public decimal LineValue { get; set; }
