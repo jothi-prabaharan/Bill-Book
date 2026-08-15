@@ -34,20 +34,20 @@ if (-Not (Test-Path (Join-Path $repoPath "Bill-Book.sln"))) {
 
 $backendApps = @(
     @{ Name = "Gateway"; Path = "backend\Gateway\Gateway.csproj"; Port = 5000 },
-    @{ Name = "Master"; Path = "backend\Api\Master\Master.Api\Master.Api.csproj"; Port = 5003 },
-    @{ Name = "Inventory"; Path = "backend\Api\Inventory\Inventory.Api\Inventory.Api.csproj"; Port = 5004 },
-    @{ Name = "Accounting"; Path = "backend\Api\Accounting\Accounting.Api\Accounting.Api.csproj"; Port = 5006 },
-    @{ Name = "Customer"; Path = "backend\Api\Customer\Customer.Api\Customer.Api.csproj"; Port = 5008 },
-    @{ Name = "Reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj"; Port = 5009 },
-    @{ Name = "Sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj"; Port = 5011 },
-    @{ Name = "Purchase"; Path = "backend\Api\Purchase\Purchase.Api\Purchase.Api.csproj"; Port = 5012 }
+    @{ Name = "Master"; Path = "backend\Api\Master\Master.Api\Master.Api.csproj"; Port = 5004 },
+    @{ Name = "Inventory"; Path = "backend\Api\Inventory\Inventory.Api\Inventory.Api.csproj"; Port = 5003 },
+    @{ Name = "Accounting"; Path = "backend\Api\Accounting\Accounting.Api\Accounting.Api.csproj"; Port = 5001 },
+    @{ Name = "Customer"; Path = "backend\Api\Customer\Customer.Api\Customer.Api.csproj"; Port = 5002 },
+    @{ Name = "Reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj"; Port = 5006 },
+    @{ Name = "Sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj"; Port = 5007 },
+    @{ Name = "Purchase"; Path = "backend\Api\Purchase\Purchase.Api\Purchase.Api.csproj"; Port = 5005 }
 )
 
 $frontendApps = @(
-    @{ Name = "web"; Port = 80 },
-    # @{ Name = "admin"; Port = 81 },
-    # @{ Name = "portal"; Port = 82 },
-    @{ Name = "docs"; Port = 83 }
+    @{ Name = "web"; Port = 4200 },
+    # @{ Name = "admin"; Port = 4203 },
+    # @{ Name = "portal"; Port = 4204 },
+    @{ Name = "docs"; Port = 4202 }
 )
 
 $backendAppPool = "BillBook_Backend_Pool"
@@ -167,5 +167,5 @@ Start-WebAppPool -Name $frontendAppPool -ErrorAction SilentlyContinue
 Write-Host "`n======================================================="
 Write-Host "DEPLOYMENT COMPLETE!"
 Write-Host "The Gateway is accessible at: http://localhost:5000"
-Write-Host "The Main Web App is accessible at: http://localhost:80"
+Write-Host "The Main Web App is accessible at: http://localhost:4200"
 Write-Host "======================================================="
