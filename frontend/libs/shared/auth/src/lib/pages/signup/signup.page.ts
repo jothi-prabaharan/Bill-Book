@@ -66,18 +66,27 @@ export class SignupPage implements OnInit {
 
   private async load(): Promise<void> {
     try {
-      this.countries.set(await this.auth.countries());
+      const fetchedCountries = await this.auth.countries();
+      this.countries.set(fetchedCountries);
+      if (!this.m.countryId && fetchedCountries.length > 0) {
+        this.m.countryId = fetchedCountries[0].countryId;
+      }
       await this.loadStates(this.m.countryId);
     } catch {
       this.error.set('Could not load reference data. Is the Master service running?');
     }
   }
 
-  async loadStates(countryId: number): Promise<void> {
+  async loadStates(countryId: number | undefined): Promise<void> {
     this.m.stateId = undefined;
+    if (!countryId) {
+      this.states.set([]);
+      this.m.baseCurrency = undefined;
+      return;
+    }
     const country = this.countries().find((c) => c.countryId === countryId);
     this.m.baseCurrency = country?.currencyCode;
-    this.states.set(countryId ? await this.auth.states(countryId) : []);
+    this.states.set(await this.auth.states(countryId));
   }
 
   async submit(form: NgForm): Promise<void> {

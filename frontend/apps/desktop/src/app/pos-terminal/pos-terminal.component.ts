@@ -13,23 +13,24 @@ import { EscPosService } from './esc-pos.service';
 export class PosTerminalComponent {
   private invoiceService = inject(InvoiceService);
   private escPosService = inject(EscPosService);
-  
+
   checkout() {
     // POS terminal uses Invoice API to check out
     const request: SaveInvoiceRequest = {
       documentDate: new Date().toISOString().split('T')[0],
       contactId: 1, // Default walk-in customer
       exchangeRate: 1,
+      currencyCode: 'USD',
       lines: []
     };
-    this.invoiceService.save(request).subscribe(_res => {
+    this.invoiceService.create(request).subscribe(_res => {
       // Upon successful invoice generation, print ESC/POS receipt
       const receiptBytes = this.escPosService.generateReceipt(
         'BILL-BOOK STORE',
         request.lines.map(l => ({ name: 'Item', amount: l.unitPrice * l.quantity })),
         0 // Total would be computed from lines
       );
-      
+
       this.printReceipt(receiptBytes);
     });
   }

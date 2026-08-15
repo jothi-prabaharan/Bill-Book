@@ -1,26 +1,26 @@
 {
   "/api/auth": {
-    "target": "http://localhost:5001",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/users": {
-    "target": "http://localhost:5001",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/roles": {
-    "target": "http://localhost:5001",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/customers": {
-    "target": "http://localhost:5002",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/organizations": {
-    "target": "http://localhost:5002",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/smtp-settings": {
-    "target": "http://localhost:5002",
+    "target": "http://localhost:5003",
     "secure": false
   },
   "/api/master": {
