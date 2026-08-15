@@ -14,7 +14,7 @@ public sealed class AuthService
     private static readonly TimeSpan OtpLifetime = TimeSpan.FromMinutes(10);
     private const int OtpMaxAttempts = 5;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IPasswordHasher _passwordHasher;
     private readonly ITokenService _tokens;
     private readonly IOtpService _otp;
@@ -23,7 +23,7 @@ public sealed class AuthService
     private readonly TimeProvider _clock;
 
     public AuthService(
-        MasterDbContext db,
+        AdminDbContext db,
         IPasswordHasher passwordHasher,
         ITokenService tokens,
         IOtpService otp,

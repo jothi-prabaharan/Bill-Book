@@ -10,4 +10,10 @@
     <ProjectReference Include="..\Master.Entity\Master.Entity.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="SeedData\states.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

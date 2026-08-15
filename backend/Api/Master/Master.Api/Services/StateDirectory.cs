@@ -30,10 +30,10 @@ public interface IStateDirectory
 /// </summary>
 public sealed class StateDirectory : IStateDirectory
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IMemoryCache _cache;
 
-    public StateDirectory(MasterDbContext db, IMemoryCache cache)
+    public StateDirectory(AdminDbContext db, IMemoryCache cache)
     {
         _db = db;
         _cache = cache;

@@ -7,10 +7,10 @@ namespace Master.Api.Services;
 
 public sealed class OrgCurrencyService
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IMasterCurrencies _master;
 
-    public OrgCurrencyService(MasterDbContext db, IMasterCurrencies master)
+    public OrgCurrencyService(AdminDbContext db, IMasterCurrencies master)
     {
         _db = db;
         _master = master;

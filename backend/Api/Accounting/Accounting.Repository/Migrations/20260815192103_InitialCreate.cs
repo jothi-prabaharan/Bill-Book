@@ -297,6 +297,32 @@ namespace Accounting.Repository.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "TransactionRatios",
+                schema: "acc",
+                columns: table => new
+                {
+                    TransactionRatioId = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SourceTransactionTypeCode = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    SourceTransactionId = table.Column<long>(type: "bigint", nullable: false),
+                    TargetTransactionTypeCode = table.Column<string>(type: "character varying(3)", maxLength: 3, nullable: false),
+                    TargetTransactionId = table.Column<long>(type: "bigint", nullable: false),
+                    Amount = table.Column<decimal>(type: "numeric", nullable: false),
+                    AllocatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    CreatedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    ModifiedBy = table.Column<Guid>(type: "uuid", nullable: true),
+                    ModifiedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    xmin = table.Column<uint>(type: "xid", rowVersion: true, nullable: false),
+                    OrgId = table.Column<Guid>(type: "uuid", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionRatios", x => x.TransactionRatioId);
+                    table.CheckConstraint("chk_transactionratio_amount", "\"Amount\" > 0");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SubAccounts",
                 schema: "acc",
                 columns: table => new
@@ -1522,6 +1548,24 @@ namespace Accounting.Repository.Migrations
                 filter: "\"IsSales\" = true");
 
             migrationBuilder.CreateIndex(
+                name: "IX_TransactionRatios_OrgId",
+                schema: "acc",
+                table: "TransactionRatios",
+                column: "OrgId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionRatios_OrgId_SourceTransactionTypeCode_SourceTra~",
+                schema: "acc",
+                table: "TransactionRatios",
+                columns: new[] { "OrgId", "SourceTransactionTypeCode", "SourceTransactionId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionRatios_OrgId_TargetTransactionTypeCode_TargetTra~",
+                schema: "acc",
+                table: "TransactionRatios",
+                columns: new[] { "OrgId", "TargetTransactionTypeCode", "TargetTransactionId" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TransferMoney_From",
                 schema: "acc",
                 table: "TransferMoney",
@@ -1564,298 +1608,6 @@ namespace Accounting.Repository.Migrations
                 schema: "acc",
                 table: "TransferMoney",
                 column: "ToBankAccountId");
-
-            // ---- Everything below this line EF Core does not generate. ----
-            //
-            // Row-level security, and the two constraint triggers that hold the
-            // ledger and the manual journal in balance. Both are the database's
-            // half of guarantees whose other half is in C#: a query filter that
-            // is only in the model leaks between branches the moment a query
-            // forgets it, and a balance check that is only in a service is one
-            // bad migration away from a general ledger that does not foot.
-
-            // A policy per table, all the same shape: a row is visible to the
-            // organization that owns it and to nobody else. app.current_org_id is
-            // set per transaction — never on the connection, which is pooled and
-            // would leak the last request's branch into the next one.
-            foreach (string table in new[]
-            {
-                "Accounts",
-                "SubAccounts",
-                "TaxMasters",
-                "PaymentTerms",
-                "NumberingSeries",
-                "PeriodLocks",
-                "Journals",
-                "JournalDetails",
-                "JournalLedger",
-                "OpeningBalances",
-                "OpeningBalanceLines",
-                "Banks",
-                "BankAccounts",
-                "SpendMoney",
-                "SpendMoneyDetails",
-                "ReceiveMoney",
-                "ReceiveMoneyDetails",
-                "TransferMoney",
-                "BankStatements",
-                "BankStatementLines",
-                "StatementImportProfiles",
-            })
-            {
-                migrationBuilder.Sql($"ALTER TABLE acc.\"{table}\" ENABLE ROW LEVEL SECURITY;");
-
-                // Dropped first so the migration is safe to re-run against a
-                // database where it was applied by hand.
-                migrationBuilder.Sql(
-                    $"DROP POLICY IF EXISTS {table.ToLowerInvariant()}_org_isolation ON acc.\"{table}\";");
-
-                migrationBuilder.Sql(
-                    $"CREATE POLICY {table.ToLowerInvariant()}_org_isolation ON acc.\"{table}\" " +
-                    "USING (\"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
-            }
-
-            // The general ledger has to foot per document. Deferred, so a
-            // multi-line insert is not judged on its intermediate state.
-            migrationBuilder.Sql("""
-
-                CREATE OR REPLACE FUNCTION acc.assert_ledger_balanced() RETURNS trigger AS $$
-                DECLARE
-                    org uuid;
-                    code varchar(3);
-                    txn bigint;
-                    debits numeric(18,2);
-                    credits numeric(18,2);
-                BEGIN
-                    IF TG_OP = 'DELETE' THEN
-                        org := OLD."OrgId";
-                        code := OLD."TransactionTypeCode";
-                        txn := OLD."TransactionId";
-                    ELSE
-                        org := NEW."OrgId";
-                        code := NEW."TransactionTypeCode";
-                        txn := NEW."TransactionId";
-                    END IF;
-
-                    SELECT COALESCE(SUM("DebitAmountBase"), 0), COALESCE(SUM("CreditAmountBase"), 0)
-                      INTO debits, credits
-                      FROM acc."JournalLedger"
-                     WHERE "OrgId" = org
-                       AND "TransactionTypeCode" = code
-                       AND "TransactionId" = txn;
-
-                    IF debits <> credits THEN
-                        RAISE EXCEPTION
-                            'Ledger postings for %-% do not balance: debits %, credits %',
-                            code, txn, debits, credits;
-                    END IF;
-
-                    RETURN NULL;
-                END;
-                $$ LANGUAGE plpgsql;
-                """);
-            migrationBuilder.Sql(
-                "DROP TRIGGER IF EXISTS trg_ledger_balanced ON acc.\"JournalLedger\";");
-            migrationBuilder.Sql("""
-
-                CREATE CONSTRAINT TRIGGER trg_ledger_balanced
-                AFTER INSERT OR UPDATE OR DELETE ON acc."JournalLedger"
-                DEFERRABLE INITIALLY DEFERRED
-                FOR EACH ROW EXECUTE FUNCTION acc.assert_ledger_balanced();
-                """);
-
-            // The manual journal, checked twice: once on its lines, and once on
-            // the header — because posting a draft changes the header and never
-            // touches the lines, so a trigger on the lines alone would let an
-            // unbalanced draft be posted without firing at all.
-            migrationBuilder.Sql("""
-
-                CREATE OR REPLACE FUNCTION acc.assert_journal_balanced() RETURNS trigger AS $$
-                DECLARE
-                    journal bigint;
-                    state varchar(10);
-                    debits numeric(18,2);
-                    credits numeric(18,2);
-                BEGIN
-                    IF TG_OP = 'DELETE' THEN
-                        journal := OLD."JournalId";
-                    ELSE
-                        journal := NEW."JournalId";
-                    END IF;
-
-                    SELECT "Status" INTO state FROM acc."Journals" WHERE "JournalId" = journal;
-
-                    -- The header is gone: the whole journal was deleted and its
-                    -- lines cascaded. There is nothing left to be unbalanced.
-                    IF state IS NULL OR state = 'Draft' THEN
-                        RETURN NULL;
-                    END IF;
-
-                    SELECT COALESCE(SUM("DebitAmountBase"), 0), COALESCE(SUM("CreditAmountBase"), 0)
-                      INTO debits, credits
-                      FROM acc."JournalDetails"
-                     WHERE "JournalId" = journal;
-
-                    IF debits <> credits THEN
-                        RAISE EXCEPTION
-                            'Journal % does not balance: debits %, credits %',
-                            journal, debits, credits;
-                    END IF;
-
-                    RETURN NULL;
-                END;
-                $$ LANGUAGE plpgsql;
-                """);
-            migrationBuilder.Sql(
-                "DROP TRIGGER IF EXISTS trg_journal_balanced ON acc.\"JournalDetails\";");
-            migrationBuilder.Sql("""
-
-                CREATE CONSTRAINT TRIGGER trg_journal_balanced
-                AFTER INSERT OR UPDATE OR DELETE ON acc."JournalDetails"
-                DEFERRABLE INITIALLY DEFERRED
-                FOR EACH ROW EXECUTE FUNCTION acc.assert_journal_balanced();
-                """);
-            migrationBuilder.Sql("""
-
-                CREATE OR REPLACE FUNCTION acc.assert_journal_balanced_on_post() RETURNS trigger AS $$
-                DECLARE
-                    debits numeric(18,2);
-                    credits numeric(18,2);
-                BEGIN
-                    IF NEW."Status" = 'Draft' THEN
-                        RETURN NULL;
-                    END IF;
-
-                    SELECT COALESCE(SUM("DebitAmountBase"), 0), COALESCE(SUM("CreditAmountBase"), 0)
-                      INTO debits, credits
-                      FROM acc."JournalDetails"
-                     WHERE "JournalId" = NEW."JournalId";
-
-                    IF debits <> credits THEN
-                        RAISE EXCEPTION
-                            'Journal % does not balance: debits %, credits %',
-                            NEW."JournalId", debits, credits;
-                    END IF;
-
-                    RETURN NULL;
-                END;
-                $$ LANGUAGE plpgsql;
-                """);
-            migrationBuilder.Sql(
-                "DROP TRIGGER IF EXISTS trg_journal_balanced_on_post ON acc.\"Journals\";");
-            migrationBuilder.Sql("""
-
-                CREATE CONSTRAINT TRIGGER trg_journal_balanced_on_post
-                AFTER INSERT OR UPDATE ON acc."Journals"
-                DEFERRABLE INITIALLY DEFERRED
-                FOR EACH ROW EXECUTE FUNCTION acc.assert_journal_balanced_on_post();
-                """);
-
-            // Every posted money document is allocated to exactly the amount on
-            // its header: the lines sum to the total. Not a check constraint —
-            // it spans rows, so it has to be a trigger, and one pair per document
-            // because two tables mean two parent/child relationships rather than
-            // one.
-            //
-            // DEFERRABLE INITIALLY DEFERRED, because a document is several lines
-            // and only adds up once all of them are in.
-            //
-            // **Posted documents only.** A draft is allowed not to add up — that
-            // is what a draft is for. Someone allocating a payment across nine
-            // bills is short for eight of them.
-            foreach ((string parent, string child, string key) in new[]
-            {
-                ("SpendMoney", "SpendMoneyDetails", "SpendMoneyId"),
-                ("ReceiveMoney", "ReceiveMoneyDetails", "ReceiveMoneyId"),
-            })
-            {
-                string fn = parent.ToLowerInvariant();
-
-                migrationBuilder.Sql($"""
-                    CREATE OR REPLACE FUNCTION acc.assert_{fn}_allocated() RETURNS trigger AS $$
-                    DECLARE
-                        doc bigint;
-                        state varchar(10);
-                        header numeric(18,2);
-                        allocated numeric(18,2);
-                    BEGIN
-                        IF TG_OP = 'DELETE' THEN
-                            doc := OLD."{key}";
-                        ELSE
-                            doc := NEW."{key}";
-                        END IF;
-
-                        SELECT "Status", "Amount" INTO state, header
-                          FROM acc."{parent}" WHERE "{key}" = doc;
-
-                        -- The header is gone: the document was deleted and its
-                        -- lines cascaded. Nothing left to reconcile.
-                        IF state IS NULL OR state = 'Draft' THEN
-                            RETURN NULL;
-                        END IF;
-
-                        SELECT COALESCE(SUM("Amount"), 0) INTO allocated
-                          FROM acc."{child}" WHERE "{key}" = doc;
-
-                        IF allocated <> header THEN
-                            RAISE EXCEPTION
-                                '{parent} % is allocated %, but its amount is %',
-                                doc, allocated, header;
-                        END IF;
-
-                        RETURN NULL;
-                    END;
-                    $$ LANGUAGE plpgsql;
-                    """);
-
-                migrationBuilder.Sql(
-                    $"DROP TRIGGER IF EXISTS trg_{fn}_allocated ON acc.\"{child}\";");
-
-                migrationBuilder.Sql($"""
-                    CREATE CONSTRAINT TRIGGER trg_{fn}_allocated
-                    AFTER INSERT OR UPDATE OR DELETE ON acc."{child}"
-                    DEFERRABLE INITIALLY DEFERRED
-                    FOR EACH ROW EXECUTE FUNCTION acc.assert_{fn}_allocated();
-                    """);
-
-                // Posting is a header update and the lines do not move, so the
-                // line trigger never fires for it. Without this second one, a
-                // draft whose allocation is short could be posted by flipping its
-                // status — the one path that matters most. The same pair
-                // acc.Journals carries, for the same reason.
-                migrationBuilder.Sql($"""
-                    CREATE OR REPLACE FUNCTION acc.assert_{fn}_allocated_on_post() RETURNS trigger AS $$
-                    DECLARE
-                        allocated numeric(18,2);
-                    BEGIN
-                        IF NEW."Status" = 'Draft' THEN
-                            RETURN NULL;
-                        END IF;
-
-                        SELECT COALESCE(SUM("Amount"), 0) INTO allocated
-                          FROM acc."{child}" WHERE "{key}" = NEW."{key}";
-
-                        IF allocated <> NEW."Amount" THEN
-                            RAISE EXCEPTION
-                                '{parent} % is allocated %, but its amount is %',
-                                NEW."{key}", allocated, NEW."Amount";
-                        END IF;
-
-                        RETURN NULL;
-                    END;
-                    $$ LANGUAGE plpgsql;
-                    """);
-
-                migrationBuilder.Sql(
-                    $"DROP TRIGGER IF EXISTS trg_{fn}_allocated_on_post ON acc.\"{parent}\";");
-
-                migrationBuilder.Sql($"""
-                    CREATE CONSTRAINT TRIGGER trg_{fn}_allocated_on_post
-                    AFTER INSERT OR UPDATE ON acc."{parent}"
-                    DEFERRABLE INITIALLY DEFERRED
-                    FOR EACH ROW EXECUTE FUNCTION acc.assert_{fn}_allocated_on_post();
-                    """);
-            }
         }
 
         /// <inheritdoc />
@@ -1903,6 +1655,10 @@ namespace Accounting.Repository.Migrations
 
             migrationBuilder.DropTable(
                 name: "TaxMasters",
+                schema: "acc");
+
+            migrationBuilder.DropTable(
+                name: "TransactionRatios",
                 schema: "acc");
 
             migrationBuilder.DropTable(

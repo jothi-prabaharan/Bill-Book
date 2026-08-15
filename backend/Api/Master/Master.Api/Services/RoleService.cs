@@ -7,9 +7,9 @@ namespace Master.Api.Services;
 
 public sealed class RoleService
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public RoleService(MasterDbContext db) => _db = db;
+    public RoleService(AdminDbContext db) => _db = db;
 
     /// <summary>System roles plus this customer's own.</summary>
     public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct)

@@ -32,9 +32,9 @@ namespace Master.Api.Services;
 /// </summary>
 public sealed class InProcessTenantDirectory : ITenantDirectory
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public InProcessTenantDirectory(MasterDbContext db) => _db = db;
+    public InProcessTenantDirectory(AdminDbContext db) => _db = db;
 
     public async Task<TenantDatabase?> LookupAsync(
         Guid customerId, CancellationToken ct = default) =>
@@ -57,9 +57,9 @@ public sealed class InProcessTenantDirectory : ITenantDirectory
 /// </summary>
 public sealed class MasterCurrencies : IMasterCurrencies
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public MasterCurrencies(MasterDbContext db) => _db = db;
+    public MasterCurrencies(AdminDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<MasterCurrency>> GetAllAsync(CancellationToken ct = default) =>
         await _db.Currencies
@@ -101,13 +101,13 @@ public sealed class MasterCurrencies : IMasterCurrencies
 /// </summary>
 public sealed class InProcessIdentityAdmin : IIdentityAdmin
 {
-    /// <summary>Seeded system-role id for Owner (see MasterDbContext seed).</summary>
+    /// <summary>Seeded system-role id for Owner (see AdminDbContext seed).</summary>
     private const int OwnerRoleId = 1;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IPasswordHasher _hasher;
 
-    public InProcessIdentityAdmin(MasterDbContext db, IPasswordHasher hasher)
+    public InProcessIdentityAdmin(AdminDbContext db, IPasswordHasher hasher)
     {
         _db = db;
         _hasher = hasher;
@@ -163,10 +163,10 @@ public sealed class InProcessFinancialYearProvider : IFinancialYearProvider
     /// <summary>April, the Indian financial year. Used when the branch is unknown.</summary>
     private const int DefaultStartMonth = 4;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly ICurrentUser _user;
 
-    public InProcessFinancialYearProvider(MasterDbContext db, ICurrentUser user)
+    public InProcessFinancialYearProvider(AdminDbContext db, ICurrentUser user)
     {
         _db = db;
         _user = user;

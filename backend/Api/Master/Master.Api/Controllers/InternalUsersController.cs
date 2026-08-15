@@ -19,13 +19,13 @@ namespace Master.Api.Controllers;
 [Route("internal/users")]
 public sealed class InternalUsersController : ControllerBase
 {
-    /// <summary>Seeded system-role id for Owner (see MasterDbContext seed).</summary>
+    /// <summary>Seeded system-role id for Owner (see AdminDbContext seed).</summary>
     private const int OwnerRoleId = 1;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IPasswordHasher _hasher;
 
-    public InternalUsersController(MasterDbContext db, IPasswordHasher hasher)
+    public InternalUsersController(AdminDbContext db, IPasswordHasher hasher)
     {
         _db = db;
         _hasher = hasher;

@@ -3,7 +3,6 @@ using System;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,12 +10,10 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 namespace Master.Repository.Migrations.Master
 {
-    [DbContext(typeof(MasterDbContext))]
-    [Migration("20260812050349_InitialCreate")]
-    partial class InitialCreate
+    [DbContext(typeof(AdminDbContext))]
+    partial class AdminDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -362,6 +359,2456 @@ namespace Master.Repository.Migrations.Master
                             IsActive = true,
                             PhoneCode = "+65",
                             Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 6,
+                            CountryCode = "AF",
+                            CountryName = "Afghanistan",
+                            CurrencyCode = "AFN",
+                            IsActive = true,
+                            PhoneCode = "+93",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 7,
+                            CountryCode = "AX",
+                            CountryName = "Aland Islands",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+358",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 8,
+                            CountryCode = "AL",
+                            CountryName = "Albania",
+                            CurrencyCode = "ALL",
+                            IsActive = true,
+                            PhoneCode = "+355",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 9,
+                            CountryCode = "DZ",
+                            CountryName = "Algeria",
+                            CurrencyCode = "DZD",
+                            IsActive = true,
+                            PhoneCode = "+213",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 10,
+                            CountryCode = "AS",
+                            CountryName = "American Samoa",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 11,
+                            CountryCode = "AD",
+                            CountryName = "Andorra",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+376",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 12,
+                            CountryCode = "AO",
+                            CountryName = "Angola",
+                            CurrencyCode = "AOA",
+                            IsActive = true,
+                            PhoneCode = "+244",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 13,
+                            CountryCode = "AI",
+                            CountryName = "Anguilla",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 14,
+                            CountryCode = "AQ",
+                            CountryName = "Antarctica",
+                            CurrencyCode = "AAD",
+                            IsActive = true,
+                            PhoneCode = "+672",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 15,
+                            CountryCode = "AG",
+                            CountryName = "Antigua and Barbuda",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 16,
+                            CountryCode = "AR",
+                            CountryName = "Argentina",
+                            CurrencyCode = "ARS",
+                            IsActive = true,
+                            PhoneCode = "+54",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 17,
+                            CountryCode = "AM",
+                            CountryName = "Armenia",
+                            CurrencyCode = "AMD",
+                            IsActive = true,
+                            PhoneCode = "+374",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 18,
+                            CountryCode = "AW",
+                            CountryName = "Aruba",
+                            CurrencyCode = "AWG",
+                            IsActive = true,
+                            PhoneCode = "+297",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 19,
+                            CountryCode = "AU",
+                            CountryName = "Australia",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+61",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 20,
+                            CountryCode = "AT",
+                            CountryName = "Austria",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+43",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 21,
+                            CountryCode = "AZ",
+                            CountryName = "Azerbaijan",
+                            CurrencyCode = "AZN",
+                            IsActive = true,
+                            PhoneCode = "+994",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 22,
+                            CountryCode = "BH",
+                            CountryName = "Bahrain",
+                            CurrencyCode = "BHD",
+                            IsActive = true,
+                            PhoneCode = "+973",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 23,
+                            CountryCode = "BD",
+                            CountryName = "Bangladesh",
+                            CurrencyCode = "BDT",
+                            IsActive = true,
+                            PhoneCode = "+880",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 24,
+                            CountryCode = "BB",
+                            CountryName = "Barbados",
+                            CurrencyCode = "BBD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 25,
+                            CountryCode = "BY",
+                            CountryName = "Belarus",
+                            CurrencyCode = "BYN",
+                            IsActive = true,
+                            PhoneCode = "+375",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 26,
+                            CountryCode = "BE",
+                            CountryName = "Belgium",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+32",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 27,
+                            CountryCode = "BZ",
+                            CountryName = "Belize",
+                            CurrencyCode = "BZD",
+                            IsActive = true,
+                            PhoneCode = "+501",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 28,
+                            CountryCode = "BJ",
+                            CountryName = "Benin",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+229",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 29,
+                            CountryCode = "BM",
+                            CountryName = "Bermuda",
+                            CurrencyCode = "BMD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 30,
+                            CountryCode = "BT",
+                            CountryName = "Bhutan",
+                            CurrencyCode = "BTN",
+                            IsActive = true,
+                            PhoneCode = "+975",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 31,
+                            CountryCode = "BO",
+                            CountryName = "Bolivia",
+                            CurrencyCode = "BOB",
+                            IsActive = true,
+                            PhoneCode = "+591",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 32,
+                            CountryCode = "BQ",
+                            CountryName = "Bonaire, Sint Eustatius and Saba",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+599",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 33,
+                            CountryCode = "BA",
+                            CountryName = "Bosnia and Herzegovina",
+                            CurrencyCode = "BAM",
+                            IsActive = true,
+                            PhoneCode = "+387",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 34,
+                            CountryCode = "BW",
+                            CountryName = "Botswana",
+                            CurrencyCode = "BWP",
+                            IsActive = true,
+                            PhoneCode = "+267",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 35,
+                            CountryCode = "BV",
+                            CountryName = "Bouvet Island",
+                            CurrencyCode = "NOK",
+                            IsActive = true,
+                            PhoneCode = "+0055",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 36,
+                            CountryCode = "BR",
+                            CountryName = "Brazil",
+                            CurrencyCode = "BRL",
+                            IsActive = true,
+                            PhoneCode = "+55",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 37,
+                            CountryCode = "IO",
+                            CountryName = "British Indian Ocean Territory",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+246",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 38,
+                            CountryCode = "BN",
+                            CountryName = "Brunei",
+                            CurrencyCode = "BND",
+                            IsActive = true,
+                            PhoneCode = "+673",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 39,
+                            CountryCode = "BG",
+                            CountryName = "Bulgaria",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+359",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 40,
+                            CountryCode = "BF",
+                            CountryName = "Burkina Faso",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+226",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 41,
+                            CountryCode = "BI",
+                            CountryName = "Burundi",
+                            CurrencyCode = "BIF",
+                            IsActive = true,
+                            PhoneCode = "+257",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 42,
+                            CountryCode = "KH",
+                            CountryName = "Cambodia",
+                            CurrencyCode = "KHR",
+                            IsActive = true,
+                            PhoneCode = "+855",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 43,
+                            CountryCode = "CM",
+                            CountryName = "Cameroon",
+                            CurrencyCode = "XAF",
+                            IsActive = true,
+                            PhoneCode = "+237",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 44,
+                            CountryCode = "CA",
+                            CountryName = "Canada",
+                            CurrencyCode = "CAD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 45,
+                            CountryCode = "CV",
+                            CountryName = "Cape Verde",
+                            CurrencyCode = "CVE",
+                            IsActive = true,
+                            PhoneCode = "+238",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 46,
+                            CountryCode = "KY",
+                            CountryName = "Cayman Islands",
+                            CurrencyCode = "KYD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 47,
+                            CountryCode = "CF",
+                            CountryName = "Central African Republic",
+                            CurrencyCode = "XAF",
+                            IsActive = true,
+                            PhoneCode = "+236",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 48,
+                            CountryCode = "TD",
+                            CountryName = "Chad",
+                            CurrencyCode = "XAF",
+                            IsActive = true,
+                            PhoneCode = "+235",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 49,
+                            CountryCode = "CL",
+                            CountryName = "Chile",
+                            CurrencyCode = "CLP",
+                            IsActive = true,
+                            PhoneCode = "+56",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 50,
+                            CountryCode = "CN",
+                            CountryName = "China",
+                            CurrencyCode = "CNY",
+                            IsActive = true,
+                            PhoneCode = "+86",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 51,
+                            CountryCode = "CX",
+                            CountryName = "Christmas Island",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+61",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 52,
+                            CountryCode = "CC",
+                            CountryName = "Cocos (Keeling) Islands",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+61",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 53,
+                            CountryCode = "CO",
+                            CountryName = "Colombia",
+                            CurrencyCode = "COP",
+                            IsActive = true,
+                            PhoneCode = "+57",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 54,
+                            CountryCode = "KM",
+                            CountryName = "Comoros",
+                            CurrencyCode = "KMF",
+                            IsActive = true,
+                            PhoneCode = "+269",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 55,
+                            CountryCode = "CG",
+                            CountryName = "Congo",
+                            CurrencyCode = "CDF",
+                            IsActive = true,
+                            PhoneCode = "+242",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 56,
+                            CountryCode = "CK",
+                            CountryName = "Cook Islands",
+                            CurrencyCode = "NZD",
+                            IsActive = true,
+                            PhoneCode = "+682",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 57,
+                            CountryCode = "CR",
+                            CountryName = "Costa Rica",
+                            CurrencyCode = "CRC",
+                            IsActive = true,
+                            PhoneCode = "+506",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 58,
+                            CountryCode = "HR",
+                            CountryName = "Croatia",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+385",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 59,
+                            CountryCode = "CU",
+                            CountryName = "Cuba",
+                            CurrencyCode = "CUP",
+                            IsActive = true,
+                            PhoneCode = "+53",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 60,
+                            CountryCode = "CW",
+                            CountryName = "Curaçao",
+                            CurrencyCode = "ANG",
+                            IsActive = true,
+                            PhoneCode = "+599",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 61,
+                            CountryCode = "CY",
+                            CountryName = "Cyprus",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+357",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 62,
+                            CountryCode = "CZ",
+                            CountryName = "Czech Republic",
+                            CurrencyCode = "CZK",
+                            IsActive = true,
+                            PhoneCode = "+420",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 63,
+                            CountryCode = "CD",
+                            CountryName = "Democratic Republic of the Congo",
+                            CurrencyCode = "CDF",
+                            IsActive = true,
+                            PhoneCode = "+243",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 64,
+                            CountryCode = "DK",
+                            CountryName = "Denmark",
+                            CurrencyCode = "DKK",
+                            IsActive = true,
+                            PhoneCode = "+45",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 65,
+                            CountryCode = "DJ",
+                            CountryName = "Djibouti",
+                            CurrencyCode = "DJF",
+                            IsActive = true,
+                            PhoneCode = "+253",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 66,
+                            CountryCode = "DM",
+                            CountryName = "Dominica",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 67,
+                            CountryCode = "DO",
+                            CountryName = "Dominican Republic",
+                            CurrencyCode = "DOP",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 68,
+                            CountryCode = "EC",
+                            CountryName = "Ecuador",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+593",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 69,
+                            CountryCode = "EG",
+                            CountryName = "Egypt",
+                            CurrencyCode = "EGP",
+                            IsActive = true,
+                            PhoneCode = "+20",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 70,
+                            CountryCode = "SV",
+                            CountryName = "El Salvador",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+503",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 71,
+                            CountryCode = "GQ",
+                            CountryName = "Equatorial Guinea",
+                            CurrencyCode = "XAF",
+                            IsActive = true,
+                            PhoneCode = "+240",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 72,
+                            CountryCode = "ER",
+                            CountryName = "Eritrea",
+                            CurrencyCode = "ERN",
+                            IsActive = true,
+                            PhoneCode = "+291",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 73,
+                            CountryCode = "EE",
+                            CountryName = "Estonia",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+372",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 74,
+                            CountryCode = "SZ",
+                            CountryName = "Eswatini",
+                            CurrencyCode = "SZL",
+                            IsActive = true,
+                            PhoneCode = "+268",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 75,
+                            CountryCode = "ET",
+                            CountryName = "Ethiopia",
+                            CurrencyCode = "ETB",
+                            IsActive = true,
+                            PhoneCode = "+251",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 76,
+                            CountryCode = "FK",
+                            CountryName = "Falkland Islands",
+                            CurrencyCode = "FKP",
+                            IsActive = true,
+                            PhoneCode = "+500",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 77,
+                            CountryCode = "FO",
+                            CountryName = "Faroe Islands",
+                            CurrencyCode = "DKK",
+                            IsActive = true,
+                            PhoneCode = "+298",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 78,
+                            CountryCode = "FJ",
+                            CountryName = "Fiji Islands",
+                            CurrencyCode = "FJD",
+                            IsActive = true,
+                            PhoneCode = "+679",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 79,
+                            CountryCode = "FI",
+                            CountryName = "Finland",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+358",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 80,
+                            CountryCode = "FR",
+                            CountryName = "France",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+33",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 81,
+                            CountryCode = "GF",
+                            CountryName = "French Guiana",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+594",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 82,
+                            CountryCode = "PF",
+                            CountryName = "French Polynesia",
+                            CurrencyCode = "XPF",
+                            IsActive = true,
+                            PhoneCode = "+689",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 83,
+                            CountryCode = "TF",
+                            CountryName = "French Southern Territories",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+262",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 84,
+                            CountryCode = "GA",
+                            CountryName = "Gabon",
+                            CurrencyCode = "XAF",
+                            IsActive = true,
+                            PhoneCode = "+241",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 85,
+                            CountryCode = "GE",
+                            CountryName = "Georgia",
+                            CurrencyCode = "GEL",
+                            IsActive = true,
+                            PhoneCode = "+995",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 86,
+                            CountryCode = "DE",
+                            CountryName = "Germany",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+49",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 87,
+                            CountryCode = "GH",
+                            CountryName = "Ghana",
+                            CurrencyCode = "GHS",
+                            IsActive = true,
+                            PhoneCode = "+233",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 88,
+                            CountryCode = "GI",
+                            CountryName = "Gibraltar",
+                            CurrencyCode = "GIP",
+                            IsActive = true,
+                            PhoneCode = "+350",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 89,
+                            CountryCode = "GR",
+                            CountryName = "Greece",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+30",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 90,
+                            CountryCode = "GL",
+                            CountryName = "Greenland",
+                            CurrencyCode = "DKK",
+                            IsActive = true,
+                            PhoneCode = "+299",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 91,
+                            CountryCode = "GD",
+                            CountryName = "Grenada",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 92,
+                            CountryCode = "GP",
+                            CountryName = "Guadeloupe",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+590",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 93,
+                            CountryCode = "GU",
+                            CountryName = "Guam",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 94,
+                            CountryCode = "GT",
+                            CountryName = "Guatemala",
+                            CurrencyCode = "GTQ",
+                            IsActive = true,
+                            PhoneCode = "+502",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 95,
+                            CountryCode = "GG",
+                            CountryName = "Guernsey",
+                            CurrencyCode = "GBP",
+                            IsActive = true,
+                            PhoneCode = "+44",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 96,
+                            CountryCode = "GN",
+                            CountryName = "Guinea",
+                            CurrencyCode = "GNF",
+                            IsActive = true,
+                            PhoneCode = "+224",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 97,
+                            CountryCode = "GW",
+                            CountryName = "Guinea-Bissau",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+245",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 98,
+                            CountryCode = "GY",
+                            CountryName = "Guyana",
+                            CurrencyCode = "GYD",
+                            IsActive = true,
+                            PhoneCode = "+592",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 99,
+                            CountryCode = "HT",
+                            CountryName = "Haiti",
+                            CurrencyCode = "HTG",
+                            IsActive = true,
+                            PhoneCode = "+509",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 100,
+                            CountryCode = "HM",
+                            CountryName = "Heard Island and McDonald Islands",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+672",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 101,
+                            CountryCode = "HN",
+                            CountryName = "Honduras",
+                            CurrencyCode = "HNL",
+                            IsActive = true,
+                            PhoneCode = "+504",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 102,
+                            CountryCode = "HK",
+                            CountryName = "Hong Kong S.A.R.",
+                            CurrencyCode = "HKD",
+                            IsActive = true,
+                            PhoneCode = "+852",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 103,
+                            CountryCode = "HU",
+                            CountryName = "Hungary",
+                            CurrencyCode = "HUF",
+                            IsActive = true,
+                            PhoneCode = "+36",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 104,
+                            CountryCode = "IS",
+                            CountryName = "Iceland",
+                            CurrencyCode = "ISK",
+                            IsActive = true,
+                            PhoneCode = "+354",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 105,
+                            CountryCode = "ID",
+                            CountryName = "Indonesia",
+                            CurrencyCode = "IDR",
+                            IsActive = true,
+                            PhoneCode = "+62",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 106,
+                            CountryCode = "IR",
+                            CountryName = "Iran",
+                            CurrencyCode = "IRR",
+                            IsActive = true,
+                            PhoneCode = "+98",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 107,
+                            CountryCode = "IQ",
+                            CountryName = "Iraq",
+                            CurrencyCode = "IQD",
+                            IsActive = true,
+                            PhoneCode = "+964",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 108,
+                            CountryCode = "IE",
+                            CountryName = "Ireland",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+353",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 109,
+                            CountryCode = "IL",
+                            CountryName = "Israel",
+                            CurrencyCode = "ILS",
+                            IsActive = true,
+                            PhoneCode = "+972",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 110,
+                            CountryCode = "IT",
+                            CountryName = "Italy",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+39",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 111,
+                            CountryCode = "CI",
+                            CountryName = "Ivory Coast",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+225",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 112,
+                            CountryCode = "JM",
+                            CountryName = "Jamaica",
+                            CurrencyCode = "JMD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 113,
+                            CountryCode = "JP",
+                            CountryName = "Japan",
+                            CurrencyCode = "JPY",
+                            IsActive = true,
+                            PhoneCode = "+81",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 114,
+                            CountryCode = "JE",
+                            CountryName = "Jersey",
+                            CurrencyCode = "GBP",
+                            IsActive = true,
+                            PhoneCode = "+44",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 115,
+                            CountryCode = "JO",
+                            CountryName = "Jordan",
+                            CurrencyCode = "JOD",
+                            IsActive = true,
+                            PhoneCode = "+962",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 116,
+                            CountryCode = "KZ",
+                            CountryName = "Kazakhstan",
+                            CurrencyCode = "KZT",
+                            IsActive = true,
+                            PhoneCode = "+7",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 117,
+                            CountryCode = "KE",
+                            CountryName = "Kenya",
+                            CurrencyCode = "KES",
+                            IsActive = true,
+                            PhoneCode = "+254",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 118,
+                            CountryCode = "KI",
+                            CountryName = "Kiribati",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+686",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 119,
+                            CountryCode = "XK",
+                            CountryName = "Kosovo",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+383",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 120,
+                            CountryCode = "KW",
+                            CountryName = "Kuwait",
+                            CurrencyCode = "KWD",
+                            IsActive = true,
+                            PhoneCode = "+965",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 121,
+                            CountryCode = "KG",
+                            CountryName = "Kyrgyzstan",
+                            CurrencyCode = "KGS",
+                            IsActive = true,
+                            PhoneCode = "+996",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 122,
+                            CountryCode = "LA",
+                            CountryName = "Laos",
+                            CurrencyCode = "LAK",
+                            IsActive = true,
+                            PhoneCode = "+856",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 123,
+                            CountryCode = "LV",
+                            CountryName = "Latvia",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+371",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 124,
+                            CountryCode = "LB",
+                            CountryName = "Lebanon",
+                            CurrencyCode = "LBP",
+                            IsActive = true,
+                            PhoneCode = "+961",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 125,
+                            CountryCode = "LS",
+                            CountryName = "Lesotho",
+                            CurrencyCode = "LSL",
+                            IsActive = true,
+                            PhoneCode = "+266",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 126,
+                            CountryCode = "LR",
+                            CountryName = "Liberia",
+                            CurrencyCode = "LRD",
+                            IsActive = true,
+                            PhoneCode = "+231",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 127,
+                            CountryCode = "LY",
+                            CountryName = "Libya",
+                            CurrencyCode = "LYD",
+                            IsActive = true,
+                            PhoneCode = "+218",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 128,
+                            CountryCode = "LI",
+                            CountryName = "Liechtenstein",
+                            CurrencyCode = "CHF",
+                            IsActive = true,
+                            PhoneCode = "+423",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 129,
+                            CountryCode = "LT",
+                            CountryName = "Lithuania",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+370",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 130,
+                            CountryCode = "LU",
+                            CountryName = "Luxembourg",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+352",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 131,
+                            CountryCode = "MO",
+                            CountryName = "Macau S.A.R.",
+                            CurrencyCode = "MOP",
+                            IsActive = true,
+                            PhoneCode = "+853",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 132,
+                            CountryCode = "MG",
+                            CountryName = "Madagascar",
+                            CurrencyCode = "MGA",
+                            IsActive = true,
+                            PhoneCode = "+261",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 133,
+                            CountryCode = "MW",
+                            CountryName = "Malawi",
+                            CurrencyCode = "MWK",
+                            IsActive = true,
+                            PhoneCode = "+265",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 134,
+                            CountryCode = "MY",
+                            CountryName = "Malaysia",
+                            CurrencyCode = "MYR",
+                            IsActive = true,
+                            PhoneCode = "+60",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 135,
+                            CountryCode = "MV",
+                            CountryName = "Maldives",
+                            CurrencyCode = "MVR",
+                            IsActive = true,
+                            PhoneCode = "+960",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 136,
+                            CountryCode = "ML",
+                            CountryName = "Mali",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+223",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 137,
+                            CountryCode = "MT",
+                            CountryName = "Malta",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+356",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 138,
+                            CountryCode = "IM",
+                            CountryName = "Man (Isle of)",
+                            CurrencyCode = "GBP",
+                            IsActive = true,
+                            PhoneCode = "+44",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 139,
+                            CountryCode = "MH",
+                            CountryName = "Marshall Islands",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+692",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 140,
+                            CountryCode = "MQ",
+                            CountryName = "Martinique",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+596",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 141,
+                            CountryCode = "MR",
+                            CountryName = "Mauritania",
+                            CurrencyCode = "MRU",
+                            IsActive = true,
+                            PhoneCode = "+222",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 142,
+                            CountryCode = "MU",
+                            CountryName = "Mauritius",
+                            CurrencyCode = "MUR",
+                            IsActive = true,
+                            PhoneCode = "+230",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 143,
+                            CountryCode = "YT",
+                            CountryName = "Mayotte",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+262",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 144,
+                            CountryCode = "MX",
+                            CountryName = "Mexico",
+                            CurrencyCode = "MXN",
+                            IsActive = true,
+                            PhoneCode = "+52",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 145,
+                            CountryCode = "FM",
+                            CountryName = "Micronesia",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+691",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 146,
+                            CountryCode = "MD",
+                            CountryName = "Moldova",
+                            CurrencyCode = "MDL",
+                            IsActive = true,
+                            PhoneCode = "+373",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 147,
+                            CountryCode = "MC",
+                            CountryName = "Monaco",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+377",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 148,
+                            CountryCode = "MN",
+                            CountryName = "Mongolia",
+                            CurrencyCode = "MNT",
+                            IsActive = true,
+                            PhoneCode = "+976",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 149,
+                            CountryCode = "ME",
+                            CountryName = "Montenegro",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+382",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 150,
+                            CountryCode = "MS",
+                            CountryName = "Montserrat",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 151,
+                            CountryCode = "MA",
+                            CountryName = "Morocco",
+                            CurrencyCode = "MAD",
+                            IsActive = true,
+                            PhoneCode = "+212",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 152,
+                            CountryCode = "MZ",
+                            CountryName = "Mozambique",
+                            CurrencyCode = "MZN",
+                            IsActive = true,
+                            PhoneCode = "+258",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 153,
+                            CountryCode = "MM",
+                            CountryName = "Myanmar",
+                            CurrencyCode = "MMK",
+                            IsActive = true,
+                            PhoneCode = "+95",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 154,
+                            CountryCode = "NA",
+                            CountryName = "Namibia",
+                            CurrencyCode = "NAD",
+                            IsActive = true,
+                            PhoneCode = "+264",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 155,
+                            CountryCode = "NR",
+                            CountryName = "Nauru",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+674",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 156,
+                            CountryCode = "NP",
+                            CountryName = "Nepal",
+                            CurrencyCode = "NPR",
+                            IsActive = true,
+                            PhoneCode = "+977",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 157,
+                            CountryCode = "NL",
+                            CountryName = "Netherlands",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+31",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 158,
+                            CountryCode = "NC",
+                            CountryName = "New Caledonia",
+                            CurrencyCode = "XPF",
+                            IsActive = true,
+                            PhoneCode = "+687",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 159,
+                            CountryCode = "NZ",
+                            CountryName = "New Zealand",
+                            CurrencyCode = "NZD",
+                            IsActive = true,
+                            PhoneCode = "+64",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 160,
+                            CountryCode = "NI",
+                            CountryName = "Nicaragua",
+                            CurrencyCode = "NIO",
+                            IsActive = true,
+                            PhoneCode = "+505",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 161,
+                            CountryCode = "NE",
+                            CountryName = "Niger",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+227",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 162,
+                            CountryCode = "NG",
+                            CountryName = "Nigeria",
+                            CurrencyCode = "NGN",
+                            IsActive = true,
+                            PhoneCode = "+234",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 163,
+                            CountryCode = "NU",
+                            CountryName = "Niue",
+                            CurrencyCode = "NZD",
+                            IsActive = true,
+                            PhoneCode = "+683",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 164,
+                            CountryCode = "NF",
+                            CountryName = "Norfolk Island",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+672",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 165,
+                            CountryCode = "KP",
+                            CountryName = "North Korea",
+                            CurrencyCode = "KPW",
+                            IsActive = true,
+                            PhoneCode = "+850",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 166,
+                            CountryCode = "MK",
+                            CountryName = "North Macedonia",
+                            CurrencyCode = "MKD",
+                            IsActive = true,
+                            PhoneCode = "+389",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 167,
+                            CountryCode = "MP",
+                            CountryName = "Northern Mariana Islands",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 168,
+                            CountryCode = "NO",
+                            CountryName = "Norway",
+                            CurrencyCode = "NOK",
+                            IsActive = true,
+                            PhoneCode = "+47",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 169,
+                            CountryCode = "OM",
+                            CountryName = "Oman",
+                            CurrencyCode = "OMR",
+                            IsActive = true,
+                            PhoneCode = "+968",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 170,
+                            CountryCode = "PK",
+                            CountryName = "Pakistan",
+                            CurrencyCode = "PKR",
+                            IsActive = true,
+                            PhoneCode = "+92",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 171,
+                            CountryCode = "PW",
+                            CountryName = "Palau",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+680",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 172,
+                            CountryCode = "PS",
+                            CountryName = "Palestinian Territory Occupied",
+                            CurrencyCode = "ILS",
+                            IsActive = true,
+                            PhoneCode = "+970",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 173,
+                            CountryCode = "PA",
+                            CountryName = "Panama",
+                            CurrencyCode = "PAB",
+                            IsActive = true,
+                            PhoneCode = "+507",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 174,
+                            CountryCode = "PG",
+                            CountryName = "Papua New Guinea",
+                            CurrencyCode = "PGK",
+                            IsActive = true,
+                            PhoneCode = "+675",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 175,
+                            CountryCode = "PY",
+                            CountryName = "Paraguay",
+                            CurrencyCode = "PYG",
+                            IsActive = true,
+                            PhoneCode = "+595",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 176,
+                            CountryCode = "PE",
+                            CountryName = "Peru",
+                            CurrencyCode = "PEN",
+                            IsActive = true,
+                            PhoneCode = "+51",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 177,
+                            CountryCode = "PH",
+                            CountryName = "Philippines",
+                            CurrencyCode = "PHP",
+                            IsActive = true,
+                            PhoneCode = "+63",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 178,
+                            CountryCode = "PN",
+                            CountryName = "Pitcairn Island",
+                            CurrencyCode = "NZD",
+                            IsActive = true,
+                            PhoneCode = "+870",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 179,
+                            CountryCode = "PL",
+                            CountryName = "Poland",
+                            CurrencyCode = "PLN",
+                            IsActive = true,
+                            PhoneCode = "+48",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 180,
+                            CountryCode = "PT",
+                            CountryName = "Portugal",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+351",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 181,
+                            CountryCode = "PR",
+                            CountryName = "Puerto Rico",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 182,
+                            CountryCode = "QA",
+                            CountryName = "Qatar",
+                            CurrencyCode = "QAR",
+                            IsActive = true,
+                            PhoneCode = "+974",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 183,
+                            CountryCode = "RE",
+                            CountryName = "Reunion",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+262",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 184,
+                            CountryCode = "RO",
+                            CountryName = "Romania",
+                            CurrencyCode = "RON",
+                            IsActive = true,
+                            PhoneCode = "+40",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 185,
+                            CountryCode = "RU",
+                            CountryName = "Russia",
+                            CurrencyCode = "RUB",
+                            IsActive = true,
+                            PhoneCode = "+7",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 186,
+                            CountryCode = "RW",
+                            CountryName = "Rwanda",
+                            CurrencyCode = "RWF",
+                            IsActive = true,
+                            PhoneCode = "+250",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 187,
+                            CountryCode = "SH",
+                            CountryName = "Saint Helena",
+                            CurrencyCode = "SHP",
+                            IsActive = true,
+                            PhoneCode = "+290",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 188,
+                            CountryCode = "KN",
+                            CountryName = "Saint Kitts and Nevis",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 189,
+                            CountryCode = "LC",
+                            CountryName = "Saint Lucia",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 190,
+                            CountryCode = "PM",
+                            CountryName = "Saint Pierre and Miquelon",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+508",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 191,
+                            CountryCode = "VC",
+                            CountryName = "Saint Vincent and the Grenadines",
+                            CurrencyCode = "XCD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 192,
+                            CountryCode = "BL",
+                            CountryName = "Saint-Barthelemy",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+590",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 193,
+                            CountryCode = "MF",
+                            CountryName = "Saint-Martin (French part)",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+590",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 194,
+                            CountryCode = "WS",
+                            CountryName = "Samoa",
+                            CurrencyCode = "WST",
+                            IsActive = true,
+                            PhoneCode = "+685",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 195,
+                            CountryCode = "SM",
+                            CountryName = "San Marino",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+378",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 196,
+                            CountryCode = "ST",
+                            CountryName = "Sao Tome and Principe",
+                            CurrencyCode = "STN",
+                            IsActive = true,
+                            PhoneCode = "+239",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 197,
+                            CountryCode = "SA",
+                            CountryName = "Saudi Arabia",
+                            CurrencyCode = "SAR",
+                            IsActive = true,
+                            PhoneCode = "+966",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 198,
+                            CountryCode = "SN",
+                            CountryName = "Senegal",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+221",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 199,
+                            CountryCode = "RS",
+                            CountryName = "Serbia",
+                            CurrencyCode = "RSD",
+                            IsActive = true,
+                            PhoneCode = "+381",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 200,
+                            CountryCode = "SC",
+                            CountryName = "Seychelles",
+                            CurrencyCode = "SCR",
+                            IsActive = true,
+                            PhoneCode = "+248",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 201,
+                            CountryCode = "SL",
+                            CountryName = "Sierra Leone",
+                            CurrencyCode = "SLL",
+                            IsActive = true,
+                            PhoneCode = "+232",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 202,
+                            CountryCode = "SX",
+                            CountryName = "Sint Maarten (Dutch part)",
+                            CurrencyCode = "ANG",
+                            IsActive = true,
+                            PhoneCode = "+1721",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 203,
+                            CountryCode = "SK",
+                            CountryName = "Slovakia",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+421",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 204,
+                            CountryCode = "SI",
+                            CountryName = "Slovenia",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+386",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 205,
+                            CountryCode = "SB",
+                            CountryName = "Solomon Islands",
+                            CurrencyCode = "SBD",
+                            IsActive = true,
+                            PhoneCode = "+677",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 206,
+                            CountryCode = "SO",
+                            CountryName = "Somalia",
+                            CurrencyCode = "SOS",
+                            IsActive = true,
+                            PhoneCode = "+252",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 207,
+                            CountryCode = "ZA",
+                            CountryName = "South Africa",
+                            CurrencyCode = "ZAR",
+                            IsActive = true,
+                            PhoneCode = "+27",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 208,
+                            CountryCode = "GS",
+                            CountryName = "South Georgia",
+                            CurrencyCode = "GBP",
+                            IsActive = true,
+                            PhoneCode = "+500",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 209,
+                            CountryCode = "KR",
+                            CountryName = "South Korea",
+                            CurrencyCode = "KRW",
+                            IsActive = true,
+                            PhoneCode = "+82",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 210,
+                            CountryCode = "SS",
+                            CountryName = "South Sudan",
+                            CurrencyCode = "SSP",
+                            IsActive = true,
+                            PhoneCode = "+211",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 211,
+                            CountryCode = "ES",
+                            CountryName = "Spain",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+34",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 212,
+                            CountryCode = "LK",
+                            CountryName = "Sri Lanka",
+                            CurrencyCode = "LKR",
+                            IsActive = true,
+                            PhoneCode = "+94",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 213,
+                            CountryCode = "SD",
+                            CountryName = "Sudan",
+                            CurrencyCode = "SDG",
+                            IsActive = true,
+                            PhoneCode = "+249",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 214,
+                            CountryCode = "SR",
+                            CountryName = "Suriname",
+                            CurrencyCode = "SRD",
+                            IsActive = true,
+                            PhoneCode = "+597",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 215,
+                            CountryCode = "SJ",
+                            CountryName = "Svalbard and Jan Mayen Islands",
+                            CurrencyCode = "NOK",
+                            IsActive = true,
+                            PhoneCode = "+47",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 216,
+                            CountryCode = "SE",
+                            CountryName = "Sweden",
+                            CurrencyCode = "SEK",
+                            IsActive = true,
+                            PhoneCode = "+46",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 217,
+                            CountryCode = "CH",
+                            CountryName = "Switzerland",
+                            CurrencyCode = "CHF",
+                            IsActive = true,
+                            PhoneCode = "+41",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 218,
+                            CountryCode = "SY",
+                            CountryName = "Syria",
+                            CurrencyCode = "SYP",
+                            IsActive = true,
+                            PhoneCode = "+963",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 219,
+                            CountryCode = "TW",
+                            CountryName = "Taiwan",
+                            CurrencyCode = "TWD",
+                            IsActive = true,
+                            PhoneCode = "+886",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 220,
+                            CountryCode = "TJ",
+                            CountryName = "Tajikistan",
+                            CurrencyCode = "TJS",
+                            IsActive = true,
+                            PhoneCode = "+992",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 221,
+                            CountryCode = "TZ",
+                            CountryName = "Tanzania",
+                            CurrencyCode = "TZS",
+                            IsActive = true,
+                            PhoneCode = "+255",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 222,
+                            CountryCode = "TH",
+                            CountryName = "Thailand",
+                            CurrencyCode = "THB",
+                            IsActive = true,
+                            PhoneCode = "+66",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 223,
+                            CountryCode = "BS",
+                            CountryName = "The Bahamas",
+                            CurrencyCode = "BSD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 224,
+                            CountryCode = "GM",
+                            CountryName = "The Gambia",
+                            CurrencyCode = "GMD",
+                            IsActive = true,
+                            PhoneCode = "+220",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 225,
+                            CountryCode = "TL",
+                            CountryName = "Timor-Leste",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+670",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 226,
+                            CountryCode = "TG",
+                            CountryName = "Togo",
+                            CurrencyCode = "XOF",
+                            IsActive = true,
+                            PhoneCode = "+228",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 227,
+                            CountryCode = "TK",
+                            CountryName = "Tokelau",
+                            CurrencyCode = "NZD",
+                            IsActive = true,
+                            PhoneCode = "+690",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 228,
+                            CountryCode = "TO",
+                            CountryName = "Tonga",
+                            CurrencyCode = "TOP",
+                            IsActive = true,
+                            PhoneCode = "+676",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 229,
+                            CountryCode = "TT",
+                            CountryName = "Trinidad and Tobago",
+                            CurrencyCode = "TTD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 230,
+                            CountryCode = "TN",
+                            CountryName = "Tunisia",
+                            CurrencyCode = "TND",
+                            IsActive = true,
+                            PhoneCode = "+216",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 231,
+                            CountryCode = "TR",
+                            CountryName = "Turkey",
+                            CurrencyCode = "TRY",
+                            IsActive = true,
+                            PhoneCode = "+90",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 232,
+                            CountryCode = "TM",
+                            CountryName = "Turkmenistan",
+                            CurrencyCode = "TMT",
+                            IsActive = true,
+                            PhoneCode = "+993",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 233,
+                            CountryCode = "TC",
+                            CountryName = "Turks and Caicos Islands",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 234,
+                            CountryCode = "TV",
+                            CountryName = "Tuvalu",
+                            CurrencyCode = "AUD",
+                            IsActive = true,
+                            PhoneCode = "+688",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 235,
+                            CountryCode = "UG",
+                            CountryName = "Uganda",
+                            CurrencyCode = "UGX",
+                            IsActive = true,
+                            PhoneCode = "+256",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 236,
+                            CountryCode = "UA",
+                            CountryName = "Ukraine",
+                            CurrencyCode = "UAH",
+                            IsActive = true,
+                            PhoneCode = "+380",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 237,
+                            CountryCode = "UM",
+                            CountryName = "United States Minor Outlying Islands",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 238,
+                            CountryCode = "UY",
+                            CountryName = "Uruguay",
+                            CurrencyCode = "UYU",
+                            IsActive = true,
+                            PhoneCode = "+598",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 239,
+                            CountryCode = "UZ",
+                            CountryName = "Uzbekistan",
+                            CurrencyCode = "UZS",
+                            IsActive = true,
+                            PhoneCode = "+998",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 240,
+                            CountryCode = "VU",
+                            CountryName = "Vanuatu",
+                            CurrencyCode = "VUV",
+                            IsActive = true,
+                            PhoneCode = "+678",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 241,
+                            CountryCode = "VA",
+                            CountryName = "Vatican City State (Holy See)",
+                            CurrencyCode = "EUR",
+                            IsActive = true,
+                            PhoneCode = "+379",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 242,
+                            CountryCode = "VE",
+                            CountryName = "Venezuela",
+                            CurrencyCode = "VES",
+                            IsActive = true,
+                            PhoneCode = "+58",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 243,
+                            CountryCode = "VN",
+                            CountryName = "Vietnam",
+                            CurrencyCode = "VND",
+                            IsActive = true,
+                            PhoneCode = "+84",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 244,
+                            CountryCode = "VG",
+                            CountryName = "Virgin Islands (British)",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 245,
+                            CountryCode = "VI",
+                            CountryName = "Virgin Islands (US)",
+                            CurrencyCode = "USD",
+                            IsActive = true,
+                            PhoneCode = "+1",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 246,
+                            CountryCode = "WF",
+                            CountryName = "Wallis and Futuna Islands",
+                            CurrencyCode = "XPF",
+                            IsActive = true,
+                            PhoneCode = "+681",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 247,
+                            CountryCode = "EH",
+                            CountryName = "Western Sahara",
+                            CurrencyCode = "MAD",
+                            IsActive = true,
+                            PhoneCode = "+212",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 248,
+                            CountryCode = "YE",
+                            CountryName = "Yemen",
+                            CurrencyCode = "YER",
+                            IsActive = true,
+                            PhoneCode = "+967",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 249,
+                            CountryCode = "ZM",
+                            CountryName = "Zambia",
+                            CurrencyCode = "ZMW",
+                            IsActive = true,
+                            PhoneCode = "+260",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CountryId = 250,
+                            CountryCode = "ZW",
+                            CountryName = "Zimbabwe",
+                            CurrencyCode = "ZWL",
+                            IsActive = true,
+                            PhoneCode = "+263",
+                            Version = 0u
                         });
                 });
 
@@ -405,8 +2852,8 @@ namespace Master.Repository.Migrations.Master
 
                     b.Property<string>("Symbol")
                         .IsRequired()
-                        .HasMaxLength(5)
-                        .HasColumnType("character varying(5)");
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<string>("SymbolPosition")
                         .IsRequired()
@@ -432,9 +2879,9 @@ namespace Master.Repository.Migrations.Master
                             CurrencyId = 1,
                             Code = "INR",
                             DecimalPlaces = 2,
-                            Format = "##,##,##0.00",
+                            Format = "##,##,##,##0.00",
                             IsActive = true,
-                            Name = "Indian Rupee",
+                            Name = "Indian rupee",
                             Symbol = "₹",
                             SymbolPosition = "Prefix",
                             Version = 0u
@@ -446,7 +2893,7 @@ namespace Master.Repository.Migrations.Master
                             DecimalPlaces = 2,
                             Format = "###,###,##0.00",
                             IsActive = true,
-                            Name = "US Dollar",
+                            Name = "United States dollar",
                             Symbol = "$",
                             SymbolPosition = "Prefix",
                             Version = 0u
@@ -458,7 +2905,7 @@ namespace Master.Repository.Migrations.Master
                             DecimalPlaces = 2,
                             Format = "###,###,##0.00",
                             IsActive = true,
-                            Name = "Pound Sterling",
+                            Name = "British pound",
                             Symbol = "£",
                             SymbolPosition = "Prefix",
                             Version = 0u
@@ -470,8 +2917,8 @@ namespace Master.Repository.Migrations.Master
                             DecimalPlaces = 2,
                             Format = "###,###,##0.00",
                             IsActive = true,
-                            Name = "UAE Dirham",
-                            Symbol = "د.إ",
+                            Name = "United Arab Emirates dirham",
+                            Symbol = "إ.د",
                             SymbolPosition = "Prefix",
                             Version = 0u
                         },
@@ -482,8 +2929,1796 @@ namespace Master.Repository.Migrations.Master
                             DecimalPlaces = 2,
                             Format = "###,###,##0.00",
                             IsActive = true,
-                            Name = "Singapore Dollar",
-                            Symbol = "S$",
+                            Name = "Singapore dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 6,
+                            Code = "AAD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Antarctican dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 7,
+                            Code = "AFN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Afghan afghani",
+                            Symbol = "؋",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 8,
+                            Code = "ALL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Albanian lek",
+                            Symbol = "Lek",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 9,
+                            Code = "AMD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Armenian dram",
+                            Symbol = "֏",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 10,
+                            Code = "ANG",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Netherlands Antillean guilder",
+                            Symbol = "ƒ",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 11,
+                            Code = "AOA",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Angolan kwanza",
+                            Symbol = "Kz",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 12,
+                            Code = "ARS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Argentine peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 13,
+                            Code = "AUD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Australian dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 14,
+                            Code = "AWG",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Aruban florin",
+                            Symbol = "ƒ",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 15,
+                            Code = "AZN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Azerbaijani manat",
+                            Symbol = "m",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 16,
+                            Code = "BAM",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bosnia and Herzegovina convertible mark",
+                            Symbol = "KM",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 17,
+                            Code = "BBD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Barbadian dollar",
+                            Symbol = "Bds$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 18,
+                            Code = "BDT",
+                            DecimalPlaces = 2,
+                            Format = "##,##,##,##0.00",
+                            IsActive = true,
+                            Name = "Bangladeshi taka",
+                            Symbol = "৳",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 19,
+                            Code = "BHD",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Bahraini dinar",
+                            Symbol = ".د.ب",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 20,
+                            Code = "BIF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Burundian franc",
+                            Symbol = "FBu",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 21,
+                            Code = "BMD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bermudian dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 22,
+                            Code = "BND",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Brunei dollar",
+                            Symbol = "B$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 23,
+                            Code = "BOB",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bolivian boliviano",
+                            Symbol = "Bs.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 24,
+                            Code = "BRL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Brazilian real",
+                            Symbol = "R$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 25,
+                            Code = "BSD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bahamian dollar",
+                            Symbol = "B$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 26,
+                            Code = "BTN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bhutanese ngultrum",
+                            Symbol = "Nu.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 27,
+                            Code = "BWP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Botswana pula",
+                            Symbol = "P",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 28,
+                            Code = "BYN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Belarusian ruble",
+                            Symbol = "Br",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 29,
+                            Code = "BZD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Belize dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 30,
+                            Code = "CAD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Canadian dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 31,
+                            Code = "CDF",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Congolese Franc",
+                            Symbol = "FC",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 32,
+                            Code = "CHF",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Swiss franc",
+                            Symbol = "CHf",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 33,
+                            Code = "CLP",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Chilean peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 34,
+                            Code = "CNY",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Chinese yuan",
+                            Symbol = "¥",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 35,
+                            Code = "COP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Colombian peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 36,
+                            Code = "CRC",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Costa Rican colón",
+                            Symbol = "₡",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 37,
+                            Code = "CUP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Cuban peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 38,
+                            Code = "CVE",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Cape Verdean escudo",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 39,
+                            Code = "CZK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Czech koruna",
+                            Symbol = "Kč",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 40,
+                            Code = "DJF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Djiboutian franc",
+                            Symbol = "Fdj",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 41,
+                            Code = "DKK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Danish krone",
+                            Symbol = "Kr.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 42,
+                            Code = "DOP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Dominican peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 43,
+                            Code = "DZD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Algerian dinar",
+                            Symbol = "دج",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 44,
+                            Code = "EGP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Egyptian pound",
+                            Symbol = "ج.م",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 45,
+                            Code = "ERN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Eritrean nakfa",
+                            Symbol = "Nfk",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 46,
+                            Code = "ETB",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Ethiopian birr",
+                            Symbol = "Nkf",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 47,
+                            Code = "EUR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Euro",
+                            Symbol = "€",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 48,
+                            Code = "FJD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Fijian dollar",
+                            Symbol = "FJ$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 49,
+                            Code = "FKP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Falkland Islands pound",
+                            Symbol = "£",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 50,
+                            Code = "GEL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Georgian lari",
+                            Symbol = "ლ",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 51,
+                            Code = "GHS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Ghanaian cedi",
+                            Symbol = "GH₵",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 52,
+                            Code = "GIP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Gibraltar pound",
+                            Symbol = "£",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 53,
+                            Code = "GMD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Gambian dalasi",
+                            Symbol = "D",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 54,
+                            Code = "GNF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Guinean franc",
+                            Symbol = "FG",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 55,
+                            Code = "GTQ",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Guatemalan quetzal",
+                            Symbol = "Q",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 56,
+                            Code = "GYD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Guyanese dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 57,
+                            Code = "HKD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Hong Kong dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 58,
+                            Code = "HNL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Honduran lempira",
+                            Symbol = "L",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 59,
+                            Code = "HTG",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Haitian gourde",
+                            Symbol = "G",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 60,
+                            Code = "HUF",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Hungarian forint",
+                            Symbol = "Ft",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 61,
+                            Code = "IDR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Indonesian rupiah",
+                            Symbol = "Rp",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 62,
+                            Code = "ILS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Israeli new shekel",
+                            Symbol = "₪",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 63,
+                            Code = "IQD",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Iraqi dinar",
+                            Symbol = "د.ع",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 64,
+                            Code = "IRR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Iranian rial",
+                            Symbol = "﷼",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 65,
+                            Code = "ISK",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Icelandic króna",
+                            Symbol = "ko",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 66,
+                            Code = "JMD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Jamaican dollar",
+                            Symbol = "J$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 67,
+                            Code = "JOD",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Jordanian dinar",
+                            Symbol = "ا.د",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 68,
+                            Code = "JPY",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Japanese yen",
+                            Symbol = "¥",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 69,
+                            Code = "KES",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Kenyan shilling",
+                            Symbol = "KSh",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 70,
+                            Code = "KGS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Kyrgyzstani som",
+                            Symbol = "лв",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 71,
+                            Code = "KHR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Cambodian riel",
+                            Symbol = "KHR",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 72,
+                            Code = "KMF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Comorian franc",
+                            Symbol = "CF",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 73,
+                            Code = "KPW",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "North Korean Won",
+                            Symbol = "₩",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 74,
+                            Code = "KRW",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Won",
+                            Symbol = "₩",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 75,
+                            Code = "KWD",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Kuwaiti dinar",
+                            Symbol = "ك.د",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 76,
+                            Code = "KYD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Cayman Islands dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 77,
+                            Code = "KZT",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Kazakhstani tenge",
+                            Symbol = "лв",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 78,
+                            Code = "LAK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Lao kip",
+                            Symbol = "₭",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 79,
+                            Code = "LBP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Lebanese pound",
+                            Symbol = "£",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 80,
+                            Code = "LKR",
+                            DecimalPlaces = 2,
+                            Format = "##,##,##,##0.00",
+                            IsActive = true,
+                            Name = "Sri Lankan rupee",
+                            Symbol = "Rs",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 81,
+                            Code = "LRD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Liberian dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 82,
+                            Code = "LSL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Lesotho loti",
+                            Symbol = "L",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 83,
+                            Code = "LYD",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Libyan dinar",
+                            Symbol = "د.ل",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 84,
+                            Code = "MAD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Moroccan dirham",
+                            Symbol = "DH",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 85,
+                            Code = "MDL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Moldovan leu",
+                            Symbol = "L",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 86,
+                            Code = "MGA",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Malagasy ariary",
+                            Symbol = "Ar",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 87,
+                            Code = "MKD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Denar",
+                            Symbol = "ден",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 88,
+                            Code = "MMK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Burmese kyat",
+                            Symbol = "K",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 89,
+                            Code = "MNT",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Mongolian tögrög",
+                            Symbol = "₮",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 90,
+                            Code = "MOP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Macanese pataca",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 91,
+                            Code = "MRU",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Mauritanian ouguiya",
+                            Symbol = "UM",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 92,
+                            Code = "MUR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Mauritian rupee",
+                            Symbol = "₨",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 93,
+                            Code = "MVR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Maldivian rufiyaa",
+                            Symbol = "Rf",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 94,
+                            Code = "MWK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Malawian kwacha",
+                            Symbol = "MK",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 95,
+                            Code = "MXN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Mexican peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 96,
+                            Code = "MYR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Malaysian ringgit",
+                            Symbol = "RM",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 97,
+                            Code = "MZN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Mozambican metical",
+                            Symbol = "MT",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 98,
+                            Code = "NAD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Namibian dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 99,
+                            Code = "NGN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Nigerian naira",
+                            Symbol = "₦",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 100,
+                            Code = "NIO",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Nicaraguan córdoba",
+                            Symbol = "C$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 101,
+                            Code = "NOK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Norwegian krone",
+                            Symbol = "ko",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 102,
+                            Code = "NPR",
+                            DecimalPlaces = 2,
+                            Format = "##,##,##,##0.00",
+                            IsActive = true,
+                            Name = "Nepalese rupee",
+                            Symbol = "₨",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 103,
+                            Code = "NZD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "New Zealand dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 104,
+                            Code = "OMR",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Omani rial",
+                            Symbol = ".ع.ر",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 105,
+                            Code = "PAB",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Panamanian balboa",
+                            Symbol = "B/.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 106,
+                            Code = "PEN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Peruvian sol",
+                            Symbol = "S/.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 107,
+                            Code = "PGK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Papua New Guinean kina",
+                            Symbol = "K",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 108,
+                            Code = "PHP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Philippine peso",
+                            Symbol = "₱",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 109,
+                            Code = "PKR",
+                            DecimalPlaces = 2,
+                            Format = "##,##,##,##0.00",
+                            IsActive = true,
+                            Name = "Pakistani rupee",
+                            Symbol = "₨",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 110,
+                            Code = "PLN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Polish złoty",
+                            Symbol = "zł",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 111,
+                            Code = "PYG",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Paraguayan guarani",
+                            Symbol = "₲",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 112,
+                            Code = "QAR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Qatari riyal",
+                            Symbol = "ق.ر",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 113,
+                            Code = "RON",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Romanian leu",
+                            Symbol = "lei",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 114,
+                            Code = "RSD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Serbian dinar",
+                            Symbol = "din",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 115,
+                            Code = "RUB",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Russian ruble",
+                            Symbol = "₽",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 116,
+                            Code = "RWF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Rwandan franc",
+                            Symbol = "FRw",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 117,
+                            Code = "SAR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Saudi riyal",
+                            Symbol = "﷼",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 118,
+                            Code = "SBD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Solomon Islands dollar",
+                            Symbol = "Si$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 119,
+                            Code = "SCR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Seychellois rupee",
+                            Symbol = "SRe",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 120,
+                            Code = "SDG",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Sudanese pound",
+                            Symbol = ".س.ج",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 121,
+                            Code = "SEK",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Swedish krona",
+                            Symbol = "ko",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 122,
+                            Code = "SHP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Saint Helena pound",
+                            Symbol = "£",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 123,
+                            Code = "SLL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Sierra Leonean leone",
+                            Symbol = "Le",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 124,
+                            Code = "SOS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Somali shilling",
+                            Symbol = "Sh.so.",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 125,
+                            Code = "SRD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Surinamese dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 126,
+                            Code = "SSP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "South Sudanese pound",
+                            Symbol = "£",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 127,
+                            Code = "STN",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Dobra",
+                            Symbol = "Db",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 128,
+                            Code = "SYP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Syrian pound",
+                            Symbol = "LS",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 129,
+                            Code = "SZL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Lilangeni",
+                            Symbol = "E",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 130,
+                            Code = "THB",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Thai baht",
+                            Symbol = "฿",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 131,
+                            Code = "TJS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Tajikistani somoni",
+                            Symbol = "SM",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 132,
+                            Code = "TMT",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Turkmenistan manat",
+                            Symbol = "T",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 133,
+                            Code = "TND",
+                            DecimalPlaces = 3,
+                            Format = "###,###,##0.000",
+                            IsActive = true,
+                            Name = "Tunisian dinar",
+                            Symbol = "ت.د",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 134,
+                            Code = "TOP",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Tongan paʻanga",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 135,
+                            Code = "TRY",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Turkish lira",
+                            Symbol = "₺",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 136,
+                            Code = "TTD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Trinidad and Tobago dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 137,
+                            Code = "TWD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "New Taiwan dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 138,
+                            Code = "TZS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Tanzanian shilling",
+                            Symbol = "TSh",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 139,
+                            Code = "UAH",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Ukrainian hryvnia",
+                            Symbol = "₴",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 140,
+                            Code = "UGX",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Ugandan shilling",
+                            Symbol = "USh",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 141,
+                            Code = "UYU",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Uruguayan peso",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 142,
+                            Code = "UZS",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Uzbekistani soʻm",
+                            Symbol = "лв",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 143,
+                            Code = "VES",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Bolívar",
+                            Symbol = "Bs",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 144,
+                            Code = "VND",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Vietnamese đồng",
+                            Symbol = "₫",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 145,
+                            Code = "VUV",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Vanuatu vatu",
+                            Symbol = "VT",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 146,
+                            Code = "WST",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Samoan tālā",
+                            Symbol = "SAT",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 147,
+                            Code = "XAF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "Central African CFA franc",
+                            Symbol = "FCFA",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 148,
+                            Code = "XCD",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Eastern Caribbean dollar",
+                            Symbol = "$",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 149,
+                            Code = "XOF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "West African CFA franc",
+                            Symbol = "CFA",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 150,
+                            Code = "XPF",
+                            DecimalPlaces = 0,
+                            Format = "###,###,##0",
+                            IsActive = true,
+                            Name = "CFP franc",
+                            Symbol = "₣",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 151,
+                            Code = "YER",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Yemeni rial",
+                            Symbol = "﷼",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 152,
+                            Code = "ZAR",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "South African rand",
+                            Symbol = "R",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 153,
+                            Code = "ZMW",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Zambian kwacha",
+                            Symbol = "ZK",
+                            SymbolPosition = "Prefix",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            CurrencyId = 154,
+                            Code = "ZWL",
+                            DecimalPlaces = 2,
+                            Format = "###,###,##0.00",
+                            IsActive = true,
+                            Name = "Zimbabwe Dollar",
+                            Symbol = "$",
                             SymbolPosition = "Prefix",
                             Version = 0u
                         });
@@ -6168,341 +10403,6 @@ namespace Master.Repository.Migrations.Master
                         .IsUnique();
 
                     b.ToTable("States", "mst");
-
-                    b.HasData(
-                        new
-                        {
-                            StateId = 1,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "01",
-                            StateName = "Jammu and Kashmir",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 2,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "02",
-                            StateName = "Himachal Pradesh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 3,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "03",
-                            StateName = "Punjab",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 4,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "04",
-                            StateName = "Chandigarh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 5,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "05",
-                            StateName = "Uttarakhand",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 6,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "06",
-                            StateName = "Haryana",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 7,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "07",
-                            StateName = "Delhi",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 8,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "08",
-                            StateName = "Rajasthan",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 9,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "09",
-                            StateName = "Uttar Pradesh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 10,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "10",
-                            StateName = "Bihar",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 11,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "11",
-                            StateName = "Sikkim",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 12,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "12",
-                            StateName = "Arunachal Pradesh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 13,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "13",
-                            StateName = "Nagaland",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 14,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "14",
-                            StateName = "Manipur",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 15,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "15",
-                            StateName = "Mizoram",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 16,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "16",
-                            StateName = "Tripura",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 17,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "17",
-                            StateName = "Meghalaya",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 18,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "18",
-                            StateName = "Assam",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 19,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "19",
-                            StateName = "West Bengal",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 20,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "20",
-                            StateName = "Jharkhand",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 21,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "21",
-                            StateName = "Odisha",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 22,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "22",
-                            StateName = "Chhattisgarh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 23,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "23",
-                            StateName = "Madhya Pradesh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 24,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "24",
-                            StateName = "Gujarat",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 25,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "26",
-                            StateName = "Dadra and Nagar Haveli and Daman and Diu",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 26,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "27",
-                            StateName = "Maharashtra",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 27,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "29",
-                            StateName = "Karnataka",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 28,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "30",
-                            StateName = "Goa",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 29,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "31",
-                            StateName = "Lakshadweep",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 30,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "32",
-                            StateName = "Kerala",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 31,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "33",
-                            StateName = "Tamil Nadu",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 32,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "34",
-                            StateName = "Puducherry",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 33,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "35",
-                            StateName = "Andaman and Nicobar Islands",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 34,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "36",
-                            StateName = "Telangana",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 35,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "37",
-                            StateName = "Andhra Pradesh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 36,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "38",
-                            StateName = "Ladakh",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            StateId = 37,
-                            CountryId = 1,
-                            IsActive = true,
-                            StateCode = "97",
-                            StateName = "Other Territory",
-                            Version = 0u
-                        });
                 });
 
             modelBuilder.Entity("Master.Entity.TableEntities.TransactionType", b =>
@@ -6587,6 +10487,14 @@ namespace Master.Repository.Migrations.Master
                             IsActive = true,
                             IsLedgerPosting = false,
                             Name = "Sales Order",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            Code = "DLC",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Delivery Challan",
                             Version = 0u
                         },
                         new

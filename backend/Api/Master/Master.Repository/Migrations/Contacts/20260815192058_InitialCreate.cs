@@ -506,38 +506,6 @@ namespace Master.Repository.Migrations.Contacts
                 table: "Contacts",
                 column: "OrgId",
                 filter: "\"IsVendor\" = true");
-
-            // ---- Row-level security, which EF Core does not generate. ----
-            //
-            // Every con table is per-branch. The EF query filter is the first
-            // line of defence; this is the one that holds if a query ever runs
-            // without it, and it is one of the raw-SQL exceptions CLAUDE.md
-            // allows. app.current_org_id is set per transaction — never on the
-            // connection, which is pooled and would leak the last request's
-            // branch into the next one.
-            foreach (string table in new[]
-            {
-                "Contacts",
-                "ContactAddresses",
-                "ContactPersons",
-                "ContactPersonRoles",
-                "ContactBankDetails",
-                "ContactLicences",
-                "ContactAttachments",
-            })
-            {
-                migrationBuilder.Sql($"ALTER TABLE con.\"{table}\" ENABLE ROW LEVEL SECURITY;");
-
-                // Dropped first so the migration is safe to re-run against a
-                // database where it was applied by hand.
-                migrationBuilder.Sql(
-                    $"DROP POLICY IF EXISTS {table.ToLowerInvariant()}_org_isolation ON con.\"{table}\";");
-
-                migrationBuilder.Sql(
-                    $"CREATE POLICY {table.ToLowerInvariant()}_org_isolation ON con.\"{table}\" " +
-                    "USING (\"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
-            }
-
         }
 
         /// <inheritdoc />

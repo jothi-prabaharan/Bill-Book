@@ -15,10 +15,10 @@ namespace Master.Api.Services;
 /// </summary>
 public sealed class SmtpSettingsService
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly ISecretProtector _protector;
 
-    public SmtpSettingsService(MasterDbContext db, ISecretProtector protector)
+    public SmtpSettingsService(AdminDbContext db, ISecretProtector protector)
     {
         _db = db;
         _protector = protector;

@@ -13,13 +13,13 @@ public sealed class SignupService
     private const int TrialMaxOrganizations = 1;
     private const int CodeRetryLimit = 5;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IProvisioningQueue _queue;
     private readonly IMasterCurrencies _master;
     private readonly TimeProvider _clock;
 
     public SignupService(
-        MasterDbContext db,
+        AdminDbContext db,
         IProvisioningQueue queue,
         IMasterCurrencies master,
         TimeProvider clock)

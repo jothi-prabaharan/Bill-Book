@@ -11,14 +11,14 @@ public sealed class UserService
 {
     private static readonly TimeSpan InviteLifetime = TimeSpan.FromDays(7);
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly IEmailSender _email;
     private readonly OrgContextService _orgs;
     private readonly IConfiguration _config;
     private readonly TimeProvider _clock;
 
     public UserService(
-        MasterDbContext db,
+        AdminDbContext db,
         IEmailSender email,
         OrgContextService orgs,
         IConfiguration config,

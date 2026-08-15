@@ -25,9 +25,9 @@ namespace Master.Api.Controllers;
 [Route("internal/master")]
 public sealed class InternalMasterController : ControllerBase
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public InternalMasterController(MasterDbContext db) => _db = db;
+    public InternalMasterController(AdminDbContext db) => _db = db;
 
     /// <summary>
     /// One state. Contacts validates a GSTIN's first two digits against this,

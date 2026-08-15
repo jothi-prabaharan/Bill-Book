@@ -22,9 +22,9 @@ namespace Master.Repository;
 /// lives in that customer's own database, so it kept its own context and its own
 /// schema — see <see cref="ContactsDbContext"/>. One API host, two databases.
 /// </summary>
-public class MasterDbContext : DbContext
+public class AdminDbContext : DbContext
 {
-    public MasterDbContext(DbContextOptions<MasterDbContext> options)
+    public AdminDbContext(DbContextOptions<AdminDbContext> options)
         : base(options)
     {
     }
@@ -280,7 +280,6 @@ public class MasterDbContext : DbContext
         MapXminConcurrency(modelBuilder);
         SeedCountries(modelBuilder);
         SeedCurrencies(modelBuilder);
-        SeedIndianStates(modelBuilder);
         SeedTransactionTypes(modelBuilder);
         SeedLedgerTypes(modelBuilder);
         SeedLedgerSources(modelBuilder);
@@ -309,56 +308,14 @@ public class MasterDbContext : DbContext
 
     private static void SeedCountries(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Country>().HasData(
-            new Country { CountryId = 1, CountryCode = "IN", CountryName = "India", CurrencyCode = "INR", PhoneCode = "+91" },
-            new Country { CountryId = 2, CountryCode = "US", CountryName = "United States", CurrencyCode = "USD", PhoneCode = "+1" },
-            new Country { CountryId = 3, CountryCode = "GB", CountryName = "United Kingdom", CurrencyCode = "GBP", PhoneCode = "+44" },
-            new Country { CountryId = 4, CountryCode = "AE", CountryName = "United Arab Emirates", CurrencyCode = "AED", PhoneCode = "+971" },
-            new Country { CountryId = 5, CountryCode = "SG", CountryName = "Singapore", CurrencyCode = "SGD", PhoneCode = "+65" });
+        modelBuilder.Entity<Country>().HasData(SeedData.GeographySeed.GetCountries());
     }
 
     private static void SeedCurrencies(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Currency>().HasData(
-            new Currency { CurrencyId = 1, Code = "INR", Name = "Indian Rupee", Symbol = "₹", Format = "##,##,##0.00", DecimalPlaces = 2 },
-            new Currency { CurrencyId = 2, Code = "USD", Name = "US Dollar", Symbol = "$", Format = "###,###,##0.00", DecimalPlaces = 2 },
-            new Currency { CurrencyId = 3, Code = "GBP", Name = "Pound Sterling", Symbol = "£", Format = "###,###,##0.00", DecimalPlaces = 2 },
-            new Currency { CurrencyId = 4, Code = "AED", Name = "UAE Dirham", Symbol = "د.إ", Format = "###,###,##0.00", DecimalPlaces = 2 },
-            new Currency { CurrencyId = 5, Code = "SGD", Name = "Singapore Dollar", Symbol = "S$", Format = "###,###,##0.00", DecimalPlaces = 2 });
+        modelBuilder.Entity<Currency>().HasData(SeedData.GeographySeed.GetCurrencies());
     }
 
-    private static void SeedIndianStates(ModelBuilder modelBuilder)
-    {
-        // (GST state code, name) — India (CountryId 1). Codes 25 and 28 are unused historically.
-        (string Code, string Name)[] states =
-        {
-            ("01", "Jammu and Kashmir"), ("02", "Himachal Pradesh"), ("03", "Punjab"),
-            ("04", "Chandigarh"), ("05", "Uttarakhand"), ("06", "Haryana"), ("07", "Delhi"),
-            ("08", "Rajasthan"), ("09", "Uttar Pradesh"), ("10", "Bihar"), ("11", "Sikkim"),
-            ("12", "Arunachal Pradesh"), ("13", "Nagaland"), ("14", "Manipur"), ("15", "Mizoram"),
-            ("16", "Tripura"), ("17", "Meghalaya"), ("18", "Assam"), ("19", "West Bengal"),
-            ("20", "Jharkhand"), ("21", "Odisha"), ("22", "Chhattisgarh"), ("23", "Madhya Pradesh"),
-            ("24", "Gujarat"), ("26", "Dadra and Nagar Haveli and Daman and Diu"), ("27", "Maharashtra"),
-            ("29", "Karnataka"), ("30", "Goa"), ("31", "Lakshadweep"), ("32", "Kerala"),
-            ("33", "Tamil Nadu"), ("34", "Puducherry"), ("35", "Andaman and Nicobar Islands"),
-            ("36", "Telangana"), ("37", "Andhra Pradesh"), ("38", "Ladakh"), ("97", "Other Territory"),
-        };
-
-        var rows = new List<State>();
-        for (int i = 0; i < states.Length; i++)
-        {
-            rows.Add(new State
-            {
-                StateId = i + 1,
-                CountryId = 1,
-                StateCode = states[i].Code,
-                StateName = states[i].Name,
-                IsActive = true,
-            });
-        }
-
-        modelBuilder.Entity<State>().HasData(rows);
-    }
 
     private static void SeedTransactionTypes(ModelBuilder modelBuilder)
     {

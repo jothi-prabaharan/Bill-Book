@@ -8,10 +8,10 @@ namespace Master.Api.Services;
 /// <summary>Resolves what Identity needs at login: customer, database readiness, licence.</summary>
 public sealed class OrgContextService
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly TimeProvider _clock;
 
-    public OrgContextService(MasterDbContext db, TimeProvider clock)
+    public OrgContextService(AdminDbContext db, TimeProvider clock)
     {
         _db = db;
         _clock = clock;

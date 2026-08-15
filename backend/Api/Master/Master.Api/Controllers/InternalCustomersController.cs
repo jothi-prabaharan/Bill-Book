@@ -20,9 +20,9 @@ namespace Master.Api.Controllers;
 [Route("internal/customers")]
 public sealed class InternalCustomersController : ControllerBase
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public InternalCustomersController(MasterDbContext db) => _db = db;
+    public InternalCustomersController(AdminDbContext db) => _db = db;
 
     /// <summary>
     /// Every branch that is ready to be worked on, with the database it lives

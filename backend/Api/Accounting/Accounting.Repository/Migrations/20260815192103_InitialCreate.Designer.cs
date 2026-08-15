@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Accounting.Repository.Migrations
 {
     [DbContext(typeof(AccountingDbContext))]
-    [Migration("20260814080119_AddTransactionRatios")]
-    partial class AddTransactionRatios
+    [Migration("20260815192103_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

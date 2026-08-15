@@ -29,14 +29,14 @@ public sealed class OrganizationService
     /// </summary>
     private const int BranchTrialDays = 30;
 
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
     private readonly ITenantSeeder _seeder;
     private readonly IMasterCurrencies _master;
     private readonly IStateDirectory _states;
     private readonly ILogger<OrganizationService> _log;
 
     public OrganizationService(
-        MasterDbContext db,
+        AdminDbContext db,
         ITenantSeeder seeder,
         IMasterCurrencies master,
         IStateDirectory states,

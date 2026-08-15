@@ -12,9 +12,9 @@ namespace Master.Api.Services;
 /// </summary>
 public sealed class ConfigurationService
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public ConfigurationService(MasterDbContext db) => _db = db;
+    public ConfigurationService(AdminDbContext db) => _db = db;
 
     public async Task<IReadOnlyList<ConfigurationDto>> ListAsync(Guid orgId, CancellationToken ct)
     {

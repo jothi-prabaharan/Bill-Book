@@ -68,7 +68,7 @@ public sealed class ProvisioningWorker : BackgroundService
     private async Task ProvisionAsync(ProvisioningJob job, CancellationToken ct)
     {
         using IServiceScope scope = _scopes.CreateScope();
-        MasterDbContext db = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
+        AdminDbContext db = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
         ISecretStore secrets = scope.ServiceProvider.GetRequiredService<ISecretStore>();
         IIdentityAdmin identity = scope.ServiceProvider.GetRequiredService<IIdentityAdmin>();
         IEventPublisher events = scope.ServiceProvider.GetRequiredService<IEventPublisher>();
@@ -143,7 +143,7 @@ public sealed class ProvisioningWorker : BackgroundService
         try
         {
             using IServiceScope scope = _scopes.CreateScope();
-            MasterDbContext db = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
+            AdminDbContext db = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
             CustomerDatabase? database = await db.CustomerDatabases
                 .FirstOrDefaultAsync(d => d.CustomerId == customerId, ct);
             if (database is not null)

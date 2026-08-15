@@ -22,9 +22,9 @@ namespace Master.Api.Controllers;
 [Route("internal/hsn-sac")]
 public sealed class InternalHsnImportController : ControllerBase
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public InternalHsnImportController(MasterDbContext db) => _db = db;
+    public InternalHsnImportController(AdminDbContext db) => _db = db;
 
     [HttpPost("import")]
     [RequestSizeLimit(20 * 1024 * 1024)]
