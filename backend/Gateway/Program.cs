@@ -36,7 +36,7 @@ builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 // CreatedBy.
 builder.Services.AddDbContext<GatewayDbContext>((sp, options) =>
 {
-    options.UseNpgsql(RequiredConnectionString("MasterDatabase"));
+    options.UseNpgsql(RequiredConnectionString("AdminDatabase"));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 builder.Services.AddHostedService<RequestLogWriter>();
