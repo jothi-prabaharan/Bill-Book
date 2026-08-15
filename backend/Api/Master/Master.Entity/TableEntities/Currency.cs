@@ -19,7 +19,7 @@ public class Currency : AuditableEntity
     public string Name { get; set; } = null!;
 
     [Required(ErrorMessage = "Symbol is required.")]
-    [MaxLength(5, ErrorMessage = "Symbol cannot exceed 5 characters.")]
+    [MaxLength(10, ErrorMessage = "Symbol cannot exceed 10 characters.")]
     public string Symbol { get; set; } = null!;
 
     /// <summary>Display grouping mask, e.g. ###,###,##0.00 (Western) or ##,##,##0.00 (Indian).</summary>

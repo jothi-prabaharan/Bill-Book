@@ -24,7 +24,7 @@ namespace Master.Repository.SeedData;
 public static class HsnSacCsvLoader
 {
     public static async Task<HsnImportResult> ImportAsync(
-        MasterDbContext db, Stream csv, CancellationToken ct = default)
+        AdminDbContext db, Stream csv, CancellationToken ct = default)
     {
         using var reader = new StreamReader(csv);
         string? header = await reader.ReadLineAsync(ct);
