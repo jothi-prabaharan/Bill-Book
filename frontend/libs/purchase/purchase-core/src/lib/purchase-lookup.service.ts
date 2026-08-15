@@ -48,6 +48,19 @@ export interface ReceiptOption {
   currencyCode: string;
 }
 
+/** A bill, as the bills list serves it — enough to pick one. */
+export interface BillOption {
+  billId: number;
+  documentNo: string;
+  vendorBillNo: string;
+  documentDate: string;
+  contactId: number;
+  contactName?: string | null;
+  status: string;
+  totalAmount: number;
+  currencyCode: string;
+}
+
 /** A GST rate, as the tax master serves it. */
 export interface TaxRateOption {
   taxMasterId: number;
@@ -150,6 +163,28 @@ export class PurchaseLookupService {
           row.documentNo.toLowerCase().includes(term) ||
           (row.contactName ?? '').toLowerCase().includes(term) ||
           (row.vendorDeliveryNoteNo ?? '').toLowerCase().includes(term)),
+    );
+  }
+
+  /**
+   * Bills a debit note can be raised against: posted, so something is actually
+   * owed. A draft bill owes nothing yet and is corrected by editing it.
+   */
+  async creditableBills(search: string, contactId: number | null): Promise<BillOption[]> {
+    const rows = await firstValueFrom(
+      this.http.get<BillOption[]>('/api/purchase/bills'),
+    );
+
+    const term = search.trim().toLowerCase();
+
+    return rows.filter(
+      (row) =>
+        row.status === 'Posted' &&
+        (contactId === null || row.contactId === contactId) &&
+        (term === '' ||
+          row.documentNo.toLowerCase().includes(term) ||
+          row.vendorBillNo.toLowerCase().includes(term) ||
+          (row.contactName ?? '').toLowerCase().includes(term)),
     );
   }
 

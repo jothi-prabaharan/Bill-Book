@@ -44,9 +44,13 @@ The account's **currency** is frozen with the rest of the configuration. Changin
 
 ## Seeded accounts
 
-Twelve written when an organization is created, all `IsSystemDefault`, so locked from birth:
+Thirteen written when an organization is created, all `IsSystemDefault`, so locked from birth:
 
-Accounts Receivable · Inventory · Input GST · Fixed Asset · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+Accounts Receivable · Inventory · Input GST · Fixed Asset · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Purchase Returns · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+
+**Purchase Returns** is a **contra** expense: goods sent back reduce what you
+bought, so a report subtracts it rather than adding a negative number. Sales
+Returns and Discount Given work the same way on the income side.
 
 **Fixed Asset** is where a capital line on a bill lands. It is a holding account
 for now: the design is that each fixed asset category carries its own asset,

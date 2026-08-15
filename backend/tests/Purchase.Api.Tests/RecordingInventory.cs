@@ -24,6 +24,15 @@ public sealed class RecordingInventory : IInventoryClient
     /// <summary>Item ids Inventory should refuse, and the outcome it should give.</summary>
     public Dictionary<long, string> Refuse { get; } = [];
 
+    /// <summary>Every return that arrived, in order.</summary>
+    public List<ReturnStockRequest> Returns { get; } = [];
+
+    /// <summary>
+    /// What a returned unit is carrying, which is what the layers say rather
+    /// than what the bill charged. Purchase credits stock by this.
+    /// </summary>
+    public decimal ReturnUnitCost { get; set; } = 100m;
+
     public Task<ReceiveStockResponse> ReceiveAsync(
         ReceiveStockRequest request, CancellationToken ct)
     {
@@ -61,6 +70,50 @@ public sealed class RecordingInventory : IInventoryClient
                 Outcome = fresh ? "Ok" : "DuplicateSource",
                 UnitCost = line.UnitCost,
                 LineValue = fresh ? line.Quantity * line.UnitCost : 0m,
+            });
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+        return Task.FromResult(response);
+    }
+
+    public Task<ReturnStockResponse> ReturnAsync(
+        ReturnStockRequest request, CancellationToken ct)
+    {
+        Returns.Add(request);
+
+        ReturnStockResponse response = new() { Success = true };
+
+        foreach (ReturnStockLine line in request.Lines)
+        {
+            if (Refuse.TryGetValue(line.ItemId, out string? outcome))
+            {
+                response.Success = false;
+                response.Lines.Add(new ReturnStockLineResult
+                {
+                    SourceLineId = line.SourceLineId,
+                    ItemId = line.ItemId,
+                    Quantity = line.Quantity,
+                    Success = false,
+                    Outcome = outcome,
+                });
+
+                continue;
+            }
+
+            bool fresh = _recorded.Add(
+                (request.SourceType, request.SourceId, line.SourceLineId));
+
+            response.Lines.Add(new ReturnStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                Success = true,
+                AlreadyRecorded = !fresh,
+                Outcome = fresh ? "Ok" : "DuplicateSource",
+                UnitCost = ReturnUnitCost,
+                LineValue = fresh ? line.Quantity * ReturnUnitCost : 0m,
             });
         }
 

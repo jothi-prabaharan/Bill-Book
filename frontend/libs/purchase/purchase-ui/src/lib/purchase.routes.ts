@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 /**
  * Purchase's screens.
  *
- * The debit note (T5.3) mounts here as it lands.
+ * Every document in the purchase chain has a screen.
  * Permissions are declared per route so the frontend guard refuses a page the
  * API would refuse anyway — the two read the same `{module}.{action}` strings.
  */
@@ -48,6 +48,30 @@ export const purchaseRoutes: Routes = [
     path: 'bills/:id',
     loadComponent: () =>
       import('./bill-form/bill-form.page').then((m) => m.BillFormPage),
+    data: { permission: 'purchase.view' },
+  },
+  {
+    path: 'debit-notes',
+    loadComponent: () =>
+      import('./debit-note-list/debit-note-list.page').then(
+        (m) => m.DebitNoteListPage,
+      ),
+    data: { permission: 'purchase.view' },
+  },
+  {
+    path: 'debit-notes/new',
+    loadComponent: () =>
+      import('./debit-note-form/debit-note-form.page').then(
+        (m) => m.DebitNoteFormPage,
+      ),
+    data: { permission: 'purchase.edit' },
+  },
+  {
+    path: 'debit-notes/:id',
+    loadComponent: () =>
+      import('./debit-note-form/debit-note-form.page').then(
+        (m) => m.DebitNoteFormPage,
+      ),
     data: { permission: 'purchase.view' },
   },
   {

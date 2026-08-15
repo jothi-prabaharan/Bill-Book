@@ -6,9 +6,11 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: the whole T4 chain is built and verified.** T4.1 through T4.5 are done — the twelve `pur` tables with RLS, and the purchase order, goods receipt and bill end to end: APIs, pages, Gateway route and thirty-three tests against a real PostgreSQL 16. The debit note (T5.3) is the remaining document.
+**Status: every document in the module is built and verified.** T4.1 through T4.5 and T5.3 are done — the twelve `pur` tables with RLS, and the purchase order, goods receipt, bill and debit note end to end: APIs, pages, Gateway route and forty-one tests against a real PostgreSQL 16.
 
-`POR → GRN → BIL` now runs end to end: an order commits nothing, a receipt puts stock on the shelf against Goods Received Not Invoiced, and a bill clears that account and owes the vendor with the input tax credit claimed against their own number. GRNI is no longer one-way.
+`POR → GRN → BIL` runs end to end, with `DBN` as the way back out: an order commits nothing, a receipt puts stock on the shelf against Goods Received Not Invoiced, a bill clears that account and owes the vendor with input credit claimed against their own number, and a debit note sends goods back and reverses both.
+
+What remains is **T5.4, the allocation UI** — settling payments against bills — which is shared with Sales and belongs with the payment work rather than here.
 
 **One case is deliberately refused rather than guessed at:** a bill priced differently from the receipt it bills. Purchase price variance is undecided (§8) and shipping a guess would leave a residue in the clearing account, so the bill is rejected with both figures named. That is the next decision worth making here.
 
@@ -259,7 +261,24 @@ Numbering follows `TRANSACTIONS.md`.
 ### T5 — debit note
 
 - [ ] **T5.1 — `acc.TransactionRatio`** — shared with Sales, built once by whichever stage arrives first.
-- [ ] **T5.3 — Debit note.** `Dr Accounts Payable / Cr Purchase Returns` (contra Expense), Input GST reversed, stock returned to its layers.
+- [x] **T5.3 — Debit note.** `Dr Accounts Payable / Cr Purchase Returns` (contra Expense), Input GST reversed, stock returned to its layers.
+
+  Eight tests against PostgreSQL 16 — forty-one in the project.
+
+  **The reason decides whether stock moves, and only one of five does.** `PurchaseReturn` sends goods back; a price correction, a post-purchase discount, a shortage and a cancellation are money-only corrections to a bill whose goods stayed on the shelf. Moving stock for an overcharge would take away inventory the branch still has, so the reason is not decoration.
+
+  **`Purchase Returns` is now seeded, code 5200, with `IsContra` set** — and the seed helper gained an `isContra` parameter, because no seeded account had needed one before. A return reduces what was bought; booking it as a negative expense would leave every report that groups by account type adding a negative number.
+
+  **Stock goes back at what its layers were carrying, not at what the bill charged.** Inventory answers the value — only it knows which layers the units came off — and Purchase credits Inventory by exactly that. When the two differ, the difference lands on Purchase Returns, which is the account whose whole job is what a return did to the cost of buying. That is also why this is *not* blocked by the purchase price variance decision: nothing here has to reconcile a receipt against a bill.
+
+  **`POST internal/stock/return` is new on Inventory**, the mirror of the receipt endpoint. A sourced `PurchaseReturn` is refused a posting by `StockLedgerMapping`, exactly as a sourced receipt is, so Purchase posts both halves.
+
+  Two guards worth naming:
+
+  - **A bill line cannot be returned twice.** `BillDetail.ReturnedQuantity` is the running total, and the service decrements what is left *as it reads the note's own lines* — so two lines against the same bill line cannot each take the whole remaining quantity. Returning more than was bought would credit input tax twice.
+  - **A posted return cannot be voided**, because the stock has left; a money-only note can be, because withdrawing its rows puts the payable back exactly as it was.
+
+  On the UI the debit note **does not use the shared line grid**. It picks lines off a bill and says how much of each goes back, at the price the bill charged — the grid's job is composing a document from items and prices, and offering it here would invite editing figures that have to match the bill.
 - [ ] **T5.4 — Allocation UI** — shared with Sales.
 
 ---

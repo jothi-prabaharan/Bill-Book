@@ -390,5 +390,97 @@ public sealed class InternalStockController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// Goods going back to a vendor against a purchase document.
+    ///
+    /// <b>Stock returns to the layers it came from.</b> That is the whole reason
+    /// a debit note has to name the bill line it reverses — a return valued at
+    /// today's weighted average rather than at what those units actually cost
+    /// would move value into or out of the branch that never existed.
+    ///
+    /// Like the receipt, it posts nothing: a sourced <c>PurchaseReturn</c> is
+    /// refused a posting by <c>StockLedgerMapping</c>, because its other leg is
+    /// Accounts Payable and only Purchase knows the vendor and the tax.
+    /// </summary>
+    [HttpPost("return")]
+    public async Task<IActionResult> Return(
+        [FromBody] ReturnStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to return stock.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReturnStockResponse { Success = true };
+
+        foreach (ReturnStockLine line in request.Lines)
+        {
+            RecordStockMovementResult result = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Entity.Enums.StockMovementType.PurchaseReturn),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    UomId = line.UomId,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId,
+                    ItemBatchId = line.ItemBatchId,
+                },
+                ct);
+
+            bool already = result.Outcome == StockOutcome.DuplicateSource;
+            bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+
+            // What the returned units were carrying. Purchase credits stock by
+            // this rather than by the bill's price, so the layer and the ledger
+            // agree about what left.
+            decimal unitCost = result.Position?.WeightedAverageCost ?? 0m;
+
+            response.Lines.Add(new ReturnStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                Success = ok,
+                AlreadyRecorded = already,
+                Outcome = result.Outcome.ToString(),
+                UnitCost = unitCost,
+                LineValue = ok && !already ? line.Quantity * unitCost : 0m,
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            _log.LogWarning(
+                "Return {SourceType}/{SourceId} in {OrgId}: {Failed} of {Total} lines refused.",
+                request.SourceType,
+                request.SourceId,
+                request.OrgId,
+                response.Lines.Count(l => !l.Success),
+                response.Lines.Count);
+
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
     private const string OpeningBalanceCode = "OPB";
 }

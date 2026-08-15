@@ -231,3 +231,65 @@ public sealed record ReceiveStockLineResult
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
+
+/// <summary>Goods going back to a vendor. The mirror of <see cref="ReceiveStockRequest"/>.</summary>
+public sealed record ReturnStockRequest
+{
+    [Required]
+    public Guid OrgId { get; init; }
+
+    [Required]
+    public Guid CustomerId { get; init; }
+
+    public DateOnly MovementDate { get; init; }
+
+    /// <summary>The document sending them back — <c>DBN</c>.</summary>
+    [Required]
+    [MaxLength(3, ErrorMessage = "Source type must be a 3-letter code.")]
+    public string SourceType { get; init; } = null!;
+
+    public long SourceId { get; init; }
+
+    [Required]
+    public List<ReturnStockLine> Lines { get; init; } = [];
+}
+
+public sealed record ReturnStockLine
+{
+    public long SourceLineId { get; init; }
+
+    [Required]
+    public long ItemId { get; init; }
+
+    [Range(0.000001, double.MaxValue, ErrorMessage = "Quantity must be greater than zero.")]
+    public decimal Quantity { get; init; }
+
+    public long? WarehouseId { get; init; }
+
+    public long? UomId { get; init; }
+
+    /// <summary>The lot going back, when the item is batch-tracked.</summary>
+    public long? ItemBatchId { get; init; }
+}
+
+public sealed record ReturnStockResponse
+{
+    public bool Success { get; set; }
+
+    /// <summary>What the returned units were carrying. What Purchase credits Inventory by.</summary>
+    public decimal TotalValue { get; set; }
+
+    public List<ReturnStockLineResult> Lines { get; set; } = [];
+}
+
+public sealed record ReturnStockLineResult
+{
+    public long SourceLineId { get; init; }
+    public long ItemId { get; init; }
+    public decimal Quantity { get; init; }
+    public bool Success { get; init; }
+    public bool AlreadyRecorded { get; init; }
+    public string Outcome { get; init; } = string.Empty;
+    public decimal UnitCost { get; init; }
+    public decimal LineValue { get; init; }
+}

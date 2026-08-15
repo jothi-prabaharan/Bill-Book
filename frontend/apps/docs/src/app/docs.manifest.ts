@@ -71,6 +71,7 @@ export const DOCS: DocSection[] = [
       { slug: 'purchase-orders', title: 'Purchase orders', status: 'built' },
       { slug: 'goods-receipts', title: 'Goods receipts', status: 'built' },
       { slug: 'bills', title: 'Bills', status: 'built' },
+      { slug: 'debit-notes', title: 'Debit notes', status: 'built' },
     ],
   },
   {

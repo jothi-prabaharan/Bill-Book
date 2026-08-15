@@ -44,6 +44,11 @@ public static class ChartOfAccountsSeed
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
         Account(orgId, "5100", SystemAccount.CostOfGoodsSold, Expense, isPurchase: true),
 
+        // Goods sent back. A contra Expense: it reduces what was bought, and a
+        // report has to subtract it rather than add a negative.
+        Account(orgId, "5200", SystemAccount.PurchaseReturns, Expense,
+            isPurchase: true, isContra: true),
+
         // Parent groups for bank accounts. Each bank account created in Banking
         // hangs a child account under one of these, so the chart of accounts
         // grows a line per real account rather than needing one seeded per bank.
@@ -72,7 +77,8 @@ public static class ChartOfAccountsSeed
         bool isJe = false,
         bool isSales = false,
         bool isPurchase = false,
-        bool isLock = false)
+        bool isLock = false,
+        bool isContra = false)
     {
         string name = SystemAccountNames.Of(systemAccount);
         return new()
@@ -90,6 +96,11 @@ public static class ChartOfAccountsSeed
             // A grouping row: locking it stops a posting landing on the group
             // instead of the account underneath.
             IsLock = isLock,
+
+            // Its normal balance runs opposite its type, so a report subtracts
+            // it rather than adding a negative. Miss it and the report
+            // overstates silently.
+            IsContra = isContra,
         };
     }
 }

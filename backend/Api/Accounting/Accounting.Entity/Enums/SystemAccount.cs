@@ -61,6 +61,18 @@ public enum SystemAccount
     /// the balance is split out across the real asset accounts.
     /// </summary>
     FixedAsset = 15,
+
+    /// <summary>
+    /// Goods sent back to a vendor — a <b>contra Expense</b>.
+    ///
+    /// <b>Contra is the whole point.</b> A return reduces what was bought, and
+    /// booking it as a negative expense would leave every report that groups by
+    /// account type adding a negative number. <c>IsContra</c> tells a report to
+    /// subtract it instead, which is what keeps cost of goods and the purchase
+    /// total honest. CLAUDE.md lists it alongside Sales Returns and Discount
+    /// Given for the same reason.
+    /// </summary>
+    PurchaseReturns = 16,
 }
 
 /// <summary>
@@ -87,6 +99,7 @@ public static class SystemAccountNames
         SystemAccount.BankOverdraftAndCards => "Bank OD & Credit Cards",
         SystemAccount.GoodsReceivedNotInvoiced => "Goods Received Not Invoiced",
         SystemAccount.FixedAsset => "Fixed Asset",
+        SystemAccount.PurchaseReturns => "Purchase Returns",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

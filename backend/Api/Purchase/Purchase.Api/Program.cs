@@ -71,11 +71,11 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-// The debit note (T5.3) registers its service here as it lands.
 builder.Services.AddScoped<PurchaseSeeder>();
 builder.Services.AddScoped<PurchaseOrderService>();
 builder.Services.AddScoped<GoodsReceiptService>();
 builder.Services.AddScoped<BillService>();
+builder.Services.AddScoped<DebitNoteService>();
 
 // The due date a payment term implies. Asked rather than computed: the rule is
 // Accounting's, and a second implementation here would disagree with it the

@@ -13,6 +13,13 @@ namespace Purchase.Api.Services;
 public interface IInventoryClient
 {
     Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct);
+
+    /// <summary>
+    /// Goods going back to a vendor. Inventory answers what the returned units
+    /// were carrying, and Purchase credits stock by exactly that — the layer and
+    /// the ledger then agree about what left.
+    /// </summary>
+    Task<ReturnStockResponse> ReturnAsync(ReturnStockRequest request, CancellationToken ct);
 }
 
 public sealed class InventoryClient : IInventoryClient
@@ -53,6 +60,91 @@ public sealed class InventoryClient : IInventoryClient
             Lines = [],
         };
     }
+
+    public async Task<ReturnStockResponse> ReturnAsync(
+        ReturnStockRequest request, CancellationToken ct)
+    {
+        HttpResponseMessage response =
+            await _http.PostAsJsonAsync("internal/stock/return", request, ct);
+
+        ReturnStockResponse? body = null;
+        try
+        {
+            body = await response.Content.ReadFromJsonAsync<ReturnStockResponse>(ct);
+        }
+        catch (Exception)
+        {
+            // Not the expected shape — reported as a refusal below.
+        }
+
+        if (body is not null)
+        {
+            body.Success = response.IsSuccessStatusCode && body.Success;
+            return body;
+        }
+
+        return new ReturnStockResponse { Success = false, Lines = [] };
+    }
+}
+
+/// <summary>Goods going back to a vendor. The mirror of the receipt request.</summary>
+public sealed class ReturnStockRequest
+{
+    public Guid OrgId { get; set; }
+
+    public Guid CustomerId { get; set; }
+
+    public DateOnly MovementDate { get; set; }
+
+    public string SourceType { get; set; } = null!;
+
+    public long SourceId { get; set; }
+
+    public List<ReturnStockLine> Lines { get; set; } = [];
+}
+
+public sealed class ReturnStockLine
+{
+    public long SourceLineId { get; set; }
+
+    public long ItemId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public long? WarehouseId { get; set; }
+
+    public long? UomId { get; set; }
+
+    public long? ItemBatchId { get; set; }
+}
+
+public sealed class ReturnStockResponse
+{
+    public bool Success { get; set; }
+
+    /// <summary>What the returned units were carrying — what Inventory is credited by.</summary>
+    public decimal TotalValue { get; set; }
+
+    public List<ReturnStockLineResult> Lines { get; set; } = [];
+}
+
+public sealed class ReturnStockLineResult
+{
+    public long SourceLineId { get; set; }
+
+    public long ItemId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public bool Success { get; set; }
+
+    public bool AlreadyRecorded { get; set; }
+
+    public string Outcome { get; set; } = string.Empty;
+
+    public decimal UnitCost { get; set; }
+
+    public decimal LineValue { get; set; }
 }
 
 /// <summary>Goods arriving against a purchase document. Inventory's contract, mirrored.</summary>
