@@ -44,9 +44,14 @@ The account's **currency** is frozen with the rest of the configuration. Changin
 
 ## Seeded accounts
 
-Eleven written when an organization is created, all `IsSystemDefault`, so locked from birth:
+Twelve written when an organization is created, all `IsSystemDefault`, so locked from birth:
 
-Accounts Receivable · Inventory · Input GST · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+Accounts Receivable · Inventory · Input GST · Fixed Asset · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+
+**Fixed Asset** is where a capital line on a bill lands. It is a holding account
+for now: the design is that each fixed asset category carries its own asset,
+depreciation and expense accounts, but the asset register is not built yet — so
+capitalised purchases collect here until it is, and are split out then.
 
 **Goods Received Not Invoiced** is a clearing account, not a resting place. When goods arrive before the vendor's bill does, the receipt debits Inventory and credits this; the bill then clears it and credits Accounts Payable. What is left sitting in it is stock on the shelf that nobody has invoiced yet — which is a figure worth looking at, and the reason the alternative was rejected: posting nothing until the bill arrives understates the inventory asset for however long the paperwork takes. It is off the manual-journal picker for the same reason Accounts Receivable and Accounts Payable are — a hand posting to it leaves a residue that no document can ever clear.
 

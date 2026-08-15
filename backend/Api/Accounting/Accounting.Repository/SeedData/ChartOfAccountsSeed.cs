@@ -26,6 +26,11 @@ public static class ChartOfAccountsSeed
         Account(orgId, "1100", SystemAccount.AccountsReceivable, Asset),
         Account(orgId, "1200", SystemAccount.Inventory, Asset),
         Account(orgId, "1300", SystemAccount.InputGst, Asset),
+
+        // Capitalised purchases. A holding account until the fixed asset
+        // register exists — see SystemAccount.FixedAsset for why a capital line
+        // has to land somewhere real before its category can say where.
+        Account(orgId, "1600", SystemAccount.FixedAsset, Asset),
         Account(orgId, "2100", SystemAccount.AccountsPayable, Liability),
 
         // Goods received and not yet billed. Off the manual-journal picker for

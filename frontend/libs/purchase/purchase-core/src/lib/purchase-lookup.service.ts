@@ -35,6 +35,19 @@ export interface OrderOption {
   currencyCode: string;
 }
 
+/** A goods receipt, as the receipts list serves it — enough to pick one. */
+export interface ReceiptOption {
+  goodsReceiptId: number;
+  documentNo: string;
+  documentDate: string;
+  contactId: number;
+  contactName?: string | null;
+  vendorDeliveryNoteNo?: string | null;
+  status: string;
+  totalAmount: number;
+  currencyCode: string;
+}
+
 /** A GST rate, as the tax master serves it. */
 export interface TaxRateOption {
   taxMasterId: number;
@@ -114,6 +127,29 @@ export class PurchaseLookupService {
         (term === '' ||
           row.documentNo.toLowerCase().includes(term) ||
           (row.contactName ?? '').toLowerCase().includes(term)),
+    );
+  }
+
+  /**
+   * Receipts a bill can be raised against: posted, so something is actually
+   * sitting in the clearing account for the bill to clear. A draft receipt has
+   * credited nothing.
+   */
+  async billableReceipts(search: string, contactId: number | null): Promise<ReceiptOption[]> {
+    const rows = await firstValueFrom(
+      this.http.get<ReceiptOption[]>('/api/purchase/goods-receipts'),
+    );
+
+    const term = search.trim().toLowerCase();
+
+    return rows.filter(
+      (row) =>
+        row.status === 'Posted' &&
+        (contactId === null || row.contactId === contactId) &&
+        (term === '' ||
+          row.documentNo.toLowerCase().includes(term) ||
+          (row.contactName ?? '').toLowerCase().includes(term) ||
+          (row.vendorDeliveryNoteNo ?? '').toLowerCase().includes(term)),
     );
   }
 

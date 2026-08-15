@@ -46,6 +46,21 @@ public enum SystemAccount
     /// Decision T4.1, in <c>docs/modules/Purchase.md</c> §8.
     /// </summary>
     GoodsReceivedNotInvoiced = 14,
+
+    /// <summary>
+    /// Capitalised purchases — an Asset.
+    ///
+    /// <b>A holding account until the fixed asset register exists.</b> The design
+    /// is that a fixed asset <i>category</i> owns the GL mapping and a capital
+    /// line creates the register row (Purchase.md §4), but the register is Phase
+    /// 2 and the category table does not exist. A capital line has to land
+    /// somewhere real in the meantime, and an asset sitting in an expense or a
+    /// control account is worse than one sitting here.
+    ///
+    /// When the register lands, the category's own mapping supersedes this and
+    /// the balance is split out across the real asset accounts.
+    /// </summary>
+    FixedAsset = 15,
 }
 
 /// <summary>
@@ -71,6 +86,7 @@ public static class SystemAccountNames
         SystemAccount.BankAccounts => "Bank Accounts",
         SystemAccount.BankOverdraftAndCards => "Bank OD & Credit Cards",
         SystemAccount.GoodsReceivedNotInvoiced => "Goods Received Not Invoiced",
+        SystemAccount.FixedAsset => "Fixed Asset",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

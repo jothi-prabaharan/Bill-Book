@@ -96,6 +96,33 @@ public sealed class LedgerLegRequest
     /// </summary>
     public string? AccountSystemName { get; set; }
 
+    /// <summary>
+    /// Which sub-account under the control account this leg is really about.
+    /// <c>1</c> Contact, <c>2</c> Item, <c>3</c> Tax — sent as a number because
+    /// Purchase does not reference Accounting's assemblies.
+    ///
+    /// <b>The Accounts Payable leg needs one or payables aging is a single
+    /// number with no vendors in it.</b>
+    /// </summary>
+    public int? SubAccountReferenceType { get; set; }
+
+    public long? SubAccountReferenceId { get; set; }
+
+    /// <summary>
+    /// Which of a contact's balances under the control account: <c>0</c> the
+    /// trade balance, and the advances above it. Part of the key, not a
+    /// refinement — a contact has three sub-accounts under Accounts Payable and
+    /// the reference alone matches all three.
+    /// </summary>
+    public int SubAccountPurpose { get; set; }
+
+    /// <summary>
+    /// Which component of a tax rate: <c>0</c> none, <c>1</c> CGST, <c>2</c>
+    /// SGST, <c>3</c> IGST. The same story as the purpose — three sub-accounts
+    /// share one parent and one rate.
+    /// </summary>
+    public int SubAccountTaxComponent { get; set; }
+
     public decimal DebitAmount { get; set; }
 
     public decimal CreditAmount { get; set; }

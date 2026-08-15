@@ -71,11 +71,20 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-// The bill (T4.5) and the debit note (T5.3) register their services here as
-// they land.
+// The debit note (T5.3) registers its service here as it lands.
 builder.Services.AddScoped<PurchaseSeeder>();
 builder.Services.AddScoped<PurchaseOrderService>();
 builder.Services.AddScoped<GoodsReceiptService>();
+builder.Services.AddScoped<BillService>();
+
+// The due date a payment term implies. Asked rather than computed: the rule is
+// Accounting's, and a second implementation here would disagree with it the
+// first time a day-of-month term was used.
+builder.Services.AddHttpClient<IPaymentTermClient, PaymentTermClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // Stock, moved synchronously. A receipt applies its quantity and opens its cost
 // layer inside the request — two people receiving the same delivery is a real

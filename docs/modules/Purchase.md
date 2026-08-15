@@ -6,9 +6,11 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: schema, purchase order and goods receipt built and verified.** T4.1 through T4.4 are done — the twelve `pur` tables with RLS, the purchase order, and the goods receipt end to end: APIs, pages, Gateway route and twenty-three tests against a real PostgreSQL 16. The bill (T4.5) and the debit note (T5.3) are still designed and uncoded.
+**Status: the whole T4 chain is built and verified.** T4.1 through T4.5 are done — the twelve `pur` tables with RLS, and the purchase order, goods receipt and bill end to end: APIs, pages, Gateway route and thirty-three tests against a real PostgreSQL 16. The debit note (T5.3) is the remaining document.
 
-**Stock receipt, cost layers and batch capture are now called by a document.** They had been built and never invoked, so every receipt landed as an opening balance; T4.4 closed that. What is still not exercised is the *bill* side — GRNI is credited by every receipt and nothing clears it yet, so that balance will grow until T4.5 lands. That is the expected state, not a defect, but it means the clearing account is currently a one-way street.
+`POR → GRN → BIL` now runs end to end: an order commits nothing, a receipt puts stock on the shelf against Goods Received Not Invoiced, and a bill clears that account and owes the vendor with the input tax credit claimed against their own number. GRNI is no longer one-way.
+
+**One case is deliberately refused rather than guessed at:** a bill priced differently from the receipt it bills. Purchase price variance is undecided (§8) and shipping a guess would leave a residue in the clearing account, so the bill is rejected with both figures named. That is the next decision worth making here.
 
 ---
 
@@ -159,8 +161,10 @@ Everything in [`SALES.md` §8](./SALES.md) applies here too — the base classes
 ## 8. Open — answer before the stage that needs them
 
 - ~~**Goods received not invoiced.**~~ **Settled — T4.1 answered yes.** `acc.Accounts` code **2150**, `GoodsReceivedNotInvoiced`, a Liability, seeded off the manual-journal picker for the same reason AR and AP are: it is cleared by the bill that matches the receipt, and a hand posting leaves a residue no document can clear. Postings are as §6 shows. The seed is idempotent per account, which was checked rather than assumed — `AccountService` filters the seed by both `AccountSystemName` and `AccountCode` against what the branch already has — so existing branches pick it up by re-running it. Nothing posts to it yet; T4.4 is what makes it move.
-- **Landed cost apportionment.** `LandedCostAmount` on the bill and `ApportionedLandedCost` on the line hold it; whether it is spread by value, weight or quantity is not decided.
-- **Purchase price variance.** A receipt opens a cost layer at the order's price; the bill may disagree, after sales have already drawn on that layer. Either **revalue the layer** and let the recosting engine restate those sales, or **post the difference to a variance account** and accept a slightly untrue margin. The recosting machinery already existing tilts this toward revaluation — the expensive half is built.
+- **Landed cost apportionment.** `LandedCostAmount` on the bill and `ApportionedLandedCost` on the line hold it; whether it is spread by value, weight or quantity is not decided. Both columns exist and stay zero until it is.
+- **Purchase price variance — now blocking, not merely open.** A receipt opens a cost layer at the order's price; the bill may disagree, after sales have already drawn on that layer. Either **revalue the layer** and let the recosting engine restate those sales, or **post the difference to a variance account** and accept a slightly untrue margin. The recosting machinery already existing tilts this toward revaluation — the expensive half is built.
+
+  **T4.5 shipped refusing the case rather than guessing at it.** A bill whose unit cost differs from the receipt's is rejected with `PriceVarianceUndecided`, naming both figures. That keeps the money accounted for, but it means a vendor who bills a price different from the one received cannot be entered against that receipt at all — they have to be billed without it, which loses the GRNI clearing. This is the next decision worth making in the module.
 - **`pur.PurchaseRegister`** — the counterpart to `sal.SalesRegister`, same grain, for ITC claims and GSTR-2B reconciliation against what the vendor filed. Not designed.
 
 ---
@@ -233,8 +237,24 @@ Numbering follows `TRANSACTIONS.md`.
   - **A posted receipt cannot be voided.** It has moved stock and written a posting, and voiding cannot un-receive goods — the refusal says so and points at the debit note, which reverses both halves. A draft still voids normally.
 
   **A fully rejected delivery posts nothing and moves nothing**, and is still a document: it records that the goods came and were refused, which is the reason to raise it.
-- [ ] **T4.5 — Bill: API and page.** With or without a receipt, with Input GST legs and payment terms driving the due date.
+- [x] **T4.5 — Bill: API and page.** With or without a receipt, with Input GST legs and payment terms driving the due date.
   *Done when*: a bill against a receipt clears GRNI to the paise and moves no stock; a bill with no receipt does move stock; a capital line moves neither and lands on a Fixed Asset account; and payables aging ties to the Accounts Payable control account.
+
+  All four are asserted by `BillServiceTests` against PostgreSQL 16 — ten tests, thirty-three in the project.
+
+  **The bill has two posting shapes and which runs depends on whether a receipt came first.** That is the whole design of the service: against a receipt the goods already reached stock and already credited the clearing account, so the bill moves *no stock* and debits GRNI; with no receipt it does both jobs, moving the stock and debiting Inventory directly. Both then add the Input GST legs and credit Accounts Payable.
+
+  Decisions taken here:
+
+  - **A price that disagrees with the receipt is refused, not absorbed.** This is the one place T4.5 ran into an open decision — purchase price variance, §8 — and rather than pick one silently, a bill whose unit cost differs from the receipt's is refused with a message naming both figures. A residue left in the clearing account by a quietly-absorbed difference is exactly the failure the clearing account exists to prevent. **Answering §8 is what unblocks this**, and until then a vendor who bills a different price has to be handled by detaching the receipt.
+  - **A `Fixed Asset` control account is now seeded**, code 1600. The Done-when requires a capital line to land on one and none existed. The design is that a fixed asset *category* owns the mapping and the line creates a register row, but the register is Phase 2 — so this is a holding account, and the category's own mapping supersedes it when T10 lands. An asset sitting in an expense or a control account in the meantime would be worse.
+  - **Quantity may be less than the receipt's, price may not.** A bill can cover part of a delivery; billing more than was *accepted* is refused, because rejected goods were never taken into stock and are not owed for.
+  - **The due date is asked of Accounting, not computed here.** `internal/payment-terms/{id}/due-date` is new — the public route is behind a user token and Purchase holds the internal key. The net-days against day-of-month rule stays in one place; a second implementation here would disagree the first time a day-of-month term was used.
+  - **Voiding a posted bill withdraws its ledger rows** rather than leaving them under a void document. A bill that brought the goods in itself cannot be voided at all, for the same reason a posted receipt cannot.
+
+  **Accounts Payable is credited against the vendor's own sub-account**, which is what makes payables aging a list of vendors rather than one number. Input GST is debited per component against the rate's sub-account — an asset, because it is reclaimable, which is the one difference in meaning from the identical sales arithmetic.
+
+  On the UI, attaching a receipt **locks the lines**: they are copied from the receipt and cannot be edited, because the server would refuse a price that differs anyway. The form says why rather than letting somebody discover it at the end.
 
 ### T5 — debit note
 
