@@ -49,7 +49,7 @@ cd backend
 dotnet build
 # Master maps two contexts, so it needs --context on each.
 dotnet ef database update --project Api/Master/Master.Repository \
-  --startup-project Api/Master/Master.Api --context MasterDbContext
+  --startup-project Api/Master/Master.Api --context AdminDbContext
 dotnet ef database update --project Api/Master/Master.Repository \
   --startup-project Api/Master/Master.Api --context ContactsDbContext
 dotnet ef database update --project Api/Inventory/Inventory.Repository \

@@ -52,7 +52,7 @@ ASP.NET Core maps environment variables onto configuration keys by replacing `:`
 
 | Configuration key | Environment variable | Set for |
 |---|---|---|
-| `ConnectionStrings:MasterDatabase` | `ConnectionStrings__MasterDatabase` | Master |
+| `ConnectionStrings:AdminDatabase` | `ConnectionStrings__AdminDatabase` | Master |
 | `ConnectionStrings:DesignTimeDatabase` | `ConnectionStrings__DesignTimeDatabase` | Master, Accounting, Inventory |
 | `ConnectionStrings:TenantFallback` | `ConnectionStrings__TenantFallback` | Master, Accounting, Inventory |
 | `TenantDatabase:ConnectionTemplate` | `TenantDatabase__ConnectionTemplate` | Master |
@@ -64,7 +64,7 @@ ASP.NET Core maps environment variables onto configuration keys by replacing `:`
 | `App:BaseUrl` | `App__BaseUrl` | Master |
 
 Master takes both connection strings, and that is the merge showing through the
-configuration: `MasterDatabase` is the shared master database its `mst` schema
+configuration: `AdminDatabase` is the shared master database its `mst` schema
 lives in, and `DesignTimeDatabase` is the fallback its contacts context uses when
 no tenant has been resolved.
 
