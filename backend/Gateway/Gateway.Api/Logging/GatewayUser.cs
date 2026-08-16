@@ -1,6 +1,6 @@
 using Shared.Kernel.Interfaces;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>
 /// The gateway acts as no person, and could not name one if it wanted to.

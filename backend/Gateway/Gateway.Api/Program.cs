@@ -1,4 +1,4 @@
-using Gateway.Logging;
+using Gateway.Api.Logging;
 using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;

@@ -2,7 +2,7 @@ using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>
 /// Deletes rows past the retention window. Without this the request log becomes

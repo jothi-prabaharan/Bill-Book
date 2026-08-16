@@ -1,4 +1,4 @@
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>Bound from the <c>RequestLog</c> configuration section.</summary>
 public class RequestLogOptions

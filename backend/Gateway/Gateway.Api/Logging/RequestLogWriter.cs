@@ -3,7 +3,7 @@ using Gateway.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>
 /// Drains the queue and writes batches. Flushes when the batch fills or the
@@ -35,13 +35,12 @@ public class RequestLogWriter(
 
         Task<bool> tick = timer.WaitForNextTickAsync(stoppingToken).AsTask();
         IAsyncEnumerator<RequestLog> entries = queue.ReadAllAsync(stoppingToken).GetAsyncEnumerator(stoppingToken);
-        ValueTask<bool> pending = entries.MoveNextAsync();
+        Task<bool> next = entries.MoveNextAsync().AsTask();
 
         try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Task<bool> next = pending.AsTask();
                 Task completed = await Task.WhenAny(next, tick);
 
                 if (completed == next)
@@ -52,7 +51,7 @@ public class RequestLogWriter(
                     }
 
                     batch.Add(entries.Current);
-                    pending = entries.MoveNextAsync();
+                    next = entries.MoveNextAsync().AsTask();
 
                     if (batch.Count < _options.BatchSize)
                     {
@@ -80,7 +79,9 @@ public class RequestLogWriter(
         }
         finally
         {
-            await entries.DisposeAsync();
+            // Note: The async enumerator from System.Threading.Channels.ChannelReader
+            // does not implement IAsyncDisposable and does not require disposal.
+            // Calling DisposeAsync() throws NotSupportedException, so we must skip it!
 
             // Best effort on the way out, with a fresh token: stoppingToken is
             // already cancelled by this point and would abort the write.
