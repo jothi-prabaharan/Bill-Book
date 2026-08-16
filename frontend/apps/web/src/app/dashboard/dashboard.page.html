@@ -1,2 +1,96 @@
-<h1>Dashboard</h1>
-<p>Welcome to Bill-Book. Feature modules appear here as they are built.</p>
+<div style="display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--space-3);margin-bottom:var(--space-4)">
+  <h2 style="font-size:29px;margin:0">Dashboard</h2>
+  <div style="display:flex;align-items:center;gap:var(--space-3)">
+    <span class="text-muted" style="font-size:12px;font-variant-numeric:tabular-nums">Tuesday, 11 August 2026</span>
+    <button class="btn btn-secondary" type="button" style="margin:0">Customize</button>
+  </div>
+</div>
+
+<div class="board">
+
+  <div class="card" style="grid-column:span 3">
+    <div class="card-kicker">Sales today</div>
+    <div class="kpi">₹1,84,250</div>
+    <div class="card-meta">14 invoices · 2 unpaid</div>
+  </div>
+
+  <div class="card" style="grid-column:span 3">
+    <div class="card-kicker">Receivables</div>
+    <div class="kpi">₹9,42,100</div>
+    <div class="card-meta">₹1,20,400 overdue</div>
+  </div>
+
+  <div class="card" style="grid-column:span 3">
+    <div class="card-kicker">Payables</div>
+    <div class="kpi">₹3,16,880</div>
+    <div class="card-meta">Next due 14 Aug 2026</div>
+  </div>
+
+  <div class="card" style="grid-column:span 3">
+    <div class="card-kicker">Cash &amp; bank</div>
+    <div class="kpi">₹6,08,320</div>
+    <div class="card-meta">9 accounts · 2 in foreign currency</div>
+  </div>
+
+  <div class="card" style="grid-column:span 6">
+    <div class="card-kicker">Profit &amp; loss</div>
+    <div class="card-title">April – August 2026</div>
+    <div style="display:flex;flex-direction:column;gap:9px;margin-top:var(--space-2)">
+      <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>Revenue</span><span style="font-variant-numeric:tabular-nums">₹58,40,200</span></div><div style="height:7px;background:var(--color-neutral-200);border-radius:2px"><div style="height:7px;width:100%;background:var(--color-accent);border-radius:2px"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>Cost of goods sold</span><span style="font-variant-numeric:tabular-nums">₹38,90,600</span></div><div style="height:7px;background:var(--color-neutral-200);border-radius:2px"><div style="height:7px;width:67%;background:var(--color-neutral-500);border-radius:2px"></div></div></div>
+      <div><div style="display:flex;justify-content:space-between;font-size:12px"><span>Operating expenses</span><span style="font-variant-numeric:tabular-nums">₹11,26,400</span></div><div style="height:7px;background:var(--color-neutral-200);border-radius:2px"><div style="height:7px;width:19%;background:var(--color-neutral-500);border-radius:2px"></div></div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:var(--space-1) var(--space-2);border-top:1px solid var(--color-divider);margin-top:var(--space-3);padding-top:var(--space-2)">
+      <span style="font-size:11px;letter-spacing:.06em;text-transform:uppercase">Net profit</span>
+      <span style="font-family:var(--font-heading);font-size:22px;font-variant-numeric:tabular-nums;color:var(--color-accent-700)">₹8,23,200</span>
+    </div>
+    <div class="card-meta">14.1% margin · 2.4 pts above last year</div>
+  </div>
+
+  <div class="card" style="grid-column:span 6">
+    <div class="card-kicker">Sales &amp; outstanding</div>
+    <div class="card-title">Last six months</div>
+    <svg viewBox="0 0 220 76" style="width:100%;height:auto;margin-top:var(--space-2)" role="img" aria-label="Sales and outstanding, March to August">
+      <line x1="0" y1="68" x2="220" y2="68" stroke="var(--color-divider)"></line>
+      <line x1="0" y1="38" x2="220" y2="38" stroke="var(--color-divider)" stroke-dasharray="2 4"></line>
+      <polyline points="8,46 50,36 92,40 134,24 176,19 212,11" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+      <polyline points="8,58 50,55 92,60 134,50 176,52 212,43" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+    </svg>
+    <div style="display:flex;justify-content:space-between;font-size:11px" class="text-muted"><span>Mar</span><span>Aug</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:var(--space-3);font-size:11px;margin-top:var(--space-1)">
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:2px;background:var(--color-accent)"></span>Sales ₹18.4L</span>
+      <span style="display:flex;align-items:center;gap:5px"><span style="width:12px;height:2px;background:var(--color-neutral-600)"></span>Outstanding ₹9.4L</span>
+    </div>
+  </div>
+
+  <div class="card" style="grid-column:span 7">
+    <div class="card-kicker">Top products by profit</div>
+    <table class="table">
+      <thead><tr><th>Item</th><th style="text-align:right">Sold</th><th style="text-align:right">Profit</th><th style="text-align:right">Margin</th></tr></thead>
+      <tbody>
+        <tr><td>Cotton shirting 2×2 — 44"</td><td style="text-align:right;font-variant-numeric:tabular-nums">1,840 m</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹2,46,300</td><td style="text-align:right;font-variant-numeric:tabular-nums">31.4%</td></tr>
+        <tr><td>Linen blend — natural</td><td style="text-align:right;font-variant-numeric:tabular-nums">960 m</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹1,72,800</td><td style="text-align:right;font-variant-numeric:tabular-nums">28.1%</td></tr>
+        <tr><td>Poly viscose suiting</td><td style="text-align:right;font-variant-numeric:tabular-nums">2,410 m</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹1,38,400</td><td style="text-align:right;font-variant-numeric:tabular-nums">19.6%</td></tr>
+        <tr><td>Brass buttons 18L</td><td style="text-align:right;font-variant-numeric:tabular-nums">312 gr</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹84,900</td><td style="text-align:right;font-variant-numeric:tabular-nums">42.8%</td></tr>
+        <tr><td>Corrugated cartons 5-ply</td><td style="text-align:right;font-variant-numeric:tabular-nums">4,600 pc</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹61,200</td><td style="text-align:right;font-variant-numeric:tabular-nums">14.2%</td></tr>
+      </tbody>
+    </table>
+    <div class="card-meta">April – August 2026 · weighted average cost</div>
+  </div>
+
+  <div class="card" style="grid-column:span 5">
+    <div class="card-kicker">Outstanding — largest and oldest first</div>
+    <table class="table">
+      <thead><tr><th>Party</th><th>Due</th><th style="text-align:right">Amount</th><th style="text-align:right">Overdue</th></tr></thead>
+      <tbody>
+        <tr><td>Suriya Textiles</td><td style="font-variant-numeric:tabular-nums">12 Apr</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹3,42,000</td><td style="text-align:right"><span class="tag tag-accent">121 d</span></td></tr>
+        <tr><td>Anand Hardware</td><td style="font-variant-numeric:tabular-nums">30 May</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹2,18,400</td><td style="text-align:right"><span class="tag tag-accent">73 d</span></td></tr>
+        <tr><td>Meenakshi Agencies</td><td style="font-variant-numeric:tabular-nums">18 Jun</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹1,64,900</td><td style="text-align:right"><span class="tag tag-outline">54 d</span></td></tr>
+        <tr><td>Kavitha Stores</td><td style="font-variant-numeric:tabular-nums">09 Jul</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹96,300</td><td style="text-align:right"><span class="tag tag-outline">33 d</span></td></tr>
+        <tr><td>Raja Packaging</td><td style="font-variant-numeric:tabular-nums">28 Jul</td><td style="text-align:right;font-variant-numeric:tabular-nums">₹48,900</td><td style="text-align:right"><span class="tag tag-neutral">14 d</span></td></tr>
+      </tbody>
+    </table>
+    <div class="card-meta">₹9,42,100 total · ₹1,20,400 over 90 days</div>
+  </div>
+
+</div>

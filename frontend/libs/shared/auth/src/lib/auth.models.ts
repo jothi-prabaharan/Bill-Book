@@ -79,3 +79,10 @@ export interface StateRow {
   stateCode: string;
   stateName: string;
 }
+
+export interface Currency {
+  currencyId: number;
+  code: string;
+  name: string;
+  symbol: string;
+}

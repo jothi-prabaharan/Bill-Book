@@ -1,132 +1,180 @@
-<div class="auth-shell">
-  <aside class="auth-aside">
-    <div style="font-family:var(--font-body);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-mark);font-variant-numeric:tabular-nums">Retail ERP &amp; Accounting</div>
-
-    <div>
-      <div class="auth-brand">
-        <img src="assets/bill-book-mark.svg" alt="Bill-Book Logo">
-        <span>Bill-Book</span>
-      </div>
-      <div class="auth-rule"></div>
-      <p style="font-size:15px;line-height:1.7;color:rgba(243,242,242,.72);margin:0;max-width:26ch;text-wrap:pretty">Billing, inventory, double-entry accounting and GST compliance — one set of books for every organization you run.</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column">
-      <div class="auth-stats">
-        <div><div>14</div>days free</div>
-        <div><div>3</div>users</div>
-        <div><div>1</div>organization</div>
-      </div>
-      <div class="auth-rule" style="margin:var(--space-4) 0 var(--space-3)"></div>
-      <div class="auth-switch">
-        <a routerLink="/login">Sign in</a>
-        <a routerLink="/signup" class="active">Sign up</a>
-        <a routerLink="/forgot-password">Forgot</a>
-      </div>
-    </div>
-  </aside>
-
-  <main class="auth-pane">
+<bb-auth-shell>
     @if (provisioning()) {
-      <div style="width:100%;max-width:420px;text-align:center">
-        <div style="font-family:var(--font-heading);font-size:clamp(40px,13vw,56px);line-height:1;color:var(--color-accent);font-variant-numeric:tabular-nums">14</div>
-        <h2 style="font-size:clamp(25px,7vw,32px);margin:var(--space-4) 0 var(--space-2)">Setting up your books.</h2>
-        <p class="text-muted" style="font-size:14px;margin:0 0 var(--space-6);text-wrap:pretty">We're creating your database, chart of accounts and numbering series. This takes a moment — you can't sign in until it's ready.</p>
-        <div style="height:1px;background:var(--color-divider);position:relative;overflow:hidden">
-          <div style="position:absolute;left:0;top:0;height:1px;width:62%;background:var(--color-accent);animation: progress 2s infinite ease-in-out;"></div>
-        </div>
-        <p class="text-muted" style="font-size:12px;margin:var(--space-3) 0 0;letter-spacing:.06em;text-transform:uppercase">Provisioning · seeding master data</p>
-        <style>@keyframes progress { 0% { left: -62%; } 100% { left: 100%; } }</style>
+      <div class="auth-form auth-form--center provisioning">
+        <div class="provisioning__numeral">14</div>
+        <h2>Setting up your books.</h2>
+        <p class="text-muted lede">
+          We're creating your database, chart of accounts and numbering series. This takes a moment —
+          you can't sign in until it's ready.
+        </p>
+        <div class="provisioning__track"><div class="provisioning__fill"></div></div>
+        <p class="text-muted provisioning__note">Provisioning · seeding master data</p>
       </div>
     } @else {
-      <div style="width:100%;max-width:620px">
-        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-2)">
-          <h6 style="color:var(--color-accent-700);margin:0">Free trial</h6>
-          <span class="text-muted" style="font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-variant-numeric:tabular-nums">Step {{ currentTab() + 1 }} of {{ tabs.length }}</span>
+      <form class="auth-form auth-form--wide" [formGroup]="signupForm" (ngSubmit)="submit()">
+        <div class="stepper__head">
+          <h6>Free trial</h6>
+          <span class="stepper__count">Step {{ step() }} of {{ stepCount }}</span>
         </div>
-        <div style="height:1px;background:var(--color-divider);margin-bottom:var(--space-4);position:relative">
-          <div style="position:absolute;left:0;top:0;height:1px;background:var(--color-accent)" [style.width.%]="(currentTab() + 1) / tabs.length * 100"></div>
-        </div>
+        <div class="stepper__track"><div class="stepper__fill" [style.width.%]="progress()"></div></div>
 
-        <form #signupForm="ngForm" (ngSubmit)="submit(signupForm)">
-          <!-- Step 1: Personal -->
-          <div [hidden]="currentTab() !== 0">
-            <h2 style="font-size:clamp(22px,5.5vw,25px);margin:0 0 var(--space-1)">Your account.</h2>
-            <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">This becomes the owner user for the books we create.</p>
-            <div class="auth-grid">
-              <div class="field"><label for="s-name">Full name</label><input class="input" id="s-name" name="displayName" [(ngModel)]="m.displayName" required placeholder="Priya Raman"></div>
-              <div class="field"><label for="s-email">Email</label><input class="input" id="s-email" name="email" type="email" [(ngModel)]="m.email" required placeholder="priya@company.in"></div>
-              <div class="field"><label for="s-mobile">Mobile</label><input class="input" id="s-mobile" name="mobileNumber" [(ngModel)]="m.mobileNumber" inputmode="tel" placeholder="+91 98400 00000"></div>
-              <div class="field"><label for="s-pass">Password</label><input class="input" id="s-pass" name="password" type="password" minlength="8" [(ngModel)]="m.password" required placeholder="At least 8 characters"></div>
+        @switch (step()) {
+          @case (1) {
+            <h2>Your account.</h2>
+            <p class="text-muted lede">This becomes the owner user for the books we create.</p>
+            <div class="grid-2">
+              <div class="field">
+                <label for="su-first">First name</label>
+                <input class="input" id="su-first" maxlength="100" autocomplete="given-name"
+                       formControlName="firstName" />
+              </div>
+              <div class="field">
+                <label for="su-last">Last name</label>
+                <input class="input" id="su-last" maxlength="100" autocomplete="family-name"
+                       formControlName="lastName" />
+              </div>
+              <div class="field">
+                <label for="su-email">Email</label>
+                <input class="input" id="su-email" maxlength="200" autocomplete="email" formControlName="email" />
+              </div>
+              <div class="field">
+                <label for="su-mobile">Mobile</label>
+                <input class="input" id="su-mobile" inputmode="tel" maxlength="20" autocomplete="tel" formControlName="mobileNumber" />
+              </div>
+              <div class="field">
+                <label for="su-password">Password</label>
+                <input class="input" id="su-password" type="password"
+                       autocomplete="new-password" placeholder="At least 8 characters"
+                       formControlName="password" />
+              </div>
+              <div class="field">
+                <label for="su-password2">Confirm password</label>
+                <input class="input" id="su-password2" type="password"
+                       autocomplete="new-password"
+                       formControlName="confirmPassword" />
+              </div>
             </div>
-          </div>
-
-          <!-- Step 2: Company & Location -->
-          <div [hidden]="currentTab() !== 1">
-            <h2 style="font-size:clamp(22px,5.5vw,25px);margin:0 0 var(--space-1)">Company &amp; books.</h2>
-            <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">One company can hold many organizations later. Start with one.</p>
-            <div class="auth-grid">
-              <div class="field"><label for="s-co">Company name</label><input class="input" id="s-co" name="companyName" [(ngModel)]="m.companyName" required placeholder="Eternal Pathway Pvt Ltd"></div>
-              <div class="field"><label for="s-org">Organization name</label><input class="input" id="s-org" name="organizationName" [(ngModel)]="m.organizationName" required placeholder="Head Office"></div>
-              <div class="field"><label for="s-fy">Financial year starts</label>
-                <select class="input" id="s-fy" name="fyStart" [(ngModel)]="m.financialYearStartMonth">
+            <p class="text-muted" style="font-size: 11px; margin: var(--space-2) 0 0">
+              Your display name will be <em>First Last</em> — you can change it later in Settings.
+            </p>
+          }
+          @case (2) {
+            <h2>Company &amp; books.</h2>
+            <p class="text-muted lede">One company can hold many organizations later. Start with one.</p>
+            <div class="grid-2">
+              <div class="field">
+                <label for="su-company">Company name</label>
+                <input class="input" id="su-company" maxlength="200" autocomplete="organization" formControlName="companyName" />
+              </div>
+              <div class="field">
+                <label for="su-org">Organization name</label>
+                <input class="input" id="su-org" maxlength="200" formControlName="organizationName" />
+              </div>
+              <div class="field">
+                <label for="su-fy">Financial year starts</label>
+                <select class="input" id="su-fy" formControlName="financialYearStartMonth">
                   @for (month of months; track month.value) {
                     <option [ngValue]="month.value">{{ month.name }}</option>
                   }
                 </select>
               </div>
-              <div class="field"><label for="s-country">Country</label>
-                <select class="input" id="s-country" name="countryId" [(ngModel)]="m.countryId" (ngModelChange)="loadStates($event)" required>
+              <div class="field">
+                <label for="su-country">Country</label>
+                <select class="input" id="su-country" formControlName="countryId">
                   @for (c of countries(); track c.countryId) {
                     <option [ngValue]="c.countryId">{{ c.countryName }}</option>
                   }
                 </select>
               </div>
-              <div class="field"><label for="s-state">State</label>
-                <select class="input" id="s-state" name="stateId" [(ngModel)]="m.stateId">
-                  <option [ngValue]="undefined">—</option>
+              <div class="field">
+                <label for="su-state">State</label>
+                <select class="input" id="su-state" formControlName="stateId">
+                  <option [ngValue]="null">—</option>
                   @for (s of states(); track s.stateId) {
                     <option [ngValue]="s.stateId">{{ s.stateName }}</option>
                   }
                 </select>
               </div>
-              <div class="field"><label for="s-city">City</label><input class="input" id="s-city" name="city" [(ngModel)]="m.city" placeholder="Coimbatore"></div>
-              <div class="field"><label for="s-pin">Postal code</label><input class="input" id="s-pin" name="postalCode" [(ngModel)]="m.postalCode" inputmode="numeric" placeholder="641001"></div>
+              <div class="field field--wide">
+                <label for="su-addr1">Address line 1</label>
+                <input class="input" id="su-addr1" maxlength="200" autocomplete="address-line1" formControlName="addressLine1" />
+              </div>
+              <div class="field field--wide">
+                <label for="su-addr2">Address line 2</label>
+                <input class="input" id="su-addr2" maxlength="200" autocomplete="address-line2" formControlName="addressLine2" />
+              </div>
+              <div class="field">
+                <label for="su-city">City</label>
+                <input class="input" id="su-city" maxlength="100" autocomplete="address-level2" formControlName="city" />
+              </div>
+              <div class="field">
+                <label for="su-postal">Postal code</label>
+                <input class="input" id="su-postal" inputmode="numeric" maxlength="10" autocomplete="postal-code" formControlName="postalCode" />
+              </div>
+              <div class="field">
+                <label for="su-currency">Base currency</label>
+                <select class="input" id="su-currency" formControlName="baseCurrency">
+                  @for (c of currencies(); track c.code) {
+                    <option [ngValue]="c.code">{{ c.code }} — {{ c.name }}</option>
+                  }
+                </select>
+                <small class="text-muted">Defaults from the country — change it only if you keep books in another currency.</small>
+              </div>
             </div>
-          </div>
-
-          <!-- Step 3: Statutory -->
-          <div [hidden]="currentTab() !== 2">
-            <h2 style="font-size:clamp(22px,5.5vw,25px);margin:0 0 var(--space-1)">Statutory details.</h2>
-            <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">All optional — you can add them later in Organization settings.</p>
-            <div class="auth-grid">
-              <div class="field"><label for="s-gstin">GSTIN</label><input class="input" id="s-gstin" name="gstin" maxlength="15" [(ngModel)]="m.gstin" placeholder="33AABCG1234H1Z5"></div>
-              <div class="field"><label for="s-pan">PAN</label><input class="input" id="s-pan" name="pan" maxlength="10" [(ngModel)]="m.pan" placeholder="AABCG1234H"></div>
-              <div class="field"><label for="s-tan">TAN</label><input class="input" id="s-tan" name="tan" maxlength="10" [(ngModel)]="m.tan"></div>
-              <div class="field"><label for="s-tin">TIN</label><input class="input" id="s-tin" name="tin" maxlength="15" [(ngModel)]="m.tin"></div>
-              <div class="field"><label for="s-cin">CIN</label><input class="input" id="s-cin" name="cin" maxlength="21" [(ngModel)]="m.cin"></div>
-              <div class="field"><label for="s-udyam">Udyam</label><input class="input" id="s-udyam" name="udyamNumber" maxlength="20" [(ngModel)]="m.udyamNumber"></div>
-            </div>
-          </div>
-
-          @if (error()) {
-            <p class="error-msg" style="margin-top:10px">{{ error() }}</p>
           }
+          @case (3) {
+            <h2>Statutory details.</h2>
+            <p class="text-muted lede">All optional — you can add them later in Organization settings.</p>
+            <div class="grid-2">
+              <div class="field">
+                <label for="su-gstin">GSTIN</label>
+                <input class="input" id="su-gstin" maxlength="15" formControlName="gstin" />
+              </div>
+              <div class="field">
+                <label for="su-pan">PAN</label>
+                <input class="input" id="su-pan" maxlength="10" formControlName="pan" />
+              </div>
+              <div class="field">
+                <label for="su-tan">TAN</label>
+                <input class="input" id="su-tan" maxlength="10" formControlName="tan" />
+              </div>
+              <div class="field">
+                <label for="su-tin">TIN</label>
+                <input class="input" id="su-tin" maxlength="15" formControlName="tin" />
+              </div>
+              <div class="field">
+                <label for="su-cin">CIN</label>
+                <input class="input" id="su-cin" maxlength="21" formControlName="cin" />
+              </div>
+              <div class="field">
+                <label for="su-udyam">Udyam</label>
+                <input class="input" id="su-udyam" maxlength="20" formControlName="udyamNumber" />
+              </div>
+            </div>
+            <p class="text-muted lede" style="margin-top: var(--space-3)">
+              The GSTIN's first two digits must match your state's GST code.
+            </p>
+          }
+        }
 
-          <div class="auth-actions" style="display:flex;align-items:center;gap:var(--space-3);margin-top:var(--space-4)">
-            @if (currentTab() > 0) {
-              <button class="btn btn-secondary" type="button" (click)="prevTab()" style="margin:0">Back</button>
-            }
-            @if (currentTab() < tabs.length - 1) {
-              <button class="btn btn-primary" type="button" (click)="nextTab()" style="margin:0;flex:1">Continue</button>
-            } @else {
-              <button class="btn btn-primary" type="submit" [disabled]="busy()" style="margin:0;flex:1">Create my account</button>
-            }
-          </div>
-        </form>
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
 
-        <p style="font-size:13px;margin:var(--space-4) 0 0" class="text-muted">Already have an account? <a routerLink="/login">Sign in</a></p>
-      </div>
+        <div class="form-actions">
+          <button class="btn btn-secondary" type="button" (click)="back()">Back</button>
+          @if (step() < stepCount) {
+            <button class="btn btn-primary" type="button" (click)="next()">Continue</button>
+          } @else {
+            <button class="btn btn-primary" type="submit" [disabled]="busy()">
+              {{ busy() ? 'Creating…' : 'Create my account' }}
+            </button>
+          }
+        </div>
+
+        <p class="text-muted lede" style="margin-top: var(--space-4)">
+          Already have an account? <a routerLink="/login">Sign in</a>
+        </p>
+      </form>
     }
-  </main>
-</div>
+  </bb-auth-shell>

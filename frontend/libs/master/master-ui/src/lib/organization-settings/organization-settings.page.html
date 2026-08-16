@@ -173,7 +173,11 @@
     <div class="fields">
       <label>
         Base currency
-        <input type="text" name="baseCurrency" [ngModel]="org.baseCurrency" disabled />
+        <select name="baseCurrency" [ngModel]="org.baseCurrency" disabled>
+          @for (curr of currencies(); track curr.code) {
+            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
+          }
+        </select>
         <small>
           Fixed once the branch exists. Every posting converts to it, so changing
           it would restate the books.

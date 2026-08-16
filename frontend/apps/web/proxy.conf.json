@@ -1,42 +1,42 @@
 {
   "/api/auth": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/users": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/roles": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/customers": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/organizations": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/smtp-settings": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/master": {
-    "target": "http://localhost:4503",
+    "target": "http://localhost:4504",
     "secure": false
   },
   "/api/accounts": {
-    "target": "http://localhost:4504",
+    "target": "http://localhost:4501",
     "secure": false
   },
   "/api/sub-accounts": {
-    "target": "http://localhost:4504",
+    "target": "http://localhost:4501",
     "secure": false
   },
   "/api/tax-masters": {
-    "target": "http://localhost:4504",
+    "target": "http://localhost:4501",
     "secure": false
   },
   "/api/sales": {

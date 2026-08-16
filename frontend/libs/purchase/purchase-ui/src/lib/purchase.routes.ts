@@ -9,13 +9,16 @@ import { Routes } from '@angular/router';
  */
 export const purchaseRoutes: Routes = [
   {
-    path: 'purchase-orders',
-    loadComponent: () =>
-      import('./purchase-order-list/purchase-order-list.page').then(
-        (m) => m.PurchaseOrderListPage,
-      ),
-    data: { permission: 'purchase.view' },
+    path: 'transactions',
+    loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
+    data: { permission: 'purchase.view' }
   },
+  {
+    path: '',
+    redirectTo: 'transactions',
+    pathMatch: 'full'
+  },
+  // Keep form routes intact for navigating to them from the transaction list
   {
     path: 'purchase-orders/new',
     loadComponent: () =>
@@ -33,12 +36,6 @@ export const purchaseRoutes: Routes = [
     data: { permission: 'purchase.view' },
   },
   {
-    path: 'bills',
-    loadComponent: () =>
-      import('./bill-list/bill-list.page').then((m) => m.BillListPage),
-    data: { permission: 'purchase.view' },
-  },
-  {
     path: 'bills/new',
     loadComponent: () =>
       import('./bill-form/bill-form.page').then((m) => m.BillFormPage),
@@ -48,14 +45,6 @@ export const purchaseRoutes: Routes = [
     path: 'bills/:id',
     loadComponent: () =>
       import('./bill-form/bill-form.page').then((m) => m.BillFormPage),
-    data: { permission: 'purchase.view' },
-  },
-  {
-    path: 'debit-notes',
-    loadComponent: () =>
-      import('./debit-note-list/debit-note-list.page').then(
-        (m) => m.DebitNoteListPage,
-      ),
     data: { permission: 'purchase.view' },
   },
   {
@@ -71,14 +60,6 @@ export const purchaseRoutes: Routes = [
     loadComponent: () =>
       import('./debit-note-form/debit-note-form.page').then(
         (m) => m.DebitNoteFormPage,
-      ),
-    data: { permission: 'purchase.view' },
-  },
-  {
-    path: 'goods-receipts',
-    loadComponent: () =>
-      import('./goods-receipt-list/goods-receipt-list.page').then(
-        (m) => m.GoodsReceiptListPage,
       ),
     data: { permission: 'purchase.view' },
   },

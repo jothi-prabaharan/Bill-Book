@@ -1,5 +1,6 @@
+import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 import { Component, inject, signal } from '@angular/core';
-import { FormsModule, NgForm } from '@angular/forms';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
 
@@ -10,7 +11,7 @@ import { AuthService } from '../../auth.service';
 @Component({
   selector: 'bb-login-page',
   standalone: true,
-  imports: [FormsModule, RouterLink],
+  imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
 })
@@ -18,19 +19,22 @@ export class LoginPage {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 
-  email = '';
-  password = '';
+  protected readonly loginForm = new FormGroup({
+    email: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.email] }),
+    password: new FormControl('', { nonNullable: true, validators: Validators.required }),
+    remember: new FormControl(false, { nonNullable: true })
+  });
 
   protected readonly step = signal<'credentials' | 'organization'>('credentials');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
-  async submit(form: NgForm): Promise<void> {
-    if (form.invalid) return;
+  async submit(): Promise<void> {
+    if (this.loginForm.invalid) return;
     this.busy.set(true);
     this.error.set(null);
     try {
-      const response = await this.auth.login(this.email, this.password);
+      const response = await this.auth.login(this.loginForm.value.email!, this.loginForm.value.password!);
       if (response.requiresOrgSelection) {
         this.step.set('organization');
       } else {

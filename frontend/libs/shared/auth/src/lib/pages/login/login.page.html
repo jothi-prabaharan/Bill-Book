@@ -1,85 +1,59 @@
-<div class="auth-shell">
-  <aside class="auth-aside">
-    <div style="font-family:var(--font-body);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-mark);font-variant-numeric:tabular-nums">Retail ERP &amp; Accounting</div>
-
-    <div>
-      <div class="auth-brand">
-        <img src="assets/bill-book-mark.svg" alt="Bill-Book Logo">
-        <span>Bill-Book</span>
-      </div>
-      <div class="auth-rule"></div>
-      <p style="font-size:15px;line-height:1.7;color:rgba(243,242,242,.72);margin:0;max-width:26ch;text-wrap:pretty">Billing, inventory, double-entry accounting and GST compliance — one set of books for every organization you run.</p>
-    </div>
-
-    <div style="display:flex;flex-direction:column">
-      <div class="auth-stats">
-        <div><div>14</div>days free</div>
-        <div><div>3</div>users</div>
-        <div><div>1</div>organization</div>
-      </div>
-      <div class="auth-rule" style="margin:var(--space-4) 0 var(--space-3)"></div>
-      <div class="auth-switch">
-        <a routerLink="/login" class="active">Sign in</a>
-        <a routerLink="/signup">Sign up</a>
-        <a routerLink="/forgot-password">Forgot</a>
-      </div>
-    </div>
-  </aside>
-
-  <main class="auth-pane">
+<bb-auth-shell>
     @if (step() === 'credentials') {
-      <div style="width:100%;max-width:380px">
-        <h6 style="color:var(--color-accent-700);margin:0 0 var(--space-2)">Sign in</h6>
-        <h2 style="font-size:clamp(26px,6vw,34px);margin:0 0 var(--space-6)">Welcome back.</h2>
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+        <h6>Sign in</h6>
+        <h2>Welcome back.</h2>
 
-        <form #loginForm="ngForm" (ngSubmit)="submit(loginForm)">
-          <div class="field">
-            <label for="l-email">Email</label>
-            <input class="input" id="l-email" name="email" type="email" [(ngModel)]="email" required autocomplete="username" placeholder="you@company.in">
-          </div>
-          <div class="field">
-            <label for="l-pass">Password</label>
-            <input class="input" id="l-pass" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" placeholder="••••••••">
-          </div>
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input class="input" id="login-email" placeholder="you@company.in"
+                 formControlName="email" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input class="input" id="login-password" type="password" placeholder="••••••••"
+                 formControlName="password" autocomplete="current-password" />
+        </div>
 
-          <div style="display:flex;align-items:center;justify-content:flex-end;gap:var(--space-3);margin-bottom:var(--space-4)">
-            <a routerLink="/forgot-password" style="font-size:13px">Forgot password?</a>
-          </div>
-
-          @if (error()) {
-            <p class="error-msg">{{ error() }}</p>
-          }
-
-          <button class="btn btn-primary btn-block" type="submit" [disabled]="busy()" style="margin-top:0">
-            {{ busy() ? 'Signing in…' : 'Sign in' }}
-          </button>
-        </form>
-
-        <div class="hr" style="margin:var(--space-6) 0"></div>
-        <p style="font-size:13px;margin:0" class="text-muted">New here? <a routerLink="/signup">Start a free trial</a></p>
-      </div>
-    } @else {
-      <div style="width:100%;max-width:420px">
-        <h6 style="color:var(--color-accent-700);margin:0 0 var(--space-2)">Step two</h6>
-        <h2 style="font-size:clamp(26px,6vw,34px);margin:0 0 var(--space-2)">Choose an organization.</h2>
-        <p class="text-muted" style="font-size:13px;margin:0 0 var(--space-4)">Your account reaches multiple sets of books.</p>
-
-        <div style="display:grid;gap:var(--space-2)">
-          @for (org of auth.organizations(); track org.orgId) {
-            <button type="button" class="auth-orgrow" (click)="pick(org.orgId)" [disabled]="busy()">
-              <strong>{{ org.orgName }}</strong>
-              <span class="text-muted">{{ org.roleName }}</span>
-            </button>
-          }
+        <div class="form-row">
+          <label class="checkbox"><input type="checkbox" formControlName="remember" /> Keep me signed in</label>
+          <a routerLink="/forgot-password">Forgot password?</a>
         </div>
 
         @if (error()) {
-          <p class="error-msg" style="margin-top:10px">{{ error() }}</p>
+          <p class="error">{{ error() }}</p>
         }
 
-        <div class="hr" style="margin:var(--space-6) 0"></div>
-        <p style="font-size:13px;margin:0" class="text-muted">Signed in as {{ email }} · <a href="#" (click)="$event.preventDefault(); step.set('credentials'); password=''">Not you?</a></p>
+        <button class="btn btn-primary btn-block" type="submit" [disabled]="busy()">
+          {{ busy() ? 'Signing in…' : 'Sign in' }}
+        </button>
+
+        <hr class="hr" />
+        <p class="text-muted lede">New here? <a routerLink="/signup">Start a free trial</a></p>
+      </form>
+    } @else {
+      <div class="auth-form">
+        <h6>Step two</h6>
+        <h2>Choose an organization.</h2>
+        <p class="text-muted lede">Your account reaches more than one set of books.</p>
+
+        <ul class="org-list">
+          @for (org of auth.organizations(); track org.orgId) {
+            <li>
+              <button type="button" (click)="pick(org.orgId)" [disabled]="busy()">
+                <strong>{{ org.orgName }}</strong>
+                <span>{{ org.roleName }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+
+        <hr class="hr" />
+        <p class="text-muted lede">Wrong account? <a routerLink="/login">Sign in again</a></p>
       </div>
     }
-  </main>
-</div>
+  </bb-auth-shell>

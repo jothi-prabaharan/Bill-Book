@@ -1,0 +1,49 @@
+<div class="page-header">
+  <h1>Sales Transactions</h1>
+  
+  <div class="header-actions">
+    <div class="field" style="display: inline-block; margin-right: 1rem;">
+      <select [(ngModel)]="selectedType" (change)="onTypeChange()" class="input">
+        <option value="">All Transactions</option>
+        <option value="Quote">Quotes</option>
+        <option value="SalesOrder">Sales Orders</option>
+        <option value="Invoice">Invoices</option>
+        <option value="CreditNote">Credit Notes</option>
+      </select>
+    </div>
+
+    <!-- For simplicity, navigating to specific new form directly, or using a single dropdown if you want -->
+    <a routerLink="/sales/quotes/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Quote</a>
+    <a routerLink="/sales/sales-orders/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Order</a>
+    <a routerLink="/sales/invoices/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Invoice</a>
+    <a routerLink="/sales/credit-notes/new" class="btn btn-primary">New Credit Note</a>
+  </div>
+</div>
+
+<div class="card">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Type</th>
+        <th>Number</th>
+        <th>Customer</th>
+        <th class="text-right">Amount</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let t of transactions" (click)="navigateToTransaction(t)" class="clickable-row" style="cursor: pointer;">
+        <td>{{ t.documentDate | date }}</td>
+        <td>{{ t.transactionType }}</td>
+        <td>{{ t.documentNo }}</td>
+        <td>{{ t.contactName }}</td>
+        <td class="text-right">{{ t.totalAmount | number:'1.2-2' }}</td>
+        <td><span class="badge">{{ t.status }}</span></td>
+      </tr>
+      <tr *ngIf="transactions.length === 0">
+        <td colspan="6" class="text-center text-muted">No transactions found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
