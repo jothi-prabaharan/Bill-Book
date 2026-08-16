@@ -135,7 +135,7 @@ New-ModuleCommit -Title 'Backend per-environment configuration' -Paths @(
     'backend/Api/Platform/Platform.Api/appsettings*.json',
     'backend/Api/Master/Master.Api/appsettings*.json',
     'backend/Api/Accounting/Accounting.Api/appsettings*.json',
-    'backend/Gateway/appsettings*.json'
+    'backend/Gateway/Gateway.Api/appsettings*.json'
 ) -Message @'
 Add Development, Staging, UAT and Production appsettings
 
@@ -296,9 +296,9 @@ and a warning against ever putting a real one there.
 New-ModuleCommit -Title 'Gateway request log' -Paths @(
     'backend/Gateway/Gateway.Entity',
     'backend/Gateway/Gateway.Repository',
-    'backend/Gateway/Logging',
-    'backend/Gateway/Program.cs',
-    'backend/Gateway/Gateway.csproj',
+    'backend/Gateway/Gateway.Api/Logging',
+    'backend/Gateway/Gateway.Api/Program.cs',
+    'backend/Gateway/Gateway.Api/Gateway.Api.csproj',
     'backend/Bill-Book.sln',
     'backend/Bill-Book.Debug.slnf'
 ) -Message @'
