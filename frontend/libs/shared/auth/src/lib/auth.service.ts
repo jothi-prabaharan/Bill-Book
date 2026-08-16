@@ -11,6 +11,7 @@ import {
   SignupResponse,
   StateRow,
   TokenResponse,
+  Currency,
 } from './auth.models';
 
 const ACCESS_KEY = 'bb.access';
@@ -188,5 +189,9 @@ export class AuthService {
 
   states(countryId: number): Promise<StateRow[]> {
     return firstValueFrom(this.http.get<StateRow[]>(`/api/master/countries/${countryId}/states`));
+  }
+
+  currencies(): Promise<Currency[]> {
+    return firstValueFrom(this.http.get<Currency[]>('/api/master/currencies'));
   }
 }

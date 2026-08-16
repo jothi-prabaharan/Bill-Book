@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { AuthService } from '@bill-book/auth';
+import { AuthService, Currency } from '@bill-book/auth';
 
 interface Organization {
   orgId: string;
@@ -63,6 +63,7 @@ export class OrganizationsPage implements OnInit {
 
   protected readonly rows = signal<Organization[]>([]);
   protected readonly states = signal<State[]>([]);
+  protected readonly currencies = signal<Currency[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
@@ -75,6 +76,7 @@ export class OrganizationsPage implements OnInit {
   ngOnInit(): void {
     void this.load();
     void this.loadStates();
+    void this.loadCurrencies();
   }
 
   async load(): Promise<void> {
@@ -95,6 +97,14 @@ export class OrganizationsPage implements OnInit {
       );
     } catch {
       // The GSTIN-versus-state check runs server-side regardless.
+    }
+  }
+
+  private async loadCurrencies(): Promise<void> {
+    try {
+      this.currencies.set(await this.get<Currency[]>('/api/master/currencies'));
+    } catch {
+      // Ignore
     }
   }
 

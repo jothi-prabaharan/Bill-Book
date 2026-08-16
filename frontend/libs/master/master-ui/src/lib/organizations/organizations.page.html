@@ -114,13 +114,14 @@
 
       <label>
         Base currency
-        <input
-          type="text"
+        <select
           [(ngModel)]="form.baseCurrency"
-          maxlength="3"
           [disabled]="currencyLocked"
-          style="text-transform: uppercase"
-        />
+        >
+          @for (curr of currencies(); track curr.code) {
+            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
+          }
+        </select>
         <small>
           @if (currencyLocked) {
             Fixed — every amount already posted here was converted to it.
