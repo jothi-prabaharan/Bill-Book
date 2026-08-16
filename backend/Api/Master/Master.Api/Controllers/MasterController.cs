@@ -65,6 +65,7 @@ public sealed class MasterController : ControllerBase
         return state is null ? NotFound() : Ok(state);
     }
 
+    [AllowAnonymous]
     [HttpGet("currencies")]
     public async Task<IActionResult> GetCurrencies(CancellationToken ct)
     {

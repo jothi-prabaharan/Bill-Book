@@ -18,6 +18,11 @@ public sealed class CustomersController : ControllerBase
     [HttpPost("signup")]
     public async Task<IActionResult> Signup([FromBody] SignupRequest request, CancellationToken ct)
     {
+        if (await _signup.EmailExistsAsync(request.Email, ct))
+        {
+            return BadRequest(new { message = "An account with this email already exists." });
+        }
+
         SignupResponse response = await _signup.SignupAsync(request, ct);
         return AcceptedAtAction(nameof(GetStatus), new { customerId = response.CustomerId }, response);
     }

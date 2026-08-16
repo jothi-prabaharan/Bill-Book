@@ -32,13 +32,12 @@ public class DatabaseMigrationService : IHostedService
 
         // 1. Ensure databases exist with correct encoding
         string adminDbString = RequiredConnectionString("AdminDatabase");
-        string designDbString = RequiredConnectionString("DesignTimeDatabase");
+
+        string tenantFallbackString = RequiredConnectionString("TenantFallback");
 
         await EnsureDatabaseExistsAsync(adminDbString, cancellationToken);
-        await EnsureDatabaseExistsAsync(designDbString, cancellationToken);
-        // Ensure test db and base tenant db exists as well, as they did in the setup script
-        await EnsureDatabaseExistsAsync(GetConnectionStringForDb(adminDbString, "EP_Test"), cancellationToken);
-        await EnsureDatabaseExistsAsync(GetConnectionStringForDb(adminDbString, "IN0000000001"), cancellationToken);
+
+        await EnsureDatabaseExistsAsync(tenantFallbackString, cancellationToken);
 
         // 2. Run EF Core Migrations
         var adminDb = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
@@ -46,7 +45,7 @@ public class DatabaseMigrationService : IHostedService
         await adminDb.Database.MigrateAsync(cancellationToken);
 
         var contactsDb = scope.ServiceProvider.GetRequiredService<ContactsDbContext>();
-        _logger.LogInformation("Migrating Design-time database...");
+        _logger.LogInformation("Migrating fallback tenant database...");
         await contactsDb.Database.MigrateAsync(cancellationToken);
 
         // 3. Seed Geography Data

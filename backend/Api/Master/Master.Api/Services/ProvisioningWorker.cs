@@ -78,7 +78,7 @@ public sealed class ProvisioningWorker : BackgroundService
         string safeName = new(job.DatabaseName.Where(char.IsLetterOrDigit).ToArray());
 #pragma warning disable EF1002 // CREATE DATABASE takes no parameters; safeName is stripped to letters and digits above.
         await db.Database.ExecuteSqlRawAsync(
-            $"CREATE DATABASE \"{safeName}\" ENCODING 'UTF8'", ct);
+            $"CREATE DATABASE \"{safeName}\" ENCODING 'UTF8' TEMPLATE \"EP_Tenant_Template\"", ct);
 #pragma warning restore EF1002
 
         // 2. Store the tenant connection string — Key Vault, never plt.

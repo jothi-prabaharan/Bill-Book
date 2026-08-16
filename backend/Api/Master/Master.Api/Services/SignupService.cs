@@ -194,4 +194,10 @@ public sealed class SignupService
         long next = max is null ? 1 : long.Parse(max) + 1;
         return next.ToString("D10");
     }
+
+    public async Task<bool> EmailExistsAsync(string email, CancellationToken ct)
+    {
+        return await _db.Users.AnyAsync(u => u.Email == email, ct)
+            || await _db.Customers.AnyAsync(c => c.BillingEmail == email, ct);
+    }
 }
