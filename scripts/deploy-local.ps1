@@ -28,7 +28,7 @@ $backendApps = @(
     @{ Name = "reporting"; Path = "backend\Api\Reporting\Reporting.Api\Reporting.Api.csproj" },
     @{ Name = "sales"; Path = "backend\Api\Sales\Sales.Api\Sales.Api.csproj" }
 )
-$gatewayApp = @{ Name = "gateway"; Path = "backend\Gateway\Gateway.csproj" }
+$gatewayApp = @{ Name = "gateway"; Path = "backend\Gateway\Gateway.Api\Gateway.Api.csproj" }
 $frontendApps = @("web", "admin", "portal", "docs")
 
 # Verify infrastructure exists
