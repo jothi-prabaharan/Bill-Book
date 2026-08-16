@@ -65,7 +65,7 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         // Design-time and unauthenticated paths fall back to the configured value.
         // Guarded, not defaulted: a blank here would hand Npgsql an empty string
         // and the failure would surface as an unrelated connection error.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(

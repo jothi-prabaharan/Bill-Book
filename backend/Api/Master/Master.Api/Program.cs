@@ -86,7 +86,7 @@ builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
