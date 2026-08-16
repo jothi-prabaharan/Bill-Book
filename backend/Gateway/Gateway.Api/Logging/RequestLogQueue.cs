@@ -1,7 +1,7 @@
 using System.Threading.Channels;
 using Gateway.Entity.TableEntities;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <inheritdoc />
 public class RequestLogQueue : IRequestLogQueue

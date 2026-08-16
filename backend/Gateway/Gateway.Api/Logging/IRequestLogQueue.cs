@@ -1,6 +1,6 @@
 using Gateway.Entity.TableEntities;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>
 /// Hand-off between the request path and the background writer.

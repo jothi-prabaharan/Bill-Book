@@ -4,7 +4,7 @@ using Gateway.Entity.TableEntities;
 using Microsoft.Extensions.Options;
 using Yarp.ReverseProxy.Model;
 
-namespace Gateway.Logging;
+namespace Gateway.Api.Logging;
 
 /// <summary>
 /// Captures one <see cref="RequestLog"/> per proxied request and hands it to the
