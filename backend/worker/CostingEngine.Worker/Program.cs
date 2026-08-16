@@ -52,7 +52,7 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
     string connectionString = tenant.CustomerId is Guid customerId
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
