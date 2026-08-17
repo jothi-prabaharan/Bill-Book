@@ -594,21 +594,29 @@ That is the whole rule, and it is not a claim about which model is cleverer — 
 
 | | Senior — Claude Code | Junior — Antigravity |
 |---|---|---|
-| **Owns** | The contract, both ends. The query engine. **The first source of each shape**, because every later source is copied from it. The grid and its panels. The pivot builder | The schema. The read models. The API host. The Excel writer. The pages. And the volume — fifteen report sources across R1 and R2, each a copy of a template that already exists |
-| **Tasks** | R0.0, R0.3, R0.4, R0.5, R0.8, R0.9, R0.10, R1.3, R3.3, R3.4 | R0.1, R0.2, R0.6, R0.7, R0.11, R1.1, R1.2, R1.4–R1.7, all of R2, R3.1, R3.2 |
-| **Roughly** | ~17h, front-loaded into R0 — or ~14h if R0.10 moves to junior | ~19h, most of it after R0 |
+| **Owns** | **The whole of R0** — schema, read models, contract, engine, host, Excel, grid, panels, pages. Then the first source of each shape, because every later source is copied from it, and the pivot builder | **Everything from R1 onward.** The volume: fourteen report sources across R1 and R2, each a copy of a template that already exists, plus saved views |
+| **Tasks** | R0.0 – R0.11 entire, R1.3, R3.3, R3.4 | R1.1, R1.2, R1.4–R1.7, all of R2, R3.1, R3.2 |
+| **Roughly** | ~25h, nearly all of it in R0 | ~11h, none of it before R1 |
 
-**R0 is unavoidably senior-heavy** — it is nearly all design — and the payoff is R1 and R2, which are 10 hours of near-pure junior work. If the senior budget has to shrink further, the one task to move is **R0.10**: once R0.9 lands, the filter bar, column chooser and group panel follow its idiom closely enough for junior to write them against it.
+**Senior builds the whole foundation and junior builds on it.** The line is no longer drawn inside R0 — it is drawn at the end of it. The argument for that: all three silent-failure gates (§9.1 below) are R0 tasks, and R0 is where a mistake propagates rather than surfaces.
+
+**The cost is that junior idles through R0** unless given something. Two tasks do not depend on the reporting engine at all and can run in parallel with it from day one: **R1.1** (three indexes, an *Accounting* migration) and **R1.2** (the batched user-name resolver). Start junior on those.
+
+If the senior budget bites, the task to hand back is **R0.10** — once R0.9 lands, the filter bar, column chooser and group panel follow its idiom closely enough to be written against it. That returns ~3.5h.
 
 #### Review gates
 
-**Senior reviews every junior commit before it merges.** Three of those reviews are gates rather than reviews — junior does not proceed past them, and the reviewer's job is to check the specific thing named, not to read the diff generally:
+**Senior reviews every junior commit before it merges.**
+
+Three checks are **gates** — the work does not proceed past them. They are all in R0, and with R0 now wholly senior they are senior's own verification rather than a handoff: **they do not become optional by being self-checks.** Each fails silently, and none of the three fails a test, which is precisely why they are written down instead of trusted to attention.
 
 | Gate | After | What is checked, and why it is a gate |
 |---|---|---|
 | **G1** | R0.1 | Every `rpt` table has `OrgId`, a global query filter **and** an RLS policy. A miss leaks between branches and no test fails |
 | **G2** | R0.2 | Every read model re-declares its query filter, and none carries a navigation to a writable entity. Same failure mode, wider blast radius |
 | **G3** | R0.6 | `set_config` is transaction-local, never connection-level. Pooled connections are reused across requests, so connection-level org context leaks to the next caller |
+
+Verify each against a second org: set `app.current_org_id` to a branch that owns none of the rows and confirm the query returns nothing. A gate signed off by reading the code rather than running it is not signed off.
 
 #### How junior should work
 
@@ -626,7 +634,7 @@ git worktree add ../Bill-Book-senior report-senior
 git worktree add ../Bill-Book-junior report-junior
 ```
 
-Both merge into `Report`. **Sequence:** junior does R0.1 and R0.2 → senior does R0.3, R0.4, R0.5 and writes the recipe → from there both run in parallel, senior on R0.8–R0.10, junior on R0.6, R0.7, R0.11 and into R1 and R2.
+Both merge into `Report`. **Sequence:** senior does R0.0, then the whole of R0 in dependency order, then R1.3 as the second template. Junior runs R1.1 and R1.2 alongside R0 — neither touches the reporting engine — and picks up the rest of R1, then all of R2, once the recipe of §9.5 exists.
 
 Four files conflict no matter how the work is split, and are worth resolving by hand each merge rather than trusting a three-way merge: **this file's progress checklist** (senior owns the ticks), **`release-notes.md`**, **`docs.manifest.ts`**, and **`Bill-Book.sln`**. The `rpt` migration has **one owner only** — two EF migrations from two branches do not merge cleanly, they merge dirtily.
 
@@ -650,7 +658,7 @@ Antigravity does not read `CLAUDE.md`. Without this task it starts blind to LINQ
 
 ---
 
-#### R0.1 — the `rpt` schema · **Junior** · ~1.5h · depends: R0.0 · **gate G1**
+#### R0.1 — the `rpt` schema · **Senior** · ~1.5h · depends: R0.0 · **gate G1**
 
 **Create:**
 
@@ -689,7 +697,7 @@ All three entities inherit `Shared.Kernel.Tenancy.OrgScopedEntity`. `ReportKey` 
 
 ---
 
-#### R0.2 — read-only reads across `acc`, `inv` and `con` · **Junior** · ~1.5h · depends: R0.1 · **gate G2** · **needs the §2 decision**
+#### R0.2 — read-only reads across `acc`, `inv` and `con` · **Senior** · ~1.5h · depends: R0.1 · **gate G2** · **needs the §2 decision**
 
 **Do not start this until the §2 exception is confirmed.** Everything else in R0 except R0.5–R0.7 proceeds without it.
 
@@ -749,7 +757,7 @@ The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
 ---
 
-#### R0.6 — the API host · **Junior** · ~2h · depends: R0.5 · **gate G3**
+#### R0.6 — the API host · **Senior** · ~2h · depends: R0.5 · **gate G3**
 
 `Reporting.Api/Program.cs` is a stub returning `"not implemented"`. **Replace it wholesale** — copy `Inventory.Api/Program.cs`, which its own comment names as the fullest example: JWT bearer, tenant resolution, `set_config` transaction-locally (never connection-level), the audit interceptor, DI, OpenAPI.
 
@@ -761,7 +769,7 @@ The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
 ---
 
-#### R0.7 — Excel export · **Junior** · ~2h · depends: R0.6
+#### R0.7 — Excel export · **Senior** · ~2h · depends: R0.6
 
 **Create** `Reporting.Api/Services/ExcelReportWriter.cs` on `DocumentFormat.OpenXml` (pinned 3.5.1). Read `ExcelStatementReader.cs` and `StatementExportWriter.cs` first — the OpenXml idiom this repo uses is already there.
 
@@ -801,7 +809,7 @@ The API is in §3.3. This task covers: the table, sticky header (`position: stic
 
 ---
 
-#### R0.11 — pages, routes and documentation · **Junior** · ~1h · depends: R0.6, R0.10
+#### R0.11 — pages, routes and documentation · **Senior** · ~1h · depends: R0.6, R0.10
 
 **Create** `libs/reporting/reporting-ui/src/lib/report-list/report-list.page.*` (catalog grouped by module) and `report-host/report-host.page.*` (one generic page driven by `:reportKey`). Routes in `apps/web`. Navigation entry.
 
@@ -868,19 +876,21 @@ Full detail for each task is in the section above; this is the tracker, not a se
 #### R0 — the engine and the grid
 
 - [ ] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
-- [ ] **J · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty. → **G1**
-- [ ] **J · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
+- [ ] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty. → **G1**
+- [ ] **S · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
 - [ ] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [ ] **S · R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
 - [ ] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** Account Movement and Trial Balance, plus the written recipe every later report is built from.
-- [ ] **J · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`. → **G3**
-- [ ] **J · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
+- [ ] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`. → **G3**
+- [ ] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
 - [ ] **S · R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
 - [ ] **S · R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
 - [ ] **S · R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser. *Junior may take this if the senior budget is tight — after R0.9 lands.*
-- [ ] **J · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
+- [ ] **S · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
 
-**Gates** — [ ] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. Senior signs each one off before junior continues; §9.1 says what each checks.
+**Gates** — [ ] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
+
+**Junior runs R1.1 and R1.2 alongside R0** — neither depends on the reporting engine, and they are the only work available before §9.5 exists.
 
 #### R1 — the accounting reports
 
