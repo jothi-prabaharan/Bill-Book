@@ -931,7 +931,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 - [x] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** `AccountMovementSource` (row per record) and `TrialBalanceSource` (row per account with totals underneath) — the two shapes every later report copies — plus `ReportCatalogSeeder` and the recipe at §9.5. 41 tests. **Account Type is not on either report yet**: it lives in `mst.AccountTypes`, another database, so it needs R1.2's batched resolver.
 - [x] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, `InternalSeedController`, `ReportRunner`, the gateway route. **The permission module is `reports`, not `reporting`** — that is what `mst.Permissions` seeds — and the query route carries `[PermissionAction("view")]` because a POST would otherwise derive `.edit` and a Viewer could not run a report. → **G3 FAILED, see §9.9**
 - [x] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml` — frozen header, column widths, money as numbers and dates as date serials, group subtotals and the grand total as real rows. The 100k cap **refuses rather than truncates**, and `ExportFormat.Pdf` refuses politely. Eight tests open the produced file and read it back.
-- [ ] **S · R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
+- [x] **S · R0.8 — frontend contracts and services:** `reporting-core` — the contracts mirroring the server's models, `ReportQueryService`, and the URL round trip. 5 tests. Ionic-safe: no `window`, no `document`. **`npm run check` fails on a pre-existing `sales-ui` typecheck error, §9.6** — reporting itself typechecks clean.
 - [ ] **S · R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
 - [ ] **S · R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser. *Junior may take this if the senior budget is tight — after R0.9 lands.*
 - [ ] **S · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
@@ -1003,6 +1003,24 @@ Before commit `5a131c4` — *"rename MasterDbContext to AdminDbContext and squas
 **The fix is recoverable, not a rewrite.** The SQL is intact in git at `5a131c4^:backend/Api/Accounting/Accounting.Repository/Migrations/20260812044850_InitialCreate.cs`. It wants lifting into a new Accounting migration, and the same check running against `con` in Master. **It is Accounting's and Master's work, not reporting's**, and it is not in any R-stage here.
 
 **What it means for G2.** G2 asks whether the read models are isolated. Their EF query filters are in place and inherited from `OrgScopedEntity`, so they cannot be omitted — that half holds. The database half **cannot hold for `acc` and `con` until the policies are restored**, because there are no policies to hold. G2 stays open on that basis rather than being ticked on the half that passes.
+
+---
+
+## 9.6 `npm run check` was already failing before reporting touched the frontend
+
+One typecheck error in the workspace, and it is not reporting's:
+
+```
+libs/sales/sales-ui/src/lib/delivery-challan-form/delivery-challan-form.component.ts(71,7)
+  error TS2322: … is missing the following properties from type 'DocumentLine':
+  detailId, lineNumber, itemLabel, warehouseId, and 16 more.
+```
+
+The delivery-challan form builds its lines as an object literal with nine fields and assigns them to `DocumentLine[]`, which has twenty-five. Last touched by `b13c269`, the sales commit that added it; reporting has never been near the file, and `tsc` reports **zero** errors under `libs/reporting`.
+
+It matters beyond the one file because **`npm run check` chains lint → typecheck → tests → builds**, so the whole chain stops here. Nobody running it gets to the tests or the builds, and the repository's own claim that it is green is out of date. Lint passes across all 15 projects; it is typecheck that fails.
+
+**Not reporting's to fix** — it is Sales', and the fix is either to complete the literal or to have `bb-document-line-grid` accept a partial line and fill the rest, which is a decision about that component rather than about this one.
 
 ---
 
