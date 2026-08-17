@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel", "Shared\Shared.Kernel\Shared.Kernel.csproj", "{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel", "shared\Shared.Kernel\Shared.Kernel.csproj", "{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Master.Entity", "Api\Master\Master.Entity\Master.Entity.csproj", "{9B2DF8B3-EEA6-5DF1-B51E-18CE52004661}"
 EndProject
@@ -47,11 +47,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reporting.Repository", "Api
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Reporting.Api", "Api\Reporting\Reporting.Api\Reporting.Api.csproj", "{331CF046-2B5D-59DD-8363-D3006345F1A5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Notification.Worker", "Worker\Notification.Worker\Notification.Worker.csproj", "{6664246C-6C16-5DFC-8C2E-E3FDE3826FE0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Notification.Worker", "worker\Notification.Worker\Notification.Worker.csproj", "{6664246C-6C16-5DFC-8C2E-E3FDE3826FE0}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CostingEngine.Worker", "Worker\CostingEngine.Worker\CostingEngine.Worker.csproj", "{1B0703D7-ADD0-5897-A43C-C4BC7F5D2FB5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CostingEngine.Worker", "worker\CostingEngine.Worker\CostingEngine.Worker.csproj", "{1B0703D7-ADD0-5897-A43C-C4BC7F5D2FB5}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RateSync.Worker", "Worker\RateSync.Worker\RateSync.Worker.csproj", "{799B7B38-B069-5DA1-B7AE-65F91AA4490D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RateSync.Worker", "worker\RateSync.Worker\RateSync.Worker.csproj", "{799B7B38-B069-5DA1-B7AE-65F91AA4490D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "Gateway\Gateway.Api\Gateway.Api.csproj", "{7A244E29-6F9B-535B-967D-FF69A148E10D}"
 EndProject
@@ -81,13 +81,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Entity", "Gateway\G
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Repository", "Gateway\Gateway.Repository\Gateway.Repository.csproj", "{3F1B9E20-7C4A-4D51-9A63-1E5C2B8D4A02}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel.Tests", "Tests\Shared.Kernel.Tests\Shared.Kernel.Tests.csproj", "{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel.Tests", "tests\Shared.Kernel.Tests\Shared.Kernel.Tests.csproj", "{5C1A8D42-9E33-5AB7-B0D1-7F2E4C6A9B02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api.Tests", "Tests\Inventory.Api.Tests\Inventory.Api.Tests.csproj", "{A611876E-59A6-43F4-9C3B-4EE77AA704AC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Inventory.Api.Tests", "tests\Inventory.Api.Tests\Inventory.Api.Tests.csproj", "{A611876E-59A6-43F4-9C3B-4EE77AA704AC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounting.Api.Tests", "Tests\Accounting.Api.Tests\Accounting.Api.Tests.csproj", "{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Accounting.Api.Tests", "tests\Accounting.Api.Tests\Accounting.Api.Tests.csproj", "{EA06E7A7-24CE-411C-AD00-77F1F67C9B01}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Purchase.Api.Tests", "Tests\Purchase.Api.Tests\Purchase.Api.Tests.csproj", "{3793D6CB-73D8-4BBE-884F-AF3473FDB04C}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Purchase.Api.Tests", "tests\Purchase.Api.Tests\Purchase.Api.Tests.csproj", "{3793D6CB-73D8-4BBE-884F-AF3473FDB04C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reporting.Api.Tests", "tests\Reporting.Api.Tests\Reporting.Api.Tests.csproj", "{19731F18-BBB6-4CCD-8170-A0402AA40F9A}"
 EndProject

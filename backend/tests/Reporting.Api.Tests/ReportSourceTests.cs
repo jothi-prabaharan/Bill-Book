@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Caching.Memory;
 using Reporting.Api.Services;
 using Reporting.Api.Services.Sources;
 using Xunit;
@@ -10,8 +11,19 @@ namespace Reporting.Api.Tests;
 /// </summary>
 public class ReportSourceTests
 {
-    private static readonly AccountMovementSource Movement = new();
+    private static readonly AccountMovementSource Movement = new(OfflineResolver());
     private static readonly TrialBalanceSource TrialBalance = new();
+
+    /// <summary>
+    /// A resolver these tests never call. They read <c>Columns</c> only, which is
+    /// declared without touching Master — so the client is here to satisfy the
+    /// constructor, and a test that made it reach the network would fail loudly
+    /// rather than quietly resolve a name.
+    /// </summary>
+    private static BatchedNameResolver OfflineResolver() =>
+        new(
+            new HttpClient { BaseAddress = new Uri("http://reporting.tests.invalid") },
+            new MemoryCache(new MemoryCacheOptions()));
 
     public static TheoryData<IReportSource> Sources => [Movement, TrialBalance];
 
