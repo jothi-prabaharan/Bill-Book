@@ -40,6 +40,6 @@ export class SalesListComponent implements OnInit {
   }
 
   navigateToTransaction(transaction: SalesTransactionListItem) {
-    this.router.navigate([this.getRouteForTransaction(transaction)]);
+    void this.router.navigate([this.getRouteForTransaction(transaction)]);
   }
 }

@@ -40,6 +40,6 @@ export class PurchaseListPage implements OnInit {
   }
 
   navigateToTransaction(transaction: PurchaseTransactionListItem) {
-    this.router.navigate([this.getRouteForTransaction(transaction)]);
+    void this.router.navigate([this.getRouteForTransaction(transaction)]);
   }
 }
