@@ -76,6 +76,15 @@ public sealed class ProvisioningWorker : BackgroundService
         // 1. CREATE DATABASE — raw SQL is allowed here (no LINQ equivalent).
         //    The name is generated (prefix + digits), never user input.
         string safeName = new(job.DatabaseName.Where(char.IsLetterOrDigit).ToArray());
+
+        // Forcibly disconnect any pooled connections (e.g. from other APIs) from the template database, 
+        // otherwise PostgreSQL will reject the cloning operation with "accessed by other users".
+        await db.Database.ExecuteSqlRawAsync(@"
+            SELECT pg_terminate_backend(pg_stat_activity.pid)
+            FROM pg_stat_activity
+            WHERE pg_stat_activity.datname = 'EP_Tenant_Template'
+            AND pid <> pg_backend_pid();", ct);
+
 #pragma warning disable EF1002 // CREATE DATABASE takes no parameters; safeName is stripped to letters and digits above.
         await db.Database.ExecuteSqlRawAsync(
             $"CREATE DATABASE \"{safeName}\" ENCODING 'UTF8' TEMPLATE \"EP_Tenant_Template\"", ct);

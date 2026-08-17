@@ -69,7 +69,7 @@ public static class UomSeed
             ("QTL", "QTL", "Quintal", 100m, 3, false),
             ("TON", "TON", "Tonnes", 1000m, 3, false),
             ("MTS", "MTS", "Metric ton", 1000m, 3, false),
-            ("CRT", "OTH", "Carat", 0.0000002m, 3, false),
+            ("CRT", "OTH", "Carat", 0.0002m, 3, false),
             ("TOL", "OTH", "Tola", 0.0116638m, 3, false),
         ]);
 
