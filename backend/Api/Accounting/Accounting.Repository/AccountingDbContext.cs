@@ -268,6 +268,7 @@ public class AccountingDbContext : TenantDbContext
             // rows behind one document.
             b.HasIndex(e => new { e.OrgId, e.LedgerDate });
             b.HasIndex(e => new { e.OrgId, e.AccountId, e.LedgerDate });
+            b.HasIndex(e => new { e.OrgId, e.SubAccountId, e.LedgerDate });
 
             // The replace key, and the document lookup, in one index. A posting
             // is identified by all four columns — the leftmost three are what
