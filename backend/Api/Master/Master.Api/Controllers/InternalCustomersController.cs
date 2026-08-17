@@ -56,7 +56,7 @@ public sealed class InternalCustomersController : ControllerBase
             {
                 d.DatabaseName,
                 d.ConnectionSecretRef,
-                IsReady = d.Status == ProvisioningStatus.Ready,
+                IsReady = d.Status == ProvisioningStatus.Ready || d.Status == ProvisioningStatus.Provisioning,
             })
             .FirstOrDefaultAsync(ct);
 

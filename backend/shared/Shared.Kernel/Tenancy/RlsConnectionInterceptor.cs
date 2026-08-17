@@ -6,13 +6,12 @@ namespace Shared.Kernel.Tenancy;
 /// <summary>
 /// Sets app.current_org_id for Postgres row-level security.
 ///
-/// Deliberately uses set_config(..., true) — the third argument makes it
-/// transaction-local. Setting it at connection level would leak org context to
-/// the next request that borrows the pooled connection, which is the specific
-/// mistake this class exists to prevent.
+/// Uses set_config(..., false) to set the config at the session level.
+/// To prevent connection pool leaks, it ALWAYS overwrites the value when the connection
+/// is taken from the pool and opened. If the current request has no OrgId, it is explicitly cleared.
 ///
-/// This is one of the few places raw SQL is allowed: set_config has no LINQ
-/// equivalent.
+/// This avoids the "cannot be used outside a transaction block" error that occurs when
+/// using set_config(..., true) outside an explicit EF Core transaction.
 /// </summary>
 public sealed class RlsConnectionInterceptor : DbConnectionInterceptor
 {
@@ -25,17 +24,17 @@ public sealed class RlsConnectionInterceptor : DbConnectionInterceptor
         ConnectionEndEventData eventData,
         CancellationToken cancellationToken = default)
     {
-        if (_tenant.OrgId is Guid orgId)
-        {
-            await using DbCommand command = connection.CreateCommand();
-            command.CommandText = "SELECT set_config('app.current_org_id', $1, true)";
+        await using DbCommand command = connection.CreateCommand();
+        // Use is_local = false (session level). To prevent connection pool leaks,
+        // we ALWAYS overwrite the value. If there is no OrgId, we clear it.
+        // This avoids Postgres errors when calling set_config(..., true) outside a transaction.
+        command.CommandText = "SELECT set_config('app.current_org_id', $1, false)";
 
-            DbParameter parameter = command.CreateParameter();
-            parameter.Value = orgId.ToString();
-            command.Parameters.Add(parameter);
+        DbParameter parameter = command.CreateParameter();
+        parameter.Value = _tenant.OrgId?.ToString() ?? "";
+        command.Parameters.Add(parameter);
 
-            await command.ExecuteNonQueryAsync(cancellationToken);
-        }
+        await command.ExecuteNonQueryAsync(cancellationToken);
 
         await base.ConnectionOpenedAsync(connection, eventData, cancellationToken);
     }

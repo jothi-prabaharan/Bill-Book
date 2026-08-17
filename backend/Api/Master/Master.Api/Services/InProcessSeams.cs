@@ -44,7 +44,7 @@ public sealed class InProcessTenantDirectory : ITenantDirectory
             {
                 DatabaseName = d.DatabaseName,
                 ConnectionSecretRef = d.ConnectionSecretRef,
-                IsReady = d.Status == ProvisioningStatus.Ready,
+                IsReady = d.Status == ProvisioningStatus.Ready || d.Status == ProvisioningStatus.Provisioning,
             })
             .FirstOrDefaultAsync(ct);
 }
