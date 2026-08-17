@@ -875,7 +875,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 #### R0 — the engine and the grid
 
-- [ ] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
+- [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
 - [ ] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty. → **G1**
 - [ ] **S · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
 - [ ] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
@@ -934,4 +934,4 @@ The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior
 4. **Aging buckets** — is Current / 1–30 / 31–60 / 61–90 / 90+ the default, and is the bucket size a per-report parameter or a branch setting?
 5. **The export cap of 100,000 rows** (§5.6), and whether a capped export should refuse or truncate with a warning row.
 6. **Whether Trial Balance's existing page** is replaced by the grid host or kept beside it.
-7. **`CLAUDE.md` still says there is one branch and it is `main`** (hard rule 11). This work is on `Report` by instruction, which contradicts it. Either the rule gets amended or `Report` gets merged and the rule stands — but a rule the next session reads and disobeys is worse than either.
+7. ~~**`CLAUDE.md` still says there is one branch and it is `main`**~~ — **settled in R0.0.** `CLAUDE.md` now carries the reporting exception explicitly, and `AGENTS.md` states the branch for every other agent. The exception ends when reporting merges.

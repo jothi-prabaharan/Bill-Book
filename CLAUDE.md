@@ -32,7 +32,13 @@ There is one branch, and it is `main`. Every commit goes there as the work is do
 
 The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
 
-### This covers every feature task, without exception
+### The one standing exception: reporting
+
+**Reporting work — everything under `docs/architecture/REPORTS.md` — commits to `Report`.** By the repository owner's instruction of 17 August 2026, and because that work is built by two agents in parallel: Claude Code and Antigravity, each in its own worktree, merging into one branch rather than into `main` a commit at a time.
+
+It is written down here rather than left to each session to rediscover, because the alternative is two agents reading two different answers and diverging on their first commit. Everything else in the product still goes to `main`, and this exception ends when reporting merges.
+
+### This covers every other feature task, without exception
 
 A task with a stage number — **T2.3**, **T4.4**, **T5.3** — is not a reason to open a branch. Neither is a task that spans a schema, an API, a page and a ledger posting, and neither is one that will take several sessions. **Each of those commits to `main` as it is finished**, in whatever pieces it naturally divides into:
 
