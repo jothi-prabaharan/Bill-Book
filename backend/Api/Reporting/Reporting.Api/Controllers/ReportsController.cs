@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
+using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Shared.Kernel.Internal;
 
@@ -84,6 +85,79 @@ public sealed class ReportsController : ControllerBase
             return BadRequest(new { message = ex.Message });
         }
     }
+
+    /// <summary>
+    /// The report as a file, over the <b>whole</b> result rather than a page.
+    ///
+    /// <b>The cap refuses rather than truncates.</b> A 100,000-row ceiling exists
+    /// because a bigger export is a background job this product has no broker for
+    /// yet — but a file silently missing its last two hundred thousand rows is
+    /// worse than no file, because it looks complete. The message says the row
+    /// count so the person can narrow the range knowing by how much.
+    /// </summary>
+    [HttpPost("{reportKey}/export")]
+    [PermissionAction("export")]
+    public async Task<IActionResult> Export(
+        string reportKey,
+        [FromQuery] ExportFormat format,
+        [FromBody] ReportQueryRequest request,
+        CancellationToken ct)
+    {
+        if (format == ExportFormat.Pdf)
+        {
+            // Declared in the contract so adding it later is not a route change,
+            // and refused here because nothing in the pinned package list writes a
+            // PDF that renders Tamil or Chinese. REPORTS.md §5.8.
+            return BadRequest(new
+            {
+                message = "PDF export is not built yet. Export to Excel instead.",
+            });
+        }
+
+        try
+        {
+            // Paging off: an export is the same query without a page.
+            request.Page = new ReportPageModel
+            {
+                Number = 1,
+                Size = ExportRowCap + 1,
+                IncludeCount = true,
+            };
+
+            ReportResultView? result =
+                await _runner.RunAsync(reportKey, request, Permissions(), ct);
+
+            if (result is null)
+            {
+                return NotFound();
+            }
+
+            if (result.Rows.Count > ExportRowCap)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        $"This export would be {result.Page.TotalRows:N0} rows, and the limit is "
+                        + $"{ExportRowCap:N0}. Narrow the date range or add a filter.",
+                });
+            }
+
+            return File(
+                ExcelReportWriter.Write(result),
+                ExcelReportWriter.ContentType,
+                $"{reportKey}-{DateTime.UtcNow:yyyy-MM-dd}.xlsx");
+        }
+        catch (ReportQueryException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    /// <summary>
+    /// REPORTS.md §5.6. When a broker exists this becomes the threshold at which an
+    /// export is queued rather than refused.
+    /// </summary>
+    private const int ExportRowCap = 100_000;
 
     /// <summary>
     /// The permissions on the token.
