@@ -10,13 +10,15 @@ Read [`CLAUDE.md`](../../CLAUDE.md) first — the hard rules there apply here wi
 
 ## 1. Decisions already taken
 
-Four questions were settled before this was written. They are recorded here because each one closes off a large branch of design, and re-opening one means re-reading everything below it.
+Six questions were settled before this was written. They are recorded here because each one closes off a large branch of design, and re-opening one means re-reading everything below it.
 
 | Question | Decision | What it buys |
 |---|---|---|
-| What renders the grid | **In-house `bb-report-grid`**, in `libs/shared/ui-components`, built on Angular CDK | No licence, no vendor bundle, and the ~360px card-list mode the house rule demands. Matches `bb-document-line-grid`, which is hand-rolled for the same reasons |
+| What renders the grid | **In-house `bb-report-grid`**, in `libs/shared/ui-components` | No licence, no vendor bundle, and the ~360px card-list mode the house rule demands. Matches `bb-document-line-grid`, which is hand-rolled for the same reasons |
 | Where filter / sort / group / pivot / page execute | **Server-side, always** | Account Transaction and Journal Report reach millions of rows in a live branch. One code path, one place `OrgId` is enforced, one place a total is computed |
-| How PDF and Excel are produced | **Server-side, over the full result set** — XLSX via `DocumentFormat.OpenXml`, PDF via the Syncfusion .NET path | The export is the same query without paging, so it cannot disagree with the screen. A 200k-row export is possible at all |
+| Which libraries may be used | **No new packages.** Only what `backend/Directory.Packages.props` and `frontend/package.json` already pin | No Syncfusion, no AG Grid, no SheetJS, no jsPDF. `@angular/cdk` drag-drop stays — nine pages already use it — and so does `DocumentFormat.OpenXml`, which is Microsoft's own, MIT, no licence key, and already carries the bank-statement import |
+| How Excel is produced | **Server-side, over the full result set**, via `DocumentFormat.OpenXml` | The export is the same query without paging, so it cannot disagree with the screen. A 200k-row export is possible at all |
+| What PDF export does | **Deferred** — §5.8 | Nothing in the box writes a PDF, and hand-writing one that renders Tamil and Chinese is the single largest piece of work in the project. Excel ships first; PDF is scheduled once there is evidence anyone needs it |
 | Whether layouts persist | **Yes — `rpt.ReportDetails`** | Reports here carry 8 to 40 columns. Without a saved layout every user re-picks them on every visit |
 
 The grid is therefore **dumb by design**: it holds no data, fetches nothing, and computes no total. It receives a column definition, a query state and a page of rows, and it emits a new query state. Exactly the contract `bb-document-line-grid` already works to.
@@ -53,7 +55,7 @@ Nine capabilities were asked for. Each is spelled out here as the acceptance con
 
 **Pivot.** Rows, columns and values, each a list of report columns; values carry an aggregate (sum, count, min, max, avg). The server computes the matrix and returns it with a **declared column set**, because pivot columns are data-dependent — a pivot of sales by month has as many columns as there are months with data. The grid renders whatever columns the response declares and never invents one.
 
-**Export — PDF and Excel.** Both re-run the query with the current filters, sort, grouping, pivot and column selection, and **without paging**. XLSX carries a frozen header row, column widths, number formats matching the column type, and group subtotals as real rows. PDF carries the report title, the parameter summary, the branch name, the generated timestamp and page numbers, and repeats the header on every page. A row cap applies (§5.6) and the user is told before a capped export runs, not after.
+**Export — Excel.** It re-runs the query with the current filters, sort, grouping, pivot and column selection, and **without paging**. XLSX carries a frozen header row, column widths, number formats matching the column type, and group subtotals as real rows. A row cap applies (§5.6) and the user is told before a capped export runs, not after. **PDF is deferred** — §5.8 — so the grid shows one export button, not a menu of two.
 
 **Pagination.** Server-side, page sizes 25 / 50 / 100 / 200, with first / previous / next / last and a "showing 1–50 of 12,480". The count is a second query and is the expensive half, so it is returned only on the first page of a query and cached in the client's state until a filter changes.
 
@@ -136,7 +138,7 @@ The house rule holds: the grid becomes a card per row. The card shows the column
 | `GET` | `/api/reports` | The catalog: key, title, module, description, whether the caller may run it |
 | `GET` | `/api/reports/{key}` | One report's parameters and full column metadata |
 | `POST` | `/api/reports/{key}/query` | Run it. Body is the query state; response is one page |
-| `POST` | `/api/reports/{key}/export?format=pdf\|xlsx` | Same body, no paging, returns a file |
+| `POST` | `/api/reports/{key}/export?format=xlsx` | Same body, no paging, returns a file. `format` is a parameter from the start so adding `pdf` later is not a route change |
 | `GET` | `/api/reports/{key}/views` | Saved layouts visible to the caller |
 | `POST` / `PUT` / `DELETE` | `/api/reports/{key}/views[/{id}]` | Manage them |
 
@@ -189,7 +191,7 @@ All of these are C# enums, per hard rule 7, and are serialized by name.
 - `SortDirection` — `Asc`, `Desc`
 - `AggregateFunction` — `None`, `Sum`, `Count`, `CountDistinct`, `Min`, `Max`, `Avg`
 - `ColumnDataType` — `Text`, `Number`, `Money`, `Quantity`, `Percent`, `Rate`, `Date`, `DateTime`, `Boolean`, `Enum`, `Link`
-- `ExportFormat` — `Pdf`, `Xlsx`
+- `ExportFormat` — `Xlsx`, and `Pdf` declared but refused with a message until §5.8 is built. Declaring it now keeps the contract stable; returning a broken file would not
 - `ReportModule` — `Accounting`, `Inventory`, `Sales`, `Purchase`, `FixedAssets`, `Banking`
 
 ### 4.5 Permissions and errors
@@ -247,9 +249,11 @@ Reports read what transactions write, and the write-side indexes are not the rea
 
 ### 5.8 Export writers
 
-`ExcelReportWriter` uses `DocumentFormat.OpenXml`, already a dependency of `Accounting.Api` for statement import. `PdfReportWriter` uses the Syncfusion .NET path — noting that `SyncfusionPdfGenerator` is today a mock returning a UTF-8 string, so the first report export is also the work that makes that class real.
+`ExcelReportWriter` uses `DocumentFormat.OpenXml` — already pinned at 3.5.1 in `Directory.Packages.props`, already carrying `ExcelStatementReader` and `StatementExportWriter`. It consumes the **same** `ReportResult` shape the API returns, with paging off, so one serializer feeds both the screen and the file.
 
-Both writers consume the **same** `ReportResult` shape the API returns, with paging off. One serializer, three outputs.
+**PDF is deferred, and the reason is fonts.** No PDF library may be added, and `SyncfusionPdfGenerator` is a mock returning a UTF-8 string with no Syncfusion package behind it. A hand-written PDF writer is entirely possible — objects, xref table, content streams — but the base-14 fonts it would use are WinAnsi, and this product promises Tamil and Chinese work natively. Rendering those means embedding a TrueType font, subsetting its glyphs, and building Identity-H CID encoding with a ToUnicode CMap: the largest single piece of work anywhere in this document, and the kind that fails on one customer's data months later.
+
+So Excel ships and PDF waits. When it is scheduled, three things are already true and should stay true: the route takes `format` as a parameter so nothing changes shape, `ExportFormat.Pdf` exists and refuses politely, and the writer will consume the same `ReportResult` as Excel does. **If a Latin-only PDF is ever accepted as an interim, it must refuse the export when non-Latin text is present** rather than emitting a file full of wrong glyphs — a broken invoice that looks fine to the person generating it is worse than no invoice.
 
 ---
 
@@ -549,26 +553,259 @@ Forty-five rather than forty-six after the Sales Order Tracking merge of §7.3.
 
 ---
 
-## 9. Build phases
+## 9. Implementation tasks
 
-Each stage commits to `main` as it stands up — schema, then engine, then grid, then reports — per the git rule in `CLAUDE.md`. Every stage ships its documentation page and its release-note bullet in the same commit.
+**This section is written to be executed by an agent with no memory of the conversation that produced it.** Everything needed is either here or in the file paths named. Work the tasks in order; each one is a commit.
 
-**R0 — the engine and the grid.** `rpt` schema and migration; `IReportSource`, the generic builder, the catalog and the query endpoint; `bb-report-grid` with all nine capabilities; the generic host page; both export writers. Proven against **Account Movement** and **Trial Balance** — the simplest report and the one that already has a page to compare against.
-*Done when:* both render, filter, sort, group, page, freeze and export, and the exported XLSX row count matches the grid's stated total.
+### 9.0 How to work
 
-**R1 — the accounting reports.** Account Transaction (the running-balance case and the performance bar), General Ledger Summary, Journal Report, Bank Summary, Reconciliation. Includes the index review of §5.7 and the batched user-name resolution of §8.1.
+**Branch: `Report`.** Not `main`. This overrides hard rule 11 and the *Git — how work reaches main* section of `CLAUDE.md`, by explicit instruction of the repository owner on 17 August 2026. Push with `git push -u origin Report`. Do not open a pull request unless asked.
 
-**R2 — the inventory reports.** All ten, three of them shipping with their sales/purchase columns declared and null.
+**No new packages.** Not one, backend or frontend. `backend/Directory.Packages.props` and `frontend/package.json` are closed lists for this work. Everything below is buildable with what they already pin — `@angular/cdk` for drag-drop (nine pages already use it) and `DocumentFormat.OpenXml` for XLSX (two services already use it). If a task appears to need something else, the task is wrong: stop and say so rather than adding a dependency.
 
-**R3 — saved views and pivot.** `rpt.ReportViews`, the saved-view dialog, branch-wide views behind `reporting.manage`, and the pivot panel. Split from R0 deliberately: pivot is the one capability no Ready report needs on day one, and the saved-view UI is easier to design once there are real layouts to save.
+**The hard rules in `CLAUDE.md` apply without exception**, and these five are the ones this work trips over most:
 
-**R4 — receivables and payables.** With Sales and Purchase. Ten reports, two aging sources.
+- **LINQ only.** No raw SQL except the RLS policy block in the migration.
+- **Entities are plain property bags** — no constructors, no methods, no computed properties.
+- **Every Data Annotation carries `ErrorMessage`.**
+- **Every `rpt` table has `OrgId`, a global query filter and an RLS policy.** Omitting one leaks between branches.
+- **Angular: standalone, `inject()`, signals, `async`/`await`, separate `templateUrl` and `styleUrl`.** `-core` libs stay Ionic-safe: no `window`, no `document`.
 
-**R5 — sales and purchase reports.** Twelve reports, with their services.
+**Verify before every commit:**
 
-**R6 — fixed assets.** Phase 2, with the register.
+```
+cd frontend && npm run check          # lint, typecheck, tests, both builds
+cd backend  && dotnet build && dotnet test
+```
 
-**Unlocked in order:** R0 → R1 → R2 → R3 are buildable today. R4 and R5 wait on services that do not exist. R6 waits on a Phase 2 decision that is still open.
+`dotnet build` must be clean — `TreatWarningsAsErrors` is on. Database-backed tests skip with a reason when no PostgreSQL answers; set `REPORTING_TEST_DB` to run them, as `Accounting.Api.Tests` does with `ACCOUNTING_TEST_DB`.
+
+**Commit messages** follow `docs/standards/commit-rules.md`: `feat(reporting): add the generic query builder`. **Documentation ships in the same commit as the feature it describes** — the page under `frontend/apps/docs/content/`, its entry in `docs.manifest.ts`, and a bullet under **Unreleased** in `release-notes.md`. That is hard rule 10 and it is not a separate task.
+
+**Effort figures** below are for an agent working uninterrupted, and are a guide rather than a commitment. The three marked ★ are where the work actually is.
+
+---
+
+### Stage R0 — the engine and the grid
+
+Eleven tasks. Proven against **Account Movement** (simplest source) and **Trial Balance** (has an existing page to check numbers against).
+
+---
+
+#### R0.1 — the `rpt` schema · ~1.5h · depends: nothing
+
+**Create:**
+
+```
+Reporting.Entity/Enums/
+  ReportModule.cs          Accounting, Inventory, Sales, Purchase, FixedAssets, Banking
+  ColumnDataType.cs        Text, Number, Money, Quantity, Percent, Rate, Date, DateTime,
+                           Boolean, Enum, Link
+  FilterOperator.cs        Equals, NotEquals, Contains, NotContains, StartsWith, EndsWith,
+                           GreaterThan, GreaterOrEqual, LessThan, LessOrEqual, Between,
+                           In, NotIn, IsNull, IsNotNull
+  AggregateFunction.cs     None, Sum, Count, CountDistinct, Min, Max, Avg
+  SortDirection.cs         Asc, Desc
+  ColumnAlignment.cs       Left, Right, Center
+  ExportFormat.cs          Xlsx, Pdf
+
+Reporting.Entity/TableEntities/
+  Report.cs                ReportId, ReportKey, Title, Module, Description,
+                           RequiredPermission, IsActive, SortOrder
+  ReportDetail.cs          ReportDetailId, ReportId, ColumnKey, Header, DataType,
+                           IsDefault, IsFilterable, IsSortable, IsGroupable, IsPivotable,
+                           DefaultAggregate, Alignment, Width, SortOrder, IsPrimary, IsHidden
+  ReportView.cs            ReportViewId, ReportId, ViewName, OwnerUserId (nullable),
+                           IsDefault, LayoutJson (JSONB)
+
+Reporting.Repository/ReportingDbContext.cs
+Reporting.Repository/SeedData/ReportCatalogSeed.cs
+Reporting.Repository/Migrations/README-RowLevelSecurity.md
+```
+
+All three entities inherit `Shared.Kernel.Tenancy.OrgScopedEntity`. `ReportKey` is unique per `(OrgId, ReportKey)`. `LayoutJson` maps to `jsonb`.
+
+**Then:** add EF Core, Npgsql and Shared.Kernel references to `Reporting.Repository.csproj`; generate the migration; append the RLS policy block by hand, following `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md`.
+
+**Done when:** the migration applies to PostgreSQL 16; a second `dotnet ef migrations add` produces an **empty** migration; `SELECT` under a different `app.current_org_id` returns nothing; `dotnet build` is clean.
+
+---
+
+#### R0.2 — read-only reads across `acc`, `inv` and `con` · ~1.5h · depends: R0.1 · **needs the §2 decision**
+
+**Do not start this until the §2 exception is confirmed.** Everything else in R0 except R0.5–R0.7 proceeds without it.
+
+**Create** `Reporting.Repository/ReadModels/` — one class per table Reporting reads, each mapped with `ToTable(name, schema)` and `ExcludeFromMigrations()`, each re-declaring its `OrgId` query filter, none with a navigation property to a writable entity:
+
+`JournalLedgerRead` · `AccountRead` · `SubAccountRead` · `JournalRead` · `JournalDetailRead` · `BankAccountRead` · `BankStatementRead` · `BankStatementLineRead` · `TaxMasterRead` (all `acc`) — `ItemRead` · `ItemStockRead` · `ItemCategoryRead` · `StockMovementRead` · `CostLayerRead` · `ItemBatchRead` · `ItemSerialRead` · `WarehouseRead` · `UnitOfMeasureRead` (all `inv`) — `ContactRead` · `ContactLicenceRead` (both `con`).
+
+Only the columns the reports in §8 name. A read model is not a copy of the entity.
+
+**Done when:** a smoke test returns rows for the seeded org and zero rows under another org's `app.current_org_id`; no `rpt` migration changed.
+
+---
+
+#### R0.3 — the query contract · ~0.5h · depends: nothing
+
+**Create** in `Reporting.Entity/Models/`: `ReportQueryRequest`, `ReportFilterModel`, `ReportSortModel`, `ReportPivotModel`, `ReportPageModel`, `ReportFreezeModel`, `ReportResultView`, `ReportColumnView`, `ReportGroupFooterView`, `ReportTotalView`, `ReportCatalogItemView`, `ReportMetadataView`, `SavedViewModel`.
+
+Shapes are in §4.2 and §4.3. Every annotation carries `ErrorMessage`. Enforce in annotations: page size 1–200, filters ≤50, sorts ≤5, `groupBy` ≤3, columns ≤60.
+
+**Done when:** a request with page size 500 is rejected by model validation with a readable message, not by a database error.
+
+---
+
+#### R0.4 ★ — the generic query engine · ~3h · depends: R0.3
+
+The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
+
+| File | What |
+|---|---|
+| `IReportSource.cs` | `ReportKey`, `Module`, `Title`, `RequiredPermission`, `Columns`, `Parameters`, `Build(parameters, db)` returning `IQueryable` and executing nothing |
+| `ReportColumn.cs` | Key, header, `ColumnDataType`, alignment, flags, default aggregate, **and the member expression naming its property on the row type** |
+| `ReportParameter.cs` | Name, type, required, default |
+| `ReportQueryBuilder.cs` | Composes `Where` / `OrderBy` / `ThenBy` / `Skip` / `Take` as expression trees against the column map |
+| `ReportExecutionService.cs` | Runs the page query, the group-footer query and the grand-total query; assembles `ReportResultView` |
+| `ReportCatalogService.cs` | Discovers registered sources, filters by the caller's permissions, merges `rpt.ReportDetails` presentation over source metadata |
+| `ReportCatalogValidator.cs` | Startup check: every source's column keys have a seeded `rpt.ReportDetails` row and vice versa. Fail fast |
+
+**A column absent from the map cannot be filtered or sorted on.** That is the security property: no client string reaches the database. A filter naming an unknown column is a 400, not an ignored clause.
+
+**Create** `backend/Api/Reporting/Reporting.Api.Tests/` (add to `Bill-Book.sln`, xunit, already pinned). Test the builder against an in-memory `IQueryable` — no database needed: every operator, multi-key sort, three-level grouping, paging boundaries, and the unknown-column rejection.
+
+**Done when:** those tests pass and the builder has no `FromSql` anywhere.
+
+---
+
+#### R0.5 — Account Movement and Trial Balance · ~1h · depends: R0.2, R0.4
+
+**Create** `Reporting.Api/Services/Sources/AccountMovementSource.cs` and `TrialBalanceSource.cs`, columns exactly as §8.1 lists them. Add both to `ReportCatalogSeed`.
+
+*Account Type* comes from `mst.AccountTypes` — a different database, so resolve in C# and batch it. Trial Balance's *CAAccountID* is `IsHidden`.
+
+**Done when:** the catalog validator passes and both sources compile against the read models.
+
+---
+
+#### R0.6 — the API host · ~2h · depends: R0.5
+
+`Reporting.Api/Program.cs` is a stub returning `"not implemented"`. **Replace it wholesale** — copy `Inventory.Api/Program.cs`, which its own comment names as the fullest example: JWT bearer, tenant resolution, `set_config` transaction-locally (never connection-level), the audit interceptor, DI, OpenAPI.
+
+**Create** `Reporting.Api/Controllers/ReportsController.cs` — the four routes of §4.1, `[Authorize]`, `[RequireModulePermission("reporting")]`, plus each report's own module permission checked before it runs. `Forbid()` on a report the caller may not run, never `NotFound()`.
+
+**Also:** the YARP route for Reporting in the Gateway's per-environment config, and `reporting.view` / `reporting.manage` in the Master permission seed.
+
+**Done when:** both reports return data through the gateway with a real token, and a token lacking `accounting.view` gets 403 from Account Movement while still seeing the catalog.
+
+---
+
+#### R0.7 — Excel export · ~2h · depends: R0.6
+
+**Create** `Reporting.Api/Services/ExcelReportWriter.cs` on `DocumentFormat.OpenXml` (pinned 3.5.1). Read `ExcelStatementReader.cs` and `StatementExportWriter.cs` first — the OpenXml idiom this repo uses is already there.
+
+Frozen header pane, column widths, number formats by `ColumnDataType`, group subtotals as real rows. The export re-runs the query with paging **off** and the 100,000-row cap of §5.6; over the cap it refuses with the row count rather than truncating silently.
+
+**PDF is not built** — see §5.8. `ExportFormat.Pdf` returns a clear refusal.
+
+**Done when:** the exported row count equals the grid's stated total for the same filters, and a 100k-row export completes without exhausting memory.
+
+---
+
+#### R0.8 — frontend contracts and services · ~1h · depends: R0.3
+
+**Create** in `libs/reporting/reporting-core/src/lib/`: `models/` mirroring the server contracts, `report-catalog.service.ts`, `report-query.service.ts`, `report-state.ts` (state ↔ URL serialization), and export them from `index.ts`.
+
+Signals and `inject()`, `async`/`await` over promises rather than piped RxJS. **No `window`, no `document`** — this lib must stay Ionic-compatible.
+
+---
+
+#### R0.9 ★ — `bb-report-grid` · ~3h · depends: R0.8
+
+**Create** `libs/shared/ui-components/src/lib/report-grid/` — component, models, and the styles. Read `document-line-grid.component.ts` first: same house style, same "owns no data, fetches nothing" contract.
+
+The API is in §3.3. This task covers: the table, sticky header (`position: sticky; top: 0`), sticky first-*N* columns with computed left offsets and a seam shadow, single and shift-click multi-key sort with position indicators, the pager, and the ~360px card mode of §3.5.
+
+**Renders against stub data.** It must be demonstrable before R0.6 exists.
+
+**Done when:** header and frozen columns hold under both scroll axes, sort emits correct state, and the card mode works at 360px.
+
+---
+
+#### R0.10 ★ — filtering, column selection, grouping · ~3.5h · depends: R0.9
+
+**Create** beside the grid: `filter-bar.component.*` (per-type editors, clearable chips), `column-chooser.dialog.*` (search, select, drag reorder via `@angular/cdk/drag-drop` — copy the idiom from `numbering-series.page.ts`), `group-panel.component.*` (drop target, three-level nesting, collapsible group headers showing count and subtotals).
+
+**Done when:** every operator in §4.4 is reachable from the UI for a column of its type, and group subtotals come from the response rather than being computed in the browser.
+
+---
+
+#### R0.11 — pages, routes and documentation · ~1h · depends: R0.6, R0.10
+
+**Create** `libs/reporting/reporting-ui/src/lib/report-list/report-list.page.*` (catalog grouped by module) and `report-host/report-host.page.*` (one generic page driven by `:reportKey`). Routes in `apps/web`. Navigation entry.
+
+**And the documentation, in this same commit:** `frontend/apps/docs/content/reports.md`, its entry in `docs.manifest.ts` with status `partial`, and an **Added** bullet under Unreleased in `release-notes.md`.
+
+**R0 is done when** both reports render, filter, sort, group, page, freeze and export, and the exported XLSX row count matches the grid's stated total.
+
+---
+
+### Stage R1 — the accounting reports · ~5h · depends: R0
+
+Seven tasks, one commit each:
+
+| # | Task | Note |
+|---|---|---|
+| R1.1 | `acc.JournalLedger` indexes | `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)`, `(OrgId, SubAccountId, LedgerDate)`. An **Accounting** migration, not a Reporting one |
+| R1.2 | Batched user-name resolver | `mst.Users` is another database. A 200-row Journal Report page must not be 200 lookups |
+| R1.3 | Account Transaction | The running-balance rule of §5.5: forces its sort order, and page *n*'s opening figure comes back in the response |
+| R1.4 | General Ledger Summary | Opening balance is everything before the period |
+| R1.5 | Journal Report | Six audit columns, resolved through R1.2 |
+| R1.6 | Bank Summary | |
+| R1.7 | Reconciliation | *GroupBy* in the source list is a parameter, not a column |
+
+---
+
+### Stage R2 — the inventory reports · ~5h · depends: R0
+
+Ten sources over an engine that already works — the point of R0. Three or four commits, grouped:
+
+- **R2.1** Inventory Aging (ages by cost-layer receipt date), Inventory Item List, Item Detail, Item Summary — the last three declare their sales/purchase columns and return null for them
+- **R2.2** Batch Tracking Status + Detail
+- **R2.3** Serial Tracking Status + Detail
+- **R2.4** Warehouse Tracking Status + Detail
+
+---
+
+### Stage R3 — saved views and pivot · ~6h · depends: R0
+
+| # | Task |
+|---|---|
+| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reporting.manage` |
+| R3.2 | `saved-view.dialog.*` — save, rename, set default, share to branch |
+| R3.3 | `PivotBuilder` — group both axes, aggregate, transpose the aggregated result in memory; refuse a column axis over 200 distinct values, naming the column |
+| R3.4 | `pivot-panel.component.*` — rows / columns / values with aggregates; hidden below the tablet breakpoint per §3.5 |
+
+---
+
+### Stages R4–R6 — not schedulable yet
+
+**R4** (10 receivables/payables reports) needs Sales and Purchase. **R5** (12 sales/purchase reports) needs the same. **R6** (4 fixed-asset reports) needs the Phase 2 register, which is itself blocked on two open schema decisions.
+
+Roughly one commit per two reports once those services exist — by then a report is an `IReportSource` and a row of seed data.
+
+---
+
+### Progress
+
+Tick these as they land. **This list is the handoff**: a session with no context reads it to know where the work stopped.
+
+**R0** — ☐ 1 schema · ☐ 2 read models · ☐ 3 contracts · ☐ 4 engine · ☐ 5 two sources · ☐ 6 API host · ☐ 7 Excel · ☐ 8 core services · ☐ 9 grid · ☐ 10 filter/chooser/group · ☐ 11 pages + docs
+
+**R1** — ☐ 1 indexes · ☐ 2 user resolver · ☐ 3 Account Transaction · ☐ 4 GL Summary · ☐ 5 Journal · ☐ 6 Bank Summary · ☐ 7 Reconciliation
+
+**R2** — ☐ 1 item reports · ☐ 2 batch · ☐ 3 serial · ☐ 4 warehouse
+
+**R3** — ☐ 1 views API · ☐ 2 view dialog · ☐ 3 pivot builder · ☐ 4 pivot panel
 
 ---
 
@@ -580,3 +817,4 @@ Each stage commits to `main` as it stands up — schema, then engine, then grid,
 4. **Aging buckets** — is Current / 1–30 / 31–60 / 61–90 / 90+ the default, and is the bucket size a per-report parameter or a branch setting?
 5. **The export cap of 100,000 rows** (§5.6), and whether a capped export should refuse or truncate with a warning row.
 6. **Whether Trial Balance's existing page** is replaced by the grid host or kept beside it.
+7. **`CLAUDE.md` still says there is one branch and it is `main`** (hard rule 11). This work is on `Report` by instruction, which contradicts it. Either the rule gets amended or `Report` gets merged and the rule stands — but a rule the next session reads and disobeys is worse than either.
