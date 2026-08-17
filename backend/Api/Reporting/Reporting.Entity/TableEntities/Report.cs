@@ -39,7 +39,7 @@ public class Report : OrgScopedEntity
     public string? Description { get; set; }
 
     /// <summary>
-    /// The module permission a caller needs on top of <c>reporting.view</c> —
+    /// The module permission a caller needs on top of <c>reports.view</c> —
     /// <c>accounting.view</c>, <c>inventory.view</c>. A report the caller may not
     /// run is absent from the catalog rather than listed and refused, so the
     /// existence of a report is not itself information.

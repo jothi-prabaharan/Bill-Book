@@ -22,7 +22,7 @@ public class ReportView : OrgScopedEntity
 
     /// <summary>
     /// Whose view it is. <b>Null means the whole branch sees it</b> — a standard
-    /// layout somebody with <c>reporting.manage</c> published, rather than one
+    /// layout somebody with <c>reports.edit</c> published, rather than one
     /// person's working preference.
     ///
     /// No foreign key: users live in the master database and this table does not.

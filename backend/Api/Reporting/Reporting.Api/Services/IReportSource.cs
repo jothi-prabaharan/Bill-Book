@@ -25,7 +25,7 @@ public interface IReportSource
     ReportModule Module { get; }
 
     /// <summary>
-    /// The module permission a caller needs beyond <c>reporting.view</c>. A report
+    /// The module permission a caller needs beyond <c>reports.view</c>. A report
     /// the caller lacks it for is absent from the catalog rather than refused, so
     /// the existence of a report is not itself a disclosure.
     /// </summary>

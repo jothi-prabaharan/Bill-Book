@@ -50,11 +50,11 @@ public class ReportSourceTests
     [MemberData(nameof(Sources))]
     public void A_report_declares_a_permission_beyond_reporting_view(IReportSource source)
     {
-        // reporting.view gets you the catalog. Reading the general ledger through a
+        // reports.view gets you the catalog. Reading the general ledger through a
         // report must still need accounting.view, or the engine becomes a way round
         // the permission on the screens it reports from.
         Assert.False(string.IsNullOrWhiteSpace(source.RequiredPermission));
-        Assert.NotEqual("reporting.view", source.RequiredPermission);
+        Assert.NotEqual("reports.view", source.RequiredPermission);
     }
 
     [Fact]

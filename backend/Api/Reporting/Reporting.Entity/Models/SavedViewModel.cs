@@ -19,7 +19,7 @@ public class SavedViewModel
 
     /// <summary>
     /// True when this is a branch-wide view rather than one person's. Setting it
-    /// needs <c>reporting.manage</c>; the server decides the owner from the token
+    /// needs <c>reports.edit</c>; the server decides the owner from the token
     /// rather than taking one from the caller.
     /// </summary>
     public bool IsShared { get; set; }

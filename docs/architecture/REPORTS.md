@@ -277,7 +277,7 @@ The `IReportSource` in code is the authority on what a column *means*; this tabl
 
 `ReportId`, `ViewName`, `OwnerUserId` (null = a branch-wide view), `IsDefault`, and the layout itself as **JSONB**: selected columns and their order, filters, sorts, grouping, pivot spec, freeze settings, page size. JSONB rather than four child tables because the layout is read and written whole, is never queried into, and evolves with the grid — and Postgres JSONB is a deliberate choice in this project rather than a shortcut.
 
-One default per user per report; a branch-wide view needs `reporting.manage` to create.
+One default per user per report; a branch-wide view needs `reports.edit` to create.
 
 ---
 
@@ -763,7 +763,7 @@ The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
 **Create** `Reporting.Api/Controllers/ReportsController.cs` — the four routes of §4.1, `[Authorize]`, `[RequireModulePermission("reporting")]`, plus each report's own module permission checked before it runs. `Forbid()` on a report the caller may not run, never `NotFound()`.
 
-**Also:** the YARP route for Reporting in the Gateway's per-environment config, and `reporting.view` / `reporting.manage` in the Master permission seed.
+**Also:** the YARP route for Reporting in the Gateway's per-environment config, and `reports.view` / `reports.edit` in the Master permission seed.
 
 **Done when:** both reports return data through the gateway with a real token, and a token lacking `accounting.view` gets 403 from Account Movement while still seeing the catalog.
 
@@ -850,7 +850,7 @@ Seven tasks, one commit each. **R1.3 is senior** — it is the second template, 
 
 | # | Task | Owner |
 |---|---|---|
-| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reporting.manage` | Junior |
+| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reports.edit` | Junior |
 | R3.2 | `saved-view.dialog.*` — save, rename, set default, share to branch | Junior |
 | R3.3 | `PivotBuilder` — group both axes, aggregate, transpose the aggregated result in memory; refuse a column axis over 200 distinct values, naming the column | **Senior** |
 | R3.4 | `pivot-panel.component.*` — rows / columns / values with aggregates; hidden below the tablet breakpoint per §3.5 | **Senior** |
@@ -877,7 +877,7 @@ Roughly one commit per two reports once those services exist — by then a repor
 
 **2. A source class** deriving from `ReportSource<TRow>`, in `Reporting.Api/Services/Sources/`. Four things are required of it:
 
-- `ReportKey`, `Title`, `Module`, `RequiredPermission` — the key matches the seeded catalog row exactly, and the permission is the *module's* (`accounting.view`, `inventory.view`), never `reporting.view`. `reporting.view` gets you the catalog; reading the ledger through a report still needs the ledger's permission, or the engine becomes a way around the permission on the screens it reports from.
+- `ReportKey`, `Title`, `Module`, `RequiredPermission` — the key matches the seeded catalog row exactly, and the permission is the *module's* (`accounting.view`, `inventory.view`), never `reports.view`. `reports.view` gets you the catalog; reading the ledger through a report still needs the ledger's permission, or the engine becomes a way around the permission on the screens it reports from.
 - `Columns` — see step 3.
 - `Build(parameters, db)` — the LINQ, **executing nothing**. Return the `IQueryable`; materialising here pages in memory and reads the whole ledger to show fifty rows.
 - `DefaultOrder` — a **unique** column. This is the tie-break, and without it two rows equal on every sort key can swap between pages, which reads as a row going missing. It only shows up under paging, never in a test with four rows.
@@ -929,14 +929,14 @@ Full detail for each task is in the section above; this is the tracker, not a se
   - **Groupable columns must be text**, decided and enforced where a column is declared. Grouping runs in SQL on one concatenated key; concatenating a date or an enum asks Postgres to render it in a format nobody chose and which moves with server settings. A report grouping by account type exposes the type's *name* — which is what the group header wanted anyway.
   - **The catalog validator runs when a report's columns are built, not at startup.** The catalog is per-branch data in a per-customer database, so at startup there is no tenant to read it for and nothing to validate against.
 - [x] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** `AccountMovementSource` (row per record) and `TrialBalanceSource` (row per account with totals underneath) — the two shapes every later report copies — plus `ReportCatalogSeeder` and the recipe at §9.5. 41 tests. **Account Type is not on either report yet**: it lives in `mst.AccountTypes`, another database, so it needs R1.2's batched resolver.
-- [ ] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`. → **G3**
+- [x] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, `InternalSeedController`, `ReportRunner`, the gateway route. **The permission module is `reports`, not `reporting`** — that is what `mst.Permissions` seeds — and the query route carries `[PermissionAction("view")]` because a POST would otherwise derive `.edit` and a Viewer could not run a report. → **G3 FAILED, see §9.9**
 - [ ] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
 - [ ] **S · R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
 - [ ] **S · R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
 - [ ] **S · R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser. *Junior may take this if the senior budget is tight — after R0.9 lands.*
 - [ ] **S · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
 
-**Gates** — [x] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
+**Gates** — [x] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6 — **failed, §9.9**. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
 
 > **The test database is the one that already exists.** `rpt` lives beside `acc` and `con` in the same per-customer database, so reporting's tests use `ACCOUNTING_TEST_DB` and the same server — there is no second database to create, and creating one would mean the read models had no `acc` tables to read.
 >
@@ -966,7 +966,7 @@ The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior
 #### R3 — saved views and pivot
 
 - [ ] **J · R3.1 — saved views API:** `ReportViewsController` and `saved-view.service.ts` over `rpt.ReportViews`.
-- [ ] **J · R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reporting.manage`.
+- [ ] **J · R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reports.edit`.
 - [ ] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL, transposed in memory, refusing over 200 columns.
 - [ ] **S · R3.4 — the pivot panel:** rows / columns / values, hidden below the tablet breakpoint.
 
@@ -1003,6 +1003,47 @@ Before commit `5a131c4` — *"rename MasterDbContext to AdminDbContext and squas
 **The fix is recoverable, not a rewrite.** The SQL is intact in git at `5a131c4^:backend/Api/Accounting/Accounting.Repository/Migrations/20260812044850_InitialCreate.cs`. It wants lifting into a new Accounting migration, and the same check running against `con` in Master. **It is Accounting's and Master's work, not reporting's**, and it is not in any R-stage here.
 
 **What it means for G2.** G2 asks whether the read models are isolated. Their EF query filters are in place and inherited from `OrgScopedEntity`, so they cannot be omitted — that half holds. The database half **cannot hold for `acc` and `con` until the policies are restored**, because there are no policies to hold. G2 stays open on that basis rather than being ticked on the half that passes.
+
+---
+
+## 9.9 G3 fails: row-level security never applies at runtime
+
+**Gate G3 asks whether `set_config` is transaction-local rather than connection-level. It is — and that turns out to be the problem.**
+
+`RlsConnectionInterceptor` runs this when a connection opens:
+
+```
+SELECT set_config('app.current_org_id', $1, true)
+```
+
+The third argument means *transaction-local*, and the comment on the class explains why: connection-level would leak org context to the next request borrowing that pooled connection. That reasoning is right. But **`ConnectionOpenedAsync` runs outside any transaction**, so the implicit transaction is that one statement, and the value is discarded the moment it completes. Measured against PostgreSQL 16:
+
+| | Result |
+|---|---|
+| `set_config(…, true)` then read it in the **next statement** | **empty — lost** |
+| `set_config(…, true)` and read it **inside one transaction** | survives |
+
+So `app.current_org_id` is never set for any query that follows. Every RLS policy in the product evaluates `"OrgId" = current_setting('app.current_org_id', true)::uuid` against a null, which matches nothing.
+
+**That should mean every query returns zero rows, and it does not — because of a second problem masking the first.** Every table has `relrowsecurity = t` but `relforcerowsecurity = f`, and every connection string in the repository connects as `postgres`, which owns the tables. **A table's owner bypasses RLS unless `FORCE ROW LEVEL SECURITY` is set.** Verified: as `postgres` with no org context, `rpt.Reports` returns every row; as a non-owner role, zero.
+
+**The two faults hide each other, and fixing either one alone breaks the product:**
+
+- Run the application as a non-owner role — the correct production posture — and the `set_config` bug bites: **every query returns nothing**.
+- Add `FORCE ROW LEVEL SECURITY` — the same, for the same reason.
+- Fix `set_config` alone and nothing changes, because the owner still bypasses.
+
+**What is actually protecting branch isolation today is the EF query filter, alone.** That is one mechanism where the design calls for two, and `CLAUDE.md` describes the second as "the one that holds if a query ever runs without it".
+
+**This is not reporting's to fix.** `RlsConnectionInterceptor` is in `Shared.Kernel` and is used by all seven services; the connection strings and the database role are deployment's. The fix has three parts and wants doing together:
+
+1. **Set the variable inside the transaction that uses it** — on transaction start, or via an `NpgsqlDataSource` physical-connection initializer with a matching reset, rather than at connection-open with `is_local = true`.
+2. **`ALTER TABLE … FORCE ROW LEVEL SECURITY`** on every per-customer table, so ownership stops being an exemption.
+3. **Give the application a non-owner role**, so the policy is load-bearing rather than decorative.
+
+Do them in that order, and check after each: parts 2 and 3 without part 1 take the product to zero rows everywhere.
+
+**G3 stays failed** rather than being marked not-reached. It was reached, it was measured, and it did not pass.
 
 ---
 

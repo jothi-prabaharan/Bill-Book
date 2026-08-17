@@ -135,11 +135,7 @@ public sealed class ReportCatalogService
                     return new ReportColumnView
                     {
                         Key = column.Key,
-                        // "Debit(%CurCode%)" seeded once reads "Debit(INR)" in one
-                        // branch and "Debit(AED)" in another. The client never sees
-                        // the placeholder.
-                        Header = detail.Header.Replace(
-                            "%CurCode%", currency.Code, StringComparison.Ordinal),
+                        Header = Substitute(detail.Header, currency.Code),
                         DataType = column.DataType,
                         Alignment = detail.Alignment,
                         Width = detail.Width,
@@ -154,6 +150,25 @@ public sealed class ReportCatalogService
                 .Where(c => !details[c.Key].IsHidden),
         ];
     }
+
+    /// <summary>
+    /// Replaces <c>%CurCode%</c> in a seeded header with the branch's currency, so
+    /// one seed row reads "Debit(INR)" in one branch and "Debit(AED)" in another.
+    ///
+    /// <b>When the currency is unknown the parenthetical goes with it</b> —
+    /// "Debit(%CurCode%)" becomes "Debit", not "Debit()". A header that renders
+    /// empty brackets looks like a bug on a printed report, and one that guessed
+    /// a code would be worse: the figures are correct base-currency amounts either
+    /// way, so the honest thing is to stop naming the currency rather than to name
+    /// it wrongly.
+    /// </summary>
+    internal static string Substitute(string header, string currencyCode) =>
+        currencyCode.Length > 0
+            ? header.Replace("%CurCode%", currencyCode, StringComparison.Ordinal)
+            : header
+                .Replace("(%CurCode%)", string.Empty, StringComparison.Ordinal)
+                .Replace("%CurCode%", string.Empty, StringComparison.Ordinal)
+                .Trim();
 
     private async Task<List<string>> DefaultKeysAsync(IReportSource source, CancellationToken ct)
     {
