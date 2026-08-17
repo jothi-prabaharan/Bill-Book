@@ -1,7 +1,7 @@
-
+﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.9.12105.275 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared.Kernel", "shared\Shared.Kernel\Shared.Kernel.csproj", "{ED9484BA-3B04-5EF1-B3F7-B9DAFFB3FF2C}"
 EndProject
@@ -53,7 +53,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CostingEngine.Worker", "wor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RateSync.Worker", "worker\RateSync.Worker\RateSync.Worker.csproj", "{799B7B38-B069-5DA1-B7AE-65F91AA4490D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway", "Gateway\Gateway.Api\Gateway.Api.csproj", "{7A244E29-6F9B-535B-967D-FF69A148E10D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Gateway.Api", "Gateway\Gateway.Api\Gateway.Api.csproj", "{7A244E29-6F9B-535B-967D-FF69A148E10D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Api", "Api", "{26B7A075-AD2D-5C62-A5B1-FC519E9BEFC9}"
 EndProject
