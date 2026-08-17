@@ -795,17 +795,55 @@ Roughly one commit per two reports once those services exist — by then a repor
 
 ---
 
-### Progress
+### 9.1 Task checklist
 
-Tick these as they land. **This list is the handoff**: a session with no context reads it to know where the work stopped.
+**Tick a box in the same commit as the task it names.** This list is the handoff: a session with no memory of any of this reads it to learn where the work stopped, and a box ticked later — or ticked in a sweep at the end — tells it something untrue.
 
-**R0** — ☐ 1 schema · ☐ 2 read models · ☐ 3 contracts · ☐ 4 engine · ☐ 5 two sources · ☐ 6 API host · ☐ 7 Excel · ☐ 8 core services · ☐ 9 grid · ☐ 10 filter/chooser/group · ☐ 11 pages + docs
+Full detail for each task is in the section above; this is the tracker, not a second specification.
 
-**R1** — ☐ 1 indexes · ☐ 2 user resolver · ☐ 3 Account Transaction · ☐ 4 GL Summary · ☐ 5 Journal · ☐ 6 Bank Summary · ☐ 7 Reconciliation
+#### R0 — the engine and the grid
 
-**R2** — ☐ 1 item reports · ☐ 2 batch · ☐ 3 serial · ☐ 4 warehouse
+- [ ] **R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty.
+- [ ] **R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.**
+- [ ] **R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
+- [ ] **R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
+- [ ] **R0.5 — Account Movement and Trial Balance:** the first two `IReportSource` implementations and their catalog seed rows.
+- [ ] **R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`.
+- [ ] **R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
+- [ ] **R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
+- [ ] **R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
+- [ ] **R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser.
+- [ ] **R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
 
-**R3** — ☐ 1 views API · ☐ 2 view dialog · ☐ 3 pivot builder · ☐ 4 pivot panel
+#### R1 — the accounting reports
+
+- [ ] **R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
+- [ ] **R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
+- [ ] **R1.3 — Account Transaction:** the running-balance rule — forced sort order, and page *n*'s opening figure in the response.
+- [ ] **R1.4 — General Ledger Summary:** opening balance is everything before the period.
+- [ ] **R1.5 — Journal Report:** six audit columns, resolved through R1.2.
+- [ ] **R1.6 — Bank Summary**
+- [ ] **R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
+
+#### R2 — the inventory reports
+
+- [ ] **R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null.
+- [ ] **R2.2 — batch tracking:** Status and Detail.
+- [ ] **R2.3 — serial tracking:** Status and Detail.
+- [ ] **R2.4 — warehouse tracking:** Status and Detail.
+
+#### R3 — saved views and pivot
+
+- [ ] **R3.1 — saved views API:** `ReportViewsController` and `saved-view.service.ts` over `rpt.ReportViews`.
+- [ ] **R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reporting.manage`.
+- [ ] **R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL, transposed in memory, refusing over 200 columns.
+- [ ] **R3.4 — the pivot panel:** rows / columns / values, hidden below the tablet breakpoint.
+
+#### R4–R6 — not schedulable
+
+- [ ] **R4 — receivables and payables:** 10 reports. Needs Sales and Purchase.
+- [ ] **R5 — sales and purchase reports:** 12 reports. Needs the same.
+- [ ] **R6 — fixed assets:** 4 reports. Needs the Phase 2 register.
 
 ---
 
