@@ -1,0 +1,87 @@
+<div class="filter-bar">
+  <ul class="chips">
+    @for (filter of filters(); track $index) {
+      <li class="chip">
+        <span>{{ describe(filter) }}</span>
+        <button
+          type="button"
+          (click)="removeAt($index)"
+          [attr.aria-label]="'Remove filter ' + describe(filter)"
+        >
+          ×
+        </button>
+      </li>
+    }
+
+    @if (filters().length > 1) {
+      <li>
+        <button type="button" class="ghost" (click)="clearAll()">Clear all</button>
+      </li>
+    }
+
+    @if (!adding()) {
+      <li>
+        <button type="button" class="add" (click)="open()">+ Filter</button>
+      </li>
+    }
+  </ul>
+
+  @if (adding()) {
+    <form class="editor" (ngSubmit)="apply()">
+      <label>
+        <span class="visually-hidden">Column</span>
+        <select
+          name="filterColumn"
+          [ngModel]="draftColumn()"
+          (ngModelChange)="onColumnChange($event)"
+        >
+          @for (column of filterable(); track column.key) {
+            <option [value]="column.key">{{ column.header }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span class="visually-hidden">Operator</span>
+        <select
+          name="filterOperator"
+          [ngModel]="draftOperator()"
+          (ngModelChange)="draftOperator.set($event)"
+        >
+          @for (operator of operators(); track operator) {
+            <option [value]="operator">{{ operator }}</option>
+          }
+        </select>
+      </label>
+
+      @if (arity() !== 'none') {
+        <label>
+          <span class="visually-hidden">Value</span>
+          <input
+            [type]="arity() === 'list' ? 'text' : inputType()"
+            name="filterValue"
+            [placeholder]="arity() === 'list' ? 'Comma separated' : 'Value'"
+            [ngModel]="draftValue()"
+            (ngModelChange)="draftValue.set($event)"
+          />
+        </label>
+      }
+
+      @if (arity() === 'two') {
+        <label>
+          <span class="visually-hidden">Upper bound</span>
+          <input
+            [type]="inputType()"
+            name="filterValue2"
+            placeholder="and"
+            [ngModel]="draftValue2()"
+            (ngModelChange)="draftValue2.set($event)"
+          />
+        </label>
+      }
+
+      <button type="submit" [disabled]="!canApply()">Apply</button>
+      <button type="button" class="ghost" (click)="adding.set(false)">Cancel</button>
+    </form>
+  }
+</div>

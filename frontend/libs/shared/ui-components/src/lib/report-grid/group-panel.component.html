@@ -1,0 +1,41 @@
+<div class="group-panel">
+  <span class="label">Grouped by</span>
+
+  @if (levels().length === 0) {
+    <span class="hint">nothing</span>
+  } @else {
+    <ol cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="reorder($event)">
+      @for (column of levels(); track column.key) {
+        <li cdkDrag>
+          <span class="depth" aria-hidden="true">{{ $index + 1 }}</span>
+          <span class="name">{{ column.header }}</span>
+          <button
+            type="button"
+            (click)="removeAt($index)"
+            [attr.aria-label]="'Stop grouping by ' + column.header"
+          >
+            ×
+          </button>
+        </li>
+      }
+    </ol>
+  }
+
+  @if (!isFull() && available().length > 0) {
+    <label class="add">
+      <span class="visually-hidden">Add a grouping level</span>
+      <select #picker (change)="add(picker.value); picker.value = ''">
+        <option value="">+ Group by…</option>
+        @for (column of available(); track column.key) {
+          <option [value]="column.key">{{ column.header }}</option>
+        }
+      </select>
+    </label>
+  } @else if (isFull()) {
+    <span class="hint">Three levels is the limit.</span>
+  }
+
+  @if (levels().length > 0) {
+    <button type="button" class="ghost" (click)="clear()">Clear</button>
+  }
+</div>

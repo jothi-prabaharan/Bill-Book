@@ -5,3 +5,7 @@ export * from './lib/allocation-grid/allocation-grid.component';
 export * from './lib/lookup-dialog/lookup-row.model';
 export * from './lib/lookup-dialog/lookup-dialog.component';
 export * from './lib/report-grid/report-grid.component';
+export * from './lib/report-grid/filter-operators';
+export * from './lib/report-grid/filter-bar.component';
+export * from './lib/report-grid/column-chooser.dialog';
+export * from './lib/report-grid/group-panel.component';

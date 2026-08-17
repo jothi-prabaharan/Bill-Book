@@ -1,0 +1,62 @@
+<div class="chooser">
+  <header>
+    <h2>Columns</h2>
+    <button type="button" class="ghost" (click)="close()">Done</button>
+  </header>
+
+  <section class="chosen">
+    <h3>Showing <small>{{ chosen().length }}</small></h3>
+
+    <ul cdkDropList (cdkDropListDropped)="reorder($event)">
+      @for (column of chosen(); track column.key) {
+        <li cdkDrag>
+          <button type="button" class="handle" cdkDragHandle aria-label="Reorder">⠿</button>
+          <span class="name">{{ column.header }}</span>
+          <button
+            type="button"
+            class="remove"
+            (click)="remove(column.key)"
+            [disabled]="chosen().length <= 1"
+            [attr.aria-label]="'Remove ' + column.header"
+          >
+            ×
+          </button>
+        </li>
+      }
+    </ul>
+  </section>
+
+  <section class="rest">
+    <h3>Add</h3>
+
+    <label class="search">
+      <span class="visually-hidden">Search columns</span>
+      <input
+        type="search"
+        placeholder="Search columns"
+        [ngModel]="search()"
+        (ngModelChange)="search.set($event)"
+        name="columnSearch"
+      />
+    </label>
+
+    <ul>
+      @for (column of rest(); track column.key) {
+        <li>
+          <button type="button" (click)="add(column)">
+            <span class="name">{{ column.header }}</span>
+            <span class="plus" aria-hidden="true">+</span>
+          </button>
+        </li>
+      } @empty {
+        <li class="empty">
+          @if (search()) {
+            No column matches “{{ search() }}”.
+          } @else {
+            Every column is already showing.
+          }
+        </li>
+      }
+    </ul>
+  </section>
+</div>
