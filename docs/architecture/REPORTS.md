@@ -948,7 +948,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 - [ ] **J · R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
 - [ ] **J · R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
-- [ ] **S · R1.3 — Account Transaction:** the second template — the running-balance rule, forced sort order, and page *n*'s opening figure in the response. Also the performance bar.
+- [x] **S · R1.3 — Account Transaction:** the second template — forced sort order, and page *n*'s opening figure fetched as one aggregate over the rows ahead of it. `ForcesSortOrder` and the two `ReportSource` hooks are engine-side, so **any later report with a window-function figure gets them for free**. 6 tests.
 - [ ] **J · R1.4 — General Ledger Summary:** opening balance is everything before the period. Copies R1.3.
 - [ ] **J · R1.5 — Journal Report:** six audit columns, resolved through R1.2.
 - [ ] **J · R1.6 — Bank Summary**

@@ -92,6 +92,34 @@ public abstract class ReportSource<TRow> : IReportSource
     /// </summary>
     protected abstract LambdaExpression DefaultOrder { get; }
 
+    /// <summary>
+    /// What the running balance stood at before this page began — the sum of every
+    /// row the ordering puts ahead of it.
+    ///
+    /// <b>Only a report with a running balance overrides this</b>, and such a
+    /// report also sets <see cref="ForcesSortOrder"/>, because a balance is defined
+    /// over an ordering and re-sorting would leave it true of an order the reader
+    /// cannot see.
+    ///
+    /// EF Core translates no window function, so this is a second query over the
+    /// rows before the page rather than a <c>SUM() OVER ()</c>. That is one extra
+    /// aggregate per page, which is cheaper than it sounds and very much cheaper
+    /// than fetching every earlier row to add them up here.
+    /// </summary>
+    protected virtual Task<decimal?> OpeningBalanceAsync(
+        IQueryable<TRow> rowsBeforeThisPage, CancellationToken ct) =>
+        Task.FromResult<decimal?>(null);
+
+    /// <summary>
+    /// Fills in whatever can only be known once the page is in hand and in order —
+    /// a running balance being the case that exists.
+    ///
+    /// Runs after materialisation, over the page only.
+    /// </summary>
+    protected virtual void ApplyRunningTotals(IReadOnlyList<TRow> page, decimal opening)
+    {
+    }
+
     /// <summary>Column key to column, built once.</summary>
     public IReadOnlyDictionary<string, ReportColumn> Map =>
         _map ??= Columns.ToDictionary(c => c.Key, StringComparer.Ordinal);
@@ -128,8 +156,22 @@ public abstract class ReportSource<TRow> : IReportSource
 
         query = ReportQueryBuilder<TRow>.ApplySorts(query, request.Sorts, Map, DefaultOrder);
 
+        // The rows this page's ordering puts ahead of it. Taken from the ordered
+        // query rather than the filtered one, because "before" only means anything
+        // once there is an order.
+        int skipped = (request.Page.Number - 1) * request.Page.Size;
+
+        decimal? opening = skipped == 0
+            ? await OpeningBalanceAsync(query.Take(0), ct)
+            : await OpeningBalanceAsync(query.Take(skipped), ct);
+
         List<TRow> rows = await ReportQueryBuilder<TRow>.Page(query, request.Page)
             .ToListAsync(ct);
+
+        if (opening is decimal carried)
+        {
+            ApplyRunningTotals(rows, carried);
+        }
 
         List<ReportColumn> selected = Select(request.Columns);
 
@@ -149,6 +191,7 @@ public abstract class ReportSource<TRow> : IReportSource
                 RowCount = total ?? rows.Count,
                 Aggregates = totals,
             },
+            OpeningBalance = opening,
             Page = new ReportPageView
             {
                 Number = request.Page.Number,

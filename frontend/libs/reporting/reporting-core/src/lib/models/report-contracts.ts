@@ -176,6 +176,11 @@ export interface ReportResult {
   /** Spans the whole result, not the page. */
   grandTotal: ReportGroupFooter | null;
   page: ReportPageInfo;
+  /**
+   * What a running balance stood at before this page's first row, for the reports
+   * that carry one. Null for every report that does not.
+   */
+  openingBalance: number | null;
   truncated: boolean;
   truncationReason: string | null;
 }

@@ -45,6 +45,16 @@ public class ReportResultView
     public ReportPageView Page { get; set; } = new();
 
     /// <summary>
+    /// What the running balance stood at before this page's first row, for reports
+    /// that carry one. Null for every report that does not.
+    ///
+    /// <b>Without it, page 2 of a running balance starts from zero</b> and every
+    /// figure on it is wrong by the whole of page 1 — while still adding up
+    /// internally, which is what makes it dangerous rather than obviously broken.
+    /// </summary>
+    public decimal? OpeningBalance { get; set; }
+
+    /// <summary>
     /// Set when a limit stopped the result short — a pivot column axis over its
     /// ceiling, or an export over the row cap. <see cref="TruncationReason"/> says
     /// which, in words meant for the person who asked.

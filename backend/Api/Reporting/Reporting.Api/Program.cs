@@ -86,6 +86,7 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
 // them from DI, so adding a report is adding a line here and a seed entry —
 // there is no registry to keep in step.
 builder.Services.AddScoped<IReportSource, AccountMovementSource>();
+builder.Services.AddScoped<IReportSource, AccountTransactionSource>();
 builder.Services.AddScoped<IReportSource, TrialBalanceSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
