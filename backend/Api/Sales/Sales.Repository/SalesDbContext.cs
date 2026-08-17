@@ -305,5 +305,9 @@ public class SalesDbContext : TenantDbContext
 
             b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId }).IsUnique();
         });
+
+        // Base class applies query filters, OrgId indexes and xmin last so it
+        // sees every entity configured above.
+        base.OnModelCreating(modelBuilder);
     }
 }
