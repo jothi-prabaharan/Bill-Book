@@ -1,0 +1,1 @@
+INSERT INTO inv."UnitOfMeasures" ("UomTypeId", "UomCode", "UqcCode", "UomName", "IsBaseUnit", "ConversionToBase", "DecimalPlaces", "DisplayOrder", "IsSystem", "IsActive", "OrgId") VALUES (3, 'CCM', 'CCM', 'Cubic centimetres', false, 0.000001, 3, 50, true, true, '11111111-1111-1111-1111-111111111111');
