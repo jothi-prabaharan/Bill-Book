@@ -92,7 +92,9 @@ public sealed class JwtTokenService : ITokenService
                 return null;
             }
 
-            string? sub = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+            string? sub = principal.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+                ?? principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
             return Guid.TryParse(sub, out Guid userId) ? userId : null;
         }
         catch (Exception)

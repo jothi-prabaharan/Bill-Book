@@ -184,7 +184,13 @@ public sealed class SignupService
             CustomerId = customerId,
             CustomerStatus = row.Status.ToString(),
             DatabaseStatus = row.DbStatus.ToString(),
-            CanLogin = row.Status == TenantStatus.Active && row.DbStatus == ProvisioningStatus.Ready,
+            // Trial counts. ProvisioningWorker finishes a successful signup by
+            // setting the customer to Trial, not Active, so requiring Active here
+            // meant CanLogin was false for every account that provisioned
+            // correctly — the signup screen polls this until it gives up, and the
+            // customer never reaches the app. Suspended and Expired stay refused.
+            CanLogin = row.DbStatus == ProvisioningStatus.Ready
+                && (row.Status == TenantStatus.Trial || row.Status == TenantStatus.Active),
         };
     }
 
