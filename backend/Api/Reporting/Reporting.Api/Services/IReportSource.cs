@@ -140,6 +140,21 @@ public abstract class ReportSource<TRow> : IReportSource
         // a page boundary.
         IQueryable<TRow> filtered = query;
 
+        // A pivot declares its own shape, so it leaves here rather than going on
+        // to sorting, paging and totals — none of which mean anything to a matrix.
+        if (request.Pivot is ReportPivotModel pivot)
+        {
+            ReportResultView matrix =
+                await PivotBuilder<TRow>.BuildAsync(filtered, pivot, Map, ct);
+
+            matrix.ReportKey = ReportKey;
+            matrix.Title = Title;
+            matrix.GeneratedAt = DateTimeOffset.UtcNow;
+            matrix.Currency = currency;
+
+            return matrix;
+        }
+
         // Counted before paging and before ordering: the count is of the filtered
         // set, and ordering it would cost a sort nobody reads.
         long? total = request.Page.IncludeCount

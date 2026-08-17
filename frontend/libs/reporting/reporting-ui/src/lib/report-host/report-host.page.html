@@ -5,6 +5,9 @@
   </div>
 
   <div class="actions">
+    <button type="button" (click)="choosingView.set(true)" [disabled]="busy()">
+      Views
+    </button>
     <button type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
       Columns
     </button>
@@ -43,6 +46,12 @@
     (filtersChange)="onFiltersChange($event)"
   />
 
+  <bb-pivot-panel
+    [columns]="columns()"
+    [pivot]="query().pivot"
+    (pivotChange)="onPivotChange($event)"
+  />
+
   <bb-group-panel
     [columns]="columns()"
     [groupBy]="query().groupBy"
@@ -62,6 +71,17 @@
     [busy]="busy()"
     (stateChange)="onStateChange($event)"
   />
+
+  @if (choosingView()) {
+    <div class="overlay">
+      <bb-saved-view-dialog
+        [reportKey]="report.reportKey"
+        [layout]="query()"
+        (applied)="onSavedViewApplied($event)"
+        (closed)="choosingView.set(false)"
+      />
+    </div>
+  }
 
   @if (choosingColumns()) {
     <div class="overlay">

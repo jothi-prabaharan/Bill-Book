@@ -123,7 +123,7 @@ public static class ReportQueryBuilder<TRow>
     }
 
     /// <summary>The separator between group levels inside a composite key.</summary>
-    public const char GroupSeparator = '';
+    public const char GroupSeparator = '\u001F';
 
     /// <summary>
     /// A key selector over the group columns, as <b>one concatenated string</b>.
@@ -178,6 +178,32 @@ public static class ReportQueryBuilder<TRow>
     private static readonly MethodInfo ConcatThree =
         typeof(string).GetMethod(
             nameof(string.Concat), [typeof(string), typeof(string), typeof(string)])!;
+
+    /// <summary>Separates a pivot's row key from its column key inside one composite.</summary>
+    public const char AxisSeparator = '\u001E';
+
+    /// <summary>
+    /// Joins two key selectors into one, so a pivot groups on a single string.
+    ///
+    /// <b>Composed as an expression, never by compiling either side.</b> Calling
+    /// <c>Compile()</c> inside a <c>GroupBy</c> produces code that builds and then
+    /// throws when EF tries to translate it — a delegate invocation has no SQL —
+    /// so the failure lands at run time on a real query rather than at compile
+    /// time on a developer's machine.
+    /// </summary>
+    public static Expression<Func<TRow, string>> CombineKeys(
+        Expression<Func<TRow, string>> first, Expression<Func<TRow, string>> second)
+    {
+        ParameterExpression parameter = Expression.Parameter(typeof(TRow), "e");
+
+        Expression combined = Expression.Call(
+            ConcatThree,
+            Rebind(first, parameter),
+            Expression.Constant(AxisSeparator.ToString()),
+            Rebind(second, parameter));
+
+        return Expression.Lambda<Func<TRow, string>>(combined, parameter);
+    }
 
     private static ReportColumn Resolve(
         string key, IReadOnlyDictionary<string, ReportColumn> columns, string verb)

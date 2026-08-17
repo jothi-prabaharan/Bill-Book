@@ -15,8 +15,10 @@ import {
   ColumnChooserDialog,
   FilterBarComponent,
   GroupPanelComponent,
+  PivotPanelComponent,
   ReportGridComponent,
 } from '@bill-book/ui-components';
+import { SavedViewDialog } from '../saved-views/saved-view.dialog';
 
 /**
  * Every report's screen.
@@ -40,6 +42,8 @@ import {
     FilterBarComponent,
     ColumnChooserDialog,
     GroupPanelComponent,
+    PivotPanelComponent,
+    SavedViewDialog,
   ],
   templateUrl: './report-host.page.html',
   styleUrl: './report-host.page.scss',
@@ -55,6 +59,7 @@ export class ReportHostPage implements OnInit {
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly choosingColumns = signal(false);
+  protected readonly choosingView = signal(false);
   protected readonly exporting = signal(false);
 
   private reportKey = '';
@@ -134,6 +139,24 @@ export class ReportHostPage implements OnInit {
       filters,
       page: { ...this.query().page, number: 1, includeCount: true },
     });
+  }
+
+  /**
+   * A pivot replaces the report's rows, so grouping and the page both reset with
+   * it — leaving a group panel populated beside a matrix it does not apply to
+   * would say the report is doing something it is not.
+   */
+  protected onPivotChange(pivot: ReportQuery['pivot']): void {
+    void this.onStateChange({
+      ...this.query(),
+      pivot,
+      groupBy: pivot ? [] : this.query().groupBy,
+      page: { ...this.query().page, number: 1, includeCount: true },
+    });
+  }
+
+  protected onSavedViewApplied(layout: ReportQuery): void {
+    void this.onStateChange(layout);
   }
 
   protected onGroupByChange(groupBy: string[]): void {

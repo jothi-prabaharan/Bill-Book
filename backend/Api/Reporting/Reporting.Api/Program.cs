@@ -91,6 +91,7 @@ builder.Services.AddScoped<IReportSource, TrialBalanceSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
+builder.Services.AddScoped<SavedViewService>();
 builder.Services.AddScoped<ReportCatalogSeeder>();
 
 // Must match Master's key exactly: Master mints the tokens, Reporting only

@@ -965,10 +965,10 @@ The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior
 
 #### R3 — saved views and pivot
 
-- [ ] **J · R3.1 — saved views API:** `ReportViewsController` and `saved-view.service.ts` over `rpt.ReportViews`.
-- [ ] **J · R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reports.edit`.
-- [ ] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL, transposed in memory, refusing over 200 columns.
-- [ ] **S · R3.4 — the pivot panel:** rows / columns / values, hidden below the tablet breakpoint.
+- [x] **S · R3.1 — saved views API:** `SavedViewService` + `ReportViewsController` over `rpt.ReportViews`. The owner comes from the token, never the caller; branch-wide views need `reports.edit`; a saved layout drops its page number.
+- [x] **S · R3.2 — the saved-view dialog:** open, save, remove, share to the branch, set as default. Server refusals are shown rather than replaced.
+- [x] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL on one composite key, transposed in memory, refusing a column axis over 200 values by name. 7 tests.
+- [x] **S · R3.4 — the pivot panel:** rows / columns / values with an aggregate, hidden below the tablet breakpoint. Turning it on clears grouping, since neither grouping nor paging means anything to a matrix.
 
 #### R4–R6 — not schedulable
 
