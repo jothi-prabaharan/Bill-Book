@@ -1,0 +1,78 @@
+<header class="page-head">
+  <div>
+    <a class="back" routerLink="/reports">← Reports</a>
+    <h1>{{ metadata()?.title ?? 'Report' }}</h1>
+  </div>
+
+  <div class="actions">
+    <button type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
+      Columns
+    </button>
+    <button type="button" (click)="exportToExcel()" [disabled]="busy() || exporting()">
+      {{ exporting() ? 'Exporting…' : 'Export to Excel' }}
+    </button>
+  </div>
+</header>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+@if (metadata(); as report) {
+  <!-- Parameters, not filters. A report filtered to April is April's rows hidden
+       from a report of everything; a report *for* April is a different report. -->
+  @if (report.parameters.length > 0) {
+    <form class="parameters">
+      @for (parameter of report.parameters; track parameter.name) {
+        <label>
+          {{ parameter.label }}
+          <input
+            [type]="parameter.dataType === 'Date' ? 'date' : 'text'"
+            [name]="parameter.name"
+            [ngModel]="query().parameters[parameter.name]"
+            (ngModelChange)="onParameterChange(parameter.name, $event)"
+          />
+        </label>
+      }
+    </form>
+  }
+
+  <bb-filter-bar
+    [columns]="columns()"
+    [filters]="query().filters"
+    (filtersChange)="onFiltersChange($event)"
+  />
+
+  <bb-group-panel
+    [columns]="columns()"
+    [groupBy]="query().groupBy"
+    (groupByChange)="onGroupByChange($event)"
+  />
+
+  @if (report.forcesSortOrder) {
+    <p class="notice">
+      This report is shown in its own order, because its running balance is only
+      true of that order.
+    </p>
+  }
+
+  <bb-report-grid
+    [result]="result()"
+    [state]="query()"
+    [busy]="busy()"
+    (stateChange)="onStateChange($event)"
+  />
+
+  @if (choosingColumns()) {
+    <div class="overlay">
+      <bb-column-chooser
+        [available]="columns()"
+        [selected]="query().columns.length ? query().columns : report.defaultColumns"
+        (selectedChange)="onColumnsChange($event)"
+        (closed)="choosingColumns.set(false)"
+      />
+    </div>
+  }
+} @else if (busy()) {
+  <p class="empty">Loading…</p>
+}
