@@ -1,1 +1,0 @@
-INSERT INTO inv."UnitOfMeasures" ("UomTypeId", "UomCode", "UqcCode", "UomName", "IsBaseUnit", "ConversionToBase", "DecimalPlaces", "DisplayOrder", "IsSystem", "IsActive", "OrgId") VALUES (1, 'PCS', 'PCS', 'Pieces', true, 1, 0, 10, true, true, '11111111-1111-1111-1111-111111111111');

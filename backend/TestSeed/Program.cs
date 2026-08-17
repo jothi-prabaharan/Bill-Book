@@ -2,7 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Inventory.Repository;
+using Sales.Repository;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
@@ -10,40 +10,33 @@ class Program
 {
     static async Task Main(string[] args)
     {
-        var tenant = new MockTenantContext { OrgId = Guid.NewGuid(), CustomerId = Guid.NewGuid() };
+        var tenant = new MockTenantContext { OrgId = Guid.Parse("bb6e5001-6042-48bc-961b-dcbd3811330a"), CustomerId = Guid.NewGuid() };
         var clock = TimeProvider.System;
         var user = new MockCurrentUser();
         
         var audit = new AuditSaveChangesInterceptor(user, clock);
         var rls = new RlsConnectionInterceptor(tenant);
         
-        var options = new DbContextOptionsBuilder<InventoryDbContext>()
-            .UseNpgsql("Host=localhost;Port=5432;Database=EP_Tenant_Template;Username=postgres;Password=123")
+        var options = new DbContextOptionsBuilder<SalesDbContext>()
+            .UseNpgsql("Host=localhost;Port=5432;Database=IN0000000001;Username=postgres;Password=123")
             .AddInterceptors(audit, rls)
             .Options;
             
-        using var db = new InventoryDbContext(options, tenant);
+        using var db = new SalesDbContext(options, tenant);
         
         try
         {
-            var types = Inventory.Repository.SeedData.UomSeed.BuildTypes(tenant.OrgId.Value);
-            db.UomTypes.AddRange(types);
-            await db.SaveChangesAsync();
-            Console.WriteLine("Types saved!");
-            
-            var typeIds = await db.UomTypes.Where(t => t.UomTypeSystemName != null).ToDictionaryAsync(t => t.UomTypeSystemName!, t => t.UomTypeId);
-            var units = Inventory.Repository.SeedData.UomSeed.BuildUnits(tenant.OrgId.Value, typeIds);
-            db.UnitOfMeasures.AddRange(units);
-            await db.SaveChangesAsync();
-            Console.WriteLine("Units saved!");
+            var seed = new Sales.Repository.SeedData.SalesSeed(db);
+            await seed.SeedForOrganizationAsync(tenant.OrgId.Value, default);
+            Console.WriteLine("Sales saved!");
         }
         catch (DbUpdateException ex)
         {
-            Console.WriteLine("DbUpdateException: " + (ex.InnerException?.Message ?? ex.Message));
+            Console.WriteLine("DbUpdateException in Sales: " + (ex.InnerException?.Message ?? ex.Message));
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Exception: " + ex.Message);
+            Console.WriteLine("Exception in Sales: " + ex.Message);
         }
     }
 }

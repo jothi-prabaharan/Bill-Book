@@ -1,8 +1,8 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\Api\Inventory\Inventory.Repository\Inventory.Repository.csproj" />
     <ProjectReference Include="..\Shared\Shared.Kernel\Shared.Kernel.csproj" />
+    <ProjectReference Include="..\Api\Sales\Sales.Repository\Sales.Repository.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
