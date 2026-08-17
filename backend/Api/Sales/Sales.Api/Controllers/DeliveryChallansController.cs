@@ -5,7 +5,7 @@ using Sales.Entity.Models;
 namespace Sales.Api.Controllers;
 
 [ApiController]
-[Route("DeliveryChallans")]
+[Route("api/sales/delivery-challans")]
 public sealed class DeliveryChallansController : ControllerBase
 {
     private readonly DeliveryChallanService _service;
