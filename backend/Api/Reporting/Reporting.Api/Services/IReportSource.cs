@@ -120,6 +120,9 @@ public abstract class ReportSource<TRow> : IReportSource
     {
     }
 
+    protected virtual Task FormatRowsAsync(IReadOnlyList<TRow> page, CancellationToken ct) =>
+        Task.CompletedTask;
+
     /// <summary>Column key to column, built once.</summary>
     public IReadOnlyDictionary<string, ReportColumn> Map =>
         _map ??= Columns.ToDictionary(c => c.Key, StringComparer.Ordinal);

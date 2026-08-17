@@ -4,20 +4,15 @@ using Reporting.Repository;
 
 namespace Reporting.Api.Services.Sources;
 
-/// <summary>
-/// <b>Account Movement — and the file every other report is copied from.</b>
-///
-/// Read this before writing a report, and follow its shape rather than inventing
-/// one: a row type, a column list, a query that executes nothing, and a default
-/// order. Nothing about filtering, sorting, grouping, paging, totalling or
-/// exporting appears here, because the engine does all of that to every report
-/// alike. §9.5 is the step-by-step; this is the worked example it points at.
-///
-/// The report itself is the plain movement listing — every posting against every
-/// account, in date order.
-/// </summary>
 public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
 {
+    private readonly BatchedNameResolver _resolver;
+
+    public AccountMovementSource(BatchedNameResolver resolver)
+    {
+        _resolver = resolver;
+    }
+
     public override string ReportKey => "account-movement";
 
     public override string Title => "Account Movement";
@@ -42,19 +37,13 @@ public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
         },
     ];
 
-    /// <summary>
-    /// Note what carries an aggregate and what does not. Debit and credit total;
-    /// a date, a code or a reference does not, and declaring <c>Sum</c> on one of
-    /// those produces a footer figure that looks like an answer.
-    ///
-    /// <c>account</c> is groupable and is text — grouping runs in SQL on a
-    /// concatenated key, so a groupable column must be text or the column
-    /// declaration throws.
-    /// </summary>
     public override IReadOnlyList<ReportColumn> Columns =>
     [
         ReportColumn.Of<AccountMovementRow, DateOnly>(
             "date", ColumnDataType.Date, r => r.Date),
+
+        ReportColumn.Of<AccountMovementRow, string>(
+            "accountType", ColumnDataType.Text, r => r.AccountType, groupable: true),
 
         ReportColumn.Of<AccountMovementRow, string>(
             "accountCode", ColumnDataType.Text, r => r.AccountCode, groupable: true),
@@ -81,18 +70,6 @@ public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
             "accountId", ColumnDataType.Number, r => r.AccountId),
     ];
 
-    /// <summary>
-    /// The query, executing nothing.
-    ///
-    /// <b>Date filtering happens here rather than as a column filter</b>, because
-    /// the range is a parameter: a movement report filtered to April is April's
-    /// rows hidden from a report of everything, while a movement report *for*
-    /// April is a different report. The opening figure of any later report depends
-    /// on which of those it is.
-    ///
-    /// Amounts are the base-currency ones. A report that mixed a rupee row and a
-    /// dollar row into one total would foot to a number in no currency at all.
-    /// </summary>
     protected override IQueryable<AccountMovementRow> Build(
         ReportParameters parameters, ReportingDbContext db)
     {
@@ -114,6 +91,7 @@ public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
                {
                    LedgerId = l.LedgerId,
                    Date = l.LedgerDate,
+                   AccountTypeId = a.AccountTypeId,
                    AccountId = a.AccountId,
                    AccountCode = a.AccountCode,
                    Account = a.AccountName,
@@ -125,28 +103,31 @@ public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
                };
     }
 
-    /// <summary>
-    /// The tie-break, and it must be unique. Two rows equal on every sort key may
-    /// otherwise swap between one page and the next, which reads as a row going
-    /// missing — a bug that only shows up under paging and never in a test with
-    /// four rows.
-    /// </summary>
+    protected override async Task FormatRowsAsync(IReadOnlyList<AccountMovementRow> page, CancellationToken ct)
+    {
+        Dictionary<int, string> types = await _resolver.GetAccountTypeNamesAsync(ct);
+        foreach (var row in page)
+        {
+            if (types.TryGetValue(row.AccountTypeId, out string? typeName))
+            {
+                row.AccountType = typeName;
+            }
+        }
+    }
+
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<AccountMovementRow, long>>)(r => r.LedgerId);
 }
 
-/// <summary>
-/// One row of Account Movement.
-///
-/// A row type per report, holding exactly what its columns read. Not an entity
-/// and not shared: the projection is what EF turns into the <c>SELECT</c> list, so
-/// a shared row type would fetch columns no report on it needed.
-/// </summary>
 public sealed class AccountMovementRow
 {
     public long LedgerId { get; set; }
 
     public DateOnly Date { get; set; }
+
+    public int AccountTypeId { get; set; }
+
+    public string AccountType { get; set; } = string.Empty;
 
     public long AccountId { get; set; }
 

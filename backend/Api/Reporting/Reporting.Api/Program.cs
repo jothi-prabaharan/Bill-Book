@@ -85,9 +85,22 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
 // Every report, registered as an IReportSource. The catalog service discovers
 // them from DI, so adding a report is adding a line here and a seed entry —
 // there is no registry to keep in step.
+builder.Services.AddHttpClient<BatchedNameResolver>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<IReportSource, AccountMovementSource>();
 builder.Services.AddScoped<IReportSource, AccountTransactionSource>();
 builder.Services.AddScoped<IReportSource, TrialBalanceSource>();
+builder.Services.AddScoped<IReportSource, GeneralLedgerSummarySource>();
+builder.Services.AddScoped<IReportSource, JournalReportSource>();
+builder.Services.AddScoped<IReportSource, BankSummarySource>();
+builder.Services.AddScoped<IReportSource, ReconciliationSource>();
+builder.Services.AddScoped<IReportSource, InventoryAgingSource>();
+builder.Services.AddScoped<IReportSource, ItemListSource>();
+builder.Services.AddScoped<IReportSource, ItemDetailSource>();
+builder.Services.AddScoped<IReportSource, ItemSummarySource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
