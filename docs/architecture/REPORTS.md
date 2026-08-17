@@ -888,9 +888,11 @@ Full detail for each task is in the section above; this is the tracker, not a se
 - [ ] **S · R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser. *Junior may take this if the senior budget is tight — after R0.9 lands.*
 - [ ] **S · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
 
-**Gates** — [ ] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
+**Gates** — [x] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
 
-> **None of the three can be cleared in a container with no PostgreSQL**, which is where R0.1 was written: `dotnet ef migrations add` reads the model and writes files, but only `database update` opens a connection. The RLS block is written and the query filters are in place; whether they *hold* is unproven until the migration is applied to a real server and queried as a second org. **Set `REPORTING_TEST_DB` and clear all three gates before any of this is trusted.** A gate signed off on a build alone is not signed off.
+> **The test database is the one that already exists.** `rpt` lives beside `acc` and `con` in the same per-customer database, so reporting's tests use `ACCOUNTING_TEST_DB` and the same server — there is no second database to create, and creating one would mean the read models had no `acc` tables to read.
+>
+> **G1 is cleared.** The migration applies to PostgreSQL 16; all three `rpt` tables report `rowsecurity = true` with an `org_isolation` policy each; and queried as a **non-superuser** — superusers bypass RLS, so a check run as `postgres` proves nothing — branch A sees only A's rows, branch B only B's, and **a session with no `app.current_org_id` set sees zero rows rather than all of them.** Failing closed is the property that matters; failing open is the one that leaks.
 
 **Junior runs R1.1 and R1.2 alongside R0** — neither depends on the reporting engine, and they are the only work available before §9.5 exists.
 
@@ -925,6 +927,34 @@ The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior
 - [ ] **R4 — receivables and payables:** 10 reports. Needs Sales and Purchase.
 - [ ] **R5 — sales and purchase reports:** 12 reports. Needs the same.
 - [ ] **R6 — fixed assets:** 4 reports. Needs the Phase 2 register.
+
+---
+
+## 9.8 Found while clearing G1: `acc` and `con` have no RLS
+
+**This is not a reporting defect and reporting cannot fix it, but it changes what G2 can honestly claim.**
+
+Turning a PostgreSQL on to clear G1 also ran the 141 database-backed tests that had been skipping. Two failed — `An_under_allocated_payment_cannot_be_posted` and `A_posted_payment_cannot_be_knocked_out_of_allocation`, both expecting a `DbUpdateException` from a database trigger that never fired. The triggers are not there. Nor is anything else that was written by hand:
+
+| Service | `migrationBuilder.Sql` calls | RLS blocks | Triggers |
+|---|---|---|---|
+| **Accounting** | **0** | **0** | **0** |
+| **Master** (`con`) | **0** | **0** | **0** |
+| Inventory | 16 | 5 | — |
+| Sales | 4 | 1 | — |
+| Purchase | 4 | 1 | — |
+
+Before commit `5a131c4` — *"rename MasterDbContext to AdminDbContext and squash migrations"* — Accounting's `InitialCreate` carried **18** `Sql()` calls: `acc.assert_journal_balanced`, `acc.assert_journal_balanced_on_post`, `acc.assert_ledger_balanced`, their three constraint triggers, the two allocation triggers, and the RLS block. Squashing regenerates migrations from the EF model, and **the model does not know about hand-written SQL**, so all of it was dropped. Inventory, Sales and Purchase were not squashed and kept theirs.
+
+**What is actually broken today:**
+
+- **No RLS on any `acc` or `con` table.** The EF query filter still runs, so the API is not leaking — but the second line of defence, the one `CLAUDE.md` describes as "the one that holds if a query ever runs without it", is absent. Anything reaching those tables outside EF — a raw connection, a restore script, an `IgnoreQueryFilters` call — crosses branches freely.
+- **The general ledger's balance check is down to one.** `CLAUDE.md` says balance is checked three times: domain guard, interceptor, deferred trigger. The interceptor was already recorded as never built. With the trigger gone, **an unbalanced journal is refused only by the domain guard on Post** — anything writing ledger rows by another path is unchecked.
+- **The allocation triggers are gone**, which is what the two failing tests noticed.
+
+**The fix is recoverable, not a rewrite.** The SQL is intact in git at `5a131c4^:backend/Api/Accounting/Accounting.Repository/Migrations/20260812044850_InitialCreate.cs`. It wants lifting into a new Accounting migration, and the same check running against `con` in Master. **It is Accounting's and Master's work, not reporting's**, and it is not in any R-stage here.
+
+**What it means for G2.** G2 asks whether the read models are isolated. Their EF query filters are in place and inherited from `OrgScopedEntity`, so they cannot be omitted — that half holds. The database half **cannot hold for `acc` and `con` until the policies are restored**, because there are no policies to hold. G2 stays open on that basis rather than being ticked on the half that passes.
 
 ---
 
