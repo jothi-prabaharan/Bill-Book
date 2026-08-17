@@ -969,9 +969,9 @@ Full detail for each task is in the section above; this is the tracker, not a se
 The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior reviews and writes nothing here.
 
 - [x] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null. **Starts by adding the `inv` read models** — `ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`, `CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`, `UnitOfMeasureRead` — following the ten in `ReadModels/` exactly, and re-running the empty-migration check afterwards.
-- [ ] **J · R2.2 — batch tracking:** Status and Detail.
-- [ ] **J · R2.3 — serial tracking:** Status and Detail.
-- [ ] **J · R2.4 — warehouse tracking:** Status and Detail.
+- [x] **J · R2.2 — batch tracking:** Status and Detail.
+- [x] **J · R2.3 — serial tracking:** Status and Detail.
+- [x] **J · R2.4 — warehouse tracking:** Status and Detail.
 
 #### R3 — saved views and pivot
 
@@ -1084,4 +1084,5 @@ Do them in that order, and check after each: parts 2 and 3 without part 1 take t
 5. **The export cap of 100,000 rows** (§5.6), and whether a capped export should refuse or truncate with a warning row.
 6. **Whether Trial Balance's existing page** is replaced by the grid host or kept beside it.
 7. ~~**`CLAUDE.md` still says there is one branch and it is `main`**~~ — **settled in R0.0.** `CLAUDE.md` now carries the reporting exception explicitly, and `AGENTS.md` states the branch for every other agent. The exception ends when reporting merges.
+
 
