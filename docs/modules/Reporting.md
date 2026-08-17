@@ -1,6 +1,10 @@
 # Reporting Module
 
-**Schema:** N/A (Read-only queries across `acc`, `inv`, `sal`, `pur`)
+**Schema:** `rpt` (report catalog and saved layouts) + read-only queries across `acc`, `inv`, `sal`, `pur`, `con`
+
+> The common report grid and the catalog of 45 reports with their columns live in
+> [`docs/architecture/REPORTS.md`](../architecture/REPORTS.md). The checklist below
+> covers the statements and GST returns, which are not grid reports.
 
 ## Overview
 Generates business reports, tax compliance documents (GST), and financial statements (P&L, Balance Sheet, Trial Balance).
