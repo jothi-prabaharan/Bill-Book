@@ -596,7 +596,7 @@ That is the whole rule, and it is not a claim about which model is cleverer — 
 |---|---|---|
 | **Owns** | The contract, both ends. The query engine. **The first source of each shape**, because every later source is copied from it. The grid and its panels. The pivot builder | The schema. The read models. The API host. The Excel writer. The pages. And the volume — fifteen report sources across R1 and R2, each a copy of a template that already exists |
 | **Tasks** | R0.0, R0.3, R0.4, R0.5, R0.8, R0.9, R0.10, R1.3, R3.3, R3.4 | R0.1, R0.2, R0.6, R0.7, R0.11, R1.1, R1.2, R1.4–R1.7, all of R2, R3.1, R3.2 |
-| **Roughly** | ~14h, front-loaded into R0 | ~19h, most of it after R0 |
+| **Roughly** | ~17h, front-loaded into R0 — or ~14h if R0.10 moves to junior | ~19h, most of it after R0 |
 
 **R0 is unavoidably senior-heavy** — it is nearly all design — and the payoff is R1 and R2, which are 10 hours of near-pure junior work. If the senior budget has to shrink further, the one task to move is **R0.10**: once R0.9 lands, the filter bar, column chooser and group panel follow its idiom closely enough for junior to write them against it.
 
