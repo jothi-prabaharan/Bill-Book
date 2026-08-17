@@ -14,34 +14,43 @@ and ask rather than inventing one.
 | | |
 |---|---|
 | Repository | `github.com/jothi-prabaharan/Bill-Book` |
-| **Branch — work on this and only this** | **`Report`** |
-| Base of your work | `a8b0737` or later on `Report` |
-| Default branch | `main` — **do not commit to it** |
+| **Branch — work on this and only this** | **`main`** |
+| Base of your work | `c1cfabc` or later on `main` |
+| `Report` | merged and finished — **do not push to it, do not branch from it** |
 
 ```bash
 git clone https://github.com/jothi-prabaharan/Bill-Book.git
 cd Bill-Book
-git fetch origin Report
-git checkout Report
-git pull origin Report          # always start from the latest
+git checkout main
+git pull origin main            # always start from the latest
 ```
 
-**Why not `main`.** `CLAUDE.md` says the product has one branch and it is `main`.
-Reporting is a written exception, recorded in `CLAUDE.md` under *"The one standing
-exception: reporting"*, because two agents build it in parallel. Everything under
-`docs/architecture/REPORTS.md` goes to `Report`.
+**This changed on 17 August 2026.** Reporting used to commit to `Report`, and every
+earlier instruction you were given said so. `Report` merged into `main` that day and
+the exception ended with it, by the repository owner's instruction. `main` is now the
+only branch, reporting included — it is what `CLAUDE.md` and `AGENTS.md` both say, and
+they are the authority if anything you remember disagrees.
 
-**Never open a pull request unless explicitly asked.**
+`Report` still exists, pointing at the merge commit. It carries nothing `main` lacks.
+Anything committed there from now on is work that `main` will not have.
+
+**Never open a pull request unless explicitly asked.** There is no second branch for
+one to merge from.
 
 ---
 
 ## 2. Git workflow
 
-**Pull before you start each task.** Another agent is on this branch.
+**Pull before you start each task, and again before you push.** Another agent is on
+this branch, and `main` now carries the whole product rather than reporting alone — it
+moves more often than `Report` did.
 
 ```bash
-git pull origin Report
+git pull --rebase origin main
 ```
+
+Rebase rather than merge. Your commits go on top of whatever landed while you were
+working, and there is no merge commit to reconcile afterwards.
 
 **Commit when a task stands up**, not when the whole stage is finished. One task,
 one commit. A commit that does not build blocks whoever is working in parallel
@@ -65,12 +74,19 @@ Bad: `Added GL Summary report.`
 **Push:**
 
 ```bash
-git push -u origin Report
+git push -u origin main
 ```
 
 If a push fails on a network error, retry up to four times with 2s, 4s, 8s, 16s
-backoff. If it fails because the branch moved, `git pull --rebase origin Report`
+backoff. If it fails because the branch moved, `git pull --rebase origin main`
 and push again.
+
+**One thing to check by hand after any rebase or merge that touches
+`backend/Bill-Book.sln`.** Its project paths are `shared\`, `tests\` and `worker\` —
+**lowercase**, matching what git records. Windows accepts the capitalised spelling and
+Linux does not: eight projects fail to load and the build breaks for everyone except
+the machine that caused it. This has already happened twice. `git diff` the file
+before committing it.
 
 ---
 

@@ -28,15 +28,22 @@ Also, without exception: **PascalCase table and column names** matching the C# p
 
 ## Branch
 
-**Reporting work commits to `Report`.** Not `main`.
-
-`CLAUDE.md` states that there is one branch and it is `main`. That remains true for the rest of the product; reporting is a deliberate exception, by the repository owner's instruction of 17 August 2026. If you are working on anything under `docs/architecture/REPORTS.md`, use `Report`:
+**Everything commits to `main`. Reporting included. There is no other branch.**
 
 ```
-git push -u origin Report
+git pull origin main      # before you start, every time
+git push -u origin main
 ```
 
-**Do not open a pull request unless you are asked for one.**
+Reporting used to be an exception and is not any more. `Report` merged into `main` on 17 August 2026 and the exception ended with it, by the repository owner's instruction of the same day. **Do not push to `Report`, and do not branch off it** — it is left in place pointing at the merge and carries nothing `main` lacks. Anything you commit there is work `main` will not have.
+
+Because two agents now share one branch, **pull before you start and pull again before you push**. A rebase onto `origin/main` is the normal way to land: your commits go on top of whatever arrived while you were working, and nothing needs merging afterwards.
+
+```
+git pull --rebase origin main
+```
+
+**Do not open a pull request unless you are asked for one.** There is no second branch for one to merge from.
 
 ---
 

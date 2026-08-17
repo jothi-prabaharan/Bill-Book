@@ -32,13 +32,19 @@ There is one branch, and it is `main`. Every commit goes there as the work is do
 
 The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
 
-### The one standing exception: reporting
+### There is no exception any more. Reporting merged.
 
-**Reporting work — everything under `docs/architecture/REPORTS.md` — commits to `Report`.** By the repository owner's instruction of 17 August 2026, and because that work is built by two agents in parallel: Claude Code and Antigravity, each in its own worktree, merging into one branch rather than into `main` a commit at a time.
+Reporting was the one standing exception: for a fortnight it committed to `Report`, because it was built by two agents in parallel and it seemed easier to merge one branch than to interleave two agents on `main`.
 
-It is written down here rather than left to each session to rediscover, because the alternative is two agents reading two different answers and diverging on their first commit. Everything else in the product still goes to `main`, and this exception ends when reporting merges.
+**`Report` merged into `main` on 17 August 2026 and the exception ended with it**, by the repository owner's instruction of the same day. `main` is again the only branch, reporting included.
 
-### This covers every other feature task, without exception
+The exception did not pay for itself, which is worth recording so it is not reinvented. Both agents ended up committing the same non-reporting work to both branches independently, so fifteen commits on `main` had content-identical twins on `Report` under different ids, and the merge had to reconcile a history that had said the same thing twice. One conflict resolved cleanly and wrongly — git reverted a fix to `Bill-Book.sln` because the same lines had been touched on both sides — and nothing would have caught it but a diff of the merged tree against the branch.
+
+**`Report` is left in place pointing at the merge. Do not push to it and do not branch from it.** It carries nothing `main` lacks.
+
+**Two agents on one branch is the arrangement now**, so pull before starting and pull again before pushing; `git pull --rebase origin main` puts your commits on top of whatever landed while you were working.
+
+### This covers every feature task, without exception
 
 A task with a stage number — **T2.3**, **T4.4**, **T5.3** — is not a reason to open a branch. Neither is a task that spans a schema, an API, a page and a ledger posting, and neither is one that will take several sessions. **Each of those commits to `main` as it is finished**, in whatever pieces it naturally divides into:
 

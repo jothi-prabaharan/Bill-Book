@@ -559,7 +559,15 @@ Forty-five rather than forty-six after the Sales Order Tracking merge of §7.3.
 
 ### 9.0 How to work
 
-**Branch: `Report`.** Not `main`. This overrides hard rule 11 and the *Git — how work reaches main* section of `CLAUDE.md`, by explicit instruction of the repository owner on 17 August 2026. Push with `git push -u origin Report`. Do not open a pull request unless asked.
+**Branch: `main`.** Hard rule 11 and the *Git — how work reaches main* section of `CLAUDE.md` apply here like everywhere else. Push with `git push -u origin main`. Do not open a pull request unless asked.
+
+This reverses what stood here for the first fortnight of the work. Reporting committed to `Report` while it was being built by two agents in parallel; **`Report` merged into `main` on 17 August 2026 and the exception ended with it**, by the repository owner's instruction of the same day. `Report` is left pointing at the merge — do not push to it and do not branch from it, it carries nothing `main` lacks.
+
+**Two agents still share the branch**, so pull before you start and again before you push:
+
+```
+git pull --rebase origin main
+```
 
 **No new packages.** Not one, backend or frontend. `backend/Directory.Packages.props` and `frontend/package.json` are closed lists for this work. Everything below is buildable with what they already pin — `@angular/cdk` for drag-drop (nine pages already use it) and `DocumentFormat.OpenXml` for XLSX (two services already use it). If a task appears to need something else, the task is wrong: stop and say so rather than adding a dependency.
 
@@ -634,9 +642,11 @@ git worktree add ../Bill-Book-senior report-senior
 git worktree add ../Bill-Book-junior report-junior
 ```
 
-Both merge into `Report`. **Sequence:** senior does R0.0, then the whole of R0 in dependency order, then R1.3 as the second template. Junior runs R1.1 and R1.2 alongside R0 — neither touches the reporting engine — and picks up the rest of R1, then all of R2, once the recipe of §9.5 exists.
+Both push to `main`, rebasing onto it rather than merging into it — `git pull --rebase origin main` before starting and again before pushing. **Sequence:** senior does R0.0, then the whole of R0 in dependency order, then R1.3 as the second template. Junior runs R1.1 and R1.2 alongside R0 — neither touches the reporting engine — and picks up the rest of R1, then all of R2, once the recipe of §9.5 exists.
 
-Four files conflict no matter how the work is split, and are worth resolving by hand each merge rather than trusting a three-way merge: **this file's progress checklist** (senior owns the ticks), **`release-notes.md`**, **`docs.manifest.ts`**, and **`Bill-Book.sln`**. The `rpt` migration has **one owner only** — two EF migrations from two branches do not merge cleanly, they merge dirtily.
+Four files collide no matter how the work is split, and are worth resolving by hand rather than trusting a three-way merge: **this file's progress checklist** (senior owns the ticks), **`release-notes.md`**, **`docs.manifest.ts`**, and **`Bill-Book.sln`**. The `rpt` migration has **one owner only** — two EF migrations written in parallel do not merge cleanly, they merge dirtily.
+
+`Bill-Book.sln` has now broken the build twice on the same fault, so it is worth naming precisely: its project paths are `shared\`, `tests\` and `worker\`, **lowercase**, matching what git records. A case-insensitive filesystem accepts `Shared\`, `Tests\` and `Worker\` and every Linux checkout and CI run does not — eight projects fail to load and the failure never appears on the machine that caused it. **After any merge that touches this file, diff it before committing.**
 
 ---
 
@@ -648,7 +658,7 @@ Eleven tasks. Proven against **Account Movement** (simplest source) and **Trial 
 
 #### R0.0 — `AGENTS.md` · **Senior** · ~0.5h · depends: nothing
 
-Antigravity does not read `CLAUDE.md`. Without this task it starts blind to LINQ-only, to `ErrorMessage` on every annotation, to `OrgId` on every table, to the `Report` branch and to the no-new-packages rule — and writes plausible code that breaks four house rules.
+Antigravity does not read `CLAUDE.md`. Without this task it starts blind to LINQ-only, to `ErrorMessage` on every annotation, to `OrgId` on every table, to which branch the work lands on and to the no-new-packages rule — and writes plausible code that breaks four house rules.
 
 **Create** `AGENTS.md` at the repository root — the convention non-Claude agents read. It points at `docs/standards/ai-agent-structure-rules.md` (already written for both agents, and naming Antigravity explicitly), at §9.0 and §9.1 of this file, and states the branch and the package rule inline rather than by reference, because those two are the ones that cause damage before anybody notices.
 
