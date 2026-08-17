@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -18,14 +19,13 @@ public class BankAccountRead : OrgScopedEntity
 
     public long? LedgerAccountId { get; set; }
 
-    public string AccountName { get; set; } = null!;
-
-    public string AccountNumber { get; set; } = null!;
-
+    public string AccountName { get; set; }
+    public string AccountNumber { get; set; }
     /// <summary>Matches <c>BankAccountType</c> in Accounting: current, savings, OD, and so on.</summary>
     public int AccountType { get; set; }
 
-    public string CurrencyCode { get; set; } = null!;
-
+    public string CurrencyCode { get; set; }
     public bool IsActive { get; set; }
 }
+
+

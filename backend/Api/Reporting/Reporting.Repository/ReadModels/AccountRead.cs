@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -21,10 +22,8 @@ public class AccountRead : OrgScopedEntity
 
     public bool IsContra { get; set; }
 
-    public string AccountCode { get; set; } = null!;
-
-    public string AccountName { get; set; } = null!;
-
+    public string AccountCode { get; set; }
+    public string AccountName { get; set; }
     public long? ParentAccountId { get; set; }
 
     public string? CurrencyCode { get; set; }
@@ -33,3 +32,5 @@ public class AccountRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
+

@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -29,8 +30,7 @@ public class JournalLedgerRead : OrgScopedEntity
     /// <summary>Null on legs with no sub-dimension — bank and equity.</summary>
     public long? SubAccountId { get; set; }
 
-    public string TransactionTypeCode { get; set; } = null!;
-
+    public string TransactionTypeCode { get; set; }
     public long TransactionId { get; set; }
 
     public long TransactionDetailId { get; set; }
@@ -43,8 +43,7 @@ public class JournalLedgerRead : OrgScopedEntity
 
     public decimal CreditAmountBase { get; set; }
 
-    public string CurrencyCode { get; set; } = null!;
-
+    public string CurrencyCode { get; set; }
     public decimal ExchangeRate { get; set; }
 
     /// <summary>
@@ -61,3 +60,5 @@ public class JournalLedgerRead : OrgScopedEntity
 
     public long? JournalId { get; set; }
 }
+
+

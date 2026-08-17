@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -33,5 +34,7 @@ public class SubAccountRead : OrgScopedEntity
     /// <summary>Matches <c>SubAccountPurpose</c> in Accounting.</summary>
     public int Purpose { get; set; }
 
-    public string SubAccountName { get; set; } = null!;
+    public string SubAccountName { get; set; }
 }
+
+

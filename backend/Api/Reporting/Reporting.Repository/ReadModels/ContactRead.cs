@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -14,10 +15,8 @@ public class ContactRead : OrgScopedEntity
 {
     public long ContactId { get; set; }
 
-    public string ContactCode { get; set; } = null!;
-
-    public string DisplayName { get; set; } = null!;
-
+    public string ContactCode { get; set; }
+    public string DisplayName { get; set; }
     public string? LegalName { get; set; }
 
     public bool IsCustomer { get; set; }
@@ -26,11 +25,12 @@ public class ContactRead : OrgScopedEntity
 
     public string? Gstin { get; set; }
 
-    public string CurrencyCode { get; set; } = null!;
-
+    public string CurrencyCode { get; set; }
     public long? PaymentTermId { get; set; }
 
     public int? PlaceOfSupplyStateId { get; set; }
 
     public bool IsActive { get; set; }
 }
+
+

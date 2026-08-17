@@ -63,6 +63,15 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<BankStatementLineRead> BankStatementLines => Set<BankStatementLineRead>();
 
     public DbSet<ContactRead> Contacts => Set<ContactRead>();
+    public DbSet<ItemRead> Items => Set<ItemRead>();
+    public DbSet<ItemStockRead> ItemStocks => Set<ItemStockRead>();
+    public DbSet<ItemCategoryRead> ItemCategories => Set<ItemCategoryRead>();
+    public DbSet<StockMovementRead> StockMovements => Set<StockMovementRead>();
+    public DbSet<CostLayerRead> CostLayers => Set<CostLayerRead>();
+    public DbSet<ItemBatchRead> ItemBatches => Set<ItemBatchRead>();
+    public DbSet<ItemSerialRead> ItemSerials => Set<ItemSerialRead>();
+    public DbSet<WarehouseRead> Warehouses => Set<WarehouseRead>();
+    public DbSet<UnitOfMeasureRead> UnitsOfMeasure => Set<UnitOfMeasureRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -162,6 +171,15 @@ public class ReportingDbContext : TenantDbContext
         MapRead<BankStatementLineRead>(
             modelBuilder, "BankStatementLines", "acc", e => e.BankStatementLineId);
         MapRead<ContactRead>(modelBuilder, "Contacts", "con", e => e.ContactId);
+        MapRead<ItemRead>(modelBuilder, "Items", "inv", e => e.ItemId);
+        MapRead<ItemStockRead>(modelBuilder, "ItemStocks", "inv", e => e.ItemId);
+        MapRead<ItemCategoryRead>(modelBuilder, "ItemCategories", "inv", e => e.ItemCategoryId);
+        MapRead<StockMovementRead>(modelBuilder, "StockMovements", "inv", e => e.StockMovementId);
+        MapRead<CostLayerRead>(modelBuilder, "CostLayers", "inv", e => e.CostLayerId);
+        MapRead<ItemBatchRead>(modelBuilder, "ItemBatches", "inv", e => e.ItemBatchId);
+        MapRead<ItemSerialRead>(modelBuilder, "ItemSerials", "inv", e => e.ItemSerialId);
+        MapRead<WarehouseRead>(modelBuilder, "Warehouses", "inv", e => e.WarehouseId);
+        MapRead<UnitOfMeasureRead>(modelBuilder, "UnitsOfMeasure", "inv", e => e.UomId);
     }
 
     private static void MapRead<TEntity>(

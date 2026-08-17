@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -22,16 +23,14 @@ public class JournalRead : OrgScopedEntity
 
     public DateOnly JournalDate { get; set; }
 
-    public string CurrencyCode { get; set; } = null!;
-
+    public string CurrencyCode { get; set; }
     public decimal ExchangeRate { get; set; }
 
     public string? Reference { get; set; }
 
     public string? Memo { get; set; }
 
-    public string TransactionTypeCode { get; set; } = null!;
-
+    public string TransactionTypeCode { get; set; }
     /// <summary>Matches <c>JournalStatus</c> in Accounting: draft, posted, reversed.</summary>
     public int Status { get; set; }
 
@@ -43,3 +42,5 @@ public class JournalRead : OrgScopedEntity
 
     public long? ReversedByJournalId { get; set; }
 }
+
+

@@ -1,3 +1,4 @@
+#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -45,3 +46,5 @@ public class BankStatementLineRead : OrgScopedEntity
 
     public bool MatchedAutomatically { get; set; }
 }
+
+
