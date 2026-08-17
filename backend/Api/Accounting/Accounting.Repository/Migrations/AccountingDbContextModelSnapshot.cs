@@ -808,6 +808,8 @@ namespace Accounting.Repository.Migrations
                     b.HasIndex("OrgId", "MappingTransactionTypeCode", "MappingTransactionId")
                         .HasDatabaseName("IX_JournalLedger_Mapping");
 
+                    b.HasIndex("OrgId", "SubAccountId", "LedgerDate");
+
                     b.HasIndex("OrgId", "TransactionTypeCode", "TransactionId", "TransactionDetailId", "LedgerTypeId")
                         .HasDatabaseName("IX_JournalLedger_Posting");
 

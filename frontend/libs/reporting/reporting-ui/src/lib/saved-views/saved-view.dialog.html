@@ -1,0 +1,66 @@
+<div class="views">
+  <header>
+    <h2>Saved views</h2>
+    <button type="button" class="ghost" (click)="close()">Done</button>
+  </header>
+
+  @if (message()) {
+    <p class="error">{{ message() }}</p>
+  }
+
+  <ul>
+    @for (view of saved(); track view.reportViewId) {
+      <li>
+        <button type="button" class="open" (click)="apply(view)">
+          <span class="name">{{ view.viewName }}</span>
+          @if (view.isShared) {
+            <span class="tag">Branch</span>
+          }
+          @if (view.isDefault) {
+            <span class="tag default">Default</span>
+          }
+        </button>
+        <button
+          type="button"
+          class="remove"
+          (click)="remove(view)"
+          [attr.aria-label]="'Remove ' + view.viewName"
+        >
+          ×
+        </button>
+      </li>
+    } @empty {
+      <li class="empty">
+        @if (busy()) {
+          Loading…
+        } @else {
+          No saved views yet. Save the current layout below.
+        }
+      </li>
+    }
+  </ul>
+
+  <form (ngSubmit)="save()">
+    <label>
+      <span class="visually-hidden">View name</span>
+      <input
+        type="text"
+        name="viewName"
+        placeholder="Name this layout"
+        [(ngModel)]="name"
+      />
+    </label>
+
+    <label class="check">
+      <input type="checkbox" name="shared" [(ngModel)]="shareWithBranch" />
+      Share with the branch
+    </label>
+
+    <label class="check">
+      <input type="checkbox" name="isDefault" [(ngModel)]="makeDefault" />
+      Open this by default
+    </label>
+
+    <button type="submit" [disabled]="busy() || name.trim() === ''">Save</button>
+  </form>
+</div>

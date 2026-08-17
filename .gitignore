@@ -146,4 +146,6 @@ Thumbs.db
 
 # Files uploaded against a contact in Development — LocalDiskFileStorage's root.
 .files/
-.vscode/.edge-debug-profile/  
+
+# Throwaway Edge profile created by the "Web (Edge, 4200)" debug config.
+.vscode/.edge-debug-profile/

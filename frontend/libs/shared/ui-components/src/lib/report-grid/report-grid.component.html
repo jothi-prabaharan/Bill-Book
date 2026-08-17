@@ -1,0 +1,209 @@
+@if (result(); as report) {
+  <!-- Wide table on desktop, scrolling inside its own container so the page never
+       moves sideways. Below the phone breakpoint the same rows render as cards. -->
+  <div class="report-grid" [class.busy]="busy()">
+    <table class="grid">
+      <thead>
+        <tr>
+          @for (column of columns(); track column.key; let index = $index) {
+            <th
+              [class.frozen]="isFrozen(index)"
+              [class.seam]="isSeam(index)"
+              [class.right]="isNumeric(column)"
+              [style.left]="isFrozen(index) ? frozenLeft(index) : null"
+              [style.width.px]="column.width"
+              [attr.aria-sort]="
+                sortDirection(column.key) === 'Asc'
+                  ? 'ascending'
+                  : sortDirection(column.key) === 'Desc'
+                    ? 'descending'
+                    : 'none'
+              "
+            >
+              @if (column.isSortable) {
+                <button type="button" class="sort" (click)="toggleSort(column, $event)">
+                  {{ column.header }}
+                  @if (sortDirection(column.key); as direction) {
+                    <span class="mark" aria-hidden="true">
+                      {{ direction === 'Asc' ? '▲' : '▼' }}
+                      <!-- The position matters once there are two: a three-key sort
+                           is otherwise indistinguishable from a one-key sort with
+                           surprising results. -->
+                      @if (state().sorts.length > 1) {
+                        <small>{{ sortPosition(column.key) }}</small>
+                      }
+                    </span>
+                  }
+                </button>
+              } @else {
+                {{ column.header }}
+              }
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (row of rows(); track $index) {
+          <tr (dblclick)="activate(row)" tabindex="0" (keydown.enter)="activate(row)">
+            @for (column of columns(); track column.key; let index = $index) {
+              <td
+                [class.frozen]="isFrozen(index)"
+                [class.seam]="isSeam(index)"
+                [class.right]="isNumeric(column)"
+                [style.left]="isFrozen(index) ? frozenLeft(index) : null"
+              >
+                @if (isNumeric(column)) {
+                  <span class="amount">{{
+                    numeric(row, column) | number: format(column)
+                  }}</span>
+                } @else {
+                  {{ display(row, column) }}
+                }
+              </td>
+            }
+          </tr>
+        } @empty {
+          <tr>
+            <td [attr.colspan]="columns().length" class="empty">
+              Nothing to show for these filters.
+            </td>
+          </tr>
+        }
+      </tbody>
+
+      <tfoot>
+        <!-- Subtotals and the total come from the server, computed over the whole
+             result rather than this page. -->
+        @for (footer of report.groupFooters; track $index) {
+          <tr class="group">
+            @for (column of columns(); track column.key; let index = $index) {
+              <td
+                [class.frozen]="isFrozen(index)"
+                [class.right]="isNumeric(column)"
+                [style.left]="isFrozen(index) ? frozenLeft(index) : null"
+              >
+                @if (index === 0) {
+                  {{ footer.path.join(' › ') }}
+                  <small>({{ footer.rowCount }})</small>
+                } @else if (aggregate(footer, column.key) !== null) {
+                  <span class="amount">{{
+                    aggregate(footer, column.key) | number: format(column)
+                  }}</span>
+                }
+              </td>
+            }
+          </tr>
+        }
+
+        @if (report.grandTotal; as total) {
+          <tr class="total">
+            @for (column of columns(); track column.key; let index = $index) {
+              <td
+                [class.frozen]="isFrozen(index)"
+                [class.right]="isNumeric(column)"
+                [style.left]="isFrozen(index) ? frozenLeft(index) : null"
+              >
+                @if (index === 0) {
+                  Total <small>({{ total.rowCount }})</small>
+                } @else if (aggregate(total, column.key) !== null) {
+                  <span class="amount">{{
+                    aggregate(total, column.key) | number: format(column)
+                  }}</span>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- The same rows as cards. One column can never be a row at 360px. -->
+  <ul class="cards">
+    @for (row of rows(); track $index) {
+      <!-- A card is as activatable as a table row, so it takes the keyboard too:
+           a list you can only open with a mouse is one nobody can use on a phone
+           with a keyboard attached, or with a screen reader at all. -->
+      <li
+        tabindex="0"
+        role="button"
+        (click)="activate(row)"
+        (keydown.enter)="activate(row)"
+        (keydown.space)="activate(row)"
+      >
+        <p class="title">
+          @for (column of cardTitleColumns(); track column.key) {
+            <span>{{ display(row, column) }}</span>
+          }
+        </p>
+        <dl>
+          @for (column of cardBodyColumns(); track column.key) {
+            <div>
+              <dt>{{ column.header }}</dt>
+              <dd [class.right]="isNumeric(column)">
+                @if (isNumeric(column)) {
+                  {{ numeric(row, column) | number: format(column) }}
+                } @else {
+                  {{ display(row, column) }}
+                }
+              </dd>
+            </div>
+          }
+        </dl>
+      </li>
+    } @empty {
+      <li class="empty">Nothing to show for these filters.</li>
+    }
+  </ul>
+
+  <nav class="pager">
+    <span class="count">
+      @if (report.page.totalRows !== null) {
+        Showing {{ firstRow() }}–{{ lastRow() }} of {{ report.page.totalRows | number }}
+      } @else {
+        Showing {{ firstRow() }}–{{ lastRow() }}
+      }
+    </span>
+
+    <label>
+      Rows
+      <select
+        [value]="state().page.size"
+        (change)="changePageSize(+$any($event.target).value)"
+      >
+        @for (size of pageSizes; track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </label>
+
+    <button type="button" (click)="goToPage(1)" [disabled]="state().page.number === 1">
+      ⏮
+    </button>
+    <button
+      type="button"
+      (click)="goToPage(state().page.number - 1)"
+      [disabled]="state().page.number === 1"
+    >
+      ‹
+    </button>
+    <span class="where">{{ state().page.number }} / {{ totalPages() }}</span>
+    <button
+      type="button"
+      (click)="goToPage(state().page.number + 1)"
+      [disabled]="state().page.number >= totalPages()"
+    >
+      ›
+    </button>
+    <button
+      type="button"
+      (click)="goToPage(totalPages())"
+      [disabled]="state().page.number >= totalPages()"
+    >
+      ⏭
+    </button>
+  </nav>
+} @else if (busy()) {
+  <p class="empty">Loading…</p>
+}

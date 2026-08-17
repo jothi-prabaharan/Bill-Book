@@ -1,0 +1,95 @@
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.4rem 0.2rem 0.55rem;
+  border: 1px solid var(--bb-line, #e2e5ea);
+  border-radius: 999px;
+  background: var(--bb-surface-2, #f6f7f9);
+  font-size: 0.85rem;
+}
+
+.chip button {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  opacity: 0.6;
+}
+
+.chip button:hover {
+  opacity: 1;
+}
+
+.add {
+  border: 1px dashed var(--bb-line, #e2e5ea);
+  border-radius: 999px;
+  background: none;
+  padding: 0.2rem 0.6rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.editor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+  padding: 0.5rem;
+  border: 1px solid var(--bb-line, #e2e5ea);
+  border-radius: 4px;
+  background: var(--bb-surface, #fff);
+}
+
+.editor select,
+.editor input {
+  padding: 0.3rem 0.4rem;
+}
+
+.ghost {
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: 0.85rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* At phone width the editor stacks rather than wrapping into a ragged row. */
+@media (max-width: 40rem) {
+  .editor {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .editor select,
+  .editor input {
+    width: 100%;
+  }
+}

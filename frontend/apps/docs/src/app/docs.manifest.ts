@@ -54,6 +54,10 @@ export const DOCS: DocSection[] = [
     ],
   },
   {
+    title: 'Reports',
+    pages: [{ slug: 'reports', title: 'Reports', status: 'partial' }],
+  },
+  {
     title: 'Accounting',
     pages: [
       { slug: 'chart-of-accounts', title: 'Chart of accounts', status: 'built' },

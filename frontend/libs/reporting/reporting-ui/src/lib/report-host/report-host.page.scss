@@ -1,0 +1,99 @@
+.page-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.back {
+  font-size: 0.85rem;
+  text-decoration: none;
+  opacity: 0.75;
+}
+
+h1 {
+  font-size: 1.3rem;
+  margin: 0.2rem 0 0;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.parameters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.parameters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.85rem;
+}
+
+.notice {
+  margin: 0.25rem 0;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--bb-accent, #14605c);
+  background: var(--bb-surface-2, #f6f7f9);
+  font-size: 0.85rem;
+}
+
+.error {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--bb-danger, #97302f);
+  background: var(--bb-surface-2, #f6f7f9);
+  color: var(--bb-danger, #97302f);
+}
+
+.empty {
+  padding: 1rem 0;
+  opacity: 0.75;
+}
+
+/* The column chooser sits over the report. At phone width it fills the screen,
+   per the house rule that a modal becomes a sheet. */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(0 0 0 / 35%);
+}
+
+.overlay bb-column-chooser {
+  background: var(--bb-surface, #fff);
+  border-radius: 6px;
+  width: min(28rem, 92vw);
+  max-height: 85vh;
+  overflow: auto;
+}
+
+@media (max-width: 40rem) {
+  .overlay {
+    align-items: stretch;
+  }
+
+  .overlay bb-column-chooser {
+    width: 100%;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+  }
+}

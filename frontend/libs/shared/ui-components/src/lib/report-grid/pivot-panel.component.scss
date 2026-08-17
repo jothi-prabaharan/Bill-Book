@@ -1,0 +1,56 @@
+.pivot-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+label span {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  opacity: 0.7;
+}
+
+select {
+  padding: 0.25rem 0.4rem;
+}
+
+.note {
+  flex-basis: 100%;
+  margin: 0;
+  opacity: 0.7;
+  font-size: 0.8rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* A matrix has no card form, and shrinking one until it fits produces something
+   nobody can read. Hidden rather than degraded. */
+@media (max-width: 48rem) {
+  .pivot-panel {
+    display: none;
+  }
+}
