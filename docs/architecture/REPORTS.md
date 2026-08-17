@@ -946,13 +946,13 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 #### R1 — the accounting reports
 
-- [ ] **J · R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
-- [ ] **J · R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
+- [x] **J · R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
+- [x] **J · R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
 - [x] **S · R1.3 — Account Transaction:** the second template — forced sort order, and page *n*'s opening figure fetched as one aggregate over the rows ahead of it. `ForcesSortOrder` and the two `ReportSource` hooks are engine-side, so **any later report with a window-function figure gets them for free**. 6 tests.
-- [ ] **J · R1.4 — General Ledger Summary:** opening balance is everything before the period. Copies R1.3.
-- [ ] **J · R1.5 — Journal Report:** six audit columns, resolved through R1.2.
-- [ ] **J · R1.6 — Bank Summary**
-- [ ] **J · R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
+- [x] **J · R1.4 — General Ledger Summary:** opening balance is everything before the period. Copies R1.3.
+- [x] **J · R1.5 — Journal Report:** six audit columns, resolved through R1.2.
+- [x] **J · R1.6 — Bank Summary**
+- [x] **J · R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
 
 #### R2 — the inventory reports · all junior
 
@@ -1074,3 +1074,4 @@ Do them in that order, and check after each: parts 2 and 3 without part 1 take t
 5. **The export cap of 100,000 rows** (§5.6), and whether a capped export should refuse or truncate with a warning row.
 6. **Whether Trial Balance's existing page** is replaced by the grid host or kept beside it.
 7. ~~**`CLAUDE.md` still says there is one branch and it is `main`**~~ — **settled in R0.0.** `CLAUDE.md` now carries the reporting exception explicitly, and `AGENTS.md` states the branch for every other agent. The exception ends when reporting merges.
+
