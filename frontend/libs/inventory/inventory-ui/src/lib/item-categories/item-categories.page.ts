@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -33,7 +34,7 @@ interface UomType {
 @Component({
   selector: 'bb-item-categories-page',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })

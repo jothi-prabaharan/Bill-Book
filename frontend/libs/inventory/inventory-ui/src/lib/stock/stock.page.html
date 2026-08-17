@@ -53,7 +53,7 @@
   the valuation; available is what a new order may draw on.
 </p>
 
-<table class="grid">
+<bb-card-table>
   <thead>
     <tr>
       <th>Code</th>
@@ -108,7 +108,7 @@
       <tr><td colspan="10">No stocked items.</td></tr>
     }
   </tbody>
-</table>
+</bb-card-table>
 
 @if (movementFor(); as item) {
   <div class="sheet">
@@ -265,7 +265,7 @@
       history is append-only: a mistake is corrected by an opposite movement, never by an edit.
     </p>
 
-    <table class="grid">
+    <bb-card-table>
       <thead>
         <tr>
           <th>Date</th>
@@ -348,7 +348,7 @@
           <tr><td colspan="10">Nothing has moved yet.</td></tr>
         }
       </tbody>
-    </table>
+    </bb-card-table>
 
     @if (allocations().length > 0) {
       <h3>Cost layers consumed</h3>
@@ -357,7 +357,7 @@
         goods sold — a disputed margin can be walked back to the purchases behind it.
       </p>
 
-      <table class="grid">
+      <bb-card-table>
         <thead>
           <tr>
             <th>Received</th>
@@ -380,7 +380,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     }
 
     @if (recostings().length > 0) {
@@ -391,7 +391,7 @@
         quantities never changed — only what they cost.
       </p>
 
-      <table class="grid">
+      <bb-card-table>
         <thead>
           <tr>
             <th>Sale dated</th>
@@ -414,7 +414,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     }
 
     <div class="sheet-actions">

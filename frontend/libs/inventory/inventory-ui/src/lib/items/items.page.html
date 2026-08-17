@@ -26,7 +26,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<table class="grid">
+<bb-card-table>
   <thead>
     <tr>
       <th>Code</th>
@@ -74,7 +74,7 @@
       <tr><td colspan="9">No items.</td></tr>
     }
   </tbody>
-</table>
+</bb-card-table>
 
 @if (editorOpen()) {
   <div class="sheet">

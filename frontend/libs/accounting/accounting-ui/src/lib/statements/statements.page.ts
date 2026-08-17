@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -90,7 +91,7 @@ interface StatementLine {
 @Component({
   selector: 'bb-statements-page',
   standalone: true,
-  imports: [DecimalPipe, FormsModule],
+  imports: [CardTableComponent, DecimalPipe, FormsModule],
   templateUrl: './statements.page.html',
   styleUrl: './statements.page.scss',
 })

@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -28,7 +29,7 @@ interface RoleOption {
 @Component({
   selector: 'bb-users-page',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [CardTableComponent, FormsModule, DatePipe],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
 })

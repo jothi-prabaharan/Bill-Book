@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -38,7 +39,7 @@ interface AccountType {
 @Component({
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './chart-of-accounts.page.html',
   styleUrl: './chart-of-accounts.page.scss',
 })

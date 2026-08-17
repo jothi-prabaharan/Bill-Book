@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -137,7 +138,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
 @Component({
   selector: 'bb-stock-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })

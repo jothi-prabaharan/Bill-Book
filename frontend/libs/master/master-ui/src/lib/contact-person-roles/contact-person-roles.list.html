@@ -2,7 +2,7 @@
   <p class="error">{{ error() }}</p>
 }
 
-<table class="grid">
+<bb-card-table>
   <thead>
     <tr>
       <th class="handle-col"><span class="sr-only">Reorder</span></th>
@@ -63,7 +63,7 @@
       <tr><td colspan="6">No roles.</td></tr>
     }
   </tbody>
-</table>
+</bb-card-table>
 
 <div class="add-row">
   <input type="text" [(ngModel)]="newRoleName" maxlength="50" placeholder="New role name" />

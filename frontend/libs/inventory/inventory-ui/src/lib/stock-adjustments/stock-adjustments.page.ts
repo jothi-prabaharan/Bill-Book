@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -88,7 +89,7 @@ const REASONS: readonly { value: string; label: string }[] = [
 @Component({
   selector: 'bb-stock-adjustments-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',
 })

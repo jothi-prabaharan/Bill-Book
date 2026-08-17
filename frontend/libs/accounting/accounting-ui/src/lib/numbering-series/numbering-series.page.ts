@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -55,7 +56,7 @@ type FormModel = Omit<
 @Component({
   selector: 'bb-numbering-series-page',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
   templateUrl: './numbering-series.page.html',
   styleUrl: './numbering-series.page.scss',
 })
