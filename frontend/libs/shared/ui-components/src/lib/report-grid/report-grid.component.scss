@@ -1,0 +1,217 @@
+/* The report grid.
+
+   Two renderings of the same rows: a table above the phone breakpoint and a card
+   list below it, per the house rule that every page works at ~360px. A thirty
+   column report cannot be a table on a phone, and shrinking one until it fits
+   produces a table nobody can read either. */
+
+.report-grid {
+  overflow: auto;
+  /* Bounded so the sticky header has something to stick within. Without a height
+     the container grows to fit and nothing ever scrolls inside it, which makes
+     `position: sticky` silently do nothing. */
+  max-height: 70vh;
+  border: 1px solid var(--bb-line, #e2e5ea);
+}
+
+.report-grid.busy {
+  opacity: 0.6;
+}
+
+table.grid {
+  width: 100%;
+  border-collapse: separate;
+  /* Separate rather than collapse: collapsed borders are painted on cells that
+     scroll away, so a frozen column loses its lines while the rest moves. */
+  border-spacing: 0;
+}
+
+th,
+td {
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--bb-line, #e2e5ea);
+  text-align: left;
+  white-space: nowrap;
+  background: var(--bb-surface, #fff);
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: var(--bb-surface-2, #f6f7f9);
+}
+
+/* Frozen columns. The offset is computed in the component, because sticky needs
+   a real pixel value and the columns are not all one width. */
+.frozen {
+  position: sticky;
+  z-index: 1;
+}
+
+th.frozen {
+  /* Above both the sticky header and the frozen body cells, or the top-left
+     corner cell is painted over as the grid scrolls diagonally. */
+  z-index: 3;
+}
+
+/* The seam. Without it a frozen column and a scrolled one abut with no join, and
+   the reader cannot tell which columns are pinned. */
+.seam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 6px;
+  transform: translateX(100%);
+  pointer-events: none;
+  background: linear-gradient(to right, rgb(0 0 0 / 12%), transparent);
+}
+
+.right {
+  text-align: right;
+}
+
+/* Digits that line up in a column read as a column. */
+.amount {
+  font-variant-numeric: tabular-nums;
+}
+
+th .sort {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: baseline;
+}
+
+th .sort:focus-visible {
+  outline: 2px solid var(--bb-accent, #14605c);
+  outline-offset: 2px;
+}
+
+.mark small {
+  font-size: 0.65em;
+  vertical-align: super;
+}
+
+tbody tr:hover td {
+  background: var(--bb-surface-2, #f6f7f9);
+}
+
+tbody tr:focus-visible {
+  outline: 2px solid var(--bb-accent, #14605c);
+  outline-offset: -2px;
+}
+
+tfoot td {
+  position: sticky;
+  bottom: 0;
+  font-weight: 600;
+  background: var(--bb-surface-2, #f6f7f9);
+  border-top: 1px solid var(--bb-line, #e2e5ea);
+}
+
+tfoot .total td {
+  border-top: 2px solid var(--bb-line, #e2e5ea);
+}
+
+tfoot small {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.empty {
+  padding: 1.5rem;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.pager {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  padding: 0.5rem 0;
+  font-size: 0.85rem;
+}
+
+.pager .count {
+  margin-right: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.pager .where {
+  font-variant-numeric: tabular-nums;
+  min-width: 4rem;
+  text-align: center;
+}
+
+.pager button {
+  min-width: 2rem;
+  cursor: pointer;
+}
+
+.pager button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+/* The card list is the phone rendering, hidden on wider screens. */
+.cards {
+  display: none;
+}
+
+@media (max-width: 40rem) {
+  .report-grid {
+    display: none;
+  }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cards li {
+    border: 1px solid var(--bb-line, #e2e5ea);
+    border-radius: 4px;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .cards .title {
+    margin: 0 0 0.4rem;
+    font-weight: 600;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .cards dl {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 0.75rem;
+    font-size: 0.85rem;
+  }
+
+  .cards dl > div {
+    display: contents;
+  }
+
+  .cards dt {
+    opacity: 0.7;
+  }
+
+  .cards dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
