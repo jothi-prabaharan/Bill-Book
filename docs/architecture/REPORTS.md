@@ -877,7 +877,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 - [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
 - [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 not yet cleared** → **G1**
-- [ ] **S · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
+- [x] **S · R0.2 — read-only cross-schema reads:** ten read models over `acc` and `con` with `ExcludeFromMigrations`, verified to add nothing to the migration. **The `inv` read models move to R2.1**, where the reports that need them say which columns those are — declaring them now would be guessing. → **G2 not yet cleared**
 - [ ] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [ ] **S · R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
 - [ ] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** Account Movement and Trial Balance, plus the written recipe every later report is built from.
@@ -908,7 +908,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior reviews and writes nothing here.
 
-- [ ] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null.
+- [ ] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null. **Starts by adding the `inv` read models** — `ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`, `CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`, `UnitOfMeasureRead` — following the ten in `ReadModels/` exactly, and re-running the empty-migration check afterwards.
 - [ ] **J · R2.2 — batch tracking:** Status and Detail.
 - [ ] **J · R2.3 — serial tracking:** Status and Detail.
 - [ ] **J · R2.4 — warehouse tracking:** Status and Detail.

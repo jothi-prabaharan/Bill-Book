@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.TableEntities;
+using Reporting.Repository.ReadModels;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository;
@@ -29,6 +30,39 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ReportDetail> ReportDetails => Set<ReportDetail>();
 
     public DbSet<ReportView> ReportViews => Set<ReportView>();
+
+    // ---- Read-only, from other services' schemas. Never written to. ----
+    //
+    // The recorded exception of REPORTS.md §2. A report engine has to join across
+    // acc, inv and con and then page the result; over HTTP there is no join and no
+    // server-side paging, and a Postgres view would be raw SQL, which hard rule 1
+    // forbids. So Reporting maps its own read models over those tables with
+    // ExcludeFromMigrations: it owns no migration for them and never writes to them.
+    //
+    // Each inherits OrgScopedEntity, which is the deliberate part — the base
+    // context applies the OrgId query filter by reflection, so a read model cannot
+    // be added without one. That is gate G2, enforced by the type system rather
+    // than by remembering.
+
+    public DbSet<JournalLedgerRead> Ledger => Set<JournalLedgerRead>();
+
+    public DbSet<AccountRead> Accounts => Set<AccountRead>();
+
+    public DbSet<SubAccountRead> SubAccounts => Set<SubAccountRead>();
+
+    public DbSet<JournalRead> Journals => Set<JournalRead>();
+
+    public DbSet<JournalDetailRead> JournalDetails => Set<JournalDetailRead>();
+
+    public DbSet<BankAccountRead> BankAccounts => Set<BankAccountRead>();
+
+    public DbSet<BankRead> Banks => Set<BankRead>();
+
+    public DbSet<BankStatementRead> BankStatements => Set<BankStatementRead>();
+
+    public DbSet<BankStatementLineRead> BankStatementLines => Set<BankStatementLineRead>();
+
+    public DbSet<ContactRead> Contacts => Set<ContactRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -89,6 +123,58 @@ public class ReportingDbContext : TenantDbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        ConfigureReadModels(modelBuilder);
+
         base.OnModelCreating(modelBuilder);
+    }
+
+    /// <summary>
+    /// Maps the other schemas' tables read-only.
+    ///
+    /// Three properties hold for every one of them, and all three matter:
+    /// <list type="number">
+    /// <item><b><c>ExcludeFromMigrations</c></b> — the owning service migrates its
+    /// own tables. A Reporting migration that created or altered one of these
+    /// would be two services writing one schema, and the second one to run
+    /// wins.</item>
+    /// <item><b>No navigation to anything writable.</b> A report joins by id in
+    /// the query rather than by a navigation property, so there is no path from a
+    /// read model to a tracked graph somebody could save.</item>
+    /// <item><b>The OrgId query filter comes from the base context</b>, because
+    /// each read model inherits <see cref="OrgScopedEntity"/>. Adding one without
+    /// a filter would take deliberate effort.</item>
+    /// </list>
+    ///
+    /// <c>ToTable</c> names are the owning services' table names exactly. When one
+    /// of those is renamed this breaks at compile time or at the first query,
+    /// which is the cost of the §2 exception and was accepted knowingly.
+    /// </summary>
+    private static void ConfigureReadModels(ModelBuilder modelBuilder)
+    {
+        MapRead<JournalLedgerRead>(modelBuilder, "JournalLedger", "acc", e => e.LedgerId);
+        MapRead<AccountRead>(modelBuilder, "Accounts", "acc", e => e.AccountId);
+        MapRead<SubAccountRead>(modelBuilder, "SubAccounts", "acc", e => e.SubAccountId);
+        MapRead<JournalRead>(modelBuilder, "Journals", "acc", e => e.JournalId);
+        MapRead<JournalDetailRead>(modelBuilder, "JournalDetails", "acc", e => e.JournalDetailId);
+        MapRead<BankAccountRead>(modelBuilder, "BankAccounts", "acc", e => e.BankAccountId);
+        MapRead<BankRead>(modelBuilder, "Banks", "acc", e => e.BankId);
+        MapRead<BankStatementRead>(modelBuilder, "BankStatements", "acc", e => e.BankStatementId);
+        MapRead<BankStatementLineRead>(
+            modelBuilder, "BankStatementLines", "acc", e => e.BankStatementLineId);
+        MapRead<ContactRead>(modelBuilder, "Contacts", "con", e => e.ContactId);
+    }
+
+    private static void MapRead<TEntity>(
+        ModelBuilder modelBuilder,
+        string table,
+        string schema,
+        System.Linq.Expressions.Expression<Func<TEntity, object?>> key)
+        where TEntity : class
+    {
+        modelBuilder.Entity<TEntity>(b =>
+        {
+            b.ToTable(table, schema, t => t.ExcludeFromMigrations());
+            b.HasKey(key);
+        });
     }
 }
