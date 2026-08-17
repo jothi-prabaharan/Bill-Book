@@ -102,7 +102,7 @@
         {{ group.type.displayName }}
         <span class="meta">{{ group.type.normalBalance }} · {{ group.type.reportSection }}</span>
       </h2>
-      <table class="grid">
+      <bb-card-table>
         <tbody>
           @for (a of group.accounts; track a.accountId) {
             <tr [class.inactive]="!a.isActive" [class.child]="a.parentAccountId">
@@ -131,7 +131,7 @@
             <tr><td colspan="4" class="empty">No accounts of this type.</td></tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     </section>
   }
 }

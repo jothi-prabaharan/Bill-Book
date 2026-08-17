@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -140,7 +141,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
 @Component({
   selector: 'bb-items-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
 })

@@ -8,7 +8,7 @@
 }
 
 @if (!editing()) {
-  <table class="grid">
+  <bb-card-table>
     <thead>
       <tr><th>Role</th><th>Description</th><th>Users</th><th>Permissions</th><th></th></tr>
     </thead>
@@ -33,7 +33,7 @@
         <tr><td colspan="5">No roles.</td></tr>
       }
     </tbody>
-  </table>
+  </bb-card-table>
 } @else {
   <form class="editor" (ngSubmit)="save()">
     <label>

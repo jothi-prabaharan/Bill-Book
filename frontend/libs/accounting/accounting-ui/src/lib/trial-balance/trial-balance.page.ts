@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -42,7 +43,7 @@ interface AccountType {
 @Component({
   selector: 'bb-trial-balance-page',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink],
+  imports: [CardTableComponent, DecimalPipe, FormsModule, RouterLink],
   templateUrl: './trial-balance.page.html',
   styleUrl: './trial-balance.page.scss',
 })

@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -36,7 +37,7 @@ interface PermissionGroup {
 @Component({
   selector: 'bb-roles-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './roles.page.html',
   styleUrl: './roles.page.scss',
 })

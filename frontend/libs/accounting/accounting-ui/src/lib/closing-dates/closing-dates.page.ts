@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -44,7 +45,7 @@ interface Row {
 @Component({
   selector: 'bb-closing-dates-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './closing-dates.page.html',
   styleUrl: './closing-dates.page.scss',
 })

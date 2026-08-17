@@ -50,7 +50,7 @@
         {{ group.accountName }}
         <span class="meta">{{ group.rows.length }}</span>
       </h2>
-      <table class="grid">
+      <bb-card-table>
         <tbody>
           @for (s of group.rows; track s.subAccountId) {
             <tr [class.inactive]="!s.isActive">
@@ -73,7 +73,7 @@
             </tr>
           }
         </tbody>
-      </table>
+      </bb-card-table>
     </section>
   } @empty {
     <p class="empty">

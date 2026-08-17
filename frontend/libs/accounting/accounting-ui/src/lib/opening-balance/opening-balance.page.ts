@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -124,7 +125,7 @@ interface LineForm {
 @Component({
   selector: 'bb-opening-balance-page',
   standalone: true,
-  imports: [DecimalPipe, FormsModule],
+  imports: [CardTableComponent, DecimalPipe, FormsModule],
   templateUrl: './opening-balance.page.html',
   styleUrl: './opening-balance.page.scss',
 })

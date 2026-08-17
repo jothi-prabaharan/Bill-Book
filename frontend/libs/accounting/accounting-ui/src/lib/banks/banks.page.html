@@ -13,7 +13,7 @@
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<table class="grid">
+<bb-card-table>
   <thead>
     <tr>
       <th class="handle-col"><span class="sr-only">Reorder</span></th>
@@ -45,7 +45,7 @@
       <tr><td colspan="6">No banks.</td></tr>
     }
   </tbody>
-</table>
+</bb-card-table>
 
 @if (editingId() !== null) {
   <div class="sheet narrow">

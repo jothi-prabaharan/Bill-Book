@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +33,7 @@ type Mode = 'create' | 'revise' | 'rename';
 @Component({
   selector: 'bb-tax-master-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CardTableComponent, FormsModule],
   templateUrl: './tax-master.page.html',
   styleUrl: './tax-master.page.scss',
 })

@@ -33,7 +33,7 @@
     </p>
   }
 
-  <table class="grid">
+  <bb-card-table>
     <thead>
       <tr>
         <th class="code-col">Code</th>
@@ -77,7 +77,7 @@
         <td class="num">{{ tb.totalCredit | number: '1.2-2' }}</td>
       </tr>
     </tfoot>
-  </table>
+  </bb-card-table>
 
   @if (tb.rows.length === 0) {
     <p class="empty">

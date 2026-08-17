@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -168,7 +169,7 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
 @Component({
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [FormsModule, ContactPersonRolesDialog],
+  imports: [CardTableComponent, FormsModule, ContactPersonRolesDialog],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
 })

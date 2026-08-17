@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -109,7 +110,7 @@ interface LineForm {
 @Component({
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [DecimalPipe, FormsModule],
+  imports: [CardTableComponent, DecimalPipe, FormsModule],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })

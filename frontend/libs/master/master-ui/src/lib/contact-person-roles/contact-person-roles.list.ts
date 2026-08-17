@@ -1,3 +1,4 @@
+import { CardTableComponent } from '@bill-book/ui-components';
 import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -27,7 +28,7 @@ export interface ContactPersonRole {
 @Component({
   selector: 'bb-contact-person-roles-list',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
   templateUrl: './contact-person-roles.list.html',
   styleUrl: './contact-person-roles.list.scss',
 })
