@@ -29,3 +29,4 @@ app.MapGet("/", () => Results.Ok(new
 }));
 
 app.Run();
+
