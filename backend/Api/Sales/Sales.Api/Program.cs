@@ -182,6 +182,8 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+builder.Services.AddHostedService<DatabaseMigrationService>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -215,5 +217,6 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
 
 

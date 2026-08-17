@@ -63,7 +63,7 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
@@ -127,6 +127,8 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
+builder.Services.AddHostedService<DatabaseMigrationService>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -160,3 +162,4 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
