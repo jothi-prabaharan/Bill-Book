@@ -101,6 +101,12 @@ builder.Services.AddScoped<IReportSource, InventoryAgingSource>();
 builder.Services.AddScoped<IReportSource, ItemListSource>();
 builder.Services.AddScoped<IReportSource, ItemDetailSource>();
 builder.Services.AddScoped<IReportSource, ItemSummarySource>();
+builder.Services.AddScoped<IReportSource, BatchTrackingStatusSource>();
+builder.Services.AddScoped<IReportSource, BatchTrackingDetailSource>();
+builder.Services.AddScoped<IReportSource, SerialTrackingStatusSource>();
+builder.Services.AddScoped<IReportSource, SerialTrackingDetailSource>();
+builder.Services.AddScoped<IReportSource, WarehouseTrackingStatusSource>();
+builder.Services.AddScoped<IReportSource, WarehouseTrackingDetailSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
