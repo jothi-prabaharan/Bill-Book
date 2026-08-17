@@ -876,7 +876,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 #### R0 — the engine and the grid
 
 - [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
-- [ ] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty. → **G1**
+- [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 not yet cleared** → **G1**
 - [ ] **S · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
 - [ ] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [ ] **S · R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
@@ -889,6 +889,8 @@ Full detail for each task is in the section above; this is the tracker, not a se
 - [ ] **S · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
 
 **Gates** — [ ] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
+
+> **None of the three can be cleared in a container with no PostgreSQL**, which is where R0.1 was written: `dotnet ef migrations add` reads the model and writes files, but only `database update` opens a connection. The RLS block is written and the query filters are in place; whether they *hold* is unproven until the migration is applied to a real server and queried as a second org. **Set `REPORTING_TEST_DB` and clear all three gates before any of this is trusted.** A gate signed off on a build alone is not signed off.
 
 **Junior runs R1.1 and R1.2 alongside R0** — neither depends on the reporting engine, and they are the only work available before §9.5 exists.
 
