@@ -42,5 +42,25 @@
   "/api/sales": {
     "target": "http://localhost:4507",
     "secure": false
+  },
+  "/api/inventory": {
+    "target": "http://localhost:4503",
+    "secure": false
+  },
+  "/api/purchase": {
+    "target": "http://localhost:4505",
+    "secure": false
+  },
+  "/api/customer": {
+    "target": "http://localhost:4502",
+    "secure": false
+  },
+  "/api/reporting": {
+    "target": "http://localhost:4506",
+    "secure": false
+  },
+  "/api/gateway": {
+    "target": "http://localhost:4500",
+    "secure": false
   }
 }
