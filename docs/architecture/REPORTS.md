@@ -586,13 +586,71 @@ cd backend  && dotnet build && dotnet test
 
 ---
 
+### 9.1 Who builds what
+
+Two agents build this. **Claude Code is senior and owns the pieces whose mistakes are silent. Antigravity is junior and owns the pieces whose mistakes are loud.**
+
+That is the whole rule, and it is not a claim about which model is cleverer — it is about where a defect surfaces. A missing query filter serves another branch's ledger to a customer and nothing turns red. A report page with a broken column does not render and everybody knows inside a minute. The scarce budget goes on the first kind.
+
+| | Senior — Claude Code | Junior — Antigravity |
+|---|---|---|
+| **Owns** | The contract, both ends. The query engine. **The first source of each shape**, because every later source is copied from it. The grid and its panels. The pivot builder | The schema. The read models. The API host. The Excel writer. The pages. And the volume — fifteen report sources across R1 and R2, each a copy of a template that already exists |
+| **Tasks** | R0.0, R0.3, R0.4, R0.5, R0.8, R0.9, R0.10, R1.3, R3.3, R3.4 | R0.1, R0.2, R0.6, R0.7, R0.11, R1.1, R1.2, R1.4–R1.7, all of R2, R3.1, R3.2 |
+| **Roughly** | ~14h, front-loaded into R0 | ~19h, most of it after R0 |
+
+**R0 is unavoidably senior-heavy** — it is nearly all design — and the payoff is R1 and R2, which are 10 hours of near-pure junior work. If the senior budget has to shrink further, the one task to move is **R0.10**: once R0.9 lands, the filter bar, column chooser and group panel follow its idiom closely enough for junior to write them against it.
+
+#### Review gates
+
+**Senior reviews every junior commit before it merges.** Three of those reviews are gates rather than reviews — junior does not proceed past them, and the reviewer's job is to check the specific thing named, not to read the diff generally:
+
+| Gate | After | What is checked, and why it is a gate |
+|---|---|---|
+| **G1** | R0.1 | Every `rpt` table has `OrgId`, a global query filter **and** an RLS policy. A miss leaks between branches and no test fails |
+| **G2** | R0.2 | Every read model re-declares its query filter, and none carries a navigation to a writable entity. Same failure mode, wider blast radius |
+| **G3** | R0.6 | `set_config` is transaction-local, never connection-level. Pooled connections are reused across requests, so connection-level org context leaks to the next caller |
+
+#### How junior should work
+
+- **Stop and ask rather than invent.** A junior that guesses at the tenancy model writes code that passes its tests and leaks data. Ambiguity in this document is a question, not a judgement call.
+- **Copy the named file.** Where a task says "copy `Inventory.Api/Program.cs`" or "copy `AccountMovementSource.cs`", that is an instruction, not a suggestion — consistency across sources is what keeps fifteen reports maintainable by one person.
+- **Never add a package.** Not one. If a task seems to need one, the task is wrong; say so.
+- **Run both verification commands before every commit.** A commit that does not build is a commit that blocks the other agent.
+
+#### Working in parallel
+
+Separate worktrees, one per agent, so neither clobbers the other's files or build cache:
+
+```
+git worktree add ../Bill-Book-senior report-senior
+git worktree add ../Bill-Book-junior report-junior
+```
+
+Both merge into `Report`. **Sequence:** junior does R0.1 and R0.2 → senior does R0.3, R0.4, R0.5 and writes the recipe → from there both run in parallel, senior on R0.8–R0.10, junior on R0.6, R0.7, R0.11 and into R1 and R2.
+
+Four files conflict no matter how the work is split, and are worth resolving by hand each merge rather than trusting a three-way merge: **this file's progress checklist** (senior owns the ticks), **`release-notes.md`**, **`docs.manifest.ts`**, and **`Bill-Book.sln`**. The `rpt` migration has **one owner only** — two EF migrations from two branches do not merge cleanly, they merge dirtily.
+
+---
+
 ### Stage R0 — the engine and the grid
 
 Eleven tasks. Proven against **Account Movement** (simplest source) and **Trial Balance** (has an existing page to check numbers against).
 
 ---
 
-#### R0.1 — the `rpt` schema · ~1.5h · depends: nothing
+#### R0.0 — `AGENTS.md` · **Senior** · ~0.5h · depends: nothing
+
+Antigravity does not read `CLAUDE.md`. Without this task it starts blind to LINQ-only, to `ErrorMessage` on every annotation, to `OrgId` on every table, to the `Report` branch and to the no-new-packages rule — and writes plausible code that breaks four house rules.
+
+**Create** `AGENTS.md` at the repository root — the convention non-Claude agents read. It points at `docs/standards/ai-agent-structure-rules.md` (already written for both agents, and naming Antigravity explicitly), at §9.0 and §9.1 of this file, and states the branch and the package rule inline rather than by reference, because those two are the ones that cause damage before anybody notices.
+
+**Also resolve open question 7** — `CLAUDE.md` hard rule 11 says commit to `main`, §9.0 says `Report`. Two agents reading two answers diverge on their first commit.
+
+**Done when:** an agent given only `AGENTS.md` can state the branch, the package rule and the five hard rules that matter here.
+
+---
+
+#### R0.1 — the `rpt` schema · **Junior** · ~1.5h · depends: R0.0 · **gate G1**
 
 **Create:**
 
@@ -631,7 +689,7 @@ All three entities inherit `Shared.Kernel.Tenancy.OrgScopedEntity`. `ReportKey` 
 
 ---
 
-#### R0.2 — read-only reads across `acc`, `inv` and `con` · ~1.5h · depends: R0.1 · **needs the §2 decision**
+#### R0.2 — read-only reads across `acc`, `inv` and `con` · **Junior** · ~1.5h · depends: R0.1 · **gate G2** · **needs the §2 decision**
 
 **Do not start this until the §2 exception is confirmed.** Everything else in R0 except R0.5–R0.7 proceeds without it.
 
@@ -645,7 +703,7 @@ Only the columns the reports in §8 name. A read model is not a copy of the enti
 
 ---
 
-#### R0.3 — the query contract · ~0.5h · depends: nothing
+#### R0.3 — the query contract · **Senior** · ~0.5h · depends: nothing
 
 **Create** in `Reporting.Entity/Models/`: `ReportQueryRequest`, `ReportFilterModel`, `ReportSortModel`, `ReportPivotModel`, `ReportPageModel`, `ReportFreezeModel`, `ReportResultView`, `ReportColumnView`, `ReportGroupFooterView`, `ReportTotalView`, `ReportCatalogItemView`, `ReportMetadataView`, `SavedViewModel`.
 
@@ -655,7 +713,7 @@ Shapes are in §4.2 and §4.3. Every annotation carries `ErrorMessage`. Enforce 
 
 ---
 
-#### R0.4 ★ — the generic query engine · ~3h · depends: R0.3
+#### R0.4 ★ — the generic query engine · **Senior** · ~3h · depends: R0.3
 
 The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
@@ -677,17 +735,21 @@ The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
 ---
 
-#### R0.5 — Account Movement and Trial Balance · ~1h · depends: R0.2, R0.4
+#### R0.5 ★ — the two template sources, and the recipe · **Senior** · ~1.5h · depends: R0.2, R0.4
+
+**This task looks small and is not.** `AccountMovementSource.cs` is the file the other forty-four reports are copied from. Its shape — how columns are declared, how a cross-database lookup is batched, how parameters are read, where the seed rows go — becomes the shape of every report in R1 and R2. Get it wrong and junior faithfully reproduces the mistake fifteen times, and it surfaces in R2.
 
 **Create** `Reporting.Api/Services/Sources/AccountMovementSource.cs` and `TrialBalanceSource.cs`, columns exactly as §8.1 lists them. Add both to `ReportCatalogSeed`.
 
 *Account Type* comes from `mst.AccountTypes` — a different database, so resolve in C# and batch it. Trial Balance's *CAAccountID* is `IsHidden`.
 
-**Done when:** the catalog validator passes and both sources compile against the read models.
+**Then write §9.5, "How to add a report"** — the recipe junior works from: which file to copy, the four things to change, where the catalog and `rpt.ReportDetails` rows go, and the two commands that verify it. Written **after** the code exists, never before: a recipe written against imaginary code is a recipe that does not match the code.
+
+**Done when:** the catalog validator passes, both sources compile against the read models, and §9.5 is written such that adding a third report requires no decisions.
 
 ---
 
-#### R0.6 — the API host · ~2h · depends: R0.5
+#### R0.6 — the API host · **Junior** · ~2h · depends: R0.5 · **gate G3**
 
 `Reporting.Api/Program.cs` is a stub returning `"not implemented"`. **Replace it wholesale** — copy `Inventory.Api/Program.cs`, which its own comment names as the fullest example: JWT bearer, tenant resolution, `set_config` transaction-locally (never connection-level), the audit interceptor, DI, OpenAPI.
 
@@ -699,7 +761,7 @@ The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
 
 ---
 
-#### R0.7 — Excel export · ~2h · depends: R0.6
+#### R0.7 — Excel export · **Junior** · ~2h · depends: R0.6
 
 **Create** `Reporting.Api/Services/ExcelReportWriter.cs` on `DocumentFormat.OpenXml` (pinned 3.5.1). Read `ExcelStatementReader.cs` and `StatementExportWriter.cs` first — the OpenXml idiom this repo uses is already there.
 
@@ -711,7 +773,7 @@ Frozen header pane, column widths, number formats by `ColumnDataType`, group sub
 
 ---
 
-#### R0.8 — frontend contracts and services · ~1h · depends: R0.3
+#### R0.8 — frontend contracts and services · **Senior** · ~1h · depends: R0.3
 
 **Create** in `libs/reporting/reporting-core/src/lib/`: `models/` mirroring the server contracts, `report-catalog.service.ts`, `report-query.service.ts`, `report-state.ts` (state ↔ URL serialization), and export them from `index.ts`.
 
@@ -719,7 +781,7 @@ Signals and `inject()`, `async`/`await` over promises rather than piped RxJS. **
 
 ---
 
-#### R0.9 ★ — `bb-report-grid` · ~3h · depends: R0.8
+#### R0.9 ★ — `bb-report-grid` · **Senior** · ~3h · depends: R0.8
 
 **Create** `libs/shared/ui-components/src/lib/report-grid/` — component, models, and the styles. Read `document-line-grid.component.ts` first: same house style, same "owns no data, fetches nothing" contract.
 
@@ -731,7 +793,7 @@ The API is in §3.3. This task covers: the table, sticky header (`position: stic
 
 ---
 
-#### R0.10 ★ — filtering, column selection, grouping · ~3.5h · depends: R0.9
+#### R0.10 ★ — filtering, column selection, grouping · **Senior**, or junior if the budget is tight · ~3.5h · depends: R0.9
 
 **Create** beside the grid: `filter-bar.component.*` (per-type editors, clearable chips), `column-chooser.dialog.*` (search, select, drag reorder via `@angular/cdk/drag-drop` — copy the idiom from `numbering-series.page.ts`), `group-panel.component.*` (drop target, three-level nesting, collapsible group headers showing count and subtotals).
 
@@ -739,7 +801,7 @@ The API is in §3.3. This task covers: the table, sticky header (`position: stic
 
 ---
 
-#### R0.11 — pages, routes and documentation · ~1h · depends: R0.6, R0.10
+#### R0.11 — pages, routes and documentation · **Junior** · ~1h · depends: R0.6, R0.10
 
 **Create** `libs/reporting/reporting-ui/src/lib/report-list/report-list.page.*` (catalog grouped by module) and `report-host/report-host.page.*` (one generic page driven by `:reportKey`). Routes in `apps/web`. Navigation entry.
 
@@ -751,23 +813,23 @@ The API is in §3.3. This task covers: the table, sticky header (`position: stic
 
 ### Stage R1 — the accounting reports · ~5h · depends: R0
 
-Seven tasks, one commit each:
+Seven tasks, one commit each. **R1.3 is senior** — it is the second template, the one every report with a running balance or a window function is copied from. The rest are junior, working from §9.5.
 
-| # | Task | Note |
-|---|---|---|
-| R1.1 | `acc.JournalLedger` indexes | `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)`, `(OrgId, SubAccountId, LedgerDate)`. An **Accounting** migration, not a Reporting one |
-| R1.2 | Batched user-name resolver | `mst.Users` is another database. A 200-row Journal Report page must not be 200 lookups |
-| R1.3 | Account Transaction | The running-balance rule of §5.5: forces its sort order, and page *n*'s opening figure comes back in the response |
-| R1.4 | General Ledger Summary | Opening balance is everything before the period |
-| R1.5 | Journal Report | Six audit columns, resolved through R1.2 |
-| R1.6 | Bank Summary | |
-| R1.7 | Reconciliation | *GroupBy* in the source list is a parameter, not a column |
+| # | Task | Owner | Note |
+|---|---|---|---|
+| R1.1 | `acc.JournalLedger` indexes | Junior | `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)`, `(OrgId, SubAccountId, LedgerDate)`. An **Accounting** migration, not a Reporting one |
+| R1.2 | Batched user-name resolver | Junior | `mst.Users` is another database. A 200-row Journal Report page must not be 200 lookups |
+| R1.3 | Account Transaction | **Senior** | The running-balance rule of §5.5: forces its sort order, and page *n*'s opening figure comes back in the response. Also the performance bar — the report that proves the engine at volume |
+| R1.4 | General Ledger Summary | Junior | Opening balance is everything before the period. Copies R1.3's pattern |
+| R1.5 | Journal Report | Junior | Six audit columns, resolved through R1.2 |
+| R1.6 | Bank Summary | Junior | |
+| R1.7 | Reconciliation | Junior | *GroupBy* in the source list is a parameter, not a column |
 
 ---
 
 ### Stage R2 — the inventory reports · ~5h · depends: R0
 
-Ten sources over an engine that already works — the point of R0. Three or four commits, grouped:
+**All junior.** Ten sources over an engine that already works, each one §9.5 applied — this stage is the return on R0 being senior-heavy. Senior reviews, and writes no code here. Three or four commits, grouped:
 
 - **R2.1** Inventory Aging (ages by cost-layer receipt date), Inventory Item List, Item Detail, Item Summary — the last three declare their sales/purchase columns and return null for them
 - **R2.2** Batch Tracking Status + Detail
@@ -778,12 +840,12 @@ Ten sources over an engine that already works — the point of R0. Three or four
 
 ### Stage R3 — saved views and pivot · ~6h · depends: R0
 
-| # | Task |
-|---|---|
-| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reporting.manage` |
-| R3.2 | `saved-view.dialog.*` — save, rename, set default, share to branch |
-| R3.3 | `PivotBuilder` — group both axes, aggregate, transpose the aggregated result in memory; refuse a column axis over 200 distinct values, naming the column |
-| R3.4 | `pivot-panel.component.*` — rows / columns / values with aggregates; hidden below the tablet breakpoint per §3.5 |
+| # | Task | Owner |
+|---|---|---|
+| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reporting.manage` | Junior |
+| R3.2 | `saved-view.dialog.*` — save, rename, set default, share to branch | Junior |
+| R3.3 | `PivotBuilder` — group both axes, aggregate, transpose the aggregated result in memory; refuse a column axis over 200 distinct values, naming the column | **Senior** |
+| R3.4 | `pivot-panel.component.*` — rows / columns / values with aggregates; hidden below the tablet breakpoint per §3.5 | **Senior** |
 
 ---
 
@@ -795,49 +857,56 @@ Roughly one commit per two reports once those services exist — by then a repor
 
 ---
 
-### 9.1 Task checklist
+### 9.2 Task checklist
 
 **Tick a box in the same commit as the task it names.** This list is the handoff: a session with no memory of any of this reads it to learn where the work stopped, and a box ticked later — or ticked in a sweep at the end — tells it something untrue.
 
-Full detail for each task is in the section above; this is the tracker, not a second specification.
+**Senior ticks the boxes, including junior's.** One writer keeps this file from conflicting on every commit, and the tick then means *reviewed and merged* rather than *pushed*.
+
+Full detail for each task is in the section above; this is the tracker, not a second specification. **S** = senior, Claude Code. **J** = junior, Antigravity. §9.1 explains the split.
 
 #### R0 — the engine and the grid
 
-- [ ] **R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty.
-- [ ] **R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.**
-- [ ] **R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
-- [ ] **R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
-- [ ] **R0.5 — Account Movement and Trial Balance:** the first two `IReportSource` implementations and their catalog seed rows.
-- [ ] **R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`.
-- [ ] **R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
-- [ ] **R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
-- [ ] **R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
-- [ ] **R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser.
-- [ ] **R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
+- [ ] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
+- [ ] **J · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. Done when a second `migrations add` comes back empty. → **G1**
+- [ ] **J · R0.2 — read-only cross-schema reads:** ~20 read models over `acc`, `inv` and `con` with `ExcludeFromMigrations`. **Blocked on the §2 decision.** → **G2**
+- [ ] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
+- [ ] **S · R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
+- [ ] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** Account Movement and Trial Balance, plus the written recipe every later report is built from.
+- [ ] **J · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`. → **G3**
+- [ ] **J · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
+- [ ] **S · R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
+- [ ] **S · R0.9 ★ — `bb-report-grid`:** table, sticky header, sticky first-*N* columns, multi-key sort, pager, 360px cards. Renders against stub data.
+- [ ] **S · R0.10 ★ — filtering, column selection, grouping:** filter bar, column chooser, group panel. Subtotals come from the response, never the browser. *Junior may take this if the senior budget is tight — after R0.9 lands.*
+- [ ] **J · R0.11 — pages, routes and documentation:** report list, generic host page, routes, and the docs page + manifest entry + release note **in this same commit**.
+
+**Gates** — [ ] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6. Senior signs each one off before junior continues; §9.1 says what each checks.
 
 #### R1 — the accounting reports
 
-- [ ] **R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
-- [ ] **R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
-- [ ] **R1.3 — Account Transaction:** the running-balance rule — forced sort order, and page *n*'s opening figure in the response.
-- [ ] **R1.4 — General Ledger Summary:** opening balance is everything before the period.
-- [ ] **R1.5 — Journal Report:** six audit columns, resolved through R1.2.
-- [ ] **R1.6 — Bank Summary**
-- [ ] **R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
+- [ ] **J · R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
+- [ ] **J · R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
+- [ ] **S · R1.3 — Account Transaction:** the second template — the running-balance rule, forced sort order, and page *n*'s opening figure in the response. Also the performance bar.
+- [ ] **J · R1.4 — General Ledger Summary:** opening balance is everything before the period. Copies R1.3.
+- [ ] **J · R1.5 — Journal Report:** six audit columns, resolved through R1.2.
+- [ ] **J · R1.6 — Bank Summary**
+- [ ] **J · R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
 
-#### R2 — the inventory reports
+#### R2 — the inventory reports · all junior
 
-- [ ] **R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null.
-- [ ] **R2.2 — batch tracking:** Status and Detail.
-- [ ] **R2.3 — serial tracking:** Status and Detail.
-- [ ] **R2.4 — warehouse tracking:** Status and Detail.
+The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior reviews and writes nothing here.
+
+- [ ] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null.
+- [ ] **J · R2.2 — batch tracking:** Status and Detail.
+- [ ] **J · R2.3 — serial tracking:** Status and Detail.
+- [ ] **J · R2.4 — warehouse tracking:** Status and Detail.
 
 #### R3 — saved views and pivot
 
-- [ ] **R3.1 — saved views API:** `ReportViewsController` and `saved-view.service.ts` over `rpt.ReportViews`.
-- [ ] **R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reporting.manage`.
-- [ ] **R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL, transposed in memory, refusing over 200 columns.
-- [ ] **R3.4 — the pivot panel:** rows / columns / values, hidden below the tablet breakpoint.
+- [ ] **J · R3.1 — saved views API:** `ReportViewsController` and `saved-view.service.ts` over `rpt.ReportViews`.
+- [ ] **J · R3.2 — the saved-view dialog:** save, rename, set default, share to branch behind `reporting.manage`.
+- [ ] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL, transposed in memory, refusing over 200 columns.
+- [ ] **S · R3.4 — the pivot panel:** rows / columns / values, hidden below the tablet breakpoint.
 
 #### R4–R6 — not schedulable
 
