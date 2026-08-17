@@ -876,7 +876,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 #### R0 — the engine and the grid
 
 - [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
-- [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 not yet cleared** → **G1**
+- [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 cleared** against PostgreSQL 16.
 - [x] **S · R0.2 — read-only cross-schema reads:** ten read models over `acc` and `con` with `ExcludeFromMigrations`, verified to add nothing to the migration. **The `inv` read models move to R2.1**, where the reports that need them say which columns those are — declaring them now would be guessing. → **G2 not yet cleared**
 - [x] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [ ] **S · R0.4 ★ — the generic query engine:** `IReportSource`, `ReportQueryBuilder`, `ReportExecutionService`, the catalog and its startup validator. Expression trees only, and an unknown column is a 400.
