@@ -106,7 +106,11 @@ public static class ReportQueryBuilder<TRow>
     /// result and a result totalling zero are different facts, and a report that
     /// prints 0.00 for "nothing here" invites somebody to reconcile against it.
     /// </summary>
-    public static IQueryable<decimal?> SelectDecimal(IQueryable<TRow> query, ReportColumn column)
+    public static IQueryable<decimal?> SelectDecimal(IQueryable<TRow> query, ReportColumn column) =>
+        query.Select(DecimalSelector(column));
+
+    /// <summary>A column as a nullable decimal, for summing and averaging.</summary>
+    public static Expression<Func<TRow, decimal?>> DecimalSelector(ReportColumn column)
     {
         ParameterExpression parameter = Expression.Parameter(typeof(TRow), "e");
         Expression member = Rebind(column.Selector, parameter);
@@ -115,8 +119,65 @@ public static class ReportQueryBuilder<TRow>
             ? Expression.Convert(member, typeof(decimal?))
             : Expression.Convert(Expression.Convert(member, typeof(decimal)), typeof(decimal?));
 
-        return query.Select(Expression.Lambda<Func<TRow, decimal?>>(asDecimal, parameter));
+        return Expression.Lambda<Func<TRow, decimal?>>(asDecimal, parameter);
     }
+
+    /// <summary>The separator between group levels inside a composite key.</summary>
+    public const char GroupSeparator = '';
+
+    /// <summary>
+    /// A key selector over the group columns, as <b>one concatenated string</b>.
+    ///
+    /// One string rather than a key object, because that is the shape Postgres
+    /// groups on without argument: <c>a || b</c> translates, a member-init key is
+    /// at the mercy of the provider, and a key whose type varies per column drags
+    /// reflection through every call site. The levels are split apart again when
+    /// the footers are assembled.
+    ///
+    /// The separator is the ASCII unit separator — a character no ledger
+    /// description, account name or contact ever contains, so a value cannot forge
+    /// a group boundary.
+    /// </summary>
+    public static Expression<Func<TRow, string>> GroupKeySelector(
+        IReadOnlyList<string> groupBy, IReadOnlyDictionary<string, ReportColumn> columns)
+    {
+        ParameterExpression parameter = Expression.Parameter(typeof(TRow), "e");
+        Expression? key = null;
+
+        foreach (string columnKey in groupBy)
+        {
+            ReportColumn column = Resolve(columnKey, columns, "grouped by");
+
+            if (!column.IsGroupable)
+            {
+                throw new ReportQueryException($"Column '{columnKey}' cannot be grouped by.");
+            }
+
+            // Null and empty group alike. A group header reading "(none)" is the
+            // presentation layer's business, not the query's.
+            Expression member = Expression.Coalesce(
+                Rebind(column.Selector, parameter), Expression.Constant(string.Empty));
+
+            key = key is null
+                ? member
+                : Expression.Call(
+                    ConcatThree,
+                    key,
+                    Expression.Constant(GroupSeparator.ToString()),
+                    member);
+        }
+
+        if (key is null)
+        {
+            throw new ReportQueryException("Grouping needs at least one column.");
+        }
+
+        return Expression.Lambda<Func<TRow, string>>(key, parameter);
+    }
+
+    private static readonly MethodInfo ConcatThree =
+        typeof(string).GetMethod(
+            nameof(string.Concat), [typeof(string), typeof(string), typeof(string)])!;
 
     private static ReportColumn Resolve(
         string key, IReadOnlyDictionary<string, ReportColumn> columns, string verb)

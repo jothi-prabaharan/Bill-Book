@@ -79,6 +79,20 @@ public sealed class ReportColumn
     {
         Type value = Nullable.GetUnderlyingType(typeof(TValue)) ?? typeof(TValue);
 
+        // Groupable columns must be text, and the constraint is worth its
+        // inconvenience. Grouping happens in SQL, on a key built by concatenating
+        // the group columns; concatenating a date or an enum means asking Postgres
+        // to render it, which it does in a format nobody chose and which changes
+        // with server settings. A report that wants to group by account type
+        // exposes the type's *name* as a column — which is what the reader wanted
+        // to see in the group header anyway.
+        if (groupable && value != typeof(string))
+        {
+            throw new InvalidOperationException(
+                $"Column '{key}' is marked groupable but is {value.Name}. Grouping keys must be "
+                + "text — expose a text column carrying the display value and group by that.");
+        }
+
         return new ReportColumn(
             key, dataType, selector, value, aggregate, sortable, filterable, groupable);
     }

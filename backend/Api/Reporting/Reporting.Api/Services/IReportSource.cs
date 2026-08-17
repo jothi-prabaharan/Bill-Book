@@ -107,6 +107,11 @@ public abstract class ReportSource<TRow> : IReportSource
 
         query = ReportQueryBuilder<TRow>.ApplyFilters(query, request.Filters, Map);
 
+        // Held before paging: the footers and totals are of the whole filtered
+        // result, which is what makes a subtotal right when its group runs across
+        // a page boundary.
+        IQueryable<TRow> filtered = query;
+
         // Counted before paging and before ordering: the count is of the filtered
         // set, and ordering it would cost a sort nobody reads.
         long? total = request.Page.IncludeCount
@@ -136,6 +141,9 @@ public abstract class ReportSource<TRow> : IReportSource
             Currency = currency,
             Columns = [], // filled by the catalog, which owns presentation
             Rows = [.. rows.Select(row => Project(row, selected))],
+            GroupFooters = request.GroupBy.Count == 0
+                ? []
+                : await GroupFootersAsync(filtered, request.GroupBy, ct),
             GrandTotal = new ReportGroupFooterView
             {
                 RowCount = total ?? rows.Count,
@@ -182,6 +190,60 @@ public abstract class ReportSource<TRow> : IReportSource
         }
 
         return totals;
+    }
+
+    /// <summary>
+    /// Subtotals per group, over the <b>whole filtered result</b> rather than the
+    /// page. That distinction is the entire reason this runs as its own query: a
+    /// footer computed from the fifty rows on screen is wrong for every group that
+    /// spans a page boundary, and wrong in a way that looks plausible.
+    ///
+    /// One query for the row counts, then one per aggregatable column. Several
+    /// small grouped queries rather than one wide projection because the column
+    /// set varies per request, and a dynamic projection over a varying column list
+    /// is where this would stop being readable — Postgres groups the same set each
+    /// time, so the plans are cheap and identical.
+    /// </summary>
+    private async Task<List<ReportGroupFooterView>> GroupFootersAsync(
+        IQueryable<TRow> filtered, IReadOnlyList<string> groupBy, CancellationToken ct)
+    {
+        Expression<Func<TRow, string>> key =
+            ReportQueryBuilder<TRow>.GroupKeySelector(groupBy, Map);
+
+        List<ReportGroupFooterView> footers = [.. (await filtered
+            .GroupBy(key)
+            .Select(g => new { Key = g.Key, Count = g.LongCount() })
+            .ToListAsync(ct))
+            .Select(g => new ReportGroupFooterView
+            {
+                Path = [.. g.Key.Split(ReportQueryBuilder<TRow>.GroupSeparator)],
+                RowCount = g.Count,
+            })];
+
+        Dictionary<string, ReportGroupFooterView> byKey = footers.ToDictionary(
+            f => string.Join(ReportQueryBuilder<TRow>.GroupSeparator, f.Path),
+            StringComparer.Ordinal);
+
+        foreach (ReportColumn column in Columns.Where(c => c.IsAggregatable))
+        {
+            Expression<Func<TRow, decimal?>> value =
+                ReportQueryBuilder<TRow>.DecimalSelector(column);
+
+            var aggregated = await filtered
+                .GroupBy(key, value)
+                .Select(g => new { Key = g.Key, Total = g.Sum() })
+                .ToListAsync(ct);
+
+            foreach (var row in aggregated)
+            {
+                if (byKey.TryGetValue(row.Key, out ReportGroupFooterView? footer))
+                {
+                    footer.Aggregates[column.Key] = row.Total;
+                }
+            }
+        }
+
+        return footers;
     }
 
     private List<ReportColumn> Select(IReadOnlyList<string> requested)
