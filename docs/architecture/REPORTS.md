@@ -958,7 +958,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior reviews and writes nothing here.
 
-- [ ] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null. **Starts by adding the `inv` read models** — `ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`, `CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`, `UnitOfMeasureRead` — following the ten in `ReadModels/` exactly, and re-running the empty-migration check afterwards.
+- [x] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null. **Starts by adding the `inv` read models** — `ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`, `CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`, `UnitOfMeasureRead` — following the ten in `ReadModels/` exactly, and re-running the empty-migration check afterwards.
 - [ ] **J · R2.2 — batch tracking:** Status and Detail.
 - [ ] **J · R2.3 — serial tracking:** Status and Detail.
 - [ ] **J · R2.4 — warehouse tracking:** Status and Detail.
