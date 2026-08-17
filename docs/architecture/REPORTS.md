@@ -865,6 +865,52 @@ Roughly one commit per two reports once those services exist — by then a repor
 
 ---
 
+### 9.5 How to add a report
+
+**Written against code that exists.** `AccountMovementSource.cs` is the file to copy for a row-per-record report; `TrialBalanceSource.cs` for a row-per-thing-with-totals-underneath one. Adding a report is filling in a form — if you find yourself making a design decision, stop and ask, because the decision has probably already been made in one of those two files.
+
+**Nothing here writes filtering, sorting, grouping, paging, totalling or exporting.** The engine does all of it to every report alike. A report that contains any of that is a report doing the engine's job badly.
+
+#### The five steps
+
+**1. A row type.** One per report, in the same file, holding exactly what its columns read. Not an entity, not shared with another report — the projection becomes EF's `SELECT` list, so a shared row type fetches columns nobody asked for.
+
+**2. A source class** deriving from `ReportSource<TRow>`, in `Reporting.Api/Services/Sources/`. Four things are required of it:
+
+- `ReportKey`, `Title`, `Module`, `RequiredPermission` — the key matches the seeded catalog row exactly, and the permission is the *module's* (`accounting.view`, `inventory.view`), never `reporting.view`. `reporting.view` gets you the catalog; reading the ledger through a report still needs the ledger's permission, or the engine becomes a way around the permission on the screens it reports from.
+- `Columns` — see step 3.
+- `Build(parameters, db)` — the LINQ, **executing nothing**. Return the `IQueryable`; materialising here pages in memory and reads the whole ledger to show fifty rows.
+- `DefaultOrder` — a **unique** column. This is the tie-break, and without it two rows equal on every sort key can swap between pages, which reads as a row going missing. It only shows up under paging, never in a test with four rows.
+
+**3. The columns**, as `ReportColumn.Of<TRow, TValue>(key, dataType, selector, …)`. Four flags decide behaviour, and each has a wrong answer:
+
+| | Give it to | Never give it to |
+|---|---|---|
+| `AggregateFunction.Sum` | money that means something totalled | a rate, a code, a date, a running balance — the footer would look like an answer |
+| `groupable: true` | **text columns only** — enforced, it throws otherwise | anything else; grouping concatenates the key in SQL, and a date would be rendered in a format nobody chose |
+| `filterable: false` | internal ids, anything that would put a raw key in front of somebody | ordinary columns |
+| `sortable: false` | rarely — only where an order would be meaningless | anything a person might reasonably order by |
+
+**4. A seed entry** in `ReportCatalogSeeder.Catalog` — the report and **every** column it declares. Headers may carry `%CurCode%`, substituted per branch at render time, so one seeded header reads *Debit(INR)* in one branch and *Debit(AED)* in another. `IsDefault` marks the columns shown before anybody chooses; `IsHidden` carries a column that is fetched but never offered, like an id a row links by.
+
+**5. Register it** in DI alongside the other sources.
+
+#### Verify
+
+```
+cd backend && dotnet build && dotnet test
+```
+
+The build must be clean — `TreatWarningsAsErrors` is on. Then check the report actually runs: the catalog service compares the source's column keys against the seeded ones **and refuses the report by name when they disagree**, so a column added to a source but not to the seeder breaks that report rather than quietly dropping the column. That is deliberate, and it is the error you will hit most often.
+
+#### Things that are already decided
+
+- **Base-currency amounts** (`DebitAmountBase`, not `DebitAmount`) unless the report explicitly offers a `(Source)` column, in which case it offers `Currency` and `ExchangeRate` beside it. A total mixing a rupee row and a dollar row foots to a number in no currency.
+- **Date ranges are parameters, not filters.** A report filtered to April is April's rows hidden from a report of everything; a report *for* April is a different report, and every opening figure downstream depends on which it is.
+- **Cross-database values** — a user's name from `mst.Users`, an account type's name from `mst.AccountTypes` — cannot be joined and must be resolved in C#, **batched**. A 200-row page must not be 200 lookups. R1.2 builds the mechanism; until it lands, a report carries the id and not the name.
+
+---
+
 ### 9.2 Task checklist
 
 **Tick a box in the same commit as the task it names.** This list is the handoff: a session with no memory of any of this reads it to learn where the work stopped, and a box ticked later — or ticked in a sweep at the end — tells it something untrue.
@@ -882,7 +928,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 - [x] **S · R0.4 ★ — the generic query engine:** `ReportColumn`, `ReportParameter`, `ReportQueryBuilder` (every operator, multi-key sort, paging, composite group keys), `IReportSource` + `ReportSource<TRow>` with execution, count, grand totals and group footers, and `ReportCatalogService` carrying the source-against-seed validation. 30 tests. Expression trees only, and an unknown column is refused rather than dropped.
   - **Groupable columns must be text**, decided and enforced where a column is declared. Grouping runs in SQL on one concatenated key; concatenating a date or an enum asks Postgres to render it in a format nobody chose and which moves with server settings. A report grouping by account type exposes the type's *name* — which is what the group header wanted anyway.
   - **The catalog validator runs when a report's columns are built, not at startup.** The catalog is per-branch data in a per-customer database, so at startup there is no tenant to read it for and nothing to validate against.
-- [ ] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** Account Movement and Trial Balance, plus the written recipe every later report is built from.
+- [x] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** `AccountMovementSource` (row per record) and `TrialBalanceSource` (row per account with totals underneath) — the two shapes every later report copies — plus `ReportCatalogSeeder` and the recipe at §9.5. 41 tests. **Account Type is not on either report yet**: it lives in `mst.AccountTypes`, another database, so it needs R1.2's batched resolver.
 - [ ] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, the gateway route, `reporting.view` / `reporting.manage`. → **G3**
 - [ ] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml`, the 100k cap, and `ExportFormat.Pdf` refusing politely.
 - [ ] **S · R0.8 — frontend contracts and services:** `reporting-core` models, catalog and query services, state ↔ URL. No `window`, no `document`.
