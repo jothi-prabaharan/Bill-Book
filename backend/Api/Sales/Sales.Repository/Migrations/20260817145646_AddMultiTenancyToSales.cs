@@ -1,270 +1,109 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace Sales.Repository.Migrations
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// Brings the sal schema onto TenantDbContext: an OrgId index per table, and
+    /// the concurrency token moved to the PostgreSQL system column.
+    ///
+    /// As scaffolded this migration renamed Version to xmin and then altered it to
+    /// xid. Both are impossible. xmin is a system column that exists on every
+    /// table already, so Postgres rejects the rename with 42701, "column name
+    /// xmin conflicts with a system column name", and Sales.Api died on startup
+    /// before it could listen.
+    ///
+    /// Npgsql silently omits xmin from CreateTable, which is why Accounting and
+    /// Inventory scaffolded correctly — they never had a real Version column. The
+    /// sal tables were created before Sales moved onto TenantDbContext, so they do
+    /// carry one, and the right operation is to drop it. The model maps Version to
+    /// the system xmin, which is read and never written.
+    /// </summary>
     public partial class AddMultiTenancyToSales : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "SalesRegister",
-                newName: "xmin");
+                table: "SalesRegister");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "SalesOrders",
-                newName: "xmin");
+                table: "SalesOrders");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "SalesOrderDetails",
-                newName: "xmin");
+                table: "SalesOrderDetails");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "SalesOrderDetailTaxes",
-                newName: "xmin");
+                table: "SalesOrderDetailTaxes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "Quotes",
-                newName: "xmin");
+                table: "Quotes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "QuoteDetails",
-                newName: "xmin");
+                table: "QuoteDetails");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "QuoteDetailTaxes",
-                newName: "xmin");
+                table: "QuoteDetailTaxes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "Invoices",
-                newName: "xmin");
+                table: "Invoices");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "InvoiceDetails",
-                newName: "xmin");
+                table: "InvoiceDetails");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "InvoiceDetailTaxes",
-                newName: "xmin");
+                table: "InvoiceDetailTaxes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "DeliveryChallans",
-                newName: "xmin");
+                table: "DeliveryChallans");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "DeliveryChallanDetails",
-                newName: "xmin");
+                table: "DeliveryChallanDetails");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "DeliveryChallanDetailTaxes",
-                newName: "xmin");
+                table: "DeliveryChallanDetailTaxes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "CreditNotes",
-                newName: "xmin");
+                table: "CreditNotes");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "CreditNoteDetails",
-                newName: "xmin");
+                table: "CreditNoteDetails");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "Version",
                 schema: "sal",
-                table: "CreditNoteDetailTaxes",
-                newName: "xmin");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesRegister",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrders",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrderDetails",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrderDetailTaxes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "Quotes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "QuoteDetails",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "QuoteDetailTaxes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "Invoices",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "InvoiceDetails",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "InvoiceDetailTaxes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallans",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallanDetails",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallanDetailTaxes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNotes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNoteDetails",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
-
-            migrationBuilder.AlterColumn<uint>(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNoteDetailTaxes",
-                type: "xid",
-                rowVersion: true,
-                nullable: false,
-                oldClrType: typeof(long),
-                oldType: "bigint");
+                table: "CreditNoteDetailTaxes");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SalesRegister_OrgId",
@@ -446,261 +285,133 @@ namespace Sales.Repository.Migrations
                 schema: "sal",
                 table: "CreditNoteDetailTaxes");
 
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesRegister",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrders",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrderDetails",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "SalesOrderDetailTaxes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "Quotes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "QuoteDetails",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "QuoteDetailTaxes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "Invoices",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "InvoiceDetails",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "InvoiceDetailTaxes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallans",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallanDetails",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "DeliveryChallanDetailTaxes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNotes",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNoteDetails",
-                newName: "Version");
-
-            migrationBuilder.RenameColumn(
-                name: "xmin",
-                schema: "sal",
-                table: "CreditNoteDetailTaxes",
-                newName: "Version");
-
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "SalesRegister",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "SalesOrders",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "SalesOrderDetails",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "SalesOrderDetailTaxes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "Quotes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "QuoteDetails",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "QuoteDetailTaxes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "Invoices",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "InvoiceDetails",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "InvoiceDetailTaxes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "DeliveryChallans",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "DeliveryChallanDetails",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "DeliveryChallanDetailTaxes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "CreditNotes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "CreditNoteDetails",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
 
-            migrationBuilder.AlterColumn<long>(
+            migrationBuilder.AddColumn<long>(
                 name: "Version",
                 schema: "sal",
                 table: "CreditNoteDetailTaxes",
                 type: "bigint",
                 nullable: false,
-                oldClrType: typeof(uint),
-                oldType: "xid",
-                oldRowVersion: true);
+                defaultValue: 0L);
         }
     }
 }
