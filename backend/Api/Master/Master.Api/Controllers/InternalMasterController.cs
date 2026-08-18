@@ -60,4 +60,15 @@ public sealed class InternalMasterController : ControllerBase
 
         return Ok(currencies);
     }
+    [HttpGet("account-types")]
+    public async Task<IActionResult> GetAccountTypes(CancellationToken ct)
+    {
+        var types = await _db.AccountTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => new { t.AccountTypeId, t.SystemName, t.DisplayName, t.NormalBalance, t.ReportSection, t.SortOrder })
+            .ToListAsync(ct);
+
+        return Ok(types);
+    }
 }

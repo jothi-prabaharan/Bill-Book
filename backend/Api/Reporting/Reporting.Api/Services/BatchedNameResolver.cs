@@ -52,5 +52,20 @@ public sealed class BatchedNameResolver
         }) ?? new Dictionary<int, string>();
     }
 
-    private sealed record AccountTypeDto(int AccountTypeId, string SystemName, string DisplayName);
+    public sealed record AccountTypeDto(int AccountTypeId, string SystemName, string DisplayName, string NormalBalance, string ReportSection, int SortOrder);
+
+    /// <summary>
+    /// Gets the full account types for use in financial statements.
+    /// </summary>
+    public async Task<List<AccountTypeDto>> GetAccountTypesFullAsync(CancellationToken ct = default)
+    {
+        return await _cache.GetOrCreateAsync("AccountTypesFull", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+            var response = await _client.GetAsync("internal/master/account-types", ct);
+            response.EnsureSuccessStatusCode();
+
+            return await response.Content.ReadFromJsonAsync<List<AccountTypeDto>>(cancellationToken: ct) ?? new List<AccountTypeDto>();
+        }) ?? new List<AccountTypeDto>();
+    }
 }

@@ -72,6 +72,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ItemSerialRead> ItemSerials => Set<ItemSerialRead>();
     public DbSet<WarehouseRead> Warehouses => Set<WarehouseRead>();
     public DbSet<UnitOfMeasureRead> UnitsOfMeasure => Set<UnitOfMeasureRead>();
+    public DbSet<SalesRegisterRead> SalesRegisters => Set<SalesRegisterRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -180,6 +181,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<ItemSerialRead>(modelBuilder, "ItemSerials", "inv", e => e.ItemSerialId);
         MapRead<WarehouseRead>(modelBuilder, "Warehouses", "inv", e => e.WarehouseId);
         MapRead<UnitOfMeasureRead>(modelBuilder, "UnitsOfMeasure", "inv", e => e.UomId);
+        MapRead<SalesRegisterRead>(modelBuilder, "SalesRegisters", "sal", e => e.SalesRegisterId);
     }
 
     private static void MapRead<TEntity>(
@@ -196,3 +198,6 @@ public class ReportingDbContext : TenantDbContext
         });
     }
 }
+
+
+

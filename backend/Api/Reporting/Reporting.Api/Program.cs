@@ -107,6 +107,7 @@ builder.Services.AddScoped<IReportSource, SerialTrackingStatusSource>();
 builder.Services.AddScoped<IReportSource, SerialTrackingDetailSource>();
 builder.Services.AddScoped<IReportSource, WarehouseTrackingStatusSource>();
 builder.Services.AddScoped<IReportSource, WarehouseTrackingDetailSource>();
+builder.Services.AddScoped<IReportSource, SalesRegisterSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
@@ -174,3 +175,4 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
