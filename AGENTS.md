@@ -16,7 +16,7 @@ The full list is in [`docs/standards/ai-agent-structure-rules.md`](./docs/standa
 
 **2. Every per-customer table carries `OrgId`, a global query filter, and an RLS policy.** All three. `OrgId` is the branch boundary and it is load-bearing for security — a missing filter serves one customer's ledger to another, and nothing turns red when it happens. Inherit `Shared.Kernel.Tenancy.OrgScopedEntity` and the filter comes from `TenantDbContext` automatically; the RLS policy you write by hand in the migration.
 
-**3. `set_config` is transaction-local, never connection-level.** Pooled connections are reused across requests. Connection-level org context leaks to whoever gets that connection next.
+**3. Org context must reach the query, and must never outlive the request.** Pooled connections are reused across requests, so a value left behind leaks to whoever borrows that connection next. **Do not "fix" `RlsConnectionInterceptor` back to `set_config(..., true)`** — that was tried, and because `ConnectionOpenedAsync` runs outside any transaction the transaction-local value was discarded before the next statement, so org context was never set at all. It now sets the value session-level and overwrites it unconditionally on every connection open, clearing it when there is no org, which is what closes the leak. `REPORTS.md` §9.9 has the measurements.
 
 **4. Entities are plain property bags.** No constructors, no methods, no validation logic, no computed properties. Just `public X Y { get; set; }` with Data Annotations — and **every Data Annotation carries an `ErrorMessage`**.
 
@@ -44,6 +44,14 @@ git pull --rebase origin main
 ```
 
 **Do not open a pull request unless you are asked for one.** There is no second branch for one to merge from.
+
+---
+
+## What you own
+
+**Every outstanding reporting task is yours**, by the repository owner's instruction of 18 August 2026 — stage **R7** in `docs/architecture/REPORTS.md` §9.2, and section 10 of `docs/architecture/REPORTS-ANTIGRAVITY-BRIEF.md`. Claude Code's queue is empty; nothing is waiting on a review gate and there is nobody to hand a task back to.
+
+That includes **G3**, the row-level-security gate, which was previously Claude Code's own verification. A gate is signed off by querying as a second organization and getting zero rows back — **never by reading the diff**. G3 has already been marked cleared once by inspection and found broken by measurement, which is why this sentence exists.
 
 ---
 

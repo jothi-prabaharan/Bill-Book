@@ -1,11 +1,19 @@
-# Antigravity brief — RetailErp reporting, stages R1 and R2
+# Antigravity brief — RetailErp reporting, stage R7
 
 You are continuing work already in progress on a multi-tenant retail ERP for
-Indian SMBs. The reporting engine, the grid and three worked example reports
-already exist. **Your job is to add ten more reports on top of them, not to design
-anything.** If a task seems to need a design decision, it has almost certainly
-already been made in one of the files named here; if it genuinely has not, stop
-and ask rather than inventing one.
+Indian SMBs. The reporting engine, the grid, seventeen report sources and the
+saved-view and pivot layers all exist. **Your job is to make the fourteen written
+reports actually reachable, cover them with the existing tests, and clear the
+row-level-security gate — not to design anything.** If a task seems to need a
+design decision, it has almost certainly already been made in one of the files
+named here; if it genuinely has not, stop and ask rather than inventing one.
+
+**As of 18 August 2026 every outstanding reporting task is yours**, by the
+repository owner's instruction. Claude Code built R0, R1.3 and R3 and its queue is
+empty — there is nobody to hand a task back to and no review gate to wait behind.
+That includes the two verification gates, which were previously senior's own; §12
+and R7.3 say how they are signed off, and it is by querying a second organization,
+never by reading the diff.
 
 ---
 
@@ -355,61 +363,76 @@ hit most often.
 
 ## 10. Your tasks, in order
 
-### R1.1 — indexes on `acc.JournalLedger`
-Three composite indexes: `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)`,
-`(OrgId, SubAccountId, LedgerDate)`. **An Accounting migration, not a Reporting
-one** — Accounting owns that table. Account Transaction is unusable at volume
-without them.
+**Everything outstanding on reporting is yours**, by the repository owner's
+instruction of 18 August 2026. Claude Code's queue is empty; there is no handoff
+waiting and no review gate to wait behind. Four tasks.
 
-### R1.2 — batched user-name resolver
-`mst.Users` is in the master database and cannot be joined. Build a resolver that
-takes a set of user ids and returns their display names in one call, cached.
-Then use it for the six audit columns on Journal Report.
+### R7.1 ★ — seed the fourteen missing catalog rows
 
-**This also unblocks the Account Type column**, which `REPORTS.md` §8.1 lists on
-Account Movement and which is currently absent for exactly this reason. Add it
-once the resolver exists.
+**This is the one that matters.** Seventeen sources are written and registered in
+DI. `ReportCatalogSeeder` carries **three**. The other fourteen are invisible and
+unusable:
 
-### R1.4 — General Ledger Summary
-Columns in §8.1. Copy `TrialBalanceSource`. Opening balance is everything before
-the period — the `OpeningBalanceAsync` hook on `ReportSource<TRow>` already exists;
-see `AccountTransactionSource` for how it is used.
+- `ReportCatalogService.ListAsync` filters the catalog to reports that have a
+  `rpt.Reports` row, so they never appear at `/reports`.
+- Reaching one by key throws, because `Validate()` refuses a source whose columns
+  have no matching `ReportDetails` rows.
 
-### R1.5 — Journal Report
-Columns in §8.1. Reads `acc.Journals` and `acc.JournalDetails`, **not**
-`acc.JournalLedger`, because it reports on the document including drafts, which
-have no ledger rows at all. Six audit columns resolved through R1.2.
+Each report needs one `Report` row plus **one `ReportDetail` per column**, and
+`ColumnKey` must match the source's declared key character for character. A
+mismatch in either direction throws with the offending key named — read the
+message, it tells you which side is wrong.
 
-### R1.6 — Bank Summary
-Columns in §8.1. `acc.BankAccounts` joined to the ledger through
-`LedgerAccountId` — each bank account provisions its own account in the chart, so
-opening, received, spent and closing all come from ledger rows against it.
+The fourteen keys:
 
-### R1.7 — Reconciliation
-Columns in §8.1. `acc.BankStatements` and `acc.BankStatementLines`. Note:
-*GroupBy* in the source column list is **a parameter, not a column**.
+```
+general-ledger-summary        inventory-aging            batch-tracking-status
+journal-report                inventory-item-list        batch-tracking-detail
+bank-summary                  inventory-item-detail      serial-tracking-status
+reconciliation                inventory-item-summary     serial-tracking-detail
+                                                         warehouse-tracking-status
+                                                         warehouse-tracking-detail
+```
 
-### R2.1 — the item reports
-**Start by adding the `inv` read models** to
-`Reporting.Repository/ReadModels/`, following the ten already there exactly:
-`ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`,
-`CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`,
-`UnitOfMeasureRead`.
+Copy the three existing entries in `ReportCatalogSeeder` for the shape. The seeder
+is idempotent and adds only what is missing, so re-running it is safe.
 
-Each inherits `OrgScopedEntity`, is mapped in `ReportingDbContext` with
-`ToTable(name, "inv", t => t.ExcludeFromMigrations())`, and declares **only** the
-columns the reports need — a read model is not a copy of an entity. **Then run the
-empty-migration check in §11.**
+**Done when all seventeen appear in the report list and open without throwing.**
 
-Then the reports: Inventory Aging (ages by cost-layer receipt date), Inventory Item
-List, Item Detail, Item Summary. The last three declare their sales/purchase
-columns and return null for them until those services exist.
+### R7.2 — tests for the fourteen new sources
 
-### R2.2 — Batch Tracking, status and detail
-### R2.3 — Serial Tracking, status and detail
-### R2.4 — Warehouse Tracking, status and detail
+`ReportSourceTests` still covers only the two templates from R0.5. It has two
+theories that catch a copied source carrying a copied mistake — every column key
+unique, and an aggregate only on money columns — and both run over a
+`MemberData` list. **Add the fourteen sources to that list.** Do not write new
+test classes; the value is in every source going through the same two checks.
 
-Columns for all of these are in `REPORTS.md` §8.3.
+### R7.3 ★ — clear G3, the row-level-security gate
+
+Part 1 of the three-part fix in §9.9 is **already done** — `RlsConnectionInterceptor`
+now uses session-level `set_config` and overwrites on every connection open. Parts
+2 and 3 are not:
+
+1. `ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table. Without
+   it the policies are inert, because the application connects as `postgres`,
+   which owns the tables, and **a table's owner is exempt from its own policies**.
+2. Give the application a non-owner role with the ordinary DML grants, so the
+   policy is load-bearing rather than decorative.
+
+**Verify by querying, not by reading the diff.** Connect as the non-owner role,
+set `app.current_org_id` to a branch that owns none of the rows, and confirm every
+table returns zero. This gate has already been marked cleared once by inspection
+and found broken by measurement — that is why it is written down.
+
+§9.9 in `REPORTS.md` carries the measurements and an ordering warning worth
+reading first.
+
+### R7.4 — the two FX reports
+
+`fx-gain-loss` and `fx-gain-loss-details` are listed in the catalog at §8.1 marked
+*Partial* and appear in **no stage of the plan** — they belong to nobody unless
+you take them. Write them per the recipe in §8 above, and seed them alongside
+R7.1's rows.
 
 ---
 
@@ -474,11 +497,13 @@ Do not fix these, do not be surprised by them, and do not let them block you.
    `An_under_allocated_payment_cannot_be_posted` and
    `A_posted_payment_cannot_be_knocked_out_of_allocation`. A migration squash
    dropped the allocation triggers. `REPORTS.md` §9.8.
-3. **Row-level security does not apply at runtime.** `set_config` runs outside a
-   transaction so the value is discarded, and the application connects as the table
-   owner, which bypasses RLS anyway. Branch isolation currently rests on the EF
-   query filter alone — which your read models inherit automatically, so your work
-   is as safe as everything else. `REPORTS.md` §9.9.
+**Row-level security is no longer on this list — it is task R7.3 and it is yours.**
+Half of it has been fixed since this brief was first written: `set_config` now runs
+session-level and is overwritten on every connection open. What remains is
+`FORCE ROW LEVEL SECURITY` and a non-owner database role. Until that lands, branch
+isolation rests on the EF query filter alone — which your read models inherit
+automatically, so your own work is as safe as everything else, but the backstop the
+design calls for is not there. `REPORTS.md` §9.9.
 
 ---
 
@@ -495,8 +520,17 @@ and documentation.
 
 **R3 entirely** — saved views API and dialog, `PivotBuilder`, pivot panel.
 
+**R1.1, R1.2, R1.4 – R1.7 and all of R2** — your own earlier work: the ledger
+indexes, the batched name resolver, and fourteen report sources across accounting
+and inventory, all written, registered and building.
+
+**G1 and G2 are cleared.** G2 was re-run on 18 August 2026 against all nineteen
+read models — the probe migration came back empty. **G3 is not cleared**; it is
+R7.3.
+
 **Three reports render today:** Account Movement, Account Transaction, Trial
-Balance. Your ten tasks take that to seventeen.
+Balance. **Seventeen sources exist.** The gap is R7.1, and closing it is the single
+highest-value thing on your list.
 
 ---
 

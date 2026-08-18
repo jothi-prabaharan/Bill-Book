@@ -602,9 +602,13 @@ That is the whole rule, and it is not a claim about which model is cleverer — 
 
 | | Senior — Claude Code | Junior — Antigravity |
 |---|---|---|
-| **Owns** | **The whole of R0** — schema, read models, contract, engine, host, Excel, grid, panels, pages. Then the first source of each shape, because every later source is copied from it, and the pivot builder | **Everything from R1 onward.** The volume: fourteen report sources across R1 and R2, each a copy of a template that already exists, plus saved views |
-| **Tasks** | R0.0 – R0.11 entire, R1.3, R3.3, R3.4 | R1.1, R1.2, R1.4–R1.7, all of R2, R3.1, R3.2 |
-| **Roughly** | ~25h, nearly all of it in R0 | ~11h, none of it before R1 |
+| **Owned** | **The whole of R0** — schema, read models, contract, engine, host, Excel, grid, panels, pages. Then the first source of each shape, because every later source is copied from it, and the pivot builder | **Everything from R1 onward.** The volume: fourteen report sources across R1 and R2, each a copy of a template that already exists |
+| **Built** | R0.0 – R0.11 entire, R1.3, R3.1 – R3.4 — **all delivered** | R1.1, R1.2, R1.4 – R1.7, all of R2 — **all delivered** |
+| **Owns now** | Nothing. Senior's tasks are finished | **Everything outstanding**, by the repository owner's instruction of 18 August 2026 — stage R7 below, the gates included |
+
+**As of 18 August 2026 every remaining reporting task is Antigravity's**, including the two verification gates that were senior's own. That is a deliberate change to the split above, not a drift from it: senior's queue is empty, the outstanding work is a seeding job, a test pass and two database checks, and one owner for all of it beats a handoff in the middle.
+
+**What does not change is the reason the split existed.** The gates are still the tasks whose failure is silent, and §9.1's rule — verify against a second org, never by reading the code — applies to whoever runs them. A gate signed off from the diff is not signed off, and G3 has already been marked cleared once by inspection and found broken by measurement.
 
 **Senior builds the whole foundation and junior builds on it.** The line is no longer drawn inside R0 — it is drawn at the end of it. The argument for that: all three silent-failure gates (§9.1 below) are R0 tasks, and R0 is where a mistake propagates rather than surfaces.
 
@@ -621,10 +625,19 @@ Three checks are **gates** — the work does not proceed past them. They are all
 | Gate | After | What is checked, and why it is a gate |
 |---|---|---|
 | **G1** | R0.1 | Every `rpt` table has `OrgId`, a global query filter **and** an RLS policy. A miss leaks between branches and no test fails |
-| **G2** | R0.2 | Every read model re-declares its query filter, and none carries a navigation to a writable entity. Same failure mode, wider blast radius |
-| **G3** | R0.6 | `set_config` is transaction-local, never connection-level. Pooled connections are reused across requests, so connection-level org context leaks to the next caller |
+| **G2** | R0.2 | Every read model re-declares its query filter, and none carries a navigation to a writable entity. Same failure mode, wider blast radius. **Cleared 18 August 2026** — see below |
+| **G3** | R0.6 | Org context reaches the query, **and** row-level security actually applies to the role the application connects as. **Failed, and still failing — §9.9.** Reworded from "`set_config` is transaction-local, never connection-level", which is what the gate originally asked and which turned out to be half the bug rather than the test for it |
 
 Verify each against a second org: set `app.current_org_id` to a branch that owns none of the rows and confirm the query returns nothing. A gate signed off by reading the code rather than running it is not signed off.
+
+**G2 was cleared on 18 August 2026 and the evidence is worth keeping**, because it is the cheap check that nobody re-runs. It was originally passed with ten read models over `acc` and `con`; R2.1 added nine more over `inv`, and a single missing `ExcludeFromMigrations` among them would have had reporting create tables Inventory owns. Re-run at nineteen:
+
+```
+dotnet ef migrations add G2Probe --startup-project ../Reporting.Api --context ReportingDbContext
+```
+
+`Up()` and `Down()` both came back empty, and the probe was removed. **Re-run it after adding any read model** — it costs a minute and it is the only thing standing between a read-only mapping and a migration that tries to own another service's schema.
+
 
 #### How junior should work
 
@@ -933,7 +946,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 
 - [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
 - [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 cleared** against PostgreSQL 16.
-- [x] **S · R0.2 — read-only cross-schema reads:** ten read models over `acc` and `con` with `ExcludeFromMigrations`, verified to add nothing to the migration. **The `inv` read models move to R2.1**, where the reports that need them say which columns those are — declaring them now would be guessing. → **G2 not yet cleared**
+- [x] **S · R0.2 — read-only cross-schema reads:** ten read models over `acc` and `con` with `ExcludeFromMigrations`, verified to add nothing to the migration. **The `inv` read models move to R2.1**, where the reports that need them say which columns those are — declaring them now would be guessing. → **G2 cleared 18 August 2026**, re-run against all nineteen read models rather than the original ten.
 - [x] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [x] **S · R0.4 ★ — the generic query engine:** `ReportColumn`, `ReportParameter`, `ReportQueryBuilder` (every operator, multi-key sort, paging, composite group keys), `IReportSource` + `ReportSource<TRow>` with execution, count, grand totals and group footers, and `ReportCatalogService` carrying the source-against-seed validation. 30 tests. Expression trees only, and an unknown column is refused rather than dropped.
   - **Groupable columns must be text**, decided and enforced where a column is declared. Grouping runs in SQL on one concatenated key; concatenating a date or an enum asks Postgres to render it in a format nobody chose and which moves with server settings. A report grouping by account type exposes the type's *name* — which is what the group header wanted anyway.
@@ -979,6 +992,15 @@ The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior
 - [x] **S · R3.2 — the saved-view dialog:** open, save, remove, share to the branch, set as default. Server refusals are shown rather than replaced.
 - [x] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL on one composite key, transposed in memory, refusing a column axis over 200 values by name. 7 tests.
 - [x] **S · R3.4 — the pivot panel:** rows / columns / values with an aggregate, hidden below the tablet breakpoint. Turning it on clears grouping, since neither grouping nor paging means anything to a matrix.
+
+#### R7 — what is actually outstanding · all junior
+
+**Every task below is Antigravity's, by the repository owner's instruction of 18 August 2026.** They are ordered: R7.1 is what stands between seventeen written sources and seventeen working reports, and R7.3 is the one whose failure is silent.
+
+- [ ] **J · R7.1 ★ — seed the fourteen missing catalog rows.** Seventeen sources exist and are registered; `ReportCatalogSeeder` carries **three**. The other fourteen are absent from the report list — `ListAsync` filters the catalog to reports with a `rpt.Reports` row — and throw if reached by key, because `Validate()` refuses a source whose columns have no `ReportDetails` rows. Each needs one `Report` row plus one `ReportDetail` per column, **with `ColumnKey` matching the source's declared key exactly**. The keys: `general-ledger-summary`, `journal-report`, `bank-summary`, `reconciliation`, `inventory-aging`, `inventory-item-list`, `inventory-item-detail`, `inventory-item-summary`, `batch-tracking-status`, `batch-tracking-detail`, `serial-tracking-status`, `serial-tracking-detail`, `warehouse-tracking-status`, `warehouse-tracking-detail`. **Done when all seventeen appear in `/reports` and open.**
+- [ ] **J · R7.2 — tests for the fourteen new sources.** `ReportSourceTests` still covers only the two templates from R0.5. Its two theories — unique column keys, and an aggregate only on money columns — are the ones that catch a copied source with a copied mistake, and they take every source through `MemberData`. Add the fourteen to that list rather than writing new tests.
+- [ ] **J · R7.3 ★ — clear G3.** Part 1 is fixed; parts 2 and 3 are not. `ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table, then run the application as a non-owner role. **Verify as that role against a second org** — set `app.current_org_id` to a branch owning none of the rows and confirm zero. §9.9 has the measurements and the ordering warning. **Not signed off by reading the diff.**
+- [ ] **J · R7.4 — the two FX reports.** `fx-gain-loss` and `fx-gain-loss-details` are in the catalog at §8.1 marked *Partial* and appear in **no stage of this plan** — they would fall to nobody. Write them per §9.5 and seed them with R7.1's rows.
 
 #### R4–R6 — not schedulable
 
@@ -1072,6 +1094,28 @@ So `app.current_org_id` is never set for any query that follows. Every RLS polic
 Do them in that order, and check after each: parts 2 and 3 without part 1 take the product to zero rows everywhere.
 
 **G3 stays failed** rather than being marked not-reached. It was reached, it was measured, and it did not pass.
+
+### Part 1 is now fixed. Parts 2 and 3 are not, and the gate still fails.
+
+Checked again on **18 August 2026**. `RlsConnectionInterceptor` was rewritten in commit `8181545` and now reads:
+
+```
+SELECT set_config('app.current_org_id', $1, false)
+```
+
+Session-level rather than transaction-local, always overwritten when a connection is opened, and cleared to the empty string when the request carries no org. That closes part 1 and closes the pool-leak worry the original `true` was reaching for — a pooled connection cannot inherit the previous request's branch if every open overwrites the value unconditionally.
+
+**Part 2 has not been done, and it is the one that makes every policy inert:**
+
+```
+grep -rn 'FORCE ROW LEVEL' → no matches anywhere in the repository
+```
+
+Every per-customer table still has `relforcerowsecurity = f`, and the application still connects as `postgres`, which owns them. A table's owner is exempt from its own policies unless `FORCE` is set, so the policies in `inv`, `sal`, `pur` and `rpt` are all present and all bypassed on the connection that serves requests. **Branch isolation still rests on the EF query filter alone** — which is the sentence this section existed to stop being true, and it is still true.
+
+**The ordering warning has inverted, and this is the part to read before touching it.** When both faults were live, parts 2 and 3 without part 1 took the product to zero rows. Part 1 is now done, so that trap is gone: adding `FORCE` should leave a correctly-scoped query working and start refusing an unscoped one. **That makes it safe to do and worth doing now** — but verify it the way §9.1 says, as a non-owner role against a second org, because the failure mode if part 1 has a gap is every query in the product returning nothing.
+
+Remaining, in order: **`ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table**, then **give the application a non-owner role** so the policy is load-bearing rather than decorative. Tracked as **R7.3**.
 
 ---
 
