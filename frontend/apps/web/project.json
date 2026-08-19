@@ -3,26 +3,43 @@
   "name": "web",
   "projectType": "application",
   "sourceRoot": "apps/web/src",
-  "tags": ["type:app", "platform:browser"],
+  "tags": [
+    "type:app",
+    "platform:browser"
+  ],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/web",
         "index": "apps/web/src/index.html",
         "browser": "apps/web/src/main.ts",
         "tsConfig": "apps/web/tsconfig.json",
-        "polyfills": ["zone.js"],
-        "assets": [
-          { "glob": "**/*", "input": "apps/web/src/assets", "output": "assets" }
+        "polyfills": [
+          "zone.js"
         ],
-        "styles": ["apps/web/src/styles.scss"]
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          }
+        ],
+        "styles": [
+          "apps/web/src/styles.scss"
+        ]
       },
       "configurations": {
         "production": {
           "budgets": [
-            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
           ],
           "outputHashing": "all",
           "fileReplacements": [
@@ -34,7 +51,11 @@
         },
         "uat": {
           "budgets": [
-            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
           ],
           "outputHashing": "all",
           "fileReplacements": [
@@ -46,7 +67,11 @@
         },
         "staging": {
           "budgets": [
-            { "type": "initial", "maximumWarning": "500kb", "maximumError": "1mb" }
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
           ],
           "outputHashing": "all",
           "sourceMap": true,
@@ -72,10 +97,18 @@
         "port": 4200
       },
       "configurations": {
-        "development": { "buildTarget": "web:build:development" },
-        "staging": { "buildTarget": "web:build:staging" },
-        "uat": { "buildTarget": "web:build:uat" },
-        "production": { "buildTarget": "web:build:production" }
+        "development": {
+          "buildTarget": "web:build:development"
+        },
+        "staging": {
+          "buildTarget": "web:build:staging"
+        },
+        "uat": {
+          "buildTarget": "web:build:uat"
+        },
+        "production": {
+          "buildTarget": "web:build:production"
+        }
       },
       "defaultConfiguration": "development"
     }

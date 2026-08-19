@@ -82,6 +82,18 @@ export default tseslint.config(
       ...angular.configs.templateRecommended,
       ...angular.configs.templateAccessibility,
     ],
-    rules: {},
+    rules: {
+      '@angular-eslint/template/label-has-associated-control': [
+        'error',
+        {
+          controlComponents: [
+            'bb-date-input',
+            'bb-number-input',
+            'bb-search-input',
+            'bb-text-input',
+            'bb-currency-input'
+          ]
+        }
+      ],},
   },
 );

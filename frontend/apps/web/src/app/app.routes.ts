@@ -152,6 +152,9 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { permission: 'contacts.view' },
       },
+      // The nav rail points at /inventory, so it needs somewhere to land. Items
+      // is the primary feature of the inventory module.
+      { path: 'inventory', pathMatch: 'full', redirectTo: 'inventory/items' },
       {
         path: 'inventory/items',
         loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.ItemsPage),

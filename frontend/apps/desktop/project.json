@@ -3,22 +3,39 @@
   "name": "desktop",
   "projectType": "application",
   "sourceRoot": "apps/desktop/src",
-  "tags": ["type:app", "platform:electron"],
+  "tags": [
+    "type:app",
+    "platform:electron"
+  ],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/desktop",
         "index": "apps/desktop/src/index.html",
         "browser": "apps/desktop/src/main.ts",
         "tsConfig": "apps/desktop/tsconfig.json",
-        "polyfills": ["zone.js"],
-        "assets": [
-          { "glob": "**/*", "input": "apps/desktop/src/assets", "output": "assets" },
-          { "glob": "**/*", "input": "apps/web/src/assets", "output": "assets" }
+        "polyfills": [
+          "zone.js"
         ],
-        "styles": ["apps/desktop/src/styles.scss"]
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/desktop/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          }
+        ],
+        "styles": [
+          "apps/desktop/src/styles.scss"
+        ]
       }
     },
     "serve-web": {
