@@ -1,5 +1,8 @@
+import { SearchInputComponent } from '@bill-book/ui-components';
+import { filter } from 'rxjs/operators';
 import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService, AccessibleOrg } from '@bill-book/auth';
 
 interface NavItem {
@@ -21,7 +24,7 @@ interface NavItem {
 @Component({
   selector: 'bb-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, SearchInputComponent, FormsModule],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -96,18 +99,17 @@ export class ShellComponent {
   ];
 
   readonly currentOrgId = computed(() => localStorage.getItem('bb.orgId'));
+  
   readonly currentOrgName = computed(() => {
-    const orgs = this.allOrgs();
-    const id = this.currentOrgId();
-    const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
-    return current ? current.orgName : 'Eternal Pathway'; // fallback to mock if loading
+    return 'Eternal Pathway'; // Fallback company name since API lacks CustomerName
   });
   readonly currentOrgRole = computed(() => {
     const orgs = this.allOrgs();
     const id = this.currentOrgId();
     const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
-    return current ? current.roleName : 'Head Office'; // fallback to mock if loading
+    return current ? current.orgName : 'Head Office'; // API orgName is the Branch Name
   });
+
 
   readonly filteredOrgs = computed(() => {
     const query = this.orgQuery().toLowerCase();
@@ -118,12 +120,55 @@ export class ShellComponent {
     );
   });
 
+  
   constructor() {
     // Load organizations when shell boots
-    this.auth.accessibleOrganizations().then(orgs => {
+    void this.auth.accessibleOrganizations().then(orgs => {
       this.allOrgs.set(orgs);
     });
+    
+    this.router.events.pipe(
+      filter((event: any) => event instanceof NavigationEnd)
+    ).subscribe((event: any) => {
+      this.updateCrumbs(event.urlAfterRedirects);
+    });
+    
+    // Initialize crumbs
+    setTimeout(() => this.updateCrumbs(this.router.url), 0);
   }
+
+  updateCrumbs(url: string) {
+    if (url === '/' || url.startsWith('/dashboard')) {
+      this.crumbs.set([]);
+      return;
+    }
+    
+    const parts = url.split('?')[0].split('/').filter(p => p);
+    const result = [];
+    let currentPath = '';
+    
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      currentPath += '/' + part;
+      
+      let label = part.replace(/-/g, ' ');
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+      
+      // Some special cases for capitalization
+      if (label === 'Coa') label = 'Chart of Accounts';
+      
+      const isLast = i === parts.length - 1;
+      result.push({
+        label,
+        path: currentPath,
+        isLink: !isLast,
+        isLast
+      });
+    }
+    
+    this.crumbs.set(result);
+  }
+
 
   toggleOrg(): void {
     this.orgOpen.update((v: boolean) => !v);
@@ -132,9 +177,8 @@ export class ShellComponent {
     }
   }
 
-  setOrgQuery(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    this.orgQuery.set(input.value);
+  setOrgQuery(value: string): void {
+    this.orgQuery.set(value);
   }
 
   async pickOrg(orgId: string): Promise<void> {
