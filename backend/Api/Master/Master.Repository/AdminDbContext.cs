@@ -172,6 +172,7 @@ public class AdminDbContext : DbContext
             b.HasIndex(e => e.CustomerId);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.DiscountLevel).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Vertical).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.AllowFreeTextLines).HasDefaultValue(true);
             b.Property(e => e.DiscountBeforeTax).HasDefaultValue(true);
 
@@ -434,15 +435,16 @@ public class AdminDbContext : DbContext
             //
             // The excess is marked as an overpayment rather than as an ordinary
             // advance, and that is the whole reason these two exist. Refunding an
-            // overpayment and refunding a deliberate advance move the same
-            // balance the same way; without the distinction here, the two refund
-            // sources below would have nothing to tell them apart.
+            // overpayment and refunding a deliberate advance clear different
+            // balances — the excess and the deposit are held apart, so the two
+            // refund sources below have nothing to tell them apart without the
+            // distinction here.
             (16, "VENDOROVERPAYMENT", "Overpayment to vendor", LedgerDirection.Out),
             (17, "CUSTOMEROVERPAYMENT", "Overpayment from customer", LedgerDirection.In),
 
-            // Money held for a customer, given back. Both clear Advance from
-            // Customer; they differ only in how the credit arose, which is
-            // exactly what a ledger source is for.
+            // Money held for a customer, given back. 18 clears the overpayment
+            // balance and 19 the prepayment balance; they differ in how the
+            // credit arose, which is exactly what a ledger source is for.
             (18, "CUSTOMEROVERPAYMENTREFUND", "Customer overpayment refunded", LedgerDirection.Out),
             (19, "CUSTOMERPREPAYMENTREFUND", "Customer advance refunded", LedgerDirection.Out),
         };

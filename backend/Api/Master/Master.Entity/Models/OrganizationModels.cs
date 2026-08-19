@@ -60,6 +60,9 @@ public class OrganizationListItem
 
     public string DiscountLevel { get; set; } = "Line";
 
+    /// <summary>General, Pharma or Jewellery — the trade this branch is in.</summary>
+    public string Vertical { get; set; } = "General";
+
     public bool DiscountBeforeTax { get; set; } = true;
 
     /// <summary>Provisioning, Active, Suspended — a branch is only usable once Active.</summary>
@@ -151,6 +154,11 @@ public class SaveOrganizationRequest
     [MaxLength(10, ErrorMessage = "Discount level must be Line, Header or Both.")]
     public string DiscountLevel { get; set; } = "Line";
 
+    /// <summary>General, Pharma or Jewellery. Changeable any time.</summary>
+    [Required(ErrorMessage = "Vertical is required.")]
+    [MaxLength(20, ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
+    public string Vertical { get; set; } = "General";
+
     /// <summary>Frozen once the branch has traded.</summary>
     public bool DiscountBeforeTax { get; set; } = true;
 }
@@ -196,6 +204,13 @@ public enum SaveOrganizationOutcome
     /// <summary>Discount level was not Line, Header or Both.</summary>
     InvalidDiscountLevel = 13,
     InvalidValue = 10,
+
+    /// <summary>
+    /// The account already runs the maximum number of trial branches. A branch
+    /// beyond the entitlement is normally created on a trial — unless the trial
+    /// slots are full, in which case it is refused until one is paid for.
+    /// </summary>
+    TrialLimitReached = 14,
 }
 
 public sealed record SaveOrganizationResult(

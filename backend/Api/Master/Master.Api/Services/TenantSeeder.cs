@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -46,6 +47,33 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// </summary>
     private static readonly string[] Services = ["Accounting", "Inventory", "Sales"];
 
+    /// <summary>
+    /// The branch's current vertical, or General when the row cannot be read.
+    /// General is the everything default, so seeding under it is never the
+    /// wrong shape — only possibly wider than the branch's own trade.
+    /// </summary>
+    private async Task<string> ReadVerticalAsync(
+        Guid customerId, Guid orgId, CancellationToken ct)
+    {
+        try
+        {
+            using IServiceScope scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<Repository.AdminDbContext>();
+            return (await db.Organizations
+                    .Where(o => o.CustomerId == customerId && o.OrgId == orgId)
+                    .Select(o => (Entity.Enums.Vertical?)o.Vertical)
+                    .FirstOrDefaultAsync(ct))
+                ?.ToString() ?? "General";
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex,
+                "Reading vertical for organization {OrgId} failed; seeding as General.",
+                orgId);
+            return "General";
+        }
+    }
+
     public HttpTenantSeeder(
         IHttpClientFactory clients,
         IConfiguration config,
@@ -62,7 +90,18 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         Guid customerId, Guid orgId, CancellationToken ct)
     {
         var failed = new List<string>();
-        var request = new SeedOrganizationRequest { CustomerId = customerId, OrgId = orgId };
+
+        // The vertical is read at seed time, not passed in, so a retry after a
+        // partial seed and a re-seed after a vertical change both carry the
+        // branch's current trade without the callers having to know.
+        string vertical = await ReadVerticalAsync(customerId, orgId, ct);
+
+        var request = new SeedOrganizationRequest
+        {
+            CustomerId = customerId,
+            OrgId = orgId,
+            Vertical = vertical,
+        };
 
         foreach (string service in Services)
         {

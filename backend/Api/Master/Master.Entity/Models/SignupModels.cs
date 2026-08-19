@@ -156,4 +156,11 @@ public class OrgContextResponse
     /// Whether a discount reduces the taxable value.
     /// </summary>
     public bool DiscountBeforeTax { get; set; }
+
+    /// <summary>
+    /// The trade this branch is in — General, Pharma or Jewellery. Carried on
+    /// every login so a per-customer service can default an item's profile and
+    /// decide which screens to offer, without reading the master database.
+    /// </summary>
+    public string Vertical { get; set; } = "General";
 }

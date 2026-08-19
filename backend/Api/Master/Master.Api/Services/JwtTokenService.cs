@@ -42,6 +42,11 @@ public sealed class JwtTokenService : ITokenService
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
 
+            // The trade this branch is in. Defaults to General for every token
+            // unless the request says otherwise, so nothing downstream has to
+            // handle its absence.
+            new("vertical", request.Vertical),
+
             // The role, beside the permissions it grants. Permissions answer
             // "may this caller do X"; the role answers "which of the branch's
             // period locks applies to them", and that is not derivable from a
@@ -109,6 +114,20 @@ public sealed class JwtTokenService : ITokenService
         string token = Convert.ToBase64String(raw);
         DateTimeOffset expires = _clock.GetUtcNow().AddDays(_options.RefreshTokenDays);
         return (token, HashUtil.Sha256(token), expires);
+    }
+
+    public string CreatePortalToken(Guid customerId, Guid orgId, long contactId)
+    {
+        var claims = new List<Claim>
+        {
+            new("customer_id", customerId.ToString()),
+            new("org_id", orgId.ToString()),
+            new("contact_id", contactId.ToString()),
+            new("portal_access", "true")
+        };
+
+        // Portal tokens can live longer (e.g. 30 days) to allow contacts to use the link.
+        return Write(claims, _clock.GetUtcNow().AddDays(30));
     }
 
     private string Write(IEnumerable<Claim> claims, DateTimeOffset expires)

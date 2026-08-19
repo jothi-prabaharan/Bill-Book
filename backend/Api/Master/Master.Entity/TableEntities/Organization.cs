@@ -25,6 +25,15 @@ public class Organization : AuditableEntity
     public Guid CustomerId { get; set; }
 
     /// <summary>
+    /// The trade this branch is in — General, Pharma or Jewellery — which
+    /// narrows its seeding, the default item profile and the settings screens
+    /// it is offered. One per branch, and changeable after the branch has
+    /// traded: re-seeding adds what the new vertical adds, and the old
+    /// vertical's rows stay as data. See master.md 5.14.
+    /// </summary>
+    public Vertical Vertical { get; set; } = Vertical.General;
+
+    /// <summary>
     /// Short code for the branch, unique within the head office. Copied onto a
     /// numbering series so a generated number can name where it was written —
     /// <c>INV/2526/CHN/00042</c>.
@@ -80,11 +89,13 @@ public class Organization : AuditableEntity
     /// branch created before this column existed is null, so nothing about them
     /// changed.
     ///
-    /// <b>A renewal has to move this too.</b> The date is copied at creation, so
-    /// extending the licence without extending the branches leaves them expired
-    /// under a licence that is perfectly valid — and the login would refuse with
-    /// nothing on the licence to explain it. There is no renewal endpoint yet;
-    /// whoever writes one must handle this. See master.md 5.16.
+    /// <b>A renewal moves this too.</b> The date is a copy taken at creation, so
+    /// extending the licence without extending the branches would leave them
+    /// expired under a licence that is perfectly valid. Recording a payment
+    /// moves the branches that were tracking the licence — this date equal to
+    /// the old licence expiry, or null — and leaves a branch wound down early on
+    /// its own date, so renewing never silently reopens a closed branch. See
+    /// master.md 5.16.
     /// </summary>
     public DateOnly? ExpiryDate { get; set; }
 
@@ -97,8 +108,9 @@ public class Organization : AuditableEntity
     /// screen — one is "buy a licence for this branch", the other is "this
     /// branch was closed". Storing the reason is cheaper than guessing it.
     ///
-    /// Cleared when the branch is paid for; nothing clears it automatically,
-    /// because nothing takes payment yet.
+    /// Cleared when the branch is paid for: recording a payment sets this
+    /// false and moves the branch onto the licence's new expiry. Nothing clears
+    /// it automatically, because nothing else takes payment.
     /// </summary>
     public bool IsTrial { get; set; }
 

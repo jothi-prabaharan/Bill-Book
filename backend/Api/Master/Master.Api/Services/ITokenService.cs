@@ -13,6 +13,9 @@ public interface ITokenService
 
     /// <summary>A new opaque refresh token plus its SHA-256 hash and expiry.</summary>
     (string Token, string Hash, DateTimeOffset ExpiresAt) CreateRefreshToken();
+
+    /// <summary>A long-lived secure token for external contacts to view their statements.</summary>
+    string CreatePortalToken(Guid customerId, Guid orgId, long contactId);
 }
 
 public sealed class AccessTokenRequest
@@ -40,4 +43,7 @@ public sealed class AccessTokenRequest
 
     /// <summary>Whether that date is the branch's own rather than the licence's.</summary>
     public bool ExpiryIsBranchLevel { get; init; }
+
+    /// <summary>The trade this branch is in — General, Pharma or Jewellery.</summary>
+    public string Vertical { get; init; } = "General";
 }

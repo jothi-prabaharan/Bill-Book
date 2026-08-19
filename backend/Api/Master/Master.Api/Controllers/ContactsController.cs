@@ -66,6 +66,18 @@ public sealed class ContactsController : ControllerBase
         return Respond(outcome, NoContent);
     }
 
+    [HttpPost("{contactId:long}/portal-link")]
+    public async Task<IActionResult> GeneratePortalLink(long contactId, CancellationToken ct)
+    {
+        string? token = await _contacts.GeneratePortalLinkAsync(contactId, ct);
+        if (token is null)
+        {
+            return NotFound();
+        }
+
+        return Ok(new { token });
+    }
+
     [HttpDelete("{contactId:long}")]
     public async Task<IActionResult> Deactivate(long contactId, CancellationToken ct) =>
         Respond(await _contacts.DeactivateAsync(contactId, ct), NoContent);

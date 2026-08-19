@@ -4,6 +4,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
+using Shared.Kernel.Tenancy;
 
 namespace Master.Api.Services;
 
@@ -21,19 +22,25 @@ public sealed class ContactService
     private readonly IStateDirectory _states;
     private readonly IAccountingSubAccounts _subAccounts;
     private readonly TimeProvider _clock;
+    private readonly ITokenService _tokenService;
+    private readonly ITenantContext _tenant;
 
     public ContactService(
         ContactsDbContext db,
         INumberGenerator numbers,
         IStateDirectory states,
         IAccountingSubAccounts subAccounts,
-        TimeProvider clock)
+        TimeProvider clock,
+        ITokenService tokenService,
+        ITenantContext tenant)
     {
         _db = db;
         _numbers = numbers;
         _states = states;
         _subAccounts = subAccounts;
         _clock = clock;
+        _tokenService = tokenService;
+        _tenant = tenant;
     }
 
     /// <summary>
@@ -333,6 +340,29 @@ public sealed class ContactService
         contact.IsActive = false;
         await _db.SaveChangesAsync(ct);
         return SaveContactOutcome.Ok;
+    }
+
+    /// <summary>
+    /// Generates a long-lived secure statement URL for external contacts.
+    /// Returns null if the contact does not exist.
+    /// </summary>
+    public async Task<string?> GeneratePortalLinkAsync(long contactId, CancellationToken ct)
+    {
+        var exists = await _db.Contacts.AnyAsync(c => c.ContactId == contactId, ct);
+        if (!exists)
+        {
+            return null;
+        }
+
+        // We assume the caller is authenticated and has ITenantContext populated
+        Guid customerId = _tenant.CustomerId ?? Guid.Empty;
+        Guid orgId = _tenant.OrgId ?? Guid.Empty;
+
+        string token = _tokenService.CreatePortalToken(customerId, orgId, contactId);
+
+        // TODO: Base URL should come from configuration (e.g., Portal:BaseUrl)
+        // For now, we return just the token, the caller controller will construct the URI.
+        return token;
     }
 
     /// <summary>

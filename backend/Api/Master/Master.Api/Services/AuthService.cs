@@ -171,6 +171,7 @@ public sealed class AuthService
             LicenseStatus = ctx.LicenseStatus,
             LicenseExpiry = ctx.LicenseExpiry,
             ExpiryIsBranchLevel = ctx.ExpiryIsBranchLevel,
+            Vertical = ctx.Vertical,
         });
 
         (string refreshToken, string hash, DateTimeOffset expiresAt) = _tokens.CreateRefreshToken();

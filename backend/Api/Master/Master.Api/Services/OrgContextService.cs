@@ -35,6 +35,7 @@ public sealed class OrgContextService
                 o.FinancialYearStartMonth,
                 o.BaseCurrency,
                 o.DiscountBeforeTax,
+                o.Vertical,
                 StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
@@ -114,6 +115,7 @@ public sealed class OrgContextService
             BaseCurrency = row.BaseCurrency,
             StateCode = row.StateCode,
             DiscountBeforeTax = row.DiscountBeforeTax,
+            Vertical = row.Vertical.ToString(),
         };
     }
 }

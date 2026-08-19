@@ -29,6 +29,15 @@ public sealed class OrganizationService
     /// </summary>
     private const int BranchTrialDays = 30;
 
+    /// <summary>
+    /// How many branches one account may run on trial at once, by the owner's
+    /// decision (master.md 5.19). Two, because a business opens a second
+    /// counter to try the model before paying for it — and a cap at all,
+    /// because thirty trial branches is not a trial, it is a licence being
+    /// evaded. A third branch must be paid for.
+    /// </summary>
+    private const int MaxTrialBranches = 2;
+
     private readonly AdminDbContext _db;
     private readonly ITenantSeeder _seeder;
     private readonly IMasterCurrencies _master;
@@ -118,6 +127,22 @@ public sealed class OrganizationService
         // own expiry instead of the licence's, so an unpaid branch stops on its
         // own without touching the account or the branches already paid for.
         bool beyondLicence = allowed > 0 && existing >= allowed;
+
+        // The trial itself is capped, though. Two trial branches are a business
+        // trying the model; a third is a licence being evaded, and it is refused
+        // until one of the two is paid for — recording a payment clears a trial
+        // and raises the entitlement together (master.md 5.19).
+        if (beyondLicence)
+        {
+            int trials = await _db.Organizations.CountAsync(
+                o => o.CustomerId == customerId && o.IsTrial, ct);
+
+            if (trials >= MaxTrialBranches)
+            {
+                return new SaveOrganizationResult(
+                    SaveOrganizationOutcome.TrialLimitReached, null, []);
+            }
+        }
 
         DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
 
@@ -251,6 +276,12 @@ public sealed class OrganizationService
                 SaveOrganizationOutcome.InvalidDiscountLevel, null, []);
         }
 
+        if (!Enum.TryParse(request.Vertical, ignoreCase: true, out Vertical vertical))
+        {
+            return new SaveOrganizationResult(
+                SaveOrganizationOutcome.InvalidValue, null, []);
+        }
+
         // The same freeze the base currency gets, for the same kind of reason:
         // these three decide how a document's tax and discount are computed, so
         // changing one after the branch has traded leaves earlier documents
@@ -267,8 +298,28 @@ public sealed class OrganizationService
                 SaveOrganizationOutcome.DocumentSettingsLocked, null, []);
         }
 
+        // A vertical change re-seeds what the new trade adds, because seeding is
+        // idempotent and keyed on system names. What the old trade seeded stays
+        // as data — the branch may still be selling off stock priced in it —
+        // which is the owner's decision for 5.14: rows are added, never removed.
+        bool verticalChanged = organization.Vertical != vertical;
+
         Apply(organization, request);
         await _db.SaveChangesAsync(ct);
+
+        if (verticalChanged)
+        {
+            IReadOnlyList<string> unseeded =
+                await _seeder.SeedAsync(customerId, organization.OrgId, ct);
+
+            if (unseeded.Count > 0)
+            {
+                _log.LogError(
+                    "Vertical change for branch {OrgId} could not be re-seeded by: {Services}",
+                    organization.OrgId,
+                    string.Join(", ", unseeded));
+            }
+        }
 
         return new SaveOrganizationResult(SaveOrganizationOutcome.Ok, orgId, []);
     }
@@ -365,6 +416,7 @@ public sealed class OrganizationService
         organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
         organization.AllowFreeTextLines = request.AllowFreeTextLines;
         organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
+        organization.Vertical = Enum.Parse<Vertical>(request.Vertical, ignoreCase: true);
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
@@ -396,6 +448,7 @@ public sealed class OrganizationService
         BaseCurrency = o.BaseCurrency,
         AllowFreeTextLines = o.AllowFreeTextLines,
         DiscountLevel = o.DiscountLevel.ToString(),
+        Vertical = o.Vertical.ToString(),
         DiscountBeforeTax = o.DiscountBeforeTax,
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,

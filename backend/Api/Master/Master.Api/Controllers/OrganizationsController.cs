@@ -236,6 +236,11 @@ public sealed class OrganizationsController : ControllerBase
             {
                 Message = "Discount level must be Line, Header or Both.",
             }),
+            SaveOrganizationOutcome.TrialLimitReached => Conflict(new MessageResponse
+            {
+                Message = "This account already has its two trial branches. Add a licence to "
+                    + "open another.",
+            }),
             SaveOrganizationOutcome.InvalidValue => BadRequest(new MessageResponse
             {
                 Message = "One of the selected options is not a recognised value.",
