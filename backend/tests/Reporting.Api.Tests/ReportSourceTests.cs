@@ -81,13 +81,16 @@ public class ReportSourceTests
 
     [Theory]
     [MemberData(nameof(Sources))]
-    public void Only_money_columns_carry_an_aggregate(IReportSource source)
+    public void Only_money_and_quantity_columns_carry_an_aggregate(IReportSource source)
     {
         // Summing a code, a date or a reference produces a footer figure that looks
         // like an answer and is not one.
         foreach (ReportColumn column in source.Columns.Where(c => c.IsAggregatable))
         {
-            Assert.Equal(Entity.Enums.ColumnDataType.Money, column.DataType);
+            Assert.True(
+                column.DataType == Entity.Enums.ColumnDataType.Money || 
+                column.DataType == Entity.Enums.ColumnDataType.Quantity, 
+                $"Column {column.Key} is aggregatable but its type is {column.DataType}");
         }
     }
 

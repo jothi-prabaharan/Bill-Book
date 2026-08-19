@@ -30,6 +30,9 @@ public class ContactRead : OrgScopedEntity
 
     public int? PlaceOfSupplyStateId { get; set; }
 
+    public decimal? CreditLimit { get; set; }
+    public int? MaxOutstandingDays { get; set; }
+
     public bool IsActive { get; set; }
 }
 
