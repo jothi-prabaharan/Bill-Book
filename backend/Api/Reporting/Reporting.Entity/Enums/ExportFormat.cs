@@ -8,7 +8,7 @@ namespace Reporting.Entity.Enums;
 /// are WinAnsi — this product supports Tamil and Chinese, so a correct writer
 /// needs TrueType embedding with Identity-H CID encoding. Declaring the value
 /// now keeps the route's shape stable; returning a file full of wrong glyphs
-/// would not. See REPORTS.md §5.8.
+/// would not. See Reporting.md §5.8.
 /// </summary>
 public enum ExportFormat
 {

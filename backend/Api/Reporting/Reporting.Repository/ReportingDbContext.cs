@@ -14,7 +14,7 @@ namespace Reporting.Repository;
 /// its own — the report catalog, its column metadata and saved layouts. The
 /// reports themselves read acc, inv and con, and those come in as read-only
 /// models mapped with <c>ExcludeFromMigrations</c> in R0.2: a recorded exception
-/// to the rule against crossing a service boundary, argued in REPORTS.md §2,
+/// to the rule against crossing a service boundary, argued in Reporting.md §2,
 /// and specific to reporting. <b>Nothing in this context ever writes to another
 /// schema.</b>
 /// </summary>
@@ -33,7 +33,7 @@ public class ReportingDbContext : TenantDbContext
 
     // ---- Read-only, from other services' schemas. Never written to. ----
     //
-    // The recorded exception of REPORTS.md §2. A report engine has to join across
+    // The recorded exception of Reporting.md §2. A report engine has to join across
     // acc, inv and con and then page the result; over HTTP there is no join and no
     // server-side paging, and a Postgres view would be raw SQL, which hard rule 1
     // forbids. So Reporting maps its own read models over those tables with

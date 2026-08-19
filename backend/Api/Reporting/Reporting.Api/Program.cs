@@ -67,7 +67,7 @@ builder.Services.AddDbContext<ReportingDbContext>((sp, options) =>
     // RlsConnectionInterceptor is what sets app.current_org_id, and it sets it
     // transaction-locally. Never connection-level: pooled connections are reused
     // across requests, so a connection-scoped org context leaks to whoever gets
-    // that connection next — which is gate G3 in REPORTS.md §9.1.
+    // that connection next — which is gate G3 in Reporting.md §9.1.
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

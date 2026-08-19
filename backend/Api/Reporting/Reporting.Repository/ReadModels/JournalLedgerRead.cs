@@ -17,7 +17,7 @@ namespace Reporting.Repository.ReadModels;
 /// document said in its own currency; <c>DebitAmountBase</c> is the same leg in
 /// the branch's base currency at the rate the document was booked at. Reports
 /// offering a <c>(Source)</c> column mean the first and a <c>%CurCode%</c> column
-/// the second — see REPORTS.md §7.
+/// the second — see Reporting.md §7.
 /// </summary>
 public class JournalLedgerRead : OrgScopedEntity
 {

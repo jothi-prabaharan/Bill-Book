@@ -40,7 +40,7 @@ public sealed class BatchTrackingStatusSource : ReportSource<BatchTrackingStatus
                // Group movements by batch and warehouse to get quantities per warehouse
                let moves = db.StockMovements.Where(m => m.ItemBatchId == b.ItemBatchId)
                // Instead of a complex cross apply, we can just flatten or group.
-               // Actually, a batch could be in multiple warehouses, but REPORTS.md says:
+               // Actually, a batch could be in multiple warehouses, but Reporting.md says:
                // "Batch No, Item Code... Warehouse". It expects one row per Batch per Warehouse.
                // EF Core grouping on multiple keys translates well:
                from g in db.StockMovements

@@ -107,7 +107,7 @@ public sealed class ReportsController : ControllerBase
         {
             // Declared in the contract so adding it later is not a route change,
             // and refused here because nothing in the pinned package list writes a
-            // PDF that renders Tamil or Chinese. REPORTS.md §5.8.
+            // PDF that renders Tamil or Chinese. Reporting.md §5.8.
             return BadRequest(new
             {
                 message = "PDF export is not built yet. Export to Excel instead.",
@@ -154,7 +154,7 @@ public sealed class ReportsController : ControllerBase
     }
 
     /// <summary>
-    /// REPORTS.md §5.6. When a broker exists this becomes the threshold at which an
+    /// Reporting.md §5.6. When a broker exists this becomes the threshold at which an
     /// export is queued rather than refused.
     /// </summary>
     private const int ExportRowCap = 100_000;
