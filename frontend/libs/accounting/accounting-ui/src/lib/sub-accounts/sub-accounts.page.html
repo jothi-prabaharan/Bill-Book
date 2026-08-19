@@ -31,9 +31,9 @@
       </button>
     }
   </div>
-  <input
+  <bb-search-input
     class="search"
-    type="search"
+    
     placeholder="Filter by name…"
     [(ngModel)]="search"
     (ngModelChange)="searchTerm.set($event)"
@@ -50,30 +50,30 @@
         {{ group.accountName }}
         <span class="meta">{{ group.rows.length }}</span>
       </h2>
-      <bb-card-table>
-        <tbody>
-          @for (s of group.rows; track s.subAccountId) {
-            <tr [class.inactive]="!s.isActive">
-              <td>
-                {{ s.subAccountName }}
-                @if (!s.isActive) { <span class="badge off">Inactive</span> }
-              </td>
-              <td class="tags">
-                <span class="chip">{{ s.referenceType }}</span>
-                @if (s.taxComponent !== 'None') {
-                  <span class="chip tax">{{ s.taxComponent.toUpperCase() }}</span>
-                }
-                @if (s.purpose !== 'Primary') {
-                  <span class="chip advance" title="An advance held under this control account — reported apart from trade balances">
-                    Advance
-                  </span>
-                }
-              </td>
-              <td class="ref">#{{ s.referenceId }}</td>
-            </tr>
-          }
-        </tbody>
-      </bb-card-table>
+      <bb-data-grid [gridCode]="'SUB_ACCOUNTS_' + group.accountId" [columns]="columns" [data]="group.rows">
+        <ng-template bbCellTemplate="subAccountName" let-row>
+          <div [class.inactive]="!row.isActive">
+            {{ row.subAccountName }}
+            @if (!row.isActive) { <span class="badge off">Inactive</span> }
+          </div>
+        </ng-template>
+        <ng-template bbCellTemplate="tags" let-row>
+          <div class="tags" [class.inactive]="!row.isActive">
+            <span class="chip">{{ row.referenceType }}</span>
+            @if (row.taxComponent !== 'None') {
+              <span class="chip tax">{{ row.taxComponent.toUpperCase() }}</span>
+            }
+            @if (row.purpose !== 'Primary') {
+              <span class="chip advance" title="An advance held under this control account — reported apart from trade balances">
+                Advance
+              </span>
+            }
+          </div>
+        </ng-template>
+        <ng-template bbCellTemplate="referenceId" let-row>
+          <div class="ref" [class.inactive]="!row.isActive">#{{ row.referenceId }}</div>
+        </ng-template>
+      </bb-data-grid>
     </section>
   } @empty {
     <p class="empty">

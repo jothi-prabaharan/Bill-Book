@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , DateInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -66,7 +66,7 @@ interface AccountType {
 @Component({
   selector: 'bb-account-ledger-page',
   standalone: true,
-  imports: [CardTableComponent, DecimalPipe, FormsModule, RouterLink],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
   templateUrl: './account-ledger.page.html',
   styleUrl: './account-ledger.page.scss',
 })
@@ -84,6 +84,15 @@ export class AccountLedgerPage implements OnInit {
   accountId: number | null = null;
   from = '';
   to = '';
+
+  columns: ColumnDef[] = [
+    { field: 'ledgerDate', header: 'Date', isTemplate: true },
+    { field: 'document', header: 'Document', isTemplate: true },
+    { field: 'detail', header: 'Detail', isTemplate: true },
+    { field: 'debit', header: 'Debit', type: 'number', isTemplate: true },
+    { field: 'credit', header: 'Credit', type: 'number', isTemplate: true },
+    { field: 'balance', header: 'Balance', type: 'number', isTemplate: true }
+  ];
 
   /**
    * Which way up this account reads. An asset or an expense grows on the debit

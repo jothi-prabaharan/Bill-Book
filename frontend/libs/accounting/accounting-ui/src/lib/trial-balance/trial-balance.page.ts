@@ -1,9 +1,9 @@
-import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { DataGridComponent, ColumnDef , DateInputComponent } from '@bill-book/ui-components';
 
 interface TrialBalanceRow {
   accountId: number;
@@ -43,11 +43,17 @@ interface AccountType {
 @Component({
   selector: 'bb-trial-balance-page',
   standalone: true,
-  imports: [CardTableComponent, DecimalPipe, FormsModule, RouterLink],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
   templateUrl: './trial-balance.page.html',
   styleUrl: './trial-balance.page.scss',
 })
 export class TrialBalancePage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'code', header: 'Code' },
+    { field: 'account', header: 'Account' },
+    { field: 'debit', header: 'Debit' },
+    { field: 'credit', header: 'Credit' },
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly report = signal<TrialBalance | null>(null);

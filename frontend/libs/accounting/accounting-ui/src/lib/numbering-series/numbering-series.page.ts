@@ -1,8 +1,8 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 
 interface NumberingSeries {
   numberingSeriesId: number;
@@ -56,12 +56,25 @@ type FormModel = Omit<
 @Component({
   selector: 'bb-numbering-series-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './numbering-series.page.html',
   styleUrl: './numbering-series.page.scss',
 })
 export class NumberingSeriesPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: '' },
+    { field: 'seriesName', header: 'Name' },
+    { field: 'seriesCode', header: 'Code' },
+    { field: 'seriesFor', header: 'For' },
+    { field: 'preview', header: 'Preview' },
+    { field: 'nextNumber', header: 'Next' },
+    { field: 'resetFrequency', header: 'Reset' },
+    { field: 'isDefault', header: 'Default' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: 'Actions' }
+  ];
 
   private readonly orgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
 

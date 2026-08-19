@@ -1,5 +1,5 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +22,7 @@ interface Bank {
 @Component({
   selector: 'bb-banks-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './banks.page.html',
   styleUrl: './banks.page.scss',
 })
@@ -37,6 +37,15 @@ export class BanksPage implements OnInit {
 
   showInactive = false;
   form = { bankCode: '', bankName: '', isActive: true };
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: '', isTemplate: true },
+    { field: 'code', header: 'Code', isTemplate: true },
+    { field: 'bank', header: 'Bank', isTemplate: true },
+    { field: 'accounts', header: 'Accounts', type: 'number', isTemplate: true },
+    { field: 'active', header: 'Active', isTemplate: true },
+    { field: 'actions', header: '', isTemplate: true },
+  ];
 
   ngOnInit(): void {
     void this.load();

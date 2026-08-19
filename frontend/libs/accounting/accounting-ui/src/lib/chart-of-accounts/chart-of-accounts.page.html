@@ -34,13 +34,13 @@
       </label>
       <label>
         Code
-        <input name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
+        <bb-text-input name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
       </label>
     </div>
 
     <label>
       Name
-      <input name="accountName" [(ngModel)]="form.accountName" required />
+      <bb-text-input name="accountName" [(ngModel)]="form.accountName" required />
     </label>
 
     <label>
@@ -102,36 +102,38 @@
         {{ group.type.displayName }}
         <span class="meta">{{ group.type.normalBalance }} · {{ group.type.reportSection }}</span>
       </h2>
-      <bb-card-table>
-        <tbody>
-          @for (a of group.accounts; track a.accountId) {
-            <tr [class.inactive]="!a.isActive" [class.child]="a.parentAccountId">
-              <td class="code">{{ a.accountCode }}</td>
-              <td>
-                {{ a.accountName }}
-                @if (a.isSystemDefault) { <span class="badge sys">System</span> }
-                @if (a.isContra) { <span class="badge contra">Contra</span> }
-                @if (a.isLock) { <span class="badge lock">Locked</span> }
-              </td>
-              <td class="flags-cell">
-                @if (a.isBank) { <span class="chip">Bank</span> }
-                @if (a.isSales) { <span class="chip">Sales</span> }
-                @if (a.isPurchase) { <span class="chip">Purchase</span> }
-                @if (a.isPayment) { <span class="chip">Payment</span> }
-                @if (a.isJE) { <span class="chip je">Journal</span> }
-              </td>
-              <td class="row-actions">
-                <button type="button" class="link" (click)="startEdit(a)">Edit</button>
-                @if (!a.isSystemDefault && a.isActive) {
-                  <button type="button" class="link danger" (click)="deactivate(a)">Deactivate</button>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr><td colspan="4" class="empty">No accounts of this type.</td></tr>
-          }
-        </tbody>
-      </bb-card-table>
+      <bb-data-grid [gridCode]="'CHART_OF_ACCOUNTS_' + group.type.accountTypeId" [columns]="columns" [data]="group.accounts">
+        <ng-template bbCellTemplate="code" let-row>
+          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
+            {{ row.accountCode }}
+          </div>
+        </ng-template>
+        <ng-template bbCellTemplate="name" let-row>
+          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
+            {{ row.accountName }}
+            @if (row.isSystemDefault) { <span class="badge sys">System</span> }
+            @if (row.isContra) { <span class="badge contra">Contra</span> }
+            @if (row.isLock) { <span class="badge lock">Locked</span> }
+          </div>
+        </ng-template>
+        <ng-template bbCellTemplate="flags" let-row>
+          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
+            @if (row.isBank) { <span class="chip">Bank</span> }
+            @if (row.isSales) { <span class="chip">Sales</span> }
+            @if (row.isPurchase) { <span class="chip">Purchase</span> }
+            @if (row.isPayment) { <span class="chip">Payment</span> }
+            @if (row.isJE) { <span class="chip je">Journal</span> }
+          </div>
+        </ng-template>
+        <ng-template bbCellTemplate="actions" let-row>
+          <div [class.inactive]="!row.isActive" [class.child]="row.parentAccountId">
+            <button type="button" class="link" (click)="startEdit(row)">Edit</button>
+            @if (!row.isSystemDefault && row.isActive) {
+              <button type="button" class="link danger" (click)="deactivate(row)">Deactivate</button>
+            }
+          </div>
+        </ng-template>
+      </bb-data-grid>
     </section>
   }
 }

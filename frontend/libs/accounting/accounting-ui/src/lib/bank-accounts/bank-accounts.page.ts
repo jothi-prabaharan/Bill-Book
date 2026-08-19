@@ -1,5 +1,5 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -53,7 +53,7 @@ interface BankAccount {
 @Component({
   selector: 'bb-bank-accounts-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './bank-accounts.page.html',
   styleUrl: './bank-accounts.page.scss',
 })
@@ -69,6 +69,19 @@ export class BankAccountsPage implements OnInit {
 
   showInactive = false;
   form = this.blank();
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: '', isTemplate: true },
+    { field: 'account', header: 'Account', isTemplate: true },
+    { field: 'bank', header: 'Bank', isTemplate: true },
+    { field: 'number', header: 'Number', isTemplate: true },
+    { field: 'type', header: 'Type', isTemplate: true },
+    { field: 'ifsc', header: 'IFSC', isTemplate: true },
+    { field: 'ledger', header: 'Ledger', isTemplate: true },
+    { field: 'default', header: 'Default', isTemplate: true },
+    { field: 'active', header: 'Active', isTemplate: true },
+    { field: 'actions', header: '', isTemplate: true },
+  ];
 
   ngOnInit(): void {
     void this.load();

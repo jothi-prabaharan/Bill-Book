@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +39,7 @@ interface AccountType {
 @Component({
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './chart-of-accounts.page.html',
   styleUrl: './chart-of-accounts.page.scss',
 })
@@ -71,6 +71,13 @@ export class ChartOfAccountsPage implements OnInit {
     isPayment: false,
     isBank: false,
   };
+
+  columns: ColumnDef[] = [
+    { field: 'code', header: '', isTemplate: true },
+    { field: 'name', header: '', isTemplate: true },
+    { field: 'flags', header: '', isTemplate: true },
+    { field: 'actions', header: '', isTemplate: true },
+  ];
 
   /** Accounts grouped under their type, parents before their children. */
   protected readonly grouped = computed(() =>

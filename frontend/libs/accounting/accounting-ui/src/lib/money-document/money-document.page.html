@@ -14,7 +14,7 @@
     <div class="head-fields">
       <label>
         Date
-        <input type="date" [(ngModel)]="transactionDate" name="transactionDate" />
+        <bb-date-input  [(ngModel)]="transactionDate" name="transactionDate" />
       </label>
       <label class="wide">
         {{ direction() === 'spend' ? 'Paid from' : 'Received into' }}
@@ -36,8 +36,8 @@
       </label>
       <label>
         Amount
-        <input
-          type="number"
+        <bb-number-input
+          
           inputmode="decimal"
           step="0.01"
           min="0"
@@ -55,15 +55,15 @@
       </label>
       <label>
         Reference
-        <input type="text" [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+        <bb-text-input  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
       </label>
       <label>
         Reference date
-        <input type="date" [(ngModel)]="referenceDate" name="referenceDate" />
+        <bb-date-input  [(ngModel)]="referenceDate" name="referenceDate" />
       </label>
       <label class="wide">
         Memo
-        <input type="text" [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
+        <bb-text-input  [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
       </label>
     </div>
 
@@ -79,108 +79,90 @@
       </p>
     }
 
-    <table class="lines">
-      <thead>
-        <tr>
-          <th class="line-col">#</th>
-          <th>What this is for</th>
-          <th>Posts to</th>
-          <th>Settles</th>
-          <th>Memo</th>
-          <th class="num">Amount</th>
-          <th class="actions-col"><span class="sr-only">Remove</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of lines(); track $index) {
-          <tr>
-            <td class="line-col" data-label="Line">{{ $index + 1 }}</td>
+    <bb-data-grid [gridCode]="'MONEY_DOCUMENT_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
+      <ng-template bbCellTemplate="lineNumber" let-row let-index="index">
+        {{ index + 1 }}
+      </ng-template>
 
-            <td data-label="What this is for">
-              <select
-                [(ngModel)]="line.ledgerSourceId"
-                [name]="'source' + $index"
-                (ngModelChange)="onSource(line)"
-              >
-                <option [ngValue]="null">Choose…</option>
-                @for (s of sources(); track s.ledgerSourceId) {
-                  <option [ngValue]="s.ledgerSourceId">{{ s.label }}</option>
-                }
-              </select>
-              @if (sourceFor(line.ledgerSourceId); as s) {
-                <span class="sub">{{ s.hint }}</span>
-              }
-            </td>
-
-            <!-- Shown, never chosen. The account follows from the contact and
-                 what the line is for; the server resolves the same one from the
-                 same rule, so a picker here could only disagree with it. -->
-            <td data-label="Posts to">
-              @if (subAccountFor(line); as sub) {
-                <span class="locked" title="Fixed by the contact and what this line is for">
-                  {{ sub.accountCode }} — {{ sub.accountName }}
-                </span>
-                <span class="sub">{{ sub.subAccountName }}</span>
-              } @else if (line.ledgerSourceId === null || contactId === null) {
-                <span class="none">—</span>
-              } @else {
-                <span class="missing">
-                  No {{ sourceFor(line.ledgerSourceId)?.accountSystemName }} account for this
-                  contact
-                </span>
-              }
-            </td>
-
-            <td data-label="Settles">
-              @if (line.mappingTransactionTypeCode) {
-                <span class="chip">{{ line.mappingTransactionTypeCode }}</span>
-                <input
-                  type="number"
-                  inputmode="numeric"
-                  min="1"
-                  step="1"
-                  placeholder="Document #"
-                  [(ngModel)]="line.mappingTransactionId"
-                  [name]="'maps' + $index"
-                  (ngModelChange)="touch()"
-                />
-              } @else {
-                <span class="none">—</span>
-              }
-            </td>
-
-            <td data-label="Memo">
-              <input
-                type="text"
-                [(ngModel)]="line.lineMemo"
-                [name]="'lineMemo' + $index"
-                maxlength="300"
-                (ngModelChange)="touch()"
-              />
-            </td>
-
-            <td class="num" data-label="Amount">
-              <input
-                type="number"
-                inputmode="decimal"
-                step="0.01"
-                min="0"
-                [(ngModel)]="line.amount"
-                [name]="'lineAmount' + $index"
-                (ngModelChange)="touch()"
-              />
-              <button type="button" class="link fill" (click)="fill(line)">Fill rest</button>
-            </td>
-
-            <td class="actions-col">
-              <button type="button" class="icon" (click)="removeLine($index)" title="Remove line">
-                ×
-              </button>
-            </td>
-          </tr>
+      <ng-template bbCellTemplate="source" let-row let-index="index">
+        <select
+          [(ngModel)]="row.ledgerSourceId"
+          [name]="'source' + index"
+          (ngModelChange)="onSource(row)"
+        >
+          <option [ngValue]="null">Choose…</option>
+          @for (s of sources(); track s.ledgerSourceId) {
+            <option [ngValue]="s.ledgerSourceId">{{ s.label }}</option>
+          }
+        </select>
+        @if (sourceFor(row.ledgerSourceId); as s) {
+          <span class="sub">{{ s.hint }}</span>
         }
-      </tbody>
-    </table>
+      </ng-template>
+
+      <ng-template bbCellTemplate="postsTo" let-row let-index="index">
+        @if (subAccountFor(row); as sub) {
+          <span class="locked" title="Fixed by the contact and what this line is for">
+            {{ sub.accountCode }} — {{ sub.accountName }}
+          </span>
+          <span class="sub">{{ sub.subAccountName }}</span>
+        } @else if (row.ledgerSourceId === null || contactId === null) {
+          <span class="none">—</span>
+        } @else {
+          <span class="missing">
+            No {{ sourceFor(row.ledgerSourceId)?.accountSystemName }} account for this
+            contact
+          </span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="settles" let-row let-index="index">
+        @if (row.mappingTransactionTypeCode) {
+          <span class="chip">{{ row.mappingTransactionTypeCode }}</span>
+          <bb-number-input
+            
+            inputmode="numeric"
+            min="1"
+            step="1"
+            placeholder="Document #"
+            [(ngModel)]="row.mappingTransactionId"
+            [name]="'maps' + index"
+            (ngModelChange)="touch()"
+          />
+        } @else {
+          <span class="none">—</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="memo" let-row let-index="index">
+        <bb-text-input
+          
+          [(ngModel)]="row.lineMemo"
+          [name]="'lineMemo' + index"
+          maxlength="300"
+          (ngModelChange)="touch()"
+        />
+      </ng-template>
+
+      <ng-template bbCellTemplate="amount" let-row let-index="index">
+        <bb-number-input
+          
+          inputmode="decimal"
+          step="0.01"
+          min="0"
+          [(ngModel)]="row.amount"
+          [name]="'lineAmount' + index"
+          (ngModelChange)="touch()"
+        />
+        <button type="button" class="link fill" (click)="fill(row)">Fill rest</button>
+      </ng-template>
+
+      <ng-template bbCellTemplate="actions" let-row let-index="index">
+        <button type="button" class="icon" (click)="removeLine(index)" title="Remove line">
+          ×
+        </button>
+      </ng-template>
+    </bb-data-grid>
 
     <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
 
@@ -251,42 +233,36 @@
       <div><dt>Memo</dt><dd>{{ d.memo ?? '—' }}</dd></div>
     </dl>
 
-    <table class="lines">
-      <thead>
-        <tr>
-          <th class="line-col">#</th>
-          <th>What this is for</th>
-          <th>Settles</th>
-          <th>Memo</th>
-          <th class="num">Amount</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of d.lines; track line.detailId) {
-          <tr>
-            <td class="line-col" data-label="Line">{{ line.lineNumber }}</td>
-            <td data-label="What this is for">
-              {{ sourceFor(line.ledgerSourceId)?.label ?? 'Source ' + line.ledgerSourceId }}
-            </td>
-            <td data-label="Settles">
-              @if (line.mappingTransactionTypeCode) {
-                {{ line.mappingTransactionTypeCode }} #{{ line.mappingTransactionId ?? '—' }}
-              } @else {
-                <span class="none">—</span>
-              }
-            </td>
-            <td data-label="Memo">{{ line.lineMemo ?? '' }}</td>
-            <td class="num" data-label="Amount">{{ line.amount | number: '1.2-2' }}</td>
-          </tr>
+    <bb-data-grid [gridCode]="'MONEY_DOCUMENT_VIEW_LINES'" [columns]="viewLinesColumns" [data]="d.lines">
+      <ng-template bbCellTemplate="lineNumber" let-row>
+        {{ row.lineNumber }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="source" let-row>
+        {{ sourceFor(row.ledgerSourceId)?.label ?? 'Source ' + row.ledgerSourceId }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="settles" let-row>
+        @if (row.mappingTransactionTypeCode) {
+          {{ row.mappingTransactionTypeCode }} #{{ row.mappingTransactionId ?? '—' }}
+        } @else {
+          <span class="none">—</span>
         }
-      </tbody>
-      <tfoot>
-        <tr>
-          <td colspan="4">Total</td>
-          <td class="num">{{ d.amount | number: '1.2-2' }}</td>
-        </tr>
-      </tfoot>
-    </table>
+      </ng-template>
+
+      <ng-template bbCellTemplate="memo" let-row>
+        {{ row.lineMemo ?? '' }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="amount" let-row>
+        {{ row.amount | number: '1.2-2' }}
+      </ng-template>
+    </bb-data-grid>
+
+    <div class="totals-footer">
+      <div>Total</div>
+      <div class="num">{{ d.amount | number: '1.2-2' }}</div>
+    </div>
 
     <div class="editor-actions">
       <button type="button" class="ghost" (click)="close()">Close</button>
@@ -309,52 +285,38 @@
   </label>
 </div>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th class="date-col">Date</th>
-      <th>Number</th>
-      <th>{{ contactLabel() }}</th>
-      <th>Account</th>
-      <th class="num">Amount</th>
-      <th>Status</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.documentId) {
-      <tr [class.draft]="row.status === 'Draft'">
-        <td class="date-col" data-label="Date">{{ row.transactionDate }}</td>
-        <td data-label="Number">
-          <button type="button" class="link" (click)="open(row.documentId)">
-            {{ row.transactionNo ?? 'Unnumbered draft' }}
-          </button>
-        </td>
-        <td data-label="Contact">{{ contactName(row.contactId) }}</td>
-        <td data-label="Account">{{ row.bankAccountName }}</td>
-        <td class="num" data-label="Amount">{{ row.amount | number: '1.2-2' }}</td>
-        <td data-label="Status">
-          <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
-        </td>
-        <td class="actions-col">
-          @if (row.status === 'Draft') {
-            <button type="button" class="link" (click)="discard(row)">Delete</button>
-          } @else if (row.status === 'Posted') {
-            <button type="button" class="link" (click)="voidDocument(row)">Void</button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="7" class="empty">
-          Nothing here yet.
-          {{
-            direction() === 'spend'
-              ? 'Spend money records what left the bank — a bill paid, a deposit placed, a customer refunded.'
-              : 'Receive money records what arrived — an invoice settled, an advance taken, a supplier refunding us.'
-          }}
-        </td>
-      </tr>
+<bb-data-grid [gridCode]="'MONEY_DOCUMENT_LIST'" [columns]="columns()" [data]="rows()">
+  <ng-template bbCellTemplate="transactionDate" let-row>
+    {{ row.transactionDate }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="transactionNo" let-row>
+    <button type="button" class="link" (click)="open(row.documentId)">
+      {{ row.transactionNo ?? 'Unnumbered draft' }}
+    </button>
+  </ng-template>
+
+  <ng-template bbCellTemplate="contact" let-row>
+    {{ contactName(row.contactId) }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="account" let-row>
+    {{ row.bankAccountName }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="amount" let-row>
+    {{ row.amount | number: '1.2-2' }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="status" let-row>
+    <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.status === 'Draft') {
+      <button type="button" class="link" (click)="discard(row)">Delete</button>
+    } @else if (row.status === 'Posted') {
+      <button type="button" class="link" (click)="voidDocument(row)">Void</button>
     }
-  </tbody>
-</bb-card-table>
+  </ng-template>
+</bb-data-grid>

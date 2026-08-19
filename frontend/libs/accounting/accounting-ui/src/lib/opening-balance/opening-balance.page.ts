@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { ColumnDef, DataGridComponent , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -125,11 +125,30 @@ interface LineForm {
 @Component({
   selector: 'bb-opening-balance-page',
   standalone: true,
-  imports: [CardTableComponent, DecimalPipe, FormsModule],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './opening-balance.page.html',
   styleUrl: './opening-balance.page.scss',
 })
 export class OpeningBalancePage implements OnInit {
+  linesColumns: ColumnDef[] = [
+    { field: 'lineNo', header: '#' },
+    { field: 'what', header: 'What' },
+    { field: 'which', header: 'Which' },
+    { field: 'document', header: 'Document' },
+    { field: 'qty', header: 'Qty', dataType: 'quantity' },
+    { field: 'unitCost', header: 'Unit cost', dataType: 'unitprice' },
+    { field: 'debit', header: 'Debit', dataType: 'money' },
+    { field: 'credit', header: 'Credit', dataType: 'money' },
+    { field: 'actions', header: '' }
+  ];
+
+  tieColumns: ColumnDef[] = [
+    { field: 'controlAccount', header: 'Control account' },
+    { field: 'account', header: 'Account', dataType: 'money' },
+    { field: 'subledger', header: 'Subledger', dataType: 'money' },
+    { field: 'unattributed', header: 'Belongs to nobody', dataType: 'money' },
+    { field: 'balances', header: 'Balances', dataType: 'number' }
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly document = signal<OpeningBalanceView | null>(null);

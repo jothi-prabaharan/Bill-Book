@@ -33,68 +33,52 @@
   }
 }
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th>Role</th>
-      <th>Closed up to</th>
-      <th>Why</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.role.roleId) {
-      <tr>
-        <td>
-          {{ row.role.displayName }}
-          @if (row.role.isSystemRole) {
-            <span class="sub">system role</span>
-          }
-          @if (row.role.userCount > 0) {
-            <span class="sub">{{ row.role.userCount }} user(s)</span>
-          }
-        </td>
-
-        <td>
-          <input
-            type="date"
-            [(ngModel)]="row.editing"
-            [name]="'lock' + row.role.roleId"
-            [attr.aria-label]="'Closed up to, for ' + row.role.displayName"
-          />
-          @if (row.lock === null) {
-            <span class="sub">not closed — every period is open</span>
-          } @else if (reopens(row)) {
-            <span class="sub warn">
-              earlier than {{ row.lock.lockedUpto }} — this reopens a closed period
-            </span>
-          }
-        </td>
-
-        <td>
-          <input
-            type="text"
-            [(ngModel)]="row.note"
-            [name]="'note' + row.role.roleId"
-            maxlength="300"
-            placeholder="Year-end closed, audit signed off…"
-            [attr.aria-label]="'Why, for ' + row.role.displayName"
-          />
-        </td>
-
-        <td class="actions-col">
-          <button type="button" class="link" (click)="save(row)" [disabled]="busy()">
-            {{ row.lock === null ? 'Close' : 'Update' }}
-          </button>
-          @if (row.lock !== null) {
-            <button type="button" class="link" (click)="clear(row)" [disabled]="busy()">
-              Reopen all
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="4">No active roles.</td></tr>
+<bb-data-grid [gridCode]="'CLOSING_DATES'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="role" let-row>
+    {{ row.role.displayName }}
+    @if (row.role.isSystemRole) {
+      <span class="sub">system role</span>
     }
-  </tbody>
-</bb-card-table>
+    @if (row.role.userCount > 0) {
+      <span class="sub">{{ row.role.userCount }} user(s)</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="lock" let-row>
+    <bb-date-input
+      
+      [(ngModel)]="row.editing"
+      [name]="'lock' + row.role.roleId"
+      [attr.aria-label]="'Closed up to, for ' + row.role.displayName"
+    />
+    @if (row.lock === null) {
+      <span class="sub">not closed — every period is open</span>
+    } @else if (reopens(row)) {
+      <span class="sub warn">
+        earlier than {{ row.lock.lockedUpto }} — this reopens a closed period
+      </span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="note" let-row>
+    <bb-text-input
+      
+      [(ngModel)]="row.note"
+      [name]="'note' + row.role.roleId"
+      maxlength="300"
+      placeholder="Year-end closed, audit signed off…"
+      [attr.aria-label]="'Why, for ' + row.role.displayName"
+    />
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="save(row)" [disabled]="busy()">
+      {{ row.lock === null ? 'Close' : 'Update' }}
+    </button>
+    @if (row.lock !== null) {
+      <button type="button" class="link" (click)="clear(row)" [disabled]="busy()">
+        Reopen all
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>

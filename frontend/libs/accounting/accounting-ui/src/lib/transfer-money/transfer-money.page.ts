@@ -1,7 +1,7 @@
-import { CardTableComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { PAYMENT_METHODS } from '../money-document/money-sources';
 
 interface BankAccountOption {
@@ -45,11 +45,20 @@ interface TransferListItem {
 @Component({
   selector: 'bb-transfer-money-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './transfer-money.page.html',
   styleUrl: './transfer-money.page.scss',
 })
 export class TransferMoneyPage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'date', header: 'Date' },
+    { field: 'number', header: 'Number' },
+    { field: 'from', header: 'From' },
+    { field: 'to', header: 'To' },
+    { field: 'amount', header: 'Amount' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: 'Actions' },
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly paymentMethods = PAYMENT_METHODS;

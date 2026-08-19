@@ -1,9 +1,9 @@
-import { CardTableComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import {
   MoneySource,
   PAYMENT_METHODS,
@@ -110,13 +110,31 @@ interface LineForm {
 @Component({
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [CardTableComponent, DecimalPipe, FormsModule],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })
 export class MoneyDocumentPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
+
+  editLinesColumns: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'source', header: 'What this is for' },
+    { field: 'postsTo', header: 'Posts to' },
+    { field: 'settles', header: 'Settles' },
+    { field: 'memo', header: 'Memo' },
+    { field: 'amount', header: 'Amount' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
+  viewLinesColumns: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'source', header: 'What this is for' },
+    { field: 'settles', header: 'Settles' },
+    { field: 'memo', header: 'Memo' },
+    { field: 'amount', header: 'Amount' }
+  ];
 
   protected readonly paymentMethods = PAYMENT_METHODS;
 
@@ -165,6 +183,16 @@ export class MoneyDocumentPage implements OnInit {
   protected readonly contactLabel = computed(() =>
     this.direction() === 'spend' ? 'Paid to' : 'Received from',
   );
+
+  protected readonly columns = computed<ColumnDef[]>(() => [
+    { field: 'transactionDate', header: 'Date' },
+    { field: 'transactionNo', header: 'Number' },
+    { field: 'contact', header: this.contactLabel() },
+    { field: 'account', header: 'Account' },
+    { field: 'amount', header: 'Amount' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: 'Actions' }
+  ]);
 
   private get endpoint(): string {
     return this.direction() === 'spend' ? '/api/spend-money' : '/api/receive-money';

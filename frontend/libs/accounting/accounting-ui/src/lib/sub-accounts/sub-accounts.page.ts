@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -35,7 +35,7 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
 @Component({
   selector: 'bb-sub-accounts-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, SearchInputComponent],
   templateUrl: './sub-accounts.page.html',
   styleUrl: './sub-accounts.page.scss',
 })
@@ -44,6 +44,12 @@ export class SubAccountsPage implements OnInit {
 
   protected readonly referenceTypes = REFERENCE_TYPES;
   protected readonly rows = signal<SubAccountRow[]>([]);
+
+  columns: ColumnDef[] = [
+    { field: 'subAccountName', header: 'Name' },
+    { field: 'tags', header: 'Tags' },
+    { field: 'referenceId', header: 'Reference' }
+  ];
   protected readonly referenceType = signal<ReferenceType | null>(null);
   protected readonly searchTerm = signal('');
   protected readonly busy = signal(false);

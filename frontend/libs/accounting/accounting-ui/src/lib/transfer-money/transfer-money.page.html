@@ -19,7 +19,7 @@
     <div class="head-fields">
       <label>
         Date
-        <input type="date" [(ngModel)]="transactionDate" name="transactionDate" />
+        <bb-date-input  [(ngModel)]="transactionDate" name="transactionDate" />
       </label>
       <label class="wide">
         From
@@ -52,8 +52,8 @@
       </label>
       <label>
         Amount
-        <input
-          type="number"
+        <bb-number-input
+          
           inputmode="decimal"
           step="0.01"
           min="0"
@@ -71,15 +71,15 @@
       </label>
       <label>
         Reference
-        <input type="text" [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+        <bb-text-input  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
       </label>
       <label>
         Reference date
-        <input type="date" [(ngModel)]="referenceDate" name="referenceDate" />
+        <bb-date-input  [(ngModel)]="referenceDate" name="referenceDate" />
       </label>
       <label class="wide">
         Memo
-        <input type="text" [(ngModel)]="memo" name="memo" placeholder="Why the money was moved" />
+        <bb-text-input  [(ngModel)]="memo" name="memo" placeholder="Why the money was moved" />
       </label>
     </div>
 
@@ -143,48 +143,34 @@
   </label>
 </div>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th class="date-col">Date</th>
-      <th>Number</th>
-      <th>From</th>
-      <th>To</th>
-      <th class="num">Amount</th>
-      <th>Status</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.documentId) {
-      <tr [class.draft]="row.status === 'Draft'">
-        <td class="date-col" data-label="Date">{{ row.transactionDate }}</td>
-        <td data-label="Number">
-          <button type="button" class="link" (click)="open(row.documentId)">
-            {{ row.transactionNo ?? 'Unnumbered draft' }}
-          </button>
-        </td>
-        <td data-label="From">{{ row.bankAccountName }}</td>
-        <td data-label="To">{{ row.toBankAccountName ?? '—' }}</td>
-        <td class="num" data-label="Amount">{{ row.amount }}</td>
-        <td data-label="Status">
-          <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
-        </td>
-        <td class="actions-col">
-          @if (row.status === 'Draft') {
-            <button type="button" class="link" (click)="discard(row)">Delete</button>
-          } @else if (row.status === 'Posted') {
-            <button type="button" class="link" (click)="voidDocument(row)">Void</button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="7" class="empty">
-          No transfers yet. This is where a till banked, or a current account topped up from
-          savings, is recorded.
-        </td>
-      </tr>
-    }
-  </tbody>
-</bb-card-table>
+<bb-data-grid [gridCode]="'TRANSFER_MONEY'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="date" let-row>
+    <div class="date-col" [class.draft]="row.status === 'Draft'">{{ row.transactionDate }}</div>
+  </ng-template>
+  <ng-template bbCellTemplate="number" let-row>
+    <button type="button" class="link" (click)="open(row.documentId)">
+      {{ row.transactionNo ?? 'Unnumbered draft' }}
+    </button>
+  </ng-template>
+  <ng-template bbCellTemplate="from" let-row>
+    {{ row.bankAccountName }}
+  </ng-template>
+  <ng-template bbCellTemplate="to" let-row>
+    {{ row.toBankAccountName ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="amount" let-row>
+    <div class="num">{{ row.amount }}</div>
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    <span class="badge" [class.void]="row.status === 'Void'">{{ row.status }}</span>
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <div class="actions-col">
+      @if (row.status === 'Draft') {
+        <button type="button" class="link" (click)="discard(row)">Delete</button>
+      } @else if (row.status === 'Posted') {
+        <button type="button" class="link" (click)="voidDocument(row)">Void</button>
+      }
+    </div>
+  </ng-template>
+</bb-data-grid>

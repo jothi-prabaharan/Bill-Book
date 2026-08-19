@@ -34,12 +34,12 @@
     <div class="head-fields">
       <label>
         Rows to skip
-        <input type="number" min="0" max="100" [(ngModel)]="form.skipRows" name="skipRows" />
+        <bb-number-input  min="0" max="100" [(ngModel)]="form.skipRows" name="skipRows" />
         <span class="sub">The branch address and summary above the table</span>
       </label>
       <label>
         Date format
-        <input type="text" [(ngModel)]="form.dateFormat" name="dateFormat" maxlength="40" />
+        <bb-text-input  [(ngModel)]="form.dateFormat" name="dateFormat" maxlength="40" />
         <span class="sub">e.g. dd/MM/yyyy or dd-MMM-yyyy</span>
       </label>
       <label class="check">
@@ -51,12 +51,12 @@
     <div class="head-fields">
       <label>
         Date column
-        <input type="text" [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
+        <bb-text-input  [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
       </label>
       <label>
         Value date <span class="optional">optional</span>
-        <input
-          type="text"
+        <bb-text-input
+          
           [(ngModel)]="form.valueDateColumn"
           name="valueDateColumn"
           maxlength="100"
@@ -64,8 +64,8 @@
       </label>
       <label>
         Description
-        <input
-          type="text"
+        <bb-text-input
+          
           [(ngModel)]="form.descriptionColumn"
           name="descriptionColumn"
           maxlength="100"
@@ -73,8 +73,8 @@
       </label>
       <label>
         Reference
-        <input
-          type="text"
+        <bb-text-input
+          
           [(ngModel)]="form.referenceColumn"
           name="referenceColumn"
           maxlength="100"
@@ -83,7 +83,7 @@
       </label>
       <label>
         Balance <span class="optional">optional</span>
-        <input type="text" [(ngModel)]="form.balanceColumn" name="balanceColumn" maxlength="100" />
+        <bb-text-input  [(ngModel)]="form.balanceColumn" name="balanceColumn" maxlength="100" />
       </label>
     </div>
 
@@ -95,8 +95,8 @@
       <div class="head-fields">
         <label>
           Withdrawal column
-          <input
-            type="text"
+          <bb-text-input
+            
             [(ngModel)]="form.withdrawalColumn"
             name="withdrawalColumn"
             maxlength="100"
@@ -105,8 +105,8 @@
         </label>
         <label>
           Deposit column
-          <input
-            type="text"
+          <bb-text-input
+            
             [(ngModel)]="form.depositColumn"
             name="depositColumn"
             maxlength="100"
@@ -120,8 +120,8 @@
       <div class="head-fields">
         <label>
           One signed amount column
-          <input
-            type="text"
+          <bb-text-input
+            
             [(ngModel)]="form.amountColumn"
             name="amountColumn"
             maxlength="100"
@@ -192,118 +192,84 @@
       <button type="button" class="ghost" (click)="close()">Close</button>
     </div>
 
-    <table class="lines">
-      <thead>
-        <tr>
-          <th class="date-col">Date</th>
-          <th>What the bank says</th>
-          <th class="num">Out</th>
-          <th class="num">In</th>
-          <th>Your record</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of visibleLines; track line.bankStatementLineId) {
-          <tr [class.decided]="line.status !== 'Unmatched'">
-            <td class="date-col" data-label="Date">{{ line.transactionDate }}</td>
-
-            <td data-label="What the bank says">
-              {{ line.description ?? '—' }}
-              @if (line.referenceNo) {
-                <span class="sub">Ref {{ line.referenceNo }}</span>
+    <bb-data-grid [gridCode]="'STATEMENT_LINES'" [columns]="lineColumns" [data]="visibleLines">
+      <ng-template bbCellTemplate="date" let-row>
+        <div class="date-col" [class.decided]="row.status !== 'Unmatched'">{{ row.transactionDate }}</div>
+      </ng-template>
+      <ng-template bbCellTemplate="bankSays" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.description ?? '—' }}
+          @if (row.referenceNo) {
+            <span class="sub">Ref {{ row.referenceNo }}</span>
+          }
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="out" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.withdrawalAmount ? (row.withdrawalAmount | number: '1.2-2') : '' }}
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="in" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.depositAmount ? (row.depositAmount | number: '1.2-2') : '' }}
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="record" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          @if (row.status === 'Matched') {
+            <span class="matched">
+              {{ row.matchedTransactionNo ?? row.matchedTransactionTypeCode }}
+              @if (row.matchedAutomatically) {
+                <span class="chip">matched for you</span>
               }
-            </td>
-
-            <td class="num" data-label="Out">
-              {{ line.withdrawalAmount ? (line.withdrawalAmount | number: '1.2-2') : '' }}
-            </td>
-            <td class="num" data-label="In">
-              {{ line.depositAmount ? (line.depositAmount | number: '1.2-2') : '' }}
-            </td>
-
-            <td data-label="Your record">
-              @if (line.status === 'Matched') {
-                <span class="matched">
-                  {{ line.matchedTransactionNo ?? line.matchedTransactionTypeCode }}
-                  @if (line.matchedAutomatically) {
-                    <span class="chip">matched for you</span>
-                  }
-                </span>
-                <button type="button" class="link" (click)="unmatch(line)">Undo</button>
-              } @else if (line.status === 'Ignored') {
-                <span class="ignored">Set aside — {{ line.note }}</span>
-                <button type="button" class="link" (click)="unmatch(line)">Undo</button>
-              } @else if (line.candidates.length > 0) {
-                <!-- Candidates rather than a guess. Two documents equally good is
-                     a line a person has to look at: picking one would be a coin
-                     toss filed as a decision. -->
-                @for (c of line.candidates; track c.transactionTypeCode + c.transactionId) {
-                  <div class="candidate">
-                    <button type="button" class="pick" (click)="match(line, c)">
-                      {{ c.transactionNo ?? c.transactionTypeCode + ' #' + c.transactionId }}
-                    </button>
-                    <span class="sub">{{ c.reason }}</span>
-                  </div>
-                }
-                <button type="button" class="link" (click)="ignore(line)">Set aside</button>
-              } @else {
-                <span class="none">
-                  Nothing in your records matches this. It may be a bank charge or interest that
-                  needs recording as a payment or a receipt.
-                </span>
-                <button type="button" class="link" (click)="ignore(line)">Set aside</button>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty">
-              {{
-                showAll
-                  ? 'This statement has no lines.'
-                  : 'Nothing left to decide on this statement.'
-              }}
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+            </span>
+            <button type="button" class="link" (click)="unmatch(row)">Undo</button>
+          } @else if (row.status === 'Ignored') {
+            <span class="ignored">Set aside — {{ row.note }}</span>
+            <button type="button" class="link" (click)="unmatch(row)">Undo</button>
+          } @else if (row.candidates.length > 0) {
+            @for (c of row.candidates; track c.transactionTypeCode + c.transactionId) {
+              <div class="candidate">
+                <button type="button" class="pick" (click)="match(row, c)">
+                  {{ c.transactionNo ?? c.transactionTypeCode + ' #' + c.transactionId }}
+                </button>
+                <span class="sub">{{ c.reason }}</span>
+              </div>
+            }
+            <button type="button" class="link" (click)="ignore(row)">Set aside</button>
+          } @else {
+            <span class="none">
+              Nothing in your records matches this. It may be a bank charge or interest that
+              needs recording as a payment or a receipt.
+            </span>
+            <button type="button" class="link" (click)="ignore(row)">Set aside</button>
+          }
+        </div>
+      </ng-template>
+    </bb-data-grid>
   </section>
 }
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th class="date-col">Period</th>
-      <th>File</th>
-      <th class="num">Lines</th>
-      <th class="num">Decided</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (s of statements(); track s.bankStatementId) {
-      <tr>
-        <td class="date-col" data-label="Period">
-          <button type="button" class="link" (click)="open(s)">
-            {{ s.fromDate }} → {{ s.toDate }}
-          </button>
-        </td>
-        <td data-label="File">{{ s.fileName ?? '—' }}</td>
-        <td class="num" data-label="Lines">{{ s.lineCount }}</td>
-        <td class="num" data-label="Decided">{{ s.matchedCount + s.ignoredCount }}</td>
-        <td data-label="Status">
-          <span class="badge" [class.done]="s.isReconciled">
-            {{ s.isReconciled ? 'Reconciled' : 'In progress' }}
-          </span>
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="5" class="empty">
-          No statements imported for this account yet.
-        </td>
-      </tr>
-    }
-  </tbody>
-</bb-card-table>
+<bb-data-grid [gridCode]="'STATEMENTS'" [columns]="statementColumns" [data]="statements()">
+  <ng-template bbCellTemplate="period" let-row>
+    <div class="date-col">
+      <button type="button" class="link" (click)="open(row)">
+        {{ row.fromDate }} → {{ row.toDate }}
+      </button>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="file" let-row>
+    {{ row.fileName ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="lines" let-row>
+    {{ row.lineCount }}
+  </ng-template>
+  <ng-template bbCellTemplate="decided" let-row>
+    {{ row.matchedCount + row.ignoredCount }}
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    <span class="badge" [class.done]="row.isReconciled">
+      {{ row.isReconciled ? 'Reconciled' : 'In progress' }}
+    </span>
+  </ng-template>
+</bb-data-grid>

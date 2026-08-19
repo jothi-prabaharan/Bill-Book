@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -91,7 +91,7 @@ interface StatementLine {
 @Component({
   selector: 'bb-statements-page',
   standalone: true,
-  imports: [CardTableComponent, DecimalPipe, FormsModule],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './statements.page.html',
   styleUrl: './statements.page.scss',
 })
@@ -113,6 +113,22 @@ export class StatementsPage implements OnInit {
   file: File | null = null;
 
   form = this.blankProfile();
+
+  statementColumns: ColumnDef[] = [
+    { field: 'period', header: 'Period' },
+    { field: 'file', header: 'File' },
+    { field: 'lines', header: 'Lines', dataType: 'number' },
+    { field: 'decided', header: 'Decided', dataType: 'number' },
+    { field: 'status', header: 'Status' }
+  ];
+
+  lineColumns: ColumnDef[] = [
+    { field: 'date', header: 'Date', dataType: 'date' },
+    { field: 'bankSays', header: 'What the bank says' },
+    { field: 'out', header: 'Out', dataType: 'money' },
+    { field: 'in', header: 'In', dataType: 'money' },
+    { field: 'record', header: 'Your record' }
+  ];
 
   protected readonly usableAccounts = computed(() =>
     this.accounts().filter((a) => a.isActive),

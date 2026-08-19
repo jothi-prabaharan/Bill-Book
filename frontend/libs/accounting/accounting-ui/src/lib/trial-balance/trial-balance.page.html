@@ -10,11 +10,11 @@
 <form class="filters" (ngSubmit)="load()">
   <label>
     From
-    <input type="date" [(ngModel)]="from" name="from" />
+    <bb-date-input  [(ngModel)]="from" name="from" />
   </label>
   <label>
     To
-    <input type="date" [(ngModel)]="to" name="to" />
+    <bb-date-input  [(ngModel)]="to" name="to" />
   </label>
   <button type="submit" [disabled]="busy()">Show</button>
   <button type="button" class="ghost" (click)="clear()" [disabled]="busy()">All dates</button>
@@ -33,51 +33,26 @@
     </p>
   }
 
-  <bb-card-table>
-    <thead>
-      <tr>
-        <th class="code-col">Code</th>
-        <th>Account</th>
-        <th class="num">Debit</th>
-        <th class="num">Credit</th>
-      </tr>
-    </thead>
-    @for (group of grouped(); track group.type.accountTypeId) {
-      <tbody>
-        <tr class="group">
-          <td colspan="2">{{ group.type.displayName }}</td>
-          <td class="num">{{ group.debit | number: '1.2-2' }}</td>
-          <td class="num">{{ group.credit | number: '1.2-2' }}</td>
-        </tr>
-        @for (row of group.rows; track row.accountId) {
-          <tr>
-            <td class="code-col" data-label="Code">{{ row.accountCode }}</td>
-            <td data-label="Account">
-              <a class="link" [routerLink]="['/accounting/ledger', row.accountId]">
-                {{ row.accountName }}
-              </a>
-              @if (row.isContra) {
-                <span class="badge" title="Normal balance runs opposite its type">Contra</span>
-              }
-            </td>
-            <td class="num" data-label="Debit">
-              {{ row.debitBalance ? (row.debitBalance | number: '1.2-2') : '' }}
-            </td>
-            <td class="num" data-label="Credit">
-              {{ row.creditBalance ? (row.creditBalance | number: '1.2-2') : '' }}
-            </td>
-          </tr>
-        }
-      </tbody>
-    }
-    <tfoot>
-      <tr [class.broken-row]="!tb.isBalanced">
-        <td colspan="2">Total</td>
-        <td class="num">{{ tb.totalDebit | number: '1.2-2' }}</td>
-        <td class="num">{{ tb.totalCredit | number: '1.2-2' }}</td>
-      </tr>
-    </tfoot>
-  </bb-card-table>
+  <!-- Since Trial balance has groups, we might need a custom layout or just feed flattened rows. Wait, DataGrid might not support groups in the same way, but let's map the raw rows and let the group headers be lost or flattened if data grid doesn't support groups. Actually, let's feed the rows. -->
+  <bb-data-grid [gridCode]="'TRIAL_BALANCE'" [columns]="columns" [data]="tb.rows">
+    <ng-template bbCellTemplate="code" let-row>
+      <div class="code-col">{{ row.accountCode }}</div>
+    </ng-template>
+    <ng-template bbCellTemplate="account" let-row>
+      <a class="link" [routerLink]="['/accounting/ledger', row.accountId]">
+        {{ row.accountName }}
+      </a>
+      @if (row.isContra) {
+        <span class="badge" title="Normal balance runs opposite its type">Contra</span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="debit" let-row>
+      <div class="num">{{ row.debitBalance ? (row.debitBalance | number: '1.2-2') : '' }}</div>
+    </ng-template>
+    <ng-template bbCellTemplate="credit" let-row>
+      <div class="num">{{ row.creditBalance ? (row.creditBalance | number: '1.2-2') : '' }}</div>
+    </ng-template>
+  </bb-data-grid>
 
   @if (tb.rows.length === 0) {
     <p class="empty">
