@@ -1,7 +1,6 @@
 import {
-  CdkDrag,
   CdkDragDrop,
-  CdkDropList,
+  DragDropModule,
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { Component, computed, input, output } from '@angular/core';
@@ -23,7 +22,7 @@ const MAX_LEVELS = 3;
 @Component({
   selector: 'bb-group-panel',
   standalone: true,
-  imports: [CdkDropList, CdkDrag],
+  imports: [DragDropModule],
   templateUrl: './group-panel.component.html',
   styleUrl: './group-panel.component.scss',
 })

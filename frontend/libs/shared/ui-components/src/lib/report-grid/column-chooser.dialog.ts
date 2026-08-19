@@ -1,8 +1,6 @@
 import {
-  CdkDrag,
   CdkDragDrop,
-  CdkDragHandle,
-  CdkDropList,
+  DragDropModule,
   moveItemInArray,
 } from '@angular/cdk/drag-drop';
 import { Component, computed, input, output, signal } from '@angular/core';
@@ -23,7 +21,7 @@ import { ReportColumn } from '@bill-book/reporting-core';
 @Component({
   selector: 'bb-column-chooser',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [FormsModule, DragDropModule],
   templateUrl: './column-chooser.dialog.html',
   styleUrl: './column-chooser.dialog.scss',
 })

@@ -6,7 +6,7 @@
   } @else {
     <ol cdkDropList cdkDropListOrientation="horizontal" (cdkDropListDropped)="reorder($event)">
       @for (column of levels(); track column.key) {
-        <li cdkDrag>
+        <li >
           <span class="depth" aria-hidden="true">{{ $index + 1 }}</span>
           <span class="name">{{ column.header }}</span>
           <button

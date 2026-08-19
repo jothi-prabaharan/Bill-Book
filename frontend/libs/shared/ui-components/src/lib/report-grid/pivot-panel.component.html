@@ -15,7 +15,7 @@
         <span>Rows</span>
         <select
           name="pivotRows"
-          [ngModel]="spec.rows[0] ?? ''"
+          [ngModel]="spec.rows[0] || ''"
           (ngModelChange)="setRow($event)"
         >
           @for (column of axisColumns(); track column.key) {
@@ -28,7 +28,7 @@
         <span>Columns</span>
         <select
           name="pivotColumns"
-          [ngModel]="spec.columns[0] ?? ''"
+          [ngModel]="spec.columns[0] || ''"
           (ngModelChange)="setColumn($event)"
         >
           <!-- No column axis is a legitimate choice: rows and a measure alone is

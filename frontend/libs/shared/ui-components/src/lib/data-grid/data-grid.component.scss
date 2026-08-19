@@ -1,0 +1,3 @@
+:host { display: block; }
+:host ::ng-deep .table tbody tr { transition: background 120ms ease; }
+:host ::ng-deep .table tbody tr:hover { background: color-mix(in srgb, var(--color-accent) 5%, transparent); }

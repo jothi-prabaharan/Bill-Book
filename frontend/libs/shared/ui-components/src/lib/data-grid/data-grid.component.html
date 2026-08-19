@@ -1,0 +1,45 @@
+<div class="flex justify-end" style="margin-bottom:8px">
+  <button class="btn btn-secondary" (click)="exportToCsv()">Export to CSV</button>
+</div>
+
+<div class="card p-0" style="overflow-x:auto">
+  <cdk-virtual-scroll-viewport itemSize="45" class="w-full" style="height: 500px">
+    <table class="table w-full m-0">
+      <thead class="sticky top-0 z-50" style="background: var(--color-background-card)">
+        <tr>
+          <th *ngFor="let col of visibleColumns()" class="relative" style="background: var(--color-background-card)" [ngClass]="{'text-right': col.dataType === 'money' || col.dataType === 'number' || col.dataType === 'quantity' || col.dataType === 'unitprice'}">
+            <div class="flex items-center justify-between">
+              <span>{{ col.header }}</span>
+              <button style="padding:2px" (click)="toggleFilter(col.field, $event)" class="min-h-auto btn btn-ghost m-0">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                </svg>
+              </button>
+            </div>
+            
+            <div *ngIf="openFilterField() === col.field" class="top-full p-3 filter-dropdown card absolute left-0 z-60 shadow-md border-divider">
+              <select style="min-height:28px" 
+                      [ngModel]="filterOp()" (ngModelChange)="filterOp.set($event)" (click)="$event.stopPropagation()" class="px-2 py-1 input w-full mb-2 text-sm">
+                <option value="equals">Equals</option>
+                <option value="contains">Contains</option>
+                <option value="starts">Starts with</option>
+              </select>
+              <input type="text" placeholder="Value..." style="min-height:28px" 
+                     [ngModel]="filterVal()" (ngModelChange)="filterVal.set($event)" (click)="$event.stopPropagation()" class="px-2 py-1 input w-full mb-2 text-sm">
+              <div class="flex justify-end gap-2">
+                <button style="min-height:24px" (click)="clearFilter(col.field, $event)" class="px-1-5 py-0-5 btn btn-secondary text-xs m-0">Clear</button>
+                <button style="min-height:24px" (click)="applyFilter(col.field, $event)" class="px-1-5 py-0-5 btn btn-primary text-xs m-0">Apply</button>
+              </div>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr bb-data-grid-row *cdkVirtualFor="let row of filteredData()" [row]="row" [visibleColumns]="visibleColumns()" (rowClick)="onRowClick($event)" class="clickable-row cursor-pointer"></tr>
+        <tr *ngIf="filteredData().length === 0">
+          <td [attr.colspan]="visibleColumns().length" class="text-center text-muted p-4">No records found.</td>
+        </tr>
+      </tbody>
+    </table>
+  </cdk-virtual-scroll-viewport>
+</div>

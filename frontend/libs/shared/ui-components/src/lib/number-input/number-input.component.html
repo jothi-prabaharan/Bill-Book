@@ -1,0 +1,35 @@
+<div
+  class="number-group"
+  [class.has-prefix]="prefix()"
+  [class.has-suffix]="suffix()"
+  [class.disabled]="effectiveDisabled()"
+>
+  @if (prefix()) {
+    <span class="input-addon prefix" aria-hidden="true">{{ prefix() }}</span>
+  }
+  <input
+    type="number"
+    [attr.inputmode]="inputmode()"
+    class="input number-input"
+    [class.align-left]="align() === 'left'"
+    [class.align-right]="align() === 'right'"
+    [class.align-center]="align() === 'center'"
+    [id]="id() || null"
+    [name]="name() || null"
+    [placeholder]="placeholder()"
+    [min]="min() ?? null"
+    [max]="max() ?? null"
+    [step]="step()"
+    [disabled]="effectiveDisabled()"
+    [readonly]="readonly()"
+    [required]="required()"
+    [attr.aria-label]="ariaLabel() || null"
+    [value]="displayValue()"
+    (input)="onInput($event)"
+    (focus)="onFocus($event)"
+    (blur)="onBlur($event)"
+  />
+  @if (suffix()) {
+    <span class="input-addon suffix" aria-hidden="true">{{ suffix() }}</span>
+  }
+</div>
