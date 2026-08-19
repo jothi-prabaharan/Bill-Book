@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -51,7 +51,7 @@ type OrganizationForm = Omit<
 @Component({
   selector: 'bb-organizations-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './organizations.page.html',
   styleUrl: './organizations.page.scss',
 })
@@ -73,6 +73,17 @@ export class OrganizationsPage implements OnInit {
   protected readonly currentOrgId = signal<string>(localStorage.getItem('bb.orgId') ?? '');
 
   form: OrganizationForm = this.blank();
+
+  columns: ColumnDef[] = [
+    { field: 'orgCode', header: 'Code' },
+    { field: 'name', header: 'Branch' },
+    { field: 'city', header: 'City' },
+    { field: 'stateId', header: 'State' },
+    { field: 'gstin', header: 'GSTIN' },
+    { field: 'baseCurrency', header: 'Currency' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: 'Actions' },
+  ];
 
   ngOnInit(): void {
     void this.load();

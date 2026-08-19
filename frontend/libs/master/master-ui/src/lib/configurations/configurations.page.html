@@ -32,13 +32,13 @@
               </select>
             }
             @case ('Number') {
-              <input type="number" [(ngModel)]="row.value" (blur)="save(row)" />
+              <bb-number-input  [(ngModel)]="row.value" (blur)="save(row)" />
             }
             @case ('Date') {
-              <input type="date" [(ngModel)]="row.value" (blur)="save(row)" />
+              <bb-date-input  [(ngModel)]="row.value" (blur)="save(row)" />
             }
             @default {
-              <input type="text" [(ngModel)]="row.value" (blur)="save(row)" />
+              <bb-text-input  [(ngModel)]="row.value" (blur)="save(row)" />
             }
           }
           <button

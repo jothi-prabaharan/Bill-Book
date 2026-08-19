@@ -15,78 +15,65 @@
   by organization, so adding one costs no new database.
 </p>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th>Code</th>
-      <th>Branch</th>
-      <th>City</th>
-      <th>State</th>
-      <th>GSTIN</th>
-      <th>Currency</th>
-      <th>Status</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.orgId) {
-      <tr [class.inactive]="row.status === 'Suspended'">
-        <td><code>{{ row.orgCode }}</code></td>
-        <td>
-          {{ row.name }}
-          @if (row.orgId === currentOrgId()) {
-            <span class="badge here">You are here</span>
-          }
-          @if (row.isFirst) {
-            <span class="badge">First</span>
-          }
-          @if (row.isTrial) {
-            <span
-              class="badge trial"
-              [title]="
-                row.expiryDate
-                  ? 'On a branch trial until ' + row.expiryDate
-                  : 'On a branch trial'
-              "
-            >Trial</span>
-          }
-        </td>
-        <td>{{ row.city ?? '—' }}</td>
-        <td>{{ stateNameOf(row.stateId) }}</td>
-        <td><code>{{ row.gstin ?? '—' }}</code></td>
-        <td>{{ row.baseCurrency }}</td>
-        <td>
-          @switch (row.status) {
-            @case ('Active') { Active }
-            @case ('Provisioning') { <span class="badge warn">Setting up</span> }
-            @default { {{ row.status }} }
-          }
-        </td>
-        <td class="actions-col">
-          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-
-          @if (row.status === 'Provisioning') {
-            <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
-              Finish setup
-            </button>
-          } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
-            <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
-              Switch to
-            </button>
-          }
-
-          @if (!row.isFirst && row.status === 'Active') {
-            <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
-              Suspend
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="8">No branches.</td></tr>
+<bb-data-grid [gridCode]="'ORGANIZATIONS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="orgCode" let-row>
+    <code>{{ row.orgCode }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="name" let-row>
+    {{ row.name }}
+    @if (row.orgId === currentOrgId()) {
+      <span class="badge here">You are here</span>
     }
-  </tbody>
-</bb-card-table>
+    @if (row.isFirst) {
+      <span class="badge">First</span>
+    }
+    @if (row.isTrial) {
+      <span
+        class="badge trial"
+        [title]="
+          row.expiryDate
+            ? 'On a branch trial until ' + row.expiryDate
+            : 'On a branch trial'
+        "
+      >Trial</span>
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="city" let-row>
+    {{ row.city ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="stateId" let-row>
+    {{ stateNameOf(row.stateId) }}
+  </ng-template>
+  <ng-template bbCellTemplate="gstin" let-row>
+    <code>{{ row.gstin ?? '—' }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @switch (row.status) {
+      @case ('Active') { Active }
+      @case ('Provisioning') { <span class="badge warn">Setting up</span> }
+      @default { {{ row.status }} }
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+
+    @if (row.status === 'Provisioning') {
+      <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
+        Finish setup
+      </button>
+    } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
+      <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
+        Switch to
+      </button>
+    }
+
+    @if (!row.isFirst && row.status === 'Active') {
+      <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
+        Suspend
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>
 
 @if (editingId() !== null) {
   <div class="sheet">
@@ -103,13 +90,13 @@
     <div class="fields">
       <label>
         Code
-        <input type="text" [(ngModel)]="form.orgCode" maxlength="10" style="text-transform: uppercase" />
+        <bb-text-input  [(ngModel)]="form.orgCode" maxlength="10" class="uppercase" />
         <small>Goes into document numbers when a series includes the branch code.</small>
       </label>
 
       <label>
         Name
-        <input type="text" [(ngModel)]="form.name" maxlength="200" />
+        <bb-text-input  [(ngModel)]="form.name" maxlength="200" />
       </label>
 
       <label>
@@ -143,28 +130,28 @@
 
       <label>
         GSTIN
-        <input type="text" [(ngModel)]="form.gstin" maxlength="15" style="text-transform: uppercase" />
+        <bb-text-input  [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
         <small>Its first two digits must match the branch's state.</small>
       </label>
 
       <label>
         PAN
-        <input type="text" [(ngModel)]="form.pan" maxlength="10" style="text-transform: uppercase" />
+        <bb-text-input  [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
       </label>
 
       <label class="wide">
         Address line 1
-        <input type="text" [(ngModel)]="form.addressLine1" maxlength="200" />
+        <bb-text-input  [(ngModel)]="form.addressLine1" maxlength="200" />
       </label>
 
       <label class="wide">
         Address line 2
-        <input type="text" [(ngModel)]="form.addressLine2" maxlength="200" />
+        <bb-text-input  [(ngModel)]="form.addressLine2" maxlength="200" />
       </label>
 
       <label>
         City
-        <input type="text" [(ngModel)]="form.city" maxlength="100" />
+        <bb-text-input  [(ngModel)]="form.city" maxlength="100" />
       </label>
 
       <label>
@@ -179,17 +166,17 @@
 
       <label>
         Postal code
-        <input type="text" [(ngModel)]="form.postalCode" maxlength="10" />
+        <bb-text-input  [(ngModel)]="form.postalCode" maxlength="10" />
       </label>
 
       <label>
         Phone
-        <input type="text" [(ngModel)]="form.phoneNumber" maxlength="20" />
+        <bb-text-input  [(ngModel)]="form.phoneNumber" maxlength="20" />
       </label>
 
       <label>
         Mobile
-        <input type="text" [(ngModel)]="form.mobileNumber" maxlength="20" />
+        <bb-text-input  [(ngModel)]="form.mobileNumber" maxlength="20" />
       </label>
 
       <label>

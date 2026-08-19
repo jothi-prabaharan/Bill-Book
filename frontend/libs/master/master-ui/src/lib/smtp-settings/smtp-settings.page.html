@@ -17,11 +17,11 @@
   <div class="row">
     <label class="grow">
       SMTP host
-      <input name="host" [(ngModel)]="form.host" required placeholder="smtp.gmail.com" />
+      <bb-text-input name="host" [(ngModel)]="form.host" required placeholder="smtp.gmail.com" />
     </label>
     <label class="narrow">
       Port
-      <input name="port" type="number" [(ngModel)]="form.port" required />
+      <bb-number-input name="port"  [(ngModel)]="form.port" required />
     </label>
   </div>
 
@@ -37,13 +37,13 @@
     </label>
     <label class="grow">
       From name
-      <input name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
+      <bb-text-input name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
     </label>
   </div>
 
   <label>
     Username
-    <input name="username" [(ngModel)]="form.username" required />
+    <bb-text-input name="username" [(ngModel)]="form.username" required />
   </label>
 
   <label>

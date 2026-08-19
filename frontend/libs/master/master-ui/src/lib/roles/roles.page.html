@@ -8,41 +8,27 @@
 }
 
 @if (!editing()) {
-  <bb-card-table>
-    <thead>
-      <tr><th>Role</th><th>Description</th><th>Users</th><th>Permissions</th><th></th></tr>
-    </thead>
-    <tbody>
-      @for (r of roles(); track r.roleId) {
-        <tr [class.inactive]="!r.isActive">
-          <td>
-            {{ r.displayName }}
-            @if (r.isSystemRole) { <span class="badge">System</span> }
-          </td>
-          <td>{{ r.description }}</td>
-          <td>{{ r.userCount }}</td>
-          <td>{{ r.permissionCount }}</td>
-          <td class="row-actions">
-            <button type="button" class="link" (click)="startEdit(r.roleId)">Edit</button>
-            @if (!r.isSystemRole) {
-              <button type="button" class="link danger" (click)="remove(r)">Delete</button>
-            }
-          </td>
-        </tr>
-      } @empty {
-        <tr><td colspan="5">No roles.</td></tr>
+  <bb-data-grid [gridCode]="'ROLES'" [columns]="columns" [data]="roles()">
+    <ng-template bbCellTemplate="displayName" let-row>
+      {{ row.displayName }}
+      @if (row.isSystemRole) { <span class="badge">System</span> }
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
+      @if (!row.isSystemRole) {
+        <button type="button" class="link danger" (click)="remove(row)">Delete</button>
       }
-    </tbody>
-  </bb-card-table>
+    </ng-template>
+  </bb-data-grid>
 } @else {
   <form class="editor" (ngSubmit)="save()">
     <label>
       Name
-      <input name="displayName" [(ngModel)]="form.displayName" required maxlength="100" />
+      <bb-text-input name="displayName" [(ngModel)]="form.displayName" required maxlength="100" />
     </label>
     <label>
       Description
-      <input name="description" [(ngModel)]="form.description" maxlength="300" />
+      <bb-text-input name="description" [(ngModel)]="form.description" maxlength="300" />
     </label>
 
     @if (isSystem()) {

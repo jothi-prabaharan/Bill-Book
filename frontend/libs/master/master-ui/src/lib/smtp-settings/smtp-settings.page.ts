@@ -1,3 +1,4 @@
+import { TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -24,7 +25,7 @@ interface SmtpSettings {
 @Component({
   selector: 'bb-smtp-settings-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './smtp-settings.page.html',
   styleUrl: './smtp-settings.page.scss',
 })

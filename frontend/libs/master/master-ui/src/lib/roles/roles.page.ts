@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -37,7 +37,7 @@ interface PermissionGroup {
 @Component({
   selector: 'bb-roles-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './roles.page.html',
   styleUrl: './roles.page.scss',
 })
@@ -54,6 +54,14 @@ export class RolesPage implements OnInit {
 
   private editingId: number | null = null;
   form = { displayName: '', description: '' };
+
+  columns: ColumnDef[] = [
+    { field: 'displayName', header: 'Role' },
+    { field: 'description', header: 'Description' },
+    { field: 'userCount', header: 'Users' },
+    { field: 'permissionCount', header: 'Permissions' },
+    { field: 'actions', header: '' },
+  ];
 
   ngOnInit(): void {
     void this.load();

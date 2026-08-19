@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -29,7 +29,7 @@ interface RoleOption {
 @Component({
   selector: 'bb-users-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, DatePipe],
+  imports: [DataGridComponent, FormsModule, DatePipe, TextInputComponent],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
 })
@@ -44,6 +44,15 @@ export class UsersPage implements OnInit {
   protected readonly messageIsError = signal(false);
 
   form = { email: '', displayName: '', mobileNumber: '', roleId: 0 };
+
+  columns: ColumnDef[] = [
+    { field: 'displayName', header: 'Name' },
+    { field: 'email', header: 'Email' },
+    { field: 'roleName', header: 'Role' },
+    { field: 'lastLoginAt', header: 'Last login' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: '' },
+  ];
 
   ngOnInit(): void {
     void this.load();

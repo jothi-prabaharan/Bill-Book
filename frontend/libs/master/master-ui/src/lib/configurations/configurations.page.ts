@@ -1,3 +1,4 @@
+import { DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -21,7 +22,7 @@ interface ConfigurationRow {
 @Component({
   selector: 'bb-configurations-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './configurations.page.html',
   styleUrl: './configurations.page.scss',
 })

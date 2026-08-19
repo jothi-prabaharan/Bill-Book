@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -31,7 +31,7 @@ interface MasterCurrency {
 @Component({
   selector: 'bb-org-currencies-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule],
   templateUrl: './org-currencies.page.html',
   styleUrl: './org-currencies.page.scss',
 })
@@ -49,6 +49,15 @@ export class OrgCurrenciesPage implements OnInit {
 
   showInactive = false;
   selectedCurrencyId = 0;
+
+  columns: ColumnDef[] = [
+    { field: 'code', header: 'Code' },
+    { field: 'name', header: 'Name' },
+    { field: 'symbol', header: 'Symbol' },
+    { field: 'format', header: 'Format' },
+    { field: 'decimalPlaces', header: 'Decimals' },
+    { field: 'isActive', header: 'Active' },
+  ];
 
   ngOnInit(): void {
     void this.load();

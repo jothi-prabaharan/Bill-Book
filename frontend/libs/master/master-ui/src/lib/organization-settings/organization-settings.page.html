@@ -42,19 +42,19 @@
     <div class="fields">
       <label>
         Branch code
-        <input type="text" name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
+        <bb-text-input  name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
         <small>Appears in generated document numbers — INV/2526/CHN/00042.</small>
       </label>
 
       <label>
         Name
-        <input type="text" name="name" [(ngModel)]="org.name" maxlength="200" />
+        <bb-text-input  name="name" [(ngModel)]="org.name" maxlength="200" />
       </label>
 
       <label class="wide">
         Address
-        <input
-          type="text"
+        <bb-text-input
+          
           name="addressLine1"
           [(ngModel)]="org.addressLine1"
           maxlength="200"
@@ -64,8 +64,8 @@
 
       <label class="wide">
         <span class="sr-only">Address line 2</span>
-        <input
-          type="text"
+        <bb-text-input
+          
           name="addressLine2"
           [(ngModel)]="org.addressLine2"
           maxlength="200"
@@ -75,7 +75,7 @@
 
       <label>
         City
-        <input type="text" name="city" [(ngModel)]="org.city" maxlength="100" />
+        <bb-text-input  name="city" [(ngModel)]="org.city" maxlength="100" />
       </label>
 
       <label>
@@ -91,18 +91,18 @@
 
       <label>
         Postal code
-        <input type="text" name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
+        <bb-text-input  name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
       </label>
 
       <label>
         Phone
-        <input type="text" name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
+        <bb-text-input  name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
         <small>STD code then number.</small>
       </label>
 
       <label>
         Mobile
-        <input type="text" name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
+        <bb-text-input  name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
         <small>Lead with + for a number outside the branch's country.</small>
       </label>
 
@@ -113,12 +113,12 @@
 
       <label>
         Website
-        <input type="text" name="website" [(ngModel)]="org.website" maxlength="200" />
+        <bb-text-input  name="website" [(ngModel)]="org.website" maxlength="200" />
       </label>
 
       <label class="wide">
         Logo URL
-        <input type="text" name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
+        <bb-text-input  name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
         <small>Printed on documents. Upload is not built yet — paste a URL.</small>
       </label>
     </div>
@@ -128,7 +128,7 @@
     <div class="fields">
       <label>
         GSTIN
-        <input type="text" name="gstin" [(ngModel)]="org.gstin" maxlength="15" />
+        <bb-text-input  name="gstin" [(ngModel)]="org.gstin" maxlength="15" />
         @if (gstinMismatch()) {
           <small class="warn">
             The first two digits ({{ gstinStateCode() }}) do not match the state chosen on
@@ -141,29 +141,29 @@
 
       <label>
         PAN
-        <input type="text" name="pan" [(ngModel)]="org.pan" maxlength="10" />
+        <bb-text-input  name="pan" [(ngModel)]="org.pan" maxlength="10" />
       </label>
 
       <label>
         TAN
-        <input type="text" name="tan" [(ngModel)]="org.tan" maxlength="10" />
+        <bb-text-input  name="tan" [(ngModel)]="org.tan" maxlength="10" />
         <small>Needed to deduct TDS.</small>
       </label>
 
       <label>
         TIN
-        <input type="text" name="tin" [(ngModel)]="org.tin" maxlength="15" />
+        <bb-text-input  name="tin" [(ngModel)]="org.tin" maxlength="15" />
       </label>
 
       <label>
         CIN
-        <input type="text" name="cin" [(ngModel)]="org.cin" maxlength="21" />
+        <bb-text-input  name="cin" [(ngModel)]="org.cin" maxlength="21" />
         <small>Companies only — issued on incorporation.</small>
       </label>
 
       <label>
         Udyam number
-        <input type="text" name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
+        <bb-text-input  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
         <small>MSME registration.</small>
       </label>
     </div>

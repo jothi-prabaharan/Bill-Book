@@ -1,5 +1,5 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -28,11 +28,20 @@ export interface ContactPersonRole {
 @Component({
   selector: 'bb-contact-person-roles-list',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './contact-person-roles.list.html',
   styleUrl: './contact-person-roles.list.scss',
 })
 export class ContactPersonRolesList implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'handle', header: 'Reorder' },
+    { field: 'roleName', header: 'Role' },
+    { field: 'usageCount', header: 'In use' },
+    { field: 'isDefault', header: 'Default' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<ContactPersonRole[]>([]);

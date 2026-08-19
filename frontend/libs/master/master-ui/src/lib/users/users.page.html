@@ -17,11 +17,11 @@
     </label>
     <label>
       Name
-      <input name="displayName" [(ngModel)]="form.displayName" required />
+      <bb-text-input name="displayName" [(ngModel)]="form.displayName" required />
     </label>
     <label>
       Mobile <span class="opt">(optional)</span>
-      <input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
+      <bb-text-input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
     </label>
     <label>
       Role
@@ -43,39 +43,27 @@
   </form>
 }
 
-<bb-card-table>
-  <thead>
-    <tr><th>Name</th><th>Email</th><th>Role</th><th>Last login</th><th>Status</th><th></th></tr>
-  </thead>
-  <tbody>
-    @for (u of users(); track u.userId) {
-      <tr [class.inactive]="!u.isActive">
-        <td>{{ u.displayName }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ u.roleName }}</td>
-        <td>{{ u.lastLoginAt ? (u.lastLoginAt | date: 'medium') : '—' }}</td>
-        <td>
-          @if (!u.isActive) {
-            <span class="tag off">Revoked</span>
-          } @else if (u.isInvitePending) {
-            <span class="tag pending">Invite pending</span>
-          } @else if (u.isLockedOut) {
-            <span class="tag locked">Locked</span>
-          } @else {
-            <span class="tag on">Active</span>
-          }
-        </td>
-        <td class="row-actions">
-          @if (u.isInvitePending && u.isActive) {
-            <button type="button" class="link" (click)="resend(u)">Resend</button>
-          }
-          @if (u.isActive) {
-            <button type="button" class="link danger" (click)="revoke(u)">Revoke</button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="6">No users.</td></tr>
+<bb-data-grid [gridCode]="'USERS'" [columns]="columns" [data]="users()">
+  <ng-template bbCellTemplate="lastLoginAt" let-row>
+    {{ row.lastLoginAt ? (row.lastLoginAt | date: 'medium') : '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @if (!row.isActive) {
+      <span class="tag off">Revoked</span>
+    } @else if (row.isInvitePending) {
+      <span class="tag pending">Invite pending</span>
+    } @else if (row.isLockedOut) {
+      <span class="tag locked">Locked</span>
+    } @else {
+      <span class="tag on">Active</span>
     }
-  </tbody>
-</bb-card-table>
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.isInvitePending && row.isActive) {
+      <button type="button" class="link" (click)="resend(row)">Resend</button>
+    }
+    @if (row.isActive) {
+      <button type="button" class="link danger" (click)="revoke(row)">Revoke</button>
+    }
+  </ng-template>
+</bb-data-grid>

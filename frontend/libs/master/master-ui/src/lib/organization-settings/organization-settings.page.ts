@@ -1,3 +1,4 @@
+import { TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -72,7 +73,7 @@ const MONTHS = [
 @Component({
   selector: 'bb-organization-settings-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TextInputComponent],
   templateUrl: './organization-settings.page.html',
   styleUrl: './organization-settings.page.scss',
 })

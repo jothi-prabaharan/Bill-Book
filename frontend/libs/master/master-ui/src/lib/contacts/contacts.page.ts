@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -169,7 +169,7 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
 @Component({
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, ContactPersonRolesDialog],
+  imports: [DataGridComponent, FormsModule, ContactPersonRolesDialog, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
 })
@@ -197,6 +197,23 @@ export class ContactsPage implements OnInit {
 
   search = '';
   roleFilter = '';
+  columns: ColumnDef[] = [
+    { field: 'contactCode', header: 'CONTACT CODE' },
+    { field: 'nameGstin', header: 'NAME · GSTIN' },
+    { field: 'city', header: 'CITY' },
+    { field: 'role', header: 'ROLE' },
+    { field: 'outstanding', header: 'OUTSTANDING', dataType: 'money' },
+    { field: 'creditLimit', header: 'CREDIT LIMIT', dataType: 'money' }
+  ];
+
+  documentColumns: ColumnDef[] = [
+    { field: 'file', header: 'File' },
+    { field: 'type', header: 'Type' },
+    { field: 'size', header: 'Size' },
+    { field: 'expires', header: 'Expires' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
   showInactive = false;
 
   uploadDocumentType = 'Other';
@@ -893,4 +910,23 @@ export class ContactsPage implements OnInit {
         .subscribe({ next: resolve as (value: T) => void, error: reject }),
     );
   }
+
+  openFilter: string | null = null;
+  filterOp: string = 'contains';
+  filterVal: string = '';
+
+  toggleFilter(col: string, event: Event) {
+    event.stopPropagation();
+    this.openFilter = this.openFilter === col ? null : col;
+  }
+
+  roleLabels(row: ContactListItem): string {
+    const roles: string[] = [];
+    if (row.isCustomer) roles.push('Customer');
+    if (row.isVendor) roles.push('Vendor');
+    if (row.isJobWorker) roles.push('Job worker');
+    if (row.isPrescriber) roles.push('Prescriber');
+    return roles.join(' & ') || '—';
+  }
+
 }
