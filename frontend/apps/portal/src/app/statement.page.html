@@ -1,0 +1,56 @@
+<div class="portal-container">
+  <header>
+    <h1>Account Statement</h1>
+  </header>
+
+  <main>
+    <div *ngIf="loading()" class="loading">
+      Loading statement...
+    </div>
+
+    <div *ngIf="error()" class="error">
+      {{ error() }}
+    </div>
+
+    <div *ngIf="statement() as data">
+      <div class="summary-cards">
+        <div class="card">
+          <span class="label">Opening Balance</span>
+          <span class="value">{{ data.openingBalance | number:'1.2-2' }}</span>
+        </div>
+        <div class="card">
+          <span class="label">Closing Balance</span>
+          <span class="value" [class.negative]="data.closingBalance < 0">{{ data.closingBalance | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <table class="statement-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Transaction No</th>
+            <th>Reference</th>
+            <th>Description</th>
+            <th class="number-cell">Debit</th>
+            <th class="number-cell">Credit</th>
+            <th class="number-cell">Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let txn of data.transactions">
+            <td>{{ txn.ledgerDate | date:'mediumDate' }}</td>
+            <td>{{ txn.transactionNo }}</td>
+            <td>{{ txn.reference }}</td>
+            <td>{{ txn.description }}</td>
+            <td class="number-cell">{{ txn.debit > 0 ? (txn.debit | number:'1.2-2') : '-' }}</td>
+            <td class="number-cell">{{ txn.credit > 0 ? (txn.credit | number:'1.2-2') : '-' }}</td>
+            <td class="number-cell">{{ txn.balance | number:'1.2-2' }}</td>
+          </tr>
+          <tr *ngIf="data.transactions.length === 0">
+            <td colspan="7" class="empty-state">No transactions found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
