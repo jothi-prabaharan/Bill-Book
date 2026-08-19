@@ -29,51 +29,9 @@
                   <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
                 </span>
               </button>
-
-              <button type="button"
-                      style="padding:2px"
-                      (click)="toggleFilter(col.field, $event)"
-                      title="Filter column"
-                      aria-label="Filter column"
-                      class="btn btn-ghost m-0 filter-btn">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                </svg>
-              </button>
             </div>
 
-            <!-- Column Filter Dropdown -->
-            <div *ngIf="openFilterField() === col.field"
-                 class="filter-dropdown card absolute shadow-md"
-                 [ngClass]="isNumericCol(col) ? 'right-0' : 'left-0'">
-              <select style="min-height:28px" 
-                      [ngModel]="filterOp()"
-                      (ngModelChange)="filterOp.set($event)"
-                      (click)="$event.stopPropagation()"
-                      class="px-2 py-1 input w-full mb-2 text-sm">
-                <option value="equals">Equals</option>
-                <option value="contains">Contains</option>
-                <option value="starts">Starts with</option>
-              </select>
-              <input type="text"
-                     placeholder="Value..."
-                     style="min-height:28px" 
-                     [ngModel]="filterVal()"
-                     (ngModelChange)="filterVal.set($event)"
-                     (click)="$event.stopPropagation()"
-                     (keydown.enter)="applyFilter(col.field, $event)"
-                     class="px-2 py-1 input w-full mb-2 text-sm">
-              <div class="flex justify-end gap-2">
-                <button type="button"
-                        style="min-height:24px"
-                        (click)="clearFilter(col.field, $event)"
-                        class="btn btn-secondary text-xs m-0">Clear</button>
-                <button type="button"
-                        style="min-height:24px"
-                        (click)="applyFilter(col.field, $event)"
-                        class="btn btn-primary text-xs m-0">Apply</button>
-              </div>
-            </div>
+            <!-- Filter row should be implemented as a separate row (.fltrow) per design, not as a dropdown -->
           </th>
         </tr>
       </thead>

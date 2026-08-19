@@ -1,92 +1,22 @@
 :host {
   display: block;
-  width: 100%;
-}
-
-.search-group {
-  display: flex;
-  align-items: center;
-  position: relative;
-  width: 100%;
-}
-
-.search-icon {
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: color-mix(in srgb, var(--color-text, #201f1d) 45%, transparent);
-  pointer-events: none;
-  z-index: 1;
 }
 
 .search-input {
   width: 100%;
-  min-height: 36px;
-  padding: 6px 32px 6px 32px;
-  font: inherit;
-  font-family: var(--font-body, system-ui, sans-serif);
-  font-size: 14px;
-  color: var(--color-text, #201f1d);
-  caret-color: var(--color-accent, #b68235);
+  height: 100%;
+  border: 0;
+  padding: 0;
+  margin: 0;
   background: transparent;
-  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
-  border-radius: var(--radius-md, 4px);
-  box-sizing: border-box;
   outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-
-  /* Hide native webkit search cancel button */
-  &::-webkit-search-cancel-button {
-    display: none;
-    -webkit-appearance: none;
-  }
-
-  &:hover:not(:disabled) {
-    border-color: color-mix(in srgb, var(--color-text, #201f1d) 45%, transparent);
-  }
-
-  &:focus-visible {
-    border-color: var(--color-accent, #b68235);
-    outline: 2px solid var(--color-accent, #b68235);
-    outline-offset: 0;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
-  }
+  font: inherit;
+  color: inherit;
+  box-sizing: border-box;
 }
 
-.clear-btn {
-  position: absolute;
-  right: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: color-mix(in srgb, var(--color-text, #201f1d) 50%, transparent);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: color 150ms ease, background-color 150ms ease;
-
-  &:hover {
-    color: var(--color-text, #201f1d);
-    background: color-mix(in srgb, var(--color-text, #201f1d) 10%, transparent);
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--color-accent, #b68235);
-    outline-offset: 1px;
-  }
+/* Hide native webkit search cancel button since we want a clean design */
+.search-input::-webkit-search-cancel-button {
+  display: none;
+  -webkit-appearance: none;
 }
