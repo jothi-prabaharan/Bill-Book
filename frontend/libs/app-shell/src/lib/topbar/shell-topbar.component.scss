@@ -5,7 +5,7 @@
 
 .shell-header {
   position: relative;
-  z-index: 6;
+  z-index: var(--z-topbar);
   height: 46px;
   display: flex;
   align-items: center;
@@ -13,7 +13,7 @@
   padding: 0 var(--space-4);
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-divider);
-  box-shadow: 0 8px 20px -10px rgba(32, 31, 29, 0.45), var(--shadow-md);
+  box-shadow: var(--shadow-header);
 
   img {
     width: 26px;
@@ -70,7 +70,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--color-muted, #737373);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -84,7 +84,7 @@
 
 .shell-org-dropdown {
   position: absolute;
-  z-index: 20;
+  z-index: var(--z-dropdown);
   top: calc(100% + 6px);
   left: -8px;
   min-width: 290px;
@@ -140,7 +140,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: var(--color-muted, #737373);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
   font-size: 11px;
   font-variant-numeric: tabular-nums;
 }
@@ -148,7 +148,7 @@
 .org-empty-msg {
   padding: 9px;
   font-size: 12px;
-  color: var(--color-muted, #737373);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
 }
 
 .fy-tag {

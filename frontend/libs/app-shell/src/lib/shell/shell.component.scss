@@ -19,20 +19,20 @@
 .shell-nav-cell {
   grid-column: 1;
   grid-row: 1 / span 3;
-  z-index: 5;
+  z-index: var(--z-rail);
   height: 100%;
 }
 
 .shell-topbar-cell {
   grid-column: 2;
   grid-row: 1;
-  z-index: 6;
+  z-index: var(--z-topbar);
 }
 
 .shell-breadcrumb-cell {
   grid-column: 2;
   grid-row: 2;
-  z-index: 4;
+  z-index: var(--z-breadcrumb);
 }
 
 .shell-content-cell {
@@ -41,7 +41,7 @@
   min-height: 0;
   min-width: 0;
   overflow-y: auto;
-  z-index: 1;
+  z-index: var(--z-content);
   padding: var(--space-4) var(--space-4) var(--space-6);
 }
 

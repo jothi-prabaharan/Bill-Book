@@ -5,11 +5,11 @@
 
 .shell-sidebar {
   position: relative;
-  z-index: 5;
+  z-index: var(--z-rail);
   height: 100%;
   width: 56px;
   background: var(--color-ink);
-  color: #f3f2f2;
+  color: var(--color-neutral-100);
   box-shadow: var(--shadow-lg);
   display: flex;
   flex-direction: column;
@@ -32,7 +32,7 @@
   align-items: center;
   justify-content: center;
   margin: calc(var(--space-2) * -1) -4px var(--space-2);
-  border-bottom: 1px solid rgba(243, 242, 242, 0.16);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-neutral-100) 16%, transparent);
 
   img {
     width: 24px;
@@ -46,12 +46,12 @@
   align-items: center;
   gap: 3px;
   padding: 5px 0;
-  border-radius: 4px;
+  border-radius: var(--radius-md);
   font-family: var(--font-heading);
   font-weight: 600;
   font-size: 10px;
   letter-spacing: 0.03em;
-  color: rgba(243, 242, 242, 0.72);
+  color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   text-align: center;
   text-decoration: none;
   transition: color 120ms ease, background 120ms ease;
@@ -70,7 +70,7 @@
     padding-right: 4px;
     padding-left: 4px;
     border-radius: 0;
-    box-shadow: inset 4px 0 0 var(--color-accent), inset 13px 0 12px -10px rgba(32, 31, 29, 0.55);
+    box-shadow: var(--shadow-rail-active);
 
     &:hover {
       background: var(--color-bg);
@@ -94,7 +94,7 @@
 
 .shell-sidebar-divider {
   height: 1px;
-  background: rgba(243, 242, 242, 0.16);
+  background: color-mix(in srgb, var(--color-neutral-100) 16%, transparent);
   margin: var(--space-2) 4px;
 }
 
@@ -165,7 +165,7 @@
   background: color-mix(in srgb, var(--color-neutral-900) 45%, transparent);
   align-items: flex-end;
   justify-content: center;
-  z-index: 20;
+  z-index: var(--z-dropdown);
 }
 
 .sheet-overlay {
@@ -188,7 +188,7 @@
   width: 38px;
   height: 3px;
   background: var(--color-divider);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   margin: 0 auto var(--space-4);
 }
 
@@ -212,7 +212,7 @@
 .more-logout-btn {
   font-size: 14px;
   background: transparent;
-  color: #d32f2f;
+  color: var(--color-danger);
   border: 1px solid var(--color-divider);
   padding: var(--space-3);
   border-radius: var(--radius-md);
