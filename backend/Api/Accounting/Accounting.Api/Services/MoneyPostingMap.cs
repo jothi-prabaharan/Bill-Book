@@ -59,15 +59,17 @@ public static class MoneyPostingMap
     public static string? Settles(int ledgerSourceId) => ledgerSourceId switch
     {
         2 => "BIL",   // BILLPAYMENT
-        16 => "BIL",  // VENDOROVERPAYMENT — the bill the payment ran past
         6 => "CRN",   // CREDITNOTEREFUND
         3 => "INV",   // INVOICEPAYMENT
-        17 => "INV",  // CUSTOMEROVERPAYMENT
         7 => "DBN",   // DEBITNOTEREFUND
-        4 => "BIL",   // BILLREFUND — a supplier returning what we overpaid on a bill
 
-        // 8, 9, 18, 19 — advances placed and advances given back. There is no
-        // document behind an advance: that is what makes it one.
+        // 4, 8, 9, 16, 17, 18, 19, 20 — advances placed, overpayments, and
+        // refunds of them. There is no document behind an advance: that is what
+        // makes it one.
+        //
+        // 5 (INVOICEREFUND) is retired: a customer refund now goes through the
+        // credit note, source 6. It is absent from the maps and the screens on
+        // purpose, so a line carrying it is refused rather than guessed at.
         _ => null,
     };
 
@@ -78,9 +80,11 @@ public static class MoneyPostingMap
     /// <b>An overpayment is an advance, not a negative balance.</b> Left on the
     /// trade balance it turns the contact's payable into a debit, which reads as
     /// "they owe us" on every aging report and is not what happened. So the
-    /// remainder goes to the overpayment advance beneath the other control
-    /// account, where it is visible as money held rather than as a balance
-    /// running the wrong way.
+    /// remainder goes to the <b>overpayment</b> advance beneath the other
+    /// control account, where it is visible as money held rather than as a
+    /// balance running the wrong way — and held apart from deliberate
+    /// prepayments, so a balance sheet can tell a deposit placed from an excess
+    /// paid.
     /// </summary>
     public static int Overpayment(bool spending) => spending ? 16 : 17;
 
@@ -95,21 +99,26 @@ public static class MoneyPostingMap
         // Settling what we owe on a bill.
         2 => new MoneyLeg(Payable, Primary),
 
-        // A deposit put down with a supplier before their bill exists. An asset:
-        // they owe us goods.
+        // A deposit put down with a supplier before their bill exists. An
+        // asset: they owe us goods.
         8 => new MoneyLeg(Receivable, PrepaymentAdvance),
 
-        // The excess when a payment ran past the bill. Also an asset, and held
-        // apart from a deliberate deposit so a refund can tell them apart.
+        // The excess when a payment ran past the bill — money they owe us, but
+        // an *overpayment* rather than a deliberate prepayment. Held apart from
+        // the deposit balance, so a balance sheet can tell the two apart.
         16 => new MoneyLeg(Receivable, OverpaymentAdvance),
 
         // Paying a customer back for goods they returned. Clears the credit
         // balance the credit note left on their receivable.
         6 => new MoneyLeg(Receivable, Primary),
 
-        // Giving back money a customer overpaid, and giving back an advance they
-        // placed. Both clear a balance we were holding for them.
+        // Giving back money a customer overpaid — clearing the overpayment
+        // balance the excess created.
         18 => new MoneyLeg(Payable, OverpaymentAdvance),
+
+        // Giving back an advance a customer placed — clearing the prepayment
+        // balance the advance was placed in. Same control account, different
+        // balance: the source says which one is being returned.
         19 => new MoneyLeg(Payable, PrepaymentAdvance),
 
         _ => null,
@@ -121,18 +130,27 @@ public static class MoneyPostingMap
         // Settling what a customer owes on an invoice.
         3 => new MoneyLeg(Receivable, Primary),
 
-        // An advance taken from a customer, and the excess when a receipt ran
-        // past the invoice. Both liabilities: we owe them goods or the money.
+        // An advance taken from a customer before their invoice exists. A
+        // liability: we owe them goods.
         9 => new MoneyLeg(Payable, PrepaymentAdvance),
+
+        // The excess when a receipt ran past the invoice — an overpayment, held
+        // apart from a deliberate advance.
         17 => new MoneyLeg(Payable, OverpaymentAdvance),
 
         // A supplier paying us back for goods we returned. Clears the debit
         // balance the debit note left on their payable.
         7 => new MoneyLeg(Payable, Primary),
 
-        // A supplier returning what we overpaid them, which clears the advance
-        // the overpayment created.
+        // A supplier returning what we overpaid them, which clears the
+        // overpayment balance the excess created.
         4 => new MoneyLeg(Receivable, OverpaymentAdvance),
+
+        // A supplier returning the deposit we placed with them before their
+        // bill existed — clearing the prepayment balance the deposit was
+        // placed in. The mirror of source 18/19 on the spend side: a refund
+        // clears the balance the money was placed in, not the other advance.
+        20 => new MoneyLeg(Receivable, PrepaymentAdvance),
 
         _ => null,
     };

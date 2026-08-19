@@ -22,6 +22,7 @@ public class MoneyDocumentServiceTests
     private const int BillPayment = 2;
     private const int VendorOverpayment = 16;
     private const int VendorPrepayment = 8;
+    private const int VendorPrepaymentRefund = 20;
     private const int InvoicePayment = 3;
     private const int CustomerOverpayment = 17;
 
@@ -119,6 +120,30 @@ public class MoneyDocumentServiceTests
         Assert.Equal("Accounts Receivable", control.AccountSystemName);
         Assert.Equal(MoneyPostingMap.PrepaymentAdvance, control.SubAccountPurpose);
         Assert.Equal(5_000m, control.DebitAmount);
+    }
+
+    /// <summary>
+    /// The mirror of the deposit: the supplier returns it, and the refund
+    /// clears the <b>prepayment</b> balance the deposit was placed in — not the
+    /// overpayment balance, which is what "Refund of our overpayment" clears.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_returned_supplier_advance_clears_the_prepayment_advance()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        MoneyDocumentResult draft = await h.Receive.CreateAsync(
+            h.Payment(2_000m, VendorPrepaymentRefund), ct);
+
+        await h.Receive.PostAsync(draft.DocumentId, ct);
+
+        LedgerPostingLeg control = Assert.Single(
+            h.Ledger.Last.Legs, l => l.AccountSystemName is not null);
+
+        Assert.Equal("Accounts Receivable", control.AccountSystemName);
+        Assert.Equal(MoneyPostingMap.PrepaymentAdvance, control.SubAccountPurpose);
+        Assert.Equal(2_000m, control.CreditAmount);
     }
 
     /// <summary>Money in reverses every leg: the bank is debited, the control credited.</summary>
@@ -576,7 +601,7 @@ public class MoneyDocumentServiceTests
                 // Part of one bill, all of another, and money over.
                 Settles(BillPayment, "BIL", 501, 4_000m),
                 Settles(BillPayment, "BIL", 502, 6_000m),
-                Settles(MoneyPostingMap.Overpayment(spending: true), "BIL", 502, 2_000m),
+                new SaveMoneyLineRequest { LedgerSourceId = MoneyPostingMap.Overpayment(spending: true), Amount = 2_000m },
             ],
         }, ct);
 
@@ -586,8 +611,8 @@ public class MoneyDocumentServiceTests
         List<LedgerPostingLeg> control =
             [.. h.Ledger.Last.Legs.Where(l => l.AccountSystemName is not null)];
 
-        // ₹10,000 against the trade payable, ₹2,000 held as an advance under
-        // receivables. Not ₹12,000 on one account.
+        // ₹10,000 against the trade payable, ₹2,000 held as an overpayment
+        // advance under receivables. Not ₹12,000 on one account.
         Assert.Equal(
             10_000m,
             control.Where(l => l.AccountSystemName == "Accounts Payable").Sum(l => l.DebitAmount));
@@ -600,13 +625,11 @@ public class MoneyDocumentServiceTests
     }
 
     /// <summary>
-    /// The excess and the bill payment may name the same bill, because they are
-    /// different sources — the duplicate check is per document <i>within</i> a
-    /// source's own claim, and an overpayment against a bill is a different claim
-    /// from paying it.
+    /// An overpayment used to name the bill it ran past, but now it acts like a
+    /// general advance, so naming a document is refused.
     /// </summary>
     [SkippableFact]
-    public async Task An_overpayment_may_name_the_bill_it_ran_past()
+    public async Task An_overpayment_cannot_name_a_document()
     {
         await using Harness h = await Harness.CreateAsync(_postgres);
 
@@ -623,7 +646,7 @@ public class MoneyDocumentServiceTests
             ],
         }, CancellationToken.None);
 
-        Assert.Equal(MoneyDocumentOutcome.Ok, draft.Outcome);
+        Assert.Equal(MoneyDocumentOutcome.MappingNotSettleable, draft.Outcome);
     }
 
     private static SaveMoneyLineRequest Settles(
