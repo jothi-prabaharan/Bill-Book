@@ -1,5 +1,6 @@
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
+using Master.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Entities;
 
@@ -70,6 +71,12 @@ public class AdminDbContext : DbContext
     public DbSet<Permission> Permissions => Set<Permission>();
 
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+
+    public DbSet<Menu> Menus => Set<Menu>();
+
+    public DbSet<SubMenu> SubMenus => Set<SubMenu>();
+
+    public DbSet<SubMenuPermission> SubMenuPermissions => Set<SubMenuPermission>();
 
     public DbSet<UserOrganizationRole> UserOrganizationRoles => Set<UserOrganizationRole>();
 
@@ -277,6 +284,27 @@ public class AdminDbContext : DbContext
             b.Property(e => e.Channel).HasConversion<string>().HasMaxLength(10);
         });
 
+        // ---- Menu & SubMenu ----
+        modelBuilder.Entity<Menu>(b =>
+        {
+            b.HasKey(e => e.MenuId);
+            b.HasIndex(e => e.Code).IsUnique();
+            b.HasMany(e => e.SubMenus).WithOne(e => e.Menu).HasForeignKey(e => e.MenuId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SubMenu>(b =>
+        {
+            b.HasKey(e => e.SubMenuId);
+            b.HasIndex(e => new { e.MenuId, e.Code }).IsUnique();
+            b.HasMany(e => e.Permissions).WithOne(e => e.SubMenu).HasForeignKey(e => e.SubMenuId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SubMenuPermission>(b =>
+        {
+            b.HasKey(e => e.SubMenuPermissionId);
+            b.HasIndex(e => new { e.SubMenuId, e.PermissionCode }).IsUnique();
+        });
+
         MapXminConcurrency(modelBuilder);
         SeedCountries(modelBuilder);
         SeedCurrencies(modelBuilder);
@@ -287,6 +315,9 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<HsnSacCode>().HasData(SeedData.HsnSacSeed.Build());
         SeedConfigurations(modelBuilder);
         SeedRolesAndPermissions(modelBuilder);
+        modelBuilder.Entity<Menu>().HasData(MenuSeed.Build().SelectMany(m => new[] { m }));
+        modelBuilder.Entity<SubMenu>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus));
+        modelBuilder.Entity<SubMenuPermission>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus.SelectMany(sm => sm.Permissions)));
     }
 
     /// <summary>Expose the Postgres xmin system column as the concurrency token on every audited entity.</summary>

@@ -11,6 +11,8 @@ public interface ITenantContext
 
     Guid? OrgId { get; }
 
+    IReadOnlySet<string> Permissions { get; }
+
     /// <summary>Throws when either id is missing, so a query can never silently run unscoped.</summary>
     (Guid CustomerId, Guid OrgId) Require();
 }
@@ -20,6 +22,8 @@ public sealed class TenantContext : ITenantContext
     public Guid? CustomerId { get; set; }
 
     public Guid? OrgId { get; set; }
+
+    public IReadOnlySet<string> Permissions { get; set; } = new HashSet<string>();
 
     public (Guid CustomerId, Guid OrgId) Require()
     {

@@ -146,6 +146,9 @@ builder.Services.AddScoped<ContactService>();
 builder.Services.AddScoped<ContactPersonRoleService>();
 builder.Services.AddScoped<ContactAttachmentService>();
 
+// ---- Menu. ----
+builder.Services.AddScoped<MenuService>();
+
 // Only Accounting writes ledger rows, so a contact's six sub-accounts are
 // created by calling it. This one stays a real HTTP seam — Accounting is still
 // a separate service with its own database.
