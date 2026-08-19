@@ -7,15 +7,16 @@ namespace Inventory.Repository.SeedData;
 /// The standard Indian purities, ordered finest first because that is how a
 /// jeweller reads a list.
 ///
-/// Seeded for <b>every</b> branch, not only jewellers. There is nothing on a
-/// branch that says which trade it is in, so there is nothing to condition on —
-/// and the cost of getting it wrong is asymmetric. A jeweller who did not get
-/// them cannot price a single ornament until someone types eleven rows by hand;
-/// a chemist who did get them has eleven unused rows on one settings screen,
-/// which they can deactivate and forget.
+/// Seeded for <b>every</b> branch except Pharma. The cost of getting it wrong
+/// is asymmetric — a jeweller who did not get them cannot price a single
+/// ornament until someone types eleven rows by hand, while a chemist who did
+/// has eleven unused rows on one settings screen — so General and Jewellery
+/// branches are seeded with them, and only the chemist's branch is not.
 ///
-/// Whether a branch should declare its trade is a real question, and one for
-/// the owner rather than for this comment — see master.md 5.14.
+/// The trade is declared on the branch now (master.md 5.14, resolved): the
+/// seeder reads the branch's vertical and skips the purities for Pharma, and
+/// when a branch switches vertical it re-seeds what the new trade adds while
+/// leaving the old trade's rows as data.
 /// </summary>
 public static class MetalPuritiesSeed
 {

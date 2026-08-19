@@ -181,9 +181,21 @@ public sealed class MetalPurityService
     /// the whole reason that column exists — a jeweller who relabels
     /// "916 (22K)" as "22 Karat" must not be handed a second copy of it under
     /// the original label.
+    ///
+    /// Skips entirely for the Pharma vertical (master.md 5.14): a chemist has no
+    /// ornaments to price, so the rows would be written and never looked at.
+    /// When a branch switches to a vertical that needs them, re-seeding writes
+    /// them — and when it switches away, the rows stay as data, because the
+    /// branch may still be selling off stock priced in them.
     /// </summary>
-    public async Task<int> SeedForOrganizationAsync(Guid orgId, CancellationToken ct)
+    public async Task<int> SeedForOrganizationAsync(
+        Guid orgId, string vertical, CancellationToken ct)
     {
+        if (string.Equals(vertical, "Pharma", StringComparison.OrdinalIgnoreCase))
+        {
+            return 0;
+        }
+
         List<MetalPurity> existing = await _db.MetalPurities
             .IgnoreQueryFilters()
             .Where(p => p.OrgId == orgId)
