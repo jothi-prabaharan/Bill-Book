@@ -1,4 +1,5 @@
 import { Component, inject, OnInit } from '@angular/core';
+import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -7,7 +8,7 @@ import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purc
 @Component({
   selector: 'bb-purchase-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [DataGridComponent, CommonModule, RouterModule, FormsModule],
   templateUrl: './purchase-list.page.html'
 })
 export class PurchaseListPage implements OnInit {
@@ -15,7 +16,18 @@ export class PurchaseListPage implements OnInit {
   private router = inject(Router);
 
   transactions: PurchaseTransactionListItem[] = [];
-  selectedType: string = ''; // Empty string means 'All'
+  selectedType: string = '';
+  openFilter: string | null = null;
+  filterOp: string = 'contains';
+  filterVal: string = '';
+
+  toggleFilter(col: string, event: Event) {
+    event.stopPropagation();
+    this.openFilter = this.openFilter === col ? null : col;
+  }
+
+  // Mock properties for parity with design
+
 
   ngOnInit() {
     this.loadTransactions();
@@ -23,6 +35,11 @@ export class PurchaseListPage implements OnInit {
 
   loadTransactions() {
     this.transactionService.list(this.selectedType).subscribe(t => this.transactions = t);
+  }
+
+  setType(type: string) {
+    this.selectedType = type;
+    this.loadTransactions();
   }
 
   onTypeChange() {
@@ -39,7 +56,18 @@ export class PurchaseListPage implements OnInit {
     }
   }
 
+  columns: ColumnDef[] = [
+    { field: 'documentDate', header: 'Date' },
+    { field: 'transactionType', header: 'Type' },
+    { field: 'documentNo', header: 'Number' },
+    { field: 'contactName', header: 'Vendor' },
+    { field: 'totalAmount', header: 'Amount' },
+    { field: 'status', header: 'Status' }
+  ];
+
   navigateToTransaction(transaction: PurchaseTransactionListItem) {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
   }
 }
+
+

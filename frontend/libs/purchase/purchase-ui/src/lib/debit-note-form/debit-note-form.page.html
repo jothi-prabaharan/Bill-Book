@@ -73,8 +73,8 @@
 
         <label class="field">
           <span class="field__label">Date</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="documentDate()"
@@ -101,8 +101,8 @@
 
         <label class="field">
           <span class="field__label">Place of supply</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="2"
             [disabled]="readonlyDoc()"
@@ -148,47 +148,36 @@
       @if (lines().length === 0) {
         <p class="state">Choose a bill above to see what can be corrected.</p>
       } @else {
-        <table class="lines">
-          <thead>
-            <tr>
-              <th scope="col">Item</th>
-              <th scope="col" class="num">Available</th>
-              <th scope="col" class="num">Quantity</th>
-              <th scope="col" class="num">Price</th>
-              <th scope="col" class="num">Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (line of lines(); track line.billDetailId) {
-              <tr>
-                <td class="item">{{ line.label }}</td>
-                <td class="num">{{ line.available }}</td>
-                <td class="num">
-                  <input
-                    type="number"
-                    class="input input--qty"
-                    min="0"
-                    [max]="line.available"
-                    [disabled]="readonlyDoc()"
-                    [ngModel]="line.quantity"
-                    (ngModelChange)="onQuantityChange($index, $event)"
-                    [name]="'qty' + $index"
-                  />
-                </td>
-                <td class="num">{{ line.unitPrice | number: '1.2-2' }}</td>
-                <td class="num">
-                  {{ line.quantity * line.unitPrice | number: '1.2-2' }}
-                </td>
-              </tr>
-            }
-          </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="4" class="num">Before tax</td>
-              <td class="num total">{{ total() | number: '1.2-2' }}</td>
-            </tr>
-          </tfoot>
-        </table>
+                <bb-data-grid [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
+          <ng-template bbCellTemplate="label" let-row="row">
+            {{ row.label }}
+          </ng-template>
+          <ng-template bbCellTemplate="available" let-row="row">
+            {{ row.available }}
+          </ng-template>
+          <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
+            <bb-number-input
+              
+              class="input input--qty"
+              min="0"
+              [max]="row.available"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.quantity"
+              (ngModelChange)="onQuantityChange(index, $event)"
+              [name]="'qty' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="unitPrice" let-row="row">
+            {{ row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="value" let-row="row">
+            {{ row.quantity * row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+        </bb-data-grid>
+        <div class="flex justify-between p-3 bg-surface border-t border-divider font-bold">
+          <span class="num">Before tax</span>
+          <span class="num total">{{ total() | number: '1.2-2' }}</span>
+        </div>
 
         <p class="field__hint">
           Prices come from the bill and cannot be changed &mdash; a credit has to
@@ -249,3 +238,4 @@
     (dismiss)="closePicker()"
   />
 </div>
+

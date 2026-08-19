@@ -20,23 +20,23 @@
   <form [formGroup]="form" class="form-grid">
     <div class="field">
       <label for="docDate">Document Date</label>
-      <input id="docDate" type="date" class="input" formControlName="documentDate" />
+      <bb-date-input id="docDate"  class="input" formControlName="documentDate" />
     </div>
     <div class="field">
       <label for="dueDate">Due Date</label>
-      <input id="dueDate" type="date" class="input" formControlName="dueDate" />
+      <bb-date-input id="dueDate"  class="input" formControlName="dueDate" />
     </div>
     <div class="field">
       <label for="contactId">Contact (ID)</label>
-      <input id="contactId" type="number" class="input" formControlName="contactId" />
+      <bb-number-input id="contactId"  class="input" formControlName="contactId" />
     </div>
     <div class="field">
       <label for="currencyCode">Currency</label>
-      <input id="currencyCode" formControlName="currencyCode" maxlength="3" />
+      <bb-text-input id="currencyCode" formControlName="currencyCode" maxlength="3" />
     </div>
     <div class="field">
       <label for="exchangeRate">Exchange Rate</label>
-      <input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
+      <bb-text-input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
     </div>
     <div class="field">
       <label for="billingAddress">Billing Address</label>

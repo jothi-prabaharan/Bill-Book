@@ -9,8 +9,7 @@ import {
   LookupDialogComponent,
   LookupRow,
   TaxGroupOption,
-  recalculate,
-} from '@bill-book/ui-components';
+  recalculate, DateInputComponent , TextInputComponent } from '@bill-book/ui-components';
 import {
   PurchaseLookupService,
   PurchaseOrderService,
@@ -38,7 +37,7 @@ type Picker = 'none' | 'vendor' | 'item';
  * sales order form has one because confirming it holds stock back; ordering
  * from a vendor holds nothing, because the goods are not here. What this page
  * adds beside the shared line grid is the expected delivery date — see
- * `docs/modules/Purchase.md` §9a.
+ * `docs/Purchase.md` §9a.
  *
  * The pickers are the host's job by design: `bb-document-line-grid` and
  * `bb-lookup-dialog` both fetch nothing, so this page owns every HTTP call and
@@ -53,7 +52,7 @@ type Picker = 'none' | 'vendor' | 'item';
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  ],
+  DateInputComponent, TextInputComponent],
   templateUrl: './purchase-order-form.page.html',
   styleUrl: './purchase-order-form.page.scss',
 })

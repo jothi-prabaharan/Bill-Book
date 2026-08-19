@@ -9,8 +9,7 @@ import {
   LookupDialogComponent,
   LookupRow,
   TaxGroupOption,
-  recalculate,
-} from '@bill-book/ui-components';
+  recalculate, DateInputComponent , TextInputComponent } from '@bill-book/ui-components';
 import {
   BillService,
   BillView,
@@ -43,7 +42,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  ],
+  DateInputComponent, TextInputComponent],
   templateUrl: './bill-form.page.html',
   styleUrl: './bill-form.page.scss',
 })

@@ -60,8 +60,8 @@
 
         <label class="field">
           <span class="field__label">Vendor GSTIN</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="15"
             [disabled]="readonlyDoc()"
@@ -73,8 +73,8 @@
 
         <label class="field">
           <span class="field__label">Order date</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="documentDate()"
@@ -85,8 +85,8 @@
 
         <label class="field">
           <span class="field__label">Expected delivery</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="expectedDate()"
@@ -98,8 +98,8 @@
 
         <label class="field">
           <span class="field__label">Place of supply</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="2"
             [disabled]="readonlyDoc()"
@@ -244,8 +244,8 @@
           </p>
           <label class="field field--wide">
             <span class="field__label">Reason</span>
-            <input
-              type="text"
+            <bb-text-input
+              
               class="input"
               maxlength="300"
               [ngModel]="voidReason()"

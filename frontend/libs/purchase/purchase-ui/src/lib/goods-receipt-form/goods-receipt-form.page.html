@@ -72,8 +72,8 @@
 
         <label class="field">
           <span class="field__label">Receipt date</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="documentDate()"
@@ -84,8 +84,8 @@
 
         <label class="field">
           <span class="field__label">Vendor delivery note</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="50"
             [disabled]="readonlyDoc()"
@@ -98,8 +98,8 @@
 
         <label class="field">
           <span class="field__label">Delivery note date</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="vendorDeliveryNoteDate()"
@@ -110,8 +110,8 @@
 
         <label class="field">
           <span class="field__label">Vendor GSTIN</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="15"
             [disabled]="readonlyDoc()"
@@ -123,8 +123,8 @@
 
         <label class="field">
           <span class="field__label">Place of supply</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="2"
             [disabled]="readonlyDoc()"
@@ -163,74 +163,63 @@
       @if (lines().length === 0) {
         <p class="state">Add a line above first.</p>
       } @else {
-        <table class="receiving">
-          <thead>
-            <tr>
-              <th scope="col">Item</th>
-              <th scope="col" class="num">Delivered</th>
-              <th scope="col" class="num">Rejected</th>
-              <th scope="col" class="num">Accepted</th>
-              <th scope="col">Reason</th>
-              <th scope="col">Batch</th>
-              <th scope="col">Expiry</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (row of receiving(); track $index) {
-              <tr>
-                <td class="item">{{ itemLabelOf($index) }}</td>
-                <td class="num">{{ deliveredOf($index) }}</td>
-                <td class="num">
-                  <input
-                    type="number"
-                    class="input input--qty"
-                    min="0"
-                    [max]="deliveredOf($index)"
-                    [disabled]="readonlyDoc()"
-                    [ngModel]="row.rejectedQuantity"
-                    (ngModelChange)="onRejectedChange($index, $event)"
-                    [name]="'rejected' + $index"
-                  />
-                </td>
-                <td class="num accepted">{{ row.acceptedQuantity }}</td>
-                <td>
-                  <input
-                    type="text"
-                    class="input"
-                    maxlength="300"
-                    placeholder="Required when rejecting"
-                    [disabled]="readonlyDoc() || row.rejectedQuantity === 0"
-                    [ngModel]="row.rejectionReason"
-                    (ngModelChange)="onReceivingField($index, 'rejectionReason', $event)"
-                    [name]="'reason' + $index"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    class="input"
-                    maxlength="50"
-                    placeholder="Lot"
-                    [disabled]="readonlyDoc()"
-                    [ngModel]="row.batchNumber"
-                    (ngModelChange)="onReceivingField($index, 'batchNumber', $event)"
-                    [name]="'batch' + $index"
-                  />
-                </td>
-                <td>
-                  <input
-                    type="date"
-                    class="input"
-                    [disabled]="readonlyDoc()"
-                    [ngModel]="row.batchExpiryDate"
-                    (ngModelChange)="onReceivingField($index, 'batchExpiryDate', $event)"
-                    [name]="'expiry' + $index"
-                  />
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
+                <bb-data-grid [gridCode]="'GOODS_RECEIPT_LINES'" [columns]="columns" [data]="receiving()">
+          <ng-template bbCellTemplate="item" let-row="row" let-index="index">
+            {{ itemLabelOf(index) }}
+          </ng-template>
+          <ng-template bbCellTemplate="delivered" let-row="row" let-index="index">
+            {{ deliveredOf(index) }}
+          </ng-template>
+          <ng-template bbCellTemplate="rejected" let-row="row" let-index="index">
+            <bb-number-input
+              
+              class="input input--qty"
+              min="0"
+              [max]="deliveredOf(index)"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.rejectedQuantity"
+              (ngModelChange)="onRejectedChange(index, $event)"
+              [name]="'rejected' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="accepted" let-row="row">
+            <span class="accepted">{{ row.acceptedQuantity }}</span>
+          </ng-template>
+          <ng-template bbCellTemplate="reason" let-row="row" let-index="index">
+            <bb-text-input
+              
+              class="input"
+              maxlength="300"
+              placeholder="Required when rejecting"
+              [disabled]="readonlyDoc() || row.rejectedQuantity === 0"
+              [ngModel]="row.rejectionReason"
+              (ngModelChange)="onReceivingField(index, 'rejectionReason', $event)"
+              [name]="'reason' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="batch" let-row="row" let-index="index">
+            <bb-text-input
+              
+              class="input"
+              maxlength="50"
+              placeholder="Lot"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.batchNumber"
+              (ngModelChange)="onReceivingField(index, 'batchNumber', $event)"
+              [name]="'batch' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="expiry" let-row="row" let-index="index">
+            <bb-date-input
+              
+              class="input"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.batchExpiryDate"
+              (ngModelChange)="onReceivingField(index, 'batchExpiryDate', $event)"
+              [name]="'expiry' + index"
+            />
+          </ng-template>
+        </bb-data-grid>
 
         <p class="field__hint">
           Batch and expiry are only required for items that track them &mdash;
@@ -291,3 +280,4 @@
     (dismiss)="closePicker()"
   />
 </div>
+

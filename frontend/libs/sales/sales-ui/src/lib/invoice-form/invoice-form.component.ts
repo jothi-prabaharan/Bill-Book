@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InvoiceService, SaveInvoiceRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf } from '@bill-book/ui-components';
+import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'bb-invoice-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.scss'
 })

@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, SalesTransactionListItem } from '@bill-book/sales-core';
+import { DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
 
 @Component({
   selector: 'bb-sales-list',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, DataGridComponent, DataGridCellTemplateDirective],
   templateUrl: './sales-list.component.html'
 })
 export class SalesListComponent implements OnInit {
@@ -15,7 +16,19 @@ export class SalesListComponent implements OnInit {
   private router = inject(Router);
 
   transactions: SalesTransactionListItem[] = [];
-  selectedType: string = ''; // Empty string means 'All'
+  selectedType: string = '';
+
+  columns: ColumnDef[] = [
+    { field: 'documentDate', header: 'Date' },
+    { field: 'transactionType', header: 'Type' },
+    { field: 'documentNo', header: 'Number' },
+    { field: 'contactName', header: 'Customer' },
+    { field: 'totalAmount', header: 'Amount', align: 'right' },
+    { field: 'status', header: 'Status' }
+  ];
+
+  // Mock properties for parity with design
+
 
   ngOnInit() {
     this.loadTransactions();
@@ -23,6 +36,11 @@ export class SalesListComponent implements OnInit {
 
   loadTransactions() {
     this.transactionService.list(this.selectedType).subscribe(t => this.transactions = t);
+  }
+
+  setType(type: string) {
+    this.selectedType = type;
+    this.loadTransactions();
   }
 
   onTypeChange() {

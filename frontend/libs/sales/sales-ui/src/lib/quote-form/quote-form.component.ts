@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { QuoteService, SaveQuoteRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
+import { DocumentLineGridComponent, DocumentLine, DocumentLineContext , TextInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'bb-quote-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, TextInputComponent],
   templateUrl: './quote-form.component.html',
   styleUrls: ['./quote-form.component.scss']
 })

@@ -1,49 +1,43 @@
-<div class="page-header">
-  <h1>Sales Transactions</h1>
+<nav aria-label="Document types" class="flex flex-wrap mb-3 gap-6px">
+  <button type="button" (click)="setType('')" [attr.aria-pressed]="selectedType === ''" class="btn btn-secondary text-sm tab-all">All transactions</button>
   
-  <div class="header-actions">
-    <div class="field" style="display: inline-block; margin-right: 1rem;">
-      <select [(ngModel)]="selectedType" (change)="onTypeChange()" class="input">
-        <option value="">All Transactions</option>
-        <option value="Quote">Quotes</option>
-        <option value="SalesOrder">Sales Orders</option>
-        <option value="Invoice">Invoices</option>
-        <option value="CreditNote">Credit Notes</option>
-      </select>
-    </div>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('Invoice')" [attr.aria-pressed]="selectedType === 'Invoice'">Invoices</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/invoices/new" title="New Invoice" aria-label="New Invoice"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
 
-    <!-- For simplicity, navigating to specific new form directly, or using a single dropdown if you want -->
-    <a routerLink="/sales/quotes/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Quote</a>
-    <a routerLink="/sales/sales-orders/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Order</a>
-    <a routerLink="/sales/invoices/new" class="btn btn-primary" style="margin-right: 0.5rem;">New Invoice</a>
-    <a routerLink="/sales/credit-notes/new" class="btn btn-primary">New Credit Note</a>
-  </div>
-</div>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('SalesOrder')" [attr.aria-pressed]="selectedType === 'SalesOrder'">Sales orders</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/sales-orders/new" title="New Sales order" aria-label="New Sales order"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
 
-<div class="card">
-  <table class="table">
-    <thead>
-      <tr>
-        <th>Date</th>
-        <th>Type</th>
-        <th>Number</th>
-        <th>Customer</th>
-        <th class="text-right">Amount</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let t of transactions" (click)="navigateToTransaction(t)" class="clickable-row" style="cursor: pointer;">
-        <td>{{ t.documentDate | date }}</td>
-        <td>{{ t.transactionType }}</td>
-        <td>{{ t.documentNo }}</td>
-        <td>{{ t.contactName }}</td>
-        <td class="text-right">{{ t.totalAmount | number:'1.2-2' }}</td>
-        <td><span class="badge">{{ t.status }}</span></td>
-      </tr>
-      <tr *ngIf="transactions.length === 0">
-        <td colspan="6" class="text-center text-muted">No transactions found.</td>
-      </tr>
-    </tbody>
-  </table>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('Quote')" [attr.aria-pressed]="selectedType === 'Quote'">Quotes</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/quotes/new" title="New Quote" aria-label="New Quote"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('CreditNote')" [attr.aria-pressed]="selectedType === 'CreditNote'">Credit notes</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/credit-notes/new" title="New Credit note" aria-label="New Credit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+</nav>
+
+<div class="card bg-surface">
+  <bb-data-grid [gridCode]="'SALES_LIST'" [columns]="columns" [data]="transactions" (rowClick)="navigateToTransaction($event)">
+    <ng-template bbCellTemplate="documentDate" let-row>
+      <span class="tabular-nums">{{ row.documentDate | date }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="totalAmount" let-row>
+      <span class="tabular-nums">{{ row.totalAmount | number:'1.2-2' }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="status" let-row>
+      <span class="tag" [ngClass]="{
+        'tag-neutral': row.status === 'Posted' || row.status === 'Closed',
+        'tag-accent': row.status === 'Open' || row.status === 'Sent',
+        'tag-outline': row.status === 'Draft' || row.status === 'Void'
+      }">{{ row.status }}</span>
+    </ng-template>
+  </bb-data-grid>
 </div>

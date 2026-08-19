@@ -1,16 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import {
-  DocumentLine,
-  DocumentLineContext,
-  DocumentLineGridComponent,
-  LookupDialogComponent,
-  LookupRow,
-  TaxGroupOption,
-  recalculate,
-} from '@bill-book/ui-components';
+
+import { ColumnDef, DataGridComponent, DateInputComponent, DocumentLine, DocumentLineContext, DocumentLineGridComponent, LookupDialogComponent, LookupRow, NumberInputComponent, TaxGroupOption, TextInputComponent, recalculate } from '@bill-book/ui-components';
+
 import {
   GoodsReceiptService,
   GoodsReceiptView,
@@ -55,13 +50,13 @@ interface ReceivingLine {
 @Component({
   selector: 'bb-goods-receipt-form',
   standalone: true,
-  imports: [
+  imports: [DataGridComponent, 
     CommonModule,
     FormsModule,
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  ],
+  DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './goods-receipt-form.page.html',
   styleUrl: './goods-receipt-form.page.scss',
 })
@@ -684,7 +679,19 @@ export class GoodsReceiptFormPage {
     return body?.message ?? 'The goods receipt could not be saved.';
   }
 
+  columns: ColumnDef[] = [
+    { field: 'item', header: 'Item' },
+    { field: 'delivered', header: 'Delivered' },
+    { field: 'rejected', header: 'Rejected' },
+    { field: 'accepted', header: 'Accepted' },
+    { field: 'reason', header: 'Reason' },
+    { field: 'batch', header: 'Batch' },
+    { field: 'expiry', header: 'Expiry' }
+  ];
+
   private today(): string {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
+

@@ -1,11 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
+
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
-import {
-  LookupDialogComponent,
-  LookupRow,
-} from '@bill-book/ui-components';
+
+import { ColumnDef, DataGridComponent, DateInputComponent, LookupDialogComponent, LookupRow, NumberInputComponent, TextInputComponent } from '@bill-book/ui-components';
+
 import {
   BillService,
   DEBIT_NOTE_REASONS,
@@ -56,7 +56,7 @@ interface ReturnLine {
 @Component({
   selector: 'bb-debit-note-form',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, LookupDialogComponent],
+  imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './debit-note-form.page.html',
   styleUrl: './debit-note-form.page.scss',
 })
@@ -449,7 +449,17 @@ export class DebitNoteFormPage {
     return body?.message ?? 'The debit note could not be saved.';
   }
 
+  columns: ColumnDef[] = [
+    { field: 'label', header: 'Item' },
+    { field: 'available', header: 'Available' },
+    { field: 'quantity', header: 'Quantity' },
+    { field: 'unitPrice', header: 'Price' },
+    { field: 'value', header: 'Value' }
+  ];
+
   private today(): string {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
+

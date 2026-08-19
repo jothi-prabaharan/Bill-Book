@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DeliveryChallanService, SaveDeliveryChallanRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
+import { DocumentLineGridComponent, DocumentLine, DocumentLineContext , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'bb-delivery-challan-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './delivery-challan-form.component.html',
   styleUrls: ['./delivery-challan-form.component.scss']
 })
@@ -78,7 +78,7 @@ export class DeliveryChallanFormComponent implements OnInit {
         quantity: l.quantity,
         unitPrice: l.unitPrice,
         discountPercent: l.discountPercent || 0
-      }));
+      })) as any;
     });
   }
 

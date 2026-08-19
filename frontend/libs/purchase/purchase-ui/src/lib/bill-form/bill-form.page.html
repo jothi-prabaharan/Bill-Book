@@ -55,8 +55,8 @@
 
         <label class="field">
           <span class="field__label">Vendor's bill number</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="50"
             [disabled]="readonlyDoc()"
@@ -73,8 +73,8 @@
 
         <label class="field">
           <span class="field__label">Their bill date</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="vendorBillDate()"
@@ -86,8 +86,8 @@
 
         <label class="field">
           <span class="field__label">Received on</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="documentDate()"
@@ -98,8 +98,8 @@
 
         <label class="field">
           <span class="field__label">Due</span>
-          <input
-            type="date"
+          <bb-date-input
+            
             class="input"
             [disabled]="readonlyDoc()"
             [ngModel]="dueDate()"
@@ -111,8 +111,8 @@
 
         <label class="field">
           <span class="field__label">Vendor GSTIN</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="15"
             [disabled]="readonlyDoc()"
@@ -124,8 +124,8 @@
 
         <label class="field">
           <span class="field__label">Place of supply</span>
-          <input
-            type="text"
+          <bb-text-input
+            
             class="input"
             maxlength="2"
             [disabled]="readonlyDoc()"

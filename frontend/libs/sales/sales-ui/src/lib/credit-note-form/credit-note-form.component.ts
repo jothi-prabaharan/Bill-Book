@@ -2,13 +2,13 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CreditNoteService, SaveCreditNoteRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
+import { DocumentLineGridComponent, DocumentLine, DocumentLineContext , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'bb-credit-note-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './credit-note-form.component.html',
   styleUrl: './credit-note-form.component.scss'
 })
