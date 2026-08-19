@@ -349,65 +349,125 @@ public sealed class InvoiceService
         decimal totalAmount = invoice.TotalAmount;
         decimal totalRevenue = invoice.SubTotal - invoice.DiscountAmount;
 
+        // Debit Accounts Receivable / Cash (CONTROL leg, type 3)
         postRequest.Legs.Add(new LedgerLegRequest
         {
-            LedgerTypeId = invoice.TillId.HasValue ? 1 : 1, // AR/Cash
-            LedgerSourceId = 3,
+            LedgerTypeId = 3, // CONTROL
+            LedgerSourceId = 3, // Transaction posting
             TransactionDetailId = 0,
             AccountSystemName = invoice.TillId.HasValue ? "Cash" : "Accounts Receivable",
-            Amount = totalAmount
+            SubAccountReferenceType = invoice.TillId.HasValue ? null : 1, // Contact
+            SubAccountReferenceId = invoice.TillId.HasValue ? null : invoice.ContactId,
+            SubAccountPurpose = 0, // Primary (trade balance)
+            DebitAmount = totalAmount
         });
 
+        // Credit Sales Revenue (ITEM leg, type 1)
         postRequest.Legs.Add(new LedgerLegRequest
         {
-            LedgerTypeId = 4, // Revenue
+            LedgerTypeId = 1, // ITEM
             LedgerSourceId = 3,
             TransactionDetailId = 0,
             AccountSystemName = "Sales",
-            Amount = totalRevenue
+            CreditAmount = totalRevenue
         });
 
+        // Credit Tax Payable (TAX legs, type 2) - split by rate and component
         var taxes = invoice.Lines.SelectMany(l => l.Taxes)
             .GroupBy(t => t.SubAccountId)
             .Select(g => new { TaxRateId = g.Key, Amount = g.Sum(t => t.Amount) });
             
         foreach (var tax in taxes)
         {
-            postRequest.Legs.Add(new LedgerLegRequest
+            // For intra-state: CGST + SGST; inter-state: IGST
+            // We need to post each component separately with the correct SubAccountTaxComponent
+            // The invoice stores CGST/SGST/IGST split in the line taxes
+            // Shared.Kernel.Documents.TaxComponent is 0-based: Cgst=0, Sgst=1, Igst=2
+            // Accounting.Entity.Enums.TaxComponent is 1-based: None=0, Cgst=1, Sgst=2, Igst=3
+            var cgst = invoice.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Cgst)
+                .Sum(t => t.Amount);
+            var sgst = invoice.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Sgst)
+                .Sum(t => t.Amount);
+            var igst = invoice.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Igst)
+                .Sum(t => t.Amount);
+
+            if (cgst > 0)
             {
-                LedgerTypeId = 2, // Liability
-                LedgerSourceId = 3,
-                TransactionDetailId = 0,
-                SubAccountReferenceId = tax.TaxRateId,
-                AccountSystemName = "Tax Payable",
-                Amount = tax.Amount
-            });
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 1, // CGST (Accounting: 1)
+                    AccountSystemName = "Tax Payable",
+                    CreditAmount = cgst
+                });
+            }
+
+            if (sgst > 0)
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 2, // SGST (Accounting: 2)
+                    AccountSystemName = "Tax Payable",
+                    CreditAmount = sgst
+                });
+            }
+
+            if (igst > 0)
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 3, // IGST (Accounting: 3)
+                    AccountSystemName = "Tax Payable",
+                    CreditAmount = igst
+                });
+            }
         }
 
         if (totalCogs > 0)
         {
+            // Debit COGS (COGS leg, type 4)
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = 5, // Expense
+                LedgerTypeId = 4, // COGS
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = "Cost of Goods Sold",
-                Amount = totalCogs
+                DebitAmount = totalCogs
             });
 
+            // Credit Inventory or GDNI (CONTROL leg, type 3 for stock, or ITEM for COGS?)
+            // Based on Accounting: Issue posts Dr COGS / Cr Inventory
+            // The inventory side is a CONTROL leg (type 3) against Inventory account
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = invoice.DeliveryChallanId.HasValue ? 5 : 1, // 5 = GDNI, 1 = Asset
+                LedgerTypeId = 3, // CONTROL (stock movement)
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = invoice.DeliveryChallanId.HasValue ? "Goods Delivered Not Invoiced" : "Inventory",
-                Amount = totalCogs
+                CreditAmount = totalCogs
             });
         }
 
-        bool posted = await _ledgerClient.PostAsync(postRequest, ct);
-        if (!posted)
-            throw new InvalidOperationException("Ledger post failed.");
+        var result = await _ledgerClient.PostAsync(postRequest, ct);
+        if (!result.Posted)
+            throw new InvalidOperationException($"Ledger post failed: {result.Detail}");
 
         foreach (var l in invoice.Lines)
         {

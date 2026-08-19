@@ -313,76 +313,120 @@ public sealed class CreditNoteService
         decimal totalAmount = creditNote.TotalAmount;
         decimal totalRevenue = creditNote.SubTotal - creditNote.DiscountAmount;
 
-        // Decrease Accounts Receivable (Credit)
+        // Credit Accounts Receivable (CONTROL leg, type 3) - decrease AR
         postRequest.Legs.Add(new LedgerLegRequest
         {
-            LedgerTypeId = 1, // Asset
-            LedgerSourceId = 3, // Invoice related
+            LedgerTypeId = 3, // CONTROL
+            LedgerSourceId = 3, // Transaction posting
             TransactionDetailId = 0,
             AccountSystemName = "Accounts Receivable",
-            Amount = totalAmount // Ledger might interpret based on direction, let's keep it consistent
-        }); // TODO: Needs direction or negative amount depending on system design. Usually Sales Returns debit Sales Returns and credit AR. Let's make it positive and see if Ledger expects natural balances.
-            // If AR is naturally DR, we need to Credit it. If we use positive amounts for increasing balance, we need a way to decrease it.
-            // Actually, in InvoiceService, there is no Direction flag. 
-
-        // Let's assume negative for contra/decreases.
-        postRequest.Legs.Add(new LedgerLegRequest
-        {
-            LedgerTypeId = 1, // Asset -> AR (Credit)
-            LedgerSourceId = 3,
-            TransactionDetailId = 0,
-            AccountSystemName = "Accounts Receivable",
-            Amount = -totalAmount
+            SubAccountReferenceType = 1, // Contact
+            SubAccountReferenceId = creditNote.ContactId,
+            SubAccountPurpose = 0, // Primary (trade balance)
+            CreditAmount = totalAmount
         });
 
+        // Debit Sales Returns (ITEM leg, type 1) - contra revenue
         postRequest.Legs.Add(new LedgerLegRequest
         {
-            LedgerTypeId = 4, // Revenue -> Sales Returns (Contra Revenue -> Debit)
+            LedgerTypeId = 1, // ITEM
             LedgerSourceId = 3,
             TransactionDetailId = 0,
             AccountSystemName = "Sales Returns",
-            Amount = -totalRevenue // Contra revenue decreases revenue balance
+            DebitAmount = totalRevenue
         });
 
-        // Taxes
+        // Debit Tax Payable (TAX legs, type 2) - decrease tax liability, split by component
         var taxes = creditNote.Lines.SelectMany(l => l.Taxes)
             .GroupBy(t => t.SubAccountId)
             .Select(g => new { TaxRateId = g.Key, Amount = g.Sum(t => t.Amount) });
             
         foreach (var tax in taxes)
         {
-            postRequest.Legs.Add(new LedgerLegRequest
+            // Shared.Kernel.Documents.TaxComponent is 0-based: Cgst=0, Sgst=1, Igst=2
+            // Accounting.Entity.Enums.TaxComponent is 1-based: None=0, Cgst=1, Sgst=2, Igst=3
+            var cgst = creditNote.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Cgst)
+                .Sum(t => t.Amount);
+            var sgst = creditNote.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Sgst)
+                .Sum(t => t.Amount);
+            var igst = creditNote.Lines.SelectMany(l => l.Taxes)
+                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Igst)
+                .Sum(t => t.Amount);
+
+            if (cgst > 0)
             {
-                LedgerTypeId = 2, // Liability -> Tax Payable (Debit)
-                LedgerSourceId = 3,
-                TransactionDetailId = 0,
-                SubAccountReferenceId = tax.TaxRateId,
-                AccountSystemName = "Tax Payable",
-                Amount = -tax.Amount // Decrease liability
-            });
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 1, // CGST
+                    AccountSystemName = "Tax Payable",
+                    DebitAmount = cgst
+                });
+            }
+
+            if (sgst > 0)
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 2, // SGST
+                    AccountSystemName = "Tax Payable",
+                    DebitAmount = sgst
+                });
+            }
+
+            if (igst > 0)
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = 2, // TAX
+                    LedgerSourceId = 3,
+                    TransactionDetailId = 0,
+                    SubAccountReferenceType = 3, // Tax
+                    SubAccountReferenceId = tax.TaxRateId,
+                    SubAccountTaxComponent = 3, // IGST
+                    AccountSystemName = "Tax Payable",
+                    DebitAmount = igst
+                });
+            }
         }
 
-                if (totalCogs > 0)
+        if (totalCogs > 0)
         {
+            // Credit Inventory (CONTROL leg, type 3) - stock returned
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = 1, // Asset -> Inventory (Debit)
+                LedgerTypeId = 3, // CONTROL (stock movement)
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = "Inventory",
-                Amount = totalCogs
+                CreditAmount = totalCogs
             });
+
+            // Debit COGS (COGS leg, type 4) - reverse the cost
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = 5, // Expense -> COGS (Credit)
+                LedgerTypeId = 4, // COGS
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = "Cost of Goods Sold",
-                Amount = -totalCogs
+                DebitAmount = totalCogs
             });
         }
 
-        await _ledgerClient.PostAsync(postRequest, ct);
+        var result = await _ledgerClient.PostAsync(postRequest, ct);
+        if (!result.Posted)
+            throw new InvalidOperationException($"Ledger post failed: {result.Detail}");
 
         // Allocate credit note against the invoice
         if (creditNote.InvoiceId > 0)

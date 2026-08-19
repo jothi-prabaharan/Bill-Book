@@ -321,25 +321,29 @@ public sealed class DeliveryChallanService
 
             if (totalCogs > 0)
             {
+                // Dr Goods Delivered Not Invoiced (CONTROL leg, type 3)
                 postRequest.Legs.Add(new LedgerLegRequest
                 {
-                    LedgerTypeId = 5, // Expense -> GDNI
+                    LedgerTypeId = 3, // CONTROL
                     LedgerSourceId = 3,
                     TransactionDetailId = 0,
                     AccountSystemName = "Goods Delivered Not Invoiced",
-                    Amount = totalCogs
+                    DebitAmount = totalCogs
                 });
 
+                // Cr Inventory (CONTROL leg, type 3)
                 postRequest.Legs.Add(new LedgerLegRequest
                 {
-                    LedgerTypeId = 1, // Asset -> Inventory
+                    LedgerTypeId = 3, // CONTROL
                     LedgerSourceId = 3,
                     TransactionDetailId = 0,
                     AccountSystemName = "Inventory",
-                    Amount = totalCogs
+                    CreditAmount = totalCogs
                 });
 
-                await _ledgerClient.PostAsync(postRequest, ct);
+                var result = await _ledgerClient.PostAsync(postRequest, ct);
+                if (!result.Posted)
+                    throw new InvalidOperationException($"Ledger post failed: {result.Detail}");
             }
         }
 
