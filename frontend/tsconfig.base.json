@@ -16,26 +16,36 @@
     "importHelpers": true,
     "skipLibCheck": true,
     "paths": {
-      "@bill-book/master-core": ["libs/master/master-core/src/index.ts"],
-      "@bill-book/master-ui": ["libs/master/master-ui/src/index.ts"],
+      "@bill-book/accounting-core": [
+        "libs/accounting/accounting-core/src/index.ts"
+      ],
+      "@bill-book/accounting-ui": [
+        "libs/accounting/accounting-ui/src/index.ts"
+      ],
+      "@bill-book/api-client": ["libs/shared/api-client/src/index.ts"],
+      "@bill-book/app-shell": ["libs/app-shell/src/index.ts"],
+      "@bill-book/auth": ["libs/shared/auth/src/index.ts"],
+      "@bill-book/currency-format": [
+        "libs/shared/currency-format/src/index.ts"
+      ],
       "@bill-book/customer-core": ["libs/customer/customer-core/src/index.ts"],
       "@bill-book/customer-ui": ["libs/customer/customer-ui/src/index.ts"],
-      "@bill-book/inventory-core": ["libs/inventory/inventory-core/src/index.ts"],
+      "@bill-book/inventory-core": [
+        "libs/inventory/inventory-core/src/index.ts"
+      ],
       "@bill-book/inventory-ui": ["libs/inventory/inventory-ui/src/index.ts"],
-      "@bill-book/sales-core": ["libs/sales/sales-core/src/index.ts"],
-      "@bill-book/sales-ui": ["libs/sales/sales-ui/src/index.ts"],
+      "@bill-book/master-core": ["libs/master/master-core/src/index.ts"],
+      "@bill-book/master-ui": ["libs/master/master-ui/src/index.ts"],
       "@bill-book/purchase-core": ["libs/purchase/purchase-core/src/index.ts"],
       "@bill-book/purchase-ui": ["libs/purchase/purchase-ui/src/index.ts"],
-      "@bill-book/accounting-core": ["libs/accounting/accounting-core/src/index.ts"],
-      "@bill-book/accounting-ui": ["libs/accounting/accounting-ui/src/index.ts"],
-      "@bill-book/reporting-core": ["libs/reporting/reporting-core/src/index.ts"],
+      "@bill-book/reporting-core": [
+        "libs/reporting/reporting-core/src/index.ts"
+      ],
       "@bill-book/reporting-ui": ["libs/reporting/reporting-ui/src/index.ts"],
-      "@bill-book/auth": ["libs/shared/auth/src/index.ts"],
-      "@bill-book/api-client": ["libs/shared/api-client/src/index.ts"],
-      "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"],
-      "@bill-book/currency-format": ["libs/shared/currency-format/src/index.ts"],
+      "@bill-book/sales-core": ["libs/sales/sales-core/src/index.ts"],
+      "@bill-book/sales-ui": ["libs/sales/sales-ui/src/index.ts"],
       "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
-      "@bill-book/app-shell": ["libs/app-shell/src/index.ts"]
+      "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
