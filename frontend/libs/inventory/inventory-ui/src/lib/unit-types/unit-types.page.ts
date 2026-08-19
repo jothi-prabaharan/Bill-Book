@@ -1,7 +1,7 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface Unit {
@@ -41,12 +41,32 @@ interface UomType {
 @Component({
   selector: 'bb-unit-types-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './unit-types.page.html',
   styleUrl: './unit-types.page.scss',
 })
 export class UnitTypesPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: '' },
+    { field: 'uomTypeName', header: 'Type' },
+    { field: 'baseUnit', header: 'Base unit' },
+    { field: 'unitsCount', header: 'Units', type: 'number' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: '' },
+  ];
+
+  unitColumns: ColumnDef[] = [
+    { field: 'isBaseUnit', header: 'Base' },
+    { field: 'uomCode', header: 'Code' },
+    { field: 'uomName', header: 'Name' },
+    { field: 'uqcCode', header: 'UQC' },
+    { field: 'conversionToBase', header: 'Factor to base', type: 'number' },
+    { field: 'decimalPlaces', header: 'Decimals', type: 'number' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: '' },
+  ];
 
   protected readonly types = signal<UomType[]>([]);
   protected readonly busy = signal(false);
@@ -54,6 +74,11 @@ export class UnitTypesPage implements OnInit {
   protected readonly messageIsError = signal(false);
   protected readonly expanded = signal<number | null>(null);
   protected readonly editingUnitId = signal<number | null>(null);
+
+  protected readonly expandedType = computed(() => {
+    const id = this.expanded();
+    return id ? this.types().find(t => t.uomTypeId === id) ?? null : null;
+  });
 
   showInactive = false;
   newTypeName = '';

@@ -1,80 +1,61 @@
-<header class="page-head">
-  <h1>Items</h1>
-  <div class="head-actions">
-    <input
-      type="search"
-      [(ngModel)]="search"
-      (keyup.enter)="load()"
-      placeholder="Name or code"
-      aria-label="Search items"
-    />
-    <select [(ngModel)]="profileFilter" (ngModelChange)="load()" aria-label="Filter by profile">
-      <option value="">All profiles</option>
-      <option value="Standard">Standard</option>
-      <option value="Pharma">Pharma</option>
-      <option value="Jewellery">Jewellery</option>
-    </select>
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
-    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add item</button>
-  </div>
-</header>
+<nav aria-label="Inventory views" class="flex flex-wrap mb-3 gap-6px">
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'itm' ? 'true' : null" (click)="tabFilter = 'itm'; load()">Items</button>
+    <button class="btn btn-secondary" type="button" title="New item" aria-label="New item" (click)="openAdd()" [disabled]="busy()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'low' ? 'true' : null" (click)="tabFilter = 'low'; load()">Below reorder level</button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="tabFilter === 'adj' ? 'true' : null" (click)="tabFilter = 'adj'; load()">Stock adjustments</button>
+    <button class="btn btn-secondary" type="button" title="New adjustment" aria-label="New adjustment">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+  </span>
+</nav>
+
+<div class="actbar">
+  <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Search this list" aria-label="Search items" class="w-auto flex-1 input text-sm actbar-search"/>
+  
+  <select [(ngModel)]="showInactive" (ngModelChange)="load()" aria-label="Filter by status" class="w-auto input text-sm actbar-select">
+    <option [ngValue]="false">Active only</option>
+    <option [ngValue]="true">Any status</option>
+  </select>
+
+
+
+  
+</div>
+
 
 @if (message()) {
   <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
 }
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th>Code</th>
-      <th>Name</th>
-      <th>Profile</th>
-      <th>Category</th>
-      <th>Costing</th>
-      <th>Unit</th>
-      <th class="num">Price</th>
-      <th>Active</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.itemId) {
-      <tr [class.inactive]="!row.isActive">
-        <td><code>{{ row.itemCode }}</code></td>
-        <td>{{ row.itemName }}</td>
-        <td>
-          <span class="chip">{{ row.itemProfile }}</span>
-          @if (row.itemType === 'Service') {
-            <span class="chip">Service</span>
-          }
-        </td>
-        <td>{{ row.categoryName ?? '—' }}</td>
-        <td>{{ row.costingType }}</td>
-        <td><code>{{ row.inventoryUomCode }}</code></td>
-        <td class="num">
-          {{ row.salesPrice ?? '—' }}
-          @if (row.mrp) {
-            <span class="sub">MRP {{ row.mrp }}</span>
-          }
-        </td>
-        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
-        <td class="actions-col">
-          <button type="button" class="link" (click)="openEdit(row)" [disabled]="busy()">Edit</button>
-          @if (row.isActive) {
-            <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
-              Deactivate
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="9">No items.</td></tr>
-    }
-  </tbody>
-</bb-card-table>
+<div class="card bg-surface">
+  <bb-data-grid [gridCode]="'ITEMS'" [columns]="columns" [data]="rows()" (rowClick)="openEdit($event)">
+    <ng-template bbCellTemplate="itemCode" let-row>
+      {{ row.itemCode }}
+    </ng-template>
+    <ng-template bbCellTemplate="itemName" let-row>
+      {{ row.itemName }}
+    </ng-template>
+    <ng-template bbCellTemplate="hsnSac" let-row>
+      —
+    </ng-template>
+    <ng-template bbCellTemplate="status" let-row>
+      <span class="tag tag-neutral">{{ row.isActive ? 'Active' : 'Inactive' }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="onHand" let-row>
+      <span class="tabular-nums">—</span>
+    </ng-template>
+    <ng-template bbCellTemplate="stockValue" let-row>
+      <span class="tabular-nums">—</span>
+    </ng-template>
+  </bb-data-grid>
+</div>
 
 @if (editorOpen()) {
   <div class="sheet">
@@ -105,18 +86,18 @@
       <div class="fields">
         <label>
           Name
-          <input type="text" [(ngModel)]="form.itemName" maxlength="200" />
+          <bb-text-input  [(ngModel)]="form.itemName" maxlength="200" />
         </label>
 
         <label>
           Print name
-          <input type="text" [(ngModel)]="form.printName" maxlength="200" />
+          <bb-text-input  [(ngModel)]="form.printName" maxlength="200" />
           <small>What prints on the invoice. Blank uses the name.</small>
         </label>
 
         <label>
           Code
-          <input type="text" [(ngModel)]="form.itemCode" maxlength="50" [disabled]="editingId() !== null" />
+          <bb-text-input  [(ngModel)]="form.itemCode" maxlength="50" [disabled]="editingId() !== null" />
           <small>Blank takes the next code from the numbering series.</small>
         </label>
 
@@ -161,9 +142,9 @@
             </span>
           } @else {
             <label class="sr-only" for="item-hsn-search">Search HSN or SAC codes</label>
-            <input
+            <bb-search-input
               id="item-hsn-search"
-              type="search"
+              
               name="hsnSearch"
               [(ngModel)]="hsnSearch"
               (keyup.enter)="searchHsn()"
@@ -225,18 +206,18 @@
 
         <label>
           Sales price
-          <input type="number" [(ngModel)]="form.salesPrice" step="0.0001" />
+          <bb-number-input  [(ngModel)]="form.salesPrice" step="0.0001" />
           <small>Per the inventory unit, always.</small>
         </label>
 
         <label>
           Purchase price
-          <input type="number" [(ngModel)]="form.purchasePrice" step="0.0001" />
+          <bb-number-input  [(ngModel)]="form.purchasePrice" step="0.0001" />
         </label>
 
         <label>
           MRP
-          <input type="number" [(ngModel)]="form.mrp" step="0.01" />
+          <bb-number-input  [(ngModel)]="form.mrp" step="0.01" />
           @if (form.isBatchTracked) {
             <small>A batch's own MRP wins over this.</small>
           }
@@ -244,7 +225,7 @@
 
         <label>
           Minimum sale price
-          <input type="number" [(ngModel)]="form.minSalePrice" step="0.0001" />
+          <bb-number-input  [(ngModel)]="form.minSalePrice" step="0.0001" />
           <small>The floor a discount may not cross.</small>
         </label>
 
@@ -382,17 +363,17 @@
 
           <label>
             Reorder level
-            <input type="number" [(ngModel)]="form.reorderLevel" step="0.001" />
+            <bb-number-input  [(ngModel)]="form.reorderLevel" step="0.001" />
           </label>
 
           <label>
             Reorder quantity
-            <input type="number" [(ngModel)]="form.reorderQuantity" step="0.001" />
+            <bb-number-input  [(ngModel)]="form.reorderQuantity" step="0.001" />
           </label>
 
           <label>
             Lead time (days)
-            <input type="number" [(ngModel)]="form.leadTimeDays" min="0" />
+            <bb-number-input  [(ngModel)]="form.leadTimeDays" min="0" />
           </label>
         }
       </div>
@@ -429,28 +410,28 @@
 
         <label>
           Gross weight
-          <input type="number" [(ngModel)]="form.jewellery['grossWeight']" step="0.001" />
+          <bb-number-input  [(ngModel)]="form.jewellery['grossWeight']" step="0.001" />
         </label>
 
         <label>
           Net weight
-          <input type="number" [(ngModel)]="form.jewellery['netWeight']" step="0.001" />
+          <bb-number-input  [(ngModel)]="form.jewellery['netWeight']" step="0.001" />
           <small>The metal rate applies to this, not to gross.</small>
         </label>
 
         <label>
           Stone weight
-          <input type="number" [(ngModel)]="form.jewellery['stoneWeight']" step="0.001" />
+          <bb-number-input  [(ngModel)]="form.jewellery['stoneWeight']" step="0.001" />
         </label>
 
         <label>
           Stone charge
-          <input type="number" [(ngModel)]="form.jewellery['stoneCharge']" step="0.01" />
+          <bb-number-input  [(ngModel)]="form.jewellery['stoneCharge']" step="0.01" />
         </label>
 
         <label>
           Wastage %
-          <input type="number" [(ngModel)]="form.jewellery['wastagePercent']" step="0.01" />
+          <bb-number-input  [(ngModel)]="form.jewellery['wastagePercent']" step="0.01" />
         </label>
 
         <label>
@@ -464,7 +445,7 @@
 
         <label>
           Making charge
-          <input type="number" [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
+          <bb-number-input  [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
         </label>
 
         <label class="inline">
@@ -478,12 +459,12 @@
       <div class="fields">
         <label>
           Generic name (salt)
-          <input type="text" [(ngModel)]="form.pharma['genericName']" maxlength="200" />
+          <bb-text-input  [(ngModel)]="form.pharma['genericName']" maxlength="200" />
         </label>
 
         <label>
           Strength
-          <input type="text" [(ngModel)]="form.pharma['strength']" maxlength="50" />
+          <bb-text-input  [(ngModel)]="form.pharma['strength']" maxlength="50" />
         </label>
 
         <label>
@@ -502,17 +483,17 @@
 
         <label>
           Pack size
-          <input type="text" [(ngModel)]="form.pharma['packSize']" maxlength="50" />
+          <bb-text-input  [(ngModel)]="form.pharma['packSize']" maxlength="50" />
         </label>
 
         <label>
           Manufacturer
-          <input type="text" [(ngModel)]="form.pharma['manufacturerName']" maxlength="200" />
+          <bb-text-input  [(ngModel)]="form.pharma['manufacturerName']" maxlength="200" />
         </label>
 
         <label>
           Marketed by
-          <input type="text" [(ngModel)]="form.pharma['marketedBy']" maxlength="200" />
+          <bb-text-input  [(ngModel)]="form.pharma['marketedBy']" maxlength="200" />
         </label>
 
         <label>
@@ -544,25 +525,25 @@
 
         <label>
           Shelf life (days)
-          <input type="number" [(ngModel)]="form.pharma['shelfLifeDays']" min="1" />
+          <bb-number-input  [(ngModel)]="form.pharma['shelfLifeDays']" min="1" />
         </label>
 
         <label>
           Minimum expiry on receipt (days)
-          <input type="number" [(ngModel)]="form.pharma['minExpiryDaysOnReceipt']" min="0" />
+          <bb-number-input  [(ngModel)]="form.pharma['minExpiryDaysOnReceipt']" min="0" />
           <small>Inward stock expiring sooner than this is refused.</small>
         </label>
 
         <label>
           Expiry alert (days)
-          <input type="number" [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
+          <bb-number-input  [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
         </label>
       </div>
     }
 
     @if (tab() === 'barcodes') {
       <div class="child-actions">
-        <button type="button" (click)="addBarcode()">+ Add barcode</button>
+        <button type="button" class="btn btn-secondary" (click)="addBarcode()">+ Add barcode</button>
       </div>
 
       @for (barcode of form.barcodes; track $index) {
@@ -570,7 +551,7 @@
           <div class="fields">
             <label>
               Barcode
-              <input type="text" [(ngModel)]="barcode.barcode" [name]="'bc' + $index" maxlength="50" />
+              <bb-text-input  [(ngModel)]="barcode.barcode" [name]="'bc' + $index" maxlength="50" />
             </label>
 
             <label>

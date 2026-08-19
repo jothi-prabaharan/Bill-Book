@@ -5,7 +5,7 @@
       <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
       Show inactive
     </label>
-    <input type="text" [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
+    <bb-text-input  [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
     <button type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">
       + Add type
     </button>
@@ -21,174 +21,163 @@
   units of their type — a 50 kg bag is a Weight unit with a factor of 50.
 </p>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th class="handle-col"><span class="sr-only">Reorder</span></th>
-      <th>Type</th>
-      <th>Base unit</th>
-      <th class="num">Units</th>
-      <th>Active</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
-    @for (type of types(); track type.uomTypeId) {
-      <tr cdkDrag [cdkDragDisabled]="!canReorder || busy()" [class.inactive]="!type.isActive">
-        <td class="handle-col">
-          <span class="handle" cdkDragHandle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
-        </td>
-        <td>
-          <button type="button" class="link" (click)="toggle(type)">
-            {{ expanded() === type.uomTypeId ? '▾' : '▸' }} {{ type.uomTypeName }}
-          </button>
-          @if (type.isSystem) {
-            <span class="badge">Built-in</span>
-          }
-        </td>
-        <td>
-          @for (unit of type.units; track unit.uomId) {
-            @if (unit.isBaseUnit) {
-              <code>{{ unit.uomCode }}</code>
-            }
-          }
-        </td>
-        <td class="num">{{ type.units.length }}</td>
-        <td>
-          <button type="button" class="link" (click)="toggleTypeActive(type)" [disabled]="busy()">
-            {{ type.isActive ? 'Active' : 'Inactive' }}
-          </button>
-        </td>
-        <td class="actions-col">
-          @if (!type.isSystem && type.units.length === 0) {
-            <button type="button" class="link danger" (click)="deleteType(type)" [disabled]="busy()">
-              Delete
-            </button>
-          }
-        </td>
-      </tr>
+<div>
+  <bb-data-grid [gridCode]="'UNIT_TYPES'" [columns]="columns" [data]="types()">
+    <ng-template bbCellTemplate="handle" let-row>
+      <span class="handle" Handle [class.disabled]="!canReorder" aria-hidden="true">⠿</span>
+    </ng-template>
 
-      @if (expanded() === type.uomTypeId) {
-        <tr>
-          <td colspan="6">
-            <div class="child-card">
-              <table class="grid">
-                <thead>
-                  <tr>
-                    <th>Base</th>
-                    <th>Code</th>
-                    <th>Name</th>
-                    <th>UQC</th>
-                    <th class="num">Factor to base</th>
-                    <th class="num">Decimals</th>
-                    <th>Active</th>
-                    <th class="actions-col"><span class="sr-only">Actions</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (unit of type.units; track unit.uomId) {
-                    <tr [class.inactive]="!unit.isActive">
-                      <td>
-                        <input
-                          type="radio"
-                          [name]="'base' + type.uomTypeId"
-                          [checked]="unit.isBaseUnit"
-                          [disabled]="busy() || unit.isBaseUnit"
-                          (change)="setBase(unit)"
-                        />
-                      </td>
-
-                      @if (editingUnitId() === unit.uomId) {
-                        <td><input type="text" [(ngModel)]="editUnit.uomCode" maxlength="10" /></td>
-                        <td><input type="text" [(ngModel)]="editUnit.uomName" maxlength="50" /></td>
-                        <td><input type="text" [(ngModel)]="editUnit.uqcCode" maxlength="3" /></td>
-                        <td class="num">
-                          <input
-                            type="number"
-                            [(ngModel)]="editUnit.conversionToBase"
-                            step="0.000001"
-                            [disabled]="unit.isBaseUnit"
-                          />
-                        </td>
-                        <td class="num">
-                          <input type="number" [(ngModel)]="editUnit.decimalPlaces" min="0" max="6" />
-                        </td>
-                        <td>
-                          <label class="inline">
-                            <input type="checkbox" [(ngModel)]="editUnit.isActive" />
-                          </label>
-                        </td>
-                        <td class="actions-col">
-                          <button type="button" class="link" (click)="saveUnit(type, unit)">Save</button>
-                          <button type="button" class="link" (click)="editingUnitId.set(null)">
-                            Cancel
-                          </button>
-                        </td>
-                      } @else {
-                        <td>
-                          <code>{{ unit.uomCode }}</code>
-                          @if (unit.isUsed) {
-                            <span class="sub">in use</span>
-                          }
-                        </td>
-                        <td>{{ unit.uomName }}</td>
-                        <td><code>{{ unit.uqcCode }}</code></td>
-                        <td class="num">
-                          {{ unit.conversionToBase }}
-                          <span class="sub">{{ describe(type, unit) }}</span>
-                        </td>
-                        <td class="num">{{ unit.decimalPlaces }}</td>
-                        <td>{{ unit.isActive ? 'Active' : 'Inactive' }}</td>
-                        <td class="actions-col">
-                          <button type="button" class="link" (click)="startEditUnit(unit)">Edit</button>
-                          @if (!unit.isSystem && !unit.isUsed) {
-                            <button type="button" class="link danger" (click)="deleteUnit(unit)">
-                              Delete
-                            </button>
-                          }
-                        </td>
-                      }
-                    </tr>
-                  } @empty {
-                    <tr><td colspan="8">No units yet. The first one added becomes the base.</td></tr>
-                  }
-                </tbody>
-              </table>
-
-              <div class="fields">
-                <label>
-                  Code
-                  <input type="text" [(ngModel)]="newUnit.uomCode" maxlength="10" />
-                </label>
-                <label>
-                  Name
-                  <input type="text" [(ngModel)]="newUnit.uomName" maxlength="50" />
-                </label>
-                <label>
-                  UQC
-                  <input type="text" [(ngModel)]="newUnit.uqcCode" maxlength="3" />
-                  <small>The notified GST unit this reports as. OTH when there is none.</small>
-                </label>
-                <label>
-                  Factor to base
-                  <input type="number" [(ngModel)]="newUnit.conversionToBase" step="0.000001" />
-                </label>
-                <label>
-                  Decimals
-                  <input type="number" [(ngModel)]="newUnit.decimalPlaces" min="0" max="6" />
-                  <small>Drives quantity rounding, not just display.</small>
-                </label>
-              </div>
-
-              <div class="sheet-actions">
-                <button type="button" (click)="addUnit(type)" [disabled]="busy()">+ Add unit</button>
-              </div>
-            </div>
-          </td>
-        </tr>
+    <ng-template bbCellTemplate="uomTypeName" let-row>
+      <button type="button" class="link" (click)="toggle(row)">
+        {{ expanded() === row.uomTypeId ? '▾' : '▸' }} {{ row.uomTypeName }}
+      </button>
+      @if (row.isSystem) {
+        <span class="badge">Built-in</span>
       }
-    } @empty {
-      <tr><td colspan="6">No unit types.</td></tr>
-    }
-  </tbody>
-</bb-card-table>
+    </ng-template>
+
+    <ng-template bbCellTemplate="baseUnit" let-row>
+      @for (unit of row.units; track unit.uomId) {
+        @if (unit.isBaseUnit) {
+          <code>{{ unit.uomCode }}</code>
+        }
+      }
+    </ng-template>
+
+    <ng-template bbCellTemplate="unitsCount" let-row>
+      {{ row.units.length }}
+    </ng-template>
+
+    <ng-template bbCellTemplate="isActive" let-row>
+      <button type="button" class="link" (click)="toggleTypeActive(row)" [disabled]="busy()">
+        {{ row.isActive ? 'Active' : 'Inactive' }}
+      </button>
+    </ng-template>
+
+    <ng-template bbCellTemplate="actions" let-row>
+      @if (!row.isSystem && row.units.length === 0) {
+        <button type="button" class="link danger" (click)="deleteType(row)" [disabled]="busy()">
+          Delete
+        </button>
+      }
+    </ng-template>
+  </bb-data-grid>
+</div>
+
+@if (expandedType(); as type) {
+  <div class="sheet child-card">
+    <h2>Units for {{ type.uomTypeName }}</h2>
+    <bb-data-grid [gridCode]="'UNIT_TYPES_UNITS'" [columns]="unitColumns" [data]="type.units">
+      <ng-template bbCellTemplate="isBaseUnit" let-row>
+        <input
+          type="radio"
+          [name]="'base' + type.uomTypeId"
+          [checked]="row.isBaseUnit"
+          [disabled]="busy() || row.isBaseUnit"
+          (change)="setBase(row)"
+        />
+      </ng-template>
+
+      <ng-template bbCellTemplate="uomCode" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <bb-text-input  [(ngModel)]="editUnit.uomCode" maxlength="10" />
+        } @else {
+          <code>{{ row.uomCode }}</code>
+          @if (row.isUsed) {
+            <span class="sub">in use</span>
+          }
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="uomName" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <bb-text-input  [(ngModel)]="editUnit.uomName" maxlength="50" />
+        } @else {
+          {{ row.uomName }}
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="uqcCode" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <bb-text-input  [(ngModel)]="editUnit.uqcCode" maxlength="3" />
+        } @else {
+          <code>{{ row.uqcCode }}</code>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="conversionToBase" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <bb-number-input
+            
+            [(ngModel)]="editUnit.conversionToBase"
+            step="0.000001"
+            [disabled]="row.isBaseUnit"
+          />
+        } @else {
+          {{ row.conversionToBase }}
+          <span class="sub">{{ describe(type, row) }}</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="decimalPlaces" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <bb-number-input  [(ngModel)]="editUnit.decimalPlaces" min="0" max="6" />
+        } @else {
+          {{ row.decimalPlaces }}
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="isActive" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <label class="inline">
+            <input type="checkbox" [(ngModel)]="editUnit.isActive" />
+          </label>
+        } @else {
+          {{ row.isActive ? 'Active' : 'Inactive' }}
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="actions" let-row>
+        @if (editingUnitId() === row.uomId) {
+          <button type="button" class="link" (click)="saveUnit(type, row)">Save</button>
+          <button type="button" class="link" (click)="editingUnitId.set(null)">Cancel</button>
+        } @else {
+          <button type="button" class="link" (click)="startEditUnit(row)">Edit</button>
+          @if (!row.isSystem && !row.isUsed) {
+            <button type="button" class="link danger" (click)="deleteUnit(row)">Delete</button>
+          }
+        }
+      </ng-template>
+    </bb-data-grid>
+
+    <div class="fields" style="margin-top: 1rem;">
+      <label>
+        Code
+        <bb-text-input  [(ngModel)]="newUnit.uomCode" maxlength="10" />
+      </label>
+      <label>
+        Name
+        <bb-text-input  [(ngModel)]="newUnit.uomName" maxlength="50" />
+      </label>
+      <label>
+        UQC
+        <bb-text-input  [(ngModel)]="newUnit.uqcCode" maxlength="3" />
+        <small>The notified GST unit this reports as. OTH when there is none.</small>
+      </label>
+      <label>
+        Factor to base
+        <bb-number-input  [(ngModel)]="newUnit.conversionToBase" step="0.000001" />
+      </label>
+      <label>
+        Decimals
+        <bb-number-input  [(ngModel)]="newUnit.decimalPlaces" min="0" max="6" />
+        <small>Drives quantity rounding, not just display.</small>
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button type="button" (click)="addUnit(type)" [disabled]="busy() || !newUnit.uomCode.trim() || !newUnit.uomName.trim()">+ Add unit</button>
+      <button type="button" class="link" (click)="expanded.set(null)">Close</button>
+    </div>
+  </div>
+}

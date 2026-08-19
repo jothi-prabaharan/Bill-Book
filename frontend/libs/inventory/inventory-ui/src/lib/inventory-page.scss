@@ -1,50 +1,26 @@
-.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.head-actions { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.inline { display: inline-flex; align-items: center; gap: .35rem; font-size: .85rem; }
+/* Shared styles for Inventory master pages (unit-types, warehouses, etc.)
+   Form-editor classes (.sheet, .fields, .tabs, .child-card, .hint, .link, etc.)
+   are now in the global styles.scss, using design tokens. */
+
 .error { color: #c0392b; }
 .notice { color: #187a4b; }
-.hint { color: #6a6f80; font-size: .78rem; margin: .3rem 0 0; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-.grid { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-.grid th, .grid td { text-align: left; padding: .5rem .6rem; border-bottom: 1px solid #e2e4ea; }
-.grid th { font-size: .78rem; color: #6a6f80; }
-.grid tr.inactive { opacity: .45; }
 .num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .handle-col { width: 1.75rem; }
-.handle { cursor: grab; color: #9aa0b0; user-select: none; }
+.handle { cursor: grab; color: color-mix(in srgb, var(--color-text) 45%, transparent); user-select: none; }
 .handle.disabled { cursor: default; opacity: .35; }
 .actions-col { text-align: right; white-space: nowrap; }
 .actions-col .link + .link { margin-left: .6rem; }
 
-.badge { font-size: .62rem; background: #eceef3; color: #6a6f80; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
 .preview { font-variant-numeric: tabular-nums; }
 .preview.big { font-size: 1.15rem; }
 
-.link { background: none; border: 0; color: #3557d6; cursor: pointer; font: inherit; font-size: .85rem; padding: 0; }
-.link.danger { color: #c0392b; }
-button:not(.link) { padding: .5rem .9rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; }
-button:disabled { opacity: .6; cursor: default; }
-
-.sheet { margin-top: 1.25rem; border: 1px solid #e2e4ea; border-radius: 10px; padding: 1rem; max-width: 46rem; }
-.sheet.narrow { max-width: 26rem; }
-.sheet h2 { margin: 0 0 .75rem; font-size: 1rem; }
-.preview-box { background: #f7f8fa; border-radius: 8px; padding: .75rem; display: grid; gap: .2rem; margin-bottom: 1rem; }
-.preview-label { font-size: .7rem; color: #8a8f9e; }
-.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .9rem; }
-.fields label { display: grid; gap: .25rem; font-size: .85rem; align-content: start; }
-.fields label.inline { display: inline-flex; align-items: center; }
-.fields input:not([type='checkbox']), .fields select { padding: .5rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; }
-.fields small { color: #8a8f9e; font-size: .72rem; }
-.sheet-actions { display: flex; gap: .75rem; align-items: center; margin-top: 1rem; }
-
 /* The drag preview the CDK lifts out of the table. */
-.cdk-drag-preview { box-shadow: 0 3px 12px rgb(0 0 0 / 18%); background: #fff; border-radius: 6px; }
+.cdk-drag-preview { box-shadow: 0 3px 12px rgb(0 0 0 / 18%); background: var(--color-bg); border-radius: 6px; }
 .cdk-drag-placeholder { opacity: .3; }
 
-/* Below ~700px the grid becomes cards and the sheets go full width, per the
-   360px rule — a ten-column table cannot be read on a phone. */
+/* Below ~700px the grid becomes cards and the sheets go full width. */
 @media (max-width: 700px) {
   .grid thead { display: none; }
   .grid tr { display: grid; grid-template-columns: 1.5rem 1fr; gap: .15rem; padding: .6rem 0; }
@@ -52,19 +28,4 @@ button:disabled { opacity: .6; cursor: default; }
   .grid td.handle-col { grid-column: 1; grid-row: 1 / span 3; }
   .num { text-align: left; }
   .actions-col { text-align: left; }
-  .fields { grid-template-columns: 1fr; }
-  .sheet { border-radius: 0; margin-left: -1rem; margin-right: -1rem; }
 }
-
-/* Shared by every Inventory master page. Copied rather than imported so each
-   page keeps its own compiled stylesheet, which is how the other libs work. */
-.chip { font-size: .62rem; background: #e3e9fd; color: #2743a8; padding: .05rem .3rem; border-radius: 3px; margin-right: .25rem; }
-.note { background: #fffaf0; border-left: 3px solid #f0b429; padding: .6rem .8rem; font-size: .85rem; margin-bottom: 1rem; }
-.child-card { border: 1px solid #e2e4ea; border-radius: 8px; padding: .85rem; margin-bottom: .75rem; }
-.child-actions { display: flex; gap: 1rem; align-items: center; margin-bottom: .75rem; }
-.tabs { display: flex; gap: .25rem; border-bottom: 1px solid #e2e4ea; margin: .75rem 0 1rem; overflow-x: auto; }
-.tabs button { background: none; border: 0; border-bottom: 2px solid transparent; color: #6a6f80; padding: .5rem .8rem; font: inherit; font-size: .88rem; cursor: pointer; border-radius: 0; }
-.tabs button.on { color: #2743a8; border-bottom-color: #3557d6; }
-.indent-1 { padding-left: 1.25rem; }
-.indent-2 { padding-left: 2.5rem; }
-.sub { display: block; color: #8a8f9e; font-size: .72rem; }

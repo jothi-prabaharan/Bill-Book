@@ -1,8 +1,8 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 
 interface Category {
   itemCategoryId: number;
@@ -34,11 +34,21 @@ interface UomType {
 @Component({
   selector: 'bb-item-categories-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })
 export class ItemCategoriesPage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'handle', header: 'Reorder' },
+    { field: 'categoryName', header: 'Category' },
+    { field: 'categoryCode', header: 'Code' },
+    { field: 'defaultItemProfile', header: 'Default profile' },
+    { field: 'defaultCostingType', header: 'Default costing' },
+    { field: 'itemCount', header: 'Items' },
+    { field: 'active', header: 'Active' },
+    { field: 'actions', header: 'Actions' },
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<Category[]>([]);

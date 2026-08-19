@@ -21,82 +21,69 @@
   has already moved: correct it by reversing, which writes the mirror of it.
 </p>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th>Number</th>
-      <th>Date</th>
-      <th>Kind</th>
-      <th>Reason</th>
-      <th class="num">Lines</th>
-      <th class="num">Net value</th>
-      <th>Status</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.stockAdjustmentId) {
-      <tr>
-        <td>
-          @if (row.adjustmentNo) {
-            <code>{{ row.adjustmentNo }}</code>
-          } @else {
-            <span class="muted">— not yet numbered</span>
-          }
-        </td>
-        <td>{{ row.adjustmentDate }}</td>
-        <td>{{ row.kind === 'PhysicalCount' ? 'Count' : 'Write-off' }}</td>
-        <td>{{ labelFor(row.reason) }}</td>
-        <td class="num">{{ row.lineCount }}</td>
-        <td class="num">
-          @if (row.status === 'Draft') {
-            <span class="muted">—</span>
-          } @else if (row.netValue === null) {
-            <span class="badge low" title="Costing settles a moment behind">Costing…</span>
-          } @else {
-            <span [class.down]="row.netValue < 0">{{ row.netValue }}</span>
-          }
-        </td>
-        <td>
-          @switch (row.status) {
-            @case ('Posted') {
-              <span class="badge posted">Posted</span>
-            }
-            @case ('Reversed') {
-              <span class="badge out" [title]="'Reversed by sheet ' + row.reversedByStockAdjustmentId">
-                Reversed
-              </span>
-            }
-            @default {
-              <span class="badge low">Draft</span>
-            }
-          }
-          @if (row.reversesStockAdjustmentId) {
-            <span class="sub">reverses #{{ row.reversesStockAdjustmentId }}</span>
-          }
-        </td>
-        <td class="actions-col">
-          @if (row.status === 'Draft') {
-            <button type="button" class="link" (click)="edit(row)" [disabled]="busy()">Edit</button>
-            <button type="button" class="link" (click)="post(row)" [disabled]="busy()">Post</button>
-            <button type="button" class="link" (click)="remove(row)" [disabled]="busy()">
-              Discard
-            </button>
-          } @else {
-            <button type="button" class="link" (click)="view(row)" [disabled]="busy()">View</button>
-            @if (row.status === 'Posted') {
-              <button type="button" class="link" (click)="reverse(row)" [disabled]="busy()">
-                Reverse
-              </button>
-            }
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="8">No adjustments yet.</td></tr>
+<bb-data-grid [gridCode]="'ADJUSTMENTS'" [columns]="listColumns" [data]="rows()">
+  <ng-template bbCellTemplate="adjustmentNo" let-row>
+    @if (row.adjustmentNo) {
+      <code>{{ row.adjustmentNo }}</code>
+    } @else {
+      <span class="muted">— not yet numbered</span>
     }
-  </tbody>
-</bb-card-table>
+  </ng-template>
+
+  <ng-template bbCellTemplate="kind" let-row>
+    {{ row.kind === 'PhysicalCount' ? 'Count' : 'Write-off' }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="reason" let-row>
+    {{ labelFor(row.reason) }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="netValue" let-row>
+    @if (row.status === 'Draft') {
+      <span class="muted">—</span>
+    } @else if (row.netValue === null) {
+      <span class="badge low" title="Costing settles a moment behind">Costing…</span>
+    } @else {
+      <span [class.down]="row.netValue < 0">{{ row.netValue }}</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="status" let-row>
+    @switch (row.status) {
+      @case ('Posted') {
+        <span class="badge posted">Posted</span>
+      }
+      @case ('Reversed') {
+        <span class="badge out" [title]="'Reversed by sheet ' + row.reversedByStockAdjustmentId">
+          Reversed
+        </span>
+      }
+      @default {
+        <span class="badge low">Draft</span>
+      }
+    }
+    @if (row.reversesStockAdjustmentId) {
+      <span class="sub">reverses #{{ row.reversesStockAdjustmentId }}</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.status === 'Draft') {
+      <button type="button" class="link" (click)="edit(row)" [disabled]="busy()">Edit</button>
+      <button type="button" class="link" (click)="post(row)" [disabled]="busy()">Post</button>
+      <button type="button" class="link" (click)="remove(row)" [disabled]="busy()">
+        Discard
+      </button>
+    } @else {
+      <button type="button" class="link" (click)="view(row)" [disabled]="busy()">View</button>
+      @if (row.status === 'Posted') {
+        <button type="button" class="link" (click)="reverse(row)" [disabled]="busy()">
+          Reverse
+        </button>
+      }
+    }
+  </ng-template>
+</bb-data-grid>
 
 @if (editing(); as sheet) {
   <div class="sheet">
@@ -116,7 +103,7 @@
     <div class="fields">
       <label>
         Date
-        <input type="date" [(ngModel)]="form.adjustmentDate" />
+        <bb-date-input  [(ngModel)]="form.adjustmentDate" />
         <small>The date it happened, not the date it was typed.</small>
       </label>
 
@@ -142,105 +129,83 @@
 
       <label class="wide">
         Notes
-        <input type="text" [(ngModel)]="form.notes" maxlength="500" />
+        <bb-text-input  [(ngModel)]="form.notes" maxlength="500" />
       </label>
     </div>
 
-    <table class="grid lines">
-      <thead>
-        <tr>
-          <th>Item</th>
-          @if (isCount) {
-            <th class="num">Counted</th>
-          } @else {
-            <th class="num">Quantity</th>
-            <th>Direction</th>
+    <bb-data-grid [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">
+      <ng-template bbCellTemplate="item" let-row let-index="index">
+        <select [(ngModel)]="row.itemId" [name]="'item' + index">
+          <option [ngValue]="null">Choose an item</option>
+          @for (item of items(); track item.itemId) {
+            <option [ngValue]="item.itemId">{{ item.itemCode }} — {{ item.itemName }}</option>
           }
-          <th class="num">Cost per unit</th>
-          <th>Batch</th>
-          <th>Note</th>
-          <th class="actions-col"><span class="sr-only">Remove</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of lines; track $index) {
-          <tr>
-            <td>
-              <select [(ngModel)]="line.itemId" [name]="'item' + $index">
-                <option [ngValue]="null">Choose an item</option>
-                @for (item of items(); track item.itemId) {
-                  <option [ngValue]="item.itemId">{{ item.itemCode }} — {{ item.itemName }}</option>
-                }
-              </select>
-            </td>
+        </select>
+      </ng-template>
 
-            @if (isCount) {
-              <td class="num">
-                <input
-                  type="number"
-                  [(ngModel)]="line.countedQuantity"
-                  [name]="'counted' + $index"
-                  min="0"
-                  step="0.001"
-                />
-              </td>
-            } @else {
-              <td class="num">
-                <input
-                  type="number"
-                  [(ngModel)]="line.quantity"
-                  [name]="'qty' + $index"
-                  min="0"
-                  step="0.001"
-                />
-              </td>
-              <td>
-                <select [(ngModel)]="line.direction" [name]="'dir' + $index">
-                  <option value="Out">Out — written off</option>
-                  <option value="In">In — added back</option>
-                </select>
-              </td>
-            }
+      <ng-template bbCellTemplate="countedQuantity" let-row let-index="index">
+        <bb-number-input
+          
+          [(ngModel)]="row.countedQuantity"
+          [name]="'counted' + index"
+          min="0"
+          step="0.001"
+        />
+      </ng-template>
 
-            <td class="num">
-              @if (line.direction === 'In' && !isCount) {
-                <input
-                  type="number"
-                  [(ngModel)]="line.unitCost"
-                  [name]="'cost' + $index"
-                  min="0"
-                  step="0.000001"
-                />
-              } @else {
-                <span class="muted">—</span>
-              }
-            </td>
+      <ng-template bbCellTemplate="quantity" let-row let-index="index">
+        <bb-number-input
+          
+          [(ngModel)]="row.quantity"
+          [name]="'qty' + index"
+          min="0"
+          step="0.001"
+        />
+      </ng-template>
 
-            <td>
-              <input
-                type="text"
-                [(ngModel)]="line.batchNumber"
-                [name]="'batch' + $index"
-                maxlength="50"
-              />
-            </td>
+      <ng-template bbCellTemplate="direction" let-row let-index="index">
+        <select [(ngModel)]="row.direction" [name]="'dir' + index">
+          <option value="Out">Out — written off</option>
+          <option value="In">In — added back</option>
+        </select>
+      </ng-template>
 
-            <td>
-              <input
-                type="text"
-                [(ngModel)]="line.notes"
-                [name]="'note' + $index"
-                maxlength="300"
-              />
-            </td>
-
-            <td class="actions-col">
-              <button type="button" class="link" (click)="removeLine($index)">Remove</button>
-            </td>
-          </tr>
+      <ng-template bbCellTemplate="unitCost" let-row let-index="index">
+        @if (row.direction === 'In' && !isCount) {
+          <bb-number-input
+            
+            [(ngModel)]="row.unitCost"
+            [name]="'cost' + index"
+            min="0"
+            step="0.000001"
+          />
+        } @else {
+          <span class="muted">—</span>
         }
-      </tbody>
-    </table>
+      </ng-template>
+
+      <ng-template bbCellTemplate="batchNumber" let-row let-index="index">
+        <bb-text-input
+          
+          [(ngModel)]="row.batchNumber"
+          [name]="'batch' + index"
+          maxlength="50"
+        />
+      </ng-template>
+
+      <ng-template bbCellTemplate="notes" let-row let-index="index">
+        <bb-text-input
+          
+          [(ngModel)]="row.notes"
+          [name]="'note' + index"
+          maxlength="300"
+        />
+      </ng-template>
+
+      <ng-template bbCellTemplate="actions" let-row let-index="index">
+        <button type="button" class="link" (click)="removeLine(index)">Remove</button>
+      </ng-template>
+    </bb-data-grid>
 
     <div class="sheet-actions">
       <button type="button" class="link" (click)="addLine()">Add a line</button>
@@ -262,45 +227,28 @@
       }
     </p>
 
-    <bb-card-table>
-      <thead>
-        <tr>
-          <th>#</th>
-          <th>Item</th>
-          @if (sheet.kind === 'PhysicalCount') {
-            <th class="num">System held</th>
-            <th class="num">Counted</th>
-          }
-          <th class="num">Moved</th>
-          <th class="num">Cost</th>
-          <th>Note</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (line of sheet.lines; track line.stockAdjustmentLineId) {
-          <tr>
-            <td>{{ line.lineNumber }}</td>
-            <td><code>{{ line.itemCode }}</code> {{ line.itemName }}</td>
-            @if (sheet.kind === 'PhysicalCount') {
-              <td class="num">{{ line.systemQuantity }}</td>
-              <td class="num">{{ line.countedQuantity }}</td>
-            }
-            <td class="num">
-              {{ line.direction === 'Out' ? '−' : '+' }}{{ line.quantity }}
-              {{ line.inventoryUomCode }}
-            </td>
-            <td class="num">
-              @if (line.movementTotalCost === null) {
-                <span class="badge low">Costing…</span>
-              } @else {
-                {{ line.movementTotalCost }}
-              }
-            </td>
-            <td>{{ line.notes ?? '—' }}</td>
-          </tr>
+    <bb-data-grid [gridCode]="'ADJUSTMENT_VIEW'" [columns]="viewColumns" [data]="sheet.lines ?? []">
+      <ng-template bbCellTemplate="item" let-row>
+        <code>{{ row.itemCode }}</code> {{ row.itemName }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="movedQuantity" let-row>
+        {{ row.direction === 'Out' ? '−' : '+' }}{{ row.quantity }}
+        {{ row.inventoryUomCode }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="movementTotalCost" let-row>
+        @if (row.movementTotalCost === null) {
+          <span class="badge low">Costing…</span>
+        } @else {
+          {{ row.movementTotalCost }}
         }
-      </tbody>
-    </bb-card-table>
+      </ng-template>
+
+      <ng-template bbCellTemplate="notes" let-row>
+        {{ row.notes ?? '—' }}
+      </ng-template>
+    </bb-data-grid>
 
     <div class="sheet-actions">
       <button type="button" class="link" (click)="viewing.set(null)">Close</button>

@@ -1,8 +1,8 @@
 <header class="page-head">
   <h1>Stock</h1>
   <div class="head-actions">
-    <input
-      type="search"
+    <bb-search-input
+      
       [(ngModel)]="search"
       (ngModelChange)="load()"
       placeholder="Search items"
@@ -53,62 +53,49 @@
   the valuation; available is what a new order may draw on.
 </p>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th>Code</th>
-      <th>Item</th>
-      <th class="num">On hand</th>
-      <th class="num">Reserved</th>
-      <th class="num">Available</th>
-      <th class="num">In report unit</th>
-      <th class="num">Avg. cost</th>
-      <th class="num">Value</th>
-      <th>Costing</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.itemId) {
-      <tr [class.low]="row.isBelowReorderLevel">
-        <td><code>{{ row.itemCode }}</code></td>
-        <td>
-          {{ row.itemName }}
-          @if (row.isBelowReorderLevel) {
-            <span class="badge low">Reorder</span>
-          }
-        </td>
-        <td class="num">{{ row.quantityOnHand }} {{ row.inventoryUomCode }}</td>
-        <td class="num">
-          @if (row.quantityReserved > 0) {
-            {{ row.quantityReserved }}
-          } @else {
-            <span class="muted">—</span>
-          }
-        </td>
-        <td class="num" [class.short]="row.quantityAvailable <= 0">
-          {{ row.quantityAvailable }}
-        </td>
-        <td class="num">{{ row.quantityInReportUom }} {{ row.reportUomCode }}</td>
-        <td class="num">{{ row.weightedAverageCost }}</td>
-        <td class="num">
-          {{ row.stockValue }}
-        </td>
-        <td>{{ row.costingType }}</td>
-        <td class="actions-col">
-          <button type="button" class="link" (click)="openMovement(row)" [disabled]="busy()">
-            Record
-          </button>
-          <button type="button" class="link" (click)="openLedger(row)" [disabled]="busy()">
-            History
-          </button>
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="10">No stocked items.</td></tr>
+<bb-data-grid [gridCode]="'STOCK_ROWS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="itemCode" let-row>
+    <code>{{ row.itemCode }}</code>
+  </ng-template>
+
+  <ng-template bbCellTemplate="itemName" let-row>
+    {{ row.itemName }}
+    @if (row.isBelowReorderLevel) {
+      <span class="badge low">Reorder</span>
     }
-  </tbody>
-</bb-card-table>
+  </ng-template>
+
+  <ng-template bbCellTemplate="quantityOnHand" let-row>
+    {{ row.quantityOnHand }} {{ row.inventoryUomCode }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="quantityReserved" let-row>
+    @if (row.quantityReserved > 0) {
+      {{ row.quantityReserved }}
+    } @else {
+      <span class="muted">—</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="quantityAvailable" let-row>
+    <div [class.short]="row.quantityAvailable <= 0">
+      {{ row.quantityAvailable }}
+    </div>
+  </ng-template>
+
+  <ng-template bbCellTemplate="quantityInReportUom" let-row>
+    {{ row.quantityInReportUom }} {{ row.reportUomCode }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="openMovement(row)" [disabled]="busy()">
+      Record
+    </button>
+    <button type="button" class="link" (click)="openLedger(row)" [disabled]="busy()">
+      History
+    </button>
+  </ng-template>
+</bb-data-grid>
 
 @if (movementFor(); as item) {
   <div class="sheet">
@@ -136,12 +123,12 @@
 
       <label>
         Date
-        <input type="date" [(ngModel)]="form.movementDate" />
+        <bb-date-input  [(ngModel)]="form.movementDate" />
       </label>
 
       <label>
         Quantity
-        <input type="number" [(ngModel)]="form.quantity" min="0" step="0.001" />
+        <bb-number-input  [(ngModel)]="form.quantity" min="0" step="0.001" />
       </label>
 
       <label>
@@ -192,7 +179,7 @@
       @if (item.isBatchTracked) {
         <label>
           Batch number
-          <input type="text" [(ngModel)]="form.batchNumber" maxlength="50" />
+          <bb-text-input  [(ngModel)]="form.batchNumber" maxlength="50" />
           <small>An existing lot is reused; a new one is created.</small>
         </label>
       }
@@ -200,7 +187,7 @@
       @if (item.isExpiryTracked) {
         <label>
           Batch expiry
-          <input type="date" [(ngModel)]="form.batchExpiryDate" />
+          <bb-date-input  [(ngModel)]="form.batchExpiryDate" />
           <small>What FEFO orders by — the soonest to expire goes out first.</small>
         </label>
       }
@@ -208,7 +195,7 @@
       @if (item.isBatchTracked) {
         <label>
           Batch MRP
-          <input type="number" [(ngModel)]="form.batchMrp" min="0" step="0.01" />
+          <bb-number-input  [(ngModel)]="form.batchMrp" min="0" step="0.01" />
           <small>Printed on this lot. Overrides the item's own MRP.</small>
         </label>
       }
@@ -230,7 +217,7 @@
       @if (costRequired) {
         <label>
           Cost per unit
-          <input type="number" [(ngModel)]="form.unitCost" min="0" step="0.000001" />
+          <bb-number-input  [(ngModel)]="form.unitCost" min="0" step="0.000001" />
           <small>
             Per the unit chosen above. This is the only thing that moves the weighted average.
           </small>
@@ -239,7 +226,7 @@
 
       <label class="wide">
         Notes
-        <input type="text" [(ngModel)]="form.notes" maxlength="300" />
+        <bb-text-input  [(ngModel)]="form.notes" maxlength="300" />
       </label>
     </div>
 
@@ -265,90 +252,81 @@
       history is append-only: a mistake is corrected by an opposite movement, never by an edit.
     </p>
 
-    <bb-card-table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Type</th>
-          <th>Warehouse</th>
-          <th class="num">Entered</th>
-          <th class="num">In stock unit</th>
-          <th class="num">Unit cost</th>
-          <th class="num">Avg. after</th>
-          <th>Accounts</th>
-          <th>Source</th>
-          <th class="actions-col"><span class="sr-only">Cost</span></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (movement of movements(); track movement.stockMovementId) {
-          <tr>
-            <td>{{ movement.movementDate }}</td>
-            <td>
-              {{ movement.movementType }}
-              <span class="badge" [class.out]="movement.direction === 'Out'">
-                {{ movement.direction }}
-              </span>
-            </td>
-            <td>{{ movement.warehouseName ?? '—' }}</td>
-            <td class="num">{{ movement.enteredQuantity }} {{ movement.enteredUomCode }}</td>
-            <td class="num">
-              {{ movement.direction === 'Out' ? '−' : '+' }}{{ movement.quantity }}
-              {{ item.inventoryUomCode }}
-            </td>
-            <td class="num">
-              @switch (movement.costingStatus) {
-                @case ('Costed') {
-                  {{ movement.unitCost ?? '—' }}
-                }
-                @case ('Skipped') {
-                  {{ movement.unitCost ?? '—' }}
-                }
-                @case ('Failed') {
-                  <span class="badge out" [title]="movement.costingError ?? ''">Failed</span>
-                }
-                @default {
-                  <span class="badge low">Costing…</span>
-                }
-              }
-            </td>
-            <td class="num">{{ movement.resultingWeightedAverageCost ?? '—' }}</td>
-            <td>
-              @switch (movement.ledgerStatus) {
-                @case ('Posted') {
-                  <span class="badge posted">Posted</span>
-                }
-                @case ('NotApplicable') {
-                  <span class="muted" [title]="movement.ledgerError ?? 'Nothing to post.'">—</span>
-                }
-                @case ('Failed') {
-                  <span class="badge out" [title]="movement.ledgerError ?? ''">Not posted</span>
-                }
-                @default {
-                  <span class="badge low">Posting…</span>
-                }
-              }
-            </td>
-            <td>
-              @if (movement.sourceType) {
-                <code>{{ movement.sourceType }}-{{ movement.sourceId }}</code>
-              } @else {
-                <span class="muted">Manual</span>
-              }
-            </td>
-            <td class="actions-col">
-              @if (item.usesCostLayers && movement.direction === 'Out') {
-                <button type="button" class="link" (click)="openAllocations(movement)">
-                  Layers
-                </button>
-              }
-            </td>
-          </tr>
-        } @empty {
-          <tr><td colspan="10">Nothing has moved yet.</td></tr>
+    <bb-data-grid [gridCode]="'STOCK_MOVEMENTS'" [columns]="movementsColumns" [data]="movements()">
+      <ng-template bbCellTemplate="movementType" let-movement>
+        {{ movement.movementType }}
+        <span class="badge" [class.out]="movement.direction === 'Out'">
+          {{ movement.direction }}
+        </span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="warehouseName" let-movement>
+        {{ movement.warehouseName ?? '—' }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="enteredQuantity" let-movement>
+        {{ movement.enteredQuantity }} {{ movement.enteredUomCode }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="quantity" let-movement>
+        {{ movement.direction === 'Out' ? '−' : '+' }}{{ movement.quantity }}
+        {{ item.inventoryUomCode }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="unitCost" let-movement>
+        @switch (movement.costingStatus) {
+          @case ('Costed') {
+            {{ movement.unitCost ?? '—' }}
+          }
+          @case ('Skipped') {
+            {{ movement.unitCost ?? '—' }}
+          }
+          @case ('Failed') {
+            <span class="badge out" [title]="movement.costingError ?? ''">Failed</span>
+          }
+          @default {
+            <span class="badge low">Costing…</span>
+          }
         }
-      </tbody>
-    </bb-card-table>
+      </ng-template>
+
+      <ng-template bbCellTemplate="resultingWeightedAverageCost" let-movement>
+        {{ movement.resultingWeightedAverageCost ?? '—' }}
+      </ng-template>
+
+      <ng-template bbCellTemplate="ledgerStatus" let-movement>
+        @switch (movement.ledgerStatus) {
+          @case ('Posted') {
+            <span class="badge posted">Posted</span>
+          }
+          @case ('NotApplicable') {
+            <span class="muted" [title]="movement.ledgerError ?? 'Nothing to post.'">—</span>
+          }
+          @case ('Failed') {
+            <span class="badge out" [title]="movement.ledgerError ?? ''">Not posted</span>
+          }
+          @default {
+            <span class="badge low">Posting…</span>
+          }
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="sourceType" let-movement>
+        @if (movement.sourceType) {
+          <code>{{ movement.sourceType }}-{{ movement.sourceId }}</code>
+        } @else {
+          <span class="muted">Manual</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="actions" let-movement>
+        @if (item.usesCostLayers && movement.direction === 'Out') {
+          <button type="button" class="link" (click)="openAllocations(movement)">
+            Layers
+          </button>
+        }
+      </ng-template>
+    </bb-data-grid>
 
     @if (allocations().length > 0) {
       <h3>Cost layers consumed</h3>
@@ -357,30 +335,14 @@
         goods sold — a disputed margin can be walked back to the purchases behind it.
       </p>
 
-      <bb-card-table>
-        <thead>
-          <tr>
-            <th>Received</th>
-            <th>Batch</th>
-            <th>Expires</th>
-            <th class="num">Quantity</th>
-            <th class="num">Unit cost</th>
-            <th class="num">Cost</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (allocation of allocations(); track allocation.costLayerId) {
-            <tr>
-              <td>{{ allocation.receivedOn }}</td>
-              <td>{{ allocation.batchNumber ?? '—' }}</td>
-              <td>{{ allocation.expiresOn ?? '—' }}</td>
-              <td class="num">{{ allocation.quantity }}</td>
-              <td class="num">{{ allocation.unitCost }}</td>
-              <td class="num">{{ allocation.totalCost }}</td>
-            </tr>
-          }
-        </tbody>
-      </bb-card-table>
+      <bb-data-grid [gridCode]="'STOCK_ALLOCATIONS'" [columns]="allocationsColumns" [data]="allocations()">
+        <ng-template bbCellTemplate="batchNumber" let-allocation>
+          {{ allocation.batchNumber ?? '—' }}
+        </ng-template>
+        <ng-template bbCellTemplate="expiresOn" let-allocation>
+          {{ allocation.expiresOn ?? '—' }}
+        </ng-template>
+      </bb-data-grid>
     }
 
     @if (recostings().length > 0) {
@@ -391,30 +353,13 @@
         quantities never changed — only what they cost.
       </p>
 
-      <bb-card-table>
-        <thead>
-          <tr>
-            <th>Sale dated</th>
-            <th class="num">Was</th>
-            <th class="num">Now</th>
-            <th class="num">Difference</th>
-            <th>Restated</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (recosting of recostings(); track recosting.recostingAdjustmentId) {
-            <tr>
-              <td>{{ recosting.movementDate }}</td>
-              <td class="num">{{ recosting.previousCost }}</td>
-              <td class="num">{{ recosting.newCost }}</td>
-              <td class="num" [class.up]="recosting.delta > 0" [class.down]="recosting.delta < 0">
-                {{ recosting.delta > 0 ? '+' : '' }}{{ recosting.delta }}
-              </td>
-              <td>{{ recosting.runAt }}</td>
-            </tr>
-          }
-        </tbody>
-      </bb-card-table>
+      <bb-data-grid [gridCode]="'STOCK_RECOSTINGS'" [columns]="recostingsColumns" [data]="recostings()">
+        <ng-template bbCellTemplate="delta" let-recosting>
+          <span [class.up]="recosting.delta > 0" [class.down]="recosting.delta < 0">
+            {{ recosting.delta > 0 ? '+' : '' }}{{ recosting.delta }}
+          </span>
+        </ng-template>
+      </bb-data-grid>
     }
 
     <div class="sheet-actions">

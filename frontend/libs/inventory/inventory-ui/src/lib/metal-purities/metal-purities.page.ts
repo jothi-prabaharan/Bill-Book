@@ -1,5 +1,5 @@
-import { CardTableComponent } from '@bill-book/ui-components';
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -23,12 +23,21 @@ interface Purity {
 @Component({
   selector: 'bb-metal-purities-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './metal-purities.page.html',
   styleUrl: './metal-purities.page.scss',
 })
 export class MetalPuritiesPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: 'Reorder' },
+    { field: 'metalType', header: 'Metal' },
+    { field: 'purityName', header: 'Purity' },
+    { field: 'purityFactor', header: 'Factor' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: 'Actions' }
+  ];
 
   protected readonly rows = signal<Purity[]>([]);
   protected readonly busy = signal(false);

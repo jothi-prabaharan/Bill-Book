@@ -1,4 +1,4 @@
-import { CardTableComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -89,11 +89,21 @@ const REASONS: readonly { value: string; label: string }[] = [
 @Component({
   selector: 'bb-stock-adjustments-page',
   standalone: true,
-  imports: [CardTableComponent, FormsModule],
+  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',
 })
 export class StockAdjustmentsPage implements OnInit {
+
+  columns: ColumnDef[] = [
+    { field: 'date', header: 'Date' },
+    { field: 'reason', header: 'Reason' },
+    { field: 'item', header: 'Item' },
+    { field: 'quantity', header: 'Adjusted by', align: 'right' },
+    { field: 'value', header: 'Value', align: 'right' },
+    { field: 'actions', header: '' }
+  ];
+
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<Adjustment[]>([]);
@@ -111,6 +121,58 @@ export class StockAdjustmentsPage implements OnInit {
 
   form = this.blank();
   lines: DraftLine[] = [];
+
+  listColumns: ColumnDef[] = [
+    { field: 'adjustmentNo', header: 'Number' },
+    { field: 'adjustmentDate', header: 'Date' },
+    { field: 'kind', header: 'Kind' },
+    { field: 'reason', header: 'Reason' },
+    { field: 'lineCount', header: 'Lines', dataType: 'number' },
+    { field: 'netValue', header: 'Net value', dataType: 'number' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: '' },
+  ];
+
+  get draftColumns(): ColumnDef[] {
+    const cols: ColumnDef[] = [
+      { field: 'item', header: 'Item' }
+    ];
+    if (this.isCount) {
+      cols.push({ field: 'countedQuantity', header: 'Counted', dataType: 'number' });
+    } else {
+      cols.push(
+        { field: 'quantity', header: 'Quantity', dataType: 'number' },
+        { field: 'direction', header: 'Direction' }
+      );
+    }
+    cols.push(
+      { field: 'unitCost', header: 'Cost per unit', dataType: 'number' },
+      { field: 'batchNumber', header: 'Batch' },
+      { field: 'notes', header: 'Note' },
+      { field: 'actions', header: '' }
+    );
+    return cols;
+  }
+
+  get viewColumns(): ColumnDef[] {
+    const isCount = this.viewing()?.kind === 'PhysicalCount';
+    const cols: ColumnDef[] = [
+      { field: 'lineNumber', header: '#' },
+      { field: 'item', header: 'Item' }
+    ];
+    if (isCount) {
+      cols.push(
+        { field: 'systemQuantity', header: 'System held', dataType: 'number' },
+        { field: 'countedQuantity', header: 'Counted', dataType: 'number' }
+      );
+    }
+    cols.push(
+      { field: 'movedQuantity', header: 'Moved', dataType: 'number' },
+      { field: 'movementTotalCost', header: 'Cost', dataType: 'number' },
+      { field: 'notes', header: 'Note' }
+    );
+    return cols;
+  }
 
   ngOnInit(): void {
     void this.load();

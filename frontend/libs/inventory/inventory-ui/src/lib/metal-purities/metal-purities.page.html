@@ -25,44 +25,43 @@
   price a piece, so it is fixed once an item uses it.
 </p>
 
-<bb-card-table>
-  <thead>
-    <tr>
-      <th class="handle-col"><span class="sr-only">Reorder</span></th>
-      <th>Metal</th>
-      <th>Purity</th>
-      <th class="num">Factor</th>
-      <th>Active</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
-    @for (row of rows(); track row.metalPurityId) {
-      <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
-        <td class="handle-col"><span class="handle" cdkDragHandle aria-hidden="true">⠿</span></td>
-        <td>{{ row.metalType }}</td>
-        <td>
-          {{ row.purityName }}
-          @if (row.isSystem) {
-            <span class="badge">Built-in</span>
-          }
-        </td>
-        <td class="num">{{ row.purityFactor }}</td>
-        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
-        <td class="actions-col">
-          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-          @if (!row.isSystem) {
-            <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-              Delete
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="6">No purities.</td></tr>
-    }
-  </tbody>
-</bb-card-table>
+<bb-data-grid [gridCode]="'METAL_PURITIES'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="handle" let-row>
+    <span class="handle" aria-hidden="true">⠿</span>
+  </ng-template>
+
+  <ng-template bbCellTemplate="metalType" let-row>
+    <div [class.inactive]="!row.isActive">{{ row.metalType }}</div>
+  </ng-template>
+
+  <ng-template bbCellTemplate="purityName" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.purityName }}
+      @if (row.isSystem) {
+        <span class="badge">Built-in</span>
+      }
+    </div>
+  </ng-template>
+
+  <ng-template bbCellTemplate="purityFactor" let-row>
+    <div class="num" [class.inactive]="!row.isActive">{{ row.purityFactor }}</div>
+  </ng-template>
+
+  <ng-template bbCellTemplate="isActive" let-row>
+    <div [class.inactive]="!row.isActive">{{ row.isActive ? 'Active' : 'Inactive' }}</div>
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    <div [class.inactive]="!row.isActive">
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      @if (!row.isSystem) {
+        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+          Delete
+        </button>
+      }
+    </div>
+  </ng-template>
+</bb-data-grid>
 
 @if (editingId() !== null) {
   <div class="sheet narrow">
@@ -80,12 +79,12 @@
       </label>
       <label>
         Name
-        <input type="text" [(ngModel)]="form.purityName" maxlength="20" />
+        <bb-text-input  [(ngModel)]="form.purityName" maxlength="20" />
         <small>What the counter calls it: 22K, 916, 999.</small>
       </label>
       <label>
         Factor
-        <input type="number" [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
+        <bb-number-input  [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
       </label>
       <label class="inline">
         <input type="checkbox" [(ngModel)]="form.isActive" />
