@@ -108,6 +108,8 @@ builder.Services.AddScoped<IReportSource, SerialTrackingDetailSource>();
 builder.Services.AddScoped<IReportSource, WarehouseTrackingStatusSource>();
 builder.Services.AddScoped<IReportSource, WarehouseTrackingDetailSource>();
 builder.Services.AddScoped<IReportSource, SalesRegisterSource>();
+builder.Services.AddScoped<IReportSource, FxGainLossSource>();
+builder.Services.AddScoped<IReportSource, FxGainLossDetailsSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

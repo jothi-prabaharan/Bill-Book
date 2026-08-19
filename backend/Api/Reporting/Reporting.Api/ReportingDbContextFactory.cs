@@ -49,6 +49,8 @@ public class ReportingDbContextFactory : IDesignTimeDbContextFactory<ReportingDb
 
         public Guid? OrgId => null;
 
+        public IReadOnlySet<string> Permissions => new HashSet<string>();
+
         public (Guid CustomerId, Guid OrgId) Require() =>
             throw new InvalidOperationException(
                 "The design-time tenant context has no organization. This factory exists " +

@@ -12,7 +12,25 @@ namespace Reporting.Api.Tests;
 public class ReportSourceTests
 {
     private static readonly AccountMovementSource Movement = new(OfflineResolver());
+    private static readonly AccountTransactionSource AccountTransaction = new();
     private static readonly TrialBalanceSource TrialBalance = new();
+    private static readonly GeneralLedgerSummarySource GeneralLedgerSummary = new();
+    private static readonly JournalReportSource JournalReport = new(OfflineResolver());
+    private static readonly BankSummarySource BankSummary = new(OfflineResolver());
+    private static readonly ReconciliationSource Reconciliation = new();
+    private static readonly InventoryAgingSource InventoryAging = new();
+    private static readonly ItemListSource ItemList = new(OfflineResolver());
+    private static readonly ItemDetailSource ItemDetail = new();
+    private static readonly ItemSummarySource ItemSummary = new();
+    private static readonly BatchTrackingStatusSource BatchTrackingStatus = new();
+    private static readonly BatchTrackingDetailSource BatchTrackingDetail = new();
+    private static readonly SerialTrackingStatusSource SerialTrackingStatus = new();
+    private static readonly SerialTrackingDetailSource SerialTrackingDetail = new();
+    private static readonly WarehouseTrackingStatusSource WarehouseTrackingStatus = new();
+    private static readonly WarehouseTrackingDetailSource WarehouseTrackingDetail = new();
+    private static readonly SalesRegisterSource SalesRegister = new();
+    private static readonly FxGainLossSource FxGainLoss = new();
+    private static readonly FxGainLossDetailsSource FxGainLossDetails = new();
 
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
@@ -25,7 +43,29 @@ public class ReportSourceTests
             new HttpClient { BaseAddress = new Uri("http://reporting.tests.invalid") },
             new MemoryCache(new MemoryCacheOptions()));
 
-    public static TheoryData<IReportSource> Sources => [Movement, TrialBalance];
+    public static TheoryData<IReportSource> Sources =>
+    [
+        Movement,
+        AccountTransaction,
+        TrialBalance,
+        GeneralLedgerSummary,
+        JournalReport,
+        BankSummary,
+        Reconciliation,
+        InventoryAging,
+        ItemList,
+        ItemDetail,
+        ItemSummary,
+        BatchTrackingStatus,
+        BatchTrackingDetail,
+        SerialTrackingStatus,
+        SerialTrackingDetail,
+        WarehouseTrackingStatus,
+        WarehouseTrackingDetail,
+        SalesRegister,
+        FxGainLoss,
+        FxGainLossDetails,
+    ];
 
     [Theory]
     [MemberData(nameof(Sources))]
