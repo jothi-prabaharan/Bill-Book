@@ -1,6 +1,16 @@
 /* Master Web Application Stylesheet */
 @use '../../../libs/shared/theming/src/index.scss' as *;
 
+/* Compact ERP Spacing Overrides */
+:root {
+  --space-1: var(--space-compact-1);
+  --space-2: var(--space-compact-2);
+  --space-3: var(--space-compact-3);
+  --space-4: var(--space-compact-4);
+  --space-6: var(--space-compact-6);
+  --space-8: var(--space-compact-8);
+}
+
 /* Auth Shell & Authentication Flows */
 .auth-shell {
   --pane-min: 0;
@@ -38,7 +48,7 @@
 
 .auth-aside {
   background: var(--color-ink, #2f353f);
-  color: #f3f2f2;
+  color: var(--color-neutral-100);
   padding: var(--space-8);
   display: flex;
   flex-direction: column;
@@ -61,20 +71,20 @@
     line-height: 1;
     letter-spacing: -0.02em;
   }
-  &__rule { height: 1px; background: rgba(243, 242, 242, 0.22); margin: var(--space-4) 0; }
+  &__rule { height: 1px; background: color-mix(in srgb, var(--color-neutral-100) 22%, transparent); margin: var(--space-4) 0; }
   &__copy p {
     max-width: 26ch;
     margin: 0;
     font-size: 15px;
     line-height: 1.7;
-    color: rgba(243, 242, 242, 0.72);
+    color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
     text-wrap: pretty;
   }
   &__stats {
     display: flex;
     gap: var(--space-6);
     font-size: 12px;
-    color: rgba(243, 242, 242, 0.55);
+    color: color-mix(in srgb, var(--color-neutral-100) 55%, transparent);
     font-variant-numeric: tabular-nums;
 
     b {
@@ -236,7 +246,7 @@ nav[aria-label='Modules']::-webkit-scrollbar { width: 0; height: 0; }
   font-weight: 600;
   font-size: 10px;
   letter-spacing: 0.03em;
-  color: rgba(243, 242, 242, 0.72);
+  color: color-mix(in srgb, var(--color-neutral-100) 72%, transparent);
   text-align: center;
 
   &:hover { color: var(--color-accent-400); }
@@ -280,11 +290,11 @@ nav[aria-label='Modules']::-webkit-scrollbar { width: 0; height: 0; }
 .listwrap .table thead th {
   position: sticky;
   top: 0;
-  z-index: 3;
+  z-index: var(--z-table-head);
   background: var(--color-surface);
   background-clip: padding-box;
   border-bottom: 0;
-  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
+  box-shadow: var(--shadow-table-head);
   color: var(--color-accent-800);
   white-space: nowrap;
   padding-top: var(--space-2);
