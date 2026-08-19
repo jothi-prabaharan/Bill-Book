@@ -16,8 +16,7 @@ import {
   FilterBarComponent,
   GroupPanelComponent,
   PivotPanelComponent,
-  ReportGridComponent,
-} from '@bill-book/ui-components';
+  ReportGridComponent } from '@bill-book/ui-components';
 import { SavedViewDialog } from '../saved-views/saved-view.dialog';
 
 /**
@@ -43,7 +42,7 @@ import { SavedViewDialog } from '../saved-views/saved-view.dialog';
     ColumnChooserDialog,
     GroupPanelComponent,
     PivotPanelComponent,
-    SavedViewDialog,
+    SavedViewDialog
   ],
   templateUrl: './report-host.page.html',
   styleUrl: './report-host.page.scss',

@@ -1,3 +1,4 @@
+import { TextInputComponent } from '@bill-book/ui-components';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-core';
@@ -16,7 +17,7 @@ import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-c
 @Component({
   selector: 'bb-saved-view-dialog',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TextInputComponent],
   templateUrl: './saved-view.dialog.html',
   styleUrl: './saved-view.dialog.scss',
 })
