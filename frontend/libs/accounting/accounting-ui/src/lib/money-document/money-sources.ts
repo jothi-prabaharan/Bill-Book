@@ -56,8 +56,8 @@ export const SPEND_SOURCES: readonly MoneySource[] = [
     label: 'Overpayment to supplier',
     accountSystemName: 'Accounts Receivable',
     purpose: 'OverpaymentAdvance',
-    settles: 'BIL',
-    hint: 'The excess when the payment ran past the bill. Held apart from a deliberate advance.',
+    settles: null,
+    hint: "The excess when the payment ran past the bill. An overpayment — held apart from a deliberate advance.",
   },
   {
     ledgerSourceId: 6,
@@ -108,8 +108,8 @@ export const RECEIVE_SOURCES: readonly MoneySource[] = [
     label: 'Overpayment from customer',
     accountSystemName: 'Accounts Payable',
     purpose: 'OverpaymentAdvance',
-    settles: 'INV',
-    hint: 'The excess when the receipt ran past the invoice.',
+    settles: null,
+    hint: "The excess when the receipt ran past the invoice. An overpayment — held apart from a deliberate advance.",
   },
   {
     ledgerSourceId: 7,
@@ -124,8 +124,16 @@ export const RECEIVE_SOURCES: readonly MoneySource[] = [
     label: 'Refund of our overpayment',
     accountSystemName: 'Accounts Receivable',
     purpose: 'OverpaymentAdvance',
-    settles: 'BIL',
+    settles: null,
     hint: 'A supplier returning what we overpaid them.',
+  },
+  {
+    ledgerSourceId: 20,
+    label: "Refund of our advance to supplier",
+    accountSystemName: 'Accounts Receivable',
+    purpose: 'PrepaymentAdvance',
+    settles: null,
+    hint: 'A supplier returning the deposit we placed with them.',
   },
 ];
 

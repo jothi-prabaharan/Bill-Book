@@ -30,6 +30,7 @@ import {
   SalesOrderService,
   CreditNoteService,
   DeliveryChallanService,
+  LedgerService,
   type SalesTransactionListItem,
 } from '@bill-book/sales-core';
 
@@ -77,6 +78,7 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
+  let mockLedgerService: { outstandingBalances: ReturnType<typeof vi.fn> };
   let mockNativeElement: HTMLElement;
   let mockElementRef: ElementRef;
 
@@ -179,6 +181,10 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       update: vi.fn().mockReturnValue(of({ deliveryChallanId: 1 })),
     };
 
+    mockLedgerService = {
+      outstandingBalances: vi.fn().mockReturnValue(of([])),
+    };
+
     mockNativeElement = document.createElement('div');
     const orgContainer = document.createElement('div');
     orgContainer.className = 'org-dropdown-container';
@@ -198,6 +204,7 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
         { provide: SalesOrderService, useValue: mockSalesOrderService },
         { provide: CreditNoteService, useValue: mockCreditNoteService },
         { provide: DeliveryChallanService, useValue: mockDeliveryChallanService },
+        { provide: LedgerService, useValue: mockLedgerService },
       ],
     });
   });

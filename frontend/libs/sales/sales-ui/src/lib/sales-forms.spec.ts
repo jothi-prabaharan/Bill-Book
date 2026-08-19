@@ -14,12 +14,14 @@ import {
   SalesOrderService,
   CreditNoteService,
   DeliveryChallanService,
+  LedgerService,
+  OutstandingBalance,
   SaveQuoteRequest,
   SaveSalesOrderRequest,
   SaveCreditNoteRequest,
   SaveDeliveryChallanRequest
 } from '@bill-book/sales-core';
-import { DocumentLine } from '@bill-book/ui-components';
+import { AllocationRow, DocumentLine } from '@bill-book/ui-components';
 
 describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, DeliveryChallan)', () => {
   let mockRouter: Partial<Router>;
@@ -46,6 +48,10 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   let mockCreditNoteService: {
     get: ReturnType<typeof vi.fn>;
     save: ReturnType<typeof vi.fn>;
+  };
+
+  let mockLedgerService: {
+    outstandingBalances: ReturnType<typeof vi.fn>;
   };
 
   let mockDeliveryChallanService: {
@@ -88,6 +94,19 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
     itemBatchId: null,
     lineNotes: null
   };
+
+  const allocationRow = (
+    transactionId: number,
+    outstanding: number,
+    allocated: number,
+  ): AllocationRow => ({
+    transactionId,
+    documentNo: `INV-2026-${transactionId}`,
+    documentDate: '2026-08-10',
+    totalAmount: outstanding,
+    outstandingAmount: outstanding,
+    allocatedAmount: allocated,
+  });
 
   beforeEach(() => {
     mockRouter = {
@@ -144,6 +163,32 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       save: vi.fn().mockReturnValue(of({ creditNoteId: 51 }))
     };
 
+    mockLedgerService = {
+      outstandingBalances: vi.fn().mockReturnValue(of<OutstandingBalance[]>([
+        {
+          contactId: 5,
+          transactionTypeCode: 'INV',
+          transactionId: 42,
+          documentNo: 'INV-2026-001',
+          documentDate: '2026-08-10',
+          dueDate: '2026-09-10',
+          totalAmount: 77250,
+          paidAmount: 0,
+          outstandingAmount: 77250
+        },
+        {
+          contactId: 5,
+          transactionTypeCode: 'SPM',
+          transactionId: 77,
+          documentNo: 'RCV-2026-004',
+          documentDate: '2026-08-12',
+          totalAmount: 1000,
+          paidAmount: 0,
+          outstandingAmount: -1000
+        }
+      ]))
+    };
+
     mockDeliveryChallanService = {
       get: vi.fn().mockReturnValue(of({
         deliveryChallanId: 61,
@@ -168,6 +213,7 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
         { provide: QuoteService, useValue: mockQuoteService },
         { provide: SalesOrderService, useValue: mockSalesOrderService },
         { provide: CreditNoteService, useValue: mockCreditNoteService },
+        { provide: LedgerService, useValue: mockLedgerService },
         { provide: DeliveryChallanService, useValue: mockDeliveryChallanService }
       ]
     });
@@ -336,6 +382,61 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       expect(comp.isEdit).toBe(true);
       expect(comp.creditNoteId).toBe(51);
       expect(mockCreditNoteService.get).toHaveBeenCalledWith(51);
+    });
+
+    it('CRN-T1-04: choosing a contact loads its outstanding invoices into the grid', () => {
+      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      comp.ngOnInit();
+      comp.form.patchValue({ contactId: 5 });
+
+      comp.onContactChange();
+
+      // Ledger type defaults to 3 (CONTROL) when the caller does not say.
+      expect(mockLedgerService.outstandingBalances).toHaveBeenCalledWith(5);
+      // Only the invoice is allocated against; a payment's negative balance
+      // is not an invoice.
+      expect(comp.allocationRows.length).toBe(1);
+      expect(comp.allocationRows[0].transactionId).toBe(42);
+    });
+
+    it('CRN-T1-05: allocating one invoice sets it as the note invoice', () => {
+      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      comp.ngOnInit();
+
+      comp.onAllocationRowsChange([
+        allocationRow(42, 77250, 500),
+        allocationRow(43, 100000, 0)
+      ]);
+
+      expect(comp.form.get('invoiceId')?.value).toBe('42');
+      expect(comp.allocationMessage).toBe('');
+    });
+
+    it('CRN-T1-06: allocating two invoices refuses the note and blocks save', () => {
+      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      comp.ngOnInit();
+      comp.onLinesChange([sampleLine]);
+      comp.form.patchValue({ contactId: 5 });
+
+      comp.onAllocationRowsChange([
+        allocationRow(42, 77250, 500),
+        allocationRow(43, 100000, 500)
+      ]);
+
+      expect(comp.form.get('invoiceId')?.value).toBe('');
+      expect(comp.allocationMessage).toContain('exactly one invoice');
+
+      comp.save();
+      expect(mockCreditNoteService.save).not.toHaveBeenCalled();
+    });
+
+    it('CRN-T1-07: the note total is what the grid gets to allocate, in rupees', () => {
+      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      comp.ngOnInit();
+      comp.onLinesChange([sampleLine]);
+
+      expect(comp.totals.totalAmount).toBe(77250);
+      expect(comp.amountToAllocate).toBe(772.5);
     });
   });
 

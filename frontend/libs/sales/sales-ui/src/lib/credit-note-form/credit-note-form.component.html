@@ -10,12 +10,8 @@
       <bb-date-input id="docDate"  class="input" formControlName="documentDate" />
     </div>
     <div class="field">
-      <label for="invoiceId">Invoice (ID)</label>
-      <bb-text-input id="invoiceId"  class="input" formControlName="invoiceId" />
-    </div>
-    <div class="field">
       <label for="contactId">Contact (ID)</label>
-      <bb-number-input id="contactId"  class="input" formControlName="contactId" />
+      <bb-number-input id="contactId"  class="input" formControlName="contactId" (valueChange)="onContactChange()" />
     </div>
     <div class="field">
       <label for="reasonCode">Reason Code</label>
@@ -58,6 +54,15 @@
       (linesChange)="onLinesChange($event)"
       (pickItem)="onPickItem($event)"
     ></bb-document-line-grid>
+  </div>
+
+  <div class="allocation-container" *ngIf="allocationRows.length > 0">
+    <bb-allocation-grid
+      [rows]="allocationRows"
+      [amountToAllocate]="amountToAllocate"
+      (rowsChange)="onAllocationRowsChange($event)"
+    ></bb-allocation-grid>
+    <div class="allocation-message" *ngIf="allocationMessage">{{ allocationMessage }}</div>
   </div>
 
   <div class="totals-panel">
