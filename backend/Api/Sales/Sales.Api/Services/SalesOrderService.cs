@@ -24,6 +24,7 @@ public sealed class SalesOrderService
     private readonly TimeProvider _clock;
 
     private readonly IInventoryClient _inventoryClient;
+    private readonly ICreditCheckClient _creditCheckClient;
 
     public SalesOrderService(
         SalesDbContext db,
@@ -36,7 +37,8 @@ public sealed class SalesOrderService
         IItemNameLookup itemNames,
         ICurrentUser user,
         TimeProvider clock,
-        IInventoryClient inventoryClient)
+        IInventoryClient inventoryClient,
+        ICreditCheckClient creditCheckClient)
     {
         _db = db;
         _tenant = tenant;
@@ -49,6 +51,7 @@ public sealed class SalesOrderService
         _user = user;
         _clock = clock;
         _inventoryClient = inventoryClient;
+        _creditCheckClient = creditCheckClient;
     }
 
     public async Task<SalesOrderResult> CreateAsync(SaveSalesOrderRequest request, CancellationToken ct)
@@ -193,6 +196,12 @@ public sealed class SalesOrderService
         SalesOrder.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
         SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
         SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
+
+        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
+        if (!eval.Allowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+        }
 
         SalesOrder.Status = DocumentStatus.Draft;
         SalesOrder.PostedAt = _clock.GetUtcNow();
@@ -356,6 +365,12 @@ public sealed class SalesOrderService
         SalesOrder.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
         SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
         SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
+
+        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
+        if (!eval.Allowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+        }
 
         await _db.SaveChangesAsync(ct);
 

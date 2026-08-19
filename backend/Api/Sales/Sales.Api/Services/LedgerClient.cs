@@ -15,7 +15,8 @@ namespace Sales.Api.Services;
 public interface ILedgerClient
 {
     Task<PostLedgerOutcomeResult> PostAsync(PostLedgerRequest request, CancellationToken ct);
-    Task<bool> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct);
+    Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct);
+    Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct);
 }
 
 public sealed class LedgerClient : ILedgerClient
@@ -24,14 +25,35 @@ public sealed class LedgerClient : ILedgerClient
 
     public LedgerClient(HttpClient http) => _http = http;
 
-    public async Task<bool> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct)
+    public async Task<AllocateOutcomeResult> AllocateAsync(
+        AllocateTransactionRequest request, CancellationToken ct)
     {
         var response = await _http.PostAsJsonAsync("internal/allocations", request, ct);
         if (response.IsSuccessStatusCode)
-            return true;
+            return new AllocateOutcomeResult(true, null);
 
-        var content = await response.Content.ReadAsStringAsync(ct);
-        throw new InvalidOperationException($"Allocation failed: {response.StatusCode} {content}");
+        // Accounting's refusals say why — "would exceed what the invoice still
+        // represents" — worth carrying rather than swallowing: the note's
+        // rejection reason is the message the user sees.
+        var detail = await response.Content.ReadAsStringAsync(ct);
+
+        return new AllocateOutcomeResult(
+            false, $"The allocation was refused ({(int)response.StatusCode}): {detail}");
+    }
+
+    public async Task RemoveAllocationsAsync(
+        RemoveAllocationsRequest request, CancellationToken ct)
+    {
+        var response = await _http.PostAsJsonAsync("internal/allocations/remove", request, ct);
+
+        // A removal that fails would leave the target allocated to a document
+        // that no longer exists; the void must not silently continue past it.
+        if (!response.IsSuccessStatusCode)
+        {
+            var detail = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                $"Removing the allocations failed: {response.StatusCode} {detail}");
+        }
     }
 
     public async Task<PostLedgerOutcomeResult> PostAsync(
@@ -139,8 +161,33 @@ public sealed class LedgerLegRequest
     public string? TransactionDesc { get; set; }
 }
 
+public sealed record AllocateOutcomeResult(bool Allocated, string? Detail);
+
+/// <summary>
+/// What a void sends: take every allocation a source document made.
+/// </summary>
+public sealed class RemoveAllocationsRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public string SourceTransactionTypeCode { get; set; } = null!;
+
+    public long SourceTransactionId { get; set; }
+}
+
+/// <summary>
+/// Allocates one document against another — a credit note against the invoice
+/// it settles. The tenant rides in the body because the caller is another
+/// service holding no user token, exactly as it does on a posting.
+/// </summary>
 public sealed class AllocateTransactionRequest
 {
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
     public string SourceTransactionTypeCode { get; set; } = null!;
     public long SourceTransactionId { get; set; }
     public string TargetTransactionTypeCode { get; set; } = null!;

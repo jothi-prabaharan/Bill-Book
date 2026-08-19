@@ -142,6 +142,9 @@ public enum SalesOrderOutcome
 
     /// <summary>Insufficient stock to reserve.</summary>
     InsufficientStock = 8,
+
+    /// <summary>The order exceeds the customer's credit limit or maximum outstanding days.</summary>
+    CreditLimitExceeded = 9,
 }
 
 public sealed record SalesOrderResult(SalesOrderOutcome Outcome, long SalesOrderId = 0, string? Detail = null);

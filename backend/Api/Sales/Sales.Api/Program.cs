@@ -136,6 +136,12 @@ builder.Services.AddHttpClient<IInventoryClient, InventoryClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+builder.Services.AddHttpClient<ICreditCheckClient, CreditCheckClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Reporting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a document number is allocated inside the
 // same transaction as the document — a failed insert gives the number back.

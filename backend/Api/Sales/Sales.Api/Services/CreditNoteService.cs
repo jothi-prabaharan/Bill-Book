@@ -259,6 +259,32 @@ public sealed class CreditNoteService
         if (creditNote.Lines.Count == 0)
             throw new InvalidOperationException("CreditNote has no lines.");
 
+        // The guard comes first: a refusal must leave the note draft with no
+        // stock moved and nothing posted. Allocating after the ledger post
+        // would leave a posted note the invoices it names do not recognise.
+        string invoiceTypeCode = await _db.Invoices
+            .Where(x => x.InvoiceId == creditNote.InvoiceId)
+            .Select(x => x.TransactionTypeCode)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException("The invoice this credit note corrects no longer exists.");
+
+        // Accounting's own guard re-checks the claim against the invoice's
+        // CONTROL net and what has already been allocated to it. The refusal
+        // message is the note's rejection reason.
+        var allocation = await _ledgerClient.AllocateAsync(new AllocateTransactionRequest
+        {
+            CustomerId = customerId,
+            OrgId = creditNote.OrgId,
+            SourceTransactionTypeCode = creditNote.TransactionTypeCode,
+            SourceTransactionId = creditNote.CreditNoteId,
+            TargetTransactionTypeCode = invoiceTypeCode,
+            TargetTransactionId = creditNote.InvoiceId,
+            Amount = creditNote.TotalAmount,
+        }, ct);
+
+        if (!allocation.Allocated)
+            throw new InvalidOperationException($"The credit note was refused: {allocation.Detail}");
+
         var invoiceDetailIds = creditNote.Lines.Select(l => l.InvoiceDetailId).ToList();
         var invoiceDetails = await _db.InvoiceDetails
             .Where(x => invoiceDetailIds.Contains(x.InvoiceDetailId))
@@ -428,19 +454,6 @@ public sealed class CreditNoteService
         if (!result.Posted)
             throw new InvalidOperationException($"Ledger post failed: {result.Detail}");
 
-        // Allocate credit note against the invoice
-        if (creditNote.InvoiceId > 0)
-        {
-            await _ledgerClient.AllocateAsync(new AllocateTransactionRequest
-            {
-                SourceTransactionTypeCode = creditNote.TransactionTypeCode,
-                SourceTransactionId = creditNote.CreditNoteId,
-                TargetTransactionTypeCode = "INV", // Assuming invoice type code is INV
-                TargetTransactionId = creditNote.InvoiceId,
-                Amount = creditNote.TotalAmount
-            }, ct);
-        }
-
         foreach (var l in creditNote.Lines)
         {
             var rate = l.Taxes.FirstOrDefault()?.Rate ?? 0;
@@ -484,6 +497,8 @@ public sealed class CreditNoteService
 
     public async Task VoidAsync(long creditNoteId, CancellationToken ct)
     {
+        var (customerId, orgId) = _tenant.Require();
+
         var creditNote = await _db.CreditNotes
             .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId, ct)
             ?? throw new InvalidOperationException("CreditNote not found.");
@@ -498,6 +513,17 @@ public sealed class CreditNoteService
             .Where(r => r.SourceId == creditNoteId && r.TransactionTypeCode == creditNote.TransactionTypeCode)
             .ToListAsync(ct);
         _db.SalesRegister.RemoveRange(registers);
+
+        // A voided note takes its claims with it, or the invoices it named stay
+        // partially allocated to a document that no longer exists. A failure
+        // here aborts the void: the note must not vanish while its claims remain.
+        await _ledgerClient.RemoveAllocationsAsync(new RemoveAllocationsRequest
+        {
+            CustomerId = customerId,
+            OrgId = orgId,
+            SourceTransactionTypeCode = creditNote.TransactionTypeCode,
+            SourceTransactionId = creditNoteId,
+        }, ct);
 
         await _db.SaveChangesAsync(ct);
     }
