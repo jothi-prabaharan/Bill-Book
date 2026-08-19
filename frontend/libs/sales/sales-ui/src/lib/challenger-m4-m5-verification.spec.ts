@@ -232,11 +232,11 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       );
 
       // Top Bar (6) > Nav Rail (5) > Breadcrumbs (4) > Sticky Table Header (3) > Scrolling Content (1)
-      expect(shellScss).toMatch(/\.shell-topbar-cell[\s\S]*?z-index:\s*6/);
-      expect(shellScss).toMatch(/\.shell-nav-cell[\s\S]*?z-index:\s*5/);
-      expect(shellScss).toMatch(/\.shell-breadcrumb-cell[\s\S]*?z-index:\s*4/);
-      expect(tableScss).toMatch(/\.listwrap \.table thead th[\s\S]*?z-index:\s*3/);
-      expect(shellScss).toMatch(/\.shell-content-cell[\s\S]*?z-index:\s*1/);
+      expect(shellScss).toMatch(/\.shell-topbar-cell[\s\S]*?z-index:\s*var\(--z-topbar\)/);
+      expect(shellScss).toMatch(/\.shell-nav-cell[\s\S]*?z-index:\s*var\(--z-rail\)/);
+      expect(shellScss).toMatch(/\.shell-breadcrumb-cell[\s\S]*?z-index:\s*var\(--z-breadcrumb\)/);
+      expect(tableScss).toMatch(/\.listwrap \.table thead th[\s\S]*?z-index:\s*var\(--z-table-head\)/);
+      expect(shellScss).toMatch(/\.shell-content-cell[\s\S]*?z-index:\s*var\(--z-content\)/);
     });
 
     it('CHAL-SHELL-03: Verifies Left Nav Rail active item cutout rule with 4px left accent rule', () => {
@@ -247,7 +247,7 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
 
       expect(navScss).toContain('background: var(--color-ink);');
       expect(navScss).toContain('&.active');
-      expect(navScss).toContain('inset 4px 0 0 var(--color-accent)');
+      expect(navScss).toContain('var(--shadow-rail-active)');
       expect(navScss).toContain('background: var(--color-bg);');
     });
 
@@ -318,9 +318,9 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       expect(tableScss).toContain('.listwrap .table thead th');
       expect(tableScss).toContain('position: sticky;');
       expect(tableScss).toContain('top: 0;');
-      expect(tableScss).toContain('z-index: 3;');
-      expect(tableScss).toContain('background: var(--color-surface);');
-      expect(tableScss).toContain('box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent);');
+      expect(tableScss).toContain('z-index: var(--z-table-head);');
+      expect(tableScss).toContain('background: var(--color-bg);');
+      expect(tableScss).toContain('box-shadow: var(--shadow-table-head);');
     });
 
     it('CHAL-TABLE-03: Verifies tabular numerals and right-alignment applied to numeric columns', () => {

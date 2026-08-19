@@ -10,7 +10,7 @@
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid var(--color-divider);
-  background: var(--color-surface);
+  background: transparent;
 }
 
 .data-grid-loading-bar {
@@ -83,26 +83,6 @@
   .sort-idle {
     opacity: 0.3;
   }
-}
-
-.filter-btn {
-  min-height: auto;
-  opacity: 0.6;
-  transition: opacity 120ms ease;
-
-  &:hover {
-    opacity: 1;
-  }
-}
-
-.filter-dropdown {
-  top: calc(100% + 4px);
-  z-index: var(--z-dropdown, 20);
-  width: 220px;
-  padding: var(--space-2);
-  background: var(--color-bg);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
 }
 
 .table-pagination {

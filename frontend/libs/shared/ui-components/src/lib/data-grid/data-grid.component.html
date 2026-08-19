@@ -1,8 +1,4 @@
-<div *ngIf="showExport" class="flex justify-end" style="margin-bottom:8px">
-  <button type="button" class="btn btn-secondary" (click)="exportToCsv()">Export to CSV</button>
-</div>
-
-<div class="card p-0 data-grid-card" [class.compact]="compact">
+<div class="data-grid-card" [class.compact]="compact">
   <!-- Progress bar for loading state -->
   <div *ngIf="loading" class="data-grid-loading-bar" aria-hidden="true">
     <div class="loading-pulse"></div>
@@ -16,22 +12,18 @@
               [class.numeric]="isNumericCol(col)"
               [style.width]="col.width"
               class="relative">
-            <div class="flex items-center justify-between gap-1" [class.flex-row-reverse]="isNumericCol(col)">
-              <button type="button"
-                      class="table-sort-btn"
-                      [disabled]="!sortable || col.sortable === false"
-                      (click)="onSort(col)"
-                      [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
-                <span>{{ col.header || col.title || col.field }}</span>
-                <span class="sort-indicator" *ngIf="sortable && col.sortable !== false" [class.active]="sortField() === col.field">
-                  <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
-                  <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
-                  <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
-                </span>
-              </button>
-            </div>
-
-            <!-- Filter row should be implemented as a separate row (.fltrow) per design, not as a dropdown -->
+            <button type="button"
+                    class="table-sort-btn"
+                    [disabled]="!sortable || col.sortable === false"
+                    (click)="onSort(col)"
+                    [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              <span>{{ col.header || col.title || col.field }}</span>
+              <span class="sort-indicator" *ngIf="sortable && col.sortable !== false" [class.active]="sortField() === col.field">
+                <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
+                <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
+                <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
+              </span>
+            </button>
           </th>
         </tr>
       </thead>

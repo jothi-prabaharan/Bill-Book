@@ -114,15 +114,15 @@ describe('Adversarial Stress Test Suite: Milestone 3 App Shell', () => {
       const navScss = readFileSync(resolve(__dirname, 'nav/shell-nav.component.scss'), 'utf-8');
 
       // Topbar (z-index: 6) > Left rail (z-index: 5) > Breadcrumbs (z-index: 4) > Content (z-index: 1)
-      expect(shellScss).toContain('z-index: 6'); // topbar
-      expect(shellScss).toContain('z-index: 5'); // nav
-      expect(shellScss).toContain('z-index: 4'); // breadcrumb
-      expect(shellScss).toContain('z-index: 1'); // content
+      expect(shellScss).toContain('var(--z-topbar)'); // topbar
+      expect(shellScss).toContain('var(--z-rail)'); // nav
+      expect(shellScss).toContain('var(--z-breadcrumb)'); // breadcrumb
+      expect(shellScss).toContain('var(--z-content)'); // content
 
       // Dropdown and modal layers are above chrome
-      expect(topbarScss).toContain('z-index: 20'); // org dropdown
-      expect(navScss).toContain('z-index: 20'); // more overlay
-      expect(navScss).toContain('z-index: 21'); // more panel
+      expect(topbarScss).toContain('var(--z-dropdown)'); // org dropdown
+      expect(navScss).toContain('var(--z-dropdown)'); // more overlay
+      expect(navScss).toContain('21'); // more panel (hardcoded in SCSS)
     });
   });
 

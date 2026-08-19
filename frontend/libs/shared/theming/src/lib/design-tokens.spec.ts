@@ -129,7 +129,7 @@ describe('Design Tokens & Classical Styling System (shared/theming)', () => {
 
   describe('Tier 4: Table Styling & Dense Layer Ergonomics', () => {
     it('TOK-T4-01: Table headers are sticky with z-index 3 and inset bottom shadow rule', () => {
-      expect(fileContent).toMatch(/\.listwrap \.table thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*z-index:\s*3;[^}]*box-shadow:\s*inset 0 -1px 0/s);
+      expect(fileContent).toMatch(/\.listwrap \.table thead th\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*z-index:\s*var\(--z-table-head\);[^}]*box-shadow:\s*var\(--shadow-table-head\);/s);
     });
 
     it('TOK-T4-02: Table rows feature hairline divider rules and subtle row hover', () => {

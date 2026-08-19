@@ -1,7 +1,8 @@
 import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
-import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { Router, RouterOutlet } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import { SearchInputComponent } from '@bill-book/ui-components';
 import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
 import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
 import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-breadcrumb.component';
@@ -16,6 +17,8 @@ import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-br
   standalone: true,
   imports: [
     RouterOutlet,
+    FormsModule,
+    SearchInputComponent,
     ShellNavComponent,
     ShellTopbarComponent,
     ShellBreadcrumbComponent,
@@ -133,11 +136,11 @@ export class ShellComponent {
       this.allOrgs.set(orgs);
     });
 
-    this.router.events
-      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
-      .subscribe((event) => {
-        this.updateCrumbs(event.urlAfterRedirects);
-      });
+    this.router.events.subscribe((event) => {
+      if (event.constructor.name === 'NavigationEnd') {
+        this.updateCrumbs((event as any).urlAfterRedirects);
+      }
+    });
 
     // Initialize crumbs
     setTimeout(() => this.updateCrumbs(this.router.url), 0);
@@ -262,6 +265,12 @@ export class ShellComponent {
     this.orgOpen.set(false);
     this.newOpen.set(false);
     this.favOpen.set(false);
+  }
+
+  selectDoc(_code: string): void {
+    // Hide the new popup and navigate or emit an event
+    this.newOpen.set(false);
+    // Add logic here to route to the correct 'new' document page based on code
   }
 
   logout(): void {

@@ -45,6 +45,13 @@
   padding: var(--space-4) var(--space-4) var(--space-6);
 }
 
+/* Org dropdown backdrop */
+.org-dropdown-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--z-dropdown) - 1);
+}
+
 /* Responsive breakpoint: <= 860px */
 @media (max-width: 860px) {
   .shell-grid-container {

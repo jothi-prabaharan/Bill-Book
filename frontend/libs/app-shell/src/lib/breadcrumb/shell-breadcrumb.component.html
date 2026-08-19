@@ -1,35 +1,35 @@
-<nav aria-label="Breadcrumb" class="crumbs">
-  <a routerLink="/dashboard" (click)="onCrumbClicked({ label: 'Home', path: '/dashboard', isLink: true, isLast: false })">Home</a>
+<nav aria-label="Breadcrumb" class="crumbs" style="position: relative; z-index: var(--z-breadcrumb); display: flex; align-items: center; gap: 7px; padding: 4px var(--space-4); border-bottom: 1px solid var(--color-divider); font-size: 12px;">
+  <a routerLink="/dashboard" style="color: color-mix(in srgb, var(--color-text) 60%, transparent); text-decoration: none;" (click)="onCrumbClicked({ label: 'Home', path: '/dashboard', isLink: true, isLast: false })">Home</a>
   @for (crumb of effectiveCrumbs(); track crumb.label) {
-    <span class="sep" aria-hidden="true">›</span>
+    <span class="sep" aria-hidden="true" style="opacity: 0.4;">›</span>
     @if (crumb.isLink) {
-      <a [routerLink]="crumb.path" (click)="onCrumbClicked(crumb)">{{ crumb.label }}</a>
+      <a [routerLink]="crumb.path" (click)="onCrumbClicked(crumb)" style="color: color-mix(in srgb, var(--color-text) 60%, transparent); text-decoration: none;">{{ crumb.label }}</a>
     }
     @if (crumb.isLast) {
-      <span aria-current="page">{{ crumb.label }}</span>
+      <span aria-current="page" style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; color: var(--color-accent-800);">{{ crumb.label }}</span>
     }
   }
 
-  <div class="acts">
+  <div class="acts" style="margin-left: auto; display: flex; align-items: center; gap: var(--space-2);">
     <!-- Projected Actions from child views -->
     <ng-content select="[bbShellActions], .acts" />
 
     @if (isHome()) {
-      <button class="btn btn-ghost" type="button" (click)="toggleBase()" [attr.aria-pressed]="base()">
-        <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
+      <button class="btn btn-ghost" type="button" (click)="toggleBase.emit()" [attr.aria-pressed]="base()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">
+        <span class="knob" aria-hidden="true" style="width: 26px; height: 14px; flex: none; border: 1px solid var(--color-accent); border-radius: 999px; display: inline-flex; align-items: center; padding: 1px; justify-content: flex-start; background: transparent;"></span>{{ baseLabel() }}
       </button>
       @if (notEditing()) {
-        <button class="btn btn-secondary" type="button" (click)="startEdit()">Customize</button>
+        <button class="btn btn-secondary" type="button" (click)="startEdit.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Customize</button>
       }
       @if (editing()) {
-        <button class="btn btn-ghost" type="button" (click)="resetLayout()">Reset</button>
-        <button class="btn btn-secondary" type="button" (click)="stopEdit()">Done</button>
+        <button class="btn btn-ghost" type="button" (click)="resetLayout.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Reset</button>
+        <button class="btn btn-secondary" type="button" (click)="stopEdit.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Done</button>
       }
     }
 
     @if (isRegister()) {
-      <button class="btn btn-ghost" type="button" (click)="openExport()">Export</button>
-      <button class="btn btn-secondary" type="button" (click)="openImport()">Import</button>
+      <button class="btn btn-ghost" type="button" (click)="openExport.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Export</button>
+      <button class="btn btn-secondary" type="button" (click)="openImport.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Import</button>
     }
   </div>
 </nav>

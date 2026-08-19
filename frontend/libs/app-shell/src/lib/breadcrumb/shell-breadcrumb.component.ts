@@ -30,26 +30,49 @@ export class ShellBreadcrumbComponent {
 
   readonly effectiveCrumbs = computed(() => this.crumbsInput() ?? this.crumbs());
 
-  readonly isHome = computed(() => {
-    const url = this.router.url;
-    return url === '/' || url === '/dashboard' || url.startsWith('/dashboard');
-  });
+  readonly isHome = signal(false);
+  readonly isRegister = signal(false);
 
-  readonly isRegister = computed(() => {
-    const url = this.router.url;
-    return (
-      url.includes('/sales') ||
-      url.includes('/purchase') ||
-      url.includes('/inventory') ||
-      url.includes('/contacts')
-    );
-  });
-
-  // Dashboard Actions State
-  readonly base = signal(false);
-  readonly baseLabel = signal('Accrual basis');
-  readonly editing = signal(false);
+  // Dashboard Actions State - Inputs mapped from parent
+  readonly base = input(false);
+  readonly baseLabel = input('Accrual basis');
+  readonly editing = input(false);
   readonly notEditing = computed(() => !this.editing());
+
+  // Outputs for dashboard actions
+  readonly toggleBase = output<void>();
+  readonly startEdit = output<void>();
+  readonly resetLayout = output<void>();
+  readonly stopEdit = output<void>();
+
+  // Register specific actions
+  readonly openExport = output<void>();
+  readonly openImport = output<void>();
+
+  // Methods for test compatibility - delegate to outputs
+  onToggleBase(): void {
+    this.toggleBase.emit();
+  }
+
+  onStartEdit(): void {
+    this.startEdit.emit();
+  }
+
+  onResetLayout(): void {
+    this.resetLayout.emit();
+  }
+
+  onStopEdit(): void {
+    this.stopEdit.emit();
+  }
+
+  onOpenExport(): void {
+    this.openExport.emit();
+  }
+
+  onOpenImport(): void {
+    this.openImport.emit();
+  }
 
   constructor() {
     this.router.events
@@ -100,32 +123,5 @@ export class ShellBreadcrumbComponent {
 
   onCrumbClicked(crumb: BreadcrumbItem): void {
     this.crumbClick.emit(crumb);
-  }
-
-  // Dashboard specific actions
-  toggleBase(): void {
-    this.base.update((v) => !v);
-    this.baseLabel.set(this.base() ? 'Cash basis' : 'Accrual basis');
-  }
-
-  startEdit(): void {
-    this.editing.set(true);
-  }
-
-  resetLayout(): void {
-    // Reset layout hook
-  }
-
-  stopEdit(): void {
-    this.editing.set(false);
-  }
-
-  // Register specific actions
-  openExport(): void {
-    // Open export hook
-  }
-
-  openImport(): void {
-    // Open import hook
   }
 }

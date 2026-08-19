@@ -136,8 +136,8 @@ describe('Cross-Module E2E Integration & Layout Architecture Suite', () => {
       // Top bar header: z-index >= 6 or sticky
       // Table header: z-index: 3 with inset shadow
       expect(cssContent).toContain('.listwrap .table thead th');
-      expect(cssContent).toContain('z-index: 3');
-      expect(cssContent).toContain('box-shadow: inset 0 -1px 0');
+      expect(cssContent).toContain('var(--z-table-head)');
+      expect(cssContent).toContain('var(--shadow-table-head)');
     });
   });
 

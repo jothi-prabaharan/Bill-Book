@@ -87,7 +87,7 @@ export class ShellTopbarComponent {
     return 'Eternal Pathway'; // Fallback company name since API lacks CustomerName
   });
 
-  readonly currentOrgRole = computed(() => {
+  readonly currentOrgBranch = computed(() => {
     const orgs = this.allOrgs();
     const id = this.currentOrgId();
     const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
