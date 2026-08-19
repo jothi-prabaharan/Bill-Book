@@ -1,43 +1,35 @@
-# BRIEFING — 2026-08-18T17:00:00Z
+# BRIEFING — 2026-08-19T14:56:00Z
 
 ## Mission
-Investigate shared UI components library (`frontend/libs/shared/ui-components/`), styling tokens, typecheck/lint status, and architectural design for 5 input primitives (date, currency, number, search, text).
+Investigate and design the complete SCSS token and theming architecture for Milestone 1 (`frontend/libs/shared/theming`), producing blueprints for `_tokens.scss`, `_typography.scss`, `_buttons.scss`, `_forms.scss`, `_cards.scss`, `_tags.scss`, `_table.scss`, `_dialog.scss`, `_utilities.scss`, `index.scss`, `index.ts`, `tokens.spec.ts`, and app import paths.
 
 ## 🔒 My Identity
-- Archetype: Explorer
-- Roles: Read-only investigator, UI architecture analyzer
+- Archetype: explorer
+- Roles: investigation, synthesis
 - Working directory: C:\Users\Praba\Source\repos\Bill-Book\.agents\explorer_m1_1
-- Original parent: 177e6bdc-44e8-4e99-8408-145a2f65d08f
-- Milestone: Milestone 1 - Shared Primitive UI Components
+- Original parent: 81ce1b4e-8b82-482d-87dd-d3c3263fc136 (caller: cc978969-df66-403f-b02a-6feb6cefd6fe)
+- Milestone: Milestone 1: Design Tokens & Theming (`shared/theming`)
 
 ## 🔒 Key Constraints
-- Read-only investigation — do NOT implement production source code
-- Standalone components only, inject(), signals/computed, ControlValueAccessor implementation, separate templateUrl/styleUrl
-- Responsive down to 360px
-- Zero external packages allowed
+- Read-only investigation — do NOT implement in production libraries directly (Worker will execute).
+- Maintain .agents metadata and rigorous handoff report.
+- Adhere to AGENTS.md, PROJECT.md, and design handoff specifications.
+- No new external packages.
 
 ## Current Parent
-- Conversation ID: 177e6bdc-44e8-4e99-8408-145a2f65d08f
-- Updated: 2026-08-18T17:00:00Z
+- Conversation ID: 81ce1b4e-8b82-482d-87dd-d3c3263fc136 / cc978969-df66-403f-b02a-6feb6cefd6fe
+- Updated: 2026-08-19T14:56:00Z
 
 ## Investigation State
-- **Explored paths**:
-  - `frontend/libs/shared/ui-components/` (all 25 TS files, existing grids, dialogs, models)
-  - `frontend/apps/web/src/styles.scss` (design tokens, `--color-accent`, `--color-divider`, `--radius-md`, `.input`, `.btn`, 360px media queries)
-  - `frontend/package.json`, `tsconfig.base.json`, `tsconfig.eslint.json`
-  - `frontend/libs/accounting/`, `inventory/`, `master/`, `purchase/`, `sales/` input usage patterns
-- **Key findings**:
-  - Found typecheck error in `group-panel.component.ts` (missing `CdkDrag` import) and `column-chooser.dialog.ts` (missing `DragDropModule`).
-  - Found 12 lint `no-explicit-any` warnings in `data-grid/`.
-  - Analyzed template bindings for template-driven `[(ngModel)]` and reactive `formControlName`. All 5 primitive components must implement `ControlValueAccessor` with `NG_VALUE_ACCESSOR` forwardRef provider.
-- **Unexplored areas**: None for M1 scope.
+- **Explored paths**: `frontend/libs/shared/theming/`, `frontend/apps/web/src/styles.scss`, `frontend/apps/desktop/src/styles.scss`, `frontend/tsconfig.base.json`, `styles.css`, `Shell.dc.html`.
+- **Key findings**: Decomposed token and component SCSS structure, full OKLCH color ramps, compact spacing scale, stroke-over-fill buttons, whisper shadows, and TypeScript token contracts created.
+- **Unexplored areas**: None for Milestone 1.
 
 ## Key Decisions Made
-- Use Angular 20 signal-based inputs (`input()`, `input.required()`) and outputs (`output()`), internal signals for state (`internalValue`, `isDisabled`), and CVA interface methods (`writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`).
-- Full token compliance with `styles.scss` using CSS variables (`--color-accent`, `--color-divider`, `--color-text`, `--radius-md`, `--font-body`, `--font-heading`).
+- Fully specified partials for `_tokens.scss`, `_typography.scss`, `_buttons.scss`, `_forms.scss`, `_cards.scss`, `_tags.scss`, `_table.scss`, `_dialog.scss`, `_utilities.scss`, `index.scss`, `index.ts`, and `tokens.spec.ts`.
+- Analysis written to `analysis.md` and hard handoff written to `handoff.md`.
 
 ## Artifact Index
-- DISPATCH.md — incoming dispatch instructions
-- BRIEFING.md — persistent state memory
-- progress.md — liveness heartbeat
-- handoff.md — final 5-component handoff report
+- `.agents/explorer_m1_1/analysis.md` — Detailed analysis and SCSS blueprints.
+- `.agents/explorer_m1_1/handoff.md` — Handoff report.
+- `.agents/explorer_m1_1/progress.md` — Progress tracker.

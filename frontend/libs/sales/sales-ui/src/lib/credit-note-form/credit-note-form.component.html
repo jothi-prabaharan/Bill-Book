@@ -59,4 +59,35 @@
       (pickItem)="onPickItem($event)"
     ></bb-document-line-grid>
   </div>
+
+  <div class="totals-panel">
+    <div class="total-row">
+      <span>Sub Total</span>
+      <span>{{ (totals.subTotal / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row" *ngIf="totals.discountAmount > 0">
+      <span>Discount</span>
+      <span>-{{ (totals.discountAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row tax" *ngIf="totals.cgstAmount > 0">
+      <span>CGST</span>
+      <span>{{ (totals.cgstAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row tax" *ngIf="totals.sgstAmount > 0">
+      <span>SGST</span>
+      <span>{{ (totals.sgstAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row tax" *ngIf="totals.igstAmount > 0">
+      <span>IGST</span>
+      <span>{{ (totals.igstAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row tax" *ngIf="totals.cessAmount > 0">
+      <span>CESS</span>
+      <span>{{ (totals.cessAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+    <div class="total-row grand-total">
+      <span>Total Amount</span>
+      <span>{{ (totals.totalAmount / 100) | number:'1.2-2' }}</span>
+    </div>
+  </div>
 </div>

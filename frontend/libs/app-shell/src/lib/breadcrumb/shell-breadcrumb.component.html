@@ -1,0 +1,35 @@
+<nav aria-label="Breadcrumb" class="crumbs">
+  <a routerLink="/dashboard" (click)="onCrumbClicked({ label: 'Home', path: '/dashboard', isLink: true, isLast: false })">Home</a>
+  @for (crumb of effectiveCrumbs(); track crumb.label) {
+    <span class="sep" aria-hidden="true">›</span>
+    @if (crumb.isLink) {
+      <a [routerLink]="crumb.path" (click)="onCrumbClicked(crumb)">{{ crumb.label }}</a>
+    }
+    @if (crumb.isLast) {
+      <span aria-current="page">{{ crumb.label }}</span>
+    }
+  }
+
+  <div class="acts">
+    <!-- Projected Actions from child views -->
+    <ng-content select="[bbShellActions], .acts" />
+
+    @if (isHome()) {
+      <button class="btn btn-ghost" type="button" (click)="toggleBase()" [attr.aria-pressed]="base()">
+        <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
+      </button>
+      @if (notEditing()) {
+        <button class="btn btn-secondary" type="button" (click)="startEdit()">Customize</button>
+      }
+      @if (editing()) {
+        <button class="btn btn-ghost" type="button" (click)="resetLayout()">Reset</button>
+        <button class="btn btn-secondary" type="button" (click)="stopEdit()">Done</button>
+      }
+    }
+
+    @if (isRegister()) {
+      <button class="btn btn-ghost" type="button" (click)="openExport()">Export</button>
+      <button class="btn btn-secondary" type="button" (click)="openImport()">Import</button>
+    }
+  </div>
+</nav>

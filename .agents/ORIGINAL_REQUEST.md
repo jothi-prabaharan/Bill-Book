@@ -1,32 +1,51 @@
 # Original User Request
 
-## Initial Request — 2026-08-18T16:50:00Z
+## Initial Request — 2026-08-19T14:44:27Z
 
-# Teamwork Project Prompt — Draft
+You are the Project Orchestrator for the Bill-Book desktop application shell and module list/create screens implementation.
 
-> Status: Launched
-> Goal: Craft prompt → get user approval → delegate to teamwork_preview
-> Requested team: Full multi-agent team
+## Working Directory
+Your working directory is: `C:\Users\Praba\Source\repos\Bill-Book\.agents\teamwork_preview_orchestrator_1`
+Maintain your `BRIEFING.md`, `plan.md`, and `progress.md` in your working directory.
 
-Scan the entire frontend project to identify all recurring primitive data input types (e.g., date pickers, currency formatting, number inputs). Create a global, reusable Angular UI component for each data type in `@bill-book/ui-components`, and refactor the entire frontend project to use these new global components instead of raw HTML inputs or duplicated styling.
+## Authoritative Request
+Authoritative request is recorded at: `C:\Users\Praba\Source\repos\Bill-Book\.agents\ORIGINAL_REQUEST.md`
 
-Working directory: C:\Users\Praba\Source\repos\Bill-Book\frontend
-Integrity mode: development
+## Task Description
+Implement the Bill-Book desktop application shell and module list/create screens in the existing Angular Nx workspace by translating the provided HTML/CSS design.
+
+Working directory: `C:\Users\Praba\Source\repos\Bill-Book`
+Integrity mode: benchmark
+
+## Verification Resources
+- Design Reference: `C:\Users\Praba\Downloads\Claude Design\Bill-Book Design-handoff\bill-book-design\project\Shell.dc.html`
+- Design Tokens: `C:\Users\Praba\Downloads\Claude Design\Bill-Book Design-handoff\bill-book-design\project\_ds\bill-book-6c62bbc0-6bc5-4941-b359-3208c21e8972\styles.css`
+- API Contracts: `backend/Api` + `postman/Bill-Book.postman_collection.json`
+- Rules: `docs/coding-standards.md`, `docs/ai-agent-structure-rules.md`, `docs/project-structure.md`, `AGENTS.md`, `docs/commit-rules.md`
 
 ## Requirements
+### R1. Design Tokens (`shared/theming`)
+Port the token set from the provided `styles.css` into SCSS custom properties on `:root` in the theming library. Colors apply as borders/rules/underlines, not filled blocks. Shadows are whispers. Tabular numbers for tables/figures. Focus states use a themed outline. No hard-coded hex, font names, or raw px. CSS-only interaction states.
 
-### R1. Component Creation
-Identify common UI input patterns (dates, currencies, numbers) currently using raw HTML elements (e.g., `<input type="date">`, `<input type="number">`). Create centralized standalone Angular components for them in `libs/shared/ui-components`.
+### R2. App Shell (`libs/app-shell`)
+Implement a CSS-grid layout with a fixed left rail, top bar, breadcrumb strip, and scrolling content outlet. The left rail contains module navigation and user menu. The top bar contains actions, org name searchable dropdown, and financial year tag. The breadcrumb strip replaces page titles and holds module-level controls. Emit `ShellComponent`, `ShellNavComponent`, `ShellTopbarComponent`, and `ShellBreadcrumbComponent`.
 
-### R2. Global Refactoring
-Replace the raw HTML inputs across all frontend pages (`accounting-ui`, `inventory-ui`, `master-ui`, `purchase-ui`, `sales-ui`) with the newly created global UI components. Preserve all existing `ngModel` bindings, disabled states, and validation logic.
+### R3. Shared Data Table (`shared/ui-components`)
+Implement a reusable data table for all list screens. Must have a sticky header with an inset bottom shadow, hairline row rules, and support compact density. Inputs include columns, rows, loading state, empty template, and sorting outputs.
 
-### R3. Strict Build Compliance
-The refactored project must build cleanly with no warnings or errors, as `TreatWarningsAsErrors` is active.
+### R4. Module Screens (e.g., Sales and others)
+For each module (in its `-ui` lib), implement a List page (filter bar, shared table, paging) and a Create/edit page (reactive form exactly mirroring the backend request DTO). Stop and verify Sales module end-to-end before proceeding to other modules.
+
+### R5. Architecture and Placement Constraints
+Presentational pieces go to `shared/ui-components`. Tokens to `shared/theming`. Shell chrome to `app-shell`. Module-specific UI to the module's `-ui` lib. Never import `-ui` from `-core`, and never import between module libs (use `shared/*`). Folder names stay as-is, but the UI label for `accounting` is **Accounts** ("Accounting" must never appear).
 
 ## Acceptance Criteria
+### Build and Lint
+- `npx nx run-many -t lint,test` passes cleanly for every library touched.
+- `npx nx build web` passes cleanly.
 
-### Verification Suite
-- [ ] `npm run check` (which runs lint, typecheck, tests, and production build) passes cleanly without errors.
-- [ ] At least three new global input components (e.g., Date, Currency, Number) are exported from `libs/shared/ui-components/src/index.ts`.
-- [ ] Spot check: `C:\Users\Praba\Source\repos\Bill-Book\frontend\libs\accounting\accounting-ui\src\lib\opening-balance\opening-balance.page.html` (or similar data-heavy pages) successfully uses the new components instead of raw `<input>` tags.
+### Visual and Behavior
+- No user-visible "Accounting" string appears anywhere in the UI.
+- No table header or shell chrome overlap occurs while scrolling any list page at compact density (verified across all implemented modules).
+- No hex or px literals are used in CSS where a design token exists.
+- No JS-driven animation or hover logic is used (CSS-only).

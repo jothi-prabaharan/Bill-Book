@@ -1,12 +1,17 @@
 # Progress — Challenger 2 (Milestone 1)
 
-Last visited: 2026-08-18T17:07:05Z
+Last visited: 2026-08-19T15:09:30Z
 
-## Status
-- [x] Initialized DISPATCH.md and BRIEFING.md
-- [ ] Read mandatory docs (ORIGINAL_REQUEST.md, PROJECT.md, AGENTS.md, SCOPE.md, worker handoff.md)
-- [ ] Inspect implementation of Button, Input, Select, Badge, Card
-- [ ] Run existing Vitest test suite (`cd frontend && npx vitest run libs/shared/ui-components`)
-- [ ] Write and execute adversarial CVA lifecycle stress tests (Reactive Forms, Template-driven forms, Signal state, validators, blur/touched, disabled, reset, loop detection)
-- [ ] Analyze findings and determine verdict (APPROVE / REJECT)
-- [ ] Produce handoff.md and send completion message to parent
+## Current Status
+Completed empirical verification and stress testing of Milestone 1 (Design Tokens & Theming `shared/theming`). Writing final `handoff.md`.
+
+## Checklist
+- [x] Workspace initialized (DISPATCH.md, BRIEFING.md, progress.md)
+- [x] Read mandatory inputs (`ORIGINAL_REQUEST.md`, `PROJECT.md`, `shared/theming/` source files)
+- [x] Empirically test build and compilation with `@use` in web and desktop apps
+- [x] Search for missing token references across all SCSS files in the repo
+- [x] Check layer stacking variables (`--z-topbar`, `--z-rail`, `--z-breadcrumbs`, `--z-table-head`) against layer discipline specification
+- [x] Verify light/dark theme contrast, semantic tokens, typography, spacing tokens
+- [x] Write empirical test harness `design-tokens-challenger.spec.ts` (13 tests passing)
+- [x] Verify full checks (`npm run check` 314 tests pass, `dotnet test` 356 tests pass)
+- [ ] Document findings in `handoff.md` and report to orchestrator

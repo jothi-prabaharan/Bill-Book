@@ -52,6 +52,7 @@ export class SalesListComponent implements OnInit {
       case 'Quote': return `/sales/quotes/${transaction.transactionId}`;
       case 'SalesOrder': return `/sales/sales-orders/${transaction.transactionId}`;
       case 'Invoice': return `/sales/invoices/${transaction.transactionId}`;
+      case 'DeliveryChallan': return `/sales/delivery-challans/${transaction.transactionId}`;
       case 'CreditNote': return `/sales/credit-notes/${transaction.transactionId}`;
       default: return `/sales`;
     }

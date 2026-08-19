@@ -17,6 +17,11 @@
   </span>
 
   <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('DeliveryChallan')" [attr.aria-pressed]="selectedType === 'DeliveryChallan'">Delivery challans</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/delivery-challans/new" title="New Delivery challan" aria-label="New Delivery challan"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
     <button class="btn btn-secondary" type="button" (click)="setType('CreditNote')" [attr.aria-pressed]="selectedType === 'CreditNote'">Credit notes</button>
     <button class="btn btn-secondary" type="button" routerLink="/sales/credit-notes/new" title="New Credit note" aria-label="New Credit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
   </span>

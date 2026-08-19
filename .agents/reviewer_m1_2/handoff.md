@@ -1,137 +1,99 @@
-# Milestone 1 Review & Adversarial Audit Report (Reviewer 2)
+# Review & Adversarial Critic Report — Milestone 1: Design Tokens & Theming (`shared/theming`)
+
+**Reviewer**: `reviewer_m1_2` (Reviewer 2 / Adversarial Critic)  
+**Date**: 2026-08-19  
+**Milestone**: M1 (Design Tokens & Theming)  
+**Parent / Recipient**: `cc978969-df66-403f-b02a-6feb6cefd6fe` / `81ce1b4e-8b82-482d-87dd-d3c3263fc136`  
+**Verdict**: **APPROVE**
+
+---
 
 ## 1. Observation
 
-### 1.1 Scope and Components Examined
-The implementation delivered by `worker_m1` for Milestone 1 (Shared Primitive UI Components) was thoroughly inspected across all source files, templates, SCSS stylesheets, barrel exports, and unit tests:
+1. **SCSS Architecture & Modularity**:
+   - `frontend/libs/shared/theming/src/lib/` contains 9 modular SCSS partials:
+     - `_tokens.scss`: Complete `:root` custom properties for ground/surfaces (`#f3f2f2`, `#eae9e9`), 100-900 neutral ramp, 100-900 brand accent ramp (`#f06311`), 100-900 gold accent-2 ramp (`#ac803e`), fonts, spacing scales (4.6px classical and 3px compact ERP), whisper shadows with `color-mix`, border radii, and z-index hierarchy (`--z-topbar: 6`, `--z-rail: 5`, `--z-breadcrumbs: 4`, `--z-table-head: 3`, `--z-content: 1`).
+     - `_typography.scss`: Headings h1-h6, kicker uppercase styling, tabular numbers (`font-variant-numeric: tabular-nums; font-feature-settings: "tnum"`), `.plate`, and muted text.
+     - `_buttons.scss`: Stroke-over-fill button system (`.btn`, `.btn-primary`, `.btn-secondary`, `.btn-ghost`, `.btn-icon`, `.tabgrp`, `.wbar`, `.wbtn`), tactile active scale `transform: scale(0.97)`.
+     - `_forms.scss`: Outlined inputs (`.input`, `.field`), numeric alignment and tabular numbers for `[inputmode='numeric']`, radio with custom `.dot`, checkboxes with `accent-color`, segmented toggle `.seg`, and pure CSS `.knob`.
+     - `_cards.scss`: Transparent bordered cards (`.card`), kickers, whisper elevation utilities (`.elev-sm`, `.elev-md`, `.elev-lg`), `.board` grid, and `.sheet` form editor styling.
+     - `_tags.scss`: Tonal status tags (`.tag`, `.tag-accent`, `.tag-accent-2`, `.tag-neutral`, `.tag-outline`), `.chip`, and `.badge`.
+     - `_table.scss`: Hairline row divider rules, sticky header at `z-index: 3` with inset bottom shadow rule (`box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent)`), compact density, and right-aligned tabular numbers for numeric cells.
+     - `_dialog.scss`: Modal dialog styling (`.dialog-backdrop`, `.dialog`, `.dialog-title`, `.dialog-body`, `.dialog-actions`) with CSS keyframe transitions.
+     - `_utilities.scss`: Utility helper classes for layout, flexbox, grid, spacing, and form editor helpers.
+   - `frontend/libs/shared/theming/src/index.scss` forwards all 9 partials using modern `@forward`.
+   - `frontend/apps/web/src/styles.scss` consumes theming via `@use '../../../libs/shared/theming/src/index.scss' as *;`.
+   - `frontend/apps/desktop/src/styles.scss` consumes web styles via `@use '../../web/src/styles.scss' as *;`.
+   - No deprecated Sass `@import` of SCSS files exists across the codebase (only standard CSS `@import url(...)` for Google Fonts).
 
-1. **`DateInputComponent` (`bb-date-input`)**:
-   - Location: `frontend/libs/shared/ui-components/src/lib/date-input/`
-   - Files: `date-input.component.ts`, `date-input.component.html`, `date-input.component.scss`, `date-input.component.spec.ts`
-   - CVA: `NG_VALUE_ACCESSOR` provided with `forwardRef(() => DateInputComponent)` (lines 17–23).
-   - Form handling: Implements `ControlValueAccessor` (`writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`).
-   - Normalization: Parses ISO 8601 strings (`YYYY-MM-DD`), Date instances, empty strings, and null/undefined values.
-   - Tests: 15 unit tests passing.
+2. **TypeScript Token Contract**:
+   - `frontend/libs/shared/theming/src/index.ts` exports strongly typed immutable structures:
+     - `TOKENS`: Full mirror of SCSS values for colors, ramps, fonts, spacing, radii, shadows, and zIndex.
+     - `CSS_VARS`: Dictionary mapping to CSS `var(...)` strings.
+     - `THEME_PALETTE`: Raw hex/color constants for Canvas/SVG usage.
+     - `LAYOUT_LAYERS`: Numerical constants for layout z-index tiers (TOPBAR: 6, RAIL: 5, BREADCRUMB: 4, STICKY_TABLE_HEADER: 3, CONTENT: 1).
+     - `BREAKPOINTS`: Numerical breakpoints (MOBILE_MAX: 860, DESKTOP_MIN: 861).
 
-2. **`CurrencyInputComponent` (`bb-currency-input`)**:
-   - Location: `frontend/libs/shared/ui-components/src/lib/currency-input/`
-   - Files: `currency-input.component.ts`, `currency-input.component.html`, `currency-input.component.scss`, `currency-input.component.spec.ts`
-   - CVA: `NG_VALUE_ACCESSOR` provided with `forwardRef(() => CurrencyInputComponent)` (lines 17–23).
-   - Domain Math: In `inPaise: true` mode, incoming write values are divided by 100 (`num / 100`), and user typing calculates integer paise via `Math.round(parsed * 100)` (line 122), mitigating IEEE-754 floating-point drift.
-   - Tests: 16 unit tests passing.
-
-3. **`NumberInputComponent` (`bb-number-input`)**:
-   - Location: `frontend/libs/shared/ui-components/src/lib/number-input/`
-   - Files: `number-input.component.ts`, `number-input.component.html`, `number-input.component.scss`, `number-input.component.spec.ts`
-   - CVA: `NG_VALUE_ACCESSOR` provided with `forwardRef(() => NumberInputComponent)` (lines 17–23).
-   - Boundary checks: Explicit `if (value === null || value === undefined || value === '')` ensures `0` is treated as a valid numeric input and not dropped.
-   - Addons & alignment: Prefix/suffix slot rendering with CSS border integration; support for `left`, `right`, and `center` alignment.
-   - Tests: 16 unit tests passing.
-
-4. **`SearchInputComponent` (`bb-search-input`)**:
-   - Location: `frontend/libs/shared/ui-components/src/lib/search-input/`
-   - Files: `search-input.component.ts`, `search-input.component.html`, `search-input.component.scss`, `search-input.component.spec.ts`
-   - CVA: `NG_VALUE_ACCESSOR` provided with `forwardRef(() => SearchInputComponent)` (lines 18–24).
-   - Debounce & keyboard triggers: Configurable `debounceMs` (default 300ms) with `setTimeout` cancellation; immediate search dispatch on `Enter` (lines 96–102); clear on `Escape` (lines 103–106); timer cleanup in `ngOnDestroy` (lines 50–55).
-   - Tests: 16 unit tests passing.
-
-5. **`TextInputComponent` (`bb-text-input`)**:
-   - Location: `frontend/libs/shared/ui-components/src/lib/text-input/`
-   - Files: `text-input.component.ts`, `text-input.component.html`, `text-input.component.scss`, `text-input.component.spec.ts`
-   - CVA: `NG_VALUE_ACCESSOR` provided with `forwardRef(() => TextInputComponent)` (lines 17–23).
-   - Uppercase Transform: In `uppercase: true` mode, `onInput` converts `target.value` to uppercase and updates both the internal signal and `onChange` callback, keeping the DOM element and Angular form model in sync.
-   - Tests: 16 unit tests passing.
-
-6. **Barrel Export**:
-   - `frontend/libs/shared/ui-components/src/index.ts` lines 22–26 exports all 5 components cleanly.
-
-7. **Pre-existing Fixes**:
-   - Fixed missing `DragDropModule` import in `group-panel.component.ts` and `column-chooser.dialog.ts`.
-
-### 1.2 Independent Verification Tool Executions
-- `npx vitest run libs/shared/ui-components`:
-  ```
-  Test Files  8 passed (8)
-       Tests  111 passed (111)
-    Duration  4.91s
-  ```
-- `npm run typecheck`:
-  ```
-  > tsc --noEmit -p tsconfig.eslint.json
-  Exit code 0 (clean, zero errors).
-  ```
-- `npm run check`:
-  ```
-  - Lint: 16/16 projects passed
-  - Typecheck: passed
-  - Tests: 14 test files passed (157 tests total)
-  - Production Build: 3/3 projects passed (desktop, docs, web)
-  Exit code 0.
-  ```
+3. **Independent Verification Execution**:
+   - Unit tests for theming: `npx vitest run libs/shared/theming/` ran 2 test files (`design-tokens.spec.ts`, `tokens.spec.ts`) with **30 passed (30/30)**.
+   - Full workspace verification: `npm run check` completed with **exit code 0**:
+     - Linting: Successfully ran across 17 projects with 0 errors.
+     - Typecheck (`tsc --noEmit -p tsconfig.eslint.json`): Exit code 0.
+     - Tests (`vitest run`): **24 test files passed (24/24), 301 tests passed (301/301)**.
+     - Builds (`nx run-many -t build`): All 3 applications (`web`, `desktop`, `docs`) built cleanly without errors.
 
 ---
 
 ## 2. Logic Chain
 
-1. **CVA Contract & Infinite Loop Prevention**:
-   - In all 5 components, `writeValue` updates only internal reactive state (`innerValue.set` or `displayValue.set`) and deliberately does NOT invoke `this.onChange(...)` or emit `valueChange`. This prevents infinite update cycles between Reactive Form controls and component state.
-2. **Unified Disabled State**:
-   - Component templates bind `[disabled]="effectiveDisabled()"`, where `effectiveDisabled = computed(() => this.disabled() || this.cvaDisabled())`. This correctly merges template `[disabled]` attributes and Reactive Forms `control.disable()` / `control.enable()` API calls into a single truth source.
-3. **Paise Conversion Precision**:
-   - When `inPaise: true`, user typed string (e.g. `"19.99"`) is parsed and transformed via `Math.round(parsed * 100)` -> `1999`, avoiding IEEE-754 floating-point inaccuracies.
-4. **GSTIN / PAN Uppercase Synchronization**:
-   - When `uppercase: true`, `target.value = val.toUpperCase()` is executed inside `onInput` before emitting `onChange(val)`, ensuring that form validation patterns (e.g. `Validators.pattern`) and reactive form values receive uppercase text immediately as the user types.
-5. **Debounce Memory Safety**:
-   - `SearchInputComponent` implements `OnDestroy` with `clearTimeout(this.debounceTimer)` in `ngOnDestroy()`, preventing unmounted components from firing callbacks or leaking memory.
-6. **Zero Integrity Violations**:
-   - No mock facades, no hardcoded expected test outputs, no external non-approved libraries, and full genuine implementation logic across all components.
+1. **Requirement R1 & Design Fidelity**:
+   - The design reference `styles.css` requires color applied as stroke/borders rather than heavy filled blocks, whisper drop shadows via `color-mix`, tabular numerals for financial tables/KPIs, and themed focus outlines.
+   - Inspection of `_tokens.scss`, `_typography.scss`, `_buttons.scss`, `_cards.scss`, and `_table.scss` confirms exact translation of all tokens and component classes.
+
+2. **Architecture & Modularity (R5)**:
+   - Tokens and base styles are strictly isolated in `shared/theming`.
+   - The separation into 9 single-responsibility partials enables clean maintainability.
+   - Modern Dart Sass `@forward` and `@use` syntax eliminates namespace collisions and deprecation warnings.
+
+3. **Layer Stacking Contract Verification**:
+   - Both the SCSS tokens and TypeScript layout constants strictly enforce the stacking order:
+     - Top Bar: `z-index: 6`
+     - Fixed Rail: `z-index: 5`
+     - Breadcrumb Strip: `z-index: 4`
+     - Sticky Table Header: `z-index: 3`
+     - Content / Rows: `z-index: 1`
+   - This ensures downstream milestones (M2 Data Table, M3 App Shell, M4-M5 Module screens) have a robust, conflict-free z-index hierarchy.
+
+4. **Integrity Audit**:
+   - Evaluated tests in `design-tokens.spec.ts` and `tokens.spec.ts`. The tests do not hardcode mocks; they read the actual SCSS files on disk via Node filesystem APIs and verify the regex patterns and custom properties directly against the codebase.
+   - Zero facade implementations, zero bypasses of required logic, and zero unauthorized third-party package dependencies.
 
 ---
 
-## 3. Adversarial Challenges & Stress-Testing
+## 3. Caveats
 
-| # | Assumption / Scenario | Stress-Test / Attack Vector | Result | Status |
-|---|---|---|---|---|
-| 1 | `writeValue` infinite loop | Invoking `writeValue` with different values and verifying `onChange` / `valueChange` are not called. | Passed. No callbacks triggered during `writeValue`. | SAFE |
-| 2 | `inPaise` floating-point drift | Typing amounts like `19.99` or `14.07` into `CurrencyInputComponent`. | `Math.round(parsed * 100)` correctly produces `1999` and `1407` integers. | SAFE |
-| 3 | Uppercase DOM vs Model mismatch | Typing lowercase text in `TextInputComponent` with `uppercase: true` and validating regex in `FormGroup`. | `target.value` is rewritten to uppercase and `control.value` receives uppercase string. | SAFE |
-| 4 | Rapid typing in `SearchInputComponent` | Rapid keystrokes followed by immediate `Enter` key or unmount. | Prior timers cleared; Enter dispatches immediately; `ngOnDestroy` cleans pending timer. | SAFE |
-| 5 | Falsy zero numeric input | Passing `0` into `NumberInputComponent` via `writeValue` and user input. | `0` is correctly rendered as `'0'` and emitted as `0` without being coerced to `null`. | SAFE |
-| 6 | Disabled component interaction | Triggering clear button in `SearchInputComponent` while disabled. | `onClear()` checks `effectiveDisabled()` and safely exits as a no-op. | SAFE |
+No caveats. All requirements for Milestone 1 are completely met and independently verified.
 
 ---
 
-## 4. Caveats
-
-- **No caveats**: All 5 components are complete, conformant to `PROJECT.md` contracts, fully tested with 100% test pass rate, and verified through workspace-wide `npm run check`.
-
----
-
-## 5. Conclusion
+## 4. Conclusion
 
 **Verdict: APPROVE**
 
-The implementation of Milestone 1 (Shared Primitive UI Components) fulfills all architectural, functional, CVA, and adversarial integrity standards:
-- Real CVA implementation with `forwardRef` for all 5 components (`DateInput`, `CurrencyInput`, `NumberInput`, `SearchInput`, `TextInput`).
-- Responsive down to 360px width, utilizing CSS design tokens and no unapproved packages.
-- Zero integrity violations detected.
-- Verified independently via Vitest, TypeScript typecheck, and full workspace check (`npm run check`).
+Milestone 1 (`shared/theming`) delivers a robust, modular, and fully tested design token system that faithfully reproduces the Classical design language. It compiles cleanly without Dart Sass warnings, passes all unit and integration tests across the workspace, and provides the necessary foundation for Milestone 2 (Shared Data Table) and Milestone 3 (App Shell).
 
 ---
 
-## 6. Verification Method
+## 5. Verification Method
 
-To independently verify this review:
+To independently reproduce the verification:
 
 ```powershell
 cd C:\Users\Praba\Source\repos\Bill-Book\frontend
 
-# 1. Run UI components unit test suite
-npx vitest run libs/shared/ui-components
+# 1. Run Theming Unit Tests
+npx vitest run libs/shared/theming/
 
-# 2. Run TypeScript typechecking
-npm run typecheck
-
-# 3. Run full workspace check (lint, typecheck, tests, production builds)
+# 2. Run Full Workspace Check (Lint, Typecheck, 301 Tests, 3 App Builds)
 npm run check
 ```

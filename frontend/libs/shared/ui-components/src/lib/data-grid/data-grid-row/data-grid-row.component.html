@@ -1,6 +1,8 @@
-`<td *ngFor="let col of visibleColumns" 
-        [ngClass]="{'text-right': col.dataType === 'money' || col.dataType === 'number' || col.dataType === 'quantity' || col.dataType === 'unitprice'}"
-        [style.font-variant-numeric]="(col.dataType === 'money' || col.dataType === 'date' || col.dataType === 'quantity' || col.dataType === 'unitprice') ? 'tabular-nums' : null"
-        (click)="onRowClick()">
-      <bb-data-grid-cell [col]="col" [row]="row" [template]="templates[col.field]"></bb-data-grid-cell>
-    </td>`
+<td *ngFor="let col of visibleColumns" 
+    [class.numeric]="isNumericCol(col)"
+    [ngClass]="{'text-right': isNumericCol(col)}"
+    [style.font-variant-numeric]="isNumericCol(col) || col.dataType === 'date' ? 'tabular-nums' : null"
+    [style.width]="col.width"
+    (click)="onRowClick()">
+  <bb-data-grid-cell [col]="col" [row]="row" [template]="templates[col.field]"></bb-data-grid-cell>
+</td>

@@ -1,0 +1,159 @@
+/* Classical — Design System Tokens */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:wght@400;600&display=swap');
+
+:root {
+  /* Core Color Palette */
+  --color-bg: #f3f2f2;
+  --color-surface: #eae9e9;
+  --color-text: #201f1d;
+  --color-ink: #2f353f;
+  --color-accent: #f06311;
+  --color-accent-2: #ac803e;
+  --color-divider: color-mix(in srgb, #201f1d 16%, transparent);
+  --color-border: color-mix(in srgb, #201f1d 16%, transparent);
+
+  /* OKLCH Neutral Ramp (Greys on warm ground) */
+  --color-neutral-100: #f8f4f4;
+  --color-neutral-200: #eae7e7;
+  --color-neutral-300: #d7d3d3;
+  --color-neutral-400: #bab6b6;
+  --color-neutral-500: #9b9797;
+  --color-neutral-600: #7d7979;
+  --color-neutral-700: #605d5d;
+  --color-neutral-800: #444141;
+  --color-neutral-900: #2d2b2b;
+
+  /* Primary Brand Accent Ramp (#f06311) */
+  --color-accent-100: #fdefe4;
+  --color-accent-200: #ffe3bf;
+  --color-accent-300: #facb8d;
+  --color-accent-400: #f7853f;
+  --color-accent-500: #f06311;
+  --color-accent-600: #c94d08;
+  --color-accent-700: #a03d05;
+  --color-accent-800: #7a2f04;
+  --color-accent-900: #3a270d;
+
+  /* Secondary Classical Gold Ramp (#ac803e / #bc8f4e) */
+  --color-accent-2-100: #fff3e4;
+  --color-accent-2-200: #ffe3be;
+  --color-accent-2-300: #f5cd96;
+  --color-accent-2-400: #dbaf70;
+  --color-accent-2-500: #bc8f4e;
+  --color-accent-2-600: #9b7232;
+  --color-accent-2-700: #79561f;
+  --color-accent-2-800: #573d14;
+  --color-accent-2-900: #382810;
+
+  /* Semantic Alerts */
+  --color-danger: #a2332a;
+  --color-danger-bg: #fbe4e0;
+  --color-warning: #8a5b00;
+  --color-warning-bg: #fdf0d5;
+  --color-success: #187a4b;
+  --color-success-bg: #e2f3e9;
+
+  /* Typography */
+  --font-heading: "Cormorant Garamond", system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: "Lora", system-ui, sans-serif;
+  --font-mono: Consolas, "Courier New", monospace;
+
+  /* Spacing Scale (Classical 4.6px multiplier) */
+  --space-1: 4.6px;
+  --space-2: 9.2px;
+  --space-3: 13.8px;
+  --space-4: 18.4px;
+  --space-6: 27.6px;
+  --space-8: 36.8px;
+
+  /* Compact Spacing Scale (ERP High-Density) */
+  --space-compact-1: 3px;
+  --space-compact-2: 7px;
+  --space-compact-3: 10px;
+  --space-compact-4: 13px;
+  --space-compact-6: 18px;
+  --space-compact-8: 24px;
+
+  /* Border Radii */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 7px;
+  --radius-tag: 3px;
+  --radius-pill: 999px;
+  --radius-full: 999px;
+
+  /* Whisper Elevation Shadows (Derived from ground via color-mix) */
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2d2b2b 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2d2b2b 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2d2b2b 22%, transparent);
+  --shadow-header: 0 8px 20px -10px rgba(32, 31, 29, 0.45), var(--shadow-md);
+  --shadow-rail-active: inset 4px 0 0 var(--color-accent), inset 13px 0 12px -10px rgba(32, 31, 29, 0.55);
+  --shadow-table-head: inset 0 -1px 0 color-mix(in srgb, var(--color-accent) 55%, transparent);
+
+  /* Layout Stacking Z-Index Hierarchy */
+  --z-topbar: 6;
+  --z-header: 6;
+  --z-rail: 5;
+  --z-breadcrumbs: 4;
+  --z-breadcrumb: 4;
+  --z-table-head: 3;
+  --z-table-header: 3;
+  --z-content: 1;
+  --z-base: 1;
+  --z-dropdown: 20;
+  --z-modal: 30;
+  --z-toast: 50;
+}
+
+/* Global Reset & Base */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Modern Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-neutral-400) transparent;
+}
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: var(--color-neutral-400);
+  border-radius: 3px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-neutral-500);
+}
+
+/* Themed Focus & Selection */
+:focus {
+  outline: none;
+}
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+::selection {
+  background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+}

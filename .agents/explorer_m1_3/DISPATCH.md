@@ -1,20 +1,18 @@
-## 2026-08-18T16:57:01Z
-You are Explorer 3 for Milestone 1 (Shared Primitive UI Components).
-Your working directory is: C:\Users\Praba\Source\repos\Bill-Book\.agents\explorer_m1_3
-Read:
-- C:\Users\Praba\Source\repos\Bill-Book\.agents\ORIGINAL_REQUEST.md
-- C:\Users\Praba\Source\repos\Bill-Book\PROJECT.md
-- C:\Users\Praba\Source\repos\Bill-Book\AGENTS.md
-- C:\Users\Praba\Source\repos\Bill-Book\.agents\sub_orch_m1_components\SCOPE.md
+## 2026-08-19T14:53:38Z
+You are an Explorer for Milestone 1: Design Tokens & Theming (`shared/theming`).
+Your working directory is `C:\Users\Praba\Source\repos\Bill-Book\.agents\explorer_m1_3`.
+You MUST create your directory if it does not exist, maintain your `progress.md` and `BRIEFING.md` in your directory, and write your findings to `C:\Users\Praba\Source\repos\Bill-Book\.agents\explorer_m1_3\analysis.md`.
+When finished, send a handoff message to parent (`81ce1b4e-8b82-482d-87dd-d3c3263fc136` / orchestrator).
 
-Your task:
-1. Investigate the frontend test configuration, test runners, and scripts in `frontend/package.json` and `frontend/nx.json`.
-2. Check how tests are executed (e.g. `npm run test`, `npx nx test shared-ui-components`, Vitest vs Jest configuration in `frontend/libs/shared/ui-components/`).
-3. Check how typechecking and linting are configured (`npm run typecheck`, `npm run lint`, `npm run check`).
-4. Design the unit testing plan (`.spec.ts`) for all 5 primitive components:
-   - Test CVA lifecycle (`writeValue`, `registerOnChange`, `registerOnTouched`, `setDisabledState`)
-   - Test Reactive Forms integration (`FormGroup`, `FormControl`)
-   - Test Template-driven integration (`[(ngModel)]`)
-   - Test user interaction events (`input`, `change`, `blur`, `focus`, `keydown.enter`, clear button)
-   - Test edge cases (null/undefined inputs, formatting, min/max limits, mobile responsiveness)
-5. Write your findings and test strategy to `C:\Users\Praba\Source\repos\Bill-Book\.agents\explorer_m1_3\handoff.md` and send a message back with your report path.
+MANDATORY INPUTS TO READ:
+1. `C:\Users\Praba\Source\repos\Bill-Book\.agents\ORIGINAL_REQUEST.md`
+2. `C:\Users\Praba\Source\repos\Bill-Book\PROJECT.md`
+3. `frontend/libs/shared/theming/` configuration (`project.json`, `tsconfig.json`, `src/index.ts`)
+4. Applications importing global styles: `frontend/apps/web/`, `frontend/apps/desktop/`
+
+TASKS:
+1. Analyze how `libs/shared/theming` is bundled, exported, and imported by apps and libs.
+2. Check `project.json` style targets, path aliases in `tsconfig.base.json`, and `@import` / `@use` paths.
+3. Recommend how `apps/web/src/styles.scss` and other apps should include the design tokens and partials without breaking lint or builds.
+4. Verify TypeScript token exports in `src/index.ts` if needed.
+Write detailed report in `analysis.md` and send handoff.

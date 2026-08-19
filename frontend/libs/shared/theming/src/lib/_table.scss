@@ -1,0 +1,103 @@
+/* Classical — Data Tables (Sticky Header, Hairline Rules, Compact Density) */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.table th {
+  text-align: left;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: 5px var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+
+  button {
+    all: unset;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font: inherit;
+    color: inherit;
+  }
+}
+
+.table td {
+  padding: 5px var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  min-height: 32px;
+}
+
+.table thead th:first-child,
+.table tbody td:first-child {
+  padding-left: var(--space-3);
+}
+
+.table thead th:last-child,
+.table tbody td:last-child {
+  padding-right: var(--space-3);
+}
+
+.table tbody tr {
+  transition: background 120ms ease;
+}
+
+.table tbody tr:hover {
+  background: color-mix(in srgb, var(--color-accent) 5%, transparent);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table th.numeric,
+.table td.numeric,
+.table th[numeric],
+.table td[numeric] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.table tbody .input {
+  min-height: 28px;
+  font-size: 12.5px;
+}
+
+.table tbody .input[inputmode] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* Sticky Header in Scrollable Table Wrapper */
+.listwrap .table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-head);
+  background: var(--color-surface);
+  background-clip: padding-box;
+  border-bottom: 0;
+  box-shadow: var(--shadow-table-head);
+  color: var(--color-accent-800);
+  white-space: nowrap;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+}
+
+.listwrap .table thead tr.fltrow th {
+  padding-top: 3px;
+  padding-bottom: 4px;
+  box-shadow: none;
+  top: 28px;
+}
+
+.listwrap .table thead .fltrow .input {
+  min-height: 24px;
+  padding: 1px 7px;
+  font-size: 11.5px;
+}

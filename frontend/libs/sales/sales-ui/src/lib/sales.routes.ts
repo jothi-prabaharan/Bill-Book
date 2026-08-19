@@ -36,6 +36,14 @@ export const salesRoutes: Routes = [
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent)
   },
   {
+    path: 'delivery-challans/new',
+    loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)
+  },
+  {
+    path: 'delivery-challans/:id',
+    loadComponent: () => import('./delivery-challan-form/delivery-challan-form.component').then(m => m.DeliveryChallanFormComponent)
+  },
+  {
     path: 'credit-notes/new',
     loadComponent: () => import('./credit-note-form/credit-note-form.component').then(m => m.CreditNoteFormComponent)
   },

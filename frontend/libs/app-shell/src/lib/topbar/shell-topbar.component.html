@@ -1,0 +1,113 @@
+<header class="shell-header">
+  <img src="assets/bill-book-mark.png" alt="Bill-Book" class="mobile-header-elements">
+
+  <div class="shell-org-picker org-dropdown-container">
+    <button
+      type="button"
+      (click)="toggleOrg()"
+      [attr.aria-expanded]="orgOpen()"
+      aria-label="Switch organization"
+      class="shell-org-toggle org-toggle-btn"
+    >
+      <span class="org-toggle-text">
+        <span class="org-company-name">{{ currentOrgName() }}</span>
+        <span class="org-role-name">{{ currentOrgRole() }}</span>
+      </span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-toggle-chevron"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+
+    @if (orgOpen()) {
+      <div class="shell-org-dropdown">
+        <bb-search-input
+          placeholder="Search organizations"
+          [ngModel]="orgQuery()"
+          (ngModelChange)="setOrgQuery($event)"
+          class="org-search-input"
+        ></bb-search-input>
+        <div class="org-list-container">
+          @for (org of filteredOrgs(); track org.orgId) {
+            <button
+              type="button"
+              (click)="pickOrg(org.orgId)"
+              [attr.aria-current]="org.orgId === currentOrgId() ? 'true' : null"
+              class="org-list-btn"
+            >
+              <span class="org-item-name">{{ org.orgName }}</span>
+              <span class="org-item-role">{{ org.roleName }}</span>
+            </button>
+          }
+          @if (filteredOrgs().length === 0) {
+            <div class="org-empty-msg">No organization matches that.</div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Display-only Financial Year Tag -->
+  <span class="tag tag-outline fy-tag" aria-label="Current financial year">{{ financialYear() }}</span>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="topacts">
+    <button class="btn btn-ghost" type="button" (click)="openNew()" title="New transaction" aria-label="New transaction">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" (click)="openFav()" title="Favourites" aria-label="Favourites">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" title="Help" aria-label="Help">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" title="Sign out" aria-label="Sign out" (click)="doLogout()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+    </button>
+  </div>
+</header>
+
+@if (newOpen()) {
+  <div class="dialog-backdrop" style="z-index: 30" (click)="closeNew()" (keyup.enter)="closeNew()" tabindex="0">
+    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
+      <div class="flex items-baseline justify-between gap-3">
+        <div class="dialog-title">New transaction</div>
+        <button type="button" (click)="closeNew()" (keyup.enter)="closeNew()" tabindex="0" class="btn btn-ghost m-0">Close</button>
+      </div>
+      <div class="text-muted text-sm">Every document you can raise from this branch.</div>
+
+      @for (grp of newGroups; track grp.name) {
+        <div>
+          <div class="card-kicker mb-2">{{ grp.name }}</div>
+          <div style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))" class="gap-2 grid">
+            @for (doc of grp.docs; track doc.code) {
+              <button type="button" (click)="selectDoc(doc.code)" (keyup.enter)="selectDoc(doc.code)" tabindex="0" class="btn btn-secondary m-0 justify-between gap-2 text-left">
+                {{ doc.label }}<span style="font-size: 10px; letter-spacing: 0.1em" class="text-muted tabular-nums">{{ doc.code }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (favOpen()) {
+  <div class="dialog-backdrop" style="z-index: 30" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0">
+    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
+      <div class="flex items-baseline justify-between gap-3">
+        <div class="dialog-title">Favourites</div>
+        <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0" class="btn btn-ghost m-0">Close</button>
+      </div>
+      <div class="text-muted text-sm">Your most frequently used screens.</div>
+
+      <div>
+        <div class="card-kicker mb-2">Quick Links</div>
+        <div style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr))" class="gap-2 grid">
+          <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0" routerLink="/sales" class="btn btn-secondary m-0 text-left">Sales Overview</button>
+          <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0" routerLink="/purchase" class="btn btn-secondary m-0 text-left">Purchase Overview</button>
+          <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0" routerLink="/banking" class="btn btn-secondary m-0 text-left">Banking</button>
+          <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0" routerLink="/reports" class="btn btn-secondary m-0 text-left">Reports</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

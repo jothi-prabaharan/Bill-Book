@@ -1,45 +1,120 @@
-<div class="flex justify-end" style="margin-bottom:8px">
-  <button class="btn btn-secondary" (click)="exportToCsv()">Export to CSV</button>
+<div *ngIf="showExport" class="flex justify-end" style="margin-bottom:8px">
+  <button type="button" class="btn btn-secondary" (click)="exportToCsv()">Export to CSV</button>
 </div>
 
-<div class="card p-0" style="overflow-x:auto">
-  <cdk-virtual-scroll-viewport itemSize="45" class="w-full" style="height: 500px">
-    <table class="table w-full m-0">
-      <thead class="sticky top-0 z-50" style="background: var(--color-background-card)">
+<div class="card p-0 data-grid-card" [class.compact]="compact">
+  <!-- Progress bar for loading state -->
+  <div *ngIf="loading" class="data-grid-loading-bar" aria-hidden="true">
+    <div class="loading-pulse"></div>
+  </div>
+
+  <div class="listwrap" [class.compact]="compact">
+    <table class="table" [class.compact]="compact">
+      <thead>
         <tr>
-          <th *ngFor="let col of visibleColumns()" class="relative" style="background: var(--color-background-card)" [ngClass]="{'text-right': col.dataType === 'money' || col.dataType === 'number' || col.dataType === 'quantity' || col.dataType === 'unitprice'}">
-            <div class="flex items-center justify-between">
-              <span>{{ col.header }}</span>
-              <button style="padding:2px" (click)="toggleFilter(col.field, $event)" class="min-h-auto btn btn-ghost m-0">
+          <th *ngFor="let col of visibleColumns()"
+              [class.numeric]="isNumericCol(col)"
+              [style.width]="col.width"
+              class="relative">
+            <div class="flex items-center justify-between gap-1" [class.flex-row-reverse]="isNumericCol(col)">
+              <button type="button"
+                      class="table-sort-btn"
+                      [disabled]="!sortable || col.sortable === false"
+                      (click)="onSort(col)"
+                      [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
+                <span>{{ col.header || col.title || col.field }}</span>
+                <span class="sort-indicator" *ngIf="sortable && col.sortable !== false" [class.active]="sortField() === col.field">
+                  <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
+                  <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
+                  <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
+                </span>
+              </button>
+
+              <button type="button"
+                      style="padding:2px"
+                      (click)="toggleFilter(col.field, $event)"
+                      title="Filter column"
+                      aria-label="Filter column"
+                      class="btn btn-ghost m-0 filter-btn">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
                 </svg>
               </button>
             </div>
-            
-            <div *ngIf="openFilterField() === col.field" class="top-full p-3 filter-dropdown card absolute left-0 z-60 shadow-md border-divider">
+
+            <!-- Column Filter Dropdown -->
+            <div *ngIf="openFilterField() === col.field"
+                 class="filter-dropdown card absolute shadow-md"
+                 [ngClass]="isNumericCol(col) ? 'right-0' : 'left-0'">
               <select style="min-height:28px" 
-                      [ngModel]="filterOp()" (ngModelChange)="filterOp.set($event)" (click)="$event.stopPropagation()" class="px-2 py-1 input w-full mb-2 text-sm">
+                      [ngModel]="filterOp()"
+                      (ngModelChange)="filterOp.set($event)"
+                      (click)="$event.stopPropagation()"
+                      class="px-2 py-1 input w-full mb-2 text-sm">
                 <option value="equals">Equals</option>
                 <option value="contains">Contains</option>
                 <option value="starts">Starts with</option>
               </select>
-              <input type="text" placeholder="Value..." style="min-height:28px" 
-                     [ngModel]="filterVal()" (ngModelChange)="filterVal.set($event)" (click)="$event.stopPropagation()" class="px-2 py-1 input w-full mb-2 text-sm">
+              <input type="text"
+                     placeholder="Value..."
+                     style="min-height:28px" 
+                     [ngModel]="filterVal()"
+                     (ngModelChange)="filterVal.set($event)"
+                     (click)="$event.stopPropagation()"
+                     (keydown.enter)="applyFilter(col.field, $event)"
+                     class="px-2 py-1 input w-full mb-2 text-sm">
               <div class="flex justify-end gap-2">
-                <button style="min-height:24px" (click)="clearFilter(col.field, $event)" class="px-1-5 py-0-5 btn btn-secondary text-xs m-0">Clear</button>
-                <button style="min-height:24px" (click)="applyFilter(col.field, $event)" class="px-1-5 py-0-5 btn btn-primary text-xs m-0">Apply</button>
+                <button type="button"
+                        style="min-height:24px"
+                        (click)="clearFilter(col.field, $event)"
+                        class="btn btn-secondary text-xs m-0">Clear</button>
+                <button type="button"
+                        style="min-height:24px"
+                        (click)="applyFilter(col.field, $event)"
+                        class="btn btn-primary text-xs m-0">Apply</button>
               </div>
             </div>
           </th>
         </tr>
       </thead>
       <tbody>
-        <tr bb-data-grid-row *cdkVirtualFor="let row of filteredData()" [row]="row" [visibleColumns]="visibleColumns()" (rowClick)="onRowClick($event)" class="clickable-row cursor-pointer"></tr>
-        <tr *ngIf="filteredData().length === 0">
-          <td [attr.colspan]="visibleColumns().length" class="text-center text-muted p-4">No records found.</td>
+        <tr *ngFor="let row of displayData()"
+            bb-data-grid-row
+            [row]="row"
+            [visibleColumns]="visibleColumns()"
+            [templates]="templateMap"
+            (rowClick)="onRowClick($event)"
+            class="clickable-row cursor-pointer">
+        </tr>
+        
+        <!-- Empty State -->
+        <tr *ngIf="!loading && displayData().length === 0" class="empty-state-row">
+          <td [attr.colspan]="visibleColumns().length" class="text-center text-muted p-4">
+            <ng-container *ngIf="emptyTemplate || contentEmptyTemplate; else defaultEmpty">
+              <ng-container *ngTemplateOutlet="emptyTemplate || contentEmptyTemplate"></ng-container>
+            </ng-container>
+            <ng-template #defaultEmpty>No records found.</ng-template>
+          </td>
         </tr>
       </tbody>
     </table>
-  </cdk-virtual-scroll-viewport>
+  </div>
+
+  <!-- Pagination Strip -->
+  <div *ngIf="(totalCount > 0 ? totalCount : filteredData().length) > pageSize || totalPages() > 1"
+       class="table-pagination">
+    <span class="text-muted pagination-summary">
+      {{ paginationSummary() }}
+    </span>
+    <div class="pagination-actions flex gap-2">
+      <button type="button"
+              class="btn btn-secondary pagination-btn"
+              [disabled]="currentPage <= 1"
+              (click)="prevPage()">Previous</button>
+      <button type="button"
+              class="btn btn-secondary pagination-btn"
+              [disabled]="currentPage >= totalPages()"
+              (click)="nextPage()">Next</button>
+    </div>
+  </div>
 </div>

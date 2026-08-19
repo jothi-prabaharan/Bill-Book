@@ -1,0 +1,161 @@
+/* Classical — Buttons (Stroke-over-Fill) */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border-radius: var(--radius-md);
+  transition: background 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 80ms ease;
+  user-select: none;
+  white-space: nowrap;
+
+  svg {
+    display: block;
+    flex: none;
+  }
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-800);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  }
+}
+
+.btn-secondary {
+  border-color: var(--color-divider);
+  color: var(--color-text);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+    border-color: color-mix(in srgb, var(--color-text) 30%, transparent);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-text) 14%, transparent);
+  }
+}
+
+.btn-ghost {
+  color: var(--color-accent-700);
+  padding-inline: var(--space-1);
+  border-color: transparent;
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+    color: var(--color-accent-800);
+  }
+
+  &:active:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 18%, transparent);
+  }
+}
+
+.btn-icon {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  flex: none;
+  border-radius: var(--radius-md);
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: var(--space-2);
+}
+
+.btn[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent-700);
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent);
+}
+
+/* Segmented Button Group */
+.tabgrp {
+  display: inline-flex;
+
+  > .btn {
+    margin: 0;
+    font-size: 12px;
+    padding: 5px 9px;
+
+    &:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    + .btn {
+      width: 32px;
+      min-height: 30px;
+      padding: 0;
+      border-left: 0;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+      color: var(--color-accent-700);
+
+      svg {
+        display: block;
+      }
+    }
+  }
+}
+
+/* Window & Board Control Buttons */
+.wbar {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  gap: 2px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.wbtn {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: 12px/1 var(--font-mono);
+  color: var(--color-text);
+  border-radius: 3px;
+  transition: background 150ms ease, color 150ms ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+    color: var(--color-accent-700);
+  }
+}

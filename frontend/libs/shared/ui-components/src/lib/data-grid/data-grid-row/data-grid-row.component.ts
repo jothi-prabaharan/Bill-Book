@@ -20,4 +20,13 @@ export class DataGridRowComponent {
   onRowClick() {
     this.rowClick.emit(this.row);
   }
+
+  isNumericCol(col: ColumnDef): boolean {
+    if (!col) return false;
+    return (
+      col.numeric === true ||
+      col.align === 'right' ||
+      ['number', 'money', 'quantity', 'unitprice'].includes(col.dataType || '')
+    );
+  }
 }

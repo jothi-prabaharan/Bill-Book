@@ -2,7 +2,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CreditNoteService, SaveCreditNoteRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
@@ -42,6 +42,10 @@ export class CreditNoteFormComponent implements OnInit {
     discountLevel: 'Line',
     readonly: false
   };
+
+  get totals() {
+    return totalsOf(this.lines);
+  }
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id');

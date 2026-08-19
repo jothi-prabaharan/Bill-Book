@@ -2,22 +2,22 @@
   <ng-container *ngTemplateOutlet="template; context: { $implicit: row }"></ng-container>
 </ng-container>
 <ng-template #defaultCell>
-`<ng-container [ngSwitch]="col.dataType">
-      <ng-container *ngSwitchCase="'date'">{{ value | date:'mediumDate' }}</ng-container>
-      <ng-container *ngSwitchCase="'datetime'">{{ value | date:'medium' }}</ng-container>
-      <ng-container *ngSwitchCase="'money'">{{ value | number:'1.2-2' }}</ng-container>
-      <ng-container *ngSwitchCase="'quantity'">{{ value | number:'1.3-3' }}</ng-container>
-      <ng-container *ngSwitchCase="'unitprice'">{{ value | number:'1.4-4' }}</ng-container>
-      <ng-container *ngSwitchCase="'boolean'">
-        <input type="checkbox" [checked]="!!value" disabled>
-      </ng-container>
-      <ng-container *ngSwitchCase="'status'">
-        <span class="tag" [ngClass]="{
-          'tag-neutral': value === 'Posted' || value === 'Closed',
-          'tag-accent': value === 'Open' || value === 'Sent',
-          'tag-outline': value === 'Draft' || value === 'Void'
-        }">{{ value }}</span>
-      </ng-container>
-      <ng-container *ngSwitchDefault>{{ value }}</ng-container>
-    </ng-container>`
+  <ng-container [ngSwitch]="col.dataType">
+    <ng-container *ngSwitchCase="'date'">{{ value | date:'mediumDate' }}</ng-container>
+    <ng-container *ngSwitchCase="'datetime'">{{ value | date:'medium' }}</ng-container>
+    <ng-container *ngSwitchCase="'money'">{{ value | number:'1.2-2' }}</ng-container>
+    <ng-container *ngSwitchCase="'quantity'">{{ value | number:'1.3-3' }}</ng-container>
+    <ng-container *ngSwitchCase="'unitprice'">{{ value | number:'1.4-4' }}</ng-container>
+    <ng-container *ngSwitchCase="'boolean'">
+      <input type="checkbox" [checked]="!!value" disabled>
+    </ng-container>
+    <ng-container *ngSwitchCase="'status'">
+      <span class="tag" [ngClass]="{
+        'tag-neutral': value === 'Posted' || value === 'Closed',
+        'tag-accent': value === 'Open' || value === 'Sent',
+        'tag-outline': value === 'Draft' || value === 'Void'
+      }">{{ value }}</span>
+    </ng-container>
+    <ng-container *ngSwitchDefault>{{ value }}</ng-container>
+  </ng-container>
 </ng-template>

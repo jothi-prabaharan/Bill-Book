@@ -21,3 +21,23 @@ Your Challenge Tasks:
    - `cd frontend && npx vitest run libs/shared/ui-components`
 4. State your explicit verdict: `APPROVE` (or `REJECT` with specific issues).
 5. Write your findings to `C:\Users\Praba\Source\repos\Bill-Book\.agents\challenger_m1_1\handoff.md` and send a message back with your report path and verdict.
+
+## 2026-08-19T15:04:00Z
+You are Challenger 1 for Milestone 1: Design Tokens & Theming (`shared/theming`).
+Your working directory is `C:\Users\Praba\Source\repos\Bill-Book\.agents\challenger_m1_1`.
+You MUST create your directory if it does not exist, maintain your `progress.md` and `BRIEFING.md` in your directory, and write your findings to `C:\Users\Praba\Source\repos\Bill-Book\.agents\challenger_m1_1\handoff.md`.
+When finished, send a handoff message to parent (`81ce1b4e-8b82-482d-87dd-d3c3263fc136` / orchestrator) with your explicit confirmation of correctness or failure report.
+
+MANDATORY INPUTS TO READ:
+1. `C:\Users\Praba\Source\repos\Bill-Book\.agents\ORIGINAL_REQUEST.md`
+2. `C:\Users\Praba\Source\repos\Bill-Book\PROJECT.md`
+3. Theming files: `frontend/libs/shared/theming/src/lib/*`
+
+TASKS:
+1. Empirically verify the correctness of the SCSS design tokens, ramps, typography, and whisper shadows.
+2. Stress test edge cases:
+   - Check if all 100-900 ramp variables resolve without syntax errors.
+   - Verify tabular numerals on numbers and tables.
+   - Verify that focus-visible outline is exactly 2px solid accent with 2px offset.
+   - Verify that CSS-only interaction states contain no JavaScript logic.
+3. Run stress verification tests and document empirical findings in `handoff.md`.

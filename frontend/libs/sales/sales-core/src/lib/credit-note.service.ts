@@ -91,7 +91,7 @@ export interface SaveCreditNoteLineRequest {
 })
 export class CreditNoteService {
   private http = inject(HttpClient);
-  private baseUrl = '/api/sales/CreditNotes';
+  private baseUrl = '/api/sales/credit-notes';
 
   list(from?: string, to?: string): Observable<CreditNoteListItem[]> {
     let url = this.baseUrl;

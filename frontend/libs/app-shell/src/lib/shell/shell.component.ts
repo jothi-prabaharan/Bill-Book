@@ -1,30 +1,25 @@
-import { SearchInputComponent } from '@bill-book/ui-components';
-import { filter } from 'rxjs/operators';
 import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet, NavigationEnd } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { AuthService, AccessibleOrg } from '@bill-book/auth';
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  /**
-   * The module this entry leads to, or null for one every role can reach.
-   * Drawn only when the user holds `{module}.view`.
-   */
-  module: string | null;
-}
+import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
+import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
+import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-breadcrumb.component';
 
 /**
- * Teams-style shell. Desktop (≥768px): far-left icon rail + main area.
- * Mobile: bottom tab bar with the top 4 modules + "More" — the Teams-mobile
- * pattern. Same nav model both ways; only the chrome changes.
+ * Root CSS Grid layout orchestrator (`bb-shell`).
+ * Coordinates fixed 56px left rail (`bb-shell-nav`), 46px top bar (`bb-shell-topbar`),
+ * sticky breadcrumb strip (`bb-shell-breadcrumb`), and scrolling content viewport (`<router-outlet />`).
  */
 @Component({
   selector: 'bb-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, SearchInputComponent, FormsModule],
+  imports: [
+    RouterOutlet,
+    ShellNavComponent,
+    ShellTopbarComponent,
+    ShellBreadcrumbComponent,
+  ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
 })
@@ -40,138 +35,152 @@ export class ShellComponent {
     { path: '/purchase', label: 'Purchase', icon: 'purchase', module: 'purchase' },
     { path: '/sales', label: 'Sales', icon: 'sales', module: 'sales' },
     { path: '/banking', label: 'Banking', icon: 'banking', module: 'banking' },
-    { path: '/accounting', label: 'Accounts', icon: 'accounting', module: 'accounting' },
+    { path: '/accounting', label: 'Accounts', icon: 'accounting', module: 'accounting' }, // STRICT UI RULE: Accounts
     { path: '/reports', label: 'Reports', icon: 'reports', module: 'reports' },
     { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
   ];
 
   /**
-   * What this user can actually open. Offering a screen that answers 403 is a
-   * menu lying about the product; the server was already refusing these, so
-   * this only changes what is drawn.
+   * What this user can actually open based on active permissions.
    */
   readonly nav = computed(() =>
     this.all.filter((item) => item.module === null || this.auth.canView(item.module)),
   );
 
   // Organization Switcher State
-  orgOpen = signal(false);
-  orgQuery = signal('');
-  private readonly allOrgs = signal<AccessibleOrg[]>([]);
+  readonly orgOpen = signal(false);
+  readonly orgQuery = signal('');
+  readonly allOrgs = signal<AccessibleOrg[]>([]);
 
   // New Transaction Popup State
-  newOpen = signal(false);
-  
+  readonly newOpen = signal(false);
+
   // Favourites Popup State
-  favOpen = signal(false);
+  readonly favOpen = signal(false);
 
   // Navigation / Crumbs State
-  crumbs = signal<{label: string, isLink: boolean, isLast: boolean, path?: string}[]>([]);
-  isHome = computed(() => this.router.url === '/dashboard' || this.router.url === '/');
-  isRegister = computed(() => this.router.url.includes('/sales') || this.router.url.includes('/purchase') || this.router.url.includes('/inventory') || this.router.url.includes('/contacts'));
-  
-  // Dashboard Actions State (mock)
-  base = signal(false);
-  baseLabel = signal('Accrual basis');
-  editing = signal(false);
-  notEditing = computed(() => !this.editing());
+  readonly crumbs = signal<BreadcrumbItem[]>([]);
+  readonly isHome = computed(() => this.router.url === '/dashboard' || this.router.url === '/');
+  readonly isRegister = computed(
+    () =>
+      this.router.url.includes('/sales') ||
+      this.router.url.includes('/purchase') ||
+      this.router.url.includes('/inventory') ||
+      this.router.url.includes('/contacts'),
+  );
 
-  newGroups = [
-    { name: 'Sales', docs: [
-      { label: 'Invoice', code: 'INV' },
-      { label: 'Sales order', code: 'SOR' },
-      { label: 'Quote', code: 'QOT' },
-      { label: 'Delivery challan', code: 'DLC' },
-      { label: 'Credit note', code: 'CRN' },
-      { label: 'POS sale', code: 'POS' }
-    ] },
-    { name: 'Purchase', docs: [
-      { label: 'Bill', code: 'BIL' },
-      { label: 'Purchase order', code: 'POR' },
-      { label: 'Goods receipt', code: 'GRN' },
-      { label: 'Debit note', code: 'DBN' }
-    ] },
-    { name: 'Banking', docs: [
-      { label: 'Receive money', code: 'REC' },
-      { label: 'Spend money', code: 'PAY' },
-      { label: 'Transfer money', code: 'TRF' }
-    ] }
+  // Dashboard Actions State
+  readonly base = signal(false);
+  readonly baseLabel = signal('Accrual basis');
+  readonly editing = signal(false);
+  readonly notEditing = computed(() => !this.editing());
+
+  readonly newGroups = [
+    {
+      name: 'Sales',
+      docs: [
+        { label: 'Invoice', code: 'INV' },
+        { label: 'Sales order', code: 'SOR' },
+        { label: 'Quote', code: 'QOT' },
+        { label: 'Delivery challan', code: 'DLC' },
+        { label: 'Credit note', code: 'CRN' },
+        { label: 'POS sale', code: 'POS' },
+      ],
+    },
+    {
+      name: 'Purchase',
+      docs: [
+        { label: 'Bill', code: 'BIL' },
+        { label: 'Purchase order', code: 'POR' },
+        { label: 'Goods receipt', code: 'GRN' },
+        { label: 'Debit note', code: 'DBN' },
+      ],
+    },
+    {
+      name: 'Banking',
+      docs: [
+        { label: 'Receive money', code: 'REC' },
+        { label: 'Spend money', code: 'PAY' },
+        { label: 'Transfer money', code: 'TRF' },
+      ],
+    },
   ];
 
   readonly currentOrgId = computed(() => localStorage.getItem('bb.orgId'));
-  
-  readonly currentOrgName = computed(() => {
-    return 'Eternal Pathway'; // Fallback company name since API lacks CustomerName
-  });
+
+  readonly currentOrgName = computed(() => 'Eternal Pathway');
+
   readonly currentOrgRole = computed(() => {
     const orgs = this.allOrgs();
     const id = this.currentOrgId();
     const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
-    return current ? current.orgName : 'Head Office'; // API orgName is the Branch Name
+    return current ? current.orgName : 'Head Office';
   });
-
 
   readonly filteredOrgs = computed(() => {
     const query = this.orgQuery().toLowerCase();
     if (!query) return this.allOrgs();
-    return this.allOrgs().filter((o: AccessibleOrg) => 
-      o.orgName.toLowerCase().includes(query) || 
-      o.roleName.toLowerCase().includes(query)
+    return this.allOrgs().filter(
+      (o: AccessibleOrg) =>
+        o.orgName.toLowerCase().includes(query) ||
+        o.roleName.toLowerCase().includes(query),
     );
   });
 
-  
   constructor() {
     // Load organizations when shell boots
-    void this.auth.accessibleOrganizations().then(orgs => {
+    void this.auth.accessibleOrganizations().then((orgs) => {
       this.allOrgs.set(orgs);
     });
-    
-    this.router.events.pipe(
-      filter((event: any) => event instanceof NavigationEnd)
-    ).subscribe((event: any) => {
-      this.updateCrumbs(event.urlAfterRedirects);
-    });
-    
+
+    this.router.events
+      .pipe(filter((event): event is NavigationEnd => event instanceof NavigationEnd))
+      .subscribe((event) => {
+        this.updateCrumbs(event.urlAfterRedirects);
+      });
+
     // Initialize crumbs
     setTimeout(() => this.updateCrumbs(this.router.url), 0);
   }
 
-  updateCrumbs(url: string) {
+  updateCrumbs(url: string): void {
     if (url === '/' || url.startsWith('/dashboard')) {
       this.crumbs.set([]);
       return;
     }
-    
-    const parts = url.split('?')[0].split('/').filter(p => p);
-    const result = [];
+
+    const parts = url.split('?')[0].split('/').filter((p) => p);
+    const result: BreadcrumbItem[] = [];
     let currentPath = '';
-    
+
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       currentPath += '/' + part;
-      
+
       let label = part.replace(/-/g, ' ');
       label = label.charAt(0).toUpperCase() + label.slice(1);
-      
-      // Some special cases for capitalization
-      if (label === 'Coa') label = 'Chart of Accounts';
-      
+
+      // Special cases
+      if (label.toLowerCase() === 'coa') {
+        label = 'Chart of Accounts';
+      } else if (label.toLowerCase() === 'accounting') {
+        label = 'Accounts'; // STRICT: "Accounts"
+      }
+
       const isLast = i === parts.length - 1;
       result.push({
         label,
         path: currentPath,
         isLink: !isLast,
-        isLast
+        isLast,
       });
     }
-    
+
     this.crumbs.set(result);
   }
 
-
   toggleOrg(): void {
-    this.orgOpen.update((v: boolean) => !v);
+    this.orgOpen.update((v) => !v);
     if (this.orgOpen()) {
       this.orgQuery.set('');
     }
@@ -188,8 +197,13 @@ export class ShellComponent {
     }
     await this.auth.switchOrganization(orgId);
     this.orgOpen.set(false);
-    // Reload the page to refresh context for the new org
-    window.location.reload();
+    try {
+      if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+        window.location.reload();
+      }
+    } catch {
+      // Ignored in non-browser/test environments
+    }
   }
 
   openNew(): void {
@@ -200,9 +214,8 @@ export class ShellComponent {
     this.newOpen.set(false);
   }
 
-  // Dashboard specific actions
   toggleBase(): void {
-    this.base.update(v => !v);
+    this.base.update((v) => !v);
     this.baseLabel.set(this.base() ? 'Cash basis' : 'Accrual basis');
   }
 
@@ -218,13 +231,12 @@ export class ShellComponent {
     this.editing.set(false);
   }
 
-  // Register specific actions
   openExport(): void {
-    // Open export dialog logic
+    // Open export dialog
   }
 
   openImport(): void {
-    // Open import dialog logic
+    // Open import dialog
   }
 
   openFav(): void {
@@ -236,7 +248,7 @@ export class ShellComponent {
   }
 
   @HostListener('document:click', ['$event.target'])
-  onClickOutside(target: HTMLElement) {
+  onClickOutside(target: HTMLElement): void {
     if (this.orgOpen()) {
       const container = this.elementRef.nativeElement.querySelector('.org-dropdown-container');
       if (container && !container.contains(target)) {
@@ -246,7 +258,7 @@ export class ShellComponent {
   }
 
   @HostListener('document:keydown.escape')
-  onEscape() {
+  onEscape(): void {
     this.orgOpen.set(false);
     this.newOpen.set(false);
     this.favOpen.set(false);
