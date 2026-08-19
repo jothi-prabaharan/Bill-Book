@@ -260,6 +260,56 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Schema or component only** | T5.1 allocation table, T5.4 allocation grid |
 | **Part built** | T3.3 outstanding, no aging buckets |
 | **Not built** | T3.4 print and archive, T7.1 POS API |
+
+---
+
+## 10a. Field coverage — what each screen and service actually carries
+
+Audited 15 August 2026 by comparing, for all five documents: the entity columns, the backend save request, the frontend request interface, and the form controls that fill it. **The quote and the sales order carry their whole surface. The other three carry a fraction of it**, and two of the gaps stop a save outright.
+
+### Two blockers, both proven against a real database
+
+`Sales.Api.Tests.DocumentLineFieldTests` builds a line exactly as the services build one and watches the database refuse it.
+
+| Column | Set by | Never set by | Consequence |
+|---|---|---|---|
+| `BaseQuantity` | quote, sales order | **invoice, challan, credit note** | Defaults to 0 while `ConversionFactor` defaults to 1, so `chk_*_base_quantity` reads `0 = round(10 × 1, 6)` and refuses. **The first line of any of these three documents cannot be saved.** |
+| `LineNumber` | quote, sales order | **invoice, challan, credit note** | Appears nowhere in the three services, so every line takes 0 and `IX_*_Line` refuses the second. **A multi-line document cannot be saved even once `BaseQuantity` is fixed.** |
+
+These are independent of the ledger contract in T3.1: they fail at `SaveAsync`, long before anything is posted.
+
+### The line request is five fields where the line has eighteen
+
+`SaveInvoiceLineRequest`, `SaveDeliveryChallanLineRequest` and `SaveCreditNoteLineRequest` carry `ItemId`, `Quantity`, `UnitPrice`, `DiscountPercent` and `TaxGroupIds` — nothing else. What that costs, beyond the two blockers above:
+
+- **No `TaxTreatment`** — every line is `Taxable` by default, so an exempt supply, a nil-rated one and a zero-rated export are all unreachable. They are filed in different GSTR-1 tables.
+- **No `LineType`, `Description` or `AccountId`** — a free-text line is impossible, though `AllowFreeTextLines` is a branch setting and the check constraints permit one. A service or a delivery charge cannot go on an invoice.
+- **No `HsnSacCode`** — required on the face of a GST invoice.
+- **No `IsPriceInclusive`** — MRP pricing is the Indian retail default, not an edge case.
+- **No `UomId`, `ConversionFactor`, `WarehouseId`, `ItemBatchId`, `LineNotes`.**
+
+The frontend is ahead of the backend here rather than behind: `SaveDeliveryChallanLineRequest` on the client already carries `hsnSacCode`, `description`, `accountId`, `taxTreatment` and `taxMasterId`, and the server has nowhere to put them, so they are serialized and dropped.
+
+### Header fields with no way to fill them
+
+| Document | In the request, no form control |
+|---|---|
+| Quote | — |
+| Sales order | `quoteId` |
+| **Delivery challan** | `salesOrderId`, `transporterName`, `ewayBillNo`, `ewayBillDate` |
+| **Invoice** | `quoteId`, `salesOrderId`, `deliveryChallanId`, `paymentTermId`, and the five POS columns |
+| Credit note | — |
+
+Two of those matter beyond tidiness:
+
+- **`salesOrderId` on the challan has no control**, and `ReleaseReservation` is set from `SalesOrderId.HasValue`. A challan raised from the screen therefore never releases a reservation — which is exactly the clause T3.6's *Done when* turns on.
+- **`deliveryChallanId` on the invoice has no control**, so the "invoice against a challan moves no stock" branch, which the service implements correctly, cannot be reached from the UI.
+
+The POS columns having no control is expected — POS is Phase 3 and has no screen.
+
+### Header fields the request never had
+
+`ContactGstin` and `PlaceOfSupplyStateCode` are on `SaveQuoteRequest` and `SaveSalesOrderRequest` and on **none** of the other three. `TermsAndConditions` likewise. So an invoice cannot state its own place of supply and can only fall back to the contact's registration — and an invoice is the document the GST return is filed from.
 | **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
 
 **One defect accounts for four of those boxes.** `Sales.Api`'s `LedgerLegRequest` carries a single `Amount`; Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither. Sales has never successfully posted to the general ledger. It is written up under T3.1.
