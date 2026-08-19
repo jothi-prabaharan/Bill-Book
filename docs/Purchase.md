@@ -6,11 +6,11 @@ Everything needed to build Purchase: the document chain, every table and column,
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: every document in the module is built and verified.** T4.1 through T4.5 and T5.3 are done — the twelve `pur` tables with RLS, and the purchase order, goods receipt, bill and debit note end to end: APIs, pages, Gateway route and forty-one tests against a real PostgreSQL 16.
+**Status: every document in the module is built and verified.** T4.1 through T4.5, T5.1 (built by Sales, shared) and T5.3 are done — the twelve `pur` tables with RLS, and the purchase order, goods receipt, bill and debit note end to end: APIs, pages, Gateway route and forty-one tests against a real PostgreSQL 16.
 
 `POR → GRN → BIL` runs end to end, with `DBN` as the way back out: an order commits nothing, a receipt puts stock on the shelf against Goods Received Not Invoiced, a bill clears that account and owes the vendor with input credit claimed against their own number, and a debit note sends goods back and reverses both.
 
-What remains is **T5.4, the allocation UI** — settling payments against bills — which is shared with Sales and belongs with the payment work rather than here.
+**T5.4, the allocation UI, is built** — shared with Sales, wired into the credit note page there. The debit note does not allocate by decision (see T5.3): a return against a fully paid bill is legitimate, and the money that comes back is a money document's job, not an allocation's.
 
 **One case is deliberately refused rather than guessed at:** a bill priced differently from the receipt it bills. Purchase price variance is undecided (§8) and shipping a guess would leave a residue in the clearing account, so the bill is rejected with both figures named. That is the next decision worth making here.
 
@@ -260,7 +260,7 @@ Numbering follows `TRANSACTIONS.md`.
 
 ### T5 — debit note
 
-- [ ] **T5.1 — `acc.TransactionRatio`** — shared with Sales, built once by whichever stage arrives first.
+- [x] **T5.1 — `acc.TransactionRatio`** — shared with Sales, built by Sales first. The guard, the internal endpoints and the tests are in `Accounting.Api`; see the ticked box in [`SALES.md`](./SALES.md). Nothing on the purchase side writes allocation rows yet, and deliberately — see the T5.3 note below.
 - [x] **T5.3 — Debit note.** `Dr Accounts Payable / Cr Purchase Returns` (contra Expense), Input GST reversed, stock returned to its layers.
 
   Eight tests against PostgreSQL 16 — forty-one in the project.
@@ -278,8 +278,10 @@ Numbering follows `TRANSACTIONS.md`.
   - **A bill line cannot be returned twice.** `BillDetail.ReturnedQuantity` is the running total, and the service decrements what is left *as it reads the note's own lines* — so two lines against the same bill line cannot each take the whole remaining quantity. Returning more than was bought would credit input tax twice.
   - **A posted return cannot be voided**, because the stock has left; a money-only note can be, because withdrawing its rows puts the payable back exactly as it was.
 
+  **A debit note does not allocate against its bill — and should not gain the outstanding guard T5.1 builds.** A bill that is fully paid is a legitimate target for a return (goods came back after settlement), and the money the customer gets back is handled by the money documents, not by allocation. Refusing a return because nothing was outstanding would block exactly the case a purchase return exists for. The guard, the replace-not-append rows and the remove-on-void contract are all in place for the day a payment or a partial-return flow wants them; the debit note simply does not claim.
+
   On the UI the debit note **does not use the shared line grid**. It picks lines off a bill and says how much of each goes back, at the price the bill charged — the grid's job is composing a document from items and prices, and offering it here would invite editing figures that have to match the bill.
-- [ ] **T5.4 — Allocation UI** — shared with Sales.
+- [x] **T5.4 — Allocation UI** — shared with Sales, wired into the credit note page there. The grid (`bb-allocation-grid`) clamps over-allocation while typing and the credit note form allocates against the contact's outstanding invoices; see the ticked box in [`SALES.md`](./SALES.md). The debit note page does not host it, for the reason under T5.3 — there is no claim to draw against the bill.
 
 ---
 
@@ -449,7 +451,7 @@ The way back out: a purchase return, a short delivery found later, or a rebate.
 | GST | Input GST reversed on the same rates the bill used |
 | Stock | Returned **to the layers it came from**, at their original cost |
 
-It allocates against the bill through `acc.TransactionRatio` rather than floating unapplied, and can never exceed what is outstanding.
+It can never exceed what the bill still represents: the purchase side of the T5.1 guard, unused by the debit note itself per the note under T5.3, and load-bearing for a payment drawn down against a bill.
 
 ---
 
@@ -494,7 +496,6 @@ The fifth difference has no equivalent at all: a bill can carry a **capital** li
 - **No tax determination exists anywhere.** [T0.2](./TRANSACTIONS.md#stage-t0--foundations-before-the-first-document).
 - **No document numbering series exist.** [T0.3](./TRANSACTIONS.md#stage-t0--foundations-before-the-first-document).
 - **No Goods Received Not Invoiced account** is in the chart-of-accounts seed. Adding one is safe on existing branches — the seed has been idempotent per account since master 1.4.
-- **`acc.TransactionRatio` is unbuilt**, so nothing can allocate a debit note or a payment yet.
 - **Price variance is undecided**, per above.
 
 

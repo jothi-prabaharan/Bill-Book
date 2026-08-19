@@ -254,10 +254,10 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 
 | | |
 |---|---|
-| **Ticked** | T2.3 quote, T2.4 sales order, T3.5 sales register |
+| **Ticked** | T2.3 quote, T2.4 sales order, T3.5 sales register, T5.1 allocation guard, T5.4 allocation grid |
 | **Written, blocked on the ledger leg contract** | T3.1 invoice API, T3.2 invoice page, T3.6 delivery challan, T5.2 credit note |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
-| **Schema or component only** | T5.1 allocation table, T5.4 allocation grid |
+| **Schema or component only** | *(none left — T5.1 and T5.4 both ticked)* |
 | **Part built** | T3.3 outstanding, no aging buckets |
 | **Not built** | T3.4 print and archive, T7.1 POS API |
 | **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
@@ -353,9 +353,13 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 ### T5 — credit note
 
-- [ ] **T5.1 — `acc.TransactionRatio`** (shared with Purchase). Allocation between documents. Allocations must never exceed the target's outstanding balance — a C# guard, since the sum spans rows.
+- [x] **T5.1 — `acc.TransactionRatio`** (shared with Purchase). Allocation between documents. Allocations must never exceed the target's outstanding balance — a C# guard, since the sum spans rows.
 
-  **Schema only.** `TransactionRatio.cs` exists and `AccountingDbContext` maps it with a `DbSet`. `AccountingDbContext` is the **only** file in `backend/Api` that mentions `TransactionRatios` — nothing writes a row, and the C# guard the task exists for is not written. The table is real; the allocation is not.
+  **Built, and the guard is the whole task.** `AllocationService` reads the target's outstanding from its CONTROL legs (`LedgerTypeId == 3`) — `Σ DebitAmountBase − Σ CreditAmountBase`, the same net the balance trigger and the outstanding report use — subtracts what has already been allocated (`acc.TransactionRatio` rows), and refuses a claim past the remainder with the figures in the message. A document with nothing outstanding owes nothing and is refused; so is a non-positive amount. Read, decide and write are one serializable transaction, so two allocations racing the same target cannot both pass a guard neither saw the other's row; a Postgres serialization failure (`40001`) comes back as a retryable outcome rather than a 500. Re-allocating the same (source, target) pair replaces rather than doubles, which is what makes a retry after a dropped response safe. `POST internal/allocations` and `POST internal/allocations/remove` carry the tenant in the body and are guarded by the internal key, like the ledger door; refusals are 409 with `MessageResponse`, the race is 503.
+
+  **Credit notes use it.** `CreditNoteService` allocates *before* posting — a refusal leaves the note draft with no stock moved and nothing posted — and a void removes the note's allocation rows, or the invoices it named would stay partially allocated to a document that no longer exists. The claim is the note's own `TotalAmount`; the target code is the invoice's own (`INV` or `POS`), read from the invoice rather than assumed.
+
+  **Proven against Postgres** (`Accounting.Api.Tests/AllocationServiceTests.cs`, nine tests): within-outstanding succeeds, over-allocation refused with the figures, two allocations judged together, same-pair re-allocation replaces instead of doubling, nothing-outstanding refused, zero/negative refused, CONTROL *net* not gross, one org's claims invisible to another, and removal releasing exactly the source's claims.
 
 - [ ] **T5.2 — Credit note.** Stock returned via `ReturnsStockMovementId` to the originating layers at their original cost.
   *Done when*: buy, sell, credit-note leaves stock value exactly where it started, and the note allocates against the invoice rather than floating.
@@ -364,11 +368,13 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   The id wanted is the movement the invoice's own line produced. Inventory's issue response already returns movement ids per line — the invoice needs to keep them (`sal.InvoiceDetails` has no column for one today), and the credit note line needs to name the invoice line it credits.
 
-  The allocation half of the Done-when — "allocates against the invoice rather than floating" — is T5.1, which is schema only.
+  The allocation half of the Done-when — "allocates against the invoice rather than floating" — is T5.1, now built and refused-guarded; the stock half is the line above.
 
-- [ ] **T5.4 — Allocation UI** (shared with Purchase). Over-allocation refused while typing, not at save.
+- [x] **T5.4 — Allocation UI** (shared with Purchase). Over-allocation refused while typing, not at save.
 
-  **The component exists and no page uses it.** `libs/shared/ui-components/src/lib/allocation-grid/allocation-grid.component.ts` is written and exported from the lib's `index.ts`; `AllocationGrid` appears in no other file in `frontend/`. It has nothing to allocate against until T5.1 writes rows, and payment work is deferred by decision.
+  **Built and wired into the credit note page.** `bb-allocation-grid` clamps while typing: a row cannot be keyed past its outstanding *or* past what remains of the document total, and when the note's total shrinks — its last line edited — the rows are trimmed oldest-first to match, so the grid never claims more than the parent can pay. Every clamp emits `rowsChange`, so the parent stays in sync.
+
+  **The grid is the invoice picker.** Choosing a contact loads its outstanding invoices (`GET api/ledger/contacts/{id}/outstanding-balances/3`, filtered to `INV` with a positive balance), and exactly one allocated row names the note's invoice — two of them is a refusal shown on the form *while typing*, not discovered at the ledger. The grid's amount is the note's rupee total, converted from the grid's paise in the one place `Purchase.md` T4.3 established: `save()` sends `quantity / 1e6`, `unitPrice / 100` and no totals, and the server recomputes. Tested in `allocation-grid.component.spec.ts` (eleven cases) and `sales-forms.spec.ts` (CRN-T1-04…07).
 
 ### T7 — POS
 
@@ -612,6 +618,7 @@ Worth knowing, because it changes what "build the invoice" actually costs:
 - Returns to the originating layer
 - The COGS posting, and `acc.JournalLedger` with its deferred balance trigger
 - Backdated recosting, including replacing a restated sale's ledger rows
+- **`acc.TransactionRatio` with its guard** — allocation against a document's CONTROL net, replace-not-append, serializable against concurrent claims
 
 None of it has been called by a document. The sales flow is what finally calls it.
 
@@ -620,7 +627,6 @@ None of it has been called by a document. The sales flow is what finally calls i
 - **The ledger door posts one leg type per call** and refuses a request whose legs do not balance among themselves. An invoice's per-line revenue, per-rate tax and single header receivable balance in no subset. This is [T0.1](./TRANSACTIONS.md#stage-t0--foundations-before-the-first-document) and it blocks the invoice outright.
 - **No tax determination exists anywhere.** [T0.2](./TRANSACTIONS.md#stage-t0--foundations-before-the-first-document).
 - **No document numbering series exist.** [T0.3](./TRANSACTIONS.md#stage-t0--foundations-before-the-first-document).
-- **`acc.TransactionRatio` is unbuilt**, so nothing can allocate a credit note or a receipt yet.
 
 
 
