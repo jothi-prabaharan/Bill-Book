@@ -111,7 +111,7 @@ public class SavePurchaseOrderLineRequest
 
     /// <summary>
     /// Stock, Expense or Capital. Purchase is where all three are used — see
-    /// <c>docs/modules/Purchase.md</c> §4.
+    /// <c>docs/Purchase.md</c> §4.
     /// </summary>
     public DocumentLineType LineType { get; set; } = DocumentLineType.Stock;
 

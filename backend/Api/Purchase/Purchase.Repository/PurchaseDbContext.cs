@@ -20,7 +20,7 @@ namespace Purchase.Repository;
 /// written in this file deliberately.
 ///
 /// What is written here is what is true of purchase and not of sales — and per
-/// <c>docs/modules/Purchase.md</c> §1 there are five such things, four of which
+/// <c>docs/Purchase.md</c> §1 there are five such things, four of which
 /// reach the schema:
 ///
 /// <list type="bullet">
@@ -326,7 +326,7 @@ public class PurchaseDbContext : TenantDbContext
         // silently stop working too. Inventory and Accounting both end their
         // OnModelCreating this way. SalesDbContext does not, which is why `sal`
         // has neither of the two isolation layers it is supposed to have — see
-        // the note in docs/modules/Purchase.md §11.
+        // the note in docs/Purchase.md §11.
         base.OnModelCreating(modelBuilder);
     }
 }
