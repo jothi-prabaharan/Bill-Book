@@ -36,7 +36,7 @@ public static class ChartOfAccountsSeed
         // Goods received and not yet billed. Off the manual-journal picker for
         // the same reason AR and AP are: it is cleared by the bill that matches
         // the receipt, and a hand posting would leave a residue that no document
-        // can ever clear. Decision T4.1 — docs/modules/Purchase.md §8.
+        // can ever clear. Decision T4.1 — docs/Purchase.md §8.
         Account(orgId, "2150", SystemAccount.GoodsReceivedNotInvoiced, Liability),
 
         Account(orgId, "2200", SystemAccount.OutputGst, Liability),

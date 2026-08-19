@@ -80,7 +80,7 @@ public sealed class AuthController : ControllerBase
             {
                 Message = "You do not have access to that organization.",
             });
-        }
+        }`
         catch (DatabaseNotReadyException)
         {
             return StatusCode(StatusCodes.Status409Conflict, new MessageResponse

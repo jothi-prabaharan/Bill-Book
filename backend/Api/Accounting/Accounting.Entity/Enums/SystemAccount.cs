@@ -43,7 +43,7 @@ public enum SystemAccount
     /// nothing at the receipt, understates the inventory asset for as long as the
     /// bill takes to arrive.
     ///
-    /// Decision T4.1, in <c>docs/modules/Purchase.md</c> §8.
+    /// Decision T4.1, in <c>docs/Purchase.md</c> §8.
     /// </summary>
     GoodsReceivedNotInvoiced = 14,
 
