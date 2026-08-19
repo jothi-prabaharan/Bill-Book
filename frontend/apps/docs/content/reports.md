@@ -45,3 +45,6 @@ Below tablet width each row becomes a card, with the report's key columns as its
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.
+
+
+

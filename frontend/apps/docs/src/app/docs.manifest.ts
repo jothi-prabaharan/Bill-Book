@@ -17,41 +17,15 @@ export interface DocSection {
 export const DOCS: DocSection[] = [
   {
     title: 'Overview',
-    pages: [
-      { slug: 'index', title: 'Introduction', status: 'built' },
-      { slug: 'architecture', title: 'Architecture', status: 'built' },
-      { slug: 'status', title: 'Build status', status: 'built' },
-      { slug: 'form-validation', title: 'Form validation', status: 'built' },
-    ],
+    pages: [{ slug: 'overview', title: 'Overview', status: 'built' }],
   },
   {
     title: 'Platform',
-    pages: [
-      { slug: 'tenancy', title: 'Tenancy model', status: 'built' },
-      { slug: 'organizations', title: 'Branches', status: 'built' },
-      { slug: 'auth', title: 'Authentication', status: 'built' },
-      { slug: 'signup', title: 'Signup & provisioning', status: 'built' },
-      { slug: 'licensing', title: 'Licensing & trial expiry', status: 'built' },
-      { slug: 'email', title: 'Email & invitations', status: 'built' },
-    ],
+    pages: [{ slug: 'platform', title: 'Platform', status: 'built' }],
   },
   {
     title: 'Masters',
-    pages: [
-      { slug: 'masters', title: 'Master data', status: 'partial' },
-      { slug: 'currencies', title: 'Currencies', status: 'built' },
-      { slug: 'hsn-sac', title: 'HSN & SAC codes', status: 'partial' },
-      { slug: 'roles-permissions', title: 'Roles & permissions', status: 'built' },
-      { slug: 'numbering-series', title: 'Numbering series', status: 'built' },
-      { slug: 'contacts', title: 'Contacts', status: 'built' },
-      { slug: 'contact-person-roles', title: 'Contact person roles', status: 'built' },
-      { slug: 'inventory-masters', title: 'Inventory masters', status: 'built' },
-      { slug: 'stock', title: 'Stock, batches & costing', status: 'partial' },
-      { slug: 'stock-adjustments', title: 'Stock adjustments', status: 'built' },
-      { slug: 'payment-terms', title: 'Payment terms', status: 'built' },
-      { slug: 'closing-dates', title: 'Closing dates', status: 'built' },
-      { slug: 'configuration', title: 'Configuration', status: 'built' },
-    ],
+    pages: [{ slug: 'masters', title: 'Masters', status: 'built' }],
   },
   {
     title: 'Reports',
@@ -59,36 +33,19 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Accounting',
-    pages: [
-      { slug: 'chart-of-accounts', title: 'Chart of accounts', status: 'built' },
-      { slug: 'bank-accounts', title: 'Banks & bank accounts', status: 'built' },
-      { slug: 'money-documents', title: 'Spend, receive & transfer money', status: 'built' },
-      { slug: 'bank-statements', title: 'Bank statements & reconciliation', status: 'built' },
-      { slug: 'ledger', title: 'Journal & ledger', status: 'built' },
-      { slug: 'opening-balances', title: 'Opening balances', status: 'built' },
-      { slug: 'gst', title: 'GST & tax', status: 'built' },
-    ],
+    pages: [{ slug: 'accounting', title: 'Accounting', status: 'built' }],
   },
   {
     title: 'Purchase',
-    pages: [
-      { slug: 'purchase-orders', title: 'Purchase orders', status: 'built' },
-      { slug: 'goods-receipts', title: 'Goods receipts', status: 'built' },
-      { slug: 'bills', title: 'Bills', status: 'built' },
-      { slug: 'debit-notes', title: 'Debit notes', status: 'built' },
-    ],
+    pages: [{ slug: 'purchase', title: 'Purchase', status: 'built' }],
   },
   {
     title: 'Releases',
-    pages: [{ slug: 'release-notes', title: 'Release notes', status: 'built' }],
+    pages: [{ slug: 'releases', title: 'Release notes', status: 'built' }],
   },
   {
     title: 'Development',
-    pages: [
-      { slug: 'running-locally', title: 'Running locally', status: 'built' },
-      { slug: 'environments', title: 'Environments', status: 'built' },
-      { slug: 'conventions', title: 'Conventions', status: 'built' },
-    ],
+    pages: [{ slug: 'development', title: 'Development', status: 'built' }],
   },
 ];
 
