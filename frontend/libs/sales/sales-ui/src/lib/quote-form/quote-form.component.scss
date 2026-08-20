@@ -25,3 +25,17 @@
   grid-column: 1 / -1;
 }
 
+
+/* At ~360px the header fields stack one per row and the action buttons go full
+   width. The line grid brings its own card layout at the same breakpoint. */
+@media (max-width: 720px) {
+  .page-container { padding: 16px; }
+  .page-header { flex-wrap: wrap; gap: 12px; }
+  .form-grid { grid-template-columns: 1fr; }
+  /* auto-fill already collapses the grid, but the 200px minimum keeps two
+     columns at 360px and the labels wrap badly; one field per row is the
+     readable shape. */
+  .form-group.full-width { grid-column: 1 / -1; }
+  .line-grid-container { overflow-x: auto; }
+  .page-header button.primary { flex: 1 1 auto; }
+}

@@ -1,7 +1,12 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { QuoteService, SaveQuoteRequest } from '@bill-book/sales-core';
+import {
+  QuoteService,
+  SaveQuoteRequest,
+  toApiLine,
+  toGridLine,
+} from '@bill-book/sales-core';
 import { DocumentLineGridComponent, DocumentLine, DocumentLineContext } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
@@ -70,18 +75,11 @@ export class QuoteFormComponent implements OnInit {
         notes: q.notes,
         termsAndConditions: q.termsAndConditions
       });
-      // Map lines if API returned them
-      this.lines = (q.lines || []).map(l => ({
-        itemId: l.itemId,
-        description: l.description,
-        hsnSacCode: l.hsnSacCode,
-        accountId: l.accountId,
-        taxTreatment: l.taxTreatment || 'Taxable',
-        taxMasterId: l.taxMasterId,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent || 0
-      } as any));
+      // Scaled through the boundary rather than handed over raw. The grid works
+      // in integer paise with quantity at six decimals; passing the API's rupees
+      // straight in makes it compute 10 x 100 / 1,000,000 and show a total of
+      // nothing, so a priced quote reads as an empty one.
+      this.lines = (q.lines || []).map((l, i) => toGridLine(l, i + 1));
     });
   }
 
@@ -109,17 +107,10 @@ export class QuoteFormComponent implements OnInit {
       shippingAddress: val.shippingAddress || undefined,
       notes: val.notes || undefined,
       termsAndConditions: val.termsAndConditions || undefined,
-      lines: this.lines.map(l => ({
-        itemId: l.itemId ?? undefined,
-        description: l.description ?? undefined,
-        hsnSacCode: l.hsnSacCode ?? undefined,
-        accountId: l.accountId ?? undefined,
-        taxTreatment: l.taxTreatment,
-        taxMasterId: l.taxMasterId ?? undefined,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent ?? 0
-      } as any) )
+      // Back through the same boundary, and without the computed amounts: the
+      // server recomputes every figure against the rates in force on the
+      // quote's date, so sending the grid's would put two answers on the wire.
+      lines: this.lines.map(l => toApiLine(l) as SaveQuoteRequest['lines'][number])
     };
 
     if (this.isEdit && this.quoteId) {

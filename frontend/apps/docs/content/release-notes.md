@@ -37,6 +37,12 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - **Every sales table also gained the indexes and the edit-conflict detection they were supposed to have.** The same missing line meant the branch column was unindexed on all sixteen tables, and that documents opened by two people at once could overwrite each other silently rather than warning the second person. Both are fixed. A stray empty column the fault had created on every table is dropped.
 
 ### Added
+- **Quotes are documented**, and the screen now works on a phone. Sales › Quotes had no page in this documentation and no mobile layout; the list becomes one card per quote and the form stacks to a single column at around 360px, which is the width the rest of the product is built to.
+
+### Fixed
+- **The quote screen showed a total of zero.** Amounts and quantities were handed to the line grid in the wrong units, so a line of 10 at ₹100 came to nothing and a priced quote read as an empty one. It now goes through the same conversion the delivery challan uses.
+
+### Added
 - **Delivery challans are now a screen you can reach** — Sales › Delivery challans, the document the goods actually leave on. A list beside the form, and both wired into the app: the form had been written but never given a route, so it sat in the product invisible to anyone using it. Dispatching a challan issues the stock and releases whatever the sales order behind it was holding; **only a sale reaches the accounts**, as goods delivered and not yet invoiced — job work, approval, branch transfers and samples move stock without selling anything, so they post nothing at all. A challan that has already dispatched can no longer be withdrawn: the goods have physically left, and taking the paperwork back would leave the stock gone with nothing to explain it. Raise a return instead.
 
 ### Fixed

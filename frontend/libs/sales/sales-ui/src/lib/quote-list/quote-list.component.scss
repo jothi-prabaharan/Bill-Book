@@ -2,3 +2,24 @@
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
 .data-table { width: 100%; border-collapse: collapse; }
 .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* At ~360px the table stops being a table. Each quote becomes a stacked card
+   labelled from `data-label`, because five columns at that width are unreadable
+   however narrow you make them — the house rule in CLAUDE.md. */
+@media (max-width: 720px) {
+  .page-container { padding: 16px; }
+  .page-header { flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+
+  .data-table thead { display: none; }
+  .data-table tr { display: block; padding: 8px 0; border-bottom: 1px solid #cdd1dc; }
+  .data-table td {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 12px; border: 0; padding: 4px 12px;
+  }
+  .data-table td::before {
+    content: attr(data-label);
+    color: #8a8f9e; font-size: .72rem; flex: 0 0 6rem;
+  }
+}

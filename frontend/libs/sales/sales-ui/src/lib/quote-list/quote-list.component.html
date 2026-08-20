@@ -16,11 +16,11 @@
     </thead>
     <tbody>
       <tr *ngFor="let quote of quotes">
-        <td><a [routerLink]="[quote.quoteId]">{{ quote.documentNo }}</a></td>
-        <td>{{ quote.documentDate }}</td>
-        <td>{{ quote.contactName }}</td>
-        <td>{{ quote.totalAmount }}</td>
-        <td>{{ quote.status }}</td>
+        <td data-label="Number"><a [routerLink]="[quote.quoteId]">{{ quote.documentNo }}</a></td>
+        <td data-label="Date">{{ quote.documentDate }}</td>
+        <td data-label="Customer">{{ quote.contactName }}</td>
+        <td data-label="Amount">{{ quote.totalAmount }}</td>
+        <td data-label="Status">{{ quote.status }}</td>
       </tr>
     </tbody>
   </table>
