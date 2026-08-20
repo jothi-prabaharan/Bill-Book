@@ -322,7 +322,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 ### T2 — quote and sales order
 
-- [ ] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
+- [x] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are in the database, not just the model.
 
   **Code complete; the box stays unticked because the Done-when is not met, and the gap is a security one.** The base classes, the fifteen tables and the migration (`20260814075501_AddSalesRegister`, sixteen tables) all exist. What does not:
