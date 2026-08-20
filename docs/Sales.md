@@ -260,6 +260,56 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Schema or component only** | *(none left — T5.1 and T5.4 both ticked)* |
 | **Part built** | T3.3 outstanding, no aging buckets |
 | **Not built** | T3.4 print and archive, T7.1 POS API |
+
+---
+
+## 10a. Field coverage — what each screen and service actually carries
+
+Audited 15 August 2026 by comparing, for all five documents: the entity columns, the backend save request, the frontend request interface, and the form controls that fill it. **The quote and the sales order carry their whole surface. The other three carry a fraction of it**, and two of the gaps stop a save outright.
+
+### Two blockers, both proven against a real database
+
+`Sales.Api.Tests.DocumentLineFieldTests` builds a line exactly as the services build one and watches the database refuse it.
+
+| Column | Set by | Never set by | Consequence |
+|---|---|---|---|
+| `BaseQuantity` | quote, sales order | **invoice, challan, credit note** | Defaults to 0 while `ConversionFactor` defaults to 1, so `chk_*_base_quantity` reads `0 = round(10 × 1, 6)` and refuses. **The first line of any of these three documents cannot be saved.** |
+| `LineNumber` | quote, sales order | **invoice, challan, credit note** | Appears nowhere in the three services, so every line takes 0 and `IX_*_Line` refuses the second. **A multi-line document cannot be saved even once `BaseQuantity` is fixed.** |
+
+These are independent of the ledger contract in T3.1: they fail at `SaveAsync`, long before anything is posted.
+
+### The line request is five fields where the line has eighteen
+
+`SaveInvoiceLineRequest`, `SaveDeliveryChallanLineRequest` and `SaveCreditNoteLineRequest` carry `ItemId`, `Quantity`, `UnitPrice`, `DiscountPercent` and `TaxGroupIds` — nothing else. What that costs, beyond the two blockers above:
+
+- **No `TaxTreatment`** — every line is `Taxable` by default, so an exempt supply, a nil-rated one and a zero-rated export are all unreachable. They are filed in different GSTR-1 tables.
+- **No `LineType`, `Description` or `AccountId`** — a free-text line is impossible, though `AllowFreeTextLines` is a branch setting and the check constraints permit one. A service or a delivery charge cannot go on an invoice.
+- **No `HsnSacCode`** — required on the face of a GST invoice.
+- **No `IsPriceInclusive`** — MRP pricing is the Indian retail default, not an edge case.
+- **No `UomId`, `ConversionFactor`, `WarehouseId`, `ItemBatchId`, `LineNotes`.**
+
+The frontend is ahead of the backend here rather than behind: `SaveDeliveryChallanLineRequest` on the client already carries `hsnSacCode`, `description`, `accountId`, `taxTreatment` and `taxMasterId`, and the server has nowhere to put them, so they are serialized and dropped.
+
+### Header fields with no way to fill them
+
+| Document | In the request, no form control |
+|---|---|
+| Quote | — |
+| Sales order | `quoteId` |
+| **Delivery challan** | `salesOrderId`, `transporterName`, `ewayBillNo`, `ewayBillDate` |
+| **Invoice** | `quoteId`, `salesOrderId`, `deliveryChallanId`, `paymentTermId`, and the five POS columns |
+| Credit note | — |
+
+Two of those matter beyond tidiness:
+
+- **`salesOrderId` on the challan has no control**, and `ReleaseReservation` is set from `SalesOrderId.HasValue`. A challan raised from the screen therefore never releases a reservation — which is exactly the clause T3.6's *Done when* turns on.
+- **`deliveryChallanId` on the invoice has no control**, so the "invoice against a challan moves no stock" branch, which the service implements correctly, cannot be reached from the UI.
+
+The POS columns having no control is expected — POS is Phase 3 and has no screen.
+
+### Header fields the request never had
+
+`ContactGstin` and `PlaceOfSupplyStateCode` are on `SaveQuoteRequest` and `SaveSalesOrderRequest` and on **none** of the other three. `TermsAndConditions` likewise. So an invoice cannot state its own place of supply and can only fall back to the contact's registration — and an invoice is the document the GST return is filed from.
 | **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
 
 **One defect accounts for four of those boxes.** `Sales.Api`'s `LedgerLegRequest` carries a single `Amount`; Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither. Sales has never successfully posted to the general ledger. It is written up under T3.1.
@@ -349,7 +399,16 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **Seeded and served, but one clause of the Done-when is contradicted by the code.** The `mst.TransactionTypes` row and the `DLC` series are both seeded (`NumberingSeriesSeed`, id 315, prefix `DC`), `DeliveryChallanService` issues stock with `ReleaseReservation` when the challan came from an order, and posts a ledger only when the challan is a sale — a job-work challan writes the movement and no ledger row, as asked.
 
-  **"The invoice against that challan moves no stock" is not true.** `Invoice.DeliveryChallanId` is stored and returned, but `InvoiceService.PostAsync` issues stock unconditionally — nothing reads `DeliveryChallanId` before building the issue request. Invoicing a challan that already shipped **issues the same quantity twice**, taking stock the branch still holds down by double. The gate belongs beside the existing `SalesOrderId` check in the same method.
+  **"The invoice against that challan moves no stock" now holds.** `InvoiceService.PostAsync` branches on `DeliveryChallanId`: with a challan behind it the invoice reads the cost and the movement id off the challan's lines and issues nothing, and only the `else` branch builds an `IssueStockRequest`. The note that said otherwise described a real double-issue and is spent.
+
+  **The screen is reachable now, which it was not.** `DeliveryChallanFormComponent` existed with no route and no export — in the repository and invisible to the application, which is the same as not built. It has a list beside it (`DeliveryChallanListComponent`), three routes under `sales/delivery-challans`, and both are exported.
+
+  **Three things were wrong on the way in, and each would have failed on first use:**
+  - **Voiding threw.** `VoidAsync` set `VoidedAt` and never `VoidReason`, and `chk_deliverychallans_void_stamp` ties the two together. It takes a reason now, and refuses a *posted* challan outright — the goods have physically gone, and flipping the status would leave the stock issued and GDNI holding a balance nothing will close.
+  - **The route was `DeliveryChallans`** while the frontend called `/api/sales/delivery-challans`. Both ends now agree, and `invoices` and `CreditNotes` were moved under `api/sales/` for the same reason — the frontend was already calling them there.
+  - **No gateway route pointed at the sales cluster at all.** The cluster was declared and nothing reached it, so every sales screen was unreachable through the front door. `/api/sales/{**catch-all}` added.
+
+  **What still blocks the box** is the ledger contract shared with T3.1 and T5.2 — see T3.1. A `Sale` challan's `Dr GDNI / Cr Inventory` pair is refused on the wire like every other sales posting, so the Done-when cannot be run end to end yet. Job work, approval, branch transfer and sample post nothing and are unaffected.
 
 ### T5 — credit note
 
@@ -376,7 +435,13 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **The grid is the invoice picker.** Choosing a contact loads its outstanding invoices (`GET api/ledger/contacts/{id}/outstanding-balances/3`, filtered to `INV` with a positive balance), and exactly one allocated row names the note's invoice — two of them is a refusal shown on the form *while typing*, not discovered at the ledger. The grid's amount is the note's rupee total, converted from the grid's paise in the one place `Purchase.md` T4.3 established: `save()` sends `quantity / 1e6`, `unitPrice / 100` and no totals, and the server recomputes. Tested in `allocation-grid.component.spec.ts` (eleven cases) and `sales-forms.spec.ts` (CRN-T1-04…07).
 
-### T7 — POS
+### T7 — POS · **Phase 3**
+
+**Moved Phase 1 → Phase 3 on 15 August 2026, by decision.** The boxes below are kept rather than deleted, and nothing about the design changes — only when it is built.
+
+It was the most expensive stage left in Phase 1 and the least shared with anything else: the till screen is the bulk of it, keyboard- and barcode-driven, offline-tolerant, and it lives in `apps/desktop`, which is still a scaffold with no source. The receipt is ESC/POS commands rather than PDF and prints only from the desktop app, so none of the document printing already built applies.
+
+**Nothing waits on it.** A POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'` — the tables, the numbering series and the tax determination all exist, and the counter sale it replaces is an invoice raised directly, which is the common case in a shop regardless.
 
 **No new tables.** T7.1 reuses T3.1's posting.
 

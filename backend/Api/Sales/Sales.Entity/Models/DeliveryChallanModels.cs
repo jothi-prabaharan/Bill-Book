@@ -128,3 +128,18 @@ public class SaveDeliveryChallanLineRequest
     
     public List<long> TaxGroupIds { get; set; } = [];
 }
+
+/// <summary>
+/// Why a challan is being withdrawn.
+///
+/// The reason is <b>required</b>, and not merely as a matter of record: the
+/// <c>chk_deliverychallans_void_stamp</c> constraint ties <c>VoidedAt</c> and
+/// <c>VoidReason</c> together, so a void that carried only the timestamp was
+/// refused by the database. Voiding a challan threw until this request existed.
+/// </summary>
+public class VoidDeliveryChallanRequest
+{
+    [Required(ErrorMessage = "Say why this delivery challan is being voided.")]
+    [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
+    public string Reason { get; set; } = null!;
+}

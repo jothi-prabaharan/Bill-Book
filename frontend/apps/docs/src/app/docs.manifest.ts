@@ -40,6 +40,10 @@ export const DOCS: DocSection[] = [
     pages: [{ slug: 'purchase', title: 'Purchase', status: 'built' }],
   },
   {
+    title: 'Sales',
+    pages: [{ slug: 'quotes', title: 'Quotes', status: 'built' }],
+  },
+  {
     title: 'Releases',
     pages: [{ slug: 'releases', title: 'Release notes', status: 'built' }],
   },
