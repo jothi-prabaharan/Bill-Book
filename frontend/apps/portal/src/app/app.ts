@@ -3,7 +3,7 @@ import { RouterModule } from '@angular/router';
 
 @Component({
   imports: [RouterModule],
-  selector: 'app-root',
+  selector: 'bb-portal-root',
   templateUrl: './app.html',
   styleUrl: './app.scss',
 })

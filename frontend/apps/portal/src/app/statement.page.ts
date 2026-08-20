@@ -1,7 +1,7 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 
 interface StatementTransaction {
   ledgerDate: string;
@@ -20,7 +20,7 @@ interface StatementResponse {
 }
 
 @Component({
-  selector: 'app-statement',
+  selector: 'bb-portal-statement',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './statement.page.html',
@@ -45,7 +45,9 @@ export class StatementPage implements OnInit {
         this.loading.set(false);
         return;
       }
-      this.fetchStatement(token);
+      // Fire and forget: the subscribe callback returns void, and a promise
+      // handed back to it is one nobody awaits or catches.
+      void this.fetchStatement(token);
     });
   }
 
