@@ -14,23 +14,49 @@ public sealed class InvoicesController : ControllerBase
 {
     private readonly IInvoiceService _service;
 
-    public InvoicesController(InvoiceService service)
-    {
-        _service = service;
-    }
-
+    /// <summary>
+    /// One constructor, taking the interface.
+    ///
+    /// There were two — one on the concrete <c>InvoiceService</c> and one on the
+    /// interface — which worked only because <c>IInvoiceService</c> was never
+    /// registered, so exactly one was resolvable. Registering it later, as this
+    /// commit does, would have made both resolvable and
+    /// <c>ActivatorUtilities</c> throws on an ambiguous constructor: every
+    /// invoice request would have 500'd, at runtime, with a message about
+    /// constructors rather than about invoices.
+    /// </summary>
     public InvoicesController(IInvoiceService service)
     {
         _service = service;
     }
 
+    /// <summary>What a page asks for when it does not say. Clamped again in the service.</summary>
+    private const int DefaultPageSize = 50;
+
+    /// <summary>
+    /// One page of invoices, newest first.
+    ///
+    /// <c>skip</c> and <c>take</c> arrive off a query string and are clamped in
+    /// the service rather than trusted — a negative skip is a hand-edited URL
+    /// that either throws or silently serves page one while the pager claims
+    /// otherwise.
+    /// </summary>
     [HttpGet]
     [PermissionAction("view")]
     public async Task<IActionResult> List(
-        [FromQuery] DateOnly? from, [FromQuery] DateOnly? to, CancellationToken ct)
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        CancellationToken ct,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = DefaultPageSize,
+        [FromQuery] string? status = null,
+        [FromQuery] string? search = null,
+        [FromQuery] bool overdueOnly = false)
     {
-        List<InvoiceListItem> list = await _service.ListAsync(from, to, ct);
-        return Ok(list);
+        InvoiceListPage page = await _service.ListPageAsync(
+            skip, take, status, search, from, to, overdueOnly, ct);
+
+        return Ok(page);
     }
 
     [HttpGet("{id:long}")]
@@ -73,6 +99,22 @@ public sealed class InvoicesController : ControllerBase
         [FromBody] SaveInvoiceRequest request, CancellationToken ct)
     {
         InvoiceResult result = await _service.CreateAsync(request, ct);
+
+        return result.Outcome == InvoiceOutcome.Ok
+            ? CreatedAtAction(nameof(Get), new { id = result.InvoiceId }, result)
+            : Respond(result);
+    }
+
+    /// <summary>
+    /// A confirmed sales order, turned into an invoice. The lines come from the
+    /// order rather than from the caller.
+    /// </summary>
+    [HttpPost("from-sales-order/{salesOrderId:long}")]
+    [PermissionAction("create")]
+    public async Task<IActionResult> CreateFromSalesOrder(
+        long salesOrderId, [FromBody] CreateInvoiceFromOrderRequest request, CancellationToken ct)
+    {
+        InvoiceResult result = await _service.CreateFromSalesOrderAsync(salesOrderId, request, ct);
 
         return result.Outcome == InvoiceOutcome.Ok
             ? CreatedAtAction(nameof(Get), new { id = result.InvoiceId }, result)

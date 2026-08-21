@@ -237,9 +237,13 @@ public sealed class InvoicesControllerTests
         var controller = new InvoicesController(stub);
         var result = await controller.List(null, null, CancellationToken.None);
 
+        // The list is paged now, so it answers with an envelope carrying the
+        // total that matched rather than a bare array — a page that counted its
+        // own rows would say "50 of 50" on every page of a thousand.
         var ok = Assert.IsType<OkObjectResult>(result);
-        var list = Assert.IsAssignableFrom<List<InvoiceListItem>>(ok.Value);
-        Assert.Single(list);
+        var page = Assert.IsAssignableFrom<InvoiceListPage>(ok.Value);
+        Assert.Single(page.Rows);
+        Assert.Equal(1, page.Total);
     }
 
     [Fact]
@@ -471,10 +475,42 @@ public sealed class InvoicesControllerTests
         public Task<List<InvoiceListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct) =>
             Task.FromResult(ListResult);
 
+        /// <summary>
+        /// Wraps whatever the stub was given. The clamping this page does is the
+        /// service's own, and is asserted against a real database rather than
+        /// against a stub that would simply agree with itself.
+        /// </summary>
+        public Task<InvoiceListPage> ListPageAsync(
+            int skip,
+            int take,
+            string? status,
+            string? search,
+            DateOnly? from,
+            DateOnly? to,
+            bool overdueOnly,
+            CancellationToken ct) =>
+            Task.FromResult(new InvoiceListPage
+            {
+                Total = ListResult.Count,
+                Skip = Math.Max(skip, 0),
+                Take = take,
+                Rows = ListResult,
+            });
+
         public Task<List<InvoiceListItem>> ListAsync(CancellationToken ct) =>
             Task.FromResult(ListResult);
 
         public Task<InvoiceResult> CreateAsync(SaveInvoiceRequest request, CancellationToken ct) =>
+            Task.FromResult(CreateResult);
+
+        /// <summary>
+        /// The conversion answers with the same result as a plain create, because
+        /// what the controller does with either is identical. Whether the lines
+        /// really come off the order is a question for the service's own suite,
+        /// not for a stub that has no order to read.
+        /// </summary>
+        public Task<InvoiceResult> CreateFromSalesOrderAsync(
+            long salesOrderId, CreateInvoiceFromOrderRequest request, CancellationToken ct) =>
             Task.FromResult(CreateResult);
 
         public Task<InvoiceResult> UpdateAsync(long invoiceId, SaveInvoiceRequest request, CancellationToken ct) =>

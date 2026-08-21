@@ -84,6 +84,108 @@ public sealed class InvoiceService : IInvoiceService
         _creditCheckClient = creditCheckClient;
     }
 
+    /// <summary>
+    /// A confirmed sales order, turned into an invoice.
+    ///
+    /// <b>The lines are read from the order, never sent by the caller</b>, and
+    /// they go through <see cref="CreateAsync"/> like any other invoice — so the
+    /// tax is recomputed at the rates in force on the invoice's own date rather
+    /// than copied from an order that may have been taken months ago. That is
+    /// also why nothing here touches <c>GstCalculator</c>: one path computes an
+    /// invoice, and this is not a second one.
+    ///
+    /// Each invoice line keeps the <c>SalesOrderDetailId</c> it came from, which
+    /// is what lets the order's reservation be released line by line when the
+    /// invoice posts.
+    /// </summary>
+    public async Task<InvoiceResult> CreateFromSalesOrderAsync(
+        long salesOrderId, CreateInvoiceFromOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == salesOrderId, ct);
+
+        if (order is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound, Detail: "No such sales order.");
+        }
+
+        if (_tenant.OrgId is not Guid callerOrgId || order.OrgId != callerOrgId)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.NotFound, Detail: "No such sales order.");
+        }
+
+        // Confirmed, not merely keyed. An order that has not been confirmed is
+        // holding no stock, so invoicing it would issue goods nobody reserved.
+        if (order.Status != DocumentStatus.Posted)
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "Only a confirmed sales order becomes an invoice. Confirm the order first.");
+        }
+
+        if (await _db.Invoices.AnyAsync(i => i.SalesOrderId == salesOrderId, ct))
+        {
+            return new InvoiceResult(
+                InvoiceOutcome.AlreadyFulfilled,
+                Detail: "This sales order has already been invoiced.");
+        }
+
+        DateOnly documentDate = request.DocumentDate
+            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        SaveInvoiceRequest invoice = new()
+        {
+            DocumentDate = documentDate,
+            DueDate = request.DueDate,
+            PaymentTermId = request.PaymentTermId,
+            ContactId = order.ContactId,
+            QuoteId = order.QuoteId,
+            SalesOrderId = order.SalesOrderId,
+            ContactGstin = order.ContactGstin,
+            PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
+            BillingAddress = order.BillingAddress,
+            ShippingAddress = order.ShippingAddress,
+            CurrencyCode = order.CurrencyCode,
+            ExchangeRate = order.ExchangeRate,
+            Notes = request.Notes ?? order.Notes,
+            TermsAndConditions = order.TermsAndConditions,
+            Lines = [.. order.Lines
+                .OrderBy(l => l.LineNumber)
+                .Select(l => new SaveInvoiceLineRequest
+                {
+                    ItemId = l.ItemId,
+                    Description = l.Description,
+                    HsnSacCode = l.HsnSacCode,
+                    WarehouseId = l.WarehouseId,
+                    Quantity = l.Quantity,
+                    UomId = l.UomId,
+                    ConversionFactor = l.ConversionFactor,
+                    UnitPrice = l.UnitPrice,
+                    IsPriceInclusive = l.IsPriceInclusive,
+                    DiscountPercent = l.DiscountPercent,
+                    DiscountAmount = l.DiscountAmount,
+                    TaxTreatment = l.TaxTreatment,
+                    TaxGroupId = l.TaxGroupId,
+                    LineType = l.LineType,
+                    AccountId = l.AccountId,
+                    FixedAssetCategoryId = l.FixedAssetCategoryId,
+                    ItemBatchId = l.ItemBatchId,
+                    LineNotes = l.LineNotes,
+
+                    // The thread back to the order line. Posting reads it to
+                    // release exactly what this invoice is issuing.
+                    SalesOrderDetailId = l.SalesOrderDetailId,
+                })],
+        };
+
+        // The place of supply is re-resolved from the GSTIN rather than copied:
+        // the order stored the answer (IsInterState), and copying an answer is
+        // how a branch that has since changed state files the wrong return.
+        return await CreateAsync(invoice, ct);
+    }
+
     public async Task<InvoiceResult> CreateAsync(SaveInvoiceRequest request, CancellationToken ct)
     {
         string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
@@ -671,6 +773,127 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         return view;
+    }
+
+    /// <summary>How many rows one page may ask for, however large a number it sends.</summary>
+    private const int MaxPageSize = 200;
+
+    /// <summary>
+    /// One page of invoices, newest first, with the total that matched.
+    ///
+    /// <b>Both bounds are clamped rather than trusted.</b> <c>skip</c> comes off
+    /// a query string, and a negative one is not merely odd — <c>Skip(-1)</c>
+    /// throws on some providers and silently returns the first page on others,
+    /// so a hand-edited URL either 500s or quietly shows page one while the
+    /// pager says otherwise. <c>take</c> is clamped at both ends for the same
+    /// reason and a second one: <c>take=1000000</c> is a way to ask for every
+    /// invoice in the branch in a single response.
+    ///
+    /// Same shape and the same reasoning as the sales order list; an invoice
+    /// list is the one that grows fastest, so paging it here rather than in the
+    /// browser matters most on this screen.
+    /// </summary>
+    public async Task<InvoiceListPage> ListPageAsync(
+        int skip,
+        int take,
+        string? status,
+        string? search,
+        DateOnly? from,
+        DateOnly? to,
+        bool overdueOnly,
+        CancellationToken ct)
+    {
+        int safeSkip = Math.Max(skip, 0);
+        int safeTake = Math.Clamp(take, 1, MaxPageSize);
+
+        DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        IQueryable<Invoice> query = _db.Invoices.AsNoTracking();
+
+        if (from.HasValue)
+        {
+            query = query.Where(x => x.DocumentDate >= from.Value);
+        }
+
+        if (to.HasValue)
+        {
+            query = query.Where(x => x.DocumentDate <= to.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
+        {
+            query = query.Where(x => x.Status == wanted);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            string term = search.Trim();
+            query = query.Where(x => x.DocumentNo.Contains(term));
+        }
+
+        // Only a posted invoice can be overdue: a draft owes nothing yet, and a
+        // voided one never will.
+        if (overdueOnly)
+        {
+            query = query.Where(x =>
+                x.Status == DocumentStatus.Posted && x.DueDate.HasValue && x.DueDate.Value < today);
+        }
+
+        // Counted before paging: the screen has to say how many matched, not how
+        // many fitted on the page.
+        int total = await query.CountAsync(ct);
+
+        List<InvoiceListItem> rows = await query
+            .OrderByDescending(x => x.DocumentDate)
+            .ThenByDescending(x => x.DocumentNo)
+            .Skip(safeSkip)
+            .Take(safeTake)
+            .Select(x => new InvoiceListItem
+            {
+                InvoiceId = x.InvoiceId,
+                DocumentNo = x.DocumentNo,
+                DocumentDate = x.DocumentDate,
+                DueDate = x.DueDate,
+                QuoteId = x.QuoteId,
+                SalesOrderId = x.SalesOrderId,
+                DeliveryChallanId = x.DeliveryChallanId,
+                ContactId = x.ContactId,
+                CurrencyCode = x.CurrencyCode,
+                TaxableAmount = x.TaxableAmount,
+                TotalAmount = x.TotalAmount,
+                Status = x.Status.ToString(),
+                IsInterState = x.IsInterState,
+                DaysOverdue = x.Status == DocumentStatus.Posted && x.DueDate.HasValue
+                    ? Math.Max(0, today.DayNumber - x.DueDate.Value.DayNumber)
+                    : 0,
+                PaymentMode = x.PaymentMode,
+            })
+            .ToListAsync(ct);
+
+        // One call for the whole page, never one per row — Contacts is another
+        // database and this is the list screen that would make it an N+1.
+        List<long> contactIds = [.. rows.Select(r => r.ContactId).Distinct()];
+        if (contactIds.Count > 0)
+        {
+            IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync(contactIds, ct);
+            foreach (InvoiceListItem row in rows)
+            {
+                if (contacts.TryGetValue(row.ContactId, out NamedRef? contact))
+                {
+                    row.ContactName = contact.Name;
+                    row.ContactCode = contact.Code;
+                }
+            }
+        }
+
+        return new InvoiceListPage
+        {
+            Total = total,
+            Skip = safeSkip,
+            Take = safeTake,
+            Rows = rows,
+        };
     }
 
     public async Task<List<InvoiceListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)

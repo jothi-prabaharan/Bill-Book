@@ -1,0 +1,122 @@
+<!-- The scrim dims and blocks; it does not dismiss. A click-anywhere-to-close on
+     a form is a way to lose what was typed by brushing the trackpad, and it
+     cannot be operated from a keyboard without putting a full-screen button in
+     the tab order. Escape and the × close it. -->
+<div class="o2i__scrim" aria-hidden="true"></div>
+
+<div
+  class="o2i"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="o2i-title"
+  tabindex="-1"
+  (keydown.escape)="cancel()"
+>
+  <header class="o2i__head">
+    <h2 class="o2i__title" id="o2i-title">Invoice a sales order</h2>
+
+    <button type="button" class="o2i__close" aria-label="Close" (click)="cancel()">&times;</button>
+  </header>
+
+  <div class="o2i__body">
+    <!-- Business rules and anything the server refused. Field constraints are
+         shown on their own fields, below. -->
+    <bb-message-box [messages]="messages()" />
+
+    @if (loading()) {
+      <p class="o2i__note">Loading confirmed orders…</p>
+    } @else if (!hasCandidates()) {
+      <p class="o2i__note">
+        There are no confirmed sales orders waiting to be invoiced. An order has to be confirmed
+        first — an unconfirmed one is holding no stock — and one that has already been invoiced
+        cannot be invoiced again.
+      </p>
+    } @else {
+      <form class="o2i__form" [formGroup]="form" (ngSubmit)="convert()">
+        <fieldset class="o2i__orders">
+          <legend class="o2i__legend">Sales order</legend>
+
+          @if (showError('salesOrderId')) {
+            <p class="field-error" role="alert">Choose the order to invoice.</p>
+          }
+
+          <ul class="o2i__list">
+            @for (order of candidates(); track order.salesOrderId) {
+              <li>
+                <button
+                  type="button"
+                  class="o2i__order"
+                  [class.o2i__order--on]="selected()?.salesOrderId === order.salesOrderId"
+                  [attr.aria-pressed]="selected()?.salesOrderId === order.salesOrderId"
+                  (click)="onSelect(order.salesOrderId)"
+                >
+                  <span class="o2i__order-no">{{ order.documentNo }}</span>
+                  <span class="o2i__order-name">{{ order.contactName }}</span>
+                  <span class="o2i__order-amount">{{ order.totalAmount | number: '1.2-2' }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </fieldset>
+
+        <div class="o2i__fields">
+          <div class="field">
+            <label for="o2i-date">Invoice date</label>
+            <input id="o2i-date" class="input" type="date" formControlName="documentDate" />
+
+            @if (showError('documentDate')) {
+              <span class="field-error" role="alert">Give the invoice a date.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="o2i-due">Due date</label>
+            <input id="o2i-due" class="input" type="date" formControlName="dueDate" />
+
+            @if (showError('dueDate')) {
+              <span class="field-error" role="alert">An invoice needs a due date.</span>
+            } @else {
+              <small class="field-hint">When payment is expected.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="o2i-pos">Place of supply</label>
+            <input
+              id="o2i-pos"
+              class="input"
+              type="text"
+              inputmode="numeric"
+              maxlength="2"
+              placeholder="33"
+              formControlName="placeOfSupplyStateCode"
+            />
+
+            @if (showError('placeOfSupplyStateCode')) {
+              <span class="field-error" role="alert">
+                Place of supply is a two-digit state code.
+              </span>
+            } @else {
+              <small class="field-hint">
+                Leave blank for a registered customer — their GSTIN settles it.
+              </small>
+            }
+          </div>
+
+          <div class="field o2i__wide">
+            <label for="o2i-notes">Notes</label>
+            <textarea id="o2i-notes" class="input" rows="2" formControlName="notes"></textarea>
+          </div>
+        </div>
+
+        <footer class="o2i__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Creating…' : 'Create invoice' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </div>
+</div>

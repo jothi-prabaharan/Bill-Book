@@ -1,95 +1,325 @@
-<div class="page-container">
-  <header class="page-header">
-    <h1>{{ isEdit ? 'Edit Invoice' : 'New Invoice' }}</h1>
-    <div class="header-actions">
-      <button class="secondary" (click)="goBack()">Cancel</button>
-      <button class="danger" *ngIf="isEdit && status !== 'Void'" (click)="voidInvoice()" [disabled]="voiding">Void</button>
-      <button class="secondary" *ngIf="isEdit" (click)="print()">Print</button>
-      <button class="primary" (click)="save()" [disabled]="saving || status === 'Void' || status === 'Posted'">Save</button>
-      <button class="success" *ngIf="isEdit && status === 'Draft'" (click)="postInvoice()" [disabled]="posting">Post</button>
+<section class="inv-form">
+  <header class="inv-form__head">
+    <div class="inv-form__identity">
+      <h1 class="inv-form__title">
+        {{ isEdit() ? (documentNo() || 'Invoice') : 'New invoice' }}
+      </h1>
+
+      @if (isEdit()) {
+        <span class="tag tag-neutral">{{ status() }}</span>
+
+        @if (daysOverdue() > 0) {
+          <span class="badge expired">{{ daysOverdue() }} days late</span>
+        }
+
+        @if (salesOrderId()) {
+          <a class="chip" [routerLink]="['/sales/sales-orders', salesOrderId()]">from order</a>
+        }
+      }
+    </div>
+
+    <div class="inv-form__actions">
+      @if (!isEdit()) {
+        <button type="button" class="btn btn-secondary" (click)="showConvert.set(true)">
+          From an order
+        </button>
+      }
+
+      @if (canPost()) {
+        <button type="button" class="btn btn-secondary" (click)="preview()">Preview entry</button>
+
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
+          Post
+        </button>
+      }
+
+      @if (canVoid()) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="saving()"
+          (click)="voidInvoice()"
+        >
+          Void
+        </button>
+      }
+
+      @if (editable()) {
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      }
     </div>
   </header>
 
-  <div class="status-banner posted" *ngIf="status === 'Posted'">
-    This invoice has been posted and cannot be edited.
-  </div>
-  <div class="status-banner voided" *ngIf="status === 'Void'">
-    This invoice has been voided.
-  </div>
+  <!-- Rules about the document, and everything the server refused. Field
+       constraints live on their fields, below. -->
+  <bb-message-box [messages]="messages()" />
 
-  <form [formGroup]="form" class="form-grid">
-    <div class="field">
-      <label for="docDate">Document Date</label>
-      <bb-date-input id="docDate"  class="input" formControlName="documentDate" />
+  @if (glPreview(); as preview) {
+    <!-- Read from the server, by the same code that will do the posting. A
+         preview drawn from a second implementation would eventually disagree
+         with the entry it claims to predict. -->
+    <div class="inv-form__gl">
+      <h2 class="inv-form__gl-title">What posting will write to the ledger</h2>
+
+      <table class="inv-form__gl-table">
+        <thead>
+          <tr>
+            <th scope="col">Account</th>
+            <th scope="col" class="inv-form__num">Debit</th>
+            <th scope="col" class="inv-form__num">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (leg of preview.legs; track $index) {
+            <tr>
+              <td>{{ leg.accountSystemName }}</td>
+              <td class="inv-form__num">
+                {{ leg.debitAmount ? (leg.debitAmount | number: '1.2-2') : '' }}
+              </td>
+              <td class="inv-form__num">
+                {{ leg.creditAmount ? (leg.creditAmount | number: '1.2-2') : '' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Total</th>
+            <td class="inv-form__num">{{ preview.totalDebit | number: '1.2-2' }}</td>
+            <td class="inv-form__num">{{ preview.totalCredit | number: '1.2-2' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      @if (!preview.isBalanced) {
+        <p class="field-error" role="alert">
+          These legs do not balance, so posting will be refused. This is a fault in the document
+          rather than in what you have typed — the ledger will not accept it either.
+        </p>
+      }
     </div>
+  }
+
+  @if (canVoid()) {
+    <form class="field inv-form__void" [formGroup]="voidForm">
+      <label for="inv-void-reason">Reason, if voiding</label>
+      <input
+        id="inv-void-reason"
+        class="input"
+        type="text"
+        maxlength="300"
+        placeholder="Raised against the wrong customer"
+        formControlName="reason"
+      />
+
+      @if (voidForm.controls.reason.invalid && voidForm.controls.reason.touched) {
+        <span class="field-error" role="alert">
+          Say why this invoice is being voided. Its number stays on record, and the reason is what
+          makes the gap in the sequence answerable.
+        </span>
+      }
+    </form>
+  }
+
+  <form class="inv-form__fields" [formGroup]="form">
     <div class="field">
-      <label for="dueDate">Due Date</label>
-      <bb-date-input id="dueDate"  class="input" formControlName="dueDate" />
+      <label for="inv-date">Invoice date</label>
+      <input id="inv-date" class="input" type="date" formControlName="documentDate" />
+
+      @if (showError('documentDate')) {
+        <span class="field-error" role="alert">Give the invoice a date.</span>
+      }
     </div>
+
     <div class="field">
-      <label for="contactId">Contact (ID)</label>
-      <bb-number-input id="contactId"  class="input" formControlName="contactId" />
+      <label for="inv-due">Due date</label>
+      <input id="inv-due" class="input" type="date" formControlName="dueDate" />
+
+      @if (showError('dueDate')) {
+        <span class="field-error" role="alert">An invoice needs a due date.</span>
+      } @else {
+        <small class="field-hint">When payment is expected.</small>
+      }
     </div>
+
     <div class="field">
-      <label for="currencyCode">Currency</label>
-      <bb-text-input id="currencyCode" formControlName="currencyCode" maxlength="3" />
+      <label for="inv-contact">Customer</label>
+      <input
+        id="inv-contact"
+        class="input"
+        type="number"
+        min="1"
+        step="1"
+        formControlName="contactId"
+      />
+
+      @if (showError('contactId')) {
+        <span class="field-error" role="alert">Choose the customer.</span>
+      }
     </div>
+
     <div class="field">
-      <label for="exchangeRate">Exchange Rate</label>
-      <bb-text-input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
+      <label for="inv-gstin">Customer GSTIN</label>
+      <input
+        id="inv-gstin"
+        class="input"
+        type="text"
+        maxlength="15"
+        formControlName="contactGstin"
+      />
+
+      @if (showError('contactGstin')) {
+        <span class="field-error" role="alert">A GSTIN is 15 characters.</span>
+      }
     </div>
+
     <div class="field">
-      <label for="billingAddress">Billing Address</label>
-      <textarea id="billingAddress" formControlName="billingAddress" rows="2"></textarea>
+      <label for="inv-pos">Place of supply</label>
+      <input
+        id="inv-pos"
+        class="input"
+        type="text"
+        inputmode="numeric"
+        maxlength="2"
+        placeholder="33"
+        formControlName="placeOfSupplyStateCode"
+      />
+
+      @if (showError('placeOfSupplyStateCode')) {
+        <span class="field-error" role="alert">Place of supply is a two-digit state code.</span>
+      } @else {
+        <small class="field-hint">Leave blank to take it from the GSTIN.</small>
+      }
     </div>
+
     <div class="field">
-      <label for="shippingAddress">Shipping Address</label>
-      <textarea id="shippingAddress" formControlName="shippingAddress" rows="2"></textarea>
+      <label for="inv-currency">Currency</label>
+      <input
+        id="inv-currency"
+        class="input"
+        type="text"
+        maxlength="3"
+        formControlName="currencyCode"
+      />
+
+      @if (showError('currencyCode')) {
+        <span class="field-error" role="alert">Currency is a three-letter code.</span>
+      }
     </div>
-    <div class="field full-width">
-      <label for="notes">Notes</label>
-      <textarea id="notes" formControlName="notes" rows="2"></textarea>
+
+    <div class="field">
+      <label for="inv-rate">Exchange rate</label>
+      <input
+        id="inv-rate"
+        class="input"
+        type="number"
+        min="0.00000001"
+        step="0.0001"
+        formControlName="exchangeRate"
+      />
+
+      @if (showError('exchangeRate')) {
+        <span class="field-error" role="alert">Exchange rate must be greater than zero.</span>
+      } @else {
+        <small class="field-hint">A snapshot at the invoice's date, never looked up live.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-billing">Billing address</label>
+      <textarea id="inv-billing" class="input" rows="2" formControlName="billingAddress"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="inv-shipping">Shipping address</label>
+      <textarea
+        id="inv-shipping"
+        class="input"
+        rows="2"
+        formControlName="shippingAddress"
+      ></textarea>
+    </div>
+
+    <div class="field inv-form__wide">
+      <label for="inv-notes">Notes</label>
+      <textarea id="inv-notes" class="input" rows="2" formControlName="notes"></textarea>
+    </div>
+
+    <div class="field inv-form__wide">
+      <label for="inv-terms">Terms and conditions</label>
+      <textarea
+        id="inv-terms"
+        class="input"
+        rows="2"
+        formControlName="termsAndConditions"
+      ></textarea>
     </div>
   </form>
 
-  <div class="line-grid-container">
+  <div class="inv-form__lines">
     <bb-document-line-grid
-      [lines]="lines"
-      [context]="context"
+      [lines]="lines()"
+      [context]="context()"
       (linesChange)="onLinesChange($event)"
       (pickItem)="onPickItem($event)"
-    ></bb-document-line-grid>
+    />
   </div>
 
-  <div class="totals-panel">
-    <div class="total-row">
-      <span>Sub Total</span>
-      <span>{{ (totals.subTotal / 100) | number:'1.2-2' }}</span>
+  <!-- Paise throughout, divided only to display: the grid's totals are integers
+       and dividing at the last moment is what keeps them adding up. -->
+  <div class="inv-form__totals">
+    <div class="inv-form__total">
+      <span>Sub total</span>
+      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
     </div>
-    <div class="total-row" *ngIf="totals.discountAmount > 0">
-      <span>Discount</span>
-      <span>-{{ (totals.discountAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cgstAmount > 0">
-      <span>CGST</span>
-      <span>{{ (totals.cgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.sgstAmount > 0">
-      <span>SGST</span>
-      <span>{{ (totals.sgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.igstAmount > 0">
-      <span>IGST</span>
-      <span>{{ (totals.igstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cessAmount > 0">
-      <span>CESS</span>
-      <span>{{ (totals.cessAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row grand-total">
-      <span>Total Amount</span>
-      <span>{{ (totals.totalAmount / 100) | number:'1.2-2' }}</span>
+
+    @if (totals().discountAmount > 0) {
+      <div class="inv-form__total">
+        <span>Discount</span>
+        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cgstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>CGST</span>
+        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().sgstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>SGST</span>
+        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().igstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>IGST</span>
+        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cessAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>Cess</span>
+        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    <div class="inv-form__total inv-form__total--grand">
+      <span>Total</span>
+      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
     </div>
   </div>
-</div>
+</section>
 
+@if (showConvert()) {
+  <bb-order-to-invoice-dialog
+    (converted)="onConverted($event)"
+    (cancelled)="showConvert.set(false)"
+  />
+}

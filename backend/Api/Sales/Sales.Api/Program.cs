@@ -79,6 +79,12 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
+
+// Resolved from the concrete registration rather than registered separately, so
+// a request that touches both InvoicesController (the interface) and
+// TransactionsController (the concrete type) gets one instance and therefore one
+// DbContext change tracker.
+builder.Services.AddScoped<IInvoiceService>(sp => sp.GetRequiredService<InvoiceService>());
 builder.Services.AddScoped<DeliveryChallanService>();
 builder.Services.AddScoped<CreditNoteService>();
 

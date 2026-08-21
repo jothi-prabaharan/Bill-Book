@@ -14,25 +14,38 @@ export class PosTerminalComponent {
   private invoiceService = inject(InvoiceService);
   private escPosService = inject(EscPosService);
 
-  checkout() {
-    // POS terminal uses Invoice API to check out
+  /**
+   * A till sale, which is an ordinary invoice with a till on it.
+   *
+   * Still a scaffold: no cart, a hardcoded walk-in customer and no tender
+   * handling. **POS is Phase 3** — what is worth knowing is that when it is
+   * built it reuses this path rather than gaining one of its own, because a POS
+   * sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'` and two
+   * tables for one document would mean two places to fix a GST bug.
+   */
+  async checkout(): Promise<void> {
     const request: SaveInvoiceRequest = {
       documentDate: new Date().toISOString().split('T')[0],
       contactId: 1, // Default walk-in customer
       exchangeRate: 1,
-      currencyCode: 'USD',
       lines: []
     };
-    this.invoiceService.create(request).subscribe(_res => {
-      // Upon successful invoice generation, print ESC/POS receipt
-      const receiptBytes = this.escPosService.generateReceipt(
-        'BILL-BOOK STORE',
-        request.lines.map(l => ({ name: 'Item', amount: l.unitPrice * l.quantity })),
-        0 // Total would be computed from lines
-      );
 
-      this.printReceipt(receiptBytes);
-    });
+    // Awaited rather than subscribed: InvoiceService returns promises, so a
+    // refusal can be caught here instead of vanishing into an error callback.
+    await this.invoiceService.create(request);
+
+    const receiptBytes = this.escPosService.generateReceipt(
+      'BILL-BOOK STORE',
+      request.lines.map(l => ({
+        name: l.description ?? 'Item',
+        // Rupees on the wire, so the receipt line is a plain multiplication.
+        amount: (l.unitPrice ?? 0) * (l.quantity ?? 0)
+      })),
+      0 // Total would be computed from lines
+    );
+
+    this.printReceipt(receiptBytes);
   }
 
   private printReceipt(bytes: Uint8Array) {

@@ -74,6 +74,67 @@ public class SaveInvoiceRequest
     public List<SaveInvoiceLineRequest> Lines { get; set; } = [];
 }
 
+/// <summary>
+/// One page of invoices, and how many matched in all.
+///
+/// <b>The count is of the filtered set, not the page.</b> A list screen has to
+/// say how many invoices match before it can draw a pager, and counting the rows
+/// it was handed would say "50 of 50" on every page of a thousand.
+/// </summary>
+public class InvoiceListPage
+{
+    public int Total { get; set; }
+
+    /// <summary>Echoed back already clamped, so the screen and the server agree on where it is.</summary>
+    public int Skip { get; set; }
+
+    public int Take { get; set; }
+
+    public List<InvoiceListItem> Rows { get; set; } = [];
+}
+
+/// <summary>
+/// Invoicing a confirmed sales order.
+///
+/// The lines are <b>not</b> sent: they are read from the order server-side and
+/// recomputed at the rates in force on the invoice's own date. An invoice that
+/// claimed to come from an order it does not match would leave the two documents
+/// disagreeing for the rest of their lives — and this is the document a GST
+/// return is filed from, so the disagreement would eventually be with the
+/// department.
+///
+/// Same shape as <c>CreateOrderFromQuoteRequest</c> one step upstream, and for
+/// the same reasons.
+/// </summary>
+public class CreateInvoiceFromOrderRequest
+{
+    /// <summary>Defaults to today when the screen does not say.</summary>
+    public DateOnly? DocumentDate { get; set; }
+
+    /// <summary>
+    /// Required on an <c>INV</c>, here as everywhere else.
+    ///
+    /// It is not carried over from the order, because an order has no due date
+    /// to carry — a delivery date is when goods are expected, not when money is.
+    /// Send a <see cref="PaymentTermId"/> instead and the term derives it.
+    /// </summary>
+    public DateOnly? DueDate { get; set; }
+
+    public long? PaymentTermId { get; set; }
+
+    /// <summary>
+    /// The two-digit state code the supply is made in.
+    ///
+    /// <b>Not recoverable from the order</b>, which stores the answer
+    /// (<c>IsInterState</c>) and not the question. For a registered customer the
+    /// GSTIN carried across settles it and this can be left null.
+    /// </summary>
+    [MaxLength(2, ErrorMessage = "Place of supply must be a 2-digit state code.")]
+    public string? PlaceOfSupplyStateCode { get; set; }
+
+    public string? Notes { get; set; }
+}
+
 /// <summary>One line as the screen sends it. Money figures are derived, not sent.</summary>
 public class SaveInvoiceLineRequest
 {

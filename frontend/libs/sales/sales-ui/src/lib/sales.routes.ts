@@ -34,6 +34,13 @@ export const salesRoutes: Routes = [
     path: 'sales-orders/:id',
     loadComponent: () => import('./sales-order-form/sales-order-form.component').then(m => m.SalesOrderFormComponent)
   },
+  // Its own list, beside the mixed transaction list — the mixed one cannot
+  // filter by overdue or search an invoice number, which is what somebody
+  // chasing a payment actually wants.
+  {
+    path: 'invoices',
+    loadComponent: () => import('./invoice-list/invoice-list.component').then(m => m.InvoiceListComponent)
+  },
   {
     path: 'invoices/new',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent)
