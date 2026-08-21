@@ -1,6 +1,6 @@
-# Original User Request
+# Dispatch Record
 
-## Initial Request — 2026-08-20T18:15:33Z
+## 2026-08-20T18:15:33Z
 
 You are the Project Orchestrator for Stage T3.1 — Invoices (INV) for the Bill-Book ERP SaaS application.
 
