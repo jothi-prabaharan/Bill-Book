@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: Stage T3.1 Invoices (INV) module with full ledger and inventory integration. You can now create, convert from sales orders, post, and void invoices.
 - Added Inventory Item List, Item Detail, Item Summary, and Inventory Aging reports.
 
 ### Security
