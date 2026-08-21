@@ -49,3 +49,5 @@ Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. N
 - **Data Fetching**: Use `async/await` with Promises for straightforward REST calls instead of heavily piping RxJS streams.
 - **File Naming**: Suffix component files accurately according to their role (`.page.ts`, `.dialog.ts`, `.list.ts`, `.component.ts`).
 - **Separation of Concerns**: Use separate `templateUrl` and `styleUrl` instead of inline templates.
+- **Frontend Styling**: Absolutely NO inline styles (`style="..."`). Always use global CSS classes and CSS custom properties (e.g., `var(--primary-color)`).
+- **Validation UX**: Field validation errors must display directly on top of inputs. Business validation errors must display inside the shared message box component.

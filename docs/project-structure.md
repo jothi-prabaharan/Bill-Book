@@ -19,6 +19,9 @@ This is a multi-tenant retail ERP and accounting system.
 
 Each module generally maintains its own domain entities, EF Core DbContext, migrations, and API endpoints.
 
+### Transaction Architecture Rule
+For any transactional document (e.g., Invoice), create distinct tables: `[TransactionName]`, `[TransactionName]Details`, `[TransactionName]Tax`, `[TransactionName]StockMovement`, and `[TransactionName]Ledger`. A dedicated Ledger posting table and a Stock Movement table must be created for each specific transaction type.
+
 ---
 
 ## Frontend (Nx + Angular) — layout and conventions
@@ -34,6 +37,8 @@ Guiding principle: apps orchestrate, -core contains behaviour and side-effects, 
   - `libs/{module}/{module}-core` — models, services, state, HTTP clients, facades. Must be platform-agnostic (no `window`, `document`, Node, or Electron APIs).
   - `libs/{module}/{module}-ui` — presentational components, pages and shared UI widgets.
   - `libs/shared/` — shared theme, tokens, utilities, and small wrappers for platform-specific features.
+
+**Global Component Rule (STRICT STOP RULE)**: You must exclusively use existing global shared components for all UI elements (grids, buttons, inputs). If a component does not exist for a specific use case, development must STOP and explicit confirmation must be obtained from the user before creating a new one.
 
 ### Component folder layout
 - Each reusable component lives in its own folder and contains at minimum:
