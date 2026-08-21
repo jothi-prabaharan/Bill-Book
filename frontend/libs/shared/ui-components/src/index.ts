@@ -10,6 +10,8 @@ export * from './lib/report-grid/filter-bar.component';
 export * from './lib/report-grid/column-chooser.dialog';
 export * from './lib/report-grid/group-panel.component';
 export * from './lib/report-grid/pivot-panel.component';
+export * from './lib/message-box/message-box.model';
+export * from './lib/message-box/message-box.component';
 export * from './lib/bank-graph-card/bank-graph-card.component';
 export * from './lib/card-table/card-table.component';
 

@@ -22,6 +22,23 @@ namespace Sales.Repository;
 /// argument above does not stop at the schema boundary. What stays in this file
 /// is what is true of sales and not of purchase: the conversion links, the
 /// POS columns, and the reservation quantities.
+///
+/// <b>Every header-to-line relationship names its collection navigation, and it
+/// has to.</b> Configured as <c>HasOne&lt;Quote&gt;().WithMany()</c> — no
+/// navigation — the mapping is a perfectly good relationship that has nothing to
+/// do with <c>Quote.Lines</c>, so EF mapped that collection a second time by
+/// convention and gave it a shadow foreign key of its own: <c>QuoteId1</c>,
+/// <c>SalesOrderId1</c>, and eight more across the schema. Adding a line through
+/// the navigation then filled the shadow column and left the real, <c>NOT
+/// NULL</c> one at zero, so <b>no sales document with lines could be saved at
+/// all</b> — a foreign key violation on every create, in all five document types.
+///
+/// It survived for the same reason the missing <c>base.OnModelCreating</c> did:
+/// nothing wrote to these tables while the schema was being built, and a table
+/// nobody inserts into is a table nobody has checked. Six of these relationships
+/// are still navigation-less on purpose — the conversion links, quote to order to
+/// invoice — and those carry no collection to bind.
+/// <c>Sales.Api.Tests.SalesSchemaTests</c> asserts that no shadow key comes back.
 /// </summary>
 public class SalesDbContext : TenantDbContext
 {
@@ -85,7 +102,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.QuoteDetailId);
             b.ConfigureLine("QuoteDetails", "QuoteId");
-            b.HasOne<Quote>().WithMany().HasForeignKey(e => e.QuoteId)
+            b.HasOne<Quote>().WithMany(q => q.Lines).HasForeignKey(e => e.QuoteId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -93,7 +110,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.QuoteDetailTaxId);
             b.ConfigureTax("QuoteDetailTaxes", "QuoteDetailId");
-            b.HasOne<QuoteDetail>().WithMany().HasForeignKey(e => e.QuoteDetailId)
+            b.HasOne<QuoteDetail>().WithMany(d => d.Taxes).HasForeignKey(e => e.QuoteDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -124,7 +141,7 @@ public class SalesDbContext : TenantDbContext
             b.Property(e => e.ReservedQuantity).HasColumnType("decimal(18,6)");
             b.Property(e => e.DeliveredQuantity).HasColumnType("decimal(18,6)");
 
-            b.HasOne<SalesOrder>().WithMany().HasForeignKey(e => e.SalesOrderId)
+            b.HasOne<SalesOrder>().WithMany(o => o.Lines).HasForeignKey(e => e.SalesOrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             b.ToTable(t => t.HasCheckConstraint(
@@ -137,7 +154,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.SalesOrderDetailTaxId);
             b.ConfigureTax("SalesOrderDetailTaxes", "SalesOrderDetailId");
-            b.HasOne<SalesOrderDetail>().WithMany().HasForeignKey(e => e.SalesOrderDetailId)
+            b.HasOne<SalesOrderDetail>().WithMany(d => d.Taxes).HasForeignKey(e => e.SalesOrderDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -162,7 +179,7 @@ public class SalesDbContext : TenantDbContext
 
             b.Property(e => e.InvoicedQuantity).HasColumnType("decimal(18,6)");
 
-            b.HasOne<DeliveryChallan>().WithMany().HasForeignKey(e => e.DeliveryChallanId)
+            b.HasOne<DeliveryChallan>().WithMany(c => c.Lines).HasForeignKey(e => e.DeliveryChallanId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             b.HasOne<SalesOrderDetail>().WithMany().HasForeignKey(e => e.SalesOrderDetailId)
@@ -177,7 +194,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.DeliveryChallanDetailTaxId);
             b.ConfigureTax("DeliveryChallanDetailTaxes", "DeliveryChallanDetailId");
-            b.HasOne<DeliveryChallanDetail>().WithMany()
+            b.HasOne<DeliveryChallanDetail>().WithMany(d => d.Taxes)
                 .HasForeignKey(e => e.DeliveryChallanDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
@@ -232,7 +249,7 @@ public class SalesDbContext : TenantDbContext
 
             b.Property(e => e.ReturnedQuantity).HasColumnType("decimal(18,6)");
 
-            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId)
+            b.HasOne<Invoice>().WithMany(i => i.Lines).HasForeignKey(e => e.InvoiceId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             b.HasOne<SalesOrderDetail>().WithMany().HasForeignKey(e => e.SalesOrderDetailId)
@@ -250,7 +267,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.InvoiceDetailTaxId);
             b.ConfigureTax("InvoiceDetailTaxes", "InvoiceDetailId");
-            b.HasOne<InvoiceDetail>().WithMany().HasForeignKey(e => e.InvoiceDetailId)
+            b.HasOne<InvoiceDetail>().WithMany(d => d.Taxes).HasForeignKey(e => e.InvoiceDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -273,7 +290,7 @@ public class SalesDbContext : TenantDbContext
             b.HasKey(e => e.CreditNoteDetailId);
             b.ConfigureLine("CreditNoteDetails", "CreditNoteId");
 
-            b.HasOne<CreditNote>().WithMany().HasForeignKey(e => e.CreditNoteId)
+            b.HasOne<CreditNote>().WithMany(c => c.Lines).HasForeignKey(e => e.CreditNoteId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             // Restrict: the invoice line is how stock finds the cost layer it
@@ -287,7 +304,7 @@ public class SalesDbContext : TenantDbContext
         {
             b.HasKey(e => e.CreditNoteDetailTaxId);
             b.ConfigureTax("CreditNoteDetailTaxes", "CreditNoteDetailId");
-            b.HasOne<CreditNoteDetail>().WithMany().HasForeignKey(e => e.CreditNoteDetailId)
+            b.HasOne<CreditNoteDetail>().WithMany(d => d.Taxes).HasForeignKey(e => e.CreditNoteDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

@@ -51,7 +51,7 @@ public sealed class QuotesController : ControllerBase
     }
 
     [HttpPost("{QuoteId:long}/approve")]
-    [PermissionAction("sales.approve")]
+    [PermissionAction("approve")]
     public async Task<IActionResult> Approve(long QuoteId, CancellationToken ct)
     {
         QuoteResult result = await _Quotes.PostAsync(QuoteId, ct);
@@ -62,7 +62,7 @@ public sealed class QuotesController : ControllerBase
     }
 
     [HttpPost("{QuoteId:long}/void")]
-    [PermissionAction("sales.void")]
+    [PermissionAction("void")]
     public async Task<IActionResult> Void(long QuoteId, [FromBody] VoidQuoteRequest request, CancellationToken ct)
     {
         QuoteResult result = await _Quotes.VoidAsync(QuoteId, request, ct);

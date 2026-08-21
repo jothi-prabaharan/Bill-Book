@@ -1,134 +1,360 @@
-import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { SalesOrderService, SaveSalesOrderRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, TextInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { readApiFailure } from '@bill-book/api-client';
+import {
+  blankGridLine,
+  SalesOrderService,
+  SalesOrderView,
+  SaveSalesOrderRequest,
+  toApiLine,
+  toGridLine,
+} from '@bill-book/sales-core';
+import {
+  DocumentLine,
+  DocumentLineContext,
+  DocumentLineGridComponent,
+  MessageBoxComponent,
+  totalsOf,
+  UiMessage,
+} from '@bill-book/ui-components';
+import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 
+/**
+ * The sales order form.
+ *
+ * **Where each kind of error goes, and why the split is not cosmetic.** A field
+ * constraint — required, a two-digit state code, an exchange rate above zero —
+ * is shown on that field, because the eye is already there and the fix is one
+ * keystroke. A rule about the *document* — not enough stock to reserve, the
+ * credit limit is exceeded, a posted order is never edited — goes to the shared
+ * message box, because no single field is wrong and pinning it to one would be
+ * a guess.
+ *
+ * **Lines go through the scale boundary, never straight in.** The API serves
+ * decimal rupees; `bb-document-line-grid` works in integer paise with quantity
+ * at six decimals. Handed one to the other unconverted it does not throw — it
+ * computes 10 × 100 ÷ 1 000 000 and shows a priced order as an empty one. That
+ * is what `toGridLine` and `toApiLine` are for, and they are the only crossing.
+ *
+ * **Header in a reactive form, lines in the shared grid.** The brief asked for a
+ * `FormArray` of lines; the grid already owns line editing for all nine
+ * document types, and a `FormArray` beside it would be a second source of truth
+ * for the same rows. So the header is reactive and the lines stay with the
+ * component that all nine share.
+ */
 @Component({
   selector: 'bb-sales-order-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, TextInputComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterModule,
+    DocumentLineGridComponent,
+    MessageBoxComponent,
+    QuoteToOrderDialogComponent,
+  ],
   templateUrl: './sales-order-form.component.html',
-  styleUrls: ['./sales-order-form.component.scss']
+  styleUrl: './sales-order-form.component.scss',
 })
 export class SalesOrderFormComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private salesOrderService = inject(SalesOrderService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly orders = inject(SalesOrderService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  isEdit = false;
-  salesOrderId: number | null = null;
-  
-  form = this.fb.group({
-    documentDate: [new Date().toISOString().split('T')[0], Validators.required],
-    deliveryDate: [new Date().toISOString().split('T')[0], Validators.required],
-    contactId: [1, Validators.required], 
-    contactGstin: [''],
-    placeOfSupplyStateCode: [''],
-    currencyCode: ['INR', Validators.required],
-    exchangeRate: [1, [Validators.required, Validators.min(0.0001)]],
+  protected readonly isEdit = signal(false);
+  protected readonly salesOrderId = signal<number | null>(null);
+  protected readonly saving = signal(false);
+  protected readonly messages = signal<UiMessage[]>([]);
+  protected readonly showConvert = signal(false);
+
+  /** Draft / ReadyToPost / Posted / Void, as the server last said. */
+  protected readonly status = signal('Draft');
+  protected readonly documentNo = signal('');
+  protected readonly fulfilment = signal('Open');
+  protected readonly quoteId = signal<number | null>(null);
+
+  protected readonly form = this.fb.nonNullable.group({
+    documentDate: [today(), Validators.required],
+    deliveryDate: [''],
+    contactId: [0, [Validators.required, Validators.min(1)]],
+    contactGstin: ['', [Validators.maxLength(15)]],
+    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
     billingAddress: [''],
     shippingAddress: [''],
     notes: [''],
-    termsAndConditions: ['']
+    termsAndConditions: [''],
   });
 
-  lines: DocumentLine[] = [];
-  context: DocumentLineContext = {
-    isInterState: false,
+  /**
+   * Why the order is being withdrawn.
+   *
+   * Its own group rather than a control on the form above, because the form
+   * above is disabled the moment the order stops being editable — and voiding a
+   * *posted* order is exactly the case that needs this field usable.
+   */
+  protected readonly voidForm = this.fb.nonNullable.group({
+    reason: ['', [Validators.required, Validators.maxLength(300)]],
+  });
+
+  protected readonly lines = signal<DocumentLine[]>([blankGridLine(1)]);
+
+  /**
+   * The grid's own context. `isInterState` is what the *screen* believes, from
+   * the GSTIN typed so far, and it only drives which tax columns are drawn —
+   * the server resolves the place of supply again and its answer is the one
+   * that reaches the document.
+   */
+  protected readonly context = computed<DocumentLineContext>(() => ({
+    isInterState: this.looksInterState(),
     currencyDecimals: 2,
     allowFreeTextLines: true,
     discountBeforeTax: true,
     discountLevel: 'Line',
-    readonly: false
-  };
+    readonly: !this.editable(),
+  }));
 
-  get totals() {
-    return totalsOf(this.lines);
-  }
+  protected readonly totals = computed(() => totalsOf(this.lines()));
 
-  ngOnInit() {
+  /** A posted or voided order is read-only. The lifecycle says so for every document. */
+  protected readonly editable = computed(
+    () => this.status() === 'Draft' || this.status() === 'ReadyToPost',
+  );
+
+  protected readonly canConfirm = computed(
+    () => this.isEdit() && this.editable() && this.lines().length > 0,
+  );
+
+  protected readonly canVoid = computed(() => this.isEdit() && this.status() !== 'Void');
+
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+
     if (id && id !== 'new') {
-      this.isEdit = true;
-      this.salesOrderId = +id;
-      this.loadSalesOrder();
+      this.isEdit.set(true);
+      this.salesOrderId.set(Number(id));
+      void this.load();
     }
   }
 
-  loadSalesOrder() {
-    if (!this.salesOrderId) return;
-    this.salesOrderService.get(this.salesOrderId).subscribe(so => {
-      this.form.patchValue({
-        documentDate: so.documentDate,
-        deliveryDate: so.deliveryDate,
-        contactId: so.contactId,
-        contactGstin: so.contactGstin || '',
-        placeOfSupplyStateCode: (so as any).placeOfSupplyStateCode || (so as any).placeOfSupplyStateId?.toString() || '',
-        currencyCode: so.currencyCode,
-        exchangeRate: so.exchangeRate,
-        billingAddress: so.billingAddress || '',
-        shippingAddress: so.shippingAddress || '',
-        notes: so.notes,
-        termsAndConditions: so.termsAndConditions
-      });
-      this.lines = (so.lines || []).map(l => ({
-        itemId: l.itemId,
-        description: l.description,
-        hsnSacCode: l.hsnSacCode,
-        accountId: l.accountId,
-        taxTreatment: l.taxTreatment || 'Taxable',
-        taxMasterId: l.taxMasterId,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent || 0
-      } as any));
+  protected async load(): Promise<void> {
+    const id = this.salesOrderId();
+    if (id === null) {
+      return;
+    }
+
+    try {
+      const order = await this.orders.get(id);
+      this.apply(order);
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    }
+  }
+
+  private apply(order: SalesOrderView): void {
+    this.status.set(order.status);
+    this.documentNo.set(order.documentNo);
+    this.fulfilment.set(order.fulfilmentStatus);
+    this.quoteId.set(order.quoteId ?? null);
+
+    this.form.patchValue({
+      documentDate: order.documentDate,
+      deliveryDate: order.deliveryDate ?? '',
+      contactId: order.contactId,
+      contactGstin: order.contactGstin ?? '',
+      currencyCode: order.currencyCode,
+      exchangeRate: order.exchangeRate,
+      billingAddress: order.billingAddress ?? '',
+      shippingAddress: order.shippingAddress ?? '',
+      notes: order.notes ?? '',
+      termsAndConditions: order.termsAndConditions ?? '',
     });
+
+    // Through the scale boundary. Straight in, a ₹100 line reads as zero.
+    this.lines.set(
+      order.lines.length > 0
+        ? order.lines.map((line, index) => toGridLine(line, index + 1))
+        : [blankGridLine(1)],
+    );
+
+    if (!this.editable()) {
+      this.form.disable({ emitEvent: false });
+    }
+
+    if (order.status === 'Void' && order.voidReason) {
+      this.messages.set([
+        { tone: 'warning', text: `This order was voided: ${order.voidReason}` },
+      ]);
+    }
   }
 
-  onLinesChange(newLines: readonly DocumentLine[]) {
-    this.lines = [...newLines];
+  protected onLinesChange(lines: readonly DocumentLine[]): void {
+    this.lines.set([...lines]);
   }
 
-  onPickItem(_index: number) {
-    // open item picker dialog, update lines
+  protected onPickItem(_index: number): void {
+    // The item picker is a lookup dialog the host opens; wiring it is T2.4,
+    // which is where the item lookup endpoint lands. Until then a line is keyed
+    // by hand, which the grid already supports.
   }
 
-  save() {
-    if (this.form.invalid) return;
+  protected async save(): Promise<void> {
+    this.form.markAllAsTouched();
+    this.messages.set([]);
 
-    const val = this.form.value;
+    if (this.form.invalid) {
+      return;
+    }
+
+    const priced = this.lines().filter((line) => line.quantity > 0);
+
+    if (priced.length === 0) {
+      this.messages.set([
+        { tone: 'error', text: 'An order needs at least one line with a quantity on it.' },
+      ]);
+      return;
+    }
+
+    this.saving.set(true);
+
+    const value = this.form.getRawValue();
+
     const request: SaveSalesOrderRequest = {
-      documentDate: val.documentDate!,
-      deliveryDate: val.deliveryDate!,
-      contactId: val.contactId!,
-      contactGstin: val.contactGstin || undefined,
-      placeOfSupplyStateCode: val.placeOfSupplyStateCode || undefined,
-      currencyCode: val.currencyCode!,
-      exchangeRate: val.exchangeRate!,
-      billingAddress: val.billingAddress || undefined,
-      shippingAddress: val.shippingAddress || undefined,
-      notes: val.notes || undefined,
-      termsAndConditions: val.termsAndConditions || undefined,
-      lines: this.lines.map(l => ({
-        itemId: l.itemId ?? undefined,
-        description: l.description ?? undefined,
-        hsnSacCode: l.hsnSacCode ?? undefined,
-        accountId: l.accountId ?? undefined,
-        taxTreatment: l.taxTreatment,
-        taxMasterId: l.taxMasterId ?? undefined,
-        quantity: l.quantity,
-        unitPrice: l.unitPrice,
-        discountPercent: l.discountPercent ?? 0
-      } as any))
+      documentDate: value.documentDate,
+      deliveryDate: value.deliveryDate || undefined,
+      contactId: value.contactId,
+      contactGstin: value.contactGstin || undefined,
+      placeOfSupplyStateCode: value.placeOfSupplyStateCode || undefined,
+      currencyCode: value.currencyCode || undefined,
+      exchangeRate: value.exchangeRate,
+      billingAddress: value.billingAddress || undefined,
+      shippingAddress: value.shippingAddress || undefined,
+      notes: value.notes || undefined,
+      termsAndConditions: value.termsAndConditions || undefined,
+      lines: priced.map(toApiLine),
     };
 
-    if (this.isEdit && this.salesOrderId) {
-      this.salesOrderService.update(this.salesOrderId, request).subscribe(() => { void this.router.navigate(['../'], { relativeTo: this.route }); });
-    } else {
-      this.salesOrderService.create(request).subscribe(() => { void this.router.navigate(['../'], { relativeTo: this.route }); });
+    try {
+      const id = this.salesOrderId();
+
+      if (this.isEdit() && id !== null) {
+        await this.orders.update(id, request);
+        await this.load();
+        this.messages.set([{ tone: 'success', text: 'Sales order saved.' }]);
+      } else {
+        const created = await this.orders.create(request);
+        await this.router.navigate(['/sales/sales-orders', created.salesOrderId]);
+      }
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
     }
   }
+
+  /**
+   * Confirm the order, which reserves its stock.
+   *
+   * The refusal this exists to show properly is the stock one: the server names
+   * the items that were short, and that sentence goes into the message box
+   * whole rather than being reduced to "insufficient stock".
+   */
+  protected async confirm(): Promise<void> {
+    const id = this.salesOrderId();
+    if (id === null) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      await this.orders.confirm(id);
+      await this.load();
+      this.messages.set([
+        { tone: 'success', text: 'Sales order confirmed. Its stock is now reserved.' },
+      ]);
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  protected async voidOrder(): Promise<void> {
+    const id = this.salesOrderId();
+
+    if (id === null) {
+      return;
+    }
+
+    // The reason is a field constraint, so it shows on its own field — the same
+    // rule the server enforces, said before the round trip rather than instead
+    // of it.
+    this.voidForm.markAllAsTouched();
+
+    if (this.voidForm.invalid) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      await this.orders.voidOrder(id, { reason: this.voidForm.controls.reason.value.trim() });
+      this.voidForm.reset();
+      await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  protected async onConverted(salesOrderId: number): Promise<void> {
+    this.showConvert.set(false);
+    await this.router.navigate(['/sales/sales-orders', salesOrderId]);
+  }
+
+  /** Whether a field should show its error yet — touched, and actually wrong. */
+  protected showError(control: keyof typeof this.form.controls): boolean {
+    const field = this.form.controls[control];
+    return field.invalid && (field.touched || field.dirty);
+  }
+
+  /**
+   * What the screen guesses about the place of supply, for the grid's columns.
+   *
+   * The first two digits of a GSTIN are its state. With no GSTIN and no stated
+   * code the screen cannot tell, and guesses intra-state — the ordinary case,
+   * and one the server corrects on save if it is wrong.
+   */
+  private looksInterState(): boolean {
+    const stated = this.form.controls.placeOfSupplyStateCode.value;
+    const gstin = this.form.controls.contactGstin.value;
+    const supply = stated || gstin.slice(0, 2);
+
+    return supply.length === 2 && supply !== BRANCH_STATE_FALLBACK;
+  }
+}
+
+/**
+ * The branch's own state, until the settings endpoint is wired into this page.
+ *
+ * It affects the columns drawn and nothing else — the document's own
+ * `IsInterState` comes from `PlaceOfSupply.Resolve` on the server, against the
+ * branch's real state code.
+ */
+const BRANCH_STATE_FALLBACK = '33';
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
 }

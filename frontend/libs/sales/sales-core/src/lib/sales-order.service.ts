@@ -1,12 +1,20 @@
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { ApiDocumentLine } from './document-line-scale';
 
+/**
+ * A sales order as the screen sends it.
+ *
+ * **No totals and no tax.** The server computes every figure from the lines at
+ * the rates in force on the document's date; a caller free to send its own
+ * would be free to save a document whose foot disagrees with its body.
+ */
 export interface SaveSalesOrderRequest {
   documentDate: string;
-  deliveryDate: string;
   contactId: number;
   quoteId?: number;
+  deliveryDate?: string;
   contactGstin?: string;
   placeOfSupplyStateCode?: string;
   billingAddress?: string;
@@ -18,127 +26,167 @@ export interface SaveSalesOrderRequest {
   lines: SalesOrderLineRequest[];
 }
 
-export interface SalesOrderLineRequest {
-  itemId?: number;
-  description?: string;
-  hsnSacCode?: string;
-  accountId?: number;
-  taxTreatment: string;
-  taxMasterId?: number;
-  quantity: number;
-  unitPrice: number;
-  discountPercent: number;
-  lineNotes?: string;
-}
+/**
+ * One line, in the units the API takes — rupees and plain quantities.
+ *
+ * Built by `toApiLine`, never by hand: the grid works in integer paise and the
+ * API does not, and the one place somebody forgets is a line off by a factor of
+ * a hundred that still renders.
+ */
+export type SalesOrderLineRequest = ApiDocumentLine;
 
 export interface VoidSalesOrderRequest {
   reason: string;
+}
+
+/** Turning an accepted quote into an order. The lines come from the quote. */
+export interface CreateOrderFromQuoteRequest {
+  documentDate?: string;
+  deliveryDate?: string;
+  placeOfSupplyStateCode?: string;
+  notes?: string;
 }
 
 export interface SalesOrderListItem {
   salesOrderId: number;
   documentNo: string;
   documentDate: string;
-  contactName: string;
+  quoteId?: number;
+  deliveryDate?: string;
+  fulfilmentStatus: string;
+  contactId: number;
+  contactName?: string;
+  contactCode?: string;
+  currencyCode: string;
+  taxableAmount: number;
   totalAmount: number;
   status: string;
   isInterState: boolean;
   invoicedDocumentId?: number;
 }
 
-export interface SalesOrderView {
-  salesOrderId: number;
-  documentNo: string;
-  documentDate: string;
-  deliveryDate: string;
-  contactId: number;
-  contactName: string;
+/**
+ * One page of orders and how many matched in all.
+ *
+ * `total` is of the filtered set rather than the page, because that is what the
+ * pager needs — a page that counted its own rows would say "50 of 50" on every
+ * page of a thousand.
+ */
+export interface SalesOrderListPage {
+  total: number;
+  skip: number;
+  take: number;
+  rows: SalesOrderListItem[];
+}
+
+export interface SalesOrderView extends SalesOrderListItem {
   contactGstin?: string;
+  placeOfSupplyStateId: number;
   billingAddress?: string;
   shippingAddress?: string;
-  placeOfSupplyStateId: number;
-  isInterState: boolean;
-  currencyCode: string;
   exchangeRate: number;
   subTotal: number;
   discountAmount: number;
-  taxableAmount: number;
   cgstAmount: number;
   sgstAmount: number;
   igstAmount: number;
   cessAmount: number;
   roundOffAmount: number;
-  totalAmount: number;
-  status: string;
-  postedAt?: string;
-  postedBy?: string;
-  voidedAt?: string;
-  voidedBy?: string;
-  voidReason?: string;
+  totalAmountBase: number;
   notes?: string;
   termsAndConditions?: string;
-  invoicedDocumentId?: number;
+  postedAt?: string;
+  voidedAt?: string;
+  voidReason?: string;
   lines: SalesOrderLineView[];
 }
 
-export interface SalesOrderLineView {
+export interface SalesOrderLineView extends ApiDocumentLine {
   salesOrderDetailId: number;
   lineNumber: number;
-  itemId?: number;
   itemLabel?: string;
-  description?: string;
-  hsnSacCode?: string;
-  accountId?: number;
-  taxTreatment: string;
-  taxMasterId?: number;
-  quantity: number;
-  conversionFactor: number;
-  unitPrice: number;
-  discountPercent: number;
-  discountAmount: number;
+  baseQuantity: number;
+  reservedQuantity: number;
+  deliveredQuantity: number;
   grossAmount: number;
   taxableAmount: number;
   taxAmount: number;
   lineTotal: number;
-  lineNotes?: string;
   taxes: SalesOrderLineTaxView[];
 }
 
 export interface SalesOrderLineTaxView {
+  salesOrderDetailTaxId: number;
   taxComponent: string;
   rate: number;
   taxableAmount: number;
   amount: number;
+  amountBase: number;
 }
 
-@Injectable({
-  providedIn: 'root'
-})
+/** What the list screen may ask the server for. */
+export interface SalesOrderListQuery {
+  skip?: number;
+  take?: number;
+  status?: string;
+  search?: string;
+}
+
+/**
+ * The sales order endpoints.
+ *
+ * **Promises, not streams.** These are one-shot REST calls with no
+ * cancellation, no retry and no composition, and `await` lets the caller wrap a
+ * refusal in `try`/`catch` — which is what puts a rule's own words into the
+ * message box instead of losing them in an error callback.
+ */
+@Injectable({ providedIn: 'root' })
 export class SalesOrderService {
-  private http = inject(HttpClient);
-  private apiUrl = '/api/sales/sales-orders';
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = '/api/sales/sales-orders';
 
-  list(): Observable<SalesOrderListItem[]> {
-    return this.http.get<SalesOrderListItem[]>(this.apiUrl);
+  async list(query: SalesOrderListQuery = {}): Promise<SalesOrderListPage> {
+    let params = new HttpParams()
+      .set('skip', String(query.skip ?? 0))
+      .set('take', String(query.take ?? 50));
+
+    if (query.status) {
+      params = params.set('status', query.status);
+    }
+    if (query.search) {
+      params = params.set('search', query.search);
+    }
+
+    return firstValueFrom(this.http.get<SalesOrderListPage>(this.apiUrl, { params }));
   }
 
-  get(salesOrderId: number): Observable<SalesOrderView> {
-    return this.http.get<SalesOrderView>(`${this.apiUrl}/${salesOrderId}`);
+  async get(salesOrderId: number): Promise<SalesOrderView> {
+    return firstValueFrom(this.http.get<SalesOrderView>(`${this.apiUrl}/${salesOrderId}`));
   }
 
-  create(request: SaveSalesOrderRequest): Observable<{ salesOrderId: number }> {
-    return this.http.post<{ salesOrderId: number }>(this.apiUrl, request);
+  async create(request: SaveSalesOrderRequest): Promise<{ salesOrderId: number }> {
+    return firstValueFrom(this.http.post<{ salesOrderId: number }>(this.apiUrl, request));
   }
 
-  update(salesOrderId: number, request: SaveSalesOrderRequest): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${salesOrderId}`, request);
+  async createFromQuote(
+    quoteId: number,
+    request: CreateOrderFromQuoteRequest,
+  ): Promise<{ salesOrderId: number }> {
+    return firstValueFrom(
+      this.http.post<{ salesOrderId: number }>(`${this.apiUrl}/from-quote/${quoteId}`, request),
+    );
   }
 
-  approve(salesOrderId: number): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${salesOrderId}/approve`, {});
+  async update(salesOrderId: number, request: SaveSalesOrderRequest): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`${this.apiUrl}/${salesOrderId}`, request));
   }
 
-  voidOrder(salesOrderId: number, request: VoidSalesOrderRequest): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/${salesOrderId}/void`, request);
+  /** Confirms the order and reserves its stock. Nothing reaches the ledger. */
+  async confirm(salesOrderId: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.apiUrl}/${salesOrderId}/confirm`, {}));
+  }
+
+  async voidOrder(salesOrderId: number, request: VoidSalesOrderRequest): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`${this.apiUrl}/${salesOrderId}/void`, request));
   }
 }

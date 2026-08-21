@@ -1,0 +1,117 @@
+<!-- The scrim dims and blocks; it does not dismiss. A click-anywhere-to-close
+     on a form is a way to lose what was typed by brushing the trackpad, and it
+     cannot be operated from a keyboard without putting a full-screen button in
+     the tab order. Escape and the × close it, which is what a keyboard user
+     reaches for anyway. -->
+<div class="q2o__scrim" aria-hidden="true"></div>
+
+<div
+  class="q2o"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="q2o-title"
+  tabindex="-1"
+  (keydown.escape)="cancel()"
+>
+  <header class="q2o__head">
+    <h2 class="q2o__title" id="q2o-title">Convert a quote to a sales order</h2>
+
+    <button type="button" class="q2o__close" aria-label="Close" (click)="cancel()">&times;</button>
+  </header>
+
+  <div class="q2o__body">
+    <!-- Business rules and anything the server refused. Field constraints are
+         shown on their own fields, below. -->
+    <bb-message-box [messages]="messages()" />
+
+    @if (loading()) {
+      <p class="q2o__note">Loading accepted quotes…</p>
+    } @else if (!hasCandidates()) {
+      <p class="q2o__note">
+        There are no accepted quotes waiting to be converted. A quote has to be approved first,
+        and one that has already become an order cannot become a second.
+      </p>
+    } @else {
+      <form class="q2o__form" [formGroup]="form" (ngSubmit)="convert()">
+        <fieldset class="q2o__quotes">
+          <legend class="q2o__legend">Quote</legend>
+
+          @if (showError('quoteId')) {
+            <p class="field-error" role="alert">Choose the quote to convert.</p>
+          }
+
+          <ul class="q2o__list">
+            @for (quote of candidates(); track quote.quoteId) {
+              <li>
+                <button
+                  type="button"
+                  class="q2o__quote"
+                  [class.q2o__quote--on]="selected()?.quoteId === quote.quoteId"
+                  [attr.aria-pressed]="selected()?.quoteId === quote.quoteId"
+                  (click)="onSelect(quote.quoteId)"
+                >
+                  <span class="q2o__quote-no">{{ quote.documentNo }}</span>
+                  <span class="q2o__quote-name">{{ quote.contactName }}</span>
+                  <span class="q2o__quote-amount">{{ quote.totalAmount | number: '1.2-2' }}</span>
+                </button>
+              </li>
+            }
+          </ul>
+        </fieldset>
+
+        <div class="q2o__fields">
+          <div class="field">
+            <label for="q2o-date">Order date</label>
+            <input id="q2o-date" class="input" type="date" formControlName="documentDate" />
+
+            @if (showError('documentDate')) {
+              <span class="field-error" role="alert">Give the order a date.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="q2o-delivery">Delivery date</label>
+            <input id="q2o-delivery" class="input" type="date" formControlName="deliveryDate" />
+            <small class="field-hint">When the customer is expecting the goods.</small>
+          </div>
+
+          <div class="field">
+            <label for="q2o-pos">Place of supply</label>
+            <input
+              id="q2o-pos"
+              class="input"
+              type="text"
+              inputmode="numeric"
+              maxlength="2"
+              placeholder="33"
+              formControlName="placeOfSupplyStateCode"
+            />
+
+            @if (showError('placeOfSupplyStateCode')) {
+              <span class="field-error" role="alert">
+                Place of supply is a two-digit state code.
+              </span>
+            } @else {
+              <small class="field-hint">
+                Leave blank for a registered customer — their GSTIN settles it.
+              </small>
+            }
+          </div>
+
+          <div class="field q2o__wide">
+            <label for="q2o-notes">Notes</label>
+            <textarea id="q2o-notes" class="input" rows="2" formControlName="notes"></textarea>
+          </div>
+        </div>
+
+        <footer class="q2o__actions">
+          <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Converting…' : 'Convert to order' }}
+          </button>
+        </footer>
+      </form>
+    }
+  </div>
+</div>

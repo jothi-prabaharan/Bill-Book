@@ -164,10 +164,11 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       update: vi.fn().mockReturnValue(of({ quoteId: 1 })),
     };
 
+    // Promises: SalesOrderService is awaited since T2.2.
     mockSalesOrderService = {
-      get: vi.fn().mockReturnValue(of({ salesOrderId: 1, lines: [] })),
-      create: vi.fn().mockReturnValue(of({ salesOrderId: 1 })),
-      update: vi.fn().mockReturnValue(of({ salesOrderId: 1 })),
+      get: vi.fn().mockResolvedValue({ salesOrderId: 1, status: 'Draft', lines: [] }),
+      create: vi.fn().mockResolvedValue({ salesOrderId: 1 }),
+      update: vi.fn().mockResolvedValue(undefined),
     };
 
     mockCreditNoteService = {
@@ -509,15 +510,22 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       const deliveryChallan = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
 
       quote.onLinesChange([sampleLine]);
-      salesOrder.onLinesChange([sampleLine]);
+      // The sales order's totals are a signal and its members are protected, so
+      // it goes through a declared shape rather than the component being opened
+      // up for a test.
+      const order = salesOrder as unknown as {
+        onLinesChange(lines: readonly DocumentLine[]): void;
+        totals(): { subTotal: number; totalAmount: number };
+      };
+      order.onLinesChange([sampleLine]);
       creditNote.onLinesChange([sampleLine]);
       deliveryChallan.onLinesChange([sampleLine]);
 
       expect(quote.totals.subTotal).toBe(5000000);
       expect(quote.totals.totalAmount).toBe(4635000);
 
-      expect(salesOrder.totals.subTotal).toBe(5000000);
-      expect(salesOrder.totals.totalAmount).toBe(4635000);
+      expect(order.totals().subTotal).toBe(5000000);
+      expect(order.totals().totalAmount).toBe(4635000);
 
       expect(creditNote.totals.subTotal).toBe(5000000);
       expect(creditNote.totals.totalAmount).toBe(4635000);

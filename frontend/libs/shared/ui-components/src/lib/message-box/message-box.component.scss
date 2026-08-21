@@ -1,0 +1,93 @@
+/* Every colour is a token. Nothing here names a hex value — the four tones are
+   --color-danger / --color-warning / --color-success and the accent, so a
+   palette change reaches this box without anybody editing it. */
+
+.msgbox {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--msgbox-edge);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--msgbox-ground);
+  color: var(--color-text);
+  font-size: 13px;
+  line-height: 1.5;
+
+  /* Defaults, so the block below only has to say what differs per tone. */
+  --msgbox-edge: var(--color-accent);
+  --msgbox-ground: var(--color-accent-100);
+}
+
+.msgbox--error {
+  --msgbox-edge: var(--color-danger);
+  --msgbox-ground: var(--color-danger-bg);
+}
+
+.msgbox--warning {
+  --msgbox-edge: var(--color-warning);
+  --msgbox-ground: var(--color-warning-bg);
+}
+
+.msgbox--success {
+  --msgbox-edge: var(--color-success);
+  --msgbox-ground: var(--color-success-bg);
+}
+
+.msgbox--info {
+  --msgbox-edge: var(--color-accent);
+  --msgbox-ground: var(--color-accent-100);
+}
+
+.msgbox__list {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.msgbox__text {
+  /* pretty, so a two-line refusal does not leave one word alone on line two. */
+  text-wrap: pretty;
+}
+
+.msgbox__detail {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-4);
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 78%, transparent);
+}
+
+.msgbox__dismiss {
+  flex: none;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--msgbox-edge);
+    outline-offset: 2px;
+  }
+}
+
+/* ~360px. The box already stacks, so the only thing to give back is padding. */
+@media (max-width: 480px) {
+  .msgbox {
+    padding: var(--space-2) var(--space-3);
+    font-size: 12px;
+  }
+}

@@ -145,9 +145,89 @@ public enum SalesOrderOutcome
 
     /// <summary>The order exceeds the customer's credit limit or maximum outstanding days.</summary>
     CreditLimitExceeded = 9,
+
+    /// <summary>
+    /// The row exists and belongs to another branch.
+    ///
+    /// <b>Distinct from <see cref="NotFound"/> on purpose</b>, because the two
+    /// are different answers: one says the id names nothing, the other says the
+    /// caller may not have it. The house rule is <c>Forbid()</c> on a cross-org
+    /// reach and never <c>NotFound()</c>.
+    ///
+    /// Under the query filter and the RLS policy another branch's row is already
+    /// invisible, so this is reached only when something has read past both —
+    /// an <c>IgnoreQueryFilters</c> added later, or a connection whose role
+    /// bypasses RLS. That is exactly when the right answer matters, and a guard
+    /// that only fires when the guards above it have failed is the one worth
+    /// having.
+    /// </summary>
+    Forbidden = 10,
+
+    /// <summary>The quote named cannot become an order — wrong status, or already converted.</summary>
+    QuoteNotConvertible = 11,
 }
 
 public sealed record SalesOrderResult(SalesOrderOutcome Outcome, long SalesOrderId = 0, string? Detail = null);
+
+/// <summary>
+/// A read, and why it failed when it did.
+///
+/// A bare <c>SalesOrderView?</c> cannot say the difference between "no such
+/// order" and "not yours", and the controller has to answer <c>NotFound()</c>
+/// for one and <c>Forbid()</c> for the other.
+/// </summary>
+public sealed record SalesOrderViewResult(SalesOrderOutcome Outcome, SalesOrderView? View = null);
+
+/// <summary>
+/// One page of sales orders, and how many matched in all.
+///
+/// <b>The count is of the filtered set, not the page.</b> A list screen has to
+/// say how many orders match before it can draw a pager, and counting the rows
+/// it was handed would say "50 of 50" on every page of a thousand.
+/// </summary>
+public class SalesOrderListPage
+{
+    public int Total { get; set; }
+
+    /// <summary>Echoed back already clamped, so the screen and the server agree on where it is.</summary>
+    public int Skip { get; set; }
+
+    public int Take { get; set; }
+
+    public List<SalesOrderListItem> Rows { get; set; } = [];
+}
+
+/// <summary>
+/// Turning an accepted quote into an order.
+///
+/// The lines are <b>not</b> sent: they are read from the quote server-side and
+/// recomputed at the rates in force on the order's own date. A caller free to
+/// send its own lines could raise an order that claims to come from a quote it
+/// does not match, and the two documents would disagree for the rest of their
+/// lives.
+/// </summary>
+public class CreateOrderFromQuoteRequest
+{
+    /// <summary>Defaults to today when the screen does not say.</summary>
+    public DateOnly? DocumentDate { get; set; }
+
+    /// <summary>When the customer is expecting the goods.</summary>
+    public DateOnly? DeliveryDate { get; set; }
+
+    /// <summary>
+    /// The two-digit state code the supply is made in.
+    ///
+    /// <b>Not recoverable from the quote</b>, which stores the answer
+    /// (<c>IsInterState</c>) and not the question. For a registered customer the
+    /// GSTIN carried across settles it and this can be left null, which is the
+    /// ordinary case; for an unregistered one the conversion needs it stated,
+    /// exactly as raising the order directly would.
+    /// </summary>
+    [MaxLength(2, ErrorMessage = "Place of supply must be a 2-digit state code.")]
+    public string? PlaceOfSupplyStateCode { get; set; }
+
+    public string? Notes { get; set; }
+}
 
 /// <summary>A SalesOrder on the list screen. Contact name resolved in a batch, never stored.</summary>
 public class SalesOrderListItem

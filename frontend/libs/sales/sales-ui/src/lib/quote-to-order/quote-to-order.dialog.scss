@@ -1,0 +1,202 @@
+/* Tokens only. Nothing here names a colour and nothing is inline. */
+
+.q2o__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: color-mix(in srgb, var(--color-ink) 45%, transparent);
+}
+
+.q2o {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  z-index: calc(var(--z-modal) + 1);
+  transform: translate(-50%, -50%);
+  width: min(640px, calc(100vw - var(--space-6) * 2));
+  max-height: calc(100dvh - var(--space-6) * 2);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+}
+
+.q2o__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.q2o__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.q2o__close {
+  flex: none;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.q2o__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.q2o__note {
+  margin: 0;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 65%, transparent);
+  text-wrap: pretty;
+}
+
+.q2o__quotes {
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  border: 0;
+}
+
+.q2o__legend {
+  padding: 0;
+  margin-bottom: var(--space-2);
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+.q2o__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-1);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.q2o__quote {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 8rem) minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.q2o__quote--on {
+  border-color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.q2o__quote-no {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.q2o__quote-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+}
+
+.q2o__quote-amount {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.q2o__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.q2o__wide {
+  grid-column: 1 / -1;
+}
+
+.q2o__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--color-divider);
+}
+
+/* ~360px. A modal becomes a full-screen sheet, per the house rule, and the
+   actions go full width so a thumb can reach them. */
+@media (max-width: 480px) {
+  .q2o {
+    top: 0;
+    left: 0;
+    transform: none;
+    width: 100vw;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border: 0;
+    border-radius: 0;
+  }
+
+  .q2o__quote {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .q2o__quote-name {
+    grid-column: 1 / -1;
+  }
+
+  .q2o__fields {
+    grid-template-columns: 1fr;
+  }
+
+  .q2o__actions {
+    flex-direction: column-reverse;
+  }
+
+  .q2o__actions .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

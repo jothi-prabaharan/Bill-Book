@@ -74,7 +74,7 @@ public sealed class DeliveryChallansController : ControllerBase
 
     /// <summary>Dispatches: issues the stock, releases the reservation, posts if it is a sale.</summary>
     [HttpPost("{id:long}/post")]
-    [PermissionAction("sales.approve")]
+    [PermissionAction("approve")]
     public async Task<IActionResult> Post(long id, CancellationToken ct)
     {
         await _service.PostAsync(id, ct);
@@ -86,7 +86,7 @@ public sealed class DeliveryChallansController : ControllerBase
     /// convention — see <see cref="VoidDeliveryChallanRequest"/>.
     /// </summary>
     [HttpPost("{id:long}/void")]
-    [PermissionAction("sales.void")]
+    [PermissionAction("void")]
     public async Task<IActionResult> Void(
         long id, [FromBody] VoidDeliveryChallanRequest request, CancellationToken ct)
     {

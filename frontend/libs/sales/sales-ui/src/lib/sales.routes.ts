@@ -19,6 +19,13 @@ export const salesRoutes: Routes = [
     path: 'quotes/:id',
     loadComponent: () => import('./quote-form/quote-form.component').then(m => m.QuoteFormComponent)
   },
+  // Its own list, beside the mixed transaction list. The mixed one pages over
+  // five document types at once and cannot filter by fulfilment or search a
+  // sales order number, which is what somebody chasing an order actually wants.
+  {
+    path: 'sales-orders',
+    loadComponent: () => import('./sales-order-list/sales-order-list.component').then(m => m.SalesOrderListComponent)
+  },
   {
     path: 'sales-orders/new',
     loadComponent: () => import('./sales-order-form/sales-order-form.component').then(m => m.SalesOrderFormComponent)

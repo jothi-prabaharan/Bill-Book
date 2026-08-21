@@ -41,8 +41,13 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Sales',
-    pages: [{ slug: 'quotes', title: 'Quotes', status: 'built' },
-      { slug: 'invoices', title: 'Invoices', status: 'built' }],
+    // In the order the documents actually run: a quote becomes an order,
+    // an order becomes an invoice.
+    pages: [
+      { slug: 'quotes', title: 'Quotes', status: 'built' },
+      { slug: 'sales-orders', title: 'Sales orders', status: 'built' },
+      { slug: 'invoices', title: 'Invoices', status: 'built' },
+    ],
   },
   {
     title: 'Releases',

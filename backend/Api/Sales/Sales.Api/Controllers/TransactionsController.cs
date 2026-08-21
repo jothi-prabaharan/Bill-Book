@@ -57,7 +57,10 @@ public sealed class TransactionsController : ControllerBase
 
         if (string.IsNullOrEmpty(type) || type.Equals("SalesOrder", StringComparison.OrdinalIgnoreCase))
         {
-            var salesOrders = await _salesOrders.ListAsync(ct);
+            // The whole first page rather than the whole table: this screen mixes
+            // five document types and pages over the mixture, so asking each one
+            // for everything is the query that gets slower every month.
+            var salesOrders = (await _salesOrders.ListAsync(0, 200, null, null, ct)).Rows;
             if (from.HasValue) salesOrders = salesOrders.Where(s => s.DocumentDate >= from.Value).ToList();
             if (to.HasValue) salesOrders = salesOrders.Where(s => s.DocumentDate <= to.Value).ToList();
 

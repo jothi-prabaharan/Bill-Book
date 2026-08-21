@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { of } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 
@@ -21,7 +22,23 @@ import {
   SaveCreditNoteRequest,
   SaveDeliveryChallanRequest
 } from '@bill-book/sales-core';
-import { AllocationRow, DocumentLine } from '@bill-book/ui-components';
+import { AllocationRow, DocumentLine, UiMessage } from '@bill-book/ui-components';
+
+/**
+ * The sales order form's members are `protected` — a template is the only thing
+ * that should reach them — so the tests go through a declared shape rather than
+ * loosening the component. Same pattern as the shared input components' specs.
+ */
+interface SalesOrderFormHarness {
+  ngOnInit(): void;
+  isEdit(): boolean;
+  salesOrderId(): number | null;
+  form: FormGroup;
+  messages(): UiMessage[];
+  totals(): { subTotal: number; totalAmount: number };
+  onLinesChange(lines: readonly DocumentLine[]): void;
+  save(): Promise<void>;
+}
 
 describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, DeliveryChallan)', () => {
   let mockRouter: Partial<Router>;
@@ -43,6 +60,8 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    confirm: ReturnType<typeof vi.fn>;
+    voidOrder: ReturnType<typeof vi.fn>;
   };
 
   let mockCreditNoteService: {
@@ -135,18 +154,25 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       update: vi.fn().mockReturnValue(of({ quoteId: 21 }))
     };
 
+    // Promises, not streams: SalesOrderService is awaited now, so that a
+    // refusal can be caught and put into the message box with its own words.
     mockSalesOrderService = {
-      get: vi.fn().mockReturnValue(of({
+      get: vi.fn().mockResolvedValue({
         salesOrderId: 31,
+        documentNo: 'SO/2026/0031',
         documentDate: '2026-08-18',
         deliveryDate: '2026-08-25',
+        fulfilmentStatus: 'Open',
+        status: 'Draft',
         contactId: 5,
         currencyCode: 'INR',
         exchangeRate: 1,
         lines: []
-      })),
-      create: vi.fn().mockReturnValue(of({ salesOrderId: 31 })),
-      update: vi.fn().mockReturnValue(of({ salesOrderId: 31 }))
+      }),
+      create: vi.fn().mockResolvedValue({ salesOrderId: 31 }),
+      update: vi.fn().mockResolvedValue(undefined),
+      confirm: vi.fn().mockResolvedValue(undefined),
+      voidOrder: vi.fn().mockResolvedValue(undefined)
     };
 
     mockCreditNoteService = {
@@ -280,19 +306,35 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   // =========================================================================
   // SECTION 2: SALES ORDER FORM
   // =========================================================================
-  describe('2. SalesOrderFormComponent (R4 Specification)', () => {
+  //
+  // Rewritten for T2.2. Three things changed and each is load-bearing:
+  //
+  //  - the members are `protected`, because a template is the only thing that
+  //    should be reaching them, so the tests go through a typed harness
+  //  - state is in signals, so `isEdit` and `totals` are read as calls
+  //  - `save()` awaits, so the assertions do too
+  //
+  // What has not changed is what these tests were for: that the DTO leaving the
+  // screen says what was typed into it.
+  describe('2. SalesOrderFormComponent (T2.2)', () => {
+    const build = (): SalesOrderFormHarness =>
+      TestBed.runInInjectionContext(
+        () => new SalesOrderFormComponent(),
+      ) as unknown as SalesOrderFormHarness;
+
     it('SOR-T1-01: Form initializes with deliveryDate control in Create mode', () => {
-      const comp = TestBed.runInInjectionContext(() => new SalesOrderFormComponent());
+      const comp = build();
       comp.ngOnInit();
 
-      expect(comp.isEdit).toBe(false);
-      expect(comp.salesOrderId).toBeNull();
-      expect(comp.form.get('deliveryDate')?.value).toBeTruthy();
+      expect(comp.isEdit()).toBe(false);
+      expect(comp.salesOrderId()).toBeNull();
+      expect(comp.form.get('deliveryDate')).not.toBeNull();
+      expect(comp.form.get('documentDate')?.value).toBeTruthy();
       expect(comp.form.get('currencyCode')?.value).toBe('INR');
     });
 
-    it('SOR-T1-02: Create sales order saves SaveSalesOrderRequest DTO and navigates back', () => {
-      const comp = TestBed.runInInjectionContext(() => new SalesOrderFormComponent());
+    it('SOR-T1-02: Create sales order saves SaveSalesOrderRequest DTO and navigates to it', async () => {
+      const comp = build();
       comp.ngOnInit();
       comp.form.patchValue({
         documentDate: '2026-08-18',
@@ -303,10 +345,10 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
         notes: 'Urgent Delivery'
       });
       comp.onLinesChange([sampleLine]);
-      expect(comp.totals.subTotal).toBe(75000);
-      expect(comp.totals.totalAmount).toBe(77250);
+      expect(comp.totals().subTotal).toBe(75000);
+      expect(comp.totals().totalAmount).toBe(77250);
 
-      comp.save();
+      await comp.save();
 
       expect(mockSalesOrderService.create).toHaveBeenCalledTimes(1);
       const req: SaveSalesOrderRequest = mockSalesOrderService.create.mock.calls[0][0];
@@ -315,20 +357,84 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       expect(req.contactId).toBe(5);
       expect(req.notes).toBe('Urgent Delivery');
       expect(req.lines.length).toBe(1);
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['../'], { relativeTo: mockActivatedRoute as any });
+
+      // The new order, not the list: it has a number now and the person who
+      // raised it is usually about to confirm it.
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/sales/sales-orders', 31]);
     });
 
-    it('SOR-T1-03: Edit sales order loads existing order by ID and updates', () => {
+    it('SOR-T1-03: Edit sales order loads existing order by ID and updates', async () => {
       mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('31');
-      const comp = TestBed.runInInjectionContext(() => new SalesOrderFormComponent());
+      const comp = build();
       comp.ngOnInit();
 
-      expect(comp.isEdit).toBe(true);
-      expect(comp.salesOrderId).toBe(31);
+      expect(comp.isEdit()).toBe(true);
+      expect(comp.salesOrderId()).toBe(31);
       expect(mockSalesOrderService.get).toHaveBeenCalledWith(31);
 
-      comp.save();
+      comp.form.patchValue({ contactId: 5 });
+      comp.onLinesChange([sampleLine]);
+      await comp.save();
+
       expect(mockSalesOrderService.update).toHaveBeenCalledWith(31, expect.any(Object));
+    });
+
+    it('SOR-T1-04: a line’s amounts cross the scale boundary rather than going straight through', async () => {
+      const comp = build();
+      comp.ngOnInit();
+      comp.form.patchValue({ contactId: 5 });
+
+      // The grid speaks integer paise and six-decimal quantities. sampleLine is
+      // one unit at 75000 paise, so the API must be told 1 at ₹750 — not 75000.
+      comp.onLinesChange([sampleLine]);
+      await comp.save();
+
+      const req: SaveSalesOrderRequest = mockSalesOrderService.create.mock.calls[0][0];
+      expect(req.lines[0].unitPrice).toBe(750);
+      expect(req.lines[0].quantity).toBeCloseTo(0.000001, 9);
+
+      // Computed figures are dropped: the server recomputes every one of them
+      // at the rates in force on the document's date.
+      expect(req.lines[0]).not.toHaveProperty('lineTotal');
+      expect(req.lines[0]).not.toHaveProperty('taxAmount');
+    });
+
+    it('SOR-T1-05: a refusal keeps the server’s own words instead of a generic message', async () => {
+      mockSalesOrderService.create.mockRejectedValueOnce(
+        new HttpErrorResponse({
+          status: 409,
+          error: { message: 'There is not enough stock available to reserve: C7 - Name 7.' },
+        }),
+      );
+
+      const comp = build();
+      comp.ngOnInit();
+      comp.form.patchValue({ contactId: 5 });
+      comp.onLinesChange([sampleLine]);
+
+      await comp.save();
+
+      expect(comp.messages()).toEqual([
+        {
+          tone: 'error',
+          text: 'There is not enough stock available to reserve: C7 - Name 7.',
+          detail: [],
+        },
+      ]);
+
+      expect(mockRouter.navigate).not.toHaveBeenCalled();
+    });
+
+    it('SOR-T1-06: an order with no line is refused before it reaches the server', async () => {
+      const comp = build();
+      comp.ngOnInit();
+      comp.form.patchValue({ contactId: 5 });
+      comp.onLinesChange([]);
+
+      await comp.save();
+
+      expect(mockSalesOrderService.create).not.toHaveBeenCalled();
+      expect(comp.messages()[0].tone).toBe('error');
     });
   });
 
@@ -503,19 +609,21 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   // SECTION 5: BOUNDARY & VALIDATION EDGE CASES ACROSS ALL 4 FORMS
   // =========================================================================
   describe('5. Boundary Validation & Error Resilience', () => {
-    it('VAL-T2-01: Invalid forms prevent submission across Quote, SalesOrder, CreditNote, DeliveryChallan', () => {
+    it('VAL-T2-01: Invalid forms prevent submission across Quote, SalesOrder, CreditNote, DeliveryChallan', async () => {
       const qot = TestBed.runInInjectionContext(() => new QuoteFormComponent());
-      const sor = TestBed.runInInjectionContext(() => new SalesOrderFormComponent());
+      const sor = TestBed.runInInjectionContext(
+        () => new SalesOrderFormComponent(),
+      ) as unknown as SalesOrderFormHarness;
       const crn = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
       const dlc = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
 
       qot.form.patchValue({ documentDate: '', validUntil: '' });
-      sor.form.patchValue({ documentDate: '', deliveryDate: '' });
+      sor.form.patchValue({ documentDate: '', contactId: 0 });
       crn.form.patchValue({ documentDate: '', invoiceId: '' });
       dlc.form.patchValue({ documentDate: '', dispatchDate: '' });
 
       qot.save();
-      sor.save();
+      await sor.save();
       crn.save();
       dlc.save();
 

@@ -1,0 +1,39 @@
+@if (hasMessages()) {
+  <div
+    class="msgbox"
+    [class.msgbox--error]="tone() === 'error'"
+    [class.msgbox--warning]="tone() === 'warning'"
+    [class.msgbox--success]="tone() === 'success'"
+    [class.msgbox--info]="tone() === 'info'"
+    role="status"
+    [attr.aria-live]="liveness()"
+    [attr.aria-label]="label()"
+  >
+    <ul class="msgbox__list">
+      @for (message of messages(); track message.text) {
+        <li class="msgbox__item">
+          <span class="msgbox__text">{{ message.text }}</span>
+
+          @if (message.detail?.length) {
+            <ul class="msgbox__detail">
+              @for (line of message.detail; track line) {
+                <li>{{ line }}</li>
+              }
+            </ul>
+          }
+        </li>
+      }
+    </ul>
+
+    @if (dismissible()) {
+      <button
+        type="button"
+        class="msgbox__dismiss"
+        aria-label="Dismiss these messages"
+        (click)="dismiss.emit()"
+      >
+        &times;
+      </button>
+    }
+  </div>
+}
