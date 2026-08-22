@@ -3530,6 +3530,142 @@
    ]
   },
   {
+   "name": "8 \u00b7 Sales",
+   "description": "7 endpoints across 1 controllers. Bearer token via the gateway unless a request says otherwise.",
+   "item": [
+    {
+     "name": "Get all \u2014 GET /api/sales-orders",
+     "description": "`Sales.SalesOrdersController.GetAll`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders"
+      }
+     }
+    },
+    {
+     "name": "Create \u2014 POST /api/sales-orders",
+     "description": "`Sales.SalesOrdersController.Create`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"contactId\": 1,\n  \"documentDate\": \"2026-08-10\",\n  \"deliveryDate\": \"2026-08-10\",\n  \"quoteId\": 1,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"placeOfSupplyStateId\": 1,\n  \"notes\": \"<Notes>\",\n  \"termsAndConditions\": \"<TermsAndConditions>\",\n  \"lines\": [\n    {\n      \"itemId\": 1,\n      \"description\": \"<Description>\",\n      \"warehouseId\": 1,\n      \"quantity\": 0,\n      \"uomId\": 1,\n      \"unitPrice\": 0,\n      \"discountPercent\": 0,\n      \"taxMasterId\": 1,\n      \"lineNotes\": \"<LineNotes>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Get by id \u2014 GET /api/sales-orders/:id",
+     "description": "`Sales.SalesOrdersController.GetById`",
+     "request": {
+      "method": "GET",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders/:id"
+      }
+     }
+    },
+    {
+     "name": "Update \u2014 PUT /api/sales-orders/:id",
+     "description": "`Sales.SalesOrdersController.Update`",
+     "request": {
+      "method": "PUT",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders/:id"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"contactId\": 1,\n  \"documentDate\": \"2026-08-10\",\n  \"deliveryDate\": \"2026-08-10\",\n  \"quoteId\": 1,\n  \"currencyCode\": \"INR\",\n  \"exchangeRate\": 0,\n  \"placeOfSupplyStateId\": 1,\n  \"notes\": \"<Notes>\",\n  \"termsAndConditions\": \"<TermsAndConditions>\",\n  \"lines\": [\n    {\n      \"itemId\": 1,\n      \"description\": \"<Description>\",\n      \"warehouseId\": 1,\n      \"quantity\": 0,\n      \"uomId\": 1,\n      \"unitPrice\": 0,\n      \"discountPercent\": 0,\n      \"taxMasterId\": 1,\n      \"lineNotes\": \"<LineNotes>\"\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Cancel order \u2014 POST /api/sales-orders/:id/cancel",
+     "description": "`Sales.SalesOrdersController.CancelOrder`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders/:id/cancel"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Confirm order \u2014 POST /api/sales-orders/:id/confirm",
+     "description": "`Sales.SalesOrdersController.ConfirmOrder`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders/:id/confirm"
+      }
+     }
+    },
+    {
+     "name": "Short close order \u2014 POST /api/sales-orders/:id/short-close",
+     "description": "`Sales.SalesOrdersController.ShortCloseOrder`",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{gatewayUrl}}/api/sales-orders/:id/short-close"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"reason\": \"<Reason>\"\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
    "name": "8 \u00b7 Internal (service-to-service)",
    "description": "Never routed through the gateway, and guarded by a shared key rather than a token. Several take the tenant in the body because the caller is a background worker holding no user token.",
    "item": [
@@ -3884,6 +4020,72 @@
       "body": {
        "mode": "raw",
        "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"openingBalanceId\": 1,\n  \"asOfDate\": \"2026-08-10\",\n  \"lines\": [\n    {\n      \"lineNumber\": 1,\n      \"itemId\": 1,\n      \"quantity\": 0,\n      \"unitCost\": 0,\n      \"warehouseId\": 1\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Release \u2014 POST /internal/stock/release",
+     "description": "`Inventory.InternalStockController.Release` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{inventoryUrl}}/internal/stock/release"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"sourceType\": \"<SourceType>\",\n  \"sourceId\": 1,\n  \"lines\": [\n    {\n      \"lineNumber\": 1,\n      \"itemId\": 1,\n      \"quantity\": 0\n    }\n  ]\n}",
+       "options": {
+        "raw": {
+         "language": "json"
+        }
+       }
+      },
+      "header": [
+       {
+        "key": "X-Internal-Key",
+        "value": "{{internalKey}}",
+        "description": "Shared service-to-service key. Not a user token."
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ]
+     }
+    },
+    {
+     "name": "Reserve \u2014 POST /internal/stock/reserve",
+     "description": "`Inventory.InternalStockController.Reserve` \u2014 shared key, no user token",
+     "request": {
+      "method": "POST",
+      "url": {
+       "raw": "{{inventoryUrl}}/internal/stock/reserve"
+      },
+      "auth": {
+       "type": "noauth"
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\n  \"customerId\": \"00000000-0000-0000-0000-000000000000\",\n  \"orgId\": \"00000000-0000-0000-0000-000000000000\",\n  \"sourceType\": \"<SourceType>\",\n  \"sourceId\": 1,\n  \"lines\": [\n    {\n      \"lineNumber\": 1,\n      \"itemId\": 1,\n      \"quantity\": 0\n    }\n  ]\n}",
        "options": {
         "raw": {
          "language": "json"

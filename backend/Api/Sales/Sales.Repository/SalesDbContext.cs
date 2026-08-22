@@ -283,6 +283,17 @@ public class SalesDbContext : TenantDbContext
             b.HasOne<CreditNoteDetail>().WithMany().HasForeignKey(e => e.CreditNoteDetailId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        // Base class applies query filters, OrgId indexes and xmin last so
+        // it sees every entity configured above.
+        //
+        // Without this call the fifteen sal tables had no EF query filter at
+        // all — the first line of defence against one branch reading
+        // another's documents — no OrgId index, and no concurrency token.
+        // RLS still held at the database, which is why nothing failed
+        // loudly; what surfaced was NumberingSeries trying to write a real
+        // Version column instead of mapping xmin.
+        base.OnModelCreating(modelBuilder);
     }
 
     /// <summary>

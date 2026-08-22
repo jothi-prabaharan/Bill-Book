@@ -75,6 +75,16 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeeder>();
+builder.Services.AddScoped<SalesOrderService>();
+
+// Sales never touches a stock quantity itself: Inventory owns the pool and the
+// guarded update that protects it, so confirming an order is a call rather than
+// a write.
+builder.Services.AddHttpClient<IInventoryStock, InventoryStock>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an

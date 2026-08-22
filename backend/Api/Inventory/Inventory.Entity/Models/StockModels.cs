@@ -366,3 +366,71 @@ public enum StockOutcome
 
 public sealed record RecordStockMovementResult(
     StockOutcome Outcome, long? StockMovementId, StockPosition? Position);
+
+/// <summary>
+/// Stock a confirmed order is holding, or giving back.
+///
+/// <b>Whole-document, not line at a time.</b> A sales order either reserves
+/// everything it promised or reserves nothing: reserving four lines and failing
+/// on the fifth would leave stock held by an order that was never confirmed, and
+/// nothing on any screen saying so. The caller sends the lot and gets the lot
+/// back, and a shortage on any line means none of it was taken.
+/// </summary>
+public class ReserveStockRequest
+{
+    /// <summary>Which database. In the body because the caller holds no user token.</summary>
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    /// <summary>
+    /// What the reservation is for — the document type and id, carried so a
+    /// refusal can name the order rather than only the item.
+    /// </summary>
+    [MaxLength(3, ErrorMessage = "Source type must be a 3-letter code.")]
+    public string? SourceType { get; set; }
+
+    public long? SourceId { get; set; }
+
+    public List<ReserveStockLine> Lines { get; set; } = [];
+}
+
+public class ReserveStockLine
+{
+    public int LineNumber { get; set; }
+
+    [Range(1, long.MaxValue, ErrorMessage = "An item is required.")]
+    public long ItemId { get; set; }
+
+    /// <summary>In the item's own stock unit — the caller converts before sending.</summary>
+    [Range(0.000001, 999999999999.999, ErrorMessage = "Quantity must be greater than zero.")]
+    public decimal Quantity { get; set; }
+}
+
+/// <summary>What was taken, or why it could not be.</summary>
+public class ReserveStockResponse
+{
+    public bool Reserved { get; set; }
+
+    public List<ReserveStockLineResult> Lines { get; set; } = [];
+}
+
+public class ReserveStockLineResult
+{
+    public int LineNumber { get; set; }
+
+    public long ItemId { get; set; }
+
+    public string ItemCode { get; set; } = null!;
+
+    public string ItemName { get; set; } = null!;
+
+    public decimal Requested { get; set; }
+
+    /// <summary>On hand less what is already reserved — what this line could draw on.</summary>
+    public decimal Available { get; set; }
+
+    public bool Ok { get; set; }
+
+    public string Outcome { get; set; } = null!;
+}

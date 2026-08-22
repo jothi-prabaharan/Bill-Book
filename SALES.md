@@ -256,7 +256,7 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
 
 ### T2 — quote and sales order
 
-- [ ] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
+- [x] **T2.2 — The five pairs: base classes, entities, migration.** `DocumentHeaderBase`, `DocumentLineBase` and `DocumentLineTaxBase` in `Shared.Kernel` first, then the fifteen tables inheriting them, with `OrgId` on every one, query filters, RLS, and the document series.
   *Done when*: `migrations add` produces an empty migration and the RLS policies are in the database, not just the model.
   **Written, unverified.** The three base classes are in `Shared.Kernel/Documents/` with the four enums they carry; the fifteen tables are in `Sales.Entity/TableEntities/`; `SalesDbContext` configures them through three helpers rather than fifteen hand-written blocks, because fifteen blocks is twelve chances to give one table a different precision or drop one check.
   Four things settled in the writing, none of which the spec had to say:
@@ -266,7 +266,7 @@ These live in `TRANSACTIONS.md` and nothing here starts without them: **T0.2** t
   **Header checks are in the database, not just C#** — the total footing to its parts, the tax split matching `IsInterState`, void stamped with a reason, `PostedAt` set iff it posted. Each is a thing that still prints and still posts when it is wrong.
 - [ ] **T2.3 — Quote: API and page.** Create, edit, print, convert to order, expire. **Uses `bb-document-line-grid`** — the grid is built, so the page wires it up rather than writing one.
   *Done when*: a quote prints, converts, and writes nothing to the ledger or stock. **The batched name lookup lands here** — it is this stage's first real problem, not something to meet at T3.2.
-- [ ] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
+- [~] **T2.4 — Sales order: API and page, reserving stock.** *(API done and tested; page next)* Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
   *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
 
 ### T3 — invoice

@@ -2,6 +2,7 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -123,4 +124,184 @@ public sealed class InternalStockController : ControllerBase
 
     /// <summary><c>mst.TransactionTypes</c> OPB.</summary>
     private const string OpeningBalanceCode = "OPB";
+
+    /// <summary>
+    /// Holds stock for a confirmed order.
+    ///
+    /// <b>All of it or none of it.</b> Reserving four lines and failing on the
+    /// fifth would leave stock held by an order that was never confirmed, with
+    /// nothing on any screen saying so — so the shortages are found first, and
+    /// only if every line can be taken is anything taken.
+    ///
+    /// <b>Not idempotent, and cannot be.</b> A reservation is a quantity, not a
+    /// row keyed on a document, so a repeated call reserves twice. The caller
+    /// only ever calls this on the Draft-to-Confirmed transition, which its own
+    /// guarded status change makes happen once.
+    /// </summary>
+    [HttpPost("reserve")]
+    public async Task<IActionResult> Reserve(
+        [FromBody] ReserveStockRequest request, CancellationToken ct)
+    {
+        if (Tenant(request.CustomerId, request.OrgId) is IActionResult bad)
+        {
+            return bad;
+        }
+
+        var stock = _services.GetRequiredService<StockService>();
+        var db = _services.GetRequiredService<Repository.InventoryDbContext>();
+
+        var response = new ReserveStockResponse { Reserved = true };
+
+        // Every line's availability first, before a single one is taken.
+        foreach (ReserveStockLine line in request.Lines)
+        {
+            var position = await db.Items
+                .Where(i => i.ItemId == line.ItemId)
+                .Select(i => new
+                {
+                    i.ItemCode,
+                    i.ItemName,
+                    Available = db.ItemStock
+                        .Where(s => s.ItemId == i.ItemId)
+                        .Select(s => s.QuantityOnHand - s.QuantityReserved)
+                        .FirstOrDefault(),
+                })
+                .FirstOrDefaultAsync(ct);
+
+            bool enough = position is not null && position.Available >= line.Quantity;
+
+            response.Lines.Add(new ReserveStockLineResult
+            {
+                LineNumber = line.LineNumber,
+                ItemId = line.ItemId,
+                ItemCode = position?.ItemCode ?? string.Empty,
+                ItemName = position?.ItemName ?? string.Empty,
+                Requested = line.Quantity,
+                Available = position?.Available ?? 0m,
+                Ok = enough,
+                Outcome = position is null
+                    ? nameof(StockOutcome.ItemNotFound)
+                    : enough ? nameof(StockOutcome.Ok) : nameof(StockOutcome.InsufficientStock),
+            });
+
+            response.Reserved &= enough;
+        }
+
+        if (!response.Reserved)
+        {
+            _log.LogInformation(
+                "Reservation for {SourceType}-{SourceId} refused: {Short} of {Total} lines short.",
+                request.SourceType,
+                request.SourceId,
+                response.Lines.Count(l => !l.Ok),
+                response.Lines.Count);
+
+            return BadRequest(response);
+        }
+
+        // Now take them. Each is still guarded, so a concurrent sale between the
+        // check above and the take below loses the race rather than overdrawing —
+        // and that line comes back short.
+        foreach (ReserveStockLine line in request.Lines)
+        {
+            StockOutcome outcome = await stock.ReserveAsync(line.ItemId, line.Quantity, ct);
+
+            if (outcome != StockOutcome.Ok)
+            {
+                // Give back whatever this call already took. Without it, losing
+                // the race on line five would leave lines one to four held by an
+                // order that did not confirm.
+                foreach (ReserveStockLine taken in request.Lines)
+                {
+                    if (taken.LineNumber == line.LineNumber)
+                    {
+                        break;
+                    }
+
+                    await stock.ReleaseAsync(taken.ItemId, taken.Quantity, ct);
+                }
+
+                ReserveStockLineResult row =
+                    response.Lines.First(l => l.LineNumber == line.LineNumber);
+                row.Ok = false;
+                row.Outcome = outcome.ToString();
+                response.Reserved = false;
+
+                return BadRequest(response);
+            }
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Gives stock back — a cancelled order, a short close, or the part of a line
+    /// that shipped and so stopped being a promise.
+    ///
+    /// A release of more than is held is refused per line rather than clamped: it
+    /// means the caller believes it holds something it does not, and quietly
+    /// releasing the difference would free stock nobody reserved.
+    /// </summary>
+    [HttpPost("release")]
+    public async Task<IActionResult> Release(
+        [FromBody] ReserveStockRequest request, CancellationToken ct)
+    {
+        if (Tenant(request.CustomerId, request.OrgId) is IActionResult bad)
+        {
+            return bad;
+        }
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReserveStockResponse { Reserved = true };
+
+        foreach (ReserveStockLine line in request.Lines)
+        {
+            StockOutcome outcome = await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
+            bool ok = outcome == StockOutcome.Ok;
+
+            response.Lines.Add(new ReserveStockLineResult
+            {
+                LineNumber = line.LineNumber,
+                ItemId = line.ItemId,
+                Requested = line.Quantity,
+                Ok = ok,
+                Outcome = outcome.ToString(),
+            });
+
+            response.Reserved &= ok;
+        }
+
+        if (!response.Reserved)
+        {
+            _log.LogWarning(
+                "Release for {SourceType}-{SourceId}: {Failed} of {Total} lines held less than "
+                    + "the caller believed.",
+                request.SourceType,
+                request.SourceId,
+                response.Lines.Count(l => !l.Ok),
+                response.Lines.Count);
+        }
+
+        // Reported, not refused. The document has moved on regardless, and a
+        // release that found less than expected must not block a cancellation.
+        return Ok(response);
+    }
+
+    /// <summary>Sets the tenant, or says why it could not.</summary>
+    private IActionResult? Tenant(Guid customerId, Guid orgId)
+    {
+        if (customerId == Guid.Empty || orgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        // Set before anything resolves a DbContext: the context is built from the
+        // tenant, so resolving a service first would bind it to no tenant.
+        _tenant.CustomerId = customerId;
+        _tenant.OrgId = orgId;
+        return null;
+    }
 }
