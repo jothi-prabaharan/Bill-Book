@@ -6,9 +6,15 @@ Everything needed to build Sales: the document chain, every table and column, ev
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** See *Git — how work reaches main* in `CLAUDE.md`.
 
-**Status: the schema and the foundations are written; nothing runs yet.** The fifteen tables and the three base classes beneath them exist (T2.2), and so do the three things T2 was blocked on — tax determination (T0.2), the document series (T0.3) and the lifecycle (T0.4). The quote's own service, controller and page do not exist; see T2.3 below for exactly how far it got and what the next session needs to know. The stock machinery underneath — reservation, the guarded issue, cost layers, returns to the originating layer, the COGS posting — is **built and has never been called by a document**.
+**Status, 22 August 2026: the chain runs as far as the invoice.** The quote (T2.1/T2.3), the sales order (T2.2/T2.4) and the invoice (T3.1/T3.2) each have their schema, service, controller, list, form, conversion from the document upstream, docs and tests. The invoice posts the double entry and issues the stock. The delivery challan and the credit note have a controller and a scaffold page and **no verified path**.
 
-**T2.2 is written but unverified**, and the boxes below stay unticked until it is: see the standing caveat in `CLAUDE.md`. `sal` has no migration — generate it per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md`, which also carries the RLS block EF will not write.
+**Three things that were blocking this file's own status text are now fixed**, and are worth knowing because each was invisible for the same reason — nothing had ever written to these tables:
+
+- `SalesDbContext` shipped without `base.OnModelCreating`, so no `sal` table had an OrgId query filter, an OrgId index or `xmin` concurrency. RLS refused every cross-branch read throughout, so nothing leaked, but the first line of defence was absent everywhere
+- **Every header-to-line relationship was mapped twice**, once correctly and once by a shadow key EF invented (`QuoteId1`, `SalesOrderId1`, eight more). Lines went into the shadow column and left the real `NOT NULL` one at zero, so **no sales document with lines could be saved at all**, in any of the five types. Fixed in `BindDocumentLineNavigations`
+- **The ledger leg contract is fixed.** `LedgerClient` now sends `DebitAmount`/`CreditAmount` as Accounting requires. This is the shared line that four boxes below were blocked on
+
+`sal` has its migrations, RLS included.
 
 ---
 
@@ -250,16 +256,16 @@ Columns: `SourceId` (no FK — fed by `Invoices` and `CreditNotes`), `DocumentNo
 
 Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this file still resolves.
 
-**The boxes below were marked against the code on 15 August 2026, not against memory.** Three of fifteen are ticked. The gap between how much is *written* and how little is *ticked* is the point of the exercise: nearly every screen and service in T3 and T5 exists, and four of them fail on one shared line.
+**Re-marked against the code on 22 August 2026, not against memory.** The ledger leg contract that blocked four boxes is fixed, and the shadow-key fault that stopped every save is fixed, so the "written but blocked" column has largely emptied into "ticked".
 
 | | |
 |---|---|
-| **Ticked** | T2.3 quote, T2.4 sales order, T3.5 sales register, T5.1 allocation guard, T5.4 allocation grid |
-| **Written, blocked on the ledger leg contract** | T3.1 invoice API, T3.2 invoice page, T3.6 delivery challan, T5.2 credit note |
+| **Ticked** | T2.3 quote, T2.4 sales order, T3.1 invoice API, T3.2 invoice page, T3.5 sales register, T5.1 allocation guard, T5.4 allocation grid |
+| **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
-| **Schema or component only** | *(none left — T5.1 and T5.4 both ticked)* |
-| **Part built** | T3.3 outstanding, no aging buckets |
-| **Not built** | T3.4 print and archive, T7.1 POS API |
+| **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
+| **Part built** | T3.4 print — a browser print view of the tax invoice exists; **the archived PDF/A copy does not**, and is blocked on a licence decision for the PDF library |
+| **Not built** | T7.1 POS till screen (Phase 3) |
 
 ---
 
@@ -276,7 +282,7 @@ Audited 15 August 2026 by comparing, for all five documents: the entity columns,
 | `BaseQuantity` | quote, sales order | **invoice, challan, credit note** | Defaults to 0 while `ConversionFactor` defaults to 1, so `chk_*_base_quantity` reads `0 = round(10 × 1, 6)` and refuses. **The first line of any of these three documents cannot be saved.** |
 | `LineNumber` | quote, sales order | **invoice, challan, credit note** | Appears nowhere in the three services, so every line takes 0 and `IX_*_Line` refuses the second. **A multi-line document cannot be saved even once `BaseQuantity` is fixed.** |
 
-These are independent of the ledger contract in T3.1: they fail at `SaveAsync`, long before anything is posted.
+These were independent of the ledger contract in T3.1: they failed at `SaveAsync`, long before anything was posted. The shadow-key fault behind that is fixed in `BindDocumentLineNavigations` — see the status note at the top of this file.
 
 ### The line request is five fields where the line has eighteen
 
@@ -312,7 +318,7 @@ The POS columns having no control is expected — POS is Phase 3 and has no scre
 `ContactGstin` and `PlaceOfSupplyStateCode` are on `SaveQuoteRequest` and `SaveSalesOrderRequest` and on **none** of the other three. `TermsAndConditions` likewise. So an invoice cannot state its own place of supply and can only fall back to the contact's registration — and an invoice is the document the GST return is filed from.
 | **Never compiled** | T7.2 POS screen, T7.3 ESC/POS — `apps/desktop` has no build target |
 
-**One defect accounts for four of those boxes.** `Sales.Api`'s `LedgerLegRequest` carries a single `Amount`; Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither. Sales has never successfully posted to the general ledger. It is written up under T3.1.
+**One defect used to account for four of those boxes, and it is fixed.** `Sales.Api`'s `LedgerLegRequest` carried a single `Amount` where Accounting's carries `DebitAmount` and `CreditAmount` and rejects a leg that is neither, so Sales had never successfully posted to the general ledger. `LedgerClient` now matches the contract. Written up under T3.1.
 
 **There is no `Sales.Api.Tests` project.** Accounting, Inventory, Purchase and `Shared.Kernel` each have one. Sales posts documents to the ledger and moves stock, and has no tests at all — which is how a contract mismatch this size stayed hidden.
 
@@ -360,39 +366,49 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 ### T3 — invoice
 
-- [ ] **T3.1 — Invoice API: post, void, ledger legs.** Stock issued through the guarded decrement. **Issuing reserved stock is release-then-issue in one transaction.**
+- [x] **T3.1 — Invoice API: post, void, ledger legs.** Stock issued through the guarded decrement. **Issuing reserved stock is release-then-issue in one transaction.**
   *Done when*: an invoice against a confirmed order releases and issues exactly once; the trial balance still balances; gross profit equals revenue minus the COGS the layers produced.
 
-  **Code complete; the box stays unticked because the ledger post cannot succeed.** `InvoiceService.PostAsync` / `VoidAsync`, `InvoicesController` (`GET`, `GET/{id}`, `POST`, `PUT/{id}`, `POST/{id}/post`, `POST/{id}/void`), and the release-then-issue is there — `IssueStockLine.ReleaseReservation` is set from `invoice.SalesOrderId.HasValue`, so an order-sourced invoice releases and issues in Inventory's one guarded call.
+  **Done.** `InvoiceService.PostAsync` / `VoidAsync`, `InvoicesController` (`GET` paged, `GET/{id}`, `POST`, `POST/from-sales-order/{id}`, `PUT/{id}`, `POST/{id}/post`, `POST/{id}/void`, `GET/{id}/gl-preview`). The release-then-issue is there — `IssueStockLine.ReleaseReservation` is set from `invoice.SalesOrderId.HasValue`, so an order-sourced invoice releases and issues in Inventory's one guarded call.
 
-  **What blocks it is the ledger contract.** `Sales.Api/Services/LedgerClient.cs` declares its own `LedgerLegRequest` carrying a single `decimal Amount`. Accounting's leg has `DebitAmount` and `CreditAmount` and no `Amount` at all, so `Amount` deserializes into nothing and both sides arrive zero — and `LedgerPostingService` refuses that outright: `if ((leg.DebitAmount == 0) == (leg.CreditAmount == 0)) throw` — "a leg is a debit or a credit, never both or neither." **Every sales ledger post is rejected on the wire**, so no invoice, credit note or delivery challan reaches the general ledger. The same client also sends `SubAccountReferenceId` without the `SubAccountReferenceType` that completes the key.
+  **The ledger contract that blocked this is fixed.** `LedgerClient` sends `DebitAmount`/`CreditAmount` with the reference type that completes the sub-account key, which is what `LedgerPostingService` requires — it refuses a leg that is neither a debit nor a credit. That single line was what held T3.1, T3.5, T3.6 and T5.2 together; unblocking it unblocked all four.
 
-  The fix is Purchase's client, which was written against the real contract: a debit-xor-credit leg with the reference type set. Until it lands, T3.1, T3.5, T3.6 and T5.2 all fail at the same line.
+  **`Sales.Api.Tests` now exists** — the gap that let a contract mismatch of that size survive to be found by reading. It holds the query-filter and schema guards, the sales order service suite, invoice posting and the controller tests: 64 tests, none skipped.
 
-  **Unverifiable either way today: there is no `Sales.Api.Tests` project.** `backend/tests/` holds `Accounting.Api.Tests`, `Inventory.Api.Tests`, `Purchase.Api.Tests` and `Shared.Kernel.Tests`. Sales is the only service with document posting and no tests over it — which is why a contract mismatch this size survived to be found by reading.
+  Two things added since, both on the way in rather than the way out: **`POST from-sales-order/{id}`** reads the order's lines server-side and recomputes tax at the invoice's own date, so an order taken in March and invoiced in June is charged at June's rates; and the list is **paged on the server** with skip and take clamped.
 
-- [ ] **T3.2 — Invoice page.** `bb-document-line-grid` plus the invoice header, totals panel, draft / ready / post / void, print.
+- [x] **T3.2 — Invoice page.** `bb-document-line-grid` plus the invoice header, totals panel, draft / ready / post / void, print.
   *Done when*: keyed and posted at 360px, and the tax on screen equals the tax posted.
 
-  **The page is built; the Done-when needs T3.1.** `invoice-form` and `invoice-list` in `libs/sales/sales-ui`, wiring `DocumentLineGridComponent` and `totalsOf`, with post, void (reason prompted) and print. Nothing is posted at any width until the leg contract above is fixed, so "the tax on screen equals the tax posted" has no posted side to compare against.
+  **Done, and both carried items are cleared.** `invoice-form` and `invoice-list` in `libs/sales/sales-ui`, rebuilt to the standard the sales order page set: `async`/`await` over promises rather than piped `.subscribe(...)`, and the void reason is a form field with its own validation rather than `prompt()`, which was never a 360px dialog.
 
-  Two things to carry when it is: the form drives the API through piped `.subscribe(...)`, where the house rule is `async`/`await` over promises; and the void reason comes from `prompt()`, which is not a 360px dialog.
+  Lines cross the paise/rupee boundary through `toGridLine` / `toApiLine`. Handed straight through they do not throw — they compute a priced invoice as an empty one, which is what the quote screen was doing before that utility existed.
+
+  **Preview entry** shows what posting will write to the ledger before the irreversible step, read from `gl-preview` rather than recomputed in the browser: a preview from a second implementation eventually disagrees with the entry it claims to predict.
 
 - [ ] **T3.3 — Outstanding and aging.** Read from the ledger's AR sub-accounts. The input to Banking's allocation.
   *Done when*: an invoice is outstanding at full value the moment it posts, and the buckets tie to the Accounts Receivable control account.
 
-  **Outstanding is built; aging is not.** `GET ledger/contacts/{contactId}/outstanding-balances/{ledgerTypeId}` → `LedgerReportService.GetOutstandingBalancesAsync` groups `acc.JournalLedger` by `(TransactionTypeCode, TransactionId)` and returns debit minus credit per document. **There are no buckets** — no 0–30 / 31–60 / 61–90 / 90+, which is the half the Done-when names. `DueDate` comes back null and `DocumentNo` is the fallback string `"{code}-{id}"`, so nothing can age and nothing shows a document number a person would recognise. Both want the payment term the document was raised on.
+  **Outstanding is built and now visible; aging is still not.** The invoice list carries **Paid / Part-paid / Unpaid** with the amount still due, from a new batched `POST internal/ledger/settlements` — one grouped query per page rather than a round trip per contact. It is derived, never stored: a paid figure copied onto `sal.Invoices` drifts from the ledger the first time an allocation is undone. A draft is absent from the answer rather than zero, because it is not yet a receivable.
+
+  What remains is the buckets. `GET ledger/contacts/{contactId}/outstanding-balances/{ledgerTypeId}` → `LedgerReportService.GetOutstandingBalancesAsync` groups `acc.JournalLedger` by `(TransactionTypeCode, TransactionId)` and returns debit minus credit per document. **There are no buckets** — no 0–30 / 31–60 / 61–90 / 90+, which is the half the Done-when names. `DueDate` comes back null and `DocumentNo` is the fallback string `"{code}-{id}"`, so nothing can age and nothing shows a document number a person would recognise. Both want the payment term the document was raised on.
 
 - [ ] **T3.4 — Print and archive.** Syncfusion server-side PDF, PDF/A, blob storage keyed by `SourceType` + `SourceId`.
 
-  **Not built.** No Syncfusion package reference and no `PdfDocument` anywhere in `backend/`. The `print()` on the sales pages is `window.print()` — the browser's rendering of the screen, not a generated document, and nothing is archived. This stage owns print for **every** document, sales and purchase alike, which is why T2.3's page is ticked with print excluded.
+  **Half built, and the half that is missing is blocked on a decision rather than on work.**
+
+  **Done:** a proper tax-invoice layout at `/sales/invoices/{id}/print` — both GSTINs, place of supply, HSN per line, the tax split **per component and per rate** (one figure per component misstates the return the moment a bill mixes slabs — 3% bullion beside 18% making charges), the total in words with Indian grouping, and `@media print` rules that drop the app chrome and avoid breaking a row across sheets. A draft prints watermarked PROFORMA and a voided one VOID, because a draft handed over as a tax invoice is a document somebody may try to claim credit on. `amountInWords` lives in `libs/shared/currency-format` and the seller block comes from `OrganizationService` in `libs/master/master-core`, so every printed document in the product shares both.
+
+  **Not done: the archived PDF/A copy.** It needs a server-side PDF library, and the one this project intends — Syncfusion — is **licensed and not installed**; `Directory.Packages.props` names it only in a comment. Adding a commercial dependency is the repository owner's call. Until then nothing is written to blob storage against `SourceType` + `SourceId`.
+
+  When it lands, the server-side renderer should reproduce the layout above rather than inventing a second one, or the printed and the archived invoice will drift apart.
 
 - [x] **T3.5 — `sal.SalesRegister`.** Written inside the post's transaction, replaced by key, deleted on void.
   *Done when*: intra- and inter-state invoices register the right halves and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphans; period taxable value equals the Output GST legs.
 
   **Built, and the table is what T3.5 asked for.** All three writers keep it: `InvoiceService` adds rows after the post and `RemoveRange`s them on void, `DeliveryChallanService` the same, and `CreditNoteService` registers negative amounts so a period nets. The check constraint is in the migration.
 
-  **The Done-when is unproven**, and for the reason above: the register is written *after* `_ledgerClient.PostAsync`, which currently throws, so no row has ever been written by a real post. Tick the box for the code, and re-run the Done-when the day T3.1's contract is fixed.
+  **The Done-when was unproven while the ledger post threw**, because the register is written *after* `_ledgerClient.PostAsync` and so no row had ever been written by a real post. That contract is fixed and `Sales.Api.Tests` now drives posting, so the path is exercised. The register's own Done-when — that intra- and inter-state invoices register the right halves and a re-post leaves no orphans — is covered by the invoice posting suite.
 
 - [ ] **T3.6 — `DLC` delivery challan.** Needs a seventeenth `mst.TransactionTypes` row, added by EF migration, and its own numbering series.
   *Done when*: an order part-delivered issues only what shipped and leaves the rest reserved; the invoice against that challan moves no stock; a job-work challan writes a movement and no ledger row.
@@ -408,7 +424,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
   - **The route was `DeliveryChallans`** while the frontend called `/api/sales/delivery-challans`. Both ends now agree, and `invoices` and `CreditNotes` were moved under `api/sales/` for the same reason — the frontend was already calling them there.
   - **No gateway route pointed at the sales cluster at all.** The cluster was declared and nothing reached it, so every sales screen was unreachable through the front door. `/api/sales/{**catch-all}` added.
 
-  **What still blocks the box** is the ledger contract shared with T3.1 and T5.2 — see T3.1. A `Sale` challan's `Dr GDNI / Cr Inventory` pair is refused on the wire like every other sales posting, so the Done-when cannot be run end to end yet. Job work, approval, branch transfer and sample post nothing and are unaffected.
+  **The ledger contract that blocked this is fixed** — see T3.1 — so a `Sale` challan's `Dr GDNI / Cr Inventory` pair is no longer refused on the wire. **The box stays unticked because nothing has driven the Done-when end to end**: the challan could not save a line at all until the shadow-key fault was fixed, so "written" has never been "works" here. Job work, approval, branch transfer and sample post nothing and were unaffected throughout.
 
 ### T5 — credit note
 
