@@ -25,6 +25,14 @@
         </button>
       }
 
+      @if (isEdit()) {
+        <!-- Available on a draft too: somebody proofreads it before posting. It
+             prints watermarked PROFORMA until the invoice is posted. -->
+        <a class="btn btn-secondary" [routerLink]="['/sales/invoices', invoiceId(), 'print']">
+          Print
+        </a>
+      }
+
       @if (canPost()) {
         <button type="button" class="btn btn-secondary" (click)="preview()">Preview entry</button>
 

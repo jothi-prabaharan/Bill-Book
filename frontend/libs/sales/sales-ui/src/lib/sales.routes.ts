@@ -45,6 +45,11 @@ export const salesRoutes: Routes = [
     path: 'invoices/new',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent)
   },
+  // Before 'invoices/:id', or the :id route swallows it.
+  {
+    path: 'invoices/:id/print',
+    loadComponent: () => import('./invoice-print/invoice-print.page').then(m => m.InvoicePrintPage)
+  },
   {
     path: 'invoices/:id',
     loadComponent: () => import('./invoice-form/invoice-form.component').then(m => m.InvoiceFormComponent)

@@ -1,0 +1,218 @@
+<!-- Screen-only chrome. It disappears in print, which is why the actions live
+     outside the sheet rather than inside it. -->
+<div class="print-bar">
+  <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
+  <button type="button" class="btn btn-primary" (click)="print()">Print</button>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (loading()) {
+  <p class="print-note">Loading…</p>
+} @else if (invoice(); as inv) {
+  <article class="sheet" [class.sheet--proforma]="isProforma()">
+    @if (isProforma()) {
+      <!-- A draft handed over as a tax invoice is a document somebody may try to
+           claim input credit on. It says what it is, across the page. -->
+      <p class="sheet__watermark" aria-hidden="true">{{ isVoid() ? 'VOID' : 'PROFORMA' }}</p>
+    }
+
+    <header class="sheet__head">
+      <div class="sheet__seller">
+        @if (seller(); as org) {
+          <h1 class="sheet__org">{{ org.name }}</h1>
+
+          <address class="sheet__address">
+            @if (org.addressLine1) {
+              <span>{{ org.addressLine1 }}</span>
+            }
+            @if (org.addressLine2) {
+              <span>{{ org.addressLine2 }}</span>
+            }
+            @if (org.city || org.postalCode) {
+              <span>{{ org.city }} {{ org.postalCode }}</span>
+            }
+            @if (org.phoneNumber || org.mobileNumber) {
+              <span>{{ org.phoneNumber || org.mobileNumber }}</span>
+            }
+            @if (org.email) {
+              <span>{{ org.email }}</span>
+            }
+          </address>
+
+          <dl class="sheet__ids">
+            @if (org.gstin) {
+              <div><dt>GSTIN</dt><dd class="tabular-nums">{{ org.gstin }}</dd></div>
+            }
+            @if (org.pan) {
+              <div><dt>PAN</dt><dd class="tabular-nums">{{ org.pan }}</dd></div>
+            }
+          </dl>
+        }
+      </div>
+
+      <div class="sheet__meta">
+        <h2 class="sheet__kind">{{ title() }}</h2>
+
+        <dl class="sheet__ids">
+          <div><dt>Number</dt><dd class="tabular-nums">{{ inv.documentNo }}</dd></div>
+          <div><dt>Date</dt><dd class="tabular-nums">{{ inv.documentDate | date: 'dd MMM yyyy' }}</dd></div>
+          @if (inv.dueDate) {
+            <div><dt>Due</dt><dd class="tabular-nums">{{ inv.dueDate | date: 'dd MMM yyyy' }}</dd></div>
+          }
+          <div>
+            <dt>Supply</dt>
+            <dd>{{ inv.isInterState ? 'Inter-state' : 'Intra-state' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </header>
+
+    <section class="sheet__parties">
+      <div class="sheet__party">
+        <h3 class="sheet__party-label">Billed to</h3>
+        <p class="sheet__party-name">{{ inv.contactName || 'Customer ' + inv.contactId }}</p>
+
+        @if (inv.billingAddress) {
+          <p class="sheet__party-address">{{ inv.billingAddress }}</p>
+        }
+        @if (inv.contactGstin) {
+          <p class="sheet__party-gstin tabular-nums">GSTIN {{ inv.contactGstin }}</p>
+        }
+      </div>
+
+      @if (inv.shippingAddress && inv.shippingAddress !== inv.billingAddress) {
+        <div class="sheet__party">
+          <h3 class="sheet__party-label">Shipped to</h3>
+          <p class="sheet__party-address">{{ inv.shippingAddress }}</p>
+        </div>
+      }
+    </section>
+
+    <table class="sheet__lines">
+      <thead>
+        <tr>
+          <th scope="col" class="sheet__col-num">#</th>
+          <th scope="col">Description</th>
+          <th scope="col">HSN/SAC</th>
+          <th scope="col" class="sheet__num">Qty</th>
+          <th scope="col" class="sheet__num">Rate</th>
+          <th scope="col" class="sheet__num">Discount</th>
+          <th scope="col" class="sheet__num">Taxable</th>
+          <th scope="col" class="sheet__num">Tax</th>
+          <th scope="col" class="sheet__num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (line of inv.lines; track line.invoiceDetailId) {
+          <tr>
+            <td class="sheet__col-num">{{ line.lineNumber }}</td>
+            <td>{{ line.itemLabel || line.description }}</td>
+            <td class="tabular-nums">{{ line.hsnSacCode }}</td>
+            <td class="sheet__num">{{ line.quantity | number: '1.0-3' }}</td>
+            <td class="sheet__num">{{ line.unitPrice | number: '1.2-2' }}</td>
+            <td class="sheet__num">
+              {{ line.discountAmount ? (line.discountAmount | number: '1.2-2') : '—' }}
+            </td>
+            <td class="sheet__num">{{ line.taxableAmount | number: '1.2-2' }}</td>
+            <td class="sheet__num">{{ line.taxAmount | number: '1.2-2' }}</td>
+            <td class="sheet__num">{{ line.lineTotal | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <section class="sheet__foot">
+      <div class="sheet__taxes">
+        <h3 class="sheet__party-label">Tax summary</h3>
+
+        <!-- Per component *and per rate*: an invoice that mixes slabs — 3%
+             bullion beside 18% making charges — cannot be summarised as one
+             figure per component without misstating the return. -->
+        <table class="sheet__tax-table">
+          <thead>
+            <tr>
+              <th scope="col">Component</th>
+              <th scope="col" class="sheet__num">Rate</th>
+              <th scope="col" class="sheet__num">Taxable</th>
+              <th scope="col" class="sheet__num">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (bucket of taxBreakdown(); track bucket.component + bucket.rate) {
+              <tr>
+                <td>{{ bucket.component }}</td>
+                <td class="sheet__num">{{ bucket.rate | number: '1.0-2' }}%</td>
+                <td class="sheet__num">{{ bucket.taxable | number: '1.2-2' }}</td>
+                <td class="sheet__num">{{ bucket.amount | number: '1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="4">No tax on this invoice.</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <dl class="sheet__totals">
+        <div><dt>Sub total</dt><dd class="sheet__num">{{ inv.subTotal | number: '1.2-2' }}</dd></div>
+
+        @if (inv.discountAmount) {
+          <div>
+            <dt>Discount</dt>
+            <dd class="sheet__num">-{{ inv.discountAmount | number: '1.2-2' }}</dd>
+          </div>
+        }
+
+        <div><dt>Taxable</dt><dd class="sheet__num">{{ inv.taxableAmount | number: '1.2-2' }}</dd></div>
+
+        @if (inv.cgstAmount) {
+          <div><dt>CGST</dt><dd class="sheet__num">{{ inv.cgstAmount | number: '1.2-2' }}</dd></div>
+        }
+        @if (inv.sgstAmount) {
+          <div><dt>SGST</dt><dd class="sheet__num">{{ inv.sgstAmount | number: '1.2-2' }}</dd></div>
+        }
+        @if (inv.igstAmount) {
+          <div><dt>IGST</dt><dd class="sheet__num">{{ inv.igstAmount | number: '1.2-2' }}</dd></div>
+        }
+        @if (inv.cessAmount) {
+          <div><dt>Cess</dt><dd class="sheet__num">{{ inv.cessAmount | number: '1.2-2' }}</dd></div>
+        }
+        @if (inv.roundOffAmount) {
+          <div>
+            <dt>Round off</dt>
+            <dd class="sheet__num">{{ inv.roundOffAmount | number: '1.2-2' }}</dd>
+          </div>
+        }
+
+        <div class="sheet__grand">
+          <dt>Total ({{ inv.currencyCode }})</dt>
+          <dd class="sheet__num">{{ inv.totalAmount | number: '1.2-2' }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <p class="sheet__words">{{ totalInWords() }}</p>
+
+    @if (inv.notes || inv.termsAndConditions) {
+      <section class="sheet__terms">
+        @if (inv.notes) {
+          <p>{{ inv.notes }}</p>
+        }
+        @if (inv.termsAndConditions) {
+          <p>{{ inv.termsAndConditions }}</p>
+        }
+      </section>
+    }
+
+    @if (inv.status === 'Void' && inv.voidReason) {
+      <p class="sheet__void-reason">Voided: {{ inv.voidReason }}</p>
+    }
+
+    <footer class="sheet__sign">
+      <span>For {{ seller()?.name }}</span>
+      <span class="sheet__sign-line">Authorised signatory</span>
+    </footer>
+  </article>
+}
