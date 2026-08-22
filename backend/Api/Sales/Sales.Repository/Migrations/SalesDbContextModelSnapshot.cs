@@ -699,6 +699,9 @@ namespace Sales.Repository.Migrations
                     b.Property<long?>("SalesOrderDetailId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("StockMovementId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(28,2)");
 
@@ -715,6 +718,9 @@ namespace Sales.Repository.Migrations
 
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(28,6)");
@@ -1133,6 +1139,9 @@ namespace Sales.Repository.Migrations
                     b.Property<long?>("SalesOrderDetailId")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("StockMovementId")
+                        .HasColumnType("bigint");
+
                     b.Property<decimal>("TaxAmount")
                         .HasColumnType("decimal(28,2)");
 
@@ -1149,6 +1158,9 @@ namespace Sales.Repository.Migrations
 
                     b.Property<decimal>("TaxableAmount")
                         .HasColumnType("decimal(28,2)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("numeric");
 
                     b.Property<decimal>("UnitPrice")
                         .HasColumnType("decimal(28,6)");
@@ -1747,6 +1759,10 @@ namespace Sales.Repository.Migrations
                     b.Property<string>("ShippingAddress")
                         .HasColumnType("text");
 
+                    b.Property<string>("ShortCloseReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(12)
@@ -2053,6 +2069,138 @@ namespace Sales.Repository.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Sales.Entity.TableEntities.SalesRegister", b =>
+                {
+                    b.Property<long>("SalesRegisterId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("SalesRegisterId"));
+
+                    b.Property<decimal>("CessAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("CgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("ContactGstin")
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<long>("ContactId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<DateOnly>("DocumentDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("DocumentNo")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<decimal>("ExchangeRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("GstRate")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("HsnSacCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<decimal>("IgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("IsInterState")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("OrgId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateOnly?>("OriginalInvoiceDate")
+                        .HasColumnType("date");
+
+                    b.Property<long?>("OriginalInvoiceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("OriginalInvoiceNo")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<int>("PlaceOfSupplyStateId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Quantity")
+                        .HasColumnType("numeric");
+
+                    b.Property<bool>("ReverseCharge")
+                        .HasColumnType("boolean");
+
+                    b.Property<decimal>("SgstAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<long>("SourceId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("SupplyType")
+                        .IsRequired()
+                        .HasMaxLength(15)
+                        .HasColumnType("character varying(15)");
+
+                    b.Property<decimal>("TaxableAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TaxableAmountBase")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("numeric");
+
+                    b.Property<string>("TransactionTypeCode")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<string>("UqcCode")
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("SalesRegisterId");
+
+                    b.HasIndex("OrgId");
+
+                    b.HasIndex("TransactionTypeCode", "SourceId")
+                        .IsUnique();
+
+                    b.ToTable("SalesRegister", "sal", t =>
+                        {
+                            t.HasCheckConstraint("chk_salesregister_tax_split", "(\"IsInterState\" AND \"CgstAmount\" = 0 AND \"SgstAmount\" = 0) OR (NOT \"IsInterState\" AND \"IgstAmount\" = 0)");
+                        });
+                });
+
             modelBuilder.Entity("Shared.Kernel.Numbering.NumberingSeries", b =>
                 {
                     b.Property<long>("NumberingSeriesId")
@@ -2204,7 +2352,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.CreditNoteDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.CreditNote", null)
-                        .WithMany()
+                        .WithMany("Lines")
                         .HasForeignKey("CreditNoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2219,7 +2367,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.CreditNoteDetailTax", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.CreditNoteDetail", null)
-                        .WithMany()
+                        .WithMany("Taxes")
                         .HasForeignKey("CreditNoteDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2236,7 +2384,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.DeliveryChallanDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.DeliveryChallan", null)
-                        .WithMany()
+                        .WithMany("Lines")
                         .HasForeignKey("DeliveryChallanId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2250,7 +2398,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.DeliveryChallanDetailTax", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.DeliveryChallanDetail", null)
-                        .WithMany()
+                        .WithMany("Taxes")
                         .HasForeignKey("DeliveryChallanDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2277,7 +2425,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.Invoice", null)
-                        .WithMany()
+                        .WithMany("Lines")
                         .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2291,7 +2439,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceDetailTax", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.InvoiceDetail", null)
-                        .WithMany()
+                        .WithMany("Taxes")
                         .HasForeignKey("InvoiceDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2300,7 +2448,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.QuoteDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.Quote", null)
-                        .WithMany()
+                        .WithMany("Lines")
                         .HasForeignKey("QuoteId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2309,7 +2457,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.QuoteDetailTax", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.QuoteDetail", null)
-                        .WithMany()
+                        .WithMany("Taxes")
                         .HasForeignKey("QuoteDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2326,7 +2474,7 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrderDetail", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.SalesOrder", null)
-                        .WithMany()
+                        .WithMany("Lines")
                         .HasForeignKey("SalesOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -2335,10 +2483,60 @@ namespace Sales.Repository.Migrations
             modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrderDetailTax", b =>
                 {
                     b.HasOne("Sales.Entity.TableEntities.SalesOrderDetail", null)
-                        .WithMany()
+                        .WithMany("Taxes")
                         .HasForeignKey("SalesOrderDetailId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.CreditNote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.CreditNoteDetail", b =>
+                {
+                    b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.DeliveryChallan", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.DeliveryChallanDetail", b =>
+                {
+                    b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.Invoice", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.InvoiceDetail", b =>
+                {
+                    b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.Quote", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.QuoteDetail", b =>
+                {
+                    b.Navigation("Taxes");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrder", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("Sales.Entity.TableEntities.SalesOrderDetail", b =>
+                {
+                    b.Navigation("Taxes");
                 });
 #pragma warning restore 612, 618
         }

@@ -1,26 +1,57 @@
-<div class="auth-card">
-  <h1>Set your password</h1>
+<div class="auth-shell">
+  <aside class="auth-aside">
+    <div class="text-xs uppercase tabular-nums" style="font-family:var(--font-body); letter-spacing:.14em; color:var(--color-mark)">Retail ERP &amp; Accounts</div>
 
-  @if (!token()) {
-    <p class="error">
-      This link is missing its token. Ask your administrator to resend the invitation.
-    </p>
-    <p><a routerLink="/login">Back to sign in</a></p>
-  } @else {
-    <p class="hint">Welcome{{ email() ? ', ' + email() : '' }}. Choose a password to finish.</p>
-    <form (ngSubmit)="submit()">
-      <label>
-        New password
-        <input name="password" type="password" minlength="8" [(ngModel)]="password" required />
-      </label>
-      <label>
-        Confirm password
-        <input name="confirmPassword" type="password" [(ngModel)]="confirmPassword" required />
-      </label>
-      @if (error()) {
-        <p class="error">{{ error() }}</p>
+    <div>
+      <div class="auth-brand">
+        <img src="assets/bill-book-mark.png" alt="Bill-Book Logo">
+        <span>Bill-Book</span>
+      </div>
+      <div class="auth-rule"></div>
+      <p style="line-height:1.7; color:rgba(243,242,242,.72); max-width:26ch; text-wrap:pretty" class="m-0 text-15">Billing, inventory, double-entry accounts and GST compliance — one set of books for every organization you run.</p>
+    </div>
+
+    <div class="flex flex-col">
+      <div class="auth-stats">
+        <div><div>14</div>days free</div>
+        <div><div>3</div>users</div>
+        <div><div>1</div>organization</div>
+      </div>
+      <div class="auth-rule" style="margin:var(--space-4) 0 var(--space-3)"></div>
+      <div class="auth-switch">
+        <a routerLink="/login">Sign in</a>
+        <a routerLink="/signup">Sign up</a>
+        <a routerLink="/forgot-password">Forgot</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="auth-pane">
+    <div class="w-full" style="max-width:380px">
+      <h6 style="color:var(--color-accent-700);margin:0 0 var(--space-2)">Welcome</h6>
+      <h2 style="font-size:clamp(26px,6vw,34px);margin:0 0 var(--space-2)">Set your password.</h2>
+
+      @if (!token()) {
+        <p style="margin:0 0 var(--space-4)" class="text-muted text-13">This link is missing its token. Ask your administrator to resend the invitation.</p>
+        <div class="hr" style="margin:var(--space-6) 0"></div>
+        <p class="text-13 m-0 text-muted"><a routerLink="/login">Back to sign in</a></p>
+      } @else {
+        <p style="margin:0 0 var(--space-4)" class="text-muted text-13">Welcome{{ email() ? ', ' + email() : '' }}. Choose a password to finish.</p>
+        <form #acceptForm="ngForm" (ngSubmit)="submit(acceptForm)">
+          <div class="field mb-3">
+            <label for="a-pass">New password</label>
+            <input class="input" id="a-pass" name="password" type="password" minlength="8" [(ngModel)]="password" required placeholder="At least 8 characters">
+          </div>
+          <div class="field mb-4">
+            <label for="a-conf">Confirm password</label>
+            <input class="input" id="a-conf" name="confirmPassword" type="password" [(ngModel)]="confirmPassword" required>
+          </div>
+          @if (error()) {
+            <p class="error-msg">{{ error() }}</p>
+          }
+          <button type="submit" [disabled]="busy()" class="btn btn-primary btn-block m-0">Set password</button>
+        </form>
       }
-      <button type="submit" [disabled]="busy()">Set password and continue</button>
-    </form>
-  }
+    </div>
+  </main>
 </div>

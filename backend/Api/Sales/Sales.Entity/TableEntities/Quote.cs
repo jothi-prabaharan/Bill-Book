@@ -27,4 +27,6 @@ public class Quote : DocumentHeaderBase
     /// ticks, and a lapsed quote is not a withdrawn one.
     /// </summary>
     public DateOnly ValidUntil { get; set; }
+
+    public List<QuoteDetail> Lines { get; set; } = [];
 }

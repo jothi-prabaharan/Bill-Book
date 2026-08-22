@@ -18,50 +18,47 @@
   belong to the item — changing a category never rewrites items already saved.
 </p>
 
-<table class="grid">
-  <thead>
-    <tr>
-      <th class="handle-col"><span class="sr-only">Reorder</span></th>
-      <th>Category</th>
-      <th>Code</th>
-      <th>Default profile</th>
-      <th>Default costing</th>
-      <th class="num">Items</th>
-      <th>Active</th>
-      <th class="actions-col"><span class="sr-only">Actions</span></th>
-    </tr>
-  </thead>
-  <tbody cdkDropList (cdkDropListDropped)="onDrop($event)">
-    @for (row of rows(); track row.itemCategoryId) {
-      <tr cdkDrag [cdkDragDisabled]="busy()" [class.inactive]="!row.isActive">
-        <td class="handle-col"><span class="handle" cdkDragHandle aria-hidden="true">⠿</span></td>
-        <td [class.indent-1]="row.depth === 2" [class.indent-2]="row.depth === 3">
-          {{ row.categoryName }}
-        </td>
-        <td><code>{{ row.categoryCode }}</code></td>
-        <td>{{ row.defaultItemProfile ?? '—' }}</td>
-        <td>{{ row.defaultCostingType ?? '—' }}</td>
-        <td class="num">{{ row.itemCount }}</td>
-        <td>{{ row.isActive ? 'Active' : 'Inactive' }}</td>
-        <td class="actions-col">
-          @if (row.depth < 3) {
-            <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
-              + Sub
-            </button>
-          }
-          <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
-          @if (row.itemCount === 0) {
-            <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
-              Delete
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr><td colspan="8">No categories.</td></tr>
-    }
-  </tbody>
-</table>
+<bb-data-grid [gridCode]="'ITEM_CATEGORIES'" [columns]="columns" [data]="rows()">
+  <!-- Cdk drop list goes on a custom wrapper if bb-data-grid doesn't support it directly, but for now we put the drop list on the parent or handle it appropriately. If DataGridComponent doesn't support CdkDrag naturally, we might just put cdkDropList on the table if possible, or omit it if DataGrid abstracts it. For now, since bb-data-grid renders rows internally, drag-and-drop might need special handling. We'll map the cells. -->
+  <ng-template bbCellTemplate="handle" let-row>
+    <div class="handle-col"><span class="handle" aria-hidden="true">⠿</span></div>
+  </ng-template>
+  <ng-template bbCellTemplate="categoryName" let-row>
+    <div [class.indent-1]="row.depth === 2" [class.indent-2]="row.depth === 3" [class.inactive]="!row.isActive">
+      {{ row.categoryName }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="categoryCode" let-row>
+    <code>{{ row.categoryCode }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="defaultItemProfile" let-row>
+    {{ row.defaultItemProfile ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="defaultCostingType" let-row>
+    {{ row.defaultCostingType ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="itemCount" let-row>
+    <div class="num">{{ row.itemCount }}</div>
+  </ng-template>
+  <ng-template bbCellTemplate="active" let-row>
+    {{ row.isActive ? 'Active' : 'Inactive' }}
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <div class="actions-col">
+      @if (row.depth < 3) {
+        <button type="button" class="link" (click)="startAdd(row.itemCategoryId)" [disabled]="busy()">
+          + Sub
+        </button>
+      }
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      @if (row.itemCount === 0) {
+        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+          Delete
+        </button>
+      }
+    </div>
+  </ng-template>
+</bb-data-grid>
 
 @if (editingId() !== null) {
   <div class="sheet">
@@ -69,11 +66,11 @@
     <div class="fields">
       <label>
         Name
-        <input type="text" [(ngModel)]="form.categoryName" maxlength="100" />
+        <bb-text-input  [(ngModel)]="form.categoryName" maxlength="100" />
       </label>
       <label>
         Code
-        <input type="text" [(ngModel)]="form.categoryCode" maxlength="20" />
+        <bb-text-input  [(ngModel)]="form.categoryCode" maxlength="20" />
       </label>
       <label>
         Parent

@@ -1,0 +1,74 @@
+<section class="sor-list">
+  <header class="sor-list__head">
+    <h1 class="sor-list__title">Sales orders</h1>
+
+    <button type="button" class="btn btn-primary" (click)="create()">New sales order</button>
+  </header>
+
+  <!-- Anything the server refused. Field-level problems never reach here; this
+       is where a rule about the request itself is shown. -->
+  <bb-message-box [messages]="messages()" />
+
+  <form class="sor-list__filters" (ngSubmit)="onFilterChange()">
+    <div class="field sor-list__filter">
+      <label for="sor-status">Status</label>
+      <select
+        id="sor-status"
+        class="input"
+        name="status"
+        [(ngModel)]="status"
+        (ngModelChange)="onFilterChange()"
+      >
+        @for (option of statuses; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field sor-list__filter sor-list__filter--grow">
+      <label for="sor-search">Order number</label>
+      <input
+        id="sor-search"
+        class="input"
+        type="search"
+        name="search"
+        placeholder="SO/2026/0001"
+        [(ngModel)]="search"
+      />
+    </div>
+
+    <button type="submit" class="btn btn-secondary sor-list__apply">Search</button>
+  </form>
+
+  <div class="card bg-surface sor-list__grid">
+    <bb-data-grid
+      [gridCode]="'SALES_ORDER_LIST'"
+      [columns]="columns"
+      [data]="rows()"
+      [loading]="loading()"
+      [totalCount]="total()"
+      [pageSize]="pageSize"
+      [currentPage]="page()"
+      (pageChange)="onPageChange($event)"
+      (rowClick)="open($event)"
+    >
+      <ng-template bbCellTemplate="documentNo" let-row>
+        <span class="tabular-nums">{{ row.documentNo }}</span>
+
+        @if (row.quoteId) {
+          <span class="chip" title="Converted from a quote">from quote</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="status" let-row>
+        <span [class]="statusTag(row.status)">{{ row.status }}</span>
+      </ng-template>
+    </bb-data-grid>
+
+    @if (isEmpty()) {
+      <p class="sor-list__empty">
+        No sales orders match. Clear the filters, or raise one from an accepted quote.
+      </p>
+    }
+  </div>
+</section>

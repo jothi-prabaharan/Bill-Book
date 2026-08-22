@@ -1,0 +1,114 @@
+<header class="shell-header">
+  <img src="assets/bill-book-mark.png" alt="Bill-Book" class="mobile-header-elements" style="width: 26px; height: auto; flex: none;">
+
+  <div class="shell-org-picker org-dropdown-container">
+    <button
+      type="button"
+      (click)="toggleOrg()"
+      [attr.aria-expanded]="orgOpen()"
+      aria-label="Switch organization"
+      class="shell-org-toggle org-toggle-btn"
+      style="all: unset; cursor: pointer; display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding: 4px 8px; margin: 0 -8px; border-radius: var(--radius-md);"
+    >
+      <span style="min-width: 0">
+        <span style="display: block; font-family: var(--font-heading); font-weight: 600; font-size: 15px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ currentOrgName() }}</span>
+        <span style="display: block; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 55%, transparent);">{{ currentOrgBranch() }}</span>
+      </span>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; opacity: 0.55;"><path d="m6 9 6 6 6-6"/></svg>
+    </button>
+
+    @if (orgOpen()) {
+      <div class="shell-org-dropdown" style="position: absolute; z-index: var(--z-dropdown); top: calc(100% + 6px); left: -8px; width: 290px; padding: var(--space-2); background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-lg);">
+        <bb-search-input
+          placeholder="Search organizations"
+          [ngModel]="orgQuery()"
+          (ngModelChange)="setOrgQuery($event)"
+          class="org-search-input"
+        ></bb-search-input>
+        <div class="org-list-container" style="max-height: 250px; overflow-y: auto; display: grid; gap: 2px;">
+          @for (org of filteredOrgs(); track org.orgId) {
+            <button
+              type="button"
+              (click)="pickOrg(org.orgId)"
+              [attr.aria-current]="org.orgId === currentOrgId() ? 'true' : null"
+              style="all: unset; cursor: pointer; display: block; padding: 7px 9px; border-radius: var(--radius-md); background: transparent;"
+            >
+              <span style="display: block; font-size: 13px;">{{ org.orgName }}</span>
+              <span style="display: block; font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent); font-variant-numeric: tabular-nums;">{{ org.roleName }}</span>
+            </button>
+          }
+          @if (filteredOrgs().length === 0) {
+            <div style="padding: 9px; font-size: 12px; color: color-mix(in srgb, var(--color-text) 50%, transparent);">No organization matches that.</div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Display-only Financial Year Tag -->
+  <span class="tag tag-outline" style="font-size: 11px; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); border: 1px solid var(--color-accent); color: var(--color-accent);" aria-label="Current financial year">{{ financialYear() }}</span>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="topacts">
+    <button class="btn btn-ghost" type="button" (click)="openNew()" title="New transaction" aria-label="New transaction" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" (click)="openFav()" title="Favourites" aria-label="Favourites" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" title="Help" aria-label="Help" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    </button>
+    <button class="btn btn-ghost" type="button" title="Sign out" aria-label="Sign out" (click)="doLogout()" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+    </button>
+  </div>
+</header>
+
+@if (newOpen()) {
+  <div class="dialog-backdrop" (click)="closeNew()" (keyup.enter)="closeNew()" tabindex="0">
+    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);">
+        <div class="dialog-title" style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px;">New transaction</div>
+        <button type="button" (click)="closeNew()" (keyup.enter)="closeNew()" class="btn btn-ghost" style="margin: 0;">Close</button>
+      </div>
+      <div style="font-size: 14px; opacity: 0.85; color: var(--color-text);">Every document you can raise from this branch.</div>
+
+      @for (grp of newGroups; track grp.name) {
+        <div>
+          <div style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-2);">{{ grp.name }}</div>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2);">
+            @for (doc of grp.docs; track doc.code) {
+              <button type="button" (click)="selectDoc(doc.code)" class="btn btn-secondary" style="margin: 0; display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); text-align: left;">
+                {{ doc.label }}<span style="font-size: 10px; letter-spacing: 0.1em; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-variant-numeric: tabular-nums;">{{ doc.code }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+@if (favOpen()) {
+  <div class="dialog-backdrop" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0">
+    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);">
+        <div class="dialog-title" style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px;">Favourites</div>
+        <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" class="btn btn-ghost" style="margin: 0;">Close</button>
+      </div>
+      <div style="font-size: 14px; opacity: 0.85; color: var(--color-text);">Your most frequently used screens.</div>
+
+      <div>
+        <div style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-2);">Quick Links</div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2);">
+          <button type="button" (click)="closeFav()" routerLink="/sales" class="btn btn-secondary" style="margin: 0; text-align: left;">Sales Overview</button>
+          <button type="button" (click)="closeFav()" routerLink="/purchase" class="btn btn-secondary" style="margin: 0; text-align: left;">Purchase Overview</button>
+          <button type="button" (click)="closeFav()" routerLink="/banking" class="btn btn-secondary" style="margin: 0; text-align: left;">Banking</button>
+          <button type="button" (click)="closeFav()" routerLink="/reports" class="btn btn-secondary" style="margin: 0; text-align: left;">Reports</button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

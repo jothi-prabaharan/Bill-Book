@@ -74,7 +74,13 @@ export interface DocumentLineTax {
   amount: number;
 }
 
-export type TaxComponent = 'Cgst' | 'Sgst' | 'Igst' | 'Cess';
+/**
+ * `Utgst` takes `Sgst`'s place — never beside it — on a supply inside a Union
+ * Territory with no legislature. Same rate, same column on the return, which has
+ * a single "State/UT tax" field; what differs is the name printed on the
+ * invoice. Mirrors `Shared.Kernel.Documents.TaxComponent`.
+ */
+export type TaxComponent = 'Cgst' | 'Sgst' | 'Igst' | 'Cess' | 'Utgst';
 
 export type TaxTreatment =
   | 'Taxable'
@@ -86,12 +92,39 @@ export type TaxTreatment =
 export type LineType = 'Stock' | 'Expense' | 'Capital';
 
 /**
+ * A tax group the user can put a line on, as `acc.TaxMasters` serves it.
+ *
+ * **Rates are percents here, not scaled**, because that is how the API sends
+ * them; the grid scales to `RATE_SCALE` when it builds the line's tax rows. Both
+ * splits are carried — CGST/SGST and IGST — and which one is used follows the
+ * document's `isInterState`, exactly as the C# `TaxRate` record does. Asking the
+ * caller to pre-resolve one would put the intra/inter decision in two places.
+ */
+export interface TaxGroupOption {
+  taxGroupId: number;
+  taxMasterId: number;
+  /** What the user reads — "GST 18%". */
+  label: string;
+  cgstRate: number;
+  sgstRate: number;
+  igstRate: number;
+  cessRate: number;
+}
+
+/**
  * What the grid needs from the document around it. Passed in rather than
  * fetched, so the grid stays free of HTTP and can be tested without a server.
  */
 export interface DocumentLineContext {
   /** Decides whether a line's tax rows carry CGST + SGST, or IGST. */
   isInterState: boolean;
+
+  /**
+   * Whether an intra-state supply is inside a Union Territory with no
+   * legislature, making the state half UTGST rather than SGST. Optional: almost
+   * every branch is in a state.
+   */
+  isUnionTerritory?: boolean;
   /** From `plt.Organizations`. Off means every line must name an item. */
   allowFreeTextLines: boolean;
   /** From `plt.Organizations`. Off computes tax on the gross. */

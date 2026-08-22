@@ -29,9 +29,9 @@
 
 <div class="head-actions">
   <label class="sr-only" for="hsn-search">Search</label>
-  <input
+  <bb-search-input
     id="hsn-search"
-    type="search"
+    
     name="search"
     placeholder="Code or description"
     [(ngModel)]="search"
@@ -72,52 +72,33 @@
   <p class="error" role="alert">{{ message }}</p>
 }
 
-<table class="grid">
-  <thead>
-    <tr>
-      <th scope="col">Code</th>
-      <th scope="col">Type</th>
-      <th scope="col">Description</th>
-      <th scope="col" class="num">Usual GST</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (row of rows(); track row.hsnSacCodeId) {
-      <tr [class.inactive]="!row.isActive">
-        <td>
-          <strong>{{ row.code }}</strong>
-          @if (row.digitLength <= 2) {
-            <span class="badge">chapter</span>
-          }
-          @if (!row.isActive) {
-            <span class="badge">retired</span>
-          }
-        </td>
-        <td>{{ row.codeType }}</td>
-        <td>{{ row.description }}</td>
-        <td class="num">
-          @if (row.defaultGstRate !== null) {
-            {{ row.defaultGstRate }}%
-          } @else {
-            <span class="sub" title="No single rate applies to this code">—</span>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="4">
-          @if (busy()) {
-            Loading…
-          } @else if (search) {
-            Nothing matches “{{ search }}”.
-          } @else {
-            No codes to show.
-          }
-        </td>
-      </tr>
+<bb-data-grid [gridCode]="'HSN_SAC'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="code" let-row>
+    <strong>{{ row.code }}</strong>
+    @if (row.digitLength <= 2) {
+      <span class="badge">chapter</span>
     }
-  </tbody>
-</table>
+    @if (!row.isActive) {
+      <span class="badge">retired</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="codeType" let-row>
+    {{ row.codeType }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="description" let-row>
+    {{ row.description }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="usualGst" let-row>
+    @if (row.defaultGstRate !== null) {
+      {{ row.defaultGstRate }}%
+    } @else {
+      <span class="sub" title="No single rate applies to this code">—</span>
+    }
+  </ng-template>
+</bb-data-grid>
 
 @if (total() > 0) {
   <nav class="pager" aria-label="Pages">

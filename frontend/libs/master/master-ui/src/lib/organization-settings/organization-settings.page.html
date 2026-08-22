@@ -1,0 +1,259 @@
+<div class="page-head">
+  <h1>Organization</h1>
+</div>
+
+<p class="hint">
+  The branch you are signed in to. Switch branches from Settings › Branches to
+  edit a different one.
+</p>
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (form; as org) {
+  @if (org.isTrial) {
+    <p class="note">
+      <strong>This branch is on a 30-day trial.</strong>
+      Your licence does not cover it, so it stops
+      @if (org.expiryDate) {
+        on {{ org.expiryDate }}
+      } @else {
+        when the trial ends
+      }
+      unless a licence is added. Everything in it is kept either way, and your
+      other branches are unaffected.
+    </p>
+  }
+
+  <div class="tabs" role="tablist">
+    <button type="button" role="tab" [class.on]="tab() === 'profile'" (click)="tab.set('profile')">
+      Profile
+    </button>
+    <button type="button" role="tab" [class.on]="tab() === 'statutory'" (click)="tab.set('statutory')">
+      Statutory
+    </button>
+    <button type="button" role="tab" [class.on]="tab() === 'financial'" (click)="tab.set('financial')">
+      Financial
+    </button>
+  </div>
+
+  @if (tab() === 'profile') {
+    <div class="fields">
+      <label>
+        Branch code
+        <bb-text-input  name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
+        <small>Appears in generated document numbers — INV/2526/CHN/00042.</small>
+      </label>
+
+      <label>
+        Name
+        <bb-text-input  name="name" [(ngModel)]="org.name" maxlength="200" />
+      </label>
+
+      <label class="wide">
+        Address
+        <bb-text-input
+          
+          name="addressLine1"
+          [(ngModel)]="org.addressLine1"
+          maxlength="200"
+          placeholder="Line 1"
+        />
+      </label>
+
+      <label class="wide">
+        <span class="sr-only">Address line 2</span>
+        <bb-text-input
+          
+          name="addressLine2"
+          [(ngModel)]="org.addressLine2"
+          maxlength="200"
+          placeholder="Line 2"
+        />
+      </label>
+
+      <label>
+        City
+        <bb-text-input  name="city" [(ngModel)]="org.city" maxlength="100" />
+      </label>
+
+      <label>
+        State
+        <select name="stateId" [(ngModel)]="org.stateId">
+          <option [ngValue]="null">Not set</option>
+          @for (state of states(); track state.stateId) {
+            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
+          }
+        </select>
+        <small>Decides the place of supply, so it decides CGST/SGST against IGST.</small>
+      </label>
+
+      <label>
+        Postal code
+        <bb-text-input  name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
+      </label>
+
+      <label>
+        Phone
+        <bb-text-input  name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
+        <small>STD code then number.</small>
+      </label>
+
+      <label>
+        Mobile
+        <bb-text-input  name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
+        <small>Lead with + for a number outside the branch's country.</small>
+      </label>
+
+      <label>
+        Email
+        <input type="email" name="email" [(ngModel)]="org.email" maxlength="200" />
+      </label>
+
+      <label>
+        Website
+        <bb-text-input  name="website" [(ngModel)]="org.website" maxlength="200" />
+      </label>
+
+      <label class="wide">
+        Logo URL
+        <bb-text-input  name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
+        <small>Printed on documents. Upload is not built yet — paste a URL.</small>
+      </label>
+    </div>
+  }
+
+  @if (tab() === 'statutory') {
+    <div class="fields">
+      <label>
+        GSTIN
+        <bb-text-input  name="gstin" [(ngModel)]="org.gstin" maxlength="15" />
+        @if (gstinMismatch()) {
+          <small class="warn">
+            The first two digits ({{ gstinStateCode() }}) do not match the state chosen on
+            Profile. Saving will be refused.
+          </small>
+        } @else {
+          <small>First two digits are the state code and must match the branch's state.</small>
+        }
+      </label>
+
+      <label>
+        PAN
+        <bb-text-input  name="pan" [(ngModel)]="org.pan" maxlength="10" />
+      </label>
+
+      <label>
+        TAN
+        <bb-text-input  name="tan" [(ngModel)]="org.tan" maxlength="10" />
+        <small>Needed to deduct TDS.</small>
+      </label>
+
+      <label>
+        TIN
+        <bb-text-input  name="tin" [(ngModel)]="org.tin" maxlength="15" />
+      </label>
+
+      <label>
+        CIN
+        <bb-text-input  name="cin" [(ngModel)]="org.cin" maxlength="21" />
+        <small>Companies only — issued on incorporation.</small>
+      </label>
+
+      <label>
+        Udyam number
+        <bb-text-input  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
+        <small>MSME registration.</small>
+      </label>
+    </div>
+  }
+
+  @if (tab() === 'financial') {
+    <div class="fields">
+      <label>
+        Base currency
+        <select name="baseCurrency" [ngModel]="org.baseCurrency" disabled>
+          @for (curr of currencies(); track curr.code) {
+            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
+          }
+        </select>
+        <small>
+          Fixed once the branch exists. Every posting converts to it, so changing
+          it would restate the books.
+        </small>
+      </label>
+
+      <label>
+        Financial year starts
+        <select name="financialYearStartMonth" [(ngModel)]="org.financialYearStartMonth">
+          @for (month of months; track month; let i = $index) {
+            <option [ngValue]="i + 1">{{ month }}</option>
+          }
+        </select>
+        <small>April in India. Decides the year segment in document numbers and when series reset.</small>
+      </label>
+    </div>
+
+    <h3>Documents</h3>
+    <p class="hint">
+      These three decide how every invoice and bill is built. Like the base currency
+      they are <strong>set once</strong> — they stay editable until this branch posts
+      its first sales or purchase document, and are fixed after that.
+    </p>
+
+    <div class="grid">
+      <label>
+        Lines without an item
+        <select name="allowFreeTextLines" [(ngModel)]="org.allowFreeTextLines">
+          <option [ngValue]="true">Allowed</option>
+          <option [ngValue]="false">Every line must name an item</option>
+        </select>
+        <small>
+          A line with no item carries a description, quantity and price — useful for a
+          service or a one-off charge. It moves no stock and never appears in a
+          sales-by-item report.
+        </small>
+      </label>
+
+      <label>
+        Discount entered at
+        <select name="discountLevel" [(ngModel)]="org.discountLevel">
+          <option value="Line">Line</option>
+          <option value="Header">Header</option>
+          <option value="Both">Both</option>
+        </select>
+        <small>
+          A header discount is spread across the lines by taxable value before tax,
+          because GST is charged per line.
+        </small>
+      </label>
+
+      <label>
+        Discount reduces tax
+        <select name="discountBeforeTax" [(ngModel)]="org.discountBeforeTax">
+          <option [ngValue]="true">Yes — taken off before GST</option>
+          <option [ngValue]="false">No — GST on the full value</option>
+        </select>
+        <small>
+          Yes is the trade-discount case. No is a settlement discount: it does not
+          reduce GST liability and must still be shown on the invoice.
+        </small>
+      </label>
+    </div>
+
+    <p class="hint">
+      Which currencies this branch trades in is set on Settings › Currencies;
+      number formats and default terms on Settings › Configuration.
+    </p>
+  }
+
+  <div class="sheet-actions">
+    <button type="button" (click)="save()" [disabled]="busy()">Save</button>
+    @if (saved()) {
+      <span class="notice">Saved.</span>
+    }
+  </div>
+} @else if (!loaded() && !busy()) {
+  <p class="hint">Nothing to show.</p>
+}

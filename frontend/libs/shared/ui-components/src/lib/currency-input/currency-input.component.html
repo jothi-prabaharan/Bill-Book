@@ -1,0 +1,27 @@
+<div
+  class="currency-group"
+  [class.has-symbol]="showSymbol()"
+  [class.disabled]="effectiveDisabled()"
+>
+  @if (showSymbol()) {
+    <span class="currency-symbol" aria-hidden="true">{{ symbol() || '₹' }}</span>
+  }
+  <input
+    type="text"
+    inputmode="decimal"
+    class="input currency-input"
+    [class.align-left]="align() === 'left'"
+    [class.align-right]="align() === 'right'"
+    [id]="id() || null"
+    [name]="name() || null"
+    [placeholder]="placeholder()"
+    [disabled]="effectiveDisabled()"
+    [readonly]="readonly()"
+    [required]="required()"
+    [attr.aria-label]="ariaLabel() || null"
+    [value]="displayValue()"
+    (input)="onInput($event)"
+    (focus)="onFocus($event)"
+    (blur)="onBlur($event)"
+  />
+</div>

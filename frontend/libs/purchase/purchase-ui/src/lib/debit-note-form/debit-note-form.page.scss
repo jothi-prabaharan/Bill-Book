@@ -1,0 +1,264 @@
+.page {
+  padding: 1.5rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+.page__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+    font-size: 1.5rem;
+  }
+}
+
+.page__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.5rem 0 0;
+}
+
+.pill {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: var(--bb-chip, #eef1f5);
+  color: #4a5361;
+
+  &--info {
+    background: #e8f0fe;
+    color: #1a4f9c;
+  }
+}
+
+.banner {
+  padding: 0.75rem 1rem;
+  border-radius: 0.375rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+
+  &--error {
+    background: #fdeceb;
+    color: #b42318;
+  }
+
+  &--info {
+    background: #eef4ff;
+    color: #1a4f9c;
+  }
+}
+
+.state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--bb-text-muted, #5b6472);
+}
+
+.card {
+  border: 1px solid var(--bb-border, #e7eaee);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: var(--bb-surface, #fff);
+}
+
+.card__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card__title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.field__label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.field__hint {
+  font-size: 0.75rem;
+  color: var(--bb-text-muted, #5b6472);
+}
+
+.input {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--bb-border, #d5d9e0);
+  border-radius: 0.375rem;
+  font: inherit;
+
+  &:disabled {
+    background: var(--bb-disabled, #f6f7f9);
+    color: var(--bb-text-muted, #5b6472);
+  }
+}
+
+.btn {
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--bb-border, #d5d9e0);
+  border-radius: 0.375rem;
+  background: var(--bb-surface, #fff);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+  display: inline-block;
+
+  &--primary {
+    background: var(--bb-primary, #2f6fed);
+    border-color: var(--bb-primary, #2f6fed);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.actions__hint {
+  font-size: 0.75rem;
+  color: var(--bb-text-muted, #5b6472);
+  max-width: 24rem;
+}
+
+/* Every page works at ~360px: the form stacks and the buttons go full width. */
+@media (max-width: 640px) {
+  .page {
+    padding: 1rem 0.75rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+
+    .btn {
+      width: 100%;
+    }
+  }
+}
+
+/* The vendor field is a button that opens the lookup, not a text box — the id
+   is chosen, never typed. */
+.picker {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--bb-border, #d5d9e0);
+  border-radius: 0.375rem;
+  background: var(--bb-surface, #fff);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:disabled {
+    background: var(--bb-disabled, #f6f7f9);
+    color: var(--bb-text-muted, #5b6472);
+    cursor: not-allowed;
+  }
+}
+
+.banner--ok {
+  background: #e7f6ec;
+  color: #1d6f42;
+}
+
+.btn--danger {
+  border-color: #d9534f;
+  color: #b42318;
+}
+
+.card--void {
+  border-color: #f0c2bf;
+}
+
+/* A debit note picks lines off a bill rather than composing them, so it gets
+   its own small table instead of the shared line grid. */
+.lines {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.4rem 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--bb-border, #e7eaee);
+  }
+
+  th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--bb-text-muted, #5b6472);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .item {
+    min-width: 10rem;
+  }
+
+  .total {
+    font-weight: 600;
+  }
+
+  .input--qty {
+    max-width: 6rem;
+    text-align: right;
+  }
+}
+
+.banner--warn {
+  background: #fff4e5;
+  color: #8a5300;
+}
+
+@media (max-width: 640px) {
+  .lines {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

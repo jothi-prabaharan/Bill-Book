@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent } from '@bill-book/ui-components';
 
 interface PeriodLock {
   periodLockId: number;
@@ -44,12 +45,19 @@ interface Row {
 @Component({
   selector: 'bb-closing-dates-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent],
   templateUrl: './closing-dates.page.html',
   styleUrl: './closing-dates.page.scss',
 })
 export class ClosingDatesPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  columns: ColumnDef[] = [
+    { field: 'role', header: 'Role' },
+    { field: 'lock', header: 'Closed up to' },
+    { field: 'note', header: 'Why' },
+    { field: 'actions', header: 'Actions' }
+  ];
 
   protected readonly rows = signal<Row[]>([]);
   protected readonly mine = signal<MyLock | null>(null);

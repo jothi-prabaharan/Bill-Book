@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "customer-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/customer/customer-ui/src",
+  "tags": [
+    "scope:customer",
+    "type:ui"
+  ],
+  "targets": {}
+}

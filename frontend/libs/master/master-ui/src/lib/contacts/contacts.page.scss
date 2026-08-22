@@ -1,0 +1,6 @@
+/* Page-specific styles for contacts.page — shared form-editor classes
+   (.sheet, .fields, .tabs, .child-card, .hint, .link, .badge, etc.)
+   are now in the global styles.scss, using design tokens. */
+
+/* Contacts uses 3-column fields layout for the wider form. */
+.fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }

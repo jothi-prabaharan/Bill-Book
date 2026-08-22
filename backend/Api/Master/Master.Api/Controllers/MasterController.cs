@@ -19,9 +19,9 @@ namespace Master.Api.Controllers;
 [Route("api/master")]
 public sealed class MasterController : ControllerBase
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public MasterController(MasterDbContext db) => _db = db;
+    public MasterController(AdminDbContext db) => _db = db;
 
     /// <summary>Anonymous: the signup form needs this before there is an account.</summary>
     [AllowAnonymous]
@@ -65,6 +65,7 @@ public sealed class MasterController : ControllerBase
         return state is null ? NotFound() : Ok(state);
     }
 
+    [AllowAnonymous]
     [HttpGet("currencies")]
     public async Task<IActionResult> GetCurrencies(CancellationToken ct)
     {

@@ -28,12 +28,12 @@
 <div class="head-fields">
   <label>
     Go-live date
-    <input type="date" [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
+    <bb-date-input  [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
   </label>
   <label class="wide">
     Memo
-    <input
-      type="text"
+    <bb-text-input
+      
       [(ngModel)]="memo"
       name="memo"
       placeholder="Which system these came from, and who signed them off"
@@ -42,204 +42,177 @@
   </label>
 </div>
 
-<table class="lines">
-  <thead>
-    <tr>
-      <th class="line-col">#</th>
-      <th>What</th>
-      <th>Which</th>
-      <th>Document</th>
-      <th class="num">Qty</th>
-      <th class="num">Unit cost</th>
-      <th class="num">Debit</th>
-      <th class="num">Credit</th>
-      <th class="actions-col"><span class="sr-only">Remove</span></th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (line of lines(); track $index) {
-      <tr>
-        <td class="line-col" data-label="Line">{{ $index + 1 }}</td>
+<bb-data-grid [gridCode]="'OPENING_BALANCE_LINES'" [columns]="linesColumns" [data]="lines()">
+  <ng-template bbCellTemplate="lineNo" let-row>
+    {{ lines().indexOf(row) + 1 }}
+  </ng-template>
 
-        <td data-label="What">
-          <select
-            [(ngModel)]="line.lineType"
-            [name]="'type' + $index"
-            (ngModelChange)="onLineType(line)"
-            [disabled]="finalized()"
-          >
-            <option value="GlAccount">Account balance</option>
-            <option value="ContactReceivable">Owed to us</option>
-            <option value="ContactPayable">We owe</option>
-            <option value="Item">Stock on hand</option>
-          </select>
-        </td>
+  <ng-template bbCellTemplate="what" let-row>
+    <select
+      [(ngModel)]="row.lineType"
+      [name]="'type' + lines().indexOf(row)"
+      (ngModelChange)="onLineType(row)"
+      [disabled]="finalized()"
+    >
+      <option value="GlAccount">Account balance</option>
+      <option value="ContactReceivable">Owed to us</option>
+      <option value="ContactPayable">We owe</option>
+      <option value="Item">Stock on hand</option>
+    </select>
+  </ng-template>
 
-        <!-- Which thing the line is about. An account balance names an account;
-             a receivable or payable names the contact and posts to receivables
-             or payables, which is not a choice; stock names the item. -->
-        <td data-label="Which">
-          @if (line.lineType === 'GlAccount') {
-            <select
-              [(ngModel)]="line.accountId"
-              [name]="'account' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            >
-              <option [ngValue]="null">Choose…</option>
-              @for (a of postable(); track a.accountId) {
-                <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
-              }
-            </select>
-          } @else if (line.lineType === 'Item') {
-            <select
-              [(ngModel)]="line.itemId"
-              [name]="'item' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            >
-              <option [ngValue]="null">Choose…</option>
-              @for (i of items(); track i.itemId) {
-                <option [ngValue]="i.itemId">{{ i.itemCode }} — {{ i.itemName }}</option>
-              }
-            </select>
-            <span class="sub">Posts to Inventory at this cost</span>
-          } @else {
-            <select
-              [(ngModel)]="line.contactId"
-              [name]="'contact' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            >
-              <option [ngValue]="null">Choose…</option>
-              @for (c of contacts(); track c.contactId) {
-                <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
-              }
-            </select>
-            <span class="sub">
-              {{ line.lineType === 'ContactReceivable' ? 'Accounts Receivable' : 'Accounts Payable' }}
-              — this contact's own balance
-            </span>
-          }
-        </td>
-
-        <!-- The old system's invoice number and date. Not decoration: an aging
-             report ages from this date, and a contact querying the balance asks
-             about this number. -->
-        <td data-label="Document">
-          @if (line.lineType === 'ContactReceivable' || line.lineType === 'ContactPayable') {
-            <input
-              type="text"
-              placeholder="Invoice no."
-              [(ngModel)]="line.documentReference"
-              [name]="'ref' + $index"
-              maxlength="50"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            />
-            <input
-              type="date"
-              [(ngModel)]="line.documentDate"
-              [name]="'docdate' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            />
-          } @else {
-            <input
-              type="text"
-              placeholder="Note"
-              [(ngModel)]="line.lineMemo"
-              [name]="'memo' + $index"
-              maxlength="300"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            />
-          }
-        </td>
-
-        <td class="num" data-label="Qty">
-          @if (line.lineType === 'Item') {
-            <input
-              type="number"
-              inputmode="decimal"
-              step="0.001"
-              min="0"
-              [(ngModel)]="line.quantity"
-              [name]="'qty' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            />
-          } @else {
-            <span class="none">—</span>
-          }
-        </td>
-
-        <td class="num" data-label="Unit cost">
-          @if (line.lineType === 'Item') {
-            <input
-              type="number"
-              inputmode="decimal"
-              step="0.01"
-              min="0"
-              [(ngModel)]="line.unitCost"
-              [name]="'cost' + $index"
-              (ngModelChange)="touch()"
-              [disabled]="finalized()"
-            />
-          } @else {
-            <span class="none">—</span>
-          }
-        </td>
-
-        <td class="num" data-label="Debit">
-          @if (line.lineType === 'Item') {
-            <span class="derived">{{ lineValue(line) | number: '1.2-2' }}</span>
-          } @else {
-            <input
-              type="number"
-              inputmode="decimal"
-              step="0.01"
-              min="0"
-              [(ngModel)]="line.debit"
-              [name]="'debit' + $index"
-              (ngModelChange)="onDebit(line)"
-              [disabled]="finalized()"
-            />
-          }
-        </td>
-
-        <td class="num" data-label="Credit">
-          @if (line.lineType === 'Item') {
-            <span class="none">—</span>
-          } @else {
-            <input
-              type="number"
-              inputmode="decimal"
-              step="0.01"
-              min="0"
-              [(ngModel)]="line.credit"
-              [name]="'credit' + $index"
-              (ngModelChange)="onCredit(line)"
-              [disabled]="finalized()"
-            />
-          }
-        </td>
-
-        <td class="actions-col">
-          @if (!finalized()) {
-            <button type="button" class="icon" (click)="removeLine($index)" title="Remove line">
-              ×
-            </button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="9" class="empty">Nothing keyed yet.</td>
-      </tr>
+  <ng-template bbCellTemplate="which" let-row>
+    @if (row.lineType === 'GlAccount') {
+      <select
+        [(ngModel)]="row.accountId"
+        [name]="'account' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      >
+        <option [ngValue]="null">Choose…</option>
+        @for (a of postable(); track a.accountId) {
+          <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
+        }
+      </select>
+    } @else if (row.lineType === 'Item') {
+      <select
+        [(ngModel)]="row.itemId"
+        [name]="'item' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      >
+        <option [ngValue]="null">Choose…</option>
+        @for (i of items(); track i.itemId) {
+          <option [ngValue]="i.itemId">{{ i.itemCode }} — {{ i.itemName }}</option>
+        }
+      </select>
+      <span class="sub">Posts to Inventory at this cost</span>
+    } @else {
+      <select
+        [(ngModel)]="row.contactId"
+        [name]="'contact' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      >
+        <option [ngValue]="null">Choose…</option>
+        @for (c of contacts(); track c.contactId) {
+          <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
+        }
+      </select>
+      <span class="sub">
+        {{ row.lineType === 'ContactReceivable' ? 'Accounts Receivable' : 'Accounts Payable' }}
+        — this contact's own balance
+      </span>
     }
-  </tbody>
-</table>
+  </ng-template>
+
+  <ng-template bbCellTemplate="document" let-row>
+    @if (row.lineType === 'ContactReceivable' || row.lineType === 'ContactPayable') {
+      <bb-text-input
+        
+        placeholder="Invoice no."
+        [(ngModel)]="row.documentReference"
+        [name]="'ref' + lines().indexOf(row)"
+        maxlength="50"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      />
+      <bb-date-input
+        
+        [(ngModel)]="row.documentDate"
+        [name]="'docdate' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      />
+    } @else {
+      <bb-text-input
+        
+        placeholder="Note"
+        [(ngModel)]="row.lineMemo"
+        [name]="'memo' + lines().indexOf(row)"
+        maxlength="300"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      />
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="qty" let-row>
+    @if (row.lineType === 'Item') {
+      <bb-number-input
+        
+        inputmode="decimal"
+        step="0.001"
+        min="0"
+        [(ngModel)]="row.quantity"
+        [name]="'qty' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      />
+    } @else {
+      <span class="none">—</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="unitCost" let-row>
+    @if (row.lineType === 'Item') {
+      <bb-number-input
+        
+        inputmode="decimal"
+        step="0.01"
+        min="0"
+        [(ngModel)]="row.unitCost"
+        [name]="'cost' + lines().indexOf(row)"
+        (ngModelChange)="touch()"
+        [disabled]="finalized()"
+      />
+    } @else {
+      <span class="none">—</span>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="debit" let-row>
+    @if (row.lineType === 'Item') {
+      <span class="derived">{{ lineValue(row) | number: '1.2-2' }}</span>
+    } @else {
+      <bb-number-input
+        
+        inputmode="decimal"
+        step="0.01"
+        min="0"
+        [(ngModel)]="row.debit"
+        [name]="'debit' + lines().indexOf(row)"
+        (ngModelChange)="onDebit(row)"
+        [disabled]="finalized()"
+      />
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="credit" let-row>
+    @if (row.lineType === 'Item') {
+      <span class="none">—</span>
+    } @else {
+      <bb-number-input
+        
+        inputmode="decimal"
+        step="0.01"
+        min="0"
+        [(ngModel)]="row.credit"
+        [name]="'credit' + lines().indexOf(row)"
+        (ngModelChange)="onCredit(row)"
+        [disabled]="finalized()"
+      />
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (!finalized()) {
+      <button type="button" class="icon" (click)="removeLine(lines().indexOf(row))" title="Remove line">
+        ×
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>
 
 @if (!finalized()) {
   <button type="button" class="ghost" (click)="addLine()">+ Add line</button>
@@ -313,38 +286,27 @@
       by no one, and the trial balance would never notice.
     </p>
 
-    <table class="grid">
-      <thead>
-        <tr>
-          <th>Control account</th>
-          <th class="num">Account</th>
-          <th class="num">Subledger</th>
-          <th class="num">Belongs to nobody</th>
-          <th>Balances</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (row of t.rows; track row.accountId) {
-          <tr [class.off]="!row.isTied">
-            <td data-label="Account">{{ row.accountCode }} — {{ row.accountName }}</td>
-            <td class="num" data-label="Account">{{ row.controlBalance | number: '1.2-2' }}</td>
-            <td class="num" data-label="Subledger">
-              {{ row.subLedgerBalance | number: '1.2-2' }}
-            </td>
-            <td class="num" data-label="Belongs to nobody">
-              {{ row.unattributed | number: '1.2-2' }}
-            </td>
-            <td data-label="Balances">{{ row.subAccountCount }}</td>
-          </tr>
-        } @empty {
-          <tr>
-            <td colspan="5" class="empty">
-              Nothing posted to a control account yet, so there is no subledger to tie.
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+    <bb-data-grid [gridCode]="'OPENING_BALANCE_TIE'" [columns]="tieColumns" [data]="t.rows">
+      <ng-template bbCellTemplate="controlAccount" let-row>
+        <span [class.off]="!row.isTied">{{ row.accountCode }} — {{ row.accountName }}</span>
+      </ng-template>
+      
+      <ng-template bbCellTemplate="account" let-row>
+        <span [class.off]="!row.isTied">{{ row.controlBalance | number: '1.2-2' }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="subledger" let-row>
+        <span [class.off]="!row.isTied">{{ row.subLedgerBalance | number: '1.2-2' }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="unattributed" let-row>
+        <span [class.off]="!row.isTied">{{ row.unattributed | number: '1.2-2' }}</span>
+      </ng-template>
+
+      <ng-template bbCellTemplate="balances" let-row>
+        <span [class.off]="!row.isTied">{{ row.subAccountCount }}</span>
+      </ng-template>
+    </bb-data-grid>
   </section>
 }
 

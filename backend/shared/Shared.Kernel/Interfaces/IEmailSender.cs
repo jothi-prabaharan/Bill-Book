@@ -1,7 +1,7 @@
 namespace Shared.Kernel.Interfaces;
 
 /// <summary>
-/// Outbound email. Backed by SMTP settings from <c>plt.SmtpSettings</c>, whose
+/// Outbound email. Backed by SMTP settings from <c>mst.SmtpSettings</c>, whose
 /// password is AES-encrypted at rest and decrypted here before authenticating
 /// to the mail server. Invitations, OTPs and password-reset mail go through this.
 /// </summary>

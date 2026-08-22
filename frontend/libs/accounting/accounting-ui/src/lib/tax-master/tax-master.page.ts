@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 
 interface TaxRate {
   taxMasterId: number;
@@ -32,11 +33,21 @@ type Mode = 'create' | 'revise' | 'rename';
 @Component({
   selector: 'bb-tax-master-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './tax-master.page.html',
   styleUrl: './tax-master.page.scss',
 })
 export class TaxMasterPage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'name', header: 'Name' },
+    { field: 'total', header: 'Total' },
+    { field: 'cgst', header: 'CGST' },
+    { field: 'sgst', header: 'SGST' },
+    { field: 'igst', header: 'IGST' },
+    { field: 'appliesTo', header: 'Applies to' },
+    { field: 'effective', header: 'Effective' },
+    { field: 'actions', header: '' },
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly rates = signal<TaxRate[]>([]);

@@ -1,14 +1,7 @@
 {
   "version": "2.0.0",
   "tasks": [
-    {
-      "label": "build-backend",
-      "type": "shell",
-      "command": "dotnet",
-      "args": ["build", "${workspaceFolder}/backend/Bill-Book.Debug.slnf"],
-      "group": { "kind": "build", "isDefault": true },
-      "problemMatcher": "$msCompile"
-    },
+
     {
       "label": "web-install",
       "type": "shell",
@@ -29,6 +22,68 @@
         "-ExecutionPolicy", "Bypass",
         "-Command",
         "& '${workspaceFolder}/scripts/setup-dev-db.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/setup-dev-db.log'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
+    // Starts Gateway, Accounting, Inventory, Sales and Master detached, and waits
+    // for each port. Signup needs all five: Master calls the middle three over
+    // HTTP to seed the new organization.
+    {
+      "label": "start-backend",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "& '${workspaceFolder}/scripts/start-backend.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/start-backend.log'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "stop-backend",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "& '${workspaceFolder}/scripts/start-backend.ps1' -Stop"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
+    // End-to-end signup against the running services: clears prior state, posts
+    // a signup, polls status, then dumps the tenant database table by table.
+    {
+      "label": "test-signup",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "& '${workspaceFolder}/scripts/test-signup.ps1' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/test-signup.log'"
+      ],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+
+    // Read-only. Reports what exists in the databases and where provisioning
+    // stopped. Output is teed so a failure can be read after the fact.
+    {
+      "label": "diagnose-tenant",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-Command",
+        "$env:PGPASSWORD='123'; psql -h localhost -U postgres -d postgres -f '${workspaceFolder}/scripts/diagnose-tenant.sql' *>&1 | Tee-Object -FilePath '${workspaceFolder}/scripts/diagnose-tenant.log'"
       ],
       "options": { "cwd": "${workspaceFolder}" },
       "problemMatcher": []

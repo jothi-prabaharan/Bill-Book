@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 
 interface JournalListItem {
   journalId: number;
@@ -80,7 +81,7 @@ interface LineForm {
 @Component({
   selector: 'bb-journals-page',
   standalone: true,
-  imports: [DecimalPipe, FormsModule, RouterLink],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent, TextInputComponent, NumberInputComponent],
   templateUrl: './journals.page.html',
   styleUrl: './journals.page.scss',
 })
@@ -88,6 +89,34 @@ export class JournalsPage implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  columns: ColumnDef[] = [
+    { field: 'journalDate', header: 'Date' },
+    { field: 'journalNo', header: 'Number' },
+    { field: 'reference', header: 'Reference' },
+    { field: 'totalDebit', header: 'Debit' },
+    { field: 'totalCredit', header: 'Credit' },
+    { field: 'status', header: 'Status' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
+  editLinesColumns: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'account', header: 'Account' },
+    { field: 'subAccount', header: 'Sub-account' },
+    { field: 'memo', header: 'Memo' },
+    { field: 'debit', header: 'Debit' },
+    { field: 'credit', header: 'Credit' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
+  viewLinesColumns: ColumnDef[] = [
+    { field: 'lineNumber', header: '#' },
+    { field: 'account', header: 'Account' },
+    { field: 'memo', header: 'Memo' },
+    { field: 'debit', header: 'Debit' },
+    { field: 'credit', header: 'Credit' }
+  ];
 
   protected readonly rows = signal<JournalListItem[]>([]);
   protected readonly accounts = signal<AccountOption[]>([]);

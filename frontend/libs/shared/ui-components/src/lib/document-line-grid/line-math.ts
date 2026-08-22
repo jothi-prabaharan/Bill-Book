@@ -132,8 +132,15 @@ export function recalculate(
  */
 export function componentsFor(
   isInterState: boolean,
-): ReadonlyArray<'Cgst' | 'Sgst' | 'Igst'> {
-  return isInterState ? ['Igst'] : ['Cgst', 'Sgst'];
+  isUnionTerritory = false,
+): ReadonlyArray<'Cgst' | 'Sgst' | 'Igst' | 'Utgst'> {
+  if (isInterState) {
+    return ['Igst'];
+  }
+
+  // Inside a Union Territory the state half is UTGST. Same rate, and it sums
+  // into the same column — see TaxComponent in document-line.model.ts.
+  return isUnionTerritory ? ['Cgst', 'Utgst'] : ['Cgst', 'Sgst'];
 }
 
 /** Document totals, summed from already-rounded lines. */
@@ -153,7 +160,11 @@ export function totalsOf(lines: readonly DocumentLine[]) {
 
   const taxable = sum((line) => line.taxableAmount);
   const cgst = byComponent('Cgst');
-  const sgst = byComponent('Sgst');
+
+  // One column for State tax and UT tax, because the return has one field for
+  // them and they cannot both appear on a line. Matches GstCalculator.Totals.
+  const sgst = byComponent('Sgst') + byComponent('Utgst');
+
   const igst = byComponent('Igst');
   const cess = byComponent('Cess');
 

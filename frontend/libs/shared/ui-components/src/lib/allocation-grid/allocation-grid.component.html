@@ -1,0 +1,46 @@
+<div class="allocation-grid-container">
+  <div class="allocation-header">
+    <div class="summary-info">
+      <div>Amount to Allocate: <strong>{{ amountToAllocate | number:'1.2-2' }}</strong></div>
+      <div>Allocated: <strong>{{ totalAllocated | number:'1.2-2' }}</strong></div>
+      <div>Remaining: <strong>{{ remainingToAllocate | number:'1.2-2' }}</strong></div>
+    </div>
+    <button class="secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
+  </div>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Document No</th>
+        <th>Date</th>
+        <th>Due Date</th>
+        <th class="number-cell">Total Amount</th>
+        <th class="number-cell">Outstanding</th>
+        <th class="number-cell">Allocate</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="rows.length === 0">
+        <td colspan="6" class="empty-state">No outstanding documents found.</td>
+      </tr>
+      <tr *ngFor="let row of rows; let i = index" [class.fully-allocated]="row.outstandingAmount === row.allocatedAmount">
+        <td>{{ row.documentNo }}</td>
+        <td>{{ row.documentDate | date }}</td>
+        <td>{{ row.dueDate | date }}</td>
+        <td class="number-cell">{{ row.totalAmount | number:'1.2-2' }}</td>
+        <td class="number-cell">{{ row.outstandingAmount | number:'1.2-2' }}</td>
+        <td class="number-cell">
+          <input 
+            type="number" 
+            [ngModel]="row.allocatedAmount" 
+            (ngModelChange)="onAllocateChange(i, $event)"
+            [max]="row.outstandingAmount"
+            min="0"
+            step="0.01"
+            class="amount-input"
+          />
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>

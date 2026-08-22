@@ -337,4 +337,94 @@ public sealed class LedgerReportService
             IsBalanced = debitTotal == creditTotal,
         };
     }
+
+    /// <summary>
+    /// Gets outstanding balances per transaction for a specific contact and ledger type (e.g. AR = 1).
+    /// </summary>
+    /// <summary>
+    /// How far each of a batch of documents has been settled.
+    ///
+    /// <b>One grouped query for the whole page.</b> The alternative a list screen
+    /// reaches for is asking per contact and matching afterwards, which is a
+    /// round trip per distinct customer on the page and gets slower exactly
+    /// where it matters — the branches with the most invoices.
+    ///
+    /// A document with no rows at this ledger type comes back <i>absent</i>
+    /// rather than zero: a draft has never posted, so it is not an unpaid
+    /// receivable, and folding it in as owing nothing would put it in the same
+    /// bucket as one paid in full.
+    /// </summary>
+    public async Task<List<SettlementView>> GetSettlementsAsync(
+        string transactionTypeCode,
+        int ledgerTypeId,
+        IReadOnlyCollection<long> transactionIds,
+        CancellationToken ct = default)
+    {
+        if (transactionIds.Count == 0)
+        {
+            return [];
+        }
+
+        List<long> ids = [.. transactionIds.Distinct()];
+
+        return await _db.JournalLedger
+            .Where(l => l.TransactionTypeCode == transactionTypeCode
+                && l.LedgerTypeId == ledgerTypeId
+                && ids.Contains(l.TransactionId))
+            .GroupBy(l => l.TransactionId)
+            .Select(g => new SettlementView
+            {
+                TransactionId = g.Key,
+
+                // The document's own leg is the debit on a receivable; what has
+                // come back against it is the credit. Base currency on both, so
+                // a foreign-currency invoice and its receipt are comparable.
+                TotalAmount = g.Sum(x => x.DebitAmountBase),
+                PaidAmount = g.Sum(x => x.CreditAmountBase),
+                OutstandingAmount = g.Sum(x => x.DebitAmountBase) - g.Sum(x => x.CreditAmountBase),
+            })
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(long contactId, int ledgerTypeId, CancellationToken ct = default)
+    {
+        var ledgers = await _db.JournalLedger
+            .Where(l => l.ContactId == contactId && l.LedgerTypeId == ledgerTypeId)
+            .GroupBy(l => new { l.TransactionTypeCode, l.TransactionId })
+            .Select(g => new
+            {
+                g.Key.TransactionTypeCode,
+                g.Key.TransactionId,
+                TotalDebit = g.Sum(x => x.DebitAmountBase),
+                TotalCredit = g.Sum(x => x.CreditAmountBase),
+                MinDate = g.Min(x => x.LedgerDate)
+            })
+            .ToListAsync(ct);
+
+        var result = new List<OutstandingBalanceView>();
+        foreach (var l in ledgers)
+        {
+            decimal totalAmount = l.TotalDebit;
+            decimal paidAmount = l.TotalCredit;
+            decimal outstanding = totalAmount - paidAmount;
+
+            if (Math.Abs(outstanding) > 0.01m)
+            {
+                result.Add(new OutstandingBalanceView
+                {
+                    ContactId = contactId,
+                    TransactionTypeCode = l.TransactionTypeCode,
+                    TransactionId = l.TransactionId,
+                    DocumentNo = $"{l.TransactionTypeCode}-{l.TransactionId}", // fallback
+                    DocumentDate = l.MinDate,
+                    DueDate = null,
+                    TotalAmount = totalAmount,
+                    PaidAmount = paidAmount,
+                    OutstandingAmount = outstanding
+                });
+            }
+        }
+
+        return result.OrderBy(x => x.DocumentDate).ToList();
+    }
 }

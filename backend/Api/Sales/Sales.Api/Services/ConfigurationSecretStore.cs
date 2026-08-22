@@ -15,11 +15,26 @@ public sealed class ConfigurationSecretStore : ISecretStore
 
     public Task<string> GetSecretAsync(string name, CancellationToken cancellationToken = default)
     {
-        string? value = _configuration[$"Secrets:{name}"]
-            ?? _configuration.GetConnectionString("TenantFallback");
-        return value is null
+        string? value = _configuration[$"Secrets:{name}"];
+        if (value is not null)
+        {
+            return Task.FromResult(value);
+        }
+
+        string? fallback = _configuration.GetConnectionString("TenantFallback");
+        if (fallback is not null && name.StartsWith("tenant-db-"))
+        {
+            string dbName = name.Substring(10);
+            var builder = new Npgsql.NpgsqlConnectionStringBuilder(fallback)
+            {
+                Database = dbName
+            };
+            return Task.FromResult(builder.ToString());
+        }
+
+        return fallback is null
             ? throw new KeyNotFoundException($"Secret '{name}' not found.")
-            : Task.FromResult(value);
+            : Task.FromResult(fallback);
     }
 
     public Task SetSecretAsync(string name, string value, CancellationToken cancellationToken = default) =>

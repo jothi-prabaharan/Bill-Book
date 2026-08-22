@@ -45,9 +45,9 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -63,7 +63,7 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
@@ -90,7 +90,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -99,7 +99,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Inventory only
+// Must match Master's key exactly: Master mints the tokens, Inventory only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -126,6 +126,8 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
@@ -160,3 +162,4 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+

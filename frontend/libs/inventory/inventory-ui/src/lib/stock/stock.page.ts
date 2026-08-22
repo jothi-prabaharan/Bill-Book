@@ -1,3 +1,4 @@
+import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -137,12 +138,55 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
 @Component({
   selector: 'bb-stock-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })
 export class StockPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  columns: ColumnDef[] = [
+    { field: 'itemCode', header: 'Code' },
+    { field: 'itemName', header: 'Item' },
+    { field: 'quantityOnHand', header: 'On hand', type: 'number' },
+    { field: 'quantityReserved', header: 'Reserved', type: 'number' },
+    { field: 'quantityAvailable', header: 'Available', type: 'number' },
+    { field: 'quantityInReportUom', header: 'In report unit', type: 'number' },
+    { field: 'weightedAverageCost', header: 'Avg. cost', type: 'number' },
+    { field: 'stockValue', header: 'Value', type: 'number' },
+    { field: 'costingType', header: 'Costing' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
+  movementsColumns: ColumnDef[] = [
+    { field: 'movementDate', header: 'Date' },
+    { field: 'movementType', header: 'Type' },
+    { field: 'warehouseName', header: 'Warehouse' },
+    { field: 'enteredQuantity', header: 'Entered', type: 'number' },
+    { field: 'quantity', header: 'In stock unit', type: 'number' },
+    { field: 'unitCost', header: 'Unit cost', type: 'number' },
+    { field: 'resultingWeightedAverageCost', header: 'Avg. after', type: 'number' },
+    { field: 'ledgerStatus', header: 'Accounts' },
+    { field: 'sourceType', header: 'Source' },
+    { field: 'actions', header: 'Cost' }
+  ];
+
+  allocationsColumns: ColumnDef[] = [
+    { field: 'receivedOn', header: 'Received' },
+    { field: 'batchNumber', header: 'Batch' },
+    { field: 'expiresOn', header: 'Expires' },
+    { field: 'quantity', header: 'Quantity', type: 'number' },
+    { field: 'unitCost', header: 'Unit cost', type: 'number' },
+    { field: 'totalCost', header: 'Cost', type: 'number' }
+  ];
+
+  recostingsColumns: ColumnDef[] = [
+    { field: 'movementDate', header: 'Sale dated' },
+    { field: 'previousCost', header: 'Was', type: 'number' },
+    { field: 'newCost', header: 'Now', type: 'number' },
+    { field: 'delta', header: 'Difference', type: 'number' },
+    { field: 'runAt', header: 'Restated' }
+  ];
 
   protected readonly rows = signal<StockPosition[]>([]);
   protected readonly movements = signal<StockMovement[]>([]);

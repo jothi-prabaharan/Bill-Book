@@ -1,0 +1,80 @@
+<h1>Email settings</h1>
+<p class="hint">
+  Used to send invitations, verification codes and password resets.
+</p>
+
+@if (inherited()) {
+  <p class="note">
+    This organization currently sends using the platform mailbox. Saving here creates your own.
+  </p>
+}
+
+@if (message()) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+}
+
+<form (ngSubmit)="save()">
+  <div class="row">
+    <label class="grow">
+      SMTP host
+      <bb-text-input name="host" [(ngModel)]="form.host" required placeholder="smtp.gmail.com" />
+    </label>
+    <label class="narrow">
+      Port
+      <bb-number-input name="port"  [(ngModel)]="form.port" required />
+    </label>
+  </div>
+
+  <label class="inline">
+    <input name="useSsl" type="checkbox" [(ngModel)]="form.useSsl" />
+    Use SSL/TLS
+  </label>
+
+  <div class="row">
+    <label class="grow">
+      From address
+      <input name="fromEmail" type="email" [(ngModel)]="form.fromEmail" required />
+    </label>
+    <label class="grow">
+      From name
+      <bb-text-input name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
+    </label>
+  </div>
+
+  <label>
+    Username
+    <bb-text-input name="username" [(ngModel)]="form.username" required />
+  </label>
+
+  <label>
+    Password
+    <input
+      name="password"
+      type="password"
+      [(ngModel)]="form.password"
+      [placeholder]="hasPassword() ? '•••••••• (unchanged)' : 'Required'"
+      [required]="!hasPassword()"
+      autocomplete="new-password"
+    />
+    <span class="field-hint">
+      @if (hasPassword()) {
+        Leave blank to keep the stored password. It is encrypted, never shown again.
+      } @else {
+        Stored encrypted — the mail server needs the real value, so this one secret is
+        reversible rather than hashed.
+      }
+    </span>
+  </label>
+
+  <label class="inline">
+    <input name="isActive" type="checkbox" [(ngModel)]="form.isActive" />
+    Active
+  </label>
+
+  <div class="actions">
+    <button type="submit" [disabled]="busy()">Save</button>
+    <button type="button" class="secondary" (click)="sendTest()" [disabled]="busy() || inherited()">
+      Send test email
+    </button>
+  </div>
+</form>

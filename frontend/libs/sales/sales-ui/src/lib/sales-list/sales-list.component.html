@@ -1,0 +1,48 @@
+<nav aria-label="Document types" class="flex flex-wrap mb-3 gap-6px">
+  <button type="button" (click)="setType('')" [attr.aria-pressed]="selectedType === ''" class="btn btn-secondary text-sm tab-all">All transactions</button>
+  
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('Invoice')" [attr.aria-pressed]="selectedType === 'Invoice'">Invoices</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/invoices/new" title="New Invoice" aria-label="New Invoice"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('SalesOrder')" [attr.aria-pressed]="selectedType === 'SalesOrder'">Sales orders</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/sales-orders/new" title="New Sales order" aria-label="New Sales order"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('Quote')" [attr.aria-pressed]="selectedType === 'Quote'">Quotes</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/quotes/new" title="New Quote" aria-label="New Quote"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('DeliveryChallan')" [attr.aria-pressed]="selectedType === 'DeliveryChallan'">Delivery challans</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/delivery-challans/new" title="New Delivery challan" aria-label="New Delivery challan"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" (click)="setType('CreditNote')" [attr.aria-pressed]="selectedType === 'CreditNote'">Credit notes</button>
+    <button class="btn btn-secondary" type="button" routerLink="/sales/credit-notes/new" title="New Credit note" aria-label="New Credit note"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg></button>
+  </span>
+</nav>
+
+<div class="card bg-surface">
+  <bb-data-grid [gridCode]="'SALES_LIST'" [columns]="columns" [data]="transactions" (rowClick)="navigateToTransaction($event)">
+    <ng-template bbCellTemplate="documentDate" let-row>
+      <span class="tabular-nums">{{ row.documentDate | date }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="totalAmount" let-row>
+      <span class="tabular-nums">{{ row.totalAmount | number:'1.2-2' }}</span>
+    </ng-template>
+
+    <ng-template bbCellTemplate="status" let-row>
+      <span class="tag" [ngClass]="{
+        'tag-neutral': row.status === 'Posted' || row.status === 'Closed',
+        'tag-accent': row.status === 'Open' || row.status === 'Sent',
+        'tag-outline': row.status === 'Draft' || row.status === 'Void'
+      }">{{ row.status }}</span>
+    </ng-template>
+  </bb-data-grid>
+</div>

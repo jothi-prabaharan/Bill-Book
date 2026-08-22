@@ -1,0 +1,75 @@
+@if (canPivot()) {
+  <div class="pivot-panel">
+    <label class="switch">
+      <input
+        type="checkbox"
+        name="pivotOn"
+        [ngModel]="active()"
+        (ngModelChange)="toggle($event)"
+      />
+      Pivot
+    </label>
+
+    @if (pivot(); as spec) {
+      <label>
+        <span>Rows</span>
+        <select
+          name="pivotRows"
+          [ngModel]="spec.rows[0] || ''"
+          (ngModelChange)="setRow($event)"
+        >
+          @for (column of axisColumns(); track column.key) {
+            <option [value]="column.key">{{ column.header }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Columns</span>
+        <select
+          name="pivotColumns"
+          [ngModel]="spec.columns[0] || ''"
+          (ngModelChange)="setColumn($event)"
+        >
+          <!-- No column axis is a legitimate choice: rows and a measure alone is
+               a summary table, which is often what was wanted. -->
+          <option value="">None</option>
+          @for (column of axisColumns(); track column.key) {
+            <option [value]="column.key">{{ column.header }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span>Values</span>
+        <select
+          name="pivotValue"
+          [ngModel]="spec.values[0].column"
+          (ngModelChange)="setValue($event)"
+        >
+          @for (column of valueColumns(); track column.key) {
+            <option [value]="column.key">{{ column.header }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        <span class="visually-hidden">Aggregate</span>
+        <select
+          name="pivotAggregate"
+          [ngModel]="spec.values[0].aggregate"
+          (ngModelChange)="setAggregate($event)"
+        >
+          @for (aggregate of aggregates; track aggregate) {
+            <option [value]="aggregate">{{ aggregate }}</option>
+          }
+        </select>
+      </label>
+
+      <p class="note">
+        A pivot replaces the report's rows, so filters still apply but sorting,
+        grouping and paging do not.
+      </p>
+    }
+  </div>
+}

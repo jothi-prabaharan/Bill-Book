@@ -1,0 +1,17 @@
+<input
+  type="date"
+  class="input date-input"
+  [id]="id() || null"
+  [name]="name() || null"
+  [placeholder]="placeholder()"
+  [min]="min() || null"
+  [max]="max() || null"
+  [disabled]="effectiveDisabled()"
+  [readonly]="readonly()"
+  [required]="required()"
+  [attr.aria-label]="ariaLabel() || null"
+  [value]="innerValue()"
+  (input)="onInput($event)"
+  (blur)="onBlur($event)"
+  (focus)="onFocus($event)"
+/>

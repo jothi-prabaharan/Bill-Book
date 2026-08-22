@@ -1,39 +1,59 @@
-<div class="auth-card">
-  <h1>Bill-Book</h1>
+<bb-auth-shell>
+    @if (step() === 'credentials') {
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="submit()">
+        <h6>Sign in</h6>
+        <h2>Welcome back.</h2>
 
-  @if (step() === 'credentials') {
-    <form (ngSubmit)="submit()">
-      <label>
-        Email
-        <input name="email" type="email" [(ngModel)]="email" required autocomplete="username" />
-      </label>
-      <label>
-        Password
-        <input name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" />
-      </label>
+        <div class="field">
+          <label for="login-email">Email</label>
+          <input class="input" id="login-email" placeholder="you@company.in"
+                 formControlName="email" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input class="input" id="login-password" type="password" placeholder="••••••••"
+                 formControlName="password" autocomplete="current-password" />
+        </div>
 
-      @if (error()) {
-        <p class="error">{{ error() }}</p>
-      }
+        <div class="form-row">
+          <label class="checkbox"><input type="checkbox" formControlName="remember" /> Keep me signed in</label>
+          <a routerLink="/forgot-password">Forgot password?</a>
+        </div>
 
-      <button type="submit" [disabled]="busy()">{{ busy() ? 'Signing in…' : 'Sign in' }}</button>
-    </form>
-    <p><a routerLink="/forgot-password">Forgot password?</a></p>
-    <p>New here? <a routerLink="/signup">Start a free trial</a></p>
-  } @else {
-    <h2>Choose an organization</h2>
-    <ul class="org-list">
-      @for (org of auth.organizations(); track org.orgId) {
-        <li>
-          <button type="button" (click)="pick(org.orgId)" [disabled]="busy()">
-            <strong>{{ org.orgName }}</strong>
-            <span>{{ org.roleName }}</span>
-          </button>
-        </li>
-      }
-    </ul>
-    @if (error()) {
-      <p class="error">{{ error() }}</p>
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+
+        <button class="btn btn-primary btn-block" type="submit" [disabled]="busy()">
+          {{ busy() ? 'Signing in…' : 'Sign in' }}
+        </button>
+
+        <hr class="hr" />
+        <p class="text-muted lede">New here? <a routerLink="/signup">Start a free trial</a></p>
+      </form>
+    } @else {
+      <div class="auth-form">
+        <h6>Step two</h6>
+        <h2>Choose an organization.</h2>
+        <p class="text-muted lede">Your account reaches more than one set of books.</p>
+
+        <ul class="org-list">
+          @for (org of auth.organizations(); track org.orgId) {
+            <li>
+              <button type="button" (click)="pick(org.orgId)" [disabled]="busy()">
+                <strong>{{ org.orgName }}</strong>
+                <span>{{ org.roleName }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+
+        @if (error()) {
+          <p class="error">{{ error() }}</p>
+        }
+
+        <hr class="hr" />
+        <p class="text-muted lede">Wrong account? <a routerLink="/login">Sign in again</a></p>
+      </div>
     }
-  }
-</div>
+  </bb-auth-shell>

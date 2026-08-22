@@ -13,10 +13,11 @@ namespace Sales.Repository.SeedData;
 /// own transaction — which is the whole reason that table is shared rather than
 /// split five ways.
 ///
-/// <b><c>DLC</c> is deliberately absent.</b> The delivery challan needs a
-/// seventeenth <c>mst.TransactionTypes</c> row that does not exist yet, and a
-/// series pointing at a transaction type the master has never heard of is a
-/// number that resolves to nothing. It is seeded by T3.6, alongside the row.
+/// <b><c>DLC</c> is here now.</b> It was held back while the delivery challan
+/// had no <c>mst.TransactionTypes</c> row — a series pointing at a transaction
+/// type the master has never heard of is a number that resolves to nothing. The
+/// seventeenth row landed with <c>AddDeliveryChallanTransactionType</c>, so the
+/// series can stand beside the others.
 ///
 /// <b>No manual override, and a yearly reset.</b> These are document series: they
 /// have to run consecutively within the financial year — statutory on an Indian
@@ -29,6 +30,7 @@ public static class NumberingSeriesSeed
     [
         Document(orgId, 300, "QTE", "Quote Number", "QT"),
         Document(orgId, 310, "SOR", "Sales Order Number", "SO"),
+        Document(orgId, 315, "DLC", "Delivery Challan Number", "DC"),
         Document(orgId, 320, "INV", "Invoice Number", "INV"),
         Document(orgId, 330, "CRN", "Credit Note Number", "CN"),
 

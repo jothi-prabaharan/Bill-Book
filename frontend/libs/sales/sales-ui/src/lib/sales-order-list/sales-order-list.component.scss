@@ -1,0 +1,89 @@
+/* Tokens only — no hex, no rgb, nothing inline in the template. */
+
+.sor-list {
+  padding: var(--space-4);
+}
+
+.sor-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.sor-list__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--color-text);
+}
+
+.sor-list__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+
+.sor-list__filter {
+  min-width: 160px;
+}
+
+.sor-list__filter--grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.sor-list__apply {
+  flex: none;
+}
+
+.sor-list__grid {
+  /* The grid scrolls inside its own box, so a wide table never makes the page
+     scroll sideways. */
+  overflow-x: auto;
+}
+
+.sor-list__empty {
+  margin: 0;
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+/* ~360px. The house rule is that every page works there, so the header stops
+   being a row, the filters stack, and both buttons go full width — a 44px
+   target is the smallest thing a thumb reliably hits. */
+@media (max-width: 480px) {
+  .sor-list {
+    padding: var(--space-3);
+  }
+
+  .sor-list__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sor-list__title {
+    font-size: 20px;
+  }
+
+  .sor-list__filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .sor-list__filter {
+    min-width: 0;
+  }
+
+  .sor-list__head .btn,
+  .sor-list__apply {
+    width: 100%;
+    min-height: 44px;
+  }
+}

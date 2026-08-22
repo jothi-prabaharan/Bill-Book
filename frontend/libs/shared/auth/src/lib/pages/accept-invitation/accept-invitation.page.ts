@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -34,7 +34,8 @@ export class AcceptInvitationPage implements OnInit {
     this.email.set(params.get('email'));
   }
 
-  async submit(): Promise<void> {
+  async submit(form: NgForm): Promise<void> {
+    if (form.invalid) return;
     if (this.password !== this.confirmPassword) {
       this.error.set('Passwords do not match.');
       return;

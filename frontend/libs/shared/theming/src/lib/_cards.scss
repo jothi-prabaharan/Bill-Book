@@ -1,0 +1,134 @@
+/* Classical — Cards & Elevation */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid var(--color-divider);
+  transition: box-shadow 200ms ease, border-color 200ms ease;
+}
+
+.card-kicker {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent-700);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  line-height: 1.2;
+}
+
+.card-body {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.8;
+  flex: 1;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+/* Whisper Elevation Utilities */
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+/* Dashboard & Layout Boards */
+.board {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-3);
+  align-items: stretch;
+
+  > .card {
+    display: flex;
+    flex-direction: column;
+
+    > .card-meta {
+      margin-top: auto;
+    }
+
+    &:hover {
+      box-shadow: var(--shadow-md);
+      border-color: color-mix(in srgb, var(--color-accent) 30%, transparent);
+    }
+  }
+
+  &.narrow {
+    grid-template-columns: 1fr;
+
+    > * {
+      grid-column: auto !important;
+    }
+  }
+
+  &.editing .card {
+    outline: 1px dashed color-mix(in srgb, var(--color-accent) 55%, transparent);
+    outline-offset: 2px;
+    padding-top: 38px;
+  }
+}
+
+/* Sheet & Form-Editor Container Styles */
+.sheet {
+  margin-top: 1.25rem;
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-lg);
+  padding: 1rem;
+  max-width: 46rem;
+
+  &.narrow { max-width: 26rem; }
+  h2 { margin: 0 0 0.75rem; font-size: 1rem; }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+
+  h2 { margin: 0; font-size: 1.05rem; }
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.child-card {
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.child-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.child-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--color-divider);
+}

@@ -28,15 +28,15 @@ builder.Services.AddScoped<ICurrentUser, SystemUser>();
 // guarded endpoint is reachable by this service and by nothing else.
 builder.Services.AddTransient<InternalKeyHandler>();
 
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -52,7 +52,7 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
     string connectionString = tenant.CustomerId is Guid customerId
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(

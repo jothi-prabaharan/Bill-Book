@@ -48,7 +48,7 @@ def service_ports():
     so it is the one place they cannot drift from.
     """
     config = json.loads(
-        (BACKEND / "Gateway" / "appsettings.Development.json").read_text())
+        (BACKEND / "Gateway" / "Gateway.Api" / "appsettings.Development.json").read_text())
 
     ports = {}
     for cluster, value in config["ReverseProxy"]["Clusters"].items():
@@ -64,8 +64,7 @@ SVC_PORT = service_ports()
 
 # Folder order follows CLAUDE.md's status order: reference data first, then the
 # services that depend on it.
-ORDER = ["Master", "Platform", "Identity", "Contacts", "Inventory", "Accounting", "Banking",
-         "Sales", "Purchase", "Crm", "Support", "Reporting"]
+ORDER = ["Master", "Inventory", "Accounting", "Sales", "Purchase", "Customer", "Reporting"]
 
 
 # --------------------------------------------------------------- request models
@@ -182,7 +181,7 @@ def load_routes():
 
 def gateway_prefixes():
     """The `/api/{prefix}` values YARP actually proxies."""
-    config = json.loads((BACKEND / "Gateway" / "appsettings.json").read_text())
+    config = json.loads((BACKEND / "Gateway" / "Gateway.Api" / "appsettings.json").read_text())
     found = set()
     for r in config["ReverseProxy"]["Routes"].values():
         m = re.match(r"/api/([^/]+)/", r["Match"]["Path"])
@@ -306,12 +305,36 @@ def main():
 
     for i, service in enumerate([s for s in ORDER if by_service[s]], 1):
         rs = sorted(by_service[service], key=lambda r: (r["controller"], r["path"], r["verb"]))
+        
+        by_controller = collections.defaultdict(list)
+        for r in rs:
+            by_controller[r["controller"]].append(make(r))
+            
+        service_items = []
+        for controller, crs in by_controller.items():
+            service_items.append({
+                "name": controller,
+                "item": crs
+            })
+
         items.append({
             "name": f"{i} · {service}",
             "description": f"{len(rs)} endpoints across "
-                           f"{len({r['controller'] for r in rs})} controllers. "
+                           f"{len(by_controller)} controllers. "
                            "Bearer token via the gateway unless a request says otherwise.",
-            "item": [make(r) for r in rs],
+            "item": service_items,
+        })
+
+    internal_sorted = sorted(internal, key=lambda r: (r["service"], r["path"]))
+    internal_by_svc = collections.defaultdict(list)
+    for r in internal_sorted:
+        internal_by_svc[r["service"]].append(make(r))
+        
+    internal_items = []
+    for svc, irs in internal_by_svc.items():
+        internal_items.append({
+            "name": svc,
+            "item": irs
         })
 
     items.append({
@@ -319,7 +342,7 @@ def main():
         "description": "Never routed through the gateway, and guarded by a shared key "
                        "rather than a token. Several take the tenant in the body because "
                        "the caller is a background worker holding no user token.",
-        "item": [make(r) for r in sorted(internal, key=lambda r: (r["service"], r["path"]))],
+        "item": internal_items,
     })
 
     collection = {
@@ -367,7 +390,15 @@ def main():
     }
 
     OUT.write_text(json.dumps(collection, indent=1) + "\n")
-    total = sum(len(i["item"]) for i in items if "item" in i) + 2
+    # Counted by walking the tree, not by adding up the top level: requests sit
+    # inside a controller folder inside a service folder, so the outer length is
+    # a count of controllers and reads as a collapse from 320 to 58.
+    def requests_in(nodes):
+        return sum(
+            ("request" in n) + requests_in(n.get("item", []))
+            for n in nodes)
+
+    total = requests_in(items)
     print(f"{OUT.relative_to(ROOT)}: {total} requests, "
           f"{sum(1 for i in items if 'item' in i)} folders")
 

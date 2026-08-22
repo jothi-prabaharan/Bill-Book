@@ -20,6 +20,15 @@ public sealed class SeedOrganizationRequest
 
     [Required(ErrorMessage = "Organization id is required.")]
     public Guid OrgId { get; set; }
+
+    /// <summary>
+    /// The branch's trade — General, Pharma or Jewellery — read by the seeder
+    /// from the organization row at seed time. It lets a service seed only what
+    /// the branch uses (a chemist has no metal purities) and re-seed the added
+    /// masters when the branch changes vertical.
+    /// </summary>
+    [MaxLength(20, ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
+    public string Vertical { get; set; } = "General";
 }
 
 /// <summary>What a service wrote, so a failed fan-out can be told from a no-op.</summary>

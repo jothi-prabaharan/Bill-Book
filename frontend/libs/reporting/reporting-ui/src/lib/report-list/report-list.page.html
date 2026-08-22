@@ -1,0 +1,34 @@
+<header class="page-head">
+  <h1>Reports</h1>
+</header>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+@if (busy()) {
+  <p class="empty">Loading…</p>
+} @else {
+  @for (group of grouped(); track group.module) {
+    <section>
+      <h2>{{ group.module }}</h2>
+      <ul class="reports">
+        @for (report of group.reports; track report.reportKey) {
+          <li>
+            <a [routerLink]="['/reports', report.reportKey]">
+              <span class="title">{{ report.title }}</span>
+              @if (report.description) {
+                <span class="description">{{ report.description }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </section>
+  } @empty {
+    <p class="empty">
+      No reports are available yet. They are seeded per branch — if this branch was
+      set up before reporting existed, its catalog needs seeding.
+    </p>
+  }
+}

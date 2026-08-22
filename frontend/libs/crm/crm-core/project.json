@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "crm-core",
-  "projectType": "library",
-  "sourceRoot": "libs/crm/crm-core/src",
-  "tags": ["scope:crm", "type:core", "platform:ionic-safe"],
-  "targets": {}
-}

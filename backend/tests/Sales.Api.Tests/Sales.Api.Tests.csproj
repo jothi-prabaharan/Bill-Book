@@ -17,11 +17,11 @@
 
     <!-- Sales and Accounting share one per-customer database in production, and
          acc.NumberingSeries lives in it: Accounting migrates that table, Sales
-         maps it with ExcludeFromMigrations so a number can be allocated inside
-         Sales's own transaction. A test database built from Sales's
+         maps it with ExcludeFromMigrations so a document number is allocated
+         inside Sales' own transaction. A test database built from Sales'
          migrations alone would not have it, so the fixture migrates both — which
          is what the real database looks like. The reference is the test's, never
-         the service's. -->
+         the service's, exactly as in Purchase.Api.Tests. -->
     <ProjectReference Include="..\..\Api\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
   </ItemGroup>
 

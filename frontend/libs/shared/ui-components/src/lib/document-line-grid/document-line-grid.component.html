@@ -36,18 +36,39 @@
                 ×
               </button>
             } @else {
-              <input
-                type="text"
-                placeholder="Description"
-                [(ngModel)]="line.description"
-                [disabled]="context().readonly"
-                (blur)="touch(i)"
-              />
+              <!-- The description is what a free-text line is; it is only
+                   offered when the branch allows them. Picking an item is
+                   offered always — it was previously gated on the same setting,
+                   which meant a branch that requires an item on every line got a
+                   description box it may not use and no way to choose one. -->
               @if (context().allowFreeTextLines) {
-                <button type="button" class="link" [disabled]="context().readonly" (click)="pickItem.emit(i)">
-                  pick an item
-                </button>
+                <input
+                  type="text"
+                  placeholder="Description"
+                  [(ngModel)]="line.description"
+                  [disabled]="context().readonly"
+                  (blur)="touch(i)"
+                />
               }
+              <button type="button" class="link" [disabled]="context().readonly" (click)="pickItem.emit(i)">
+                pick an item
+              </button>
+            }
+            <!-- Stock, Expense or Capital. Purchase is where all three are used
+                 and a capital line is how a fixed asset reaches the register, so
+                 the purchase screens turn this on; a sale has one kind of line
+                 in practice and leaves it off. -->
+            @if (showLineType()) {
+              <select
+                class="line-type"
+                [(ngModel)]="line.lineType"
+                [disabled]="context().readonly"
+                (ngModelChange)="touch(i)"
+              >
+                @for (kind of lineTypes; track kind) {
+                  <option [value]="kind">{{ kind }}</option>
+                }
+              </select>
             }
             <input
               type="text"
@@ -111,6 +132,24 @@
                 <option [value]="treatment">{{ treatment }}</option>
               }
             </select>
+
+            <!-- The rate itself. Without a group a line carries no tax rows and
+                 therefore no tax, so this is what makes the Tax column mean
+                 anything. Hidden when the host passes no groups, which keeps
+                 every existing caller exactly as it was. -->
+            @if (taxGroups().length > 0) {
+              <select
+                class="tax-group"
+                [(ngModel)]="line.taxGroupId"
+                [disabled]="context().readonly || !chargesTaxRows(line)"
+                (ngModelChange)="onTaxGroupChange(i)"
+              >
+                <option [ngValue]="null">No rate</option>
+                @for (group of taxGroups(); track group.taxGroupId) {
+                  <option [ngValue]="group.taxGroupId">{{ group.label }}</option>
+                }
+              </select>
+            }
           </td>
 
           @for (component of components(); track component) {

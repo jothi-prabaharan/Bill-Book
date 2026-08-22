@@ -1,0 +1,285 @@
+<div class="page">
+  <header class="page__header">
+    <div>
+      <h1>
+        @if (isNew()) {
+          New purchase order
+        } @else {
+          {{ documentNo() }}
+        }
+      </h1>
+      @if (!isNew()) {
+        <p class="page__pills">
+          <span class="pill">{{ status() }}</span>
+          <span class="pill">{{ fulfilmentStatus() }}</span>
+          @if (receiptCount() > 0) {
+            <span class="pill pill--info">{{ receiptCount() }} receipt(s)</span>
+          }
+        </p>
+      }
+    </div>
+    <a class="btn" routerLink="..">Back to list</a>
+  </header>
+
+  @if (error()) {
+    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="banner banner--ok">{{ notice() }}</div>
+  }
+
+  @if (readonlyDoc()) {
+    <div class="banner banner--info">
+      @if (status() === 'Void') {
+        This order has been voided. Its number stays on record; raise a new one.
+      } @else {
+        This order has been issued, so it is no longer editable. Raise a goods
+        receipt against it when the stock arrives.
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="state">Loading&hellip;</p>
+  } @else {
+    <section class="card">
+      <h2 class="card__title">Vendor &amp; dates</h2>
+
+      <div class="grid">
+        <div class="field">
+          <span class="field__label">Vendor</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openVendorPicker()"
+          >
+            {{ contactLabel() || 'Choose a vendor' }}
+          </button>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Vendor GSTIN</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="15"
+            [disabled]="readonlyDoc()"
+            [ngModel]="contactGstin()"
+            (ngModelChange)="contactGstin.set($event)"
+            name="contactGstin"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Order date</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+            name="documentDate"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Expected delivery</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="expectedDate()"
+            (ngModelChange)="expectedDate.set($event)"
+            name="expectedDate"
+          />
+          <span class="field__hint">Cannot fall before the order date.</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Place of supply</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+            name="placeOfSupplyStateCode"
+            placeholder="2-digit state code"
+          />
+          <span class="field__hint">
+            Left blank it follows the vendor's GSTIN, which decides CGST + SGST
+            against IGST. <strong>An unregistered or composition-scheme vendor
+            has no GSTIN</strong>, so on those orders this has to be set or the
+            order is refused.
+          </span>
+        </label>
+      </div>
+
+      <div class="grid">
+        <label class="field field--wide">
+          <span class="field__label">Billing address</span>
+          <textarea
+            class="input"
+            rows="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="billingAddress()"
+            (ngModelChange)="billingAddress.set($event)"
+            name="billingAddress"
+          ></textarea>
+        </label>
+
+        <label class="field field--wide">
+          <span class="field__label">Deliver to</span>
+          <textarea
+            class="input"
+            rows="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="shippingAddress()"
+            (ngModelChange)="shippingAddress.set($event)"
+            name="shippingAddress"
+          ></textarea>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Lines</h2>
+
+      <!-- The same grid every sales and purchase document uses. Adding and
+           removing lines is the grid's own; this page answers pickItem, because
+           the grid deliberately does not know how to fetch anything.
+           showLineType is on: purchase is where Stock, Expense and Capital are
+           all used. There is no reservation column — an order holds no stock. -->
+      <bb-document-line-grid
+        [lines]="lines()"
+        [context]="gridContext()"
+        [taxGroups]="taxGroups()"
+        [showLineType]="true"
+        (linesChange)="onLinesChange($event)"
+        (pickItem)="onPickItem($event)"
+      />
+
+      @if (taxGroups().length === 0) {
+        <p class="field__hint">
+          No purchase tax rates are set up, so no rate can be put on a line. Add
+          them under Settings &rsaquo; Tax master.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Notes</h2>
+      <div class="grid">
+        <label class="field field--wide">
+          <span class="field__label">Notes to the vendor</span>
+          <textarea
+            class="input"
+            rows="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="notes()"
+            (ngModelChange)="notes.set($event)"
+            name="notes"
+          ></textarea>
+        </label>
+
+        <label class="field field--wide">
+          <span class="field__label">Terms &amp; conditions</span>
+          <textarea
+            class="input"
+            rows="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="termsAndConditions()"
+            (ngModelChange)="termsAndConditions.set($event)"
+            name="termsAndConditions"
+          ></textarea>
+        </label>
+      </div>
+    </section>
+
+    @if (!readonlyDoc()) {
+      <footer class="actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : 'Save draft' }}
+        </button>
+
+        @if (!isNew()) {
+          @if (canApprove()) {
+            <button type="button" class="btn" [disabled]="saving()" (click)="approve()">
+              Approve
+            </button>
+          }
+          @if (canConfirm()) {
+            <button type="button" class="btn" [disabled]="saving()" (click)="confirm()">
+              Issue to vendor
+            </button>
+          }
+          <button
+            type="button"
+            class="btn btn--danger"
+            [disabled]="saving()"
+            (click)="voidOpen.set(true)"
+          >
+            Void
+          </button>
+          <span class="actions__hint">
+            Issuing freezes the order so a goods receipt can be raised against
+            it. It posts nothing to the ledger.
+          </span>
+        }
+      </footer>
+
+      @if (voidOpen()) {
+        <section class="card card--void">
+          <h2 class="card__title">Void this order</h2>
+          <p class="field__hint">
+            The order and its number stay on record. The reason is required —
+            it is what makes the gap in the sequence answerable.
+          </p>
+          <label class="field field--wide">
+            <span class="field__label">Reason</span>
+            <bb-text-input
+              
+              class="input"
+              maxlength="300"
+              [ngModel]="voidReason()"
+              (ngModelChange)="voidReason.set($event)"
+              name="voidReason"
+            />
+          </label>
+          <div class="actions">
+            <button
+              type="button"
+              class="btn btn--danger"
+              [disabled]="saving()"
+              (click)="voidOrder()"
+            >
+              Void the order
+            </button>
+            <button type="button" class="btn" (click)="voidOpen.set(false)">
+              Cancel
+            </button>
+          </div>
+        </section>
+      }
+    }
+  }
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [emptyText]="pickerEmptyText()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
+</div>

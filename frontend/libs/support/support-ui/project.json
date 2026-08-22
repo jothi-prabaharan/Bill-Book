@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "support-ui",
-  "projectType": "library",
-  "sourceRoot": "libs/support/support-ui/src",
-  "tags": ["scope:support", "type:ui"],
-  "targets": {}
-}

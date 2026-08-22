@@ -7,93 +7,172 @@ using Shared.Kernel.Internal;
 namespace Sales.Api.Controllers;
 
 /// <summary>
-/// Sales orders — <c>SOR</c>. A commitment document.
+/// Sales orders — <c>SOR</c>. The document that commits stock without selling it.
 ///
-/// <b>Posts nothing to the general ledger, and reserves stock.</b> That pair is
-/// what makes it different from a quote on one side and an invoice on the other:
-/// a quote promises nothing, an invoice sells, and an order holds.
-///
-/// <b>There is no void.</b> A confirmed order is cancelled or closed short, and
-/// either way it keeps its number — the two differ in what they say happened,
-/// not in what they release.
+/// <b>Nothing here reaches <c>acc.JournalLedger</c>.</b> An order is a promise
+/// and a promise is not a supply, so the double entry belongs to the invoice
+/// raised from it. What confirming one does instead is reserve: see
+/// <see cref="SalesOrderService.ConfirmAsync"/>.
 /// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("sales")]
-[Route("api/sales-orders")]
+[Route("api/sales/sales-orders")]
 public sealed class SalesOrdersController : ControllerBase
 {
-    private readonly SalesOrderService _orders;
+    /// <summary>What a page asks for when it does not say. Clamped again in the service.</summary>
+    private const int DefaultPageSize = 50;
 
-    public SalesOrdersController(SalesOrderService orders) => _orders = orders;
+    private readonly SalesOrderService _SalesOrders;
 
+    public SalesOrdersController(SalesOrderService SalesOrders) => _SalesOrders = SalesOrders;
+
+    /// <summary>
+    /// One page of sales orders, newest first.
+    ///
+    /// <c>skip</c> and <c>take</c> arrive off a query string and are clamped in
+    /// the service rather than trusted — a negative skip is a hand-edited URL
+    /// that either throws or silently serves page one while the pager claims
+    /// otherwise.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> GetAll(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        [FromQuery] DateOnly? from = null,
-        [FromQuery] DateOnly? to = null,
+        CancellationToken ct,
+        [FromQuery] int skip = 0,
+        [FromQuery] int take = DefaultPageSize,
         [FromQuery] string? status = null,
-        CancellationToken ct = default) =>
-        Ok(await _orders.ListAsync(page, pageSize, from, to, status, ct));
-
-    [HttpGet("{id:long}")]
-    public async Task<IActionResult> GetById(long id, CancellationToken ct)
+        [FromQuery] string? search = null)
     {
-        SalesOrderDetailModel? order = await _orders.GetAsync(id, ct);
-        return order is null ? NotFound() : Ok(order);
+        SalesOrderListPage page = await _SalesOrders.ListAsync(skip, take, status, search, ct);
+        return Ok(page);
+    }
+
+    [HttpGet("{SalesOrderId:long}")]
+    public async Task<IActionResult> Get(long SalesOrderId, CancellationToken ct)
+    {
+        SalesOrderViewResult result = await _SalesOrders.GetAsync(SalesOrderId, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? Ok(result.View)
+            : Respond(result.Outcome, null);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(
-        [FromBody] SaveSalesOrderRequest dto, CancellationToken ct) =>
-        Respond(await _orders.SaveAsync(null, dto, ct));
-
-    /// <summary>Only a draft can be changed: a confirmed order is holding stock.</summary>
-    [HttpPut("{id:long}")]
-    public async Task<IActionResult> Update(
-        long id, [FromBody] SaveSalesOrderRequest dto, CancellationToken ct) =>
-        Respond(await _orders.SaveAsync(id, dto, ct));
-
-    /// <summary>Takes the number and holds the stock.</summary>
-    [HttpPost("{id:long}/confirm")]
-    public async Task<IActionResult> ConfirmOrder(long id, CancellationToken ct) =>
-        Respond(await _orders.ConfirmAsync(id, ct));
-
-    /// <summary>The customer withdrew. Everything still held is released.</summary>
-    [HttpPost("{id:long}/cancel")]
-    public async Task<IActionResult> CancelOrder(
-        long id, [FromBody] CloseSalesOrderRequest dto, CancellationToken ct) =>
-        Respond(await _orders.CancelAsync(id, dto, ct));
-
-    /// <summary>Nothing further is coming. What has not shipped is released.</summary>
-    [HttpPost("{id:long}/short-close")]
-    public async Task<IActionResult> ShortCloseOrder(
-        long id, [FromBody] CloseSalesOrderRequest dto, CancellationToken ct) =>
-        Respond(await _orders.ShortCloseAsync(id, dto, ct));
-
-    private IActionResult Respond(SalesOrderResult result) => result.Outcome switch
+    public async Task<IActionResult> Create([FromBody] SaveSalesOrderRequest request, CancellationToken ct)
     {
-        SalesOrderOutcome.Ok => Ok(new { salesOrderId = result.SalesOrderId }),
+        SalesOrderResult result = await _SalesOrders.CreateAsync(request, ct);
 
-        SalesOrderOutcome.NotFound => NotFound(),
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? CreatedAtAction(nameof(Get), new { SalesOrderId = result.SalesOrderId }, result)
+            : Respond(result.Outcome, result.Detail);
+    }
 
-        // The shortage is data, not prose: the screen lists the lines and what
-        // each could actually draw on, which a message string cannot carry.
-        SalesOrderOutcome.InsufficientStock => BadRequest(new
+    /// <summary>An accepted quote, turned into an order. The lines come from the quote.</summary>
+    [HttpPost("from-quote/{QuoteId:long}")]
+    public async Task<IActionResult> CreateFromQuote(
+        long QuoteId, [FromBody] CreateOrderFromQuoteRequest request, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.CreateFromQuoteAsync(QuoteId, request, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? CreatedAtAction(nameof(Get), new { SalesOrderId = result.SalesOrderId }, result)
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    /// <summary>
+    /// What the items on a document can still be promised.
+    ///
+    /// <b>Advisory, and the form says so.</b> The figure a screen shows is a
+    /// moment old the instant it is drawn — another till may confirm the last
+    /// unit while somebody is still typing. The check that actually decides is
+    /// the guarded reservation taken on confirm, which no stale screen can slip
+    /// past. This exists so the refusal is rare, not so it is impossible.
+    /// </summary>
+    [HttpPost("availability")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> Availability(
+        [FromBody] SalesOrderAvailabilityRequest request, CancellationToken ct)
+    {
+        List<SalesOrderAvailabilityLine> lines =
+            await _SalesOrders.GetAvailabilityAsync(request.ItemIds, ct);
+
+        return Ok(lines);
+    }
+
+    [HttpPut("{SalesOrderId:long}")]
+    public async Task<IActionResult> Update(long SalesOrderId, [FromBody] SaveSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.UpdateAsync(SalesOrderId, request, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    /// <summary>
+    /// Confirm the order and reserve its stock.
+    ///
+    /// The route says <c>confirm</c> because that is what it does to the order;
+    /// the permission is still <c>sales.approve</c>, which is the authority a
+    /// state change on a trading document takes throughout the product.
+    /// </summary>
+    [HttpPost("{SalesOrderId:long}/confirm")]
+    [PermissionAction("approve")]
+    public async Task<IActionResult> Confirm(long SalesOrderId, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.ConfirmAsync(SalesOrderId, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    /// <summary>
+    /// Close the order short: no more is coming, and what it still reserves goes
+    /// back on the shelf. Distinct from a void — the order existed and was
+    /// partly honoured.
+    /// </summary>
+    [HttpPost("{SalesOrderId:long}/short-close")]
+    [PermissionAction("approve")]
+    public async Task<IActionResult> ShortClose(
+        long SalesOrderId, [FromBody] ShortCloseSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.ShortCloseAsync(SalesOrderId, request, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    [HttpPost("{SalesOrderId:long}/void")]
+    [PermissionAction("void")]
+    public async Task<IActionResult> Void(long SalesOrderId, [FromBody] VoidSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.VoidAsync(SalesOrderId, request, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    private IActionResult Respond(SalesOrderOutcome outcome, string? detail) =>
+        outcome switch
         {
-            message = result.Detail,
-            shortages = result.Shortages,
-        }),
+            SalesOrderOutcome.NotFound => NotFound(),
 
-        // Transient. A 503 says "nothing changed, come back", which is a
-        // different instruction to the caller than "you got this wrong".
-        SalesOrderOutcome.InventoryUnreachable => StatusCode(
-            StatusCodes.Status503ServiceUnavailable, new { message = result.Detail }),
+            // Never NotFound(): the row exists and the caller may not have it.
+            // Those are different answers and the house rule is to say so.
+            SalesOrderOutcome.Forbidden => Forbid(),
 
-        SalesOrderOutcome.SeriesMissing => StatusCode(
-            StatusCodes.Status409Conflict, new { message = result.Detail }),
-
-        _ => BadRequest(new { message = result.Detail ?? $"Refused: {result.Outcome}." }),
-    };
+            SalesOrderOutcome.LifecycleRefused => BadRequest(new MessageResponse { Message = detail ?? "Action refused by document lifecycle." }),
+            SalesOrderOutcome.LineInvalid => BadRequest(new MessageResponse { Message = detail ?? "One or more lines are invalid." }),
+            SalesOrderOutcome.ValidityInvalid => BadRequest(new MessageResponse { Message = detail ?? "Validity date is invalid." }),
+            SalesOrderOutcome.PlaceOfSupplyRefused => BadRequest(new MessageResponse { Message = detail ?? "Place of supply could not be determined." }),
+            SalesOrderOutcome.RatesUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = detail ?? "Tax rates or base currency are temporarily unavailable." }),
+            SalesOrderOutcome.AlreadyFulfilled => Conflict(new MessageResponse { Message = "This Sales Order has already been fulfilled." }),
+            SalesOrderOutcome.InsufficientStock => Conflict(new MessageResponse { Message = detail ?? "Insufficient stock to reserve." }),
+            SalesOrderOutcome.CreditLimitExceeded => BadRequest(new MessageResponse { Message = detail ?? "Credit limit exceeded or account on hold." }),
+            SalesOrderOutcome.QuoteNotConvertible => Conflict(new MessageResponse { Message = detail ?? "This quote cannot be converted to a sales order." }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError)
+        };
 }

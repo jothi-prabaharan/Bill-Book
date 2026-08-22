@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "contacts-core",
-  "projectType": "library",
-  "sourceRoot": "libs/contacts/contacts-core/src",
-  "tags": ["scope:contacts", "type:core", "platform:ionic-safe"],
-  "targets": {}
-}

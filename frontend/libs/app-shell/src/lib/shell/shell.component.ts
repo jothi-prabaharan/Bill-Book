@@ -1,62 +1,277 @@
-import { Component, computed, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { AuthService } from '@bill-book/auth';
-
-interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  /**
-   * The module this entry leads to, or null for one every role can reach.
-   * Drawn only when the user holds `{module}.view`.
-   */
-  module: string | null;
-}
+import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
+import { Router, RouterOutlet } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import { SearchInputComponent } from '@bill-book/ui-components';
+import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
+import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
+import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-breadcrumb.component';
 
 /**
- * Teams-style shell. Desktop (≥768px): far-left icon rail + main area.
- * Mobile: bottom tab bar with the top 4 modules + "More" — the Teams-mobile
- * pattern. Same nav model both ways; only the chrome changes.
+ * Root CSS Grid layout orchestrator (`bb-shell`).
+ * Coordinates fixed 56px left rail (`bb-shell-nav`), 46px top bar (`bb-shell-topbar`),
+ * sticky breadcrumb strip (`bb-shell-breadcrumb`), and scrolling content viewport (`<router-outlet />`).
  */
 @Component({
   selector: 'bb-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [
+    RouterOutlet,
+    FormsModule,
+    SearchInputComponent,
+    ShellNavComponent,
+    ShellTopbarComponent,
+    ShellBreadcrumbComponent,
+  ],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.scss',
-  // Escape closes the More sheet. Tapping outside it does too, but that is a
-  // pointer gesture with no keyboard equivalent — without this, a keyboard user
-  // who opens the sheet has no way to dismiss it.
-  host: { '(document:keydown.escape)': 'moreOpen = false' },
 })
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-
-  moreOpen = false;
+  private readonly elementRef = inject(ElementRef);
 
   private readonly all: NavItem[] = [
-    // Home has no module: it is where everyone lands, including roles with no
-    // dashboard permission, and it holds nothing of its own to protect.
-    { path: '/dashboard', label: 'Home', icon: '🏠', module: null },
-    { path: '/sales', label: 'Sales', icon: '🧾', module: 'sales' },
-    { path: '/purchase', label: 'Purchase', icon: '📦', module: 'purchase' },
-    { path: '/banking', label: 'Banking', icon: '🏦', module: 'banking' },
-    { path: '/contacts', label: 'Contacts', icon: '👥', module: 'contacts' },
-    { path: '/inventory', label: 'Inventory', icon: '📋', module: 'inventory' },
-    { path: '/accounting', label: 'Accounting', icon: '📒', module: 'accounting' },
-    { path: '/reports', label: 'Reports', icon: '📊', module: 'reports' },
-    { path: '/settings', label: 'Settings', icon: '⚙️', module: 'settings' },
+    { path: '/dashboard', label: 'Home', icon: 'home', module: null },
+    { path: '/contacts', label: 'Contacts', icon: 'contacts', module: 'contacts' },
+    { path: '/inventory', label: 'Inventory', icon: 'inventory', module: 'inventory' },
+    { path: '/purchase', label: 'Purchase', icon: 'purchase', module: 'purchase' },
+    { path: '/sales', label: 'Sales', icon: 'sales', module: 'sales' },
+    { path: '/banking', label: 'Banking', icon: 'banking', module: 'banking' },
+    { path: '/accounting', label: 'Accounts', icon: 'accounting', module: 'accounting' }, // STRICT UI RULE: Accounts
+    { path: '/reports', label: 'Reports', icon: 'reports', module: 'reports' },
+    { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
   ];
 
   /**
-   * What this user can actually open. Offering a screen that answers 403 is a
-   * menu lying about the product; the server was already refusing these, so
-   * this only changes what is drawn.
+   * What this user can actually open based on active permissions.
    */
   readonly nav = computed(() =>
     this.all.filter((item) => item.module === null || this.auth.canView(item.module)),
   );
+
+  // Organization Switcher State
+  readonly orgOpen = signal(false);
+  readonly orgQuery = signal('');
+  readonly allOrgs = signal<AccessibleOrg[]>([]);
+
+  // New Transaction Popup State
+  readonly newOpen = signal(false);
+
+  // Favourites Popup State
+  readonly favOpen = signal(false);
+
+  // Navigation / Crumbs State
+  readonly crumbs = signal<BreadcrumbItem[]>([]);
+  readonly isHome = computed(() => this.router.url === '/dashboard' || this.router.url === '/');
+  readonly isRegister = computed(
+    () =>
+      this.router.url.includes('/sales') ||
+      this.router.url.includes('/purchase') ||
+      this.router.url.includes('/inventory') ||
+      this.router.url.includes('/contacts'),
+  );
+
+  // Dashboard Actions State
+  readonly base = signal(false);
+  readonly baseLabel = signal('Accrual basis');
+  readonly editing = signal(false);
+  readonly notEditing = computed(() => !this.editing());
+
+  readonly newGroups = [
+    {
+      name: 'Sales',
+      docs: [
+        { label: 'Invoice', code: 'INV' },
+        { label: 'Sales order', code: 'SOR' },
+        { label: 'Quote', code: 'QOT' },
+        { label: 'Delivery challan', code: 'DLC' },
+        { label: 'Credit note', code: 'CRN' },
+        { label: 'POS sale', code: 'POS' },
+      ],
+    },
+    {
+      name: 'Purchase',
+      docs: [
+        { label: 'Bill', code: 'BIL' },
+        { label: 'Purchase order', code: 'POR' },
+        { label: 'Goods receipt', code: 'GRN' },
+        { label: 'Debit note', code: 'DBN' },
+      ],
+    },
+    {
+      name: 'Banking',
+      docs: [
+        { label: 'Receive money', code: 'REC' },
+        { label: 'Spend money', code: 'PAY' },
+        { label: 'Transfer money', code: 'TRF' },
+      ],
+    },
+  ];
+
+  readonly currentOrgId = computed(() => localStorage.getItem('bb.orgId'));
+
+  readonly currentOrgName = computed(() => 'Eternal Pathway');
+
+  readonly currentOrgRole = computed(() => {
+    const orgs = this.allOrgs();
+    const id = this.currentOrgId();
+    const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
+    return current ? current.orgName : 'Head Office';
+  });
+
+  readonly filteredOrgs = computed(() => {
+    const query = this.orgQuery().toLowerCase();
+    if (!query) return this.allOrgs();
+    return this.allOrgs().filter(
+      (o: AccessibleOrg) =>
+        o.orgName.toLowerCase().includes(query) ||
+        o.roleName.toLowerCase().includes(query),
+    );
+  });
+
+  constructor() {
+    // Load organizations when shell boots
+    void this.auth.accessibleOrganizations().then((orgs) => {
+      this.allOrgs.set(orgs);
+    });
+
+    this.router.events.subscribe((event) => {
+      if (event.constructor.name === 'NavigationEnd') {
+        this.updateCrumbs((event as any).urlAfterRedirects);
+      }
+    });
+
+    // Initialize crumbs
+    setTimeout(() => this.updateCrumbs(this.router.url), 0);
+  }
+
+  updateCrumbs(url: string): void {
+    if (url === '/' || url.startsWith('/dashboard')) {
+      this.crumbs.set([]);
+      return;
+    }
+
+    const parts = url.split('?')[0].split('/').filter((p) => p);
+    const result: BreadcrumbItem[] = [];
+    let currentPath = '';
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      currentPath += '/' + part;
+
+      let label = part.replace(/-/g, ' ');
+      label = label.charAt(0).toUpperCase() + label.slice(1);
+
+      // Special cases
+      if (label.toLowerCase() === 'coa') {
+        label = 'Chart of Accounts';
+      } else if (label.toLowerCase() === 'accounting') {
+        label = 'Accounts'; // STRICT: "Accounts"
+      }
+
+      const isLast = i === parts.length - 1;
+      result.push({
+        label,
+        path: currentPath,
+        isLink: !isLast,
+        isLast,
+      });
+    }
+
+    this.crumbs.set(result);
+  }
+
+  toggleOrg(): void {
+    this.orgOpen.update((v) => !v);
+    if (this.orgOpen()) {
+      this.orgQuery.set('');
+    }
+  }
+
+  setOrgQuery(value: string): void {
+    this.orgQuery.set(value);
+  }
+
+  async pickOrg(orgId: string): Promise<void> {
+    if (orgId === this.currentOrgId()) {
+      this.orgOpen.set(false);
+      return;
+    }
+    await this.auth.switchOrganization(orgId);
+    this.orgOpen.set(false);
+    try {
+      if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+        window.location.reload();
+      }
+    } catch {
+      // Ignored in non-browser/test environments
+    }
+  }
+
+  openNew(): void {
+    this.newOpen.set(true);
+  }
+
+  closeNew(): void {
+    this.newOpen.set(false);
+  }
+
+  toggleBase(): void {
+    this.base.update((v) => !v);
+    this.baseLabel.set(this.base() ? 'Cash basis' : 'Accrual basis');
+  }
+
+  startEdit(): void {
+    this.editing.set(true);
+  }
+
+  resetLayout(): void {
+    // Reset layout logic
+  }
+
+  stopEdit(): void {
+    this.editing.set(false);
+  }
+
+  openExport(): void {
+    // Open export dialog
+  }
+
+  openImport(): void {
+    // Open import dialog
+  }
+
+  openFav(): void {
+    this.favOpen.set(true);
+  }
+
+  closeFav(): void {
+    this.favOpen.set(false);
+  }
+
+  @HostListener('document:click', ['$event.target'])
+  onClickOutside(target: HTMLElement): void {
+    if (this.orgOpen()) {
+      const container = this.elementRef.nativeElement.querySelector('.org-dropdown-container');
+      if (container && !container.contains(target)) {
+        this.orgOpen.set(false);
+      }
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.orgOpen.set(false);
+    this.newOpen.set(false);
+    this.favOpen.set(false);
+  }
+
+  selectDoc(_code: string): void {
+    // Hide the new popup and navigate or emit an event
+    this.newOpen.set(false);
+    // Add logic here to route to the correct 'new' document page based on code
+  }
 
   logout(): void {
     this.auth.logout();

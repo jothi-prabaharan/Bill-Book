@@ -1,0 +1,115 @@
+<section class="inv-list">
+  <header class="inv-list__head">
+    <h1 class="inv-list__title">Invoices</h1>
+
+    <button type="button" class="btn btn-primary" (click)="create()">New invoice</button>
+  </header>
+
+  <!-- Anything the server refused. Field-level problems never reach here; this
+       is where a rule about the request itself is shown. -->
+  <bb-message-box [messages]="messages()" />
+
+  <form class="inv-list__filters" (ngSubmit)="onFilterChange()">
+    <div class="field inv-list__filter">
+      <label for="inv-status">Status</label>
+      <select
+        id="inv-status"
+        class="input"
+        name="status"
+        [(ngModel)]="status"
+        (ngModelChange)="onFilterChange()"
+      >
+        @for (option of statuses; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="field inv-list__filter inv-list__filter--grow">
+      <label for="inv-search">Invoice number</label>
+      <input
+        id="inv-search"
+        class="input"
+        type="search"
+        name="search"
+        placeholder="INV/2026/0001"
+        [(ngModel)]="search"
+      />
+    </div>
+
+    <label class="inv-list__check" for="inv-overdue">
+      <input
+        id="inv-overdue"
+        type="checkbox"
+        name="overdueOnly"
+        [(ngModel)]="overdueOnly"
+        (ngModelChange)="onFilterChange()"
+      />
+      <span>Overdue only</span>
+    </label>
+
+    <button type="submit" class="btn btn-secondary inv-list__apply">Search</button>
+  </form>
+
+  <div class="card bg-surface inv-list__grid">
+    <bb-data-grid
+      [gridCode]="'INVOICE_LIST'"
+      [columns]="columns"
+      [data]="rows()"
+      [loading]="loading()"
+      [totalCount]="total()"
+      [pageSize]="pageSize"
+      [currentPage]="page()"
+      (pageChange)="onPageChange($event)"
+      (rowClick)="open($event)"
+    >
+      <ng-template bbCellTemplate="documentNo" let-row>
+        <span class="tabular-nums">{{ row.documentNo }}</span>
+
+        @if (row.salesOrderId) {
+          <span class="chip" title="Raised from a sales order">from order</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="dueDate" let-row>
+        @if (row.dueDate) {
+          <span class="tabular-nums">{{ row.dueDate | date }}</span>
+
+          @if (row.daysOverdue > 0) {
+            <span class="badge expired">{{ row.daysOverdue }}d late</span>
+          }
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="settlementStatus" let-row>
+        @if (row.settlementStatus) {
+          <span [class]="settlementTag(row.settlementStatus)">{{ row.settlementStatus }}</span>
+
+          @if (row.settlementStatus === 'PartPaid' && row.outstandingAmount !== undefined) {
+            <span class="chip tabular-nums">{{ row.outstandingAmount | number: '1.2-2' }} due</span>
+          }
+        } @else {
+          <span class="inv-list__muted">—</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="status" let-row>
+        <span [class]="statusTag(row.status)">{{ row.status }}</span>
+      </ng-template>
+    </bb-data-grid>
+
+    @if (isEmpty()) {
+      <p class="inv-list__empty">
+        No invoices match. Clear the filters, or raise one from a confirmed sales order.
+      </p>
+    } @else {
+      <!-- Labelled as the page's own, because that is what it is: the server
+           pages before it sums, so a figure across every match is a different
+           query and calling this one "outstanding" would invite a reconciliation
+           against a number that is short. -->
+      <p class="inv-list__foot">
+        This page: <strong class="tabular-nums">{{ pageTotal() | number: '1.2-2' }}</strong>
+      </p>
+    }
+  </div>
+</section>

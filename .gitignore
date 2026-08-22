@@ -69,9 +69,83 @@ yarn-error.log*
 .idea/
 .DS_Store
 Thumbs.db
+# ---------------------------------------------------------------- .NET
+# Unanchored so they match at any depth under backend/
+bin/
+obj/
+artifacts/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+*.userprefs
+.vs/
+project.lock.json
+project.fragment.lock.json
+*.nupkg
+*.snupkg
+
+# EF Core
+*.mdf
+*.ldf
+
+# ---------------------------------------------------------------- Node / Nx
+node_modules/
+
+# package-lock.json is committed, deliberately. `npm run check` is what says the
+# frontend is sound, and a lint or test result that depends on which day the
+# packages were resolved is not a result. It was ignored here only because it
+# arrived inside a stock Angular .gitignore, between the two lockfiles this
+# repository does not use — which stay ignored, so a second one cannot appear
+# alongside it.
+yarn.lock
+pnpm-lock.yaml
+.nx/
+dist/
+out-tsc/
+coverage/
+tmp/
+*.tsbuildinfo
+
+# ---------------------------------------------------------------- Angular
+.angular/
+.ng/
+.angular-cli.json
+e2e/test-output/
+
+# ---------------------------------------------------------------- Electron
+apps/desktop/release/
+apps/desktop/out/
+
+# ---------------------------------------------------------------- Environment
+.env
+.env.*
+!.env.example
+# appsettings.Development.json is deliberately committed: it holds only localhost
+# values (see docs/environments) so a clone runs with no setup. Staging, UAT and
+# Production ship blank and are filled from environment variables. Anything
+# genuinely secret goes in appsettings.Local.json, which stays ignored.
+appsettings.Local.json
+*.pfx
+*.p12
+
+# ---------------------------------------------------------------- Logs
+*.log
+scripts/setup-dev-db.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ---------------------------------------------------------------- Editors / OS
+.idea/
+.DS_Store
+Thumbs.db
 
 # Throwaway Chrome profile created by the "Web (Chrome, 4200)" debug config.
 .vscode/.chrome-debug-profile/
 
 # Files uploaded against a contact in Development — LocalDiskFileStorage's root.
 .files/
+
+# Throwaway Edge profile created by the "Web (Edge, 4200)" debug config.
+.vscode/.edge-debug-profile/

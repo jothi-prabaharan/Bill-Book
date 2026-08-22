@@ -1,0 +1,283 @@
+<div class="page">
+  <header class="page__header">
+    <div>
+      <h1>
+        @if (isNew()) {
+          New goods receipt
+        } @else {
+          {{ documentNo() }}
+        }
+      </h1>
+      @if (!isNew()) {
+        <p class="page__pills">
+          <span class="pill">{{ status() }}</span>
+          @if (totalRejected() > 0) {
+            <span class="pill pill--void">{{ totalRejected() }} rejected</span>
+          }
+        </p>
+      }
+    </div>
+    <a class="btn" routerLink="..">Back to list</a>
+  </header>
+
+  @if (error()) {
+    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="banner banner--ok">{{ notice() }}</div>
+  }
+
+  @if (readonlyDoc()) {
+    <div class="banner banner--info">
+      This receipt has been posted. The stock is on the shelf and the ledger has
+      it, so it can no longer be changed &mdash; send goods back with a debit
+      note instead.
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="state">Loading&hellip;</p>
+  } @else {
+    <section class="card">
+      <h2 class="card__title">Delivery</h2>
+
+      <div class="grid">
+        <div class="field">
+          <span class="field__label">Vendor</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openVendorPicker()"
+          >
+            {{ contactLabel() || 'Choose a vendor' }}
+          </button>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Against order</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openOrderPicker()"
+          >
+            {{ purchaseOrderNo() || 'None — receiving without an order' }}
+          </button>
+          <span class="field__hint">
+            Picking one copies what is still outstanding on it. A receipt without
+            an order is fine; nothing is then advanced.
+          </span>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Receipt date</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+            name="documentDate"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Vendor delivery note</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="50"
+            [disabled]="readonlyDoc()"
+            [ngModel]="vendorDeliveryNoteNo()"
+            (ngModelChange)="vendorDeliveryNoteNo.set($event)"
+            name="vendorDeliveryNoteNo"
+          />
+          <span class="field__hint">Their docket number, off the paperwork with the goods.</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Delivery note date</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="vendorDeliveryNoteDate()"
+            (ngModelChange)="vendorDeliveryNoteDate.set($event)"
+            name="vendorDeliveryNoteDate"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Vendor GSTIN</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="15"
+            [disabled]="readonlyDoc()"
+            [ngModel]="contactGstin()"
+            (ngModelChange)="contactGstin.set($event)"
+            name="contactGstin"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Place of supply</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+            name="placeOfSupplyStateCode"
+            placeholder="2-digit state code"
+          />
+          <span class="field__hint">
+            Needed when the vendor has no GSTIN to take it from.
+          </span>
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">What was delivered</h2>
+
+      <bb-document-line-grid
+        [lines]="lines()"
+        [context]="gridContext()"
+        [taxGroups]="taxGroups()"
+        (linesChange)="onLinesChange($event)"
+        (pickItem)="onPickItem($event)"
+      />
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">What was accepted</h2>
+      <p class="field__hint">
+        <strong>Only the accepted quantity becomes stock.</strong> Key what was
+        refused and the rest is accepted &mdash; a rejected carton is a dispute
+        with the vendor, not inventory, and the order stays open for it.
+      </p>
+
+      @if (lines().length === 0) {
+        <p class="state">Add a line above first.</p>
+      } @else {
+                <bb-data-grid [gridCode]="'GOODS_RECEIPT_LINES'" [columns]="columns" [data]="receiving()">
+          <ng-template bbCellTemplate="item" let-row="row" let-index="index">
+            {{ itemLabelOf(index) }}
+          </ng-template>
+          <ng-template bbCellTemplate="delivered" let-row="row" let-index="index">
+            {{ deliveredOf(index) }}
+          </ng-template>
+          <ng-template bbCellTemplate="rejected" let-row="row" let-index="index">
+            <bb-number-input
+              
+              class="input input--qty"
+              min="0"
+              [max]="deliveredOf(index)"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.rejectedQuantity"
+              (ngModelChange)="onRejectedChange(index, $event)"
+              [name]="'rejected' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="accepted" let-row="row">
+            <span class="accepted">{{ row.acceptedQuantity }}</span>
+          </ng-template>
+          <ng-template bbCellTemplate="reason" let-row="row" let-index="index">
+            <bb-text-input
+              
+              class="input"
+              maxlength="300"
+              placeholder="Required when rejecting"
+              [disabled]="readonlyDoc() || row.rejectedQuantity === 0"
+              [ngModel]="row.rejectionReason"
+              (ngModelChange)="onReceivingField(index, 'rejectionReason', $event)"
+              [name]="'reason' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="batch" let-row="row" let-index="index">
+            <bb-text-input
+              
+              class="input"
+              maxlength="50"
+              placeholder="Lot"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.batchNumber"
+              (ngModelChange)="onReceivingField(index, 'batchNumber', $event)"
+              [name]="'batch' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="expiry" let-row="row" let-index="index">
+            <bb-date-input
+              
+              class="input"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.batchExpiryDate"
+              (ngModelChange)="onReceivingField(index, 'batchExpiryDate', $event)"
+              [name]="'expiry' + index"
+            />
+          </ng-template>
+        </bb-data-grid>
+
+        <p class="field__hint">
+          Batch and expiry are only required for items that track them &mdash;
+          Inventory refuses the receipt and names the line if one is missing.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Notes</h2>
+      <label class="field field--wide">
+        <span class="field__label">Notes</span>
+        <textarea
+          class="input"
+          rows="2"
+          [disabled]="readonlyDoc()"
+          [ngModel]="notes()"
+          (ngModelChange)="notes.set($event)"
+          name="notes"
+        ></textarea>
+      </label>
+    </section>
+
+    @if (!readonlyDoc()) {
+      <footer class="actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : 'Save draft' }}
+        </button>
+
+        @if (!isNew()) {
+          <button type="button" class="btn" [disabled]="saving()" (click)="post()">
+            Receive the goods
+          </button>
+          <span class="actions__hint">
+            Receiving puts the accepted quantity into stock, posts
+            <strong>Dr Inventory / Cr Goods Received Not Invoiced</strong>, and
+            moves the order toward closed. It cannot be undone from here.
+          </span>
+        }
+      </footer>
+    }
+  }
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [emptyText]="pickerEmptyText()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
+</div>
+

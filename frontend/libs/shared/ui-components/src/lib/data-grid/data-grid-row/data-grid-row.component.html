@@ -1,0 +1,8 @@
+<td *ngFor="let col of visibleColumns" 
+    [class.numeric]="isNumericCol(col)"
+    [ngClass]="{'text-right': isNumericCol(col)}"
+    [style.font-variant-numeric]="isNumericCol(col) || col.dataType === 'date' ? 'tabular-nums' : null"
+    [style.width]="col.width"
+    (click)="onRowClick()">
+  <bb-data-grid-cell [col]="col" [row]="row" [template]="templates[col.field]"></bb-data-grid-cell>
+</td>

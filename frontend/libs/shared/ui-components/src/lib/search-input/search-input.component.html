@@ -1,0 +1,13 @@
+<input
+  type="search"
+  class="search-input"
+  [id]="id() || null"
+  [name]="name() || null"
+  [placeholder]="placeholder()"
+  [disabled]="effectiveDisabled()"
+  [attr.aria-label]="ariaLabel()"
+  [value]="innerValue()"
+  (input)="onInput($event)"
+  (keydown)="onKeyDown($event)"
+  (blur)="onBlur()"
+/>

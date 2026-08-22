@@ -47,6 +47,57 @@ export default defineConfig({
       '@bill-book/api-client': fileURLToPath(
         new URL('./libs/shared/api-client/src/index.ts', import.meta.url),
       ),
+      '@bill-book/ui-components': fileURLToPath(
+        new URL('./libs/shared/ui-components/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/app-shell': fileURLToPath(
+        new URL('./libs/app-shell/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/sales-core': fileURLToPath(
+        new URL('./libs/sales/sales-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/sales-ui': fileURLToPath(
+        new URL('./libs/sales/sales-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/purchase-core': fileURLToPath(
+        new URL('./libs/purchase/purchase-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/purchase-ui': fileURLToPath(
+        new URL('./libs/purchase/purchase-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/inventory-core': fileURLToPath(
+        new URL('./libs/inventory/inventory-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/inventory-ui': fileURLToPath(
+        new URL('./libs/inventory/inventory-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/accounting-core': fileURLToPath(
+        new URL('./libs/accounting/accounting-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/accounting-ui': fileURLToPath(
+        new URL('./libs/accounting/accounting-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/master-core': fileURLToPath(
+        new URL('./libs/master/master-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/master-ui': fileURLToPath(
+        new URL('./libs/master/master-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/reporting-core': fileURLToPath(
+        new URL('./libs/reporting/reporting-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/reporting-ui': fileURLToPath(
+        new URL('./libs/reporting/reporting-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/customer-core': fileURLToPath(
+        new URL('./libs/customer/customer-core/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/customer-ui': fileURLToPath(
+        new URL('./libs/customer/customer-ui/src/index.ts', import.meta.url),
+      ),
+      '@bill-book/currency-format': fileURLToPath(
+        new URL('./libs/shared/currency-format/src/index.ts', import.meta.url),
+      ),
     },
   },
 });

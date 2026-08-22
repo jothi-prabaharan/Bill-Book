@@ -30,4 +30,6 @@ public class CreditNote : DocumentHeaderBase
     /// <see cref="CreditNoteReason.SalesReturn"/> moves stock.
     /// </summary>
     public CreditNoteReason ReasonCode { get; set; } = CreditNoteReason.SalesReturn;
+    public List<CreditNoteDetail> Lines { get; set; } = [];
 }
+

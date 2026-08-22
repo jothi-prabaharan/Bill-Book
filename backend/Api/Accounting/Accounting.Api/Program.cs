@@ -15,10 +15,10 @@ using Shared.Kernel.Tenancy;
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Fail at startup rather than on the first request that needs the missing
-// registration. Banking shipped without IBaseCurrencyProvider registered — every
-// money document endpoint would have thrown on its first call, and neither the
-// build nor the tests could see it, because the build does not resolve DI and
-// the tests construct their services by hand. This is what closes that gap:
+// registration. The money documents shipped without IBaseCurrencyProvider
+// registered — every one of their endpoints would have thrown on its first
+// call, and neither the build nor the tests could see it, because the build
+// does not resolve DI and the tests construct their services by hand. This is what closes that gap:
 // ValidateOnBuild walks every registration at startup, so a service asking for
 // something nobody registered is a container that refuses to build.
 builder.Host.UseDefaultServiceProvider(options =>
@@ -45,9 +45,9 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -65,7 +65,7 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
         // Design-time and unauthenticated paths fall back to the configured value.
         // Guarded, not defaulted: a blank here would hand Npgsql an empty string
         // and the failure would surface as an unrelated connection error.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
@@ -74,6 +74,7 @@ builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 });
 
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<AllocationService>();
 builder.Services.AddScoped<SubAccountService>();
 builder.Services.AddScoped<TaxMasterService>();
 builder.Services.AddScoped<NumberingSeriesService>();
@@ -84,6 +85,20 @@ builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
+
+// The money documents, formerly the Banking service. Registered alongside the
+// ledger rather than behind an HTTP client onto it, which is the whole point of
+// the merge: a payment and the ledger rows it produces now share a transaction.
+builder.Services.AddScoped<BankService>();
+builder.Services.AddScoped<SpendMoneyService>();
+builder.Services.AddScoped<ReceiveMoneyService>();
+builder.Services.AddScoped<TransferMoneyService>();
+builder.Services.AddScoped<BankStatementService>();
+
+// The seam the money documents reach the ledger through. Still an interface —
+// it is where the tests substitute, and it marks the line they may not write
+// across — but the implementation is now a call rather than a round trip.
+builder.Services.AddScoped<IAccountingLedger, InProcessAccountingLedger>();
 
 // Opening stock is Inventory's to record: the unit cost seeds the weighted
 // average, and only Inventory can seed it. Keyed rather than token-forwarded,
@@ -100,7 +115,7 @@ builder.Services.AddHttpClient<IInventoryOpeningStock, InventoryOpeningStock>(cl
 // never, and the alternative is an HTTP call on every posting.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -113,7 +128,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -122,7 +137,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Accounting only
+// Must match Master's key exactly: Master mints the tokens, Accounting only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -149,6 +164,9 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+// Runs EF core migrations on startup
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 

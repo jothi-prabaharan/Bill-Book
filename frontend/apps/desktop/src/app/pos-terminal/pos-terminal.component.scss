@@ -1,0 +1,11 @@
+.pos-terminal {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 1rem;
+  .cart {
+    flex: 1;
+    border: 1px solid #ccc;
+    margin-bottom: 1rem;
+  }
+}

@@ -20,4 +20,12 @@ public class DeliveryChallanDetail : DocumentLineBase
     /// being inferred from a one-to-one link that does not exist.
     /// </summary>
     public decimal InvoicedQuantity { get; set; }
+    
+    /// <summary>The inventory movement generated when this line was issued.</summary>
+    public long? StockMovementId { get; set; }
+    
+    public decimal UnitCost { get; set; }
+    
+    public List<DeliveryChallanDetailTax> Taxes { get; set; } = [];
 }
+

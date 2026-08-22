@@ -1,0 +1,51 @@
+<header class="page-head">
+  <h1>Currencies</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add currency</button>
+  </div>
+</header>
+
+@if (adding()) {
+  <div class="add-row">
+    <select [(ngModel)]="selectedCurrencyId">
+      <option [ngValue]="0">Select a currency…</option>
+      @for (c of available(); track c.currencyId) {
+        <option [ngValue]="c.currencyId">{{ c.code }} — {{ c.name }} ({{ c.symbol }})</option>
+      }
+    </select>
+    <button type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">Save</button>
+    <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
+  </div>
+}
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<bb-data-grid [gridCode]="'ORG_CURRENCIES'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="code" let-row>
+    {{ row.code }}
+    @if (row.isBaseCurrency) {
+      <span class="badge">Base</span>
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="format" let-row>
+    <code>{{ row.format }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="isActive" let-row>
+    <button
+      type="button"
+      class="toggle"
+      [class.on]="row.isActive"
+      [disabled]="row.isBaseCurrency || busy()"
+      [title]="row.isBaseCurrency ? 'The base currency cannot be deactivated' : 'Toggle active'"
+      (click)="toggle(row)"
+    >
+      {{ row.isActive ? 'Active' : 'Inactive' }}
+    </button>
+  </ng-template>
+</bb-data-grid>

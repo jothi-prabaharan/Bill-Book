@@ -1,0 +1,199 @@
+<header class="page-head">
+  <h1>Branches</h1>
+  <div class="head-actions">
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add branch</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Each branch is a complete set of books — its own items, contacts, stock, chart of accounts and
+  numbering. Nothing crosses between them. They share this account's database and are separated
+  by organization, so adding one costs no new database.
+</p>
+
+<bb-data-grid [gridCode]="'ORGANIZATIONS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="orgCode" let-row>
+    <code>{{ row.orgCode }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="name" let-row>
+    {{ row.name }}
+    @if (row.orgId === currentOrgId()) {
+      <span class="badge here">You are here</span>
+    }
+    @if (row.isFirst) {
+      <span class="badge">First</span>
+    }
+    @if (row.isTrial) {
+      <span
+        class="badge trial"
+        [title]="
+          row.expiryDate
+            ? 'On a branch trial until ' + row.expiryDate
+            : 'On a branch trial'
+        "
+      >Trial</span>
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="city" let-row>
+    {{ row.city ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="stateId" let-row>
+    {{ stateNameOf(row.stateId) }}
+  </ng-template>
+  <ng-template bbCellTemplate="gstin" let-row>
+    <code>{{ row.gstin ?? '—' }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @switch (row.status) {
+      @case ('Active') { Active }
+      @case ('Provisioning') { <span class="badge warn">Setting up</span> }
+      @default { {{ row.status }} }
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+
+    @if (row.status === 'Provisioning') {
+      <button type="button" class="link" (click)="retrySeeding(row)" [disabled]="busy()">
+        Finish setup
+      </button>
+    } @else if (row.orgId !== currentOrgId() && row.status === 'Active') {
+      <button type="button" class="link" (click)="switchTo(row)" [disabled]="busy()">
+        Switch to
+      </button>
+    }
+
+    @if (!row.isFirst && row.status === 'Active') {
+      <button type="button" class="link danger" (click)="suspend(row)" [disabled]="busy()">
+        Suspend
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === '' ? 'New branch' : 'Edit branch' }}</h2>
+
+    @if (editingId() === '') {
+      <p class="hint">
+        A new branch starts empty and is set up as it is created — chart of accounts, GST rates,
+        numbering series, payment terms, units and purities. It stays unusable until that
+        finishes, rather than opening with no books behind it.
+      </p>
+    }
+
+    <div class="fields">
+      <label>
+        Code
+        <bb-text-input  [(ngModel)]="form.orgCode" maxlength="10" class="uppercase" />
+        <small>Goes into document numbers when a series includes the branch code.</small>
+      </label>
+
+      <label>
+        Name
+        <bb-text-input  [(ngModel)]="form.name" maxlength="200" />
+      </label>
+
+      <label>
+        Base currency
+        <select
+          [(ngModel)]="form.baseCurrency"
+          [disabled]="currencyLocked"
+        >
+          @for (curr of currencies(); track curr.code) {
+            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
+          }
+        </select>
+        <small>
+          @if (currencyLocked) {
+            Fixed — every amount already posted here was converted to it.
+          } @else {
+            Every posting in this branch converts to it. It cannot be changed afterwards.
+          }
+        </small>
+      </label>
+
+      <label>
+        Financial year starts
+        <select [(ngModel)]="form.financialYearStartMonth">
+          @for (month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track month) {
+            <option [ngValue]="month">Month {{ month }}</option>
+          }
+        </select>
+        <small>April for India. Drives the year segment in generated numbers.</small>
+      </label>
+
+      <label>
+        GSTIN
+        <bb-text-input  [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
+        <small>Its first two digits must match the branch's state.</small>
+      </label>
+
+      <label>
+        PAN
+        <bb-text-input  [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
+      </label>
+
+      <label class="wide">
+        Address line 1
+        <bb-text-input  [(ngModel)]="form.addressLine1" maxlength="200" />
+      </label>
+
+      <label class="wide">
+        Address line 2
+        <bb-text-input  [(ngModel)]="form.addressLine2" maxlength="200" />
+      </label>
+
+      <label>
+        City
+        <bb-text-input  [(ngModel)]="form.city" maxlength="100" />
+      </label>
+
+      <label>
+        State
+        <select [(ngModel)]="form.stateId">
+          <option [ngValue]="null">Not set</option>
+          @for (state of states(); track state.stateId) {
+            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
+          }
+        </select>
+      </label>
+
+      <label>
+        Postal code
+        <bb-text-input  [(ngModel)]="form.postalCode" maxlength="10" />
+      </label>
+
+      <label>
+        Phone
+        <bb-text-input  [(ngModel)]="form.phoneNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Mobile
+        <bb-text-input  [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Email
+        <input type="email" [(ngModel)]="form.email" maxlength="200" />
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="busy() || !form.orgCode || !form.name || !form.baseCurrency"
+      >
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

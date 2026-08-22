@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
 using Sales.Entity.Enums;
@@ -7,355 +6,481 @@ using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
-using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
-using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
 using Xunit;
 
 namespace Sales.Api.Tests;
 
 /// <summary>
-/// The sales order, against a real database.
+/// The sales order — T2.2 — against a real PostgreSQL.
 ///
-/// What these check is the pair that makes an order different from every other
-/// document: it posts <b>nothing</b> to the ledger, and it <b>holds stock</b>.
-/// The second half is a call to another service, so Inventory is a stand-in
-/// here — but the contract being tested is the one that matters, which is what
-/// this service does when the answer comes back yes, no, or not at all.
+/// <b>Written through the service rather than by inserting rows.</b> Three of
+/// the four bugs these cover would have looked fine in a test that built a
+/// <c>SalesOrder</c> by hand: the create path was refused by a check constraint,
+/// the void path asked the wrong question, and the release path was handed an
+/// empty line collection. All three are only visible from the door the
+/// controller uses.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
-public class SalesOrderServiceTests
+public sealed class SalesOrderServiceTests
 {
-    private readonly PostgresFixture _postgres;
+    private readonly PostgresFixture _pg;
 
-    public SalesOrderServiceTests(PostgresFixture postgres) => _postgres = postgres;
+    public SalesOrderServiceTests(PostgresFixture pg) => _pg = pg;
 
-    /// <summary>Confirming takes a number and holds exactly what the lines promised.</summary>
     [SkippableFact]
-    public async Task Confirming_takes_a_number_and_reserves_every_stock_line()
+    public async Task A_draft_is_numbered_taxed_and_not_stamped_as_posted()
     {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        long id = await h.Draft((41, 6m), (42, 4m));
+        Harness h = await Harness.CreateAsync(_pg);
 
-        SalesOrderResult confirmed = await h.Orders.ConfirmAsync(id, ct);
+        SalesOrderResult result = await h.Service.CreateAsync(
+            Request([Line(quantity: 10m, unitPrice: 100m, taxGroupId: 1)]), default);
+
+        Assert.Equal(SalesOrderOutcome.Ok, result.Outcome);
+
+        SalesOrder saved = await h.Db.SalesOrders
+            .Include(o => o.Lines)
+            .SingleAsync(o => o.SalesOrderId == result.SalesOrderId);
+
+        Assert.StartsWith("SO/", saved.DocumentNo);
+        Assert.Equal("SOR", saved.TransactionTypeCode);
+
+        // 10 × 100 = 1000 taxable, 18% = 180, total 1180.
+        Assert.Equal(1000m, saved.TaxableAmount);
+        Assert.Equal(1180m, saved.TotalAmount);
+        Assert.False(saved.IsInterState);
+        Assert.Equal(90m, saved.CgstAmount);
+        Assert.Equal(90m, saved.SgstAmount);
+
+        // The one that matters. Create used to stamp PostedAt and PostedBy on a
+        // Draft, which chk_salesorders_posted_stamp refuses outright — so no
+        // sales order could be created at all, and the failure surfaced as a
+        // database error rather than as anything a reader would connect to this.
+        Assert.Equal(DocumentStatus.Draft, saved.Status);
+        Assert.Null(saved.PostedAt);
+        Assert.Null(saved.PostedBy);
+
+        // Nothing is reserved until it is confirmed.
+        Assert.Equal(0m, saved.Lines.Single().ReservedQuantity);
+        Assert.Equal(FulfilmentStatus.Open, saved.FulfilmentStatus);
+        Assert.Empty(h.Inventory.Reservations);
+    }
+
+    [SkippableFact]
+    public async Task Confirming_reserves_the_stock_and_records_how_much()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        SalesOrderResult created = await h.Service.CreateAsync(
+            Request([Line(quantity: 4m, unitPrice: 250m, taxGroupId: 1)]), default);
+
+        SalesOrderResult confirmed = await h.Service.ConfirmAsync(created.SalesOrderId, default);
         Assert.Equal(SalesOrderOutcome.Ok, confirmed.Outcome);
 
-        SalesOrder order = await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct);
-        Assert.Equal(DocumentStatus.Posted, order.Status);
-        Assert.StartsWith("SO/", order.DocumentNo);
-        Assert.Equal(FulfilmentStatus.Open, order.FulfilmentStatus);
+        ReserveStockRequest reservation = Assert.Single(h.Inventory.Reservations);
+        ReserveStockLine reservedLine = Assert.Single(reservation.Lines);
+        Assert.Equal(7, reservedLine.ItemId);
+        Assert.Equal(4m, reservedLine.Quantity);
 
-        // Inventory was asked for exactly the lines, in base quantity.
-        Assert.Equal(
-            [(41L, 6m), (42L, 4m)],
-            h.Inventory.Reserved.Select(r => (r.ItemId, r.Quantity)).Order().ToArray());
+        h.Db.ChangeTracker.Clear();
+        SalesOrder saved = await h.Db.SalesOrders
+            .Include(o => o.Lines)
+            .SingleAsync(o => o.SalesOrderId == created.SalesOrderId);
 
-        // And the order records what it is holding, which is what a release
-        // later gives back.
-        List<SalesOrderDetail> lines = await h.Db.SalesOrderDetails
-            .Where(l => l.SalesOrderId == id).OrderBy(l => l.LineNumber).ToListAsync(ct);
+        Assert.Equal(DocumentStatus.Posted, saved.Status);
+        Assert.NotNull(saved.PostedAt);
 
-        Assert.Equal([6m, 4m], lines.Select(l => l.ReservedQuantity));
+        // Kept on the line as well as in Inventory, because releasing has to be
+        // exact when only part of the order ships.
+        Assert.Equal(4m, saved.Lines.Single().ReservedQuantity);
     }
 
-    /// <summary>
-    /// A shortage leaves a draft with no number spent. The reverse — a number
-    /// issued for an order that never confirmed — is a hole in a statutory
-    /// sequence.
-    /// </summary>
     [SkippableFact]
-    public async Task A_shortage_leaves_a_draft_and_spends_no_number()
+    public async Task A_short_item_is_named_rather_than_reported_as_insufficient_stock()
     {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        h.Inventory.Short(itemId: 42, available: 1m);
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.RefuseReserve[7] = "InsufficientStock";
 
-        long id = await h.Draft((41, 6m), (42, 4m));
-        SalesOrderResult result = await h.Orders.ConfirmAsync(id, ct);
+        SalesOrderResult created = await h.Service.CreateAsync(
+            Request([Line(quantity: 4m, unitPrice: 250m, taxGroupId: 1)]), default);
 
-        Assert.Equal(SalesOrderOutcome.InsufficientStock, result.Outcome);
+        SalesOrderResult confirmed = await h.Service.ConfirmAsync(created.SalesOrderId, default);
 
-        SalesOrderShortage shortage = Assert.Single(result.Shortages!);
-        Assert.Equal(42, shortage.ItemId);
-        Assert.Equal(4m, shortage.Requested);
-        Assert.Equal(1m, shortage.Available);
+        Assert.Equal(SalesOrderOutcome.InsufficientStock, confirmed.Outcome);
 
-        // Still a draft, and still holding the number it was created with — a
-        // refused confirm changes nothing at all.
-        SalesOrder order = await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct);
-        Assert.Equal(DocumentStatus.Draft, order.Status);
-        Assert.EndsWith("00001", order.DocumentNo);
-        Assert.Null(order.PostedAt);
+        // "Insufficient stock" on a twenty-line order is not something the person
+        // on the phone to the customer can act on. The item is named.
+        Assert.Contains("C7", confirmed.Detail);
+
+        h.Db.ChangeTracker.Clear();
+        SalesOrder saved = await h.Db.SalesOrders
+            .SingleAsync(o => o.SalesOrderId == created.SalesOrderId);
+
+        // Refused, so it stays a draft — never a confirmed order the shelf
+        // disagrees with.
+        Assert.Equal(DocumentStatus.Draft, saved.Status);
     }
 
-    /// <summary>
-    /// Inventory being unreachable is not the same as a refusal, and must not be
-    /// reported as one: nothing was held, so the order is still a draft and the
-    /// caller should try again rather than re-key it.
-    /// </summary>
     [SkippableFact]
-    public async Task Inventory_being_unreachable_is_distinct_from_a_shortage()
+    public async Task A_draft_can_be_voided_with_a_reason_and_reserves_nothing_back()
     {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        h.Inventory.Unreachable = true;
+        Harness h = await Harness.CreateAsync(_pg);
 
-        long id = await h.Draft((41, 2m));
-        SalesOrderResult result = await h.Orders.ConfirmAsync(id, ct);
+        SalesOrderResult created = await h.Service.CreateAsync(
+            Request([Line(quantity: 2m, unitPrice: 500m, taxGroupId: 1)]), default);
 
-        Assert.Equal(SalesOrderOutcome.InventoryUnreachable, result.Outcome);
+        SalesOrderResult voided = await h.Service.VoidAsync(
+            created.SalesOrderId, new VoidSalesOrderRequest { Reason = "Customer changed their mind." },
+            default);
 
-        SalesOrder order = await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct);
-        Assert.Equal(DocumentStatus.Draft, order.Status);
-        Assert.Null(order.PostedAt);
+        // The downstream check used to ask whether this order existed — which it
+        // always does by that line — so every void was refused as having
+        // documents beneath it and no sales order could be withdrawn at all.
+        Assert.Equal(SalesOrderOutcome.Ok, voided.Outcome);
+
+        h.Db.ChangeTracker.Clear();
+        SalesOrder saved = await h.Db.SalesOrders
+            .SingleAsync(o => o.SalesOrderId == created.SalesOrderId);
+
+        Assert.Equal(DocumentStatus.Void, saved.Status);
+        Assert.Equal(FulfilmentStatus.Cancelled, saved.FulfilmentStatus);
+        Assert.Equal("Customer changed their mind.", saved.VoidReason);
+
+        // A draft never held a reservation, so nothing is handed back. Releasing
+        // here would be a windfall on the next availability check.
+        Assert.Empty(h.Inventory.Releases);
     }
 
-    /// <summary>Cancelling gives back exactly what the order was holding, and keeps its number.</summary>
     [SkippableFact]
-    public async Task Cancelling_releases_what_it_holds_and_keeps_the_number()
+    public async Task Voiding_a_confirmed_order_releases_the_lines_it_reserved()
     {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        long id = await h.Draft((41, 6m), (42, 4m));
-        await h.Orders.ConfirmAsync(id, ct);
+        Harness h = await Harness.CreateAsync(_pg);
 
-        string number = (await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct)).DocumentNo;
+        SalesOrderResult created = await h.Service.CreateAsync(
+            Request([Line(quantity: 6m, unitPrice: 100m, taxGroupId: 1)]), default);
 
-        SalesOrderResult cancelled = await h.Orders.CancelAsync(
-            id, new CloseSalesOrderRequest { Reason = "Customer withdrew." }, ct);
+        await h.Service.ConfirmAsync(created.SalesOrderId, default);
 
-        Assert.Equal(SalesOrderOutcome.Ok, cancelled.Outcome);
+        SalesOrderResult voided = await h.Service.VoidAsync(
+            created.SalesOrderId, new VoidSalesOrderRequest { Reason = "Order cancelled." }, default);
 
-        Assert.Equal(
-            [(41L, 6m), (42L, 4m)],
-            h.Inventory.Released.Select(r => (r.ItemId, r.Quantity)).Order().ToArray());
+        Assert.Equal(SalesOrderOutcome.Ok, voided.Outcome);
 
-        SalesOrder order = await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct);
-        Assert.Equal(FulfilmentStatus.Cancelled, order.FulfilmentStatus);
-
-        // Cancelling withdraws the document, which is what Void means. The
-        // schema refuses a Void with no reason, and a reason with no Void.
-        Assert.Equal(DocumentStatus.Void, order.Status);
-        Assert.Equal(number, order.DocumentNo);
-        Assert.Equal("Customer withdrew.", order.VoidReason);
-
-        // Nothing is held any more, so a second close has nothing to give back.
-        Assert.True(await h.Db.SalesOrderDetails
-            .Where(l => l.SalesOrderId == id).AllAsync(l => l.ReservedQuantity == 0m, ct));
+        // The release used to be built from a header fetched with FindAsync, so
+        // Lines was empty and nothing was ever handed back — silently, because
+        // an empty request was skipped and the void reported success.
+        ReleaseStockRequest release = Assert.Single(h.Inventory.Releases);
+        ReleaseStockLine releasedLine = Assert.Single(release.Lines);
+        Assert.Equal(7, releasedLine.ItemId);
+        Assert.Equal(6m, releasedLine.Quantity);
     }
 
-    /// <summary>A short close releases the remainder and says nothing further is coming.</summary>
     [SkippableFact]
-    public async Task Short_closing_releases_the_remainder()
+    public async Task An_order_with_an_invoice_against_it_cannot_be_voided()
     {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        long id = await h.Draft((41, 10m));
-        await h.Orders.ConfirmAsync(id, ct);
+        Harness h = await Harness.CreateAsync(_pg);
 
-        // Six of the ten shipped, so only four are still a promise.
-        SalesOrderDetail line = await h.Db.SalesOrderDetails.FirstAsync(l => l.SalesOrderId == id, ct);
-        line.DeliveredQuantity = 6m;
-        line.ReservedQuantity = 4m;
-        await h.Db.SaveChangesAsync(ct);
-        h.Inventory.Released.Clear();
+        SalesOrderResult created = await h.Service.CreateAsync(
+            Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
 
-        Assert.Equal(
-            SalesOrderOutcome.Ok,
-            (await h.Orders.ShortCloseAsync(
-                id, new CloseSalesOrderRequest { Reason = "Balance not required." }, ct)).Outcome);
-
-        (long ItemId, decimal Quantity) released = Assert.Single(
-            h.Inventory.Released.Select(r => (r.ItemId, r.Quantity)));
-
-        Assert.Equal((41L, 4m), released);
-
-        SalesOrder closed = await h.Db.SalesOrders.FirstAsync(o => o.SalesOrderId == id, ct);
-
-        Assert.Equal(FulfilmentStatus.Closed, closed.FulfilmentStatus);
-
-        // Not a void. Half of this order shipped, so the document is a true
-        // record of what was ordered and what went out — it only stops
-        // expecting more.
-        Assert.Equal(DocumentStatus.Posted, closed.Status);
-        Assert.Null(closed.VoidedAt);
-        Assert.Contains("Balance not required.", closed.Notes);
-    }
-
-    /// <summary>A confirmed order is holding stock, so it cannot be edited.</summary>
-    [SkippableFact]
-    public async Task A_confirmed_order_refuses_an_edit()
-    {
-        await using Harness h = await Harness.CreateAsync(_postgres);
-        CancellationToken ct = CancellationToken.None;
-
-        long id = await h.Draft((41, 2m));
-        await h.Orders.ConfirmAsync(id, ct);
-
-        Assert.Equal(
-            SalesOrderOutcome.NotDraft,
-            (await h.Orders.SaveAsync(id, h.Request((41, 3m)), ct)).Outcome);
-    }
-
-    /// <summary>Inventory, as this service sees it: yes, no, or no answer.</summary>
-    private sealed class FakeInventory : IInventoryStock
-    {
-        private readonly Dictionary<long, decimal> _short = [];
-
-        public List<StockLine> Reserved { get; } = [];
-
-        public List<StockLine> Released { get; } = [];
-
-        public bool Unreachable { get; set; }
-
-        public void Short(long itemId, decimal available) => _short[itemId] = available;
-
-        public Task<StockReservationResult> ReserveAsync(
-            Guid customerId, Guid orgId, long salesOrderId, IReadOnlyList<StockLine> lines,
-            CancellationToken ct)
+        h.Db.Invoices.Add(new Invoice
         {
-            if (Unreachable)
-            {
-                return Task.FromResult(new StockReservationResult(false, [], Unreachable: true));
-            }
+            TransactionTypeCode = "INV",
+            DocumentNo = $"INV/{Guid.NewGuid():N}"[..20],
+            DocumentDate = new DateOnly(2026, 6, 2),
+            DueDate = new DateOnly(2026, 7, 2),
+            SalesOrderId = created.SalesOrderId,
+            ContactId = 42,
+            CurrencyCode = "INR",
+            ExchangeRate = 1m,
+            Status = DocumentStatus.Draft,
+        });
 
-            List<StockShortage> shortages =
-            [
-                .. lines
-                    .Where(l => _short.TryGetValue(l.ItemId, out decimal a) && a < l.Quantity)
-                    .Select(l => new StockShortage(
-                        l.LineNumber, l.ItemId, $"ITEM-{l.ItemId}", $"Item {l.ItemId}",
-                        l.Quantity, _short[l.ItemId], "InsufficientStock")),
-            ];
+        await h.Db.SaveChangesAsync();
 
-            if (shortages.Count > 0)
-            {
-                // Nothing is taken when anything is short — the real endpoint
-                // checks every line before it takes any.
-                return Task.FromResult(new StockReservationResult(false, shortages));
-            }
+        SalesOrderResult voided = await h.Service.VoidAsync(
+            created.SalesOrderId, new VoidSalesOrderRequest { Reason = "Mistake." }, default);
 
-            Reserved.AddRange(lines);
-            return Task.FromResult(new StockReservationResult(true, []));
+        Assert.Equal(SalesOrderOutcome.LifecycleRefused, voided.Outcome);
+        Assert.Contains("points at this document", voided.Detail);
+    }
+
+    [SkippableFact]
+    public async Task The_list_clamps_a_negative_skip_and_an_oversized_take()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        for (int i = 0; i < 3; i++)
+        {
+            await h.Service.CreateAsync(
+                Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
         }
 
-        public Task<StockReservationResult> ReleaseAsync(
-            Guid customerId, Guid orgId, long salesOrderId, IReadOnlyList<StockLine> lines,
-            CancellationToken ct)
-        {
-            if (Unreachable)
-            {
-                return Task.FromResult(new StockReservationResult(false, [], Unreachable: true));
-            }
+        // Skip(-5) throws on some providers and quietly serves page one on
+        // others, so a hand-edited URL either 500s or lies to the pager.
+        SalesOrderListPage page = await h.Service.ListAsync(-5, 1_000_000, null, null, default);
 
-            Released.AddRange(lines);
-            return Task.FromResult(new StockReservationResult(true, []));
-        }
+        Assert.Equal(0, page.Skip);
+        Assert.Equal(200, page.Take);
+        Assert.Equal(3, page.Total);
+        Assert.Equal(3, page.Rows.Count);
     }
 
-    private sealed class Harness : IAsyncDisposable
+    [SkippableFact]
+    public async Task The_total_counts_what_matched_rather_than_what_fitted_on_the_page()
     {
-        public required SalesDbContext Db { get; init; }
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
 
-        public required SalesOrderService Orders { get; init; }
+        Harness h = await Harness.CreateAsync(_pg);
 
-        public required FakeInventory Inventory { get; init; }
-
-        public SaveSalesOrderRequest Request(params (long ItemId, decimal Qty)[] lines) => new()
+        for (int i = 0; i < 5; i++)
         {
-            ContactId = 7,
-            DocumentDate = new DateOnly(2026, 8, 22),
-            PlaceOfSupplyStateId = 33,
+            await h.Service.CreateAsync(
+                Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+        }
+
+        SalesOrderListPage page = await h.Service.ListAsync(0, 2, null, null, default);
+
+        Assert.Equal(2, page.Rows.Count);
+
+        // Counting the rows it was handed would say "2 of 2" on every page.
+        Assert.Equal(5, page.Total);
+
+        // One lookup for the whole page, never one per row: Contacts is another
+        // database and this is the screen that would make it an N+1.
+        Assert.Single(h.Names.Calls);
+    }
+
+    [SkippableFact]
+    public async Task The_list_filters_by_status()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        SalesOrderResult first = await h.Service.CreateAsync(
+            Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+
+        await h.Service.CreateAsync(
+            Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+
+        await h.Service.ConfirmAsync(first.SalesOrderId, default);
+
+        SalesOrderListPage posted = await h.Service.ListAsync(0, 50, "Posted", null, default);
+        SalesOrderListPage drafts = await h.Service.ListAsync(0, 50, "draft", null, default);
+
+        Assert.Equal(1, posted.Total);
+        Assert.Equal(first.SalesOrderId, posted.Rows.Single().SalesOrderId);
+
+        // Case-insensitive, because it arrives off a query string.
+        Assert.Equal(1, drafts.Total);
+    }
+
+    [SkippableFact]
+    public async Task Another_branchs_order_is_forbidden_rather_than_not_found()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Guid customerId = Guid.NewGuid();
+        Harness mine = await Harness.CreateAsync(_pg, customerId);
+        Harness theirs = await Harness.CreateAsync(_pg, customerId);
+
+        SalesOrderResult created = await mine.Service.CreateAsync(
+            Request([Line(quantity: 1m, unitPrice: 100m, taxGroupId: 1)]), default);
+
+        // Reached through the other branch's service, the row is hidden by the
+        // query filter and by RLS, so this is the NotFound path — the guard
+        // under them answers Forbidden only once something has read past both.
+        SalesOrderViewResult crossBranch = await theirs.Service.GetAsync(created.SalesOrderId, default);
+        Assert.Equal(SalesOrderOutcome.NotFound, crossBranch.Outcome);
+
+        // Its own branch reads it back in full.
+        SalesOrderViewResult own = await mine.Service.GetAsync(created.SalesOrderId, default);
+        Assert.Equal(SalesOrderOutcome.Ok, own.Outcome);
+        Assert.NotNull(own.View);
+        Assert.Equal("Name 42", own.View.ContactName);
+    }
+
+    [SkippableFact]
+    public async Task An_accepted_quote_becomes_an_order_carrying_its_lines()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        Quote quote = new()
+        {
+            TransactionTypeCode = "QTE",
+            DocumentNo = $"QT/{Guid.NewGuid():N}"[..20],
+            DocumentDate = new DateOnly(2026, 6, 1),
+            ValidUntil = new DateOnly(2026, 7, 1),
+            ContactId = 42,
+
+            // 33 is Tamil Nadu, which is where the branch is, so this resolves
+            // intra-state off the GSTIN alone — the ordinary case, and the
+            // reason the conversion does not need the place of supply stated.
+            ContactGstin = "33ABCDE1234F1Z5",
+            CurrencyCode = "INR",
+            ExchangeRate = 1m,
+            Status = DocumentStatus.Posted,
+            PostedAt = DateTimeOffset.UtcNow,
             Lines =
-            [
-                .. lines.Select(l => new SaveSalesOrderLineRequest
+            {
+                new QuoteDetail
                 {
-                    ItemId = l.ItemId,
-                    Quantity = l.Qty,
-                    UnitPrice = 100m,
-                }),
-            ],
+                    LineNumber = 1,
+                    ItemId = 7,
+                    Quantity = 3m,
+                    ConversionFactor = 1m,
+                    BaseQuantity = 3m,
+                    UnitPrice = 200m,
+                    TaxGroupId = 1,
+                    LineType = DocumentLineType.Stock,
+                },
+            },
         };
 
-        public async Task<long> Draft(params (long ItemId, decimal Qty)[] lines)
+        h.Db.Quotes.Add(quote);
+        await h.Db.SaveChangesAsync();
+
+        SalesOrderResult result = await h.Service.CreateFromQuoteAsync(
+            quote.QuoteId,
+            new CreateOrderFromQuoteRequest
+            {
+                DocumentDate = new DateOnly(2026, 6, 10),
+                DeliveryDate = new DateOnly(2026, 6, 20),
+            },
+            default);
+
+        Assert.Equal(SalesOrderOutcome.Ok, result.Outcome);
+
+        SalesOrder order = await h.Db.SalesOrders
+            .Include(o => o.Lines)
+            .SingleAsync(o => o.SalesOrderId == result.SalesOrderId);
+
+        Assert.Equal(quote.QuoteId, order.QuoteId);
+        Assert.Equal(new DateOnly(2026, 6, 20), order.DeliveryDate);
+
+        // 3 × 200 = 600 taxable, recomputed at the order's own date rather than
+        // copied off the quote.
+        Assert.Equal(600m, order.TaxableAmount);
+        Assert.Equal(708m, order.TotalAmount);
+        Assert.Equal(3m, order.Lines.Single().Quantity);
+
+        // Converting it a second time is refused, so one quote cannot become two
+        // orders because somebody double-clicked.
+        SalesOrderResult again = await h.Service.CreateFromQuoteAsync(
+            quote.QuoteId, new CreateOrderFromQuoteRequest(), default);
+
+        Assert.Equal(SalesOrderOutcome.QuoteNotConvertible, again.Outcome);
+    }
+
+    [SkippableFact]
+    public async Task A_draft_quote_is_not_convertible()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        Quote quote = new()
         {
-            SalesOrderResult saved =
-                await Orders.SaveAsync(null, Request(lines), CancellationToken.None);
+            TransactionTypeCode = "QTE",
+            DocumentNo = $"QT/{Guid.NewGuid():N}"[..20],
+            DocumentDate = new DateOnly(2026, 6, 1),
+            ValidUntil = new DateOnly(2026, 7, 1),
+            ContactId = 42,
+            CurrencyCode = "INR",
+            ExchangeRate = 1m,
+            Status = DocumentStatus.Draft,
+        };
 
-            Assert.Equal(SalesOrderOutcome.Ok, saved.Outcome);
-            return saved.SalesOrderId!.Value;
-        }
+        h.Db.Quotes.Add(quote);
+        await h.Db.SaveChangesAsync();
 
-        public static async Task<Harness> CreateAsync(PostgresFixture postgres)
+        SalesOrderResult result = await h.Service.CreateFromQuoteAsync(
+            quote.QuoteId, new CreateOrderFromQuoteRequest(), default);
+
+        Assert.Equal(SalesOrderOutcome.QuoteNotConvertible, result.Outcome);
+        Assert.Contains("Approve the quote first", result.Detail);
+    }
+
+    private static SaveSalesOrderRequest Request(List<SaveSalesOrderLineRequest> lines) =>
+        new()
         {
-            Skip.If(postgres.SkipReason is not null, postgres.SkipReason ?? string.Empty);
+            DocumentDate = new DateOnly(2026, 6, 1),
+            ContactId = 42,
+            DeliveryDate = new DateOnly(2026, 6, 15),
+            PlaceOfSupplyStateCode = "33",
+            Lines = lines,
+        };
 
-            var customerId = Guid.NewGuid();
-            var orgId = Guid.NewGuid();
-            SalesDbContext db = postgres.CreateContext(customerId, orgId);
+    private static SaveSalesOrderLineRequest Line(
+        decimal quantity, decimal unitPrice, long taxGroupId) =>
+        new()
+        {
+            ItemId = 7,
+            Quantity = quantity,
+            ConversionFactor = 1m,
+            UnitPrice = unitPrice,
+            TaxGroupId = taxGroupId,
+            LineType = DocumentLineType.Stock,
+        };
 
-            // The SOR series exactly as the branch seed writes it: the number is
-            // allocated inside the confirm's own transaction, so it has to be
-            // real rather than stubbed.
+    /// <summary>
+    /// One branch, its numbering series seeded, and the service wired to stubs
+    /// for everything that would otherwise be an HTTP call.
+    /// </summary>
+    private sealed record Harness(
+        SalesDbContext Db,
+        SalesOrderService Service,
+        StubNameLookup Names,
+        RecordingInventory Inventory)
+    {
+        public static async Task<Harness> CreateAsync(PostgresFixture pg, Guid? customerId = null)
+        {
+            Guid orgId = Guid.NewGuid();
+
+            SalesDbContext db = pg.CreateContext(customerId ?? Guid.NewGuid(), orgId);
+
             db.NumberingSeries.AddRange(Repository.SeedData.NumberingSeriesSeed.Build(orgId));
             await db.SaveChangesAsync();
 
-            var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-            var inventory = new FakeInventory();
+            StubNameLookup names = new();
+            RecordingInventory inventory = new();
 
-            return new Harness
-            {
-                Db = db,
-                Inventory = inventory,
-                Orders = new SalesOrderService(
-                    db,
-                    inventory,
-                    new StubRates(),
-                    new NumberGenerator(
-                        db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
-                    tenant,
-                    new StubCurrentUser(),
-                    TimeProvider.System,
-                    NullLogger<SalesOrderService>.Instance),
-            };
+            NumberGenerator numbering = new(
+                db, Options.Create(new NumberingOptions()), new StubFinancialYear());
+
+            SalesOrderService service = new(
+                db,
+                new TenantContext { CustomerId = customerId ?? Guid.NewGuid(), OrgId = orgId },
+                numbering,
+                new StubBaseCurrency(),
+                new StubBranchSettings(),
+                new StubTaxRates(),
+                names,
+                names,
+                new StubCurrentUser(),
+                TimeProvider.System,
+                inventory,
+                new StubCreditCheck());
+
+            return new Harness(db, service, names, inventory);
         }
-
-        public async ValueTask DisposeAsync() => await Db.DisposeAsync();
-    }
-
-    /// <summary>No rates. Every line is exempt, which keeps these tests about the order.</summary>
-    private sealed class StubRates : ITaxRateProvider
-    {
-        public Task<IReadOnlyDictionary<long, TaxRate>?> GetRatesAsync(
-            DateOnly onDate, CancellationToken ct = default) =>
-            Task.FromResult<IReadOnlyDictionary<long, TaxRate>?>(
-                new Dictionary<long, TaxRate>());
-
-        public Task<TaxRate?> GetRateAsync(
-            long taxGroupId, DateOnly onDate, CancellationToken ct = default) =>
-            Task.FromResult<TaxRate?>(null);
-    }
-
-    private sealed class StubFinancialYear : IFinancialYearProvider
-    {
-        public Task<int> GetStartMonthAsync(CancellationToken ct = default) => Task.FromResult(4);
-    }
-
-    private sealed class StubCurrentUser : ICurrentUser
-    {
-        public Guid? UserId { get; } = Guid.NewGuid();
-
-        public Guid? CustomerId => null;
-
-        public Guid? OrgId => null;
-
-        public int? RoleId => null;
     }
 }

@@ -1,3 +1,4 @@
+import { TextInputComponent , NumberInputComponent , SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -140,7 +141,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
 @Component({
   selector: 'bb-items-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, TextInputComponent, NumberInputComponent, SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
 })
@@ -160,6 +161,7 @@ export class ItemsPage implements OnInit {
   protected readonly warehouses = signal<Warehouse[]>([]);
   protected readonly busy = signal(false);
   protected readonly message = signal<string | null>(null);
+    tabFilter = 'itm';
   protected readonly messageIsError = signal(false);
   protected readonly editorOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
@@ -168,6 +170,15 @@ export class ItemsPage implements OnInit {
   search = '';
   profileFilter = '';
   showInactive = false;
+
+  columns: ColumnDef[] = [
+    { field: 'itemCode', header: 'Item code' },
+    { field: 'itemName', header: 'Item name' },
+    { field: 'hsnSac', header: 'HSN/SAC' },
+    { field: 'status', header: 'Status' },
+    { field: 'onHand', header: 'On hand', align: 'right' },
+    { field: 'stockValue', header: 'Stock value', align: 'right' },
+  ];
 
   form: ItemDetail = this.blank();
   hsnSearch = '';

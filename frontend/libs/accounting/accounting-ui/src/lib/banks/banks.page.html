@@ -1,0 +1,77 @@
+<header class="page-head">
+  <h1>Banks</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add bank</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<bb-data-grid [gridCode]="'BANKS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="handle" let-row>
+    <div [class.inactive]="!row.isActive">
+      <span class="handle" Handle aria-hidden="true">⠿</span>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="code" let-row>
+    <div [class.inactive]="!row.isActive">
+      <code>{{ row.bankCode }}</code>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="bank" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.bankName }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="accounts" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.accountCount }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="active" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.isActive ? 'Active' : 'Inactive' }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <div [class.inactive]="!row.isActive">
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      @if (row.accountCount === 0) {
+        <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+          Delete
+        </button>
+      }
+    </div>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== null) {
+  <div class="sheet narrow">
+    <h2>{{ editingId() === 0 ? 'New bank' : 'Edit bank' }}</h2>
+    <div class="fields">
+      <label>
+        Name
+        <bb-text-input  [(ngModel)]="form.bankName" maxlength="100" />
+      </label>
+      <label>
+        Code
+        <bb-text-input  [(ngModel)]="form.bankCode" maxlength="20" [disabled]="editingId() !== 0" />
+        <small>Blank takes the next code from the numbering series.</small>
+      </label>
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+        Active
+      </label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.bankName">Save</button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

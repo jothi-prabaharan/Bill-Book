@@ -47,6 +47,8 @@ export interface SignupRequest {
   udyamNumber?: string;
   countryId: number;
   stateId?: number;
+  addressLine1?: string;
+  addressLine2?: string;
   city?: string;
   postalCode?: string;
 }
@@ -76,4 +78,11 @@ export interface StateRow {
   stateId: number;
   stateCode: string;
   stateName: string;
+}
+
+export interface Currency {
+  currencyId: number;
+  code: string;
+  name: string;
+  symbol: string;
 }

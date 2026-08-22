@@ -4,618 +4,1012 @@ using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
-using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Interfaces;
 
 namespace Sales.Api.Services;
 
-/// <summary>
-/// Sales orders — <c>SOR</c>. A commitment, not a posting.
-///
-/// <b>Nothing here reaches the general ledger.</b> An order promises goods; it
-/// does not sell them. What it does do, and what nothing before it in the sales
-/// flow does, is <b>reserve stock</b>: confirming holds the quantity so the same
-/// units cannot be promised to somebody else, and cancelling or closing short
-/// gives back whatever is still held.
-///
-/// <b>The reservation lives in Inventory, not here.</b> There is no reservation
-/// table in <c>sal</c>: <c>inv.ItemStock.QuantityReserved</c> is the one counter,
-/// already guarded and already read by the issue path, and a second counter in
-/// another service would be a second answer to "what is available". What this
-/// service keeps is <see cref="SalesOrderDetail.ReservedQuantity"/> per line —
-/// not a second source of truth but the record of what <i>this</i> order is
-/// holding, which is what makes a release able to give back exactly its own.
-/// </summary>
 public sealed class SalesOrderService
 {
-    private const string TypeCode = "SOR";
-
     private readonly SalesDbContext _db;
-    private readonly IInventoryStock _stock;
-    private readonly ITaxRateProvider _rates;
-    private readonly INumberGenerator _numbers;
     private readonly ITenantContext _tenant;
+    private readonly INumberGenerator _numbering;
+    private readonly IBaseCurrencyProvider _baseCurrency;
+    private readonly IBranchSettingsProvider _branchSettings;
+    private readonly ITaxRateProvider _rates;
+    private readonly IContactNameLookup _contactNames;
+    private readonly IItemNameLookup _itemNames;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
-    private readonly ILogger<SalesOrderService> _log;
+
+    private readonly IInventoryClient _inventoryClient;
+    private readonly ICreditCheckClient _creditCheckClient;
 
     public SalesOrderService(
         SalesDbContext db,
-        IInventoryStock stock,
-        ITaxRateProvider rates,
-        INumberGenerator numbers,
         ITenantContext tenant,
+        INumberGenerator numbering,
+        IBaseCurrencyProvider baseCurrency,
+        IBranchSettingsProvider branchSettings,
+        ITaxRateProvider rates,
+        IContactNameLookup contactNames,
+        IItemNameLookup itemNames,
         ICurrentUser user,
         TimeProvider clock,
-        ILogger<SalesOrderService> log)
+        IInventoryClient inventoryClient,
+        ICreditCheckClient creditCheckClient)
     {
         _db = db;
-        _stock = stock;
-        _rates = rates;
-        _numbers = numbers;
         _tenant = tenant;
+        _numbering = numbering;
+        _baseCurrency = baseCurrency;
+        _branchSettings = branchSettings;
+        _rates = rates;
+        _contactNames = contactNames;
+        _itemNames = itemNames;
         _user = user;
         _clock = clock;
-        _log = log;
+        _inventoryClient = inventoryClient;
+        _creditCheckClient = creditCheckClient;
     }
 
-    public async Task<SalesOrderPage> ListAsync(
-        int page, int pageSize, DateOnly? from, DateOnly? to, string? status, CancellationToken ct)
+    public async Task<SalesOrderResult> CreateAsync(SaveSalesOrderRequest request, CancellationToken ct)
     {
-        page = page < 1 ? 1 : page;
-        pageSize = pageSize is < 1 or > 200 ? 20 : pageSize;
-
-        IQueryable<SalesOrder> query = _db.SalesOrders;
-
-        if (from is DateOnly start)
+        string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        if (baseCurrency is null)
         {
-            query = query.Where(o => o.DocumentDate >= start);
+            return new SalesOrderResult(SalesOrderOutcome.RatesUnavailable, Detail: "Branch base currency could not be read.");
         }
 
-        if (to is DateOnly end)
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
         {
-            query = query.Where(o => o.DocumentDate <= end);
+            return new SalesOrderResult(SalesOrderOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
         }
 
-        if (Enum.TryParse(status, ignoreCase: true, out DocumentStatus wanted))
+
+
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+
+        if (!pos.IsOk)
         {
-            query = query.Where(o => o.Status == wanted);
+            return new SalesOrderResult(SalesOrderOutcome.PlaceOfSupplyRefused, Detail: pos.Detail);
         }
 
-        int total = await query.CountAsync(ct);
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
 
-        List<SalesOrderListItem> items = await query
-            .OrderByDescending(o => o.DocumentDate)
-            .ThenByDescending(o => o.SalesOrderId)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(o => new SalesOrderListItem
-            {
-                SalesOrderId = o.SalesOrderId,
-                DocumentNo = o.DocumentNo,
-                DocumentDate = o.DocumentDate,
-                DeliveryDate = o.DeliveryDate,
-                ContactId = o.ContactId,
-                Status = o.Status.ToString(),
-                FulfilmentStatus = o.FulfilmentStatus.ToString(),
-                TotalAmount = o.TotalAmount,
-                CurrencyCode = o.CurrencyCode,
-                QuoteId = o.QuoteId,
-                LineCount = _db.SalesOrderDetails.Count(l => l.SalesOrderId == o.SalesOrderId),
-                ReservedQuantity = _db.SalesOrderDetails
-                    .Where(l => l.SalesOrderId == o.SalesOrderId)
-                    .Sum(l => (decimal?)l.ReservedQuantity) ?? 0m,
-            })
-            .ToListAsync(ct);
+        NumberAllocation alloc = await _numbering.NextAsync("SOR", request.DocumentDate, ct);
 
-        return new SalesOrderPage
+        SalesOrder SalesOrder = new()
         {
-            Items = items,
-            Page = page,
-            PageSize = pageSize,
-            TotalCount = total,
+            TransactionTypeCode = "SOR",
+            DocumentNo = alloc.Code,
+            DocumentDate = request.DocumentDate,
+            DeliveryDate = request.DeliveryDate,
+            QuoteId = request.QuoteId,
+            ContactId = request.ContactId,
+            ContactGstin = request.ContactGstin,
+            BillingAddress = request.BillingAddress,
+            ShippingAddress = request.ShippingAddress,
+            PlaceOfSupplyStateId = 0, // Master data missing PlaceOfSupplyStateId lookup for now; using 0 since it's unenforced
+            IsInterState = pos.IsInterState,
+            CurrencyCode = request.CurrencyCode ?? baseCurrency,
+            ExchangeRate = request.ExchangeRate ?? 1m,
+            Notes = request.Notes,
+            TermsAndConditions = request.TermsAndConditions,
         };
-    }
 
-    public async Task<SalesOrderDetailModel?> GetAsync(long id, CancellationToken ct)
-    {
-        SalesOrderDetailModel? order = await _db.SalesOrders
-            .Where(o => o.SalesOrderId == id)
-            .Select(o => new SalesOrderDetailModel
-            {
-                SalesOrderId = o.SalesOrderId,
-                DocumentNo = o.DocumentNo,
-                DocumentDate = o.DocumentDate,
-                DeliveryDate = o.DeliveryDate,
-                ContactId = o.ContactId,
-                ContactGstin = o.ContactGstin,
-                BillingAddress = o.BillingAddress,
-                ShippingAddress = o.ShippingAddress,
-                PlaceOfSupplyStateId = o.PlaceOfSupplyStateId,
-                IsInterState = o.IsInterState,
-                Status = o.Status.ToString(),
-                FulfilmentStatus = o.FulfilmentStatus.ToString(),
-                CurrencyCode = o.CurrencyCode,
-                ExchangeRate = o.ExchangeRate,
-                SubTotal = o.SubTotal,
-                DiscountAmount = o.DiscountAmount,
-                TaxableAmount = o.TaxableAmount,
-                CgstAmount = o.CgstAmount,
-                SgstAmount = o.SgstAmount,
-                IgstAmount = o.IgstAmount,
-                CessAmount = o.CessAmount,
-                RoundOffAmount = o.RoundOffAmount,
-                TotalAmount = o.TotalAmount,
-                QuoteId = o.QuoteId,
-                Notes = o.Notes,
-                TermsAndConditions = o.TermsAndConditions,
-                VoidReason = o.VoidReason,
-            })
-            .FirstOrDefaultAsync(ct);
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
-        if (order is null)
+        for (int i = 0; i < request.Lines.Count; i++)
         {
-            return null;
+            SaveSalesOrderLineRequest lineReq = request.Lines[i];
+
+            if (lineReq.ItemId is null && string.IsNullOrWhiteSpace(lineReq.Description))
+            {
+                return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: $"Line {i + 1} is a free-text line and must have a description.");
+            }
+            if (lineReq.ItemId is null && lineReq.AccountId is null)
+            {
+                return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: $"Line {i + 1} is a free-text line and must have an account selected.");
+            }
+
+            TaxRate? rate = null;
+            if (lineReq.TaxGroupId is long taxGroupId)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    return new SalesOrderResult(SalesOrderOutcome.RatesUnavailable, Detail: $"Tax rate for group {taxGroupId} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = lineReq.Quantity,
+                UnitPrice = lineReq.UnitPrice,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = lineReq.DiscountAmount,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                TaxTreatment = lineReq.TaxTreatment,
+                Rate = rate,
+                ConversionFactor = lineReq.ConversionFactor,
+            };
+
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
+            SalesOrderDetail detail = new()
+            {
+                LineNumber = i + 1,
+                ItemId = lineReq.ItemId,
+                Description = lineReq.Description,
+                HsnSacCode = lineReq.HsnSacCode,
+                WarehouseId = lineReq.WarehouseId,
+                Quantity = lineReq.Quantity,
+                UomId = lineReq.UomId,
+                ConversionFactor = lineReq.ConversionFactor,
+                BaseQuantity = computed.BaseQuantity,
+                UnitPrice = lineReq.UnitPrice,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxTreatment = lineReq.TaxTreatment,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineType = lineReq.LineType,
+                AccountId = lineReq.AccountId,
+                FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                LineTotal = computed.LineTotal,
+                ItemBatchId = lineReq.ItemBatchId,
+                LineNotes = lineReq.LineNotes,
+            };
+
+            foreach (var comp in computed.Components)
+            {
+                detail.Taxes.Add(new SalesOrderDetailTax
+                {
+                    TaxComponent = comp.Component,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * SalesOrder.ExchangeRate,
+                });
+            }
+
+            SalesOrder.Lines.Add(detail);
         }
 
-        order.Lines = await _db.SalesOrderDetails
-            .Where(l => l.SalesOrderId == id)
-            .OrderBy(l => l.LineNumber)
-            .Select(l => new SalesOrderLineModel
-            {
-                SalesOrderDetailId = l.SalesOrderDetailId,
-                LineNumber = l.LineNumber,
-                ItemId = l.ItemId,
-                Description = l.Description,
-                HsnSacCode = l.HsnSacCode,
-                WarehouseId = l.WarehouseId,
-                Quantity = l.Quantity,
-                UomId = l.UomId,
-                UnitPrice = l.UnitPrice,
-                DiscountAmount = l.DiscountAmount,
-                TaxableAmount = l.TaxableAmount,
-                TaxAmount = l.TaxAmount,
-                LineTotal = l.LineTotal,
-                ReservedQuantity = l.ReservedQuantity,
-                DeliveredQuantity = l.DeliveredQuantity,
-                LineNotes = l.LineNotes,
-            })
-            .ToListAsync(ct);
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
 
-        order.LineCount = order.Lines.Count;
-        order.ReservedQuantity = order.Lines.Sum(l => l.ReservedQuantity);
-        return order;
+        SalesOrder.SubTotal = totals.SubTotal;
+        SalesOrder.DiscountAmount = totals.DiscountAmount;
+        SalesOrder.TaxableAmount = totals.TaxableAmount;
+        SalesOrder.CgstAmount = totals.CgstAmount;
+        SalesOrder.SgstAmount = totals.SgstAmount;
+        SalesOrder.IgstAmount = totals.IgstAmount;
+        SalesOrder.CessAmount = totals.CessAmount;
+        SalesOrder.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
+        SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
+
+        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
+        if (!eval.Allowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+        }
+
+        // A new order is a draft and nothing more. It used to be stamped
+        // PostedAt/PostedBy here as well, which is what tells a voided order that
+        // was live apart from one that was abandoned as a draft — so every
+        // abandoned draft read as an order that had once been confirmed.
+        SalesOrder.Status = DocumentStatus.Draft;
+        SalesOrder.FulfilmentStatus = FulfilmentStatus.Open;
+
+        _db.SalesOrders.Add(SalesOrder);
+        await _db.SaveChangesAsync(ct);
+
+        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    public async Task<SalesOrderResult> UpdateAsync(long SalesOrderId, SaveSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? SalesOrder = await _db.SalesOrders
+            .Include(q => q.Lines)
+            .ThenInclude(l => l.Taxes)
+            .FirstOrDefaultAsync(q => q.SalesOrderId == SalesOrderId, ct);
+
+        if (SalesOrder is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+        }
+
+        if (!BelongsToCaller(SalesOrder))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        // The lifecycle answers this for every document in the product, so a
+        // sales order does not get its own opinion about whether ReadyToPost is
+        // still editable.
+        DocumentTransition editable = DocumentLifecycle.CanEdit(SalesOrder.Status);
+        if (!editable.IsAllowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LifecycleRefused, Detail: editable.Detail);
+        }
+
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.RatesUnavailable, Detail: "Branch settings could not be read.");
+        }
+
+
+
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+
+        if (!pos.IsOk)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.PlaceOfSupplyRefused, Detail: pos.Detail);
+        }
+
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+
+        SalesOrder.DocumentDate = request.DocumentDate;
+        SalesOrder.DeliveryDate = request.DeliveryDate;
+        SalesOrder.ContactId = request.ContactId;
+        SalesOrder.ContactGstin = request.ContactGstin;
+        SalesOrder.BillingAddress = request.BillingAddress;
+        SalesOrder.ShippingAddress = request.ShippingAddress;
+        SalesOrder.IsInterState = pos.IsInterState;
+        
+        if (request.CurrencyCode != null)
+        {
+            SalesOrder.CurrencyCode = request.CurrencyCode;
+        }
+        if (request.ExchangeRate.HasValue)
+        {
+            SalesOrder.ExchangeRate = request.ExchangeRate.Value;
+        }
+
+        SalesOrder.Notes = request.Notes;
+        SalesOrder.TermsAndConditions = request.TermsAndConditions;
+
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
+        SalesOrder.Lines.Clear();
+
+        for (int i = 0; i < request.Lines.Count; i++)
+        {
+            SaveSalesOrderLineRequest lineReq = request.Lines[i];
+
+            if (lineReq.ItemId is null && string.IsNullOrWhiteSpace(lineReq.Description))
+            {
+                return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: $"Line {i + 1} is a free-text line and must have a description.");
+            }
+            if (lineReq.ItemId is null && lineReq.AccountId is null)
+            {
+                return new SalesOrderResult(SalesOrderOutcome.LineInvalid, Detail: $"Line {i + 1} is a free-text line and must have an account selected.");
+            }
+
+            TaxRate? rate = null;
+            if (lineReq.TaxGroupId is long taxGroupId)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    return new SalesOrderResult(SalesOrderOutcome.RatesUnavailable, Detail: $"Tax rate for group {taxGroupId} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = lineReq.Quantity,
+                UnitPrice = lineReq.UnitPrice,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = lineReq.DiscountAmount,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                TaxTreatment = lineReq.TaxTreatment,
+                Rate = rate,
+                ConversionFactor = lineReq.ConversionFactor,
+            };
+
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
+            SalesOrderDetail detail = new()
+            {
+                LineNumber = i + 1,
+                ItemId = lineReq.ItemId,
+                Description = lineReq.Description,
+                HsnSacCode = lineReq.HsnSacCode,
+                WarehouseId = lineReq.WarehouseId,
+                Quantity = lineReq.Quantity,
+                UomId = lineReq.UomId,
+                ConversionFactor = lineReq.ConversionFactor,
+                BaseQuantity = computed.BaseQuantity,
+                UnitPrice = lineReq.UnitPrice,
+                IsPriceInclusive = lineReq.IsPriceInclusive,
+                DiscountPercent = lineReq.DiscountPercent,
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxTreatment = lineReq.TaxTreatment,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineType = lineReq.LineType,
+                AccountId = lineReq.AccountId,
+                FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                LineTotal = computed.LineTotal,
+                ItemBatchId = lineReq.ItemBatchId,
+                LineNotes = lineReq.LineNotes,
+            };
+
+            foreach (var comp in computed.Components)
+            {
+                detail.Taxes.Add(new SalesOrderDetailTax
+                {
+                    TaxComponent = comp.Component,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * SalesOrder.ExchangeRate,
+                });
+            }
+
+            SalesOrder.Lines.Add(detail);
+        }
+
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
+
+        SalesOrder.SubTotal = totals.SubTotal;
+        SalesOrder.DiscountAmount = totals.DiscountAmount;
+        SalesOrder.TaxableAmount = totals.TaxableAmount;
+        SalesOrder.CgstAmount = totals.CgstAmount;
+        SalesOrder.SgstAmount = totals.SgstAmount;
+        SalesOrder.IgstAmount = totals.IgstAmount;
+        SalesOrder.CessAmount = totals.CessAmount;
+        SalesOrder.RoundOffAmount = Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
+        SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
+
+        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
+        if (!eval.Allowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+        }
+
+        await _db.SaveChangesAsync(ct);
+
+        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    public async Task<SalesOrderResult> VoidAsync(long SalesOrderId, VoidSalesOrderRequest request, CancellationToken ct)
+    {
+        // Loaded with its lines, not by key: the reservation released below is
+        // built from them, and FindAsync leaves the collection empty — so this
+        // used to release nothing at all and quietly report success.
+        SalesOrder? SalesOrder = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == SalesOrderId, ct);
+
+        if (SalesOrder is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+        }
+
+        if (!BelongsToCaller(SalesOrder))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        // What points *at* this order — an invoice raised from it or a challan
+        // delivered against it. It previously asked whether the order itself
+        // existed, which it always does by this line, so every void was refused
+        // as having downstream documents and no sales order could be withdrawn.
+        bool hasDownstream = await _db.Invoices.AnyAsync(i => i.SalesOrderId == SalesOrderId, ct)
+            || await _db.DeliveryChallans.AnyAsync(d => d.SalesOrderId == SalesOrderId, ct);
+
+        DocumentTransition transition = DocumentLifecycle.CanVoid(SalesOrder.Status, hasDownstream, request.Reason);
+        if (!transition.IsAllowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // Only a confirmed order holds a reservation. Releasing against a draft
+        // would hand back stock that was never taken, which reads as a windfall
+        // on the next availability check.
+        if (SalesOrder.Status == DocumentStatus.Posted)
+        {
+            var releaseReq = new ReleaseStockRequest
+            {
+                OrgId = _tenant.OrgId.GetValueOrDefault(),
+                CustomerId = _tenant.CustomerId.GetValueOrDefault(),
+                Lines = SalesOrder.Lines.Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
+                    .Select(l => new ReleaseStockLine { ItemId = l.ItemId!.Value, Quantity = l.Quantity })
+                    .ToList()
+            };
+
+            if (releaseReq.Lines.Count > 0)
+            {
+                ReleaseStockResponse releaseRes = await _inventoryClient.ReleaseAsync(releaseReq, ct);
+                if (!releaseRes.Success)
+                {
+                    // The void is refused rather than recorded, because a voided
+                    // order whose reservation is still held is stock nobody can
+                    // sell and no document explains. Ask again; it is idempotent.
+                    return new SalesOrderResult(
+                        SalesOrderOutcome.InsufficientStock,
+                        Detail: "The reservation held by this order could not be released, so it "
+                            + "has not been voided. Try again in a moment.");
+                }
+            }
+        }
+
+        SalesOrder.FulfilmentStatus = FulfilmentStatus.Cancelled;
+        SalesOrder.Status = DocumentStatus.Void;
+        SalesOrder.VoidedAt = _clock.GetUtcNow();
+        SalesOrder.VoidedBy = _user.UserId;
+        SalesOrder.VoidReason = request.Reason;
+
+        await _db.SaveChangesAsync(ct);
+        return new SalesOrderResult(SalesOrderOutcome.Ok);
     }
 
     /// <summary>
-    /// Creates or replaces a draft, recomputing every line's tax from the rates
-    /// in force on the document date.
+    /// Confirming the order: the customer has committed, so the stock is taken
+    /// off the shelf for them.
     ///
-    /// <b>The tax is never taken from the caller.</b> A browser that computed its
-    /// own totals would be a second implementation of the GST rules, free to
-    /// disagree with the one that files the return.
+    /// <b>Nothing reaches the ledger.</b> An order is a promise, and a promise
+    /// is not a supply — the double entry is the invoice's job, and posting one
+    /// here would recognise revenue on goods that have not left. What it does do
+    /// is reserve: the quantity stays in stock and in the valuation but stops
+    /// being available, which is the only thing standing between two salespeople
+    /// and the same last unit.
     /// </summary>
-    public async Task<SalesOrderResult> SaveAsync(
-        long? id, SaveSalesOrderRequest request, CancellationToken ct)
+    public async Task<SalesOrderResult> ConfirmAsync(long SalesOrderId, CancellationToken ct)
     {
-        if (request.Lines.Count == 0)
+        SalesOrder? SalesOrder = await _db.SalesOrders
+            .Include(q => q.Lines)
+            .FirstOrDefaultAsync(q => q.SalesOrderId == SalesOrderId, ct);
+
+        if (SalesOrder is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+        }
+
+        if (!BelongsToCaller(SalesOrder))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        DocumentTransition transition = DocumentLifecycle.CanPost(SalesOrder.Status, SalesOrder.Lines.Count);
+        if (!transition.IsAllowed)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        var reserveReq = new ReserveStockRequest
+        {
+            OrgId = _tenant.OrgId.GetValueOrDefault(),
+            CustomerId = _tenant.CustomerId.GetValueOrDefault(),
+            Lines = SalesOrder.Lines.Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
+                .Select(l => new ReserveStockLine { ItemId = l.ItemId!.Value, Quantity = l.Quantity })
+                .ToList()
+        };
+
+        // Reserved before the status moves, not after: a confirmed order whose
+        // reservation failed is one the screen says is committed and the shelf
+        // says is available.
+        if (reserveReq.Lines.Count > 0)
+        {
+            ReserveStockResponse reserveRes = await _inventoryClient.ReserveAsync(reserveReq, ct);
+            if (!reserveRes.Success)
+            {
+                return new SalesOrderResult(
+                    SalesOrderOutcome.InsufficientStock,
+                    Detail: await ShortfallDetailAsync(reserveRes, ct));
+            }
+
+            foreach (SalesOrderDetail line in SalesOrder.Lines)
+            {
+                if (line.LineType == DocumentLineType.Stock && line.ItemId.HasValue)
+                {
+                    line.ReservedQuantity = line.Quantity;
+                }
+            }
+        }
+
+        SalesOrder.Status = DocumentStatus.Posted;
+        SalesOrder.FulfilmentStatus = FulfilmentStatus.Open;
+        SalesOrder.PostedAt = _clock.GetUtcNow();
+        SalesOrder.PostedBy = _user.UserId;
+
+        await _db.SaveChangesAsync(ct);
+        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    /// <summary>
+    /// What the items on a document can still be promised, with their names.
+    ///
+    /// <b>Advisory.</b> The authoritative check is the guarded reservation taken
+    /// on confirm — this exists so a refusal is rare rather than impossible, and
+    /// the screen labels it as a snapshot rather than a promise.
+    /// </summary>
+    public async Task<List<SalesOrderAvailabilityLine>> GetAvailabilityAsync(
+        IReadOnlyCollection<long> itemIds, CancellationToken ct)
+    {
+        if (itemIds.Count == 0
+            || _tenant.OrgId is not Guid orgId
+            || _tenant.CustomerId is not Guid customerId)
+        {
+            return [];
+        }
+
+        List<long> ids = [.. itemIds.Distinct()];
+
+        StockAvailabilityResponse stock = await _inventoryClient.GetAvailabilityAsync(
+            new StockAvailabilityRequest { OrgId = orgId, CustomerId = customerId, ItemIds = ids },
+            ct);
+
+        // Named here rather than in Inventory: the name lookup is already
+        // batched on this side, and Inventory answering with labels would be it
+        // guessing what a sales screen wants to display.
+        IReadOnlyDictionary<long, NamedRef> names = await _itemNames.ResolveAsync(ids, ct);
+
+        return [.. stock.Lines.Select(line => new SalesOrderAvailabilityLine
+        {
+            ItemId = line.ItemId,
+            ItemLabel = names.TryGetValue(line.ItemId, out NamedRef? named)
+                ? $"{named.Code} - {named.Name}"
+                : null,
+            QuantityOnHand = line.QuantityOnHand,
+            QuantityReserved = line.QuantityReserved,
+            QuantityAvailable = line.QuantityAvailable,
+            IsTracked = line.IsTracked,
+        })];
+    }
+
+    /// <summary>
+    /// Closing an order short: no more is coming, and whatever is still reserved
+    /// goes back on the shelf.
+    ///
+    /// <b>Not a void.</b> A void says the order should not have existed; a
+    /// short-close says it existed, was partly honoured, and both sides have
+    /// agreed to stop. Four of ten delivered and closed is a completed piece of
+    /// trading history — voiding it would withdraw a document that shipped
+    /// goods, and leave the four with nothing behind them.
+    ///
+    /// It is also what makes <see cref="FulfilmentStatus.Closed"/> readable: the
+    /// status covers both "everything went out" and "nothing further is coming",
+    /// so the reason recorded here is what tells the two apart afterwards.
+    /// </summary>
+    public async Task<SalesOrderResult> ShortCloseAsync(
+        long SalesOrderId, ShortCloseSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? SalesOrder = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == SalesOrderId, ct);
+
+        if (SalesOrder is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+        }
+
+        if (!BelongsToCaller(SalesOrder))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        // Only a confirmed order can be closed short. A draft has committed
+        // nothing and is abandoned by voiding it; a voided one is already
+        // finished.
+        if (SalesOrder.Status != DocumentStatus.Posted)
         {
             return new SalesOrderResult(
-                SalesOrderOutcome.NoLines, id, "An order needs at least one line.");
+                SalesOrderOutcome.LifecycleRefused,
+                Detail: "Only a confirmed order can be closed short. A draft that is not going "
+                    + "ahead is voided instead, with a reason.");
+        }
+
+        if (SalesOrder.FulfilmentStatus is FulfilmentStatus.Closed or FulfilmentStatus.Cancelled)
+        {
+            return new SalesOrderResult(
+                SalesOrderOutcome.AlreadyFulfilled,
+                Detail: "This order is already closed. Nothing further was expected against it.");
+        }
+
+        // What is still being held: ordered less delivered, never negative. A
+        // line delivered in full holds nothing back and contributes nothing to
+        // the release.
+        var toRelease = SalesOrder.Lines
+            .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
+            .Select(l => new ReleaseStockLine
+            {
+                ItemId = l.ItemId!.Value,
+                Quantity = Math.Max(0m, l.ReservedQuantity - l.DeliveredQuantity),
+            })
+            .Where(l => l.Quantity > 0m)
+            .ToList();
+
+        if (toRelease.Count > 0)
+        {
+            ReleaseStockResponse released = await _inventoryClient.ReleaseAsync(
+                new ReleaseStockRequest
+                {
+                    OrgId = _tenant.OrgId.GetValueOrDefault(),
+                    CustomerId = _tenant.CustomerId.GetValueOrDefault(),
+                    Lines = toRelease,
+                },
+                ct);
+
+            if (!released.Success)
+            {
+                // Refused rather than recorded, for the same reason a void is:
+                // an order marked closed while still holding stock is stock
+                // nobody can sell and no document explains.
+                return new SalesOrderResult(
+                    SalesOrderOutcome.InsufficientStock,
+                    Detail: "The stock this order is still holding could not be released, so it "
+                        + "has not been closed. Try again in a moment.");
+            }
+        }
+
+        // The lines stop holding anything. Delivered quantities are untouched —
+        // they are what actually shipped, and closing the order does not unship
+        // them.
+        foreach (SalesOrderDetail line in SalesOrder.Lines)
+        {
+            line.ReservedQuantity = line.DeliveredQuantity;
+        }
+
+        SalesOrder.FulfilmentStatus = FulfilmentStatus.Closed;
+        SalesOrder.ShortCloseReason = request.Reason.Trim();
+
+        await _db.SaveChangesAsync(ct);
+        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    /// <summary>
+    /// An accepted quote, turned into an order.
+    ///
+    /// <b>The lines are read from the quote, never sent by the caller</b>, and
+    /// they go through <see cref="CreateAsync"/> like any other order — so the
+    /// tax is recomputed at the rates in force on the order's own date rather
+    /// than copied from a quote that may have been priced months ago. That is
+    /// also why nothing here touches <c>GstCalculator</c>: one path computes an
+    /// order, and this is not a second one.
+    /// </summary>
+    public async Task<SalesOrderResult> CreateFromQuoteAsync(
+        long quoteId, CreateOrderFromQuoteRequest request, CancellationToken ct)
+    {
+        Quote? quote = await _db.Quotes
+            .Include(q => q.Lines)
+            .FirstOrDefaultAsync(q => q.QuoteId == quoteId, ct);
+
+        if (quote is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound, Detail: "No such quote.");
+        }
+
+        if (_tenant.OrgId is not Guid callerOrgId || quote.OrgId != callerOrgId)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        if (quote.Status != DocumentStatus.Posted)
+        {
+            return new SalesOrderResult(
+                SalesOrderOutcome.QuoteNotConvertible,
+                Detail: "Only a quote the customer has accepted becomes an order. Approve the "
+                    + "quote first.");
+        }
+
+        if (await _db.SalesOrders.AnyAsync(o => o.QuoteId == quoteId, ct))
+        {
+            return new SalesOrderResult(
+                SalesOrderOutcome.QuoteNotConvertible,
+                Detail: "This quote has already been converted to a sales order.");
         }
 
         DateOnly documentDate = request.DocumentDate
             ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
-        SalesOrder? order;
-
-        if (id is long existingId)
+        SaveSalesOrderRequest order = new()
         {
-            order = await _db.SalesOrders.FirstOrDefaultAsync(o => o.SalesOrderId == existingId, ct);
-
-            if (order is null)
-            {
-                return new SalesOrderResult(SalesOrderOutcome.NotFound);
-            }
-
-            if (order.Status != DocumentStatus.Draft)
-            {
-                return new SalesOrderResult(
-                    SalesOrderOutcome.NotDraft, existingId,
-                    "The order is confirmed and holding stock. Cancel it, or raise an amendment.");
-            }
-
-            await _db.SalesOrderDetails
-                .Where(l => l.SalesOrderId == existingId)
-                .ExecuteDeleteAsync(ct);
-        }
-        else
-        {
-            // The number is taken now, at creation, not at confirm. That is the
-            // rule T0.3 settled and the unique index enforces it — there is no
-            // filter on it, so two unnumbered drafts would collide.
-            //
-            // Both ways keep the series gapless; the difference is whether a gap
-            // is prevented or explained, and explained was the choice. The
-            // consequence is not optional: a number issued has been spent, so an
-            // abandoned draft is cancelled and keeps its number rather than being
-            // deleted.
-            NumberAllocation created;
-
-            try
-            {
-                created = await _numbers.NextAsync(TypeCode, documentDate, ct);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return new SalesOrderResult(
-                    SalesOrderOutcome.SeriesMissing, null,
-                    "No SOR numbering series exists for this branch, so the order could not be "
-                        + $"numbered and nothing was saved. Re-run the branch seed. ({ex.Message})");
-            }
-
-            order = new SalesOrder
-            {
-                TransactionTypeCode = TypeCode,
-                DocumentNo = created.Code,
-            };
-
-            _db.SalesOrders.Add(order);
-        }
-
-        IReadOnlyDictionary<long, TaxRate>? rates = await _rates.GetRatesAsync(documentDate, ct);
-
-        if (rates is null)
-        {
-            // Null is "could not ask", which is not the same as "no rates" and
-            // must not be treated as zero tax.
-            return new SalesOrderResult(
-                SalesOrderOutcome.InventoryUnreachable, id,
-                "The tax rates could not be read, so nothing was saved. Try again shortly.");
-        }
-
-        order.ContactId = request.ContactId;
-        order.DocumentDate = documentDate;
-        order.DeliveryDate = request.DeliveryDate;
-        order.QuoteId = request.QuoteId;
-        order.CurrencyCode = request.CurrencyCode ?? "INR";
-        order.ExchangeRate = request.ExchangeRate ?? 1m;
-        order.PlaceOfSupplyStateId = request.PlaceOfSupplyStateId;
-        order.Notes = request.Notes;
-        order.TermsAndConditions = request.TermsAndConditions;
-
-        await _db.SaveChangesAsync(ct);
-
-        var context = new TaxContext(order.IsInterState, DiscountBeforeTax: true);
-        var results = new List<TaxLineResult>();
-        int lineNumber = 0;
-
-        foreach (SaveSalesOrderLineRequest line in request.Lines)
-        {
-            TaxRate? rate = line.TaxMasterId is long groupId && rates.TryGetValue(groupId, out TaxRate? found)
-                ? found
-                : null;
-
-            TaxLineResult computed = GstCalculator.Compute(
-                new TaxLineInput
+            DocumentDate = documentDate,
+            DeliveryDate = request.DeliveryDate,
+            ContactId = quote.ContactId,
+            QuoteId = quote.QuoteId,
+            ContactGstin = quote.ContactGstin,
+            PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
+            BillingAddress = quote.BillingAddress,
+            ShippingAddress = quote.ShippingAddress,
+            CurrencyCode = quote.CurrencyCode,
+            ExchangeRate = quote.ExchangeRate,
+            Notes = request.Notes ?? quote.Notes,
+            TermsAndConditions = quote.TermsAndConditions,
+            Lines = [.. quote.Lines
+                .OrderBy(l => l.LineNumber)
+                .Select(l => new SaveSalesOrderLineRequest
                 {
-                    Quantity = line.Quantity,
-                    UnitPrice = line.UnitPrice,
-                    DiscountPercent = line.DiscountPercent,
-                    Rate = rate,
-                    TaxTreatment = rate is null ? TaxTreatment.Exempt : TaxTreatment.Taxable,
-                },
-                context);
+                    ItemId = l.ItemId,
+                    Description = l.Description,
+                    HsnSacCode = l.HsnSacCode,
+                    WarehouseId = l.WarehouseId,
+                    Quantity = l.Quantity,
+                    UomId = l.UomId,
+                    ConversionFactor = l.ConversionFactor,
+                    UnitPrice = l.UnitPrice,
+                    IsPriceInclusive = l.IsPriceInclusive,
+                    DiscountPercent = l.DiscountPercent,
+                    DiscountAmount = l.DiscountAmount,
+                    TaxTreatment = l.TaxTreatment,
+                    TaxGroupId = l.TaxGroupId,
+                    LineType = l.LineType,
+                    AccountId = l.AccountId,
+                    FixedAssetCategoryId = l.FixedAssetCategoryId,
+                    ItemBatchId = l.ItemBatchId,
+                    LineNotes = l.LineNotes,
+                })],
+        };
 
-            results.Add(computed);
-
-            _db.SalesOrderDetails.Add(new SalesOrderDetail
-            {
-                SalesOrderId = order.SalesOrderId,
-                LineNumber = ++lineNumber,
-                ItemId = line.ItemId,
-                Description = line.Description,
-                WarehouseId = line.WarehouseId,
-                Quantity = line.Quantity,
-                UomId = line.UomId,
-                BaseQuantity = computed.BaseQuantity,
-                UnitPrice = line.UnitPrice,
-                DiscountPercent = line.DiscountPercent,
-                DiscountAmount = computed.DiscountAmount,
-                GrossAmount = computed.GrossAmount,
-                TaxableAmount = computed.TaxableAmount,
-                TaxAmount = computed.TaxAmount,
-                LineTotal = computed.LineTotal,
-                TaxGroupId = line.TaxMasterId,
-                TaxMasterId = rate?.TaxMasterId,
-                LineNotes = line.LineNotes,
-            });
-        }
-
-        TaxDocumentTotals totals = GstCalculator.Totals(results);
-
-        order.SubTotal = totals.SubTotal;
-        order.DiscountAmount = totals.DiscountAmount;
-        order.TaxableAmount = totals.TaxableAmount;
-        order.CgstAmount = totals.CgstAmount;
-        order.SgstAmount = totals.SgstAmount;
-        order.IgstAmount = totals.IgstAmount;
-        order.CessAmount = totals.CessAmount;
-        order.TotalAmount = totals.TaxableAmount + totals.CgstAmount + totals.SgstAmount
-            + totals.IgstAmount + totals.CessAmount;
-        order.TotalAmountBase = order.ExchangeRate == 1m
-            ? order.TotalAmount
-            : Math.Round(order.TotalAmount / order.ExchangeRate, 2, MidpointRounding.AwayFromZero);
-
-        await _db.SaveChangesAsync(ct);
-        return new SalesOrderResult(SalesOrderOutcome.Ok, order.SalesOrderId);
+        // The place of supply is re-resolved from the GSTIN rather than copied:
+        // the quote stored the answer (IsInterState), and copying an answer is
+        // how a branch that has since changed state files the wrong return.
+        return await CreateAsync(order, ct);
     }
 
+    public async Task<SalesOrderViewResult> GetAsync(long SalesOrderId, CancellationToken ct)
+    {
+        var found = await _db.SalesOrders
+            .Include(q => q.Lines)
+            .ThenInclude(l => l.Taxes)
+            .Where(q => q.SalesOrderId == SalesOrderId)
+            .Select(q => new { q.OrgId, View = new SalesOrderView
+            {
+                SalesOrderId = q.SalesOrderId,
+                DocumentNo = q.DocumentNo,
+                DocumentDate = q.DocumentDate,
+                DeliveryDate = q.DeliveryDate,
+                FulfilmentStatus = q.FulfilmentStatus.ToString(),
+                ContactId = q.ContactId,
+                CurrencyCode = q.CurrencyCode,
+                TaxableAmount = q.TaxableAmount,
+                TotalAmount = q.TotalAmount,
+                Status = q.Status.ToString(),
+                IsInterState = q.IsInterState,
+                InvoicedDocumentId = _db.Invoices.Where(o => o.SalesOrderId == q.SalesOrderId).Select(o => (long?)o.InvoiceId).FirstOrDefault(),
+                ContactGstin = q.ContactGstin,
+                PlaceOfSupplyStateId = q.PlaceOfSupplyStateId,
+                BillingAddress = q.BillingAddress,
+                ShippingAddress = q.ShippingAddress,
+                ExchangeRate = q.ExchangeRate,
+                SubTotal = q.SubTotal,
+                DiscountAmount = q.DiscountAmount,
+                CgstAmount = q.CgstAmount,
+                SgstAmount = q.SgstAmount,
+                IgstAmount = q.IgstAmount,
+                CessAmount = q.CessAmount,
+                RoundOffAmount = q.RoundOffAmount,
+                TotalAmountBase = q.TotalAmountBase,
+                Notes = q.Notes,
+                TermsAndConditions = q.TermsAndConditions,
+                PostedAt = q.PostedAt,
+                VoidedAt = q.VoidedAt,
+                VoidReason = q.VoidReason,
+                ShortCloseReason = q.ShortCloseReason,
+                Lines = q.Lines.Select(l => new SalesOrderLineView
+                {
+                    SalesOrderDetailId = l.SalesOrderDetailId,
+                    LineNumber = l.LineNumber,
+                    ItemId = l.ItemId,
+                    Description = l.Description,
+                    HsnSacCode = l.HsnSacCode,
+                    WarehouseId = l.WarehouseId,
+                    Quantity = l.Quantity,
+                    UomId = l.UomId,
+                    ConversionFactor = l.ConversionFactor,
+                    BaseQuantity = l.BaseQuantity,
+                    ReservedQuantity = l.ReservedQuantity,
+                    DeliveredQuantity = l.DeliveredQuantity,
+                    UnitPrice = l.UnitPrice,
+                    IsPriceInclusive = l.IsPriceInclusive,
+                    DiscountPercent = l.DiscountPercent,
+                    DiscountAmount = l.DiscountAmount,
+                    GrossAmount = l.GrossAmount,
+                    TaxableAmount = l.TaxableAmount,
+                    TaxTreatment = l.TaxTreatment.ToString(),
+                    TaxMasterId = l.TaxMasterId,
+                    TaxGroupId = l.TaxGroupId,
+                    TaxAmount = l.TaxAmount,
+                    LineType = l.LineType.ToString(),
+                    AccountId = l.AccountId,
+                    FixedAssetCategoryId = l.FixedAssetCategoryId,
+                    LineTotal = l.LineTotal,
+                    ItemBatchId = l.ItemBatchId,
+                    LineNotes = l.LineNotes,
+                    Taxes = l.Taxes.Select(t => new SalesOrderLineTaxView
+                    {
+                        SalesOrderDetailTaxId = t.SalesOrderDetailTaxId,
+                        TaxComponent = t.TaxComponent.ToString(),
+                        SubAccountId = t.SubAccountId,
+                        Rate = t.Rate,
+                        TaxableAmount = t.TaxableAmount,
+                        Amount = t.Amount,
+                        AmountBase = t.AmountBase,
+                    }).ToList()
+                }).ToList()
+            } }).FirstOrDefaultAsync(ct);
+
+        if (found is null)
+        {
+            return new SalesOrderViewResult(SalesOrderOutcome.NotFound);
+        }
+
+        // The OrgId is carried out of the projection and never onto the view:
+        // the caller has to be told whose row this is, and the browser does not.
+        if (_tenant.OrgId is not Guid callerOrgId || found.OrgId != callerOrgId)
+        {
+            return new SalesOrderViewResult(SalesOrderOutcome.Forbidden);
+        }
+
+        SalesOrderView SalesOrder = found.View;
+
+        IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync([SalesOrder.ContactId], ct);
+        if (contacts.TryGetValue(SalesOrder.ContactId, out NamedRef? contactName))
+        {
+            SalesOrder.ContactName = contactName.Name;
+            SalesOrder.ContactCode = contactName.Code;
+        }
+
+        var itemIds = SalesOrder.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToList();
+        if (itemIds.Count > 0)
+        {
+            IReadOnlyDictionary<long, NamedRef> items = await _itemNames.ResolveAsync(itemIds, ct);
+            foreach (var line in SalesOrder.Lines)
+            {
+                if (line.ItemId.HasValue && items.TryGetValue(line.ItemId.Value, out NamedRef? itemName))
+                {
+                    line.ItemLabel = $"{itemName.Code} - {itemName.Name}";
+                }
+            }
+        }
+
+        return new SalesOrderViewResult(SalesOrderOutcome.Ok, SalesOrder);
+    }
+
+    /// <summary>How many rows one page may ask for, however large a number it sends.</summary>
+    private const int MaxPageSize = 200;
+
     /// <summary>
-    /// Confirms the order: takes its number and holds the stock.
+    /// One page of sales orders, newest first, with the total that matched.
     ///
-    /// <b>The reservation is the last thing done and the first thing undone.</b>
-    /// The number and the status change go in inside a transaction that is not
-    /// committed until Inventory has said yes, so a shortage leaves a draft with
-    /// no number spent. If the commit itself then fails, the stock is released
-    /// again — the one ordering that never leaves stock held by an order that
-    /// does not exist.
+    /// <b>Both bounds are clamped rather than trusted.</b> <c>skip</c> comes off
+    /// a query string, and a negative one is not merely odd — <c>Skip(-1)</c>
+    /// throws on some providers and silently returns the first page on others,
+    /// so a hand-edited URL either 500s or quietly shows page one while the pager
+    /// says otherwise. <c>take</c> is clamped at both ends for the same reason
+    /// and a second one: <c>take=1000000</c> is a way to ask for every order in
+    /// the branch in a single response.
+    ///
+    /// The projection is a <see cref="SalesOrderListItem"/> built in the database
+    /// rather than an entity read and mapped after, so the fifteen columns a list
+    /// screen shows are the fifteen that cross the wire — not the header's forty
+    /// plus every line and tax row hanging off it.
     /// </summary>
-    public async Task<SalesOrderResult> ConfirmAsync(long id, CancellationToken ct)
+    public async Task<SalesOrderListPage> ListAsync(
+        int skip, int take, string? status, string? search, CancellationToken ct)
     {
-        SalesOrder? order = await _db.SalesOrders.FirstOrDefaultAsync(o => o.SalesOrderId == id, ct);
+        int safeSkip = Math.Max(skip, 0);
+        int safeTake = Math.Clamp(take, 1, MaxPageSize);
 
-        if (order is null)
+        IQueryable<SalesOrder> query = _db.SalesOrders;
+
+        if (!string.IsNullOrWhiteSpace(status)
+            && Enum.TryParse(status.Trim(), ignoreCase: true, out DocumentStatus wanted))
         {
-            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+            query = query.Where(o => o.Status == wanted);
         }
 
-        if (order.Status != DocumentStatus.Draft && order.Status != DocumentStatus.ReadyToPost)
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            return new SalesOrderResult(
-                SalesOrderOutcome.NotDraft, id, "The order has already been confirmed.");
+            string term = search.Trim();
+            query = query.Where(o => o.DocumentNo.Contains(term));
         }
 
-        List<SalesOrderDetail> lines = await _db.SalesOrderDetails
-            .Where(l => l.SalesOrderId == id)
-            .OrderBy(l => l.LineNumber)
+        // Counted before paging: the screen has to say how many matched, not how
+        // many fitted on the page.
+        int total = await query.CountAsync(ct);
+
+        List<SalesOrderListItem> rows = await query
+            .OrderByDescending(o => o.DocumentDate)
+            .ThenByDescending(o => o.DocumentNo)
+            .Skip(safeSkip)
+            .Take(safeTake)
+            .Select(o => new SalesOrderListItem
+            {
+                SalesOrderId = o.SalesOrderId,
+                DocumentNo = o.DocumentNo,
+                DocumentDate = o.DocumentDate,
+                QuoteId = o.QuoteId,
+                DeliveryDate = o.DeliveryDate,
+                FulfilmentStatus = o.FulfilmentStatus.ToString(),
+                ContactId = o.ContactId,
+                CurrencyCode = o.CurrencyCode,
+                TaxableAmount = o.TaxableAmount,
+                TotalAmount = o.TotalAmount,
+                Status = o.Status.ToString(),
+                IsInterState = o.IsInterState,
+                InvoicedDocumentId = _db.Invoices
+                    .Where(i => i.SalesOrderId == o.SalesOrderId)
+                    .Select(i => (long?)i.InvoiceId)
+                    .FirstOrDefault(),
+            })
             .ToListAsync(ct);
 
-        if (lines.Count == 0)
+        // One call for the whole page, never one per row — Contacts is another
+        // database and this is the list screen that would make it an N+1.
+        List<long> contactIds = [.. rows.Select(r => r.ContactId).Distinct()];
+        if (contactIds.Count > 0)
         {
-            return new SalesOrderResult(SalesOrderOutcome.NoLines, id, "The order has no lines.");
-        }
-
-        if (_tenant.CustomerId is not Guid customerId || _tenant.OrgId is not Guid orgId)
-        {
-            return new SalesOrderResult(SalesOrderOutcome.InvalidValue, id, "No branch in context.");
-        }
-
-        // Only stock lines reserve. A service or a description-only line has no
-        // quantity to hold, and asking Inventory about it would be asking about
-        // an item that does not exist.
-        IReadOnlyList<StockLine> claims =
-        [
-            .. lines
-                .Where(l => l.ItemId is not null && l.LineType == DocumentLineType.Stock)
-                .Select(l => new StockLine(l.LineNumber, l.ItemId!.Value, l.BaseQuantity)),
-        ];
-
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
-
-        // The number was taken when the order was created, so confirming only
-        // changes what the document means and what it holds.
-        order.Status = DocumentStatus.Posted;
-        order.FulfilmentStatus = FulfilmentStatus.Open;
-        order.PostedAt = _clock.GetUtcNow();
-        order.PostedBy = _user.UserId;
-
-        foreach (SalesOrderDetail line in lines)
-        {
-            line.ReservedQuantity = claims.Any(c => c.LineNumber == line.LineNumber)
-                ? line.BaseQuantity
-                : 0m;
-        }
-
-        await _db.SaveChangesAsync(ct);
-
-        if (claims.Count > 0)
-        {
-            StockReservationResult reserved =
-                await _stock.ReserveAsync(customerId, orgId, id, claims, ct);
-
-            if (!reserved.Ok)
+            IReadOnlyDictionary<long, NamedRef> contacts = await _contactNames.ResolveAsync(contactIds, ct);
+            foreach (SalesOrderListItem row in rows)
             {
-                await tx.RollbackAsync(ct);
-
-                // The database is back where it started; the tracked entities
-                // are not. Without this they keep the number and the Posted
-                // status the rolled-back attempt gave them, and anything that
-                // read the order later in the same request would see a confirm
-                // that never happened.
-                await ReloadAsync(order, lines, ct);
-
-                return reserved.Unreachable
-                    ? new SalesOrderResult(
-                        SalesOrderOutcome.InventoryUnreachable, id,
-                        "Inventory could not be reached, so no stock was held and the order is "
-                            + "still a draft. Nothing was lost — try again.")
-                    : new SalesOrderResult(
-                        SalesOrderOutcome.InsufficientStock, id,
-                        "There is not enough unreserved stock to confirm this order.",
-                        [.. reserved.Shortages.Select(s => new SalesOrderShortage(
-                            s.LineNumber, s.ItemId, s.ItemCode, s.ItemName, s.Requested, s.Available))]);
+                if (contacts.TryGetValue(row.ContactId, out NamedRef? contactName))
+                {
+                    row.ContactName = contactName.Name;
+                    row.ContactCode = contactName.Code;
+                }
             }
         }
 
-        try
+        return new SalesOrderListPage
         {
-            await tx.CommitAsync(ct);
-        }
-        catch
-        {
-            // The stock is held and the order is not. Give it back rather than
-            // leave a reservation nothing can ever release.
-            if (claims.Count > 0)
-            {
-                await _stock.ReleaseAsync(customerId, orgId, id, claims, CancellationToken.None);
-            }
-
-            throw;
-        }
-
-        return new SalesOrderResult(SalesOrderOutcome.Ok, id);
+            Total = total,
+            Skip = safeSkip,
+            Take = safeTake,
+            Rows = rows,
+        };
     }
 
     /// <summary>
-    /// The customer withdrew. Everything still held goes back, and the order
-    /// keeps its number — a document series with a hole in it is what an auditor
-    /// asks about.
+    /// Whether a row that was found may be shown to this caller.
+    ///
+    /// See <see cref="SalesOrderOutcome.Forbidden"/> for why this exists when
+    /// the query filter and RLS have already hidden other branches' rows.
     /// </summary>
-    public Task<SalesOrderResult> CancelAsync(
-        long id, CloseSalesOrderRequest request, CancellationToken ct) =>
-        ReleaseAndCloseAsync(id, request.Reason, FulfilmentStatus.Cancelled, ct);
+    private bool BelongsToCaller(SalesOrder order) =>
+        _tenant.OrgId is Guid orgId && order.OrgId == orgId;
 
     /// <summary>
-    /// Nothing further is coming, by agreement. What has shipped has shipped;
-    /// what has not stops being a promise and is released.
+    /// Which items were short, by name.
+    ///
+    /// "Insufficient stock" on a twenty-line order tells the person on the phone
+    /// to the customer nothing they can act on. Inventory answers per line, so
+    /// the message says which items and lets them take those lines off.
     /// </summary>
-    public Task<SalesOrderResult> ShortCloseAsync(
-        long id, CloseSalesOrderRequest request, CancellationToken ct) =>
-        ReleaseAndCloseAsync(id, request.Reason, FulfilmentStatus.Closed, ct);
-
-    private async Task<SalesOrderResult> ReleaseAndCloseAsync(
-        long id, string reason, FulfilmentStatus closeAs, CancellationToken ct)
+    private async Task<string> ShortfallDetailAsync(ReserveStockResponse response, CancellationToken ct)
     {
-        SalesOrder? order = await _db.SalesOrders.FirstOrDefaultAsync(o => o.SalesOrderId == id, ct);
+        List<long> shortItemIds = [.. response.Lines.Where(l => !l.Success).Select(l => l.ItemId).Distinct()];
 
-        if (order is null)
+        if (shortItemIds.Count == 0)
         {
-            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+            return "There is not enough stock available to reserve for this order.";
         }
 
-        // Cancelling covers an abandoned draft as well as a confirmed order
-        // taken back out — PostedAt being null is what tells the two apart, and
-        // a draft simply has nothing to release. A short close does not: there
-        // is nothing to close short of on an order that never confirmed.
-        bool draft = order.Status == DocumentStatus.Draft
-            || order.Status == DocumentStatus.ReadyToPost;
+        IReadOnlyDictionary<long, NamedRef> names = await _itemNames.ResolveAsync(shortItemIds, ct);
 
-        if (order.Status != DocumentStatus.Posted
-            && !(draft && closeAs == FulfilmentStatus.Cancelled))
-        {
-            return new SalesOrderResult(
-                SalesOrderOutcome.NotConfirmed, id,
-                order.Status == DocumentStatus.Void
-                    ? "The order has already been cancelled."
-                    : "Only a confirmed order can be closed short.");
-        }
+        IEnumerable<string> labels = shortItemIds.Select(id =>
+            names.TryGetValue(id, out NamedRef? named) ? $"{named.Code} - {named.Name}" : $"item {id}");
 
-        if (order.FulfilmentStatus is FulfilmentStatus.Cancelled or FulfilmentStatus.Closed)
-        {
-            return new SalesOrderResult(
-                SalesOrderOutcome.NotConfirmed, id, "The order is already closed.");
-        }
-
-        if (_tenant.CustomerId is not Guid customerId || _tenant.OrgId is not Guid orgId)
-        {
-            return new SalesOrderResult(SalesOrderOutcome.InvalidValue, id, "No branch in context.");
-        }
-
-        List<SalesOrderDetail> lines = await _db.SalesOrderDetails
-            .Where(l => l.SalesOrderId == id && l.ReservedQuantity > 0)
-            .ToListAsync(ct);
-
-        // Only what is still held. A line already delivered released its share
-        // when it shipped, and releasing it twice would free stock nobody holds.
-        IReadOnlyList<StockLine> claims =
-        [
-            .. lines
-                .Where(l => l.ItemId is not null)
-                .Select(l => new StockLine(l.LineNumber, l.ItemId!.Value, l.ReservedQuantity)),
-        ];
-
-        if (claims.Count > 0)
-        {
-            StockReservationResult released =
-                await _stock.ReleaseAsync(customerId, orgId, id, claims, ct);
-
-            if (released.Unreachable)
-            {
-                return new SalesOrderResult(
-                    SalesOrderOutcome.InventoryUnreachable, id,
-                    "Inventory could not be reached, so the order is unchanged and its stock is "
-                        + "still held. Try again shortly.");
-            }
-
-            if (!released.Ok)
-            {
-                // Reported, not refused: the release found less held than this
-                // order believed, which is worth a log and a look, but refusing
-                // the cancellation would leave the customer's withdrawn order open.
-                _log.LogWarning(
-                    "Releasing order {SalesOrderId}: {Failed} line(s) held less than recorded.",
-                    id,
-                    released.Shortages.Count);
-            }
-        }
-
-        foreach (SalesOrderDetail line in lines)
-        {
-            line.ReservedQuantity = 0m;
-        }
-
-        order.FulfilmentStatus = closeAs;
-
-        if (closeAs == FulfilmentStatus.Cancelled)
-        {
-            // Cancelling withdraws the document: the customer pulled out and
-            // nothing about it stands. That is what Void means, and the schema
-            // enforces the pairing — a Void status with no reason, or a reason
-            // with no status, is refused.
-            order.Status = DocumentStatus.Void;
-            order.VoidReason = reason;
-            order.VoidedAt = _clock.GetUtcNow();
-            order.VoidedBy = _user.UserId;
-        }
-        else
-        {
-            // A short close is not a void, and stamping one would be a lie: half
-            // of this order shipped, so the document is a true record of what was
-            // ordered and what went out. It stays Posted and only stops expecting
-            // more.
-            //
-            // The reason goes into Notes because the table has nowhere else for
-            // it. A column of its own would be better and is a schema change to
-            // a table five other documents share — worth doing deliberately
-            // rather than as a side effect of this.
-            string stamp = $"Closed short on "
-                + $"{DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime):yyyy-MM-dd}: {reason}";
-
-            order.Notes = string.IsNullOrWhiteSpace(order.Notes)
-                ? stamp
-                : $"{order.Notes}\n{stamp}";
-        }
-
-        await _db.SaveChangesAsync(ct);
-        return new SalesOrderResult(SalesOrderOutcome.Ok, id);
-    }
-
-    /// <summary>
-    /// Puts the tracked entities back in step with the database after a rollback.
-    /// EF does not undo what it wrote to the objects, only what it wrote to the
-    /// rows.
-    /// </summary>
-    private async Task ReloadAsync(
-        SalesOrder order, List<SalesOrderDetail> lines, CancellationToken ct)
-    {
-        await _db.Entry(order).ReloadAsync(ct);
-
-        foreach (SalesOrderDetail line in lines)
-        {
-            await _db.Entry(line).ReloadAsync(ct);
-        }
+        return "There is not enough stock available to reserve: " + string.Join(", ", labels) + ".";
     }
 }

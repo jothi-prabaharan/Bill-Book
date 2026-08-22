@@ -1,0 +1,275 @@
+<header class="page-head">
+  <h1>Statements</h1>
+  <label class="account">
+    Account
+    <select [(ngModel)]="bankAccountId" name="bankAccountId" (ngModelChange)="onAccountChange()">
+      @for (a of usableAccounts(); track a.bankAccountId) {
+        <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
+      }
+    </select>
+  </label>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="note">
+  What the bank says happened, against what you recorded. Matching a line says the two agree about
+  one movement — <strong>nothing here posts to your accounts</strong>. The money already moved, and
+  the document that recorded it already posted.
+</p>
+
+<!-- The mapping. Every bank lays its export out differently, so this is chosen
+     once per account rather than guessed at every import. -->
+@if (editingProfile()) {
+  <section class="editor">
+    <h2>How to read this bank's file</h2>
+
+    <p class="hint">
+      Name the columns as they appear in the file's header row, or give their positions counting
+      from 0 if there is no header.
+    </p>
+
+    <div class="head-fields">
+      <label>
+        Rows to skip
+        <bb-number-input  min="0" max="100" [(ngModel)]="form.skipRows" name="skipRows" />
+        <span class="sub">The branch address and summary above the table</span>
+      </label>
+      <label>
+        Date format
+        <bb-text-input  [(ngModel)]="form.dateFormat" name="dateFormat" maxlength="40" />
+        <span class="sub">e.g. dd/MM/yyyy or dd-MMM-yyyy</span>
+      </label>
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="form.hasHeaderRow" name="hasHeaderRow" />
+        The first row names the columns
+      </label>
+    </div>
+
+    <div class="head-fields">
+      <label>
+        Date column
+        <bb-text-input  [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
+      </label>
+      <label>
+        Value date <span class="optional">optional</span>
+        <bb-text-input
+          
+          [(ngModel)]="form.valueDateColumn"
+          name="valueDateColumn"
+          maxlength="100"
+        />
+      </label>
+      <label>
+        Description
+        <bb-text-input
+          
+          [(ngModel)]="form.descriptionColumn"
+          name="descriptionColumn"
+          maxlength="100"
+        />
+      </label>
+      <label>
+        Reference
+        <bb-text-input
+          
+          [(ngModel)]="form.referenceColumn"
+          name="referenceColumn"
+          maxlength="100"
+        />
+        <span class="sub">Cheque or UTR — what matching leans on hardest</span>
+      </label>
+      <label>
+        Balance <span class="optional">optional</span>
+        <bb-text-input  [(ngModel)]="form.balanceColumn" name="balanceColumn" maxlength="100" />
+      </label>
+    </div>
+
+    <!-- The two layouts, and they are exclusive. Typing in one clears the other,
+         so the screen never offers a shape the server refuses. -->
+    <fieldset class="amounts">
+      <legend>Where the amount is</legend>
+
+      <div class="head-fields">
+        <label>
+          Withdrawal column
+          <bb-text-input
+            
+            [(ngModel)]="form.withdrawalColumn"
+            name="withdrawalColumn"
+            maxlength="100"
+            (ngModelChange)="onTwoColumns()"
+          />
+        </label>
+        <label>
+          Deposit column
+          <bb-text-input
+            
+            [(ngModel)]="form.depositColumn"
+            name="depositColumn"
+            maxlength="100"
+            (ngModelChange)="onTwoColumns()"
+          />
+        </label>
+      </div>
+
+      <p class="or">or</p>
+
+      <div class="head-fields">
+        <label>
+          One signed amount column
+          <bb-text-input
+            
+            [(ngModel)]="form.amountColumn"
+            name="amountColumn"
+            maxlength="100"
+            (ngModelChange)="onAmountShape()"
+          />
+        </label>
+        @if (usesSignedColumn) {
+          <label class="check">
+            <input
+              type="checkbox"
+              [(ngModel)]="form.negativeIsDeposit"
+              name="negativeIsDeposit"
+            />
+            Negative means money in
+          </label>
+        }
+      </div>
+    </fieldset>
+
+    <div class="editor-actions">
+      <button type="button" class="ghost" (click)="editingProfile.set(false)">Cancel</button>
+      <button type="button" class="primary" (click)="saveProfile()" [disabled]="busy()">
+        Save mapping
+      </button>
+    </div>
+  </section>
+} @else {
+  <section class="import">
+    @if (profile()) {
+      <div class="import-row">
+        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm" (change)="onFile($event)" />
+        <button type="button" class="primary" (click)="import()" [disabled]="busy() || !file">
+          Import
+        </button>
+        <button type="button" class="link" (click)="startProfile()">Edit column mapping</button>
+      </div>
+      <p class="hint">
+        Importing the same period again is fine — anything already here is recognised and not
+        added twice.
+      </p>
+    } @else {
+      <p class="note warn">
+        This account has no column mapping yet. Every bank lays its export out differently, so tell
+        us which column is which once and we will remember it.
+        <button type="button" class="link" (click)="startProfile()">Set it up</button>
+      </p>
+    }
+  </section>
+}
+
+@if (openStatement(); as s) {
+  <section class="editor">
+    <h2>
+      {{ s.bankAccountName }} · {{ s.fromDate }} to {{ s.toDate }}
+      <span class="badge" [class.done]="s.isReconciled">
+        {{ s.isReconciled ? 'Reconciled' : undecided + ' to decide' }}
+      </span>
+    </h2>
+
+    <div class="statement-actions">
+      <label class="check">
+        <input type="checkbox" [(ngModel)]="showAll" name="showAll" />
+        Show matched and set-aside lines too
+      </label>
+      <span class="spacer"></span>
+      <a class="link" [href]="exportUrl('csv')" download>Export CSV</a>
+      <a class="link" [href]="exportUrl('xlsx')" download>Export Excel</a>
+      <button type="button" class="ghost" (click)="close()">Close</button>
+    </div>
+
+    <bb-data-grid [gridCode]="'STATEMENT_LINES'" [columns]="lineColumns" [data]="visibleLines">
+      <ng-template bbCellTemplate="date" let-row>
+        <div class="date-col" [class.decided]="row.status !== 'Unmatched'">{{ row.transactionDate }}</div>
+      </ng-template>
+      <ng-template bbCellTemplate="bankSays" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.description ?? '—' }}
+          @if (row.referenceNo) {
+            <span class="sub">Ref {{ row.referenceNo }}</span>
+          }
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="out" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.withdrawalAmount ? (row.withdrawalAmount | number: '1.2-2') : '' }}
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="in" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          {{ row.depositAmount ? (row.depositAmount | number: '1.2-2') : '' }}
+        </div>
+      </ng-template>
+      <ng-template bbCellTemplate="record" let-row>
+        <div [class.decided]="row.status !== 'Unmatched'">
+          @if (row.status === 'Matched') {
+            <span class="matched">
+              {{ row.matchedTransactionNo ?? row.matchedTransactionTypeCode }}
+              @if (row.matchedAutomatically) {
+                <span class="chip">matched for you</span>
+              }
+            </span>
+            <button type="button" class="link" (click)="unmatch(row)">Undo</button>
+          } @else if (row.status === 'Ignored') {
+            <span class="ignored">Set aside — {{ row.note }}</span>
+            <button type="button" class="link" (click)="unmatch(row)">Undo</button>
+          } @else if (row.candidates.length > 0) {
+            @for (c of row.candidates; track c.transactionTypeCode + c.transactionId) {
+              <div class="candidate">
+                <button type="button" class="pick" (click)="match(row, c)">
+                  {{ c.transactionNo ?? c.transactionTypeCode + ' #' + c.transactionId }}
+                </button>
+                <span class="sub">{{ c.reason }}</span>
+              </div>
+            }
+            <button type="button" class="link" (click)="ignore(row)">Set aside</button>
+          } @else {
+            <span class="none">
+              Nothing in your records matches this. It may be a bank charge or interest that
+              needs recording as a payment or a receipt.
+            </span>
+            <button type="button" class="link" (click)="ignore(row)">Set aside</button>
+          }
+        </div>
+      </ng-template>
+    </bb-data-grid>
+  </section>
+}
+
+<bb-data-grid [gridCode]="'STATEMENTS'" [columns]="statementColumns" [data]="statements()">
+  <ng-template bbCellTemplate="period" let-row>
+    <div class="date-col">
+      <button type="button" class="link" (click)="open(row)">
+        {{ row.fromDate }} → {{ row.toDate }}
+      </button>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="file" let-row>
+    {{ row.fileName ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="lines" let-row>
+    {{ row.lineCount }}
+  </ng-template>
+  <ng-template bbCellTemplate="decided" let-row>
+    {{ row.matchedCount + row.ignoredCount }}
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    <span class="badge" [class.done]="row.isReconciled">
+      {{ row.isReconciled ? 'Reconciled' : 'In progress' }}
+    </span>
+  </ng-template>
+</bb-data-grid>

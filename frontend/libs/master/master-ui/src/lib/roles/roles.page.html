@@ -1,0 +1,73 @@
+<header class="page-head">
+  <h1>Roles</h1>
+  <button type="button" (click)="startCreate()" [disabled]="busy()">+ New role</button>
+</header>
+
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+@if (!editing()) {
+  <bb-data-grid [gridCode]="'ROLES'" [columns]="columns" [data]="roles()">
+    <ng-template bbCellTemplate="displayName" let-row>
+      {{ row.displayName }}
+      @if (row.isSystemRole) { <span class="badge">System</span> }
+    </ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <button type="button" class="link" (click)="startEdit(row.roleId)">Edit</button>
+      @if (!row.isSystemRole) {
+        <button type="button" class="link danger" (click)="remove(row)">Delete</button>
+      }
+    </ng-template>
+  </bb-data-grid>
+} @else {
+  <form class="editor" (ngSubmit)="save()">
+    <label>
+      Name
+      <bb-text-input name="displayName" [(ngModel)]="form.displayName" required maxlength="100" />
+    </label>
+    <label>
+      Description
+      <bb-text-input name="description" [(ngModel)]="form.description" maxlength="300" />
+    </label>
+
+    @if (isSystem()) {
+      <p class="note">
+        This is a system role. You can rename it for display, but its permissions are fixed
+        and it cannot be deleted.
+      </p>
+    }
+
+    <h2>Permissions</h2>
+    @for (group of matrix(); track group.module) {
+      <fieldset class="module">
+        <legend>
+          {{ group.module }}
+          @if (!isSystem()) {
+            <button type="button" class="link" (click)="toggleModule(group)">
+              {{ allSelected(group) ? 'Clear' : 'Select all' }}
+            </button>
+          }
+        </legend>
+        <div class="actions-grid">
+          @for (p of group.permissions; track p.permissionId) {
+            <label class="check">
+              <input
+                type="checkbox"
+                [disabled]="isSystem()"
+                [checked]="selected().has(p.permissionId)"
+                (change)="togglePermission(p.permissionId)"
+              />
+              {{ p.action }}
+            </label>
+          }
+        </div>
+      </fieldset>
+    }
+
+    <div class="editor-actions">
+      <button type="submit" [disabled]="busy()">Save</button>
+      <button type="button" class="link" (click)="cancel()">Cancel</button>
+    </div>
+  </form>
+}

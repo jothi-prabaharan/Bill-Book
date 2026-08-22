@@ -4,6 +4,10 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <!-- Mints the tokens as well as validating them: this is the service that
+         signs in. See JwtTokenService and BcryptPasswordHasher. -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="BCrypt.Net-Next" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -15,3 +19,5 @@
   </ItemGroup>
 
 </Project>
+
+

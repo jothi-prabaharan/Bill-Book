@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "contacts-ui",
-  "projectType": "library",
-  "sourceRoot": "libs/contacts/contacts-ui/src",
-  "tags": ["scope:contacts", "type:ui"],
-  "targets": {}
-}

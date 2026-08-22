@@ -1,0 +1,69 @@
+<header class="page-head">
+  <h1>Users</h1>
+  <button type="button" (click)="inviting.set(!inviting())" [disabled]="busy()">
+    + Invite user
+  </button>
+</header>
+
+@if (message()) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ message() }}</p>
+}
+
+@if (inviting()) {
+  <form class="invite" (ngSubmit)="invite()">
+    <label>
+      Email
+      <input name="email" type="email" [(ngModel)]="form.email" required />
+    </label>
+    <label>
+      Name
+      <bb-text-input name="displayName" [(ngModel)]="form.displayName" required />
+    </label>
+    <label>
+      Mobile <span class="opt">(optional)</span>
+      <bb-text-input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
+    </label>
+    <label>
+      Role
+      <select name="roleId" [(ngModel)]="form.roleId" required>
+        <option [ngValue]="0">Select…</option>
+        @for (r of roles(); track r.roleId) {
+          <option [ngValue]="r.roleId">{{ r.displayName }}</option>
+        }
+      </select>
+    </label>
+    <div class="invite-actions">
+      <button type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
+      <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>
+    </div>
+    <p class="hint">
+      They will receive an email with a link to set their own password. No temporary
+      password is created.
+    </p>
+  </form>
+}
+
+<bb-data-grid [gridCode]="'USERS'" [columns]="columns" [data]="users()">
+  <ng-template bbCellTemplate="lastLoginAt" let-row>
+    {{ row.lastLoginAt ? (row.lastLoginAt | date: 'medium') : '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @if (!row.isActive) {
+      <span class="tag off">Revoked</span>
+    } @else if (row.isInvitePending) {
+      <span class="tag pending">Invite pending</span>
+    } @else if (row.isLockedOut) {
+      <span class="tag locked">Locked</span>
+    } @else {
+      <span class="tag on">Active</span>
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.isInvitePending && row.isActive) {
+      <button type="button" class="link" (click)="resend(row)">Resend</button>
+    }
+    @if (row.isActive) {
+      <button type="button" class="link danger" (click)="revoke(row)">Revoke</button>
+    }
+  </ng-template>
+</bb-data-grid>

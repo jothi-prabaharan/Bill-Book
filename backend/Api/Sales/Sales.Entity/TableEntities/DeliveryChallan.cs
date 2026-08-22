@@ -43,4 +43,6 @@ public class DeliveryChallan : DocumentHeaderBase
     public string? EwayBillNo { get; set; }
 
     public DateOnly? EwayBillDate { get; set; }
+    public List<DeliveryChallanDetail> Lines { get; set; } = [];
 }
+

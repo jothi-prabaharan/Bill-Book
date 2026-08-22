@@ -1,0 +1,249 @@
+<div class="page">
+  <header class="page__header">
+    <div>
+      <h1>
+        @if (isNew()) {
+          New bill
+        } @else {
+          {{ documentNo() }}
+        }
+      </h1>
+      @if (!isNew()) {
+        <p class="page__pills">
+          <span class="pill">{{ status() }}</span>
+          @if (status() === 'Posted' && daysOverdue() > 0) {
+            <span class="pill pill--void">{{ daysOverdue() }} days overdue</span>
+          }
+        </p>
+      }
+    </div>
+    <a class="btn" routerLink="..">Back to list</a>
+  </header>
+
+  @if (error()) {
+    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="banner banner--ok">{{ notice() }}</div>
+  }
+
+  @if (readonlyDoc()) {
+    <div class="banner banner--info">
+      This bill has been posted. Correct it with a debit note rather than
+      changing it.
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="state">Loading&hellip;</p>
+  } @else {
+    <section class="card">
+      <h2 class="card__title">Vendor &amp; their bill</h2>
+
+      <div class="grid">
+        <div class="field">
+          <span class="field__label">Vendor</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openVendorPicker()"
+          >
+            {{ contactLabel() || 'Choose a vendor' }}
+          </button>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Vendor's bill number</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="50"
+            [disabled]="readonlyDoc()"
+            [ngModel]="vendorBillNo()"
+            (ngModelChange)="vendorBillNo.set($event)"
+            name="vendorBillNo"
+          />
+          <span class="field__hint">
+            <strong>Theirs, not ours.</strong> Input tax credit is claimed against
+            this number, and one vendor cannot bill the same one twice in a
+            financial year.
+          </span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Their bill date</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="vendorBillDate()"
+            (ngModelChange)="vendorBillDate.set($event)"
+            name="vendorBillDate"
+          />
+          <span class="field__hint">The tax period the credit falls in.</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Received on</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+            name="documentDate"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Due</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="dueDate()"
+            (ngModelChange)="dueDate.set($event)"
+            name="dueDate"
+          />
+          <span class="field__hint">Payables aging is only as good as this date.</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Vendor GSTIN</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="15"
+            [disabled]="readonlyDoc()"
+            [ngModel]="contactGstin()"
+            (ngModelChange)="contactGstin.set($event)"
+            name="contactGstin"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Place of supply</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+            name="placeOfSupplyStateCode"
+            placeholder="2-digit state code"
+          />
+        </label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Against a goods receipt?</h2>
+
+      <div class="grid">
+        <div class="field">
+          <span class="field__label">Goods receipt</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openReceiptPicker()"
+          >
+            {{ goodsReceiptNo() || 'None — this bill brings the goods in itself' }}
+          </button>
+          @if (againstReceipt() && !readonlyDoc()) {
+            <button type="button" class="btn btn--link" (click)="clearReceipt()">
+              Detach
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (againstReceipt()) {
+        <p class="banner banner--info">
+          The goods are already on the shelf, so this bill <strong>moves no
+          stock</strong> — it clears Goods Received Not Invoiced and owes the
+          vendor. The lines came from the receipt and are locked: a bill has to
+          agree with its receipt to the paise, because purchase price variance is
+          not implemented yet. If the vendor billed a different price, detach the
+          receipt or correct it there.
+        </p>
+      } @else {
+        <p class="field__hint">
+          With no receipt this bill <strong>does move stock</strong>: it debits
+          Inventory directly and brings the goods in.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Lines</h2>
+
+      <bb-document-line-grid
+        [lines]="lines()"
+        [context]="gridContext()"
+        [taxGroups]="taxGroups()"
+        [showLineType]="true"
+        (linesChange)="onLinesChange($event)"
+        (pickItem)="onPickItem($event)"
+      />
+
+      @if (!againstReceipt()) {
+        <p class="field__hint">
+          An <strong>expense</strong> line posts to the account you name; a
+          <strong>capital</strong> line posts to Fixed Asset and moves no stock.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Notes</h2>
+      <label class="field field--wide">
+        <span class="field__label">Notes</span>
+        <textarea
+          class="input"
+          rows="2"
+          [disabled]="readonlyDoc()"
+          [ngModel]="notes()"
+          (ngModelChange)="notes.set($event)"
+          name="notes"
+        ></textarea>
+      </label>
+    </section>
+
+    @if (!readonlyDoc()) {
+      <footer class="actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : 'Save draft' }}
+        </button>
+
+        @if (!isNew()) {
+          <button type="button" class="btn" [disabled]="saving()" (click)="post()">
+            Post the bill
+          </button>
+          <span class="actions__hint">
+            Posting claims the input tax credit and owes the vendor.
+          </span>
+        }
+      </footer>
+    }
+  }
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [emptyText]="pickerEmptyText()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
+</div>

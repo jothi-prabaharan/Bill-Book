@@ -1,0 +1,65 @@
+@if (error()) {
+  <p class="error">{{ error() }}</p>
+}
+
+<bb-data-grid [gridCode]="'CONTACT_ROLES'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="handle" let-row>
+    <span class="handle" Handle aria-hidden="true">⠿</span>
+  </ng-template>
+
+  <ng-template bbCellTemplate="roleName" let-row>
+    @if (editingId() === row.contactPersonRoleId) {
+      <bb-text-input  [(ngModel)]="editName" maxlength="50" />
+      <button type="button" class="link" (click)="saveEdit(row)">Save</button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    } @else {
+      {{ row.roleName }}
+      @if (row.isSystem) {
+        <span class="badge">Built-in</span>
+      }
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="usageCount" let-row>
+    {{ row.usageCount }}
+  </ng-template>
+
+  <ng-template bbCellTemplate="isDefault" let-row>
+    @if (row.isDefault) {
+      <span class="badge">Default</span>
+    } @else if (row.isActive) {
+      <button type="button" class="link" (click)="makeDefault(row)" [disabled]="busy()">
+        Set
+      </button>
+    }
+  </ng-template>
+
+  <ng-template bbCellTemplate="isActive" let-row>
+    <button type="button" class="link" (click)="toggleActive(row)" [disabled]="busy()">
+      {{ row.isActive ? 'Active' : 'Inactive' }}
+    </button>
+  </ng-template>
+
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (editingId() !== row.contactPersonRoleId) {
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">
+        Rename
+      </button>
+    }
+    @if (!row.isSystem && row.usageCount === 0) {
+      <button type="button" class="link danger" (click)="remove(row)" [disabled]="busy()">
+        Delete
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+<div class="add-row">
+  <bb-text-input  [(ngModel)]="newRoleName" maxlength="50" placeholder="New role name" />
+  <button type="button" (click)="add()" [disabled]="busy() || !newRoleName.trim()">Add</button>
+</div>
+
+<p class="hint">
+  A role that people already hold cannot be deleted — make it inactive instead, so existing
+  contacts keep it and their history still reads correctly.
+</p>

@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -46,9 +47,9 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, PlatformTenantDirectory>(client =>
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -64,7 +65,7 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
         ? sp.GetRequiredService<ITenantConnectionResolver>()
             .ResolveAsync(customerId).GetAwaiter().GetResult()
         // Design-time and unauthenticated paths fall back to the configured value.
-        : RequiredConnectionString("DesignTimeDatabase");
+        : RequiredConnectionString("TenantFallback");
 
     options.UseNpgsql(connectionString);
     options.AddInterceptors(
@@ -75,23 +76,30 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.
 builder.Services.AddScoped<SalesSeeder>();
+builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
+builder.Services.AddScoped<InvoiceService>();
 
-// Sales never touches a stock quantity itself: Inventory owns the pool and the
-// guarded update that protects it, so confirming an order is a call rather than
-// a write.
-builder.Services.AddHttpClient<IInventoryStock, InventoryStock>(client =>
-{
-    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
-})
-    .AddHttpMessageHandler<InternalKeyHandler>();
+// Resolved from the concrete registration rather than registered separately, so
+// a request that touches both InvoicesController (the interface) and
+// TransactionsController (the concrete type) gets one instance and therefore one
+// DbContext change tracker.
+builder.Services.AddScoped<IInvoiceService>(sp => sp.GetRequiredService<InvoiceService>());
+builder.Services.AddScoped<DeliveryChallanService>();
+builder.Services.AddScoped<CreditNoteService>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
 // HTTP call on every save.
 builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IBranchSettingsProvider, HttpBranchSettingsProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -105,6 +113,41 @@ builder.Services.AddHttpClient<ITaxRateProvider, HttpTaxRateProvider>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// The names a document deliberately does not store. SALES.md keeps ContactName,
+// ItemCode and ItemName off the row so a correction shows everywhere, including
+// on documents already raised — and that only stays affordable if the names come
+// back in one call per page rather than one per row. Contacts live in Master
+// since the service merge; items in Inventory.
+builder.Services.AddHttpClient<IContactNameLookup, HttpContactNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IItemNameLookup, HttpItemNameLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IInventoryClient, InventoryClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<ICreditCheckClient, CreditCheckClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Reporting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a document number is allocated inside the
 // same transaction as the document — a failed insert gives the number back.
@@ -114,7 +157,7 @@ builder.Services.Configure<NumberingOptions>(builder.Configuration.GetSection("N
 // code allocation would be absurd.
 builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
 {
-    client.BaseAddress = new Uri(RequiredSetting("Platform:BaseUrl"));
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
@@ -123,7 +166,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Must match Identity's key exactly: Identity mints the tokens, Sales only
+// Must match Master's key exactly: Master mints the tokens, Sales only
 // validates them. Never fall back to a constant here.
 string signingKey = RequiredSetting("Jwt:SigningKey");
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -150,6 +193,8 @@ builder.Services.AddAuthorization(options =>
         .RequireAuthenticatedUser()
         .Build();
 });
+
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
@@ -184,3 +229,6 @@ string RequiredConnectionString(string name) =>
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+
+
+

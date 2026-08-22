@@ -8,3 +8,11 @@ export * from './lib/account-ledger/account-ledger.page';
 export * from './lib/trial-balance/trial-balance.page';
 export * from './lib/opening-balance/opening-balance.page';
 export * from './lib/closing-dates/closing-dates.page';
+
+// Banking — the bank accounts and the three money documents.
+export * from './lib/banks/banks.page';
+export * from './lib/bank-accounts/bank-accounts.page';
+export * from './lib/money-document/money-sources';
+export * from './lib/money-document/money-document.page';
+export * from './lib/transfer-money/transfer-money.page';
+export * from './lib/statements/statements.page';

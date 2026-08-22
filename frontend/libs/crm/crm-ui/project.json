@@ -1,8 +1,0 @@
-{
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "name": "crm-ui",
-  "projectType": "library",
-  "sourceRoot": "libs/crm/crm-ui/src",
-  "tags": ["scope:crm", "type:ui"],
-  "targets": {}
-}

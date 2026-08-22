@@ -3,10 +3,15 @@ import { FormsModule } from '@angular/forms';
 import {
   DocumentLine,
   DocumentLineContext,
+  DocumentLineTax,
   LineType,
+  TaxGroupOption,
   TaxTreatment,
 } from './document-line.model';
 import { componentsFor, recalculate, totalsOf } from './line-math';
+
+/** Rates carry four decimals in a line's tax rows: 18% is stored as 180000. */
+const RATE_SCALE = 10_000;
 
 /**
  * The line grid every sales and purchase document uses.
@@ -34,6 +39,26 @@ export class DocumentLineGridComponent {
   readonly lines = input.required<readonly DocumentLine[]>();
   readonly context = input.required<DocumentLineContext>();
 
+  /**
+   * The tax groups a line may be put on.
+   *
+   * **Optional, and empty by default, so a caller that does not pass any keeps
+   * the grid exactly as it was.** Until this existed `taxGroupId` was editable
+   * nowhere, which meant every line carried no tax rows and therefore no tax —
+   * on the sales screens as much as the purchase ones.
+   */
+  readonly taxGroups = input<readonly TaxGroupOption[]>([]);
+
+  /**
+   * Whether to show the Stock / Expense / Capital selector.
+   *
+   * Off by default because a sale has one kind of line in practice. **Purchase
+   * is where all three are used** — an expense line posts to a named account and
+   * a capital line creates a fixed asset register row — so the purchase screens
+   * turn it on.
+   */
+  readonly showLineType = input(false);
+
   /** Emitted whenever a line changes, already recalculated. */
   readonly linesChange = output<readonly DocumentLine[]>();
 
@@ -43,7 +68,7 @@ export class DocumentLineGridComponent {
   protected readonly totals = computed(() => totalsOf(this.lines()));
 
   protected readonly components = computed(() =>
-    componentsFor(this.context().isInterState),
+    componentsFor(this.context().isInterState, this.context().isUnionTerritory),
   );
 
   protected readonly treatments: readonly TaxTreatment[] = [
@@ -120,6 +145,86 @@ export class DocumentLineGridComponent {
     this.emit(remaining);
   }
 
+  /**
+   * Putting a line on a tax group rebuilds its tax rows, then recalculates.
+   *
+   * **The rows are the fact, not their value.** A zero-rated line carries rows
+   * at rate zero and an exempt line carries none, which is how GSTR-1 tells an
+   * export from an exempt supply — so clearing the group clears the rows rather
+   * than leaving them at zero.
+   *
+   * Which components appear follows the document's `isInterState`: CGST + SGST
+   * intra-state, IGST across a state line. The server recomputes all of this on
+   * save; what happens here is the preview the person keying is entitled to see.
+   */
+  protected onTaxGroupChange(index: number): void {
+    const updated = this.lines().map((line, at) => {
+      if (at !== index) {
+        return line;
+      }
+
+      const group = this.taxGroups().find(
+        (candidate) => candidate.taxGroupId === Number(line.taxGroupId),
+      );
+
+      if (group === undefined) {
+        return recalculate({ ...line, taxGroupId: null, taxMasterId: null, taxes: [] },
+          this.context());
+      }
+
+      const taxes: DocumentLineTax[] = this.components().map((component) => ({
+        component,
+        // Resolved server-side when the document is saved; the grid has no way
+        // to know which GST sub-account a rate posts against.
+        subAccountId: 0,
+        rate: Math.round(this.rateOf(group, component) * RATE_SCALE),
+        taxableAmount: 0,
+        amount: 0,
+      }));
+
+      if (group.cessRate > 0) {
+        taxes.push({
+          component: 'Cess',
+          subAccountId: 0,
+          rate: Math.round(group.cessRate * RATE_SCALE),
+          taxableAmount: 0,
+          amount: 0,
+        });
+      }
+
+      return recalculate(
+        {
+          ...line,
+          taxGroupId: group.taxGroupId,
+          taxMasterId: group.taxMasterId,
+          taxes,
+        },
+        this.context(),
+      );
+    });
+
+    this.emit(updated);
+  }
+
+  private rateOf(
+    group: TaxGroupOption,
+    component: 'Cgst' | 'Sgst' | 'Igst' | 'Utgst',
+  ): number {
+    switch (component) {
+      case 'Cgst':
+        return group.cgstRate;
+
+      // UTGST draws SGST's rate: the same half of the same tax under a
+      // different name, and never beside it.
+      case 'Sgst':
+      case 'Utgst':
+        return group.sgstRate;
+
+      default:
+        return group.igstRate;
+    }
+  }
+
   /** Any edit recalculates that line and republishes the whole set. */
   protected touch(index: number): void {
     const updated = this.lines().map((line, at) =>
@@ -158,6 +263,17 @@ export class DocumentLineGridComponent {
 
   protected needsAccount(line: DocumentLine): boolean {
     return line.itemId === null || line.lineType === 'Expense';
+  }
+
+  /**
+   * Whether a rate can be put on this line at all.
+   *
+   * Exempt, nil-rated and outside-GST lines carry no tax rows, so offering a
+   * rate for them would let somebody pick one that is then thrown away.
+   * Zero-rated does carry rows, at rate zero, which is why it is not excluded.
+   */
+  protected chargesTaxRows(line: DocumentLine): boolean {
+    return line.taxTreatment === 'Taxable' || line.taxTreatment === 'ZeroRated';
   }
 
   private emit(lines: readonly DocumentLine[]): void {

@@ -1,3 +1,4 @@
+import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -49,11 +50,18 @@ const PAGE_SIZE = 50;
 @Component({
   selector: 'bb-hsn-sac-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [DataGridComponent, FormsModule, SearchInputComponent],
   templateUrl: './hsn-sac.page.html',
   styleUrl: './hsn-sac.page.scss',
 })
 export class HsnSacPage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'code', header: 'Code' },
+    { field: 'codeType', header: 'Type' },
+    { field: 'description', header: 'Description' },
+    { field: 'usualGst', header: 'Usual GST', dataType: 'number' }
+  ];
+
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<HsnSacCode[]>([]);

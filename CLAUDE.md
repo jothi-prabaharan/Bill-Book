@@ -17,9 +17,10 @@ These are non-negotiable. Violating them means the code gets rejected.
 5. **PostgreSQL only.** Never add SQL Server compatibility, never avoid a Postgres feature for portability. RLS, `xmin`, and JSONB are all in use deliberately.
 6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`.** Never set audit fields manually — `AuditSaveChangesInterceptor` does it. All four audit columns are **nullable**; `CreatedBy IS NULL` marks system/seed master data (written by no user).
 7. **Enums, not magic strings**, for any fixed set of values.
-8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event.
+8. **Never cross a service boundary by referencing another service's `DbContext`.** Use its API or an event. Master maps two contexts, and that is a database boundary rather than a service one — `mst` and `con` are different Postgres databases, so there is still no foreign key between them and ids across them are still validated in C#.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
 10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
+11. **Every feature task commits to `main`.** Not a feature branch, not a session branch, not a branch per stage — `main`, as each piece of the task is finished. See below.
 
 ---
 
@@ -30,6 +31,34 @@ These are non-negotiable. Violating them means the code gets rejected.
 There is one branch, and it is `main`. Every commit goes there as the work is done — no feature branch, no session branch, nothing to merge afterwards. A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind, which is how a change that was written and reviewed goes missing from the product.
 
 The same applies to a follow-up: commit it to `main` alongside the work it follows, rather than opening a branch beside it.
+
+### There is no exception any more. Reporting merged.
+
+Reporting was the one standing exception: for a fortnight it committed to `Report`, because it was built by two agents in parallel and it seemed easier to merge one branch than to interleave two agents on `main`.
+
+**`Report` merged into `main` on 17 August 2026 and the exception ended with it**, by the repository owner's instruction of the same day. `main` is again the only branch, reporting included.
+
+The exception did not pay for itself, which is worth recording so it is not reinvented. Both agents ended up committing the same non-reporting work to both branches independently, so fifteen commits on `main` had content-identical twins on `Report` under different ids, and the merge had to reconcile a history that had said the same thing twice. One conflict resolved cleanly and wrongly — git reverted a fix to `Bill-Book.sln` because the same lines had been touched on both sides — and nothing would have caught it but a diff of the merged tree against the branch.
+
+**`Report` is left in place pointing at the merge. Do not push to it and do not branch from it.** It carries nothing `main` lacks.
+
+**Two agents on one branch is the arrangement now**, so pull before starting and pull again before pushing; `git pull --rebase origin main` puts your commits on top of whatever landed while you were working.
+
+### This covers every feature task, without exception
+
+A task with a stage number — **T2.3**, **T4.4**, **T5.3** — is not a reason to open a branch. Neither is a task that spans a schema, an API, a page and a ledger posting, and neither is one that will take several sessions. **Each of those commits to `main` as it is finished**, in whatever pieces it naturally divides into:
+
+- schema and migration, then the service, then the controller, then the page — each its own commit on `main` when it is written and building, rather than one branch holding all four until the end
+- a fix to work already on `main` goes on `main` beside it
+- documentation goes in the **same** commit as the code it describes (hard rule 10), which is only possible when both land on the same branch
+
+**Commit at the point the work stands up, not at the point the task is finished.** A stage that builds and whose tests pass is worth committing even if the stage after it has not been started — the next session picks up from `main` and needs no instructions about where the work is. Work parked on a branch is work the next session cannot find.
+
+**If a session is started on a branch by its harness**, do the work there if the harness requires it, but merge it into `main` before the session ends and say plainly that you did. A branch that outlives its session is the failure this rule exists to prevent.
+
+**Never open a pull request unless it is asked for.** The branch model has nothing for a PR to do — there is no second branch to merge from.
+
+The one thing this rule does not override: **push only where you have been told to push.** Committing to `main` locally is always right; pushing to any remote branch other than the one you were given needs saying so first.
 
 ---
 
@@ -65,7 +94,7 @@ Produce, in this order:
 
 Do **not** write CREATE TABLE SQL. This is EF Core code-first — migrations generate the schema.
 
-Every per-customer table needs `OrgId` plus a global query filter. Master-database tables (`mst`, `plt`) do not.
+Every per-customer table needs `OrgId` plus a global query filter. Master-database tables (the `mst` schema) do not.
 
 ---
 
@@ -86,7 +115,7 @@ Two top-level halves. Inside `backend/`, four groups — `Api/`, `shared/`, `wor
 backend/
 ├── Bill-Book.sln
 ├── Api/
-│   └── {Module}/                one folder per service (×12)
+│   └── {Module}/                one folder per service (×7)
 │       ├── {Module}.Entity/
 │       ├── {Module}.Repository/
 │       └── {Module}.Api/
@@ -116,11 +145,29 @@ Three projects per service, no more — all three under `backend/Api/{Module}/`:
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
-**Services** (12): Master, Platform, Identity, Contacts, Crm, Inventory, Sales, Purchase, Accounting, Banking, Support, Reporting
+**Services** (7): Master, Inventory, Accounting, Sales, Purchase, Customer, Reporting
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
-**Frontend** (Nx): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+There were twelve. Three merges took them to seven, and the reason each time was that two services were two halves of one job:
+
+| Now | Was | Because |
+|---|---|---|
+| **Master** (`mst`, `con`) | Master + Platform + Identity + Contacts | Signing in reads a user, their branches and the customer's licence — one query now, two service hops before |
+| **Accounting** (`acc`) | Accounting + Banking | A money document exists to move a balance in the ledger; the two could not share a transaction while they were separate |
+| **Customer** (`cus`) | Crm + Support | A lead becomes a customer and a customer raises a ticket — one subject, one lifecycle. Both were empty scaffolds |
+
+**Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `AdminDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
+
+**Frontend** (Nx, Angular v20): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+
+### Angular Component Structure
+- **Standalone Only**: Use `standalone: true`. No `NgModules` are allowed.
+- **Dependency Injection**: Use the `inject()` function (e.g., `private readonly http = inject(HttpClient);`) instead of constructor injection.
+- **State & Reactivity**: Use `signal()` and `computed()` for component state over RxJS `BehaviorSubject` where possible.
+- **Data Fetching**: Use `async/await` with Promises for straightforward REST calls instead of heavily piping RxJS streams (e.g., `await this.req(...)`).
+- **File Naming**: Suffix component files accurately according to their role (`.page.ts`, `.dialog.ts`, `.list.ts`, `.component.ts`).
+- **Separation of Concerns**: Use separate `templateUrl` and `styleUrl` instead of inline templates for anything beyond trivial wrappers.
 
 `-core` libs must stay Ionic-compatible: Signals and DI are fine, but no `window`/`document`, no Syncfusion, no Electron/Node APIs.
 
@@ -140,27 +187,31 @@ Every page must work at ~360px — grids become card lists, forms stack, modals 
 | Customer ↔ Customer (head office ↔ head office) | Separate physical databases |
 | Organization ↔ Organization (branch ↔ branch) | `OrgId` + EF Core query filter + Postgres RLS |
 
-**There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `plt.Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
+**There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
 
 **A branch is a hard data boundary, not a reporting tag.** Each branch has its own items, contacts, stock, chart of accounts and numbering series. Nothing crosses between them. Consolidated reporting across branches is a **read across organizations**, done deliberately and above the query filter — never by relaxing it.
 
 **`OrgId` is load-bearing for security.** A missing query filter leaks data between branches. Never omit it on a per-customer table.
 
-Per request: resolve `CustomerId` from JWT → pick the database via the `plt` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
+Per request: resolve `CustomerId` from JWT → pick the database via the `mst` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
 
 ### Schemas
 
-Master database: `mst` (countries/states), `plt` (customers/orgs/tenant directory), `idn` (users/roles/tokens), `rat` (currency + metal rates)
+Master database: `mst` (countries and states, the tenant directory, users and roles), `rat` (currency + metal rates)
 
-Per-customer database: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `ntf`
+Per-customer database: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
+
+`plt` and `idn` were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `OrgId` with a query filter and an RLS policy.
+
+**`con` did not move into `mst` and must not.** A contact belongs to one branch's books and lives in that customer's own database; the tables in `mst` are shared by every customer. They are in different Postgres databases, which is why Master holds two DbContexts rather than one.
 
 ### Provisioning
 - **New Customer**: create row → generate `CustomerCode` → `CREATE DATABASE` → store connection in Key Vault → publish `CustomerProvisioned` → each service migrates its own schema → mark Active. Block login until ready.
 - **New Organization (a new branch)** under an existing Customer: insert row with its own `OrgCode`, seed its full master data — Chart of Accounts, Tax Master, numbering series, units, payment terms. No new database. A branch starts empty and is seeded exactly like the first one, because it is a complete set of books.
 
 ### Cross-database FKs are impossible in Postgres
-- `CreatedBy`/`ModifiedBy` (Users are in master) → plain nullable `Guid`, no FK. Resolve names from Identity in C#, **batched** — watch for N+1 on list screens.
-- Contacts referencing `mst` Countries/States → unenforced ids, validate in C#
+- `CreatedBy`/`ModifiedBy` (Users are in the master database) → plain nullable `Guid`, no FK. Resolve names from `mst.Users` in C#, **batched** — watch for N+1 on list screens.
+- Contacts referencing `mst` Countries/States → unenforced ids, validate in C#. **Master holding both contexts does not make this a foreign key** — they are still two databases, and one service mapping both is not one database.
 
 ---
 
@@ -203,14 +254,14 @@ Everything — invoices, bills, payments, depreciation, opening balances — pro
 - Lines are debit **xor** credit. Never both. Never negative.
 - Lifecycle: Draft → Posted → Reversed. **Never edit a posted entry.** Reverse it with an offsetting entry.
 - Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built the interceptor is the missing one** — the other two are in place for both `acc.Journals` and `acc.JournalLedger`, and there are in fact two triggers on the journal, because posting a draft changes the header and never touches the lines
-- Sales/Purchase/Banking **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows.
+- Sales and Purchase **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows. The money documents are Accounting's own now, so they post through `LedgerPostingService` directly — in the same transaction, which is what the merge was for.
 
 ### Fixed Assets
 The **category** owns the GL mapping (Fixed Asset / Accumulated Depreciation / Depreciation Expense), not the individual asset. Per-asset mapping doesn't scale.
 
 ### Opening balance / migration screen
 Highest-risk screen in the system:
-- Accounting orchestrates; calls Inventory (opening qty + unit cost → seeds WAC) and Contacts (opening AR/AP **per contact**, never a lump sum — aging breaks otherwise)
+- Accounting orchestrates; calls Inventory (opening qty + unit cost → seeds WAC) and Master for contacts (opening AR/AP **per contact**, never a lump sum — aging breaks otherwise)
 - Opening Balance Equity must net to zero — that's the validation
 - Block finalize until AR, AP, and Inventory subledgers tie to their control accounts
 - Migrated fixed assets skip historical depreciation
@@ -266,7 +317,7 @@ Two-step login, because one account spans multiple organizations:
 1. `POST /api/auth/login` — credentials → pre-auth token (5 min, no org context) + accessible orgs
 2. `POST /api/auth/select-organization` — → access token (15 min) + refresh token (7 days)
 
-JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `license_expiry` (when set), `permission[]`. The licence claims are what let a page and its API both refuse an expired customer without either asking Platform per request.
+JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `license_expiry` (when set), `permission[]`. The licence claims are what let a page and its API both refuse an expired customer without either asking Master per request.
 
 - BCrypt work factor 12; refresh tokens **rotate** on use; all tokens stored **hashed**
 - Lockout: 5 failed attempts → 15 min
@@ -299,51 +350,66 @@ JWT claims: `sub`, `customer_id`, `org_id`, `display_name`, `license_status`, `l
 
 ## Current state
 
-~381 C# files across 44 projects. Compiled, tested and migrated — see the caveats below.
+~429 C# files across 31 projects. Compiled, tested and migrated — see the caveats below.
 
 ### Built and wired end to end
 
 Schema, API and page all exist for these. Task tracking lives in [`master.md`](./master.md); this is the shape of the thing, not the to-do list.
 
-| Service | Tables | What works |
-|---|---|---|
-| **Master** | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
-| **Platform** | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
-| **Identity** | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
-| **Contacts** | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
-| **Inventory** | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
-| **Accounting** | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger and the trial balance |
-| **Banking** | Bank, BankAccount, MoneyTransaction, MoneyTransactionDetail | Each bank account provisions its own ledger account; the money document's schema for spend, receive and transfer — **schema only, no API or screen yet** |
+| Service | Schema | Tables | What works |
+|---|---|---|---|
+| **Master** | `mst` | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
+| **Master** | `mst` | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
+| **Master** | `mst` | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
+| **Master** | `con` | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
+| **Inventory** | `inv` | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
+| **Accounting** | `acc` | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail, PeriodLock, OpeningBalance, OpeningBalanceLine | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger, the trial balance, period locks and the opening balance |
+| **Accounting** | `acc` | Bank, BankAccount, SpendMoney, SpendMoneyDetail, ReceiveMoney, ReceiveMoneyDetail, TransferMoney, BankStatement, BankStatementLine, StatementImportProfile | Each bank account provisions its own ledger account; spend, receive and transfer money with allocation, settlement and FX; CSV and XLSX statement import with matching |
 
-`NumberingSeries` lives in `Shared.Kernel` and is mapped by five services — Accounting owns the migration, Contacts, Inventory, Banking and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
+The four **Master** rows are one service and one API host, but **two databases**: the first three are `mst` in the shared master database, the fourth is `con` in each customer's own.
+
+`NumberingSeries` lives in `Shared.Kernel` and is mapped by three services — Accounting owns the migration; Master (on its contacts context), Inventory and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
 
 The reason is the allocation. `NumberGenerator` takes a number with a guarded `ExecuteUpdate` on `NextNumber`, and that statement joins the caller's transaction — so an item insert that fails gives its code back, and a document series stays gapless. Both properties need the table in the caller's `DbContext`. Ask another service for a number over HTTP and the transaction ends at the wire: the number is spent whether or not the insert succeeds.
 
-A table per service would also break the screen. Settings › Numbering series is one list of every series, and splitting the table means four services to query and no single place to enforce one default per code.
+A table per service would also break the screen. Settings › Numbering series is one list of every series, and splitting the table means three services to query and no single place to enforce one default per code.
 
 If this is ever revisited, the thing to preserve is the transaction, not the table.
 
+The Accounting/Banking merge is what that argument predicted: Banking mapped this table for exactly this reason, and merging the two made its mapping simply Accounting's own.
+
 **Gateway**: YARP with request logging, purging and per-environment route config. **CostingEngine.Worker**: built — claims movements from `inv.StockMovements` with a guarded status update, costs them, then drains a second queue on the same table that posts them to the ledger.
 
-**Frontend**: `apps/web` and `apps/docs` build. 28 pages across accounting, banking, contacts, identity, inventory, platform and shared auth. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all twelve `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
+**Frontend**: `apps/web` and `apps/docs` build. 28 pages across `master-ui` (contacts, users, roles, branches, org settings, currencies, configuration, SMTP, HSN/SAC), `accounting-ui` (the ledger screens and the banking ones) and `inventory-ui`, plus shared auth. The libs mirror the services: `libs/{master, inventory, accounting, sales, purchase, customer, reporting}`. Of `libs/shared`, only **auth** and **api-client** have any source — `ui-components`, `currency-format` and `theming` are empty scaffolds, as are all seven `-core` libs, though `tsconfig.base.json` maps a path alias for every one of them.
 
-**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all three. Component tests need the Angular Vite plugin and are not set up. The backend has four test projects: `Shared.Kernel.Tests`, `Inventory.Api.Tests`, `Accounting.Api.Tests` and `Banking.Api.Tests`. The last of these needs **a real PostgreSQL** — the ledger's guarantees are half in the database (deferred triggers, `ExecuteDelete`, the guarded numbering update), so an in-memory provider would prove nothing about them. The last two need a real PostgreSQL and skip themselves with a reason when no server answers; point `ACCOUNTING_TEST_DB` and `BANKING_TEST_DB` at one to run them.
+**Lint and tests**: ESLint across the workspace (`npm run lint`), Vitest for services, guards and interceptors (`npm run test`), `npm run check` for all four (lint, typecheck, 66 tests, both builds). Component tests need the Angular Vite plugin and are not set up. The backend has three test projects: `Shared.Kernel.Tests`, `Inventory.Api.Tests` and `Accounting.Api.Tests` — the last absorbed `Banking.Api.Tests` with the merge, so there is now one `ACCOUNTING_TEST_DB` rather than two environment variables.
+
+`Accounting.Api.Tests` needs **a real PostgreSQL** and skips itself with a reason when no server answers. The ledger's guarantees are half in the database — deferred triggers, `ExecuteDelete`, the guarded numbering update, and the allocation triggers on the money documents — so an in-memory provider would prove nothing about them.
 
 ### Still not built
 
-- **Crm, Purchase, Support, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages
-- **Sales beyond the schema** — the fifteen `sal` tables and the three document base classes in `Shared.Kernel` are written (T2.2). No service, no controller, no page: the quote is T2.3 and wires up `bb-document-line-grid` rather than writing a grid
-- **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Platform (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
+- **Customer, Purchase, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages. Customer is where CRM and the support helpdesk will both be built
+- **Sales past the invoice.** The sixteen `sal` tables, the three document base classes and all five services and controllers are written. The **quote** (T2.1), the **sales order** (T2.2) and the **invoice** (T3.1) each have their list, their form, their conversion from the document upstream, their docs and their tests; the invoice posts the double entry and issues the stock, and `LedgerClient` now sends `DebitAmount`/`CreditAmount` as Accounting requires. **Delivery challan and credit note have a controller and a scaffold page but no verified path** — until 21 August no sales document could be saved at all (see below), so "written" has never been "works" for those two. **Nothing advances `DeliveredQuantity` yet**, which is the challan's job: `FulfilmentStatus.PartlyDelivered` is therefore unreachable and a fully invoiced order still reads Open, so the order and the invoice are complete as commitment and supply documents and incomplete as fulfilment ones. **The item and customer pickers are numeric id fields on every sales form**, awaiting the item lookup endpoint. **POS** is an `sal.Invoices` row and shares the invoice's posting; its till screen is Phase 3 and `apps/desktop` holds only a scaffold
+- **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Master (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
 - **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
-- **Document numbering series beyond `JRN`, `SPM`, `RCM` and `TRM`.** Accounting and Banking seed their own; Sales and Purchase seed theirs when those services land
+- **Document numbering series beyond `JRN`, `OPB`, `SPM`, `RCM` and `TRM`.** Accounting seeds all five; Sales and Purchase seed theirs when those services land
 
 ### Standing caveats
 
+- **T0.4 — the lifecycle — is written but not verified, and one of its five *Done when* clauses belongs to T3.1.** `Shared.Kernel.Documents.DocumentLifecycle` holds the whole table: what each status permits, with one set of refusal messages so every document answers alike. `PermissionAction` on a route **replaces** the action `RequireModulePermission` would derive from the HTTP method — `[PermissionAction("void")]` needs `{module}.void` and not `{module}.edit`, which is the separation `sales.void` was seeded for and never got. Three things settled: `ReadyToPost` is editable, a void always needs a reason, and a document row is never deleted.
 - **T0.2 — tax determination — is written but not verified.** `Shared.Kernel.Tax` holds the pure calculator, the place-of-supply resolver and the cached rate client; Accounting serves `GET internal/tax/rates?on={date}`. The three sub-decisions are settled and written down in `TRANSACTIONS.md`: inclusive **and** exclusive pricing per line, discount reduces the taxable value when the branch says so, tax rounds per component then sums. `shared-fixtures/tax-fixture.json` is read by both `Shared.Kernel.Tests` and `tax-fixture.spec.ts`, so a divergence between the C# and TypeScript implementations is a failing test rather than a wrong GST return — but neither suite has been run.
-- **T2.2 — the `sal` schema — is written but not verified, and `sal` has no migration.** It was built in a session with no .NET SDK reachable: `dot.net`, `builds.dotnet.microsoft.com`, `packages.microsoft.com` and `api.nuget.org` all refused through the egress proxy, so `dotnet build`, `dotnet test` and `dotnet ef migrations add` could none of them run. Generate the migration per `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md` — it carries the RLS block EF will not write, and the second `migrations add` that has to come back empty. The boxes in `SALES.md` stay unticked until both checks are green.
+- **`SalesDbContext` shipped without `base.OnModelCreating`, and it is worth knowing why nobody noticed.** For the whole life of the `sal` schema, `TenantDbContext` never ran against it: **no OrgId query filter on any of the sixteen tables**, no OrgId index, and `Version` mapped to a real column instead of Postgres `xmin`, so there was no optimistic concurrency and a dead column on every table. RLS still refused every cross-branch read, so nothing leaked — but the filter is the first line of defence and it was absent everywhere, and `IgnoreQueryFilters` would have walked past the only guard left. `sal.SalesRegister` was worse: it had been left out of the RLS loop too, so it had **neither** guard, and it is the table GSTR-1 is filed from.
+  It stayed invisible because **nothing queried the tables while the schema was being written** — a schema nobody queries is a schema nobody has checked, and "written" is not "verified" no matter how carefully it was written. Fixed, with `Sales.Api.Tests.SalesQueryFilterTests` asserting the filter, the `xmin` mapping and RLS coverage over the whole model rather than over one table a test happens to touch.
+  **The lesson that generalises past this bug**: those tests were useless when first written, because `PostgresFixture` caught *every* exception and reported it as "no PostgreSQL", so removing the fix turned the run green with five skips. Every suite in `tests/` still does this. A model that disagrees with its migrations is a failure; only a socket that will not open is a skip — `Sales.Api.Tests` now distinguishes them and the others should be brought into line.
 
-- **Compiled, tested and migrated as of 3 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 110, every EF snapshot matches its model, and all 33 migrations apply to PostgreSQL 16. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
-- **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, 41 tests and both builds.
+- **The same blind spot hid a worse bug, and it was found on 21 August by writing the first test that ever saved a sales document.** Every header-to-line relationship in `SalesDbContext` was configured `HasOne<Quote>().WithMany()` — a valid relationship on the real `QuoteId` column that has nothing to do with `Quote.Lines`. EF therefore mapped that collection a second time by convention and gave it a shadow key of its own: `QuoteId1`, `SalesOrderId1`, and eight more. Adding a line through the navigation — which is what every service does — filled the shadow column and left the real `NOT NULL` one at zero, so **`SaveChanges` failed with a foreign key violation on every create, in all five document types**. No sales document could be saved at all, for the whole life of the schema.
+  Bound in `BindDocumentLineNavigations`, with `Sales.Api.Tests.SalesSchemaTests` asserting over the whole model that no foreign key carries a shadow property and that all ten collections name their column. The six conversion links beside them stay navigation-less on purpose.
+  **What to take from it beyond the fix**: "the schema compiles, the snapshot matches, the migration applies" was true throughout and proved nothing, because the failure lives in the relationship EF *inferred* rather than in the one that was written. Only a round trip through the service finds that. Purchase's suite has written through the service from the start; `sal` had none of that until now.
+  **The other schemas were checked and are clean** — `information_schema.columns WHERE column_name LIKE '%Id1'` over freshly migrated databases returns nothing for `pur` (35 tables), `acc` (23), `inv` (41) or `sal` (39 after the fix). Worth re-running whenever a schema gains a header/line pair; it is a thirty-second answer.
+
+- **Compiled, tested and migrated as of 12 August 2026.** `dotnet build` is clean with zero warnings under `TreatWarningsAsErrors`, `dotnet test` passes 214 with none skipped, every EF snapshot matches its model, and all 14 migrations apply to PostgreSQL 16. There are 14 rather than 33 because the three merged services squashed their chains to one migration each — the product has no released deployment to upgrade, so a clean history was worth more than a preserved one. If a session reports the SDK as unavailable: the egress policy denies `dot.net` and `builds.dotnet.microsoft.com`, but `apt-get update && apt-get install -y dotnet-sdk-10.0` works and is what the session-start hook now tries first.
+- **Run `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` before claiming anything works.** Both are green today; the frontend chain is lint, typecheck, **460 tests** and both builds. The backend is **502 tests with none skipped**, given a PostgreSQL and clean test databases. Each suite points at its own — `SALES_TEST_DB`, `PURCHASE_TEST_DB`, `ACCOUNTING_TEST_DB`, `INVENTORY_TEST_DB`, `BANKING_TEST_DB`, `REPORTING_TEST_DB` — and **a stale one is the usual cause of a suite skipping wholesale**, because the fixture migrates into it and a half-migrated database throws. Drop and recreate rather than reusing. In a fresh container there is no server running: `service postgresql start`, then `ALTER USER postgres PASSWORD '123'` to match the default connection strings.
+- **`Directory.Packages.props` had `Npgsql` pinned to 9.0.2 while `Npgsql.EntityFrameworkCore.PostgreSQL` 10.0.0 requires ≥ 10.0.0**, so `dotnet restore` failed with NU1109 across every project referencing both — the backend did not build at all, and `Purchase.Api.Tests` had therefore never run once. The two versions must move together.
 - **Two infrastructure interfaces still have development stand-ins only.** `ISecretStore` → `InMemorySecretStore` / `ConfigurationSecretStore`, and `IEventPublisher` → `LoggingEventPublisher`, which logs and delivers nothing — so nothing that reads an event works yet, because nothing publishes one anywhere it can be read. Key Vault and Service Bus still to write. `IFileStorage` is done: `AzureBlobFileStorage` when `Storage:ConnectionString` is set, `LocalDiskFileStorage` otherwise.
 - **Every endpoint is behind a credential and a permission** (master.md 5.10, 5.17). Services default-deny; the exceptions are sign-in, signup and the country/state lists the signup form needs. `internal/` routes take a shared key instead of a token.
 
@@ -351,9 +417,15 @@ If this is ever revisited, the thing to preserve is the transaction, not the tab
 
 ## Roadmap
 
-**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, Banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, Platform provisioning
+**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, tenant provisioning
 **Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
-**Phase 3** — Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+**Phase 3** — **POS (till API, screen, ESC/POS receipt)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+
+*POS moved Phase 1 → Phase 3 on 15 August 2026, by decision. Its stage — T7 in [`docs/modules/Sales.md`](./docs/modules/Sales.md) — stays where it is, boxes kept rather than deleted.*
+
+*It was the most expensive thing left in Phase 1 and the least shared: the till screen is the bulk of the stage, it is keyboard- and barcode-driven, it has to tolerate being offline, and it lives in `apps/desktop` — which is still a scaffold with no source. The receipt is **ESC/POS commands rather than PDF** and can only be printed from the desktop app, because a browser cannot reach a USB or serial printer, so none of the printing work already done applies to it.*
+
+*What it does **not** block is the reason it can wait: **a POS sale is an `sal.Invoices` row** with `TransactionTypeCode = 'POS'`, and T7.1 reuses T3.1's posting rather than adding one. The tables, the numbering series and the GST determination are all in place already. Nothing else in the product is waiting on POS — the counter sale it replaces is an invoice raised directly, which is the common case in a shop anyway.*
 
 *FIFO/FEFO/LIFO batch allocation was Phase 3 and landed early, with cost layers — it is built. Do not defer work that depends on it.*
 

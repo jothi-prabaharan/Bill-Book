@@ -1,0 +1,100 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.number-group {
+  display: flex;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.input-addon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  min-height: 36px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 65%, transparent);
+  background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  box-sizing: border-box;
+  user-select: none;
+
+  &.prefix {
+    border-right: none;
+    border-top-left-radius: var(--radius-md, 4px);
+    border-bottom-left-radius: var(--radius-md, 4px);
+  }
+
+  &.suffix {
+    border-left: none;
+    border-top-right-radius: var(--radius-md, 4px);
+    border-bottom-right-radius: var(--radius-md, 4px);
+  }
+}
+
+.has-prefix .number-input {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.has-suffix .number-input {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.number-input {
+  flex: 1;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 10px;
+  font: inherit;
+  font-family: var(--font-body, system-ui, sans-serif);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text, #201f1d);
+  caret-color: var(--color-accent, #b68235);
+  background: transparent;
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  border-radius: var(--radius-md, 4px);
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &.align-right {
+    text-align: right;
+  }
+
+  &.align-left {
+    text-align: left;
+  }
+
+  &.align-center {
+    text-align: center;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--color-text, #201f1d) 45%, transparent);
+  }
+
+  &:focus-visible {
+    border-color: var(--color-accent, #b68235);
+    outline: 2px solid var(--color-accent, #b68235);
+    outline-offset: 0;
+    z-index: 1;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
+  }
+
+  &[readonly] {
+    opacity: 0.85;
+    background: color-mix(in srgb, var(--color-text, #201f1d) 2%, transparent);
+  }
+}

@@ -51,7 +51,11 @@ public sealed class InternalSeedController : ControllerBase
             Seeded =
             {
                 ["unitTypesAndUnits"] = await uom.SeedForOrganizationAsync(request.OrgId, ct),
-                ["metalPurities"] = await purities.SeedForOrganizationAsync(request.OrgId, ct),
+                // A vertical's trade narrows what it is seeded with. The purities
+                // are the jewellery trade — a chemist prices an ornament with no
+                // purity, so none are written (0) rather than written and ignored.
+                ["metalPurities"] = await purities.SeedForOrganizationAsync(
+                    request.OrgId, request.Vertical, ct),
                 ["numberingSeries"] = await seeder.SeedNumberingSeriesAsync(request.OrgId, ct),
             },
         };

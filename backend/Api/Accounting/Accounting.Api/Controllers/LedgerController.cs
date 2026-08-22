@@ -76,4 +76,9 @@ public sealed class LedgerController : ControllerBase
         // be able to tell a document in another branch from one that never was.
         return rate is null ? NotFound() : Ok(rate);
     }
+
+    [HttpGet("contacts/{contactId:long}/outstanding-balances/{ledgerTypeId:int}")]
+    public async Task<IActionResult> OutstandingBalances(
+        long contactId, int ledgerTypeId, CancellationToken ct) =>
+        Ok(await _reports.GetOutstandingBalancesAsync(contactId, ledgerTypeId, ct));
 }

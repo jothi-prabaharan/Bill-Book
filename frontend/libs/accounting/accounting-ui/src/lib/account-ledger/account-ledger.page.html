@@ -19,11 +19,11 @@
   </label>
   <label>
     From
-    <input type="date" [(ngModel)]="from" name="from" />
+    <bb-date-input  [(ngModel)]="from" name="from" />
   </label>
   <label>
     To
-    <input type="date" [(ngModel)]="to" name="to" />
+    <bb-date-input  [(ngModel)]="to" name="to" />
   </label>
   <button type="submit" [disabled]="busy() || accountId === null">Show</button>
 </form>
@@ -59,55 +59,37 @@
     </dl>
   </section>
 
-  <table class="grid">
-    <thead>
-      <tr>
-        <th class="date-col">Date</th>
-        <th>Document</th>
-        <th>Detail</th>
-        <th class="num">Debit</th>
-        <th class="num">Credit</th>
-        <th class="num">Balance</th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (row of l.rows; track row.ledgerId) {
-        <tr>
-          <td class="date-col" data-label="Date">{{ row.ledgerDate }}</td>
-          <td data-label="Document">
-            <span class="chip">{{ row.transactionTypeCode }}</span>
-            @if (row.journalId) {
-              <a class="link" [routerLink]="['/accounting/journals', row.journalId]">
-                {{ row.journalNo ?? '#' + row.journalId }}
-              </a>
-            } @else {
-              <span class="ref">#{{ row.transactionId }}</span>
-            }
-            @if (row.transactionDetailId) {
-              <span class="ref">· line {{ row.transactionDetailId }}</span>
-            }
-          </td>
-          <td data-label="Detail">
-            {{ row.transactionDesc }}
-            @if (row.subAccountName) {
-              <span class="sub">{{ row.subAccountName }}</span>
-            }
-          </td>
-          <td class="num" data-label="Debit">
-            {{ row.debitAmountBase ? (row.debitAmountBase | number: '1.2-2') : '' }}
-          </td>
-          <td class="num" data-label="Credit">
-            {{ row.creditAmountBase ? (row.creditAmountBase | number: '1.2-2') : '' }}
-          </td>
-          <td class="num balance" data-label="Balance">
-            {{ presented(row.runningBalance) | number: '1.2-2' }}
-          </td>
-        </tr>
-      } @empty {
-        <tr>
-          <td colspan="6" class="empty">Nothing posted to this account in that range.</td>
-        </tr>
+  <bb-data-grid [gridCode]="'ACCOUNT_LEDGER'" [columns]="columns" [data]="l.rows">
+    <ng-template bbCellTemplate="ledgerDate" let-row>
+      {{ row.ledgerDate }}
+    </ng-template>
+    <ng-template bbCellTemplate="document" let-row>
+      <span class="chip">{{ row.transactionTypeCode }}</span>
+      @if (row.journalId) {
+        <a class="link" [routerLink]="['/accounting/journals', row.journalId]">
+          {{ row.journalNo ?? '#' + row.journalId }}
+        </a>
+      } @else {
+        <span class="ref">#{{ row.transactionId }}</span>
       }
-    </tbody>
-  </table>
+      @if (row.transactionDetailId) {
+        <span class="ref">· line {{ row.transactionDetailId }}</span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="detail" let-row>
+      {{ row.transactionDesc }}
+      @if (row.subAccountName) {
+        <span class="sub">{{ row.subAccountName }}</span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="debit" let-row>
+      {{ row.debitAmountBase ? (row.debitAmountBase | number: '1.2-2') : '' }}
+    </ng-template>
+    <ng-template bbCellTemplate="credit" let-row>
+      {{ row.creditAmountBase ? (row.creditAmountBase | number: '1.2-2') : '' }}
+    </ng-template>
+    <ng-template bbCellTemplate="balance" let-row>
+      {{ presented(row.runningBalance) | number: '1.2-2' }}
+    </ng-template>
+  </bb-data-grid>
 }

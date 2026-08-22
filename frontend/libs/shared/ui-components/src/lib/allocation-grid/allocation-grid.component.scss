@@ -1,0 +1,83 @@
+.allocation-grid-container {
+  margin-top: 16px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background-color: #fff;
+  overflow: hidden;
+}
+
+.allocation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e0e0e0;
+  
+  .summary-info {
+    display: flex;
+    gap: 24px;
+    font-size: 14px;
+    
+    div {
+      display: flex;
+      flex-direction: column;
+      
+      strong {
+        font-size: 16px;
+        margin-top: 4px;
+        color: #1f2937;
+      }
+    }
+  }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  
+  th, td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 14px;
+  }
+  
+  th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #4b5563;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+  }
+  
+  .number-cell {
+    text-align: right;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 32px;
+    color: #6b7280;
+    font-style: italic;
+  }
+  
+  .fully-allocated {
+    background-color: #f0fdf4;
+  }
+  
+  .amount-input {
+    width: 120px;
+    padding: 6px 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 4px;
+    text-align: right;
+    
+    &:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 1px #3b82f6;
+    }
+  }
+}

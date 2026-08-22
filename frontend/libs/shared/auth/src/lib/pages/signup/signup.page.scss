@@ -1,12 +1,1 @@
-.columns {
-  display: flex;
-  gap: 1rem;
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-  }
-}
-
-.column {
-  flex: 2;
-}
+:host { display: contents; }

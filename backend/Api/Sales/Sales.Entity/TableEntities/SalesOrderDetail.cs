@@ -28,4 +28,6 @@ public class SalesOrderDetail : DocumentLineBase
 
     /// <summary>How much has actually gone out, across every challan and invoice against this line.</summary>
     public decimal DeliveredQuantity { get; set; }
+
+    public List<SalesOrderDetailTax> Taxes { get; set; } = [];
 }

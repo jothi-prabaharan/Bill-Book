@@ -1,0 +1,633 @@
+
+<nav aria-label="Contact views" class="flex flex-wrap mb-3 gap-6px">
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === '' ? 'true' : null" (click)="roleFilter = ''; load()">All contacts</button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'customer' ? 'true' : null" (click)="roleFilter = 'customer'; load()">Customers</button>
+    <button class="btn btn-secondary" type="button" title="New customer" aria-label="New customer" (click)="openAdd()" [disabled]="busy()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'vendor' ? 'true' : null" (click)="roleFilter = 'vendor'; load()">Vendors</button>
+    <button class="btn btn-secondary" type="button" title="New vendor" aria-label="New vendor" (click)="openAdd()" [disabled]="busy()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+    </button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'jobworker' ? 'true' : null" (click)="roleFilter = 'jobworker'; load()">Job workers</button>
+  </span>
+  <span class="tabgrp">
+    <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'prescriber' ? 'true' : null" (click)="roleFilter = 'prescriber'; load()">Prescribers</button>
+  </span>
+</nav>
+
+<div class="actbar">
+  <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" aria-label="Search contacts" class="w-auto flex-1 input text-sm actbar-search"/>
+
+  <select [(ngModel)]="showInactive" (ngModelChange)="load()" aria-label="Filter by status" class="w-auto input text-sm actbar-select">
+    <option [ngValue]="false">Active only</option>
+    <option [ngValue]="true">Any status</option>
+  </select>
+
+  
+  
+  <button type="button" class="btn btn-secondary">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    Export
+  </button>
+</div>
+
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<div class="card bg-surface">
+  <bb-data-grid [gridCode]="'CONTACTS'" [columns]="columns" [data]="rows()" (rowClick)="openEdit($event)">
+    <ng-template bbCellTemplate="contactCode" let-row>
+      {{ row.contactCode }}
+    </ng-template>
+    <ng-template bbCellTemplate="nameGstin" let-row>
+      {{ row.displayName }} &middot; <span class="muted">{{ row.gstin || 'Unregistered' }}</span>
+      @if (!row.isSubLedgerLinked) {
+        <span class="badge unlinked" title="Cannot be invoiced or billed until linked">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+        </span>
+      }
+    </ng-template>
+    <ng-template bbCellTemplate="city" let-row>
+      {{ row.city || '—' }}
+    </ng-template>
+    <ng-template bbCellTemplate="role" let-row>
+      <span class="tag tag-neutral">{{ roleLabels(row) }}</span>
+    </ng-template>
+    <ng-template bbCellTemplate="outstanding" let-row>
+      <div class="tabular-nums text-right">—</div>
+    </ng-template>
+    <ng-template bbCellTemplate="creditLimit" let-row>
+      <div class="tabular-nums text-right">—</div>
+    </ng-template>
+  </bb-data-grid>
+</div>
+
+@if (editorOpen()) {
+  <div class="sheet">
+    <header class="sheet-head">
+      <h2>{{ editingId() === null ? 'New contact' : form.displayName }}</h2>
+      @if (editingId() !== null) {
+        <code class="muted">{{ form.contactCode }}</code>
+      }
+    </header>
+
+    <nav class="tabs">
+      <button type="button" [class.on]="tab() === 'general'" (click)="tab.set('general')">General</button>
+      <button type="button" [class.on]="tab() === 'addresses'" (click)="tab.set('addresses')">
+        Addresses ({{ form.addresses.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'persons'" (click)="tab.set('persons')">
+        People ({{ form.persons.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'banking'" (click)="tab.set('banking')">
+        Bank details ({{ form.bankDetails.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'licences'" (click)="tab.set('licences')">
+        Licences ({{ form.licences.length }})
+      </button>
+      <button type="button" [class.on]="tab() === 'documents'" (click)="tab.set('documents')">
+        Documents ({{ form.attachments.length }})
+      </button>
+    </nav>
+
+    @if (tab() === 'general') {
+      <div class="fields">
+        <label>
+          Display name
+          <bb-text-input  [(ngModel)]="form.displayName" maxlength="200" />
+        </label>
+
+        <label>
+          Legal name
+          <bb-text-input  [(ngModel)]="form.legalName" maxlength="200" />
+          <small>Name as on the GST certificate, if different. Prints on documents.</small>
+        </label>
+
+        <label>
+          Code
+          <bb-text-input  [(ngModel)]="form.contactCode" maxlength="20" [disabled]="editingId() !== null" />
+          <small>Leave empty to take the next code from the numbering series.</small>
+        </label>
+
+        <label>
+          Category
+          <select [(ngModel)]="form.contactCategory">
+            <option value="Business">Business</option>
+            <option value="Individual">Individual</option>
+          </select>
+        </label>
+
+        <fieldset class="roles">
+          <legend>Roles</legend>
+          <label class="inline"><input type="checkbox" [(ngModel)]="form.isCustomer" /> Customer</label>
+          <label class="inline"><input type="checkbox" [(ngModel)]="form.isVendor" /> Vendor</label>
+          <label class="inline"><input type="checkbox" [(ngModel)]="form.isJobWorker" /> Job worker</label>
+          <label class="inline"><input type="checkbox" [(ngModel)]="form.isPrescriber" /> Prescriber</label>
+          <small>Tick every role that applies — one contact, not one per role.</small>
+        </fieldset>
+
+        <label>
+          GST registration
+          <select [(ngModel)]="form.gstRegistrationType" (ngModelChange)="onRegistrationChange()">
+            <option value="Regular">Regular</option>
+            <option value="Composition">Composition</option>
+            <option value="Unregistered">Unregistered</option>
+            <option value="Sez">SEZ</option>
+            <option value="Overseas">Overseas</option>
+            <option value="Consumer">Consumer</option>
+          </select>
+        </label>
+
+        @if (gstinAllowed) {
+          <label>
+            GSTIN
+            <bb-text-input  [(ngModel)]="form.gstin" maxlength="15" class="uppercase" />
+            <small>Its first two digits must match the place of supply.</small>
+          </label>
+        }
+
+        <label>
+          Place of supply
+          <select [(ngModel)]="form.placeOfSupplyStateId">
+            <option [ngValue]="null">Not set</option>
+            @for (state of states(); track state.stateId) {
+              <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
+            }
+          </select>
+          <small>Decides CGST + SGST versus IGST.</small>
+        </label>
+
+        <label>
+          PAN
+          <bb-text-input  [(ngModel)]="form.pan" maxlength="10" class="uppercase" />
+        </label>
+
+        <label>
+          Currency
+          <bb-text-input  [(ngModel)]="form.currencyCode" maxlength="3" />
+        </label>
+
+        <label>
+          Payment terms
+          <select [(ngModel)]="form.paymentTermId">
+            <option [ngValue]="null">Not set</option>
+            @for (term of terms(); track term.paymentTermId) {
+              <option [ngValue]="term.paymentTermId">{{ term.termName }}</option>
+            }
+          </select>
+        </label>
+
+        <label>
+          Credit limit
+          <bb-number-input  [(ngModel)]="form.creditLimit" min="0" step="0.01" />
+          <small>Empty means no limit.</small>
+        </label>
+
+        <label>
+          Max outstanding days
+          <bb-number-input  [(ngModel)]="form.maxOutstandingDays" min="0" />
+          <small>Counted from the due date, not the invoice date.</small>
+        </label>
+
+        <label>
+          Max discount %
+          <bb-number-input  [(ngModel)]="form.maxDiscountPercent" min="0" max="100" step="0.01" />
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isTdsApplicable" />
+          TDS applicable
+        </label>
+
+        @if (form.isTdsApplicable) {
+          <label>
+            TDS section
+            <bb-text-input  [(ngModel)]="form.tdsSection" maxlength="10" />
+          </label>
+        }
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isMsme" />
+          MSME registered
+        </label>
+
+        @if (form.isMsme) {
+          <label>
+            Udyam number
+            <bb-text-input  [(ngModel)]="form.udyamNumber" maxlength="20" />
+          </label>
+        }
+
+        <label class="wide">
+          Notes
+          <textarea [(ngModel)]="form.notes" maxlength="500" rows="2"></textarea>
+        </label>
+
+        <label class="inline">
+          <input type="checkbox" [(ngModel)]="form.isActive" />
+          Active
+        </label>
+      </div>
+    }
+
+    @if (tab() === 'addresses') {
+      <div class="child-actions">
+        <button type="button" (click)="addAddress()">+ Add address</button>
+        <button type="button" class="link" (click)="copyBillingToShipping()">
+          Copy billing to shipping
+        </button>
+      </div>
+
+      @for (address of form.addresses; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label>
+              Type
+              <select [(ngModel)]="address.addressType" [name]="'addrType' + $index">
+                <option value="Billing">Billing</option>
+                <option value="Shipping">Shipping</option>
+              </select>
+            </label>
+
+            <label>
+              Label
+              <bb-text-input  [(ngModel)]="address.label" [name]="'addrLabel' + $index" maxlength="50" />
+            </label>
+
+            <label class="wide">
+              Address line 1
+              <bb-text-input  [(ngModel)]="address.addressLine1" [name]="'addr1' + $index" maxlength="200" />
+            </label>
+
+            <label class="wide">
+              Address line 2
+              <bb-text-input  [(ngModel)]="address.addressLine2" [name]="'addr2' + $index" maxlength="200" />
+            </label>
+
+            <label>
+              City
+              <bb-text-input  [(ngModel)]="address.city" [name]="'city' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              State
+              <select [(ngModel)]="address.stateId" [name]="'state' + $index">
+                <option [ngValue]="null">Not set</option>
+                @for (state of states(); track state.stateId) {
+                  <option [ngValue]="state.stateId">{{ state.stateName }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Postal code
+              <bb-text-input  [(ngModel)]="address.postalCode" [name]="'pin' + $index" maxlength="10" />
+            </label>
+
+            <label>
+              Mobile
+              <bb-text-input  [(ngModel)]="address.mobileNumber" [name]="'addrMobile' + $index" maxlength="20" />
+            </label>
+          </div>
+
+          <div class="child-footer">
+            <label class="inline">
+              <input
+                type="radio"
+                [name]="'defaultAddr' + address.addressType"
+                [checked]="address.isDefault"
+                (change)="setDefaultAddress($index)"
+              />
+              Default {{ address.addressType.toLowerCase() }} address
+            </label>
+            <button type="button" class="link danger" (click)="removeAddress($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">No addresses yet. Place of supply falls back to the contact's own state.</p>
+      }
+    }
+
+    @if (tab() === 'persons') {
+      <div class="child-actions">
+        <button type="button" (click)="addPerson()">+ Add person</button>
+        <button type="button" class="link" (click)="rolesOpen.set(true)">Manage roles</button>
+      </div>
+
+      @for (person of form.persons; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label>
+              Role
+              <select [(ngModel)]="person.contactPersonRoleId" [name]="'role' + $index">
+                @for (role of roles(); track role.contactPersonRoleId) {
+                  <option [ngValue]="role.contactPersonRoleId">{{ role.roleName }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              First name
+              <bb-text-input  [(ngModel)]="person.firstName" [name]="'first' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              Last name
+              <bb-text-input  [(ngModel)]="person.lastName" [name]="'last' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              Designation
+              <bb-text-input  [(ngModel)]="person.designation" [name]="'desig' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              Email
+              <input type="email" [(ngModel)]="person.email" [name]="'email' + $index" maxlength="150" />
+            </label>
+
+            <label>
+              Mobile
+              <bb-text-input  [(ngModel)]="person.mobileNumber" [name]="'mobile' + $index" maxlength="20" />
+            </label>
+
+            <label>
+              Phone
+              <bb-text-input  [(ngModel)]="person.phoneNumber" [name]="'phone' + $index" maxlength="20" />
+            </label>
+
+            <label>
+              Website
+              <bb-text-input  [(ngModel)]="person.website" [name]="'web' + $index" maxlength="200" />
+            </label>
+          </div>
+
+          <div class="child-footer">
+            <label class="inline">
+              <input
+                type="radio"
+                name="defaultPerson"
+                [checked]="person.isDefault"
+                (change)="setDefaultPerson($index)"
+              />
+              Default contact
+            </label>
+            @if (form.persons.length > 1) {
+              <button type="button" class="link danger" (click)="removePerson($index)">Remove</button>
+            }
+          </div>
+        </div>
+      }
+
+      <p class="hint">
+        Every contact needs at least one person, and exactly one of them is the default — invoices
+        and reminders go to that person's email or mobile, so one of the two is required.
+      </p>
+    }
+
+    @if (tab() === 'banking') {
+      <div class="child-actions">
+        <button type="button" (click)="addBankDetail()">+ Add account</button>
+      </div>
+
+      @for (bank of form.bankDetails; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label class="wide">
+              Account holder name
+              <bb-text-input
+                
+                [(ngModel)]="bank.accountHolderName"
+                [name]="'holder' + $index"
+                maxlength="100"
+              />
+              <small>Exactly as on the passbook — a transfer is rejected when it differs.</small>
+            </label>
+
+            <label>
+              Bank
+              <bb-text-input  [(ngModel)]="bank.bankName" [name]="'bankName' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              Account number
+              <bb-text-input  [(ngModel)]="bank.accountNumber" [name]="'acctNo' + $index" maxlength="30" />
+            </label>
+
+            <label>
+              Account type
+              <select [(ngModel)]="bank.accountKind" [name]="'acctKind' + $index">
+                <option value="Savings">Savings</option>
+                <option value="Current">Current</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            <label>
+              IFSC
+              <bb-text-input
+                
+                [(ngModel)]="bank.ifsc"
+                [name]="'ifsc' + $index"
+                maxlength="11"
+                class="uppercase"
+              />
+            </label>
+
+            <label>
+              Branch
+              <bb-text-input  [(ngModel)]="bank.branchName" [name]="'branch' + $index" maxlength="100" />
+            </label>
+
+            <label>
+              UPI id
+              <bb-text-input  [(ngModel)]="bank.upiId" [name]="'upi' + $index" maxlength="100" />
+              <small>Often the only detail a small vendor gives you.</small>
+            </label>
+          </div>
+
+          <div class="child-footer">
+            <label class="inline">
+              <input
+                type="radio"
+                name="defaultBank"
+                [checked]="bank.isDefault"
+                (change)="setDefaultBankDetail($index)"
+              />
+              Default payout account
+            </label>
+            <button type="button" class="link danger" (click)="removeBankDetail($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">
+          No payout accounts. These are the vendor's accounts — money we send out — not the
+          organization's own bank accounts, which live under Banking.
+        </p>
+      }
+    }
+
+    @if (tab() === 'licences') {
+      <div class="child-actions">
+        <button type="button" (click)="addLicence()">+ Add licence</button>
+      </div>
+
+      @for (licence of form.licences; track $index) {
+        <div class="child-card">
+          <div class="fields">
+            <label>
+              Type
+              <select [(ngModel)]="licence.licenceType" [name]="'licType' + $index">
+                @for (type of licenceTypes; track type.value) {
+                  <option [value]="type.value">{{ type.label }}</option>
+                }
+              </select>
+            </label>
+
+            <label>
+              Number
+              <bb-text-input  [(ngModel)]="licence.licenceNumber" [name]="'licNo' + $index" maxlength="50" />
+            </label>
+
+            <label>
+              Issuing authority
+              <bb-text-input
+                
+                [(ngModel)]="licence.issuingAuthority"
+                [name]="'licAuth' + $index"
+                maxlength="100"
+              />
+            </label>
+
+            <label>
+              Issued on
+              <bb-date-input  [(ngModel)]="licence.issuedOn" [name]="'licFrom' + $index" />
+            </label>
+
+            <label>
+              Expires on
+              <bb-date-input  [(ngModel)]="licence.expiresOn" [name]="'licTo' + $index" />
+              <small>Leave empty when the licence does not expire.</small>
+            </label>
+
+            <label>
+              Description
+              <bb-text-input
+                
+                [(ngModel)]="licence.description"
+                [name]="'licDesc' + $index"
+                maxlength="100"
+              />
+              <small>"Form 20B", "Retail" — the authority's own wording.</small>
+            </label>
+          </div>
+
+          <div class="child-footer">
+            @switch (licenceStatus(licence)) {
+              @case ('expired') {
+                <span class="badge expired">Expired</span>
+              }
+              @case ('soon') {
+                <span class="badge soon">Expires within 30 days</span>
+              }
+              @case ('valid') {
+                <span class="badge valid">Valid</span>
+              }
+              @default {
+                <span class="muted">No expiry</span>
+              }
+            }
+            <button type="button" class="link danger" (click)="removeLicence($index)">Remove</button>
+          </div>
+        </div>
+      } @empty {
+        <p class="hint">
+          No licences. A pharma distributor's drug licence belongs here — selling Schedule H stock
+          against a lapsed one is an offence, and nobody checks a date they cannot see.
+        </p>
+      }
+    }
+
+    @if (tab() === 'documents') {
+      @if (editingId() === null) {
+        <p class="hint">Save the contact first — a file has to be attached to something.</p>
+      } @else {
+        <div class="fields">
+          <label>
+            Document type
+            <select [(ngModel)]="uploadDocumentType" name="uploadType">
+              @for (type of documentTypes; track type.value) {
+                <option [value]="type.value">{{ type.label }}</option>
+              }
+            </select>
+          </label>
+
+          <label>
+            Description
+            <bb-text-input  [(ngModel)]="uploadDescription" name="uploadDesc" maxlength="500" />
+          </label>
+
+          <label>
+            Expires on
+            <bb-date-input  [(ngModel)]="uploadExpiryDate" name="uploadExpiry" />
+            <small>Optional — for agreements and certificates that lapse.</small>
+          </label>
+
+          <label class="wide">
+            File
+            <input
+              type="file"
+              accept="application/pdf,image/jpeg,image/png,image/webp,image/tiff"
+              [disabled]="uploading()"
+              (change)="uploadFile($event)"
+            />
+            <small>PDF or image, up to 10 MB. The file uploads as soon as you choose it.</small>
+          </label>
+        </div>
+
+        <bb-data-grid [gridCode]="'CONTACT_DOCS'" [columns]="documentColumns" [data]="form.attachments">
+          <ng-template bbCellTemplate="file" let-row>
+            <div class="stack">
+              <strong>{{ row.fileName }}</strong>
+              @if (row.description) {
+                <span class="muted">{{ row.description }}</span>
+              }
+            </div>
+          </ng-template>
+          <ng-template bbCellTemplate="type" let-row>
+            {{ labelOf(documentTypes, row.documentType) }}
+          </ng-template>
+          <ng-template bbCellTemplate="size" let-row>
+            {{ formatSize(row.fileSizeBytes) }}
+          </ng-template>
+          <ng-template bbCellTemplate="expires" let-row>
+            {{ row.expiryDate ?? '—' }}
+          </ng-template>
+          <ng-template bbCellTemplate="actions" let-row>
+            <button type="button" class="link" (click)="downloadFile(row)">Download</button>
+            <button type="button" class="link danger" (click)="deleteFile(row)">Remove</button>
+          </ng-template>
+        </bb-data-grid>
+      }
+    }
+
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
+      <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
+    </div>
+  </div>
+}
+
+@if (rolesOpen()) {
+  <bb-contact-person-roles-dialog (closed)="onRolesClosed()" />
+}

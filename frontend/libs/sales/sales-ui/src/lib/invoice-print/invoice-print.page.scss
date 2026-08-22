@@ -1,0 +1,341 @@
+/* Tokens only — no hex, no rgb — and nothing inline in the template.
+   The print rules live at the bottom, where they override the screen ones. */
+
+.print-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.print-note {
+  padding: var(--space-6);
+  text-align: center;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+}
+
+/* An A4 sheet on screen, so what you see is what comes out of the printer. */
+.sheet {
+  position: relative;
+  width: min(210mm, 100%);
+  margin: 0 auto var(--space-6);
+  padding: var(--space-6);
+  background: var(--color-neutral-100);
+  color: var(--color-text);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.sheet__watermark {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-heading);
+  font-size: 84px;
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  pointer-events: none;
+  user-select: none;
+}
+
+.sheet__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-6);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--color-accent);
+}
+
+.sheet__org {
+  margin: 0 0 var(--space-1);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 22px;
+  line-height: 1.1;
+}
+
+.sheet__address {
+  display: flex;
+  flex-direction: column;
+  font-style: normal;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+}
+
+.sheet__meta {
+  text-align: right;
+  flex: none;
+}
+
+.sheet__kind {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 17px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-800);
+}
+
+.sheet__ids {
+  margin: var(--space-1) 0 0;
+  display: grid;
+  gap: 2px;
+
+  div {
+    display: flex;
+    gap: var(--space-2);
+    justify-content: inherit;
+  }
+
+  dt {
+    font-weight: 600;
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.sheet__meta .sheet__ids div {
+  justify-content: flex-end;
+}
+
+.sheet__parties {
+  display: flex;
+  gap: var(--space-6);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.sheet__party {
+  flex: 1;
+  min-width: 0;
+}
+
+.sheet__party-label {
+  margin: 0 0 var(--space-1);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.sheet__party-name {
+  margin: 0;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.sheet__party-address,
+.sheet__party-gstin {
+  margin: 2px 0 0;
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  white-space: pre-line;
+}
+
+.sheet__lines {
+  width: 100%;
+  margin-top: var(--space-3);
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 5px var(--space-2);
+    border-bottom: 1px solid var(--color-divider);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  thead th {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-accent-800);
+    border-bottom: 1px solid var(--color-accent);
+    white-space: nowrap;
+  }
+}
+
+.sheet__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sheet__col-num {
+  width: 2rem;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.sheet__foot {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+  margin-top: var(--space-4);
+}
+
+.sheet__taxes {
+  flex: 1;
+  min-width: 0;
+}
+
+.sheet__tax-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 3px var(--space-2);
+    border-bottom: 1px solid var(--color-divider);
+    text-align: left;
+  }
+
+  thead th {
+    font-size: 10px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  }
+}
+
+.sheet__totals {
+  flex: none;
+  width: min(16rem, 45%);
+  margin: 0;
+  display: grid;
+  gap: 2px;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-4);
+  }
+
+  dt {
+    color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.sheet__grand {
+  margin-top: var(--space-1);
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-accent);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 14px;
+}
+
+.sheet__words {
+  margin: var(--space-3) 0 0;
+  padding-top: var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  font-style: italic;
+}
+
+.sheet__terms {
+  margin-top: var(--space-3);
+  color: color-mix(in srgb, var(--color-text) 75%, transparent);
+  white-space: pre-line;
+
+  p {
+    margin: 0 0 var(--space-1);
+  }
+}
+
+.sheet__void-reason {
+  margin: var(--space-2) 0 0;
+  color: var(--color-danger);
+}
+
+.sheet__sign {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-6);
+}
+
+.sheet__sign-line {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-divider);
+  min-width: 12rem;
+  text-align: center;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+
+/* ~360px. The sheet gives up its fixed width and the two-column blocks stack;
+   the line table keeps its own scroll rather than widening the page. */
+@media (max-width: 480px) {
+  .sheet {
+    padding: var(--space-3);
+    font-size: 11px;
+  }
+
+  .sheet__head,
+  .sheet__parties,
+  .sheet__foot {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .sheet__meta,
+  .sheet__meta .sheet__ids div {
+    text-align: left;
+    justify-content: flex-start;
+  }
+
+  .sheet__lines {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .sheet__totals {
+    width: 100%;
+  }
+
+  .print-bar .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+/* Print. The app chrome goes, the sheet loses its screen framing, and the page
+   is asked not to break a row or the totals block across two sheets. */
+@media print {
+  .print-bar,
+  bb-message-box {
+    display: none;
+  }
+
+  .sheet {
+    width: auto;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    font-size: 11px;
+  }
+
+  .sheet__lines tr,
+  .sheet__foot,
+  .sheet__sign {
+    break-inside: avoid;
+  }
+
+  .sheet__lines thead {
+    display: table-header-group;
+  }
+}

@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Accounting.Entity.Models;
 
 /// <summary>
@@ -198,4 +200,78 @@ public class SubLedgerTieRow
     public int SubAccountCount { get; set; }
 
     public bool IsTied { get; set; }
+}
+
+/// <summary>
+/// An outstanding balance for a specific document.
+/// </summary>
+public class OutstandingBalanceView
+{
+    public long ContactId { get; set; }
+    
+    public string TransactionTypeCode { get; set; } = null!;
+    
+    public long TransactionId { get; set; }
+    
+    public string DocumentNo { get; set; } = null!;
+    
+    public DateOnly DocumentDate { get; set; }
+    
+    public DateOnly? DueDate { get; set; }
+    
+    public decimal TotalAmount { get; set; }
+    
+    public decimal PaidAmount { get; set; }
+    
+    public decimal OutstandingAmount { get; set; }
+}
+
+/// <summary>
+/// Asks how far a batch of documents has been settled.
+///
+/// <b>A batch, because the caller is a list screen.</b> Sales shows a page of
+/// invoices and needs the paid figure on each; asking per document, or per
+/// contact and matching afterwards, is the N+1 that makes an invoice list slow
+/// in exactly the branches that have the most invoices.
+/// </summary>
+public class SettlementQueryRequest
+{
+    /// <summary>Which database. Carried in the body, as the other internal routes do.</summary>
+    public Guid CustomerId { get; set; }
+
+    /// <summary>Which branch's books.</summary>
+    public Guid OrgId { get; set; }
+
+    [Required(ErrorMessage = "Transaction type code is required.")]
+    [MaxLength(3, ErrorMessage = "Transaction type code must be a 3-letter code.")]
+    public string TransactionTypeCode { get; set; } = null!;
+
+    /// <summary>
+    /// The control ledger type — receivable or payable. Defaults to 3, which is
+    /// the control leg every trading document posts.
+    /// </summary>
+    public int LedgerTypeId { get; set; } = 3;
+
+    public List<long> TransactionIds { get; set; } = [];
+}
+
+/// <summary>
+/// How far one document has been settled.
+///
+/// <b>A document with no ledger rows is absent from the answer, not zero.</b>
+/// A draft invoice has never posted, so it is not unpaid — it is not yet a
+/// receivable at all, and reporting it as owing nothing would put it in the same
+/// bucket as one that has been paid in full.
+/// </summary>
+public class SettlementView
+{
+    public long TransactionId { get; set; }
+
+    /// <summary>What the document put on the control account, in base currency.</summary>
+    public decimal TotalAmount { get; set; }
+
+    /// <summary>What has come back against it since.</summary>
+    public decimal PaidAmount { get; set; }
+
+    public decimal OutstandingAmount { get; set; }
 }

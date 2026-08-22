@@ -26,11 +26,28 @@ public static class ChartOfAccountsSeed
         Account(orgId, "1100", SystemAccount.AccountsReceivable, Asset),
         Account(orgId, "1200", SystemAccount.Inventory, Asset),
         Account(orgId, "1300", SystemAccount.InputGst, Asset),
+
+        // Capitalised purchases. A holding account until the fixed asset
+        // register exists — see SystemAccount.FixedAsset for why a capital line
+        // has to land somewhere real before its category can say where.
+        Account(orgId, "1600", SystemAccount.FixedAsset, Asset),
         Account(orgId, "2100", SystemAccount.AccountsPayable, Liability),
+
+        // Goods received and not yet billed. Off the manual-journal picker for
+        // the same reason AR and AP are: it is cleared by the bill that matches
+        // the receipt, and a hand posting would leave a residue that no document
+        // can ever clear. Decision T4.1 — docs/Purchase.md §8.
+        Account(orgId, "2150", SystemAccount.GoodsReceivedNotInvoiced, Liability),
+
         Account(orgId, "2200", SystemAccount.OutputGst, Liability),
         Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
         Account(orgId, "5100", SystemAccount.CostOfGoodsSold, Expense, isPurchase: true),
+
+        // Goods sent back. A contra Expense: it reduces what was bought, and a
+        // report has to subtract it rather than add a negative.
+        Account(orgId, "5200", SystemAccount.PurchaseReturns, Expense,
+            isPurchase: true, isContra: true),
 
         // Parent groups for bank accounts. Each bank account created in Banking
         // hangs a child account under one of these, so the chart of accounts
@@ -60,7 +77,8 @@ public static class ChartOfAccountsSeed
         bool isJe = false,
         bool isSales = false,
         bool isPurchase = false,
-        bool isLock = false)
+        bool isLock = false,
+        bool isContra = false)
     {
         string name = SystemAccountNames.Of(systemAccount);
         return new()
@@ -78,6 +96,11 @@ public static class ChartOfAccountsSeed
             // A grouping row: locking it stops a posting landing on the group
             // instead of the account underneath.
             IsLock = isLock,
+
+            // Its normal balance runs opposite its type, so a report subtracts
+            // it rather than adding a negative. Miss it and the report
+            // overstates silently.
+            IsContra = isContra,
         };
     }
 }

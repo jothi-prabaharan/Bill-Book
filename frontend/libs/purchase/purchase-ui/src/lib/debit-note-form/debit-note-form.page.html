@@ -1,0 +1,241 @@
+<div class="page">
+  <header class="page__header">
+    <div>
+      <h1>
+        @if (isNew()) {
+          New debit note
+        } @else {
+          {{ documentNo() }}
+        }
+      </h1>
+      @if (!isNew()) {
+        <p class="page__pills">
+          <span class="pill">{{ status() }}</span>
+          <span class="pill">{{ reasonCode() }}</span>
+        </p>
+      }
+    </div>
+    <a class="btn" routerLink="..">Back to list</a>
+  </header>
+
+  @if (error()) {
+    <div class="banner banner--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="banner banner--ok">{{ notice() }}</div>
+  }
+
+  @if (readonlyDoc()) {
+    <div class="banner banner--info">
+      This debit note has been posted.
+      @if (movesStock()) {
+        The goods have gone back, so it cannot be undone &mdash; receive them
+        again on a new goods receipt if the vendor returns them.
+      }
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="state">Loading&hellip;</p>
+  } @else {
+    <section class="card">
+      <h2 class="card__title">What is being corrected</h2>
+
+      <div class="grid">
+        <div class="field">
+          <span class="field__label">Vendor</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openVendorPicker()"
+          >
+            {{ contactLabel() || 'Choose a vendor' }}
+          </button>
+        </div>
+
+        <div class="field">
+          <span class="field__label">Against bill</span>
+          <button
+            type="button"
+            class="picker"
+            [disabled]="readonlyDoc()"
+            (click)="openBillPicker()"
+          >
+            {{ billLabel() || 'Choose the bill this corrects' }}
+          </button>
+          <span class="field__hint">
+            Required. GST wants a debit note to name the document it corrects,
+            and returning stock needs the bill line to find the cost layer it
+            arrived on.
+          </span>
+        </div>
+
+        <label class="field">
+          <span class="field__label">Date</span>
+          <bb-date-input
+            
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="documentDate()"
+            (ngModelChange)="documentDate.set($event)"
+            name="documentDate"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field__label">Reason</span>
+          <select
+            class="input"
+            [disabled]="readonlyDoc()"
+            [ngModel]="reasonCode()"
+            (ngModelChange)="reasonCode.set($event)"
+            name="reasonCode"
+          >
+            @for (reason of reasons; track reason.code) {
+              <option [value]="reason.code">{{ reason.label }}</option>
+            }
+          </select>
+          <span class="field__hint">{{ reasonHint() }}</span>
+        </label>
+
+        <label class="field">
+          <span class="field__label">Place of supply</span>
+          <bb-text-input
+            
+            class="input"
+            maxlength="2"
+            [disabled]="readonlyDoc()"
+            [ngModel]="placeOfSupplyStateCode()"
+            (ngModelChange)="placeOfSupplyStateCode.set($event)"
+            name="placeOfSupplyStateCode"
+            placeholder="2-digit state code"
+          />
+        </label>
+      </div>
+
+      @if (movesStock()) {
+        <p class="banner banner--warn">
+          <strong>This reason sends the goods back.</strong> Posting removes the
+          quantities below from stock, at what the layers they came from were
+          carrying. Once posted it cannot be undone.
+        </p>
+      } @else {
+        <p class="banner banner--info">
+          <strong>This reason moves money only.</strong> The goods stay on the
+          shelf; what changes is what the vendor is owed and the input tax
+          claimed.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <div class="card__header">
+        <h2 class="card__title">
+          @if (movesStock()) {
+            What is going back
+          } @else {
+            What is being credited
+          }
+        </h2>
+        @if (lines().length > 0 && !readonlyDoc()) {
+          <button type="button" class="btn" (click)="returnAll()">
+            Take everything outstanding
+          </button>
+        }
+      </div>
+
+      @if (lines().length === 0) {
+        <p class="state">Choose a bill above to see what can be corrected.</p>
+      } @else {
+                <bb-data-grid [gridCode]="'DEBIT_NOTE_LINES'" [columns]="columns" [data]="lines()">
+          <ng-template bbCellTemplate="label" let-row="row">
+            {{ row.label }}
+          </ng-template>
+          <ng-template bbCellTemplate="available" let-row="row">
+            {{ row.available }}
+          </ng-template>
+          <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
+            <bb-number-input
+              
+              class="input input--qty"
+              min="0"
+              [max]="row.available"
+              [disabled]="readonlyDoc()"
+              [ngModel]="row.quantity"
+              (ngModelChange)="onQuantityChange(index, $event)"
+              [name]="'qty' + index"
+            />
+          </ng-template>
+          <ng-template bbCellTemplate="unitPrice" let-row="row">
+            {{ row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+          <ng-template bbCellTemplate="value" let-row="row">
+            {{ row.quantity * row.unitPrice | number: '1.2-2' }}
+          </ng-template>
+        </bb-data-grid>
+        <div class="flex justify-between p-3 bg-surface border-t border-divider font-bold">
+          <span class="num">Before tax</span>
+          <span class="num total">{{ total() | number: '1.2-2' }}</span>
+        </div>
+
+        <p class="field__hint">
+          Prices come from the bill and cannot be changed &mdash; a credit has to
+          match what was charged. Tax is worked out by the server and reversed
+          against the same rates the bill claimed.
+        </p>
+      }
+    </section>
+
+    <section class="card">
+      <h2 class="card__title">Notes</h2>
+      <label class="field field--wide">
+        <span class="field__label">Notes</span>
+        <textarea
+          class="input"
+          rows="2"
+          [disabled]="readonlyDoc()"
+          [ngModel]="notes_()"
+          (ngModelChange)="notes_.set($event)"
+          name="notes"
+        ></textarea>
+      </label>
+    </section>
+
+    @if (!readonlyDoc()) {
+      <footer class="actions">
+        <button
+          type="button"
+          class="btn btn--primary"
+          [disabled]="saving()"
+          (click)="save()"
+        >
+          {{ saving() ? 'Saving…' : 'Save draft' }}
+        </button>
+
+        @if (!isNew()) {
+          <button type="button" class="btn" [disabled]="saving()" (click)="post()">
+            Post the debit note
+          </button>
+          <span class="actions__hint">
+            Posting debits Accounts Payable, credits Purchase Returns and
+            reverses the input tax.
+          </span>
+        }
+      </footer>
+    }
+  }
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [emptyText]="pickerEmptyText()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
+</div>
+

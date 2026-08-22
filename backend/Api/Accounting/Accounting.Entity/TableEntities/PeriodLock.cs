@@ -20,7 +20,7 @@ namespace Accounting.Entity.TableEntities;
 /// locks a product nobody has configured yet.
 ///
 /// <see cref="RoleId"/> is a plain int with no foreign key: roles live in
-/// <c>idn.Roles</c>, in the master database, and no per-customer table can
+/// <c>mst.Roles</c>, in the master database, and no per-customer table can
 /// reference across that boundary. A role deleted in Identity leaves a row here
 /// that matches nobody, which costs nothing.
 /// </summary>

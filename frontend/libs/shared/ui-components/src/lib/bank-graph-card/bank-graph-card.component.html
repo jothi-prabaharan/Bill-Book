@@ -1,0 +1,19 @@
+<div class="card col-span-3">
+  <div class="flex items-baseline justify-between gap-2">
+    <div class="card-kicker m-0">{{ account.name }}</div>
+    <span class="tag tag-outline tabular-nums tracking-wider">{{ account.ccy }}</span>
+  </div>
+  <div class="card-title tabular-nums">{{ account.balText }}</div>
+  <svg viewBox="0 0 220 76" role="img" [attr.aria-label]="account.chartLabel" class="w-full mt-2 h-auto">
+    <line x1="0" y1="68" x2="220" y2="68" stroke="var(--color-divider)"></line>
+    <line x1="0" y1="38" x2="220" y2="38" stroke="var(--color-divider)" stroke-dasharray="2 4"></line>
+    <polyline [attr.points]="account.book" fill="none" stroke="var(--color-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></polyline>
+    <polyline [attr.points]="account.stmt" fill="none" stroke="var(--color-neutral-600)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"></polyline>
+  </svg>
+  <div class="flex justify-between text-xs text-muted"><span>Mar</span><span>Aug &middot; {{ account.ccy }}</span></div>
+  <div class="flex flex-wrap gap-3 text-xs mt-1">
+    <span class="flex items-center gap-5px"><span class="bg-accent" style="width:12px; height:2px"></span>{{ account.seriesLabel }}</span>
+    <span class="flex items-center gap-5px"><span style="width:12px;height:2px;background:var(--color-neutral-600)"></span>{{ account.stmtText }}</span>
+  </div>
+  <div class="card-meta">{{ account.metaText }}</div>
+</div>

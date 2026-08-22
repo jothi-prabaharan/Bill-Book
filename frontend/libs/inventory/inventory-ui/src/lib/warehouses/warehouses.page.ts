@@ -1,4 +1,5 @@
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -32,11 +33,24 @@ interface Warehouse {
 @Component({
   selector: 'bb-warehouses-page',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent],
   templateUrl: './warehouses.page.html',
   styleUrl: './warehouses.page.scss',
 })
 export class WarehousesPage implements OnInit {
+  columns: ColumnDef[] = [
+    { field: 'handle', header: 'Reorder' },
+    { field: 'warehouseCode', header: 'Code' },
+    { field: 'warehouseName', header: 'Name' },
+    { field: 'warehouseType', header: 'Type' },
+    { field: 'storageType', header: 'Storage' },
+    { field: 'city', header: 'City' },
+    { field: 'gstin', header: 'GSTIN' },
+    { field: 'isDefault', header: 'Default' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: 'Actions' }
+  ];
+
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<Warehouse[]>([]);

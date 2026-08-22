@@ -1,0 +1,333 @@
+<section class="inv-form">
+  <header class="inv-form__head">
+    <div class="inv-form__identity">
+      <h1 class="inv-form__title">
+        {{ isEdit() ? (documentNo() || 'Invoice') : 'New invoice' }}
+      </h1>
+
+      @if (isEdit()) {
+        <span class="tag tag-neutral">{{ status() }}</span>
+
+        @if (daysOverdue() > 0) {
+          <span class="badge expired">{{ daysOverdue() }} days late</span>
+        }
+
+        @if (salesOrderId()) {
+          <a class="chip" [routerLink]="['/sales/sales-orders', salesOrderId()]">from order</a>
+        }
+      }
+    </div>
+
+    <div class="inv-form__actions">
+      @if (!isEdit()) {
+        <button type="button" class="btn btn-secondary" (click)="showConvert.set(true)">
+          From an order
+        </button>
+      }
+
+      @if (isEdit()) {
+        <!-- Available on a draft too: somebody proofreads it before posting. It
+             prints watermarked PROFORMA until the invoice is posted. -->
+        <a class="btn btn-secondary" [routerLink]="['/sales/invoices', invoiceId(), 'print']">
+          Print
+        </a>
+      }
+
+      @if (canPost()) {
+        <button type="button" class="btn btn-secondary" (click)="preview()">Preview entry</button>
+
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
+          Post
+        </button>
+      }
+
+      @if (canVoid()) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="saving()"
+          (click)="voidInvoice()"
+        >
+          Void
+        </button>
+      }
+
+      @if (editable()) {
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      }
+    </div>
+  </header>
+
+  <!-- Rules about the document, and everything the server refused. Field
+       constraints live on their fields, below. -->
+  <bb-message-box [messages]="messages()" />
+
+  @if (glPreview(); as preview) {
+    <!-- Read from the server, by the same code that will do the posting. A
+         preview drawn from a second implementation would eventually disagree
+         with the entry it claims to predict. -->
+    <div class="inv-form__gl">
+      <h2 class="inv-form__gl-title">What posting will write to the ledger</h2>
+
+      <table class="inv-form__gl-table">
+        <thead>
+          <tr>
+            <th scope="col">Account</th>
+            <th scope="col" class="inv-form__num">Debit</th>
+            <th scope="col" class="inv-form__num">Credit</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (leg of preview.legs; track $index) {
+            <tr>
+              <td>{{ leg.accountSystemName }}</td>
+              <td class="inv-form__num">
+                {{ leg.debitAmount ? (leg.debitAmount | number: '1.2-2') : '' }}
+              </td>
+              <td class="inv-form__num">
+                {{ leg.creditAmount ? (leg.creditAmount | number: '1.2-2') : '' }}
+              </td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <th scope="row">Total</th>
+            <td class="inv-form__num">{{ preview.totalDebit | number: '1.2-2' }}</td>
+            <td class="inv-form__num">{{ preview.totalCredit | number: '1.2-2' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      @if (!preview.isBalanced) {
+        <p class="field-error" role="alert">
+          These legs do not balance, so posting will be refused. This is a fault in the document
+          rather than in what you have typed — the ledger will not accept it either.
+        </p>
+      }
+    </div>
+  }
+
+  @if (canVoid()) {
+    <form class="field inv-form__void" [formGroup]="voidForm">
+      <label for="inv-void-reason">Reason, if voiding</label>
+      <input
+        id="inv-void-reason"
+        class="input"
+        type="text"
+        maxlength="300"
+        placeholder="Raised against the wrong customer"
+        formControlName="reason"
+      />
+
+      @if (voidForm.controls.reason.invalid && voidForm.controls.reason.touched) {
+        <span class="field-error" role="alert">
+          Say why this invoice is being voided. Its number stays on record, and the reason is what
+          makes the gap in the sequence answerable.
+        </span>
+      }
+    </form>
+  }
+
+  <form class="inv-form__fields" [formGroup]="form">
+    <div class="field">
+      <label for="inv-date">Invoice date</label>
+      <input id="inv-date" class="input" type="date" formControlName="documentDate" />
+
+      @if (showError('documentDate')) {
+        <span class="field-error" role="alert">Give the invoice a date.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-due">Due date</label>
+      <input id="inv-due" class="input" type="date" formControlName="dueDate" />
+
+      @if (showError('dueDate')) {
+        <span class="field-error" role="alert">An invoice needs a due date.</span>
+      } @else {
+        <small class="field-hint">When payment is expected.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-contact">Customer</label>
+      <input
+        id="inv-contact"
+        class="input"
+        type="number"
+        min="1"
+        step="1"
+        formControlName="contactId"
+      />
+
+      @if (showError('contactId')) {
+        <span class="field-error" role="alert">Choose the customer.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-gstin">Customer GSTIN</label>
+      <input
+        id="inv-gstin"
+        class="input"
+        type="text"
+        maxlength="15"
+        formControlName="contactGstin"
+      />
+
+      @if (showError('contactGstin')) {
+        <span class="field-error" role="alert">A GSTIN is 15 characters.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-pos">Place of supply</label>
+      <input
+        id="inv-pos"
+        class="input"
+        type="text"
+        inputmode="numeric"
+        maxlength="2"
+        placeholder="33"
+        formControlName="placeOfSupplyStateCode"
+      />
+
+      @if (showError('placeOfSupplyStateCode')) {
+        <span class="field-error" role="alert">Place of supply is a two-digit state code.</span>
+      } @else {
+        <small class="field-hint">Leave blank to take it from the GSTIN.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-currency">Currency</label>
+      <input
+        id="inv-currency"
+        class="input"
+        type="text"
+        maxlength="3"
+        formControlName="currencyCode"
+      />
+
+      @if (showError('currencyCode')) {
+        <span class="field-error" role="alert">Currency is a three-letter code.</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-rate">Exchange rate</label>
+      <input
+        id="inv-rate"
+        class="input"
+        type="number"
+        min="0.00000001"
+        step="0.0001"
+        formControlName="exchangeRate"
+      />
+
+      @if (showError('exchangeRate')) {
+        <span class="field-error" role="alert">Exchange rate must be greater than zero.</span>
+      } @else {
+        <small class="field-hint">A snapshot at the invoice's date, never looked up live.</small>
+      }
+    </div>
+
+    <div class="field">
+      <label for="inv-billing">Billing address</label>
+      <textarea id="inv-billing" class="input" rows="2" formControlName="billingAddress"></textarea>
+    </div>
+
+    <div class="field">
+      <label for="inv-shipping">Shipping address</label>
+      <textarea
+        id="inv-shipping"
+        class="input"
+        rows="2"
+        formControlName="shippingAddress"
+      ></textarea>
+    </div>
+
+    <div class="field inv-form__wide">
+      <label for="inv-notes">Notes</label>
+      <textarea id="inv-notes" class="input" rows="2" formControlName="notes"></textarea>
+    </div>
+
+    <div class="field inv-form__wide">
+      <label for="inv-terms">Terms and conditions</label>
+      <textarea
+        id="inv-terms"
+        class="input"
+        rows="2"
+        formControlName="termsAndConditions"
+      ></textarea>
+    </div>
+  </form>
+
+  <div class="inv-form__lines">
+    <bb-document-line-grid
+      [lines]="lines()"
+      [context]="context()"
+      (linesChange)="onLinesChange($event)"
+      (pickItem)="onPickItem($event)"
+    />
+  </div>
+
+  <!-- Paise throughout, divided only to display: the grid's totals are integers
+       and dividing at the last moment is what keeps them adding up. -->
+  <div class="inv-form__totals">
+    <div class="inv-form__total">
+      <span>Sub total</span>
+      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
+    </div>
+
+    @if (totals().discountAmount > 0) {
+      <div class="inv-form__total">
+        <span>Discount</span>
+        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cgstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>CGST</span>
+        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().sgstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>SGST</span>
+        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().igstAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>IGST</span>
+        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cessAmount > 0) {
+      <div class="inv-form__total inv-form__total--tax">
+        <span>Cess</span>
+        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    <div class="inv-form__total inv-form__total--grand">
+      <span>Total</span>
+      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
+    </div>
+  </div>
+</section>
+
+@if (showConvert()) {
+  <bb-order-to-invoice-dialog
+    (converted)="onConverted($event)"
+    (cancelled)="showConvert.set(false)"
+  />
+}

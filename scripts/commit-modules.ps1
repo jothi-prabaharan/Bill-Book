@@ -45,7 +45,10 @@ function New-ModuleCommit {
         foreach ($path in $Paths) {
             # Globs that match nothing are not an error: a module may be partly
             # committed already if the script was interrupted.
+            $oldPreference = $ErrorActionPreference
+            $ErrorActionPreference = 'Continue'
             $matched = @(git ls-files --others --exclude-standard --modified --deleted -- $path 2>$null)
+            $ErrorActionPreference = $oldPreference
             if ($matched.Count -eq 0) {
                 Write-Host "    nothing pending for $path" -ForegroundColor DarkGray
                 continue
@@ -132,7 +135,7 @@ New-ModuleCommit -Title 'Backend per-environment configuration' -Paths @(
     'backend/Api/Platform/Platform.Api/appsettings*.json',
     'backend/Api/Master/Master.Api/appsettings*.json',
     'backend/Api/Accounting/Accounting.Api/appsettings*.json',
-    'backend/Gateway/appsettings*.json'
+    'backend/Gateway/Gateway.Api/appsettings*.json'
 ) -Message @'
 Add Development, Staging, UAT and Production appsettings
 
@@ -143,7 +146,7 @@ The base file lists every key but leaves environment-specific values blank, so
 the shape is discoverable without any value leaking across environments.
 Development carries the real local values; Staging, UAT and Production ship blank
 and are filled at runtime from environment variables using the double-underscore
-convention (ConnectionStrings__MasterDatabase, Jwt__SigningKey, and so on).
+convention (ConnectionStrings__AdminDatabase, Jwt__SigningKey, and so on).
 
 Blank rather than absent is deliberate. An absent key would let the `??`
 fallbacks in Program.cs fire and silently point a deployed environment at
@@ -271,7 +274,7 @@ New-ModuleCommit -Title 'Local database setup' -Paths @(
 Add the local database setup script and document the credentials
 
 setup-dev-db.ps1 takes a fresh clone to a running stack: it creates
-retailerp_master, retailerp_design, retailerp_test and a stand-in customer
+EP_Admin, EP_Design, EP_Test and a stand-in customer
 database, generates the InitialCreate migration for each service that has a
 DbContext, applies them, then prints the seeded master row counts so a failed
 seed is visible rather than assumed.
@@ -293,9 +296,9 @@ and a warning against ever putting a real one there.
 New-ModuleCommit -Title 'Gateway request log' -Paths @(
     'backend/Gateway/Gateway.Entity',
     'backend/Gateway/Gateway.Repository',
-    'backend/Gateway/Logging',
-    'backend/Gateway/Program.cs',
-    'backend/Gateway/Gateway.csproj',
+    'backend/Gateway/Gateway.Api/Logging',
+    'backend/Gateway/Gateway.Api/Program.cs',
+    'backend/Gateway/Gateway.Api/Gateway.Api.csproj',
     'backend/Bill-Book.sln',
     'backend/Bill-Book.Debug.slnf'
 ) -Message @'

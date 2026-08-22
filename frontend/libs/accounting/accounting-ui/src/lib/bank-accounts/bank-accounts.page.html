@@ -1,0 +1,194 @@
+<header class="page-head">
+  <h1>Bank accounts</h1>
+  <div class="head-actions">
+    <label class="inline">
+      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
+      Show inactive
+    </label>
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add account</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Each account has its own ledger account, created automatically. Balances come from the ledger —
+  nothing here stores one.
+</p>
+
+<bb-data-grid [gridCode]="'BANK_ACCOUNTS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="handle" let-row>
+    <div [class.inactive]="!row.isActive">
+      <span class="handle" Handle aria-hidden="true">⠿</span>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="account" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.accountName }}
+      <span class="sub">{{ row.currencyCode }}</span>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="bank" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.bankName ?? '—' }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="number" let-row>
+    <div [class.inactive]="!row.isActive">
+      <code>{{ row.accountNumber }}</code>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="type" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.accountType }}
+      @if (row.odLimit) {
+        <span class="sub">Limit {{ row.odLimit }}</span>
+      }
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="ifsc" let-row>
+    <div [class.inactive]="!row.isActive">
+      <code>{{ row.ifsc ?? '—' }}</code>
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="ledger" let-row>
+    <div [class.inactive]="!row.isActive">
+      @if (row.isLedgerLinked) {
+        <span class="badge">Linked</span>
+      } @else {
+        <span class="chip">Not linked</span>
+      }
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="default" let-row>
+    <div [class.inactive]="!row.isActive">
+      @if (row.isDefault) {
+        <span class="badge">Default</span>
+      } @else if (row.isActive) {
+        <button type="button" class="link" (click)="makeDefault(row)" [disabled]="busy()">Set</button>
+      }
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="active" let-row>
+    <div [class.inactive]="!row.isActive">
+      {{ row.isActive ? 'Active' : 'Inactive' }}
+    </div>
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <div [class.inactive]="!row.isActive">
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+      @if (!row.isLedgerLinked) {
+        <button type="button" class="link" (click)="linkLedger(row)" [disabled]="busy()">
+          Link ledger
+        </button>
+      }
+      @if (row.isActive && !row.isDefault) {
+        <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
+          Deactivate
+        </button>
+      }
+    </div>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === 0 ? 'New bank account' : 'Edit bank account' }}</h2>
+    <p class="hint">{{ ledgerNote }}</p>
+
+    <div class="fields">
+      <label>
+        Account name
+        <bb-text-input  [(ngModel)]="form.accountName" maxlength="100" />
+        <small>Shown wherever the account is picked, and on the ledger account.</small>
+      </label>
+
+      <label>
+        Type
+        <select [(ngModel)]="form.accountType" (ngModelChange)="onTypeChange()">
+          <option value="Savings">Savings</option>
+          <option value="Current">Current</option>
+          <option value="OverDraft">Overdraft</option>
+          <option value="CashCredit">Cash credit</option>
+          <option value="CreditCard">Credit card</option>
+          <option value="Wallet">Wallet</option>
+          <option value="Cash">Cash in hand</option>
+        </select>
+      </label>
+
+      @if (needsBank) {
+        <label>
+          Bank
+          <select [(ngModel)]="form.bankId">
+            <option [ngValue]="null">Select a bank…</option>
+            @for (bank of banks(); track bank.bankId) {
+              <option [ngValue]="bank.bankId">{{ bank.bankName }}</option>
+            }
+          </select>
+        </label>
+      }
+
+      <label>
+        Account number
+        <bb-text-input  [(ngModel)]="form.accountNumber" maxlength="30" />
+      </label>
+
+      @if (needsBank) {
+        <label>
+          IFSC
+          <bb-text-input  [(ngModel)]="form.ifsc" maxlength="11" class="uppercase" />
+        </label>
+
+        <label>
+          Branch
+          <bb-text-input  [(ngModel)]="form.branchName" maxlength="100" />
+        </label>
+
+        <label>
+          MICR
+          <bb-text-input  [(ngModel)]="form.micr" maxlength="9" />
+        </label>
+
+        <label>
+          SWIFT
+          <bb-text-input  [(ngModel)]="form.swiftCode" maxlength="11" class="uppercase" />
+        </label>
+
+        <label>
+          IBAN
+          <bb-text-input  [(ngModel)]="form.iban" maxlength="34" />
+        </label>
+      }
+
+      <label>
+        Currency
+        <bb-text-input  [(ngModel)]="form.currencyCode" maxlength="3" />
+      </label>
+
+      @if (canOverdraw) {
+        <label>
+          Limit
+          <bb-number-input  [(ngModel)]="form.odLimit" step="0.01" min="0" />
+        </label>
+      }
+
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+        Active
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button
+        type="button"
+        (click)="save()"
+        [disabled]="busy() || !form.accountName || !form.accountNumber || (needsBank && !form.bankId)"
+      >
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}

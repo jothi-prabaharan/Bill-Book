@@ -1,4 +1,5 @@
-import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
+import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -47,7 +48,7 @@ type FormModel = Pick<
 @Component({
   selector: 'bb-payment-terms-page',
   standalone: true,
-  imports: [FormsModule, CdkDropList, CdkDrag, CdkDragHandle],
+  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
   templateUrl: './payment-terms.page.html',
   styleUrl: './payment-terms.page.scss',
 })
@@ -61,6 +62,18 @@ export class PaymentTermsPage implements OnInit {
   protected readonly editing = signal<number | null>(null);
   protected readonly formOpen = signal(false);
   protected readonly editingIsSystem = signal(false);
+
+  columns: ColumnDef[] = [
+    { field: 'handle', header: '', width: '40px' },
+    { field: 'termName', header: 'Name' },
+    { field: 'rule', header: 'Rule' },
+    { field: 'sampleDueDate', header: 'Due for a bill dated today' },
+    { field: 'discount', header: 'Discount' },
+    { field: 'usedOn', header: 'Used on' },
+    { field: 'default', header: 'Default' },
+    { field: 'isActive', header: 'Active' },
+    { field: 'actions', header: '' }
+  ];
 
   showInactive = false;
   form: FormModel = this.blank();

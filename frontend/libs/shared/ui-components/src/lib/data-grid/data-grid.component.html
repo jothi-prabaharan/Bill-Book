@@ -1,0 +1,70 @@
+<div class="data-grid-card" [class.compact]="compact">
+  <!-- Progress bar for loading state -->
+  <div *ngIf="loading" class="data-grid-loading-bar" aria-hidden="true">
+    <div class="loading-pulse"></div>
+  </div>
+
+  <div class="listwrap" [class.compact]="compact">
+    <table class="table" [class.compact]="compact">
+      <thead>
+        <tr>
+          <th *ngFor="let col of visibleColumns()"
+              [class.numeric]="isNumericCol(col)"
+              [style.width]="col.width"
+              class="relative">
+            <button type="button"
+                    class="table-sort-btn"
+                    [disabled]="!sortable || col.sortable === false"
+                    (click)="onSort(col)"
+                    [attr.aria-sort]="sortField() === col.field ? (sortDirection() === 'asc' ? 'ascending' : 'descending') : 'none'">
+              <span>{{ col.header || col.title || col.field }}</span>
+              <span class="sort-indicator" *ngIf="sortable && col.sortable !== false" [class.active]="sortField() === col.field">
+                <span *ngIf="sortField() === col.field && sortDirection() === 'asc'" aria-label="sorted ascending">▲</span>
+                <span *ngIf="sortField() === col.field && sortDirection() === 'desc'" aria-label="sorted descending">▼</span>
+                <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
+              </span>
+            </button>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let row of displayData()"
+            bb-data-grid-row
+            [row]="row"
+            [visibleColumns]="visibleColumns()"
+            [templates]="templateMap"
+            (rowClick)="onRowClick($event)"
+            class="clickable-row cursor-pointer">
+        </tr>
+        
+        <!-- Empty State -->
+        <tr *ngIf="!loading && displayData().length === 0" class="empty-state-row">
+          <td [attr.colspan]="visibleColumns().length" class="text-center text-muted p-4">
+            <ng-container *ngIf="emptyTemplate || contentEmptyTemplate; else defaultEmpty">
+              <ng-container *ngTemplateOutlet="emptyTemplate || contentEmptyTemplate"></ng-container>
+            </ng-container>
+            <ng-template #defaultEmpty>No records found.</ng-template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination Strip -->
+  <div *ngIf="(totalCount > 0 ? totalCount : filteredData().length) > pageSize || totalPages() > 1"
+       class="table-pagination">
+    <span class="text-muted pagination-summary">
+      {{ paginationSummary() }}
+    </span>
+    <div class="pagination-actions flex gap-2">
+      <button type="button"
+              class="btn btn-secondary pagination-btn"
+              [disabled]="currentPage <= 1"
+              (click)="prevPage()">Previous</button>
+      <button type="button"
+              class="btn btn-secondary pagination-btn"
+              [disabled]="currentPage >= totalPages()"
+              (click)="nextPage()">Next</button>
+    </div>
+  </div>
+</div>

@@ -1032,6 +1032,41 @@ public sealed class StockService
     /// still worth what it cost; only its availability changed. Anything that
     /// values stock keeps reading <c>QuantityOnHand</c>.
     /// </summary>
+    /// <summary>
+    /// What a batch of items has on hand, holds reserved, and can still promise.
+    ///
+    /// <b>One query for the whole document.</b> A sales order form asks about
+    /// every line it is showing at once; a call per line is a round trip per row
+    /// while somebody is typing.
+    ///
+    /// An item with no stock row comes back untracked rather than as zero. The
+    /// two are different facts — a service line has no stock and never will,
+    /// which is not the same as a stocked item that has run out — and a screen
+    /// that showed "0 available" against a service would refuse a sale that is
+    /// perfectly good.
+    /// </summary>
+    public async Task<List<(long ItemId, decimal OnHand, decimal Reserved, bool IsTracked)>>
+        GetAvailabilityAsync(IReadOnlyCollection<long> itemIds, CancellationToken ct = default)
+    {
+        if (itemIds.Count == 0)
+        {
+            return [];
+        }
+
+        List<long> ids = [.. itemIds.Distinct()];
+
+        var rows = await _db.ItemStock
+            .Where(s => ids.Contains(s.ItemId))
+            .Select(s => new { s.ItemId, s.QuantityOnHand, s.QuantityReserved })
+            .ToListAsync(ct);
+
+        var byItem = rows.ToDictionary(r => r.ItemId);
+
+        return [.. ids.Select(id => byItem.TryGetValue(id, out var row)
+            ? (id, row.QuantityOnHand, row.QuantityReserved, true)
+            : (id, 0m, 0m, false))];
+    }
+
     public async Task<StockOutcome> ReserveAsync(long itemId, decimal quantity, CancellationToken ct)
     {
         if (quantity <= 0)

@@ -456,9 +456,10 @@ public sealed class UomService
     /// </summary>
     private async Task<HashSet<long>> UsedUnitIdsAsync(CancellationToken ct)
     {
-        List<long> ids = await _db.Items
-            .SelectMany(i => new[] { i.InventoryUomId, i.SalesUomId, i.PurchaseUomId, i.ReportUomId })
-            .Distinct()
+        List<long> ids = await _db.Items.Select(i => i.InventoryUomId)
+            .Union(_db.Items.Select(i => i.SalesUomId))
+            .Union(_db.Items.Select(i => i.PurchaseUomId))
+            .Union(_db.Items.Select(i => i.ReportUomId))
             .ToListAsync(ct);
 
         return [.. ids];

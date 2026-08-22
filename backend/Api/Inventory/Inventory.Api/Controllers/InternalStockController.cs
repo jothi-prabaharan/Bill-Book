@@ -2,7 +2,6 @@ using Inventory.Api.Services;
 using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -122,175 +121,15 @@ public sealed class InternalStockController : ControllerBase
         return Ok(response);
     }
 
-    /// <summary><c>mst.TransactionTypes</c> OPB.</summary>
-    private const string OpeningBalanceCode = "OPB";
-
     /// <summary>
-    /// Holds stock for a confirmed order.
-    ///
-    /// <b>All of it or none of it.</b> Reserving four lines and failing on the
-    /// fifth would leave stock held by an order that was never confirmed, with
-    /// nothing on any screen saying so — so the shortages are found first, and
-    /// only if every line can be taken is anything taken.
-    ///
-    /// <b>Not idempotent, and cannot be.</b> A reservation is a quantity, not a
-    /// row keyed on a document, so a repeated call reserves twice. The caller
-    /// only ever calls this on the Draft-to-Confirmed transition, which its own
-    /// guarded status change makes happen once.
+    /// What a batch of items has available. A read, but a POST because the ids
+    /// and the tenant travel in the body like every other route here.
     /// </summary>
-    [HttpPost("reserve")]
-    public async Task<IActionResult> Reserve(
-        [FromBody] ReserveStockRequest request, CancellationToken ct)
+    [HttpPost("availability")]
+    public async Task<IActionResult> Availability(
+        [FromBody] StockAvailabilityRequest request, CancellationToken ct)
     {
-        if (Tenant(request.CustomerId, request.OrgId) is IActionResult bad)
-        {
-            return bad;
-        }
-
-        var stock = _services.GetRequiredService<StockService>();
-        var db = _services.GetRequiredService<Repository.InventoryDbContext>();
-
-        var response = new ReserveStockResponse { Reserved = true };
-
-        // Every line's availability first, before a single one is taken.
-        foreach (ReserveStockLine line in request.Lines)
-        {
-            var position = await db.Items
-                .Where(i => i.ItemId == line.ItemId)
-                .Select(i => new
-                {
-                    i.ItemCode,
-                    i.ItemName,
-                    Available = db.ItemStock
-                        .Where(s => s.ItemId == i.ItemId)
-                        .Select(s => s.QuantityOnHand - s.QuantityReserved)
-                        .FirstOrDefault(),
-                })
-                .FirstOrDefaultAsync(ct);
-
-            bool enough = position is not null && position.Available >= line.Quantity;
-
-            response.Lines.Add(new ReserveStockLineResult
-            {
-                LineNumber = line.LineNumber,
-                ItemId = line.ItemId,
-                ItemCode = position?.ItemCode ?? string.Empty,
-                ItemName = position?.ItemName ?? string.Empty,
-                Requested = line.Quantity,
-                Available = position?.Available ?? 0m,
-                Ok = enough,
-                Outcome = position is null
-                    ? nameof(StockOutcome.ItemNotFound)
-                    : enough ? nameof(StockOutcome.Ok) : nameof(StockOutcome.InsufficientStock),
-            });
-
-            response.Reserved &= enough;
-        }
-
-        if (!response.Reserved)
-        {
-            _log.LogInformation(
-                "Reservation for {SourceType}-{SourceId} refused: {Short} of {Total} lines short.",
-                request.SourceType,
-                request.SourceId,
-                response.Lines.Count(l => !l.Ok),
-                response.Lines.Count);
-
-            return BadRequest(response);
-        }
-
-        // Now take them. Each is still guarded, so a concurrent sale between the
-        // check above and the take below loses the race rather than overdrawing —
-        // and that line comes back short.
-        foreach (ReserveStockLine line in request.Lines)
-        {
-            StockOutcome outcome = await stock.ReserveAsync(line.ItemId, line.Quantity, ct);
-
-            if (outcome != StockOutcome.Ok)
-            {
-                // Give back whatever this call already took. Without it, losing
-                // the race on line five would leave lines one to four held by an
-                // order that did not confirm.
-                foreach (ReserveStockLine taken in request.Lines)
-                {
-                    if (taken.LineNumber == line.LineNumber)
-                    {
-                        break;
-                    }
-
-                    await stock.ReleaseAsync(taken.ItemId, taken.Quantity, ct);
-                }
-
-                ReserveStockLineResult row =
-                    response.Lines.First(l => l.LineNumber == line.LineNumber);
-                row.Ok = false;
-                row.Outcome = outcome.ToString();
-                response.Reserved = false;
-
-                return BadRequest(response);
-            }
-        }
-
-        return Ok(response);
-    }
-
-    /// <summary>
-    /// Gives stock back — a cancelled order, a short close, or the part of a line
-    /// that shipped and so stopped being a promise.
-    ///
-    /// A release of more than is held is refused per line rather than clamped: it
-    /// means the caller believes it holds something it does not, and quietly
-    /// releasing the difference would free stock nobody reserved.
-    /// </summary>
-    [HttpPost("release")]
-    public async Task<IActionResult> Release(
-        [FromBody] ReserveStockRequest request, CancellationToken ct)
-    {
-        if (Tenant(request.CustomerId, request.OrgId) is IActionResult bad)
-        {
-            return bad;
-        }
-
-        var stock = _services.GetRequiredService<StockService>();
-        var response = new ReserveStockResponse { Reserved = true };
-
-        foreach (ReserveStockLine line in request.Lines)
-        {
-            StockOutcome outcome = await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
-            bool ok = outcome == StockOutcome.Ok;
-
-            response.Lines.Add(new ReserveStockLineResult
-            {
-                LineNumber = line.LineNumber,
-                ItemId = line.ItemId,
-                Requested = line.Quantity,
-                Ok = ok,
-                Outcome = outcome.ToString(),
-            });
-
-            response.Reserved &= ok;
-        }
-
-        if (!response.Reserved)
-        {
-            _log.LogWarning(
-                "Release for {SourceType}-{SourceId}: {Failed} of {Total} lines held less than "
-                    + "the caller believed.",
-                request.SourceType,
-                request.SourceId,
-                response.Lines.Count(l => !l.Ok),
-                response.Lines.Count);
-        }
-
-        // Reported, not refused. The document has moved on regardless, and a
-        // release that found less than expected must not block a cancellation.
-        return Ok(response);
-    }
-
-    /// <summary>Sets the tenant, or says why it could not.</summary>
-    private IActionResult? Tenant(Guid customerId, Guid orgId)
-    {
-        if (customerId == Guid.Empty || orgId == Guid.Empty)
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
         {
             return BadRequest(new MessageResponse
             {
@@ -298,10 +137,394 @@ public sealed class InternalStockController : ControllerBase
             });
         }
 
-        // Set before anything resolves a DbContext: the context is built from the
-        // tenant, so resolving a service first would bind it to no tenant.
-        _tenant.CustomerId = customerId;
-        _tenant.OrgId = orgId;
-        return null;
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var rows = await stock.GetAvailabilityAsync(request.ItemIds, ct);
+
+        return Ok(new StockAvailabilityResponse
+        {
+            Lines = [.. rows.Select(r => new StockAvailabilityLine
+            {
+                ItemId = r.ItemId,
+                QuantityOnHand = r.OnHand,
+                QuantityReserved = r.Reserved,
+
+                // Never negative on screen: an over-release would otherwise read
+                // as "minus three available", which tells nobody anything.
+                QuantityAvailable = Math.Max(0m, r.OnHand - r.Reserved),
+                IsTracked = r.IsTracked,
+            })],
+        });
     }
+
+    [HttpPost("reserve")]
+    public async Task<IActionResult> Reserve(
+        [FromBody] ReserveStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReserveStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            var outcome = await stock.ReserveAsync(line.ItemId, line.Quantity, ct);
+            bool ok = outcome == StockOutcome.Ok;
+
+            response.Lines.Add(new ReserveStockLineResult
+            {
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = outcome.ToString()
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    [HttpPost("release")]
+    public async Task<IActionResult> Release(
+        [FromBody] ReleaseStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReleaseStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            var outcome = await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
+            bool ok = outcome == StockOutcome.Ok;
+
+            response.Lines.Add(new ReleaseStockLineResult
+            {
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = outcome.ToString()
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary><c>mst.TransactionTypes</c> OPB.</summary>
+    [HttpPost("issue")]
+    public async Task<IActionResult> Issue(
+        [FromBody] IssueStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required."
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new IssueStockResponse { Success = true };
+
+        foreach (var line in request.Lines)
+        {
+            if (line.ReleaseReservation)
+            {
+                // Release the reserved quantity before issuing
+                await stock.ReleaseAsync(line.ItemId, line.Quantity, ct);
+            }
+
+            var recordResult = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Inventory.Entity.Enums.StockMovementType.Issue),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId
+                },
+                ct);
+
+            bool ok = recordResult.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+
+            decimal unitCost = recordResult.Position?.WeightedAverageCost ?? 0m;
+            decimal lineValue = ok ? line.Quantity * unitCost : 0m;
+
+            response.Lines.Add(new IssueStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = ok,
+                Outcome = recordResult.Outcome.ToString(),
+                StockMovementId = recordResult.StockMovementId,
+                UnitCost = unitCost,
+                LineValue = lineValue
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Goods arriving against a purchase document: quantity in, cost layer
+    /// opened, weighted average moved.
+    ///
+    /// <b>It posts nothing to the ledger, and that is deliberate.</b> These
+    /// movements carry a source type, and <c>StockLedgerMapping</c> refuses a
+    /// posting for a sourced receipt — the other leg is Goods Received Not
+    /// Invoiced or Accounts Payable, and only Purchase knows which vendor and
+    /// how much of the figure is reclaimable tax. Posting the stock half here as
+    /// well would double the inventory asset.
+    ///
+    /// The response carries what each line was worth, because Purchase debits
+    /// Inventory by exactly that and would otherwise have to recompute a figure
+    /// Inventory has already decided.
+    /// </summary>
+    [HttpPost("receipt")]
+    public async Task<IActionResult> Receipt(
+        [FromBody] ReceiveStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to receive stock.",
+            });
+        }
+
+        // Set before anything resolves a DbContext: the context is built from
+        // the tenant, so resolving the service first would bind it to no tenant.
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReceiveStockResponse { Success = true };
+
+        foreach (ReceiveStockLine line in request.Lines)
+        {
+            RecordStockMovementResult result = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Entity.Enums.StockMovementType.Receipt),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    UnitCost = line.UnitCost,
+                    UomId = line.UomId,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId,
+                    ItemBatchId = line.ItemBatchId,
+                    BatchNumber = line.BatchNumber,
+                    BatchExpiryDate = line.BatchExpiryDate,
+                    BatchManufactureDate = line.BatchManufactureDate,
+                    ReturnsStockMovementId = line.ReturnsStockMovementId,
+                },
+                ct);
+
+            // Already recorded is success, not failure: it means an earlier
+            // attempt at this same post got this far. Treating it as an error
+            // would make a retry impossible for exactly the documents that most
+            // need one.
+            bool already = result.Outcome == StockOutcome.DuplicateSource;
+            bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+            decimal lineValue = ok && !already ? line.Quantity * line.UnitCost : 0m;
+
+            response.Lines.Add(new ReceiveStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                Success = ok,
+                AlreadyRecorded = already,
+                Outcome = result.Outcome.ToString(),
+                StockMovementId = result.StockMovementId,
+                UnitCost = line.UnitCost,
+
+                // Nothing new landed on a replay, so it contributes nothing to
+                // the value being posted — the first attempt already did.
+                LineValue = lineValue,
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            _log.LogWarning(
+                "Receipt {SourceType}/{SourceId} in {OrgId}: {Failed} of {Total} lines refused.",
+                request.SourceType,
+                request.SourceId,
+                request.OrgId,
+                response.Lines.Count(l => !l.Success),
+                response.Lines.Count);
+
+            // 409, not 400: the request is well-formed and some of it landed.
+            // The caller has to see which lines, because a partly received
+            // document is exactly the state it must not treat as done.
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Goods going back to a vendor against a purchase document.
+    ///
+    /// <b>Stock returns to the layers it came from.</b> That is the whole reason
+    /// a debit note has to name the bill line it reverses — a return valued at
+    /// today's weighted average rather than at what those units actually cost
+    /// would move value into or out of the branch that never existed.
+    ///
+    /// Like the receipt, it posts nothing: a sourced <c>PurchaseReturn</c> is
+    /// refused a posting by <c>StockLedgerMapping</c>, because its other leg is
+    /// Accounts Payable and only Purchase knows the vendor and the tax.
+    /// </summary>
+    [HttpPost("return")]
+    public async Task<IActionResult> Return(
+        [FromBody] ReturnStockRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to return stock.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var response = new ReturnStockResponse { Success = true };
+
+        foreach (ReturnStockLine line in request.Lines)
+        {
+            RecordStockMovementResult result = await stock.RecordAsync(
+                new RecordStockMovementRequest
+                {
+                    ItemId = line.ItemId,
+                    MovementType = nameof(Entity.Enums.StockMovementType.PurchaseReturn),
+                    MovementDate = request.MovementDate,
+                    Quantity = line.Quantity,
+                    UomId = line.UomId,
+                    WarehouseId = line.WarehouseId,
+                    SourceType = request.SourceType,
+                    SourceId = request.SourceId,
+                    SourceLineId = line.SourceLineId,
+                    ItemBatchId = line.ItemBatchId,
+                },
+                ct);
+
+            bool already = result.Outcome == StockOutcome.DuplicateSource;
+            bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
+
+            // What the returned units were carrying. Purchase credits stock by
+            // this rather than by the bill's price, so the layer and the ledger
+            // agree about what left.
+            decimal unitCost = result.Position?.WeightedAverageCost ?? 0m;
+            decimal lineValue = ok && !already ? line.Quantity * unitCost : 0m;
+
+            response.Lines.Add(new ReturnStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                Quantity = line.Quantity,
+                Success = ok,
+                AlreadyRecorded = already,
+                Outcome = result.Outcome.ToString(),
+                StockMovementId = result.StockMovementId,
+                UnitCost = unitCost,
+                LineValue = lineValue,
+            });
+
+            if (!ok)
+            {
+                response.Success = false;
+            }
+        }
+
+        response.TotalValue = response.Lines.Sum(l => l.LineValue);
+
+        if (!response.Success)
+        {
+            _log.LogWarning(
+                "Return {SourceType}/{SourceId} in {OrgId}: {Failed} of {Total} lines refused.",
+                request.SourceType,
+                request.SourceId,
+                request.OrgId,
+                response.Lines.Count(l => !l.Success),
+                response.Lines.Count);
+
+            return Conflict(response);
+        }
+
+        return Ok(response);
+    }
+
+    private const string OpeningBalanceCode = "OPB";
 }

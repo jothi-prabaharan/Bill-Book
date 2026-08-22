@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "customer-core",
+  "projectType": "library",
+  "sourceRoot": "libs/customer/customer-core/src",
+  "tags": [
+    "scope:customer",
+    "type:core"
+  ],
+  "targets": {}
+}

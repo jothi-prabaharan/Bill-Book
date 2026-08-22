@@ -25,9 +25,9 @@ namespace Master.Api.Controllers;
 [Route("internal/master")]
 public sealed class InternalMasterController : ControllerBase
 {
-    private readonly MasterDbContext _db;
+    private readonly AdminDbContext _db;
 
-    public InternalMasterController(MasterDbContext db) => _db = db;
+    public InternalMasterController(AdminDbContext db) => _db = db;
 
     /// <summary>
     /// One state. Contacts validates a GSTIN's first two digits against this,
@@ -59,5 +59,16 @@ public sealed class InternalMasterController : ControllerBase
             .ToListAsync(ct);
 
         return Ok(currencies);
+    }
+    [HttpGet("account-types")]
+    public async Task<IActionResult> GetAccountTypes(CancellationToken ct)
+    {
+        var types = await _db.AccountTypes
+            .Where(t => t.IsActive)
+            .OrderBy(t => t.SortOrder)
+            .Select(t => new { t.AccountTypeId, t.SystemName, t.DisplayName, t.NormalBalance, t.ReportSection, t.SortOrder })
+            .ToListAsync(ct);
+
+        return Ok(types);
     }
 }

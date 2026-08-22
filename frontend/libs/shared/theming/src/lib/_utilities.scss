@@ -1,0 +1,166 @@
+/* Classical — Common Utility Classes */
+
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-1 { flex: 1; }
+.flex-none { flex: none; }
+.block { display: block; }
+.grid { display: grid; }
+
+.items-center { align-items: center; }
+.items-baseline { align-items: baseline; }
+.items-start { align-items: flex-start; }
+.items-end { align-items: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-end { justify-content: flex-end; }
+.justify-center { justify-content: center; }
+.justify-start { justify-content: flex-start; }
+
+.gap-0 { gap: 0; }
+.gap-1 { gap: var(--space-1); }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-5px { gap: 5px; }
+.gap-6px { gap: 6px; }
+
+.m-0 { margin: 0; }
+.mt-0 { margin-top: 0; }
+.mt-1 { margin-top: var(--space-1); }
+.mt-2 { margin-top: var(--space-2); }
+.mt-3 { margin-top: var(--space-3); }
+.mt-4 { margin-top: var(--space-4); }
+.mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--space-1); }
+.mb-2 { margin-bottom: var(--space-2); }
+.mb-3 { margin-bottom: var(--space-3); }
+.mb-4 { margin-bottom: var(--space-4); }
+.ml-auto { margin-left: auto; }
+.mr-auto { margin-right: auto; }
+
+.p-0 { padding: 0; }
+.pt-0 { padding-top: 0; }
+.pb-0 { padding-bottom: 0; }
+.pl-0 { padding-left: 0; }
+.pr-0 { padding-right: 0; }
+.p-3 { padding: var(--space-3); }
+.p-4 { padding: var(--space-4); }
+
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+.w-auto { width: auto; }
+.h-auto { height: auto; }
+.min-w-0 { min-width: 0; }
+.min-h-0 { min-height: 0; }
+.min-h-auto { min-height: auto; }
+
+.overflow-hidden { overflow: hidden; }
+.overflow-auto { overflow: auto; }
+.overflow-y-auto { overflow-y: auto; }
+.whitespace-nowrap { white-space: nowrap; }
+.truncate { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.font-heading { font-family: var(--font-heading); }
+.font-bold { font-weight: bold; }
+.font-semibold { font-weight: 600; }
+.uppercase { text-transform: uppercase; }
+.tracking-wide { letter-spacing: 0.06em; }
+.tracking-wider { letter-spacing: 0.08em; }
+
+.text-9 { font-size: 9px; }
+.text-xs { font-size: 11px; }
+.text-sm { font-size: 12px; }
+.text-13 { font-size: 13px; }
+.text-15 { font-size: 15px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 22px; }
+.text-2xl { font-size: 29px; }
+
+.text-accent-700 { color: var(--color-accent-700); }
+.text-accent-800 { color: var(--color-accent-800); }
+.bg-surface { background: var(--color-surface); }
+.bg-neutral-200 { background: var(--color-neutral-200); }
+.bg-accent { background: var(--color-accent); }
+.border-divider { border: 1px solid var(--color-divider); }
+
+.relative { position: relative; }
+.absolute { position: absolute; }
+.sticky { position: sticky; }
+.top-0 { top: 0; }
+.left-0 { left: 0; }
+.right-0 { right: 0; }
+.bottom-0 { bottom: 0; }
+.top-full { top: 100%; }
+
+.z-10 { z-index: 10; }
+.z-50 { z-index: 50; }
+.z-60 { z-index: 60; }
+
+.shadow-md { box-shadow: var(--shadow-md); }
+.rounded-2px { border-radius: 2px; }
+.rounded-md { border-radius: var(--radius-md); }
+.cursor-pointer { cursor: pointer; }
+.opacity-30 { opacity: 0.3; }
+
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.col-span-4 { grid-column: span 4; }
+.col-span-5 { grid-column: span 5; }
+.col-span-6 { grid-column: span 6; }
+.col-span-7 { grid-column: span 7; }
+.col-span-8 { grid-column: span 8; }
+.col-span-9 { grid-column: span 9; }
+.col-span-10 { grid-column: span 10; }
+.col-span-11 { grid-column: span 11; }
+.col-span-12 { grid-column: span 12; }
+
+/* Filter Inputs & Dropdowns styling */
+.filter-dropdown {
+  min-width: 200px;
+}
+.filter-input {
+  width: 100%;
+  margin-bottom: var(--space-2);
+  padding: 4px 8px;
+  font-size: 12px;
+  min-height: 28px;
+}
+.btn-filter-action {
+  font-size: 11px;
+  padding: 2px 6px;
+  min-height: 24px;
+  margin: 0;
+}
+
+/* List-page action bar controls */
+.actbar-search { min-width: 180px; max-width: 320px; min-height: 30px; padding: 2px 9px; }
+.actbar-select { min-height: 30px; padding: 2px 9px; }
+.tab-all { margin: 0 var(--space-2) 0 0; padding: 5px 9px; border-color: color-mix(in srgb, var(--color-accent) 45%, transparent); color: var(--color-accent-800); }
+
+/* Form editor shared classes */
+.note { background: color-mix(in srgb, var(--color-accent-100) 50%, var(--color-bg)); border-left: 3px solid var(--color-accent-400); padding: 0.6rem 0.8rem; font-size: 0.85rem; margin-bottom: 1rem; }
+.hint { color: color-mix(in srgb, var(--color-text) 55%, transparent); font-size: 0.78rem; margin: 0.3rem 0 0; }
+.link { background: none; border: 0; color: var(--color-accent); cursor: pointer; font: inherit; font-size: 0.85rem; padding: 0; }
+.link.danger { color: var(--color-danger); }
+
+fieldset.roles { grid-column: 1 / -1; border: 1px solid var(--color-divider); border-radius: 8px; display: flex; flex-wrap: wrap; gap: 0.9rem; align-items: center; }
+fieldset.roles legend { font-size: 0.78rem; color: color-mix(in srgb, var(--color-text) 55%, transparent); padding: 0 0.35rem; }
+fieldset.roles small { flex-basis: 100%; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-size: 0.72rem; }
+
+.picked { display: flex; align-items: baseline; gap: 0.4rem; flex-wrap: wrap; font-size: 0.85rem; }
+.matches { list-style: none; margin: 0.35rem 0 0; padding: 0; max-height: 12rem; overflow-y: auto; border: 1px solid var(--color-divider); border-radius: 6px; }
+.matches li + li { border-top: 1px solid var(--color-divider); }
+.matches button { display: block; width: 100%; text-align: left; padding: 0.4rem 0.5rem; font-size: 0.82rem; }
+.matches button:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+
+.preview-box { background: var(--color-surface); border-radius: 8px; padding: 0.75rem; display: grid; gap: 0.2rem; margin-bottom: 1rem; }
+.preview-label { font-size: 0.7rem; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+
+.stack { display: grid; gap: 0.1rem; font-size: 0.85rem; }
+.inactive { opacity: 0.45; }

@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Sales.Entity.Enums;
 using Shared.Kernel.Documents;
 
@@ -28,4 +29,21 @@ public class SalesOrder : DocumentHeaderBase
     /// fully delivered are different facts that produce the same sums.
     /// </summary>
     public FulfilmentStatus FulfilmentStatus { get; set; } = FulfilmentStatus.Open;
+
+    /// <summary>
+    /// Why an order was closed with less delivered than ordered.
+    ///
+    /// <b>It is what disambiguates <see cref="FulfilmentStatus.Closed"/>.</b>
+    /// That status covers both "everything went out" and "nothing further is
+    /// coming", and the arithmetic over the challans cannot tell them apart —
+    /// which is the reason the status is a column at all. Null means the order
+    /// closed because it was fulfilled; set means somebody decided to stop, and
+    /// this says who agreed what.
+    ///
+    /// Null on every other status.
+    /// </summary>
+    [MaxLength(300, ErrorMessage = "Short-close reason cannot exceed 300 characters.")]
+    public string? ShortCloseReason { get; set; }
+
+    public List<SalesOrderDetail> Lines { get; set; } = [];
 }
