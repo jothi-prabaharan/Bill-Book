@@ -261,11 +261,12 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | | |
 |---|---|
 | **Ticked** | T2.3 quote, T2.4 sales order, T3.1 invoice API, T3.2 invoice page, T3.5 sales register, T5.1 allocation guard, T5.4 allocation grid |
+| **Ticked, with a named hole** | T2.4 — `DeliveredQuantity` is never written, so `PartlyDelivered` is unreachable and a fully invoiced order still reads Open. T3.1 — no `InvoicedQuantity`, so partial invoicing cannot exist. Both wait on T3.6 |
 | **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
 | **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
 | **Part built** | T3.4 print — a browser print view of the tax invoice exists; **the archived PDF/A copy does not**, and is blocked on a licence decision for the PDF library |
-| **Not built** | T7.1 POS till screen (Phase 3) |
+| **Not built** | T7.1 POS till screen (Phase 3); the item and customer pickers on every sales form, which wait on the item lookup endpoint |
 
 ---
 
@@ -369,6 +370,37 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
     - **`POST /{id}/short-close`.** An order taken partly and then stopped is neither fulfilled nor void — voiding one that shipped goods would withdraw the document those goods went out on. Short-closing releases what is still reserved (ordered less delivered, never negative), sets `FulfilmentStatus.Closed`, and records a required `ShortCloseReason`. That column is what disambiguates `Closed`, which otherwise covers both "everything went out" and "nothing further is coming" — the very ambiguity that made the status a column rather than arithmetic. Refused if Inventory cannot release, for the same reason a void is
     - **Stock availability on the form.** `POST internal/stock/availability` in Inventory answers on hand, reserved and available for a batch of items; `POST /api/sales/sales-orders/availability` names them and the drawer shows the shortfall per line. **Advisory** — the guarded reservation on confirm is what decides, and an unreachable Inventory answers empty rather than failing the screen
 
+    **What the box does *not* cover, and the first one is a hole rather than a deferral.**
+
+    **`DeliveredQuantity` is never written.** Nothing anywhere in the service sets
+    it — the only mention is a projection into the view. Three things follow, and
+    they are worth reading together:
+
+    - **`FulfilmentStatus.PartlyDelivered` is unreachable.** The enum value exists
+      and no code path can produce it. Fulfilment only ever moves Open → Cancelled
+      (void) or Open → Closed (short-close)
+    - **An order that has been fully invoiced still reads Open.** Nothing closes it
+      on invoicing, so the status answers "is this order finished" with a
+      permanent no
+    - **Short-close releases `ReservedQuantity - DeliveredQuantity`, which is
+      right today by accident.** Delivered is always zero, so it releases the whole
+      reservation, which is the correct answer for every order that currently
+      exists. That line has never run against a non-zero delivered quantity, and
+      the day partial delivery works is the day it is right for the right reason —
+      or wrong, unnoticed
+
+    Advancing delivered quantity is the delivery challan's job (T3.6), which is
+    written and unverified. **So the sales order is complete as a commitment
+    document and incomplete as a fulfilment one**, and that is the honest reading
+    of this ticked box.
+
+    Two more, both shared with the invoice: **the customer and the items are
+    numeric id fields** — `onPickItem` is an empty stub awaiting the item lookup
+    endpoint — and **`short-close` and `availability` have no tests**. The twelve
+    in `SalesOrderServiceTests` cover create, confirm, the named shortfall, both
+    void paths, the downstream block, clamping, the filtered total, the status
+    filter, cross-org, and both quote-conversion outcomes.
+
 ### T3 — invoice
 
 - [x] **T3.1 — Invoice API: post, void, ledger legs.** Stock issued through the guarded decrement. **Issuing reserved stock is release-then-issue in one transaction.**
@@ -381,6 +413,20 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
   **`Sales.Api.Tests` now exists** — the gap that let a contract mismatch of that size survive to be found by reading. It holds the query-filter and schema guards, the sales order service suite, invoice posting and the controller tests: 64 tests, none skipped.
 
   Two things added since, both on the way in rather than the way out: **`POST from-sales-order/{id}`** reads the order's lines server-side and recomputes tax at the invoice's own date, so an order taken in March and invoiced in June is charged at June's rates; and the list is **paged on the server** with skip and take clamped.
+
+  **What the box does not cover:**
+
+  - **Partial invoicing is not possible at all.** There is no `InvoicedQuantity`
+    on `SalesOrderDetail`, so an order cannot be billed four of ten and left open.
+    A status of `PartiallyInvoiced` has nowhere to come from, which is why it is
+    not in the enum
+  - **The customer and the items are numeric id fields.** `onPickItem` is an empty
+    stub awaiting the item lookup endpoint. This is the single biggest thing
+    between the invoice and being usable by somebody who does not know ids
+  - **The newer endpoints have no tests.** `from-sales-order`, the paged list and
+    its clamping, and the settlement merge are all stub-only in the suites. The
+    34 that exist cover posting, the ledger legs, POS, the reservation release,
+    the challan path and the controller's own answers
 
 - [x] **T3.2 — Invoice page.** `bb-document-line-grid` plus the invoice header, totals panel, draft / ready / post / void, print.
   *Done when*: keyed and posted at 360px, and the tax on screen equals the tax posted.
@@ -428,6 +474,12 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
   - **Voiding threw.** `VoidAsync` set `VoidedAt` and never `VoidReason`, and `chk_deliverychallans_void_stamp` ties the two together. It takes a reason now, and refuses a *posted* challan outright — the goods have physically gone, and flipping the status would leave the stock issued and GDNI holding a balance nothing will close.
   - **The route was `DeliveryChallans`** while the frontend called `/api/sales/delivery-challans`. Both ends now agree, and `invoices` and `CreditNotes` were moved under `api/sales/` for the same reason — the frontend was already calling them there.
   - **No gateway route pointed at the sales cluster at all.** The cluster was declared and nothing reached it, so every sales screen was unreachable through the front door. `/api/sales/{**catch-all}` added.
+
+  **This stage is what closes the fulfilment hole in T2.4 and T3.1.** Nothing
+  currently advances `SalesOrderDetail.DeliveredQuantity`, so `PartlyDelivered` is
+  unreachable and an order never stops reading Open. Dispatching a challan is what
+  should move it, and short-close already reads it — correctly, but only because
+  it is always zero today.
 
   **The ledger contract that blocked this is fixed** — see T3.1 — so a `Sale` challan's `Dr GDNI / Cr Inventory` pair is no longer refused on the wire. **The box stays unticked because nothing has driven the Done-when end to end**: the challan could not save a line at all until the shadow-key fault was fixed, so "written" has never been "works" here. Job work, approval, branch transfer and sample post nothing and were unaffected throughout.
 
