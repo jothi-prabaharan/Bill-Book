@@ -84,6 +84,19 @@ export interface InvoiceListItem {
   /** Zero unless the invoice is posted and past its due date. */
   daysOverdue: number;
   paymentMode?: string;
+
+  /**
+   * What has been received against it, from Accounting's ledger.
+   *
+   * **Absent when the invoice has never posted** — a draft is not an unpaid
+   * receivable — and absent when the ledger could not be read, in which case
+   * the list still loads and simply does not claim to know.
+   */
+  paidAmount?: number;
+  outstandingAmount?: number;
+
+  /** `Unpaid` | `PartPaid` | `Paid`, derived from the ledger rather than stored. */
+  settlementStatus?: string;
 }
 
 /**

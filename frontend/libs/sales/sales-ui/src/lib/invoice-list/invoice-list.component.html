@@ -81,6 +81,18 @@
         }
       </ng-template>
 
+      <ng-template bbCellTemplate="settlementStatus" let-row>
+        @if (row.settlementStatus) {
+          <span [class]="settlementTag(row.settlementStatus)">{{ row.settlementStatus }}</span>
+
+          @if (row.settlementStatus === 'PartPaid' && row.outstandingAmount !== undefined) {
+            <span class="chip tabular-nums">{{ row.outstandingAmount | number: '1.2-2' }} due</span>
+          }
+        } @else {
+          <span class="inv-list__muted">—</span>
+        }
+      </ng-template>
+
       <ng-template bbCellTemplate="status" let-row>
         <span [class]="statusTag(row.status)">{{ row.status }}</span>
       </ng-template>

@@ -887,6 +887,8 @@ public sealed class InvoiceService : IInvoiceService
             }
         }
 
+        await ApplySettlementAsync(rows, ct);
+
         return new InvoiceListPage
         {
             Total = total,
@@ -894,6 +896,76 @@ public sealed class InvoiceService : IInvoiceService
             Take = safeTake,
             Rows = rows,
         };
+    }
+
+    /// <summary>
+    /// How much of each invoice on the page has been received, from Accounting.
+    ///
+    /// <b>One call for the page, and only for the posted rows.</b> A draft has no
+    /// ledger rows, so asking about it would be a wasted id and reading zero back
+    /// would say "unpaid" about something that is not yet owed.
+    ///
+    /// The money is Accounting's fact, not the invoice's. Storing a paid figure
+    /// on <c>sal.Invoices</c> would be a copy that drifts the first time an
+    /// allocation is undone, and the two would then disagree about what the
+    /// customer owes — which is the disagreement nobody notices until a
+    /// statement goes out.
+    /// </summary>
+    private async Task ApplySettlementAsync(List<InvoiceListItem> rows, CancellationToken ct)
+    {
+        List<long> postedIds = [.. rows
+            .Where(r => r.Status == nameof(DocumentStatus.Posted))
+            .Select(r => r.InvoiceId)];
+
+        if (postedIds.Count == 0 || _tenant.OrgId is not Guid orgId
+            || _tenant.CustomerId is not Guid customerId)
+        {
+            return;
+        }
+
+        IReadOnlyDictionary<long, Settlement> settlements = await _ledgerClient.GetSettlementsAsync(
+            new SettlementQueryRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                TransactionTypeCode = "INV",
+                TransactionIds = postedIds,
+            },
+            ct);
+
+        foreach (InvoiceListItem row in rows)
+        {
+            if (!settlements.TryGetValue(row.InvoiceId, out Settlement? settlement))
+            {
+                continue;
+            }
+
+            row.PaidAmount = settlement.PaidAmount;
+            row.OutstandingAmount = settlement.OutstandingAmount;
+            row.SettlementStatus = SettlementStatusOf(settlement);
+        }
+    }
+
+    /// <summary>
+    /// Paid, PartPaid or Unpaid.
+    ///
+    /// <b>Compared against a rounding tolerance rather than zero.</b> A payment
+    /// in another currency settles at its own rate, so an invoice can come out a
+    /// few paise short of square and is settled for every practical purpose;
+    /// calling that PartPaid would leave a chasing list full of invoices nobody
+    /// can collect on. A paisa is the unit money is kept in, so that is the
+    /// tolerance.
+    /// </summary>
+    private static string SettlementStatusOf(Settlement settlement)
+    {
+        const decimal tolerance = 0.01m;
+
+        if (Math.Abs(settlement.OutstandingAmount) <= tolerance)
+        {
+            return "Paid";
+        }
+
+        return settlement.PaidAmount > tolerance ? "PartPaid" : "Unpaid";
     }
 
     public async Task<List<InvoiceListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)

@@ -87,4 +87,37 @@ public sealed class InternalLedgerController : ControllerBase
             }),
         };
     }
+
+    /// <summary>
+    /// How far a batch of documents has been settled.
+    ///
+    /// A read rather than a write, but internal and on this controller because
+    /// the caller is a service and not a user: Sales asks it once per page of
+    /// its invoice list, and the alternative — a round trip per contact, matched
+    /// up afterwards — is the N+1 that makes that screen slow.
+    /// </summary>
+    [HttpPost("settlements")]
+    public async Task<IActionResult> Settlements(
+        [FromBody] SettlementQueryRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to read settlements.",
+            });
+        }
+
+        // Set before anything resolves a DbContext: the context is built from
+        // the tenant, so resolving the service first would bind it to no tenant.
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var reports = _services.GetRequiredService<LedgerReportService>();
+
+        List<SettlementView> settlements = await reports.GetSettlementsAsync(
+            request.TransactionTypeCode, request.LedgerTypeId, request.TransactionIds, ct);
+
+        return Ok(settlements);
+    }
 }

@@ -109,3 +109,9 @@
     min-height: 44px;
   }
 }
+
+/* A draft has no settlement to show. An em dash says "not applicable" more
+   honestly than an empty cell, which reads as data that failed to load. */
+.inv-list__muted {
+  color: color-mix(in srgb, var(--color-text) 40%, transparent);
+}

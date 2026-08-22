@@ -286,6 +286,31 @@ public class InvoiceListItem
     public int DaysOverdue { get; set; }
 
     public string? PaymentMode { get; set; }
+
+    /// <summary>
+    /// What has been received against this invoice, from Accounting's ledger.
+    ///
+    /// <b>Null when the invoice has never posted</b>, which is not the same as
+    /// zero: a draft is not an unpaid receivable, and folding it in as owing
+    /// nothing would put it in the same bucket as one paid in full. Null also
+    /// when the ledger could not be read — the list still loads, it just does
+    /// not claim to know.
+    /// </summary>
+    public decimal? PaidAmount { get; set; }
+
+    public decimal? OutstandingAmount { get; set; }
+
+    /// <summary>
+    /// Unpaid, PartPaid or Paid — derived, never stored.
+    ///
+    /// <b>Deliberately not a <c>DocumentStatus</c>.</b> Settlement is a second
+    /// axis: an invoice is Posted <i>and</i> part-paid at the same time, and one
+    /// enum cannot say both. It is also not the invoice's own fact to keep — the
+    /// money arrives on a receipt, and a copy here would be a figure that drifts
+    /// from the ledger the first time an allocation is undone.
+    /// </summary>
+    public string? SettlementStatus { get; set; }
+
 }
 
 public class InvoiceSummary : InvoiceListItem

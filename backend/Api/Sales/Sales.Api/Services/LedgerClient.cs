@@ -17,6 +17,43 @@ public interface ILedgerClient
     Task<PostLedgerOutcomeResult> PostAsync(PostLedgerRequest request, CancellationToken ct);
     Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct);
     Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct);
+
+    /// <summary>
+    /// How far a batch of documents has been settled. One call for a whole page
+    /// of the invoice list — see <c>InvoiceService.ListPageAsync</c>.
+    /// </summary>
+    Task<IReadOnlyDictionary<long, Settlement>> GetSettlementsAsync(
+        SettlementQueryRequest request, CancellationToken ct);
+}
+
+/// <summary>What a document put on the control account, and what has come back.</summary>
+public sealed record Settlement(decimal TotalAmount, decimal PaidAmount, decimal OutstandingAmount);
+
+/// <summary>Asks Accounting how far a batch of documents has been settled.</summary>
+public sealed class SettlementQueryRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public string TransactionTypeCode { get; set; } = null!;
+
+    /// <summary>The control leg — 3, receivable. Matches Accounting's default.</summary>
+    public int LedgerTypeId { get; set; } = 3;
+
+    public List<long> TransactionIds { get; set; } = [];
+}
+
+/// <summary>One row of Accounting's answer, before it is keyed by id.</summary>
+public sealed class SettlementResponse
+{
+    public long TransactionId { get; set; }
+
+    public decimal TotalAmount { get; set; }
+
+    public decimal PaidAmount { get; set; }
+
+    public decimal OutstandingAmount { get; set; }
 }
 
 public sealed class LedgerClient : ILedgerClient
@@ -53,6 +90,51 @@ public sealed class LedgerClient : ILedgerClient
             var detail = await response.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(
                 $"Removing the allocations failed: {response.StatusCode} {detail}");
+        }
+    }
+
+    /// <summary>
+    /// Reads settlement for a batch of documents.
+    ///
+    /// <b>A failure here is not a failure of the list.</b> An invoice list that
+    /// would not load because the ledger was briefly unreachable is worse than
+    /// one that loads without the paid column — the numbers a user came for are
+    /// on the invoice itself. So this answers empty rather than throwing, and
+    /// the screen shows the settlement it could read.
+    /// </summary>
+    public async Task<IReadOnlyDictionary<long, Settlement>> GetSettlementsAsync(
+        SettlementQueryRequest request, CancellationToken ct)
+    {
+        if (request.TransactionIds.Count == 0)
+        {
+            return new Dictionary<long, Settlement>();
+        }
+
+        try
+        {
+            var response = await _http.PostAsJsonAsync("internal/ledger/settlements", request, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Dictionary<long, Settlement>();
+            }
+
+            List<SettlementResponse>? rows =
+                await response.Content.ReadFromJsonAsync<List<SettlementResponse>>(ct);
+
+            return rows is null
+                ? new Dictionary<long, Settlement>()
+                : rows.ToDictionary(
+                    r => r.TransactionId,
+                    r => new Settlement(r.TotalAmount, r.PaidAmount, r.OutstandingAmount));
+        }
+        catch (HttpRequestException)
+        {
+            return new Dictionary<long, Settlement>();
+        }
+        catch (TaskCanceledException)
+        {
+            return new Dictionary<long, Settlement>();
         }
     }
 

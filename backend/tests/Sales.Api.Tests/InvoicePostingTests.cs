@@ -532,6 +532,20 @@ public sealed class InvoicePostingTests
         public Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct) =>
             Task.FromResult(new AllocateOutcomeResult(true, null));
 
+        /// <summary>
+        /// Whatever a test wants the ledger to say a document has been settled
+        /// for. Empty by default, which is the real answer for an invoice
+        /// nothing has been received against.
+        /// </summary>
+        public Dictionary<long, Settlement> Settlements { get; } = [];
+
+        public Task<IReadOnlyDictionary<long, Settlement>> GetSettlementsAsync(
+            SettlementQueryRequest request, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyDictionary<long, Settlement>>(
+                request.TransactionIds
+                    .Where(Settlements.ContainsKey)
+                    .ToDictionary(id => id, id => Settlements[id]));
+
         public Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct) =>
             Task.CompletedTask;
 

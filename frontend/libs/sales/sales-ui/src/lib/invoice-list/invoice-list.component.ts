@@ -73,6 +73,7 @@ export class InvoiceListComponent implements OnInit {
     { field: 'contactName', header: 'Customer' },
     { field: 'dueDate', header: 'Due', isTemplate: true },
     { field: 'totalAmount', header: 'Amount', align: 'right', dataType: 'money' },
+    { field: 'settlementStatus', header: 'Payment', isTemplate: true },
     { field: 'status', header: 'Status', isTemplate: true },
   ];
 
@@ -139,6 +140,26 @@ export class InvoiceListComponent implements OnInit {
 
   protected create(): void {
     void this.router.navigate(['/sales/invoices/new']);
+  }
+
+  /**
+   * The tag a settlement status wears.
+   *
+   * A draft has no settlement at all — it is not an unpaid receivable — so it
+   * gets no tag rather than an "Unpaid" one, which would put it beside invoices
+   * somebody is actually chasing.
+   */
+  protected settlementTag(status: string | undefined): string {
+    switch (status) {
+      case 'Paid':
+        return 'badge valid';
+      case 'PartPaid':
+        return 'badge soon';
+      case 'Unpaid':
+        return 'badge expired';
+      default:
+        return '';
+    }
   }
 
   /** The tag class a status wears, from the shared set in `_tags.scss`. */
