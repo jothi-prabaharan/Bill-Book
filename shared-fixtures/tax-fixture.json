@@ -4,7 +4,7 @@
     "",
     "Read by Shared.Kernel.Tests (GstCalculatorFixtureTests) and by",
     "line-math.spec.ts. Two implementations of one sum diverge without either",
-    "looking wrong, and a GST return is where that surfaces months later — this",
+    "looking wrong, and a GST return is where that surfaces months later \u2014 this",
     "file is what makes the divergence a failing test instead.",
     "",
     "Amounts here are in RUPEES with two decimals, which is how C# holds them.",
@@ -16,7 +16,6 @@
     "",
     "Adding a case: put it here first, watch both suites fail, then fix both."
   ],
-
   "rates": {
     "gst18": {
       "taxMasterId": 1,
@@ -69,12 +68,14 @@
       "cessRate": 0.0
     }
   },
-
   "lineCases": [
     {
       "name": "intra-state, exclusive, no discount",
       "why": "The ordinary sale. Eighteen per cent splits nine and nine.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 2.0,
         "unitPrice": 500.0,
@@ -89,15 +90,26 @@
         "taxAmount": 180.0,
         "lineTotal": 1180.0,
         "components": [
-          { "component": "Cgst", "rate": 9.0, "amount": 90.0 },
-          { "component": "Sgst", "rate": 9.0, "amount": 90.0 }
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 90.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 9.0,
+            "amount": 90.0
+          }
         ]
       }
     },
     {
       "name": "inter-state, exclusive",
       "why": "The same sale across a state line is one component, not two.",
-      "context": { "isInterState": true, "discountBeforeTax": true },
+      "context": {
+        "isInterState": true,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 2.0,
         "unitPrice": 500.0,
@@ -111,13 +123,22 @@
         "taxableAmount": 1000.0,
         "taxAmount": 180.0,
         "lineTotal": 1180.0,
-        "components": [{ "component": "Igst", "rate": 18.0, "amount": 180.0 }]
+        "components": [
+          {
+            "component": "Igst",
+            "rate": 18.0,
+            "amount": 180.0
+          }
+        ]
       }
     },
     {
       "name": "discount before tax",
       "why": "A trade discount reduces what tax is charged on.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 1000.0,
@@ -133,15 +154,26 @@
         "taxAmount": 162.0,
         "lineTotal": 1062.0,
         "components": [
-          { "component": "Cgst", "rate": 9.0, "amount": 81.0 },
-          { "component": "Sgst", "rate": 9.0, "amount": 81.0 }
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 81.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 9.0,
+            "amount": 81.0
+          }
         ]
       }
     },
     {
       "name": "discount after tax",
       "why": "A settlement discount does not reduce GST liability, and must still show.",
-      "context": { "isInterState": false, "discountBeforeTax": false },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": false
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 1000.0,
@@ -157,15 +189,26 @@
         "taxAmount": 180.0,
         "lineTotal": 1180.0,
         "components": [
-          { "component": "Cgst", "rate": 9.0, "amount": 90.0 },
-          { "component": "Sgst", "rate": 9.0, "amount": 90.0 }
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 90.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 9.0,
+            "amount": 90.0
+          }
         ]
       }
     },
     {
       "name": "MRP inclusive, intra-state",
       "why": "The bug that shipped once: dividing by the rate scale where the rate is a percent made every inclusive line a hundredth of its taxable value. 118 inclusive of 18% is exactly 100.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 118.0,
@@ -180,15 +223,26 @@
         "taxAmount": 18.0,
         "lineTotal": 118.0,
         "components": [
-          { "component": "Cgst", "rate": 9.0, "amount": 9.0 },
-          { "component": "Sgst", "rate": 9.0, "amount": 9.0 }
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 9.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 9.0,
+            "amount": 9.0
+          }
         ]
       }
     },
     {
       "name": "MRP inclusive that does not divide evenly",
       "why": "999 inclusive of 18% backs out to 846.61, and the tax is what is left. The rounding point is the taxable value, not the tax.",
-      "context": { "isInterState": true, "discountBeforeTax": true },
+      "context": {
+        "isInterState": true,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 999.0,
@@ -202,13 +256,22 @@
         "taxableAmount": 846.61,
         "taxAmount": 152.39,
         "lineTotal": 999.0,
-        "components": [{ "component": "Igst", "rate": 18.0, "amount": 152.39 }]
+        "components": [
+          {
+            "component": "Igst",
+            "rate": 18.0,
+            "amount": 152.39
+          }
+        ]
       }
     },
     {
       "name": "exempt carries no tax rows at all",
       "why": "Exempt is not zero-rated. GSTR-1 files them in different tables, and the absence of the rows is the fact.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 3.0,
         "unitPrice": 100.0,
@@ -228,7 +291,10 @@
     {
       "name": "zero-rated keeps its rows, at rate zero",
       "why": "An export. Every amount is zero, so only the presence of the rows says which side of the return it belongs on.",
-      "context": { "isInterState": true, "discountBeforeTax": true },
+      "context": {
+        "isInterState": true,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 3.0,
         "unitPrice": 100.0,
@@ -242,13 +308,22 @@
         "taxableAmount": 300.0,
         "taxAmount": 0.0,
         "lineTotal": 300.0,
-        "components": [{ "component": "Igst", "rate": 0.0, "amount": 0.0 }]
+        "components": [
+          {
+            "component": "Igst",
+            "rate": 0.0,
+            "amount": 0.0
+          }
+        ]
       }
     },
     {
       "name": "cess rides on top of the intra-state split",
       "why": "Three components, not two. A fixed set of tax columns would have nowhere to put this.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 1000.0,
@@ -263,16 +338,31 @@
         "taxAmount": 400.0,
         "lineTotal": 1400.0,
         "components": [
-          { "component": "Cgst", "rate": 14.0, "amount": 140.0 },
-          { "component": "Sgst", "rate": 14.0, "amount": 140.0 },
-          { "component": "Cess", "rate": 12.0, "amount": 120.0 }
+          {
+            "component": "Cgst",
+            "rate": 14.0,
+            "amount": 140.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 14.0,
+            "amount": 140.0
+          },
+          {
+            "component": "Cess",
+            "rate": 12.0,
+            "amount": 120.0
+          }
         ]
       }
     },
     {
       "name": "half-paise rounds away from zero, per component",
       "why": "10.10 at 2.5% is 0.2525 and rounds to 0.25; the pair sums to 0.50. Rounding the 5% once would give 0.51. The component is the rounded unit because GSTR-1 reconciles per rate.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 10.1,
@@ -287,15 +377,26 @@
         "taxAmount": 0.5,
         "lineTotal": 10.6,
         "components": [
-          { "component": "Cgst", "rate": 2.5, "amount": 0.25 },
-          { "component": "Sgst", "rate": 2.5, "amount": 0.25 }
+          {
+            "component": "Cgst",
+            "rate": 2.5,
+            "amount": 0.25
+          },
+          {
+            "component": "Sgst",
+            "rate": 2.5,
+            "amount": 0.25
+          }
         ]
       }
     },
     {
       "name": "fractional quantity at the bullion rate",
       "why": "Gold is sold by the gram to three decimals and the 3% slab sits outside the standard five.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 12.345,
         "unitPrice": 6250.0,
@@ -310,15 +411,26 @@
         "taxAmount": 2314.68,
         "lineTotal": 79470.93,
         "components": [
-          { "component": "Cgst", "rate": 1.5, "amount": 1157.34 },
-          { "component": "Sgst", "rate": 1.5, "amount": 1157.34 }
+          {
+            "component": "Cgst",
+            "rate": 1.5,
+            "amount": 1157.34
+          },
+          {
+            "component": "Sgst",
+            "rate": 1.5,
+            "amount": 1157.34
+          }
         ]
       }
     },
     {
       "name": "a discount larger than the line is capped",
       "why": "A negative taxable value posts as a credit nobody raised.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "line": {
         "quantity": 1.0,
         "unitPrice": 100.0,
@@ -334,22 +446,115 @@
         "taxAmount": 0.0,
         "lineTotal": 0.0,
         "components": [
-          { "component": "Cgst", "rate": 9.0, "amount": 0.0 },
-          { "component": "Sgst", "rate": 9.0, "amount": 0.0 }
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 0.0
+          },
+          {
+            "component": "Sgst",
+            "rate": 9.0,
+            "amount": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "intra-Union-Territory, exclusive, no discount",
+      "why": "Inside a UT with no legislature the state half is UTGST, not SGST. Same rate, same half, and it sums into the same State/UT column the return has one field for \u2014 what differs is the name printed on the invoice. A branch in Chandigarh or Lakshadweep bills this way.",
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true,
+        "isUnionTerritory": true
+      },
+      "line": {
+        "quantity": 2.0,
+        "unitPrice": 500.0,
+        "isPriceInclusive": false,
+        "taxTreatment": "Taxable",
+        "rate": "gst18"
+      },
+      "expected": {
+        "grossAmount": 1000.0,
+        "discountAmount": 0.0,
+        "taxableAmount": 1000.0,
+        "taxAmount": 180.0,
+        "lineTotal": 1180.0,
+        "components": [
+          {
+            "component": "Cgst",
+            "rate": 9.0,
+            "amount": 90.0
+          },
+          {
+            "component": "Utgst",
+            "rate": 9.0,
+            "amount": 90.0
+          }
+        ]
+      }
+    },
+    {
+      "name": "out of a Union Territory to another state",
+      "why": "The UT flag only decides the *intra*-state split. A supply leaving the territory is inter-state and carries IGST like any other, so a branch that set the flag does not start charging UTGST on everything.",
+      "context": {
+        "isInterState": true,
+        "discountBeforeTax": true,
+        "isUnionTerritory": true
+      },
+      "line": {
+        "quantity": 2.0,
+        "unitPrice": 500.0,
+        "isPriceInclusive": false,
+        "taxTreatment": "Taxable",
+        "rate": "gst18"
+      },
+      "expected": {
+        "grossAmount": 1000.0,
+        "discountAmount": 0.0,
+        "taxableAmount": 1000.0,
+        "taxAmount": 180.0,
+        "lineTotal": 1180.0,
+        "components": [
+          {
+            "component": "Igst",
+            "rate": 18.0,
+            "amount": 180.0
+          }
         ]
       }
     }
   ],
-
   "documentCases": [
     {
       "name": "three lines at one rate foot to the sum of the lines",
       "why": "The header has to equal what is printed above it, because somebody always adds them up. Each 0.25 pair rounds on the line, and the header sums the rounded figures.",
-      "context": { "isInterState": false, "discountBeforeTax": true },
+      "context": {
+        "isInterState": false,
+        "discountBeforeTax": true
+      },
       "lines": [
-        { "quantity": 1.0, "unitPrice": 10.1, "isPriceInclusive": false, "taxTreatment": "Taxable", "rate": "gst5" },
-        { "quantity": 1.0, "unitPrice": 10.1, "isPriceInclusive": false, "taxTreatment": "Taxable", "rate": "gst5" },
-        { "quantity": 1.0, "unitPrice": 10.1, "isPriceInclusive": false, "taxTreatment": "Taxable", "rate": "gst5" }
+        {
+          "quantity": 1.0,
+          "unitPrice": 10.1,
+          "isPriceInclusive": false,
+          "taxTreatment": "Taxable",
+          "rate": "gst5"
+        },
+        {
+          "quantity": 1.0,
+          "unitPrice": 10.1,
+          "isPriceInclusive": false,
+          "taxTreatment": "Taxable",
+          "rate": "gst5"
+        },
+        {
+          "quantity": 1.0,
+          "unitPrice": 10.1,
+          "isPriceInclusive": false,
+          "taxTreatment": "Taxable",
+          "rate": "gst5"
+        }
       ],
       "expected": {
         "subTotal": 30.3,
@@ -365,11 +570,32 @@
     {
       "name": "mixed treatments on one document",
       "why": "A taxable line, an exempt line and a zero-rated line coexist, and only the first contributes tax.",
-      "context": { "isInterState": true, "discountBeforeTax": true },
+      "context": {
+        "isInterState": true,
+        "discountBeforeTax": true
+      },
       "lines": [
-        { "quantity": 1.0, "unitPrice": 1000.0, "isPriceInclusive": false, "taxTreatment": "Taxable", "rate": "gst18" },
-        { "quantity": 1.0, "unitPrice": 500.0, "isPriceInclusive": false, "taxTreatment": "Exempt", "rate": null },
-        { "quantity": 1.0, "unitPrice": 250.0, "isPriceInclusive": false, "taxTreatment": "ZeroRated", "rate": "gst0" }
+        {
+          "quantity": 1.0,
+          "unitPrice": 1000.0,
+          "isPriceInclusive": false,
+          "taxTreatment": "Taxable",
+          "rate": "gst18"
+        },
+        {
+          "quantity": 1.0,
+          "unitPrice": 500.0,
+          "isPriceInclusive": false,
+          "taxTreatment": "Exempt",
+          "rate": null
+        },
+        {
+          "quantity": 1.0,
+          "unitPrice": 250.0,
+          "isPriceInclusive": false,
+          "taxTreatment": "ZeroRated",
+          "rate": "gst0"
+        }
       ],
       "expected": {
         "subTotal": 1750.0,
@@ -383,21 +609,28 @@
       }
     }
   ],
-
   "placeOfSupplyCases": [
     {
       "name": "same state is intra-state",
       "branchStateCode": "33",
       "placeOfSupplyStateCode": "33",
       "contactGstin": "33AAAAA0000A1Z5",
-      "expected": { "outcome": "Ok", "stateCode": "33", "isInterState": false }
+      "expected": {
+        "outcome": "Ok",
+        "stateCode": "33",
+        "isInterState": false
+      }
     },
     {
       "name": "different state is inter-state",
       "branchStateCode": "33",
       "placeOfSupplyStateCode": "29",
       "contactGstin": "29AAAAA0000A1Z5",
-      "expected": { "outcome": "Ok", "stateCode": "29", "isInterState": true }
+      "expected": {
+        "outcome": "Ok",
+        "stateCode": "29",
+        "isInterState": true
+      }
     },
     {
       "name": "no place of supply falls back to the GSTIN",
@@ -405,7 +638,11 @@
       "branchStateCode": "33",
       "placeOfSupplyStateCode": null,
       "contactGstin": "27AAAAA0000A1Z5",
-      "expected": { "outcome": "Ok", "stateCode": "27", "isInterState": true }
+      "expected": {
+        "outcome": "Ok",
+        "stateCode": "27",
+        "isInterState": true
+      }
     },
     {
       "name": "a GSTIN contradicting the place of supply is refused",
@@ -413,7 +650,9 @@
       "branchStateCode": "33",
       "placeOfSupplyStateCode": "29",
       "contactGstin": "27AAAAA0000A1Z5",
-      "expected": { "outcome": "GstinContradictsPlaceOfSupply" }
+      "expected": {
+        "outcome": "GstinContradictsPlaceOfSupply"
+      }
     },
     {
       "name": "an unregistered customer with a place of supply is fine",
@@ -421,21 +660,29 @@
       "branchStateCode": "33",
       "placeOfSupplyStateCode": "33",
       "contactGstin": null,
-      "expected": { "outcome": "Ok", "stateCode": "33", "isInterState": false }
+      "expected": {
+        "outcome": "Ok",
+        "stateCode": "33",
+        "isInterState": false
+      }
     },
     {
       "name": "neither a place of supply nor a GSTIN is refused",
       "branchStateCode": "33",
       "placeOfSupplyStateCode": null,
       "contactGstin": null,
-      "expected": { "outcome": "PlaceOfSupplyUnknown" }
+      "expected": {
+        "outcome": "PlaceOfSupplyUnknown"
+      }
     },
     {
       "name": "a branch with no state code cannot determine anything",
       "branchStateCode": null,
       "placeOfSupplyStateCode": "33",
       "contactGstin": null,
-      "expected": { "outcome": "BranchStateUnknown" }
+      "expected": {
+        "outcome": "BranchStateUnknown"
+      }
     },
     {
       "name": "a single-digit state code is padded, not treated as a different state",
@@ -443,14 +690,20 @@
       "branchStateCode": "9",
       "placeOfSupplyStateCode": "09",
       "contactGstin": "09AAAAA0000A1Z5",
-      "expected": { "outcome": "Ok", "stateCode": "09", "isInterState": false }
+      "expected": {
+        "outcome": "Ok",
+        "stateCode": "09",
+        "isInterState": false
+      }
     },
     {
       "name": "a malformed GSTIN is refused rather than ignored",
       "branchStateCode": "33",
       "placeOfSupplyStateCode": "33",
       "contactGstin": "NOTAGSTIN",
-      "expected": { "outcome": "GstinMalformed" }
+      "expected": {
+        "outcome": "GstinMalformed"
+      }
     }
   ]
 }

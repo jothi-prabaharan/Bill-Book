@@ -16,7 +16,16 @@ public interface IBranchSettingsProvider
     Task<BranchSettings?> GetSettingsAsync(CancellationToken ct = default);
 }
 
-public sealed record BranchSettings(string StateCode, bool DiscountBeforeTax);
+public sealed record BranchSettings(
+    string StateCode,
+    bool DiscountBeforeTax,
+
+    /// <summary>
+    /// Whether this branch trades from a Union Territory without a legislature,
+    /// so its intra-state supplies carry UTGST in place of SGST. Defaulted false
+    /// because almost every branch is in a state.
+    /// </summary>
+    bool IsUnionTerritory = false);
 
 /// <summary>
 /// Reads the settings from Platform's org context, cached per organization.

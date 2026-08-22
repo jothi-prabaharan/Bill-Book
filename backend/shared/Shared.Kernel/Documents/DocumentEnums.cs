@@ -108,4 +108,18 @@ public enum TaxComponent
 
     /// <summary>Compensation cess. Sits beside either arrangement.</summary>
     Cess = 3,
+
+    /// <summary>
+    /// Union Territory GST. Takes <see cref="Sgst"/>'s place — never beside it —
+    /// on a supply within a Union Territory that has no legislature of its own.
+    ///
+    /// <b>It carries SGST's rate and sums into SGST's column, and that is not a
+    /// shortcut.</b> The two are structurally the same tax at the same half
+    /// rate, they are mutually exclusive, and GSTR-1 itself has a single
+    /// "State/UT tax" field rather than one for each. What genuinely differs is
+    /// the name printed on the invoice, and that is what this component is for:
+    /// the line's tax rows carry it, so a UT invoice reads UTGST while the
+    /// header total and the return stay in the one column they belong in.
+    /// </summary>
+    Utgst = 4,
 }

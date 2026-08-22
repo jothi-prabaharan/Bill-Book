@@ -167,7 +167,7 @@ public class GstCalculatorFixtureTests
     };
 
     private static TaxContext ToContext(FixtureContext context) =>
-        new(context.IsInterState, context.DiscountBeforeTax);
+        new(context.IsInterState, context.DiscountBeforeTax, context.IsUnionTerritory);
 
     private static TaxFixture Load()
     {
@@ -189,7 +189,16 @@ public class GstCalculatorFixtureTests
         List<DocumentCase> DocumentCases,
         List<PlaceCase> PlaceOfSupplyCases);
 
-    private sealed record FixtureContext(bool IsInterState, bool DiscountBeforeTax);
+    /// <summary>
+    /// <c>IsUnionTerritory</c> is defaulted, so the cases written before UTGST
+    /// existed keep parsing without the key. It has to be carried into the
+    /// <see cref="TaxContext"/> above, though — a reader that dropped it would
+    /// run the UT cases as ordinary intra-state ones and pass them for the
+    /// wrong reason, which is exactly the divergence this fixture exists to
+    /// catch.
+    /// </summary>
+    private sealed record FixtureContext(
+        bool IsInterState, bool DiscountBeforeTax, bool IsUnionTerritory = false);
 
     private sealed record FixtureLine(
         decimal Quantity,

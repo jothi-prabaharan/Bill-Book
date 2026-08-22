@@ -32,7 +32,18 @@ public sealed record TaxRate(
 /// Whether a discount reduces the taxable value. A trade discount does; a
 /// settlement discount does not and must still be shown on the invoice.
 /// </param>
-public sealed record TaxContext(bool IsInterState, bool DiscountBeforeTax);
+public sealed record TaxContext(
+    bool IsInterState,
+    bool DiscountBeforeTax,
+
+    /// <summary>
+    /// Whether an intra-state supply is inside a Union Territory with no
+    /// legislature, which makes the state half UTGST rather than SGST.
+    ///
+    /// Optional, and false by default, so the twenty-eight states — which is
+    /// almost every branch — need say nothing.
+    /// </summary>
+    bool IsUnionTerritory = false);
 
 /// <summary>One line, as the calculator takes it. Prices and quantities as keyed.</summary>
 public sealed record TaxLineInput

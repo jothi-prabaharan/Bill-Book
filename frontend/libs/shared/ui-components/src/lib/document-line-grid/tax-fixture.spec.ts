@@ -39,6 +39,8 @@ interface FixtureRate {
 
 interface FixtureContext {
   isInterState: boolean;
+  /** Absent on every case written before UTGST existed, hence optional. */
+  isUnionTerritory?: boolean;
   discountBeforeTax: boolean;
 }
 
@@ -127,7 +129,11 @@ const fixture: Fixture = JSON.parse(readFileSync(fixturePath(), 'utf-8')) as Fix
  * split is applied here through `componentsFor`, which is the same function the
  * grid uses and is therefore itself under test.
  */
-function taxRowsFor(rate: FixtureRate | null, isInterState: boolean): DocumentLineTax[] {
+function taxRowsFor(
+  rate: FixtureRate | null,
+  isInterState: boolean,
+  isUnionTerritory = false,
+): DocumentLineTax[] {
   if (rate === null) {
     return [];
   }
@@ -135,6 +141,13 @@ function taxRowsFor(rate: FixtureRate | null, isInterState: boolean): DocumentLi
   const rateOf: Record<TaxComponent, number> = {
     Cgst: rate.cgstRate,
     Sgst: rate.sgstRate,
+
+    // UTGST draws SGST's rate — the same half of the same tax under a different
+    // name. There is deliberately no utgstRate in the fixture's rate table,
+    // because a second number that must always equal the first is a second
+    // number that eventually does not.
+    Utgst: rate.sgstRate,
+
     Igst: rate.igstRate,
     Cess: rate.cessRate,
   };
@@ -149,7 +162,7 @@ function taxRowsFor(rate: FixtureRate | null, isInterState: boolean): DocumentLi
     amount: 0,
   });
 
-  const rows = componentsFor(isInterState).map(row);
+  const rows = componentsFor(isInterState, isUnionTerritory).map(row);
 
   // Cess rides on top of whichever arrangement applies, and only when there is
   // one — an empty cess row on every line would put a meaningless zero into the
@@ -211,7 +224,13 @@ function contextOf(source: FixtureContext): DocumentLineContext {
 /** The line with its tax rows rebuilt for the case's own intra/inter split. */
 function lineFor(source: FixtureLine, context: FixtureContext): DocumentLine {
   const rate = source.rate === null ? null : fixture.rates[source.rate];
-  return { ...toLine(source), taxes: taxRowsFor(rate ?? null, context.isInterState) };
+  // The UT flag has to reach the row builder. A reader that dropped it would
+  // run the UT cases as ordinary intra-state ones and pass them for the wrong
+  // reason — the divergence this fixture exists to catch.
+  return {
+    ...toLine(source),
+    taxes: taxRowsFor(rate ?? null, context.isInterState, context.isUnionTerritory),
+  };
 }
 
 describe('tax fixture — TypeScript agrees with C#', () => {

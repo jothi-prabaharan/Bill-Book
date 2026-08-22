@@ -66,11 +66,23 @@ public static class GstCalculator
     /// The components a line carries, given where the supply is going.
     ///
     /// Intra-state splits across CGST and SGST; inter-state puts the whole rate
-    /// on IGST. Cess rides on top of either and is added by
+    /// on IGST. Inside a Union Territory with no legislature the state half is
+    /// <see cref="TaxComponent.Utgst"/> instead — same rate, different name, and
+    /// never beside SGST. Cess rides on top of any of them and is added by
     /// <see cref="Compute"/> when the rate carries one.
     /// </summary>
-    public static IReadOnlyList<TaxComponent> ComponentsFor(bool isInterState) =>
-        isInterState ? [TaxComponent.Igst] : [TaxComponent.Cgst, TaxComponent.Sgst];
+    public static IReadOnlyList<TaxComponent> ComponentsFor(
+        bool isInterState, bool isUnionTerritory = false)
+    {
+        if (isInterState)
+        {
+            return [TaxComponent.Igst];
+        }
+
+        return isUnionTerritory
+            ? [TaxComponent.Cgst, TaxComponent.Utgst]
+            : [TaxComponent.Cgst, TaxComponent.Sgst];
+    }
 
     /// <summary>What one line comes to.</summary>
     public static TaxLineResult Compute(TaxLineInput line, TaxContext context)
@@ -125,7 +137,9 @@ public static class GstCalculator
 
         decimal taxable = lines.Sum(l => l.TaxableAmount);
         decimal cgst = ByComponent(TaxComponent.Cgst);
-        decimal sgst = ByComponent(TaxComponent.Sgst);
+        // One column for State tax and UT tax, because the return has one field
+        // for them and they cannot both appear on a line.
+        decimal sgst = ByComponent(TaxComponent.Sgst) + ByComponent(TaxComponent.Utgst);
         decimal igst = ByComponent(TaxComponent.Igst);
         decimal cess = ByComponent(TaxComponent.Cess);
 
@@ -180,7 +194,7 @@ public static class GstCalculator
         {
             // Zero-rated with no rate row behind it still carries its components,
             // at zero — the rows are the fact, not their value.
-            foreach (TaxComponent component in ComponentsFor(context.IsInterState))
+            foreach (TaxComponent component in ComponentsFor(context.IsInterState, context.IsUnionTerritory))
             {
                 components.Add(new TaxComponentAmount(component, 0m, taxable, 0m));
             }
@@ -188,12 +202,16 @@ public static class GstCalculator
             return components;
         }
 
-        foreach (TaxComponent component in ComponentsFor(context.IsInterState))
+        foreach (TaxComponent component in ComponentsFor(context.IsInterState, context.IsUnionTerritory))
         {
             decimal componentRate = component switch
             {
                 TaxComponent.Cgst => rate.CgstRate,
-                TaxComponent.Sgst => rate.SgstRate,
+
+                // Utgst takes SgstRate deliberately — see TaxComponent.Utgst.
+                // The rate is the same half; only the name on the invoice differs.
+                TaxComponent.Sgst or TaxComponent.Utgst => rate.SgstRate,
+
                 TaxComponent.Igst => rate.IgstRate,
                 _ => 0m,
             };

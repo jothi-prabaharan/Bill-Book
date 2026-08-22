@@ -68,7 +68,7 @@ export class DocumentLineGridComponent {
   protected readonly totals = computed(() => totalsOf(this.lines()));
 
   protected readonly components = computed(() =>
-    componentsFor(this.context().isInterState),
+    componentsFor(this.context().isInterState, this.context().isUnionTerritory),
   );
 
   protected readonly treatments: readonly TaxTreatment[] = [
@@ -206,12 +206,20 @@ export class DocumentLineGridComponent {
     this.emit(updated);
   }
 
-  private rateOf(group: TaxGroupOption, component: 'Cgst' | 'Sgst' | 'Igst'): number {
+  private rateOf(
+    group: TaxGroupOption,
+    component: 'Cgst' | 'Sgst' | 'Igst' | 'Utgst',
+  ): number {
     switch (component) {
       case 'Cgst':
         return group.cgstRate;
+
+      // UTGST draws SGST's rate: the same half of the same tax under a
+      // different name, and never beside it.
       case 'Sgst':
+      case 'Utgst':
         return group.sgstRate;
+
       default:
         return group.igstRate;
     }

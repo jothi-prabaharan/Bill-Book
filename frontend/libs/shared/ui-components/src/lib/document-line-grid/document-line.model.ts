@@ -74,7 +74,13 @@ export interface DocumentLineTax {
   amount: number;
 }
 
-export type TaxComponent = 'Cgst' | 'Sgst' | 'Igst' | 'Cess';
+/**
+ * `Utgst` takes `Sgst`'s place — never beside it — on a supply inside a Union
+ * Territory with no legislature. Same rate, same column on the return, which has
+ * a single "State/UT tax" field; what differs is the name printed on the
+ * invoice. Mirrors `Shared.Kernel.Documents.TaxComponent`.
+ */
+export type TaxComponent = 'Cgst' | 'Sgst' | 'Igst' | 'Cess' | 'Utgst';
 
 export type TaxTreatment =
   | 'Taxable'
@@ -112,6 +118,13 @@ export interface TaxGroupOption {
 export interface DocumentLineContext {
   /** Decides whether a line's tax rows carry CGST + SGST, or IGST. */
   isInterState: boolean;
+
+  /**
+   * Whether an intra-state supply is inside a Union Territory with no
+   * legislature, making the state half UTGST rather than SGST. Optional: almost
+   * every branch is in a state.
+   */
+  isUnionTerritory?: boolean;
   /** From `plt.Organizations`. Off means every line must name an item. */
   allowFreeTextLines: boolean;
   /** From `plt.Organizations`. Off computes tax on the gross. */
