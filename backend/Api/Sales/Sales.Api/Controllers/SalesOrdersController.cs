@@ -79,6 +79,26 @@ public sealed class SalesOrdersController : ControllerBase
             : Respond(result.Outcome, result.Detail);
     }
 
+    /// <summary>
+    /// What the items on a document can still be promised.
+    ///
+    /// <b>Advisory, and the form says so.</b> The figure a screen shows is a
+    /// moment old the instant it is drawn — another till may confirm the last
+    /// unit while somebody is still typing. The check that actually decides is
+    /// the guarded reservation taken on confirm, which no stale screen can slip
+    /// past. This exists so the refusal is rare, not so it is impossible.
+    /// </summary>
+    [HttpPost("availability")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> Availability(
+        [FromBody] SalesOrderAvailabilityRequest request, CancellationToken ct)
+    {
+        List<SalesOrderAvailabilityLine> lines =
+            await _SalesOrders.GetAvailabilityAsync(request.ItemIds, ct);
+
+        return Ok(lines);
+    }
+
     [HttpPut("{SalesOrderId:long}")]
     public async Task<IActionResult> Update(long SalesOrderId, [FromBody] SaveSalesOrderRequest request, CancellationToken ct)
     {
@@ -101,6 +121,23 @@ public sealed class SalesOrdersController : ControllerBase
     public async Task<IActionResult> Confirm(long SalesOrderId, CancellationToken ct)
     {
         SalesOrderResult result = await _SalesOrders.ConfirmAsync(SalesOrderId, ct);
+
+        return result.Outcome == SalesOrderOutcome.Ok
+            ? NoContent()
+            : Respond(result.Outcome, result.Detail);
+    }
+
+    /// <summary>
+    /// Close the order short: no more is coming, and what it still reserves goes
+    /// back on the shelf. Distinct from a void — the order existed and was
+    /// partly honoured.
+    /// </summary>
+    [HttpPost("{SalesOrderId:long}/short-close")]
+    [PermissionAction("approve")]
+    public async Task<IActionResult> ShortClose(
+        long SalesOrderId, [FromBody] ShortCloseSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrderResult result = await _SalesOrders.ShortCloseAsync(SalesOrderId, request, ct);
 
         return result.Outcome == SalesOrderOutcome.Ok
             ? NoContent()

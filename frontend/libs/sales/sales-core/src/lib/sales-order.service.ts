@@ -39,6 +39,30 @@ export interface VoidSalesOrderRequest {
   reason: string;
 }
 
+/**
+ * Closing an order short: no more is coming, and what it still holds is
+ * released.
+ *
+ * **Not a void.** A void says the order should not have existed; this says it
+ * existed, was partly honoured, and both sides agreed to stop. The reason is
+ * required — it is what tells a fulfilled order apart from a stopped one, which
+ * the delivered quantities alone cannot say.
+ */
+export interface ShortCloseSalesOrderRequest {
+  reason: string;
+}
+
+/** What one item has, holds, and can still promise. */
+export interface StockAvailability {
+  itemId: number;
+  itemLabel?: string;
+  quantityOnHand: number;
+  quantityReserved: number;
+  quantityAvailable: number;
+  /** False for something never stocked — a service line — rather than out of stock. */
+  isTracked: boolean;
+}
+
 /** Turning an accepted quote into an order. The lines come from the quote. */
 export interface CreateOrderFromQuoteRequest {
   documentDate?: string;
@@ -98,6 +122,8 @@ export interface SalesOrderView extends SalesOrderListItem {
   postedAt?: string;
   voidedAt?: string;
   voidReason?: string;
+  /** Set only when the order was stopped short rather than fulfilled. */
+  shortCloseReason?: string;
   lines: SalesOrderLineView[];
 }
 
@@ -188,5 +214,33 @@ export class SalesOrderService {
 
   async voidOrder(salesOrderId: number, request: VoidSalesOrderRequest): Promise<void> {
     return firstValueFrom(this.http.post<void>(`${this.apiUrl}/${salesOrderId}/void`, request));
+  }
+
+  /** Closes the order short and releases whatever it was still holding. */
+  async shortClose(
+    salesOrderId: number,
+    request: ShortCloseSalesOrderRequest,
+  ): Promise<void> {
+    return firstValueFrom(
+      this.http.post<void>(`${this.apiUrl}/${salesOrderId}/short-close`, request),
+    );
+  }
+
+  /**
+   * What the items on the document can still be promised.
+   *
+   * **Advisory.** The figure is a moment old the instant it is drawn — another
+   * till may confirm the last unit while somebody is still typing. What actually
+   * decides is the guarded reservation taken on confirm, which no stale screen
+   * can slip past.
+   */
+  async availability(itemIds: readonly number[]): Promise<StockAvailability[]> {
+    if (itemIds.length === 0) {
+      return [];
+    }
+
+    return firstValueFrom(
+      this.http.post<StockAvailability[]>(`${this.apiUrl}/availability`, { itemIds }),
+    );
   }
 }

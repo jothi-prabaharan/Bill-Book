@@ -362,7 +362,12 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 - [x] **T2.4 — Sales order: API and page, reserving stock.** Confirming calls Inventory's `ReserveAsync`; cancelling or converting releases.
     *Done when*: confirming an order for the last unit makes it unavailable to a second order while leaving on-hand quantity, stock value and the inventory account untouched.
-    **Done.** Built `SalesOrderService` calling `IInventoryClient.ReserveAsync`/`ReleaseAsync`, scaffolded `sales-order-form` and `sales-order-list`, and successfully integrated routing into the Angular web app.
+    **Done.** `SalesOrderService` calls `IInventoryClient.ReserveAsync`/`ReleaseAsync`; `sales-order-list` pages on the server and `sales-order-form` is built on the tested paise/rupee boundary, with the quote-to-order dialog beside it.
+
+    Two additions since, both filling real gaps rather than reworking:
+
+    - **`POST /{id}/short-close`.** An order taken partly and then stopped is neither fulfilled nor void — voiding one that shipped goods would withdraw the document those goods went out on. Short-closing releases what is still reserved (ordered less delivered, never negative), sets `FulfilmentStatus.Closed`, and records a required `ShortCloseReason`. That column is what disambiguates `Closed`, which otherwise covers both "everything went out" and "nothing further is coming" — the very ambiguity that made the status a column rather than arithmetic. Refused if Inventory cannot release, for the same reason a void is
+    - **Stock availability on the form.** `POST internal/stock/availability` in Inventory answers on hand, reserved and available for a batch of items; `POST /api/sales/sales-orders/availability` names them and the drawer shows the shortfall per line. **Advisory** — the guarded reservation on confirm is what decides, and an unreachable Inventory answers empty rather than failing the screen
 
 ### T3 — invoice
 

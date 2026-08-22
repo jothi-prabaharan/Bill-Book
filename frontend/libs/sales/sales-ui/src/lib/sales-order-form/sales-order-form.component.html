@@ -22,6 +22,21 @@
         </button>
       }
 
+      @if (isEdit()) {
+        <button type="button" class="btn btn-secondary" (click)="openStock()">Stock</button>
+      }
+
+      @if (canShortClose()) {
+        <button
+          type="button"
+          class="btn btn-secondary"
+          [disabled]="saving()"
+          (click)="shortClose()"
+        >
+          Close short
+        </button>
+      }
+
       @if (canConfirm()) {
         <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="confirm()">
           Confirm &amp; reserve
@@ -62,6 +77,27 @@
         <span class="field-error" role="alert">
           Say why this order is being voided. Its number stays on record, and the reason is what
           makes the gap in the sequence answerable.
+        </span>
+      }
+    </form>
+  }
+
+  @if (canShortClose()) {
+    <form class="field sor-form__void" [formGroup]="shortCloseForm">
+      <label for="sor-shortclose-reason">Reason, if closing short</label>
+      <input
+        id="sor-shortclose-reason"
+        class="input"
+        type="text"
+        maxlength="300"
+        placeholder="Customer took four of ten and cancelled the rest"
+        formControlName="reason"
+      />
+
+      @if (shortCloseForm.controls.reason.invalid && shortCloseForm.controls.reason.touched) {
+        <span class="field-error" role="alert">
+          Say why this order is being closed short. It is what tells an order that was fulfilled
+          apart from one that was stopped.
         </span>
       }
     </form>
@@ -257,6 +293,15 @@
     </div>
   </div>
 </section>
+
+@if (showStock()) {
+  <bb-stock-availability-drawer
+    [rows]="stock()"
+    [wanted]="wantedByItem()"
+    [loading]="stockLoading()"
+    (dismiss)="showStock.set(false)"
+  />
+}
 
 @if (showConvert()) {
   <bb-quote-to-order-dialog

@@ -515,6 +515,11 @@ public sealed class InvoicePostingTests
         public Task<ReleaseStockResponse> ReleaseAsync(ReleaseStockRequest request, CancellationToken ct) =>
             Task.FromResult(new ReleaseStockResponse { Success = true });
 
+        /// <summary>Empty, as the real client answers when Inventory is unreachable.</summary>
+        public Task<StockAvailabilityResponse> GetAvailabilityAsync(
+            StockAvailabilityRequest request, CancellationToken ct) =>
+            Task.FromResult(new StockAvailabilityResponse());
+
         public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct) =>
             Task.FromResult(new ReceiveStockResponse { Success = true });
     }

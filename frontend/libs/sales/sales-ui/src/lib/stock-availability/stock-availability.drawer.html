@@ -1,0 +1,86 @@
+<div class="sad__scrim" aria-hidden="true"></div>
+
+<aside
+  class="sad"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="sad-title"
+  tabindex="-1"
+  (keydown.escape)="dismiss.emit()"
+>
+  <header class="sad__head">
+    <h2 class="sad__title" id="sad-title">Stock availability</h2>
+
+    <button type="button" class="sad__close" aria-label="Close" (click)="dismiss.emit()">
+      &times;
+    </button>
+  </header>
+
+  <div class="sad__body">
+    @if (loading()) {
+      <p class="sad__note">Reading stock…</p>
+    } @else if (tracked().length === 0) {
+      <p class="sad__note">
+        Nothing on this document is stocked. Service and free-text lines have no stock to check.
+      </p>
+    } @else {
+      @if (shortCount() > 0) {
+        <p class="sad__warn">
+          {{ shortCount() }} of {{ tracked().length }} stocked
+          {{ tracked().length === 1 ? 'line is' : 'lines are' }} short of what is available.
+          Confirming will be refused until the quantity comes down or more stock arrives.
+        </p>
+      }
+
+      <table class="sad__table">
+        <thead>
+          <tr>
+            <th scope="col">Item</th>
+            <th scope="col" class="sad__num">Ordered</th>
+            <th scope="col" class="sad__num">On hand</th>
+            <th scope="col" class="sad__num">Reserved</th>
+            <th scope="col" class="sad__num">Available</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of tracked(); track row.itemId) {
+            <tr [class.sad__row--short]="shortfall(row) > 0">
+              <td>{{ row.itemLabel || 'Item ' + row.itemId }}</td>
+              <td class="sad__num">{{ wantedOf(row) | number: '1.0-3' }}</td>
+              <td class="sad__num">{{ row.quantityOnHand | number: '1.0-3' }}</td>
+              <td class="sad__num">{{ row.quantityReserved | number: '1.0-3' }}</td>
+              <td class="sad__num">
+                {{ row.quantityAvailable | number: '1.0-3' }}
+
+                @if (shortfall(row) > 0) {
+                  <span class="badge expired">{{ shortfall(row) | number: '1.0-3' }} short</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+
+      @if (untrackedCount() > 0) {
+        <p class="sad__note">
+          {{ untrackedCount() }} further
+          {{ untrackedCount() === 1 ? 'line is' : 'lines are' }} not stocked, and need no stock to
+          be confirmed.
+        </p>
+      }
+
+      <!-- Said plainly, because the number above is a moment old the instant it
+           is drawn and somebody will otherwise treat it as a promise. -->
+      <p class="sad__note">
+        <strong>Reserved is not taken off on hand.</strong> The goods are still on the shelf and
+        still in the valuation — they are promised to a confirmed order. Available is what a new
+        order may take.
+      </p>
+
+      <p class="sad__note">
+        This is a snapshot. Another till can confirm the last unit while this is open; the check
+        that decides is the one taken when you confirm.
+      </p>
+    }
+  </div>
+</aside>

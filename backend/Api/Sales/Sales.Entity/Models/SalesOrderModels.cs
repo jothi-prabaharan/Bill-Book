@@ -307,6 +307,9 @@ public class SalesOrderView : SalesOrderListItem
 
     public string? VoidReason { get; set; }
 
+    /// <summary>Set only when the order was stopped short rather than fulfilled.</summary>
+    public string? ShortCloseReason { get; set; }
+
     public List<SalesOrderLineView> Lines { get; set; } = [];
 }
 
@@ -389,6 +392,51 @@ public class SalesOrderLineTaxView
     public decimal Amount { get; set; }
 
     public decimal AmountBase { get; set; }
+}
+
+/// <summary>Which items the form wants availability for.</summary>
+public class SalesOrderAvailabilityRequest
+{
+    public List<long> ItemIds { get; set; } = [];
+}
+
+/// <summary>
+/// What one item has, holds, and can still promise.
+///
+/// <b>Reserved is not subtracted from on hand.</b> The goods are physically
+/// there and still worth what they cost; only their availability has changed.
+/// A screen that showed on-hand where available belongs promises stock twice,
+/// and one that showed available where on-hand belongs says the shelf is empty
+/// when it is full.
+/// </summary>
+public class SalesOrderAvailabilityLine
+{
+    public long ItemId { get; set; }
+
+    public string? ItemLabel { get; set; }
+
+    public decimal QuantityOnHand { get; set; }
+
+    public decimal QuantityReserved { get; set; }
+
+    public decimal QuantityAvailable { get; set; }
+
+    /// <summary>False for something never stocked — a service line, say — rather than out of stock.</summary>
+    public bool IsTracked { get; set; }
+}
+
+/// <summary>
+/// Why an order is being closed with less delivered than ordered.
+///
+/// The reason is required for the same purpose a void's is, and one more: it is
+/// what tells a <c>Closed</c> order that was fulfilled apart from one that was
+/// stopped, which the delivered quantities alone cannot say.
+/// </summary>
+public class ShortCloseSalesOrderRequest
+{
+    [Required(ErrorMessage = "Say why this order is being closed short.")]
+    [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
+    public string Reason { get; set; } = null!;
 }
 
 /// <summary>Why a SalesOrder is being withdrawn. The reason is required, always.</summary>

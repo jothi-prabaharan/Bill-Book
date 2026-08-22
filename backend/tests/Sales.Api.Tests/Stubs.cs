@@ -186,4 +186,27 @@ public sealed class RecordingInventory : IInventoryClient
 
     public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct) =>
         Task.FromResult(new ReceiveStockResponse { Success = true });
+
+    /// <summary>
+    /// What the stub says is available. Empty by default, which is how the real
+    /// client answers when Inventory cannot be reached — an advisory read that
+    /// fails must not fail the screen.
+    /// </summary>
+    public Dictionary<long, decimal> Available { get; } = [];
+
+    public Task<StockAvailabilityResponse> GetAvailabilityAsync(
+        StockAvailabilityRequest request, CancellationToken ct) =>
+        Task.FromResult(new StockAvailabilityResponse
+        {
+            Lines = [.. request.ItemIds
+                .Where(Available.ContainsKey)
+                .Select(id => new StockAvailabilityLine
+                {
+                    ItemId = id,
+                    QuantityOnHand = Available[id],
+                    QuantityReserved = 0m,
+                    QuantityAvailable = Available[id],
+                    IsTracked = true,
+                })],
+        });
 }

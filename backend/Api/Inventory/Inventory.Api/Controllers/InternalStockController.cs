@@ -121,6 +121,44 @@ public sealed class InternalStockController : ControllerBase
         return Ok(response);
     }
 
+    /// <summary>
+    /// What a batch of items has available. A read, but a POST because the ids
+    /// and the tenant travel in the body like every other route here.
+    /// </summary>
+    [HttpPost("availability")]
+    public async Task<IActionResult> Availability(
+        [FromBody] StockAvailabilityRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var stock = _services.GetRequiredService<StockService>();
+        var rows = await stock.GetAvailabilityAsync(request.ItemIds, ct);
+
+        return Ok(new StockAvailabilityResponse
+        {
+            Lines = [.. rows.Select(r => new StockAvailabilityLine
+            {
+                ItemId = r.ItemId,
+                QuantityOnHand = r.OnHand,
+                QuantityReserved = r.Reserved,
+
+                // Never negative on screen: an over-release would otherwise read
+                // as "minus three available", which tells nobody anything.
+                QuantityAvailable = Math.Max(0m, r.OnHand - r.Reserved),
+                IsTracked = r.IsTracked,
+            })],
+        });
+    }
+
     [HttpPost("reserve")]
     public async Task<IActionResult> Reserve(
         [FromBody] ReserveStockRequest request, CancellationToken ct)

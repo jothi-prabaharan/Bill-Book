@@ -537,6 +537,147 @@ public sealed class SalesOrderService
     }
 
     /// <summary>
+    /// What the items on a document can still be promised, with their names.
+    ///
+    /// <b>Advisory.</b> The authoritative check is the guarded reservation taken
+    /// on confirm — this exists so a refusal is rare rather than impossible, and
+    /// the screen labels it as a snapshot rather than a promise.
+    /// </summary>
+    public async Task<List<SalesOrderAvailabilityLine>> GetAvailabilityAsync(
+        IReadOnlyCollection<long> itemIds, CancellationToken ct)
+    {
+        if (itemIds.Count == 0
+            || _tenant.OrgId is not Guid orgId
+            || _tenant.CustomerId is not Guid customerId)
+        {
+            return [];
+        }
+
+        List<long> ids = [.. itemIds.Distinct()];
+
+        StockAvailabilityResponse stock = await _inventoryClient.GetAvailabilityAsync(
+            new StockAvailabilityRequest { OrgId = orgId, CustomerId = customerId, ItemIds = ids },
+            ct);
+
+        // Named here rather than in Inventory: the name lookup is already
+        // batched on this side, and Inventory answering with labels would be it
+        // guessing what a sales screen wants to display.
+        IReadOnlyDictionary<long, NamedRef> names = await _itemNames.ResolveAsync(ids, ct);
+
+        return [.. stock.Lines.Select(line => new SalesOrderAvailabilityLine
+        {
+            ItemId = line.ItemId,
+            ItemLabel = names.TryGetValue(line.ItemId, out NamedRef? named)
+                ? $"{named.Code} - {named.Name}"
+                : null,
+            QuantityOnHand = line.QuantityOnHand,
+            QuantityReserved = line.QuantityReserved,
+            QuantityAvailable = line.QuantityAvailable,
+            IsTracked = line.IsTracked,
+        })];
+    }
+
+    /// <summary>
+    /// Closing an order short: no more is coming, and whatever is still reserved
+    /// goes back on the shelf.
+    ///
+    /// <b>Not a void.</b> A void says the order should not have existed; a
+    /// short-close says it existed, was partly honoured, and both sides have
+    /// agreed to stop. Four of ten delivered and closed is a completed piece of
+    /// trading history — voiding it would withdraw a document that shipped
+    /// goods, and leave the four with nothing behind them.
+    ///
+    /// It is also what makes <see cref="FulfilmentStatus.Closed"/> readable: the
+    /// status covers both "everything went out" and "nothing further is coming",
+    /// so the reason recorded here is what tells the two apart afterwards.
+    /// </summary>
+    public async Task<SalesOrderResult> ShortCloseAsync(
+        long SalesOrderId, ShortCloseSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? SalesOrder = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == SalesOrderId, ct);
+
+        if (SalesOrder is null)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.NotFound);
+        }
+
+        if (!BelongsToCaller(SalesOrder))
+        {
+            return new SalesOrderResult(SalesOrderOutcome.Forbidden);
+        }
+
+        // Only a confirmed order can be closed short. A draft has committed
+        // nothing and is abandoned by voiding it; a voided one is already
+        // finished.
+        if (SalesOrder.Status != DocumentStatus.Posted)
+        {
+            return new SalesOrderResult(
+                SalesOrderOutcome.LifecycleRefused,
+                Detail: "Only a confirmed order can be closed short. A draft that is not going "
+                    + "ahead is voided instead, with a reason.");
+        }
+
+        if (SalesOrder.FulfilmentStatus is FulfilmentStatus.Closed or FulfilmentStatus.Cancelled)
+        {
+            return new SalesOrderResult(
+                SalesOrderOutcome.AlreadyFulfilled,
+                Detail: "This order is already closed. Nothing further was expected against it.");
+        }
+
+        // What is still being held: ordered less delivered, never negative. A
+        // line delivered in full holds nothing back and contributes nothing to
+        // the release.
+        var toRelease = SalesOrder.Lines
+            .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
+            .Select(l => new ReleaseStockLine
+            {
+                ItemId = l.ItemId!.Value,
+                Quantity = Math.Max(0m, l.ReservedQuantity - l.DeliveredQuantity),
+            })
+            .Where(l => l.Quantity > 0m)
+            .ToList();
+
+        if (toRelease.Count > 0)
+        {
+            ReleaseStockResponse released = await _inventoryClient.ReleaseAsync(
+                new ReleaseStockRequest
+                {
+                    OrgId = _tenant.OrgId.GetValueOrDefault(),
+                    CustomerId = _tenant.CustomerId.GetValueOrDefault(),
+                    Lines = toRelease,
+                },
+                ct);
+
+            if (!released.Success)
+            {
+                // Refused rather than recorded, for the same reason a void is:
+                // an order marked closed while still holding stock is stock
+                // nobody can sell and no document explains.
+                return new SalesOrderResult(
+                    SalesOrderOutcome.InsufficientStock,
+                    Detail: "The stock this order is still holding could not be released, so it "
+                        + "has not been closed. Try again in a moment.");
+            }
+        }
+
+        // The lines stop holding anything. Delivered quantities are untouched —
+        // they are what actually shipped, and closing the order does not unship
+        // them.
+        foreach (SalesOrderDetail line in SalesOrder.Lines)
+        {
+            line.ReservedQuantity = line.DeliveredQuantity;
+        }
+
+        SalesOrder.FulfilmentStatus = FulfilmentStatus.Closed;
+        SalesOrder.ShortCloseReason = request.Reason.Trim();
+
+        await _db.SaveChangesAsync(ct);
+        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    /// <summary>
     /// An accepted quote, turned into an order.
     ///
     /// <b>The lines are read from the quote, never sent by the caller</b>, and
@@ -664,6 +805,7 @@ public sealed class SalesOrderService
                 PostedAt = q.PostedAt,
                 VoidedAt = q.VoidedAt,
                 VoidReason = q.VoidReason,
+                ShortCloseReason = q.ShortCloseReason,
                 Lines = q.Lines.Select(l => new SalesOrderLineView
                 {
                     SalesOrderDetailId = l.SalesOrderDetailId,

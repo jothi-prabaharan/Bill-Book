@@ -298,3 +298,53 @@ public sealed record ReturnStockLineResult
     public decimal UnitCost { get; init; }
     public decimal LineValue { get; init; }
 }
+
+/// <summary>
+/// Asks what is available across a batch of items.
+///
+/// <b>A batch, because the caller is a document.</b> A sales order form shows a
+/// line per item and wants an availability figure on each; asking per line is a
+/// round trip per row, on a screen where somebody is typing.
+/// </summary>
+public sealed record StockAvailabilityRequest
+{
+    [Required]
+    public Guid OrgId { get; init; }
+
+    [Required]
+    public Guid CustomerId { get; init; }
+
+    [Required]
+    public List<long> ItemIds { get; init; } = [];
+}
+
+public sealed record StockAvailabilityResponse
+{
+    public List<StockAvailabilityLine> Lines { get; set; } = [];
+}
+
+/// <summary>
+/// What one item has, holds, and can still promise.
+///
+/// <b>Reserved is never subtracted from on-hand.</b> The goods are physically
+/// there and still worth what they cost — only their availability has changed —
+/// so a valuation reads <c>QuantityOnHand</c> and a "can I sell this" reads
+/// <c>QuantityAvailable</c>. Showing one where the other belongs is how a screen
+/// tells somebody there is nothing on the shelf when the shelf is full.
+/// </summary>
+public sealed record StockAvailabilityLine
+{
+    public long ItemId { get; init; }
+
+    /// <summary>Physically present, whoever it is promised to.</summary>
+    public decimal QuantityOnHand { get; init; }
+
+    /// <summary>Promised to a confirmed order and not yet issued.</summary>
+    public decimal QuantityReserved { get; init; }
+
+    /// <summary>On hand less reserved. What a new order may still take.</summary>
+    public decimal QuantityAvailable { get; init; }
+
+    /// <summary>False when the item has no stock row at all — never counted, rather than zero.</summary>
+    public bool IsTracked { get; init; }
+}

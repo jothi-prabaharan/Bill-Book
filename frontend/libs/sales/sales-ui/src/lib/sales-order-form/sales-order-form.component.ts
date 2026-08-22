@@ -8,6 +8,7 @@ import {
   SalesOrderService,
   SalesOrderView,
   SaveSalesOrderRequest,
+  StockAvailability,
   toApiLine,
   toGridLine,
 } from '@bill-book/sales-core';
@@ -20,6 +21,7 @@ import {
   UiMessage,
 } from '@bill-book/ui-components';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
+import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
 
 /**
  * The sales order form.
@@ -54,6 +56,7 @@ import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.di
     DocumentLineGridComponent,
     MessageBoxComponent,
     QuoteToOrderDialogComponent,
+    StockAvailabilityDrawerComponent,
   ],
   templateUrl: './sales-order-form.component.html',
   styleUrl: './sales-order-form.component.scss',
@@ -69,6 +72,9 @@ export class SalesOrderFormComponent implements OnInit {
   protected readonly saving = signal(false);
   protected readonly messages = signal<UiMessage[]>([]);
   protected readonly showConvert = signal(false);
+  protected readonly showStock = signal(false);
+  protected readonly stockLoading = signal(false);
+  protected readonly stock = signal<StockAvailability[]>([]);
 
   /** Draft / ReadyToPost / Posted / Void, as the server last said. */
   protected readonly status = signal('Draft');
@@ -101,6 +107,17 @@ export class SalesOrderFormComponent implements OnInit {
     reason: ['', [Validators.required, Validators.maxLength(300)]],
   });
 
+  /**
+   * Why the order is being stopped short.
+   *
+   * Its own group, like the void reason, and for the same reason: the header
+   * form is disabled once the order is confirmed, and short-closing a
+   * *confirmed* order is the only case there is.
+   */
+  protected readonly shortCloseForm = this.fb.nonNullable.group({
+    reason: ['', [Validators.required, Validators.maxLength(300)]],
+  });
+
   protected readonly lines = signal<DocumentLine[]>([blankGridLine(1)]);
 
   /**
@@ -130,6 +147,40 @@ export class SalesOrderFormComponent implements OnInit {
   );
 
   protected readonly canVoid = computed(() => this.isEdit() && this.status() !== 'Void');
+
+  /**
+   * Short-closing only makes sense on a live order. A draft that is not going
+   * ahead is voided; one already closed or cancelled has nothing left to stop.
+   */
+  protected readonly canShortClose = computed(
+    () =>
+      this.status() === 'Posted' &&
+      this.fulfilment() !== 'Closed' &&
+      this.fulfilment() !== 'Cancelled',
+  );
+
+  /** What the document is asking for per item, for the drawer's shortfall column. */
+  protected readonly wantedByItem = computed(() => {
+    const wanted = new Map<number, number>();
+
+    for (const line of this.lines()) {
+      if (line.itemId === null) {
+        continue;
+      }
+
+      // The grid holds quantity at six decimals; the drawer talks in units.
+      wanted.set(line.itemId, (wanted.get(line.itemId) ?? 0) + line.quantity / 1_000_000);
+    }
+
+    return wanted;
+  });
+
+  /** Items short of what is available, if the drawer has been opened. */
+  protected readonly shortItems = computed(() =>
+    this.stock().filter(
+      (row) => row.isTracked && (this.wantedByItem().get(row.itemId) ?? 0) > row.quantityAvailable,
+    ),
+  );
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -311,6 +362,79 @@ export class SalesOrderFormComponent implements OnInit {
       await this.orders.voidOrder(id, { reason: this.voidForm.controls.reason.value.trim() });
       this.voidForm.reset();
       await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /**
+   * Open the stock drawer, reading availability for the lines on screen.
+   *
+   * Read on open rather than kept live: a figure that refreshed while somebody
+   * typed would flicker between two equally stale answers, and the one that
+   * decides is taken on confirm regardless.
+   */
+  protected async openStock(): Promise<void> {
+    const itemIds = [...new Set(
+      this.lines()
+        .map((line) => line.itemId)
+        .filter((id): id is number => id !== null),
+    )];
+
+    this.showStock.set(true);
+    this.stockLoading.set(true);
+
+    try {
+      this.stock.set(await this.orders.availability(itemIds));
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+      this.stock.set([]);
+    } finally {
+      this.stockLoading.set(false);
+    }
+  }
+
+  /**
+   * Close the order short: nothing further is coming, and what it still holds
+   * goes back on the shelf.
+   *
+   * **Distinct from a void**, which says the order should not have existed. Four
+   * of ten delivered and closed is completed trading history; voiding it would
+   * withdraw a document that shipped goods.
+   */
+  protected async shortClose(): Promise<void> {
+    const id = this.salesOrderId();
+    if (id === null) {
+      return;
+    }
+
+    this.shortCloseForm.markAllAsTouched();
+
+    if (this.shortCloseForm.invalid) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      await this.orders.shortClose(id, {
+        reason: this.shortCloseForm.controls.reason.value.trim(),
+      });
+
+      this.shortCloseForm.reset();
+      await this.load();
+
+      this.messages.set([
+        {
+          tone: 'success',
+          text: 'Order closed. Anything it was still holding has been released.',
+        },
+      ]);
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);

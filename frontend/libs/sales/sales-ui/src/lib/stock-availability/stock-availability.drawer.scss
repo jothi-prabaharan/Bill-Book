@@ -1,0 +1,134 @@
+/* Tokens only. Nothing here names a colour and nothing is inline. */
+
+.sad__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  background: color-mix(in srgb, var(--color-ink) 40%, transparent);
+}
+
+/* A drawer rather than a modal: it is read *beside* the line being keyed, so it
+   takes the right edge and leaves the form visible. */
+.sad {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: calc(var(--z-modal) + 1);
+  width: min(560px, 100vw);
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  border-left: 1px solid var(--color-divider);
+  box-shadow: var(--shadow-lg);
+  color: var(--color-text);
+}
+
+.sad__head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.sad__title {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 19px;
+  line-height: 1.15;
+}
+
+.sad__close {
+  flex: none;
+  padding: 0 var(--space-1);
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  font: inherit;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.sad__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.sad__warn {
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-warning);
+  border-left-width: 3px;
+  border-radius: var(--radius-md);
+  background: var(--color-warning-bg);
+  font-size: 13px;
+  text-wrap: pretty;
+}
+
+.sad__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: var(--space-2);
+    text-align: left;
+    border-bottom: 1px solid var(--color-divider);
+  }
+
+  thead th {
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    white-space: nowrap;
+  }
+}
+
+.sad__row--short {
+  background: color-mix(in srgb, var(--color-danger) 7%, transparent);
+}
+
+.sad__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.sad__note {
+  margin: var(--space-3) 0 0;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 68%, transparent);
+  text-wrap: pretty;
+}
+
+/* ~360px. The drawer takes the whole screen and the table scrolls inside its
+   own box rather than widening the page. */
+@media (max-width: 480px) {
+  .sad {
+    width: 100vw;
+    border-left: 0;
+  }
+
+  .sad__body {
+    padding: var(--space-3);
+  }
+
+  .sad__table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
