@@ -118,18 +118,11 @@ export interface TaxGroupOption {
 export interface DocumentLineContext {
   /** Decides whether a line's tax rows carry CGST + SGST, or IGST. */
   isInterState: boolean;
-
-  /**
-   * Whether an intra-state supply is inside a Union Territory with no
-   * legislature, making the state half UTGST rather than SGST. Optional: almost
-   * every branch is in a state.
-   */
-  isUnionTerritory?: boolean;
-  /** From `plt.Organizations`. Off means every line must name an item. */
+  /** From `mst.Organizations`. Off means every line must name an item. */
   allowFreeTextLines: boolean;
-  /** From `plt.Organizations`. Off computes tax on the gross. */
+  /** From `mst.Organizations`. Off computes tax on the gross. */
   discountBeforeTax: boolean;
-  /** From `plt.Organizations`: Line, Header or Both. */
+  /** From `mst.Organizations`: Line, Header or Both. */
   discountLevel: 'Line' | 'Header' | 'Both';
   /** Posted documents are never edited. */
   readonly: boolean;
