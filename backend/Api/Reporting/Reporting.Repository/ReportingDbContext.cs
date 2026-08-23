@@ -31,6 +31,10 @@ public class ReportingDbContext : TenantDbContext
 
     public DbSet<ReportView> ReportViews => Set<ReportView>();
 
+    public DbSet<ReportMaster> ReportMasters => Set<ReportMaster>();
+
+    public DbSet<ReportColumn> ReportColumns => Set<ReportColumn>();
+
     // ---- Read-only, from other services' schemas. Never written to. ----
     //
     // The recorded exception of Reporting.md §2. A report engine has to join across
@@ -134,6 +138,9 @@ public class ReportingDbContext : TenantDbContext
         });
 
         ConfigureReadModels(modelBuilder);
+
+        modelBuilder.ApplyConfiguration(new Reporting.Repository.Configurations.ReportMasterConfiguration());
+        modelBuilder.ApplyConfiguration(new Reporting.Repository.Configurations.ReportColumnConfiguration());
 
         base.OnModelCreating(modelBuilder);
     }

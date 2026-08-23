@@ -1,0 +1,4053 @@
+{
+  "Reports": [
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Account"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Credit(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Credit(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Currency"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Debit(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Debit(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Due(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Due(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "ExchangeRate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Foreign exchange (FX)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Gross(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Gross(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Net(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Net(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Related Account"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Revalued Cur"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Running Balance"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Tax Rate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Tax Rate Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Tax(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Tax(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Account Transaction",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Account Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Account Type"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Bank Revaluation"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Closing Balance"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Currency Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Opening Balance"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Received"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Bank Summary",
+      "ColumnName": "Spent"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "AccountName"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "CurrencyCode"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Due(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Due(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Net Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Net Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Net Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Realized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Realized Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Realized Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Revalue FxRate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Revalued Due(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Unrealized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Unrealized Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss",
+      "ColumnName": "Unrealized Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "AccountName"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "CurrencyCode"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Due(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Due(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Net Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Net Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Net Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Realized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Realized Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Realized Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Revalue Fx Rate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Revalued Due(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Transaction Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Transaction Fx Rate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Unrealized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Unrealized Gain/Loss Exposure"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Foreign Currency Gain or Loss Details",
+      "ColumnName": "Unrealized Gain/Loss YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Account"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Credit"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Debit"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Net Movement"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "Opening Balance"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "General ledger\r\n",
+      "ColumnName": "YTD"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Account Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Approved/Posted By"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Approved/Posted Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Created By"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Created Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Credit(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Credit(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Currency"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Debit(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Debit(Source)"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Exchange Rate"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Last Modified By"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Last Modified Date"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Narration"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Reconciled Status"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Trans No"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Journal Report\r\n",
+      "ColumnName": "Transactions"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Account Name"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Account Type"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "CAAccountID"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Credit"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Current Balance"
+    },
+    {
+      "ReportGroup": "Accounting",
+      "ReportName": "Trial Balance",
+      "ColumnName": "Debit"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Balance Sheet"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Cash Flow Statement - Direct"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Profit & Loss"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Amount In "
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Amount In "
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "CurrencyCode"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "GroupBy"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Revalued Amount In "
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Transaction Date"
+    },
+    {
+      "ReportGroup": "Finance",
+      "ReportName": "Reconciliation Report",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Financial performance",
+      "ReportName": "Business Performance"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Accum Dep Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Asset Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Asset Name"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Asset Number"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Asset Type"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Averaging Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Brand"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Capital Gain"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Closing Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Closing NBV"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Cost Limit"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Dep Expense Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Dep Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Dep Start Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Depreciation"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Disposal Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Effective Life"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Gain on Disposal"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Loss On Disposal"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "NBV as at Disposal date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Opening Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Opening NBV"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Outlet"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Purchase Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Purchase Price"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Rate %"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Residual Value"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Sale Proceeds"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Serial Number"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Depreciation Schedule",
+      "ColumnName": "Warranty Expiry"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetID"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetName"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetNumber"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetType"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetTypeID"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "AssetValue"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Avg Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Capital Gain"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "CostLimit"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Dep Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Dep Start Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Disposed"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Effective Life"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Loss"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Purchased"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Rate"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "ResidualValue"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Disposal Schedule Report",
+      "ColumnName": "Sale Price"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Accum Dep Credits"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Accum Dep Debits"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Closing Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Closing Book Value"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Closing Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Cost Credits"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Cost Debits"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Opening Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Opening Book Value"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Opening Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Asset Reconciliation",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Accum Dep Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Addition (Purchase) Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Asset Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Asset Name"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Asset Number"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Asset Type"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Averaging Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Closing Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Closing Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Closing NBV"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Cost Limit"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Dep Expense Account"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Dep Method"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Dep Start Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Depreciation"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Disposal Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Disposal Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Disposal Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Effective Life"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Gain on Disposal"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Loss on Disposal"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "NBV as at Disposal Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Opening Accum Dep"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Opening Cost"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Opening NBV"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Purchase Date"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Purchase Price"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Rate %"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Residual Value"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Sales Proceeds"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Serial Number"
+    },
+    {
+      "ReportGroup": "Fixed Asset",
+      "ReportName": "Fixed Assets Schedule",
+      "ColumnName": "Warranty Expiry"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Batch No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Manufactured Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Quantity IN"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Quantity OUT"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Transaction Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Transaction Type"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Detail Report",
+      "ColumnName": "Warehouse"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Available Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Batch No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Batch Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "CostingMethod"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Manufactured Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Batch Tracking Status Report",
+      "ColumnName": "Warehouse"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Aged Inventory"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Inventory Asset Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Item Code/SKU"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Aging Report",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Adjustment Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "CostingMethod"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Inventory Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Item Group"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Margin"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Profit Per Item"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Purchase Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "QoH Movement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Sales Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Unit Cost Price"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Unit Sale Price"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Detail",
+      "ColumnName": "Value Movement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Average Cost"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Balance Qty"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Committed Quotes"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Committed to DO"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Costing Method"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Inventory Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Inventory Type"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Item Group"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Purchase Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Purchase Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Purchase Description"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Purchase Tax Rate"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Purchase Tax Rate"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Quantity On Hand"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Quantity on Order"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Quantity Received"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Sales Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Sales Description"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Sales Tax Rate"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Total Value"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Unit Cost Price"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Unit Cost Price (FIFO)"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item List",
+      "ColumnName": "Unit Sale Price"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Adjustments"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Closing Balance"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Closing Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "COGS"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "CostingMethod"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Inventory Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Inventory Type"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Item Group"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Opening Balance"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Opening Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Profit"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Purchase Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Purchases"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Quantity Adjusted"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Quantity Purchased"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Quantity Sold"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Sales"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Sales Account"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportName": "Inventory Item Summary",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Manufactured Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Quantity IN"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Quantity OUT"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Serial No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Transaction Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Transaction Type"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Unit of Measurement"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Detail Report",
+      "ColumnName": "Warehouse"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Available Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "CostingMethod"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Manufactured Date"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Serial No"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Serial Tracking Status Report",
+      "ColumnName": "Warehouse"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Address"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Available Quantity"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "City"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Country"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Primary"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Quantity IN"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Quantity OUT"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "State"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Inventory Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Warehouse Tracking Status Report",
+      "ColumnName": "Warehouse Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Aged Payable"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Email"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Mobile"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Outstanding Tax"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Phone"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Primary Person"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Total"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Details",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Aged Payable"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Document Type"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Email"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Mobile"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Outstanding Tax"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Primary Person"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Aged Payables Summary",
+      "ColumnName": "Total"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Amount Paid (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Amount Paid (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Balance Due (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "BalanceDue (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Bill/DN Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Bill/DN DueDate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Bill/DN No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Currency"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Due Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Paid From"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Currency"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Currency Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Mode"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Payment Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Realized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Receipt No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Revalued Currency Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "SubTotal (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "SubTotal (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Tax (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Tax (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Total (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "Total (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Bill/DN Payment Report",
+      "ColumnName": "UnRealized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Bill Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Bill No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Permit NO"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Received Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Bills Track Report",
+      "ColumnName": "Total Amount"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Account"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Approved By"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Balance(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Balance(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Created Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Discount %"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Discount (Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Discount(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Gross(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Gross(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Invoice Total(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Invoice Total(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Last Payment Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Net(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Net(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Tax Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Tax Rate Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Tax(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Tax(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Unit Price(ex)(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Unit Price(ex)(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Unit Price(inc)(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Detail",
+      "ColumnName": "Unit Price(inc)(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Approved By"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Balance(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Balance(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Created Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Gross(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Gross(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Net(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Net(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Payments Debits"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Permit No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Realised Gains"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Tax(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Tax(Source)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Payable Invoice Summary",
+      "ColumnName": "Unrealised Gains"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Product Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Product Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Total Purchase (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Analysis",
+      "ColumnName": "Total Qty"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Delivery Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "PO Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "PO NO"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Received Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Purchase Order Track Report",
+      "ColumnName": "Total Amount"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "ContactID"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Delivery Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "ItemID"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Pending Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Receive Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Receive No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Received Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Transaction Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Transaction Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Transaction Type"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "Transaction Type"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportName": "Purchase Receive Order Details",
+      "ColumnName": "TransID"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Billed Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Receive Date"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Receive Order NO"
+    },
+    {
+      "ReportGroup": "Purchase Report",
+      "ReportSubGroup": "Track",
+      "ReportName": "Receive Order Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Aged Payable"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "DueDate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Email"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Expected Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Invoice Number"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Invoice Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Invoice Sent"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Mobile"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Outstanding Tax"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Phone"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Primary Person"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Detail",
+      "ColumnName": "Total"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Aged Payable"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Mobile"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Outstanding Tax"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Phone"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Primary Person"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Aged Receivables Summary",
+      "ColumnName": "Total"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Delivery Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Delivery Order NO"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Invoiced Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Delivery Order Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Delivered Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Invoice NO"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Invoice Track Report",
+      "ColumnName": "Total Amount"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Amount Paid (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Amount Paid (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Balance Due (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "BalanceDue (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Due Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "INV/DN Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "INV/DN DueDate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "INV/DN NO"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Paid To"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Mode"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Payment Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Realized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Receipt No"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Revalued Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "SubTotal (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "SubTotal (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Tax (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Tax (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Total (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "Total (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Invoice/DN Payment Collection Report",
+      "ColumnName": "UnRealized Gain/Loss"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "ContactID"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Delivered Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Delivery Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Delivery Over Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "DeliveryNo"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Expiry Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Invoiced Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Invoiced Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "InvoiceNo"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "ItemID"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Over Invoiced Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Pending Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Quotation Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Quote Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Quote NO"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Quoted Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "QuoteNo"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Total Amount"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "Transferred Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Quotation Track Report",
+      "ColumnName": "TransID"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Account Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Account Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Approved By"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Balance(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Balance(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Created Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Discount %"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Discount (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Discount(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Gross(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Gross(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Number"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Seen"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Sent"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Total(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Invoice Total(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Last Payment Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Net(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Net(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Tax Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Tax Rate Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Tax(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Tax(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Theme"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Unit Price(ex)(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Unit Price(ex)(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Unit Price(inc)(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Detail",
+      "ColumnName": "Unit Price(inc)(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Approved By"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Balance(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Balance(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Contact Group"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Created Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Due Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Gross(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Gross(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Invoice Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Invoice Number"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Invoice Sent"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Net(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Net(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Original Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Payments Credits"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Realised Gains"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Tax(%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Tax(Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Theme"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Receivable Invoice Summary",
+      "ColumnName": "Unrealised Gains"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Organization"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Product Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Product Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Total Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis",
+      "ColumnName": "Total Sales (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Contact Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Currency"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Currency Rate"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Description"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Disc"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Disc %"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Inventory Asset Account"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Inventory Type"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Price Adjustment"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Product Category"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Profit (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Profit Margin"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Profit Per Unit (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Purchase Account"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Quantity Return"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Sales Account"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Source"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Subtotal (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Subtotal (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Total Cost (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Transaction No"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Unit Cost Price (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Unit Sales Price (%CurCode%)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "Unit Sales Price (Source)"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportName": "Sales Analysis Detail Report",
+      "ColumnName": "UOM"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Contact Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Del Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Item Code"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Item Name"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Outstanding Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Sales Order Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Sales Order NO"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Shipment Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Shipment Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "SO Date"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "SO No"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "SO Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "SO Reference"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "SO Track Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Status"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Total Amount"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Transferred Quantity"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "Undel Qty"
+    },
+    {
+      "ReportGroup": "Sales Reports",
+      "ReportSubGroup": "Track",
+      "ReportName": "Sales Order Track Report",
+      "ColumnName": "UOM"
+    }
+  ]
+}
