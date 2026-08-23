@@ -76,3 +76,25 @@ public enum AllocationOutcome
 }
 
 public sealed record AllocationResult(AllocationOutcome Outcome, string? Message = null);
+
+/// <summary>
+/// The user-facing payload to allocate one document against another.
+/// Tenant context is drawn from the caller's token rather than the body.
+/// </summary>
+public class CreateAllocationDto
+{
+    [Required(ErrorMessage = "Source transaction type code is required.")]
+    [MaxLength(3, ErrorMessage = "Source transaction type code must be a 3-letter code.")]
+    public string SourceTransactionTypeCode { get; set; } = null!;
+
+    public long SourceTransactionId { get; set; }
+
+    [Required(ErrorMessage = "Target transaction type code is required.")]
+    [MaxLength(3, ErrorMessage = "Target transaction type code must be a 3-letter code.")]
+    public string TargetTransactionTypeCode { get; set; } = null!;
+
+    public long TargetTransactionId { get; set; }
+
+    [Range(0.01, double.MaxValue, ErrorMessage = "An allocation must be a positive amount.")]
+    public decimal Amount { get; set; }
+}
