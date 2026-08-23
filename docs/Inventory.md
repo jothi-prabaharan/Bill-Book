@@ -7,8 +7,11 @@ Handles stock levels, reservations, adjustments, and the physical count of inven
 
 ## Task Checklist
 - [x] **0.1 — Schema design:** `inv.*` tables for stock layers and movements.
-- [ ] **1.1 — Stock Reservations:** API to reserve stock for sales orders.
-- [ ] **1.2 — Stock decrement:** Guarded release-then-issue in one transaction upon invoicing.
+- [x] **1.1 — Stock Reservations:** API to reserve stock for sales orders.
+  `POST internal/stock/reserve` and `internal/stock/release`, guarded by the shared key with the tenant in the body. Reserve is all-or-nothing: every line's availability is checked before any line is taken, and a line that loses the race afterwards gives back what the call already took — reserving four lines and failing on the fifth would leave stock held by an order that never confirmed. Sales calls it on confirm; `SalesOrderServiceTests` proves the reservation is taken, recorded per line, and handed back on void.
+- [~] **1.2 — Stock decrement:** Guarded release-then-issue in one transaction upon invoicing.
+  **The order is right and the transaction is missing.** `internal/stock/issue` releases the line's reservation and then issues it, which is the correct sequence — issuing first would count the order's own reservation against it. But the two calls are not wrapped in a transaction, so a release that succeeds followed by an issue that fails leaves the stock released and not issued: available to somebody else while the invoice that wanted it failed.
+  The fix is small and the machinery is already there — `StockService` joins an ambient transaction rather than opening its own, so a `BeginTransactionAsync` around the loop is enough. Tick this when the whole request is all-or-nothing, and `Posting_invoice_with_sales_order_releases_reservation` gains a sibling that fails the issue and asserts the reservation survives.
 - [x] **9.1 — Stock Adjustments:** Header and lines with reasons and approval routing.
 - [x] **9.2 — Physical Count:** Adjustments based on counted quantities.
 - [ ] **TBD — Expiry and Batch Tracking:** Manage batch dates and serials during stock movements.
