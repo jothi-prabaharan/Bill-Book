@@ -16,3 +16,4 @@ export * from './lib/money-document/money-sources';
 export * from './lib/money-document/money-document.page';
 export * from './lib/transfer-money/transfer-money.page';
 export * from './lib/statements/statements.page';
+export * from './lib/allocation-form/allocation-form.component';

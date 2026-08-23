@@ -4,6 +4,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import { AllocationFormComponent } from '../allocation-form/allocation-form.component';
 import {
   MoneySource,
   PAYMENT_METHODS,
@@ -110,7 +111,7 @@ interface LineForm {
 @Component({
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, AllocationFormComponent],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })
@@ -147,6 +148,7 @@ export class MoneyDocumentPage implements OnInit {
   protected readonly editing = signal(false);
   protected readonly viewing = signal<MoneyDocumentView | null>(null);
   protected readonly busy = signal(false);
+  protected readonly allocating = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
 
@@ -398,6 +400,20 @@ export class MoneyDocumentPage implements OnInit {
     this.editing.set(false);
     this.viewing.set(null);
     this.editingId = null;
+    this.allocating.set(false);
+  }
+
+  startAllocation(): void {
+    this.allocating.set(true);
+  }
+
+  onAllocationClosed(success: boolean): void {
+    this.allocating.set(false);
+    if (success) {
+      this.show('Allocation successful.', false);
+      // We could reload the document to show updated lines, but allocations live in TransactionRatio
+      // not in the document's own lines.
+    }
   }
 
   addLine(): void {

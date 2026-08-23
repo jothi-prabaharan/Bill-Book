@@ -1,0 +1,44 @@
+<div class="backdrop" (click)="cancel()"></div>
+<div class="sheet">
+  <h2>Allocate {{ sourceTransactionTypeCode }}-{{ sourceTransactionId }}</h2>
+  <p class="hint">Available to Allocate: {{ remainingAmount | number:'1.2-2' }}</p>
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+
+  @if (targets().length === 0 && !busy()) {
+    <p>No outstanding documents found.</p>
+  } @else {
+    <div class="allocation-grid">
+      <div class="row header-row">
+        <div class="header-cell">Document</div>
+        <div class="header-cell">Outstanding</div>
+        <div class="header-cell input-cell">Amount to apply</div>
+      </div>
+      @for (target of targets(); track target.transactionId) {
+        <div class="row">
+          <div class="cell">
+            <strong>{{ target.documentNo }}</strong><br>
+            <small class="sub">{{ target.documentDate | date }}</small>
+          </div>
+          <div class="cell">
+            {{ target.outstandingAmount | number:'1.2-2' }}
+          </div>
+          <div class="cell input-cell">
+            <bb-number-input
+              [(ngModel)]="target.allocateAmount"
+              [min]="0"
+              [max]="target.outstandingAmount">
+            </bb-number-input>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <div class="actions">
+    <button type="button" (click)="save()" [disabled]="!isValid || busy()">Confirm Allocations</button>
+    <button type="button" class="link" (click)="cancel()" [disabled]="busy()">Cancel</button>
+  </div>
+</div>

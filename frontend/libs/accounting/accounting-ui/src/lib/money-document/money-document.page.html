@@ -267,9 +267,23 @@
     <div class="editor-actions">
       <button type="button" class="ghost" (click)="close()">Close</button>
       @if (d.status === 'Posted') {
+        @if (d.contactId !== null) {
+          <button type="button" (click)="startAllocation()" [disabled]="busy()">Allocate</button>
+        }
         <button type="button" (click)="voidDocument(d)" [disabled]="busy()">Void</button>
       }
     </div>
+
+    @if (allocating()) {
+      <bb-allocation-form
+        [contactId]="d.contactId!"
+        [sourceTransactionTypeCode]="direction() === 'spend' ? 'SPM' : 'RCM'"
+        [sourceTransactionId]="d.documentId"
+        [availableAmount]="d.amount"
+        [targetTypeCodes]="direction() === 'spend' ? ['BIL'] : ['INV']"
+        (closeForm)="onAllocationClosed($event)"
+      ></bb-allocation-form>
+    }
   </section>
 }
 
