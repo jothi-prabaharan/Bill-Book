@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
@@ -134,6 +135,21 @@ export class SalesOrderFormComponent implements OnInit {
     discountLevel: 'Line',
     readonly: !this.editable(),
   }));
+
+  /**
+   * The form's value as a signal.
+   *
+   * A reactive form's controls are not signals, so a `computed` that reads
+   * `form.controls.x.value` takes a dependency on nothing: it evaluates once and
+   * caches that answer for ever. `context` did exactly that — change the
+   * customer's GSTIN and the tax columns kept the split they were first drawn
+   * with, which is a wrong document rather than a stale screen.
+   *
+   * Same fault and same fix as the invoice form.
+   */
+  private readonly formValue = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
 
   protected readonly totals = computed(() => totalsOf(this.lines()));
 
@@ -462,8 +478,11 @@ export class SalesOrderFormComponent implements OnInit {
    * and one the server corrects on save if it is wrong.
    */
   private looksInterState(): boolean {
-    const stated = this.form.controls.placeOfSupplyStateCode.value;
-    const gstin = this.form.controls.contactGstin.value;
+    // Read through formValue, not off the controls: the controls are not
+    // signals, so reading them here would make `context` cache its first answer.
+    const value = this.formValue();
+    const stated = value.placeOfSupplyStateCode ?? '';
+    const gstin = value.contactGstin ?? '';
     const supply = stated || gstin.slice(0, 2);
 
     return supply.length === 2 && supply !== BRANCH_STATE_FALLBACK;
