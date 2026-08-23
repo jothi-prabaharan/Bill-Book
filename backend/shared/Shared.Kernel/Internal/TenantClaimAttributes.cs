@@ -17,7 +17,7 @@ namespace Shared.Kernel.Internal;
 ///
 /// <b>Only for endpoints that read the org from the route.</b> A service whose
 /// query filter already scopes by <c>OrgId</c> does not need this; a master
-/// database like <c>plt</c> has no filter to fall back on, which is exactly why
+/// database like <c>mst</c> has no filter to fall back on, which is exactly why
 /// these three needed it.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]

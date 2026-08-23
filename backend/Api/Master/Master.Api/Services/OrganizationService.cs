@@ -60,7 +60,7 @@ public sealed class OrganizationService
 
     /// <summary>
     /// Every branch on the account. Scoped by the caller's customer id, which
-    /// the controller has already checked against the token — <c>plt</c> holds
+    /// the controller has already checked against the token — <c>mst</c> holds
     /// every customer's rows, so this filter is the whole boundary.
     /// </summary>
     public async Task<IReadOnlyList<OrganizationListItem>> ListAsync(

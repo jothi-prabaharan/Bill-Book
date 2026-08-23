@@ -51,7 +51,7 @@ public sealed class InProcessTenantDirectory : ITenantDirectory
 
 /// <summary>
 /// Currency reference data, for the join between mst.Currencies and the
-/// per-organization currency list that was plt.OrgCurrencies. Both tables are in
+/// per-organization currency list that was mst.OrgCurrencies. Both tables are in
 /// the mst schema now, so this is a query rather than the C#-side join two
 /// services had to do across an API.
 /// </summary>

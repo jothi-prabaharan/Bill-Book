@@ -5,7 +5,7 @@ using Shared.Kernel.Interfaces;
 namespace Master.Api.Services;
 
 /// <summary>
-/// Sends mail using the credentials in plt.SmtpSettings. Lives in Platform
+/// Sends mail using the credentials in mst.SmtpSettings. Lives in Platform
 /// because Platform owns that table — the decrypted password never crosses a
 /// service boundary. Other services ask Platform to send instead.
 /// </summary>

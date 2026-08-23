@@ -11,7 +11,7 @@ namespace Master.Api.Controllers;
 /// Branches under the signed-in head office.
 ///
 /// Every action reads the customer from the caller's own token and never from
-/// the route. <c>plt</c> is the master database and holds every customer's rows,
+/// the route. <c>mst</c> is the master database and holds every customer's rows,
 /// so there is no row-level security to fall back on — the claim is the whole
 /// boundary, and taking an id from the URL instead would hand any caller anyone
 /// else's branches.

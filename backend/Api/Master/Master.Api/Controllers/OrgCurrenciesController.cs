@@ -10,7 +10,7 @@ namespace Master.Api.Controllers;
 /// <summary>
 /// The currencies a branch trades in.
 ///
-/// The organization comes off the URL, and `plt` is the master database — it
+/// The organization comes off the URL, and `mst` is the master database — it
 /// holds every customer's rows with no query filter and no row-level security
 /// to fall back on. The claim check is the entire boundary here, which is why it
 /// is an attribute on the controller rather than a line in each action.

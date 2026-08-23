@@ -15,7 +15,7 @@ public interface ITenantConnectionResolver
 
 /// <summary>
 /// Where the tenant directory lives. Implemented per service as a call to
-/// Platform's internal API — no service reads the plt schema directly.
+/// Platform's internal API — no service reads the mst schema directly.
 ///
 /// It returns the Key Vault <em>reference</em>, never the connection string, so
 /// the credential never travels over HTTP: each service resolves it from the

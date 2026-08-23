@@ -90,7 +90,7 @@ public sealed class ProvisioningWorker : BackgroundService
             $"CREATE DATABASE \"{safeName}\" ENCODING 'UTF8' TEMPLATE \"EP_Tenant_Template\"", ct);
 #pragma warning restore EF1002
 
-        // 2. Store the tenant connection string — Key Vault, never plt.
+        // 2. Store the tenant connection string — Key Vault, never mst.
         //    Guarded rather than defaulted: an unset value here would store an empty
         //    connection string and step 5 would still flip the org to Active, telling
         //    the customer their account is ready when it can never connect.

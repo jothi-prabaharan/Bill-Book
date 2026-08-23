@@ -9,8 +9,8 @@ namespace Master.Repository;
 /// <summary>
 /// The mst schema, in the master database — the one database every customer
 /// shares. Three schemas were folded into it: the reference data that was always
-/// mst, the tenant directory that was plt, and the users, roles and tokens that
-/// were idn.
+/// mst, the tenant directory that was mst, and the users, roles and tokens that
+/// were mst.
 ///
 /// They belong together because they are asked the same questions in the same
 /// breath. Signing in reads a user, the organizations they can reach, and the
@@ -46,7 +46,7 @@ public class AdminDbContext : DbContext
 
     public DbSet<HsnSacCode> HsnSacCodes => Set<HsnSacCode>();
 
-    // ---- plt: the tenant directory. ----
+    // ---- mst: the tenant directory. ----
 
     public DbSet<Customer> Customers => Set<Customer>();
 
@@ -62,7 +62,7 @@ public class AdminDbContext : DbContext
 
     public DbSet<Configuration> Configurations => Set<Configuration>();
 
-    // ---- idn: users, roles and tokens. ----
+    // ---- mst: users, roles and tokens. ----
 
     public DbSet<User> Users => Set<User>();
 
@@ -156,7 +156,7 @@ public class AdminDbContext : DbContext
             b.Property(e => e.DefaultGstRate).HasColumnType("decimal(5,2)");
         });
 
-        // ---- plt ----
+        // ---- mst ----
         modelBuilder.Entity<Customer>(b =>
         {
             b.HasKey(e => e.CustomerId);
@@ -220,7 +220,7 @@ public class AdminDbContext : DbContext
             b.Property(e => e.DataType).HasConversion<string>().HasMaxLength(10);
         });
 
-        // ---- idn ----
+        // ---- mst ----
         modelBuilder.Entity<User>(b =>
         {
             b.HasKey(e => e.UserId);
