@@ -128,4 +128,6 @@ export interface DocumentLineContext {
   readonly: boolean;
   /** Decimal places for display only; the values themselves stay in paise. */
   currencyDecimals: number;
+  /** Whether the state is a Union Territory without legislature */
+  isUnionTerritory?: boolean;
 }

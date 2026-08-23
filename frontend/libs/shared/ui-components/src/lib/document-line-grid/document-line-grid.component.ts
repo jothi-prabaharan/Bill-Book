@@ -68,7 +68,7 @@ export class DocumentLineGridComponent {
   protected readonly totals = computed(() => totalsOf(this.lines()));
 
   protected readonly components = computed(() =>
-    componentsFor(this.context().isInterState, this.context().isUnionTerritory),
+    componentsFor(this.context().isInterState, this.context().isUnionTerritory ?? false),
   );
 
   protected readonly treatments: readonly TaxTreatment[] = [
