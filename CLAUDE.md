@@ -201,7 +201,7 @@ Master database: `mst` (countries and states, the tenant directory, users and ro
 
 Per-customer database: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
 
-`plt` and `idn` were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `OrgId` with a query filter and an RLS policy.
+Platform and Identity schemas were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `OrgId` with a query filter and an RLS policy.
 
 **`con` did not move into `mst` and must not.** A contact belongs to one branch's books and lives in that customer's own database; the tables in `mst` are shared by every customer. They are in different Postgres databases, which is why Master holds two DbContexts rather than one.
 

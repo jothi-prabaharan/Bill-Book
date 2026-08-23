@@ -27,8 +27,8 @@ Branches are created and switched between from **Settings › Branches** — see
 The **master database** is shared by every customer:
 
 - `mst` — countries, states, currencies, and the seeded reference masters
-- `plt` — customers, organizations, licences, tenant directory, SMTP, configuration
-- `idn` — users, roles, permissions, tokens
+- `mst` — customers, organizations, licences, tenant directory, SMTP, configuration
+- `mst` — users, roles, permissions, tokens
 - `rat` — currency and metal rate history
 
 Every other schema is **replicated per customer database**: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `ntf`.

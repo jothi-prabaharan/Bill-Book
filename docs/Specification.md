@@ -311,7 +311,7 @@ Unique index: (CustomerId, Name)
 **Validate `StateId`'s StateCode matches Gstin's first 2 digits** — a mismatch silently breaks CGST/SGST vs IGST.
 
 ### `mst.OrgCurrencies` 🔨
-The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Lives in `plt` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither. Audit columns apply as everywhere — the trail of who enabled a currency and when is genuinely useful here.
+The currencies an organization actually transacts in — a per-org subset of `mst.Currencies`. Lives in `mst` so it can FK both `Organizations` and `mst.Currencies`; a per-customer-DB table could reference neither. Audit columns apply as everywhere — the trail of who enabled a currency and when is genuinely useful here.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -381,7 +381,7 @@ Tenant directory.
 | IsActive | bool | Default true |
 
 ### `mst.PlatformAdminUsers` 📋
-Operator staff, separate from tenant users in `idn`.
+Operator staff, separate from tenant users in `mst`.
 
 ### `mst.SmtpSettings` 🔨
 The outbound mail account used to send invitations, OTPs and password-reset mail. One system default (`CustomerId = null`); a customer may override with its own mailbox.

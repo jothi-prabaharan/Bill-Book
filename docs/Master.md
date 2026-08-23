@@ -17,9 +17,10 @@ The order to build things in, and how to tell when each one is actually done.
 
 ## Where things stand
 
-Verified on 3 August 2026, by reading the repository rather than from memory.
+Verified on 23 August 2026, by reading the repository rather than from memory.
 
-**Built** — Master, Platform, Identity, Accounting, Contacts, Inventory, Banking. 28 pages, and every endpoint behind an authentication and permission check.
+**Built** — Master, Accounting, Contacts, Inventory, Banking. 28 pages, and every endpoint behind an authentication and permission check.
+**Consolidated** — Platform and Identity schemas have been fully folded into the Master module (`mst`). `AdminDbContext` handles all core configuration, licenses, SMTP settings, organization currencies, and tenant data. The `Platform.Api` and `Identity.Api` modules were merged into `Master.Api` to reduce service overhead.
 
 **Both halves are verified now.** The backend builds with zero warnings under `TreatWarningsAsErrors`, its 110 tests pass, every EF snapshot matches its model, and all 33 migrations are applied to a real PostgreSQL — 24 in a customer database, 9 in the master. The frontend's `npm run check` runs lint, a typecheck, 41 tests and both builds, and is green. The SDK was never actually blocked — see 0.2.
 
@@ -61,7 +62,7 @@ Until this stage is finished, every claim about this repository is "written", no
 
 - [x] **0.5 — Apply every migration to a local database**
   PostgreSQL 16 started, `EP_Admin` and `EP_Design` created, all eleven migrations applied clean.
-  Verified against the catalogue rather than the exit code: schemas `mst plt idn` and `acc bnk con inv`; 47 tables; **30 tables with RLS enabled and 30 policies**; 41 check constraints; and the four filtered role indexes on `con.Contacts` all present — the ones the model had been collapsing into one.
+  Verified against the catalogue rather than the exit code: schemas `mst` and `acc bnk con inv`; 47 tables; **30 tables with RLS enabled and 30 policies**; 41 check constraints; and the four filtered role indexes on `con.Contacts` all present — the ones the model had been collapsing into one.
   Seed data landed: 37 states, 129 HSN/SAC rows, 16 transaction types, 5 account types, 120 permissions and 304 role grants, including the three cross-module `.view` grants from 5.17.
   *Done when*: `scripts/setup-dev-db` runs clean and all schemas exist with their RLS policies.
 
@@ -147,7 +148,7 @@ Agreed scope that was specified and not delivered. Four of seven tables exist.
   **Creating one must run the same seeding provisioning runs** — chart of accounts, tax rates, numbering, units, payment terms — or a new branch comes up empty and cannot save an item. That is the exact bug 1.1 fixed for new customers.
   Also unenforced: `License.MaxOrganizations` defaults to 1 and `TrialMaxOrganizations = 1`, stored and checked by nothing.
   *Done when*: a second branch can be created, is seeded like the first, and can be switched into.
-  `GET/POST/PUT/DELETE api/organizations` on Platform, with `[Authorize]` and the customer read from the **token** rather than the route — `plt` holds every customer's rows and has no RLS to fall back on, so the claim is the whole boundary.
+  `GET/POST/PUT/DELETE api/organizations` on Platform, with `[Authorize]` and the customer read from the **token** rather than the route — `mst` holds every customer's rows and has no RLS to fall back on, so the claim is the whole boundary.
   Creating one runs `ITenantSeeder`, the same seeding provisioning runs. A branch whose seeding fails is left `Provisioning` and returns 202 with a **Finish setup** action, rather than going Active with no chart of accounts behind it.
   `License.MaxOrganizations` is now enforced, and the base currency is frozen after creation — every amount posted was converted to it.
   Switching: `POST api/auth/switch-organization` on Identity reuses `SelectOrganizationAsync` with the user taken from the access token, so a switch grants the permissions held **in the target branch**. `GET api/auth/organizations` lists what the user may switch into; the login path now shares that same lookup rather than keeping its own copy.
@@ -309,7 +310,7 @@ Independent of the stages above; take any of them whenever.
 
   That created the one genuine design problem: `states/{id}` and `currencies` are read both by the browser (user token, no key) and by Contacts and Platform (key, no token). Rather than one endpoint accepting either — a door with two locks and no way to tell who came through — the two lookups got their own `internal/master` route and the service-to-service clients were repointed at it.
 
-  **`OrgRouteMustMatchToken` / `CustomerRouteMustMatchToken`** cover the original three. Attributes rather than per-action checks: the failure mode is omission, and a per-action check is only as good as whoever remembers the next action. `plt` is the master database with no query filter and no row-level security, so the claim is the entire boundary there.
+  **`OrgRouteMustMatchToken` / `CustomerRouteMustMatchToken`** cover the original three. Attributes rather than per-action checks: the failure mode is omission, and a per-action check is only as good as whoever remembers the next action. `mst` is the master database with no query filter and no row-level security, so the claim is the entire boundary there.
 
   **`RequirePermission` is the first place a permission claim is enforced anywhere.** Identity has minted them into every token since the beginning and no server has ever read one. It guards the platform's own mailbox, which belongs to the operator and so has no tenant claim that could protect it. Applying permissions properly is 5.17.
 
