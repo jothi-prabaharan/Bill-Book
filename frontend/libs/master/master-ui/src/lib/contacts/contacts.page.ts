@@ -2,6 +2,7 @@ import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent 
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
@@ -222,9 +223,17 @@ export class ContactsPage implements OnInit {
 
   form: ContactDetail = this.blank();
 
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
   ngOnInit(): void {
     void this.load();
     void this.loadLookups();
+    this.route.queryParamMap.subscribe(params => {
+      if (params.get('action') === 'create') {
+        this.openAdd();
+      }
+    });
   }
 
   async load(): Promise<void> {
@@ -635,14 +644,23 @@ export class ContactsPage implements OnInit {
     this.busy.set(true);
     try {
       const id = this.editingId();
+      let newId: number | null = null;
       if (id === null) {
-        await this.send('POST', '/api/contacts', payload);
+        const result = await this.send<{ contactId: number }>('POST', '/api/contacts', payload);
+        newId = result.contactId;
       } else {
         await this.send('PUT', `/api/contacts/${id}`, payload);
       }
       this.editorOpen.set(false);
       this.succeed('Contact saved.');
-      await this.load();
+
+      const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+      const returnMaster = this.route.snapshot.queryParamMap.get('returnMaster');
+      if (id === null && returnUrl && returnMaster && newId) {
+        void this.router.navigateByUrl(`${returnUrl}?returnMaster=${returnMaster}&returnId=${newId}`);
+      } else {
+        await this.load();
+      }
     } catch (err: unknown) {
       this.fail(this.messageOf(err, 'Could not save that contact.'));
     } finally {
