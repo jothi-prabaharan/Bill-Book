@@ -1173,6 +1173,7 @@ public sealed class InvoiceService : IInvoiceService
 
             if (challan is not null)
             {
+                
                 foreach (var line in invoice.Lines)
                 {
                     var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
@@ -1181,8 +1182,10 @@ public sealed class InvoiceService : IInvoiceService
                         line.UnitCost = challanLine.UnitCost;
                         line.StockMovementId = challanLine.StockMovementId;
                         totalCogs += line.UnitCost * line.Quantity;
+                        challanLine.InvoicedQuantity += line.Quantity;
                     }
                 }
+
             }
         }
         else
@@ -1423,10 +1426,31 @@ public sealed class InvoiceService : IInvoiceService
                 : new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+
         invoice.Status = DocumentStatus.Void;
         invoice.VoidedAt = _clock.GetUtcNow();
         invoice.VoidedBy = _user.UserId;
         invoice.VoidReason = request.Reason;
+
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            var challan = await _db.DeliveryChallans
+                .Include(c => c.Lines)
+                .FirstOrDefaultAsync(c => c.DeliveryChallanId == invoice.DeliveryChallanId.Value, ct);
+
+            if (challan is not null)
+            {
+                foreach (var line in invoice.Lines)
+                {
+                    var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
+                    if (challanLine is not null)
+                    {
+                        challanLine.InvoicedQuantity -= line.Quantity;
+                    }
+                }
+            }
+        }
+
 
         if (invoice.PostedAt is not null)
         {

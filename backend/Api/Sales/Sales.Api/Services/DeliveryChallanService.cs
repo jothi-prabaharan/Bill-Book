@@ -299,6 +299,35 @@ public sealed class DeliveryChallanService
             line.UnitCost = issueLine.UnitCost;
         }
 
+        
+        // Update SalesOrder quantities
+        if (deliveryChallan.SalesOrderId.HasValue)
+        {
+            var salesOrder = await _db.SalesOrders
+                .Include(x => x.Lines)
+                .FirstOrDefaultAsync(x => x.SalesOrderId == deliveryChallan.SalesOrderId.Value, ct);
+
+            if (salesOrder != null)
+            {
+                foreach (var line in deliveryChallan.Lines)
+                {
+                    if (line.SalesOrderDetailId.HasValue)
+                    {
+                        var orderLine = salesOrder.Lines.FirstOrDefault(x => x.SalesOrderDetailId == line.SalesOrderDetailId.Value);
+                        if (orderLine != null)
+                        {
+                            orderLine.DeliveredQuantity += line.Quantity;
+                            orderLine.ReservedQuantity -= line.Quantity;
+                        }
+                    }
+                }
+                
+                bool allDelivered = salesOrder.Lines.All(x => x.DeliveredQuantity >= x.Quantity);
+                bool someDelivered = salesOrder.Lines.Any(x => x.DeliveredQuantity > 0);
+                salesOrder.FulfilmentStatus = allDelivered ? FulfilmentStatus.Closed : (someDelivered ? FulfilmentStatus.PartlyDelivered : FulfilmentStatus.Open);
+            }
+        }
+
         // 2. Post Ledger (Only if Sale)
         if (deliveryChallan.ChallanType == ChallanType.Sale)
         {
@@ -386,9 +415,11 @@ public sealed class DeliveryChallanService
         await _db.SaveChangesAsync(ct);
     }
 
+    
     public async Task VoidAsync(long deliveryChallanId, string reason, CancellationToken ct)
     {
         var deliveryChallan = await _db.DeliveryChallans
+            .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.DeliveryChallanId == deliveryChallanId, ct)
             ?? throw new InvalidOperationException("DeliveryChallan not found.");
 
@@ -407,6 +438,35 @@ public sealed class DeliveryChallanService
                 "This challan has already dispatched its goods. Voiding it would leave the "
                     + "stock issued and the clearing account holding a balance nothing will "
                     + "close. Raise a return instead.");
+        }
+
+        
+        // Update SalesOrder quantities
+        if (deliveryChallan.SalesOrderId.HasValue)
+        {
+            var salesOrder = await _db.SalesOrders
+                .Include(x => x.Lines)
+                .FirstOrDefaultAsync(x => x.SalesOrderId == deliveryChallan.SalesOrderId.Value, ct);
+
+            if (salesOrder != null)
+            {
+                foreach (var line in deliveryChallan.Lines)
+                {
+                    if (line.SalesOrderDetailId.HasValue)
+                    {
+                        var orderLine = salesOrder.Lines.FirstOrDefault(x => x.SalesOrderDetailId == line.SalesOrderDetailId.Value);
+                        if (orderLine != null)
+                        {
+                            orderLine.DeliveredQuantity -= line.Quantity;
+                            orderLine.ReservedQuantity += line.Quantity;
+                        }
+                    }
+                }
+                
+                bool allDelivered = salesOrder.Lines.All(x => x.DeliveredQuantity >= x.Quantity);
+                bool someDelivered = salesOrder.Lines.Any(x => x.DeliveredQuantity > 0);
+                salesOrder.FulfilmentStatus = allDelivered ? FulfilmentStatus.Closed : (someDelivered ? FulfilmentStatus.PartlyDelivered : FulfilmentStatus.Open);
+            }
         }
 
         deliveryChallan.Status = DocumentStatus.Void;

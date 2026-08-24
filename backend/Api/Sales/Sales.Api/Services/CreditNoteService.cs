@@ -429,25 +429,36 @@ public sealed class CreditNoteService
 
         if (totalCogs > 0)
         {
-            // Credit Inventory (CONTROL leg, type 3) - stock returned
+            
+            // Debit Inventory (CONTROL leg, type 3) - stock returned
             postRequest.Legs.Add(new LedgerLegRequest
             {
                 LedgerTypeId = 3, // CONTROL (stock movement)
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = "Inventory",
-                CreditAmount = totalCogs
+                DebitAmount = totalCogs
             });
 
-            // Debit COGS (COGS leg, type 4) - reverse the cost
+            // Credit COGS (COGS leg, type 4) - reverse the cost
             postRequest.Legs.Add(new LedgerLegRequest
             {
                 LedgerTypeId = 4, // COGS
                 LedgerSourceId = 3,
                 TransactionDetailId = 0,
                 AccountSystemName = "Cost of Goods Sold",
-                DebitAmount = totalCogs
+                CreditAmount = totalCogs
             });
+
+        }
+
+
+        foreach (var l in creditNote.Lines)
+        {
+            if (invoiceDetails.TryGetValue(l.InvoiceDetailId, out var invLine))
+            {
+                invLine.ReturnedQuantity += l.Quantity;
+            }
         }
 
         var result = await _ledgerClient.PostAsync(postRequest, ct);
