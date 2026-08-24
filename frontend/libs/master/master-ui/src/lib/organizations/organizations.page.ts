@@ -8,6 +8,7 @@ interface Organization {
   orgId: string;
   orgCode: string;
   name: string;
+  vertical: 'General' | 'Pharma' | 'Jewellery';
   baseCurrency: string;
   financialYearStartMonth: number;
   gstin: string | null;
@@ -130,6 +131,7 @@ export class OrganizationsPage implements OnInit {
     this.form = {
       orgCode: row.orgCode,
       name: row.name,
+      vertical: row.vertical,
       baseCurrency: row.baseCurrency,
       financialYearStartMonth: row.financialYearStartMonth,
       gstin: row.gstin,
@@ -225,6 +227,7 @@ export class OrganizationsPage implements OnInit {
     return {
       orgCode: '',
       name: '',
+      vertical: 'General',
       baseCurrency: 'INR',
       financialYearStartMonth: 4,
       gstin: null,

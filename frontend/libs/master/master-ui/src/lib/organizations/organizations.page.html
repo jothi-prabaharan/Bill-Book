@@ -100,6 +100,16 @@
       </label>
 
       <label>
+        Trade Vertical
+        <select [(ngModel)]="form.vertical">
+          <option value="General">General / Other</option>
+          <option value="Pharma">Pharmacy / Medical Store</option>
+          <option value="Jewellery">Jewellery Store</option>
+        </select>
+        <small>Decides what this branch is seeded with and which settings apply.</small>
+      </label>
+
+      <label>
         Base currency
         <select
           [(ngModel)]="form.baseCurrency"
