@@ -1,0 +1,39 @@
+<div class="overlay">
+  <div class="modal-content bb-card">
+    <h3>New Lead</h3>
+    
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" formControlName="name" class="bb-input">
+      </div>
+
+      <div class="form-group">
+        <label>Company Name</label>
+        <input type="text" formControlName="companyName" class="bb-input">
+      </div>
+
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" formControlName="email" class="bb-input">
+      </div>
+
+      <div class="form-group">
+        <label>Phone</label>
+        <input type="tel" formControlName="phone" class="bb-input">
+      </div>
+
+      <div class="form-group">
+        <label>Source</label>
+        <select formControlName="source" class="bb-input">
+          <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
+        </select>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="bb-btn bb-btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">Save</button>
+      </div>
+    </form>
+  </div>
+</div>

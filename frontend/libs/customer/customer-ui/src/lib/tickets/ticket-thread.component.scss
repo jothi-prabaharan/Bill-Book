@@ -1,0 +1,71 @@
+.thread-container {
+  padding: 24px;
+}
+.ticket-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  h3 { margin: 0; }
+}
+.ticket-meta {
+  display: flex;
+  gap: 8px;
+}
+.badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: var(--surface-color-variant, #f0f0f0);
+}
+.ticket-desc {
+  margin-bottom: 24px;
+  white-space: pre-wrap;
+}
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-color);
+  margin: 24px 0;
+}
+.messages {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.message {
+  padding: 16px;
+  background: var(--surface-color, #fff);
+  border-left: 4px solid var(--primary-color);
+  &.from-contact {
+    border-left-color: var(--secondary-color, #6c757d);
+    background: var(--surface-color-variant, #f8f9fa);
+  }
+}
+.msg-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: var(--text-color-secondary);
+}
+.msg-body {
+  white-space: pre-wrap;
+}
+.reply-box {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  button {
+    align-self: flex-end;
+  }
+}

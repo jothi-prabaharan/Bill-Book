@@ -1,0 +1,31 @@
+<div class="tickets-container">
+  <div class="header-actions" *ngIf="!selectedTicket()">
+    <h2>Support Tickets</h2>
+    <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">New Ticket</button>
+  </div>
+
+  <div *ngIf="!selectedTicket()">
+    <bb-data-grid
+      [data]="tickets()"
+      [columns]="columns"
+      gridCode="tickets-list"
+      [pageSize]="25"
+      [totalCount]="tickets().length"
+    >
+      <ng-template bbCellTemplate="actions" let-row="row">
+        <button class="bb-btn bb-btn-secondary" (click)="selectedTicket.set(row)">View Thread</button>
+      </ng-template>
+    </bb-data-grid>
+  </div>
+
+  <div *ngIf="selectedTicket() as ticket">
+    <button class="bb-btn bb-btn-secondary back-btn" (click)="selectedTicket.set(null)">← Back to Tickets</button>
+    <bb-ticket-thread [ticket]="ticket"></bb-ticket-thread>
+  </div>
+</div>
+
+<bb-ticket-form 
+  *ngIf="showForm()" 
+  (saved)="onSaved()" 
+  (cancelled)="showForm.set(false)">
+</bb-ticket-form>

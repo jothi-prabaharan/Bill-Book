@@ -148,7 +148,7 @@ export const appRoutes: Routes = [
         data: { permission: 'accounting.view' },
       },
       {
-        path: 'contacts',
+        path: 'customer/leads', loadComponent: () => import('@bill-book/customer-ui').then((m) => m.LeadList), data: { permission: 'contacts.view' } }, { path: 'customer/tickets', loadComponent: () => import('@bill-book/customer-ui').then((m) => m.TicketList), data: { permission: 'contacts.view' } }, { path: 'contacts',
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { permission: 'contacts.view' },
       },

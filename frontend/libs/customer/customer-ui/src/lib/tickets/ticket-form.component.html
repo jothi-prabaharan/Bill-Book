@@ -1,0 +1,34 @@
+<div class="overlay">
+  <div class="modal-content bb-card">
+    <h3>New Ticket</h3>
+    
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" formControlName="subject" class="bb-input">
+      </div>
+
+      <div class="form-group">
+        <label>Description</label>
+        <textarea formControlName="description" class="bb-input" rows="4"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+        <select formControlName="priority" class="bb-input">
+          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Contact ID (Lookup)</label>
+        <input type="text" formControlName="contactId" class="bb-input" placeholder="Enter Contact ID">
+      </div>
+
+      <div class="actions">
+        <button type="button" class="bb-btn bb-btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
+        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
