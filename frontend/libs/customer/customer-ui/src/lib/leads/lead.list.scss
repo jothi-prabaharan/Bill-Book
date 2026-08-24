@@ -1,0 +1,13 @@
+.leads-container {
+  padding: 16px;
+}
+.header-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.text-success {
+  color: var(--success-color, #28a745);
+  font-weight: 500;
+}

@@ -1,0 +1,30 @@
+<div class="leads-container">
+  <div class="header-actions">
+    <h2>Leads</h2>
+    <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">Add Lead</button>
+  </div>
+
+  <bb-data-grid
+    [data]="leads()"
+    [columns]="columns"
+    gridCode="leads-list"
+    [pageSize]="25"
+    [totalCount]="leads().length"
+  >
+    <ng-template bbCellTemplate="actions" let-row="row">
+      <button 
+        *ngIf="row.status !== 'Converted'"
+        class="bb-btn bb-btn-secondary" 
+        (click)="convertLead(row)">
+        Convert to Contact
+      </button>
+      <span *ngIf="row.status === 'Converted'" class="text-success">Converted</span>
+    </ng-template>
+  </bb-data-grid>
+</div>
+
+<bb-lead-form 
+  *ngIf="showForm()" 
+  (saved)="onSaved()" 
+  (cancelled)="showForm.set(false)">
+</bb-lead-form>

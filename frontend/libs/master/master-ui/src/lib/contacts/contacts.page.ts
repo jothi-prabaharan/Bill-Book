@@ -7,7 +7,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
-} from '../contact-person-roles/contact-person-roles.dialog';
+} from '../contact-person-roles-dialog/contact-person-roles.dialog';
 
 interface ContactListItem {
   contactId: number;
@@ -949,4 +949,5 @@ export class ContactsPage implements OnInit {
   }
 
 }
+
 

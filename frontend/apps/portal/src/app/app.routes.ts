@@ -8,10 +8,11 @@ export const appRoutes: Route[] = [
   },
   {
     path: 'dashboard',
-    loadComponent: () => import('./portal-dashboard.page').then(m => m.PortalDashboardPage)
+    loadComponent: () => import('./portal-dashboard/portal-dashboard.page').then(m => m.PortalDashboardPage)
   },
   {
     path: 'statement',
-    loadComponent: () => import('./portal-statement.list').then(m => m.PortalStatementList)
+    loadComponent: () => import('./portal-statement-list/portal-statement.list').then(m => m.PortalStatementList)
   }
 ];
+

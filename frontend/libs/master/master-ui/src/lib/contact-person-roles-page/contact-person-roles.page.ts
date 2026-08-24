@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
-import { ContactPersonRolesList } from '../contact-person-roles/contact-person-roles.list';
+import { ContactPersonRolesList } from '../contact-person-roles-list/contact-person-roles.list';
 
 /**
  * Settings › Contact person roles.
@@ -22,4 +22,5 @@ changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './contact-person-roles.page.scss',
 })
 export class ContactPersonRolesPage {}
+
 
