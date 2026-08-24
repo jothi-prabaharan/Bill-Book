@@ -2,25 +2,27 @@
 
 **Schema:** `rpt` (report catalog and saved layouts) + read-only queries across `acc`, `inv`, `sal`, `pur`, `con`
 
-> The common report grid and the catalog of 45 reports with their columns live in
-> [`docs/Reporting.md`](./Reporting.md). The checklist below
-> covers the statements and GST returns, which are not grid reports.
-
-## Overview
-Generates business reports, tax compliance documents (GST), and financial statements (P&L, Balance Sheet, Trial Balance).
-
-## Task Checklist
-- [x] **1.1 — Profit & Loss Statement:** Read from `acc` ledger.
-- [x] **1.2 — Balance Sheet:** Read from `acc` ledger.
-- [ ] **2.1 — Tax (GST) Reporting:** GSTR-1, GSTR-2, GSTR-3B outputs.
-- [x] **3.1 — Inventory Valuation Report:** Weighted average reporting from `inv` layers.
-- [ ] **3.2 — Sales Register:** Export `sal.SalesRegister` data.
+**This file used to open with a second, independently-maintained checklist here** —
+one that marked Profit & Loss and Balance Sheet `[x]` done while §8 of the same
+file, twenty lines below, correctly recorded that neither exists. Two checklists
+for one catalog is exactly how that happens: whichever one gets edited drifts
+from whichever one does not, and a reader who stops at line 12 never finds out.
+**§8.8 is now the only status table in this file.** Read it, not this paragraph,
+for what is actually built — as of this correction that is **20 of 46** cataloged
+reports, verified against the source files rather than against either checklist.
 
 # Reports
 
 **One grid, forty-six reports.** This file is the whole of the reporting requirement: the common grid every report renders in, the query contract behind it, the `rpt` schema, and the catalog of reports with their columns.
 
-Nothing in here is built yet. `Reporting.Api` is a scaffold whose `Program.cs` returns `{"service":"Reporting","status":"not implemented"}`, `libs/reporting/*` hold a `.gitkeep` each, and there is no `rpt` migration. This is the design that gets agreed **before** any of that changes.
+**Nothing in here was built when this paragraph was written — that is no longer
+true and this paragraph is kept only so the next stale claim is easy to spot by
+contrast.** `Reporting.Api` is a real host, `libs/reporting/*` are real
+libraries, the `rpt` migration exists and carries RLS. §8.8 has the current,
+verified count of what renders; §9's checklist has what each task delivered.
+This section (§1–§7) remains the design as agreed, and nothing in it needed
+correcting — only the status claims layered on top of it, in this paragraph and
+in §8, had gone stale.
 
 Read [`CLAUDE.md`](../../CLAUDE.md) first — the hard rules there apply here without exception, and one of them (rule 8, service boundaries) needs a decision this document raises rather than assumes.
 
@@ -321,48 +323,78 @@ The catalog in §8 is transcribed from the source list, and these conventions de
 
 ## 8. The report catalog
 
-Forty-six reports. **Status** says what stands between the report and being built:
+**Forty-six reports in `Configurations/reports.json`, the specification this
+catalog is written from.** That file is the source the two disagree from if
+they ever do — the prose below is a description of it, not a second copy of
+it. Verified by diffing the two directly rather than by re-reading either:
+`46` distinct `(ReportGroup, ReportName)` pairs, `776` column rows.
 
-- **Ready** — every table it reads exists and is migrated
-- **Partial** — its core reads exist; named columns need a service that does not
-- **Blocked: X** — service X is not built
+**Status** says what stands between the report and being built:
+
+- **Ready** — every column it declares is built, seeded, and rendering
+- **Partial** — it renders; some of its *spec'd* columns are declared but
+  return null, or are missing outright, because the service that fills them
+  does not exist. The gap is named under each one below
+- **Blocked: X** — service X is not built, so nothing of the report exists
+- **Unscheduled** — nothing blocks it; it simply has no task and no owner
+
+**20 of 46 are built and rendering today**, three of them (Account Movement,
+Warehouse Tracking Detail, Sales Register) outside what `reports.json` itself
+enumerates — extra reports the engine's templates made cheap to add. §8.8 has
+the full count by group; every column list below is read straight off the
+source file that builds that report, not retyped from `reports.json` or from
+memory.
 
 ### 8.1 Accounting
 
-#### Account Movement — `account-movement` · Ready
+#### Account Movement — `account-movement` · Ready · 9 columns, not in `reports.json`
 *Source:* `acc.JournalLedger` → `acc.Account`
 
 | Column | Type | Note |
 |---|---|---|
 | Date | Date | `LedgerDate` |
-| Account | Text | |
-| Account Code | Text | |
-| Account Type | Enum | from `mst.AccountTypes`, resolved in C# — different database |
-| Debit | Money | base currency |
-| Credit | Money | base currency |
+| Account Type | Text | from `mst.AccountTypes`, resolved in C# — different database |
+| Account · Account Code | Text | |
+| Debit · Credit | Money | base currency |
 | Description | Text | |
 | Reference | Text | |
-| Source | Text | `TransactionTypeCode` → display name |
+| Source | Text | `TransactionTypeCode` |
 
-The plain movement listing. Groups naturally by Account Type then Account; that is its default grouping.
+The plain movement listing — every other accounting source is a copy of its shape.
+Not one of the 46 `reports.json` line items; it exists because the engine's first
+template needed a report to prove itself against, and the simplest one earned its
+place. Groups naturally by Account Type then Account.
 
-#### Account Transaction — `account-transaction` · Ready
-*Source:* `acc.JournalLedger` → `acc.Account`, `acc.SubAccount`, `con.Contacts`, `acc.TaxMaster`
+#### Account Transaction — `account-transaction` · Partial · 20 of 30 spec'd columns (+1 internal id)
+*Source:* `acc.JournalLedger` → `acc.Account`, `acc.SubAccount`, `con.Contacts`, `acc.TaxMaster`, `con.ContactLicences`
 
 | Column | Type | Note |
 |---|---|---|
-| Date · Transaction No · Reference · Description · Source | Date/Text | |
+| Date · Transaction No · Source | Date/Text | |
 | Account · Account Code · Related Account | Text | *Related Account* is the contra leg on the same document |
 | Contact Code · Contact Name | Text | via `SubAccount` → `con.Contacts` |
-| Currency · ExchangeRate · Revalued Cur | Text/Rate | |
-| Debit(Source) · Credit(Source) · Gross(Source) · Net(Source) · Tax(Source) | Money | document currency |
-| Debit(%CurCode%) · Credit(%CurCode%) · Gross(%CurCode%) · Net(%CurCode%) · Tax(%CurCode%) | Money | base currency |
-| Tax Rate · Tax Rate Name | Percent/Text | |
-| Foreign exchange (FX) | Money | realized/unrealized on the leg |
+| Description · Reference | Text | |
+| Tax Rate · Tax Rate Name | Percent/Text | via `SubAccount` → `acc.TaxMaster` |
+| Permit No | Text | contact's active licence, from `con.ContactLicences` |
+| Currency · ExchangeRate | Text/Rate | |
+| Debit(Source) · Credit(Source) · Debit(%CurCode%) · Credit(%CurCode%) | Money | |
 | Running Balance | Money | forces sort order — §5.5 |
-| Permit No | Text | contact licence number, from `con.ContactLicences` |
+
+**Missing, and not silently — the spec names them and the source does not declare
+them:** Gross/Net/Tax/Due, each in Source and %CurCode% (8 columns) — need `sal`
+and `pur` documents this leg was posted from, which reporting cannot read yet.
+Revalued Cur and Foreign exchange (FX) — need the period-end revaluation job,
+same gap as §8.1's FX pair below.
 
 The fullest accounting report and the one that sets the engine's performance bar.
+**Read next to Journal Report below — they look like duplicates and are not.**
+Account Transaction reads the posted ledger, forced into ledger order, with a
+running balance; a Draft journal has no ledger row and cannot appear here. Journal
+Report reads the journal documents directly, Draft included, with the full audit
+trail and no running balance — it answers "what documents exist and who touched
+them", not "what happened to this account, in order, with a balance". The ~10
+columns they share exist because both are legitimately reading the same legs
+through two different tables that diverge exactly at the moment of posting.
 
 #### General Ledger Summary — `general-ledger-summary` · Ready
 *Source:* `acc.JournalLedger` → `acc.Account`
@@ -408,15 +440,21 @@ The six audit columns come from `AuditableEntity`; the user names resolve from `
 | Opening Balance · Received · Spent · Closing Balance · Bank Revaluation | Money |
 | *(dynamic)* | — |
 
-#### Reconciliation Report — `reconciliation` · Ready
-*Source:* `acc.BankStatement`, `acc.BankStatementLine` → `acc.JournalLedger`
+#### Reconciliation Report — `reconciliation` · Partial · 9 columns built
+*Source:* `acc.BankStatement`, `acc.BankStatementLine`
 
-| Column | Type |
-|---|---|
-| Transaction Date · Transaction No · Reference · Description | Date/Text |
-| Amount In · Revalued Amount In | Money |
-| GroupBy | Text |
-| *(dynamic)* | — |
+| Column | Type | Note |
+|---|---|---|
+| Transaction Date · Transaction No · Reference · Description | Date/Text | |
+| Amount In · Amount Out | Money | the bank statement's own two sides |
+| Status | Enum | Matched / Unmatched / Ignored — groupable |
+| Statement | Text | which imported statement the line came from — groupable |
+
+**Missing:** *CurrencyCode* and *Revalued Amount In* — a multi-currency bank
+account's statement lines carry no currency column today, so a branch with
+foreign-currency accounts cannot tell which currency a line reconciled in
+without opening the account. Not blocked on anything; nobody has added the
+join.
 
 *GroupBy* in the source list is not a column — it is the report's grouping parameter (by statement, by matched/unmatched). Recorded as a parameter.
 
@@ -466,24 +504,31 @@ The mirror of the above: Bill/DN No, Date, DueDate, *Paid From* rather than *Pai
 
 ### 8.3 Inventory
 
-#### Inventory Item List — `inventory-item-list` · Partial
-*Source:* `inv.Item`, `inv.ItemStock`, `inv.ItemCategory`, `inv.UnitOfMeasure`
+#### Inventory Item List — `inventory-item-list` · Partial · 28 columns built
+*Source:* `inv.Item`, `inv.ItemStock`, `inv.ItemCategory`, `inv.UnitOfMeasure`, `inv.CostLayer`
 
-Item Code, Item Name, Item Group, Product Category, Inventory Type, Costing Method, Status, Date, Organization, Contact Name, Unit of Measurement, Purchase Description, Sales Description, Purchase Tax Rate, Sales Tax Rate, Inventory Account, Purchase Account, Sales Account, Quantity On Hand, Average Cost, Unit Cost Price, Unit Sale Price, Total Value.
+Item Code, Item Name, Item Group, Product Category, Inventory Type, Costing Method, Status, Date, Unit of Measurement, Purchase Description, Sales Description, Purchase Tax Rate, Sales Tax Rate, Inventory Account, Purchase Account, Sales Account, Quantity On Hand, Average Cost, Unit Cost Price, **Balance Qty**, **Unit Cost Price (FIFO)**, Unit Sale Price, Total Value, Quantity On Order, Quantity Received, Committed Quotes, Committed to DO.
 
-**Partial:** *Quantity on Order*, *Quantity Received*, *Committed Quotes* and *Committed to DO* need `sal` and `pur` documents. They are declared and return null until those land.
+**Declared and rendering blank — two different reasons, worth telling apart:**
+- *Quantity on Order*, *Quantity Received*, *Committed Quotes*, *Committed to DO* — genuinely blocked, need `sal` and `pur` documents that don't exist yet.
+- *Purchase Tax Rate*, *Sales Tax Rate*, *Inventory Account*, *Purchase Account*, *Sales Account*, and *Date* — **not blocked by anything**. The column exists, the row property exists, and the query's projection simply never assigns them. Purchase/Sales Tax Rate need a join from the item's tax group to `acc.TaxMaster`; the three account columns need the item's own sub-accounts (`acc.SubAccounts` where `ReferenceType = Item`); `Date` needs one line (`DateOnly.FromDateTime(i.CreatedAt)`) that the source's own comment already names and nobody has written.
 
-#### Inventory Item Detail — `inventory-item-detail` · Partial
-*Source:* `inv.StockMovement`, `inv.Item`, `acc.JournalLedger`
+#### Inventory Item Detail — `inventory-item-detail` · Partial · 24 columns built
+*Source:* `inv.StockMovement`, `inv.Item`
 
-Date, Item Code, Item Name, Item Group, Product Category, Description, Contact Code, Contact Name, Organization, Costing Method, Unit of Measurement, Transaction No, Reference, Source, QoH Movement, Value Movement, Unit Cost Price, Unit Sale Price, Margin, Profit Per Item, Inventory Account, Purchase Account, Sales Account, Adjustment Account.
+Date, Item Code, Item Name, Item Group, Product Category, Description, Contact Code, Contact Name, Costing Method, Unit of Measurement, Transaction No, Reference, Source, QoH Movement, Value Movement, Unit Cost Price, Unit Sale Price, Margin, Profit Per Item, Inventory Account, Purchase Account, Sales Account, Adjustment Account.
 
-**Partial:** *Unit Sale Price*, *Margin* and *Profit Per Item* need sales documents.
+**Blocked on `sal`:** *Unit Sale Price*, *Margin*, *Profit Per Item*.
+**Declared and rendering blank for no blocking reason:** *Contact Code*, *Contact Name*, *Reference*, and the four account columns — same shape as Item List above: the projection never assigns them, and `Reference` in particular is odd, since `TransactionNo` two lines above it is built from the exact same `SourceType`/`SourceId` fields.
 
-#### Inventory Item Summary — `inventory-item-summary` · Partial
-Item Code/Name/Group, Product Category, Inventory Type, Costing Method, Unit of Measurement, Organization, Opening Quantity, Opening Balance, Quantity Purchased, Purchases, Quantity Sold, Sales, Quantity Adjusted, Adjustments, COGS, Profit, Closing Quantity, Closing Balance, and the three account columns.
+#### Inventory Item Summary — `inventory-item-summary` · Partial · 23 columns built
+Item Code/Name/Group, Product Category, Inventory Type, Costing Method, Unit of Measurement, Opening Quantity, Opening Balance, Quantity Purchased, Purchases, Quantity Sold, Sales, Quantity Adjusted, Adjustments, COGS, Profit, Closing Quantity, Closing Balance, Inventory Account, Purchase Account, Sales Account.
 
-**Partial:** the purchased/sold split needs `sal` and `pur`; adjustments and opening/closing are readable today.
+**Blocked on `sal`/`pur`:** Quantity Purchased, Purchases, Quantity Sold, Sales, COGS, Profit — the six figures that need a sales or purchase document.
+**Declared and rendering blank for no blocking reason:** the three account columns, same gap as the two reports above.
+Adjustments and the opening/closing roll are readable and correct today.
+
+**One more gap across all three, worse than "declared and blank": *Organization* is spec'd for all three and not declared by any of them — no column, no row property, nothing.** Not blocked either; every row here is already `OrgId`-scoped to one branch, so the column would say the same thing on every row of a single-branch report. It matters only once a consolidated, cross-branch view exists — CLAUDE.md is explicit that is a deliberate read above the query filter, not a relaxed one, and nothing here is that yet. **Item List is also missing *Contact Name*, spec'd but not declared** — unlike Item Detail, where a row is one transaction with a counterparty, an Item List row is one item with no transaction in view, so there is no single contact a name column could show. Worth a parameter (a preferred-supplier filter) rather than a column, if it is wanted at all.
 
 #### Inventory Aging Report — `inventory-aging` · Ready
 *Source:* `inv.CostLayer`
@@ -506,10 +551,17 @@ Serial No, Item Code, Item Name, Product Category, Manufactured Date, Expiry Dat
 #### Serial Tracking Detail Report — `serial-tracking-detail` · Ready
 The Status columns plus Description-level movement: Transaction Date, Transaction No, Transaction Type, Contact Name, Quantity IN, Quantity OUT, Unit of Measurement, Warehouse.
 
-#### Warehouse Tracking Status Report — `warehouse-tracking-status` · Ready
-*Source:* `inv.Warehouse`, `inv.ItemStock`
+#### Warehouse Tracking Status Report — `warehouse-tracking-status` · Ready · 11 columns built
+*Source:* `inv.Warehouse`, `inv.StockMovement`, plus `mst.States`/`mst.Countries` resolved cross-database
 
 Warehouse Name, Address, City, State, Country, Primary, Status, Quantity IN, Quantity OUT, Available Quantity.
+
+State and Country were raw `mst.States`/`mst.Countries` ids shown as numbers until this
+week — the kind of thing that renders as "14" on a report a person reads. Resolved to
+names the same batched way Trial Balance's Account Type is, through two new internal
+Master endpoints. Primary and Status are booleans and are typed `Boolean`; they were
+typed `Enum` until the same pass, which rendered the literal words "True"/"False"
+instead of Yes/No.
 
 #### Warehouse Tracking Detail Report — `warehouse-tracking-detail` · Ready
 Warehouse Name, Item Code, Item Name, Batch/Serial No, Transaction Date, Quantity IN, Quantity OUT, Balance Quantity, Tracked Quantity, UnTracked Quantity, Total Quantity.
@@ -518,7 +570,28 @@ Warehouse Name, Item Code, Item Name, Batch/Serial No, Transaction Date, Quantit
 
 ### 8.4 Sales
 
-All Blocked: Sales — the fifteen `sal` tables are written but have no migration, no service and no controller.
+**One of these eight is built. The other seven are blocked** on the quote, order,
+invoice and delivery-challan documents — `CLAUDE.md` has the detail: the sixteen
+`sal` tables, their migration and their controllers exist, but the item and
+customer pickers on every sales form are still numeric id fields, and partial
+fulfilment (`DeliveredQuantity`, `InvoicedQuantity`) is deferred to T3.6. A
+reporting source needs a document it can trust to read, not just a table that
+exists.
+
+#### Sales Register — `sales-register` · Ready · 13 columns built, not in `reports.json`
+*Source:* `sal.SalesRegister` → `con.Contacts`
+
+Document Date, Document No, Transaction Type, Customer Name, Customer GSTIN, Supply
+Type, Taxable Amount, CGST, SGST, IGST, Cess, Total Amount.
+
+**Built ahead of the rest of Sales because it reads a different table.**
+`sal.SalesRegister` is a GST audit log, not a document — it gets one row whenever a
+sales document posts, with its own migration separate from the quote/order/invoice
+schema, precisely so GSTR-1 has something to file from before the rest of Sales is
+ready. Reporting reads that row directly rather than the invoice it came from,
+which is why this one report escapes the block the other seven are under. Like
+Account Movement, it is not one of the 46 catalogued reports — it exists because
+the table underneath it already did.
 
 | Report | Key | Columns |
 |---|---|---|
@@ -555,19 +628,59 @@ All Blocked: Fixed Assets — Phase 2 by decision of 4 August 2026, and blocked 
 
 These four are carried here so the register's schema is designed knowing what has to come out of it — *Averaging Method* and *Cost Limit* are columns nobody adds retrospectively without a migration.
 
-### 8.7 Summary
+### 8.7 The financial statements — spec'd, and mentioned nowhere until now
 
-| Module | Reports | Ready | Partial | Blocked |
-|---|---|---|---|---|
-| Accounting & banking | 9 | 7 | 2 | 0 |
-| Receivables / payables | 10 | 0 | 0 | 10 |
+**Balance Sheet, Profit & Loss, and Cash Flow Statement (Direct)** are three of the
+four members of `reports.json`'s own `"Finance"` group — the fourth is
+Reconciliation Report, filed under §8.1 above since it reads the same tables as
+everything else there. **Business Performance**, from a fifth raw group of its
+own (`"Financial performance"`), makes four. All four have **zero column rows**
+in the specification — nobody has designed what they show, only that they exist.
+
+**None of the four is blocked by anything.** They read `acc.Accounts`,
+`AccountTypes.ReportSection` (Asset/Liability/Equity/Income/Expense, seeded) and
+`acc.JournalLedger` — every table a Balance Sheet or P&L needs is built, migrated
+and posting today. They are **unscheduled**: absent from every stage in §9,
+absent from the R7 task list, absent from this catalog until this correction.
+That is a different kind of missing from the 26 reports blocked on Sales,
+Purchase or the fixed-asset register above — those are waiting on something.
+These are waiting on nobody, which is the case for treating them as the next
+piece of work rather than the last one.
+
+| Report | Key (proposed) | Note |
+|---|---|---|
+| Balance Sheet | `balance-sheet` | Asset = Liability + Equity, by `AccountTypes.ReportSection`, as at a date |
+| Profit & Loss | `profit-and-loss` | Income − Expense, by `ReportSection`, over a period |
+| Cash Flow Statement (Direct) | `cash-flow-direct` | Cash and cash-equivalent accounts only, direct method — receipts and payments, not a reconciliation from net income |
+| Business Performance | `business-performance` | No spec beyond the name. Needs a decision before it needs a source |
+
+### 8.8 Summary
+
+Counted from what is actually written in §8.1–8.7 above, not forced to reconcile
+against `reports.json`'s raw grouping — the two group reports differently on
+purpose (§8.2 mixes Sales- and Purchase-side receivables/payables into one
+domain; §8.1 keeps Reconciliation with the rest of accounting), and forcing a
+sub-total match between two taxonomies that cross-cut each other is how a wrong
+number ends up looking like an audited one. **Three of the totals below are extra
+reports beyond the 46 in the specification** — Account Movement, Warehouse
+Tracking Detail and Sales Register, each built because the table underneath it
+already existed, not because the spec asked for it. They are marked, not hidden.
+
+| Domain | Reports | Ready | Partial | Blocked / Unscheduled |
+|---|---:|---:|---:|---|
+| Accounting | 9 | 5 | 4 | 0 |
+| Receivables and payables | 10 | 0 | 0 | 10 blocked |
 | Inventory | 10 | 7 | 3 | 0 |
-| Sales | 7 | 0 | 0 | 7 |
-| Purchase | 5 | 0 | 0 | 5 |
-| Fixed assets | 4 | 0 | 0 | 4 |
-| **Total** | **45** | **14** | **5** | **26** |
+| Sales *(incl. Sales Register — extra)* | 8 | 1 | 0 | 7 blocked |
+| Purchase | 5 | 0 | 0 | 5 blocked |
+| Fixed assets | 4 | 0 | 0 | 4 blocked |
+| Financial statements | 4 | 0 | 0 | 4 unscheduled |
+| **Total documented** | **50** | **13** | **7** | **30** |
 
-Forty-five rather than forty-six after the Sales Order Tracking merge of §7.3.
+**Verified independently, and this is the number to quote:** `reports.json`
+specifies **46** distinct reports; **20** render today, three of them (marked
+above) outside that specification. Both counts came from diffing the catalog
+against the source files directly, not from summing this table.
 
 ---
 
