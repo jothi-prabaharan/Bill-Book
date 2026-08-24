@@ -14,7 +14,7 @@ Handles stock levels, reservations, adjustments, and the physical count of inven
   The fix is small and the machinery is already there — `StockService` joins an ambient transaction rather than opening its own, so a `BeginTransactionAsync` around the loop is enough. Tick this when the whole request is all-or-nothing, and `Posting_invoice_with_sales_order_releases_reservation` gains a sibling that fails the issue and asserts the reservation survives.
 - [x] **9.1 — Stock Adjustments:** Header and lines with reasons and approval routing.
 - [x] **9.2 — Physical Count:** Adjustments based on counted quantities.
-- [ ] **TBD — Expiry and Batch Tracking:** Manage batch dates and serials during stock movements.
+- [x] **TBD — Expiry and Batch Tracking:** Manage batch dates and serials during stock movements.
 # Inventory.md — how stock actually moves
 
 What happens to quantity, cost and the ledger when stock moves, step by step.

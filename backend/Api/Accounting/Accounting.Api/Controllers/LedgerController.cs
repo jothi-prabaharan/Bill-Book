@@ -81,4 +81,8 @@ public sealed class LedgerController : ControllerBase
     public async Task<IActionResult> OutstandingBalances(
         long contactId, int ledgerTypeId, CancellationToken ct) =>
         Ok(await _reports.GetOutstandingBalancesAsync(contactId, ledgerTypeId, ct));
+
+    [HttpGet("outstanding-balances/{ledgerTypeId:int}")]
+    public async Task<IActionResult> AllOutstandingBalances(int ledgerTypeId, CancellationToken ct) =>
+        Ok(await _reports.GetAllOutstandingBalancesAsync(ledgerTypeId, ct));
 }

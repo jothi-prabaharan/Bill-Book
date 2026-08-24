@@ -1,0 +1,26 @@
+<div class="page-container">
+  <div class="page-header">
+    <h1>Aged Receivables</h1>
+    <div class="page-actions">
+      <!-- Actions like print or export can go here -->
+    </div>
+  </div>
+
+  <bb-message-box [messages]="messages()"></bb-message-box>
+
+  <div class="page-content">
+    @if (isEmpty()) {
+      <div class="empty-state">
+        <p>No outstanding balances found.</p>
+      </div>
+    } @else {
+      <bb-data-grid
+        [columns]="columns"
+        [rows]="rows()"
+        [loading]="loading()"
+        [totalCount]="rows().length"
+        [pageSize]="rows().length">
+      </bb-data-grid>
+    }
+  </div>
+</div>

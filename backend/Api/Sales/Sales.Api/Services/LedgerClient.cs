@@ -12,8 +12,24 @@ namespace Sales.Api.Services;
 /// <c>CreditAmount</c> and includes the sub-account reference type that
 /// completes the key.
 /// </summary>
+
+public class OutstandingBalanceView
+{
+    public long ContactId { get; set; }
+    public string TransactionTypeCode { get; set; } = null!;
+    public long TransactionId { get; set; }
+    public string DocumentNo { get; set; } = null!;
+    public DateOnly DocumentDate { get; set; }
+    public DateOnly? DueDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    public decimal PaidAmount { get; set; }
+    public decimal OutstandingAmount { get; set; }
+}
+
 public interface ILedgerClient
 {
+    Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(int ledgerTypeId, CancellationToken ct);
+    Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(long contactId, int ledgerTypeId, CancellationToken ct);
     Task<PostLedgerOutcomeResult> PostAsync(PostLedgerRequest request, CancellationToken ct);
     Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct);
     Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct);
@@ -138,6 +154,56 @@ public sealed class LedgerClient : ILedgerClient
         }
     }
 
+
+    public async Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(int ledgerTypeId, CancellationToken ct)
+    {
+        try
+        {
+            var url = $"/api/accounting/ledger/outstanding-balances/{ledgerTypeId}";
+            var response = await _http.GetAsync(url, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+
+            var rows = await response.Content.ReadFromJsonAsync<List<OutstandingBalanceView>>(cancellationToken: ct);
+            return rows ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+        catch (TaskCanceledException)
+        {
+            return [];
+        }
+    }
+
+    public async Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(long contactId, int ledgerTypeId, CancellationToken ct)
+    {
+        try
+        {
+            var url = $"/api/accounting/ledger/contacts/{contactId}/outstanding-balances/{ledgerTypeId}";
+            var response = await _http.GetAsync(url, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return [];
+            }
+
+            var rows = await response.Content.ReadFromJsonAsync<List<OutstandingBalanceView>>(cancellationToken: ct);
+            return rows ?? [];
+        }
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+        catch (TaskCanceledException)
+        {
+            return [];
+        }
+    }
     public async Task<PostLedgerOutcomeResult> PostAsync(
         PostLedgerRequest request, CancellationToken ct)
     {

@@ -1,4 +1,4 @@
-import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent } from '@bill-book/ui-components';
+import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent, LookupDialogComponent, LookupRow } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -138,7 +138,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
 @Component({
   selector: 'bb-stock-page',
   standalone: true,
-  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
+  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent, LookupDialogComponent],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })
@@ -213,6 +213,70 @@ export class StockPage implements OnInit {
   belowReorderOnly = false;
 
   form = this.blankMovement();
+
+  protected readonly batchPickerOpen = signal(false);
+  protected readonly batchRows = signal<readonly LookupRow[]>([]);
+  protected readonly batchPickerLoading = signal(false);
+  private batchSearchToken = 0;
+
+  openBatchPicker(): void {
+    this.batchPickerOpen.set(true);
+    void this.onBatchSearch('');
+  }
+
+  async onBatchSearch(term: string): Promise<void> {
+    const token = ++this.batchSearchToken;
+    this.batchPickerLoading.set(true);
+
+    try {
+      const query = new URLSearchParams();
+      if (this.form.itemId) {
+        query.set('itemId', this.form.itemId.toString());
+      }
+      
+      const batches = await this.get<{ itemBatchId: number, batchNumber: string, expiryDate?: string, mrp?: number }[]>(`/internal/item-batches?${query}`);
+      const filtered = term ? batches.filter(b => (b.batchNumber || '').toLowerCase().includes(term.toLowerCase())) : batches;
+      
+      if (token === this.batchSearchToken) {
+        this.batchRows.set(filtered.map(b => ({
+          id: b.itemBatchId,
+          code: b.batchNumber,
+          name: b.expiryDate ? `Expires: ${b.expiryDate}` : 'No expiry',
+          meta: b.mrp ? `MRP: ${b.mrp}` : undefined
+        })));
+      }
+    } catch {
+      if (token === this.batchSearchToken) {
+        this.batchRows.set([]);
+      }
+    } finally {
+      if (token === this.batchSearchToken) {
+        this.batchPickerLoading.set(false);
+      }
+    }
+  }
+
+  onBatchChoose(row: LookupRow): void {
+    this.form.itemBatchId = row.id;
+    this.form.batchNumber = row.code;
+    
+    const expiryMatch = row.name.match(/Expires: (.*)/);
+    if (expiryMatch) {
+      this.form.batchExpiryDate = expiryMatch[1];
+    }
+    
+    const mrpMatch = row.meta?.match(/MRP: (.*)/);
+    if (mrpMatch) {
+      this.form.batchMrp = Number(mrpMatch[1]);
+    }
+    
+    this.closeBatchPicker();
+  }
+
+  closeBatchPicker(): void {
+    this.batchPickerOpen.set(false);
+    this.batchRows.set([]);
+  }
 
   ngOnInit(): void {
     void this.load();
@@ -392,6 +456,7 @@ export class StockPage implements OnInit {
       uomId: null as number | null,
       warehouseId: null as number | null,
       unitCost: null as number | null,
+      itemBatchId: null as number | null,
       batchNumber: null as string | null,
       batchExpiryDate: null as string | null,
       batchMrp: null as number | null,

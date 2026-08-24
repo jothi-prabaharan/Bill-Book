@@ -148,6 +148,7 @@ export class StockAdjustmentsPage implements OnInit {
     cols.push(
       { field: 'unitCost', header: 'Cost per unit', dataType: 'number' },
       { field: 'batchNumber', header: 'Batch' },
+      { field: 'batchExpiryDate', header: 'Expiry' },
       { field: 'notes', header: 'Note' },
       { field: 'actions', header: '' }
     );

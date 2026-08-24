@@ -79,6 +79,7 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<OutstandingService>();
 
 // Resolved from the concrete registration rather than registered separately, so
 // a request that touches both InvoicesController (the interface) and

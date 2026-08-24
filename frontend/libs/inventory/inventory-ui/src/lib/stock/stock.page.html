@@ -177,17 +177,33 @@
       }
 
       @if (item.isBatchTracked) {
-        <label>
-          Batch number
-          <bb-text-input  [(ngModel)]="form.batchNumber" maxlength="50" />
-          <small>An existing lot is reused; a new one is created.</small>
-        </label>
+        @if (form.direction === 'In') {
+          <label>
+            Batch number
+            <bb-text-input  [(ngModel)]="form.batchNumber" maxlength="50" />
+            <small>An existing lot is reused; a new one is created.</small>
+          </label>
+        } @else {
+          <div style="display: grid; gap: .25rem; font-size: .85rem; align-content: start;">
+            <span>Batch number</span>
+            <button
+              type="button"
+              style="padding: .5rem .9rem; border: 1px solid #cdd1dc; border-radius: 6px; background: #fff; color: inherit; text-align: left; font: inherit; cursor: pointer;"
+              (click)="openBatchPicker()"
+            >
+              {{ form.batchNumber || 'Choose a batch' }}
+            </button>
+            <small style="color: #8a8f9e; font-size: .72rem;">Choose the lot this was taken from.</small>
+          </div>
+        }
       }
 
       @if (item.isExpiryTracked) {
         <label>
           Batch expiry
-          <bb-date-input  [(ngModel)]="form.batchExpiryDate" />
+          <bb-date-input  
+            [(ngModel)]="form.batchExpiryDate" 
+            [required]="item.costingType === 'Fefo'" />
           <small>What FEFO orders by — the soonest to expire goes out first.</small>
         </label>
       }
@@ -373,3 +389,15 @@
     </div>
   </div>
 }
+
+<bb-lookup-dialog
+  [open]="batchPickerOpen()"
+  title="Choose a batch"
+  placeholder="Search by batch number"
+  emptyText="No batches found."
+  [rows]="batchRows()"
+  [loading]="batchPickerLoading()"
+  (searchChange)="onBatchSearch($event)"
+  (choose)="onBatchChoose($event)"
+  (dismiss)="closeBatchPicker()"
+/>

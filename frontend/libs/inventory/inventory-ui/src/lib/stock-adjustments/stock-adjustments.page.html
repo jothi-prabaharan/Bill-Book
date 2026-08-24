@@ -193,6 +193,13 @@
         />
       </ng-template>
 
+      <ng-template bbCellTemplate="batchExpiryDate" let-row let-index="index">
+        <bb-date-input
+          [(ngModel)]="row.batchExpiryDate"
+          [name]="'expiry' + index"
+        />
+      </ng-template>
+
       <ng-template bbCellTemplate="notes" let-row let-index="index">
         <bb-text-input
           

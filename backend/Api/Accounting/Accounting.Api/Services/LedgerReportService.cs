@@ -386,6 +386,49 @@ public sealed class LedgerReportService
             .ToListAsync(ct);
     }
 
+    public async Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(int ledgerTypeId, CancellationToken ct = default)
+    {
+        var ledgers = await _db.JournalLedger
+            .Where(l => l.ContactId != null && l.LedgerTypeId == ledgerTypeId)
+            .GroupBy(l => new { ContactId = l.ContactId!.Value, l.TransactionTypeCode, l.TransactionId })
+            .Select(g => new
+            {
+                g.Key.ContactId,
+                g.Key.TransactionTypeCode,
+                g.Key.TransactionId,
+                TotalDebit = g.Sum(x => x.DebitAmountBase),
+                TotalCredit = g.Sum(x => x.CreditAmountBase),
+                MinDate = g.Min(x => x.LedgerDate)
+            })
+            .ToListAsync(ct);
+
+        var result = new List<OutstandingBalanceView>();
+        foreach (var l in ledgers)
+        {
+            decimal totalAmount = l.TotalDebit;
+            decimal paidAmount = l.TotalCredit;
+            decimal outstanding = totalAmount - paidAmount;
+
+            if (Math.Abs(outstanding) > 0.01m)
+            {
+                result.Add(new OutstandingBalanceView
+                {
+                    ContactId = l.ContactId,
+                    TransactionTypeCode = l.TransactionTypeCode,
+                    TransactionId = l.TransactionId,
+                    DocumentNo = $"{l.TransactionTypeCode}-{l.TransactionId}", // fallback
+                    DocumentDate = l.MinDate,
+                    DueDate = null,
+                    TotalAmount = totalAmount,
+                    PaidAmount = paidAmount,
+                    OutstandingAmount = outstanding
+                });
+            }
+        }
+
+        return result.OrderBy(x => x.DocumentDate).ToList();
+    }
+
     public async Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(long contactId, int ledgerTypeId, CancellationToken ct = default)
     {
         var ledgers = await _db.JournalLedger
