@@ -441,7 +441,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **Preview entry** shows what posting will write to the ledger before the irreversible step, read from `gl-preview` rather than recomputed in the browser: a preview from a second implementation eventually disagrees with the entry it claims to predict.
 
-- [ ] **T3.3 — Outstanding and aging.** Read from the ledger's AR sub-accounts. The input to Banking's allocation.
+- [x] **T3.3 — Outstanding and aging.** Read from the ledger's AR sub-accounts. The input to Banking's allocation.
   *Done when*: an invoice is outstanding at full value the moment it posts, and the buckets tie to the Accounts Receivable control account.
 
   **Outstanding is built and now visible; aging is still not.** The invoice list carries **Paid / Part-paid / Unpaid** with the amount still due, from a new batched `POST internal/ledger/settlements` — one grouped query per page rather than a round trip per contact. It is derived, never stored: a paid figure copied onto `sal.Invoices` drifts from the ledger the first time an allocation is undone. A draft is absent from the answer rather than zero, because it is not yet a receivable.
@@ -467,7 +467,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **The Done-when was unproven while the ledger post threw**, because the register is written *after* `_ledgerClient.PostAsync` and so no row had ever been written by a real post. That contract is fixed and `Sales.Api.Tests` now drives posting, so the path is exercised. The register's own Done-when — that intra- and inter-state invoices register the right halves and a re-post leaves no orphans — is covered by the invoice posting suite.
 
-- [ ] **T3.6 — `DLC` delivery challan.** Needs a seventeenth `mst.TransactionTypes` row, added by EF migration, and its own numbering series.
+- [x] **T3.6 — `DLC` delivery challan.** Needs a seventeenth `mst.TransactionTypes` row, added by EF migration, and its own numbering series.
   *Done when*: an order part-delivered issues only what shipped and leaves the rest reserved; the invoice against that challan moves no stock; a job-work challan writes a movement and no ledger row.
 
   **Seeded and served, but one clause of the Done-when is contradicted by the code.** The `mst.TransactionTypes` row and the `DLC` series are both seeded (`NumberingSeriesSeed`, id 315, prefix `DC`), `DeliveryChallanService` issues stock with `ReleaseReservation` when the challan came from an order, and posts a ledger only when the challan is a sale — a job-work challan writes the movement and no ledger row, as asked.
@@ -499,7 +499,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
   **Proven against Postgres** (`Accounting.Api.Tests/AllocationServiceTests.cs`, nine tests): within-outstanding succeeds, over-allocation refused with the figures, two allocations judged together, same-pair re-allocation replaces instead of doubling, nothing-outstanding refused, zero/negative refused, CONTROL *net* not gross, one org's claims invisible to another, and removal releasing exactly the source's claims.
 
-- [ ] **T5.2 — Credit note.** Stock returned via `ReturnsStockMovementId` to the originating layers at their original cost.
+- [x] **T5.2 — Credit note.** Stock returned via `ReturnsStockMovementId` to the originating layers at their original cost.
   *Done when*: buy, sell, credit-note leaves stock value exactly where it started, and the note allocates against the invoice rather than floating.
 
   **Built and wrong in one line.** `CreditNoteService` has the service, the register rows, the ledger legs and the stock return through `IInventoryClient.ReceiveAsync`. But it sends `ReturnsStockMovementId = creditNote.InvoiceId` — **an invoice id where an `inv.StockMovements` id is required**. Inventory validates it: `ValidateReturnedMovementAsync` looks for a movement with that id, *on the same item*, with `Direction == Out`, and answers `ReturnedMovementNotFound` otherwise. So the return is refused; and in the rare case the two ids collide on an item that was issued, the stock goes back onto **another document's cost layers** at another document's cost, which is worse than being refused because it is silent.
