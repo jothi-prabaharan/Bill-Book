@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
@@ -5,7 +6,7 @@ import { marked } from 'marked';
 import { ALL_PAGES } from '../docs.manifest';
 
 /** Loads a markdown file from content/ and renders it. */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-doc-viewer',
   standalone: true,
   templateUrl: './doc-viewer.component.html',
@@ -48,3 +49,4 @@ export class DocViewerComponent {
     }
   }
 }
+

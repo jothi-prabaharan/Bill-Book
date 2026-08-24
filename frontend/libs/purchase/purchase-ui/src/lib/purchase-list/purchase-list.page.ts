@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject, OnInit } from '@angular/core';
 import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
@@ -5,7 +6,7 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purchase-core';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-purchase-list',
   standalone: true,
   imports: [DataGridComponent, CommonModule, RouterModule, FormsModule],
@@ -69,5 +70,6 @@ export class PurchaseListPage implements OnInit {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
   }
 }
+
 
 

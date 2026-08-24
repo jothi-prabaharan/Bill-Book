@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -86,7 +87,7 @@ const REASONS: readonly { value: string; label: string }[] = [
  * There is no void: a posted sheet has moved stock that physically moved, so the
  * correction is a mirror sheet.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-adjustments-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -423,3 +424,4 @@ export class StockAdjustmentsPage implements OnInit {
     );
   }
 }
+

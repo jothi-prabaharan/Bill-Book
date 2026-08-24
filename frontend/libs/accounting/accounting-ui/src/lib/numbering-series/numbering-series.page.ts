@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -53,7 +54,7 @@ type FormModel = Omit<
  * than as a field on the form, since it is the one edit that can collide with
  * codes already issued.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-numbering-series-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
@@ -424,3 +425,4 @@ export class NumberingSeriesPage implements OnInit {
     );
   }
 }
+

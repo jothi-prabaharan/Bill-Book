@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +28,7 @@ const PAGE_SIZE = 25;
  * At ~360px the grid becomes a card per order; the filters stack. Both are in
  * the stylesheet, and neither is a second template.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sales-order-list',
   standalone: true,
   imports: [
@@ -144,3 +145,4 @@ export class SalesOrderListComponent implements OnInit {
     }
   }
 }
+

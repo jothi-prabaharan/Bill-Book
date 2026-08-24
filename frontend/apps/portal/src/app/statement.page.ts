@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
@@ -19,7 +20,7 @@ interface StatementResponse {
   closingBalance: number;
 }
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-statement',
   standalone: true,
   imports: [CommonModule],
@@ -75,3 +76,4 @@ export class StatementPage implements OnInit {
     }
   }
 }
+

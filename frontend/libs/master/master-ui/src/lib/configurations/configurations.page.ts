@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -19,7 +20,7 @@ interface ConfigurationRow {
  * edits values and clears overrides; it cannot add or delete keys, because a
  * key nothing reads is dead data and a deleted key breaks whatever read it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-configurations-page',
   standalone: true,
   imports: [FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -98,3 +99,4 @@ export class ConfigurationsPage implements OnInit {
     );
   }
 }
+

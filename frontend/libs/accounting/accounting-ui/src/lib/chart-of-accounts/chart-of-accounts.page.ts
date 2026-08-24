@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -36,7 +37,7 @@ interface AccountType {
  * type, code and usage flags are frozen — only the display name, active state
  * and posting lock stay editable. IsJE is never shown: it is backend-only.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -221,3 +222,4 @@ export class ChartOfAccountsPage implements OnInit {
     );
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { LookupRow } from './lookup-row.model';
@@ -16,7 +17,7 @@ import { LookupRow } from './lookup-row.model';
  *
  * At ~360px the dialog becomes a full-screen sheet, per the house rule.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-lookup-dialog',
   standalone: true,
   imports: [FormsModule],
@@ -76,3 +77,4 @@ export class LookupDialogComponent {
     }
   }
 }
+

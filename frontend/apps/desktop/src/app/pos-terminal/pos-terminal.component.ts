@@ -1,9 +1,10 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { InvoiceService, SaveInvoiceRequest } from '@bill-book/sales-core';
 import { EscPosService } from './esc-pos.service';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pos-terminal',
   standalone: true,
   imports: [CommonModule],
@@ -54,3 +55,4 @@ export class PosTerminalComponent {
     console.log('Printing receipt. Bytes generated:', bytes.length);
   }
 }
+

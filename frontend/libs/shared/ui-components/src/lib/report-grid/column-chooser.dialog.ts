@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CdkDragDrop,
   DragDropModule,
@@ -18,7 +19,7 @@ import { ReportColumn } from '@bill-book/reporting-core';
  * the same CDK idiom the numbering-series screen uses, so the gesture is one the
  * product already teaches.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-column-chooser',
   standalone: true,
   imports: [FormsModule, DragDropModule],
@@ -80,3 +81,4 @@ export class ColumnChooserDialog {
     this.closed.emit();
   }
 }
+

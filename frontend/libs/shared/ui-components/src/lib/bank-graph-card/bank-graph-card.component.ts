@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -13,7 +14,7 @@ export interface BankAccountGraphData {
   metaText: string;
 }
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-graph-card',
   standalone: true,
   imports: [CommonModule],
@@ -22,3 +23,4 @@ export interface BankAccountGraphData {
 export class BankGraphCardComponent {
   @Input({ required: true }) account!: BankAccountGraphData;
 }
+

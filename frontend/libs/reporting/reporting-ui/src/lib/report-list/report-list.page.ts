@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ReportCatalogItem, ReportQueryService } from '@bill-book/reporting-core';
@@ -9,7 +10,7 @@ import { ReportCatalogItem, ReportQueryService } from '@bill-book/reporting-core
  * server leaves them out of the catalog, and a list of things you cannot have is
  * a worse screen besides.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-list-page',
   standalone: true,
   imports: [RouterLink],
@@ -52,3 +53,4 @@ export class ReportListPage implements OnInit {
     }
   }
 }
+

@@ -4,7 +4,7 @@ export const appRoutes: Route[] = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
   {
     path: 'login',
-    loadComponent: () => import('./login.page').then(m => m.LoginPage)
+    loadComponent: () => import('@bill-book/auth').then(m => m.LoginPage)
   },
   {
     path: 'dashboard',

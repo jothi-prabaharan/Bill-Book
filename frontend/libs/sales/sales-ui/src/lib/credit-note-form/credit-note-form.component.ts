@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,7 +14,7 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 const QTY_SCALE = 1_000_000;
 const PAISE = 100;
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, AllocationGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],

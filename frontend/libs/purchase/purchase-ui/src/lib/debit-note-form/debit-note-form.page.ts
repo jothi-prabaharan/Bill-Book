@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, signal } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -53,7 +54,7 @@ interface ReturnLine {
  * sends goods back. A price correction or a post-purchase discount reduces what
  * is owed while the goods stay on the shelf.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -461,5 +462,6 @@ export class DebitNoteFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 
 

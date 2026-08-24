@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -5,7 +6,7 @@ import { FormsModule } from '@angular/forms';
 import { TransactionService, SalesTransactionListItem } from '@bill-book/sales-core';
 import { DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sales-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, DataGridComponent, DataGridCellTemplateDirective],
@@ -62,3 +63,4 @@ export class SalesListComponent implements OnInit {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
   }
 }
+

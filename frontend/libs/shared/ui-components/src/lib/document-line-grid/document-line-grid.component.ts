@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -28,7 +29,7 @@ const RATE_SCALE = 10_000;
  *
  * At ~360px the grid becomes a card per line, per the house rule.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-document-line-grid',
   standalone: true,
   imports: [FormsModule],
@@ -280,3 +281,4 @@ export class DocumentLineGridComponent {
     this.linesChange.emit(lines);
   }
 }
+

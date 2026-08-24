@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
@@ -8,7 +9,7 @@ import { AuthService } from '../../auth.service';
  * OTP wizard: request → verify → reset. The request step always advances,
  * whether or not the account exists — never reveal which.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-forgot-password-page',
   standalone: true,
   imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
@@ -76,3 +77,4 @@ export class ForgotPasswordPage {
     }
   }
 }
+

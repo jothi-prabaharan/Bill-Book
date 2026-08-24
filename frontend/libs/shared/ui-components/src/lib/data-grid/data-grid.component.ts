@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   Component,
   Input,
@@ -19,7 +20,7 @@ import { DataGridService } from './data-grid.service';
 import { DataGridRowComponent } from './data-grid-row/data-grid-row.component';
 import { DataGridCellTemplateDirective } from './data-grid-cell-template.directive';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-data-grid, bb-data-table',
   standalone: true,
   imports: [CommonModule, FormsModule, DataGridRowComponent],
@@ -356,3 +357,4 @@ export class DataGridComponent implements OnInit {
     document.body.removeChild(link);
   }
 }
+

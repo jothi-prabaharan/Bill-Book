@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, input, output, signal, ElementRef, HostListener } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -19,7 +20,7 @@ export interface DocGroup {
  * Contains searchable organization switcher dropdown, display-only FY tag,
  * and action group buttons (`New`, `Favourites`, `Help`, `Sign out`).
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-topbar',
   standalone: true,
   imports: [RouterLink, FormsModule, SearchInputComponent],
@@ -182,3 +183,4 @@ export class ShellTopbarComponent {
     void this.router.navigateByUrl('/login');
   }
 }
+

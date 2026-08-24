@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -21,7 +22,7 @@ const CANDIDATE_PAGE = 100;
  * An unconfirmed order is holding no stock, so invoicing it would issue goods
  * nobody reserved; the server refuses that too, and says why.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-order-to-invoice-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],
@@ -142,3 +143,4 @@ function inDays(days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
+

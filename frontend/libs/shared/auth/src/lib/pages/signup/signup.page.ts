@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -10,7 +11,7 @@ import { AuthService } from '../../auth.service';
  * polls customer status until CanLogin — provisioning creates a physical
  * database, so this is eventually consistent.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-signup-page',
   standalone: true,
   imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
@@ -211,3 +212,4 @@ export class SignupPage implements OnInit {
     }
   }
 }
+

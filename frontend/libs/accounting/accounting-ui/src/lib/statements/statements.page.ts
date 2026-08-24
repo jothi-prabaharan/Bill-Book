@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -88,7 +89,7 @@ interface StatementLine {
  * than with a tidy full statement — the matched lines are the ones nobody needs
  * to look at.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statements-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, TextInputComponent, NumberInputComponent],
@@ -417,3 +418,4 @@ export class StatementsPage implements OnInit {
     );
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -12,7 +13,7 @@ import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-br
  * Coordinates fixed 56px left rail (`bb-shell-nav`), 46px top bar (`bb-shell-topbar`),
  * sticky breadcrumb strip (`bb-shell-breadcrumb`), and scrolling content viewport (`<router-outlet />`).
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell',
   standalone: true,
   imports: [
@@ -278,3 +279,4 @@ export class ShellComponent {
     void this.router.navigateByUrl('/login');
   }
 }
+

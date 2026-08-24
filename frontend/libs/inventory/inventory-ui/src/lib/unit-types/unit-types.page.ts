@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -38,7 +39,7 @@ interface UomType {
  * factor in the type, so it prompts — and the server refuses outright once any
  * item uses a unit of that type.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-unit-types-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
@@ -298,3 +299,4 @@ export class UnitTypesPage implements OnInit {
     );
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -42,7 +43,7 @@ interface TransferListItem {
  * one complicated is absent here, and a shared screen would carry the complexity
  * anyway.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-transfer-money-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -323,3 +324,4 @@ export class TransferMoneyPage implements OnInit {
     );
   }
 }
+

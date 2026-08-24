@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -31,7 +32,7 @@ import { SavedViewDialog } from '../saved-views/saved-view.dialog';
  * emit a changed copy; nothing below holds a second version, so two things can
  * never disagree about which page is showing.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-host-page',
   standalone: true,
   imports: [
@@ -215,3 +216,4 @@ export class ReportHostPage implements OnInit {
     return typeof body?.message === 'string' ? body.message : null;
   }
 }
+

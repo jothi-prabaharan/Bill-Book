@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Component, computed, input, output } from '@angular/core';
 import {
@@ -22,7 +23,7 @@ import {
  *
  * At ~360px the table becomes a card per row, per the house rule.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-grid',
   standalone: true,
   imports: [DecimalPipe],
@@ -238,3 +239,4 @@ export class ReportGridComponent {
     this.stateChange.emit(state);
   }
 }
+

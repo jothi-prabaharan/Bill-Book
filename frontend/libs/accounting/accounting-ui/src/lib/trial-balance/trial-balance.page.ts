@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -40,7 +41,7 @@ interface AccountType {
  * sound, so when they do not this page says so at the top in red rather than
  * showing a tidy table with a discrepancy buried in it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-trial-balance-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
@@ -132,3 +133,4 @@ export class TrialBalancePage implements OnInit {
     );
   }
 }
+

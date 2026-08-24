@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -46,7 +47,7 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
  * Handed straight through they do not throw — they compute a priced invoice as
  * an empty one.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [
@@ -400,3 +401,4 @@ function inDays(days: number): string {
   date.setDate(date.getDate() + days);
   return date.toISOString().slice(0, 10);
 }
+

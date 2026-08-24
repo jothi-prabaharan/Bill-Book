@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -34,7 +35,7 @@ interface PermissionGroup {
  * The matrix is 120 checkboxes, so modules are an accordion with select-all
  * per row and collapse to one module per screen on mobile.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-roles-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -191,3 +192,4 @@ export class RolesPage implements OnInit {
     );
   }
 }
+

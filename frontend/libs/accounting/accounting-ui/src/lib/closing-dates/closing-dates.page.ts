@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -42,7 +43,7 @@ interface Row {
  * everyone who keys documents while staying open to whoever has to make the
  * adjusting entries the close itself produced.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-closing-dates-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent],
@@ -190,3 +191,4 @@ export class ClosingDatesPage implements OnInit {
     );
   }
 }
+

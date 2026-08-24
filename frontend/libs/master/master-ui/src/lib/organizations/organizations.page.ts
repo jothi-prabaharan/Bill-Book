@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -49,7 +50,7 @@ type OrganizationForm = Omit<
  * written before the branch is usable, so a new branch stays "setting up" until
  * every service has seeded it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organizations-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -291,3 +292,4 @@ export class OrganizationsPage implements OnInit {
     );
   }
 }
+

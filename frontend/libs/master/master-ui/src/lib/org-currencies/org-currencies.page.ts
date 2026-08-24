@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -28,7 +29,7 @@ interface MasterCurrency {
  * yet enabled. The base currency is seeded active at org creation and cannot
  * be deactivated.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-org-currencies-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule],
@@ -140,3 +141,4 @@ export class OrgCurrenciesPage implements OnInit {
     );
   }
 }
+

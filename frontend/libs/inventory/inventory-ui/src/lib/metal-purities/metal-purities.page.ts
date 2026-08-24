@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -20,7 +21,7 @@ interface Purity {
  * metal rate — a wrong figure misprices every piece of that purity, so it is
  * frozen once an item uses it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-metal-purities-page',
   standalone: true,
   imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, TextInputComponent, NumberInputComponent],
@@ -183,3 +184,4 @@ export class MetalPuritiesPage implements OnInit {
     );
   }
 }
+

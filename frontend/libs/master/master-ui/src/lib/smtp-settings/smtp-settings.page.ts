@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -22,7 +23,7 @@ interface SmtpSettings {
  * resets. The password is write-only: it is never returned by the API, shown as
  * dots, and only sent when the user actually types a new one.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-smtp-settings-page',
   standalone: true,
   imports: [FormsModule, TextInputComponent, NumberInputComponent],
@@ -188,3 +189,4 @@ export class SmtpSettingsPage implements OnInit {
     );
   }
 }
+

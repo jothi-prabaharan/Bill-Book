@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { ColumnDef, DataGridComponent , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
@@ -122,7 +123,7 @@ interface LineForm {
  * has been measured from. After go-live the screen is a record of what was
  * brought across, and an error is corrected with a journal entry.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-opening-balance-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -493,3 +494,4 @@ export class OpeningBalancePage implements OnInit {
     );
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { FilterOperator, ReportColumn, ReportFilter } from '@bill-book/reporting-core';
@@ -15,7 +16,7 @@ import { arityOf, describeOperator, inputTypeFor, operatorsFor } from './filter-
  * replaces had neither, and a filter language nobody asked for is a parser nobody
  * maintains.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-filter-bar',
   standalone: true,
   imports: [FormsModule],
@@ -151,3 +152,4 @@ export class FilterBarComponent {
     }
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -19,7 +20,7 @@ interface Bank {
  * entered once and balances can be reported by bank rather than by whatever
  * each account happened to be called.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-banks-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -166,3 +167,4 @@ export class BanksPage implements OnInit {
     );
   }
 }
+

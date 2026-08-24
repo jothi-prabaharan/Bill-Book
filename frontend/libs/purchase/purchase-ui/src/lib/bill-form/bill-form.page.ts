@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +34,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
  * already on the shelf, so the bill clears the clearing account and moves
  * nothing; without one it does both jobs.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bill-form',
   standalone: true,
   imports: [
@@ -576,3 +577,4 @@ export class BillFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+

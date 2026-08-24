@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -47,7 +48,7 @@ const PAGE_SIZE = 50;
  * returns nothing at all. Without a count on screen that looks like a broken
  * search rather than an empty table.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-hsn-sac-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, SearchInputComponent],
@@ -161,3 +162,4 @@ export class HsnSacPage implements OnInit {
     });
   }
 }
+

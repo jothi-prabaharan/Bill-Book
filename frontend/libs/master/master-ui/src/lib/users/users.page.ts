@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -26,7 +27,7 @@ interface RoleOption {
  * User management. Adding a user sends an invitation email — a temporary
  * password is never issued. Mobile number is collected but not yet verified.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-users-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DatePipe, TextInputComponent],
@@ -150,3 +151,4 @@ export class UsersPage implements OnInit {
     );
   }
 }
+

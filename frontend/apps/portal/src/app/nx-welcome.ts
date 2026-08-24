@@ -1,7 +1,8 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-nx-welcome',
   imports: [CommonModule],
   template: `
@@ -870,3 +871,4 @@ nx g &#64;nx/angular:component ui/src/lib/button</pre>
   encapsulation: ViewEncapsulation.None,
 })
 export class NxWelcome {}
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +17,7 @@ export interface OutstandingBalanceView {
   outstandingAmount: number;
 }
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-form',
   standalone: true,
   imports: [CommonModule, FormsModule, NumberInputComponent],
@@ -169,3 +170,4 @@ export class AllocationFormComponent implements OnInit {
     this.closeForm.emit(false);
   }
 }
+

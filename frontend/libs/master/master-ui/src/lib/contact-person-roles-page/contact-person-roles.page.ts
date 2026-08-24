@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
 import { ContactPersonRolesList } from '../contact-person-roles/contact-person-roles.list';
 
@@ -13,7 +14,7 @@ import { ContactPersonRolesList } from '../contact-person-roles/contact-person-r
  * Both render <see cref="ContactPersonRolesList"/>, so there is one list and one
  * place to change its behaviour.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-page',
   standalone: true,
   imports: [ContactPersonRolesList],
@@ -21,3 +22,4 @@ import { ContactPersonRolesList } from '../contact-person-roles/contact-person-r
   styleUrl: './contact-person-roles.page.scss',
 })
 export class ContactPersonRolesPage {}
+

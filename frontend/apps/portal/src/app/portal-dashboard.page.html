@@ -1,0 +1,40 @@
+<main class="dashboard-container">
+  <header class="dashboard-header">
+    <h1>Dashboard</h1>
+    <p>Overview of your account status</p>
+  </header>
+
+  <div class="summary-cards" *ngIf="statement() as data">
+    <div class="bb-card summary-card">
+      <h3>Opening Balance</h3>
+      <p class="amount">{{ data.openingBalance | number:'1.2-2' }}</p>
+    </div>
+    
+    <div class="bb-card summary-card">
+      <h3>Total Billed</h3>
+      <p class="amount text-error">{{ totalBilled() | number:'1.2-2' }}</p>
+    </div>
+
+    <div class="bb-card summary-card">
+      <h3>Total Paid</h3>
+      <p class="amount text-success">{{ totalPaid() | number:'1.2-2' }}</p>
+    </div>
+
+    <div class="bb-card summary-card highlight">
+      <h3>Outstanding Balance</h3>
+      <p class="amount">{{ data.closingBalance | number:'1.2-2' }}</p>
+    </div>
+  </div>
+
+  <div *ngIf="loading()" class="loading-state">
+    <p>Loading your dashboard...</p>
+  </div>
+  
+  <div *ngIf="error()" class="error-message">
+    {{ error() }}
+  </div>
+
+  <div class="actions">
+    <a routerLink="/statement" class="bb-btn bb-btn-primary">View Detailed Statement</a>
+  </div>
+</main>

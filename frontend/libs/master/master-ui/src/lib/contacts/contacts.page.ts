@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -167,7 +168,7 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
  * (at least one person, exactly one default, one default address per type), so
  * the set has to arrive together.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, ContactPersonRolesDialog, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
@@ -948,3 +949,4 @@ export class ContactsPage implements OnInit {
   }
 
 }
+

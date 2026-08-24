@@ -1,10 +1,11 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, input, forwardRef, signal, inject, OnInit } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router, ActivatedRoute } from '@angular/router';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-master-select',
   standalone: true,
   imports: [CommonModule, FormsModule],
@@ -141,3 +142,4 @@ export class MasterSelectComponent implements ControlValueAccessor, OnInit {
     }
   }
 }
+

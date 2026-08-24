@@ -1,8 +1,9 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DOCS } from './docs.manifest';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-docs-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],
@@ -12,3 +13,4 @@ import { DOCS } from './docs.manifest';
 export class AppComponent {
   readonly docs = DOCS;
 }
+

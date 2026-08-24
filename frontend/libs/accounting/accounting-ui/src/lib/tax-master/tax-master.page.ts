@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -30,7 +31,7 @@ type Mode = 'create' | 'revise' | 'rename';
  * that applied then. Renaming is separate, because it is display-only and
  * therefore allowed on seeded rates.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-master-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -205,3 +206,4 @@ export class TaxMasterPage implements OnInit {
     );
   }
 }
+

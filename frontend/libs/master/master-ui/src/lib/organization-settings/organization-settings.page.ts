@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { TextInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -70,7 +71,7 @@ const MONTHS = [
  * converts to it, so changing it after anything has been posted would restate
  * the books. It is chosen when the branch is created and fixed thereafter.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organization-settings-page',
   standalone: true,
   imports: [FormsModule, TextInputComponent],
@@ -207,3 +208,4 @@ export class OrganizationSettingsPage implements OnInit {
     return (value ?? '').trim().length > 0;
   }
 }
+

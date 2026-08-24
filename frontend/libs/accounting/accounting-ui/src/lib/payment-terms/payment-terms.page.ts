@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -45,7 +46,7 @@ type FormModel = Pick<
  * "Net 30" is unambiguous, but "End of Month" and "day of next month" are not,
  * and a worked example settles it faster than any label.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payment-terms-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
@@ -304,3 +305,4 @@ export class PaymentTermsPage implements OnInit {
     );
   }
 }
+

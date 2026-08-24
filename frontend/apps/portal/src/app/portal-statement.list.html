@@ -1,0 +1,39 @@
+<main class="statement-container">
+  <header class="statement-header">
+    <h1>Account Ledger</h1>
+    <p>Your detailed transaction history</p>
+  </header>
+
+  <div class="bb-card">
+    <div class="statement-info" *ngIf="statement() as data">
+      <div class="info-row">
+        <span>Opening Balance:</span>
+        <strong>{{ data.openingBalance | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <bb-data-grid
+      [data]="transactions()"
+      [columns]="columns"
+      gridCode="portal-statement"
+      [pageSize]="25"
+      [totalCount]="transactions().length"
+    >
+      <ng-template bbCellTemplate="actions" let-row="row">
+        <button 
+          *ngIf="canDownload(row)"
+          class="bb-btn bb-btn-secondary" 
+          (click)="downloadDocument(row)">
+          Download
+        </button>
+      </ng-template>
+    </bb-data-grid>
+
+    <div class="statement-info footer-info" *ngIf="statement() as data">
+      <div class="info-row">
+        <span>Closing Balance:</span>
+        <strong>{{ data.closingBalance | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+  </div>
+</main>

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -47,7 +48,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
  * for the same rows. So the header is reactive and the lines stay with the
  * component that all nine share.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sales-order-form',
   standalone: true,
   imports: [
@@ -501,3 +502,4 @@ const BRANCH_STATE_FALLBACK = '33';
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+

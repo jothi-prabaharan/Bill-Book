@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -25,7 +26,7 @@ export interface ContactPersonRole {
  * setting a branch up will look for it. Two copies of this list would be two
  * places to fix the next behaviour change, and they would drift.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-list',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -172,3 +173,4 @@ export class ContactPersonRolesList implements OnInit {
     );
   }
 }
+

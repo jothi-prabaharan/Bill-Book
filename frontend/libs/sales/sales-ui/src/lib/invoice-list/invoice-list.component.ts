@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -28,7 +29,7 @@ const PAGE_SIZE = 25;
  * overdue — a draft owes nothing yet and a voided one never will — which is
  * decided on the server so the screen and a report cannot disagree about it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-invoice-list',
   standalone: true,
   imports: [
@@ -174,3 +175,4 @@ export class InvoiceListComponent implements OnInit {
     }
   }
 }
+

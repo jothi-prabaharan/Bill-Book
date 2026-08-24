@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -17,7 +18,7 @@ import {
  * Not offered below the tablet breakpoint: a matrix has no card form, and
  * shrinking one until it fits produces something nobody can read.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pivot-panel',
   standalone: true,
   imports: [FormsModule],
@@ -99,3 +100,4 @@ export class PivotPanelComponent {
     }
   }
 }
+

@@ -1,5 +1,5 @@
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
-import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
@@ -9,6 +9,7 @@ import { AuthService } from '../../auth.service';
  * (skipped automatically when there is exactly one).
  */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-login-page',
   standalone: true,
   imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],

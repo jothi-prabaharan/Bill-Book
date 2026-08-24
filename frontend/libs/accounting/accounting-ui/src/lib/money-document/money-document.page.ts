@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -108,7 +109,7 @@ interface LineForm {
  * one there is no sub-ledger to point at, and a payment against the bare control
  * account is exactly the posting that makes a contact statement stop tying.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-money-document-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, AllocationFormComponent],
@@ -670,3 +671,4 @@ export class MoneyDocumentPage implements OnInit {
     );
   }
 }
+

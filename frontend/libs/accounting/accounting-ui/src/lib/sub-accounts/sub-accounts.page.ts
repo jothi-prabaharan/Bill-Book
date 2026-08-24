@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -32,7 +33,7 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
  * The advances are the part of the control account that is not a trade balance,
  * which is exactly what a balance sheet has to report separately.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sub-accounts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, SearchInputComponent],
@@ -118,3 +119,4 @@ export class SubAccountsPage implements OnInit {
     );
   }
 }
+

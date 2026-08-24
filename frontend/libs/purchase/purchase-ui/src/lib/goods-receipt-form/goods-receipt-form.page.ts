@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, signal } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
@@ -47,7 +48,7 @@ interface ReceivingLine {
  * `Dr Inventory / Cr Goods Received Not Invoiced`, and the order it came against
  * moves toward closed.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-goods-receipt-form',
   standalone: true,
   imports: [DataGridComponent, 
@@ -693,5 +694,6 @@ export class GoodsReceiptFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+
 
 

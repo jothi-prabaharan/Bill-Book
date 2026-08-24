@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, input, output, signal } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
@@ -13,7 +14,7 @@ export interface BreadcrumbItem {
  * Sticky breadcrumbs (`z-index: 4`) replacing `<h1>` headers.
  * Provides dynamic route path resolution and action projection host (`<ng-content select="[bbShellActions], .acts" />`).
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-breadcrumb',
   standalone: true,
   imports: [RouterLink],
@@ -125,3 +126,4 @@ export class ShellBreadcrumbComponent {
     this.crumbClick.emit(crumb);
   }
 }
+

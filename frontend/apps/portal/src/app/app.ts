@@ -1,7 +1,8 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterModule],
   selector: 'bb-portal-root',
   templateUrl: './app.html',
@@ -10,3 +11,4 @@ import { RouterModule } from '@angular/router';
 export class App {
   protected title = 'portal';
 }
+

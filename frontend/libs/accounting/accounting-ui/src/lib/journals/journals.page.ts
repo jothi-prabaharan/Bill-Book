@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -78,7 +79,7 @@ interface LineForm {
  * with a save button — an entry is wrong until it is zero, and finding that out
  * at save time means finding it out after the typing is done.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-journals-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent, TextInputComponent, NumberInputComponent],
@@ -420,3 +421,4 @@ export class JournalsPage implements OnInit {
     );
   }
 }
+

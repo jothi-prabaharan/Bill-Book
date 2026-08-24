@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent, LookupDialogComponent, LookupRow } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -135,7 +136,7 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
  * There is deliberately no per-warehouse balance on this screen: stock is a
  * single shared pool, and a warehouse only says where a movement happened.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-page',
   standalone: true,
   imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent, LookupDialogComponent],
@@ -488,3 +489,4 @@ export class StockPage implements OnInit {
     );
   }
 }
+

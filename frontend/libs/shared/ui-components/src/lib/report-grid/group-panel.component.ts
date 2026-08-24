@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CdkDragDrop,
   DragDropModule,
@@ -19,7 +20,7 @@ const MAX_LEVELS = 3;
  * to show anyway. This panel therefore offers what the metadata marks groupable
  * and nothing else.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-group-panel',
   standalone: true,
   imports: [DragDropModule],
@@ -80,3 +81,4 @@ export class GroupPanelComponent {
     this.groupByChange.emit(order);
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , DateInputComponent } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
@@ -63,7 +64,7 @@ interface AccountType {
  * "Accounts Payable: −40,000" is a number every accountant has to stop and
  * translate.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-account-ledger-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
@@ -184,3 +185,4 @@ export class AccountLedgerPage implements OnInit {
     );
   }
 }
+

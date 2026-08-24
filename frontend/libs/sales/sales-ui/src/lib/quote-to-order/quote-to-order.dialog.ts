@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -19,7 +20,7 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
  * The server refuses the other two cases as well, and says why; this list exists
  * so that refusal is rare rather than routine.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-quote-to-order-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],
@@ -132,3 +133,4 @@ export class QuoteToOrderDialogComponent implements OnInit {
 function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../auth.service';
@@ -12,7 +13,7 @@ import { AuthService } from '../../auth.service';
  * date sits under an account that is perfectly valid, and sending that customer
  * to a billing page with nothing to pay is the wrong instruction.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-trial-expired-page',
   standalone: true,
   templateUrl: './trial-expired.page.html',
@@ -51,3 +52,4 @@ export class TrialExpiredPage {
     void this.router.navigateByUrl('/login');
   }
 }
+

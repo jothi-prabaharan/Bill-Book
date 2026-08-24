@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -43,7 +44,7 @@ type Picker = 'none' | 'vendor' | 'item';
  * `bb-lookup-dialog` both fetch nothing, so this page owns every HTTP call and
  * they stay testable without a server.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [
@@ -500,3 +501,4 @@ export class PurchaseOrderFormPage {
     return new Date().toISOString().slice(0, 10);
   }
 }
+

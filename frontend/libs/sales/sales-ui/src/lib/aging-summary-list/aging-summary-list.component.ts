@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { readApiFailure } from '@bill-book/api-client';
@@ -9,7 +10,7 @@ import {
   UiMessage,
 } from '@bill-book/ui-components';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-aging-summary-list',
   standalone: true,
   imports: [CommonModule, DataGridComponent, MessageBoxComponent],
@@ -55,3 +56,4 @@ export class AgingSummaryListComponent implements OnInit {
     }
   }
 }
+

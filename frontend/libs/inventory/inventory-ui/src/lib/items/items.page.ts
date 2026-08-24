@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { TextInputComponent , NumberInputComponent , SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -138,7 +139,7 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
  * tracking flags render read-only — every recorded quantity and cost was written
  * under them, so changing one would reinterpret history rather than correct it.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
   imports: [FormsModule, TextInputComponent, NumberInputComponent, SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective],
@@ -753,3 +754,4 @@ export class ItemsPage implements OnInit {
     );
   }
 }
+

@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -5,7 +6,7 @@ import { QuoteService, SaveQuoteRequest } from '@bill-book/sales-core';
 import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, TextInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-quote-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, TextInputComponent],
@@ -133,3 +134,4 @@ export class QuoteFormComponent implements OnInit {
     }
   }
 }
+

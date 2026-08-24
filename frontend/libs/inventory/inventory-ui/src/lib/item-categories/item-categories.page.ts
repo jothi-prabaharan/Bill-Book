@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -31,7 +32,7 @@ interface UomType {
  * independent. Changing a category's default never rewrites existing items:
  * that would restate costing on stock already held.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-item-categories-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -221,3 +222,4 @@ export class ItemCategoriesPage implements OnInit {
     );
   }
 }
+

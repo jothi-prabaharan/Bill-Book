@@ -1,3 +1,4 @@
+import { ChangeDetectionStrategy } from '@angular/core';
 import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
@@ -30,7 +31,7 @@ interface Warehouse {
  * and weighted average cost is company-wide, so nothing here splits inventory.
  * Per-warehouse quantities come from aggregating movements.
  */
-@Component({
+changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-warehouses-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],
@@ -239,3 +240,4 @@ export class WarehousesPage implements OnInit {
     );
   }
 }
+
