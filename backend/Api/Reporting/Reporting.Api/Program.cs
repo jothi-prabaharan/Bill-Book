@@ -110,6 +110,12 @@ builder.Services.AddScoped<IReportSource, WarehouseTrackingDetailSource>();
 builder.Services.AddScoped<IReportSource, SalesRegisterSource>();
 builder.Services.AddScoped<IReportSource, FxGainLossSource>();
 builder.Services.AddScoped<IReportSource, FxGainLossDetailsSource>();
+builder.Services.AddScoped<IReportSource, ArAgingSummarySource>();
+builder.Services.AddScoped<IReportSource, ApAgingSummarySource>();
+builder.Services.AddScoped<IReportSource, CustomerStatementSource>();
+builder.Services.AddScoped<IReportSource, VendorStatementSource>();
+builder.Services.AddScoped<IReportSource, PurchaseRegisterSource>();
+builder.Services.AddScoped<IReportSource, Gstr1SummarySource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

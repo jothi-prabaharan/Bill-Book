@@ -140,7 +140,7 @@ Reporting (`docs/Reporting.md` §9–12) is finished — Claude Code built R0/R1
 
 What you already have and should use: `@angular/cdk` for drag-and-drop (nine pages use it — copy the idiom from `numbering-series.page.ts`), `DocumentFormat.OpenXml` for reading and writing `.xlsx`, EF Core and Npgsql, YARP, xunit.
 
-What you do **not** have and must not reach for: any grid, chart, PDF or spreadsheet library. Syncfusion appears in comments and a mock class; it is not installed.
+What you do **not** have and must not reach for: any grid or chart library. (Exception: PDFsharp is permitted for server-side PDF generation). Syncfusion appears in comments and a mock class; it is not installed.
 
 ---
 

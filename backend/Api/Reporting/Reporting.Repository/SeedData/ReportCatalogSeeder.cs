@@ -727,8 +727,125 @@ public sealed class ReportCatalogSeeder
             ],
         },
 
+        new()
+        {
+            ReportKey = "ar-aging-summary",
+            Title = "Aged Receivables Summary",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 21,
+            Columns =
+            [
+                new("contactCode", "Contact Code", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("current", "Current", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days1_30", "1-30 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days31_60", "31-60 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days61_90", "61-90 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days90Plus", "90+ Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("contactId", "Contact ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        },
+        new()
+        {
+            ReportKey = "ap-aging-summary",
+            Title = "Aged Payables Summary",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 22,
+            Columns =
+            [
+                new("contactCode", "Contact Code", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("current", "Current", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days1_30", "1-30 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days31_60", "31-60 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days61_90", "61-90 Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("days90Plus", "90+ Days", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("total", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("contactId", "Contact ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        },
+        new()
+        {
+            ReportKey = "customer-statement",
+            Title = "Customer Statement",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 23,
+            Columns =
+            [
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("ledgerDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("transactionTypeCode", "Type", ColumnDataType.Text, IsDefault: true),
+                new("transactionDesc", "Description", ColumnDataType.Text, IsDefault: true),
+                new("debitAmountBase", "Debit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("creditAmountBase", "Credit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("balance", "Balance", ColumnDataType.Money, IsDefault: true),
+                new("contactId", "Contact ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        },
+        new()
+        {
+            ReportKey = "vendor-statement",
+            Title = "Vendor Statement",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 24,
+            Columns =
+            [
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("ledgerDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("transactionTypeCode", "Type", ColumnDataType.Text, IsDefault: true),
+                new("transactionDesc", "Description", ColumnDataType.Text, IsDefault: true),
+                new("debitAmountBase", "Debit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("creditAmountBase", "Credit", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("balance", "Balance", ColumnDataType.Money, IsDefault: true),
+                new("contactId", "Contact ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        },
+        new()
+        {
+            ReportKey = "purchase-register",
+            Title = "Purchase Register",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 25,
+            Columns =
+            [
+                new("transactionType", "Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true),
+                new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("vendorName", "Vendor Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("vendorGstin", "GSTIN", ColumnDataType.Text, IsDefault: true),
+                new("totalAmount", "Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("billId", "Bill ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        },
+        new()
+        {
+            ReportKey = "gstr1-summary",
+            Title = "GSTR-1 Summary",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 26,
+            Columns =
+            [
+                new("summaryType", "Summary Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true),
+                new("documentDate", "Date", ColumnDataType.Date, IsDefault: true),
+                new("customerGstin", "GSTIN", ColumnDataType.Text, IsDefault: true),
+                new("gstRate", "GST Rate", ColumnDataType.Number, IsDefault: true, IsGroupable: true),
+                new("taxableAmount", "Taxable Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("cgstAmount", "CGST", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("sgstAmount", "SGST", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("igstAmount", "IGST", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("cessAmount", "Cess", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum),
+                new("id", "ID", ColumnDataType.Number, IsFilterable: false, IsHidden: true)
+            ]
+        }
     ];
-
     private sealed class ReportSeed
     {
         public required string ReportKey { get; init; }
@@ -759,3 +876,4 @@ public sealed class ReportCatalogSeeder
         AggregateFunction Aggregate = AggregateFunction.None,
         ColumnAlignment Alignment = ColumnAlignment.Left);
 }
+

@@ -82,6 +82,10 @@ public class ReportingDbContext : TenantDbContext
 
     public DbSet<ContactLicenceRead> ContactLicences => Set<ContactLicenceRead>();
 
+    public DbSet<InvoiceRead> Invoices => Set<InvoiceRead>();
+    public DbSet<BillRead> Bills => Set<BillRead>();
+    public DbSet<InvoiceDetailTaxRead> InvoiceDetailTaxes => Set<InvoiceDetailTaxRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -196,6 +200,10 @@ public class ReportingDbContext : TenantDbContext
         MapRead<WarehouseRead>(modelBuilder, "Warehouses", "inv", e => e.WarehouseId);
         MapRead<UnitOfMeasureRead>(modelBuilder, "UnitsOfMeasure", "inv", e => e.UomId);
         MapRead<SalesRegisterRead>(modelBuilder, "SalesRegisters", "sal", e => e.SalesRegisterId);
+
+        MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);
+        MapRead<BillRead>(modelBuilder, "Bills", "pur", e => e.BillId);
+        MapRead<InvoiceDetailTaxRead>(modelBuilder, "InvoiceDetailTaxes", "sal", e => e.InvoiceDetailTaxId);
     }
 
     private static void MapRead<TEntity>(

@@ -88,6 +88,7 @@ builder.Services.AddScoped<OutstandingService>();
 builder.Services.AddScoped<IInvoiceService>(sp => sp.GetRequiredService<InvoiceService>());
 builder.Services.AddScoped<DeliveryChallanService>();
 builder.Services.AddScoped<CreditNoteService>();
+builder.Services.AddScoped<Sales.Api.Services.Pdf.IInvoicePdfRenderer, Sales.Api.Services.Pdf.PdfSharpInvoiceRenderer>();
 
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an

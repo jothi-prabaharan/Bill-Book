@@ -31,6 +31,12 @@ public class ReportSourceTests
     private static readonly SalesRegisterSource SalesRegister = new();
     private static readonly FxGainLossSource FxGainLoss = new();
     private static readonly FxGainLossDetailsSource FxGainLossDetails = new();
+    private static readonly ArAgingSummarySource ArAgingSummary = new();
+    private static readonly ApAgingSummarySource ApAgingSummary = new();
+    private static readonly CustomerStatementSource CustomerStatement = new();
+    private static readonly VendorStatementSource VendorStatement = new();
+    private static readonly PurchaseRegisterSource PurchaseRegister = new();
+    private static readonly Gstr1SummarySource Gstr1Summary = new();
 
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
@@ -65,6 +71,12 @@ public class ReportSourceTests
         SalesRegister,
         FxGainLoss,
         FxGainLossDetails,
+        ArAgingSummary,
+        ApAgingSummary,
+        CustomerStatement,
+        VendorStatement,
+        PurchaseRegister,
+        Gstr1Summary,
     ];
 
     [Theory]

@@ -475,7 +475,9 @@ public sealed class InvoicePostingTests
                 TimeProvider.System,
                 inventory,
                 ledger,
-                creditCheck);
+                creditCheck,
+                new StubFileStorage(),
+                new StubPdfRenderer());
 
             return new Harness(db, invoices, inventory, ledger, tenant);
         }
@@ -621,5 +623,18 @@ public sealed class InvoicePostingTests
     private sealed class StubFinancialYear : IFinancialYearProvider
     {
         public Task<int> GetStartMonthAsync(CancellationToken ct = default) => Task.FromResult(4);
+    }
+
+    private sealed class StubFileStorage : Shared.Kernel.Storage.IFileStorage
+    {
+        public Task<string> SaveAsync(string key, Stream content, string contentType, CancellationToken ct = default) => Task.FromResult(key);
+        public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) => Task.FromResult<Stream?>(null);
+        public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
+        public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) => Task.FromResult<Uri?>(null);
+    }
+
+    private sealed class StubPdfRenderer : Sales.Api.Services.Pdf.IInvoicePdfRenderer
+    {
+        public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model) => [];
     }
 }

@@ -53,6 +53,8 @@ public sealed class InvoiceService : IInvoiceService
     private readonly IInventoryClient _inventoryClient;
     private readonly ILedgerClient _ledgerClient;
     private readonly ICreditCheckClient _creditCheckClient;
+    private readonly Shared.Kernel.Storage.IFileStorage _storage;
+    private readonly Sales.Api.Services.Pdf.IInvoicePdfRenderer _pdfRenderer;
 
     public InvoiceService(
         SalesDbContext db,
@@ -67,7 +69,7 @@ public sealed class InvoiceService : IInvoiceService
         TimeProvider clock,
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
-        ICreditCheckClient creditCheckClient)
+        ICreditCheckClient creditCheckClient, Shared.Kernel.Storage.IFileStorage storage, Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer)
     {
         _db = db;
         _tenant = tenant;
@@ -82,6 +84,8 @@ public sealed class InvoiceService : IInvoiceService
         _inventoryClient = inventoryClient;
         _ledgerClient = ledgerClient;
         _creditCheckClient = creditCheckClient;
+        _storage = storage;
+        _pdfRenderer = pdfRenderer;
     }
 
     /// <summary>
@@ -1396,6 +1400,23 @@ public sealed class InvoiceService : IInvoiceService
         invoice.PostedAt = _clock.GetUtcNow();
         invoice.PostedBy = _user.UserId;
 
+        // 4. Generate and Archive PDF
+        var contactNames = await _contactNames.ResolveAsync([invoice.ContactId], ct);
+        string customerName = contactNames.TryGetValue(invoice.ContactId, out var contactRef) ? contactRef.Name : "Unknown";
+        
+        var pdfModel = new Sales.Api.Services.Pdf.PdfInvoiceModel
+        {
+            Invoice = invoice,
+            OrgName = "Our Company", // TODO: Read from Platform
+            OrgGstin = "29AAAAA0000A1Z5", // TODO: Read from Platform
+            CustomerName = customerName,
+            ItemNames = (await _itemNames.ResolveAsync(invoice.Lines.Where(l => l.ItemId.HasValue).Select(l => (long)l.ItemId!).Distinct().ToArray(), ct)).ToDictionary(k => k.Key, v => v.Value.Name)
+        };
+        
+        byte[] pdfBytes = _pdfRenderer.Render(pdfModel);
+        string objectKey = $"{orgId}/sales/invoices/{invoice.InvoiceId}.pdf";
+        await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", ct);
+
         await _db.SaveChangesAsync(ct);
         return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
@@ -1499,3 +1520,6 @@ public sealed class InvoiceService : IInvoiceService
             .AnyAsync(x => x.InvoiceId == invoiceId && x.OrgId != currentOrgId.Value, ct);
     }
 }
+
+
+

@@ -1,32 +1,118 @@
-using Microsoft.AspNetCore.Builder;
+using System.Text;
+using Customer.Repository;
+using Customer.Api.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using Shared.Kernel.Interfaces;
+using Shared.Kernel.Internal;
+using Shared.Kernel.Numbering;
+using Shared.Kernel.Persistence;
+using Shared.Kernel.Tenancy;
 
-// Customer is scaffolded, not built: no entities, no controllers, no pages.
-//
-// It is one service over what used to be two — CRM and the support helpdesk.
-// They share a subject (the person on the other side of the relationship) and
-// a lifecycle (a lead becomes a customer, a customer raises a ticket), so a
-// ticket wanting the campaign that won the account, or a lead wanting its open
-// tickets, is a join rather than an HTTP call. Its schema is cus.
-//
-// The name overlaps mst.Customers, which means the head office that holds the
-// account. This service is about the people that head office sells to and
-// supports — read Customer.Api as the trading relationship, mst.Customer as
-// the tenant.
-//
-// This file exists so the project compiles and the solution builds. It is a
-// host that starts and reports what it is — deliberately not a stub of the real
-// service, which would be a shape for someone to fill in without deciding
-// whether it is the right shape.
-//
-// Replace it wholesale when the service is built; copy the Program.cs of an
-// implemented service (Inventory is the fullest) rather than extending this.
-WebApplication app = WebApplication.CreateBuilder(args).Build();
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
-app.MapGet("/", () => Results.Ok(new
+builder.Host.UseDefaultServiceProvider(options =>
 {
-    service = "Customer",
-    status = "not implemented",
-}));
+    options.ValidateOnBuild = true;
+    options.ValidateScopes = true;
+});
+
+builder.Services.AddControllers();
+
+builder.Services.AddTransient<InternalKeyHandler>();
+
+builder.Services.AddOpenApi();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton(TimeProvider.System);
+
+builder.Services.AddScoped<TenantContext>();
+builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
+builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+builder.Services.AddScoped<RlsConnectionInterceptor>();
+builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
+builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
+
+builder.Services.AddDbContext<CustomerDbContext>((sp, options) =>
+{
+    ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
+    string connectionString = tenant.CustomerId is Guid customerId
+        ? sp.GetRequiredService<ITenantConnectionResolver>()
+            .ResolveAsync(customerId).GetAwaiter().GetResult()
+        : RequiredConnectionString("TenantFallback");
+
+    options.UseNpgsql(connectionString);
+    options.AddInterceptors(
+        sp.GetRequiredService<AuditSaveChangesInterceptor>(),
+        sp.GetRequiredService<RlsConnectionInterceptor>());
+});
+
+string signingKey = RequiredSetting("Jwt:SigningKey");
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "bill-book",
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "bill-book",
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+            ValidateLifetime = true,
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+// Add HostedService for database migrations only if there is a worker here
+// Actually, we don't need a worker for migrations, DatabaseMigrationService handles it.
+// I will need to define DatabaseMigrationService in Customer.Api or reference it if it's shared?
+// Let's check where DatabaseMigrationService lives. If it's in Inventory, I can remove it or copy it.
+// Actually, it usually lives in the Api project.
+// Let's leave it out until I check.
+
+WebApplication app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.UseMiddleware<TenantMiddleware>();
+
+app.MapControllers();
 
 app.Run();
 
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
+
+string RequiredConnectionString(string name) =>
+    builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
+            $"or via the ConnectionStrings__{name} environment variable.");
