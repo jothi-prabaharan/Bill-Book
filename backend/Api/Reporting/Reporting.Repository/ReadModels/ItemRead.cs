@@ -118,6 +118,8 @@ public class ItemRead : OrgScopedEntity
     public int DisplayOrder { get; set; }
 
     public bool IsActive { get; set; }
+
+    // CreatedAt is inherited from OrgScopedEntity → AuditableEntity — already available.
 }
 
 

@@ -48,6 +48,9 @@ public sealed class ItemSummarySource : ReportSource<ItemSummaryRow>
         ReportColumn.Of<ItemSummaryRow, long>("itemId", ColumnDataType.Number, r => r.ItemId, filterable: false),
     ];
 
+    /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
+    private const int ItemReference = 2;
+
     protected override IQueryable<ItemSummaryRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
         DateOnly? start = parameters.Date("from");
@@ -96,9 +99,26 @@ public sealed class ItemSummarySource : ReportSource<ItemSummaryRow>
                    Profit = null,
                    ClosingQuantity = openingQty + periodQty,
                    ClosingBalance = openingBal + periodBal,
-                   InventoryAccount = null,
-                   PurchaseAccount = null,
-                   SalesAccount = null
+                   InventoryAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Inventory")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   // Cost of Goods Sold — see ItemListSource for why "Purchase
+                   // Account" resolves to this one.
+                   PurchaseAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Cost of Goods Sold")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   SalesAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Sales Revenue")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
                };
     }
 

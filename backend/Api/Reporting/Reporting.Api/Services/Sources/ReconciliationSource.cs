@@ -36,6 +36,9 @@ public sealed class ReconciliationSource : ReportSource<ReconciliationRow>
         ReportColumn.Of<ReconciliationRow, string?>(
             "description", ColumnDataType.Text, r => r.Description),
 
+        ReportColumn.Of<ReconciliationRow, string>(
+            "currencyCode", ColumnDataType.Text, r => r.CurrencyCode, groupable: true),
+
         ReportColumn.Of<ReconciliationRow, decimal>(
             "amountIn", ColumnDataType.Money, r => r.AmountIn, AggregateFunction.Sum),
 
@@ -72,6 +75,8 @@ public sealed class ReconciliationSource : ReportSource<ReconciliationRow>
 
         return from l in lines
                join s in db.BankStatements on l.BankStatementId equals s.BankStatementId
+               join ba in db.BankAccounts on s.BankAccountId equals ba.BankAccountId into bankAccounts
+               from ba in bankAccounts.DefaultIfEmpty()
                select new ReconciliationRow
                {
                    BankStatementLineId = l.BankStatementLineId,
@@ -79,6 +84,7 @@ public sealed class ReconciliationSource : ReportSource<ReconciliationRow>
                    TransactionNo = l.MatchedTransactionId != null ? l.MatchedTransactionTypeCode + "-" + l.MatchedTransactionId : null,
                    Reference = l.ReferenceNo,
                    Description = l.Description,
+                   CurrencyCode = ba != null ? ba.CurrencyCode : "",
                    AmountIn = l.DepositAmount,
                    AmountOut = l.WithdrawalAmount,
                    Status = (StatementLineStatus)l.Status,
@@ -97,6 +103,7 @@ public sealed class ReconciliationRow
     public string? TransactionNo { get; set; }
     public string? Reference { get; set; }
     public string? Description { get; set; }
+    public string CurrencyCode { get; set; } = null!;
     public decimal AmountIn { get; set; }
     public decimal AmountOut { get; set; }
     public StatementLineStatus Status { get; set; }

@@ -52,6 +52,9 @@ public sealed class ItemDetailSource : ReportSource<ItemDetailRow>
         ReportColumn.Of<ItemDetailRow, long>("stockMovementId", ColumnDataType.Number, r => r.StockMovementId, filterable: false),
     ];
 
+    /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
+    private const int ItemReference = 2;
+
     protected override IQueryable<ItemDetailRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
         DateOnly? start = parameters.Date("from");
@@ -90,7 +93,11 @@ public sealed class ItemDetailSource : ReportSource<ItemDetailRow>
                    CostingMethod = i.CostingType.ToString(),
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown",
                    TransactionNo = m.SourceId != null ? m.SourceType + "-" + m.SourceId : null,
-                   Reference = null,
+                   // Built the same way TransactionNo two lines above is — the
+                   // movement carries no separate reference field, and every
+                   // other source in this product uses the source document's own
+                   // type-and-id as both.
+                   Reference = m.SourceId != null ? m.SourceType + "-" + m.SourceId : null,
                    Source = m.MovementType.ToString(),
                    QoHMovement = m.Quantity * sign,
                    ValueMovement = (m.TotalCost ?? 0m) * sign,
@@ -98,9 +105,30 @@ public sealed class ItemDetailSource : ReportSource<ItemDetailRow>
                    UnitSalePrice = null,
                    Margin = null,
                    ProfitPerItem = null,
-                   InventoryAccount = null,
-                   PurchaseAccount = null,
-                   SalesAccount = null,
+                   InventoryAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Inventory")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   // Cost of Goods Sold — see ItemListSource for why "Purchase
+                   // Account" resolves to this one; there is no separate system
+                   // account for a purchase under perpetual inventory.
+                   PurchaseAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Cost of Goods Sold")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   SalesAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Sales Revenue")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   // No per-item Adjustment account exists — a stock adjustment
+                   // posts to the item's own Inventory sub-account plus an
+                   // org-level adjustment account, not a fourth per-item one.
                    AdjustmentAccount = null
                };
     }

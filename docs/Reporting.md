@@ -440,21 +440,19 @@ The six audit columns come from `AuditableEntity`; the user names resolve from `
 | Opening Balance · Received · Spent · Closing Balance · Bank Revaluation | Money |
 | *(dynamic)* | — |
 
-#### Reconciliation Report — `reconciliation` · Partial · 9 columns built
-*Source:* `acc.BankStatement`, `acc.BankStatementLine`
+#### Reconciliation Report — `reconciliation` · Partial · 10 columns built
+*Source:* `acc.BankStatement`, `acc.BankStatementLine` → `acc.BankAccount`
 
 | Column | Type | Note |
 |---|---|---|
 | Transaction Date · Transaction No · Reference · Description | Date/Text | |
+| Currency Code | Text | the statement's bank account — groupable |
 | Amount In · Amount Out | Money | the bank statement's own two sides |
 | Status | Enum | Matched / Unmatched / Ignored — groupable |
 | Statement | Text | which imported statement the line came from — groupable |
 
-**Missing:** *CurrencyCode* and *Revalued Amount In* — a multi-currency bank
-account's statement lines carry no currency column today, so a branch with
-foreign-currency accounts cannot tell which currency a line reconciled in
-without opening the account. Not blocked on anything; nobody has added the
-join.
+**Still missing:** *Revalued Amount In* — the period-end revaluation job, same
+gap as the FX pair in §8.1. *CurrencyCode* is wired.
 
 *GroupBy* in the source list is not a column — it is the report's grouping parameter (by statement, by matched/unmatched). Recorded as a parameter.
 
@@ -509,23 +507,24 @@ The mirror of the above: Bill/DN No, Date, DueDate, *Paid From* rather than *Pai
 
 Item Code, Item Name, Item Group, Product Category, Inventory Type, Costing Method, Status, Date, Unit of Measurement, Purchase Description, Sales Description, Purchase Tax Rate, Sales Tax Rate, Inventory Account, Purchase Account, Sales Account, Quantity On Hand, Average Cost, Unit Cost Price, **Balance Qty**, **Unit Cost Price (FIFO)**, Unit Sale Price, Total Value, Quantity On Order, Quantity Received, Committed Quotes, Committed to DO.
 
-**Declared and rendering blank — two different reasons, worth telling apart:**
-- *Quantity on Order*, *Quantity Received*, *Committed Quotes*, *Committed to DO* — genuinely blocked, need `sal` and `pur` documents that don't exist yet.
-- *Purchase Tax Rate*, *Sales Tax Rate*, *Inventory Account*, *Purchase Account*, *Sales Account*, and *Date* — **not blocked by anything**. The column exists, the row property exists, and the query's projection simply never assigns them. Purchase/Sales Tax Rate need a join from the item's tax group to `acc.TaxMaster`; the three account columns need the item's own sub-accounts (`acc.SubAccounts` where `ReferenceType = Item`); `Date` needs one line (`DateOnly.FromDateTime(i.CreatedAt)`) that the source's own comment already names and nobody has written.
+**Blocked on `sal`/`pur`:** *Quantity on Order*, *Quantity Received*, *Committed Quotes*, *Committed to DO* — need documents that don't exist yet.
+**Wired:** *Purchase Tax Rate*/*Sales Tax Rate* (the item's tax group, effective-dated, split by direction — `acc.TaxMaster`), *Inventory Account*/*Purchase Account*/*Sales Account* (the item's own three sub-accounts, told apart by which control account provisioned them — see `AccountRead.AccountSystemName`; *Purchase Account* resolves to Cost of Goods Sold, since there is no separate system account for a purchase under perpetual inventory), and *Date* (the item's `CreatedAt`).
 
 #### Inventory Item Detail — `inventory-item-detail` · Partial · 24 columns built
-*Source:* `inv.StockMovement`, `inv.Item`
+*Source:* `inv.StockMovement`, `inv.Item`, `acc.SubAccounts` → `acc.Accounts`
 
 Date, Item Code, Item Name, Item Group, Product Category, Description, Contact Code, Contact Name, Costing Method, Unit of Measurement, Transaction No, Reference, Source, QoH Movement, Value Movement, Unit Cost Price, Unit Sale Price, Margin, Profit Per Item, Inventory Account, Purchase Account, Sales Account, Adjustment Account.
 
-**Blocked on `sal`:** *Unit Sale Price*, *Margin*, *Profit Per Item*.
-**Declared and rendering blank for no blocking reason:** *Contact Code*, *Contact Name*, *Reference*, and the four account columns — same shape as Item List above: the projection never assigns them, and `Reference` in particular is odd, since `TransactionNo` two lines above it is built from the exact same `SourceType`/`SourceId` fields.
+**Blocked on `sal`:** *Unit Sale Price*, *Margin*, *Profit Per Item* — need a sale.
+**Blocked on `sal`/`pur`:** *Contact Code*, *Contact Name* — a stock movement carries no contact of its own; one would come from the sale or purchase document behind it, and `inv.StockMovement`'s own read model has nothing to resolve.
+**Wired:** *Reference* (built the same way *Transaction No* is, from the movement's own source type and id), *Inventory Account*, *Purchase Account*, *Sales Account* — same resolution as Item List above.
+**No source exists for *Adjustment Account*** — a stock adjustment posts to the item's own Inventory sub-account plus an org-level adjustment account, not a fourth per-item one, so there is nothing to join to yet.
 
 #### Inventory Item Summary — `inventory-item-summary` · Partial · 23 columns built
 Item Code/Name/Group, Product Category, Inventory Type, Costing Method, Unit of Measurement, Opening Quantity, Opening Balance, Quantity Purchased, Purchases, Quantity Sold, Sales, Quantity Adjusted, Adjustments, COGS, Profit, Closing Quantity, Closing Balance, Inventory Account, Purchase Account, Sales Account.
 
 **Blocked on `sal`/`pur`:** Quantity Purchased, Purchases, Quantity Sold, Sales, COGS, Profit — the six figures that need a sales or purchase document.
-**Declared and rendering blank for no blocking reason:** the three account columns, same gap as the two reports above.
+**Wired:** the three account columns, same resolution as the two reports above.
 Adjustments and the opening/closing roll are readable and correct today.
 
 **One more gap across all three, worse than "declared and blank": *Organization* is spec'd for all three and not declared by any of them — no column, no row property, nothing.** Not blocked either; every row here is already `OrgId`-scoped to one branch, so the column would say the same thing on every row of a single-branch report. It matters only once a consolidated, cross-branch view exists — CLAUDE.md is explicit that is a deliberate read above the query filter, not a relaxed one, and nothing here is that yet. **Item List is also missing *Contact Name*, spec'd but not declared** — unlike Item Detail, where a row is one transaction with a counterparty, an Item List row is one item with no transaction in view, so there is no single contact a name column could show. Worth a parameter (a preferred-supplier filter) rather than a column, if it is wanted at all.

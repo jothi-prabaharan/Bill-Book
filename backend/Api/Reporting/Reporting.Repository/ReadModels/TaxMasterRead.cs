@@ -39,4 +39,9 @@ public class TaxMasterRead : OrgScopedEntity
     public DateOnly EffectiveFrom { get; set; }
 
     public DateOnly? EffectiveTo { get; set; }
+
+    /// <summary>A rate can apply to one direction, both, or — rarely — neither yet.</summary>
+    public bool IsSales { get; set; }
+
+    public bool IsPurchase { get; set; }
 }

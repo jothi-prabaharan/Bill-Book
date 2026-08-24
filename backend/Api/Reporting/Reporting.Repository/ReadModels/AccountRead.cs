@@ -26,6 +26,16 @@ public class AccountRead : OrgScopedEntity
     public string AccountName { get; set; }
     public long? ParentAccountId { get; set; }
 
+    /// <summary>
+    /// Null for an org's own accounts. Set only on the ten control accounts the
+    /// seed writes it onto — <c>SubAccountService</c> looks a parent up by this
+    /// name when it provisions a contact's, an item's or a tax rate's
+    /// sub-accounts, so a report resolving "which of an item's three
+    /// sub-accounts is the Inventory one" reads the same name rather than
+    /// guessing from <c>AccountName</c>, which an org is free to rename.
+    /// </summary>
+    public string? AccountSystemName { get; set; }
+
     public string? CurrencyCode { get; set; }
 
     public bool IsBank { get; set; }

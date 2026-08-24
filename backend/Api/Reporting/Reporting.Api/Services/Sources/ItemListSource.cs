@@ -36,8 +36,8 @@ public sealed class ItemListSource : ReportSource<ItemListRow>
         ReportColumn.Of<ItemListRow, string>("unitOfMeasurement", ColumnDataType.Text, r => r.UnitOfMeasurement, groupable: true),
         ReportColumn.Of<ItemListRow, string?>("purchaseDescription", ColumnDataType.Text, r => r.PurchaseDescription),
         ReportColumn.Of<ItemListRow, string?>("salesDescription", ColumnDataType.Text, r => r.SalesDescription),
-        ReportColumn.Of<ItemListRow, string?>("purchaseTaxRate", ColumnDataType.Text, r => r.PurchaseTaxRate),
-        ReportColumn.Of<ItemListRow, string?>("salesTaxRate", ColumnDataType.Text, r => r.SalesTaxRate),
+        ReportColumn.Of<ItemListRow, decimal?>("purchaseTaxRate", ColumnDataType.Percent, r => r.PurchaseTaxRate),
+        ReportColumn.Of<ItemListRow, decimal?>("salesTaxRate", ColumnDataType.Percent, r => r.SalesTaxRate),
         ReportColumn.Of<ItemListRow, string?>("inventoryAccount", ColumnDataType.Text, r => r.InventoryAccount),
         ReportColumn.Of<ItemListRow, string?>("purchaseAccount", ColumnDataType.Text, r => r.PurchaseAccount),
         ReportColumn.Of<ItemListRow, string?>("salesAccount", ColumnDataType.Text, r => r.SalesAccount),
@@ -68,8 +68,13 @@ public sealed class ItemListSource : ReportSource<ItemListRow>
         ReportColumn.Of<ItemListRow, long>("itemId", ColumnDataType.Number, r => r.ItemId, filterable: false),
     ];
 
+    /// <summary>SubAccountReferenceType.Item, in Accounting's enum this project does not reference.</summary>
+    private const int ItemReference = 2;
+
     protected override IQueryable<ItemListRow> Build(ReportParameters parameters, ReportingDbContext db)
     {
+        DateOnly today = DateOnly.FromDateTime(DateTime.UtcNow);
+
         return from i in db.Items
                join s in db.ItemStocks on i.ItemId equals s.ItemId into stocks
                from s in stocks.DefaultIfEmpty()
@@ -87,10 +92,49 @@ public sealed class ItemListSource : ReportSource<ItemListRow>
                    InventoryType = i.ItemType.ToString(),
                    CostingMethod = i.CostingType.ToString(),
                    Status = i.IsActive ? "Active" : "Inactive",
-                   Date = null, // Or from DateOnly.FromDateTime(i.CreatedAt) if available
+                   Date = i.CreatedAt.HasValue
+                       ? DateOnly.FromDateTime(i.CreatedAt!.Value.UtcDateTime)
+                       : (DateOnly?)null,
                    UnitOfMeasurement = u != null ? u.UomName : "Unknown",
                    PurchaseDescription = i.Description,
                    SalesDescription = i.Description,
+                   // The item's own tax group, effective-dated: the row in force
+                   // today, split by whether the item is bought or sold under it.
+                   PurchaseTaxRate = i.TaxGroupId == null ? null : db.TaxMasters
+                       .Where(tm => tm.TaxGroupId == i.TaxGroupId!.Value && tm.IsPurchase
+                           && tm.EffectiveFrom <= today
+                           && (tm.EffectiveTo == null || tm.EffectiveTo >= today))
+                       .OrderByDescending(tm => tm.EffectiveFrom)
+                       .Select(tm => (decimal?)tm.TotalRate)
+                       .FirstOrDefault(),
+                   SalesTaxRate = i.TaxGroupId == null ? null : db.TaxMasters
+                       .Where(tm => tm.TaxGroupId == i.TaxGroupId!.Value && tm.IsSales
+                           && tm.EffectiveFrom <= today
+                           && (tm.EffectiveTo == null || tm.EffectiveTo >= today))
+                       .OrderByDescending(tm => tm.EffectiveFrom)
+                       .Select(tm => (decimal?)tm.TotalRate)
+                       .FirstOrDefault(),
+                   // The item's own three sub-accounts, told apart by which
+                   // control account they were provisioned under — see
+                   // SubAccountService.ProvisionAsync and AccountRead.AccountSystemName.
+                   InventoryAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Inventory")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   PurchaseAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Cost of Goods Sold")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
+                   SalesAccount = db.SubAccounts
+                       .Where(sa => sa.ReferenceType == ItemReference && sa.ReferenceId == i.ItemId)
+                       .Join(db.Accounts, sa => sa.AccountId, a => a.AccountId, (sa, a) => a)
+                       .Where(a => a.AccountSystemName == "Sales Revenue")
+                       .Select(a => a.AccountName)
+                       .FirstOrDefault(),
                    QuantityOnHand = s != null ? s.QuantityOnHand : 0m,
                    AverageCost = s != null ? s.WeightedAverageCost : 0m,
                    UnitCostPrice = i.PurchasePrice,
@@ -130,9 +174,17 @@ public sealed class ItemListRow
     public string UnitOfMeasurement { get; set; } = null!;
     public string? PurchaseDescription { get; set; }
     public string? SalesDescription { get; set; }
-    public string? PurchaseTaxRate { get; set; }
-    public string? SalesTaxRate { get; set; }
+    public decimal? PurchaseTaxRate { get; set; }
+    public decimal? SalesTaxRate { get; set; }
     public string? InventoryAccount { get; set; }
+
+    /// <summary>
+    /// The item's Cost of Goods Sold sub-account. There is no separate "Purchase"
+    /// system account under perpetual inventory — a purchase debits Inventory
+    /// directly (CLAUDE.md: "Purchase: Dr Inventory / Cr Accounts Payable") — so
+    /// this is the closest real account to what the column name asks for: where
+    /// this item's cost moves to when it is sold.
+    /// </summary>
     public string? PurchaseAccount { get; set; }
     public string? SalesAccount { get; set; }
     public decimal? QuantityOnHand { get; set; }
