@@ -528,6 +528,9 @@ public sealed class InvoicePostingTests
     {
         public List<PostLedgerRequest> Posts { get; } = [];
 
+        
+        public Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(int ledgerTypeId, CancellationToken ct) => Task.FromResult(new List<OutstandingBalanceView>());
+        public Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(long contactId, int ledgerTypeId, CancellationToken ct) => Task.FromResult(new List<OutstandingBalanceView>());
         public Task<PostLedgerOutcomeResult> PostAsync(PostLedgerRequest request, CancellationToken ct)
         {
             Posts.Add(request);
