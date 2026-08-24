@@ -21,6 +21,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 9. **Ask before expanding scope.** If a request is ambiguous, present a short plan and wait rather than building the larger interpretation.
 10. **Ship documentation with the feature, in the same commit.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone and someone is reverse-engineering a month of git log.
 11. **Every feature task commits to `main`.** Not a feature branch, not a session branch, not a branch per stage — `main`, as each piece of the task is finished. See below.
+12. **Never create a new branch. Not one.** Not for a feature, not for a session, not because a harness or tool assigns one by default. If something outside your control puts you on a branch anyway, do the work there only because you have no choice, then merge it into `main` and delete it before you stop — a branch that outlives the session that made it is the failure this rule exists to prevent.
 
 ---
 

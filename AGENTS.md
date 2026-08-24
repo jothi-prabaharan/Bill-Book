@@ -103,7 +103,7 @@ Also, without exception: **PascalCase table and column names** matching the C# p
 
 ## Branch
 
-**Everything commits to `main`. There is no other branch.**
+**Everything commits to `main`. There is no other branch. Never create a new branch — not one.** Not for a feature, not for a task, not because a tool or harness assigns one by default. If something outside your control puts you on a branch anyway, treat it as a mistake to correct rather than a place to keep working: do only what you cannot avoid there, then merge it into `main` and delete the branch before you stop. This happened once already — a session was assigned `claude/project-status-review-4us30i` by its harness, worked there for a stretch, and the branch had to be reconciled and merged back afterward. Don't repeat it.
 
 ```
 git pull origin main      # before you start, every time
