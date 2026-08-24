@@ -450,6 +450,8 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 - [ ] **T3.4 — Print and archive.** Syncfusion server-side PDF, PDF/A, blob storage keyed by `SourceType` + `SourceId`.
 
+  **Moved Phase 1 → Phase 2 on 24 August 2026, by decision** — see Roadmap in `CLAUDE.md`. Nothing below changes: the archive half was already blocked on the Syncfusion licensing decision, not on priority, so the move records where the task sits rather than unblocking it.
+
   **Half built, and the half that is missing is blocked on a decision rather than on work.**
 
   **Done:** a proper tax-invoice layout at `/sales/invoices/{id}/print` — both GSTINs, place of supply, HSN per line, the tax split **per component and per rate** (one figure per component misstates the return the moment a bill mixes slabs — 3% bullion beside 18% making charges), the total in words with Indian grouping, and `@media print` rules that drop the app chrome and avoid breaking a row across sheets. A draft prints watermarked PROFORMA and a voided one VOID, because a draft handed over as a tax invoice is a document somebody may try to claim credit on. `amountInWords` lives in `libs/shared/currency-format` and the seller block comes from `OrganizationService` in `libs/master/master-core`, so every printed document in the product shares both.
@@ -514,7 +516,7 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
 
 ### T7 — POS · **Phase 3**
 
-**Moved Phase 1 → Phase 3 on 15 August 2026, by decision.** The boxes below are kept rather than deleted, and nothing about the design changes — only when it is built.
+**Moved Phase 1 → Phase 3 on 15 August 2026, by decision.** The boxes below are kept rather than deleted, and nothing about the design changes — only when it is built. **T7.3 moved again, Phase 3 → Phase 2, on 24 August 2026** — see Roadmap in `CLAUDE.md`. T7.1 and T7.2 stay in Phase 3 below.
 
 It was the most expensive stage left in Phase 1 and the least shared with anything else: the till screen is the bulk of it, keyboard- and barcode-driven, offline-tolerant, and it lives in `apps/desktop`, which is still a scaffold with no source. The receipt is ESC/POS commands rather than PDF and prints only from the desktop app, so none of the document printing already built applies.
 
@@ -527,9 +529,11 @@ It was the most expensive stage left in Phase 1 and the least shared with anythi
   **Not built.** No POS controller, service or endpoint in `Sales.Api`. It reuses T3.1's posting, which is itself blocked on the leg contract.
 
 - [ ] **T7.2 — POS screen.** Keyboard and barcode driven, offline-tolerant, in `apps/desktop`. The bulk of the stage.
-- [ ] **T7.3 — ESC/POS receipt.** Commands, not PDF. Desktop only — a browser cannot reach a USB or serial printer.
+- [ ] **T7.3 — ESC/POS receipt · Phase 2.** Commands, not PDF. Desktop only — a browser cannot reach a USB or serial printer.
 
   **Source exists for both and neither is built.** `apps/desktop/src/app/pos-terminal/` holds `pos-terminal.component.{ts,html,scss}` and `esc-pos.service.ts`. **`apps/desktop/project.json` declares `"targets": {}`** and `desktop` appears in neither `tsconfig.base.json` nor `nx.json`, so nothing compiles, typechecks or lints this code — `npm run check` passes over it without reading it. Treat it as a sketch: it has never been through a compiler, and there is no API behind it either way.
+
+  **T7.3 alone moved to Phase 2 on 24 August 2026** (T7.1 and T7.2 stay Phase 3, above). The relabel does not make it buildable: T7.1 has to post a sale and T7.2 has to exist to trigger the print before T7.3 has anything to do.
 
 ---
 

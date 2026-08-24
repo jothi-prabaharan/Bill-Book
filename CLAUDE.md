@@ -418,8 +418,8 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 ## Roadmap
 
 **Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, tenant provisioning
-**Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients
-**Phase 3** — **POS (till API, screen, ESC/POS receipt)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+**Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients, **document print & PDF/A archive (T3.4)**, **report Excel/CSV export**, **POS ESC/POS receipt printing (T7.3)**
+**Phase 3** — **POS (till API, screen)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
 
 *POS moved Phase 1 → Phase 3 on 15 August 2026, by decision. Its stage — T7 in [`docs/modules/Sales.md`](./docs/modules/Sales.md) — stays where it is, boxes kept rather than deleted.*
 
@@ -432,6 +432,12 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 *Fixed assets moved Phase 1 → Phase 2 on 4 August 2026, by decision. It was blocked twice over anyway: an asset is capitalised from the bill that bought it, and the bill does not exist yet; and both of its schema-shaping decisions are still open — whether acquisition and disposal get transaction codes of their own, and straight-line only versus books **and** tax depreciation. See Stage T10 in `TRANSACTIONS-ACCOUNTING-BANKING.md`, whose boxes are kept rather than deleted.*
 
 *The consequence to carry: **the opening balance cannot migrate a fixed asset** until the register exists. One comes across as a plain account balance, with no cost, life or schedule of its own, and "migrated assets skip historical depreciation" defers with the register.*
+
+*Document print & archive (T3.4) moved Phase 1 → Phase 2 on 24 August 2026, by decision. The print half already works — `/sales/invoices/{id}/print` renders a full tax-invoice layout, watermarks drafts and voided documents, and splits GST per component and per rate. What stays undone is the PDF/A copy to blob storage, and it stays undone because Syncfusion — the library this project intends to use — is licensed and not installed; `Directory.Packages.props` names it only in a comment. Moving the archive half to Phase 2 does not change that blocker, it only says when engineering picks the decision back up. See T3.4 in [`docs/Sales.md`](./docs/Sales.md).*
+
+*Report Excel/CSV export moved Phase 1 → Phase 2 on 24 August 2026, by decision, as a roadmap label only — the code is already built and shipped: `ExcelReportWriter` and CSV export live in `Reporting.Api` today, proven by `ExcelReportWriterTests`. This records where the next round of export work sits in priority, not that the existing export stopped working.*
+
+*T7.3 — POS ESC/POS receipt printing — moved Phase 3 → Phase 2 on 24 August 2026, by decision. Phase 3's POS entry now names only the till API and screen (T7.1, T7.2); T7.3 is called out separately because the receipt printer is genuinely separable — it talks ESC/POS, not PDF, and only from `apps/desktop`, unreachable from a browser regardless of when it is built. Carry the caveat: the sketch that exists today (`pos-terminal.component.*`, `esc-pos.service.ts`) has never compiled — `apps/desktop/project.json` declares `"targets": {}` and the app is in neither `tsconfig.base.json` nor `nx.json`, so `npm run check` passes over it without reading it. Relabeling it Phase 2 does not make it buildable, and T7.1/T7.2 still have to exist first for there to be a sale to print a receipt for. See T7 in [`docs/Sales.md`](./docs/Sales.md).*
 
 ---
 
