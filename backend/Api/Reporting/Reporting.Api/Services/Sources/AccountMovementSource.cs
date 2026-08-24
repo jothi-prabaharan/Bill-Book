@@ -67,7 +67,7 @@ public sealed class AccountMovementSource : ReportSource<AccountMovementRow>
             "source", ColumnDataType.Text, r => r.Source, groupable: true),
 
         ReportColumn.Of<AccountMovementRow, long>(
-            "accountId", ColumnDataType.Number, r => r.AccountId),
+            "accountId", ColumnDataType.Number, r => r.AccountId, filterable: false),
     ];
 
     protected override IQueryable<AccountMovementRow> Build(

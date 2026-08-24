@@ -94,7 +94,7 @@ public sealed class JournalReportSource : ReportSource<JournalReportRow>
             "modifiedAt", ColumnDataType.DateTime, r => r.ModifiedAt),
 
         ReportColumn.Of<JournalReportRow, string>(
-            "status", ColumnDataType.Enum, r => r.Status.ToString()),
+            "status", ColumnDataType.Enum, r => r.Status.ToString(), groupable: true),
 
         ReportColumn.Of<JournalReportRow, long>(
             "journalDetailId", ColumnDataType.Number, r => r.JournalDetailId, filterable: false),
@@ -118,11 +118,18 @@ public sealed class JournalReportSource : ReportSource<JournalReportRow>
             journals = journals.Where(j => j.JournalDate <= to);
         }
 
+        // A contact does not sit on the line directly — it sits behind the
+        // sub-account the line posted to, and only when that sub-account's
+        // ReferenceType is Contact. Joining SubAccountId straight to ContactId, as
+        // an earlier version of this did, compares two different id spaces and
+        // matches almost nothing. A correlated subquery reads the same way
+        // AccountTransactionSource's tax lookup does, rather than a second LEFT
+        // JOIN keyed off a value that only exists when the first one matched.
+        const int contactReference = 1; // SubAccountReferenceType.Contact
+
         return from j in journals
                join l in db.JournalDetails on j.JournalId equals l.JournalId
                join a in db.Accounts on l.AccountId equals a.AccountId
-               join c in db.Contacts on l.SubAccountId equals c.ContactId into contacts
-               from c in contacts.DefaultIfEmpty()
                select new JournalReportRow
                {
                    JournalDetailId = l.JournalDetailId,
@@ -134,7 +141,13 @@ public sealed class JournalReportSource : ReportSource<JournalReportRow>
                    Transactions = j.TransactionTypeCode,
                    AccountCode = a.AccountCode,
                    AccountName = a.AccountName,
-                   ContactName = c != null ? c.DisplayName : null,
+                   ContactName = db.SubAccounts
+                       .Where(s => s.SubAccountId == l.SubAccountId
+                           && s.ReferenceType == contactReference)
+                       .SelectMany(s => db.Contacts
+                           .Where(c => c.ContactId == s.ReferenceId)
+                           .Select(c => c.DisplayName))
+                       .FirstOrDefault(),
                    Currency = j.CurrencyCode,
                    ExchangeRate = j.ExchangeRate,
                    DebitSource = l.DebitAmount,

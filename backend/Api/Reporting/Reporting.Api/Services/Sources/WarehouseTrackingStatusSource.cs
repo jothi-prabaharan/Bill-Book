@@ -7,6 +7,13 @@ namespace Reporting.Api.Services.Sources;
 
 public sealed class WarehouseTrackingStatusSource : ReportSource<WarehouseTrackingStatusRow>
 {
+    private readonly BatchedNameResolver _resolver;
+
+    public WarehouseTrackingStatusSource(BatchedNameResolver resolver)
+    {
+        _resolver = resolver;
+    }
+
     public override string ReportKey => "warehouse-tracking-status";
 
     public override string Title => "Warehouse Tracking Status Report";
@@ -20,10 +27,17 @@ public sealed class WarehouseTrackingStatusSource : ReportSource<WarehouseTracki
         ReportColumn.Of<WarehouseTrackingStatusRow, string>("warehouseName", ColumnDataType.Text, r => r.WarehouseName),
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("address", ColumnDataType.Text, r => r.Address),
         ReportColumn.Of<WarehouseTrackingStatusRow, string?>("city", ColumnDataType.Text, r => r.City, groupable: true),
-        ReportColumn.Of<WarehouseTrackingStatusRow, int?>("state", ColumnDataType.Number, r => r.StateId),
-        ReportColumn.Of<WarehouseTrackingStatusRow, int?>("country", ColumnDataType.Number, r => r.CountryId),
-        ReportColumn.Of<WarehouseTrackingStatusRow, bool>("primary", ColumnDataType.Enum, r => r.Primary),
-        ReportColumn.Of<WarehouseTrackingStatusRow, bool>("status", ColumnDataType.Enum, r => r.Status),
+
+        // StateId and CountryId are cross-database ids into mst.States and
+        // mst.Countries — resolved to names after the page is fetched, the same
+        // batched way every other cross-database name on these reports is. A raw
+        // FK on a report a person reads is a bug, not a smaller version of the
+        // right answer.
+        ReportColumn.Of<WarehouseTrackingStatusRow, string?>("state", ColumnDataType.Text, r => r.State, groupable: true),
+        ReportColumn.Of<WarehouseTrackingStatusRow, string?>("country", ColumnDataType.Text, r => r.Country, groupable: true),
+
+        ReportColumn.Of<WarehouseTrackingStatusRow, bool>("primary", ColumnDataType.Boolean, r => r.Primary),
+        ReportColumn.Of<WarehouseTrackingStatusRow, bool>("status", ColumnDataType.Boolean, r => r.Status),
         ReportColumn.Of<WarehouseTrackingStatusRow, decimal>("quantityIn", ColumnDataType.Quantity, r => r.QuantityIn, AggregateFunction.Sum),
         ReportColumn.Of<WarehouseTrackingStatusRow, decimal>("quantityOut", ColumnDataType.Quantity, r => r.QuantityOut, AggregateFunction.Sum),
         ReportColumn.Of<WarehouseTrackingStatusRow, decimal>("availableQuantity", ColumnDataType.Quantity, r => r.AvailableQuantity, AggregateFunction.Sum),
@@ -53,6 +67,26 @@ public sealed class WarehouseTrackingStatusSource : ReportSource<WarehouseTracki
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<WarehouseTrackingStatusRow, long>>)(r => r.WarehouseId);
+
+    protected override async Task FormatRowsAsync(
+        IReadOnlyList<WarehouseTrackingStatusRow> page, CancellationToken ct)
+    {
+        Dictionary<int, string> states = await _resolver.GetStateNamesAsync(ct);
+        Dictionary<int, string> countries = await _resolver.GetCountryNamesAsync(ct);
+
+        foreach (WarehouseTrackingStatusRow row in page)
+        {
+            if (row.StateId is int stateId && states.TryGetValue(stateId, out string? stateName))
+            {
+                row.State = stateName;
+            }
+
+            if (row.CountryId is int countryId && countries.TryGetValue(countryId, out string? countryName))
+            {
+                row.Country = countryName;
+            }
+        }
+    }
 }
 
 public sealed class WarehouseTrackingStatusRow
@@ -62,7 +96,9 @@ public sealed class WarehouseTrackingStatusRow
     public string? Address { get; set; }
     public string? City { get; set; }
     public int? StateId { get; set; }
+    public string? State { get; set; }
     public int? CountryId { get; set; }
+    public string? Country { get; set; }
     public bool Primary { get; set; }
     public bool Status { get; set; }
     public decimal QuantityIn { get; set; }

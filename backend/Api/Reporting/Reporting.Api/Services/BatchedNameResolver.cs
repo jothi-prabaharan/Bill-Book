@@ -54,6 +54,38 @@ public sealed class BatchedNameResolver
 
     public sealed record AccountTypeDto(int AccountTypeId, string SystemName, string DisplayName, string NormalBalance, string ReportSection, int SortOrder);
 
+    /// <summary>Gets the display name for every state, cached since they are fixed reference data.</summary>
+    public async Task<Dictionary<int, string>> GetStateNamesAsync(CancellationToken ct = default)
+    {
+        return await _cache.GetOrCreateAsync("StateNames", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+            var response = await _client.GetAsync("internal/master/states", ct);
+            response.EnsureSuccessStatusCode();
+
+            var states = await response.Content.ReadFromJsonAsync<List<StateDto>>(cancellationToken: ct);
+            return states?.ToDictionary(s => s.StateId, s => s.StateName) ?? new Dictionary<int, string>();
+        }) ?? new Dictionary<int, string>();
+    }
+
+    public sealed record StateDto(int StateId, int CountryId, string StateCode, string StateName);
+
+    /// <summary>Gets the display name for every country, cached since they are fixed reference data.</summary>
+    public async Task<Dictionary<int, string>> GetCountryNamesAsync(CancellationToken ct = default)
+    {
+        return await _cache.GetOrCreateAsync("CountryNames", async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
+            var response = await _client.GetAsync("internal/master/countries", ct);
+            response.EnsureSuccessStatusCode();
+
+            var countries = await response.Content.ReadFromJsonAsync<List<CountryDto>>(cancellationToken: ct);
+            return countries?.ToDictionary(c => c.CountryId, c => c.CountryName) ?? new Dictionary<int, string>();
+        }) ?? new Dictionary<int, string>();
+    }
+
+    public sealed record CountryDto(int CountryId, string CountryCode, string CountryName);
+
     /// <summary>
     /// Gets the full account types for use in financial statements.
     /// </summary>

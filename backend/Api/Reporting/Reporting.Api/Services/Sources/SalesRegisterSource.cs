@@ -45,7 +45,9 @@ public sealed class SalesRegisterSource : ReportSource<SalesRegisterRow>
         ReportColumn.Of<SalesRegisterRow, decimal>("sgstAmount", ColumnDataType.Money, r => r.SgstAmount, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<SalesRegisterRow, decimal>("igstAmount", ColumnDataType.Money, r => r.IgstAmount, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<SalesRegisterRow, decimal>("cessAmount", ColumnDataType.Money, r => r.CessAmount, aggregate: AggregateFunction.Sum),
-        ReportColumn.Of<SalesRegisterRow, decimal>("totalAmount", ColumnDataType.Money, r => r.TotalAmount, aggregate: AggregateFunction.Sum)
+        ReportColumn.Of<SalesRegisterRow, decimal>("totalAmount", ColumnDataType.Money, r => r.TotalAmount, aggregate: AggregateFunction.Sum),
+
+        ReportColumn.Of<SalesRegisterRow, long>("id", ColumnDataType.Number, r => r.Id, filterable: false),
     ];
 
     protected override IQueryable<SalesRegisterRow> Build(ReportParameters parameters, ReportingDbContext db)

@@ -26,7 +26,7 @@ public class ReportSourceTests
     private static readonly BatchTrackingDetailSource BatchTrackingDetail = new();
     private static readonly SerialTrackingStatusSource SerialTrackingStatus = new();
     private static readonly SerialTrackingDetailSource SerialTrackingDetail = new();
-    private static readonly WarehouseTrackingStatusSource WarehouseTrackingStatus = new();
+    private static readonly WarehouseTrackingStatusSource WarehouseTrackingStatus = new(OfflineResolver());
     private static readonly WarehouseTrackingDetailSource WarehouseTrackingDetail = new();
     private static readonly SalesRegisterSource SalesRegister = new();
     private static readonly FxGainLossSource FxGainLoss = new();
@@ -100,6 +100,21 @@ public class ReportSourceTests
         Assert.All(
             source.Columns.Where(c => c.IsGroupable),
             column => Assert.Equal(typeof(string), column.ValueType));
+
+    [Theory]
+    [MemberData(nameof(Sources))]
+    public void Every_boolean_valued_column_is_typed_boolean(IReportSource source)
+    {
+        // A C# bool declared as anything else — Enum was the mistake found here —
+        // renders as the literal words "True"/"False" instead of "Yes"/"No", and
+        // offers the wrong filter operators: a multi-select built for a fixed set
+        // of named values instead of the three-state Equals/IsNull/IsNotNull a
+        // boolean actually needs. There is exactly one correct type for a bool.
+        foreach (ReportColumn column in source.Columns.Where(c => c.ValueType == typeof(bool)))
+        {
+            Assert.Equal(Entity.Enums.ColumnDataType.Boolean, column.DataType);
+        }
+    }
 
     [Theory]
     [MemberData(nameof(Sources))]

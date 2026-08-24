@@ -71,4 +71,34 @@ public sealed class InternalMasterController : ControllerBase
 
         return Ok(types);
     }
+
+    /// <summary>
+    /// Every state. 37-odd rows and fixed, so a report resolving a warehouse's
+    /// state id reads the whole table once and caches it, the same as account
+    /// types, rather than one round trip per warehouse.
+    /// </summary>
+    [HttpGet("states")]
+    public async Task<IActionResult> GetStates(CancellationToken ct)
+    {
+        var states = await _db.States
+            .Where(s => s.IsActive)
+            .OrderBy(s => s.StateName)
+            .Select(s => new { s.StateId, s.CountryId, s.StateCode, s.StateName })
+            .ToListAsync(ct);
+
+        return Ok(states);
+    }
+
+    /// <summary>Every country. Same shape and the same reason as <see cref="GetStates"/>.</summary>
+    [HttpGet("countries")]
+    public async Task<IActionResult> GetCountries(CancellationToken ct)
+    {
+        var countries = await _db.Countries
+            .Where(c => c.IsActive)
+            .OrderBy(c => c.CountryName)
+            .Select(c => new { c.CountryId, c.CountryCode, c.CountryName })
+            .ToListAsync(ct);
+
+        return Ok(countries);
+    }
 }
