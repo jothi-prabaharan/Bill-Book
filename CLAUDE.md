@@ -418,9 +418,11 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 ## Roadmap
 
-**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, multi-currency, RBAC, org settings, tenant provisioning
-**Phase 2** — **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients, **document print & PDF/A archive (T3.4)**, **report Excel/CSV export**, **POS ESC/POS receipt printing (T7.3)**
+**Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, multi-currency, RBAC, org settings, tenant provisioning
+**Phase 2** — **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients, **document print & PDF/A archive (T3.4)**, **report Excel/CSV export**, **POS ESC/POS receipt printing (T7.3)**
 **Phase 3** — **POS (till API, screen)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
+  
+*Reports moved Phase 1 → Phase 2 on 24 August 2026, by decision.*
 
 *POS moved Phase 1 → Phase 3 on 15 August 2026, by decision. Its stage — T7 in [`docs/modules/Sales.md`](./docs/modules/Sales.md) — stays where it is, boxes kept rather than deleted.*
 
