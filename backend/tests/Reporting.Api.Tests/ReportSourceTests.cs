@@ -13,7 +13,7 @@ public class ReportSourceTests
 {
     private static readonly AccountMovementSource Movement = new(OfflineResolver());
     private static readonly AccountTransactionSource AccountTransaction = new();
-    private static readonly TrialBalanceSource TrialBalance = new();
+    private static readonly TrialBalanceSource TrialBalance = new(OfflineResolver());
     private static readonly GeneralLedgerSummarySource GeneralLedgerSummary = new();
     private static readonly JournalReportSource JournalReport = new(OfflineResolver());
     private static readonly BankSummarySource BankSummary = new(OfflineResolver());

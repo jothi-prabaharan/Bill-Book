@@ -20,6 +20,13 @@ namespace Reporting.Api.Services.Sources;
 /// </summary>
 public sealed class TrialBalanceSource : ReportSource<TrialBalanceRow>
 {
+    private readonly BatchedNameResolver _resolver;
+
+    public TrialBalanceSource(BatchedNameResolver resolver)
+    {
+        _resolver = resolver;
+    }
+
     public override string ReportKey => "trial-balance";
 
     public override string Title => "Trial Balance";
@@ -41,6 +48,13 @@ public sealed class TrialBalanceSource : ReportSource<TrialBalanceRow>
 
         ReportColumn.Of<TrialBalanceRow, string>(
             "accountName", ColumnDataType.Text, r => r.AccountName, groupable: true),
+
+        // Asset, Liability, Equity, Income or Expense. It lives in
+        // `mst.AccountTypes` — another database — so the id travels on the row and
+        // the name is filled in after the page is fetched, batched, the way every
+        // cross-database name on these reports is.
+        ReportColumn.Of<TrialBalanceRow, string?>(
+            "accountType", ColumnDataType.Enum, r => r.AccountType, groupable: true),
 
         ReportColumn.Of<TrialBalanceRow, decimal>(
             "debit", ColumnDataType.Money, r => r.Debit, AggregateFunction.Sum),
@@ -89,6 +103,7 @@ public sealed class TrialBalanceSource : ReportSource<TrialBalanceRow>
                    AccountId = a.AccountId,
                    AccountCode = a.AccountCode,
                    AccountName = a.AccountName,
+                   AccountTypeId = a.AccountTypeId,
                    Debit = legs.Sum(l => l.DebitAmountBase),
                    Credit = legs.Sum(l => l.CreditAmountBase),
                    CurrentBalance =
@@ -98,6 +113,25 @@ public sealed class TrialBalanceSource : ReportSource<TrialBalanceRow>
 
     protected override LambdaExpression DefaultOrder =>
         (Expression<Func<TrialBalanceRow, long>>)(r => r.AccountId);
+
+    /// <summary>
+    /// One call for the whole page, not one per row. There are five account types
+    /// and they never change, so the resolver caches them — but a per-row lookup
+    /// would still be five hundred awaits on a five-hundred-account chart.
+    /// </summary>
+    protected override async Task FormatRowsAsync(
+        IReadOnlyList<TrialBalanceRow> page, CancellationToken ct)
+    {
+        Dictionary<int, string> types = await _resolver.GetAccountTypeNamesAsync(ct);
+
+        foreach (TrialBalanceRow row in page)
+        {
+            if (types.TryGetValue(row.AccountTypeId, out string? typeName))
+            {
+                row.AccountType = typeName;
+            }
+        }
+    }
 }
 
 /// <summary>One account's totals.</summary>
@@ -108,6 +142,11 @@ public sealed class TrialBalanceRow
     public string AccountCode { get; set; } = null!;
 
     public string AccountName { get; set; } = null!;
+
+    /// <summary>Resolved to <see cref="AccountType"/> after the page is fetched.</summary>
+    public int AccountTypeId { get; set; }
+
+    public string? AccountType { get; set; }
 
     public decimal Debit { get; set; }
 

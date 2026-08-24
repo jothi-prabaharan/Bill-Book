@@ -124,6 +124,21 @@ public sealed class ReportCatalogSeeder
     /// column to a source without adding it here breaks that report rather than
     /// quietly omitting the column, which is the intended trade.
     /// </summary>
+    /// <summary>
+    /// Every seeded report key with the column keys beneath it.
+    ///
+    /// <b>Exposed so a test can compare this list against what the sources
+    /// declare.</b> The two are already compared at run time — <c>Validate</c>
+    /// refuses a report whose columns and seed rows disagree — but that only fires
+    /// when somebody opens the report, on a branch with data, which in practice
+    /// means a customer finds it. A column added to a source and not to this file
+    /// should fail the build instead.
+    /// </summary>
+    public static IReadOnlyDictionary<string, IReadOnlyList<string>> SeededColumnKeys =>
+        Catalog.ToDictionary(
+            r => r.ReportKey,
+            r => (IReadOnlyList<string>)[.. r.Columns.Select(c => c.Key)]);
+
     private static IReadOnlyList<ReportSeed> Catalog =>
     [
         new()
@@ -137,6 +152,8 @@ public sealed class ReportCatalogSeeder
             Columns =
             [
                 new("date", "Date", ColumnDataType.Date, IsDefault: true, IsPrimary: true),
+                new("accountType", "Account Type", ColumnDataType.Enum,
+                    IsDefault: true, IsGroupable: true),
                 new("accountCode", "Account Code", ColumnDataType.Text, IsDefault: true,
                     IsGroupable: true),
                 new("account", "Account", ColumnDataType.Text, IsDefault: true,
@@ -172,10 +189,17 @@ public sealed class ReportCatalogSeeder
                     IsGroupable: true),
                 new("account", "Account", ColumnDataType.Text, IsDefault: true,
                     IsGroupable: true),
+                new("relatedAccount", "Related Account", ColumnDataType.Text,
+                    IsGroupable: true),
                 new("contactCode", "Contact Code", ColumnDataType.Text),
                 new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true),
                 new("description", "Description", ColumnDataType.Text, IsDefault: true),
                 new("reference", "Reference", ColumnDataType.Text),
+                new("taxRate", "Tax Rate", ColumnDataType.Percent,
+                    Alignment: ColumnAlignment.Right),
+                new("taxRateName", "Tax Rate Name", ColumnDataType.Text,
+                    IsGroupable: true),
+                new("permitNo", "Permit No", ColumnDataType.Text),
                 new("currency", "Currency", ColumnDataType.Text, IsGroupable: true),
                 new("exchangeRate", "ExchangeRate", ColumnDataType.Rate,
                     Alignment: ColumnAlignment.Right),
@@ -206,6 +230,8 @@ public sealed class ReportCatalogSeeder
                     IsPrimary: true),
                 new("accountName", "Account Name", ColumnDataType.Text, IsDefault: true,
                     IsGroupable: true, IsPrimary: true),
+                new("accountType", "Account Type", ColumnDataType.Enum,
+                    IsDefault: true, IsGroupable: true),
                 new("debit", "Debit", ColumnDataType.Money, IsDefault: true,
                     Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
                 new("credit", "Credit", ColumnDataType.Money, IsDefault: true,
@@ -363,6 +389,10 @@ public sealed class ReportCatalogSeeder
                 new("quantityOnHand", "Quantity On Hand", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
                 new("averageCost", "Average Cost", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
                 new("unitCostPrice", "Unit Cost Price", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("balanceQty", "Balance Qty", ColumnDataType.Quantity,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitCostPriceFifo", "Unit Cost Price (FIFO)", ColumnDataType.Money,
+                    Alignment: ColumnAlignment.Right),
                 new("unitSalePrice", "Unit Sale Price", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
                 new("totalValue", "Total Value", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
                 new("quantityOnOrder", "Quantity On Order", ColumnDataType.Quantity, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
@@ -655,6 +685,46 @@ public sealed class ReportCatalogSeeder
                 new("ledgerId", "Ledger", ColumnDataType.Number, IsHidden: true),
             ],
         },
+        new()
+        {
+            ReportKey = "sales-register",
+            Title = "Sales Register",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            Description =
+                "Every taxable supply with its CGST, SGST, IGST and cess — the register GSTR-1 is filed from.",
+            SortOrder = 100,
+            Columns =
+            [
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true,
+                    IsPrimary: true),
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true,
+                    IsPrimary: true),
+                new("transactionType", "Transaction Type", ColumnDataType.Text,
+                    IsDefault: true, IsGroupable: true, IsPivotable: true),
+                new("customerName", "Customer Name", ColumnDataType.Text, IsDefault: true,
+                    IsGroupable: true),
+                new("customerGstin", "Customer GSTIN", ColumnDataType.Text, IsDefault: true),
+                // Intra-state against inter-state. It is what decides CGST+SGST
+                // against IGST, so a return that groups by it is checking the one
+                // determination the whole filing turns on.
+                new("supplyType", "Supply Type", ColumnDataType.Text, IsDefault: true,
+                    IsGroupable: true, IsPivotable: true),
+                new("taxableAmount", "Taxable Amount", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("cgstAmount", "CGST", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("sgstAmount", "SGST", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("igstAmount", "IGST", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("cessAmount", "Cess", ColumnDataType.Money,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true,
+                    Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+
     ];
 
     private sealed class ReportSeed

@@ -29,6 +29,13 @@ namespace Reporting.Api.Services.Sources;
 /// </summary>
 public sealed class AccountTransactionSource : ReportSource<AccountTransactionRow>
 {
+    /// <summary>
+    /// <c>SubAccountReferenceType.Tax</c>. Written as a literal because this
+    /// project deliberately does not reference Accounting's enums — the read
+    /// models carry the underlying integers for the same reason.
+    /// </summary>
+    private const int TaxReference = 3;
+
     public override string ReportKey => "account-transaction";
 
     public override string Title => "Account Transaction";
@@ -69,6 +76,13 @@ public sealed class AccountTransactionSource : ReportSource<AccountTransactionRo
         ReportColumn.Of<AccountTransactionRow, string>(
             "account", ColumnDataType.Text, r => r.Account, groupable: true),
 
+        // The other side of the same document. A posting is only legible beside
+        // what it was posted against — "Bank 5,000" says nothing; "Bank 5,000
+        // against Accounts Receivable" is the whole entry.
+        ReportColumn.Of<AccountTransactionRow, string?>(
+            "relatedAccount", ColumnDataType.Text, r => r.RelatedAccount,
+            groupable: true),
+
         ReportColumn.Of<AccountTransactionRow, string?>(
             "contactCode", ColumnDataType.Text, r => r.ContactCode),
 
@@ -80,6 +94,22 @@ public sealed class AccountTransactionSource : ReportSource<AccountTransactionRo
 
         ReportColumn.Of<AccountTransactionRow, string?>(
             "reference", ColumnDataType.Text, r => r.Reference),
+
+        // The rate this leg was taxed at, reached through the sub-account rather
+        // than the leg: a posting stores the tax *amount*, and the only record of
+        // the rate behind it is the per-rate GST sub-account it was posted to.
+        // Both are null on every leg that is not a tax leg, which is most of them.
+        ReportColumn.Of<AccountTransactionRow, decimal?>(
+            "taxRate", ColumnDataType.Percent, r => r.TaxRate),
+
+        ReportColumn.Of<AccountTransactionRow, string?>(
+            "taxRateName", ColumnDataType.Text, r => r.TaxRateName, groupable: true),
+
+        // The contact's licence number — a drug licence or FSSAI registration.
+        // Pharmacy wholesalers must show it against each movement, which is why a
+        // permit belongs on a ledger report at all.
+        ReportColumn.Of<AccountTransactionRow, string?>(
+            "permitNo", ColumnDataType.Text, r => r.PermitNo),
 
         // The document's own currency and the rate it was booked at. Both are
         // required beside any (Source) column, or the figure means nothing.
@@ -156,6 +186,36 @@ public sealed class AccountTransactionSource : ReportSource<AccountTransactionRo
                    ContactName = c != null ? c.DisplayName : null,
                    Description = l.TransactionDesc,
                    Reference = l.TransactionTypeCode + "-" + l.TransactionId,
+                   RelatedAccount = db.Ledger
+                       .Where(o => o.TransactionTypeCode == l.TransactionTypeCode
+                           && o.TransactionId == l.TransactionId
+                           && o.LedgerId != l.LedgerId
+                           && (o.DebitAmountBase > 0) != (l.DebitAmountBase > 0))
+                       .OrderBy(o => o.LedgerId)
+                       .Select(o => db.Accounts
+                           .Where(ra => ra.AccountId == o.AccountId)
+                           .Select(ra => ra.AccountName)
+                           .FirstOrDefault())
+                       .FirstOrDefault(),
+                   TaxRate = db.SubAccounts
+                       .Where(s => s.SubAccountId == l.SubAccountId
+                           && s.ReferenceType == TaxReference)
+                       .SelectMany(s => db.TaxMasters
+                           .Where(tm => tm.TaxMasterId == s.ReferenceId)
+                           .Select(tm => (decimal?)tm.TotalRate))
+                       .FirstOrDefault(),
+                   TaxRateName = db.SubAccounts
+                       .Where(s => s.SubAccountId == l.SubAccountId
+                           && s.ReferenceType == TaxReference)
+                       .SelectMany(s => db.TaxMasters
+                           .Where(tm => tm.TaxMasterId == s.ReferenceId)
+                           .Select(tm => tm.TaxName))
+                       .FirstOrDefault(),
+                   PermitNo = db.ContactLicences
+                       .Where(cl => cl.ContactId == l.ContactId && cl.IsActive)
+                       .OrderBy(cl => cl.ContactLicenceId)
+                       .Select(cl => cl.LicenceNumber)
+                       .FirstOrDefault(),
                    Currency = l.CurrencyCode,
                    ExchangeRate = l.ExchangeRate,
                    DebitSource = l.DebitAmount,
@@ -236,6 +296,17 @@ public sealed class AccountTransactionRow
     public decimal Debit { get; set; }
 
     public decimal Credit { get; set; }
+
+    /// <summary>The contra leg's account on the same document, when there is one.</summary>
+    public string? RelatedAccount { get; set; }
+
+    /// <summary>Null on every leg that is not a tax leg.</summary>
+    public decimal? TaxRate { get; set; }
+
+    public string? TaxRateName { get; set; }
+
+    /// <summary>The contact's active licence number, when the contact holds one.</summary>
+    public string? PermitNo { get; set; }
 
     /// <summary>Filled after the page is fetched — see <c>ApplyRunningTotals</c>.</summary>
     public decimal RunningBalance { get; set; }

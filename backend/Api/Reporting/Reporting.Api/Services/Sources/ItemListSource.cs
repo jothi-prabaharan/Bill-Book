@@ -44,6 +44,18 @@ public sealed class ItemListSource : ReportSource<ItemListRow>
         ReportColumn.Of<ItemListRow, decimal?>("quantityOnHand", ColumnDataType.Quantity, r => r.QuantityOnHand, AggregateFunction.Sum),
         ReportColumn.Of<ItemListRow, decimal?>("averageCost", ColumnDataType.Money, r => r.AverageCost),
         ReportColumn.Of<ItemListRow, decimal?>("unitCostPrice", ColumnDataType.Money, r => r.UnitCostPrice),
+
+        // Quantity on hand less what is already committed. **Not the same figure
+        // as Quantity On Hand beside it**: a warehouse holding sixty units with
+        // fifty reserved can fill an order for ten, and only this column says so.
+        ReportColumn.Of<ItemListRow, decimal?>("balanceQty", ColumnDataType.Quantity, r => r.BalanceQty, AggregateFunction.Sum),
+
+        // What the stock still on the shelf actually cost, from the open cost
+        // layers rather than from the item's list price. It differs from Average
+        // Cost whenever prices have moved, and it is the figure a FIFO item is
+        // valued at — an item costed by weighted average has layers too, so this
+        // is populated either way and the two columns can be compared.
+        ReportColumn.Of<ItemListRow, decimal?>("unitCostPriceFifo", ColumnDataType.Money, r => r.UnitCostPriceFifo),
         ReportColumn.Of<ItemListRow, decimal?>("unitSalePrice", ColumnDataType.Money, r => r.UnitSalePrice),
         ReportColumn.Of<ItemListRow, decimal?>("totalValue", ColumnDataType.Money, r => r.TotalValue, AggregateFunction.Sum),
 
@@ -82,6 +94,15 @@ public sealed class ItemListSource : ReportSource<ItemListRow>
                    QuantityOnHand = s != null ? s.QuantityOnHand : 0m,
                    AverageCost = s != null ? s.WeightedAverageCost : 0m,
                    UnitCostPrice = i.PurchasePrice,
+                   BalanceQty = s != null ? s.QuantityOnHand - s.QuantityReserved : 0m,
+                   // Oldest layer still holding stock. FIFO issues from that one
+                   // next, so it is the cost the next unit out will carry.
+                   UnitCostPriceFifo = db.CostLayers
+                       .Where(cl => cl.ItemId == i.ItemId && cl.RemainingQuantity > 0)
+                       .OrderBy(cl => cl.ReceivedOn)
+                       .ThenBy(cl => cl.CostLayerId)
+                       .Select(cl => (decimal?)cl.UnitCost)
+                       .FirstOrDefault(),
                    UnitSalePrice = i.SalesPrice,
                    TotalValue = s != null ? (s.QuantityOnHand * s.WeightedAverageCost) : 0m,
                    QuantityOnOrder = null,
@@ -117,6 +138,12 @@ public sealed class ItemListRow
     public decimal? QuantityOnHand { get; set; }
     public decimal? AverageCost { get; set; }
     public decimal? UnitCostPrice { get; set; }
+
+    /// <summary>On hand less reserved — what can actually be promised.</summary>
+    public decimal? BalanceQty { get; set; }
+
+    /// <summary>The oldest open cost layer's unit cost.</summary>
+    public decimal? UnitCostPriceFifo { get; set; }
     public decimal? UnitSalePrice { get; set; }
     public decimal? TotalValue { get; set; }
     public decimal? QuantityOnOrder { get; set; }
