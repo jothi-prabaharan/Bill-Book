@@ -1,5 +1,6 @@
 using Inventory.Api.Services;
 using Inventory.Entity.Models;
+using Inventory.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
@@ -266,6 +267,10 @@ public sealed class InternalStockController : ControllerBase
         _tenant.OrgId = request.OrgId;
 
         var stock = _services.GetRequiredService<StockService>();
+        var db = _services.GetRequiredService<InventoryDbContext>();
+        
+        using var transaction = await db.Database.BeginTransactionAsync(ct);
+
         var response = new IssueStockResponse { Success = true };
 
         foreach (var line in request.Lines)
@@ -320,6 +325,7 @@ public sealed class InternalStockController : ControllerBase
             return Conflict(response);
         }
 
+        await transaction.CommitAsync(ct);
         return Ok(response);
     }
 
