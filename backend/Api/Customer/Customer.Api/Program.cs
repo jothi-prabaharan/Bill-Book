@@ -35,24 +35,15 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
-{
-    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-})
-    .AddHttpMessageHandler<InternalKeyHandler>();
-
 builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 
+// One shared tenant database now, so the connection string is fixed at
+// startup rather than resolved per request.
 builder.Services.AddDbContext<CustomerDbContext>((sp, options) =>
 {
-    ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
-    string connectionString = tenant.CustomerId is Guid customerId
-        ? sp.GetRequiredService<ITenantConnectionResolver>()
-            .ResolveAsync(customerId).GetAwaiter().GetResult()
-        : RequiredConnectionString("TenantFallback");
-
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(
+        RequiredConnectionString("TenantDatabase"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "cus"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());
@@ -89,13 +80,6 @@ app.UseMiddleware<TenantMiddleware>();
 app.MapControllers();
 
 app.Run();
-
-string RequiredSetting(string key) =>
-    builder.Configuration[key] is { Length: > 0 } value
-        ? value
-        : throw new InvalidOperationException(
-            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
-            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
 
 string RequiredConnectionString(string name) =>
     builder.Configuration.GetConnectionString(name) is { Length: > 0 } value

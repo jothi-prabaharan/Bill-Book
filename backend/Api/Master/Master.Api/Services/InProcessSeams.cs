@@ -17,37 +17,15 @@ namespace Master.Api.Services;
 // answer it — four pieces of machinery per question, all to reach a table in the
 // same Postgres instance the caller was already connected to.
 //
-// The interfaces are kept. They are not ceremony now: ITenantDirectory and
-// IFinancialYearProvider are Shared.Kernel contracts that other services still
-// satisfy over HTTP, and the rest name a real seam — the internal controllers
-// stay, because Inventory, Sales and Accounting still call them.
-
-/// <summary>
-/// Which database a customer's books live in.
-///
-/// Every other service asks Master's internal API for this and resolves the
-/// credential itself from the secret store, so the connection string never
-/// travels. Master is the service holding the table, so it reads it — the same
-/// query the controller runs, without the round trip.
-/// </summary>
-public sealed class InProcessTenantDirectory : ITenantDirectory
-{
-    private readonly AdminDbContext _db;
-
-    public InProcessTenantDirectory(AdminDbContext db) => _db = db;
-
-    public async Task<TenantDatabase?> LookupAsync(
-        Guid customerId, CancellationToken ct = default) =>
-        await _db.CustomerDatabases
-            .Where(d => d.CustomerId == customerId)
-            .Select(d => new TenantDatabase
-            {
-                DatabaseName = d.DatabaseName,
-                ConnectionSecretRef = d.ConnectionSecretRef,
-                IsReady = d.Status == ProvisioningStatus.Ready || d.Status == ProvisioningStatus.Provisioning,
-            })
-            .FirstOrDefaultAsync(ct);
-}
+// The interfaces are kept. They are not ceremony now: IFinancialYearProvider is
+// a Shared.Kernel contract that other services still satisfy over HTTP, and the
+// rest name a real seam — the internal controllers stay, because Inventory,
+// Sales and Accounting still call them.
+//
+// ITenantDirectory and InProcessTenantDirectory, which used to answer "which
+// database is this customer's" for ContactsDbContext's per-request connection
+// resolution, are gone along with that resolution: every service now points at
+// the one shared tenant database, fixed at startup.
 
 /// <summary>
 /// Currency reference data, for the join between mst.Currencies and the

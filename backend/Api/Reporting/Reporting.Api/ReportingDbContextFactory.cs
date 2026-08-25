@@ -32,7 +32,14 @@ public class ReportingDbContextFactory : IDesignTimeDbContextFactory<ReportingDb
     public ReportingDbContext CreateDbContext(string[] args)
     {
         DbContextOptionsBuilder<ReportingDbContext> options = new();
-        options.UseNpgsql("Host=localhost;Database=design_time_only;Username=postgres");
+
+        // Same schema-scoped history table Program.cs configures for real runs
+        // — matched here so `dotnet ef`, which prefers this factory over the
+        // host, does not leave rpt's migration history in the public schema
+        // while every other schema in the shared tenant database gets its own.
+        options.UseNpgsql(
+            "Host=localhost;Database=design_time_only;Username=postgres",
+            npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "rpt"));
 
         return new ReportingDbContext(options.Options, new DesignTimeTenantContext());
     }

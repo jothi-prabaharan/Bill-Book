@@ -45,30 +45,18 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
-{
-    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-})
-    .AddHttpMessageHandler<InternalKeyHandler>();
-
 // TODO: replace with the Key Vault-backed store before production.
 builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 
-// The connection string is chosen per request, so the context is built from the
-// resolved tenant rather than a fixed configuration value.
+// One shared tenant database now, so the connection string is fixed at
+// startup rather than resolved per request. Guarded, not defaulted: a blank
+// here would hand Npgsql an empty string and the failure would surface as an
+// unrelated connection error.
 builder.Services.AddDbContext<AccountingDbContext>((sp, options) =>
 {
-    ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
-    string connectionString = tenant.CustomerId is Guid customerId
-        ? sp.GetRequiredService<ITenantConnectionResolver>()
-            .ResolveAsync(customerId).GetAwaiter().GetResult()
-        // Design-time and unauthenticated paths fall back to the configured value.
-        // Guarded, not defaulted: a blank here would hand Npgsql an empty string
-        // and the failure would surface as an unrelated connection error.
-        : RequiredConnectionString("TenantFallback");
-
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(
+        RequiredConnectionString("TenantDatabase"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "acc"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

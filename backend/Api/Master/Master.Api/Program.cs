@@ -67,29 +67,21 @@ builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
-// ---- The per-customer database: con. ----
+// ---- The shared tenant database: con. ----
 //
-// Chosen per request from the caller's claims, so the context is built from the
-// resolved tenant rather than a configuration value. The tenant directory it
-// resolves through is this same service — see InProcessTenantDirectory — but the
-// databases are still two, and the interceptors are what keep the second one
-// isolated per branch.
+// One shared tenant database now, so the connection string is fixed at
+// startup rather than resolved per request — the same shape as AdminDbContext
+// above. Still a second physical database from mst, and the interceptors are
+// what keep it isolated per customer and per branch.
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
-builder.Services.AddScoped<ITenantDirectory, InProcessTenantDirectory>();
 
 builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
-    ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
-    string connectionString = tenant.CustomerId is Guid customerId
-        ? sp.GetRequiredService<ITenantConnectionResolver>()
-            .ResolveAsync(customerId).GetAwaiter().GetResult()
-        // Design-time and unauthenticated paths fall back to the configured value.
-        : RequiredConnectionString("TenantFallback");
-
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(
+        RequiredConnectionString("TenantDatabase"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());

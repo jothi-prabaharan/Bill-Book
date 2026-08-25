@@ -8,11 +8,12 @@ using Shared.Kernel.Internal;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// The tenant directory, for services that need to open a customer's database.
-/// Returns the Key Vault reference, never the connection string — each service
-/// resolves the credential itself, so it never travels over HTTP.
-///
 /// Internal only; not routed through the public gateway.
+///
+/// Used to hold the tenant directory lookup (which database a customer's books
+/// live in) for services that opened a per-customer connection. That resolution
+/// is gone now that every service points at the one shared tenant database, so
+/// only the background-worker listing below remains.
 /// </summary>
 [ApiController]
 [AllowAnonymous]
@@ -45,21 +46,5 @@ public sealed class InternalCustomersController : ControllerBase
             }).ToListAsync(ct);
 
         return Ok(rows);
-    }
-
-    [HttpGet("{customerId:guid}/database")]
-    public async Task<IActionResult> GetDatabase(Guid customerId, CancellationToken ct)
-    {
-        var row = await _db.CustomerDatabases
-            .Where(d => d.CustomerId == customerId)
-            .Select(d => new
-            {
-                d.DatabaseName,
-                d.ConnectionSecretRef,
-                IsReady = d.Status == ProvisioningStatus.Ready || d.Status == ProvisioningStatus.Provisioning,
-            })
-            .FirstOrDefaultAsync(ct);
-
-        return row is null ? NotFound() : Ok(row);
     }
 }

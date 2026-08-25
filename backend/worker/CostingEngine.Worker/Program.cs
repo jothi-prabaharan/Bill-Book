@@ -18,7 +18,6 @@ builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-builder.Services.AddScoped<ITenantConnectionResolver, TenantConnectionResolver>();
 
 // The worker acts as no user, so audit columns are stamped with no id. That is
 // exactly what CLAUDE.md reserves a null CreatedBy for: written by no person.
@@ -28,33 +27,21 @@ builder.Services.AddScoped<ICurrentUser, SystemUser>();
 // guarded endpoint is reachable by this service and by nothing else.
 builder.Services.AddTransient<InternalKeyHandler>();
 
-builder.Services.AddHttpClient<ITenantDirectory, MasterTenantDirectory>(client =>
-{
-    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
-})
-    .AddHttpMessageHandler<InternalKeyHandler>();
-
 builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-// Reused from Inventory rather than reimplemented: the worker resolves tenant
-// connections exactly the way the service does, and two copies of that logic is
-// two chances for them to disagree about which database to open.
 builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 
+// One shared tenant database now, so the connection string is fixed at
+// startup rather than resolved per organization.
 builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
 {
-    ITenantContext tenant = sp.GetRequiredService<ITenantContext>();
-
-    string connectionString = tenant.CustomerId is Guid customerId
-        ? sp.GetRequiredService<ITenantConnectionResolver>()
-            .ResolveAsync(customerId).GetAwaiter().GetResult()
-        : RequiredConnectionString("TenantFallback");
-
-    options.UseNpgsql(connectionString);
+    options.UseNpgsql(
+        RequiredConnectionString("TenantDatabase"),
+        npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "inv"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
         sp.GetRequiredService<RlsConnectionInterceptor>());
