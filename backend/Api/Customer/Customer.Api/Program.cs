@@ -1,3 +1,4 @@
+using Shared.Kernel.Security;
 using System.Text;
 using Customer.Repository;
 using Customer.Api.Services;
@@ -57,21 +58,7 @@ builder.Services.AddDbContext<CustomerDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-string signingKey = RequiredSetting("Jwt:SigningKey");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "bill-book",
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "bill-book",
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-            ValidateLifetime = true,
-        };
-    });
+builder.Services.AddBillBookAuthentication(builder.Configuration);
 
 builder.Services.AddAuthorization(options =>
 {

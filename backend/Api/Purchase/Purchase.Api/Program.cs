@@ -1,3 +1,4 @@
+using Shared.Kernel.Security;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -168,21 +169,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 
 // Must match Master's key exactly: Master mints the tokens, Purchase only
 // validates them. Never fall back to a constant here.
-string signingKey = RequiredSetting("Jwt:SigningKey");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "bill-book",
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "bill-book",
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-            ValidateLifetime = true,
-        };
-    });
+builder.Services.AddBillBookAuthentication(builder.Configuration);
 
 // Default deny: a controller added later is authenticated because nobody did
 // anything about it. Endpoints that genuinely run before a token exists — the
