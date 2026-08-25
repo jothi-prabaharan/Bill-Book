@@ -85,7 +85,7 @@ public sealed class CustomerQueryFilterTests
         var theirOrgId = Guid.NewGuid();
         
         var options = new DbContextOptionsBuilder<Master.Repository.ContactsDbContext>()
-            .UseNpgsql(Environment.GetEnvironmentVariable("SALES_TEST_DB") ?? "Host=localhost;Port=5432;Database=sales_tests;Username=postgres;Password=123")
+            .UseNpgsql(Environment.GetEnvironmentVariable("CUSTOMER_TEST_DB") ?? "Host=localhost;Port=5432;Database=customer_tests;Username=postgres;Password=123")
             .Options;
         await using var master = new Master.Repository.ContactsDbContext(options, new TenantContext { CustomerId = customerId, OrgId = myOrgId });
         var contact = new Master.Entity.TableEntities.Contact
