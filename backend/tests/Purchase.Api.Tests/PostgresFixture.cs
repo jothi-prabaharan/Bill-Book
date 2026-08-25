@@ -52,12 +52,38 @@ public sealed class PostgresFixture : IAsyncLifetime
             await using PurchaseDbContext db = CreateContext(customerId, orgId);
             await db.Database.MigrateAsync();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsUnreachable(ex))
         {
             SkipReason =
                 "No PostgreSQL answered at the test connection string, so the database-backed "
                 + $"tests did not run. Set PURCHASE_TEST_DB to point at one. ({ex.GetType().Name})";
         }
+    }
+
+    /// <summary>
+    /// Whether the server could not be reached at all — as opposed to answering
+    /// and refusing what we asked it. Catching every exception here (the previous
+    /// behavior) turns a real migration/schema failure into a green skip; brought
+    /// into line with Sales.Api.Tests.PostgresFixture for the same reason.
+    /// </summary>
+    private static bool IsUnreachable(Exception ex)
+    {
+        for (Exception? current = ex; current is not null; current = current.InnerException)
+        {
+            if (current.GetType().Name == "PostgresException")
+            {
+                return false;
+            }
+
+            if (current is System.Net.Sockets.SocketException
+                or TimeoutException
+                || current.GetType().Name == "NpgsqlException")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
