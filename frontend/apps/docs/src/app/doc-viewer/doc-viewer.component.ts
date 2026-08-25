@@ -6,7 +6,8 @@ import { marked } from 'marked';
 import { ALL_PAGES } from '../docs.manifest';
 
 /** Loads a markdown file from content/ and renders it. */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-doc-viewer',
   standalone: true,
   templateUrl: './doc-viewer.component.html',

@@ -3,7 +3,8 @@ import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { DOCS } from './docs.manifest';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-docs-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, RouterLinkActive],

@@ -4,7 +4,8 @@ import { CommonModule } from '@angular/common';
 import { InvoiceService, SaveInvoiceRequest } from '@bill-book/sales-core';
 import { EscPosService } from './esc-pos.service';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pos-terminal',
   standalone: true,
   imports: [CommonModule],
