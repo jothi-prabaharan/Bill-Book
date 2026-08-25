@@ -346,7 +346,117 @@ Preserve:
 
 The task is to reorganize and map the design.
 
-## 19. Claude Design Phase
+## 19. Responsive List View Rule — TABLE DESKTOP / CARD MOBILE
+
+For list pages, use the following responsive presentation rule unless the existing
+application has a specific established pattern that must be preserved:
+
+### Desktop and Tablet
+
+Use a table/grid presentation when the page contains structured, column-based data.
+
+Typical examples:
+
+    Invoice List
+    Customer List
+    Sales Order List
+    Purchase Order List
+    Product/Item List
+    Ledger List
+    Report List
+
+Desktop/tablet should prioritize:
+
+- Multiple columns
+- Sortable headers where supported
+- Filters
+- Pagination
+- Row actions
+- Selection where supported
+- Dense comparison of records
+
+### Mobile
+
+When a desktop table contains too many columns to remain usable on a phone, switch to
+a card/list presentation instead of forcing the desktop table to fit the viewport.
+
+Example mobile invoice card:
+
+    Invoice Number
+    Customer
+    Date
+    Status
+    Total
+    Primary actions
+
+Secondary fields may be shown inside an expandable card or details view.
+
+### Data and Business Logic
+
+The table and mobile card views MUST use the same:
+
+- API/data source
+- TypeScript business logic
+- filtering state
+- sorting state where applicable
+- pagination state
+- selection state
+- loading state
+- empty state
+- error state
+- permissions
+- row/card actions
+
+Do NOT duplicate business logic between desktop and mobile.
+
+The responsive change is a presentation change, not a business-logic change.
+
+### Implementation Preference
+
+Prefer CSS media queries when the same semantic structure can reasonably support both
+layouts.
+
+When table and card layouts have substantially different information hierarchy or
+interaction behavior, it is acceptable to render separate presentation markup while
+sharing the same component state and TypeScript logic.
+
+Example:
+
+    InvoiceListComponent.ts
+            |
+            +-- shared invoices/data/actions
+            |
+            +-- Desktop/Tablet → table/grid
+            |
+            +-- Mobile → cards
+
+Do NOT create separate API/business-logic implementations for desktop and mobile.
+
+Do NOT force a complex multi-column accounting table into a tiny mobile viewport by
+using excessive horizontal scrolling when a card presentation provides a better user
+experience.
+
+### Mobile Card Requirements
+
+Mobile cards should:
+
+- Show the most important information first.
+- Avoid unnecessary fields.
+- Preserve status visibility.
+- Keep monetary totals prominent.
+- Provide touch-friendly actions.
+- Support expandable secondary details where needed.
+- Avoid tiny icon-only actions without accessible labels.
+
+### Consistency Rule
+
+All list pages should follow this pattern consistently unless there is a documented
+reason to use another layout.
+
+Claude Design must explicitly identify the intended desktop/tablet list presentation
+and mobile list presentation for every list page.
+
+## 20. Claude Design Phase
 
 Claude Design is responsible for:
 
@@ -357,6 +467,7 @@ Claude Design is responsible for:
 5. Identifying design noise.
 6. Preserving the visual design.
 7. Producing mapping documentation.
+8. Applying the responsive list table/card rule consistently.
 
 Claude Design must NOT:
 
@@ -368,7 +479,7 @@ Claude Design must NOT:
 - Rename existing Angular components.
 - Invent `bb-*` component names.
 
-## 20. Claude Code Phase
+## 21. Claude Code Phase
 
 Claude Code is responsible for implementation only after the design mapping has been
 reviewed and approved.
@@ -388,7 +499,7 @@ Before implementation, Claude Code must:
 
 Only then may implementation begin.
 
-## 21. Claude Code Must Not Invent Paths
+## 22. Claude Code Must Not Invent Paths
 
 Before creating or modifying:
 
@@ -407,7 +518,7 @@ unless the repository already contains them or explicit approval is given to add
 If the design references a component that does not exist in Angular, report it as a
 design/application mismatch instead of silently inventing a path.
 
-## 22. Mid-Project Safety Rules
+## 23. Mid-Project Safety Rules
 
 This is NOT a greenfield project.
 
@@ -422,7 +533,7 @@ Therefore:
 - Do not change database behavior during design import.
 - Do not change accounting behavior during UI implementation.
 
-## 23. Accounting Safety
+## 24. Accounting Safety
 
 Accounting is high risk.
 
@@ -439,7 +550,7 @@ or accounting posting behavior as part of design import unless explicitly approv
 Do not create separate physical GL tables merely because the UI design contains
 separate transaction screens.
 
-## 24. Implementation Workflow
+## 25. Implementation Workflow
 
     GitHub Angular
           |
@@ -462,6 +573,9 @@ separate transaction screens.
     Component Classification
           |
           v
+    Responsive List Table/Card Mapping
+          |
+          v
     Design Gap Analysis
           |
           v
@@ -481,7 +595,7 @@ separate transaction screens.
           v
     Review Git Diff
 
-## 25. Required Final Documentation
+## 26. Required Final Documentation
 
 Produce:
 
@@ -496,7 +610,7 @@ Produce:
     MISSING_DESIGN_PAGES.md
     UNMATCHED_DESIGN_PAGES.md
 
-## 26. Final Success Criteria
+## 27. Final Success Criteria
 
 The design preparation is complete only when:
 
@@ -518,6 +632,9 @@ The design preparation is complete only when:
 - Duplicate/unwanted design files are documented.
 - Missing designs are documented.
 - Unmatched designs are documented.
+- Desktop/tablet list pages have an intentional table/grid presentation.
+- Mobile list pages have an intentional card presentation where appropriate.
+- Desktop/mobile list views share the same data, state, permissions, and business logic.
 - The mapping is reviewable before implementation.
 - Claude Code can use the mapping without guessing.
 
@@ -526,6 +643,10 @@ The design preparation is complete only when:
 **NEVER invent an Angular folder or component name.**
 
 **ALWAYS inspect GitHub and copy the exact existing path/name.**
+
+**For list pages, prefer table/grid on desktop/tablet and card presentation on mobile
+when the table is too dense for a phone. Keep one source of truth for data and business
+logic.**
 
 **If the design and Angular repository disagree, report the mismatch instead of
 silently changing either one.**
