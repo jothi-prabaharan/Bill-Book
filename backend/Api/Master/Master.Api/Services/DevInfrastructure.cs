@@ -21,7 +21,7 @@ namespace Master.Api.Services;
 /// </para>
 /// <para>
 /// So: written secrets are remembered, and a name never written falls through to
-/// configuration under <c>Secrets:</c>, then to the <c>TenantFallback</c>
+/// configuration under <c>Secrets:</c>, then to the <c>TenantDatabase</c>
 /// connection string. That is what makes a developer's two flows work in one
 /// process — provision a customer and it is readable, point at a database
 /// somebody else provisioned and it is readable too.
@@ -47,7 +47,7 @@ public sealed class InMemorySecretStore : ISecretStore
         }
 
         string? configured = _configuration[$"Secrets:{name}"]
-            ?? _configuration.GetConnectionString("TenantFallback");
+            ?? _configuration.GetConnectionString("TenantDatabase");
 
         return configured is null
             ? throw new KeyNotFoundException($"Secret '{name}' not found.")

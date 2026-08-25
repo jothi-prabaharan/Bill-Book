@@ -11,7 +11,7 @@ namespace Reporting.Api;
 ///
 /// <b>Why this exists when no other service has one.</b> Every other service
 /// generates its migrations through its API host, which registers the context in
-/// DI and falls back to the <c>DesignTimeDatabase</c> connection string. This
+/// DI against the fixed <c>TenantDatabase</c> connection string. This
 /// host is still the scaffold that answers "not implemented" — it is replaced in
 /// R0.6, which depends on the engine, which depends on the contract, all of them
 /// after this schema. Without this factory the schema could not be migrated

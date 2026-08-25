@@ -16,12 +16,12 @@ public sealed class ConfigurationSecretStore : ISecretStore
     public Task<string> GetSecretAsync(string name, CancellationToken cancellationToken = default)
     {
         string? value = _configuration[$"Secrets:{name}"]
-            ?? _configuration.GetConnectionString("TenantFallback");
+            ?? _configuration.GetConnectionString("TenantDatabase");
         return value is null
             ? throw new KeyNotFoundException($"Secret '{name}' not found.")
             : Task.FromResult(value);
     }
 
     public Task SetSecretAsync(string name, string value, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException("Purchase does not write secrets.");
+        throw new NotSupportedException("Reporting does not write secrets.");
 }

@@ -21,7 +21,7 @@ public sealed class ConfigurationSecretStore : ISecretStore
             return Task.FromResult(value);
         }
 
-        string? fallback = _configuration.GetConnectionString("TenantFallback");
+        string? fallback = _configuration.GetConnectionString("TenantDatabase");
         if (fallback is not null && name.StartsWith("tenant-db-"))
         {
             string dbName = name.Substring(10);
