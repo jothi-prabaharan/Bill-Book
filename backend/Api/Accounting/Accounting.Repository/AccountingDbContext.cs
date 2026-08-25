@@ -33,6 +33,11 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<PaymentTerm> PaymentTerms => Set<PaymentTerm>();
 
+    public DbSet<FixedAssetCategory> FixedAssetCategories => Set<FixedAssetCategory>();
+    public DbSet<FixedAsset> FixedAssets => Set<FixedAsset>();
+    public DbSet<DepreciationSchedule> DepreciationSchedules => Set<DepreciationSchedule>();
+    public DbSet<AssetTransaction> AssetTransactions => Set<AssetTransaction>();
+
     /// <summary>
     /// The general ledger. Every posting in the product lands here and nowhere
     /// else, whichever service described it.
@@ -260,7 +265,83 @@ public class AccountingDbContext : TenantDbContext
             });
         });
 
+        modelBuilder.Entity<FixedAssetCategory>(b =>
+        {
+            b.HasKey(e => e.FixedAssetCategoryId);
+            b.HasIndex(e => new { e.OrgId, e.CategoryName }).IsUnique();
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.AssetAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.AccumulatedDepreciationAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<Account>()
+                .WithMany()
+                .HasForeignKey(e => e.DepreciationExpenseAccountId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<FixedAsset>(b =>
+        {
+            b.HasKey(e => e.FixedAssetId);
+            b.HasIndex(e => new { e.OrgId, e.AssetCode }).IsUnique();
+
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.PurchasePrice).HasColumnType("decimal(18,2)");
+
+            b.HasOne<FixedAssetCategory>()
+                .WithMany()
+                .HasForeignKey(e => e.FixedAssetCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DepreciationSchedule>(b =>
+        {
+            b.HasKey(e => e.DepreciationScheduleId);
+            b.HasIndex(e => new { e.OrgId, e.FixedAssetId, e.ScheduleType }).IsUnique();
+
+            b.Property(e => e.ScheduleType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.DepreciationMethod).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Rate).HasColumnType("decimal(5,2)");
+            b.Property(e => e.SalvageValue).HasColumnType("decimal(18,2)");
+
+            b.HasOne<FixedAsset>()
+                .WithMany()
+                .HasForeignKey(e => e.FixedAssetId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<AssetTransaction>(b =>
+        {
+            b.HasKey(e => e.AssetTransactionId);
+            b.HasIndex(e => new { e.OrgId, e.FixedAssetId, e.TransactionDate });
+
+            b.Property(e => e.TransactionType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+
+            b.HasOne<FixedAsset>()
+                .WithMany()
+                .HasForeignKey(e => e.FixedAssetId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasOne<DepreciationSchedule>()
+                .WithMany()
+                .HasForeignKey(e => e.DepreciationScheduleId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            b.HasOne<Journal>()
+                .WithMany()
+                .HasForeignKey(e => e.JournalId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         modelBuilder.Entity<JournalLedger>(b =>
+
         {
             b.HasKey(e => e.LedgerId);
 

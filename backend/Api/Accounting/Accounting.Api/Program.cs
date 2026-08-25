@@ -1,3 +1,4 @@
+using Shared.Kernel.Security;
 using System.Text;
 using Accounting.Api.Services;
 using Accounting.Repository;
@@ -85,6 +86,7 @@ builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
+builder.Services.AddScoped<DepreciationService>();
 
 // The money documents, formerly the Banking service. Registered alongside the
 // ledger rather than behind an HTTP client onto it, which is the whole point of
@@ -139,21 +141,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 
 // Must match Master's key exactly: Master mints the tokens, Accounting only
 // validates them. Never fall back to a constant here.
-string signingKey = RequiredSetting("Jwt:SigningKey");
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "bill-book",
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"] ?? "bill-book",
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
-            ValidateLifetime = true,
-        };
-    });
+builder.Services.AddBillBookAuthentication(builder.Configuration);
 // Default deny: a controller added later is authenticated because nobody did
 // anything about it. Endpoints that genuinely run before a token exists —
 // signup, login, the internal service-to-service ones — say so with
