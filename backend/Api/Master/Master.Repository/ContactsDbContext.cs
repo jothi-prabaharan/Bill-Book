@@ -38,6 +38,7 @@ public class ContactsDbContext : TenantDbContext
     /// failed insert would leave the number consumed.
     /// </summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
+    public DbSet<ApiClient> ApiClients => Set<ApiClient>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -250,3 +251,4 @@ public class ContactsDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+

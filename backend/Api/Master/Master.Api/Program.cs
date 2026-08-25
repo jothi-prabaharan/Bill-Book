@@ -1,3 +1,4 @@
+using Shared.Kernel.Security;
 using System.Text;
 using Azure.Storage.Blobs;
 using Master.Api.Services;

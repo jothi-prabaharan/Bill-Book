@@ -118,4 +118,7 @@ public class Contact : OrgScopedEntity
     public DateTimeOffset? SubLedgerProvisionedAt { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    public Guid? DefaultPriceListId { get; set; }
 }
+
