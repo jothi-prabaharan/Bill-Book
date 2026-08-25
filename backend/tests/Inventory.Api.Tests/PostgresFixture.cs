@@ -48,12 +48,41 @@ public sealed class PostgresFixture : IAsyncLifetime
             await using InventoryDbContext db = CreateContext(customerId, orgId);
             await db.Database.MigrateAsync();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsUnreachable(ex))
         {
             SkipReason =
                 "No PostgreSQL answered at the test connection string, so the database-backed "
                 + $"tests did not run. Set INVENTORY_TEST_DB to point at one. ({ex.GetType().Name})";
         }
+    }
+
+    /// <summary>
+    /// Whether the server could not be reached at all — as opposed to answering
+    /// and refusing what we asked it. Catching every exception here (the previous
+    /// behavior) turns a real migration/schema failure into a green skip, which is
+    /// exactly the failure mode Sales.Api.Tests.PostgresFixture was written to
+    /// avoid — brought into line here for the same reason, since the CustomerId
+    /// migration and RLS rewrite this suite now checks deserve a suite that
+    /// actually fails when they are wrong.
+    /// </summary>
+    private static bool IsUnreachable(Exception ex)
+    {
+        for (Exception? current = ex; current is not null; current = current.InnerException)
+        {
+            if (current.GetType().Name == "PostgresException")
+            {
+                return false;
+            }
+
+            if (current is System.Net.Sockets.SocketException
+                or TimeoutException
+                || current.GetType().Name == "NpgsqlException")
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
