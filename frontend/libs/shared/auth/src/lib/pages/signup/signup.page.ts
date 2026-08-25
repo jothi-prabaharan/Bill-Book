@@ -11,7 +11,8 @@ import { AuthService } from '../../auth.service';
  * polls customer status until CanLogin — provisioning creates a physical
  * database, so this is eventually consistent.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-signup-page',
   standalone: true,
   imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],

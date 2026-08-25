@@ -16,7 +16,8 @@ import { arityOf, describeOperator, inputTypeFor, operatorsFor } from './filter-
  * replaces had neither, and a filter language nobody asked for is a parser nobody
  * maintains.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-filter-bar',
   standalone: true,
   imports: [FormsModule],

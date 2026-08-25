@@ -14,7 +14,8 @@ export interface BankAccountGraphData {
   metaText: string;
 }
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-graph-card',
   standalone: true,
   imports: [CommonModule],

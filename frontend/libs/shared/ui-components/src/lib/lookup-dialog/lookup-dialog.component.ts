@@ -17,7 +17,8 @@ import { LookupRow } from './lookup-row.model';
  *
  * At ~360px the dialog becomes a full-screen sheet, per the house rule.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-lookup-dialog',
   standalone: true,
   imports: [FormsModule],

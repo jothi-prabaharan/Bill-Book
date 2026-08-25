@@ -29,7 +29,8 @@ const RATE_SCALE = 10_000;
  *
  * At ~360px the grid becomes a card per line, per the house rule.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-document-line-grid',
   standalone: true,
   imports: [FormsModule],

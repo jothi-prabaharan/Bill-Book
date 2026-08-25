@@ -13,7 +13,8 @@ export interface AllocationRow {
   allocatedAmount: number;
 }
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-grid',
   standalone: true,
   imports: [CommonModule, FormsModule],

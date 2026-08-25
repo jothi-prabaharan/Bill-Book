@@ -20,7 +20,8 @@ import { DataGridService } from './data-grid.service';
 import { DataGridRowComponent } from './data-grid-row/data-grid-row.component';
 import { DataGridCellTemplateDirective } from './data-grid-cell-template.directive';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-data-grid, bb-data-table',
   standalone: true,
   imports: [CommonModule, FormsModule, DataGridRowComponent],

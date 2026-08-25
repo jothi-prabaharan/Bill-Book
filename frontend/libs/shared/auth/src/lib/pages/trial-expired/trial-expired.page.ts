@@ -13,7 +13,8 @@ import { AuthService } from '../../auth.service';
  * date sits under an account that is perfectly valid, and sending that customer
  * to a billing page with nothing to pay is the wrong instruction.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-trial-expired-page',
   standalone: true,
   templateUrl: './trial-expired.page.html',

@@ -19,7 +19,8 @@ import { ReportColumn } from '@bill-book/reporting-core';
  * the same CDK idiom the numbering-series screen uses, so the gesture is one the
  * product already teaches.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-column-chooser',
   standalone: true,
   imports: [FormsModule, DragDropModule],

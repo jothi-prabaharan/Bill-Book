@@ -9,7 +9,8 @@ import { firstValueFrom } from 'rxjs';
  * Completes an invitation from the emailed link. The token and email arrive as
  * query parameters; the invitee only chooses a password.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-accept-invitation-page',
   standalone: true,
   imports: [FormsModule, RouterLink],

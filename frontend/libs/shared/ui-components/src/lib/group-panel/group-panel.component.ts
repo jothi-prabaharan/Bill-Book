@@ -20,7 +20,8 @@ const MAX_LEVELS = 3;
  * to show anyway. This panel therefore offers what the metadata marks groupable
  * and nothing else.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-group-panel',
   standalone: true,
   imports: [DragDropModule],

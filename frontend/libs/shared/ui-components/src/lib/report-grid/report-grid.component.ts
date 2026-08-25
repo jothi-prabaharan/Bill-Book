@@ -23,7 +23,8 @@ import {
  *
  * At ~360px the table becomes a card per row, per the house rule.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-grid',
   standalone: true,
   imports: [DecimalPipe],

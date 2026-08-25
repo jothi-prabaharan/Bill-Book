@@ -18,7 +18,8 @@ import {
  * Not offered below the tablet breakpoint: a matrix has no card form, and
  * shrinking one until it fits produces something nobody can read.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pivot-panel',
   standalone: true,
   imports: [FormsModule],

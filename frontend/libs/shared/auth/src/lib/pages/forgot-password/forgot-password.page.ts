@@ -9,7 +9,8 @@ import { AuthService } from '../../auth.service';
  * OTP wizard: request → verify → reset. The request step always advances,
  * whether or not the account exists — never reveal which.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-forgot-password-page',
   standalone: true,
   imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
