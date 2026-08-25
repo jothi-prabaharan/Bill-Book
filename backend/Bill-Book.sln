@@ -93,7 +93,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Reporting.Api.Tests", "test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sales.Api.Tests", "tests\Sales.Api.Tests\Sales.Api.Tests.csproj", "{FDAAC350-4B7A-4F3F-9CF6-F58DFDCBF827}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Api.Tests", "Tests\Customer.Api.Tests\Customer.Api.Tests.csproj", "{00A108DF-3E6C-4A65-93D9-B26CE19C4E9A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Customer.Api.Tests", "tests\Customer.Api.Tests\Customer.Api.Tests.csproj", "{00A108DF-3E6C-4A65-93D9-B26CE19C4E9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
