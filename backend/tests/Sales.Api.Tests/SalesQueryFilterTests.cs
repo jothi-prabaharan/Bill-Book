@@ -135,6 +135,35 @@ public sealed class SalesQueryFilterTests
     }
 
     [SkippableFact]
+    public async Task One_customer_cannot_read_another_customers_quotes()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        // Two different customers sharing the one test database — the case that
+        // could never be tested before sal carried a real CustomerId column,
+        // since two customers' data never sat in the same database at once.
+        await using SalesDbContext mine = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await using SalesDbContext theirs = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        mine.Quotes.Add(new Quote
+        {
+            TransactionTypeCode = "QTE",
+            DocumentNo = $"QT/{Guid.NewGuid():N}"[..20],
+            DocumentDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            ValidUntil = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(30),
+            ContactId = 1,
+            CurrencyCode = "INR",
+            ExchangeRate = 1m,
+            Status = DocumentStatus.Draft,
+        });
+
+        await mine.SaveChangesAsync(CancellationToken.None);
+
+        Assert.NotEmpty(await mine.Quotes.ToListAsync(CancellationToken.None));
+        Assert.Empty(await theirs.Quotes.ToListAsync(CancellationToken.None));
+    }
+
+    [SkippableFact]
     public async Task Row_level_security_covers_every_table_in_the_schema()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
