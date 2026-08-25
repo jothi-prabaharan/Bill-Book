@@ -2,8 +2,8 @@ using System.Net.Http.Json;
 
 namespace CostingEngine.Worker.Consumers;
 
-/// <summary>One branch to process, and the database it lives in.</summary>
-public sealed record ActiveOrganization(Guid CustomerId, Guid OrgId, string DatabaseName);
+/// <summary>One branch to process.</summary>
+public sealed record ActiveOrganization(Guid CustomerId, Guid OrgId);
 
 /// <summary>
 /// The branches this worker should walk. A background worker has no request to

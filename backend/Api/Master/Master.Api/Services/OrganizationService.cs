@@ -98,17 +98,6 @@ public sealed class OrganizationService
             return new SaveOrganizationResult(validation, null, []);
         }
 
-        // A branch has no database of its own, but it is seeded into the head
-        // office's — so that database has to exist and be finished.
-        bool ready = await _db.CustomerDatabases.AnyAsync(
-            d => d.CustomerId == customerId && d.Status == ProvisioningStatus.Ready, ct);
-
-        if (!ready)
-        {
-            return new SaveOrganizationResult(
-                SaveOrganizationOutcome.DatabaseNotReady, null, []);
-        }
-
         int existing = await _db.Organizations.CountAsync(o => o.CustomerId == customerId, ct);
 
         var licence = await _db.Licenses

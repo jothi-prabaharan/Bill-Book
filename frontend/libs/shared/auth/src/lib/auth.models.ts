@@ -62,7 +62,7 @@ export interface SignupResponse {
 export interface CustomerStatus {
   customerId: string;
   customerStatus: string;
-  databaseStatus: string;
+  provisioningStatus: string;
   canLogin: boolean;
 }
 

@@ -22,7 +22,6 @@ public sealed class OrgContextService
         var row = await (
             from o in _db.Organizations
             join c in _db.Customers on o.CustomerId equals c.CustomerId
-            join d in _db.CustomerDatabases on c.CustomerId equals d.CustomerId
             join l in _db.Licenses on c.CustomerId equals l.CustomerId
             join s in _db.States on o.StateId equals s.StateId into sGroup
             from s in sGroup.DefaultIfEmpty()
@@ -39,7 +38,6 @@ public sealed class OrgContextService
                 StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
-                DbStatus = d.Status,
                 l.ExpiryDate,
                 l.GraceDays,
                 l.LicenseType,
@@ -99,7 +97,12 @@ public sealed class OrgContextService
             OrgId = row.OrgId,
             CustomerId = row.CustomerId,
             OrgName = row.OrgName,
-            DatabaseReady = row.DbStatus == ProvisioningStatus.Ready,
+            // No per-customer database to be ready any more — "ready" now means
+            // this customer's own seeding finished (Trial/Active) rather than
+            // never having started (Provisioning) or having failed (Failed).
+            // Suspended and Expired both still count as ready: expiry blocks the
+            // app below, never the login itself, per the comment there.
+            DatabaseReady = row.CustomerStatus is not (TenantStatus.Provisioning or TenantStatus.Failed),
             LicenseStatus = licenseStatus.ToString(),
             // The date that actually governs, which is the one the user needs to
             // be shown. Reporting the licence date while refusing on the branch

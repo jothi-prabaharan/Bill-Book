@@ -6,7 +6,6 @@ namespace Master.Api.Services;
 public sealed record ProvisioningJob(
     Guid CustomerId,
     Guid OrgId,
-    string DatabaseName,
     string OwnerEmail,
     string OwnerDisplayName,
     string? OwnerMobileNumber,

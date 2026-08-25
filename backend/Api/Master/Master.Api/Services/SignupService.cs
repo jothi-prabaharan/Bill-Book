@@ -137,22 +137,17 @@ public sealed class SignupService
             });
         }
 
-        string databaseName = customer.CountryPrefix + customer.CustomerCode;
-        var database = new CustomerDatabase
-        {
-            CustomerId = customer.CustomerId,
-            DatabaseName = databaseName,
-            ConnectionSecretRef = $"tenant-db-{databaseName}",
-            Status = ProvisioningStatus.Provisioning,
-        };
-        _db.CustomerDatabases.Add(database);
-
         await _db.SaveChangesAsync(ct);
 
+        // No database to create — every customer already shares the one
+        // tenant database. What is left is the owner user and the seed
+        // (chart of accounts, tax master, numbering series, units...), which
+        // can still fail or run long, so it stays a queued background step
+        // rather than blocking this response: the signup screen already polls
+        // GetStatusAsync for CanLogin, and that contract does not change.
         await _queue.EnqueueAsync(new ProvisioningJob(
             customer.CustomerId,
             org.OrgId,
-            databaseName,
             request.Email,
             request.DisplayName,
             request.MobileNumber,
@@ -168,13 +163,12 @@ public sealed class SignupService
 
     public async Task<CustomerStatusResponse?> GetStatusAsync(Guid customerId, CancellationToken ct)
     {
-        var row = await (
-            from c in _db.Customers
-            join d in _db.CustomerDatabases on c.CustomerId equals d.CustomerId
-            where c.CustomerId == customerId
-            select new { c.Status, DbStatus = d.Status }).FirstOrDefaultAsync(ct);
+        TenantStatus? status = await _db.Customers
+            .Where(c => c.CustomerId == customerId)
+            .Select(c => (TenantStatus?)c.Status)
+            .FirstOrDefaultAsync(ct);
 
-        if (row is null)
+        if (status is not TenantStatus customerStatus)
         {
             return null;
         }
@@ -182,15 +176,14 @@ public sealed class SignupService
         return new CustomerStatusResponse
         {
             CustomerId = customerId,
-            CustomerStatus = row.Status.ToString(),
-            DatabaseStatus = row.DbStatus.ToString(),
+            CustomerStatus = customerStatus.ToString(),
+            ProvisioningStatus = customerStatus.ToString(),
             // Trial counts. ProvisioningWorker finishes a successful signup by
             // setting the customer to Trial, not Active, so requiring Active here
             // meant CanLogin was false for every account that provisioned
             // correctly — the signup screen polls this until it gives up, and the
             // customer never reaches the app. Suspended and Expired stay refused.
-            CanLogin = row.DbStatus == ProvisioningStatus.Ready
-                && (row.Status == TenantStatus.Trial || row.Status == TenantStatus.Active),
+            CanLogin = customerStatus is TenantStatus.Trial or TenantStatus.Active,
         };
     }
 

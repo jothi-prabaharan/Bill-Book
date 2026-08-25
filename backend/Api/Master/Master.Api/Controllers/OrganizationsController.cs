@@ -212,10 +212,6 @@ public sealed class OrganizationsController : ControllerBase
                 Message = "Your licence does not allow another branch. Upgrade the plan to add "
                     + "more.",
             }),
-            SaveOrganizationOutcome.DatabaseNotReady => BadRequest(new MessageResponse
-            {
-                Message = "Your account is still being set up. Try again in a moment.",
-            }),
             SaveOrganizationOutcome.FirstOrganizationLocked => BadRequest(new MessageResponse
             {
                 Message = "The first branch cannot be suspended — the account would have nowhere "

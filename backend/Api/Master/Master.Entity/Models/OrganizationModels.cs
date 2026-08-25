@@ -178,8 +178,6 @@ public enum SaveOrganizationOutcome
     /// silently reinterpret it as something else.
     /// </summary>
     LicenceLimitReached = 5,
-    /// <summary>The customer's database is not ready, so a branch cannot be seeded into it.</summary>
-    DatabaseNotReady = 6,
     /// <summary>Created, but one or more services could not write its master data.</summary>
     SeedingFailed = 7,
     /// <summary>

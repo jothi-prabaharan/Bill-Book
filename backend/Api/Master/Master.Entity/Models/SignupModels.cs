@@ -95,7 +95,14 @@ public class CustomerStatusResponse
 
     public string CustomerStatus { get; set; } = null!;
 
-    public string DatabaseStatus { get; set; } = null!;
+    /// <summary>
+    /// Same value as <see cref="CustomerStatus"/> — there is no longer a
+    /// separate per-customer database to report on, only whether this
+    /// customer's seeding has finished. Kept as its own field (renamed from
+    /// DatabaseStatus) because the signup screen polls specifically for
+    /// "Failed" here to stop polling and show an error.
+    /// </summary>
+    public string ProvisioningStatus { get; set; } = null!;
 
     public bool CanLogin { get; set; }
 }

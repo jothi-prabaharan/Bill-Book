@@ -52,7 +52,6 @@ public class AdminDbContext : DbContext
 
     public DbSet<Organization> Organizations => Set<Organization>();
 
-    public DbSet<CustomerDatabase> CustomerDatabases => Set<CustomerDatabase>();
 
     public DbSet<License> Licenses => Set<License>();
 
@@ -184,13 +183,6 @@ public class AdminDbContext : DbContext
                 .HasDatabaseName("IX_Organizations_ExpiryDate");
         });
 
-        modelBuilder.Entity<CustomerDatabase>(b =>
-        {
-            b.HasKey(e => e.CustomerId);
-            b.HasIndex(e => e.DatabaseName).IsUnique();
-            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
-        });
-
         modelBuilder.Entity<License>(b =>
         {
             b.HasKey(e => e.LicenseId);
@@ -316,9 +308,31 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<HsnSacCode>().HasData(SeedData.HsnSacSeed.Build());
         SeedConfigurations(modelBuilder);
         SeedRolesAndPermissions(modelBuilder);
-        modelBuilder.Entity<Menu>().HasData(MenuSeed.Build().SelectMany(m => new[] { m }));
-        modelBuilder.Entity<SubMenu>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus));
-        modelBuilder.Entity<SubMenuPermission>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus.SelectMany(sm => sm.Permissions)));
+        // HasData seeds by scalar property values only — a seeded entity cannot
+        // carry a populated navigation, so each of the three projects into a
+        // fresh instance rather than reusing MenuSeed's richly-linked objects.
+        modelBuilder.Entity<Menu>().HasData(MenuSeed.Build().Select(m => new Menu
+        {
+            MenuId = m.MenuId,
+            Code = m.Code,
+            Name = m.Name,
+            Icon = m.Icon,
+            DisplayOrder = m.DisplayOrder,
+            IsActive = m.IsActive,
+        }));
+        modelBuilder.Entity<SubMenu>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus).Select(sm => new SubMenu
+        {
+            SubMenuId = sm.SubMenuId,
+            MenuId = sm.MenuId,
+            Code = sm.Code,
+            Name = sm.Name,
+            RoutePath = sm.RoutePath,
+            Icon = sm.Icon,
+            DisplayOrder = sm.DisplayOrder,
+            IsActive = sm.IsActive,
+        }));
+        modelBuilder.Entity<SubMenuPermission>().HasData(
+            MenuSeed.Build().SelectMany(m => m.SubMenus.SelectMany(sm => sm.Permissions)));
     }
 
     /// <summary>Expose the Postgres xmin system column as the concurrency token on every audited entity.</summary>

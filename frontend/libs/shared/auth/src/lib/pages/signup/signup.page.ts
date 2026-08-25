@@ -8,8 +8,10 @@ import { AuthService } from '../../auth.service';
 
 /**
  * Public trial signup. On submit shows the "setting up your account" state and
- * polls customer status until CanLogin — provisioning creates a physical
- * database, so this is eventually consistent.
+ * polls customer status until CanLogin — provisioning seeds the new
+ * organization's master data (chart of accounts, tax master, units...), so
+ * this is eventually consistent even though there is no longer a database to
+ * create first.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -206,7 +208,7 @@ export class SignupPage implements OnInit {
       if (status.canLogin) {
         return;
       }
-      if (status.databaseStatus === 'Failed') {
+      if (status.provisioningStatus === 'Failed') {
         throw new Error('Provisioning failed');
       }
       await new Promise((resolve) => setTimeout(resolve, 2000));
