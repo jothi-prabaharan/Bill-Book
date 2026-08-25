@@ -192,10 +192,12 @@ Commit messages follow [`docs/commit-rules.md`](./docs/commit-rules.md): `feat(c
 
 Getting this wrong is the most expensive mistake available here, so it is worth the sixty seconds.
 
-**Two levels, not three.** A **Customer** is the head office — the account, the billing relationship — and owns **one physical database**. An **Organization** is a branch: one place the business trades from, one complete set of books, with its own code, GSTIN, currency and numbering.
+**Two levels, not three.** A **Customer** is the head office — the account, the billing relationship — and shares **one physical database** with every other Customer. An **Organization** is a branch: one place the business trades from, one complete set of books, with its own code, GSTIN, currency and numbering.
 
-- Customer ↔ Customer is separated by **different databases**.
-- Organization ↔ Organization is separated by **`OrgId` + EF query filter + Postgres RLS**.
+- Customer ↔ Customer is separated by **`CustomerId` + EF query filter + Postgres RLS**.
+- Organization ↔ Organization is separated by **`CustomerId` + `OrgId` + EF query filter + Postgres RLS**.
+
+*(Until 24 August 2026 a Customer owned a physical database of its own; reversed 25 August 2026 — see CLAUDE.md's Tenancy section for the full account.)*
 
 **There is no `Branches` table and no `BranchId` column.** `OrgId` *is* the branch. If you find yourself wanting `BranchId`, you want `OrgId`.
 

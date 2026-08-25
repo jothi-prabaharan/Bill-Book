@@ -32,6 +32,10 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ## Unreleased
 - **Added**: Stage T3.1 Invoices (INV) module with full ledger and inventory integration. You can now create, convert from sales orders, post, and void invoices.
 - Added Inventory Item List, Item Detail, Item Summary, and Inventory Aging reports.
+- **Added**: A platform admin screen (`apps/admin`) — every customer with its provisioning status, a create-customer action, a retry for one stuck mid-setup, and a read-only view of a customer's branches.
+
+### Changed
+- **Every customer now shares one database instead of getting its own.** Nothing changes in how you sign up, sign in or use your account — your branch's data is exactly as separate from every other customer's as it always was, now kept apart by an id checked on every request instead of by a database boundary. Signing up no longer waits on a new database being created, so setting up your books happens in the same request rather than in the background.
 
 ### Security
 - **Sales documents were relying on a single layer of branch isolation instead of two.** Every table in the sales schema is meant to be guarded twice: a filter in the application that scopes every query to the branch you are signed in to, and a policy in the database that refuses anything that gets past it. The application-side filter was never switched on for any sales table — a line of setup was missing, and because nothing queried those tables while the schema was being written, nothing revealed it. **No data was exposed**: the database policy was in place throughout and refused every cross-branch read. But it was doing the work of both, and one query written the wrong way would have had nothing left to stop it. The filter is now on, and there are tests that fail if it is ever switched off again.

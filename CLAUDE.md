@@ -180,39 +180,51 @@ Every page must work at ~360px — grids become card lists, forms stack, modals 
 
 **Two levels, not three.**
 
-**Customer** = the **head office**. The account, the billing relationship, the licence. Owns **one physical database**.
-**Organization** = a **branch**. One place the business trades from, and one complete set of books — own code, GSTIN, address, currency. A Customer owns **many**, all sharing that Customer's database.
+**Customer** = the **head office**. The account, the billing relationship, the licence. Shares **one physical database** with every other Customer.
+**Organization** = a **branch**. One place the business trades from, and one complete set of books — own code, GSTIN, address, currency. A Customer owns **many**, all sharing that Customer's rows in that database.
 
 | Boundary | Enforced by |
 |---|---|
-| Customer ↔ Customer (head office ↔ head office) | Separate physical databases |
-| Organization ↔ Organization (branch ↔ branch) | `OrgId` + EF Core query filter + Postgres RLS |
+| Customer ↔ Customer (head office ↔ head office) | `CustomerId` + EF Core query filter + Postgres RLS |
+| Organization ↔ Organization (branch ↔ branch) | `CustomerId` + `OrgId` + EF Core query filter + Postgres RLS |
+
+Both rows are enforced the same way now — the difference is only which column, or pair of columns, the filter checks. Before, a Customer's own database was the isolation; now every table also carries `CustomerId`, checked alongside `OrgId` in the same query filter, the same RLS policy and the same `set_config` call. This is defence in depth, not a replacement: `OrgId` was already globally unique on its own, so `CustomerId` doubles the check rather than being the only thing standing between two customers' rows. *(Decided 25 August 2026 — see the note at the end of this section.)*
 
 **There is no separate Branches table, and no `BranchId` column anywhere.** `OrgId` *is* the branch. A second column naming a branch on the same row says the same thing twice, and only `OrgId` is ever enforced — a `Branches` table existed briefly and was removed for exactly that reason. If you find yourself wanting `BranchId`, you want `OrgId`.
 
 **A branch is a hard data boundary, not a reporting tag.** Each branch has its own items, contacts, stock, chart of accounts and numbering series. Nothing crosses between them. Consolidated reporting across branches is a **read across organizations**, done deliberately and above the query filter — never by relaxing it.
 
-**`OrgId` is load-bearing for security.** A missing query filter leaks data between branches. Never omit it on a per-customer table.
+**`CustomerId` and `OrgId` are both load-bearing for security.** A missing query filter leaks data between branches, or between customers entirely. Never omit either on a per-customer table.
 
-Per request: resolve `CustomerId` from JWT → pick the database via the `mst` tenant directory (cached) → set `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak org context.
+Per request: resolve `CustomerId` and `OrgId` from JWT → set `app.current_customer_id` and `app.current_org_id` transaction-locally via `set_config(..., true)`. **Never connection-level** — pooled connections are reused across requests and would leak tenant context. There is no connection to pick any more: every service opens the one tenant database at startup, the same way it has always opened the one master database.
 
 ### Schemas
 
-Master database: `mst` (countries and states, the tenant directory, users and roles), `rat` (currency + metal rates)
+Master database: `mst` (countries and states, users and roles), `rat` (currency + metal rates)
 
-Per-customer database: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
+Tenant database — every customer, together: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
 
-Platform and Identity schemas were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `OrgId` with a query filter and an RLS policy.
+Platform and Identity schemas were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `CustomerId` and `OrgId` with a query filter and an RLS policy.
 
-**`con` did not move into `mst` and must not.** A contact belongs to one branch's books and lives in that customer's own database; the tables in `mst` are shared by every customer. They are in different Postgres databases, which is why Master holds two DbContexts rather than one.
+**`con` did not move into `mst` and must not.** A contact belongs to one branch's books and lives in the tenant database alongside every other customer's; the tables in `mst` are a different kind of shared — global reference and account data, not scoped by `CustomerId` at all. They are still in different Postgres databases, which is why Master holds two DbContexts rather than one; what changed is that `ContactsDbContext`'s database is no longer one per customer.
 
 ### Provisioning
-- **New Customer**: create row → generate `CustomerCode` → `CREATE DATABASE` → store connection in Key Vault → publish `CustomerProvisioned` → each service migrates its own schema → mark Active. Block login until ready.
-- **New Organization (a new branch)** under an existing Customer: insert row with its own `OrgCode`, seed its full master data — Chart of Accounts, Tax Master, numbering series, units, payment terms. No new database. A branch starts empty and is seeded exactly like the first one, because it is a complete set of books.
+- **New Customer**: create row → generate `CustomerCode` → create the owner user → seed every service's master data into the tenant database, scoped to the new `CustomerId` and `OrgId` → mark Active. All synchronous, in the request — there is no database left to create and wait on, so nothing has to happen in the background any more. Block login until every service confirms its seed; a customer a service could not reach stays at `Provisioning` (or, for a public signup with no way back in to retry, the terminal `Failed`) rather than being handed a login into an empty chart of accounts. `apps/admin` lists every customer's status and can retry either one — seeding is idempotent, so a retry only adds what a service is still missing.
+- **New Organization (a new branch)** under an existing Customer: insert row with its own `OrgCode`, seed its full master data — Chart of Accounts, Tax Master, numbering series, units, payment terms. No new database, same as before. A branch starts empty and is seeded exactly like the first one, because it is a complete set of books.
 
 ### Cross-database FKs are impossible in Postgres
 - `CreatedBy`/`ModifiedBy` (Users are in the master database) → plain nullable `Guid`, no FK. Resolve names from `mst.Users` in C#, **batched** — watch for N+1 on list screens.
 - Contacts referencing `mst` Countries/States → unenforced ids, validate in C#. **Master holding both contexts does not make this a foreign key** — they are still two databases, and one service mapping both is not one database.
+
+### One database per customer, decided and reversed
+
+**One physical database per Customer was the model through 24 August 2026.** On 25 August 2026, by the repository owner's instruction, it was reversed: every Customer now shares one tenant database, isolated from every other Customer the same way a branch is already isolated from another branch in the same Customer — `CustomerId`, a query filter, an RLS policy, a `set_config` call — rather than by a database boundary. `CustomerId` was added to every table that carries `OrgId`. Greenfield: there was no released deployment and no real customer data to migrate, so nothing needed a backfill.
+
+The trigger was **new-customer provisioning becoming an operator-driven admin screen** (`apps/admin`) rather than a background worker running `CREATE DATABASE` per signup — a shape that does not suit a thousand customers each waiting on their own database, template clone and Key Vault entry. `ITenantConnectionResolver`, the per-request tenant directory, `CustomerDatabase`, `ProvisioningWorker` and the `CustomerProvisioned` event are all gone; a service now opens the one tenant database at startup, the same way it has always opened the one master database, and signup seeds a customer synchronously instead of queuing work for later.
+
+**What this did not change**: the branch-level model. `OrgId` was already globally unique, so nothing about Organization ↔ Organization isolation moved — `CustomerId` is an added layer under it, not a replacement for it. What moved is Customer ↔ Customer, from a physical wall to the same kind of filter-and-policy boundary the branch level already trusted.
+
+**Left over from the previous model, worth knowing about rather than reinventing**: nothing currently grants `platform.*` to any account — it is seeded into the permission catalogue and `apps/admin` checks for it, but no role's seed includes it, deliberately, because `Role` rows are shared system rows rather than per-customer copies, and granting `platform.*` to a tenant role (Owner, say) would grant platform access to that role's holders across every customer, not just one. How an operator's own account is meant to acquire the permission is undecided — see Undecided below.
 
 ---
 
@@ -360,14 +372,14 @@ Schema, API and page all exist for these. Task tracking lives in [`master.md`](.
 | Service | Schema | Tables | What works |
 |---|---|---|---|
 | **Master** | `mst` | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
-| **Master** | `mst` | Customer, Organization, CustomerDatabase, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → `CREATE DATABASE` → seed → Active; branch (organization) CRUD; per-org currencies, config and SMTP |
+| **Master** | `mst` | Customer, Organization, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → seed → Active, synchronously, into the shared tenant database; branch (organization) CRUD; per-org currencies, config and SMTP; platform admin (`apps/admin`) — customer list with status, admin-initiated creation, retry for one stuck mid-seed, read-only branch view per customer |
 | **Master** | `mst` | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
 | **Master** | `con` | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
 | **Inventory** | `inv` | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
 | **Accounting** | `acc` | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail, PeriodLock, OpeningBalance, OpeningBalanceLine | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger, the trial balance, period locks and the opening balance |
 | **Accounting** | `acc` | Bank, BankAccount, SpendMoney, SpendMoneyDetail, ReceiveMoney, ReceiveMoneyDetail, TransferMoney, BankStatement, BankStatementLine, StatementImportProfile | Each bank account provisions its own ledger account; spend, receive and transfer money with allocation, settlement and FX; CSV and XLSX statement import with matching |
 
-The four **Master** rows are one service and one API host, but **two databases**: the first three are `mst` in the shared master database, the fourth is `con` in each customer's own.
+The four **Master** rows are one service and one API host, but **two databases**: the first three are `mst` in the shared master database, the fourth is `con` in the one shared tenant database, alongside every other customer's own `con` rows.
 
 `NumberingSeries` lives in `Shared.Kernel` and is mapped by three services — Accounting owns the migration; Master (on its contacts context), Inventory and Sales map the same shape with `ExcludeFromMigrations`. **A settled exception to the no-shared-tables rule, not a loose end.**
 
@@ -392,7 +404,7 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 - **Customer, Purchase, Reporting** — project folders and `.csproj` exist; no entities, no controllers, no pages. Customer is where CRM and the support helpdesk will both be built
 - **Sales past the invoice.** The sixteen `sal` tables, the three document base classes and all five services and controllers are written. The **quote** (T2.1), the **sales order** (T2.2) and the **invoice** (T3.1) each have their list, their form, their conversion from the document upstream, their docs and their tests; the invoice posts the double entry and issues the stock, and `LedgerClient` now sends `DebitAmount`/`CreditAmount` as Accounting requires. **Delivery challan and credit note have a controller and a scaffold page but no verified path** — until 21 August no sales document could be saved at all (see below), so "written" has never been "works" for those two. **T2.1, T2.2/T2.4 and T3.1/T3.2 were closed on 22 August 2026 by the repository owner's decision**, with **partial fulfilment deferred to T3.6**: nothing advances `DeliveredQuantity` or `InvoicedQuantity` yet, so `FulfilmentStatus.PartlyDelivered` is unreachable and an order can be neither shipped nor billed in part. The three documents are complete as commitment and supply documents; the fulfilment half arrives with the challan. **The item and customer pickers are numeric id fields on every sales form**, awaiting the item lookup endpoint. **POS** is an `sal.Invoices` row and shares the invoice's posting; its till screen is Phase 3 and `apps/desktop` holds only a scaffold
 - **Notification.Worker and RateSync.Worker** — `.csproj` and an empty `Consumers/` folder, nothing else. Email currently sends from Master (`SmtpEmailSender` + an in-process `EmailQueue`), not from a worker
-- **`apps/portal`, `apps/admin`, `apps/desktop`** — scaffolded, zero source files
+- **`apps/portal`, `apps/desktop`** — scaffolded, zero source files. **`apps/admin` is no longer one of them** — it builds, lints and serves, with a customer list, an inline create form and a retry action, and a read-only branch view per customer. Nobody can sign in to it yet: see the platform-operator-permission gap in Undecided
 - **Document numbering series beyond `JRN`, `OPB`, `SPM`, `RCM` and `TRM`.** Accounting seeds all five; Sales and Purchase seed theirs when those services land
 
 ### Standing caveats
@@ -446,7 +458,8 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 ## Undecided — ask, don't assume
 
-- Who holds `CREATEDB` in production *(the UX half is settled: provisioning is async, behind a progress screen that waits)*
+- **How a platform operator's account acquires `platform.*`.** Nothing seeds it today, deliberately — see the provisioning-model note above for why a tenant role can't carry it. A dedicated operator-only role, a flag on `User`, something else: not decided
+- Who holds `CREATEDB` in production, now a much smaller question than it was: `DatabaseMigrationService` still creates `EP_Admin` and `EP_Tenant` on Master's own startup if either is missing, so the app's credentials still need the privilege for that idempotent check — but it is two databases, created once, not one per signup. Whether that auto-create-on-missing belongs in a production startup path at all, versus being infra-provisioned ahead of time, is the sharper form of the same question
 - RBI rate ingestion: scrape / paid wrapper / manual
 - Empty-string vs null normalization for optional phone fields
 - Whether `settings` splits into per-sub-screen libs

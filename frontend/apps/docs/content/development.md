@@ -44,6 +44,7 @@ No inline `template:` or `styles:` blocks. Components with no styling of their o
 ```bash
 # Database — UTF-8 matters, multi-language support depends on it
 createdb -E UTF8 EP_Admin
+createdb -E UTF8 EP_Tenant
 
 cd backend
 dotnet build
@@ -307,22 +308,27 @@ Each launch configuration has a matching task — `serve-web`, `serve-web-stagin
 
 ## Apps without environment files
 
-`apps/portal`, `apps/admin` and `apps/desktop` are empty shells with no build targets. They get environment files and debug configurations when they get something to build.
+`apps/portal` and `apps/desktop` are empty shells with no build targets. They get environment files and debug configurations when they get something to build. `apps/admin` has both now — it builds, lints and serves like `web` and `docs` do.
 
 The backend services that are not yet implemented — Customer, Purchase, Reporting — have only a placeholder `appsettings.json`. Per-environment files arrive with the service.
 
 ## Service-to-service key
 
-Services call each other for things no user token covers: Master's provisioning
-worker writes each service's master data for a new organization, and Accounting,
-Inventory and Sales ask Master which database to open on every request.
+Services call each other for things no user token covers: signup and platform
+admin both write each service's master data for a new organization through the
+same seeding call.
 
-Two of the calls that used to be on this list are gone. Resolving an
-organization's account on sign-in was Identity asking Platform, and reading the
-tenant directory for contacts was Contacts asking Platform; all three are Master
-now, so both are queries. None of those callers has a user token, so those endpoints take the
-organization or customer to act on as a parameter — which is exactly what makes
-them dangerous, and why they are guarded by a shared key instead.
+Three of the calls that used to be on this list are gone. Resolving an
+organization's account on sign-in was Identity asking Platform, reading the
+tenant directory for contacts was Contacts asking Platform, and resolving a
+customer's own database connection was every other service asking Master on
+every request; all three are gone now — the first two because Identity, Platform
+and Contacts are one service, the third because there is no longer a
+connection to resolve; every service opens the one shared tenant database at
+startup. What is left calls Master for the same reason those did: no user token
+covers it, so the endpoint takes the organization or customer to act on as a
+parameter — which is exactly what makes it dangerous, and why it is guarded by
+a shared key instead.
 
 Every route beginning `internal/` carries that guard. They are also absent from
 the gateway and so unreachable from outside the cluster, but that is a routing
@@ -387,9 +393,9 @@ Every table has `CreatedBy`, `CreatedAt`, `ModifiedBy`, `ModifiedAt`, and **all 
 
 ## Tenancy
 
-Every table in a per-customer schema carries `OrgId` plus a global query filter and an RLS policy. **A missing filter leaks data between organizations** — this is the highest-consequence mistake in the codebase.
+Every table in a per-customer schema carries `CustomerId` and `OrgId` plus a global query filter and an RLS policy. **A missing filter leaks data between organizations, or between customers** — this is the highest-consequence mistake in the codebase.
 
-Every unique constraint on an org-scoped table must include `OrgId`.
+Every unique constraint that used to include only `OrgId` keeps only `OrgId` — it was already globally unique, so `CustomerId` is defence in depth on the filter, not a new dimension existing keys need to widen into.
 
 ## Service boundaries
 

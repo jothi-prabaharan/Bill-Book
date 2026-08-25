@@ -6,13 +6,15 @@ Two nested boundaries, enforced by different mechanisms. Getting these confused 
 
 Two levels, and only two.
 
-- **Customer** — the **head office**. The account, the billing relationship, the licence. Owns **one physical database**.
+- **Customer** — the **head office**. The account, the billing relationship, the licence. Shares **one physical database** with every other customer.
 - **Organization** — a **branch**. One place you trade from, and one complete set of books: its own code, GSTIN, address and currency. A head office owns **many**, all sharing its database.
 
 | Boundary | Enforced by |
 |---|---|
-| Head office ↔ head office | Separate physical databases |
-| Branch ↔ branch | `OrgId` + EF Core global query filter + Postgres RLS |
+| Head office ↔ head office | `CustomerId` + EF Core global query filter + Postgres RLS |
+| Branch ↔ branch | `CustomerId` + `OrgId` + EF Core global query filter + Postgres RLS |
+
+Both boundaries are enforced the same way now — the only difference is which column the filter checks. Before, a customer's own database was the isolation; now every table also carries `CustomerId`, checked alongside `OrgId` in the same query filter, the same row-level security policy and the same `set_config` call. Defence in depth rather than a single physical wall: `OrgId` alone was already globally unique, so `CustomerId` doubles the check rather than replacing it.
 
 **A branch is a hard data boundary, not a tag on a transaction.** Each branch keeps its own items, contacts, stock, chart of accounts and numbering series, and nothing crosses between them. Chennai cannot see Bangalore's rows, because the query filter and the row-level security policy both stop it.
 
@@ -24,25 +26,22 @@ Branches are created and switched between from **Settings › Branches** — see
 
 ## Which database holds what
 
-The **master database** is shared by every customer:
+Two physical databases, and only two — both shared by every customer:
 
-- `mst` — countries, states, currencies, and the seeded reference masters
-- `mst` — customers, organizations, licences, tenant directory, SMTP, configuration
-- `mst` — users, roles, permissions, tokens
-- `rat` — currency and metal rate history
+- **The master database** (`mst` — countries, states, currencies and the seeded reference masters; customers, organizations, licences, SMTP, configuration; users, roles, permissions, tokens. `rat` — currency and metal rate history.)
+- **The tenant database** — every customer's branches, together: `con` `cus` `inv` `sal` `pur` `acc` `rpt` `ntf`.
 
-Every other schema is **replicated per customer database**: `con` `crm` `inv` `sal` `pur` `acc` `bnk` `sup` `rpt` `ntf`.
+There is no longer a database per customer. Every table in the tenant database carries `CustomerId` and `OrgId`, and both are checked on every query.
 
 ## Per-request resolution
 
 ```
-JWT → customer_id
-    → tenant directory (mst.CustomerDatabases, cached)
-    → connection string from Key Vault
+JWT → customer_id, org_id
+    → set_config('app.current_customer_id', <customer>, true)
     → set_config('app.current_org_id', <org>, true)
 ```
 
-The last step is **transaction-local**, never connection-level. Connections are pooled and reused across requests; setting org context on the connection would leak it to the next caller.
+Both are **transaction-local**, never connection-level. Connections are pooled and reused across requests; setting tenant context on the connection would leak it to the next caller. There is no connection to resolve first — every service opens the one tenant database at startup, the same way it already opened the one master database.
 
 ## Cross-database references
 
@@ -202,7 +201,6 @@ The rule: **hash what you only verify, encrypt only what you must replay.**
 | Login password | Hash (BCrypt) |
 | Refresh token, OTP code, invite token | Hash (SHA-256) |
 | **SMTP password** | **Encrypt (AES)** — the mail server needs the real value |
-| Tenant connection string | Key Vault reference, never in the database |
 
 The SMTP password is the only encrypted secret in the system, and that is deliberate.
 
@@ -210,7 +208,7 @@ The SMTP password is the only encrypted secret in the system, and that is delibe
 
 # Signup & provisioning
 
-**Status: built.** Public self-service signup that provisions an entire tenant.
+**Status: built.** Two ways in — public self-service signup, and platform admin — both provisioning a customer into the one shared tenant database rather than creating one of its own.
 
 ## What the form collects
 
@@ -230,27 +228,31 @@ POST /api/customers/signup   → 202 Accepted
 1. Create the Customer with a generated `CustomerCode` (10 digits, zero-padded)
 2. Create a **Trial licence automatically** — 14 days, 3 users, 1 organization. The customer never picks it.
 3. Create the first Organization and enable its base currency, active
-4. Queue provisioning and return immediately
+4. Create the owner user with the Owner role
+5. Seed every service's master data into the shared tenant database, scoped to the new `CustomerId` and `OrgId` — chart of accounts, GST rates, numbering series, payment terms, contact roles, unit types, units and metal purities
+6. Flip the Customer and its Organization to Active/Trial
 
-The background provisioner then:
-
-1. `CREATE DATABASE … ENCODING 'UTF8'` — UTF-8 matters, it is why Tamil and Chinese work
-2. Store the tenant connection string in the secret store
-3. Create the owner user with the Owner role
-4. Publish `CustomerProvisioned` so each service migrates its own schema and seeds its data
-5. Flip the Customer to Trial and the database to Ready
+Steps 4–6 run **synchronously**, in the same request — there is no database to create and wait on any more, so there is nothing left that has to happen in the background. The response still says `202 Accepted` because seeding several services is not instant, and the client still polls rather than assuming success.
 
 ## Why login is blocked until it finishes
 
-Creating a database is not instant, so signup is **eventually consistent**. The screen polls:
+The screen polls:
 
 ```
 GET /api/customers/{id}/status   → { canLogin: false | true }
 ```
 
-`canLogin` only becomes true when the customer is active **and** the database is Ready. Logging in earlier would hit a database that does not exist yet.
+`canLogin` only becomes true once every service has confirmed its seed. If a service could not be reached mid-seed, the customer is left at **Provisioning** — or, for a public signup with no way back in to retry, at a terminal **Failed** — rather than handed a login that leads to a chart of accounts with nothing in it.
 
-If provisioning fails, the tenant directory row is marked `Failed` for an operator to retry — the signup is not silently lost.
+## Retrying a stuck signup
+
+A public signup that lands at `Failed` has no second visit of its own — there is nobody signed in to press a retry button. **Platform admin** is where that gets fixed:
+
+`GET /api/admin/customers` lists every customer with its status; a customer at **Provisioning** or **Failed** shows a **Retry setup** action that re-runs the seed. Every seed is idempotent, so retrying is safe no matter how far a previous attempt got — it only adds what a service is still missing. `GET /api/admin/customers/{id}/organizations` shows a customer's branches read-only, for diagnosing a stuck account without needing its owner's password.
+
+The same screen can also create a customer directly — the same `SignupAsync` the public form calls, so the two can never seed a customer differently, minus the public form's own statutory and address fields, which are the customer's to fill in once they can sign in.
+
+**platform.view and platform.edit gate this API**, and today nothing seeds those permissions onto any account — deliberately, since `platform.*` must never reach a tenant role (roles are shared system rows, not per-customer copies, so granting it to one would grant it to that role's holders everywhere). How a platform operator's account is meant to get one is still undecided; see Known gaps in [Overview](overview).
 
 ## Concurrency
 

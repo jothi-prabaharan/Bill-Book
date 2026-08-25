@@ -49,7 +49,7 @@ So a customer can relabel "Accountant" as "Finance Lead", or "Cost of Goods Sold
 
 ## Built — per-organization masters (`acc`)
 
-These live in the customer's own database, resolved per request through the tenant directory. Each is seeded when an organization is created.
+These live in the shared tenant database, scoped by `CustomerId` and `OrgId`. Each is seeded when an organization is created.
 
 | Master | Rows at creation | Screen |
 |---|---|---|

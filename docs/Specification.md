@@ -244,7 +244,7 @@ Payment and refund are deliberately **paired in opposite directions**: `BILLPAYM
 ---
 
 ### `mst.Customers` ✅
-The account/billing entity. **One Customer = one physical database.**
+The account/billing entity. Shares the one tenant database with every other Customer, isolated by `CustomerId`.
 
 | Column | Type | Rules |
 |---|---|---|
@@ -253,12 +253,12 @@ The account/billing entity. **One Customer = one physical database.**
 | CountryPrefix | string(2) | Required, default `IN` |
 | Name | string(200) | Required |
 | BillingEmail | string(200) | Required, email |
-| Status | enum→string(20) | Provisioning / Active / Suspended / Trial / Expired |
+| Status | enum→string(20) | Provisioning / Active / Suspended / Trial / Expired / Failed |
 | PlanTier | string(30) | Required, default `Standard` |
 
-Navigation: `ICollection<Organization> Organizations`, `CustomerDatabase? CustomerDatabase`, `License License`
+Navigation: `ICollection<Organization> Organizations`, `License License`
 
-Database name = `CountryPrefix + CustomerCode` → `IN0000000001`
+There is no per-customer database name any more — every customer's rows live together in the one tenant database, distinguished by `CustomerId` rather than by which physical database they are in. *(Until 24 August 2026 each customer had its own database named `CountryPrefix + CustomerCode`, e.g. `IN0000000001`; reversed 25 August 2026 — see CLAUDE.md's Tenancy section.)*
 
 ### `mst.Licenses` 🔨
 One per Customer. A **Trial** licence is created automatically at signup — the customer never picks it.
@@ -357,16 +357,8 @@ Unique index: `(OrgId, Code)`, plus partial `UNIQUE (Code) WHERE OrgId IS NULL` 
 
 > **This supersedes the two typed decimal columns** that were briefly on `mst.Organizations` (`QuantityDecimalPlaces`, `PriceDecimalPlaces`). Keeping both would be two sources of truth for the same number; the config table is the single home. `mst.Currencies.DecimalPlaces` stays where it is — money precision is a property of the currency, not an org tunable.
 
-### `mst.CustomerDatabases` ✅
-Tenant directory.
-
-| Column | Type | Rules |
-|---|---|---|
-| CustomerId | Guid | PK **and** FK → Customers (one-to-one) |
-| DatabaseName | string(63) | Required, unique. Postgres identifier limit |
-| ConnectionSecretRef | string(200) | Required. **Key Vault reference — never the raw connection string** |
-| Status | enum→string(20) | Provisioning / Ready / Failed |
-| ProvisionedAt | DateTimeOffset? | |
+### `mst.CustomerDatabases` — removed 25 August 2026
+Was the tenant directory: one row per customer naming its database and a Key Vault reference to its connection string. Removed with the move to one shared tenant database — there is no longer a database to name or a connection to look up per customer, and `Customer.Status` alone (Provisioning / Active / Suspended / Trial / Expired / Failed) is enough to say whether a customer's seed has finished.
 
 ### `mst.ApiClients` 📋
 | Column | Type | Rules |
@@ -1193,11 +1185,13 @@ Validate GSTIN's first two digits against the chosen state's `StateCode` when GS
 **What the server does on submit** (see the signup flow for the full sequence):
 1. Create `mst.Customers` (Status = Provisioning) + generate `CustomerCode`
 2. Create a **Trial `mst.Licenses`** — 14 days, 3 users, 1 org — automatically
-3. `CREATE DATABASE`, run every service's migrations, seed the org's default Accounts and the 6 TaxMasters (AccountTypes and the other reference masters live in the master database), create the first Organization and its Chart of Accounts
-4. Create the owner `mst.Users` with the Owner role, password already hashed
-5. Flip Customer + CustomerDatabase to Active/Ready
+3. Create the first Organization, then create the owner `mst.Users` with the Owner role, password already hashed
+4. Seed every service's default data into the shared tenant database, scoped to the new `CustomerId`/`OrgId` — Chart of Accounts, the 6 TaxMasters (AccountTypes and the other reference masters live in the master database), numbering series, payment terms, contact roles, unit types, units and metal purities
+5. Flip Customer and Organization to Active/Trial — or, if a service could not be reached, leave the Customer at Provisioning (Failed if there is no way back in to retry) for `apps/admin` to retry later
 
-**After submit**: shows a "setting up your account" state and polls `GET /api/customers/{id}/status` until `CanLogin = true`. Provisioning creates a physical database — this is eventually consistent and login must be blocked until ready.
+Steps 3–5 are **synchronous**, in the request that returns `202 Accepted` — there is no database to create and wait on any more, only several services to seed, so nothing happens in the background.
+
+**After submit**: shows a "setting up your account" state and polls `GET /api/customers/{id}/status` until `CanLogin = true`. Seeding several services still takes a moment, so the screen still polls rather than assuming success — it just is not waiting on a database being created any more.
 
 ---
 
@@ -1301,8 +1295,10 @@ Reads `acc.vw_LedgerDetail`. One screen for every transaction type, because they
 - Reversals show paired against the original, from the journal reversal mapping
 - Mobile: card list with debit/credit and running balance; filters in a full-screen sheet
 
-## Platform admin (`apps/admin`) 📋
-Customer list with provisioning status · Organization list per customer · API client management (secret shown once at creation) · Provisioning progress and failure retry.
+## Platform admin (`apps/admin`) 🔨
+Customer list with provisioning status ✅ · Organization list per customer, read-only ✅ · Admin-initiated customer creation ✅ · Retry for a customer stuck at Provisioning or Failed ✅ · API client management (secret shown once at creation) 📋.
+
+**Built, but nobody can sign in to it yet.** Every action is gated on `platform.view`/`platform.edit`, and nothing seeds that permission onto any account — deliberately, since `Role` rows are shared system rows, and granting `platform.*` to a tenant role would grant it to that role's holders across every customer. How a platform operator's account is meant to acquire the permission is undecided; see CLAUDE.md's Undecided section.
 
 ---
 
@@ -1327,30 +1323,29 @@ The end-to-end sequences for login, signup, forgot-password, invitation and tria
 
 ## Signup + tenant provisioning
 
-Public, self-service. One form creates a Customer, its database, a Trial licence, the first Organization and the Owner user.
+Two doors to the same seed: public self-service signup, and platform-admin-initiated creation (`apps/admin`). Both create a Customer, a Trial licence, the first Organization and the Owner user, then seed every service's master data into the one shared tenant database, scoped to the new `CustomerId`/`OrgId`.
 
 ```mermaid
 sequenceDiagram
     actor U as Visitor
     participant W as apps/web (signup)
-    participant P as Platform API
-    participant DB as Postgres (master)
-    participant PV as Provisioner
+    participant P as Master API
+    participant DB as Postgres (master + tenant)
+    participant S as Accounting / Inventory / Sales
     participant N as Notification worker
 
     U->>W: company, org, name, email, password,<br/>country/state, GSTIN/PAN/TIN…, FY start
     W->>P: POST /api/customers/signup
     P->>DB: insert Customer (Provisioning) + CustomerCode
     P->>DB: insert License (Trial, +14d, 3 users, 1 org)
-    P-->>W: 202 { customerId }  → "setting up…"
-    P->>PV: provision(customerId)
-    PV->>DB: CREATE DATABASE IN000000000N (UTF8)
-    PV->>DB: migrate every service schema
-    PV->>DB: seed default Accounts,<br/>6 TaxMasters
-    PV->>DB: create Organization + its Chart of Accounts
-    PV->>DB: create Owner User (password hashed) + Owner role pivot
-    PV->>DB: Customer=Active, CustomerDatabase=Ready
-    PV->>N: send "welcome / verify email"
+    P->>DB: insert Organization
+    P->>DB: create Owner User (password hashed) + Owner role pivot
+    P->>DB: seed default Accounts, 6 TaxMasters,<br/>scoped to CustomerId/OrgId
+    P->>S: seed numbering series, units,<br/>payment terms — scoped to CustomerId/OrgId
+    S-->>P: ok, or which services could not be reached
+    P->>DB: Customer=Active/Trial, Organization=Active<br/>(or Provisioning/Failed if a service was unreachable)
+    P-->>W: 202 { customerId }
+    P->>N: send "welcome / verify email"
     N-->>U: welcome mail (SMTP)
     loop until CanLogin
         W->>P: GET /api/customers/{id}/status
@@ -1359,7 +1354,7 @@ sequenceDiagram
     W-->>U: redirect to Login
 ```
 
-Key points: the **Trial licence is automatic** — never chosen. Login is **blocked until `CanLogin = true`** because the database is created asynchronously. The owner's password is hashed (BCrypt) before it ever hits a row.
+Key points: the **Trial licence is automatic** — never chosen. Everything after the initial insert is **synchronous, in the same request** — there is no database to create, so nothing is queued for later. `CanLogin` still needs polling for because seeding several services still takes a moment, not because anything is asynchronous. A customer a service could not reach stays at Provisioning (or the terminal Failed, for a public signup with no way back in) until `apps/admin` retries it — every seed is idempotent, so a retry only adds what is still missing. The owner's password is hashed (BCrypt) before it ever hits a row.
 
 ## Login (two-step, licence-aware)
 
@@ -1486,7 +1481,6 @@ Invitees get a **link, never a temporary password**. Until they complete it, `Pa
 | OTP code | `OtpVerifications.CodeHash` | **Hash** (SHA-256) | Only ever verified |
 | Invite / reset link | `PasswordResetTokens.TokenHash` | **Hash** | Only ever verified |
 | SMTP password | `SmtpSettings.PasswordEncrypted` | **Encrypt** (AES, Key Vault key) | Must be recovered to log in to the mail server |
-| DB connection string | `CustomerDatabases.ConnectionSecretRef` | **Key Vault reference** | Never in the database at all |
 
 The single rule: **hash what you only verify; encrypt only what you must replay.** The SMTP password is the sole thing in the system that is encrypted rather than hashed, and that is deliberate.
 

@@ -11,13 +11,13 @@ Pages describe what is **actually built**. A page tagged `partial` or `planned` 
 ## Where to start
 
 - **[Architecture](#/architecture)** — the twelve services, schemas and how they talk
-- **[Tenancy model](#/tenancy)** — customers, organizations and the database-per-customer rule
+- **[Tenancy model](#/tenancy)** — customers, organizations and how each is isolated from every other
 - **[Build status](#/status)** — an honest list of what is done
 - **[Running locally](#/running-locally)** — get it up on your machine
 
 ## The two rules that shape everything
 
-1. **A Customer owns one physical database; an Organization is a set of books inside it.** Every per-customer table carries `OrgId`, and a missing query filter leaks data between organizations.
+1. **A Customer shares one physical database with every other Customer; an Organization is a set of books inside it.** Every per-customer table carries `CustomerId` and `OrgId`, and a missing query filter leaks data between organizations, or between customers.
 2. **Everything posts through a journal.** Invoices, bills, payments, depreciation and opening balances all become ledger rows — nothing writes to the general ledger directly.
 
 
@@ -32,7 +32,7 @@ Seven services, plus three workers and a YARP gateway.
 
 | Service | Schema | Owns |
 |---|---|---|
-| Master | `mst` | Countries, states, currencies, transaction/ledger/account-type masters; customers, organizations, licences, the tenant directory, SMTP and config; users, roles, permissions, tokens, OTP |
+| Master | `mst` | Countries, states, currencies, transaction/ledger/account-type masters; customers, organizations, licences, SMTP and config; users, roles, permissions, tokens, OTP |
 | Master | `con` | Contacts — customers and vendors |
 | Inventory | `inv` | Items, stock, weighted-average and cost-layer costing |
 | Accounting | `acc` | Chart of accounts, journals, the ledger, tax, period locks, opening balances; banks, money documents, reconciliation |
@@ -74,7 +74,9 @@ A service never touches another service's `DbContext`. Cross-service reads go ov
 
 Writes that cross a boundary go via events instead: Sales and Purchase publish, Accounting consumes and writes the ledger.
 
-Several seams that used to be on this list are gone, because both ends are now one service. `IPlatformDirectory` (Identity → Platform) and its DTO were deleted outright; `IMasterCurrencies`, `IIdentityAdmin` and the tenant directory kept their interfaces but read the database directly. Their internal endpoints stay, because the services that did not merge still call them.
+Several seams that used to be on this list are gone, because both ends are now one service. `IPlatformDirectory` (Identity → Platform) and its DTO were deleted outright; `IMasterCurrencies` and `IIdentityAdmin` kept their interfaces but read the database directly. Their internal endpoints stay, because the services that did not merge still call them.
+
+A different seam is gone for a different reason: the tenant directory that resolved a customer's own database connection per request no longer exists at all, deleted outright rather than collapsed into a merge. Every service opens the one shared tenant database at startup now, the same way every service has always opened the one shared master database.
 
 ## Frontend
 
@@ -108,7 +110,7 @@ The full solution builds, including the three services that are still empty shel
 |---|---|
 | `Shared.Kernel` | `AuditableEntity`, audit interceptor, `ICurrentUser`, tenancy, numbering, GST calculation, secret/event/email/storage interfaces |
 | Master · reference | Countries, states, currencies, 4 reference masters and HSN/SAC with a CBIC CSV importer |
-| Master · tenancy | Customers, organizations, licences, the tenant directory, SMTP, config, org currencies; public signup, background provisioning, status polling |
+| Master · tenancy | Customers, organizations, licences, SMTP, config, org currencies; public signup and platform-admin provisioning (both synchronous, one seed), status polling |
 | Master · auth | Users, roles, 120 permissions, tokens, OTP; two-step login, org switching, invitations, password reset |
 | Master · contacts | Contacts with roles, addresses, bank details, licences and attachments; the GSTIN versus place-of-supply check |
 | Inventory | Item master with pharma and jewellery profiles, guarded stock decrement, weighted average and FIFO/LIFO/FEFO/specific cost layers, batches, serials, backdated recosting |
@@ -123,11 +125,13 @@ The full solution builds, including the three services that are still empty shel
 
 - **Customer, Reporting** — project folders and `.csproj` exist, nothing else. Customer is where CRM and the support helpdesk will both be built
 - **Notification and RateSync workers** — a `.csproj` and an empty `Consumers/` folder. Mail currently sends from Master, queued in process
-- **`apps/portal`, `apps/admin`** — scaffolded, zero source files
+- **`apps/portal`** — scaffolded, zero source files
+- **`apps/admin`** — a customer list with status and a retry action, an inline create-customer form, and a read-only branch list per customer. Nobody can sign in to it yet — see Known gaps
 - **`apps/desktop`** — POS terminal module and ESC/POS thermal printing service built; full CRUD, inventory sync, and offline database support pending
 
 ## Known gaps
 
+- **Nothing grants `platform.*` to any account.** The permission exists in the seeded catalogue and `apps/admin` checks for it, but no role's seed includes it — deliberately, since roles are shared system rows rather than per-customer copies, so granting it to a tenant role would grant platform access to that role's holders across every customer. How an operator is meant to get one is undecided
 - `ISecretStore` and `IEventPublisher` have development stand-ins only. The secret store keeps what it was given in memory and reads through to configuration for anything else; the event publisher logs and delivers nothing, so nothing that reads an event works yet. Key Vault and Service Bus are still to write
 - `JournalDetails` is the only per-customer table without `OrgId` (it scopes via its parent journal)
 - No SMS provider, so mobile OTP cannot deliver

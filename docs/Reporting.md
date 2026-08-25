@@ -1080,7 +1080,7 @@ Full detail for each task is in the section above; this is the tracker, not a se
 - [x] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
 - [x] **S · R0.4 ★ — the generic query engine:** `ReportColumn`, `ReportParameter`, `ReportQueryBuilder` (every operator, multi-key sort, paging, composite group keys), `IReportSource` + `ReportSource<TRow>` with execution, count, grand totals and group footers, and `ReportCatalogService` carrying the source-against-seed validation. 30 tests. Expression trees only, and an unknown column is refused rather than dropped.
   - **Groupable columns must be text**, decided and enforced where a column is declared. Grouping runs in SQL on one concatenated key; concatenating a date or an enum asks Postgres to render it in a format nobody chose and which moves with server settings. A report grouping by account type exposes the type's *name* — which is what the group header wanted anyway.
-  - **The catalog validator runs when a report's columns are built, not at startup.** The catalog is per-branch data in a per-customer database, so at startup there is no tenant to read it for and nothing to validate against.
+  - **The catalog validator runs when a report's columns are built, not at startup.** The catalog is per-branch data, scoped to whichever tenant is signed in, so at startup there is no tenant to read it for and nothing to validate against.
 - [x] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** `AccountMovementSource` (row per record) and `TrialBalanceSource` (row per account with totals underneath) — the two shapes every later report copies — plus `ReportCatalogSeeder` and the recipe at §9.5. 41 tests. **Account Type is not on either report yet**: it lives in `mst.AccountTypes`, another database, so it needs R1.2's batched resolver.
 - [x] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, `InternalSeedController`, `ReportRunner`, the gateway route. **The permission module is `reports`, not `reporting`** — that is what `mst.Permissions` seeds — and the query route carries `[PermissionAction("view")]` because a POST would otherwise derive `.edit` and a Viewer could not run a report. → **G3 FAILED, see §9.9**
 - [x] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml` — frozen header, column widths, money as numbers and dates as date serials, group subtotals and the grand total as real rows. The 100k cap **refuses rather than truncates**, and `ExportFormat.Pdf` refuses politely. Eight tests open the produced file and read it back.
@@ -1468,23 +1468,23 @@ These are non-negotiable. Code that breaks one gets rejected.
 
 **Two levels, not three.**
 
-- **Customer** = the head office. Owns **one physical database**.
+- **Customer** = the head office. Shares **one physical database** with every other Customer *(since 25 August 2026 — was one database per Customer before; see CLAUDE.md's Tenancy section for the reversal)*.
 - **Organization** = a branch. One place the business trades from, one complete
-  set of books. A Customer owns many, all sharing that database.
+  set of books. A Customer owns many, all sharing that Customer's rows in that database.
 
 | Boundary | Enforced by |
 |---|---|
-| Customer ↔ Customer | Separate physical databases |
-| Organization ↔ Organization | `OrgId` + EF query filter + Postgres RLS |
+| Customer ↔ Customer | `CustomerId` + EF query filter + Postgres RLS |
+| Organization ↔ Organization | `CustomerId` + `OrgId` + EF query filter + Postgres RLS |
 
 **There is no `Branches` table and no `BranchId` column.** `OrgId` *is* the branch.
 
-**Every per-customer table needs `OrgId` and a query filter.** Inherit
+**Every per-customer table needs `CustomerId`, `OrgId` and a query filter.** Inherit
 `OrgScopedEntity` and `TenantDbContext` applies the filter by reflection — which is
 why a read model cannot be added without one.
 
 Schemas: `mst` and `rat` in the shared master database; `con inv sal pur acc cus
-rpt ntf` in each customer's own.
+rpt ntf` together in the one shared tenant database.
 
 **`mst.Users`, `mst.AccountTypes`, countries and states are in a different
 database and cannot be joined.** Resolve them in C#, batched. This is what R1.2

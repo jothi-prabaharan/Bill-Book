@@ -47,7 +47,7 @@ Seven services:
 
 | Service | Schema | Responsibility |
 |---|---|---|
-| Master | `mst`, `con` | Countries and states; customers, organizations, the tenant directory and provisioning; users, roles, permissions, JWT auth; contacts |
+| Master | `mst`, `con` | Countries and states; customers, organizations and provisioning; users, roles, permissions, JWT auth; contacts |
 | Inventory | `inv` | Items, stock, weighted average costing |
 | Accounting | `acc` | Chart of accounts, journal entries, tax master; bank accounts, money documents, reconciliation |
 | Sales | `sal` | Invoices, POS |
@@ -57,29 +57,29 @@ Seven services:
 
 Three background workers — **Notification** (`ntf`), **CostingEngine**, **RateSync** (`rat`) — plus a **YARP** gateway.
 
-There were twelve, one schema each. Three merges took them to seven, each time because two services were two halves of one job — signing in needs the user, the branch and the licence together; a[...]
+There were twelve, one schema each. Three merges took them to seven, each time because two services were two halves of one job — signing in needs the user, the branch and the licence together, a money document exists to move a balance in the ledger, and a lead becoming a customer is one lifecycle, not two services handing it back and forth.
 
-Master is the exception to one-schema-per-service, and deliberately: `mst` is in the shared master database while `con` is in each customer's own, so contacts keep their `OrgId` filter and their R[...]
+Master is the exception to one-schema-per-service, and deliberately: `mst` is the shared master database, `con` is in the shared tenant database every customer's contacts live in — still two different Postgres databases, which is why Master maps two `DbContext`s, but neither is per customer any more.
 
 Services communicate by API call or event. A service never reaches into another service's `DbContext`.
 
 ### Tenancy
 
-Two nested boundaries, enforced by different mechanisms:
+Two nested boundaries, enforced the same way — a query filter plus a Postgres row-level security policy — checking a different id, or pair of ids, at each level:
 
-- **Customer** — the account and billing entity. Owns **one physical database**.
-- **Organization** — a set of books, with its own GSTIN, currency and branches. A Customer owns **many**, all sharing that Customer's database.
+- **Customer** — the account and billing entity. Shares **one physical database** with every other Customer.
+- **Organization** — a set of books, with its own GSTIN, currency and branches. A Customer owns **many**, all sharing that Customer's rows in that database.
 
 | Boundary | Enforced by |
 |---|---|
-| Customer ↔ Customer | Separate physical databases |
-| Organization ↔ Organization | `OrgId` + EF Core global query filter + Postgres RLS |
+| Customer ↔ Customer | `CustomerId` + EF Core global query filter + Postgres RLS |
+| Organization ↔ Organization | `CustomerId` + `OrgId` + EF Core global query filter + Postgres RLS |
 
-`mst` and `rat` live in a shared **master database**. Every other schema is replicated per customer database.
+`mst` and `rat` live in the **master database**. Every other schema lives in the one **tenant database**, shared by every customer and isolated by `CustomerId`.
 
-Request flow: resolve `CustomerId` from the JWT → select the database via the `mst` tenant directory (cached) → set `app.current_org_id` **transaction-locally** with `set_config(..., true)`. N[...]
+Request flow: resolve `CustomerId` and `OrgId` from the JWT → set `app.current_customer_id` and `app.current_org_id` **transaction-locally** with `set_config(..., true)`. Never connection-level — pooled connections are reused across requests and would leak tenant context to the next caller. There is no database to select first: every service opens the one tenant database at startup.
 
-`OrgId` is load-bearing for security. A per-customer table without a query filter leaks data between organizations.
+`CustomerId` and `OrgId` are both load-bearing for security. A per-customer table without a query filter leaks data between organizations, or between customers entirely.
 
 ### Accounting model
 
@@ -148,15 +148,14 @@ Each of the seven services gets its own folder under `backend/Api/`, holding exa
 
 ### Database
 
-Create the master database with UTF-8 encoding — multi-language support (Tamil, Chinese) depends on it:
+Create both databases with UTF-8 encoding — multi-language support (Tamil, Chinese) depends on it. One holds the shared master data, the other holds every customer's data together, isolated by `CustomerId` and `OrgId` rather than by a database boundary:
 
 ```bash
 createdb -E UTF8 EP_Admin
+createdb -E UTF8 EP_Tenant
 ```
 
-Per-customer databases are created at runtime by Master during provisioning, not by hand.
-
-The account the application uses needs `CREATEDB`. Who holds that privilege in production is still an open decision.
+Master creates both automatically on first start if they don't already exist, so this step is only needed to run a migration by hand before the API has started once. There is no per-customer database any more, so nothing is created at runtime beyond these two.
 
 ### Migrations
 
@@ -174,7 +173,7 @@ dotnet ef database update --project Api/Accounting/Accounting.Repository \
   --startup-project Api/Accounting/Accounting.Api
 ```
 
-Master needs `--context` because it maps two: `AdminDbContext` against the shared master database, `ContactsDbContext` against a customer's own.
+Master needs `--context` because it maps two: `AdminDbContext` against the master database, `ContactsDbContext` against the shared tenant database every customer's contacts live in.
 
 ### Run
 
