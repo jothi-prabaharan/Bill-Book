@@ -34,6 +34,8 @@ public class InventoryDbContext : TenantDbContext
     public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
 
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<PriceList> PriceLists => Set<PriceList>();
+    public DbSet<PriceListItem> PriceListItems => Set<PriceListItem>();
 
     public DbSet<ItemStock> ItemStock => Set<ItemStock>();
 
@@ -776,3 +778,4 @@ public class InventoryDbContext : TenantDbContext
         base.OnModelCreating(modelBuilder);
     }
 }
+
