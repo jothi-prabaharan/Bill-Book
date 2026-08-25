@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'lib-api-clients-list',
+  selector: 'bb-api-clients-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './api-clients.list.html',

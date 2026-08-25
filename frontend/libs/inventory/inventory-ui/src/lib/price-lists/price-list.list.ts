@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 @Component({
-  selector: 'lib-price-list-list',
+  selector: 'bb-price-list-list',
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './price-list.list.html',
