@@ -107,6 +107,48 @@ public class CustomerStatusResponse
     public bool CanLogin { get; set; }
 }
 
+/// <summary>One row of the platform admin's customer list.</summary>
+public class CustomerListItem
+{
+    public Guid CustomerId { get; set; }
+
+    public string CustomerCode { get; set; } = null!;
+
+    public string Name { get; set; } = null!;
+
+    public string BillingEmail { get; set; } = null!;
+
+    public string PlanTier { get; set; } = null!;
+
+    public string Status { get; set; } = null!;
+
+    public DateTimeOffset? CreatedAt { get; set; }
+}
+
+/// <summary>Outcome of an admin retrying a stuck customer's provisioning.</summary>
+public enum RetryProvisioningOutcome
+{
+    Ok = 1,
+    NotFound = 2,
+    Failed = 3,
+}
+
+public sealed class RetryProvisioningResult
+{
+    public required RetryProvisioningOutcome Outcome { get; init; }
+
+    public IReadOnlyList<string> UnseededServices { get; init; } = [];
+
+    public static RetryProvisioningResult OkResult { get; } =
+        new() { Outcome = RetryProvisioningOutcome.Ok };
+
+    public static RetryProvisioningResult NotFoundResult { get; } =
+        new() { Outcome = RetryProvisioningOutcome.NotFound };
+
+    public static RetryProvisioningResult Failed(IReadOnlyList<string> unseeded) =>
+        new() { Outcome = RetryProvisioningOutcome.Failed, UnseededServices = unseeded };
+}
+
 /// <summary>
 /// Shape returned by GET /internal/orgs/{orgId}/context — must match the
 /// OrgContext the Identity service deserializes.

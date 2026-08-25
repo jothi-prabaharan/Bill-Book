@@ -16,17 +16,20 @@ public sealed class SignupService
     private readonly AdminDbContext _db;
     private readonly IProvisioningQueue _queue;
     private readonly IMasterCurrencies _master;
+    private readonly ITenantSeeder _seeder;
     private readonly TimeProvider _clock;
 
     public SignupService(
         AdminDbContext db,
         IProvisioningQueue queue,
         IMasterCurrencies master,
+        ITenantSeeder seeder,
         TimeProvider clock)
     {
         _db = db;
         _queue = queue;
         _master = master;
+        _seeder = seeder;
         _clock = clock;
     }
 
@@ -185,6 +188,74 @@ public sealed class SignupService
             // customer never reaches the app. Suspended and Expired stay refused.
             CanLogin = customerStatus is TenantStatus.Trial or TenantStatus.Active,
         };
+    }
+
+    /// <summary>
+    /// Every customer, for the platform admin's customer list. Ordered newest
+    /// first — a freshly provisioned or stuck signup is what an operator opens
+    /// this screen to look at.
+    /// </summary>
+    public async Task<IReadOnlyList<CustomerListItem>> ListAsync(CancellationToken ct) =>
+        await _db.Customers
+            .OrderByDescending(c => c.CreatedAt)
+            .Select(c => new CustomerListItem
+            {
+                CustomerId = c.CustomerId,
+                CustomerCode = c.CustomerCode,
+                Name = c.Name,
+                BillingEmail = c.BillingEmail,
+                PlanTier = c.PlanTier,
+                Status = c.Status.ToString(),
+                CreatedAt = c.CreatedAt,
+            })
+            .ToListAsync(ct);
+
+    /// <summary>
+    /// Re-runs the seed for a customer stuck at Provisioning or Failed — the
+    /// platform admin's retry action. Only the seed, not the owner user: a
+    /// retry has no password to create one with, and if the customer row
+    /// exists at all the owner-creation step already ran (it precedes the
+    /// seed in both SignupAsync's queue and ProvisioningWorker), so there is
+    /// nothing left to redo there. The seed itself is idempotent regardless
+    /// of how far a previous attempt got.
+    /// </summary>
+    public async Task<RetryProvisioningResult> RetryProvisioningAsync(Guid customerId, CancellationToken ct)
+    {
+        Customer? customer = await _db.Customers
+            .FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
+
+        if (customer is null)
+        {
+            return RetryProvisioningResult.NotFoundResult;
+        }
+
+        // The head office — the first organization created for this customer,
+        // by signup. There is exactly one at this point; later branches go
+        // through OrganizationService's own retry instead.
+        Organization? org = await _db.Organizations
+            .Where(o => o.CustomerId == customerId)
+            .OrderBy(o => o.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        if (org is null)
+        {
+            return RetryProvisioningResult.NotFoundResult;
+        }
+
+        IReadOnlyList<string> unseeded = await _seeder.SeedAsync(customerId, org.OrgId, ct);
+
+        if (unseeded.Count > 0)
+        {
+            customer.Status = TenantStatus.Failed;
+            await _db.SaveChangesAsync(ct);
+            return RetryProvisioningResult.Failed(unseeded);
+        }
+
+        customer.Status = TenantStatus.Trial;
+        org.Status = TenantStatus.Active;
+        await _db.SaveChangesAsync(ct);
+
+        return RetryProvisioningResult.OkResult;
     }
 
     private async Task<string> NextCustomerCodeAsync(CancellationToken ct)
