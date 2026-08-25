@@ -2,7 +2,72 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "admin",
   "projectType": "application",
+  "prefix": "bb",
   "sourceRoot": "apps/admin/src",
   "tags": ["type:app", "platform:browser"],
-  "targets": {}
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/admin",
+        "index": "apps/admin/src/index.html",
+        "browser": "apps/admin/src/main.ts",
+        "tsConfig": "apps/admin/tsconfig.json",
+        "polyfills": ["zone.js"],
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/admin/public"
+          }
+        ],
+        "styles": ["apps/admin/src/styles.scss"]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "500kb",
+              "maximumError": "1mb"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "4kb",
+              "maximumError": "8kb"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/admin/src/environments/environment.ts",
+              "with": "apps/admin/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/admin/proxy.conf.json",
+        "port": 4210
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "admin:build:development"
+        },
+        "production": {
+          "buildTarget": "admin:build:production"
+        }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
 }
