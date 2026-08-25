@@ -1,0 +1,7 @@
+.page-head { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: .5rem; }
+.page-head h1 { margin: .2rem 0 0; }
+.back { color: #3557d6; text-decoration: none; font-size: .85rem; }
+.error { color: #c0392b; }
+
+.badge { font-size: .62rem; background: #eceef3; color: #6a6f80; padding: .05rem .3rem; border-radius: 3px; margin-left: .3rem; }
+.badge.warn { background: #fdf0d5; color: #8a5b00; }

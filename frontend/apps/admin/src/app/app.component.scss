@@ -1,1 +1,35 @@
-// Styles for this component.
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: .75rem 1.25rem;
+  border-bottom: 1px solid #e2e4ea;
+}
+
+.brand {
+  font-weight: 600;
+  color: #1b1e27;
+  text-decoration: none;
+}
+
+.link {
+  background: none;
+  border: 0;
+  color: #3557d6;
+  cursor: pointer;
+  font: inherit;
+  font-size: .85rem;
+  padding: 0;
+}
+
+.content {
+  padding: 1.25rem;
+  max-width: 72rem;
+  margin: 0 auto;
+}
+
+@media (max-width: 700px) {
+  .content {
+    padding: 1rem;
+  }
+}

@@ -1,1 +1,10 @@
-<router-outlet></router-outlet>
+@if (auth.isAuthenticated()) {
+  <header class="bar">
+    <a class="brand" routerLink="/customers">Bill-Book Admin</a>
+    <button type="button" class="link" (click)="signOut()">Sign out</button>
+  </header>
+}
+
+<main class="content">
+  <router-outlet></router-outlet>
+</main>

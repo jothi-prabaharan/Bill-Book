@@ -1,0 +1,35 @@
+<header class="page-head">
+  <div>
+    <a routerLink="/customers" class="back">&larr; Customers</a>
+    <h1>Branches</h1>
+  </div>
+</header>
+
+@if (message()) {
+  <p class="error">{{ message() }}</p>
+}
+
+<bb-data-grid [gridCode]="'ADMIN_CUSTOMER_ORGANIZATIONS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="orgCode" let-row>
+    <code>{{ row.orgCode }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="name" let-row>
+    {{ row.name }}
+    @if (row.isFirst) {
+      <span class="badge">Head office</span>
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="city" let-row>
+    {{ row.city ?? '—' }}
+  </ng-template>
+  <ng-template bbCellTemplate="gstin" let-row>
+    <code>{{ row.gstin ?? '—' }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @switch (row.status) {
+      @case ('Active') { Active }
+      @case ('Provisioning') { <span class="badge warn">Setting up</span> }
+      @default { {{ row.status }} }
+    }
+  </ng-template>
+</bb-data-grid>

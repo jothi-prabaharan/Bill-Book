@@ -1,0 +1,133 @@
+<header class="page-head">
+  <h1>Customers</h1>
+  <div class="head-actions">
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add customer</button>
+  </div>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Every customer shares this one database, separated by customer and organization id. Creating
+  one here runs the same seed as public trial signup — chart of accounts, GST rates, numbering
+  series, payment terms, units and purities — so it stays unusable until that finishes.
+</p>
+
+<bb-data-grid [gridCode]="'ADMIN_CUSTOMERS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="customerCode" let-row>
+    <code>{{ row.customerCode }}</code>
+  </ng-template>
+  <ng-template bbCellTemplate="name" let-row>
+    <button type="button" class="link" (click)="open(row)">{{ row.name }}</button>
+  </ng-template>
+  <ng-template bbCellTemplate="createdAt" let-row>
+    {{ dateOnly(row.createdAt) }}
+  </ng-template>
+  <ng-template bbCellTemplate="status" let-row>
+    @switch (row.status) {
+      @case ('Active') { Active }
+      @case ('Trial') { <span class="badge trial">Trial</span> }
+      @case ('Provisioning') { <span class="badge warn">Setting up</span> }
+      @case ('Failed') { <span class="badge danger">Failed</span> }
+      @case ('Suspended') { <span class="badge">Suspended</span> }
+      @case ('Expired') { <span class="badge danger">Expired</span> }
+      @default { {{ row.status }} }
+    }
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="open(row)" [disabled]="busy()">View</button>
+
+    @if (row.status === 'Provisioning' || row.status === 'Failed') {
+      <button type="button" class="link" (click)="retry(row)" [disabled]="busy()">
+        Retry setup
+      </button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (adding()) {
+  <div class="sheet">
+    <h2>New customer</h2>
+
+    <p class="hint">
+      Creates the head office and its first branch, then seeds both immediately. Statutory
+      details (GSTIN, PAN, address) and further branches are the customer's own to fill in once
+      they can sign in.
+    </p>
+
+    <div class="fields">
+      <label>
+        Owner name
+        <bb-text-input [(ngModel)]="form.displayName" maxlength="200" />
+      </label>
+
+      <label>
+        Owner email
+        <input type="email" [(ngModel)]="form.email" maxlength="200" />
+        <small>Becomes the sign-in for the account owner.</small>
+      </label>
+
+      <label>
+        Temporary password
+        <input type="password" [(ngModel)]="form.password" minlength="8" />
+        <small>At least 8 characters. The owner can change it after signing in.</small>
+      </label>
+
+      <label>
+        Mobile
+        <bb-text-input [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </label>
+
+      <label>
+        Company name
+        <bb-text-input [(ngModel)]="form.companyName" maxlength="200" />
+        <small>The billing entity — the head office.</small>
+      </label>
+
+      <label>
+        First branch name
+        <bb-text-input [(ngModel)]="form.organizationName" maxlength="200" />
+      </label>
+
+      <label>
+        Financial year starts
+        <select [(ngModel)]="form.financialYearStartMonth">
+          @for (month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track month) {
+            <option [ngValue]="month">Month {{ month }}</option>
+          }
+        </select>
+        <small>April for India. Drives the year segment in generated numbers.</small>
+      </label>
+
+      <label>
+        Base currency
+        <select [(ngModel)]="form.baseCurrency">
+          @for (curr of currencies(); track curr.code) {
+            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
+          }
+        </select>
+        <small>Every posting in this branch converts to it. Fixed once created.</small>
+      </label>
+    </div>
+
+    <div class="sheet-actions">
+      <button
+        type="button"
+        (click)="create()"
+        [disabled]="
+          busy() ||
+          !form.displayName ||
+          !form.email ||
+          !form.password ||
+          !form.companyName ||
+          !form.organizationName
+        "
+      >
+        Create
+      </button>
+      <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
+    </div>
+  </div>
+}
