@@ -89,7 +89,8 @@ interface StatementLine {
  * than with a tidy full statement — the matched lines are the ones nobody needs
  * to look at.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statements-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, TextInputComponent, NumberInputComponent],

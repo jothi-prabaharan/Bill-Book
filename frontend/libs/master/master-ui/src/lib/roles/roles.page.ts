@@ -35,7 +35,8 @@ interface PermissionGroup {
  * The matrix is 120 checkboxes, so modules are an accordion with select-all
  * per row and collapse to one module per screen on mobile.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-roles-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

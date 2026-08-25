@@ -31,7 +31,8 @@ type Mode = 'create' | 'revise' | 'rename';
  * that applied then. Renaming is separate, because it is display-only and
  * therefore allowed on seeded rates.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-master-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],

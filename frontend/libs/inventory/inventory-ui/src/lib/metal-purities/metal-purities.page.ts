@@ -21,7 +21,8 @@ interface Purity {
  * metal rate — a wrong figure misprices every piece of that purity, so it is
  * frozen once an item uses it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-metal-purities-page',
   standalone: true,
   imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, TextInputComponent, NumberInputComponent],

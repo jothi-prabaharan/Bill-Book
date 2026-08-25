@@ -6,7 +6,8 @@ import { DeliveryChallanService, SaveDeliveryChallanRequest } from '@bill-book/s
 import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-delivery-challan-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],

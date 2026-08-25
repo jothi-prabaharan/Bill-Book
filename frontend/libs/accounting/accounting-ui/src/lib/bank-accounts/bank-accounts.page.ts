@@ -51,7 +51,8 @@ interface BankAccount {
  * retries it — the alternative is losing everything the user typed because
  * another service was briefly down.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-accounts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],

@@ -10,7 +10,8 @@ import {
   UiMessage,
 } from '@bill-book/ui-components';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-aging-summary-list',
   standalone: true,
   imports: [CommonModule, DataGridComponent, MessageBoxComponent],

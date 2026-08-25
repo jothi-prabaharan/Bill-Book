@@ -54,7 +54,8 @@ type FormModel = Omit<
  * than as a field on the form, since it is the one edit that can collide with
  * codes already issued.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-numbering-series-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],

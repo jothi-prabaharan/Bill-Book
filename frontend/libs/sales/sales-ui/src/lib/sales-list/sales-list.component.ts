@@ -6,7 +6,8 @@ import { FormsModule } from '@angular/forms';
 import { TransactionService, SalesTransactionListItem } from '@bill-book/sales-core';
 import { DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sales-list',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule, DataGridComponent, DataGridCellTemplateDirective],

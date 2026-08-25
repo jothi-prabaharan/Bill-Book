@@ -22,7 +22,8 @@ const CANDIDATE_PAGE = 100;
  * An unconfirmed order is holding no stock, so invoicing it would issue goods
  * nobody reserved; the server refuses that too, and says why.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-order-to-invoice-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],

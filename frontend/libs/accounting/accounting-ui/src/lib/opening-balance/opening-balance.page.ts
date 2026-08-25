@@ -123,7 +123,8 @@ interface LineForm {
  * has been measured from. After go-live the screen is a record of what was
  * brought across, and an error is corrected with a journal entry.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-opening-balance-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],

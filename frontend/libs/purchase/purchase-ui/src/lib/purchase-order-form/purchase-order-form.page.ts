@@ -44,7 +44,8 @@ type Picker = 'none' | 'vendor' | 'item';
  * `bb-lookup-dialog` both fetch nothing, so this page owns every HTTP call and
  * they stay testable without a server.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [

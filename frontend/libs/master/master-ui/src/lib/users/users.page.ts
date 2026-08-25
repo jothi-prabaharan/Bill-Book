@@ -27,7 +27,8 @@ interface RoleOption {
  * User management. Adding a user sends an invitation email — a temporary
  * password is never issued. Mobile number is collected but not yet verified.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-users-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DatePipe, TextInputComponent],

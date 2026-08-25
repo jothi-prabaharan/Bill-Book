@@ -14,7 +14,8 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 const QTY_SCALE = 1_000_000;
 const PAISE = 100;
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, AllocationGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],

@@ -87,7 +87,8 @@ const REASONS: readonly { value: string; label: string }[] = [
  * There is no void: a posted sheet has moved stock that physically moved, so the
  * correction is a mirror sheet.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-adjustments-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],

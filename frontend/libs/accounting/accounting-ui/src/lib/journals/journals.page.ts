@@ -79,7 +79,8 @@ interface LineForm {
  * with a save button — an entry is wrong until it is zero, and finding that out
  * at save time means finding it out after the typing is done.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-journals-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent, TextInputComponent, NumberInputComponent],

@@ -20,7 +20,8 @@ interface Bank {
  * entered once and balances can be reported by bank rather than by whatever
  * each account happened to be called.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-banks-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

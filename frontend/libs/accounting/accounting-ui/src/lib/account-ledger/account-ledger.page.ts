@@ -64,7 +64,8 @@ interface AccountType {
  * "Accounts Payable: −40,000" is a number every accountant has to stop and
  * translate.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-account-ledger-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],

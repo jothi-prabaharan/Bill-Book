@@ -14,7 +14,8 @@ export interface BreadcrumbItem {
  * Sticky breadcrumbs (`z-index: 4`) replacing `<h1>` headers.
  * Provides dynamic route path resolution and action projection host (`<ng-content select="[bbShellActions], .acts" />`).
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-breadcrumb',
   standalone: true,
   imports: [RouterLink],

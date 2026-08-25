@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, output } from '@angular/core';
-import { ContactPersonRolesList } from './contact-person-roles.list';
+import { ContactPersonRolesList } from '../contact-person-roles-list/contact-person-roles.list';
 
-export type { ContactPersonRole } from './contact-person-roles.list';
+export type { ContactPersonRole } from '../contact-person-roles-list/contact-person-roles.list';
 
 /**
  * The role master as a popup. It opens from the contact list and from the role
@@ -14,7 +14,8 @@ export type { ContactPersonRole } from './contact-person-roles.list';
  * dialog around it. What differs between the two surfaces is how they are
  * dismissed and nothing else.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-dialog',
   standalone: true,
   imports: [ContactPersonRolesList],

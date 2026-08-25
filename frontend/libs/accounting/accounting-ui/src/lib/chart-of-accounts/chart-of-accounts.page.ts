@@ -37,7 +37,8 @@ interface AccountType {
  * type, code and usage flags are frozen — only the display name, active state
  * and posting lock stay editable. IsJE is never shown: it is backend-only.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

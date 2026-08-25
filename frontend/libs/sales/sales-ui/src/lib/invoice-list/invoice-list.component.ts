@@ -29,7 +29,8 @@ const PAGE_SIZE = 25;
  * overdue — a draft owes nothing yet and a voided one never will — which is
  * decided on the server so the screen and a report cannot disagree about it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-invoice-list',
   standalone: true,
   imports: [

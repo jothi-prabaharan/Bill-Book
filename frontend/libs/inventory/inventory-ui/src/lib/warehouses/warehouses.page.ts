@@ -31,7 +31,8 @@ interface Warehouse {
  * and weighted average cost is company-wide, so nothing here splits inventory.
  * Per-warehouse quantities come from aggregating movements.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-warehouses-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

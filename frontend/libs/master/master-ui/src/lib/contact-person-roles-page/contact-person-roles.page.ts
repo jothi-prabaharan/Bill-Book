@@ -14,7 +14,8 @@ import { ContactPersonRolesList } from '../contact-person-roles-list/contact-per
  * Both render <see cref="ContactPersonRolesList"/>, so there is one list and one
  * place to change its behaviour.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-page',
   standalone: true,
   imports: [ContactPersonRolesList],

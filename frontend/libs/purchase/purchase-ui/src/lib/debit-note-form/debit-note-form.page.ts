@@ -54,7 +54,8 @@ interface ReturnLine {
  * sends goods back. A price correction or a post-purchase discount reduces what
  * is owed while the goods stay on the shelf.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, NumberInputComponent],

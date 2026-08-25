@@ -20,7 +20,8 @@ interface ConfigurationRow {
  * edits values and clears overrides; it cannot add or delete keys, because a
  * key nothing reads is dead data and a deleted key breaks whatever read it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-configurations-page',
   standalone: true,
   imports: [FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],

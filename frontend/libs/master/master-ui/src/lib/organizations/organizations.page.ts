@@ -50,7 +50,8 @@ type OrganizationForm = Omit<
  * written before the branch is usable, so a new branch stays "setting up" until
  * every service has seeded it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organizations-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

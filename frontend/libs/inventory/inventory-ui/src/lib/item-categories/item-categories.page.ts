@@ -32,7 +32,8 @@ interface UomType {
  * independent. Changing a category's default never rewrites existing items:
  * that would restate costing on stock already held.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-item-categories-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

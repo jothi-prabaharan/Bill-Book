@@ -15,7 +15,8 @@ import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-c
  * the whole branch reads the same report the same way. Publishing needs
  * `reports.edit`, and the server enforces that rather than this dialog.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-saved-view-dialog',
   standalone: true,
   imports: [FormsModule, TextInputComponent],

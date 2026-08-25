@@ -47,7 +47,8 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
  * Handed straight through they do not throw — they compute a priced invoice as
  * an empty one.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [

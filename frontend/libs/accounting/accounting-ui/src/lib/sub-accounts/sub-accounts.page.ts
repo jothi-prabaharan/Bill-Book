@@ -33,7 +33,8 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
  * The advances are the part of the control account that is not a trade balance,
  * which is exactly what a balance sheet has to report separately.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sub-accounts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, SearchInputComponent],

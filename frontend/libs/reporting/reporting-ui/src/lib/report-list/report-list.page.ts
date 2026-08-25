@@ -10,7 +10,8 @@ import { ReportCatalogItem, ReportQueryService } from '@bill-book/reporting-core
  * server leaves them out of the catalog, and a list of things you cannot have is
  * a worse screen besides.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-list-page',
   standalone: true,
   imports: [RouterLink],

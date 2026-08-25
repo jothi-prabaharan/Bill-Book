@@ -43,7 +43,8 @@ interface TransferListItem {
  * one complicated is absent here, and a shared screen would carry the complexity
  * anyway.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-transfer-money-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],

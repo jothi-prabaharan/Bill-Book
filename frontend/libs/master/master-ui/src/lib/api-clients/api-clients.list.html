@@ -1,0 +1,29 @@
+<div class="api-clients-container">
+  <h2>API Integrations</h2>
+  <p>Generate secure API keys to integrate external systems with this branch.</p>
+
+  <div class="create-form">
+    <input type="text" [ngModel]="newClientName()" (ngModelChange)="newClientName.set()" placeholder="E.g. Shopify POS Integration" />
+    <button (click)="createClient()">Generate API Key</button>
+  </div>
+
+  <div *ngIf="generatedKey() as key" class="success-alert">
+    <strong>Success!</strong> Your new API key is <code>{{ key }}</code>. 
+    <br>Please copy this now. It will not be shown again.
+  </div>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th>Integration Name</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let client of clients()">
+        <td>{{ client.name }}</td>
+        <td>{{ client.isActive ? 'Active' : 'Inactive' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

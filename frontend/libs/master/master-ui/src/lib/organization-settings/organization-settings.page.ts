@@ -71,7 +71,8 @@ const MONTHS = [
  * converts to it, so changing it after anything has been posted would restate
  * the books. It is chosen when the branch is created and fixed thereafter.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organization-settings-page',
   standalone: true,
   imports: [FormsModule, TextInputComponent],

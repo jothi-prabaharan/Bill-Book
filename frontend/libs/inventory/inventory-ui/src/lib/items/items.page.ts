@@ -139,7 +139,8 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
  * tracking flags render read-only — every recorded quantity and cost was written
  * under them, so changing one would reinterpret history rather than correct it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
   imports: [FormsModule, TextInputComponent, NumberInputComponent, SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective],

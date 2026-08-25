@@ -6,7 +6,8 @@ import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purchase-core';
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-purchase-list',
   standalone: true,
   imports: [DataGridComponent, CommonModule, RouterModule, FormsModule],

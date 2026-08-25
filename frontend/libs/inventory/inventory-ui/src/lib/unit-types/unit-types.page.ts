@@ -39,7 +39,8 @@ interface UomType {
  * factor in the type, so it prompts — and the server refuses outright once any
  * item uses a unit of that type.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-unit-types-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],

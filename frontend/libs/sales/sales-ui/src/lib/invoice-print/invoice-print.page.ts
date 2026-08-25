@@ -27,7 +27,8 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
  * corroborate the figure — which is why they are computed from the same rounded
  * amount rather than formatted separately.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-invoice-print',
   standalone: true,
   imports: [CommonModule, MessageBoxComponent],

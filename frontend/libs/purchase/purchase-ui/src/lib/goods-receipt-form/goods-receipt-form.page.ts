@@ -48,7 +48,8 @@ interface ReceivingLine {
  * `Dr Inventory / Cr Goods Received Not Invoiced`, and the order it came against
  * moves toward closed.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-goods-receipt-form',
   standalone: true,
   imports: [DataGridComponent, 

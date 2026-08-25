@@ -20,7 +20,8 @@ export interface DocGroup {
  * Contains searchable organization switcher dropdown, display-only FY tag,
  * and action group buttons (`New`, `Favourites`, `Help`, `Sign out`).
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-topbar',
   standalone: true,
   imports: [RouterLink, FormsModule, SearchInputComponent],

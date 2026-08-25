@@ -19,7 +19,8 @@ export interface NavItem {
  * Contains module navigation items, active cutout rule with 4px left accent rule,
  * bottom user profile menu, and responsive mobile bottom tab bar navigation (<860px).
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-nav',
   standalone: true,
   imports: [RouterLink, RouterLinkActive],

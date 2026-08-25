@@ -20,7 +20,8 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
  * The server refuses the other two cases as well, and says why; this list exists
  * so that refusal is rare rather than routine.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-quote-to-order-dialog',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],

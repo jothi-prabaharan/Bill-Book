@@ -32,7 +32,8 @@ import { SavedViewDialog } from '../saved-views/saved-view.dialog';
  * emit a changed copy; nothing below holds a second version, so two things can
  * never disagree about which page is showing.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-report-host-page',
   standalone: true,
   imports: [

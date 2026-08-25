@@ -17,7 +17,8 @@ export interface OutstandingBalanceView {
   outstandingAmount: number;
 }
 
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-allocation-form',
   standalone: true,
   imports: [CommonModule, FormsModule, NumberInputComponent],

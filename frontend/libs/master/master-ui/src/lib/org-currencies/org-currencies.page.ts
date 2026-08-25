@@ -29,7 +29,8 @@ interface MasterCurrency {
  * yet enabled. The base currency is seeded active at org creation and cannot
  * be deactivated.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-org-currencies-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule],

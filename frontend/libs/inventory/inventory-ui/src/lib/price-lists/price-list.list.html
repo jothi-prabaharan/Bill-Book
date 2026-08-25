@@ -1,0 +1,27 @@
+<div class="price-lists-container">
+  <h2>Tiered Price Lists</h2>
+  <p>Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers.</p>
+
+  <div class="create-form">
+    <input type="text" [ngModel]="newListName()" (ngModelChange)="newListName.set()" placeholder="Price List Name (e.g. Wholesale)" />
+    <input type="text" [ngModel]="newListDescription()" (ngModelChange)="newListDescription.set()" placeholder="Description" />
+    <button (click)="createPriceList()">Create Tier</button>
+  </div>
+
+  <table class="data-grid">
+    <thead>
+      <tr>
+        <th>Tier Name</th>
+        <th>Description</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let list of priceLists()">
+        <td>{{ list.name }}</td>
+        <td>{{ list.description }}</td>
+        <td>{{ list.isActive ? 'Active' : 'Inactive' }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

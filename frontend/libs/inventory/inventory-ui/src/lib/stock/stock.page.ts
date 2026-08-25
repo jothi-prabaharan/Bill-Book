@@ -136,7 +136,8 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
  * There is deliberately no per-warehouse balance on this screen: stock is a
  * single shared pool, and a warehouse only says where a movement happened.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-page',
   standalone: true,
   imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent, LookupDialogComponent],

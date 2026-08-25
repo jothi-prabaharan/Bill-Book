@@ -41,7 +41,8 @@ interface AccountType {
  * sound, so when they do not this page says so at the top in red rather than
  * showing a tidy table with a discrepancy buried in it.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-trial-balance-page',
   standalone: true,
   imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],

@@ -48,7 +48,8 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
  * for the same rows. So the header is reactive and the lines stay with the
  * component that all nine share.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sales-order-form',
   standalone: true,
   imports: [

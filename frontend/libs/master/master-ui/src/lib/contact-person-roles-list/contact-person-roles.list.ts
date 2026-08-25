@@ -26,7 +26,8 @@ export interface ContactPersonRole {
  * setting a branch up will look for it. Two copies of this list would be two
  * places to fix the next behaviour change, and they would drift.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contact-person-roles-list',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent],

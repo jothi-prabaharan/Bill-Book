@@ -15,6 +15,6 @@ export * from './lib/users/users.page';
 // Contacts.
 export * from './lib/contacts/contacts.page';
 export * from './lib/contact-person-roles-list/contact-person-roles.list';
-export * from './lib/contact-person-roles-dialog/contact-person-roles.dialog';
+
 export * from './lib/contact-person-roles-page/contact-person-roles.page';
 

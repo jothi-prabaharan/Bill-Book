@@ -46,7 +46,8 @@ type FormModel = Pick<
  * "Net 30" is unambiguous, but "End of Month" and "day of next month" are not,
  * and a worked example settles it faster than any label.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-payment-terms-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],

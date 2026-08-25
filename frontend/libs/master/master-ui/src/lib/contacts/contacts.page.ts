@@ -116,6 +116,7 @@ interface ContactDetail extends ContactListItem {
   isMsme: boolean;
   udyamNumber: string | null;
   notes: string | null;
+  defaultPriceListId: string | null;
   addresses: AddressModel[];
   persons: PersonModel[];
   bankDetails: BankDetailModel[];
@@ -168,7 +169,8 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
  * (at least one person, exactly one default, one default address per type), so
  * the set has to arrive together.
  */
-changeDetection: ChangeDetectionStrategy.OnPush,
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
   imports: [DataGridComponent, FormsModule, ContactPersonRolesDialog, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
@@ -885,6 +887,7 @@ export class ContactsPage implements OnInit {
       bankDetails: [],
       licences: [],
       attachments: [],
+      defaultPriceListId: null,
     };
   }
 
