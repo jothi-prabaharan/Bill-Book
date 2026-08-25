@@ -116,6 +116,32 @@ public sealed class CustomerQueryFilterTests
     }
 
     [SkippableFact]
+    public async Task One_customer_cannot_read_another_customers_leads()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        // Two different customers sharing the one test database — the case that
+        // could never be tested before cus carried a real CustomerId column.
+        await using CustomerDbContext mine = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+        await using CustomerDbContext theirs = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        mine.Leads.Add(new Lead
+        {
+            Name = "Customer-scoped lead",
+            CompanyName = "Test Company",
+            Email = "test2@example.com",
+            Phone = "1234567890",
+            Source = LeadSource.Website,
+            Status = LeadStatus.New
+        });
+
+        await mine.SaveChangesAsync(CancellationToken.None);
+
+        Assert.NotEmpty(await mine.Leads.ToListAsync(CancellationToken.None));
+        Assert.Empty(await theirs.Leads.ToListAsync(CancellationToken.None));
+    }
+
+    [SkippableFact]
     public async Task Row_level_security_covers_every_table_in_the_schema()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
