@@ -13,11 +13,6 @@ namespace Sales.Api.Controllers;
 
 /// <summary>
 /// Sales orders — <c>SOR</c>. The document that commits stock without selling it.
-///
-/// <b>Nothing here reaches <c>acc.JournalLedger</c>.</b> An order is a promise
-/// and a promise is not a supply, so the double entry belongs to the invoice
-/// raised from it. What confirming one does instead is reserve: see
-/// <see cref="SalesOrderService.ConfirmAsync"/>.
 /// </summary>
 [ApiController]
 [Authorize]
@@ -97,12 +92,9 @@ public sealed class SalesOrdersController : ControllerBase
 
     /// <summary>
     /// Fulfill some or all remaining order quantities by creating and posting an invoice.
-    ///
-    /// The server derives the remaining quantity from the order and all existing
-    /// non-void invoices. The caller cannot over-invoice a line by sending a stale
-    /// client-side quantity. The invoice is then posted through the existing
-    /// accounting/inventory pipeline, so tax, stock issue and ledger posting remain
-    /// owned by InvoiceService.
+    /// Existing non-void invoices are counted server-side, so stale clients cannot
+    /// over-invoice a line. The normal InvoiceService pipeline performs tax, stock
+    /// issue and ledger posting.
     ///
     /// Empty <c>Lines</c> means "fulfill everything still uninvoiced".
     /// </summary>
@@ -124,10 +116,7 @@ public sealed class SalesOrdersController : ControllerBase
         }
         if (access.Outcome != SalesOrderOutcome.Ok || access.View is null)
         {
-            return BadRequest(new MessageResponse
-            {
-                Message = "The Sales Order could not be read for fulfillment."
-            });
+            return BadRequest(new MessageResponse { Message = "The Sales Order could not be read for fulfillment." });
         }
 
         SalesOrder? order = await _db.SalesOrders
@@ -141,18 +130,12 @@ public sealed class SalesOrdersController : ControllerBase
 
         if (order.Status != DocumentStatus.Posted)
         {
-            return BadRequest(new MessageResponse
-            {
-                Message = "Only a confirmed Sales Order can be fulfilled."
-            });
+            return BadRequest(new MessageResponse { Message = "Only a confirmed Sales Order can be fulfilled." });
         }
 
         if (order.FulfilmentStatus is FulfilmentStatus.Closed or FulfilmentStatus.Cancelled)
         {
-            return Conflict(new MessageResponse
-            {
-                Message = "This Sales Order is already closed."
-            });
+            return Conflict(new MessageResponse { Message = "This Sales Order is already closed." });
         }
 
         if (request.DueDate is null)
@@ -163,8 +146,6 @@ public sealed class SalesOrdersController : ControllerBase
             });
         }
 
-        // Serializable prevents two concurrent fulfillment requests from both
-        // reading the same remaining quantity and issuing duplicate invoices.
         await using var transaction = await _db.Database.BeginTransactionAsync(
             IsolationLevel.Serializable, ct);
 
@@ -214,10 +195,7 @@ public sealed class SalesOrdersController : ControllerBase
 
                 if (requested <= 0m)
                 {
-                    return BadRequest(new MessageResponse
-                    {
-                        Message = $"Line {line.LineNumber} quantity must be greater than zero."
-                    });
+                    return BadRequest(new MessageResponse { Message = $"Line {line.LineNumber} quantity must be greater than zero." });
                 }
 
                 if (requested > remaining)
@@ -244,16 +222,12 @@ public sealed class SalesOrdersController : ControllerBase
 
             if (linesToFulfill.Count == 0)
             {
-                return Conflict(new MessageResponse
-                {
-                    Message = "There is no remaining quantity to fulfill on this Sales Order."
-                });
+                return Conflict(new MessageResponse { Message = "There is no remaining quantity to fulfill on this Sales Order." });
             }
 
             SaveInvoiceRequest invoiceRequest = new()
             {
-                DocumentDate = request.DocumentDate
-                    ?? DateOnly.FromDateTime(DateTime.UtcNow),
+                DocumentDate = request.DocumentDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
                 DueDate = request.DueDate,
                 PaymentTermId = request.PaymentTermId,
                 ContactId = order.ContactId,
@@ -305,16 +279,19 @@ public sealed class SalesOrdersController : ControllerBase
                 return InvoiceFailure(posted);
             }
 
-            // Invoice posting has issued the goods. Keep the order's fulfilment
-            // quantities aligned with DeliveryChallanService: a sales-order line
-            // may be fulfilled by either a challan or an invoice, and the two
-            // quantities are additive across documents.
-            foreach ((SalesOrderDetail line, decimal quantity, _) in linesToFulfill)
+            // Invoices are one of the two fulfillment documents for a Sales Order;
+            // DeliveryChallanService updates the same fields for the other path.
+            // Reconcile from the durable delivered quantity so older invoices that
+            // predate this endpoint are included as fulfilled as well.
+            foreach ((SalesOrderDetail line, decimal quantity, decimal previouslyInvoiced) in linesToFulfill)
             {
-                line.DeliveredQuantity += quantity;
+                line.DeliveredQuantity = Math.Max(
+                    line.DeliveredQuantity,
+                    previouslyInvoiced + quantity);
+
                 if (line.LineType == DocumentLineType.Stock)
                 {
-                    line.ReservedQuantity = Math.Max(0m, line.ReservedQuantity - quantity);
+                    line.ReservedQuantity = Math.Max(0m, line.Quantity - line.DeliveredQuantity);
                 }
             }
 
@@ -332,17 +309,13 @@ public sealed class SalesOrdersController : ControllerBase
                 SalesOrderId = order.SalesOrderId,
                 InvoiceId = created.InvoiceId,
                 Status = order.FulfilmentStatus.ToString(),
-                Lines = linesToFulfill.Select(x =>
+                Lines = linesToFulfill.Select(x => new FulfilledSalesOrderLine
                 {
-                    decimal remaining = Math.Max(0m, x.Line.Quantity - x.PreviouslyInvoiced - x.Quantity);
-                    return new FulfilledSalesOrderLine
-                    {
-                        SalesOrderDetailId = x.Line.SalesOrderDetailId,
-                        OrderedQuantity = x.Line.Quantity,
-                        PreviouslyInvoicedQuantity = x.PreviouslyInvoiced,
-                        FulfilledQuantity = x.Quantity,
-                        RemainingQuantity = remaining
-                    };
+                    SalesOrderDetailId = x.Line.SalesOrderDetailId,
+                    OrderedQuantity = x.Line.Quantity,
+                    PreviouslyInvoicedQuantity = x.PreviouslyInvoiced,
+                    FulfilledQuantity = x.Quantity,
+                    RemainingQuantity = Math.Max(0m, x.Line.Quantity - x.PreviouslyInvoiced - x.Quantity)
                 }).ToList()
             });
         }
