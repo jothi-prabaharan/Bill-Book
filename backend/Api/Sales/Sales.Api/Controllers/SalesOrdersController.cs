@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Sales.Api.Services;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
+using Sales.Entity.Enums;
 using Sales.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
