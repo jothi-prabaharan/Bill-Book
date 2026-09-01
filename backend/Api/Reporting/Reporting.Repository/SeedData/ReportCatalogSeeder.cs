@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Entity.TableEntities;
 
@@ -876,4 +876,5 @@ public sealed class ReportCatalogSeeder
         AggregateFunction Aggregate = AggregateFunction.None,
         ColumnAlignment Alignment = ColumnAlignment.Left);
 }
+
 

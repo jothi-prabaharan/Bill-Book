@@ -13,4 +13,5 @@ public class BillRead : OrgScopedEntity
     public DateOnly DueDate { get; set; }
     public string CurrencyCode { get; set; } = null!;
     public decimal TotalAmount { get; set; }
+    public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 }

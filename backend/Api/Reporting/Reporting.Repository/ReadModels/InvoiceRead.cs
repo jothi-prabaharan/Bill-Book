@@ -11,4 +11,6 @@ public class InvoiceRead : OrgScopedEntity
     public DateOnly DocumentDate { get; set; }
     public long ContactId { get; set; }
     public DateOnly? DueDate { get; set; }
+    public decimal TotalAmount { get; set; }
+    public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 }

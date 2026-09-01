@@ -86,6 +86,15 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<BillRead> Bills => Set<BillRead>();
     public DbSet<InvoiceDetailTaxRead> InvoiceDetailTaxes => Set<InvoiceDetailTaxRead>();
 
+    public DbSet<SalesOrderRead> SalesOrders => Set<SalesOrderRead>();
+    public DbSet<SalesOrderDetailRead> SalesOrderDetails => Set<SalesOrderDetailRead>();
+    public DbSet<QuoteRead> Quotes => Set<QuoteRead>();
+    public DbSet<DeliveryChallanRead> DeliveryChallans => Set<DeliveryChallanRead>();
+    public DbSet<InvoiceDetailRead> InvoiceDetails => Set<InvoiceDetailRead>();
+    public DbSet<PurchaseOrderRead> PurchaseOrders => Set<PurchaseOrderRead>();
+    public DbSet<GoodsReceiptRead> GoodsReceipts => Set<GoodsReceiptRead>();
+    public DbSet<BillDetailRead> BillDetails => Set<BillDetailRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -204,6 +213,15 @@ public class ReportingDbContext : TenantDbContext
         MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);
         MapRead<BillRead>(modelBuilder, "Bills", "pur", e => e.BillId);
         MapRead<InvoiceDetailTaxRead>(modelBuilder, "InvoiceDetailTaxes", "sal", e => e.InvoiceDetailTaxId);
+        MapRead<SalesOrderRead>(modelBuilder, "SalesOrders", "sal", e => e.SalesOrderId);
+        MapRead<SalesOrderDetailRead>(modelBuilder, "SalesOrderDetails", "sal", e => e.SalesOrderDetailId);
+        MapRead<QuoteRead>(modelBuilder, "Quotes", "sal", e => e.QuoteId);
+        MapRead<DeliveryChallanRead>(modelBuilder, "DeliveryChallans", "sal", e => e.DeliveryChallanId);
+        MapRead<InvoiceDetailRead>(modelBuilder, "InvoiceDetails", "sal", e => e.InvoiceDetailId);
+        MapRead<PurchaseOrderRead>(modelBuilder, "PurchaseOrders", "pur", e => e.PurchaseOrderId);
+        MapRead<GoodsReceiptRead>(modelBuilder, "GoodsReceipts", "pur", e => e.GoodsReceiptId);
+        MapRead<BillDetailRead>(modelBuilder, "BillDetails", "pur", e => e.BillDetailId);
+
     }
 
     private static void MapRead<TEntity>(
