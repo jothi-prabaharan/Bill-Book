@@ -89,6 +89,17 @@ public class SaveCreditNoteRequest
     [Range(1, long.MaxValue, ErrorMessage = "Contact is required")]
     public long ContactId { get; set; }
 
+    /// <summary>The contact's GSTIN, as of this document. See <see cref="PlaceOfSupplyStateCode"/>.</summary>
+    [MaxLength(15, ErrorMessage = "GSTIN must be 15 characters.")]
+    public string? ContactGstin { get; set; }
+
+    /// <summary>
+    /// The two-digit state code the supply is made in. Falls back to the state
+    /// read off <see cref="ContactGstin"/> when left blank — see
+    /// <c>Shared.Kernel.Tax.PlaceOfSupply</c>.
+    /// </summary>
+    public string? PlaceOfSupplyStateCode { get; set; }
+
     public CreditNoteReason ReasonCode { get; set; } = CreditNoteReason.SalesReturn;
 
     [MaxLength(3)]

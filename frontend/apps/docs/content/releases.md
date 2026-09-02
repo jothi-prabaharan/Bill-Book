@@ -34,6 +34,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 - Added Inventory Item List, Item Detail, Item Summary, and Inventory Aging reports.
 - **Added**: A platform admin screen (`apps/admin`) — every customer with its provisioning status, a create-customer action, a retry for one stuck mid-setup, and a read-only view of a customer's branches.
 
+### Fixed
+- **Delivery challans and credit notes could not be saved at all.** Neither ever worked out how much of the item's own stock unit a line actually moves, or what it comes to before and after tax, so the database refused every line the moment you tried — on both screens, for every branch. Neither ever worked out CGST + SGST against IGST correctly either: the split was always half and half by name, whatever state the customer was actually registered in, with IGST never charged even on a document that should have carried it. Both are now computed exactly the way invoices and sales orders already were, and refuse to save with a clear reason if the customer's GSTIN and the stated place of supply disagree, rather than guessing between them.
+
 ### Changed
 - **Every customer now shares one database instead of getting its own.** Nothing changes in how you sign up, sign in or use your account — your branch's data is exactly as separate from every other customer's as it always was, now kept apart by an id checked on every request instead of by a database boundary. Signing up no longer waits on a new database being created, so setting up your books happens in the same request rather than in the background.
 

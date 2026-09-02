@@ -8,16 +8,19 @@ namespace Sales.Api.Tests;
 
 /// <summary>
 /// What the save path actually puts on a line, checked against what the table
-/// requires.
+/// requires — using <c>Invoice</c> as the reference, since all five sales
+/// documents share <see cref="DocumentLineBase"/> and the same check
+/// constraints.
 ///
-/// <b>Three of the five sales documents build their lines from five fields</b> —
-/// item, quantity, unit price, discount percent and tax group — where the quote
-/// and the sales order set the full surface. The columns they leave alone are not
-/// all optional, and one of them is load-bearing: <c>BaseQuantity</c> has a check
-/// constraint tying it to <c>Quantity × ConversionFactor</c>, so a line that
-/// never sets it is refused by the database rather than merely incomplete.
+/// <b><c>BaseQuantity</c> is load-bearing.</b> It has a check constraint tying
+/// it to <c>Quantity × ConversionFactor</c>, so a line that never sets it is
+/// refused by the database rather than merely incomplete — which is exactly
+/// what left Delivery Challan and Credit Note unable to save a single line
+/// until their own <c>SaveAsync</c> methods were brought in line with
+/// Invoice's and Sales Order's (see <c>DeliveryChallanServiceTests</c> and
+/// <c>CreditNoteServiceTests</c> for those two, end to end).
 ///
-/// These tests pin that difference so it is a failing build rather than a 500 on
+/// These tests pin the difference so it is a failing build rather than a 500 on
 /// the first save.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -101,10 +104,11 @@ public sealed class DocumentLineFieldTests
         db.Invoices.Add(invoice);
         await db.SaveChangesAsync(CancellationToken.None);
 
-        // LineNumber is never assigned by InvoiceService, DeliveryChallanService
-        // or CreditNoteService — it appears nowhere in any of the three — so
-        // every line on a document takes the default of zero. BaseQuantity is
-        // set here so this test fails on the line number and nothing else.
+        // A line that skips LineNumber takes the default of zero, which is
+        // what every Delivery Challan and Credit Note line did before their
+        // SaveAsync methods numbered lines the way Invoice's always has.
+        // BaseQuantity is set here so this test fails on the line number and
+        // nothing else.
         for (int i = 0; i < 2; i++)
         {
             db.InvoiceDetails.Add(new InvoiceDetail

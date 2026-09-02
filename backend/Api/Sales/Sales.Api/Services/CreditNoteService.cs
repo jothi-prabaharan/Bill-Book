@@ -190,9 +190,32 @@ public sealed class CreditNoteService
             _db.CreditNotes.Add(creditNote);
         }
 
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
+        {
+            throw new InvalidOperationException("Branch settings could not be read.");
+        }
+
+        // Resolved once, the same way Invoice and SalesOrder resolve it — a
+        // GSTIN that disagrees with the stated place of supply is refused
+        // rather than guessed at. A credit note reverses what the invoice
+        // charged, so getting the head of tax wrong here is getting the
+        // reversal wrong too.
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+        if (!pos.IsOk)
+        {
+            throw new InvalidOperationException(pos.Detail);
+        }
+
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+
         creditNote.InvoiceId = request.InvoiceId;
         creditNote.ReasonCode = request.ReasonCode;
         creditNote.ContactId = request.ContactId;
+        creditNote.ContactGstin = request.ContactGstin;
+        creditNote.PlaceOfSupplyStateId = 0;
+        creditNote.IsInterState = pos.IsInterState;
         creditNote.DocumentDate = request.DocumentDate;
         creditNote.Notes = request.Notes;
         creditNote.CurrencyCode = request.CurrencyCode ?? "USD";
@@ -200,43 +223,89 @@ public sealed class CreditNoteService
         creditNote.BillingAddress = request.BillingAddress;
         creditNote.ShippingAddress = request.ShippingAddress;
 
-        foreach (var reqLine in request.Lines)
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
+
+        for (int i = 0; i < request.Lines.Count; i++)
         {
+            SaveCreditNoteLineRequest reqLine = request.Lines[i];
+            int lineNumber = i + 1;
+
+            long? taxGroupId = reqLine.TaxGroupIds.Count > 0 ? reqLine.TaxGroupIds[0] : null;
+
+            TaxRate? rate = null;
+            if (taxGroupId.HasValue)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Tax rate for group {taxGroupId.Value} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = reqLine.Quantity,
+                UnitPrice = reqLine.UnitPrice,
+                DiscountPercent = reqLine.DiscountPercent > 0 ? reqLine.DiscountPercent : null,
+                Rate = rate,
+            };
+
+            // BaseQuantity, GrossAmount, TaxableAmount and LineTotal all come
+            // from here — computing them by hand next to this call is exactly
+            // how they drifted out of step with "chk_creditnotedetails_*" before.
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
             var line = new CreditNoteDetail
             {
                 OrgId = creditNote.OrgId,
+                LineNumber = lineNumber,
                 InvoiceDetailId = reqLine.InvoiceDetailId,
                 ItemId = reqLine.ItemId,
                 Quantity = reqLine.Quantity,
+                ConversionFactor = 1m,
+                BaseQuantity = computed.BaseQuantity,
                 UnitPrice = reqLine.UnitPrice,
                 DiscountPercent = reqLine.DiscountPercent,
-                DiscountAmount = Math.Round(reqLine.Quantity * reqLine.UnitPrice * reqLine.DiscountPercent / 100, 2),
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId ?? taxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineTotal = computed.LineTotal,
             };
-            
-            line.LineTotal = (reqLine.Quantity * reqLine.UnitPrice) - line.DiscountAmount;
 
-            foreach (var taxGroupId in reqLine.TaxGroupIds)
+            foreach (var comp in computed.Components)
             {
-                var rate = await _rates.GetRateAsync(taxGroupId, request.DocumentDate, ct);
-                var taxAmount = Math.Round(line.LineTotal * (rate?.TotalRate ?? 0) / 100, 2);
                 line.Taxes.Add(new CreditNoteDetailTax
                 {
                     OrgId = creditNote.OrgId,
-                    SubAccountId = taxGroupId,
-                    Amount = taxAmount
+                    TaxComponent = comp.Component,
+                    SubAccountId = taxGroupId ?? 0,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * creditNote.ExchangeRate,
                 });
             }
 
-            line.TaxAmount = line.Taxes.Sum(t => t.Amount);
             creditNote.Lines.Add(line);
         }
 
-        creditNote.SubTotal = creditNote.Lines.Sum(l => l.LineTotal + l.DiscountAmount);
-        creditNote.DiscountAmount = creditNote.Lines.Sum(l => l.DiscountAmount);
-        creditNote.TaxableAmount = creditNote.Lines.Sum(l => l.LineTotal);
-        creditNote.CgstAmount = creditNote.Lines.Sum(l => l.TaxAmount) / 2;
-        creditNote.SgstAmount = creditNote.Lines.Sum(l => l.TaxAmount) / 2;
-        creditNote.TotalAmount = creditNote.Lines.Sum(l => l.LineTotal + l.TaxAmount);
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
+
+        creditNote.SubTotal = totals.SubTotal;
+        creditNote.DiscountAmount = totals.DiscountAmount;
+        creditNote.TaxableAmount = totals.TaxableAmount;
+        creditNote.CgstAmount = totals.CgstAmount;
+        creditNote.SgstAmount = totals.SgstAmount;
+        creditNote.IgstAmount = totals.IgstAmount;
+        creditNote.CessAmount = totals.CessAmount;
+        creditNote.RoundOffAmount =
+            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        creditNote.TotalAmount = totals.TotalAmount + creditNote.RoundOffAmount;
         creditNote.TotalAmountBase = creditNote.TotalAmount * creditNote.ExchangeRate;
 
         await _db.SaveChangesAsync(ct);

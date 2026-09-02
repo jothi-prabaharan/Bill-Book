@@ -101,6 +101,55 @@ public sealed class StubNameLookup : IContactNameLookup, IItemNameLookup
     }
 }
 
+/// <summary>
+/// The ledger, recorded rather than posted. Every service that reaches
+/// Accounting takes this the same way <see cref="RecordingInventory"/> stands
+/// in for Inventory — a test asserting what a document posted should not also
+/// have to stand up Accounting over HTTP.
+/// </summary>
+public sealed class RecordingLedger : ILedgerClient
+{
+    public List<PostLedgerRequest> Posts { get; } = [];
+
+    public List<AllocateTransactionRequest> Allocations { get; } = [];
+
+    /// <summary>Set to make the next post refused, so a service's rollback path is reachable.</summary>
+    public string? RefusePostWith { get; set; }
+
+    public Task<PostLedgerOutcomeResult> PostAsync(PostLedgerRequest request, CancellationToken ct)
+    {
+        if (RefusePostWith is not null)
+        {
+            return Task.FromResult(new PostLedgerOutcomeResult(false, RefusePostWith));
+        }
+
+        Posts.Add(request);
+        return Task.FromResult(new PostLedgerOutcomeResult(true, null));
+    }
+
+    public Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct)
+    {
+        Allocations.Add(request);
+        return Task.FromResult(new AllocateOutcomeResult(true, null));
+    }
+
+    public Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct) =>
+        Task.CompletedTask;
+
+    public Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(
+        int ledgerTypeId, CancellationToken ct) =>
+        Task.FromResult(new List<OutstandingBalanceView>());
+
+    public Task<List<OutstandingBalanceView>> GetOutstandingBalancesAsync(
+        long contactId, int ledgerTypeId, CancellationToken ct) =>
+        Task.FromResult(new List<OutstandingBalanceView>());
+
+    public Task<IReadOnlyDictionary<long, Settlement>> GetSettlementsAsync(
+        SettlementQueryRequest request, CancellationToken ct) =>
+        Task.FromResult<IReadOnlyDictionary<long, Settlement>>(
+            new Dictionary<long, Settlement>());
+}
+
 /// <summary>The credit check, which says yes unless a test tells it otherwise.</summary>
 public sealed class StubCreditCheck : ICreditCheckClient
 {

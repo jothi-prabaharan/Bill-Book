@@ -196,6 +196,25 @@ public sealed class DeliveryChallanService
             _db.DeliveryChallans.Add(deliveryChallan);
         }
 
+        BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
+        if (settings is null)
+        {
+            throw new InvalidOperationException("Branch settings could not be read.");
+        }
+
+        // Resolved once, the same way Invoice and SalesOrder resolve it — a
+        // GSTIN that disagrees with the stated place of supply is refused
+        // rather than guessed at, because a wrong pick still balances, still
+        // prints and still posts, and the mismatch only surfaces on a return.
+        PlaceOfSupplyResult pos = PlaceOfSupply.Resolve(
+            settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
+        if (!pos.IsOk)
+        {
+            throw new InvalidOperationException(pos.Detail);
+        }
+
+        TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+
         deliveryChallan.ChallanType = request.ChallanType;
         deliveryChallan.SalesOrderId = request.SalesOrderId;
         deliveryChallan.VehicleNo = request.VehicleNo;
@@ -205,6 +224,9 @@ public sealed class DeliveryChallanService
         deliveryChallan.DispatchDate = request.DispatchDate;
 
         deliveryChallan.ContactId = request.ContactId;
+        deliveryChallan.ContactGstin = request.ContactGstin;
+        deliveryChallan.PlaceOfSupplyStateId = 0;
+        deliveryChallan.IsInterState = pos.IsInterState;
         deliveryChallan.DocumentDate = request.DocumentDate;
         deliveryChallan.Notes = request.Notes;
         deliveryChallan.CurrencyCode = request.CurrencyCode ?? "USD";
@@ -212,42 +234,89 @@ public sealed class DeliveryChallanService
         deliveryChallan.BillingAddress = request.BillingAddress;
         deliveryChallan.ShippingAddress = request.ShippingAddress;
 
-        foreach (var reqLine in request.Lines)
+        var taxLines = new List<TaxLineResult>(request.Lines.Count);
+
+        for (int i = 0; i < request.Lines.Count; i++)
         {
+            SaveDeliveryChallanLineRequest reqLine = request.Lines[i];
+            int lineNumber = i + 1;
+
+            long? taxGroupId = reqLine.TaxGroupIds.Count > 0 ? reqLine.TaxGroupIds[0] : null;
+
+            TaxRate? rate = null;
+            if (taxGroupId.HasValue)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Tax rate for group {taxGroupId.Value} could not be read for date {request.DocumentDate}.");
+                }
+            }
+
+            TaxLineInput taxInput = new()
+            {
+                Quantity = reqLine.Quantity,
+                UnitPrice = reqLine.UnitPrice,
+                DiscountPercent = reqLine.DiscountPercent > 0 ? reqLine.DiscountPercent : null,
+                Rate = rate,
+            };
+
+            // BaseQuantity, GrossAmount, TaxableAmount and LineTotal all come
+            // from here — computing them by hand next to this call is exactly
+            // how they drifted out of step with "chk_deliverychallandetails_*"
+            // before. See Shared.Kernel.Tax.GstCalculator.
+            TaxLineResult computed = GstCalculator.Compute(taxInput, taxContext);
+            taxLines.Add(computed);
+
             var line = new DeliveryChallanDetail
             {
                 OrgId = deliveryChallan.OrgId,
+                LineNumber = lineNumber,
                 ItemId = reqLine.ItemId,
                 Quantity = reqLine.Quantity,
+                ConversionFactor = 1m,
+                BaseQuantity = computed.BaseQuantity,
                 UnitPrice = reqLine.UnitPrice,
                 DiscountPercent = reqLine.DiscountPercent,
-                DiscountAmount = Math.Round(reqLine.Quantity * reqLine.UnitPrice * reqLine.DiscountPercent / 100, 2),
+                DiscountAmount = computed.DiscountAmount,
+                GrossAmount = computed.GrossAmount,
+                TaxableAmount = computed.TaxableAmount,
+                TaxMasterId = rate?.TaxMasterId,
+                TaxGroupId = rate?.TaxGroupId ?? taxGroupId,
+                TaxAmount = computed.TaxAmount,
+                LineTotal = computed.LineTotal,
             };
-            
-            line.LineTotal = (reqLine.Quantity * reqLine.UnitPrice) - line.DiscountAmount;
 
-            foreach (var taxGroupId in reqLine.TaxGroupIds)
+            foreach (var comp in computed.Components)
             {
-                var rate = await _rates.GetRateAsync(taxGroupId, request.DocumentDate, ct);
-                var taxAmount = Math.Round(line.LineTotal * (rate?.TotalRate ?? 0) / 100, 2);
                 line.Taxes.Add(new DeliveryChallanDetailTax
                 {
                     OrgId = deliveryChallan.OrgId,
-                    SubAccountId = taxGroupId,
-                    Amount = taxAmount
+                    TaxComponent = comp.Component,
+                    SubAccountId = taxGroupId ?? 0,
+                    Rate = comp.Rate,
+                    TaxableAmount = comp.TaxableAmount,
+                    Amount = comp.Amount,
+                    AmountBase = comp.Amount * deliveryChallan.ExchangeRate,
                 });
             }
 
-            line.TaxAmount = line.Taxes.Sum(t => t.Amount);
             deliveryChallan.Lines.Add(line);
         }
 
-        deliveryChallan.SubTotal = deliveryChallan.Lines.Sum(l => l.LineTotal + l.DiscountAmount);
-        deliveryChallan.DiscountAmount = deliveryChallan.Lines.Sum(l => l.DiscountAmount);
-        deliveryChallan.TaxableAmount = deliveryChallan.Lines.Sum(l => l.LineTotal);
-        deliveryChallan.CgstAmount = deliveryChallan.Lines.Sum(l => l.TaxAmount) / 2;
-        deliveryChallan.SgstAmount = deliveryChallan.Lines.Sum(l => l.TaxAmount) / 2;
-        deliveryChallan.TotalAmount = deliveryChallan.Lines.Sum(l => l.LineTotal + l.TaxAmount);
+        TaxDocumentTotals totals = GstCalculator.Totals(taxLines);
+
+        deliveryChallan.SubTotal = totals.SubTotal;
+        deliveryChallan.DiscountAmount = totals.DiscountAmount;
+        deliveryChallan.TaxableAmount = totals.TaxableAmount;
+        deliveryChallan.CgstAmount = totals.CgstAmount;
+        deliveryChallan.SgstAmount = totals.SgstAmount;
+        deliveryChallan.IgstAmount = totals.IgstAmount;
+        deliveryChallan.CessAmount = totals.CessAmount;
+        deliveryChallan.RoundOffAmount =
+            Math.Round(totals.TotalAmount, 0, MidpointRounding.AwayFromZero) - totals.TotalAmount;
+        deliveryChallan.TotalAmount = totals.TotalAmount + deliveryChallan.RoundOffAmount;
         deliveryChallan.TotalAmountBase = deliveryChallan.TotalAmount * deliveryChallan.ExchangeRate;
 
         await _db.SaveChangesAsync(ct);
