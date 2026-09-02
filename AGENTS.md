@@ -112,7 +112,7 @@ git push -u origin main
 
 `Report` merged into `main` on 17 August 2026 and the exception ended with it, by the repository owner's instruction of the same day. **Do not push to `Report`, and do not branch off it** — it is left in place pointing at the merge and carries nothing `main` lacks.
 
-**A known problem as of 24 August 2026: `origin/main` and the branch this project status review session ran on (`claude/project-status-review-4us30i`) have diverged — 145 commits ahead, 11 behind, unreconciled.** The 145 include the Purchase, Reporting and much of the Sales build-out. Until the repository owner resolves this, `origin/main` may be missing work that later work depends on. **Ask before starting anything substantial** if `main` looks like it is missing something this file, `CLAUDE.md`, or another module doc describes as built — that is this divergence, not a regression.
+**The divergence warning that stood here since 24 August 2026 is cleared, 2 September 2026.** `origin/main` and the `claude/project-status-review-4us30i` branch it described have been reconciled — that branch no longer exists, and `origin/main` is a single, non-diverged line of history (most recently squashed to one EF Core migration per module in commit `befdac6`). If a future session finds `main` diverged from a working branch again, treat it the same way this entry did: name the branch and commit counts here rather than guessing, and clear the note once it is actually resolved rather than leaving it to go stale.
 
 Because more than one agent shares this branch, **pull before you start and pull again before you push**. A rebase onto `origin/main` is the normal way to land: your commits go on top of whatever arrived while you were working, and nothing needs merging afterwards.
 
@@ -126,7 +126,7 @@ git pull --rebase origin main
 
 ## What you own
 
-**The active brief is Customer service (CRM/Support) scaffold, stage C0/C1** — see the "Antigravity brief" section appended to [`docs/Customer.md`](./docs/Customer.md). It is the one Phase-1 service with no code at all: `Customer.Api/Program.cs` is a deliberate placeholder, not a stub, and says so in its own comments.
+**The active brief is Customer service (CRM/Support), stage C2/C3** — see [`docs/Customer.md`](./docs/Customer.md). C0 (the four open questions) and C1 (schema, tenancy, RLS) are done and audited as of 2 September 2026; C2 (controllers) is written but has two open findings (C1-3, C1-4 in that doc) to pick up before starting C3 (the Angular UI).
 
 Reporting (`docs/Reporting.md` §9–12) is finished — Claude Code built R0/R1.3/R3, Antigravity built the rest through R7. Nothing there is waiting on review.
 
