@@ -1077,6 +1077,22 @@ namespace Reporting.Repository.Migrations
                 table: "Reports",
                 columns: new[] { "OrgId", "ReportKey" },
                 unique: true);
+
+            // Row-level security: the database-level half of tenant isolation,
+            // independent of the EF query filter. No LINQ equivalent exists.
+            // ReportMasters/ReportColumns are deliberately excluded: they are the
+            // report catalog, global reference data shared by every customer,
+            // like mst.AccountTypes — no OrgId or CustomerId column to filter by.
+            foreach (string table in new[] { "Reports", "ReportViews", "ReportDetails" })
+            {
+                migrationBuilder.Sql($"ALTER TABLE rpt.\"{table}\" ENABLE ROW LEVEL SECURITY;");
+                migrationBuilder.Sql($"ALTER TABLE rpt.\"{table}\" FORCE ROW LEVEL SECURITY;");
+
+                migrationBuilder.Sql(
+                    $"CREATE POLICY {table.ToLowerInvariant()}_tenant_isolation ON rpt.\"{table}\" " +
+                    "USING (\"CustomerId\" = current_setting('app.current_customer_id', true)::uuid " +
+                    "AND \"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
+            }
         }
 
         /// <inheritdoc />

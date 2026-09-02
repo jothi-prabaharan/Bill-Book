@@ -1461,6 +1461,41 @@ namespace Inventory.Repository.Migrations
                 table: "Warehouses",
                 columns: new[] { "OrgId", "WarehouseCode" },
                 unique: true);
+
+            // Row-level security: the database-level half of tenant isolation,
+            // independent of the EF query filter. No LINQ equivalent exists.
+            foreach (string table in new[]
+            {
+                "Items",
+                "ItemBarcodes",
+                "ItemBatches",
+                "ItemCategories",
+                "ItemJewelleryDetails",
+                "ItemPharmaDetails",
+                "ItemSerials",
+                "ItemStock",
+                "MetalPurities",
+                "UomTypes",
+                "UnitOfMeasures",
+                "Warehouses",
+                "StockAdjustments",
+                "StockAdjustmentLines",
+                "StockMovements",
+                "CostLayers",
+                "CostLayerConsumptions",
+                "RecostingAdjustments",
+                "PriceLists",
+                "PriceListItems",
+            })
+            {
+                migrationBuilder.Sql($"ALTER TABLE inv.\"{table}\" ENABLE ROW LEVEL SECURITY;");
+                migrationBuilder.Sql($"ALTER TABLE inv.\"{table}\" FORCE ROW LEVEL SECURITY;");
+
+                migrationBuilder.Sql(
+                    $"CREATE POLICY {table.ToLowerInvariant()}_tenant_isolation ON inv.\"{table}\" " +
+                    "USING (\"CustomerId\" = current_setting('app.current_customer_id', true)::uuid " +
+                    "AND \"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
+            }
         }
 
         /// <inheritdoc />

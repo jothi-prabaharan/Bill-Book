@@ -1049,6 +1049,33 @@ namespace Purchase.Repository.Migrations
                 schema: "pur",
                 table: "PurchaseOrders",
                 columns: new[] { "OrgId", "Status" });
+
+            // Row-level security: the database-level half of tenant isolation,
+            // independent of the EF query filter. No LINQ equivalent exists.
+            foreach (string table in new[]
+            {
+                "PurchaseOrders",
+                "PurchaseOrderDetails",
+                "PurchaseOrderDetailTaxes",
+                "GoodsReceipts",
+                "GoodsReceiptDetails",
+                "GoodsReceiptDetailTaxes",
+                "Bills",
+                "BillDetails",
+                "BillDetailTaxes",
+                "DebitNotes",
+                "DebitNoteDetails",
+                "DebitNoteDetailTaxes",
+            })
+            {
+                migrationBuilder.Sql($"ALTER TABLE pur.\"{table}\" ENABLE ROW LEVEL SECURITY;");
+                migrationBuilder.Sql($"ALTER TABLE pur.\"{table}\" FORCE ROW LEVEL SECURITY;");
+
+                migrationBuilder.Sql(
+                    $"CREATE POLICY {table.ToLowerInvariant()}_tenant_isolation ON pur.\"{table}\" " +
+                    "USING (\"CustomerId\" = current_setting('app.current_customer_id', true)::uuid " +
+                    "AND \"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
+            }
         }
 
         /// <inheritdoc />

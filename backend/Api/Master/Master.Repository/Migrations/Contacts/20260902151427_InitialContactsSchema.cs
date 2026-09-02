@@ -550,6 +550,29 @@ namespace Master.Repository.Migrations.Contacts
                 table: "Contacts",
                 column: "OrgId",
                 filter: "\"IsVendor\" = true");
+
+            // Row-level security: the database-level half of tenant isolation,
+            // independent of the EF query filter. No LINQ equivalent exists.
+            foreach (string table in new[]
+            {
+                "Contacts",
+                "ContactAddresses",
+                "ContactPersons",
+                "ContactPersonRoles",
+                "ContactBankDetails",
+                "ContactLicences",
+                "ContactAttachments",
+                "ApiClients"
+            })
+            {
+                migrationBuilder.Sql($"ALTER TABLE con.\"{table}\" ENABLE ROW LEVEL SECURITY;");
+                migrationBuilder.Sql($"ALTER TABLE con.\"{table}\" FORCE ROW LEVEL SECURITY;");
+
+                migrationBuilder.Sql(
+                    $"CREATE POLICY {table.ToLowerInvariant()}_tenant_isolation ON con.\"{table}\" " +
+                    "USING (\"CustomerId\" = current_setting('app.current_customer_id', true)::uuid " +
+                    "AND \"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
+            }
         }
 
         /// <inheritdoc />

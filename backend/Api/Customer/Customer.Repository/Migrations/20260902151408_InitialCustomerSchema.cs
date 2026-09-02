@@ -150,6 +150,29 @@ namespace Customer.Repository.Migrations
                 schema: "cus",
                 table: "Tickets",
                 columns: new[] { "OrgId", "Status" });
+
+            // Real FKs into con.Contacts: cus and con are schemas in the same
+            // per-customer database, unlike the mst cross-database case, so the
+            // reference is enforced rather than left as a plain unenforced id.
+            // Raw SQL because the target entity belongs to another service's
+            // Entity project and mapping it here would cross that boundary.
+            migrationBuilder.Sql(@"
+                ALTER TABLE cus.""Leads"" ADD CONSTRAINT ""FK_Leads_Contacts_ConvertedContactId"" FOREIGN KEY (""ConvertedContactId"") REFERENCES con.""Contacts"" (""ContactId"") ON DELETE RESTRICT;
+                ALTER TABLE cus.""Tickets"" ADD CONSTRAINT ""FK_Tickets_Contacts_ContactId"" FOREIGN KEY (""ContactId"") REFERENCES con.""Contacts"" (""ContactId"") ON DELETE RESTRICT;
+            ");
+
+            // Row-level security: the database-level half of tenant isolation,
+            // independent of the EF query filter. No LINQ equivalent exists.
+            foreach (string table in new[] { "Leads", "Tickets", "TicketMessages" })
+            {
+                migrationBuilder.Sql($"ALTER TABLE cus.\"{table}\" ENABLE ROW LEVEL SECURITY;");
+                migrationBuilder.Sql($"ALTER TABLE cus.\"{table}\" FORCE ROW LEVEL SECURITY;");
+
+                migrationBuilder.Sql(
+                    $"CREATE POLICY {table.ToLowerInvariant()}_tenant_isolation ON cus.\"{table}\" " +
+                    "USING (\"CustomerId\" = current_setting('app.current_customer_id', true)::uuid " +
+                    "AND \"OrgId\" = current_setting('app.current_org_id', true)::uuid);");
+            }
         }
 
         /// <inheritdoc />
