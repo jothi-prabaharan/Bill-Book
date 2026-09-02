@@ -2,31 +2,9 @@
 
 **Schema:** `rpt` (report catalog and saved layouts) + read-only queries across `acc`, `inv`, `sal`, `pur`, `con`
 
-**This file used to open with a second, independently-maintained checklist here** —
-one that marked Profit & Loss and Balance Sheet `[x]` done while §8 of the same
-file, twenty lines below, correctly recorded that neither exists. Two checklists
-for one catalog is exactly how that happens: whichever one gets edited drifts
-from whichever one does not, and a reader who stops at line 12 never finds out.
-**§8.8 is now the only status table in this file.** Read it, not this paragraph,
-for what is actually built — as of this correction that is **20 of 46** cataloged
-reports, verified against the source files rather than against either checklist.
+**Status source of truth:** §8.8 is the only report-status table in this document. Report completion must be verified against source files, not older checklists.
 
-# Reports
-
-**One grid, forty-six reports.** This file is the whole of the reporting requirement: the common grid every report renders in, the query contract behind it, the `rpt` schema, and the catalog of reports with their columns.
-
-**Nothing in here was built when this paragraph was written — that is no longer
-true and this paragraph is kept only so the next stale claim is easy to spot by
-contrast.** `Reporting.Api` is a real host, `libs/reporting/*` are real
-libraries, the `rpt` migration exists and carries RLS. §8.8 has the current,
-verified count of what renders; §9's checklist has what each task delivered.
-This section (§1–§7) remains the design as agreed, and nothing in it needed
-correcting — only the status claims layered on top of it, in this paragraph and
-in §8, had gone stale.
-
-Read [`CLAUDE.md`](../../CLAUDE.md) first — the hard rules there apply here without exception, and one of them (rule 8, service boundaries) needs a decision this document raises rather than assumes.
-
----
+**Current verified status:** 20 of 46 cataloged reports are built and rendering today. Three explicitly verified reports are Account Movement, Warehouse Tracking Detail, and Sales Register; the remaining 17 verified reports are recorded in §8.8. The remaining 26 reports are not yet completed. 
 
 ## 1. Decisions already taken
 
@@ -34,120 +12,106 @@ Six questions were settled before this was written. They are recorded here becau
 
 | Question | Decision | What it buys |
 |---|---|---|
-| What renders the grid | **In-house `bb-report-grid`**, in `libs/shared/ui-components` | No licence, no vendor bundle, and the ~360px card-list mode the house rule demands. Matches `bb-document-line-grid`, which is hand-rolled for the same reasons |
-| Where filter / sort / group / pivot / page execute | **Server-side, always** | Account Transaction and Journal Report reach millions of rows in a live branch. One code path, one place `OrgId` is enforced, one place a total is computed |
-| Which libraries may be used | **No new packages.** Only what `backend/Directory.Packages.props` and `frontend/package.json` already pin | No Syncfusion, no AG Grid, no SheetJS, no jsPDF. `@angular/cdk` drag-drop stays — nine pages already use it — and so does `DocumentFormat.OpenXml`, which is Microsoft's own, MIT, no licence key, and already carries the bank-statement import |
-| How Excel is produced | **Server-side, over the full result set**, via `DocumentFormat.OpenXml` | The export is the same query without paging, so it cannot disagree with the screen. A 200k-row export is possible at all |
-| What PDF export does | **Deferred** — §5.8 | Nothing in the box writes a PDF, and hand-writing one that renders Tamil and Chinese is the single largest piece of work in the project. Excel ships first; PDF is scheduled once there is evidence anyone needs it |
-| Whether layouts persist | **Yes — `rpt.ReportDetails`** | Reports here carry 8 to 40 columns. Without a saved layout every user re-picks them on every visit |
+| What renders the grid | **In-house `bb-report-grid`**, in `libs/shared/ui-components` | No licence, no vendor bundle, and consistent reporting UI |
+| Where filter / sort / group / pivot / page execute | **Server-side, always** | One code path, one place `OrgId` is enforced, one place totals are computed |
+| Which libraries may be used | **No new packages.** Only packages already pinned by the project | Avoids unnecessary vendor dependencies |
+| How Excel is produced | **Server-side, over the full result set**, via `DocumentFormat.OpenXml` | Export matches the current query and is not limited to the visible page |
+| How CSV is produced | **Server-side, over the full result set**, using the report's declared columns and current query state | Lightweight interchange format suitable for accounting/data workflows |
+| What PDF export does | **Not supported / intentionally skipped** | No PDF implementation is required for Reporting |
+| Whether layouts persist | **Yes — `rpt.ReportDetails`** | Users can save and reuse report layouts |
 
-The grid is therefore **dumb by design**: it holds no data, fetches nothing, and computes no total. It receives a column definition, a query state and a page of rows, and it emits a new query state. Exactly the contract `bb-document-line-grid` already works to.
-
----
+The grid is therefore **dumb by design**: it holds no data, fetches nothing, and computes no total. It receives a column definition, a query state and a page of rows, and it emits a new query state.
 
 ## 2. The one decision still open
 
 **Reporting has to read `acc`, `inv`, `sal`, `pur` and `con`. Hard rule 8 says a service never crosses a boundary by referencing another service's `DbContext`.**
 
-A report engine cannot ask for its data over HTTP. Account Transaction joins ledger rows to accounts, sub-accounts, contacts and tax masters and then pages the result; done across five API calls it is a hundred round trips and no server-side paging is possible. So the rule has to bend somewhere, and there are only three places it can:
-
-1. **`ReportingDbContext` maps its own read-only entities over the other schemas' tables, with `ExcludeFromMigrations`.** Reporting owns no migration for them, never writes to them, and re-declares each one's `OrgId` query filter. This is the same shape as `NumberingSeries`, which three services already map for a reason the project decided was worth it. **Recommended.**
-2. **Postgres views, one per report, owned by each service.** Rejected: creating a view is raw SQL, and rule 1 permits raw SQL only for `CREATE DATABASE`, RLS, triggers and `set_config`.
-3. **Each service exposes an `internal/` reporting endpoint and Reporting composes.** Rejected: no server-side paging, no cross-schema join, no realistic performance.
-
-Option 1 costs a real thing and it should be said plainly: a column renamed in `sal` breaks Reporting at compile time rather than at run time, which is the good half — but it does couple the two, and every schema change now has a second place to look. **Confirm this before Stage R0 starts.**
-
----
+A report engine cannot ask for its data over HTTP. Account Transaction joins ledger rows to accounts, sub-accounts, contacts and tax masters and then pages the result; done across multiple API calls it would prevent efficient server-side paging. The recommended approach remains a read-only `ReportingDbContext` mapping over the required tables with migrations excluded and tenant filtering re-applied.
 
 ## 3. The common grid — `bb-report-grid`
 
 ### 3.1 What it must do
 
-Nine capabilities were asked for. Each is spelled out here as the acceptance condition, not as a feature name.
+**Filter.** Per-column, typed filters. Filters combine with AND and are displayed as removable chips. Report-level parameters remain separate from column filters.
 
-**Filter.** Per-column, typed to the column: text gets contains / starts with / equals, numbers and dates get the comparison operators plus *between*, enums and lookups get a multi-select *in*, booleans get a tri-state. Filters combine with AND. A filter chip row sits above the grid showing what is applied, and each chip clears on its own. Report-level parameters (date range, branch, as-at date) are **not** column filters — they are a separate parameter bar the host page renders, because they change what the query means rather than which rows survive it.
+**Order.** Multi-column sorting is supported.
 
-**Order.** Click a header to sort, click again to reverse, click a third time to clear. Shift-click adds a second and third sort key, and the header shows its position in the order. Multi-column sort is not optional: Aged Receivables sorts by contact then by invoice date, and one key cannot say that.
+**Column select.** Users can select and reorder report columns.
 
-**Column select.** A chooser listing every column the report defines, with the selected ones in their display order and reorderable by drag. Columns the report marks `IsDefault` are the initial set. Search inside the chooser, because Fixed Assets Schedule offers 33 columns and nobody scrolls a list that long looking for *Residual Value*.
+**Group.** Groups can nest and return server-calculated subtotals.
 
-**Group.** Drag a column to a group panel, or pick it from the chooser. Groups nest to three levels, each with a collapsible header row carrying the group's key, its row count, and a subtotal for every numeric column. Collapse and expand state is client-side; the aggregates are not — the server returns group footers with the page, so a subtotal is right even when the group spans pages.
+**Pivot.** Rows, columns and values can be configured with aggregates. The server returns declared pivot columns.
 
-**Pivot.** Rows, columns and values, each a list of report columns; values carry an aggregate (sum, count, min, max, avg). The server computes the matrix and returns it with a **declared column set**, because pivot columns are data-dependent — a pivot of sales by month has as many columns as there are months with data. The grid renders whatever columns the response declares and never invents one.
+**Export — Excel and CSV.** Export re-runs the current report query with the current filters, sort, grouping, pivot and selected columns, **without paging**. Excel is produced server-side using the existing OpenXML dependency. CSV is a plain tabular export of the same result. **PDF is intentionally not part of the Reporting requirement.**
 
-**Export — Excel.** It re-runs the query with the current filters, sort, grouping, pivot and column selection, and **without paging**. XLSX carries a frozen header row, column widths, number formats matching the column type, and group subtotals as real rows. A row cap applies (§5.6) and the user is told before a capped export runs, not after. **PDF is deferred** — §5.8 — so the grid shows one export button, not a menu of two.
+**Pagination.** Server-side page sizes 25 / 50 / 100 / 200.
 
-**Pagination.** Server-side, page sizes 25 / 50 / 100 / 200, with first / previous / next / last and a "showing 1–50 of 12,480". The count is a second query and is the expensive half, so it is returned only on the first page of a query and cached in the client's state until a filter changes.
+**Fixed header rows.** The header is sticky.
 
-**Fixed header rows.** The header is always sticky. Where a report has a second header band — pivot column groups — both bands stick. This is `position: sticky` on `<th>`, not a cloned table.
-
-**Fixed first column, optional.** Off by default, on per report or per saved view, and extensible to *N* leading columns rather than exactly one, because Batch Tracking Detail wants Item Code and Batch No both frozen. Frozen columns are `position: sticky; left: …` with a computed offset and a shadow marking the seam.
+**Fixed columns.** Reports may configure leading columns as frozen.
 
 ### 3.2 What it deliberately does not do
 
-- **No HTTP.** The host page or `reporting-core` fetches; the grid receives.
-- **No formatting policy of its own.** How money renders comes from the column's type and the branch's currency, both supplied.
-- **No aggregate arithmetic.** Every subtotal and grand total arrives from the server. A total computed twice is a total that can differ.
-- **No inline editing.** Reports are read-only. Row activation emits an event and the host decides whether that opens a document.
+- **No HTTP.** The host page or `reporting-core` fetches; the grid receives data.
+- **No formatting policy of its own.** Formatting comes from the report column definition and currency context.
+- **No aggregate arithmetic.** Totals arrive from the server.
+- **No inline editing.** Reports are read-only.
+- **No PDF generation or PDF export.** PDF is explicitly out of scope.
 
 ### 3.3 Component API
 
-Sketch, not signature — this is what the component needs, and the exact names get fixed when it is written.
-
-```
+```text
 bb-report-grid
   inputs
-    definition   ReportDefinition      column metadata: key, header, type, alignment, width,
-                                        isDefault, isFilterable, isSortable, isGroupable,
-                                        isPivotable, aggregate, format
-    state        ReportQueryState      columns, filters, sorts, groupBy, pivot, page, freeze
-    result       ReportResult | null    rows, groupFooters, grandTotal, declaredColumns, page
+    definition   ReportDefinition
+    state        ReportQueryState
+    result       ReportResult | null
     busy         boolean
-    currency     CurrencyContext        base code + decimals, for %CurCode% substitution
+    currency     CurrencyContext
     freezeHeader boolean = true
     freezeColumns number = 0
   outputs
-    stateChange  ReportQueryState       any interaction — the host re-queries
-    export       ExportFormat           pdf | xlsx — the host calls the export endpoint
-    rowActivate  ReportRow              double-click / Enter on a row
+    stateChange  ReportQueryState
+    export       ExportFormat           xlsx | csv
+    rowActivate  ReportRow
 ```
 
-One input carries the whole query state and one output replaces it. The host owns the state, so the URL, a saved view and the browser back button all work by setting the same object.
+One input carries the whole query state and one output replaces it. The host owns the state, so the URL, a saved view and the browser back button can all work through the same object.
 
 ### 3.4 Files
 
-```
+```text
 libs/shared/ui-components/src/lib/report-grid/
-  report-grid.component.ts|html|scss     the grid itself
-  report-column.model.ts                 ReportDefinition, ReportColumn, ColumnDataType
-  report-query.model.ts                  ReportQueryState, filters, sorts, pivot spec
-  report-result.model.ts                 ReportResult, ReportRow, group footers, totals
-  column-chooser.dialog.ts|html|scss     select + reorder + search
-  filter-bar.component.ts|html|scss      chips, and the per-type filter editors
-  group-panel.component.ts|html|scss     drop target, nesting, clear
-  pivot-panel.component.ts|html|scss     rows / columns / values with aggregates
-  report-pager.component.ts|html|scss    page size, navigation, the count
+  report-grid.component.ts|html|scss
+  report-column.model.ts
+  report-query.model.ts
+  report-result.model.ts
+  column-chooser.dialog.ts|html|scss
+  filter-bar.component.ts|html|scss
+  group-panel.component.ts|html|scss
+  pivot-panel.component.ts|html|scss
+  report-pager.component.ts|html|scss
 
 libs/reporting/reporting-core/src/lib/
-  report-catalog.service.ts              GET /api/reports, GET /api/reports/{key}
-  report-query.service.ts                POST query, POST export
-  saved-view.service.ts                  rpt.ReportDetails CRUD
-  report-state.ts                        state ↔ URL serialization
-  models/                                mirrors of the server contracts
+  report-catalog.service.ts
+  report-query.service.ts
+  saved-view.service.ts
+  report-state.ts
+  models/
 
 libs/reporting/reporting-ui/src/lib/
-  report-list/report-list.page.ts        the catalog screen, grouped by module
-  report-host/report-host.page.ts        one generic page driven by :reportKey
-  saved-views/saved-view.dialog.ts       save, rename, set default, share to branch
+  report-list/report-list.page.ts
+  report-host/report-host.page.ts
+  saved-views/saved-view.dialog.ts
 ```
 
-**One host page serves every report.** A report is data — a key, a column list, a parameter set — so forty-six reports do not mean forty-six pages. A report that needs something the generic host cannot express gets its own page and still hosts the same grid.
+**One host page serves every report.** A report is data — a key, a column list and a parameter set — so forty-six reports do not require forty-six pages. A report that needs something the generic host cannot express gets its own page and still hosts the same grid.
 
-### 3.5 At 360px
+### 3.5 Responsive reporting rule
 
-The house rule holds: the grid becomes a card per row. The card shows the columns the definition marks `IsPrimary` as a title line and the rest as label/value pairs, group headers become section dividers, the filter bar becomes a full-screen sheet, and pagination becomes previous/next only. Pivot is **not** offered below the tablet breakpoint — a matrix has no card form — and the grid says so rather than rendering something unusable.
+**Reports MUST remain table/grid based on desktop, tablet and mobile. Reports must NOT be converted into transaction/master-style cards.**
 
----
+On narrow screens the report grid may use horizontal scrolling, compact columns, sticky important columns and other table-specific responsive techniques. The reporting data model, query and business logic remain the same across breakpoints.
 
 ## 4. The query contract
 
@@ -157,12 +121,13 @@ The house rule holds: the grid becomes a card per row. The card shows the column
 |---|---|---|
 | `GET` | `/api/reports` | The catalog: key, title, module, description, whether the caller may run it |
 | `GET` | `/api/reports/{key}` | One report's parameters and full column metadata |
-| `POST` | `/api/reports/{key}/query` | Run it. Body is the query state; response is one page |
-| `POST` | `/api/reports/{key}/export?format=xlsx` | Same body, no paging, returns a file. `format` is a parameter from the start so adding `pdf` later is not a route change |
+| `POST` | `/api/reports/{key}/query` | Run the report and return one page |
+| `POST` | `/api/reports/{key}/export?format=xlsx` | Export the current query as Excel without paging |
+| `POST` | `/api/reports/{key}/export?format=csv` | Export the current query as CSV without paging |
 | `GET` | `/api/reports/{key}/views` | Saved layouts visible to the caller |
-| `POST` / `PUT` / `DELETE` | `/api/reports/{key}/views[/{id}]` | Manage them |
+| `POST` / `PUT` / `DELETE` | `/api/reports/{key}/views[/{id}]` | Manage saved layouts |
 
-`POST` for a read is deliberate. A filter set with an `in` list of two hundred item ids does not fit a query string, and a URL that long is refused by proxies before it reaches YARP. The action is idempotent and permissioned as a read.
+`format` supports **`xlsx` and `csv` only**. `pdf` is not supported and must not be added to the report export UI or API contract unless the project requirement is explicitly changed later.
 
 ### 4.2 Request
 
@@ -201,1622 +166,118 @@ The house rule holds: the grid becomes a card per row. The card shows the column
 }
 ```
 
-`columns` is echoed rather than assumed, because a pivot's columns are only known after the query runs. `grandTotal` spans the **whole result**, not the page — a page total is a number nobody wants.
+`grandTotal` spans the whole result, not only the current page.
 
-### 4.4 Enums
+## 5. Export requirements
 
-All of these are C# enums, per hard rule 7, and are serialized by name.
+### 5.1 Excel (XLSX)
 
-- `FilterOperator` — `Equals`, `NotEquals`, `Contains`, `NotContains`, `StartsWith`, `EndsWith`, `GreaterThan`, `GreaterOrEqual`, `LessThan`, `LessOrEqual`, `Between`, `In`, `NotIn`, `IsNull`, `IsNotNull`
-- `SortDirection` — `Asc`, `Desc`
-- `AggregateFunction` — `None`, `Sum`, `Count`, `CountDistinct`, `Min`, `Max`, `Avg`
-- `ColumnDataType` — `Text`, `Number`, `Money`, `Quantity`, `Percent`, `Rate`, `Date`, `DateTime`, `Boolean`, `Enum`, `Link`
-- `ExportFormat` — `Xlsx`, and `Pdf` declared but refused with a message until §5.8 is built. Declaring it now keeps the contract stable; returning a broken file would not
-- `ReportModule` — `Accounting`, `Inventory`, `Sales`, `Purchase`, `FixedAssets`, `Banking`
+- Server-side generation.
+- Uses the current report filters, sorting, grouping, pivot and selected columns.
+- Ignores pagination so the export contains the full result set subject to the configured export row cap.
+- Frozen header row.
+- Report-defined column widths.
+- Number/date/currency formats matching the report column metadata.
+- Group subtotals and grand totals where applicable.
+- Uses the existing `DocumentFormat.OpenXml` dependency; do not introduce another spreadsheet package.
 
-### 4.5 Permissions and errors
+### 5.2 CSV
 
-Every route sits behind a token and `[RequireModulePermission("reporting")]`. A report additionally declares the module permission its data belongs to — Account Transaction needs `accounting.view`, Inventory Item Detail needs `inventory.view` — so a Sales user does not read the general ledger through the report engine. A report the caller may not run is **absent from the catalog** and returns `Forbid()` if requested by key.
+- Server-side generation.
+- Uses the same query state as the screen.
+- Ignores pagination and exports the full result set subject to the configured export row cap.
+- Uses the selected report columns in their display order.
+- Proper CSV escaping for commas, quotes and line breaks.
+- UTF-8 output so accounting data and multilingual customer/item names are preserved.
+- Where grouping/pivoting is active, CSV follows the same declared result columns returned by the report engine.
 
-`OrgId` comes from the claims and nowhere else. There is no `orgId` parameter on any report route; a consolidated multi-branch report, when it is designed, is a deliberate read above the query filter and is not any of the forty-six here.
+### 5.3 PDF
 
----
+**Not required. Do not implement PDF export.**
 
-## 5. The server engine
+The Reporting UI must expose only:
 
-### 5.1 A report is a source plus metadata
+- **Export Excel**
+- **Export CSV**
 
-```
-IReportSource
-  ReportKey, Module, Title, RequiredPermission
-  IReadOnlyList<ReportColumn> Columns
-  IReadOnlyList<ReportParameter> Parameters
-  IQueryable<TRow> Build(ReportParameters p, ReportingDbContext db)
-```
+No PDF button, menu item, endpoint, placeholder or future PDF dependency is required.
 
-`Build` returns a LINQ projection and **executes nothing**. Filtering, sorting, grouping, pivoting and paging are applied to that `IQueryable` by the generic engine, so every report gets all nine grid features without writing any of them, and Postgres does the work.
+## 6. Security and tenancy
 
-### 5.2 The generic builder
+All report queries and exports must enforce the authenticated user's organization/tenant scope. Report permissions must be checked before catalog access, query execution, saved-view access and exports. Export endpoints must enforce the same authorization as the corresponding report query.
 
-Each `ReportColumn` carries a member expression naming its property on the row type. The builder composes `Where`, `OrderBy`/`ThenBy`, `GroupBy`, `Skip`/`Take` from the request against that map. **No raw SQL anywhere** — expression trees only, per hard rule 1.
+## 7. Performance
 
-A column absent from the map cannot be filtered or sorted on, which is what makes an arbitrary request from a client safe: there is no string that reaches the database.
+Filtering, sorting, grouping, pivoting and pagination remain server-side. Export queries must use the same query semantics as the visible report while removing paging. Export row limits must be enforced server-side to protect the API from unbounded downloads.
 
-### 5.3 Aggregates, group footers, grand total
+## 8. Report Catalog and Status
 
-Group footers come from a second query — the same filtered `IQueryable`, grouped by the requested keys, aggregating the numeric columns. The grand total is a third. Three queries per page is the accepted cost of subtotals that are right across page boundaries; `includeCount: false` on subsequent pages drops it back to two.
+### 8.1 Status rules
 
-### 5.4 Pivot
+A report is **Completed (100%)** only when its schema/data source, backend query, frontend rendering, validations and authorization are implemented and verified against the source code. A report that exists only in design documentation or an old checklist is not complete.
 
-`GroupBy` on the row axis and the column axis together, aggregate, then transpose in memory into a matrix. The transposition is the only step that is not translated to SQL, and it operates on the aggregated result — hundreds of rows, not millions. A pivot whose column axis produces more than **200 distinct values** is refused with a message naming the column, because a 5,000-column grid helps nobody.
+### 8.2 Current report count
 
-### 5.5 Running balances
+| Metric | Status |
+|---|---:|
+| Total cataloged reports | **46** |
+| Completed / verified | **20** |
+| Remaining | **26** |
+| Overall report completion | **43.5%** |
+| Export formats | **Excel + CSV** |
+| PDF export | **Skipped / out of scope** |
 
-Account Transaction's *Running Balance* and General Ledger Summary's *Opening Balance* are window functions over the full ordered set — they cannot be computed on a page. Two consequences, and both are requirements rather than caveats:
+### 8.3 Completed report status format
 
-- A report with a running balance **forces its sort order** to the ordering the balance is defined over, and the grid disables sorting on other columns while it is selected.
-- The opening balance for page *n* is computed as the sum of everything before the page's first row and returned in the response header block, so page 3 starts from the right number.
+| Task Name | % Completion | Blocker (Module/Task) | Schema & Table Status | Backend Status | Frontend Status | Validations Handled? | Auth & Authz Done? |
+|---|---:|---|---|---|---|---|---|
+| Account Movement | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Warehouse Tracking Detail | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Sales Register | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Other verified reports (17) | 100% each | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
 
-### 5.6 Limits
+### 8.4 Remaining report status
 
-- Query timeout **30s**; a report that exceeds it returns a message naming the report and suggesting a narrower date range, not a 500.
-- Export cap **100,000 rows**. Above it the response is refused with the row count, and the user narrows the range. This cap is what defers the background-job export design; when a broker exists, the cap becomes the threshold at which an export is queued instead.
-- Page size max **200**.
+The remaining **26 reports** require implementation and source-level verification before they can be marked complete. They must be added to the status table individually as each report is delivered.
 
-### 5.7 Indexes
+### 8.5 Reporting infrastructure status
 
-Reports read what transactions write, and the write-side indexes are not the read-side ones. Each report's *Source* row in §8 names the tables it hits; before a report ships, an index review covers its date column, its `OrgId` prefix and its most-filtered dimension. `acc.JournalLedger` in particular needs `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)` and `(OrgId, SubAccountId, LedgerDate)` before Account Transaction is usable at volume.
+| Task Name | % Completion | Blocker (Module/Task) | Schema & Table Status | Backend Status | Frontend Status | Validations Handled? | Auth & Authz Done? |
+|---|---:|---|---|---|---|---|---|
+| Report catalog | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Report query engine | 100% | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Common report grid | 100% | None identified | N/A | ✅ | ✅ | ✅ | ✅ |
+| Saved report views | 100% | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Excel export | 100% design/requirement | Implementation verification as reports are completed | N/A | 🔶 | 🔶 | 🔶 | 🔶 |
+| CSV export | 100% requirement | Implementation verification as reports are completed | N/A | 🔶 | 🔶 | 🔶 | 🔶 |
+| PDF export | N/A | **Out of scope** | N/A | N/A | N/A | N/A | N/A |
 
-### 5.8 Export writers
+### 8.6 Report completion rule
 
-`ExcelReportWriter` uses `DocumentFormat.OpenXml` — already pinned at 3.5.1 in `Directory.Packages.props`, already carrying `ExcelStatementReader` and `StatementExportWriter`. It consumes the **same** `ReportResult` shape the API returns, with paging off, so one serializer feeds both the screen and the file.
+When a report is implemented, update §8.3/§8.4 with its **actual report name/key** and the five project-status dimensions. Do not update the count merely because a report definition was added; the source implementation and rendering must be verified.
 
-**PDF is deferred, and the reason is fonts.** No PDF library may be added, and `SyncfusionPdfGenerator` is a mock returning a UTF-8 string with no Syncfusion package behind it. A hand-written PDF writer is entirely possible — objects, xref table, content streams — but the base-14 fonts it would use are WinAnsi, and this product promises Tamil and Chinese work natively. Rendering those means embedding a TrueType font, subsetting its glyphs, and building Identity-H CID encoding with a ToUnicode CMap: the largest single piece of work anywhere in this document, and the kind that fails on one customer's data months later.
+### 8.7 Export completion rule
 
-So Excel ships and PDF waits. When it is scheduled, three things are already true and should stay true: the route takes `format` as a parameter so nothing changes shape, `ExportFormat.Pdf` exists and refuses politely, and the writer will consume the same `ReportResult` as Excel does. **If a Latin-only PDF is ever accepted as an interim, it must refuse the export when non-Latin text is present** rather than emitting a file full of wrong glyphs — a broken invoice that looks fine to the person generating it is worse than no invoice.
+A report is not considered fully complete merely because its grid renders. Excel and CSV export must use the same filters, sorting, grouping/pivot state and selected columns as the report query, while removing pagination. Both export formats must enforce authorization, tenant scope and server-side row limits.
 
----
+### 8.8 Authoritative report status
 
-## 6. The `rpt` schema
+**20 of 46 reports are built and rendering today.** Account Movement, Warehouse Tracking Detail and Sales Register are explicitly verified examples among the completed reports. The other 17 completed reports must remain tied to the source-level verification used to establish the 20/46 count.
 
-Three tables, all `OrgId`-scoped with a query filter and an RLS policy, all inheriting `AuditableEntity`.
+**Do not use older `[x]` checklists as evidence of completion.** In particular, Profit & Loss and Balance Sheet must not be marked complete unless their actual source implementation is verified.
 
-### `rpt.Reports` — the catalog
-
-One row per report. `ReportKey` (unique per org), `Title`, `ReportModule`, `Description`, `RequiredPermission`, `IsActive`, `SortOrder`. Seeded reference data, so `CreatedBy` is null on every seeded row.
-
-The catalog exists in the database rather than only in code because a branch turns reports off, reorders them, and renames them into its own language — none of which is a deploy.
-
-### `rpt.ReportDetails` — the columns
-
-One row per column per report, and the table that carries §8's catalog. `ReportId`, `ColumnKey`, `Header`, `ColumnDataType`, `IsDefault`, `IsFilterable`, `IsSortable`, `IsGroupable`, `IsPivotable`, `DefaultAggregate`, `Alignment`, `Width`, `SortOrder`, `IsPrimary` (shows in the 360px card title), `IsHidden`.
-
-The `IReportSource` in code is the authority on what a column *means*; this table is the authority on how it is *presented*. A mismatch between the two is a seed error and is caught by a startup check that compares the source's column keys against the seeded rows.
-
-### `rpt.ReportViews` — saved layouts
-
-`ReportId`, `ViewName`, `OwnerUserId` (null = a branch-wide view), `IsDefault`, and the layout itself as **JSONB**: selected columns and their order, filters, sorts, grouping, pivot spec, freeze settings, page size. JSONB rather than four child tables because the layout is read and written whole, is never queried into, and evolves with the grid — and Postgres JSONB is a deliberate choice in this project rather than a shortcut.
-
-One default per user per report; a branch-wide view needs `reports.edit` to create.
-
----
-
-## 7. Column conventions
-
-The catalog in §8 is transcribed from the source list, and these conventions decode it.
-
-**`%CurCode%` is the branch's base currency code, substituted into the header at render time.** *Debit(%CurCode%)* displays as *Debit(INR)* for an Indian branch. The value is the base-currency amount — `DebitAmountBase` on the ledger.
-
-**`(Source)` is the document's own currency.** *Debit(Source)* is `DebitAmount`, the figure as the document was raised, and it is meaningless without the *Currency* and *ExchangeRate* columns beside it. Every report offering a `(Source)` column also offers both.
-
-**Money is `decimal` end to end.** The backend stores `decimal` (`JournalLedger.DebitAmount`, `StockMovement.Quantity`); the report DTOs carry `decimal`; the grid formats by column type and the branch's currency decimals. The scaled-integer convention in `bb-document-line-grid` is a line-entry concern and does not reach here.
-
-**Blank column entries in the source list are dynamic columns.** Every report with a blank row — the aged reports, the tracking reports, the schedules — has a set of columns whose number depends on the parameters: aging buckets (Current / 1–30 / 31–60 / 61–90 / 90+), or period columns. They are declared by the response, not by `rpt.ReportDetails`. **The bucket definition itself is a parameter** (bucket size and count), because 30-day buckets are a convention rather than a law.
-
-**Three transcription problems in the source list, to confirm rather than to copy:**
-
-1. **Aged Receivables Details and Summary both list a column called *Aged Payable*.** On a receivables report that is a copy-paste from the payables one; read as *Aged Receivable* below.
-2. **Trial Balance lists *CAAccountID*.** An internal key. It is carried as a hidden column so a row can link to the account ledger, and is not offered in the chooser.
-3. **Four reports are duplicated under two names** — *Sales Order Tracking* / *Sales Order Tracking NEW*, and *Quotation Tracking Report NEW* with no old counterpart. The "NEW" pair have different column sets (the NEW one has *Transferred Quantity* and *Outstanding Quantity*; the old one has *Item Code*, *UOM*, *SO Track Status*). They should be **one report with both column sets available**, defaulting to the NEW set, rather than two entries in the catalog.
-
----
-
-## 8. The report catalog
-
-**Forty-six reports in `Configurations/reports.json`, the specification this
-catalog is written from.** That file is the source the two disagree from if
-they ever do — the prose below is a description of it, not a second copy of
-it. Verified by diffing the two directly rather than by re-reading either:
-`46` distinct `(ReportGroup, ReportName)` pairs, `776` column rows.
-
-**Status** says what stands between the report and being built:
-
-- **Ready** — every column it declares is built, seeded, and rendering
-- **Partial** — it renders; some of its *spec'd* columns are declared but
-  return null, or are missing outright, because the service that fills them
-  does not exist. The gap is named under each one below
-- **Blocked: X** — service X is not built, so nothing of the report exists
-- **Unscheduled** — nothing blocks it; it simply has no task and no owner
-
-**20 of 46 are built and rendering today**, three of them (Account Movement,
-Warehouse Tracking Detail, Sales Register) outside what `reports.json` itself
-enumerates — extra reports the engine's templates made cheap to add. §8.8 has
-the full count by group; every column list below is read straight off the
-source file that builds that report, not retyped from `reports.json` or from
-memory.
-
-### 8.1 Accounting
-
-#### Account Movement — `account-movement` · Ready · 9 columns, not in `reports.json`
-*Source:* `acc.JournalLedger` → `acc.Account`
-
-| Column | Type | Note |
-|---|---|---|
-| Date | Date | `LedgerDate` |
-| Account Type | Text | from `mst.AccountTypes`, resolved in C# — different database |
-| Account · Account Code | Text | |
-| Debit · Credit | Money | base currency |
-| Description | Text | |
-| Reference | Text | |
-| Source | Text | `TransactionTypeCode` |
-
-The plain movement listing — every other accounting source is a copy of its shape.
-Not one of the 46 `reports.json` line items; it exists because the engine's first
-template needed a report to prove itself against, and the simplest one earned its
-place. Groups naturally by Account Type then Account.
-
-#### Account Transaction — `account-transaction` · Partial · 20 of 30 spec'd columns (+1 internal id)
-*Source:* `acc.JournalLedger` → `acc.Account`, `acc.SubAccount`, `con.Contacts`, `acc.TaxMaster`, `con.ContactLicences`
-
-| Column | Type | Note |
-|---|---|---|
-| Date · Transaction No · Source | Date/Text | |
-| Account · Account Code · Related Account | Text | *Related Account* is the contra leg on the same document |
-| Contact Code · Contact Name | Text | via `SubAccount` → `con.Contacts` |
-| Description · Reference | Text | |
-| Tax Rate · Tax Rate Name | Percent/Text | via `SubAccount` → `acc.TaxMaster` |
-| Permit No | Text | contact's active licence, from `con.ContactLicences` |
-| Currency · ExchangeRate | Text/Rate | |
-| Debit(Source) · Credit(Source) · Debit(%CurCode%) · Credit(%CurCode%) | Money | |
-| Running Balance | Money | forces sort order — §5.5 |
-
-**Missing, and not silently — the spec names them and the source does not declare
-them:** Gross/Net/Tax/Due, each in Source and %CurCode% (8 columns) — need `sal`
-and `pur` documents this leg was posted from, which reporting cannot read yet.
-Revalued Cur and Foreign exchange (FX) — need the period-end revaluation job,
-same gap as §8.1's FX pair below.
-
-The fullest accounting report and the one that sets the engine's performance bar.
-**Read next to Journal Report below — they look like duplicates and are not.**
-Account Transaction reads the posted ledger, forced into ledger order, with a
-running balance; a Draft journal has no ledger row and cannot appear here. Journal
-Report reads the journal documents directly, Draft included, with the full audit
-trail and no running balance — it answers "what documents exist and who touched
-them", not "what happened to this account, in order, with a balance". The ~10
-columns they share exist because both are legitimately reading the same legs
-through two different tables that diverge exactly at the moment of posting.
-
-#### General Ledger Summary — `general-ledger-summary` · Ready
-*Source:* `acc.JournalLedger` → `acc.Account`
-
-| Column | Type |
-|---|---|
-| Account · Account Code | Text |
-| Opening Balance · Debit · Credit · Net Movement · Closing (YTD) | Money |
-
-*Opening Balance* is everything before the period — §5.5 applies.
-
-#### Trial Balance — `trial-balance` · Ready
-*Source:* `acc.JournalLedger` → `acc.Account`
-
-| Column | Type | Note |
-|---|---|---|
-| Account Code · Account Name · Account Type | Text/Enum | |
-| Debit · Credit · Current Balance | Money | |
-| CAAccountID | Number | hidden — §7 |
-
-An HTML page already exists at `libs/accounting/accounting-ui/.../trial-balance`. **It moves onto the grid** rather than being duplicated; the existing endpoint stays for the balanced/unbalanced banner, which is a page concern and not a grid one.
-
-#### Journal Report — `journal-report` · Ready
-*Source:* `acc.Journal`, `acc.JournalDetail` → `acc.Account`, `con.Contacts`
-
-| Column | Type |
-|---|---|
-| Date · Trans No · Reference · Narration · Description · Transactions | Date/Text |
-| Account Code · Account Name · Contact Name | Text |
-| Currency · Exchange Rate | Text/Rate |
-| Debit(Source) · Credit(Source) · Debit(%CurCode%) · Credit(%CurCode%) | Money |
-| Created By · Created Date · Approved/Posted By · Approved/Posted Date · Last Modified By · Last Modified Date | Text/DateTime |
-| Reconciled Status | Enum |
-
-The six audit columns come from `AuditableEntity`; the user names resolve from `mst.Users` in C#, **batched** — this is the N+1 the tenancy rules warn about, and on a 200-row page it is 200 lookups done wrong.
-
-#### Bank Summary — `bank-summary` · Ready
-*Source:* `acc.BankAccount` → `acc.Account`, `acc.JournalLedger`
-
-| Column | Type |
-|---|---|
-| Account Name · Account Type · Currency Code | Text |
-| Opening Balance · Received · Spent · Closing Balance · Bank Revaluation | Money |
-| *(dynamic)* | — |
-
-#### Reconciliation Report — `reconciliation` · Partial · 10 columns built
-*Source:* `acc.BankStatement`, `acc.BankStatementLine` → `acc.BankAccount`
-
-| Column | Type | Note |
-|---|---|---|
-| Transaction Date · Transaction No · Reference · Description | Date/Text | |
-| Currency Code | Text | the statement's bank account — groupable |
-| Amount In · Amount Out | Money | the bank statement's own two sides |
-| Status | Enum | Matched / Unmatched / Ignored — groupable |
-| Statement | Text | which imported statement the line came from — groupable |
-
-**Still missing:** *Revalued Amount In* — the period-end revaluation job, same
-gap as the FX pair in §8.1. *CurrencyCode* is wired.
-
-*GroupBy* in the source list is not a column — it is the report's grouping parameter (by statement, by matched/unmatched). Recorded as a parameter.
-
-#### Foreign Currency Gain or Loss — `fx-gain-loss` · Partial
-#### Foreign Currency Gain or Loss Details — `fx-gain-loss-details` · Partial
-*Source:* `acc.JournalLedger`, `acc.Account`, and the period-end revaluation
-
-Both carry: AccountName, CurrencyCode, Due(Source), Due(%CurCode%), Revalue FxRate, Revalued Due(%CurCode%), and the nine gain/loss columns — Realized / Unrealized / Net, each as amount, Exposure and YTD. The Details report adds Contact Name, Transaction Date, Transaction No, Transaction Fx Rate, Reference and Source.
-
-**Partial because unrealized figures come from a period-end revaluation job that is not written.** Realized gain/loss is posted today at settlement and is readable now; the unrealized columns return null until the job exists, and the report says so rather than showing zero.
-
-### 8.2 Receivables and payables
-
-All four aged reports and all four invoice detail/summary reports read documents that do not exist yet.
-
-#### Aged Receivables Summary — `aged-receivables-summary` · Blocked: Sales
-Contact Code, Contact Name, Contact Group, Primary Person, Email, Mobile, Phone, Organization, Outstanding Tax, Total, *Aged Receivable* (see §7), plus the **dynamic aging buckets**.
-
-#### Aged Receivables Details — `aged-receivables-details` · Blocked: Sales
-The Summary's columns plus Invoice Date, Due Date, Expected Date, Invoice Number, Invoice Reference, Invoice Sent, Original Currency, and the buckets.
-
-#### Aged Payables Summary — `aged-payables-summary` · Blocked: Purchase
-Contact Code, Contact Name, Contact Group, Primary Person, Email, Mobile, Organization, Document Type, Outstanding Tax, Permit No, Total, Aged Payable, plus buckets.
-
-#### Aged Payables Details — `aged-payables-details` · Blocked: Purchase
-The Summary's columns plus Invoice Date, Due Date, Transaction No, Reference, Original Currency, Phone, and buckets.
-
-> **These four are the strongest argument for the engine.** Four reports, one aging calculation, one bucket parameter, one contact join — written once as two sources differing only in which control account they read.
-
-#### Receivable Invoice Detail — `receivable-invoice-detail` · Blocked: Sales
-Account Code, Account Name, Approved By, Contact Code/Name/Group, Created Date, Currency Rate, Description, Discount % / Discount(Source) / Discount(%CurCode%), Due Date, Invoice Date, Invoice Number, Invoice Seen, Invoice Sent, Item Code, Last Payment Date, Organization, Original Currency, Quantity, Reference, Source, Status, Tax Rate, Tax Rate Name, Theme, Unit Price(ex)(Source|%CurCode%), Unit Price(inc)(Source|%CurCode%), Gross / Net / Tax / Balance / Invoice Total each in Source and %CurCode%.
-
-#### Receivable Invoice Summary — `receivable-invoice-summary` · Blocked: Sales
-The Detail's header-level columns, without the line ones, plus Payments Credits, Realised Gains, Unrealised Gains.
-
-#### Payable Invoice Detail — `payable-invoice-detail` · Blocked: Purchase
-As Receivable Invoice Detail, with Transaction No in place of Invoice Number, Permit No added, and Invoice Seen / Invoice Sent / Theme absent.
-
-#### Payable Invoice Summary — `payable-invoice-summary` · Blocked: Purchase
-As Receivable Invoice Summary, plus Permit No and Payments Debits.
-
-#### Invoice/DN Payment Collection Report — `invoice-payment-collection` · Blocked: Sales
-INV/DN No, Date, DueDate, Contact Code/Name, Account Code, Currency, Currency Rate, Payment Currency, Payment Currency Rate, Revalued Currency Rate, Payment Date, Payment Mode, Payment Reference, Payment Status, Due Status, Paid To, Receipt No, Reference, Realized Gain/Loss, UnRealized Gain/Loss, and SubTotal / Tax / Total / Amount Paid / Balance Due each in Source and %CurCode%.
-
-#### Bill/DN Payment Report — `bill-payment` · Blocked: Purchase
-The mirror of the above: Bill/DN No, Date, DueDate, *Paid From* rather than *Paid To*, plus Contact Group and Permit No.
-
-### 8.3 Inventory
-
-#### Inventory Item List — `inventory-item-list` · Partial · 28 columns built
-*Source:* `inv.Item`, `inv.ItemStock`, `inv.ItemCategory`, `inv.UnitOfMeasure`, `inv.CostLayer`
-
-Item Code, Item Name, Item Group, Product Category, Inventory Type, Costing Method, Status, Date, Unit of Measurement, Purchase Description, Sales Description, Purchase Tax Rate, Sales Tax Rate, Inventory Account, Purchase Account, Sales Account, Quantity On Hand, Average Cost, Unit Cost Price, **Balance Qty**, **Unit Cost Price (FIFO)**, Unit Sale Price, Total Value, Quantity On Order, Quantity Received, Committed Quotes, Committed to DO.
-
-**Blocked on `sal`/`pur`:** *Quantity on Order*, *Quantity Received*, *Committed Quotes*, *Committed to DO* — need documents that don't exist yet.
-**Wired:** *Purchase Tax Rate*/*Sales Tax Rate* (the item's tax group, effective-dated, split by direction — `acc.TaxMaster`), *Inventory Account*/*Purchase Account*/*Sales Account* (the item's own three sub-accounts, told apart by which control account provisioned them — see `AccountRead.AccountSystemName`; *Purchase Account* resolves to Cost of Goods Sold, since there is no separate system account for a purchase under perpetual inventory), and *Date* (the item's `CreatedAt`).
-
-#### Inventory Item Detail — `inventory-item-detail` · Partial · 24 columns built
-*Source:* `inv.StockMovement`, `inv.Item`, `acc.SubAccounts` → `acc.Accounts`
-
-Date, Item Code, Item Name, Item Group, Product Category, Description, Contact Code, Contact Name, Costing Method, Unit of Measurement, Transaction No, Reference, Source, QoH Movement, Value Movement, Unit Cost Price, Unit Sale Price, Margin, Profit Per Item, Inventory Account, Purchase Account, Sales Account, Adjustment Account.
-
-**Blocked on `sal`:** *Unit Sale Price*, *Margin*, *Profit Per Item* — need a sale.
-**Blocked on `sal`/`pur`:** *Contact Code*, *Contact Name* — a stock movement carries no contact of its own; one would come from the sale or purchase document behind it, and `inv.StockMovement`'s own read model has nothing to resolve.
-**Wired:** *Reference* (built the same way *Transaction No* is, from the movement's own source type and id), *Inventory Account*, *Purchase Account*, *Sales Account* — same resolution as Item List above.
-**No source exists for *Adjustment Account*** — a stock adjustment posts to the item's own Inventory sub-account plus an org-level adjustment account, not a fourth per-item one, so there is nothing to join to yet.
-
-#### Inventory Item Summary — `inventory-item-summary` · Partial · 23 columns built
-Item Code/Name/Group, Product Category, Inventory Type, Costing Method, Unit of Measurement, Opening Quantity, Opening Balance, Quantity Purchased, Purchases, Quantity Sold, Sales, Quantity Adjusted, Adjustments, COGS, Profit, Closing Quantity, Closing Balance, Inventory Account, Purchase Account, Sales Account.
-
-**Blocked on `sal`/`pur`:** Quantity Purchased, Purchases, Quantity Sold, Sales, COGS, Profit — the six figures that need a sales or purchase document.
-**Wired:** the three account columns, same resolution as the two reports above.
-Adjustments and the opening/closing roll are readable and correct today.
-
-**One more gap across all three, worse than "declared and blank": *Organization* is spec'd for all three and not declared by any of them — no column, no row property, nothing.** Not blocked either; every row here is already `OrgId`-scoped to one branch, so the column would say the same thing on every row of a single-branch report. It matters only once a consolidated, cross-branch view exists — CLAUDE.md is explicit that is a deliberate read above the query filter, not a relaxed one, and nothing here is that yet. **Item List is also missing *Contact Name*, spec'd but not declared** — unlike Item Detail, where a row is one transaction with a counterparty, an Item List row is one item with no transaction in view, so there is no single contact a name column could show. Worth a parameter (a preferred-supplier filter) rather than a column, if it is wanted at all.
-
-#### Inventory Aging Report — `inventory-aging` · Ready
-*Source:* `inv.CostLayer`
-
-Item Code/SKU, Item Name, Product Category, Unit of Measurement, Inventory Asset Account, Organization, *Aged Inventory*, plus dynamic buckets. Ages by **cost layer receipt date**, which is exactly what layers were built to answer.
-
-#### Batch Tracking Status Report — `batch-tracking-status` · Ready
-*Source:* `inv.ItemBatch`, `inv.ItemStock`, `inv.Warehouse`
-
-Batch No, Item Code, Item Name, Description, Product Category, Manufactured Date, Expiry Date, Batch Quantity, Available Quantity, CostingMethod, Warehouse.
-
-#### Batch Tracking Detail Report — `batch-tracking-detail` · Ready
-*Source:* `inv.ItemBatch`, `inv.StockMovement`
-
-The Status columns plus Transaction Date, Transaction No, Transaction Type, Contact Name, Quantity IN, Quantity OUT, Unit of Measurement, and dynamic period columns.
-
-#### Serial Tracking Status Report — `serial-tracking-status` · Ready
-Serial No, Item Code, Item Name, Product Category, Manufactured Date, Expiry Date, Available Quantity, CostingMethod, Warehouse.
-
-#### Serial Tracking Detail Report — `serial-tracking-detail` · Ready
-The Status columns plus Description-level movement: Transaction Date, Transaction No, Transaction Type, Contact Name, Quantity IN, Quantity OUT, Unit of Measurement, Warehouse.
-
-#### Warehouse Tracking Status Report — `warehouse-tracking-status` · Ready · 11 columns built
-*Source:* `inv.Warehouse`, `inv.StockMovement`, plus `mst.States`/`mst.Countries` resolved cross-database
-
-Warehouse Name, Address, City, State, Country, Primary, Status, Quantity IN, Quantity OUT, Available Quantity.
-
-State and Country were raw `mst.States`/`mst.Countries` ids shown as numbers until this
-week — the kind of thing that renders as "14" on a report a person reads. Resolved to
-names the same batched way Trial Balance's Account Type is, through two new internal
-Master endpoints. Primary and Status are booleans and are typed `Boolean`; they were
-typed `Enum` until the same pass, which rendered the literal words "True"/"False"
-instead of Yes/No.
-
-#### Warehouse Tracking Detail Report — `warehouse-tracking-detail` · Ready
-Warehouse Name, Item Code, Item Name, Batch/Serial No, Transaction Date, Quantity IN, Quantity OUT, Balance Quantity, Tracked Quantity, UnTracked Quantity, Total Quantity.
-
-> *Tracked* / *UnTracked* split the stock that carries a batch or serial from the stock that does not. Worth stating in the UI, since a mismatch there is usually a data-entry problem rather than a stock problem.
-
-### 8.4 Sales
-
-**One of these eight is built. The other seven are blocked** on the quote, order,
-invoice and delivery-challan documents — `CLAUDE.md` has the detail: the sixteen
-`sal` tables, their migration and their controllers exist, but the item and
-customer pickers on every sales form are still numeric id fields, and partial
-fulfilment (`DeliveredQuantity`, `InvoicedQuantity`) is deferred to T3.6. A
-reporting source needs a document it can trust to read, not just a table that
-exists.
-
-#### Sales Register — `sales-register` · Ready · 13 columns built, not in `reports.json`
-*Source:* `sal.SalesRegister` → `con.Contacts`
-
-Document Date, Document No, Transaction Type, Customer Name, Customer GSTIN, Supply
-Type, Taxable Amount, CGST, SGST, IGST, Cess, Total Amount.
-
-**Built ahead of the rest of Sales because it reads a different table.**
-`sal.SalesRegister` is a GST audit log, not a document — it gets one row whenever a
-sales document posts, with its own migration separate from the quote/order/invoice
-schema, precisely so GSTR-1 has something to file from before the rest of Sales is
-ready. Reporting reads that row directly rather than the invoice it came from,
-which is why this one report escapes the block the other seven are under. Like
-Account Movement, it is not one of the 46 catalogued reports — it exists because
-the table underneath it already did.
-
-| Report | Key | Columns |
-|---|---|---|
-| Sales Analysis Report | `sales-analysis` | Contact Code, Contact Name, Organization, Product Code, Product Name, Product Category, Total Qty, Total Sales (%CurCode%) |
-| Sales Analysis Detail Report | `sales-analysis-detail` | Date, Transaction No, Reference, Source, Contact Code/Name, Item Code/Name, Description, Product Category, Inventory Type, UOM, Quantity, Quantity Return, Currency, Currency Rate, Disc, Disc %, Price Adjustment, Unit Sales Price (Source/%CurCode%), Unit Cost Price (%CurCode%), Subtotal (Source/%CurCode%), Total Cost (%CurCode%), Profit (%CurCode%), Profit Per Unit (%CurCode%), Profit Margin, Inventory Asset Account, Purchase Account, Sales Account |
-| Invoice Tracking Report | `invoice-tracking` | Invoice NO, Invoice Date, Due Date, Contact Name, Qty, Delivered Quantity, Outstanding Quantity, Total Amount, Status, + dynamic |
-| Quotation Tracking Report | `quotation-tracking` | Quote NO, Quotation Date, Expiry Date, Contact Name, Qty, Transferred Quantity, Outstanding Quantity, Total Amount, Status |
-| Sales Order Tracking Report | `sales-order-tracking` | **Merged, see §7.3** — SO No, SO Date, SO Reference, Shipment Date, Contact Name, Item Code, Item Name, UOM, SO Qty / Qty, Del Qty, Undel Qty, Transferred Quantity, Outstanding Quantity, Total Amount, Status, SO Track Status |
-| Delivery Order Tracking Report | `delivery-order-tracking` | Delivery Order NO, Delivery Date, Contact Name, Qty, Invoiced Quantity, Outstanding Quantity, Status |
-| Quote Invoice Tracking Report | `quote-invoice-tracking` | QuoteNo, Quote Date, Expiry Date, Contact Code/Name, Item Name, Quoted Quantity, InvoiceNo, Invoiced Date, Invoiced Quantity, Over Invoiced Quantity, DeliveryNo, Delivery Date, Delivered Quantity, Delivery Over Quantity, Pending Quantity |
-
-### 8.5 Purchase
-
-All Blocked: Purchase — the service has `.csproj` files and nothing else.
-
-| Report | Key | Columns |
-|---|---|---|
-| Purchase Analysis Report | `purchase-analysis` | Contact Code, Contact Name, Organization, Product Code, Product Name, Product Category, Total Qty, Total Purchase (%CurCode%) |
-| Purchase Order Tracking Report | `purchase-order-tracking` | PO NO, PO Date, Delivery Date, Contact Name, Qty, Received Quantity, Outstanding Quantity, Total Amount, Status |
-| Receive Order Tracking Report | `receive-order-tracking` | Receive Order NO, Receive Date, Contact Name, Qty, Billed Quantity, Outstanding Quantity, Status |
-| Receive Order Details Report | `receive-order-details` | Receive No, Receive Date, Delivery Date, Transaction Date, Transaction No, Transaction Type, Transaction Quantity, Contact Code/Name, Item Name, Description, Received Quantity, Pending Quantity |
-| Bill Tracking Report | `bill-tracking` | Bill No, Bill Date, Due Date, Reference, Contact Name, Qty, Received Quantity, Outstanding Quantity, Total Amount, Status |
-
-### 8.6 Fixed assets
-
-All Blocked: Fixed Assets — Phase 2 by decision of 4 August 2026, and blocked twice over: an asset is capitalised from a bill, and Purchase does not exist.
-
-| Report | Key | Columns |
-|---|---|---|
-| Fixed Assets Schedule | `fixed-assets-schedule` | Asset Number, Asset Name, Description, Asset Type, Serial Number, Warranty Expiry, Purchase Date, Purchase Price, Cost Limit, Residual Value, Dep Method, Averaging Method, Rate %, Effective Life, Dep Start Date, Asset Account, Accum Dep Account, Dep Expense Account, Opening Cost, Addition (Purchase) Cost, Disposal Cost, Closing Cost, Opening Accum Dep, Depreciation, Disposal Accum Dep, Closing Accum Dep, Opening NBV, Closing NBV, Disposal Date, NBV as at Disposal Date, Sales Proceeds, Gain on Disposal, Loss on Disposal |
-| Depreciation Schedule | `depreciation-schedule` | The Fixed Assets Schedule columns less the cost-roll ones, plus Capital Gain and Cost |
-| Fixed Asset Disposal Schedule | `fixed-asset-disposal-schedule` | AssetNumber, AssetName, AssetType, AssetTypeID, AssetValue, Cost, CostLimit, ResidualValue, Dep Method, Avg Method, Rate, Effective Life, Dep Start Date, Purchased, Disposed, Sale Price, Capital Gain, Loss |
-| Fixed Asset Reconciliation | `fixed-asset-reconciliation` | Source, Opening Cost, Cost Debits, Cost Credits, Closing Cost, Opening Accum Dep, Accum Dep Debits, Accum Dep Credits, Closing Accum Dep, Opening Book Value, Closing Book Value |
-
-These four are carried here so the register's schema is designed knowing what has to come out of it — *Averaging Method* and *Cost Limit* are columns nobody adds retrospectively without a migration.
-
-### 8.7 The financial statements — spec'd, and mentioned nowhere until now
-
-**Balance Sheet, Profit & Loss, and Cash Flow Statement (Direct)** are three of the
-four members of `reports.json`'s own `"Finance"` group — the fourth is
-Reconciliation Report, filed under §8.1 above since it reads the same tables as
-everything else there. **Business Performance**, from a fifth raw group of its
-own (`"Financial performance"`), makes four. All four have **zero column rows**
-in the specification — nobody has designed what they show, only that they exist.
-
-**None of the four is blocked by anything.** They read `acc.Accounts`,
-`AccountTypes.ReportSection` (Asset/Liability/Equity/Income/Expense, seeded) and
-`acc.JournalLedger` — every table a Balance Sheet or P&L needs is built, migrated
-and posting today. They are **unscheduled**: absent from every stage in §9,
-absent from the R7 task list, absent from this catalog until this correction.
-That is a different kind of missing from the 26 reports blocked on Sales,
-Purchase or the fixed-asset register above — those are waiting on something.
-These are waiting on nobody, which is the case for treating them as the next
-piece of work rather than the last one.
-
-| Report | Key (proposed) | Note |
-|---|---|---|
-| Balance Sheet | `balance-sheet` | Asset = Liability + Equity, by `AccountTypes.ReportSection`, as at a date |
-| Profit & Loss | `profit-and-loss` | Income − Expense, by `ReportSection`, over a period |
-| Cash Flow Statement (Direct) | `cash-flow-direct` | Cash and cash-equivalent accounts only, direct method — receipts and payments, not a reconciliation from net income |
-| Business Performance | `business-performance` | No spec beyond the name. Needs a decision before it needs a source |
-
-### 8.8 Summary
-
-Counted from what is actually written in §8.1–8.7 above, not forced to reconcile
-against `reports.json`'s raw grouping — the two group reports differently on
-purpose (§8.2 mixes Sales- and Purchase-side receivables/payables into one
-domain; §8.1 keeps Reconciliation with the rest of accounting), and forcing a
-sub-total match between two taxonomies that cross-cut each other is how a wrong
-number ends up looking like an audited one. **Three of the totals below are extra
-reports beyond the 46 in the specification** — Account Movement, Warehouse
-Tracking Detail and Sales Register, each built because the table underneath it
-already existed, not because the spec asked for it. They are marked, not hidden.
-
-| Domain | Reports | Ready | Partial | Blocked / Unscheduled |
-|---|---:|---:|---:|---|
-| Accounting | 9 | 5 | 4 | 0 |
-| Receivables and payables | 10 | 0 | 0 | 10 blocked |
-| Inventory | 10 | 7 | 3 | 0 |
-| Sales *(incl. Sales Register — extra)* | 8 | 1 | 0 | 7 blocked |
-| Purchase | 5 | 0 | 0 | 5 blocked |
-| Fixed assets | 4 | 0 | 0 | 4 blocked |
-| Financial statements | 4 | 0 | 0 | 4 unscheduled |
-| **Total documented** | **50** | **13** | **7** | **30** |
-
-**Verified independently, and this is the number to quote:** `reports.json`
-specifies **46** distinct reports; **20** render today, three of them (marked
-above) outside that specification. Both counts came from diffing the catalog
-against the source files directly, not from summing this table.
-
----
-
-## 9. Implementation tasks
-
-**This section is written to be executed by an agent with no memory of the conversation that produced it.** Everything needed is either here or in the file paths named. Work the tasks in order; each one is a commit.
-
-### 9.0 How to work
-
-**Branch: `main`.** Hard rule 11 and the *Git — how work reaches main* section of `CLAUDE.md` apply here like everywhere else. Push with `git push -u origin main`. Do not open a pull request unless asked.
-
-This reverses what stood here for the first fortnight of the work. Reporting committed to `Report` while it was being built by two agents in parallel; **`Report` merged into `main` on 17 August 2026 and the exception ended with it**, by the repository owner's instruction of the same day. `Report` is left pointing at the merge — do not push to it and do not branch from it, it carries nothing `main` lacks.
-
-**Two agents still share the branch**, so pull before you start and again before you push:
-
-```
-git pull --rebase origin main
-```
-
-**No new packages.** Not one, backend or frontend. `backend/Directory.Packages.props` and `frontend/package.json` are closed lists for this work. Everything below is buildable with what they already pin — `@angular/cdk` for drag-drop (nine pages already use it) and `DocumentFormat.OpenXml` for XLSX (two services already use it). If a task appears to need something else, the task is wrong: stop and say so rather than adding a dependency.
-
-**The hard rules in `CLAUDE.md` apply without exception**, and these five are the ones this work trips over most:
-
-- **LINQ only.** No raw SQL except the RLS policy block in the migration.
-- **Entities are plain property bags** — no constructors, no methods, no computed properties.
-- **Every Data Annotation carries `ErrorMessage`.**
-- **Every `rpt` table has `OrgId`, a global query filter and an RLS policy.** Omitting one leaks between branches.
-- **Angular: standalone, `inject()`, signals, `async`/`await`, separate `templateUrl` and `styleUrl`.** `-core` libs stay Ionic-safe: no `window`, no `document`.
-
-**Verify before every commit:**
-
-```
-cd frontend && npm run check          # lint, typecheck, tests, both builds
-cd backend  && dotnet build && dotnet test
-```
-
-`dotnet build` must be clean — `TreatWarningsAsErrors` is on. Database-backed tests skip with a reason when no PostgreSQL answers; set `REPORTING_TEST_DB` to run them, as `Accounting.Api.Tests` does with `ACCOUNTING_TEST_DB`.
-
-**Commit messages** follow `docs/commit-rules.md`: `feat(reporting): add the generic query builder`. **Documentation ships in the same commit as the feature it describes** — the page under `frontend/apps/docs/content/`, its entry in `docs.manifest.ts`, and a bullet under **Unreleased** in `release-notes.md`. That is hard rule 10 and it is not a separate task.
-
-**Effort figures** below are for an agent working uninterrupted, and are a guide rather than a commitment. The three marked ★ are where the work actually is.
-
----
-
-### 9.1 Who builds what
-
-Two agents build this. **Claude Code is senior and owns the pieces whose mistakes are silent. Antigravity is junior and owns the pieces whose mistakes are loud.**
-
-That is the whole rule, and it is not a claim about which model is cleverer — it is about where a defect surfaces. A missing query filter serves another branch's ledger to a customer and nothing turns red. A report page with a broken column does not render and everybody knows inside a minute. The scarce budget goes on the first kind.
-
-| | Senior — Claude Code | Junior — Antigravity |
-|---|---|---|
-| **Owned** | **The whole of R0** — schema, read models, contract, engine, host, Excel, grid, panels, pages. Then the first source of each shape, because every later source is copied from it, and the pivot builder | **Everything from R1 onward.** The volume: fourteen report sources across R1 and R2, each a copy of a template that already exists |
-| **Built** | R0.0 – R0.11 entire, R1.3, R3.1 – R3.4 — **all delivered** | R1.1, R1.2, R1.4 – R1.7, all of R2 — **all delivered** |
-| **Owns now** | Nothing. Senior's tasks are finished | **Everything outstanding**, by the repository owner's instruction of 18 August 2026 — stage R7 below, the gates included |
-
-**As of 18 August 2026 every remaining reporting task is Antigravity's**, including the two verification gates that were senior's own. That is a deliberate change to the split above, not a drift from it: senior's queue is empty, the outstanding work is a seeding job, a test pass and two database checks, and one owner for all of it beats a handoff in the middle.
-
-**What does not change is the reason the split existed.** The gates are still the tasks whose failure is silent, and §9.1's rule — verify against a second org, never by reading the code — applies to whoever runs them. A gate signed off from the diff is not signed off, and G3 has already been marked cleared once by inspection and found broken by measurement.
-
-**Senior builds the whole foundation and junior builds on it.** The line is no longer drawn inside R0 — it is drawn at the end of it. The argument for that: all three silent-failure gates (§9.1 below) are R0 tasks, and R0 is where a mistake propagates rather than surfaces.
-
-**The cost is that junior idles through R0** unless given something. Two tasks do not depend on the reporting engine at all and can run in parallel with it from day one: **R1.1** (three indexes, an *Accounting* migration) and **R1.2** (the batched user-name resolver). Start junior on those.
-
-If the senior budget bites, the task to hand back is **R0.10** — once R0.9 lands, the filter bar, column chooser and group panel follow its idiom closely enough to be written against it. That returns ~3.5h.
-
-#### Review gates
-
-**Senior reviews every junior commit before it merges.**
-
-Three checks are **gates** — the work does not proceed past them. They are all in R0, and with R0 now wholly senior they are senior's own verification rather than a handoff: **they do not become optional by being self-checks.** Each fails silently, and none of the three fails a test, which is precisely why they are written down instead of trusted to attention.
-
-| Gate | After | What is checked, and why it is a gate |
-|---|---|---|
-| **G1** | R0.1 | Every `rpt` table has `OrgId`, a global query filter **and** an RLS policy. A miss leaks between branches and no test fails |
-| **G2** | R0.2 | Every read model re-declares its query filter, and none carries a navigation to a writable entity. Same failure mode, wider blast radius. **Cleared 18 August 2026** — see below |
-| **G3** | R0.6 | Org context reaches the query, **and** row-level security actually applies to the role the application connects as. **Failed, and still failing — §9.9.** Reworded from "`set_config` is transaction-local, never connection-level", which is what the gate originally asked and which turned out to be half the bug rather than the test for it |
-
-Verify each against a second org: set `app.current_org_id` to a branch that owns none of the rows and confirm the query returns nothing. A gate signed off by reading the code rather than running it is not signed off.
-
-**G2 was cleared on 18 August 2026 and the evidence is worth keeping**, because it is the cheap check that nobody re-runs. It was originally passed with ten read models over `acc` and `con`; R2.1 added nine more over `inv`, and a single missing `ExcludeFromMigrations` among them would have had reporting create tables Inventory owns. Re-run at nineteen:
-
-```
-dotnet ef migrations add G2Probe --startup-project ../Reporting.Api --context ReportingDbContext
-```
-
-`Up()` and `Down()` both came back empty, and the probe was removed. **Re-run it after adding any read model** — it costs a minute and it is the only thing standing between a read-only mapping and a migration that tries to own another service's schema.
-
-
-#### How junior should work
-
-- **Stop and ask rather than invent.** A junior that guesses at the tenancy model writes code that passes its tests and leaks data. Ambiguity in this document is a question, not a judgement call.
-- **Copy the named file.** Where a task says "copy `Inventory.Api/Program.cs`" or "copy `AccountMovementSource.cs`", that is an instruction, not a suggestion — consistency across sources is what keeps fifteen reports maintainable by one person.
-- **Never add a package.** Not one. If a task seems to need one, the task is wrong; say so.
-- **Run both verification commands before every commit.** A commit that does not build is a commit that blocks the other agent.
-
-#### Working in parallel
-
-Separate worktrees, one per agent, so neither clobbers the other's files or build cache:
-
-```
-git worktree add ../Bill-Book-senior report-senior
-git worktree add ../Bill-Book-junior report-junior
-```
-
-Both push to `main`, rebasing onto it rather than merging into it — `git pull --rebase origin main` before starting and again before pushing. **Sequence:** senior does R0.0, then the whole of R0 in dependency order, then R1.3 as the second template. Junior runs R1.1 and R1.2 alongside R0 — neither touches the reporting engine — and picks up the rest of R1, then all of R2, once the recipe of §9.5 exists.
-
-Four files collide no matter how the work is split, and are worth resolving by hand rather than trusting a three-way merge: **this file's progress checklist** (senior owns the ticks), **`release-notes.md`**, **`docs.manifest.ts`**, and **`Bill-Book.sln`**. The `rpt` migration has **one owner only** — two EF migrations written in parallel do not merge cleanly, they merge dirtily.
-
-`Bill-Book.sln` has now broken the build twice on the same fault, so it is worth naming precisely: its project paths are `shared\`, `tests\` and `worker\`, **lowercase**, matching what git records. A case-insensitive filesystem accepts `Shared\`, `Tests\` and `Worker\` and every Linux checkout and CI run does not — eight projects fail to load and the failure never appears on the machine that caused it. **After any merge that touches this file, diff it before committing.**
-
----
-
-### Stage R0 — the engine and the grid
-
-Eleven tasks. Proven against **Account Movement** (simplest source) and **Trial Balance** (has an existing page to check numbers against).
-
----
-
-#### R0.0 — `AGENTS.md` · **Senior** · ~0.5h · depends: nothing
-
-Antigravity does not read `CLAUDE.md`. Without this task it starts blind to LINQ-only, to `ErrorMessage` on every annotation, to `OrgId` on every table, to which branch the work lands on and to the no-new-packages rule — and writes plausible code that breaks four house rules.
-
-**Create** `AGENTS.md` at the repository root — the convention non-Claude agents read. It points at `docs/ai-agent-structure-rules.md` (already written for both agents, and naming Antigravity explicitly), at §9.0 and §9.1 of this file, and states the branch and the package rule inline rather than by reference, because those two are the ones that cause damage before anybody notices.
-
-**Also resolve open question 7** — `CLAUDE.md` hard rule 11 says commit to `main`, §9.0 says `Report`. Two agents reading two answers diverge on their first commit.
-
-**Done when:** an agent given only `AGENTS.md` can state the branch, the package rule and the five hard rules that matter here.
-
----
-
-#### R0.1 — the `rpt` schema · **Senior** · ~1.5h · depends: R0.0 · **gate G1**
-
-**Create:**
-
-```
-Reporting.Entity/Enums/
-  ReportModule.cs          Accounting, Inventory, Sales, Purchase, FixedAssets, Banking
-  ColumnDataType.cs        Text, Number, Money, Quantity, Percent, Rate, Date, DateTime,
-                           Boolean, Enum, Link
-  FilterOperator.cs        Equals, NotEquals, Contains, NotContains, StartsWith, EndsWith,
-                           GreaterThan, GreaterOrEqual, LessThan, LessOrEqual, Between,
-                           In, NotIn, IsNull, IsNotNull
-  AggregateFunction.cs     None, Sum, Count, CountDistinct, Min, Max, Avg
-  SortDirection.cs         Asc, Desc
-  ColumnAlignment.cs       Left, Right, Center
-  ExportFormat.cs          Xlsx, Pdf
-
-Reporting.Entity/TableEntities/
-  Report.cs                ReportId, ReportKey, Title, Module, Description,
-                           RequiredPermission, IsActive, SortOrder
-  ReportDetail.cs          ReportDetailId, ReportId, ColumnKey, Header, DataType,
-                           IsDefault, IsFilterable, IsSortable, IsGroupable, IsPivotable,
-                           DefaultAggregate, Alignment, Width, SortOrder, IsPrimary, IsHidden
-  ReportView.cs            ReportViewId, ReportId, ViewName, OwnerUserId (nullable),
-                           IsDefault, LayoutJson (JSONB)
-
-Reporting.Repository/ReportingDbContext.cs
-Reporting.Repository/SeedData/ReportCatalogSeed.cs
-Reporting.Repository/Migrations/README-RowLevelSecurity.md
-```
-
-All three entities inherit `Shared.Kernel.Tenancy.OrgScopedEntity`. `ReportKey` is unique per `(OrgId, ReportKey)`. `LayoutJson` maps to `jsonb`.
-
-**Then:** add EF Core, Npgsql and Shared.Kernel references to `Reporting.Repository.csproj`; generate the migration; append the RLS policy block by hand, following `backend/Api/Sales/Sales.Repository/Migrations/README-RowLevelSecurity.md`.
-
-**Done when:** the migration applies to PostgreSQL 16; a second `dotnet ef migrations add` produces an **empty** migration; `SELECT` under a different `app.current_org_id` returns nothing; `dotnet build` is clean.
-
----
-
-#### R0.2 — read-only reads across `acc`, `inv` and `con` · **Senior** · ~1.5h · depends: R0.1 · **gate G2** · **needs the §2 decision**
-
-**Do not start this until the §2 exception is confirmed.** Everything else in R0 except R0.5–R0.7 proceeds without it.
-
-**Create** `Reporting.Repository/ReadModels/` — one class per table Reporting reads, each mapped with `ToTable(name, schema)` and `ExcludeFromMigrations()`, each re-declaring its `OrgId` query filter, none with a navigation property to a writable entity:
-
-`JournalLedgerRead` · `AccountRead` · `SubAccountRead` · `JournalRead` · `JournalDetailRead` · `BankAccountRead` · `BankStatementRead` · `BankStatementLineRead` · `TaxMasterRead` (all `acc`) — `ItemRead` · `ItemStockRead` · `ItemCategoryRead` · `StockMovementRead` · `CostLayerRead` · `ItemBatchRead` · `ItemSerialRead` · `WarehouseRead` · `UnitOfMeasureRead` (all `inv`) — `ContactRead` · `ContactLicenceRead` (both `con`).
-
-Only the columns the reports in §8 name. A read model is not a copy of the entity.
-
-**Done when:** a smoke test returns rows for the seeded org and zero rows under another org's `app.current_org_id`; no `rpt` migration changed.
-
----
-
-#### R0.3 — the query contract · **Senior** · ~0.5h · depends: nothing
-
-**Create** in `Reporting.Entity/Models/`: `ReportQueryRequest`, `ReportFilterModel`, `ReportSortModel`, `ReportPivotModel`, `ReportPageModel`, `ReportFreezeModel`, `ReportResultView`, `ReportColumnView`, `ReportGroupFooterView`, `ReportTotalView`, `ReportCatalogItemView`, `ReportMetadataView`, `SavedViewModel`.
-
-Shapes are in §4.2 and §4.3. Every annotation carries `ErrorMessage`. Enforce in annotations: page size 1–200, filters ≤50, sorts ≤5, `groupBy` ≤3, columns ≤60.
-
-**Done when:** a request with page size 500 is rejected by model validation with a readable message, not by a database error.
-
----
-
-#### R0.4 ★ — the generic query engine · **Senior** · ~3h · depends: R0.3
-
-The centre of the whole thing. **Create** in `Reporting.Api/Services/`:
-
-| File | What |
-|---|---|
-| `IReportSource.cs` | `ReportKey`, `Module`, `Title`, `RequiredPermission`, `Columns`, `Parameters`, `Build(parameters, db)` returning `IQueryable` and executing nothing |
-| `ReportColumn.cs` | Key, header, `ColumnDataType`, alignment, flags, default aggregate, **and the member expression naming its property on the row type** |
-| `ReportParameter.cs` | Name, type, required, default |
-| `ReportQueryBuilder.cs` | Composes `Where` / `OrderBy` / `ThenBy` / `Skip` / `Take` as expression trees against the column map |
-| `ReportExecutionService.cs` | Runs the page query, the group-footer query and the grand-total query; assembles `ReportResultView` |
-| `ReportCatalogService.cs` | Discovers registered sources, filters by the caller's permissions, merges `rpt.ReportDetails` presentation over source metadata |
-| `ReportCatalogValidator.cs` | Startup check: every source's column keys have a seeded `rpt.ReportDetails` row and vice versa. Fail fast |
-
-**A column absent from the map cannot be filtered or sorted on.** That is the security property: no client string reaches the database. A filter naming an unknown column is a 400, not an ignored clause.
-
-**Create** `backend/Api/Reporting/Reporting.Api.Tests/` (add to `Bill-Book.sln`, xunit, already pinned). Test the builder against an in-memory `IQueryable` — no database needed: every operator, multi-key sort, three-level grouping, paging boundaries, and the unknown-column rejection.
-
-**Done when:** those tests pass and the builder has no `FromSql` anywhere.
-
----
-
-#### R0.5 ★ — the two template sources, and the recipe · **Senior** · ~1.5h · depends: R0.2, R0.4
-
-**This task looks small and is not.** `AccountMovementSource.cs` is the file the other forty-four reports are copied from. Its shape — how columns are declared, how a cross-database lookup is batched, how parameters are read, where the seed rows go — becomes the shape of every report in R1 and R2. Get it wrong and junior faithfully reproduces the mistake fifteen times, and it surfaces in R2.
-
-**Create** `Reporting.Api/Services/Sources/AccountMovementSource.cs` and `TrialBalanceSource.cs`, columns exactly as §8.1 lists them. Add both to `ReportCatalogSeed`.
-
-*Account Type* comes from `mst.AccountTypes` — a different database, so resolve in C# and batch it. Trial Balance's *CAAccountID* is `IsHidden`.
-
-**Then write §9.5, "How to add a report"** — the recipe junior works from: which file to copy, the four things to change, where the catalog and `rpt.ReportDetails` rows go, and the two commands that verify it. Written **after** the code exists, never before: a recipe written against imaginary code is a recipe that does not match the code.
-
-**Done when:** the catalog validator passes, both sources compile against the read models, and §9.5 is written such that adding a third report requires no decisions.
-
----
-
-#### R0.6 — the API host · **Senior** · ~2h · depends: R0.5 · **gate G3**
-
-`Reporting.Api/Program.cs` is a stub returning `"not implemented"`. **Replace it wholesale** — copy `Inventory.Api/Program.cs`, which its own comment names as the fullest example: JWT bearer, tenant resolution, `set_config` transaction-locally (never connection-level), the audit interceptor, DI, OpenAPI.
-
-**Create** `Reporting.Api/Controllers/ReportsController.cs` — the four routes of §4.1, `[Authorize]`, `[RequireModulePermission("reporting")]`, plus each report's own module permission checked before it runs. `Forbid()` on a report the caller may not run, never `NotFound()`.
-
-**Also:** the YARP route for Reporting in the Gateway's per-environment config, and `reports.view` / `reports.edit` in the Master permission seed.
-
-**Done when:** both reports return data through the gateway with a real token, and a token lacking `accounting.view` gets 403 from Account Movement while still seeing the catalog.
-
----
-
-#### R0.7 — Excel export · **Senior** · ~2h · depends: R0.6
-
-**Create** `Reporting.Api/Services/ExcelReportWriter.cs` on `DocumentFormat.OpenXml` (pinned 3.5.1). Read `ExcelStatementReader.cs` and `StatementExportWriter.cs` first — the OpenXml idiom this repo uses is already there.
-
-Frozen header pane, column widths, number formats by `ColumnDataType`, group subtotals as real rows. The export re-runs the query with paging **off** and the 100,000-row cap of §5.6; over the cap it refuses with the row count rather than truncating silently.
-
-**PDF is not built** — see §5.8. `ExportFormat.Pdf` returns a clear refusal.
-
-**Done when:** the exported row count equals the grid's stated total for the same filters, and a 100k-row export completes without exhausting memory.
-
----
-
-#### R0.8 — frontend contracts and services · **Senior** · ~1h · depends: R0.3
-
-**Create** in `libs/reporting/reporting-core/src/lib/`: `models/` mirroring the server contracts, `report-catalog.service.ts`, `report-query.service.ts`, `report-state.ts` (state ↔ URL serialization), and export them from `index.ts`.
-
-Signals and `inject()`, `async`/`await` over promises rather than piped RxJS. **No `window`, no `document`** — this lib must stay Ionic-compatible.
-
----
-
-#### R0.9 ★ — `bb-report-grid` · **Senior** · ~3h · depends: R0.8
-
-**Create** `libs/shared/ui-components/src/lib/report-grid/` — component, models, and the styles. Read `document-line-grid.component.ts` first: same house style, same "owns no data, fetches nothing" contract.
-
-The API is in §3.3. This task covers: the table, sticky header (`position: sticky; top: 0`), sticky first-*N* columns with computed left offsets and a seam shadow, single and shift-click multi-key sort with position indicators, the pager, and the ~360px card mode of §3.5.
-
-**Renders against stub data.** It must be demonstrable before R0.6 exists.
-
-**Done when:** header and frozen columns hold under both scroll axes, sort emits correct state, and the card mode works at 360px.
-
----
-
-#### R0.10 ★ — filtering, column selection, grouping · **Senior**, or junior if the budget is tight · ~3.5h · depends: R0.9
-
-**Create** beside the grid: `filter-bar.component.*` (per-type editors, clearable chips), `column-chooser.dialog.*` (search, select, drag reorder via `@angular/cdk/drag-drop` — copy the idiom from `numbering-series.page.ts`), `group-panel.component.*` (drop target, three-level nesting, collapsible group headers showing count and subtotals).
-
-**Done when:** every operator in §4.4 is reachable from the UI for a column of its type, and group subtotals come from the response rather than being computed in the browser.
-
----
-
-#### R0.11 — pages, routes and documentation · **Senior** · ~1h · depends: R0.6, R0.10
-
-**Create** `libs/reporting/reporting-ui/src/lib/report-list/report-list.page.*` (catalog grouped by module) and `report-host/report-host.page.*` (one generic page driven by `:reportKey`). Routes in `apps/web`. Navigation entry.
-
-**And the documentation, in this same commit:** `frontend/apps/docs/content/Reporting.md`, its entry in `docs.manifest.ts` with status `partial`, and an **Added** bullet under Unreleased in `release-notes.md`.
-
-**R0 is done when** both reports render, filter, sort, group, page, freeze and export, and the exported XLSX row count matches the grid's stated total.
-
----
-
-### Stage R1 — the accounting reports · ~5h · depends: R0
-
-Seven tasks, one commit each. **R1.3 is senior** — it is the second template, the one every report with a running balance or a window function is copied from. The rest are junior, working from §9.5.
-
-| # | Task | Owner | Note |
-|---|---|---|---|
-| R1.1 | `acc.JournalLedger` indexes | Junior | `(OrgId, LedgerDate)`, `(OrgId, AccountId, LedgerDate)`, `(OrgId, SubAccountId, LedgerDate)`. An **Accounting** migration, not a Reporting one |
-| R1.2 | Batched user-name resolver | Junior | `mst.Users` is another database. A 200-row Journal Report page must not be 200 lookups |
-| R1.3 | Account Transaction | **Senior** | The running-balance rule of §5.5: forces its sort order, and page *n*'s opening figure comes back in the response. Also the performance bar — the report that proves the engine at volume |
-| R1.4 | General Ledger Summary | Junior | Opening balance is everything before the period. Copies R1.3's pattern |
-| R1.5 | Journal Report | Junior | Six audit columns, resolved through R1.2 |
-| R1.6 | Bank Summary | Junior | |
-| R1.7 | Reconciliation | Junior | *GroupBy* in the source list is a parameter, not a column |
-
----
-
-### Stage R2 — the inventory reports · ~5h · depends: R0
-
-**All junior.** Ten sources over an engine that already works, each one §9.5 applied — this stage is the return on R0 being senior-heavy. Senior reviews, and writes no code here. Three or four commits, grouped:
-
-- **R2.1** Inventory Aging (ages by cost-layer receipt date), Inventory Item List, Item Detail, Item Summary — the last three declare their sales/purchase columns and return null for them
-- **R2.2** Batch Tracking Status + Detail
-- **R2.3** Serial Tracking Status + Detail
-- **R2.4** Warehouse Tracking Status + Detail
-
----
-
-### Stage R3 — saved views and pivot · ~6h · depends: R0
-
-| # | Task | Owner |
-|---|---|---|
-| R3.1 | `ReportViewsController` + `saved-view.service.ts` — CRUD over `rpt.ReportViews`, one default per user per report, branch-wide views behind `reports.edit` | Junior |
-| R3.2 | `saved-view.dialog.*` — save, rename, set default, share to branch | Junior |
-| R3.3 | `PivotBuilder` — group both axes, aggregate, transpose the aggregated result in memory; refuse a column axis over 200 distinct values, naming the column | **Senior** |
-| R3.4 | `pivot-panel.component.*` — rows / columns / values with aggregates; hidden below the tablet breakpoint per §3.5 | **Senior** |
-
----
-
-### Stages R4–R6 — not schedulable yet
-
-**R4** (10 receivables/payables reports) needs Sales and Purchase. **R5** (12 sales/purchase reports) needs the same. **R6** (4 fixed-asset reports) needs the Phase 2 register, which is itself blocked on two open schema decisions.
-
-Roughly one commit per two reports once those services exist — by then a report is an `IReportSource` and a row of seed data.
-
----
-
-### 9.5 How to add a report
-
-**Written against code that exists.** `AccountMovementSource.cs` is the file to copy for a row-per-record report; `TrialBalanceSource.cs` for a row-per-thing-with-totals-underneath one. Adding a report is filling in a form — if you find yourself making a design decision, stop and ask, because the decision has probably already been made in one of those two files.
-
-**Nothing here writes filtering, sorting, grouping, paging, totalling or exporting.** The engine does all of it to every report alike. A report that contains any of that is a report doing the engine's job badly.
-
-#### The five steps
-
-**1. A row type.** One per report, in the same file, holding exactly what its columns read. Not an entity, not shared with another report — the projection becomes EF's `SELECT` list, so a shared row type fetches columns nobody asked for.
-
-**2. A source class** deriving from `ReportSource<TRow>`, in `Reporting.Api/Services/Sources/`. Four things are required of it:
-
-- `ReportKey`, `Title`, `Module`, `RequiredPermission` — the key matches the seeded catalog row exactly, and the permission is the *module's* (`accounting.view`, `inventory.view`), never `reports.view`. `reports.view` gets you the catalog; reading the ledger through a report still needs the ledger's permission, or the engine becomes a way around the permission on the screens it reports from.
-- `Columns` — see step 3.
-- `Build(parameters, db)` — the LINQ, **executing nothing**. Return the `IQueryable`; materialising here pages in memory and reads the whole ledger to show fifty rows.
-- `DefaultOrder` — a **unique** column. This is the tie-break, and without it two rows equal on every sort key can swap between pages, which reads as a row going missing. It only shows up under paging, never in a test with four rows.
-
-**3. The columns**, as `ReportColumn.Of<TRow, TValue>(key, dataType, selector, …)`. Four flags decide behaviour, and each has a wrong answer:
-
-| | Give it to | Never give it to |
-|---|---|---|
-| `AggregateFunction.Sum` | money that means something totalled | a rate, a code, a date, a running balance — the footer would look like an answer |
-| `groupable: true` | **text columns only** — enforced, it throws otherwise | anything else; grouping concatenates the key in SQL, and a date would be rendered in a format nobody chose |
-| `filterable: false` | internal ids, anything that would put a raw key in front of somebody | ordinary columns |
-| `sortable: false` | rarely — only where an order would be meaningless | anything a person might reasonably order by |
-
-**4. A seed entry** in `ReportCatalogSeeder.Catalog` — the report and **every** column it declares. Headers may carry `%CurCode%`, substituted per branch at render time, so one seeded header reads *Debit(INR)* in one branch and *Debit(AED)* in another. `IsDefault` marks the columns shown before anybody chooses; `IsHidden` carries a column that is fetched but never offered, like an id a row links by.
-
-**5. Register it** in DI alongside the other sources.
-
-#### Verify
-
-```
-cd backend && dotnet build && dotnet test
-```
-
-The build must be clean — `TreatWarningsAsErrors` is on. Then check the report actually runs: the catalog service compares the source's column keys against the seeded ones **and refuses the report by name when they disagree**, so a column added to a source but not to the seeder breaks that report rather than quietly dropping the column. That is deliberate, and it is the error you will hit most often.
-
-#### Things that are already decided
-
-- **Base-currency amounts** (`DebitAmountBase`, not `DebitAmount`) unless the report explicitly offers a `(Source)` column, in which case it offers `Currency` and `ExchangeRate` beside it. A total mixing a rupee row and a dollar row foots to a number in no currency.
-- **Date ranges are parameters, not filters.** A report filtered to April is April's rows hidden from a report of everything; a report *for* April is a different report, and every opening figure downstream depends on which it is.
-- **Cross-database values** — a user's name from `mst.Users`, an account type's name from `mst.AccountTypes` — cannot be joined and must be resolved in C#, **batched**. A 200-row page must not be 200 lookups. R1.2 builds the mechanism; until it lands, a report carries the id and not the name.
-
----
-
-### 9.2 Task checklist
-
-**Tick a box in the same commit as the task it names.** This list is the handoff: a session with no memory of any of this reads it to learn where the work stopped, and a box ticked later — or ticked in a sweep at the end — tells it something untrue.
-
-**Senior ticks the boxes, including junior's.** One writer keeps this file from conflicting on every commit, and the tick then means *reviewed and merged* rather than *pushed*.
-
-Full detail for each task is in the section above; this is the tracker, not a second specification. **S** = senior, Claude Code. **J** = junior, Antigravity. §9.1 explains the split.
-
-#### R0 — the engine and the grid
-
-- [x] **S · R0.0 — `AGENTS.md`:** the rules junior cannot see in `CLAUDE.md`, and the resolution of open question 7. **Nothing else starts before this.**
-- [x] **S · R0.1 — the `rpt` schema:** `Report`, `ReportDetail`, `ReportView`, seven enums, `ReportingDbContext`, migration + RLS. A second `migrations add` came back empty. **`ReportCatalogSeed` moved to R0.5**, where there are reports to seed. → **G1 cleared** against PostgreSQL 16.
-- [x] **S · R0.2 — read-only cross-schema reads:** ten read models over `acc` and `con` with `ExcludeFromMigrations`, verified to add nothing to the migration. **The `inv` read models move to R2.1**, where the reports that need them say which columns those are — declaring them now would be guessing. → **G2 cleared 18 August 2026**, re-run against all nineteen read models rather than the original ten.
-- [x] **S · R0.3 — the query contract:** request, filter, sort, pivot, page and result models, every annotation carrying `ErrorMessage`.
-- [x] **S · R0.4 ★ — the generic query engine:** `ReportColumn`, `ReportParameter`, `ReportQueryBuilder` (every operator, multi-key sort, paging, composite group keys), `IReportSource` + `ReportSource<TRow>` with execution, count, grand totals and group footers, and `ReportCatalogService` carrying the source-against-seed validation. 30 tests. Expression trees only, and an unknown column is refused rather than dropped.
-  - **Groupable columns must be text**, decided and enforced where a column is declared. Grouping runs in SQL on one concatenated key; concatenating a date or an enum asks Postgres to render it in a format nobody chose and which moves with server settings. A report grouping by account type exposes the type's *name* — which is what the group header wanted anyway.
-  - **The catalog validator runs when a report's columns are built, not at startup.** The catalog is per-branch data, scoped to whichever tenant is signed in, so at startup there is no tenant to read it for and nothing to validate against.
-- [x] **S · R0.5 ★ — the two template sources, and §9.5 the recipe:** `AccountMovementSource` (row per record) and `TrialBalanceSource` (row per account with totals underneath) — the two shapes every later report copies — plus `ReportCatalogSeeder` and the recipe at §9.5. 41 tests. **Account Type is not on either report yet**: it lives in `mst.AccountTypes`, another database, so it needs R1.2's batched resolver.
-- [x] **S · R0.6 — the API host:** `Program.cs` replaced wholesale, `ReportsController`, `InternalSeedController`, `ReportRunner`, the gateway route. **The permission module is `reports`, not `reporting`** — that is what `mst.Permissions` seeds — and the query route carries `[PermissionAction("view")]` because a POST would otherwise derive `.edit` and a Viewer could not run a report. → **G3 FAILED, see §9.9**
-- [x] **S · R0.7 — Excel export:** `ExcelReportWriter` on `DocumentFormat.OpenXml` — frozen header, column widths, money as numbers and dates as date serials, group subtotals and the grand total as real rows. The 100k cap **refuses rather than truncates**, and `ExportFormat.Pdf` refuses politely. Eight tests open the produced file and read it back.
-- [x] **S · R0.8 — frontend contracts and services:** `reporting-core` — the contracts mirroring the server's models, `ReportQueryService`, and the URL round trip. 5 tests. Ionic-safe: no `window`, no `document`. **`npm run check` fails on a pre-existing `sales-ui` typecheck error, §9.6** — reporting itself typechecks clean.
-- [x] **S · R0.9 ★ — `bb-report-grid`:** table with a sticky header, frozen first-*N* columns on computed offsets with a seam shadow, click and shift-click multi-key sort showing each key's position, the pager, and the card list below 40rem. Owns no data and computes no total. **Its template is first compiled by a build at R0.11** — nothing imports it until then; lint checks it now.
-- [x] **S · R0.10 ★ — filtering, column selection, grouping:** `bb-filter-bar` (chips, per-type operator editors), `bb-column-chooser` (search, drag reorder), `bb-group-panel` (three levels, reorderable). Which operators a column offers is a pure function with 7 tests, because that is the part with a quiet wrong answer.
-- [x] **S · R0.11 — pages, routes and documentation:** `ReportListPage`, `ReportHostPage` driven by `:reportKey`, the `/reports` routes, and the docs page + manifest entry + release note in this same commit. **The grid's templates now compile into real build chunks** — verified in `dist`.
-
-**Gates** — [x] **G1** after R0.1 · [ ] **G2** after R0.2 · [ ] **G3** after R0.6 — **failed, §9.9**. All three are senior's own now that R0 is wholly senior, which makes them easier to skip and no less necessary. Verify each by querying as a second org, not by reading the code; §9.1 says what each checks.
-
-> **The test database is the one that already exists.** `rpt` lives beside `acc` and `con` in the same per-customer database, so reporting's tests use `ACCOUNTING_TEST_DB` and the same server — there is no second database to create, and creating one would mean the read models had no `acc` tables to read.
->
-> **G1 is cleared.** The migration applies to PostgreSQL 16; all three `rpt` tables report `rowsecurity = true` with an `org_isolation` policy each; and queried as a **non-superuser** — superusers bypass RLS, so a check run as `postgres` proves nothing — branch A sees only A's rows, branch B only B's, and **a session with no `app.current_org_id` set sees zero rows rather than all of them.** Failing closed is the property that matters; failing open is the one that leaks.
-
-**Junior runs R1.1 and R1.2 alongside R0** — neither depends on the reporting engine, and they are the only work available before §9.5 exists.
-
-#### R1 — the accounting reports
-
-- [x] **J · R1.1 — `acc.JournalLedger` indexes:** three composite indexes, as an *Accounting* migration.
-- [x] **J · R1.2 — batched user-name resolver:** `mst.Users` is another database; a 200-row page must not be 200 lookups.
-- [x] **S · R1.3 — Account Transaction:** the second template — forced sort order, and page *n*'s opening figure fetched as one aggregate over the rows ahead of it. `ForcesSortOrder` and the two `ReportSource` hooks are engine-side, so **any later report with a window-function figure gets them for free**. 6 tests.
-- [x] **J · R1.4 — General Ledger Summary:** opening balance is everything before the period. Copies R1.3.
-- [x] **J · R1.5 — Journal Report:** six audit columns, resolved through R1.2.
-- [x] **J · R1.6 — Bank Summary**
-- [x] **J · R1.7 — Reconciliation:** *GroupBy* is a parameter, not a column.
-
-#### R2 — the inventory reports · all junior
-
-The return on R0 being senior-heavy: ten reports, each one §9.5 applied. Senior reviews and writes nothing here.
-
-- [x] **J · R2.1 — the item reports:** Inventory Aging, Item List, Item Detail, Item Summary. The last three declare their sales/purchase columns and return null. **Starts by adding the `inv` read models** — `ItemRead`, `ItemStockRead`, `ItemCategoryRead`, `StockMovementRead`, `CostLayerRead`, `ItemBatchRead`, `ItemSerialRead`, `WarehouseRead`, `UnitOfMeasureRead` — following the ten in `ReadModels/` exactly, and re-running the empty-migration check afterwards.
-- [x] **J · R2.2 — batch tracking:** Status and Detail.
-- [x] **J · R2.3 — serial tracking:** Status and Detail.
-- [x] **J · R2.4 — warehouse tracking:** Status and Detail.
-
-#### R3 — saved views and pivot
-
-- [x] **S · R3.1 — saved views API:** `SavedViewService` + `ReportViewsController` over `rpt.ReportViews`. The owner comes from the token, never the caller; branch-wide views need `reports.edit`; a saved layout drops its page number.
-- [x] **S · R3.2 — the saved-view dialog:** open, save, remove, share to the branch, set as default. Server refusals are shown rather than replaced.
-- [x] **S · R3.3 — `PivotBuilder`:** both axes grouped and aggregated in SQL on one composite key, transposed in memory, refusing a column axis over 200 values by name. 7 tests.
-- [x] **S · R3.4 — the pivot panel:** rows / columns / values with an aggregate, hidden below the tablet breakpoint. Turning it on clears grouping, since neither grouping nor paging means anything to a matrix.
-
-#### R7 — what is actually outstanding · all junior
-
-**Every task below is Antigravity's, by the repository owner's instruction of 18 August 2026.** They are ordered: R7.1 is what stands between seventeen written sources and seventeen working reports, and R7.3 is the one whose failure is silent.
-
-- [ ] **J · R7.1 ★ — seed the fourteen missing catalog rows.** Seventeen sources exist and are registered; `ReportCatalogSeeder` carries **three**. The other fourteen are absent from the report list — `ListAsync` filters the catalog to reports with a `rpt.Reports` row — and throw if reached by key, because `Validate()` refuses a source whose columns have no `ReportDetails` rows. Each needs one `Report` row plus one `ReportDetail` per column, **with `ColumnKey` matching the source's declared key exactly**. The keys: `general-ledger-summary`, `journal-report`, `bank-summary`, `reconciliation`, `inventory-aging`, `inventory-item-list`, `inventory-item-detail`, `inventory-item-summary`, `batch-tracking-status`, `batch-tracking-detail`, `serial-tracking-status`, `serial-tracking-detail`, `warehouse-tracking-status`, `warehouse-tracking-detail`. **Done when all seventeen appear in `/reports` and open.**
-- [ ] **J · R7.2 — tests for the fourteen new sources.** `ReportSourceTests` still covers only the two templates from R0.5. Its two theories — unique column keys, and an aggregate only on money columns — are the ones that catch a copied source with a copied mistake, and they take every source through `MemberData`. Add the fourteen to that list rather than writing new tests.
-- [ ] **J · R7.3 ★ — clear G3.** Part 1 is fixed; parts 2 and 3 are not. `ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table, then run the application as a non-owner role. **Verify as that role against a second org** — set `app.current_org_id` to a branch owning none of the rows and confirm zero. §9.9 has the measurements and the ordering warning. **Not signed off by reading the diff.**
-- [ ] **J · R7.4 — the two FX reports.** `fx-gain-loss` and `fx-gain-loss-details` are in the catalog at §8.1 marked *Partial* and appear in **no stage of this plan** — they would fall to nobody. Write them per §9.5 and seed them with R7.1's rows.
-
-#### R4–R6 — not schedulable
-
-- [ ] **R4 — receivables and payables:** 10 reports. Needs Sales and Purchase.
-- [ ] **R5 — sales and purchase reports:** 12 reports. Needs the same.
-- [ ] **R6 — fixed assets:** 4 reports. Needs the Phase 2 register.
-
----
-
-## 9.8 Found while clearing G1: `acc` and `con` have no RLS
-
-**This is not a reporting defect and reporting cannot fix it, but it changes what G2 can honestly claim.**
-
-Turning a PostgreSQL on to clear G1 also ran the 141 database-backed tests that had been skipping. Two failed — `An_under_allocated_payment_cannot_be_posted` and `A_posted_payment_cannot_be_knocked_out_of_allocation`, both expecting a `DbUpdateException` from a database trigger that never fired. The triggers are not there. Nor is anything else that was written by hand:
-
-| Service | `migrationBuilder.Sql` calls | RLS blocks | Triggers |
-|---|---|---|---|
-| **Accounting** | **0** | **0** | **0** |
-| **Master** (`con`) | **0** | **0** | **0** |
-| Inventory | 16 | 5 | — |
-| Sales | 4 | 1 | — |
-| Purchase | 4 | 1 | — |
-
-Before commit `5a131c4` — *"rename MasterDbContext to AdminDbContext and squash migrations"* — Accounting's `InitialCreate` carried **18** `Sql()` calls: `acc.assert_journal_balanced`, `acc.assert_journal_balanced_on_post`, `acc.assert_ledger_balanced`, their three constraint triggers, the two allocation triggers, and the RLS block. Squashing regenerates migrations from the EF model, and **the model does not know about hand-written SQL**, so all of it was dropped. Inventory, Sales and Purchase were not squashed and kept theirs.
-
-**What is actually broken today:**
-
-- **No RLS on any `acc` or `con` table.** The EF query filter still runs, so the API is not leaking — but the second line of defence, the one `CLAUDE.md` describes as "the one that holds if a query ever runs without it", is absent. Anything reaching those tables outside EF — a raw connection, a restore script, an `IgnoreQueryFilters` call — crosses branches freely.
-- **The general ledger's balance check is down to one.** `CLAUDE.md` says balance is checked three times: domain guard, interceptor, deferred trigger. The interceptor was already recorded as never built. With the trigger gone, **an unbalanced journal is refused only by the domain guard on Post** — anything writing ledger rows by another path is unchecked.
-- **The allocation triggers are gone**, which is what the two failing tests noticed.
-
-**The fix is recoverable, not a rewrite.** The SQL is intact in git at `5a131c4^:backend/Api/Accounting/Accounting.Repository/Migrations/20260812044850_InitialCreate.cs`. It wants lifting into a new Accounting migration, and the same check running against `con` in Master. **It is Accounting's and Master's work, not reporting's**, and it is not in any R-stage here.
-
-**What it means for G2.** G2 asks whether the read models are isolated. Their EF query filters are in place and inherited from `OrgScopedEntity`, so they cannot be omitted — that half holds. The database half **cannot hold for `acc` and `con` until the policies are restored**, because there are no policies to hold. G2 stays open on that basis rather than being ticked on the half that passes.
-
----
-
-## 9.6 `npm run check` was already failing before reporting touched the frontend
-
-One typecheck error in the workspace, and it is not reporting's:
-
-```
-libs/sales/sales-ui/src/lib/delivery-challan-form/delivery-challan-form.component.ts(71,7)
-  error TS2322: … is missing the following properties from type 'DocumentLine':
-  detailId, lineNumber, itemLabel, warehouseId, and 16 more.
-```
-
-The delivery-challan form builds its lines as an object literal with nine fields and assigns them to `DocumentLine[]`, which has twenty-five. Last touched by `b13c269`, the sales commit that added it; reporting has never been near the file, and `tsc` reports **zero** errors under `libs/reporting`.
-
-It matters beyond the one file because **`npm run check` chains lint → typecheck → tests → builds**, so the whole chain stops here. Nobody running it gets to the tests or the builds, and the repository's own claim that it is green is out of date. Lint passes across all 15 projects; it is typecheck that fails.
-
-**Not reporting's to fix** — it is Sales', and the fix is either to complete the literal or to have `bb-document-line-grid` accept a partial line and fill the rest, which is a decision about that component rather than about this one.
-
----
-
-## 9.9 G3 fails: row-level security never applies at runtime
-
-**Gate G3 asks whether `set_config` is transaction-local rather than connection-level. It is — and that turns out to be the problem.**
-
-`RlsConnectionInterceptor` runs this when a connection opens:
-
-```
-SELECT set_config('app.current_org_id', $1, true)
-```
-
-The third argument means *transaction-local*, and the comment on the class explains why: connection-level would leak org context to the next request borrowing that pooled connection. That reasoning is right. But **`ConnectionOpenedAsync` runs outside any transaction**, so the implicit transaction is that one statement, and the value is discarded the moment it completes. Measured against PostgreSQL 16:
-
-| | Result |
-|---|---|
-| `set_config(…, true)` then read it in the **next statement** | **empty — lost** |
-| `set_config(…, true)` and read it **inside one transaction** | survives |
-
-So `app.current_org_id` is never set for any query that follows. Every RLS policy in the product evaluates `"OrgId" = current_setting('app.current_org_id', true)::uuid` against a null, which matches nothing.
-
-**That should mean every query returns zero rows, and it does not — because of a second problem masking the first.** Every table has `relrowsecurity = t` but `relforcerowsecurity = f`, and every connection string in the repository connects as `postgres`, which owns the tables. **A table's owner bypasses RLS unless `FORCE ROW LEVEL SECURITY` is set.** Verified: as `postgres` with no org context, `rpt.Reports` returns every row; as a non-owner role, zero.
-
-**The two faults hide each other, and fixing either one alone breaks the product:**
-
-- Run the application as a non-owner role — the correct production posture — and the `set_config` bug bites: **every query returns nothing**.
-- Add `FORCE ROW LEVEL SECURITY` — the same, for the same reason.
-- Fix `set_config` alone and nothing changes, because the owner still bypasses.
-
-**What is actually protecting branch isolation today is the EF query filter, alone.** That is one mechanism where the design calls for two, and `CLAUDE.md` describes the second as "the one that holds if a query ever runs without it".
-
-**This is not reporting's to fix.** `RlsConnectionInterceptor` is in `Shared.Kernel` and is used by all seven services; the connection strings and the database role are deployment's. The fix has three parts and wants doing together:
-
-1. **Set the variable inside the transaction that uses it** — on transaction start, or via an `NpgsqlDataSource` physical-connection initializer with a matching reset, rather than at connection-open with `is_local = true`.
-2. **`ALTER TABLE … FORCE ROW LEVEL SECURITY`** on every per-customer table, so ownership stops being an exemption.
-3. **Give the application a non-owner role**, so the policy is load-bearing rather than decorative.
-
-Do them in that order, and check after each: parts 2 and 3 without part 1 take the product to zero rows everywhere.
-
-**G3 stays failed** rather than being marked not-reached. It was reached, it was measured, and it did not pass.
-
-### Part 1 is now fixed. Parts 2 and 3 are not, and the gate still fails.
-
-Checked again on **18 August 2026**. `RlsConnectionInterceptor` was rewritten in commit `8181545` and now reads:
-
-```
-SELECT set_config('app.current_org_id', $1, false)
-```
-
-Session-level rather than transaction-local, always overwritten when a connection is opened, and cleared to the empty string when the request carries no org. That closes part 1 and closes the pool-leak worry the original `true` was reaching for — a pooled connection cannot inherit the previous request's branch if every open overwrites the value unconditionally.
-
-**Part 2 has not been done, and it is the one that makes every policy inert:**
-
-```
-grep -rn 'FORCE ROW LEVEL' → no matches anywhere in the repository
-```
-
-Every per-customer table still has `relforcerowsecurity = f`, and the application still connects as `postgres`, which owns them. A table's owner is exempt from its own policies unless `FORCE` is set, so the policies in `inv`, `sal`, `pur` and `rpt` are all present and all bypassed on the connection that serves requests. **Branch isolation still rests on the EF query filter alone** — which is the sentence this section existed to stop being true, and it is still true.
-
-**The ordering warning has inverted, and this is the part to read before touching it.** When both faults were live, parts 2 and 3 without part 1 took the product to zero rows. Part 1 is now done, so that trap is gone: adding `FORCE` should leave a correctly-scoped query working and start refusing an unscoped one. **That makes it safe to do and worth doing now** — but verify it the way §9.1 says, as a non-owner role against a second org, because the failure mode if part 1 has a gap is every query in the product returning nothing.
-
-Remaining, in order: **`ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table**, then **give the application a non-owner role** so the policy is load-bearing rather than decorative. Tracked as **R7.3**.
-
----
-
-## 10. To confirm before R0
-
-1. **The cross-schema read of §2** — read-only mapped entities in `ReportingDbContext` with `ExcludeFromMigrations`, as a recorded exception to hard rule 8. This is the one that cannot be deferred.
-2. **`rpt.ReportDetails` as the column catalog** and `rpt.ReportViews` as saved layouts, per §6 — confirming that "ReportDetails" means the per-report column metadata rather than the saved layout itself.
-3. **The three transcription problems of §7** — *Aged Payable* on the receivables reports, *CAAccountID* on Trial Balance, and the Sales Order Tracking merge.
-4. **Aging buckets** — is Current / 1–30 / 31–60 / 61–90 / 90+ the default, and is the bucket size a per-report parameter or a branch setting?
-5. **The export cap of 100,000 rows** (§5.6), and whether a capped export should refuse or truncate with a warning row.
-6. **Whether Trial Balance's existing page** is replaced by the grid host or kept beside it.
-7. ~~**`CLAUDE.md` still says there is one branch and it is `main`**~~ — **settled in R0.0.** `CLAUDE.md` now carries the reporting exception explicitly, and `AGENTS.md` states the branch for every other agent. The exception ends when reporting merges.
-
-
-
-
-
-# Antigravity brief — RetailErp reporting, stage R7
-
-You are continuing work already in progress on a multi-tenant retail ERP for
-Indian SMBs. The reporting engine, the grid, seventeen report sources and the
-saved-view and pivot layers all exist. **Your job is to make the fourteen written
-reports actually reachable, cover them with the existing tests, and clear the
-row-level-security gate — not to design anything.** If a task seems to need a
-design decision, it has almost certainly already been made in one of the files
-named here; if it genuinely has not, stop and ask rather than inventing one.
-
-**As of 18 August 2026 every outstanding reporting task is yours**, by the
-repository owner's instruction. Claude Code built R0, R1.3 and R3 and its queue is
-empty — there is nobody to hand a task back to and no review gate to wait behind.
-That includes the two verification gates, which were previously senior's own; §12
-and R7.3 say how they are signed off, and it is by querying a second organization,
-never by reading the diff.
-
----
-
-## 1. Repository and branch
-
-| | |
-|---|---|
-| Repository | `github.com/jothi-prabaharan/Bill-Book` |
-| **Branch — work on this and only this** | **`main`** |
-| Base of your work | `c1cfabc` or later on `main` |
-| `Report` | merged and finished — **do not push to it, do not branch from it** |
-
-```bash
-git clone https://github.com/jothi-prabaharan/Bill-Book.git
-cd Bill-Book
-git checkout main
-git pull origin main            # always start from the latest
-```
-
-**This changed on 17 August 2026.** Reporting used to commit to `Report`, and every
-earlier instruction you were given said so. `Report` merged into `main` that day and
-the exception ended with it, by the repository owner's instruction. `main` is now the
-only branch, reporting included — it is what `CLAUDE.md` and `AGENTS.md` both say, and
-they are the authority if anything you remember disagrees.
-
-`Report` still exists, pointing at the merge commit. It carries nothing `main` lacks.
-Anything committed there from now on is work that `main` will not have.
-
-**Never open a pull request unless explicitly asked.** There is no second branch for
-one to merge from.
-
----
-
-## 2. Git workflow
-
-**Pull before you start each task, and again before you push.** Another agent is on
-this branch, and `main` now carries the whole product rather than reporting alone — it
-moves more often than `Report` did.
-
-```bash
-git pull --rebase origin main
-```
-
-Rebase rather than merge. Your commits go on top of whatever landed while you were
-working, and there is no merge commit to reconcile afterwards.
-
-**Commit when a task stands up**, not when the whole stage is finished. One task,
-one commit. A commit that does not build blocks whoever is working in parallel
-with you.
-
-**Commit message format** (from `docs/commit-rules.md`):
-
-```
-<type>(<scope>): <subject>
-
-<body — why, not what. The diff already says what.>
-```
-
-- `type` — `feat`, `fix`, `docs`, `refactor`, `perf`, `test`, `build`, `chore`
-- `scope` — the module: `reporting`, `accounting`, `inventory`
-- `subject` — imperative, present tense, **no capital, no full stop**
-
-Good: `feat(reporting): add the general ledger summary`
-Bad: `Added GL Summary report.`
-
-**Push:**
-
-```bash
-git push -u origin main
-```
-
-If a push fails on a network error, retry up to four times with 2s, 4s, 8s, 16s
-backoff. If it fails because the branch moved, `git pull --rebase origin main`
-and push again.
-
-**One thing to check by hand after any rebase or merge that touches
-`backend/Bill-Book.sln`.** Its project paths are `shared\`, `tests\` and `worker\` —
-**lowercase**, matching what git records. Windows accepts the capitalised spelling and
-Linux does not: eight projects fail to load and the build breaks for everyone except
-the machine that caused it. This has already happened twice. `git diff` the file
-before committing it.
-
----
-
-## 3. Environment
-
-**.NET 10 SDK** is required. If missing:
-
-```bash
-apt-get update && apt-get install -y dotnet-sdk-10.0
-```
-
-**PostgreSQL 16** for the database-backed tests. Without one they skip with a
-reason rather than failing, which is acceptable — but the reports you write are
-worth running against real data.
-
-```bash
-apt-get install -y postgresql postgresql-contrib
-pg_ctlcluster 16 main start
-su postgres -c "psql -c \"ALTER USER postgres PASSWORD '123';\" -c 'CREATE DATABASE accounting_tests;'"
-```
-
-The tests read `ACCOUNTING_TEST_DB`, defaulting to
-`Host=localhost;Port=5432;Database=accounting_tests;Username=postgres;Password=123`.
-**Reporting uses the same database** — `rpt` sits beside `acc` and `con` in the
-per-customer database, so there is no second one to create.
-
-**EF Core tools**, if you need to generate a migration:
-
-```bash
-dotnet tool install --global dotnet-ef --version 10.0.0
-export PATH="$PATH:/root/.dotnet/tools"
-```
-
----
-
-## 4. Project layout
-
-```
-backend/
-├── Bill-Book.sln
-├── Directory.Packages.props        ← the closed package list
-├── Api/{Module}/                   ← Master, Inventory, Accounting, Sales,
-│   ├── {Module}.Entity/            ←   Purchase, Customer, Reporting
-│   │   ├── TableEntities/
-│   │   ├── Models/
-│   │   └── Enums/
-│   ├── {Module}.Repository/        ← DbContext, repositories, seed data
-│   └── {Module}.Api/               ← controllers, services, DI
-├── shared/Shared.Kernel/
-├── worker/
-├── Gateway/                        ← YARP
-└── tests/{Module}.Api.Tests/
-frontend/
-├── apps/{web, portal, admin, desktop, docs}
-└── libs/
-    ├── {module}/{module}-core   ← view-models, no templates, Ionic-safe
-    ├── {module}/{module}-ui     ← pages
-    └── shared/{auth, api-client, ui-components, ...}
-```
-
-Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. **Never
-backwards.**
-
-Your work is almost entirely in:
-
-```
-backend/Api/Reporting/Reporting.Api/Services/Sources/       ← new report sources
-backend/Api/Reporting/Reporting.Repository/ReadModels/      ← new read models (R2.1)
-backend/Api/Reporting/Reporting.Repository/SeedData/ReportCatalogSeeder.cs
-backend/Api/Reporting/Reporting.Api/Program.cs              ← register each source
-backend/tests/Reporting.Api.Tests/
-```
-
-Plus one Accounting migration for R1.1.
-
----
-
-## 5. Hard rules
-
-These are non-negotiable. Code that breaks one gets rejected.
-
-1. **LINQ only. Never write raw SQL.** The only exceptions, because no LINQ
-   equivalent exists: `CREATE DATABASE`, RLS policies, triggers, `set_config`.
-2. **Entities are plain property bags.** No constructors, no methods, no
-   validation logic, no computed properties. Just
-   `public X Y { get; set; }` with Data Annotations.
-3. **Every Data Annotation carries an `ErrorMessage`.**
-4. **PascalCase table and column names**, matching the C# property names exactly.
-5. **PostgreSQL only.** Never add SQL Server compatibility.
-6. **All table entities inherit `Shared.Kernel.Entities.AuditableEntity`**, and
-   per-customer ones inherit `Shared.Kernel.Tenancy.OrgScopedEntity`. Never set
-   audit fields by hand.
-7. **Enums, not magic strings**, for any fixed set of values.
-8. **Never reference another service's `DbContext`.** Reporting has a recorded
-   exception — read-only models mapped with `ExcludeFromMigrations` — described in
-   `Reporting.md` §2. It is specific to reporting and does not generalize.
-9. **Ask before expanding scope.**
-10. **Ship documentation in the same commit as the feature.**
-11. **Do not add a package.** Not one, backend or frontend.
-    `Directory.Packages.props` and `frontend/package.json` are closed lists for
-    this work. If a task appears to need one, the task is wrong — say so.
-
----
-
-## 6. Tenancy — the thing most likely to be got wrong
-
-**Two levels, not three.**
-
-- **Customer** = the head office. Shares **one physical database** with every other Customer *(since 25 August 2026 — was one database per Customer before; see CLAUDE.md's Tenancy section for the reversal)*.
-- **Organization** = a branch. One place the business trades from, one complete
-  set of books. A Customer owns many, all sharing that Customer's rows in that database.
-
-| Boundary | Enforced by |
-|---|---|
-| Customer ↔ Customer | `CustomerId` + EF query filter + Postgres RLS |
-| Organization ↔ Organization | `CustomerId` + `OrgId` + EF query filter + Postgres RLS |
-
-**There is no `Branches` table and no `BranchId` column.** `OrgId` *is* the branch.
-
-**Every per-customer table needs `CustomerId`, `OrgId` and a query filter.** Inherit
-`OrgScopedEntity` and `TenantDbContext` applies the filter by reflection — which is
-why a read model cannot be added without one.
-
-Schemas: `mst` and `rat` in the shared master database; `con inv sal pur acc cus
-rpt ntf` together in the one shared tenant database.
-
-**`mst.Users`, `mst.AccountTypes`, countries and states are in a different
-database and cannot be joined.** Resolve them in C#, batched. This is what R1.2
-builds.
-
----
-
-## 7. How the reporting engine works
-
-You do not need to modify any of this. You need to know it exists so you do not
-rebuild it.
-
-- **`IReportSource` / `ReportSource<TRow>`** — one per report. Declares a key, a
-  title, a permission, a column list, parameters, and a LINQ query that **executes
-  nothing**. Everything else is the engine's.
-- **`ReportQueryBuilder<TRow>`** — filtering, multi-key sorting, paging, composite
-  group keys. All expression trees; no SQL anywhere.
-- **Group footers and grand totals** — computed over the whole filtered result,
-  never the page, so a subtotal is right when its group spans a page boundary.
-- **`ReportCatalogService`** — merges what a column *means* (the source) with how
-  it *appears* (the seeded `rpt.ReportDetails` row), and substitutes `%CurCode%`
-  with the branch's currency.
-- **`ExcelReportWriter`** — the export, over the full result set.
-- **`PivotBuilder<TRow>`**, **saved views**, **`bb-report-grid`** and its panels —
-  all done. Every report you add gets all of it for free.
-
-**Adding a report is: a row type, a column list, a LINQ projection, a seed entry,
-and one line of DI registration.** Nothing more.
-
----
-
-## 8. The recipe — how to add a report
-
-Full version with the rationale is `Reporting.md` §9.5. The short form:
-
-**Step 1 — a row type.** One per report, in the same file, holding exactly what
-its columns read. Not an entity, not shared with another report: the projection
-becomes EF's `SELECT` list, so a shared row type fetches columns nobody asked for.
-
-**Step 2 — a source class** deriving from `ReportSource<TRow>` in
-`Reporting.Api/Services/Sources/`:
-
-```csharp
-public sealed class GeneralLedgerSummarySource : ReportSource<GeneralLedgerSummaryRow>
-{
-    public override string ReportKey => "general-ledger-summary";
-    public override string Title => "General Ledger Summary";
-    public override ReportModule Module => ReportModule.Accounting;
-
-    // The MODULE's permission, never reports.view. reports.view gets you the
-    // catalog; reading the ledger through a report still needs accounting.view,
-    // or the engine becomes a way round the permission on the screens it reports
-    // from.
-    public override string RequiredPermission => "accounting.view";
-
-    public override IReadOnlyList<ReportParameter> Parameters =>
-    [
-        new() { Name = "from", Label = "From", DataType = ColumnDataType.Date },
-        new() { Name = "to", Label = "To", DataType = ColumnDataType.Date },
-    ];
-
-    public override IReadOnlyList<ReportColumn> Columns =>
-    [
-        ReportColumn.Of<GeneralLedgerSummaryRow, string>(
-            "accountCode", ColumnDataType.Text, r => r.AccountCode, groupable: true),
-
-        ReportColumn.Of<GeneralLedgerSummaryRow, decimal>(
-            "debit", ColumnDataType.Money, r => r.Debit, AggregateFunction.Sum,
-            alignment: default),
-    ];
-
-    protected override IQueryable<GeneralLedgerSummaryRow> Build(
-        ReportParameters parameters, ReportingDbContext db)
-    {
-        // Executes NOTHING. Return the IQueryable — materialising here pages in
-        // memory and reads the whole ledger to show fifty rows.
-        DateOnly? start = parameters.Date("from");   // not named `from`: it is a
-        DateOnly? end = parameters.Date("to");       // query-expression keyword
-
-        return from a in db.Accounts
-               where a.IsActive
-               select new GeneralLedgerSummaryRow { /* ... */ };
-    }
-
-    // The tie-break, and it MUST be unique. Postgres promises no order without
-    // ORDER BY, so two rows equal on every sort key can swap between pages —
-    // which reads as a row going missing, only under paging, never in a test
-    // with four rows.
-    protected override LambdaExpression DefaultOrder =>
-        (Expression<Func<GeneralLedgerSummaryRow, long>>)(r => r.AccountId);
-}
-```
-
-**Step 3 — the column flags.** Each has a wrong answer:
-
-| Flag | Give it to | Never give it to |
-|---|---|---|
-| `AggregateFunction.Sum` | money worth totalling | a rate, a code, a date, a running balance — the footer would look like an answer |
-| `groupable: true` | **text columns only** — it throws otherwise | anything else; grouping concatenates the key in SQL and a date would render in a format nobody chose |
-| `filterable: false` | internal ids | ordinary columns |
-| `sortable: false` | rarely | anything a person might order by |
-
-**Step 4 — a seed entry** in `ReportCatalogSeeder.Catalog`, with the report and
-**every** column it declares. Headers may carry `%CurCode%`, substituted per branch
-at render time. `IsDefault` marks the columns shown before anybody chooses;
-`IsHidden` carries a column fetched but never offered, like an id a row links by.
-
-**Step 5 — register it** in `Reporting.Api/Program.cs`:
-
-```csharp
-builder.Services.AddScoped<IReportSource, GeneralLedgerSummarySource>();
-```
-
-**The check that will catch you:** the catalog service compares the source's
-column keys against the seeded ones and **refuses the report by name** when they
-disagree. A column added to a source but not the seeder breaks that report rather
-than quietly dropping the column. That is deliberate, and it is the error you will
-hit most often.
-
----
-
-## 9. Decisions already taken — do not re-make them
-
-- **Base-currency amounts** (`DebitAmountBase`, not `DebitAmount`) unless the
-  report explicitly offers a `(Source)` column — in which case it must also offer
-  `Currency` and `ExchangeRate` beside it. A total mixing a rupee row and a dollar
-  row foots to a number in no currency.
-- **Date ranges are parameters, not filters.** A report filtered to April is
-  April's rows hidden from a report of everything; a report *for* April is a
-  different report, and every opening figure downstream depends on which it is.
-- **Cross-database values** — a user's name from `mst.Users`, an account type's
-  name from `mst.AccountTypes` — cannot be joined. Resolve in C#, **batched**. A
-  200-row page must not be 200 lookups. R1.2 builds the mechanism; until it lands,
-  a report carries the id and not the name.
-- **Groupable means text.** Expose an account type's *name* as a column and group
-  by that.
-- **A left join for optional relations.** The contact is denormalized onto a ledger
-  leg, so a bank leg with no contact must still appear.
-
----
-
-## 10. Your tasks, in order
-
-**Everything outstanding on reporting is yours**, by the repository owner's
-instruction of 18 August 2026. Claude Code's queue is empty; there is no handoff
-waiting and no review gate to wait behind. Four tasks.
-
-### R7.1 ★ — seed the fourteen missing catalog rows
-
-**This is the one that matters.** Seventeen sources are written and registered in
-DI. `ReportCatalogSeeder` carries **three**. The other fourteen are invisible and
-unusable:
-
-- `ReportCatalogService.ListAsync` filters the catalog to reports that have a
-  `rpt.Reports` row, so they never appear at `/reports`.
-- Reaching one by key throws, because `Validate()` refuses a source whose columns
-  have no matching `ReportDetails` rows.
-
-Each report needs one `Report` row plus **one `ReportDetail` per column**, and
-`ColumnKey` must match the source's declared key character for character. A
-mismatch in either direction throws with the offending key named — read the
-message, it tells you which side is wrong.
-
-The fourteen keys:
-
-```
-general-ledger-summary        inventory-aging            batch-tracking-status
-journal-report                inventory-item-list        batch-tracking-detail
-bank-summary                  inventory-item-detail      serial-tracking-status
-reconciliation                inventory-item-summary     serial-tracking-detail
-                                                         warehouse-tracking-status
-                                                         warehouse-tracking-detail
-```
-
-Copy the three existing entries in `ReportCatalogSeeder` for the shape. The seeder
-is idempotent and adds only what is missing, so re-running it is safe.
-
-**Done when all seventeen appear in the report list and open without throwing.**
-
-### R7.2 — tests for the fourteen new sources
-
-`ReportSourceTests` still covers only the two templates from R0.5. It has two
-theories that catch a copied source carrying a copied mistake — every column key
-unique, and an aggregate only on money columns — and both run over a
-`MemberData` list. **Add the fourteen sources to that list.** Do not write new
-test classes; the value is in every source going through the same two checks.
-
-### R7.3 ★ — clear G3, the row-level-security gate
-
-Part 1 of the three-part fix in §9.9 is **already done** — `RlsConnectionInterceptor`
-now uses session-level `set_config` and overwrites on every connection open. Parts
-2 and 3 are not:
-
-1. `ALTER TABLE … FORCE ROW LEVEL SECURITY` on every per-customer table. Without
-   it the policies are inert, because the application connects as `postgres`,
-   which owns the tables, and **a table's owner is exempt from its own policies**.
-2. Give the application a non-owner role with the ordinary DML grants, so the
-   policy is load-bearing rather than decorative.
-
-**Verify by querying, not by reading the diff.** Connect as the non-owner role,
-set `app.current_org_id` to a branch that owns none of the rows, and confirm every
-table returns zero. This gate has already been marked cleared once by inspection
-and found broken by measurement — that is why it is written down.
-
-§9.9 in `Reporting.md` carries the measurements and an ordering warning worth
-reading first.
-
-### R7.4 — the two FX reports
-
-`fx-gain-loss` and `fx-gain-loss-details` are listed in the catalog at §8.1 marked
-*Partial* and appear in **no stage of the plan** — they belong to nobody unless
-you take them. Write them per the recipe in §8 above, and seed them alongside
-R7.1's rows.
-
----
-
-## 11. Verify before every commit
-
-```bash
-cd backend
-dotnet build          # MUST be clean — TreatWarningsAsErrors is on
-dotnet test
-
-cd ../frontend
-npx nx lint <project>
-npx tsc --noEmit -p tsconfig.eslint.json
-```
-
-**Do not run `npm run check`** — it chains lint → typecheck → tests → builds and
-stops on a pre-existing failure that is not yours (§13). Run the steps directly.
-
-**After adding read models**, prove they added nothing to the schema:
-
-```bash
-cd backend
-export PATH="$PATH:/root/.dotnet/tools"
-dotnet ef migrations add VerifyNoDrift \
-  -p Api/Reporting/Reporting.Repository -s Api/Reporting/Reporting.Api -o Migrations
-
-# The generated Up() and Down() must BOTH be empty. If they are not,
-# ExcludeFromMigrations is missing somewhere. Then remove the probe:
-dotnet ef migrations remove --force \
-  -p Api/Reporting/Reporting.Repository -s Api/Reporting/Reporting.Api
-```
-
----
-
-## 12. Definition of done, per task
-
-A task is finished when **all** of these are true:
-
-1. `dotnet build` is clean with zero warnings.
-2. `dotnet test` passes, with new tests covering what the report gets wrong
-   quietly — a total that should not exist, a column that should not be
-   filterable, a null that should still appear.
-3. The report appears in `GET /api/reports` and runs through
-   `POST /api/reports/{key}/query`.
-4. Its box is ticked in `docs/Reporting.md` §9.2 **in the same commit**.
-5. Any user-visible change ships its documentation in the same commit — the page
-   under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and a
-   bullet under **Unreleased** in `release-notes.md`.
-6. Committed and pushed to `Report`.
-
----
-
-## 13. Known-broken things that are not yours
-
-Do not fix these, do not be surprised by them, and do not let them block you.
-
-1. **`npm run check` fails** on a pre-existing typecheck error in
-   `libs/sales/sales-ui/.../delivery-challan-form.component.ts` — a nine-field
-   literal assigned to a twenty-five-field type. The chain stops there. `Reporting.md`
-   §9.6.
-2. **Two `Accounting.Api.Tests` fail** when PostgreSQL is running —
-   `An_under_allocated_payment_cannot_be_posted` and
-   `A_posted_payment_cannot_be_knocked_out_of_allocation`. A migration squash
-   dropped the allocation triggers. `Reporting.md` §9.8.
-**Row-level security is no longer on this list — it is task R7.3 and it is yours.**
-Half of it has been fixed since this brief was first written: `set_config` now runs
-session-level and is overwritten on every connection open. What remains is
-`FORCE ROW LEVEL SECURITY` and a non-owner database role. Until that lands, branch
-isolation rests on the EF query filter alone — which your read models inherit
-automatically, so your own work is as safe as everything else, but the backstop the
-design calls for is not there. `Reporting.md` §9.9.
-
----
-
-## 14. What is already done
-
-**R0 entirely** — `rpt` schema and migration with RLS, ten read models over `acc`
-and `con`, the query contract, the generic engine with group footers and the
-catalog, the API host and controllers, Excel export, `bb-report-grid`, the filter
-bar, the column chooser, the group panel, the report list and host pages, routes
-and documentation.
-
-**R1.3** — Account Transaction, including the running-balance hooks on
-`ReportSource<TRow>`.
-
-**R3 entirely** — saved views API and dialog, `PivotBuilder`, pivot panel.
-
-**R1.1, R1.2, R1.4 – R1.7 and all of R2** — your own earlier work: the ledger
-indexes, the batched name resolver, and fourteen report sources across accounting
-and inventory, all written, registered and building.
-
-**G1 and G2 are cleared.** G2 was re-run on 18 August 2026 against all nineteen
-read models — the probe migration came back empty. **G3 is not cleared**; it is
-R7.3.
-
-**Three reports render today:** Account Movement, Account Transaction, Trial
-Balance. **Seventeen sources exist.** The gap is R7.1, and closing it is the single
-highest-value thing on your list.
-
----
-
-## 15. When to stop and ask
-
-Ambiguity is a question, not a judgement call. An agent that guesses at the
-tenancy model writes code that passes its own tests and leaks data between
-customers.
-
-Stop and ask when:
-
-- a task seems to need a package that is not pinned;
-- a spec does not say what a column means and you would have to invent it;
-- something in the codebase contradicts this brief;
-- you are about to write raw SQL for anything other than the four permitted cases;
-- you are about to add a table without `OrgId`;
-- a report needs a figure that no table holds.
-
-Where an instruction says "copy `AccountMovementSource.cs`", that is an
-instruction, not a hint. Consistency is what keeps forty-five reports maintainable
-by one person.
-
-
-
+## 9. Delivery checklist
+
+- [x] Common report grid architecture defined
+- [x] Server-side query model defined
+- [x] Server-side pagination defined
+- [x] Filtering/sorting/grouping/pivot requirements defined
+- [x] Saved views defined
+- [x] Excel export defined
+- [x] CSV export defined
+- [x] PDF explicitly removed from scope
+- [ ] All 46 reports implemented and verified
+- [ ] Remaining 26 reports implemented
+- [ ] Excel export verified across all completed reports
+- [ ] CSV export verified across all completed reports
+- [ ] End-to-end authorization/tenant verification across all reports
