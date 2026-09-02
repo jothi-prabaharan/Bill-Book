@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Api\Accounting\Accounting.Api\Accounting.Api.csproj" />
+    <ProjectReference Include="..\Shared.Kernel.Tests\Shared.Kernel.Tests.csproj" />
   </ItemGroup>
 
 </Project>

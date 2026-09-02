@@ -75,6 +75,7 @@ builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
 builder.Services.AddScoped<DepreciationService>();
+builder.Services.AddScoped<ReconciliationService>();
 
 // The money documents, formerly the Banking service. Registered alongside the
 // ledger rather than behind an HTTP client onto it, which is the whole point of

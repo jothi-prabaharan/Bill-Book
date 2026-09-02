@@ -63,6 +63,8 @@ public class BankStatementLine : OrgScopedEntity
     /// <summary>Money arriving.</summary>
     public decimal DepositAmount { get; set; }
 
+    public decimal Amount { get; set; }
+
     /// <summary>
     /// The balance the bank printed after this line, when the file carried one.
     /// Not recomputed and not trusted for arithmetic — it is here so a person
@@ -72,6 +74,8 @@ public class BankStatementLine : OrgScopedEntity
     public decimal? RunningBalance { get; set; }
 
     public StatementLineStatus Status { get; set; } = StatementLineStatus.Unmatched;
+
+    public bool IsReconciled { get; set; }
 
     /// <summary>
     /// The money document this line is the bank's version of — <c>SPM</c>,

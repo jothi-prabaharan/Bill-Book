@@ -111,4 +111,10 @@ public class JournalLedger : OrgScopedEntity
 
     /// <summary>Set when the posting came from a manual journal.</summary>
     public long? JournalId { get; set; }
+
+    /// <summary>Whether this ledger line has been reconciled against a bank feed.</summary>
+    public bool IsReconciled { get; set; }
+
+    /// <summary>The bank statement line this ledger row was reconciled against.</summary>
+    public long? BankStatementLineId { get; set; }
 }
