@@ -81,6 +81,10 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<SalesRegister> SalesRegister => Set<SalesRegister>();
 
+    public DbSet<ReminderProfile> ReminderProfiles => Set<ReminderProfile>();
+
+    public DbSet<ReminderLog> ReminderLogs => Set<ReminderLog>();
+
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 

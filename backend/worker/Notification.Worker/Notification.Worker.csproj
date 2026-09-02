@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Shared.Kernel\Shared.Kernel.csproj" />
+    <ProjectReference Include="..\..\Api\Sales\Sales.Repository\Sales.Repository.csproj" />
   </ItemGroup>
 
 </Project>
