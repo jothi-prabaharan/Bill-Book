@@ -1,27 +1,57 @@
-<div class="price-lists-container">
-  <h2>Tiered Price Lists</h2>
-  <p>Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers.</p>
-
-  <div class="create-form">
-    <input type="text" [ngModel]="newListName()" (ngModelChange)="newListName.set()" placeholder="Price List Name (e.g. Wholesale)" />
-    <input type="text" [ngModel]="newListDescription()" (ngModelChange)="newListDescription.set()" placeholder="Description" />
-    <button (click)="createPriceList()">Create Tier</button>
+<header class="page-head">
+  <h1>Tiered Price Lists</h1>
+  <div class="head-actions">
+    <button type="button" (click)="startAdd()" [disabled]="busy()">+ Add tier</button>
   </div>
+</header>
 
-  <table class="data-grid">
-    <thead>
-      <tr>
-        <th>Tier Name</th>
-        <th>Description</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let list of priceLists()">
-        <td>{{ list.name }}</td>
-        <td>{{ list.description }}</td>
-        <td>{{ list.isActive ? 'Active' : 'Inactive' }}</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()">{{ message() }}</p>
+}
+
+<p class="hint">
+  Create multiple price tiers (e.g. Retail, Wholesale) and assign them to specific customers.
+</p>
+
+<bb-data-grid [gridCode]="'PRICE_LISTS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="name" let-row>
+    <div [class.inactive]="!row.isActive">{{ row.name }}</div>
+  </ng-template>
+  <ng-template bbCellTemplate="description" let-row>
+    {{ row.description }}
+  </ng-template>
+  <ng-template bbCellTemplate="active" let-row>
+    {{ row.isActive ? 'Active' : 'Inactive' }}
+  </ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <div class="actions-col">
+      <button type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+    </div>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== null) {
+  <div class="sheet">
+    <h2>{{ editingId() === 'new' ? 'New tier' : 'Edit tier' }}</h2>
+    <div class="fields">
+      <label>
+        Tier Name
+        <bb-text-input [(ngModel)]="form.name" maxlength="100" />
+      </label>
+      <label>
+        Description
+        <bb-text-input [(ngModel)]="form.description" maxlength="255" />
+      </label>
+      <label class="inline">
+        <input type="checkbox" [(ngModel)]="form.isActive" />
+        Active
+      </label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" (click)="save()" [disabled]="busy() || !form.name">
+        Save
+      </button>
+      <button type="button" class="link" (click)="editingId.set(null)">Cancel</button>
+    </div>
+  </div>
+}
