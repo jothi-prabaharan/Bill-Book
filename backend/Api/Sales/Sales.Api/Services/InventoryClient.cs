@@ -100,7 +100,7 @@ public sealed class InventoryClient : IInventoryClient
 
     public async Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct)
     {
-        var response = await _http.PostAsJsonAsync("internal/stock/receive", request, ct);
+        var response = await _http.PostAsJsonAsync("internal/stock/receipt", request, ct);
         if (response.IsSuccessStatusCode || response.StatusCode == System.Net.HttpStatusCode.Conflict)
         {
             var result = await response.Content.ReadFromJsonAsync<ReceiveStockResponse>(cancellationToken: ct);
