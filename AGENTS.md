@@ -126,9 +126,9 @@ git pull --rebase origin main
 
 ## What you own
 
-**The active brief is Customer service (CRM/Support), stage C2/C3** — see [`docs/Customer.md`](./docs/Customer.md). C0 (the four open questions) and C1 (schema, tenancy, RLS) are done and audited as of 2 September 2026; C2 (controllers) is written but has two open findings (C1-3, C1-4 in that doc) to pick up before starting C3 (the Angular UI).
+**The active brief is Customer service (CRM/Support), stage C2/C3** — see [`docs/Customer.md`](./docs/Customer.md). C0 (the four open questions) and C1 (schema, tenancy, RLS) are done and audited as of 2 September 2026; C2 (controllers) is written but has two open findings (C1-3, C1-4 in that doc) to pick up before starting C3. **C3 is not untouched either**: `customer-ui` has five real components and `apps/web` lazy-loads `customer/leads` and `customer/tickets` today.
 
-Reporting (`docs/Reporting.md` §9–12) is finished — Claude Code built R0/R1.3/R3, Antigravity built the rest through R7. Nothing there is waiting on review.
+Reporting (`docs/Reporting.md` §9–12) is **built but was not "finished with nothing waiting on review"** — that was true when written and was overtaken the same week. Fifteen tracker and finance sources landed registered in neither the container, the catalog seeder, nor `ReportSourceTests.Sources`, so 239 tests passed over reports no screen could reach. All 41 are wired now and the suite is 344; wiring them surfaced a real fault two of them had been hiding. The lesson generalises: a report needs a **registered source, a seeded row, and a line in the test list**, and only the third makes the first two check each other.
 
 ---
 
@@ -164,7 +164,7 @@ cd frontend && npm run check          # lint, typecheck, tests, both builds
 cd backend  && dotnet build && dotnet test
 ```
 
-`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` is currently failing on `accounting-ui`'s lint** (two `@angular-eslint/template` errors in `allocation-form.component.html`, found 24 August 2026) — that is a pre-existing failure on `main`/this branch, not something your commit introduced; fix it if your task touches that file, otherwise note it rather than working around it silently.
+`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` passes as of 2 September 2026** — lint across 23 projects, typecheck, 474 tests, all five app builds. The `allocation-form.component.html` lint failure noted here on 24 August is fixed, along with the Ionic imports that had kept `accounting-ui` from typechecking at all. The backend has **one** failing test, `ReconciliationMatchingTests.GetSuggestedMatches_FindsExactAmountWithinThreeDays`, which came with bank reconciliation and is a test-data fault; it is not something your commit introduced.
 
 **A commit that does not build blocks whoever is working in parallel with you.**
 
