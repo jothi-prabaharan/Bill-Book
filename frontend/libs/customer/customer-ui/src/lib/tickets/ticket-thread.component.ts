@@ -28,7 +28,7 @@ export class TicketThreadComponent implements OnInit {
   async loadMessages() {
     this.loading.set(true);
     try {
-      const data = await this.customerService.getTicketMessages(this.ticket.id);
+      const data = await this.customerService.getTicketMessages(this.ticket.ticketId);
       this.messages.set(data);
     } catch (err) {
       console.error('Failed to load messages', err);
@@ -43,7 +43,7 @@ export class TicketThreadComponent implements OnInit {
 
     this.sending.set(true);
     try {
-      await this.customerService.createTicketMessage(this.ticket.id, text);
+      await this.customerService.createTicketMessage(this.ticket.ticketId, text);
       this.newMessage.set('');
       await this.loadMessages();
     } catch (err) {

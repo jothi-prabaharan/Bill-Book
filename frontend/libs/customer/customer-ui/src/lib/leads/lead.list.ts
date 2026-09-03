@@ -47,7 +47,7 @@ export class LeadList implements OnInit {
 
   async convertLead(lead: Lead) {
     try {
-      await this.customerService.convertLead(lead.id);
+      await this.customerService.convertLead(lead.leadId);
       await this.loadLeads();
     } catch (err) {
       console.error('Failed to convert lead', err);

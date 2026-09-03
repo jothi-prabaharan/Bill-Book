@@ -27,10 +27,10 @@
       </div>
 
       <div class="form-group">
-        <label>
+        <label for="ticketContact">
           Contact ID (Lookup)
-          <input type="text" formControlName="contactId" class="bb-input" placeholder="Enter Contact ID">
         </label>
+        <bb-master-select id="ticketContact" [masterType]="'contact'" formControlName="contactId"></bb-master-select>
       </div>
 
       <div class="actions">

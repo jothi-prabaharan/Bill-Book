@@ -14,7 +14,7 @@ export enum LeadStatus {
 }
 
 export interface Lead {
-  id: string;
+  leadId: string;
   name: string;
   companyName?: string;
   phone?: string;
@@ -39,7 +39,7 @@ export enum TicketStatus {
 }
 
 export interface Ticket {
-  id: string;
+  ticketId: string;
   subject: string;
   description: string;
   priority: TicketPriority;
@@ -50,7 +50,7 @@ export interface Ticket {
 export interface TicketMessage {
   id: string;
   ticketId: string;
-  message: string;
+  body: string;
   authorType: 'Contact' | 'User';
   createdAt: string;
 }

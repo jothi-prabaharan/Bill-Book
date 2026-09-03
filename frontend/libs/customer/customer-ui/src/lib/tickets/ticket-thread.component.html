@@ -18,7 +18,7 @@
         <strong>{{ msg.authorType }}</strong>
         <span class="date">{{ msg.createdAt | date:'short' }}</span>
       </div>
-      <div class="msg-body">{{ msg.message }}</div>
+      <div class="msg-body">{{ msg.body }}</div>
     </div>
 
     <div *ngIf="!loading() && messages().length === 0" class="empty-state">

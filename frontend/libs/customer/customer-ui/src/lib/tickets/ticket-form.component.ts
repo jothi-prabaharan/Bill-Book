@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signa
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { CustomerService, TicketPriority } from '@bill-book/customer-core';
+import { MasterSelectComponent } from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-ticket-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, MasterSelectComponent],
   templateUrl: './ticket-form.component.html',
   styleUrl: './ticket-form.component.scss'
 })

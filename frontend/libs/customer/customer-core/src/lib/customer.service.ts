@@ -42,7 +42,7 @@ export class CustomerService {
     return firstValueFrom(this.http.get<TicketMessage[]>(`/api/tickets/${ticketId}/messages`));
   }
 
-  createTicketMessage(ticketId: string, message: string): Promise<TicketMessage> {
-    return firstValueFrom(this.http.post<TicketMessage>(`/api/tickets/${ticketId}/messages`, { message }));
+  createTicketMessage(ticketId: string, body: string): Promise<TicketMessage> {
+    return firstValueFrom(this.http.post<TicketMessage>(`/api/tickets/${ticketId}/messages`, { body }));
   }
 }
