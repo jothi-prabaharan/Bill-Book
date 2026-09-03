@@ -113,6 +113,11 @@ export const appRoutes: Routes = [
         data: { permission: 'accounting.view' },
       },
       {
+        path: 'accounting/reconciliation',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ReconciliationPageComponent),
+        data: { permission: 'accounting.view' },
+      },
+      {
         path: 'accounting/sub-accounts',
         loadComponent: () =>
           import('@bill-book/accounting-ui').then((m) => m.SubAccountsPage),
@@ -184,6 +189,11 @@ export const appRoutes: Routes = [
         path: 'inventory/stock-adjustments',
         loadComponent: () =>
           import('@bill-book/inventory-ui').then((m) => m.StockAdjustmentsPage),
+        data: { permission: 'inventory.view' },
+      },
+      {
+        path: 'inventory/price-lists',
+        loadComponent: () => import('@bill-book/inventory-ui').then((m) => m.PriceListListComponent),
         data: { permission: 'inventory.view' },
       },
       {
