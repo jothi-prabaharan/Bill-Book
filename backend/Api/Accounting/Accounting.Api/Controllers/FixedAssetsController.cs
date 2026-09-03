@@ -89,6 +89,26 @@ public class FixedAssetsController : ControllerBase
         return Ok(new { asset.FixedAssetId });
     }
 
+    /// <summary>
+    /// Puts an asset on the register.
+    ///
+    /// <b>It deliberately posts nothing, and that is not the gap it looks
+    /// like.</b> The asset was bought on a bill, and <c>Purchase.BillService</c>
+    /// already posted its capital line to the <c>Fixed Asset</c> account when
+    /// that bill was posted — so debiting the asset again here would carry it
+    /// twice on the balance sheet, balanced both times and contradicted by
+    /// nothing.
+    ///
+    /// What is genuinely missing is the reclassification the category implies:
+    /// the bill posts to one shared <c>Fixed Asset</c> account (its own comment
+    /// says the category will own that mapping once this register exists), so
+    /// capitalizing should move the cost to <see cref="FixedAssetCategory"/>'s
+    /// own asset account. That is a posting decision — which account, and
+    /// whether an asset with no <c>PurchaseBillId</c> (a migrated one) instead
+    /// debits the asset against Opening Balance Equity — and it is open rather
+    /// than merely unwritten. Guessing it wrong doubles an asset, so it is left
+    /// for the decision rather than inferred here.
+    /// </summary>
     [HttpPost("capitalize")]
     public async Task<IActionResult> CapitalizeAsset(CapitalizeAssetRequest request)
     {
@@ -110,6 +130,20 @@ public class FixedAssetsController : ControllerBase
         return Ok(new { asset.FixedAssetId });
     }
 
+    /// <summary>
+    /// Retires an asset and records what it sold for.
+    ///
+    /// <b>The ledger side is not written, and needs a decision before it can
+    /// be.</b> A disposal is four legs — the accumulated depreciation written
+    /// back, the asset removed at cost, the proceeds received, and whatever is
+    /// left recognised as gain or loss — and three of the four are determined
+    /// by the category and the asset. The fourth is not: nothing on
+    /// <see cref="DisposeAssetRequest"/> says <i>where</i> the proceeds landed,
+    /// and choosing a bank account here would put money into an account nobody
+    /// picked. Until the request carries that, the disposal is a register
+    /// event: the asset is retired and the sale amount recorded, and the books
+    /// still hold the asset at cost.
+    /// </summary>
     [HttpPost("{id}/dispose")]
     public async Task<IActionResult> DisposeAsset(long id, DisposeAssetRequest request)
     {

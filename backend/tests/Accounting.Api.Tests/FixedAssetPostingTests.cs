@@ -57,6 +57,50 @@ public class FixedAssetPostingTests
         Assert.Contains(ledgerRows, l => l.AccountId == h.AccumulatedDepreciationId && l.CreditAmount > 0);
     }
 
+    [SkippableFact]
+    public async Task A_run_repeated_for_the_same_month_charges_once()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        // The same month, asked for twice — a re-run after a partial failure,
+        // or two operators closing the period between them.
+        await h.Depreciation.RunDepreciationAsync(new DateOnly(2026, 8, 31), ct);
+        await h.Depreciation.RunDepreciationAsync(new DateOnly(2026, 8, 31), ct);
+
+        var txns = await h.Db.AssetTransactions.ToListAsync(ct);
+
+        // One charge, one journal. Before the guard the second run posted a
+        // second month's expense into the same period and the asset quietly
+        // depreciated at twice its schedule — every journal balancing, so
+        // nothing downstream disagreed.
+        Assert.Single(txns);
+
+        var ledgerRows = await h.Db.JournalLedger.ToListAsync(ct);
+        Assert.Equal(2, ledgerRows.Count);
+        Assert.Equal(
+            ledgerRows.Where(l => l.AccountId == h.DepreciationExpenseId).Sum(l => l.DebitAmount),
+            txns[0].Amount);
+    }
+
+    [SkippableFact]
+    public async Task The_next_month_is_charged_even_though_this_one_was()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await h.Depreciation.RunDepreciationAsync(new DateOnly(2026, 8, 31), ct);
+        await h.Depreciation.RunDepreciationAsync(new DateOnly(2026, 9, 30), ct);
+
+        // The guard is per month, not per asset for all time — an asset
+        // charged in August is still due in September.
+        var txns = await h.Db.AssetTransactions.OrderBy(t => t.TransactionDate).ToListAsync(ct);
+
+        Assert.Equal(2, txns.Count);
+        Assert.Equal(new DateOnly(2026, 8, 31), txns[0].TransactionDate);
+        Assert.Equal(new DateOnly(2026, 9, 30), txns[1].TransactionDate);
+    }
+
     private sealed class Harness : IAsyncDisposable
     {
         public required AccountingDbContext Db { get; init; }

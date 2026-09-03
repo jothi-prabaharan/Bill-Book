@@ -22,6 +22,20 @@ public class DepreciationService
         _journals = journals;
     }
 
+    /// <summary>
+    /// Charges one month's depreciation, for every active asset that has not
+    /// been charged for the month <paramref name="runDate"/> falls in.
+    ///
+    /// <b>Running it twice charges once.</b> The guard is the asset's own
+    /// <c>Depreciation</c> transactions rather than a flag on the run, because
+    /// an asset capitalized mid-month joins a period some of its neighbours
+    /// have already been charged for — so "has this run happened" is the wrong
+    /// question and "has this asset been charged for this month" is the right
+    /// one. Without it a second run posted a second month's expense against
+    /// the same period, which nothing downstream would have contradicted:
+    /// the journal balances either way, and the asset simply depreciates twice
+    /// as fast as its schedule says.
+    /// </summary>
     public async Task RunDepreciationAsync(DateOnly runDate, CancellationToken ct)
     {
         var activeAssets = await _db.FixedAssets
@@ -37,11 +51,27 @@ public class DepreciationService
 
         var categories = await _db.FixedAssetCategories.ToListAsync(ct);
 
+        // The month the run falls in, and who has already been charged for it.
+        var periodStart = new DateOnly(runDate.Year, runDate.Month, 1);
+        var periodEnd = periodStart.AddMonths(1).AddDays(-1);
+
+        var alreadyCharged = (await _db.AssetTransactions
+            .Where(t => assetIds.Contains(t.FixedAssetId)
+                && t.TransactionType == AssetTransactionType.Depreciation
+                && t.TransactionDate >= periodStart
+                && t.TransactionDate <= periodEnd)
+            .Select(t => t.FixedAssetId)
+            .Distinct()
+            .ToListAsync(ct))
+            .ToHashSet();
+
         var journalLines = new List<SaveJournalLineRequest>();
         var transactions = new List<AssetTransaction>();
 
         foreach (var asset in activeAssets)
         {
+            if (alreadyCharged.Contains(asset.FixedAssetId)) continue;
+
             var schedule = schedules.FirstOrDefault(s => s.FixedAssetId == asset.FixedAssetId);
             if (schedule == null) continue;
 
