@@ -95,7 +95,7 @@ public sealed class AuthService
             PreAuthToken = _tokens.CreatePreAuthToken(user.UserId, user.Email),
             ExpiresInSeconds = 5 * 60,
             Organizations = orgs,
-            RequiresOrgSelection = orgs.Count > 1,
+            RequiresOrgSelection = orgs.Count != 1 || orgs.Any(o => o.OrgName == "(unavailable)"),
         };
     }
 
