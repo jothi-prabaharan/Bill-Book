@@ -161,8 +161,23 @@ export const appRoutes: Routes = [
           import('@bill-book/accounting-ui').then((m) => m.PaymentTermsPage),
         data: { permission: 'accounting.view' },
       },
+      // Leads and Tickets are the two halves the Customer service was merged
+      // from, and they kept their original permission modules: the catalogue
+      // seeds crm.* and support.*, never customer.*. These guards name the same
+      // modules LeadsController and TicketsController demand, so a role that
+      // cannot open the page cannot reach the API behind it either.
       {
-        path: 'customer/leads', loadComponent: () => import('@bill-book/customer-ui').then((m) => m.LeadList), data: { permission: 'crm.view' } }, { path: 'customer/tickets', loadComponent: () => import('@bill-book/customer-ui').then((m) => m.TicketList), data: { permission: 'support.view' } }, { path: 'contacts',
+        path: 'customer/leads',
+        loadComponent: () => import('@bill-book/customer-ui').then((m) => m.LeadList),
+        data: { permission: 'crm.view' },
+      },
+      {
+        path: 'customer/tickets',
+        loadComponent: () => import('@bill-book/customer-ui').then((m) => m.TicketList),
+        data: { permission: 'support.view' },
+      },
+      {
+        path: 'contacts',
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { permission: 'contacts.view' },
       },
