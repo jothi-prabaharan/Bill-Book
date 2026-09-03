@@ -38,6 +38,25 @@ public class ReportSourceTests
     private static readonly PurchaseRegisterSource PurchaseRegister = new();
     private static readonly Gstr1SummarySource Gstr1Summary = new();
 
+    // The tracker and finance reports. They were written, registered nowhere,
+    // and listed here nowhere either — which is why 239 tests passed over a
+    // catalog that could not serve any of them.
+    private static readonly BalanceSheetSource BalanceSheet = new(OfflineResolver());
+    private static readonly ProfitAndLossSource ProfitAndLoss = new(OfflineResolver());
+    private static readonly CashFlowSource CashFlow = new();
+    private static readonly QuotationTrackSource QuotationTrack = new();
+    private static readonly SalesOrderTrackSource SalesOrderTrack = new();
+    private static readonly DeliveryOrderTrackSource DeliveryOrderTrack = new();
+    private static readonly InvoiceTrackSource InvoiceTrack = new();
+    private static readonly AgedReceivablesDetailSource AgedReceivablesDetail = new();
+    private static readonly SalesAnalysisSource SalesAnalysis = new();
+    private static readonly SalesAnalysisDetailSource SalesAnalysisDetail = new();
+    private static readonly PurchaseOrderTrackSource PurchaseOrderTrack = new();
+    private static readonly ReceiveOrderTrackSource ReceiveOrderTrack = new();
+    private static readonly BillsTrackSource BillsTrack = new();
+    private static readonly AgedPayablesDetailsSource AgedPayablesDetails = new();
+    private static readonly PurchaseAnalysisSource PurchaseAnalysis = new();
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -77,6 +96,21 @@ public class ReportSourceTests
         VendorStatement,
         PurchaseRegister,
         Gstr1Summary,
+        BalanceSheet,
+        ProfitAndLoss,
+        CashFlow,
+        QuotationTrack,
+        SalesOrderTrack,
+        DeliveryOrderTrack,
+        InvoiceTrack,
+        AgedReceivablesDetail,
+        SalesAnalysis,
+        SalesAnalysisDetail,
+        PurchaseOrderTrack,
+        ReceiveOrderTrack,
+        BillsTrack,
+        AgedPayablesDetails,
+        PurchaseAnalysis,
     ];
 
     [Theory]

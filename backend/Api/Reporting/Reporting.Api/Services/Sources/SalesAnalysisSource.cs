@@ -29,7 +29,7 @@ public sealed class SalesAnalysisSource : ReportSource<SalesAnalysisRow>
         ReportColumn.Of<SalesAnalysisRow, string>("itemCode", ColumnDataType.Text, r => r.ItemCode, groupable: true),
         ReportColumn.Of<SalesAnalysisRow, string>("itemName", ColumnDataType.Text, r => r.ItemName),
         ReportColumn.Of<SalesAnalysisRow, string?>("categoryName", ColumnDataType.Text, r => r.CategoryName, groupable: true),
-        ReportColumn.Of<SalesAnalysisRow, decimal>("quantity", ColumnDataType.Number, r => r.Quantity, aggregate: AggregateFunction.Sum),
+        ReportColumn.Of<SalesAnalysisRow, decimal>("quantity", ColumnDataType.Quantity, r => r.Quantity, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<SalesAnalysisRow, decimal>("grossAmount", ColumnDataType.Money, r => r.GrossAmount, aggregate: AggregateFunction.Sum),
     ];
 

@@ -106,6 +106,26 @@ builder.Services.AddScoped<IReportSource, VendorStatementSource>();
 builder.Services.AddScoped<IReportSource, PurchaseRegisterSource>();
 builder.Services.AddScoped<IReportSource, Gstr1SummarySource>();
 
+// The tracker and finance reports. Registering a source is half of making a
+// report reachable — ReportCatalogService lists one only when a source and a
+// seeded rpt.Reports row agree — so each of these has an entry in
+// ReportCatalogSeeder.Catalog beside it.
+builder.Services.AddScoped<IReportSource, BalanceSheetSource>();
+builder.Services.AddScoped<IReportSource, ProfitAndLossSource>();
+builder.Services.AddScoped<IReportSource, CashFlowSource>();
+builder.Services.AddScoped<IReportSource, QuotationTrackSource>();
+builder.Services.AddScoped<IReportSource, SalesOrderTrackSource>();
+builder.Services.AddScoped<IReportSource, DeliveryOrderTrackSource>();
+builder.Services.AddScoped<IReportSource, InvoiceTrackSource>();
+builder.Services.AddScoped<IReportSource, AgedReceivablesDetailSource>();
+builder.Services.AddScoped<IReportSource, SalesAnalysisSource>();
+builder.Services.AddScoped<IReportSource, SalesAnalysisDetailSource>();
+builder.Services.AddScoped<IReportSource, PurchaseOrderTrackSource>();
+builder.Services.AddScoped<IReportSource, ReceiveOrderTrackSource>();
+builder.Services.AddScoped<IReportSource, BillsTrackSource>();
+builder.Services.AddScoped<IReportSource, AgedPayablesDetailsSource>();
+builder.Services.AddScoped<IReportSource, PurchaseAnalysisSource>();
+
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
 builder.Services.AddScoped<SavedViewService>();
