@@ -553,6 +553,24 @@ public class AdminDbContext : DbContext
             });
     }
 
+    /// <summary>
+    /// Every module the permission catalogue is seeded for — the whole set of
+    /// values a <c>RequireModulePermission</c> may name.
+    ///
+    /// <b>Public because a controller naming a module that is not here is a
+    /// locked door rather than a refused request</b>, and nothing else in the
+    /// product reads the two sides against each other. Leads and Tickets
+    /// shipped demanding <c>customer</c>, which was never seeded, so every
+    /// request to either was refused for every role including Owner. See
+    /// <c>Customer.Api.Tests.PermissionModuleTests</c>, which asserts against
+    /// this array rather than a copy of it.
+    /// </summary>
+    public static readonly string[] PermissionModules =
+    {
+        "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
+        "accounting", "banking", "reports", "settings", "support", "platform",
+    };
+
     private static void SeedRolesAndPermissions(ModelBuilder modelBuilder)
     {
         string[] systemRoles = { "Owner", "Administrator", "Accountant", "Sales", "Viewer" };
@@ -572,11 +590,7 @@ public class AdminDbContext : DbContext
 
         modelBuilder.Entity<Role>().HasData(roles);
 
-        string[] modules =
-        {
-            "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
-            "accounting", "banking", "reports", "settings", "support", "platform",
-        };
+        string[] modules = PermissionModules;
         string[] actions =
         {
             "view", "create", "edit", "approve", "void",

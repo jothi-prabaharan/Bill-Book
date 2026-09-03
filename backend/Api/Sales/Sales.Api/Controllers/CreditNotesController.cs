@@ -1,10 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
 using Sales.Entity.Models;
+using Shared.Kernel.Internal;
 
 namespace Sales.Api.Controllers;
 
 [ApiController]
+[Authorize]
+[RequireModulePermission("sales")]
 [Route("api/sales/credit-notes")]
 public sealed class CreditNotesController : ControllerBase
 {

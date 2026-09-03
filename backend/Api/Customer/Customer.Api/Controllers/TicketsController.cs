@@ -12,7 +12,9 @@ namespace Customer.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireModulePermission("customer")]
+// "support", not "customer" — see LeadsController. A ticket is the support
+// half of this service, and support.* is what the catalogue actually seeds.
+[RequireModulePermission("support")]
 [Route("api/tickets")]
 public sealed class TicketsController : ControllerBase
 {

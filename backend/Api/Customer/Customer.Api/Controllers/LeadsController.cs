@@ -12,7 +12,11 @@ namespace Customer.Api.Controllers;
 
 [ApiController]
 [Authorize]
-[RequireModulePermission("customer")]
+// "crm", not "customer". The permission catalogue is seeded with crm.* and
+// support.* — the two halves this service was merged from — and never with
+// customer.*, so every request here was refused for every role, whatever the
+// role held. The schema merged; the permissions did not.
+[RequireModulePermission("crm")]
 [Route("api/leads")]
 public sealed class LeadsController : ControllerBase
 {

@@ -7,15 +7,26 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 using BCrypt.Net;
 
 namespace Master.Api.Controllers;
 
+/// <summary>
+/// Resolves an API key to the customer, organization and client it belongs to.
+///
+/// <b>Anonymous but not open</b>: like every other <c>internal/</c> route it
+/// takes the shared key, because the caller is another service rather than a
+/// user. It shipped with <c>[AllowAnonymous]</c> and no <c>[InternalOnly]</c>
+/// beside it, which made key validation — and the key-guessing it enables —
+/// callable by anything that could reach the port.
+/// </summary>
 [ApiController]
 [Route("api/internal/api-keys")]
-[AllowAnonymous] 
+[AllowAnonymous]
+[InternalOnly]
 public class InternalApiKeysController : ControllerBase
 {
     private readonly IServiceProvider _serviceProvider;
@@ -47,20 +58,20 @@ public class InternalApiKeysController : ControllerBase
         // Now resolve the DbContext, which will use the CustomerId we just set.
         var context = _serviceProvider.GetRequiredService<ContactsDbContext>();
 
-        // Find all active API clients for this customer.
-        // We use raw list because we cannot decrypt hashes in DB, we must fetch and verify in memory.
-        // Since API clients are few, we can just fetch all or we can fetch by Customer? 
-        // Wait, if there are many API keys per customer, fetching all is bad.
-        // But BCrypt doesn't allow DB-side matching. We must fetch all for the org, or we need to look it up!
-        // To fix this at scale, we usually store a hash (SHA256) of the raw key in the DB for exact match, 
-        // OR we store the API Key ID in the prefix as well! e.g. bb_{customerId}_{apiKeyId}_{secret}
-        // Then we can query by ID!
-        // Let's assume we fetch all for now, or since we only just wrote ApiClientsController, 
-        // we can fetch all Active ones and verify.
-        
+        // A BCrypt hash cannot be matched in SQL, so the candidates have to be
+        // verified in memory — but only this customer's. The filter is bypassed
+        // because the organization is not known until the key is matched, and
+        // the filter needs both halves; the CustomerId taken from the key is
+        // put back by hand so the bypass cannot widen past it. Without that
+        // Where, every active key of every customer on the platform was fetched
+        // and BCrypt-verified against whatever string the caller sent.
+        //
+        // Still linear in one customer's keys. If that becomes the cost, the
+        // fix is to carry the client id in the key's prefix — bb_{customer}_
+        // {client}_{secret} — so a single row is fetched and one hash verified.
         var apiClients = await context.ApiClients
-            .IgnoreQueryFilters() // Bypass RLS for internal lookup
-            .Where(x => x.IsActive)
+            .IgnoreQueryFilters()
+            .Where(x => x.CustomerId == customerId && x.IsActive)
             .ToListAsync(cancellationToken);
 
         var apiClient = apiClients.FirstOrDefault(x => BCrypt.Net.BCrypt.Verify(request.ApiKey, x.HashedApiKey));

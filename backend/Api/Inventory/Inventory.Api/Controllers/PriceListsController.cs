@@ -4,13 +4,17 @@ using System.Threading;
 using System.Threading.Tasks;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
 namespace Inventory.Api.Controllers;
 
 [ApiController]
+[Authorize]
+[RequireModulePermission("inventory")]
 [Route("api/inventory/price-lists")]
 public class PriceListsController : ControllerBase
 {
