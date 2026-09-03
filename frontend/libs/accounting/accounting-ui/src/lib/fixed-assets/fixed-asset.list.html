@@ -1,0 +1,23 @@
+<header class="page-head">
+  <h1>Fixed assets</h1>
+  <div class="head-actions">
+    <button type="button" (click)="openAdd()" [disabled]="busy()">+ Capitalize asset</button>
+  </div>
+</header>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+<div>
+  <bb-data-grid
+    [gridCode]="'FIXED_ASSETS'"
+    [columns]="columns"
+    [data]="rows()"
+    [loading]="busy()"
+  ></bb-data-grid>
+</div>
+
+@if (adding()) {
+  <bb-fixed-asset-form (closed)="onFormClosed($event)"></bb-fixed-asset-form>
+}

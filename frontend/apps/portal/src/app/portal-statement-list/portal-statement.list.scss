@@ -10,14 +10,14 @@
 .statement-info {
   padding: 16px;
   background: var(--surface-color-variant, #f8f9fa);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: flex-end;
   font-size: 1.1rem;
 }
 .footer-info {
   border-bottom: none;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--color-border);
 }
 .info-row {
   display: flex;
@@ -25,7 +25,7 @@
 }
 .bb-btn {
   padding: 6px 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
   background: transparent;
   cursor: pointer;

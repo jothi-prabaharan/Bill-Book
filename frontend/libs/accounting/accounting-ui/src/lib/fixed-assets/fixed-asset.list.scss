@@ -1,0 +1,31 @@
+.page-head {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+  justify-content: space-between;
+  margin-bottom: var(--space-4, 16px);
+}
+
+.head-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+}
+
+.error {
+  color: var(--color-danger, #b0281f);
+}
+
+/* At ~360px the head stacks rather than squeezing the action off the edge. */
+@media (max-width: 480px) {
+  .page-head {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .head-actions button {
+    width: 100%;
+  }
+}

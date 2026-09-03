@@ -6,8 +6,8 @@
 
 .dashboard-header {
   margin-bottom: 32px;
-  h1 { margin: 0 0 8px; color: var(--text-color); }
-  p { margin: 0; color: var(--text-color-secondary); }
+  h1 { margin: 0 0 8px; color: var(--color-text); }
+  p { margin: 0; color: var(--color-neutral-600); }
 }
 
 .summary-cards {
@@ -23,11 +23,11 @@
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 
-  h3 { margin: 0 0 16px; font-size: 1rem; color: var(--text-color-secondary); font-weight: 500; }
-  .amount { margin: 0; font-size: 2rem; font-weight: 600; color: var(--text-color); }
+  h3 { margin: 0 0 16px; font-size: 1rem; color: var(--color-neutral-600); font-weight: 500; }
+  .amount { margin: 0; font-size: 2rem; font-weight: 600; color: var(--color-text); }
 
   &.highlight {
-    background: var(--primary-color);
+    background: var(--color-accent);
     h3, .amount { color: white; }
   }
 }
@@ -50,7 +50,7 @@
 }
 
 .bb-btn-primary {
-  background: var(--primary-color);
+  background: var(--color-accent);
   color: white;
 }
 

@@ -1,0 +1,45 @@
+<button type="button" class="sheet-backdrop" (click)="dismiss()" aria-label="Close"></button>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="upload-statement-title">
+  <header class="sheet-head">
+    <h2 id="upload-statement-title">Import statement</h2>
+    <button type="button" class="close" (click)="dismiss()" aria-label="Close">×</button>
+  </header>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  <button
+    type="button"
+    class="drop-zone"
+    [class.drag-over]="isDragOver()"
+    (dragover)="onDragOver($event)"
+    (dragleave)="onDragLeave($event)"
+    (drop)="onDrop($event)"
+    (click)="fileInput.click()"
+  >
+    @if (selectedFile(); as file) {
+      <p class="chosen">{{ file.name }}</p>
+      <p class="hint">Click to choose a different file.</p>
+    } @else {
+      <p>Drop a CSV or Excel statement here, or click to choose one.</p>
+      <p class="hint">The layout is remembered per account after the first import.</p>
+    }
+  </button>
+
+  <input
+    #fileInput
+    type="file"
+    accept=".csv,.xlsx"
+    hidden
+    (change)="onFileSelected($event)"
+  />
+
+  <div class="sheet-actions">
+    <button type="button" (click)="dismiss()" [disabled]="uploading()">Cancel</button>
+    <button type="button" (click)="upload()" [disabled]="!selectedFile() || uploading()">
+      {{ uploading() ? 'Importing…' : 'Import' }}
+    </button>
+  </div>
+</section>

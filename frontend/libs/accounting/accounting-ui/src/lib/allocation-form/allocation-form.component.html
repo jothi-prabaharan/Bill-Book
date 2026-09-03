@@ -1,4 +1,4 @@
-<div class="backdrop" (click)="cancel()"></div>
+<button type="button" class="backdrop" (click)="cancel()" aria-label="Cancel"></button>
 <div class="sheet">
   <h2>Allocate {{ sourceTransactionTypeCode }}-{{ sourceTransactionId }}</h2>
   <p class="hint">Available to Allocate: {{ remainingAmount | number:'1.2-2' }}</p>

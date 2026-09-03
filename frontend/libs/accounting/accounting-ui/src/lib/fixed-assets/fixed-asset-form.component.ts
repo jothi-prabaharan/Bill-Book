@@ -1,119 +1,118 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
-  IonButton,
-  IonButtons,
-  IonContent,
-  IonHeader,
-  IonInput,
-  IonItem,
-  IonLabel,
-  IonTitle,
-  IonToolbar,
-  ModalController
-} from '@ionic/angular/standalone';
+  CurrencyInputComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
+interface CapitalizeAssetModel {
+  fixedAssetCategoryId: number | null;
+  assetCode: string;
+  assetName: string;
+  purchaseBillId: number | null;
+  purchasePrice: number | null;
+  purchaseDate: string;
+}
+
+/**
+ * Capitalize an asset into the register.
+ *
+ * <b>The category, not the asset, carries the GL mapping</b> — Fixed Asset,
+ * Accumulated Depreciation and Depreciation Expense all hang off it, which is
+ * why the category is required here and why per-asset mapping was never
+ * offered.
+ *
+ * Written against this workspace's own inputs rather than Ionic's, which the
+ * first version imported and which has never been a dependency here.
+ */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-fixed-asset-form',
   standalone: true,
   imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonItem,
-    IonLabel,
-    IonInput,
-    IonButton,
-    IonButtons
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CurrencyInputComponent,
+    DateInputComponent,
   ],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Capitalize Asset</ion-title>
-        <ion-buttons slot="end">
-          <ion-button (click)="close()">Close</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content class="ion-padding">
-      <form [formGroup]="form" (ngSubmit)="save()">
-        <ion-item>
-          <ion-label position="stacked">Category ID</ion-label>
-          <ion-input type="number" formControlName="fixedAssetCategoryId"></ion-input>
-        </ion-item>
-        
-        <ion-item>
-          <ion-label position="stacked">Asset Code</ion-label>
-          <ion-input type="text" formControlName="assetCode"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Asset Name</ion-label>
-          <ion-input type="text" formControlName="assetName"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Purchase Bill ID</ion-label>
-          <ion-input type="number" formControlName="purchaseBillId"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Purchase Price</ion-label>
-          <ion-input type="number" formControlName="purchasePrice"></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Purchase Date</ion-label>
-          <ion-input type="date" formControlName="purchaseDate"></ion-input>
-        </ion-item>
-
-        <div class="ion-margin-top">
-          <ion-button expand="block" type="submit" [disabled]="!form.valid || saving()">
-            {{ saving() ? 'Saving...' : 'Capitalize' }}
-          </ion-button>
-        </div>
-      </form>
-    </ion-content>
-  `
+  templateUrl: './fixed-asset-form.component.html',
+  styleUrl: './fixed-asset-form.component.scss',
 })
 export class FixedAssetFormComponent {
-  private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
-  private readonly modalCtrl = inject(ModalController);
 
-  readonly saving = signal(false);
+  /** True when something was actually capitalized, so the list knows to reload. */
+  @Output() readonly closed = new EventEmitter<boolean>();
 
-  readonly form = this.fb.nonNullable.group({
-    fixedAssetCategoryId: [0, [Validators.required, Validators.min(1)]],
-    assetCode: ['', Validators.required],
-    assetName: ['', Validators.required],
-    purchaseBillId: [0, Validators.required],
-    purchasePrice: [0, [Validators.required, Validators.min(0.01)]],
-    purchaseDate: ['', Validators.required]
-  });
+  protected readonly saving = signal(false);
+  protected readonly error = signal<string | null>(null);
 
-  close() {
-    this.modalCtrl.dismiss();
+  protected model: CapitalizeAssetModel = {
+    fixedAssetCategoryId: null,
+    assetCode: '',
+    assetName: '',
+    purchaseBillId: null,
+    purchasePrice: null,
+    purchaseDate: '',
+  };
+
+  protected close(): void {
+    this.closed.emit(false);
   }
 
-  save() {
-    if (this.form.invalid) return;
+  protected async save(): Promise<void> {
+    const invalid = this.firstProblem();
+
+    if (invalid) {
+      this.error.set(invalid);
+      return;
+    }
 
     this.saving.set(true);
-    this.http.post('/api/accounting/fixed-assets/capitalize', this.form.getRawValue()).subscribe({
-      next: (result) => {
-        this.saving.set(false);
-        this.modalCtrl.dismiss(result);
-      },
-      error: () => {
-        this.saving.set(false);
-      }
+    this.error.set(null);
+
+    try {
+      await this.post('/api/accounting/fixed-assets/capitalize', this.model);
+      this.closed.emit(true);
+    } catch {
+      this.error.set('The asset could not be capitalized. Try again.');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /**
+   * The first thing wrong, in the order the form reads. A rule about the
+   * document goes to the message box; the field-level constraints are on the
+   * inputs themselves.
+   */
+  private firstProblem(): string | null {
+    if (!this.model.fixedAssetCategoryId) {
+      return 'Choose the asset category — it decides which accounts this posts to.';
+    }
+    if (!this.model.assetCode.trim()) {
+      return 'Enter an asset code.';
+    }
+    if (!this.model.assetName.trim()) {
+      return 'Enter an asset name.';
+    }
+    if (!this.model.purchasePrice || this.model.purchasePrice <= 0) {
+      return 'Enter what the asset cost.';
+    }
+    if (!this.model.purchaseDate) {
+      return 'Enter the purchase date.';
+    }
+
+    return null;
+  }
+
+  private post(url: string, body: unknown): Promise<unknown> {
+    return new Promise((resolve, reject) => {
+      this.http.post(url, body).subscribe({ next: resolve, error: reject });
     });
   }
 }

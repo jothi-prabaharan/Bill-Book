@@ -1,150 +1,92 @@
-import { Component, inject, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import {
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButton,
-  IonItem,
-  IonLabel,
-  IonIcon,
-  ModalController
-} from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { documentTextOutline } from 'ionicons/icons';
 
+/**
+ * Import a bank statement file against an account.
+ *
+ * Written against plain Angular rather than Ionic, which the first version
+ * imported and which is in no package.json in this workspace — the file could
+ * not compile, and the whole accounting library went with it.
+ */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statement-upload-form',
   standalone: true,
-  imports: [
-    CommonModule,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonContent,
-    IonButton,
-    IonItem,
-    IonLabel,
-    IonIcon
-  ],
-  template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Upload Statement (CSV/OFX)</ion-title>
-        <ion-button slot="end" fill="clear" (click)="dismiss()">Close</ion-button>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content class="ion-padding">
-      <div 
-        class="drop-zone" 
-        (dragover)="onDragOver($event)" 
-        (dragleave)="onDragLeave($event)" 
-        (drop)="onDrop($event)"
-        [class.drag-over]="isDragOver()"
-        tabindex="0"
-        (keyup.enter)="fileInput.click()"
-        (click)="fileInput.click()">
-        
-        <ion-icon name="document-text-outline" size="large"></ion-icon>
-        <p *ngIf="!selectedFile()">Drag & drop a CSV or OFX file here, or click to select</p>
-        <p *ngIf="selectedFile()">Selected: {{ selectedFile()?.name }}</p>
-
-        <input 
-          #fileInput 
-          type="file" 
-          accept=".csv,.ofx" 
-          style="display: none" 
-          (change)="onFileSelected($event)">
-      </div>
-
-      <div class="ion-margin-top ion-text-center">
-        <ion-button 
-          (click)="upload()" 
-          [disabled]="!selectedFile() || uploading()">
-          {{ uploading() ? 'Uploading...' : 'Upload' }}
-        </ion-button>
-      </div>
-    </ion-content>
-  `,
-  styles: [`
-    .drop-zone {
-      border: 2px dashed var(--ion-color-medium);
-      border-radius: 8px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      background: var(--ion-color-light);
-      transition: all 0.2s ease;
-    }
-    .drop-zone.drag-over {
-      border-color: var(--ion-color-primary);
-      background: var(--ion-color-primary-tint);
-    }
-  `]
+  templateUrl: './statement-upload-form.component.html',
+  styleUrl: './statement-upload-form.component.scss',
 })
 export class StatementUploadFormComponent {
   private readonly http = inject(HttpClient);
-  private readonly modalCtrl = inject(ModalController);
 
-  readonly isDragOver = signal(false);
-  readonly selectedFile = signal<File | null>(null);
-  readonly uploading = signal(false);
+  /** The imported statement's id, or null when the form was simply closed. */
+  @Output() readonly closed = new EventEmitter<number | null>();
 
-  constructor() {
-    addIcons({ documentTextOutline });
-  }
+  protected readonly isDragOver = signal(false);
+  protected readonly selectedFile = signal<File | null>(null);
+  protected readonly uploading = signal(false);
+  protected readonly error = signal<string | null>(null);
 
-  onDragOver(event: DragEvent) {
+  protected onDragOver(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver.set(true);
   }
 
-  onDragLeave(event: DragEvent) {
+  protected onDragLeave(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver.set(false);
   }
 
-  onDrop(event: DragEvent) {
+  protected onDrop(event: DragEvent): void {
     event.preventDefault();
     this.isDragOver.set(false);
-    
-    if (event.dataTransfer?.files.length) {
-      this.selectedFile.set(event.dataTransfer.files[0]);
+
+    const dropped = event.dataTransfer?.files;
+
+    if (dropped?.length) {
+      this.selectedFile.set(dropped[0]);
     }
   }
 
-  onFileSelected(event: Event) {
+  protected onFileSelected(event: Event): void {
     const target = event.target as HTMLInputElement;
-    if (target.files && target.files.length) {
+
+    if (target.files?.length) {
       this.selectedFile.set(target.files[0]);
     }
   }
 
-  upload() {
+  protected async upload(): Promise<void> {
     const file = this.selectedFile();
-    if (!file) return;
+
+    if (!file) {
+      return;
+    }
 
     this.uploading.set(true);
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('bankAccountId', '1'); // For demo purposes
+    this.error.set(null);
 
-    // Assuming we have BankStatementsController with an upload endpoint
-    this.http.post<{ bankStatementId: number }>('/api/bankstatements/upload', formData).subscribe({
-      next: (res) => {
-        this.uploading.set(false);
-        this.modalCtrl.dismiss({ bankStatementId: res.bankStatementId });
-      },
-      error: () => {
-        this.uploading.set(false);
-      }
-    });
+    const form = new FormData();
+    form.append('file', file);
+
+    try {
+      const result = await this.post<{ bankStatementId: number }>(
+        '/api/accounting/bank-statements/upload', form);
+
+      this.closed.emit(result.bankStatementId);
+    } catch {
+      this.error.set('The statement could not be imported. Check the file and try again.');
+    } finally {
+      this.uploading.set(false);
+    }
   }
 
-  dismiss() {
-    this.modalCtrl.dismiss();
+  protected dismiss(): void {
+    this.closed.emit(null);
+  }
+
+  private post<T>(url: string, body: FormData): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.http.post<T>(url, body).subscribe({ next: resolve, error: reject });
+    });
   }
 }

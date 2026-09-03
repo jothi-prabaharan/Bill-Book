@@ -4,25 +4,33 @@
     
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>Subject</label>
-        <input type="text" formControlName="subject" class="bb-input">
+        <label>
+          Subject
+          <input type="text" formControlName="subject" class="bb-input">
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Description</label>
-        <textarea formControlName="description" class="bb-input" rows="4"></textarea>
+        <label>
+          Description
+          <textarea formControlName="description" class="bb-input" rows="4"></textarea>
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Priority</label>
-        <select formControlName="priority" class="bb-input">
-          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
-        </select>
+        <label>
+          Priority
+          <select formControlName="priority" class="bb-input">
+            <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+          </select>
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Contact ID (Lookup)</label>
-        <input type="text" formControlName="contactId" class="bb-input" placeholder="Enter Contact ID">
+        <label>
+          Contact ID (Lookup)
+          <input type="text" formControlName="contactId" class="bb-input" placeholder="Enter Contact ID">
+        </label>
       </div>
 
       <div class="actions">

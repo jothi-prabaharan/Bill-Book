@@ -1,0 +1,53 @@
+<button type="button" class="sheet-backdrop" (click)="close()" aria-label="Close"></button>
+
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="capitalize-asset-title">
+  <header class="sheet-head">
+    <h2 id="capitalize-asset-title">Capitalize asset</h2>
+    <button type="button" class="close" (click)="close()" aria-label="Close">×</button>
+  </header>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  <form (ngSubmit)="save()">
+    <label>
+      Category
+      <bb-number-input [(ngModel)]="model.fixedAssetCategoryId" name="fixedAssetCategoryId" required />
+      <small>The category carries the accounts this asset posts to.</small>
+    </label>
+
+    <label>
+      Asset code
+      <bb-text-input [(ngModel)]="model.assetCode" name="assetCode" maxlength="30" required />
+    </label>
+
+    <label>
+      Asset name
+      <bb-text-input [(ngModel)]="model.assetName" name="assetName" maxlength="100" required />
+    </label>
+
+    <label>
+      Purchase bill
+      <bb-number-input [(ngModel)]="model.purchaseBillId" name="purchaseBillId" />
+      <small>Optional — leave empty for an asset that came across on migration.</small>
+    </label>
+
+    <label>
+      Cost
+      <bb-currency-input [(ngModel)]="model.purchasePrice" name="purchasePrice" required />
+    </label>
+
+    <label>
+      Purchase date
+      <bb-date-input [(ngModel)]="model.purchaseDate" name="purchaseDate" required />
+    </label>
+
+    <div class="sheet-actions">
+      <button type="button" (click)="close()" [disabled]="saving()">Cancel</button>
+      <button type="submit" [disabled]="saving()">
+        {{ saving() ? 'Capitalizing…' : 'Capitalize' }}
+      </button>
+    </div>
+  </form>
+</section>

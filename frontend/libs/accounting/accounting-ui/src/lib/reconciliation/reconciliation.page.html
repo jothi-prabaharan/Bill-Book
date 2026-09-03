@@ -1,0 +1,77 @@
+<header class="page-head">
+  <h1>Reconciliation</h1>
+  <div class="head-actions">
+    <button type="button" (click)="openUpload()" [disabled]="busy()">Import statement</button>
+  </div>
+</header>
+
+@if (error(); as message) {
+  <p class="error">{{ message }}</p>
+}
+
+@if (currentStatementId() === null) {
+  <p class="empty">
+    Import a statement to begin. Nothing here posts to your accounts — reconciling
+    compares what the bank says against what you recorded.
+  </p>
+} @else if (busy()) {
+  <p class="empty">Reading the statement…</p>
+} @else if (lines().length === 0) {
+  <p class="empty">This statement has no lines left to work through.</p>
+} @else {
+  <div class="panes">
+    <section class="pane">
+      <h2>Statement</h2>
+      <ul class="lines">
+        @for (line of lines(); track line.bankStatementLineId) {
+          <li class="line" [class.reconciled]="line.isReconciled">
+            <div class="line-main">
+              <span class="date">{{ line.transactionDate | date: 'dd MMM yyyy' }}</span>
+              <span class="description">{{ line.description }}</span>
+              @if (line.referenceNo) {
+                <span class="reference">Ref {{ line.referenceNo }}</span>
+              }
+            </div>
+            <span class="amount">{{ line.amount | number: '1.2-2' }}</span>
+          </li>
+        }
+      </ul>
+    </section>
+
+    <section class="pane">
+      <h2>Suggested matches</h2>
+      @for (line of lines(); track line.bankStatementLineId) {
+        @if (!line.isReconciled) {
+          <article class="match-card">
+            <h3>{{ line.amount | number: '1.2-2' }} — {{ line.description }}</h3>
+
+            @if (line.suggestedMatches.length === 0) {
+              <p class="hint">
+                Nothing matches confidently. A business paying the same supplier weekly
+                has several identical documents, and guessing between them would be a
+                coin toss recorded as a decision.
+              </p>
+            } @else {
+              <ul class="matches">
+                @for (match of line.suggestedMatches; track match.journalLedgerId) {
+                  <li class="match">
+                    <div class="match-main">
+                      <span class="code">{{ match.transactionTypeCode }}</span>
+                      <span class="date">{{ match.ledgerDate | date: 'dd MMM yyyy' }}</span>
+                      <span class="description">{{ match.description }}</span>
+                    </div>
+                    <button type="button" (click)="reconcile(line, match)">Match</button>
+                  </li>
+                }
+              </ul>
+            }
+          </article>
+        }
+      }
+    </section>
+  </div>
+}
+
+@if (uploading()) {
+  <bb-statement-upload-form (closed)="onUploadClosed($event)"></bb-statement-upload-form>
+}

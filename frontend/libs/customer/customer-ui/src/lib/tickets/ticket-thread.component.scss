@@ -25,7 +25,7 @@
 }
 hr {
   border: 0;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--color-border);
   margin: 24px 0;
 }
 .messages {
@@ -37,7 +37,7 @@ hr {
 .message {
   padding: 16px;
   background: var(--surface-color, #fff);
-  border-left: 4px solid var(--primary-color);
+  border-left: 4px solid var(--color-accent);
   &.from-contact {
     border-left-color: var(--secondary-color, #6c757d);
     background: var(--surface-color-variant, #f8f9fa);
@@ -48,7 +48,7 @@ hr {
   justify-content: space-between;
   margin-bottom: 8px;
   font-size: 0.9rem;
-  color: var(--text-color-secondary);
+  color: var(--color-neutral-600);
 }
 .msg-body {
   white-space: pre-wrap;
@@ -60,7 +60,7 @@ hr {
   textarea {
     width: 100%;
     padding: 12px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     resize: vertical;
     box-sizing: border-box;

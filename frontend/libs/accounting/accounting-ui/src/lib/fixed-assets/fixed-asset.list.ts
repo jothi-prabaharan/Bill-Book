@@ -1,88 +1,86 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ReportGridComponent } from '@bill-book/shared/ui-components';
-import { ReportQuery, ReportResult } from '@bill-book/reporting-core';
-import { IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon } from '@ionic/angular/standalone';
-import { addIcons } from 'ionicons';
-import { add } from 'ionicons/icons';
+import { ColumnDef, DataGridComponent } from '@bill-book/ui-components';
+import { FixedAssetFormComponent } from './fixed-asset-form.component';
 
+export interface FixedAsset {
+  fixedAssetId: number;
+  assetCode: string;
+  assetName: string;
+  purchaseDate: string;
+  purchasePrice: number;
+  status: string;
+}
+
+/**
+ * Accounts › Fixed assets — the register, and the form that adds to it.
+ *
+ * <b>Written twice.</b> The first version imported Ionic, which this workspace
+ * has never had: `@ionic/angular/standalone` and `ionicons` are in no
+ * package.json here, so the file could not compile and — because
+ * `apps/desktop` was the only app anyone expected to be Ionic-shaped — nobody
+ * noticed until the whole workspace was typechecked. It also drove the report
+ * grid, which wants a server-run report behind it, for what is a plain list of
+ * rows. This is the same shape every other list in Accounts uses.
+ */
 @Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-fixed-asset-list',
   standalone: true,
-  imports: [ReportGridComponent, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonButton, IonIcon],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Fixed Assets</ion-title>
-      </ion-toolbar>
-    </ion-header>
-    <ion-content>
-      <bb-report-grid
-        [result]="reportResult()"
-        [state]="query()"
-        [busy]="loading()"
-        (stateChange)="onStateChange($event)"
-      ></bb-report-grid>
-    </ion-content>
-  `
+  imports: [DataGridComponent, FixedAssetFormComponent],
+  templateUrl: './fixed-asset.list.html',
+  styleUrl: './fixed-asset.list.scss',
 })
 export class FixedAssetListComponent implements OnInit {
   private readonly http = inject(HttpClient);
 
-  readonly loading = signal(false);
-  readonly query = signal<ReportQuery>({
-    reportKey: 'fixed-assets',
-    page: { number: 1, size: 25, includeCount: true },
-    sorts: [],
-    filters: [],
-    freeze: { columns: 0, rows: 0 },
-    options: {}
-  });
+  protected readonly rows = signal<FixedAsset[]>([]);
+  protected readonly busy = signal(false);
+  protected readonly error = signal<string | null>(null);
+  protected readonly adding = signal(false);
 
-  readonly reportResult = signal<ReportResult | null>(null);
+  protected readonly columns: ColumnDef[] = [
+    { field: 'assetCode', header: 'Code', dataType: 'string', sortable: true },
+    { field: 'assetName', header: 'Asset', dataType: 'string', sortable: true },
+    { field: 'purchaseDate', header: 'Purchased', dataType: 'date', sortable: true },
+    { field: 'purchasePrice', header: 'Cost', dataType: 'money', align: 'right', sortable: true },
+    { field: 'status', header: 'Status', dataType: 'status', sortable: true },
+  ];
 
-  constructor() {
-    addIcons({ add });
+  ngOnInit(): void {
+    void this.load();
   }
 
-  ngOnInit() {
-    this.loadAssets();
+  protected async load(): Promise<void> {
+    this.busy.set(true);
+    this.error.set(null);
+
+    try {
+      const assets = await this.req<FixedAsset[]>('/api/accounting/fixed-assets');
+      this.rows.set(assets ?? []);
+    } catch {
+      this.error.set('The fixed asset register could not be read. Try again.');
+    } finally {
+      this.busy.set(false);
+    }
   }
 
-  onStateChange(state: ReportQuery) {
-    this.query.set(state);
+  protected openAdd(): void {
+    this.adding.set(true);
   }
 
-  private loadAssets() {
-    this.loading.set(true);
-    this.http.get<any[]>('/api/accounting/fixed-assets').subscribe({
-      next: (assets) => {
-        this.reportResult.set({
-          reportKey: 'fixed-assets',
-          columns: [
-            { key: 'assetCode', header: 'Code', dataType: 'Text', isSortable: true, isPrimary: true },
-            { key: 'assetName', header: 'Name', dataType: 'Text', isSortable: true, isPrimary: true },
-            { key: 'purchaseDate', header: 'Purchase Date', dataType: 'Date', isSortable: true },
-            { key: 'purchasePrice', header: 'Purchase Price', dataType: 'Money', isSortable: true },
-            { key: 'status', header: 'Status', dataType: 'Text', isSortable: true }
-          ],
-          rows: assets,
-          page: { number: 1, size: Math.max(assets.length, 1), totalElements: assets.length, totalPages: 1 },
-          currency: { code: 'INR', decimals: 2 },
-          groups: [],
-          footer: null
-        });
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false)
+  /** The form closed. It reports whether anything was actually written. */
+  protected onFormClosed(saved: boolean): void {
+    this.adding.set(false);
+
+    if (saved) {
+      void this.load();
+    }
+  }
+
+  private req<T>(url: string): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.http.get<T>(url).subscribe({ next: resolve, error: reject });
     });
   }
 }

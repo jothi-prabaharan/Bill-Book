@@ -4,30 +4,40 @@
     
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>Name</label>
-        <input type="text" formControlName="name" class="bb-input">
+        <label>
+          Name
+          <input type="text" formControlName="name" class="bb-input">
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Company Name</label>
-        <input type="text" formControlName="companyName" class="bb-input">
+        <label>
+          Company Name
+          <input type="text" formControlName="companyName" class="bb-input">
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Email</label>
-        <input type="email" formControlName="email" class="bb-input">
+        <label>
+          Email
+          <input type="email" formControlName="email" class="bb-input">
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Phone</label>
-        <input type="tel" formControlName="phone" class="bb-input">
+        <label>
+          Phone
+          <input type="tel" formControlName="phone" class="bb-input">
+        </label>
       </div>
 
       <div class="form-group">
-        <label>Source</label>
-        <select formControlName="source" class="bb-input">
-          <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
-        </select>
+        <label>
+          Source
+          <select formControlName="source" class="bb-input">
+            <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
+          </select>
+        </label>
       </div>
 
       <div class="actions">
