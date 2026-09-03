@@ -49,6 +49,23 @@ These live in [`TRANSACTIONS.md`](./TRANSACTIONS.md) and are prerequisites here.
 
 **T0.2**, tax determination, is the one foundation only partly needed here. Five of these six documents carry no GST at all — but a fixed asset bought on a bill does, since input credit on capital goods is claimable, and that GST is determined by T0.2 on the Purchase side rather than here.
 
+### T5.1's read side and the settlement workspace — built 3 September 2026
+
+The guard itself was built with Sales (see the ticked T5.1 in [`SALES.md`](./Sales.md)); what was added here is everything around it that a person needs to actually settle a document.
+
+- `GET /api/allocations` — a page of allocations, newest first, optionally narrowed to one contact and excluding voided rows unless asked. The contact filter goes through the CONTROL legs, because the documents themselves live in Sales and Purchase and this service only knows who a document belongs to through its ledger.
+- `GET /api/allocations/{id}` — one allocation with the target's live posted / allocated / available figures beside it. A cross-branch id is `Forbid()`, not `NotFound()`, so the id space cannot be used to probe what another branch holds.
+- `GET /api/allocations/open-documents/{contactId}` — both sides of the workspace. **Split by the direction the CONTROL net runs rather than by document type**: a net running debit is something owed and belongs on the target side, one running credit is money held and belongs on the source side. That is what lets one endpoint serve a customer and a vendor, and stops a document type nobody thought of from falling off the screen.
+- `POST /api/allocations/{id}/void` — releases one claim, `accounting.void` rather than `accounting.edit`, reason required.
+
+**Allocations are now voided rather than deleted**, which changed the guard: every query that asks what a target still owes filters `IsVoided` out, or a released claim would go on occupying a balance nobody could then spend. Voiding a *source document* releases its claims the same way. The row staying is the point — what an invoice was settled against before a credit note was withdrawn stays answerable, the same reasoning that makes a document row a void rather than a delete.
+
+**Settlement status is derived, never stored.** `Unallocated` / `PartiallyPaid` / `Paid` is computed from the ledger less live allocations at the moment it is asked for. It is deliberately *not* written back onto `sal.Invoices` or `pur.Bills`: Accounting cannot write another service's tables, and a stored flag is a second copy of the truth that drifts. It is also deliberately not added to `DocumentStatus` — that enum is the *lifecycle* (Draft / ReadyToPost / Posted / Void) and `DocumentLifecycle`'s rules fall through to "this document has been voided" for anything they do not recognise, so a `Paid` invoice would have reported itself as voided across all nine document types.
+
+`TransactionRatio.Amount` also gained an explicit `decimal(18,2)`. It had no precision configured, so the column was unbounded `numeric` while every figure it is checked against is two decimals.
+
+The screen is **Accounts › Settle documents** (`accounting/allocations/:contactId`): the two panels, the running arithmetic, and the status pills previewing where each document would land.
+
 ---
 
 ## Foundations owned here

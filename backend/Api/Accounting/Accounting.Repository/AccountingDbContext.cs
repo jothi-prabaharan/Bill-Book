@@ -918,7 +918,13 @@ public class AccountingDbContext : TenantDbContext
             b.HasKey(e => e.TransactionRatioId);
             b.HasIndex(e => new { e.OrgId, e.SourceTransactionTypeCode, e.SourceTransactionId });
             b.HasIndex(e => new { e.OrgId, e.TargetTransactionTypeCode, e.TargetTransactionId });
-            
+
+            // Money is two decimals everywhere in this schema — the ledger, the
+            // documents and the balance guard all sum at that scale. Left
+            // unmapped the column would be unbounded numeric, so a claim could
+            // carry a precision the ledger it is checked against cannot hold.
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+
             b.ToTable(t => t.HasCheckConstraint(
                 "chk_transactionratio_amount",
                 "\"Amount\" > 0"

@@ -291,7 +291,51 @@ Nothing here ever looks a rate up live. Every rate used was recorded at the time
 
 ## What is not here yet
 
-- **Allocation limits.** Nothing yet checks that a payment against a bill does not exceed what that bill actually owes.
+- **Partial settlement from the payment screen itself.** The allocation panel on a payment still lets you key a line against a document without seeing that document's remaining balance beside it. Settling against a balance is what **Accounts › Settle documents** below is for.
+
+
+
+# Settle documents
+
+**Accounts › Settle documents**
+
+Where a customer's or a vendor's open credit is applied against what they still owe: a credit note against the invoices it settles, a debit note against a bill it corrects, an advance against the invoice it was taken for.
+
+## Two panels, one screen
+
+Settling is a matching problem. The question is never "how much is this credit note for" on its own — it is "which of these invoices does it cover". So the credits and the documents they settle sit side by side, and the arithmetic moves as you key rather than living in your head.
+
+The left panel is **available credits**: everything on account that has money left to give. The right is **to settle**: everything still owing. Each row shows what the document was for, what has already been claimed against it, and what is still free — and **Apply max** puts the largest allowable figure into the box.
+
+**Auto-allocate all** fills both sides oldest first, which is the common case. It is a starting point, not a decision: every figure stays editable afterwards.
+
+## The two sides must agree
+
+Money applied to invoices has to come from somewhere, so the total keyed on the left must equal the total keyed on the right before **Confirm & settle** does anything. The footer shows the running sum and, when they disagree, which way and by how much.
+
+## What the status pills mean
+
+Each row previews the state its document would be left in:
+
+- **Unallocated** — nothing claimed against it.
+- **Partly paid** — some of the balance is claimed.
+- **Paid** — fully claimed; nothing left to allocate.
+
+These are **worked out from the ledger**, not stored on the invoice. A document's outstanding balance is what its control postings say it was raised for, less every live allocation against it — so the figure is derived fresh each time and cannot drift out of step with the accounts the way a stored flag would.
+
+A document with nothing left to claim drops off the screen rather than showing as a row nothing can be done with.
+
+## Nothing is allowed past the balance
+
+A claim can never exceed what a document still represents. That is enforced where it matters — in the database, inside a single transaction that reads the ledger, counts what is already claimed, and writes the new claim together. Two people settling the same invoice at the same moment cannot both slip past a check neither saw the other's row.
+
+If a settlement is refused, the screen shows the server's own words — what the document was posted for, what has already been allocated, and what actually remains.
+
+## Undoing one
+
+An allocation is **voided, never deleted**, and a reason is required. The claim it held is released immediately — the money is free to allocate again — but the row stays, so what an invoice was settled against before a credit note was withdrawn remains answerable. Voiding needs the `accounting.void` permission, which is deliberately separate from the permission to make a settlement in the first place.
+
+Voiding the source document — the credit note itself — releases every claim it made, in the same way and for the same reason.
 
 
 

@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Settle documents** (Accounts › Settle documents) — apply a contact's available credit against what they still owe, in one pass. Credits and open documents sit side by side with the running arithmetic in the footer, **Auto-allocate all** fills both sides oldest first, and status pills preview whether each document would be left unallocated, partly paid or paid. Nothing can be claimed past what a document actually owes: the balance is worked out from the ledger, less everything already allocated, and checked as the settlement is written so two people settling the same invoice at once cannot both get past it. An allocation can be released with a reason — the money frees up immediately, and the record of what was settled against what stays.
 - **Added**: Stage T3.1 Invoices (INV) module with full ledger and inventory integration. You can now create, convert from sales orders, post, and void invoices.
 - Added Inventory Item List, Item Detail, Item Summary, and Inventory Aging reports.
 - **Added**: A platform admin screen (`apps/admin`) — every customer with its provisioning status, a create-customer action, a retry for one stuck mid-setup, and a read-only view of a customer's branches.

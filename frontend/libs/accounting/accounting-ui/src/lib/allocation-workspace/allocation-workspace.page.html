@@ -1,0 +1,197 @@
+<div class="page-head">
+  <h1>Settle documents</h1>
+
+  <label class="date-field">
+    <span>Allocation date</span>
+    <bb-date-input
+      [ngModel]="allocationDate()"
+      (ngModelChange)="allocationDate.set($event)"
+      name="allocationDate">
+    </bb-date-input>
+  </label>
+</div>
+
+@if (contactId() === null) {
+  <p class="empty">
+    Open this screen from a contact to settle their documents.
+  </p>
+} @else {
+  <section class="context-card" aria-label="Contact summary">
+    <div class="who">
+      <strong>{{ contact()?.displayName ?? 'Contact ' + contactId() }}</strong>
+      @if (contact()?.gstin) {
+        <span class="sub">GSTIN {{ contact()?.gstin }}</span>
+      }
+      @if (contact()?.currencyCode) {
+        <span class="sub">{{ contact()?.currencyCode }}</span>
+      }
+    </div>
+
+    <dl class="badges">
+      <div class="badge">
+        <dt>Total outstanding</dt>
+        <dd class="num">{{ totalOutstanding() | number: '1.2-2' }}</dd>
+      </div>
+      <div class="badge">
+        <dt>Available credit</dt>
+        <dd class="num">{{ totalAvailableCredit() | number: '1.2-2' }}</dd>
+      </div>
+      <div class="badge strong">
+        <dt>Net after allocation</dt>
+        <dd class="num">{{ netPayableAfter() | number: '1.2-2' }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  <bb-message-box [messages]="messages()"></bb-message-box>
+
+  @if (busy()) {
+    <p class="empty">Working…</p>
+  }
+
+  <div class="panels">
+    <section class="panel" aria-label="Available credits">
+      <h2>Available credits</h2>
+
+      @if (sources().length === 0) {
+        <p class="empty">Nothing on account to apply.</p>
+      } @else {
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th class="num">Total</th>
+              <th class="num">Unallocated</th>
+              <th class="num">Apply</th>
+              <th>After</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of sources(); track row.transactionTypeCode + row.transactionId) {
+              <tr [class.over]="isOver(row)">
+                <td data-label="Document">
+                  <strong>{{ row.documentNo }}</strong>
+                  <span class="sub">{{ row.documentDate }}</span>
+                </td>
+                <td class="num" data-label="Total">{{ row.totalAmount | number: '1.2-2' }}</td>
+                <td class="num" data-label="Unallocated">
+                  {{ row.unallocatedAmount | number: '1.2-2' }}
+                </td>
+                <td class="num apply-cell" data-label="Apply">
+                  <bb-number-input
+                    [ngModel]="row.apply"
+                    (ngModelChange)="onApplyChange('source', row, $event)"
+                    [name]="'src-' + row.transactionTypeCode + row.transactionId"
+                    [min]="0"
+                    [max]="row.unallocatedAmount"
+                    [decimals]="2"
+                    align="right"
+                    ariaLabel="Amount to apply from this credit">
+                  </bb-number-input>
+                </td>
+                <td data-label="After">
+                  <span class="pill" [class]="'pill-' + previewStatus(row)">
+                    {{ previewStatus(row) }}
+                  </span>
+                </td>
+                <td data-label="">
+                  <button type="button" class="ghost" (click)="applyMax(row, 'source')">
+                    Apply max
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+
+    <section class="panel" aria-label="Documents to settle">
+      <h2>To settle</h2>
+
+      @if (targets().length === 0) {
+        <p class="empty">Nothing outstanding.</p>
+      } @else {
+        <table class="grid">
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th class="num">Total</th>
+              <th class="num">Outstanding</th>
+              <th class="num">Apply</th>
+              <th>After</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of targets(); track row.transactionTypeCode + row.transactionId) {
+              <tr [class.over]="isOver(row)">
+                <td data-label="Document">
+                  <strong>{{ row.documentNo }}</strong>
+                  <span class="sub">{{ row.documentDate }}</span>
+                </td>
+                <td class="num" data-label="Total">{{ row.totalAmount | number: '1.2-2' }}</td>
+                <td class="num" data-label="Outstanding">
+                  {{ row.unallocatedAmount | number: '1.2-2' }}
+                </td>
+                <td class="num apply-cell" data-label="Apply">
+                  <bb-number-input
+                    [ngModel]="row.apply"
+                    (ngModelChange)="onApplyChange('target', row, $event)"
+                    [name]="'tgt-' + row.transactionTypeCode + row.transactionId"
+                    [min]="0"
+                    [max]="row.unallocatedAmount"
+                    [decimals]="2"
+                    align="right"
+                    ariaLabel="Amount to apply to this document">
+                  </bb-number-input>
+                </td>
+                <td data-label="After">
+                  <span class="pill" [class]="'pill-' + previewStatus(row)">
+                    {{ previewStatus(row) }}
+                  </span>
+                </td>
+                <td data-label="">
+                  <button type="button" class="ghost" (click)="applyMax(row, 'target')">
+                    Apply max
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+
+  <footer class="summary" aria-label="Allocation summary">
+    <div class="maths">
+      <span>
+        Remaining due = {{ totalOutstanding() | number: '1.2-2' }} −
+        {{ appliedToTargets() | number: '1.2-2' }} =
+        <strong>{{ netPayableAfter() | number: '1.2-2' }}</strong>
+      </span>
+
+      @if (!isBalanced()) {
+        <span class="warn">
+          Credits applied ({{ appliedFromSources() | number: '1.2-2' }}) must equal
+          amounts settled ({{ appliedToTargets() | number: '1.2-2' }}) — out by
+          {{ difference() | number: '1.2-2' }}.
+        </span>
+      }
+    </div>
+
+    <div class="actions">
+      <button type="button" class="ghost" (click)="autoAllocate()" [disabled]="busy()">
+        Auto-allocate all
+      </button>
+      <button type="button" class="ghost" (click)="reset()" [disabled]="busy()">
+        Reset all
+      </button>
+      <button type="button" class="primary" (click)="settle()" [disabled]="!canSettle()">
+        Confirm &amp; settle
+      </button>
+    </div>
+  </footer>
+}

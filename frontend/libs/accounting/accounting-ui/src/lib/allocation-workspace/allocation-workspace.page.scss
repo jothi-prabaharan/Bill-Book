@@ -1,0 +1,269 @@
+/* Design tokens only — no literal colours, so the screen follows the theme. */
+
+.page-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space-3, 13.8px);
+}
+
+.page-head h1 {
+  font-family: var(--font-heading, system-ui, sans-serif);
+  margin: 0;
+}
+
+.date-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-compact-1, 3px);
+  font-size: 0.78rem;
+  color: var(--color-neutral-600, #7d7979);
+}
+
+.empty {
+  color: var(--color-neutral-500, #9b9797);
+  font-size: 0.85rem;
+}
+
+.sub {
+  color: var(--color-neutral-500, #9b9797);
+  font-size: 0.75rem;
+  margin-left: var(--space-compact-2, 7px);
+}
+
+/* ---- Contact context card ------------------------------------------------ */
+
+.context-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3, 13.8px);
+  margin: var(--space-3, 13.8px) 0;
+  padding: var(--space-compact-3, 10px) var(--space-compact-4, 13px);
+  background: var(--color-surface, #eae9e9);
+  border: 1px solid var(--color-border, rgba(32, 31, 29, 0.16));
+  border-radius: var(--radius-lg, 7px);
+}
+
+.context-card .who strong {
+  font-size: 1rem;
+}
+
+.badges {
+  display: flex;
+  gap: var(--space-4, 18.4px);
+  margin: 0;
+  flex-wrap: wrap;
+}
+
+.badge dt {
+  font-size: 0.72rem;
+  color: var(--color-neutral-600, #7d7979);
+}
+
+.badge dd {
+  margin: 0;
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge.strong dd {
+  font-weight: 600;
+  color: var(--color-accent-700, #7d5411);
+}
+
+/* ---- The two panels ------------------------------------------------------ */
+
+.panels {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4, 18.4px);
+  margin-top: var(--space-3, 13.8px);
+  align-items: start;
+}
+
+.panel h2 {
+  font-family: var(--font-heading, system-ui, sans-serif);
+  font-size: 1rem;
+  margin: 0 0 var(--space-compact-2, 7px);
+}
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.grid th,
+.grid td {
+  text-align: left;
+  padding: var(--space-compact-1, 3px) var(--space-compact-2, 7px);
+  border-bottom: 1px solid var(--color-divider, rgba(32, 31, 29, 0.16));
+  vertical-align: middle;
+}
+
+.grid th {
+  font-size: 0.74rem;
+  color: var(--color-neutral-600, #7d7979);
+  font-weight: 600;
+}
+
+.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.apply-cell {
+  width: 9rem;
+}
+
+/* A row keyed past what the document can take. The message box above carries
+   the rule; this only says which row it is about. */
+.grid tr.over td {
+  background: var(--color-danger-bg, #fbe4e0);
+}
+
+.grid tr.over .apply-cell :is(input, bb-number-input) {
+  border-color: var(--color-danger, #a2332a);
+  outline-color: var(--color-danger, #a2332a);
+}
+
+/* ---- Status pills -------------------------------------------------------- */
+
+.pill {
+  display: inline-block;
+  padding: 0 var(--space-compact-2, 7px);
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.68rem;
+  line-height: 1.5rem;
+  white-space: nowrap;
+}
+
+.pill-Unallocated {
+  background: var(--color-neutral-200, #eae7e7);
+  color: var(--color-neutral-700, #605d5d);
+}
+
+.pill-PartiallyPaid {
+  background: var(--color-warning-bg, #fdf0d5);
+  color: var(--color-warning, #8a5b00);
+}
+
+.pill-Paid {
+  background: var(--color-success-bg, #e2f3e9);
+  color: var(--color-success, #187a4b);
+}
+
+/* ---- Buttons ------------------------------------------------------------- */
+
+button {
+  font: inherit;
+  font-size: 0.8rem;
+  padding: var(--space-compact-1, 3px) var(--space-compact-3, 10px);
+  border-radius: var(--radius-md, 4px);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+button.ghost {
+  background: var(--color-neutral-200, #eae7e7);
+  color: var(--color-neutral-800, #444141);
+}
+
+button.primary {
+  background: var(--color-accent, #b68235);
+  color: var(--color-neutral-100, #f8f4f4);
+}
+
+/* ---- Sticky summary ------------------------------------------------------ */
+
+.summary {
+  position: sticky;
+  bottom: 0;
+  z-index: var(--z-content, 1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3, 13.8px);
+  margin-top: var(--space-4, 18.4px);
+  padding: var(--space-compact-3, 10px) var(--space-compact-4, 13px);
+  background: var(--color-bg, #f3f2f2);
+  border-top: 1px solid var(--color-border, rgba(32, 31, 29, 0.16));
+  box-shadow: var(--shadow-md, 0 3px 10px rgba(45, 43, 43, 0.16));
+}
+
+.maths {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-compact-1, 3px);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.maths .warn {
+  color: var(--color-warning, #8a5b00);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-compact-2, 7px);
+  flex-wrap: wrap;
+}
+
+/* ---- Narrow screens ------------------------------------------------------
+   The panels stack, and each table becomes a card list: once a row is stacked
+   the head row means nothing, so every cell carries its own label. */
+
+@media (max-width: 900px) {
+  .panels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .context-card,
+  .summary {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .grid thead {
+    display: none;
+  }
+
+  .grid tr {
+    display: block;
+    padding: var(--space-compact-2, 7px) 0;
+    border-bottom: 1px solid var(--color-divider, rgba(32, 31, 29, 0.16));
+  }
+
+  .grid td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-3, 13.8px);
+    border: 0;
+    padding: var(--space-compact-1, 3px) var(--space-compact-2, 7px);
+  }
+
+  .grid td::before {
+    content: attr(data-label);
+    color: var(--color-neutral-500, #9b9797);
+    font-size: 0.72rem;
+  }
+
+  .apply-cell {
+    width: auto;
+  }
+
+  .actions button {
+    flex: 1 1 auto;
+  }
+}

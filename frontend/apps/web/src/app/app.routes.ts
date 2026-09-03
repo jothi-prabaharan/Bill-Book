@@ -119,6 +119,15 @@ export const appRoutes: Routes = [
         data: { permission: 'accounting.view' },
       },
       {
+        // Settling is per contact, so the id is the route rather than a filter
+        // inside the screen — it makes the workspace linkable from a contact,
+        // a statement or an aging report.
+        path: 'accounting/allocations/:contactId',
+        loadComponent: () =>
+          import('@bill-book/accounting-ui').then((m) => m.AllocationWorkspacePage),
+        data: { permission: 'accounting.view' },
+      },
+      {
         path: 'settings/tax',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TaxMasterPage),
         data: { permission: 'accounting.view' },

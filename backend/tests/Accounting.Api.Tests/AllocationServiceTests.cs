@@ -249,9 +249,14 @@ public class AllocationServiceTests
     }
 
     /// <summary>
-    /// A void removes the source document's claims and no others — and the
-    /// release is real: a claim that no longer exists must not keep occupying
-    /// the target's balance.
+    /// A void releases the source document's claims and no others — and the
+    /// release is real: a claim that no longer holds must not keep occupying the
+    /// target's balance.
+    ///
+    /// <b>The row stays.</b> A released allocation is history rather than an
+    /// absence, so what was claimed against an invoice before a credit note was
+    /// withdrawn stays answerable. The release is carried by the guard ignoring
+    /// voided rows, which is what the last assertion actually proves.
     /// </summary>
     [SkippableFact]
     public async Task Removing_a_source_releases_its_claims_and_no_others()
@@ -266,14 +271,191 @@ public class AllocationServiceTests
 
         await harness.Allocations.RemoveAllocationsAsync("CRN", 9701, ct);
 
-        List<TransactionRatio> remaining = await harness.Db.TransactionRatios.ToListAsync(ct);
-        TransactionRatio kept = Assert.Single(remaining);
-        Assert.Equal(9702, kept.SourceTransactionId);
+        // The release went straight to the database, so the rows this context
+        // still tracks from the allocations above are stale.
+        harness.Db.ChangeTracker.Clear();
 
-        // 300 was released; 400 was still free. 700 is now exactly available.
+        List<TransactionRatio> rows = await harness.Db.TransactionRatios
+            .OrderBy(t => t.SourceTransactionId)
+            .ToListAsync(ct);
+
+        Assert.Equal(2, rows.Count);
+
+        TransactionRatio released = rows[0];
+        Assert.Equal(9701, released.SourceTransactionId);
+        Assert.True(released.IsVoided);
+        Assert.NotNull(released.VoidedAt);
+        Assert.False(string.IsNullOrWhiteSpace(released.VoidReason));
+
+        TransactionRatio kept = rows[1];
+        Assert.Equal(9702, kept.SourceTransactionId);
+        Assert.False(kept.IsVoided);
+
+        // 300 was released; 400 was still free. 700 is now exactly available —
+        // which only holds if the voided row stopped counting against the target.
         Assert.Equal(
             AllocationOutcome.Ok,
             (await harness.Allocations.AllocateAsync(Request("CRN", 9703, "INV", 5009, 700m), ct)).Outcome);
+    }
+
+    /// <summary>
+    /// Voiding one allocation by its id returns exactly that claim, leaving
+    /// every other claim on the same target alone.
+    /// </summary>
+    [SkippableFact]
+    public async Task Voiding_one_allocation_by_id_releases_only_that_claim()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.PostInvoiceAsync(5010, 1000m, ct);
+
+        await harness.Allocations.AllocateAsync(Request("CRN", 9801, "INV", 5010, 400m), ct);
+        await harness.Allocations.AllocateAsync(Request("CRN", 9802, "INV", 5010, 400m), ct);
+
+        long id = await harness.Db.TransactionRatios
+            .Where(t => t.SourceTransactionId == 9801)
+            .Select(t => t.TransactionRatioId)
+            .SingleAsync(ct);
+
+        Assert.True(await harness.Allocations.VoidAsync(id, "Keyed against the wrong invoice.", ct));
+
+        harness.Db.ChangeTracker.Clear();
+
+        TransactionRatio voided = await harness.Db.TransactionRatios
+            .SingleAsync(t => t.TransactionRatioId == id, ct);
+
+        Assert.True(voided.IsVoided);
+        Assert.Equal("Keyed against the wrong invoice.", voided.VoidReason);
+
+        // 400 came back and 200 was never claimed, so 600 is free — and the
+        // other note's 400 is still held.
+        Assert.Equal(
+            AllocationOutcome.Ok,
+            (await harness.Allocations.AllocateAsync(Request("CRN", 9803, "INV", 5010, 600m), ct)).Outcome);
+    }
+
+    /// <summary>
+    /// Voiding the same allocation twice is refused rather than silently
+    /// releasing nothing — the caller is told it was already void.
+    /// </summary>
+    [SkippableFact]
+    public async Task Voiding_an_already_voided_allocation_reports_that_it_did_nothing()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.PostInvoiceAsync(5011, 500m, ct);
+        await harness.Allocations.AllocateAsync(Request("CRN", 9901, "INV", 5011, 100m), ct);
+
+        long id = await harness.Db.TransactionRatios
+            .Select(t => t.TransactionRatioId)
+            .SingleAsync(ct);
+
+        Assert.True(await harness.Allocations.VoidAsync(id, "First.", ct));
+        Assert.False(await harness.Allocations.VoidAsync(id, "Second.", ct));
+
+        harness.Db.ChangeTracker.Clear();
+
+        // The first reason stands: a second void must not overwrite the record
+        // of why the claim was actually released.
+        TransactionRatio row = await harness.Db.TransactionRatios.SingleAsync(ct);
+        Assert.Equal("First.", row.VoidReason);
+    }
+
+    /// <summary>
+    /// The open-documents workspace, split by the direction the balance runs: an
+    /// invoice is something to settle, an advance is credit to settle it with,
+    /// and what is already claimed comes off both.
+    /// </summary>
+    [SkippableFact]
+    public async Task Open_documents_split_targets_from_credits_and_net_off_live_claims()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.PostInvoiceAsync(5100, 1000m, ct, contactId: 42);
+        await harness.PostCreditAsync(9100, 250m, ct, contactId: 42);
+
+        await harness.Allocations.AllocateAsync(Request("CRN", 9100, "INV", 5100, 100m), ct);
+
+        OpenDocumentsDto open = await harness.Allocations.GetOpenDocumentsAsync(42, ct);
+
+        OpenDocumentDto target = Assert.Single(open.Targets);
+        Assert.Equal("INV", target.TransactionTypeCode);
+        Assert.Equal(1000m, target.TotalAmount);
+        Assert.Equal(100m, target.AllocatedAmount);
+        Assert.Equal(900m, target.UnallocatedAmount);
+        Assert.Equal(SettlementStatus.PartiallyPaid, target.SettlementStatus);
+
+        OpenDocumentDto source = Assert.Single(open.Sources);
+        Assert.Equal("CRN", source.TransactionTypeCode);
+        Assert.Equal(250m, source.TotalAmount);
+        Assert.Equal(100m, source.AllocatedAmount);
+        Assert.Equal(150m, source.UnallocatedAmount);
+
+        Assert.Equal(900m, open.TotalOutstanding);
+        Assert.Equal(150m, open.TotalAvailableCredit);
+    }
+
+    /// <summary>
+    /// A document with nothing left to claim drops out of the workspace rather
+    /// than showing as a row nothing can be done with.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_fully_allocated_document_leaves_the_workspace()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.PostInvoiceAsync(5200, 300m, ct, contactId: 77);
+        await harness.PostCreditAsync(9200, 300m, ct, contactId: 77);
+
+        await harness.Allocations.AllocateAsync(Request("CRN", 9200, "INV", 5200, 300m), ct);
+
+        OpenDocumentsDto open = await harness.Allocations.GetOpenDocumentsAsync(77, ct);
+
+        Assert.Empty(open.Targets);
+        Assert.Empty(open.Sources);
+        Assert.Equal(0m, open.TotalOutstanding);
+    }
+
+    /// <summary>
+    /// The list counts what matched rather than what fitted on the page, and
+    /// leaves voided rows out unless they are asked for.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_list_pages_and_hides_voided_rows_unless_asked()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.PostInvoiceAsync(5300, 1000m, ct);
+
+        for (long note = 9301; note <= 9303; note++)
+        {
+            await harness.Allocations.AllocateAsync(Request("CRN", note, "INV", 5300, 100m), ct);
+        }
+
+        long first = await harness.Db.TransactionRatios
+            .Where(t => t.SourceTransactionId == 9301)
+            .Select(t => t.TransactionRatioId)
+            .SingleAsync(ct);
+
+        await harness.Allocations.VoidAsync(first, "Withdrawn.", ct);
+
+        AllocationPageDto live = await harness.Allocations.ListAsync(1, 2, null, false, ct);
+        Assert.Equal(2, live.TotalCount);
+        Assert.Equal(2, live.Items.Count);
+        Assert.DoesNotContain(live.Items, i => i.IsVoided);
+
+        AllocationPageDto all = await harness.Allocations.ListAsync(1, 2, null, true, ct);
+        Assert.Equal(3, all.TotalCount);
+        Assert.Equal(2, all.Items.Count);
+
+        // An oversized page size is clamped rather than trusted.
+        AllocationPageDto clamped = await harness.Allocations.ListAsync(1, 100_000, null, true, ct);
+        Assert.Equal(200, clamped.PageSize);
     }
 
     private static AllocateTransactionRequest Request(
@@ -351,16 +533,38 @@ public class AllocationServiceTests
         }
 
         /// <summary>An invoice worth <paramref name="amount"/>: revenue against a receivable.</summary>
-        public Task PostInvoiceAsync(long invoiceId, decimal amount, CancellationToken ct) =>
+        public Task PostInvoiceAsync(
+            long invoiceId, decimal amount, CancellationToken ct, long? contactId = null) =>
             Postings.PostAsync(new PostLedgerRequest
             {
                 TransactionTypeCode = "INV",
                 TransactionId = invoiceId,
                 LedgerDate = new DateOnly(2026, 8, 1),
+                ContactId = contactId,
                 Legs =
                 [
                     Leg(Item, 1, RevenueId, credit: amount),
                     Leg(Control, 0, ReceivableId, debit: amount),
+                ],
+            }, ct);
+
+        /// <summary>
+        /// A credit note worth <paramref name="amount"/> — the mirror of the
+        /// invoice, so its CONTROL net runs the other way and it lands on the
+        /// source side of the workspace.
+        /// </summary>
+        public Task PostCreditAsync(
+            long creditNoteId, decimal amount, CancellationToken ct, long? contactId = null) =>
+            Postings.PostAsync(new PostLedgerRequest
+            {
+                TransactionTypeCode = "CRN",
+                TransactionId = creditNoteId,
+                LedgerDate = new DateOnly(2026, 8, 2),
+                ContactId = contactId,
+                Legs =
+                [
+                    Leg(Item, 1, RevenueId, debit: amount),
+                    Leg(Control, 0, ReceivableId, credit: amount),
                 ],
             }, ct);
 
