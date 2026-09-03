@@ -16,6 +16,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Master.Repository\Master.Repository.csproj" />
+    <ProjectReference Include="..\..\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
+    <ProjectReference Include="..\..\Customer\Customer.Repository\Customer.Repository.csproj" />
+    <ProjectReference Include="..\..\Inventory\Inventory.Repository\Inventory.Repository.csproj" />
+    <ProjectReference Include="..\..\Purchase\Purchase.Repository\Purchase.Repository.csproj" />
+    <ProjectReference Include="..\..\Reporting\Reporting.Repository\Reporting.Repository.csproj" />
+    <ProjectReference Include="..\..\Sales\Sales.Repository\Sales.Repository.csproj" />
   </ItemGroup>
 
 </Project>

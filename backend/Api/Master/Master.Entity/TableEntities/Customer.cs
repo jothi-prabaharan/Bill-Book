@@ -32,4 +32,8 @@ public class Customer : AuditableEntity
     [Required(ErrorMessage = "Plan tier is required.")]
     [MaxLength(30, ErrorMessage = "Plan tier cannot exceed 30 characters.")]
     public string PlanTier { get; set; } = "Standard";
+
+    [Required(ErrorMessage = "Database name is required.")]
+    [MaxLength(50, ErrorMessage = "Database name cannot exceed 50 characters.")]
+    public string DatabaseName { get; set; } = null!;
 }

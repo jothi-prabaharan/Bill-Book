@@ -88,7 +88,7 @@ public sealed class ProvisioningWorker : BackgroundService
         }
 
         // 3. Flip statuses; login stays blocked until this commits.
-        Customer customer = await db.Customers.FirstAsync(c => c.CustomerId == job.CustomerId, ct);
+        CustomerEntity customer = await db.Customers.FirstAsync(c => c.CustomerId == job.CustomerId, ct);
         Organization org = await db.Organizations.FirstAsync(o => o.OrgId == job.OrgId, ct);
 
         customer.Status = TenantStatus.Trial;
@@ -104,7 +104,7 @@ public sealed class ProvisioningWorker : BackgroundService
         {
             using IServiceScope scope = _scopes.CreateScope();
             AdminDbContext db = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
-            Customer? customer = await db.Customers
+            CustomerEntity? customer = await db.Customers
                 .FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
             if (customer is not null)
             {

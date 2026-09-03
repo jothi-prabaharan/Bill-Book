@@ -1,3 +1,4 @@
+global using CustomerEntity = Master.Entity.TableEntities.Customer;
 using Shared.Kernel.Security;
 using System.Text;
 using Azure.Storage.Blobs;
@@ -48,6 +49,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -80,7 +82,7 @@ builder.Services.AddScoped<RlsConnectionInterceptor>();
 builder.Services.AddDbContext<ContactsDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        RequiredConnectionString("TenantDatabase"),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "con"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
@@ -265,9 +267,11 @@ string RequiredSetting(string key) =>
             $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
             $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
 
+#pragma warning disable CS8321
 string RequiredConnectionString(string name) =>
     builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
         ? value
         : throw new InvalidOperationException(
             $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
             $"or via the ConnectionStrings__{name} environment variable.");
+

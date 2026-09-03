@@ -40,6 +40,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 
 builder.Services.AddOpenApi();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ITenantDatabaseResolver, TenantDatabaseResolver>();
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton(TimeProvider.System);
 
@@ -57,7 +58,7 @@ builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
 builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
 {
     options.UseNpgsql(
-        RequiredConnectionString("TenantDatabase"),
+        sp.GetRequiredService<ITenantDatabaseResolver>().GetConnectionString(sp.GetService<ITenantContext>()?.CustomerId),
         npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sal"));
     options.AddInterceptors(
         sp.GetRequiredService<AuditSaveChangesInterceptor>(),
@@ -221,6 +222,7 @@ string RequiredSetting(string key) =>
             $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
             $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");
 
+#pragma warning disable CS8321
 string RequiredConnectionString(string name) =>
     builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
         ? value

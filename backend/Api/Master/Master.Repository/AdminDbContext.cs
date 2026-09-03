@@ -50,6 +50,8 @@ public class AdminDbContext : DbContext
 
     public DbSet<Customer> Customers => Set<Customer>();
 
+    public DbSet<TenantDatabase> TenantDatabases => Set<TenantDatabase>();
+
     public DbSet<Organization> Organizations => Set<Organization>();
 
 

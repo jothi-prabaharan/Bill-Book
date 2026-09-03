@@ -45,7 +45,7 @@ public sealed class SignupService
         string countryPrefix = country?.CountryCode ?? "IN";
         string defaultCurrency = country?.CurrencyCode ?? "INR";
 
-        Customer customer = null!;
+        CustomerEntity customer = null!;
 
         // CustomerCode is read-max-then-increment; the unique index makes the
         // retry safe under concurrent signups (CLAUDE.md blocking-gap fix).
@@ -53,7 +53,7 @@ public sealed class SignupService
         {
             string code = await NextCustomerCodeAsync(ct);
 
-            customer = new Customer
+            customer = new CustomerEntity
             {
                 CustomerId = Guid.NewGuid(),
                 CustomerCode = code,
@@ -221,7 +221,7 @@ public sealed class SignupService
     /// </summary>
     public async Task<RetryProvisioningResult> RetryProvisioningAsync(Guid customerId, CancellationToken ct)
     {
-        Customer? customer = await _db.Customers
+        CustomerEntity? customer = await _db.Customers
             .FirstOrDefaultAsync(c => c.CustomerId == customerId, ct);
 
         if (customer is null)
