@@ -164,7 +164,7 @@ cd frontend && npm run check          # lint, typecheck, tests, both builds
 cd backend  && dotnet build && dotnet test
 ```
 
-`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` passes as of 2 September 2026** — lint across 23 projects, typecheck, 474 tests, all five app builds. The `allocation-form.component.html` lint failure noted here on 24 August is fixed, along with the Ionic imports that had kept `accounting-ui` from typechecking at all. The backend has **one** failing test, `ReconciliationMatchingTests.GetSuggestedMatches_FindsExactAmountWithinThreeDays`, which came with bank reconciliation and is a test-data fault; it is not something your commit introduced.
+`dotnet build` must be clean — `TreatWarningsAsErrors` is on, so a warning is a failure. Database-backed tests skip with a reason when no PostgreSQL answers. **`npm run check` passes as of 2 September 2026** — lint across 23 projects, typecheck, 474 tests, all five app builds. The `allocation-form.component.html` lint failure noted here on 24 August is fixed, along with the Ionic imports that had kept `accounting-ui` from typechecking at all. The backend is green too: **756 tests, all passing, none skipped.**
 
 **A commit that does not build blocks whoever is working in parallel with you.**
 
