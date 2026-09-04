@@ -1,12 +1,30 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Api.Controllers;
 
+/// <summary>
+/// Sales asks this before it lets an order through, so the caller is a service
+/// rather than a person and carries no user token.
+///
+/// It shipped with neither guard, which made it two faults at once. Reporting
+/// sets a FallbackPolicy of RequireAuthenticatedUser, so the route demanded the
+/// one credential its only caller does not have — Sales' CreditCheckClient is
+/// registered with InternalKeyHandler and sends the shared key alone — while
+/// still being reachable by any signed-in user of any tenant, who could read
+/// another contact's outstanding balance and credit limit out of the refusal
+/// message. [AllowAnonymous] steps off the fallback and [InternalOnly] puts the
+/// right credential in its place, which is what every other internal/ route in
+/// the product already does.
+/// </summary>
 [Route("internal/credit")]
 [ApiController]
+[AllowAnonymous]
+[InternalOnly]
 public class InternalCreditCheckController : ControllerBase
 {
     private readonly ReportingDbContext _db;

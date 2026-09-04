@@ -1,12 +1,28 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
+using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using Reporting.Api.Services.Sources; // To reuse SalesRegisterRow if desired
 
 namespace Reporting.Api.Controllers;
 
+/// <summary>
+/// GSTR-1, GSTR-2 and GSTR-3B — the branch's whole outward and inward supply
+/// position, filed from sal.SalesRegister.
+///
+/// It had a credential and no permission: Reporting's FallbackPolicy asked for
+/// an authenticated user and nothing asked which one, so every signed-in user
+/// could read the returns regardless of their role. The Sales role is the sharp
+/// case — it is granted sales, contacts and crm and holds no reports permission
+/// at all, yet this was the one reports route it could open. The other three
+/// controllers in this service have asked for reports.* from the start; this is
+/// the same guard, not a new rule.
+/// </summary>
 [ApiController]
+[Authorize]
+[RequireModulePermission("reports")]
 [Route("api/reports/gst")]
 public class GstController : ControllerBase
 {

@@ -2,12 +2,14 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
+using Shared.Kernel.Internal;
 using System.Security.Claims;
 
 namespace Reporting.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[RequirePortalAccess]
 [Route("api/portal/statements")]
 public sealed class PortalStatementsController : ControllerBase
 {
@@ -24,18 +26,9 @@ public sealed class PortalStatementsController : ControllerBase
         [FromQuery] DateOnly? toDate,
         CancellationToken ct)
     {
-        // Require portal access claim
-        if (User.FindFirst("portal_access")?.Value != "true")
-        {
-            return Forbid();
-        }
-
-        // Extract contact ID from token
-        string? contactIdStr = User.FindFirst("contact_id")?.Value;
-        if (string.IsNullOrEmpty(contactIdStr) || !long.TryParse(contactIdStr, out long contactId))
-        {
-            return Forbid();
-        }
+        // [RequirePortalAccess] has already refused anything without a usable
+        // contact_id, so this reads the value rather than re-checking for it.
+        long contactId = long.Parse(User.FindFirst(RequirePortalAccessAttribute.ContactClaim)!.Value);
 
         // Query the ledger for this contact's sub-accounts
         // SubAccounts are linked to the ledger rows via SubAccountId.

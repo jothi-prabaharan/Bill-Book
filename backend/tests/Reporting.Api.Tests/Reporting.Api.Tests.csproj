@@ -14,6 +14,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Api\Reporting\Reporting.Api\Reporting.Api.csproj" />
+    <!-- The permission catalogue, so EndpointGuardTests can read the real seed
+         rather than a copy that would agree with itself forever. Same reference
+         Customer.Api.Tests takes, for the same reason. -->
+    <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
   </ItemGroup>
 
 </Project>
