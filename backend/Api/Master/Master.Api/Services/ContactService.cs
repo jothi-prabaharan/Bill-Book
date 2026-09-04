@@ -467,11 +467,7 @@ public sealed class ContactService
         Guid customerId = _tenant.CustomerId ?? Guid.Empty;
         Guid orgId = _tenant.OrgId ?? Guid.Empty;
 
-        string token = _tokenService.CreatePortalToken(customerId, orgId, contactId);
-
-        // TODO: Base URL should come from configuration (e.g., Portal:BaseUrl)
-        // For now, we return just the token, the caller controller will construct the URI.
-        return token;
+        return _tokenService.CreatePortalToken(customerId, orgId, contactId);
     }
 
     /// <summary>

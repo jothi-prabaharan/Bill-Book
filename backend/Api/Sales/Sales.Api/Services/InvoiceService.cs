@@ -56,6 +56,13 @@ public sealed class InvoiceService : IInvoiceService
     private readonly Shared.Kernel.Storage.IFileStorage _storage;
     private readonly Sales.Api.Services.Pdf.IInvoicePdfRenderer _pdfRenderer;
 
+    /// <summary>
+    /// Who this branch is, for the seller block. Read from Master rather than
+    /// written here: the two lines it replaces were a hard-coded company name
+    /// and a hard-coded GSTIN, printed on every customer's tax invoices alike.
+    /// </summary>
+    private readonly IOrgIdentityProvider _orgIdentity;
+
     public InvoiceService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -69,7 +76,10 @@ public sealed class InvoiceService : IInvoiceService
         TimeProvider clock,
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
-        ICreditCheckClient creditCheckClient, Shared.Kernel.Storage.IFileStorage storage, Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer)
+        ICreditCheckClient creditCheckClient,
+        Shared.Kernel.Storage.IFileStorage storage,
+        Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer,
+        IOrgIdentityProvider orgIdentity)
     {
         _db = db;
         _tenant = tenant;
@@ -86,6 +96,7 @@ public sealed class InvoiceService : IInvoiceService
         _creditCheckClient = creditCheckClient;
         _storage = storage;
         _pdfRenderer = pdfRenderer;
+        _orgIdentity = orgIdentity;
     }
 
     /// <summary>
@@ -1404,14 +1415,26 @@ public sealed class InvoiceService : IInvoiceService
         invoice.PostedBy = _user.UserId;
 
         // 4. Generate and Archive PDF
+        //
+        // The seller comes from Master, and a branch that cannot be resolved
+        // stops the posting. A tax invoice names the supplier whose GSTIN the
+        // buyer claims an input credit against; printing a placeholder there is
+        // worse than printing nothing, because the document looks filed. This
+        // used to print "Our Company" and a made-up registration on every
+        // customer's invoices alike.
+        OrgIdentity? seller = await _orgIdentity.GetIdentityAsync(ct)
+            ?? throw new InvalidOperationException(
+                "The branch issuing this invoice could not be identified, so its seller "
+                + "details cannot be printed. The invoice was not posted.");
+
         var contactNames = await _contactNames.ResolveAsync([invoice.ContactId], ct);
         string customerName = contactNames.TryGetValue(invoice.ContactId, out var contactRef) ? contactRef.Name : "Unknown";
-        
+
         var pdfModel = new Sales.Api.Services.Pdf.PdfInvoiceModel
         {
             Invoice = invoice,
-            OrgName = "Our Company", // TODO: Read from Platform
-            OrgGstin = "29AAAAA0000A1Z5", // TODO: Read from Platform
+            OrgName = seller.Name,
+            OrgGstin = seller.Gstin,
             CustomerName = customerName,
             ItemNames = (await _itemNames.ResolveAsync(invoice.Lines.Where(l => l.ItemId.HasValue).Select(l => (long)l.ItemId!).Distinct().ToArray(), ct)).ToDictionary(k => k.Key, v => v.Value.Name)
         };

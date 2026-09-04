@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Secrets;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -197,7 +198,13 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IFinancialYearProvider>()));
 
 // Dev infrastructure — swap for Key Vault / Service Bus in production.
-builder.Services.AddSingleton<ISecretStore, InMemorySecretStore>();
+// Key Vault when KeyVault:Uri is set, configuration otherwise — and a startup
+// failure in Production if neither. Master is the one service that *writes* a
+// secret (the SMTP-password key), and only the vault-backed store can: the
+// configuration store refuses rather than pretending, which is why the
+// in-memory dictionary that used to stand here was worse than nothing — it
+// accepted every write and lost it on the next restart.
+builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddSingleton<IEventPublisher, LoggingEventPublisher>();
 
 // This service mints the tokens as well as validating them, so the signing key

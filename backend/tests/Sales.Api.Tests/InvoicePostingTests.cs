@@ -432,14 +432,97 @@ public sealed class InvoicePostingTests
             Description = "Test Stock Item",
         };
 
+    /// <summary>
+    /// The seller block on a printed invoice is the branch's own, read from
+    /// Master.
+    ///
+    /// <b>It was two hard-coded lines under a TODO</b> — the name "Our Company"
+    /// and a GSTIN belonging to nobody — printed identically on every customer's
+    /// tax invoices. A tax invoice names the supplier whose registration the
+    /// buyer claims an input credit against, so a placeholder there is not a
+    /// cosmetic fault.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_posted_invoice_prints_the_branchs_own_name_and_gstin()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
+            "Kumar Traders", "33BBBBB1111B1Z9", "9 Mount Road", null, "Chennai", "33", "600002")));
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
+
+        Assert.Equal(InvoiceOutcome.Ok, (await h.Invoices.PostAsync(
+            created.InvoiceId, CancellationToken.None)).Outcome);
+
+        Assert.NotNull(h.Pdf.Rendered);
+        Assert.Equal("Kumar Traders", h.Pdf.Rendered!.OrgName);
+        Assert.Equal("33BBBBB1111B1Z9", h.Pdf.Rendered.OrgGstin);
+    }
+
+    /// <summary>
+    /// A different branch prints different details — which is the whole point,
+    /// and the thing a constant could never do.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_second_branch_prints_its_own_details_not_the_firsts()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness first = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
+            "Kumar Traders", "33BBBBB1111B1Z9", null, null, "Chennai", "33", null)));
+
+        Harness second = await Harness.CreateAsync(_pg, new StubOrgIdentity(new OrgIdentity(
+            "Sharma Stores", "29CCCCC2222C1Z8", null, null, "Bengaluru", "29", null)));
+
+        foreach (Harness h in new[] { first, second })
+        {
+            InvoiceResult created = await h.Invoices.CreateAsync(
+                Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
+
+            await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
+        }
+
+        Assert.Equal("Kumar Traders", first.Pdf.Rendered!.OrgName);
+        Assert.Equal("Sharma Stores", second.Pdf.Rendered!.OrgName);
+        Assert.NotEqual(first.Pdf.Rendered.OrgGstin, second.Pdf.Rendered.OrgGstin);
+    }
+
+    /// <summary>
+    /// A branch Master cannot resolve stops the posting instead of printing a
+    /// placeholder. An invoice with the wrong seller on it is worse than no
+    /// invoice, because it looks filed.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_unresolvable_branch_refuses_to_post_rather_than_printing_a_placeholder()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg, new StubOrgIdentity { Resolves = false });
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None));
+
+        Assert.Null(h.Pdf.Rendered);
+    }
+
     private sealed record Harness(
         SalesDbContext Db,
         InvoiceService Invoices,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
-        TenantContext Tenant)
+        TenantContext Tenant,
+        StubPdfRenderer Pdf)
     {
-        public static async Task<Harness> CreateAsync(PostgresFixture pg)
+        public static Task<Harness> CreateAsync(PostgresFixture pg) =>
+            CreateAsync(pg, new StubOrgIdentity());
+
+        public static async Task<Harness> CreateAsync(
+            PostgresFixture pg, StubOrgIdentity orgIdentity)
         {
             Guid customerId = Guid.NewGuid();
             Guid orgId = Guid.NewGuid();
@@ -459,6 +542,8 @@ public sealed class InvoicePostingTests
             StubCurrentUser currentUser = new();
             StubCreditCheck creditCheck = new();
 
+            StubPdfRenderer pdf = new();
+
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
@@ -477,9 +562,10 @@ public sealed class InvoicePostingTests
                 ledger,
                 creditCheck,
                 new StubFileStorage(),
-                new StubPdfRenderer());
+                pdf,
+                orgIdentity);
 
-            return new Harness(db, invoices, inventory, ledger, tenant);
+            return new Harness(db, invoices, inventory, ledger, tenant, pdf);
         }
     }
 
@@ -633,8 +719,19 @@ public sealed class InvoicePostingTests
         public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) => Task.FromResult<Uri?>(null);
     }
 
+    /// <summary>
+    /// Keeps the model it was handed, so a test can read the seller block that
+    /// would have been printed.
+    /// </summary>
     private sealed class StubPdfRenderer : Sales.Api.Services.Pdf.IInvoicePdfRenderer
     {
-        public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model) => [];
+        public Sales.Api.Services.Pdf.PdfInvoiceModel? Rendered { get; private set; }
+
+        public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model)
+        {
+            Rendered = model;
+
+            return [];
+        }
     }
 }

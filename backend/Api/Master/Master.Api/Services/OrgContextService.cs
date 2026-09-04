@@ -35,6 +35,11 @@ public sealed class OrgContextService
                 o.BaseCurrency,
                 o.DiscountBeforeTax,
                 o.Vertical,
+                o.Gstin,
+                o.AddressLine1,
+                o.AddressLine2,
+                o.City,
+                o.PostalCode,
                 StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
@@ -119,6 +124,15 @@ public sealed class OrgContextService
             StateCode = row.StateCode,
             DiscountBeforeTax = row.DiscountBeforeTax,
             Vertical = row.Vertical.ToString(),
+            // The seller block on a printed tax invoice. Sales cannot read
+            // mst.Organizations, so the only alternative to carrying it here is
+            // the placeholder it used to print — an invoice headed "Our Company"
+            // with somebody else's GSTIN under it.
+            Gstin = row.Gstin,
+            AddressLine1 = row.AddressLine1,
+            AddressLine2 = row.AddressLine2,
+            City = row.City,
+            PostalCode = row.PostalCode,
         };
     }
 }

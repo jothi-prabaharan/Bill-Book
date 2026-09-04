@@ -212,4 +212,24 @@ public class OrgContextResponse
     /// decide which screens to offer, without reading the master database.
     /// </summary>
     public string Vertical { get; set; } = "General";
+
+    /// <summary>
+    /// The branch's own GSTIN, as it must appear on a tax invoice.
+    ///
+    /// Here for the same reason as the state code and the base currency: the
+    /// document that has to print it is raised in a per-customer service, and
+    /// <c>mst.Organizations</c> is a database that service cannot read. Null on
+    /// an unregistered branch, which prints as absent rather than as a
+    /// placeholder.
+    /// </summary>
+    public string? Gstin { get; set; }
+
+    /// <summary>The registered address, for the seller block on a printed document.</summary>
+    public string? AddressLine1 { get; set; }
+
+    public string? AddressLine2 { get; set; }
+
+    public string? City { get; set; }
+
+    public string? PostalCode { get; set; }
 }

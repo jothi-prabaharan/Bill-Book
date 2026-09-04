@@ -27,6 +27,24 @@ public sealed class StubBranchSettings(string stateCode = "33", bool discountBef
 }
 
 /// <summary>
+/// The branch, as the seller block on a printed invoice sees it.
+///
+/// <c>identity: null</c> stands for a branch Master could not resolve, which
+/// must stop the posting rather than print a placeholder.
+/// </summary>
+public sealed class StubOrgIdentity(OrgIdentity? identity = null) : IOrgIdentityProvider
+{
+    private readonly OrgIdentity _identity =
+        identity ?? new OrgIdentity(
+            "Test Traders", "33AAAAA0000A1Z5", "1 Test Street", null, "Chennai", "33", "600001");
+
+    public bool Resolves { get; init; } = true;
+
+    public Task<OrgIdentity?> GetIdentityAsync(CancellationToken ct = default) =>
+        Task.FromResult<OrgIdentity?>(Resolves ? _identity : null);
+}
+
+/// <summary>
 /// One 18% group, resolved for any date. Real rate resolution is effective-dated
 /// and lives in Accounting; what these tests need is that the service asks for a
 /// rate and uses the one it is given.

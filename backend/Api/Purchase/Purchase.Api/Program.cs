@@ -9,6 +9,7 @@ using Purchase.Api.Services;
 using Purchase.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Secrets;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -46,8 +47,10 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-// TODO: replace with the Key Vault-backed store before production.
-builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
+// Key Vault when KeyVault:Uri is set, configuration otherwise — and a
+// startup failure in Production if neither, rather than serving requests off
+// whatever configuration happens to hold. See SecretStoreRegistration.
+builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 
 // One shared tenant database now, so the connection string is fixed at
 // startup rather than resolved per request.

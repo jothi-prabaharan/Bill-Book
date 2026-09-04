@@ -19,7 +19,14 @@ public sealed class ContactsController : ControllerBase
 {
     private readonly ContactService _contacts;
 
-    public ContactsController(ContactService contacts) => _contacts = contacts;
+    /// <summary>Read for <c>Portal:BaseUrl</c> only — see GeneratePortalLink.</summary>
+    private readonly IConfiguration _configuration;
+
+    public ContactsController(ContactService contacts, IConfiguration configuration)
+    {
+        _contacts = contacts;
+        _configuration = configuration;
+    }
 
     /// <summary><paramref name="role"/> is customer, vendor, jobworker or prescriber.</summary>
     [HttpGet]
@@ -100,7 +107,24 @@ public sealed class ContactsController : ControllerBase
             return NotFound();
         }
 
-        return Ok(new { token });
+        // The token and, where the deployment says where the portal lives, the
+        // whole link.
+        //
+        // <b>Both, rather than one or the other.</b> A screen that has just
+        // generated the link knows its own origin and can compose it; an email
+        // sent to a contact cannot ask a browser anything, so somewhere the
+        // deployment has to say. `Portal:BaseUrl` is optional for exactly that
+        // reason — a development box with no portal deployed still gets a
+        // usable token, and does not get a link to a host that is not there.
+        string? baseUrl = _configuration["Portal:BaseUrl"]?.TrimEnd('/');
+
+        return Ok(new
+        {
+            token,
+            url = string.IsNullOrWhiteSpace(baseUrl)
+                ? null
+                : $"{baseUrl}/portal?token={Uri.EscapeDataString(token)}",
+        });
     }
 
     [HttpDelete("{contactId:long}")]

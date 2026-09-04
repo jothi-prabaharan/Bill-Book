@@ -3,6 +3,7 @@ using Inventory.Api.Services;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Secrets;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
@@ -33,7 +34,9 @@ builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
+// Key Vault when KeyVault:Uri is set, configuration otherwise — and a startup
+// failure in Production if neither. See SecretStoreRegistration.
+builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 
 // One shared tenant database now, so the connection string is fixed at
 // startup rather than resolved per organization.

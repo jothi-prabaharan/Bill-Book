@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Secrets;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
@@ -50,8 +51,10 @@ builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantCon
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
-// TODO: replace with the Key Vault-backed store before production.
-builder.Services.AddSingleton<ISecretStore, ConfigurationSecretStore>();
+// Key Vault when KeyVault:Uri is set, configuration otherwise — and a
+// startup failure in Production if neither, rather than serving requests off
+// whatever configuration happens to hold. See SecretStoreRegistration.
+builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 
 // One shared tenant database now, so the connection string is fixed at
 // startup rather than resolved per request.
@@ -111,6 +114,15 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
     .AddHttpMessageHandler<InternalKeyHandler>();
 
 builder.Services.AddHttpClient<IBranchSettingsProvider, HttpBranchSettingsProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// Who the branch is, for the seller block on a printed tax invoice. Same call
+// and the same six-hour cache as the branch settings above; mst.Organizations is
+// a database this service cannot read.
+builder.Services.AddHttpClient<IOrgIdentityProvider, HttpOrgIdentityProvider>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
 })
