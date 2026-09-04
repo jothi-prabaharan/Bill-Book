@@ -45,6 +45,13 @@ public sealed class AllocationsController : ControllerBase
                 TargetTransactionTypeCode = dto.TargetTransactionTypeCode,
                 TargetTransactionId = dto.TargetTransactionId,
                 Amount = dto.Amount,
+
+                // Both were accepted by the DTO, stored by the service and
+                // dropped here, so an allocation booked to a named date landed
+                // on today's and a reason typed by the user reached nothing.
+                // The columns existed throughout; only this mapping was short.
+                AllocationDate = dto.AllocationDate,
+                Notes = dto.Notes,
             },
             ct);
 

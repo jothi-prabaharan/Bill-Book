@@ -95,6 +95,17 @@
 
       <ng-template bbCellTemplate="status" let-row>
         <span [class]="statusTag(row.status)">{{ row.status }}</span>
+
+        @if (canAllocate(row)) {
+          <button
+            type="button"
+            class="btn btn-ghost inv-list__allocate"
+            [attr.aria-label]="'Allocate credits against ' + row.documentNo"
+            (click)="allocate(row, $event)"
+          >
+            Allocate
+          </button>
+        }
       </ng-template>
     </bb-data-grid>
 
@@ -113,3 +124,15 @@
     }
   </div>
 </section>
+
+<bb-allocation-modal
+  [open]="allocateOpen()"
+  [target]="allocateTarget()"
+  [rows]="allocateRows()"
+  [loading]="allocateLoading()"
+  [saving]="allocateSaving()"
+  [messages]="allocateMessages()"
+  [formats]="formatSettings.settings()"
+  (save)="onAllocate($event)"
+  (dismiss)="closeAllocate()"
+></bb-allocation-modal>

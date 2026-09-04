@@ -115,3 +115,10 @@
 .inv-list__muted {
   color: color-mix(in srgb, var(--color-text) 40%, transparent);
 }
+
+/* The row navigates to the invoice, so this sits inside the status cell and
+   stops the click itself. Ghost rather than secondary: it is one action among
+   the row's data, not a call to action competing with "New invoice". */
+.inv-list__allocate {
+  margin-left: var(--space-2);
+}

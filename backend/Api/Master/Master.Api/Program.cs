@@ -102,6 +102,7 @@ builder.Services.AddScoped<SignupService>();
 builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();
+builder.Services.AddScoped<FormatSettingsService>();
 builder.Services.AddScoped<SmtpSettingsService>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<LicenseService>();

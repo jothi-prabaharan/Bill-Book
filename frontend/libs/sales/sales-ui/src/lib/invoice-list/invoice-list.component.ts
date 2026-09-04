@@ -3,9 +3,14 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { readApiFailure } from '@bill-book/api-client';
+import { AllocationApiService, readApiFailure } from '@bill-book/api-client';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { InvoiceListItem, InvoiceService } from '@bill-book/sales-core';
 import {
+  AllocationModalComponent,
+  AllocationRow,
+  AllocationSubmission,
+  AllocationTarget,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
@@ -40,6 +45,7 @@ const PAGE_SIZE = 25;
     DataGridComponent,
     DataGridCellTemplateDirective,
     MessageBoxComponent,
+    AllocationModalComponent,
   ],
   templateUrl: './invoice-list.component.html',
   styleUrl: './invoice-list.component.scss',
@@ -47,6 +53,8 @@ const PAGE_SIZE = 25;
 export class InvoiceListComponent implements OnInit {
   private readonly invoices = inject(InvoiceService);
   private readonly router = inject(Router);
+  private readonly allocations = inject(AllocationApiService);
+  protected readonly formatSettings = inject(FormatSettingsService);
 
   protected readonly rows = signal<InvoiceListItem[]>([]);
   protected readonly total = signal(0);
@@ -55,6 +63,14 @@ export class InvoiceListComponent implements OnInit {
   protected readonly messages = signal<UiMessage[]>([]);
 
   protected readonly pageSize = PAGE_SIZE;
+
+  // --- Allocation modal -----------------------------------------------------
+  protected readonly allocateOpen = signal(false);
+  protected readonly allocateTarget = signal<AllocationTarget | null>(null);
+  protected readonly allocateRows = signal<readonly AllocationRow[]>([]);
+  protected readonly allocateLoading = signal(false);
+  protected readonly allocateSaving = signal(false);
+  protected readonly allocateMessages = signal<UiMessage[]>([]);
 
   /** Bound with ngModel, so they are plain fields rather than signals. */
   protected status = '';
@@ -142,6 +158,125 @@ export class InvoiceListComponent implements OnInit {
 
   protected create(): void {
     void this.router.navigate(['/sales/invoices/new']);
+  }
+
+  /**
+   * Whether this invoice can take an allocation at all.
+   *
+   * A draft owes nothing yet and a voided one never will, so neither is a
+   * receivable anything can be applied to. `settlementStatus` is absent for
+   * exactly those, which is why it is the test rather than `status`.
+   */
+  protected canAllocate(invoice: InvoiceListItem): boolean {
+    return invoice.settlementStatus === 'Unpaid' || invoice.settlementStatus === 'PartPaid';
+  }
+
+  /**
+   * Opens the modal for one invoice.
+   *
+   * **The cap comes from the ledger, not from this row.** The list was paged
+   * some time ago and a credit may have been applied since; reading the
+   * outstanding from `open-documents` at the moment the modal opens means the
+   * figure the user apportions against is the one the API will check the claim
+   * against.
+   */
+  protected async allocate(invoice: InvoiceListItem, event?: Event): Promise<void> {
+    // The row itself navigates to the invoice; the button must not.
+    event?.stopPropagation();
+
+    this.allocateOpen.set(true);
+    this.allocateLoading.set(true);
+    this.allocateMessages.set([]);
+    this.allocateRows.set([]);
+    this.allocateTarget.set(null);
+
+    try {
+      const open = await this.allocations.openDocuments(invoice.contactId);
+
+      const target = open.targets.find(
+        (doc) => doc.transactionTypeCode === 'INV' && doc.transactionId === invoice.invoiceId,
+      );
+
+      if (!target) {
+        this.allocateMessages.set([
+          {
+            tone: 'warning',
+            text: `${invoice.documentNo} has nothing left to settle.`,
+          },
+        ]);
+        return;
+      }
+
+      this.allocateTarget.set({
+        transactionTypeCode: target.transactionTypeCode,
+        transactionId: target.transactionId,
+        documentNo: target.documentNo,
+        documentDate: target.documentDate,
+        totalAmount: target.totalAmount,
+        outstandingAmount: target.unallocatedAmount,
+      });
+
+      this.allocateRows.set(
+        open.sources
+          .filter((source) => source.unallocatedAmount > 0)
+          .map((source) => ({
+            transactionTypeCode: source.transactionTypeCode,
+            transactionId: source.transactionId,
+            documentNo: source.documentNo,
+            documentDate: source.documentDate,
+            totalAmount: source.totalAmount,
+            outstandingAmount: source.unallocatedAmount,
+            allocatedAmount: 0,
+          })),
+      );
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateLoading.set(false);
+    }
+  }
+
+  protected closeAllocate(): void {
+    this.allocateOpen.set(false);
+  }
+
+  /**
+   * Posts the apportionment, one claim at a time.
+   *
+   * **Sequential rather than parallel**: each claim is checked against what is
+   * left at the moment it lands, so firing them together makes them race for
+   * the same remaining balance. The first refusal stops the run and is shown —
+   * the ones already posted stand, which is safe because the API replaces on
+   * (source, target) rather than appending, so a corrected retry does not
+   * double up.
+   */
+  protected async onAllocate(submission: AllocationSubmission): Promise<void> {
+    this.allocateSaving.set(true);
+    this.allocateMessages.set([]);
+
+    try {
+      for (const decision of submission.decisions) {
+        await this.allocations.allocate({
+          sourceTransactionTypeCode: decision.sourceTransactionTypeCode,
+          sourceTransactionId: decision.sourceTransactionId,
+          targetTransactionTypeCode: submission.target.transactionTypeCode,
+          targetTransactionId: submission.target.transactionId,
+          amount: decision.amount,
+          allocationDate: submission.allocationDate,
+          notes: submission.notes,
+        });
+      }
+
+      this.allocateOpen.set(false);
+      // The settlement column is now stale on every row this touched.
+      await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateSaving.set(false);
+    }
   }
 
   /**

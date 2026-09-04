@@ -40,14 +40,39 @@
       <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full text-right tabular-nums">{{ row.totalAmount | number:'1.2-2' }}</span>
     </ng-template>
     <ng-template bbCellTemplate="status" let-row="row">
-      <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">
-        <span class="tag" [ngClass]="{
-          'tag-neutral': row.status === 'Posted' || row.status === 'Closed' || row.status === 'PurchaseReturn',
-          'tag-accent': row.status === 'Open' || row.status === 'PartlyReceived',
-          'tag-outline': row.status === 'Draft' || row.status === 'Void'
-        }">{{ row.status }}</span>
+      <span class="flex items-center gap-2">
+        <span (click)="navigateToTransaction(row)" (keyup.enter)="navigateToTransaction(row)" tabindex="0" class="cursor-pointer block w-full">
+          <span class="tag" [ngClass]="{
+            'tag-neutral': row.status === 'Posted' || row.status === 'Closed' || row.status === 'PurchaseReturn',
+            'tag-accent': row.status === 'Open' || row.status === 'PartlyReceived',
+            'tag-outline': row.status === 'Draft' || row.status === 'Void'
+          }">{{ row.status }}</span>
+        </span>
+
+        @if (canAllocate(row)) {
+          <button
+            type="button"
+            class="btn btn-ghost whitespace-nowrap"
+            [attr.aria-label]="'Allocate credits against ' + row.documentNo"
+            (click)="allocate(row, $event)"
+          >
+            Allocate
+          </button>
+        }
       </span>
     </ng-template>
   </bb-data-grid>
 </div>
+
+<bb-allocation-modal
+  [open]="allocateOpen()"
+  [target]="allocateTarget()"
+  [rows]="allocateRows()"
+  [loading]="allocateLoading()"
+  [saving]="allocateSaving()"
+  [messages]="allocateMessages()"
+  [formats]="formatSettings.settings()"
+  (save)="onAllocate($event)"
+  (dismiss)="closeAllocate()"
+></bb-allocation-modal>
 

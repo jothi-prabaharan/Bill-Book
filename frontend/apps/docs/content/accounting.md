@@ -331,6 +331,22 @@ A claim can never exceed what a document still represents. That is enforced wher
 
 If a settlement is refused, the screen shows the server's own words — what the document was posted for, what has already been allocated, and what actually remains.
 
+## Settling from a document list
+
+The full workspace is for working through a contact's whole position. When you only want to settle **one** document, **Allocate** on a row of the invoice list or the purchase list opens the same apportionment in a dialog, without leaving the list.
+
+It is available on an invoice that is unpaid or part paid, and on a posted bill. A draft owes nothing yet and a voided document never will, so neither offers it.
+
+The dialog shows what the document was raised for, what is still owing, what you have apportioned so far, and what would be left — with the credits available to that contact listed beneath. **Allocate** is disabled until something is apportioned, and stays disabled if the total ever exceeds what the document still owes.
+
+**The balance it works against is read when the dialog opens, not taken from the row.** A list is a snapshot: a credit may have been applied since it was fetched, and apportioning against a figure that has moved is how you get a refusal you cannot explain. Reading it fresh means the amount on screen is the amount the server will check the claim against.
+
+You can book the allocation to a **date** other than today and leave a **note** saying why. Both are recorded against the allocation.
+
+Each credit is posted separately, one after another. If one is refused the rest stop and the reason is shown; the ones already applied stand, and correcting the figure and trying again does not double up — a claim replaces any earlier claim by the same credit against the same document rather than adding to it.
+
+Closing the dialog and reopening it starts clean, for the same reason the balance is re-read: whatever was on screen a moment ago may no longer be true.
+
 ## Undoing one
 
 An allocation is **voided, never deleted**, and a reason is required. The claim it held is released immediately — the money is free to allocate again — but the row stays, so what an invoice was settled against before a credit note was withdrawn remains answerable. Voiding needs the `accounting.void` permission, which is deliberately separate from the permission to make a settlement in the first place.

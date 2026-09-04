@@ -4,6 +4,14 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
 export interface AllocationRow {
+  /**
+   * The three-letter code the ledger knows the document by — `INV`, `BIL`,
+   * `CRN`. Required rather than optional because it is half the key
+   * `POST /api/allocations` takes: a row that cannot say what kind of document
+   * it is cannot be posted, and discovering that at the API is worse than not
+   * being able to build the row.
+   */
+  transactionTypeCode: string;
   transactionId: number;
   documentNo: string;
   documentDate: string;

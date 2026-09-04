@@ -1,0 +1,62 @@
+/* Only what the global `.dialog` shell does not already say. Layout and
+   spacing come from the theming utilities; every colour here is a token, so a
+   palette change reaches this modal without anyone editing it. */
+
+.allocation-modal {
+  /* Wider than the 440px default: the grid inside carries five money columns,
+     and at the default width they wrap into unreadable stacks. */
+  width: min(880px, 100%);
+  max-height: 90vh;
+}
+
+.allocation-modal__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+
+  dt {
+    font-size: 12px;
+    color: var(--color-neutral-600);
+    margin-bottom: var(--space-1);
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 600;
+    /* Money lines up only when the digits are the same width. */
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* The one state worth colouring: more claimed than the document owes. Save is
+   already disabled, so this explains the disabled button rather than being the
+   only warning. */
+.allocation-modal__over dd {
+  color: var(--color-danger);
+}
+
+.allocation-modal__body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.allocation-modal__fields {
+  gap: var(--space-3);
+}
+
+/* Full-screen sheet on a phone, per the house rule for modals. */
+@media (max-width: 640px) {
+  .allocation-modal {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: 100%;
+    border-radius: 0;
+  }
+}

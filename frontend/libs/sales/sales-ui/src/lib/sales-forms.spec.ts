@@ -119,6 +119,7 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
     outstanding: number,
     allocated: number,
   ): AllocationRow => ({
+    transactionTypeCode: 'INV',
     transactionId,
     documentNo: `INV-2026-${transactionId}`,
     documentDate: '2026-08-10',

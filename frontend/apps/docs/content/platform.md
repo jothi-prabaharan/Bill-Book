@@ -101,6 +101,24 @@ Set a GSTIN on a branch that holds its own registration — typically because it
 
 The financial year start month drives the year segment in generated numbers — April for India.
 
+## How dates and amounts are displayed
+
+Every screen draws dates, quantities and amounts the way the branch expects, and none of them decides that for itself. The settings come from the server when the app loads:
+
+| What | Where it comes from |
+|---|---|
+| Date pattern | The `format.date` setting, `dd/MM/yyyy` by default |
+| Currency symbol, and which side it sits | The branch's base currency |
+| Digit grouping | The base currency's grouping mask |
+| Decimal places on money | The base currency |
+| Decimal places on quantities and unit prices | The `quantity.decimals` and `unitPrice.decimals` settings |
+
+**Grouping follows the currency rather than a global preference.** The rupee groups by lakh and crore — ₹12,34,567.00 — and the dollar groups in thousands, and that difference is carried on the currency itself. A branch that changes its base currency gets the right grouping without anyone changing a setting.
+
+**Only the date pattern is a setting of its own**, because a date belongs to the branch rather than to a currency. Everything else was already recorded against the currency or the existing decimal settings, and duplicating it would have given two places to change one answer.
+
+Until the server answers, screens show the shipped defaults — Indian grouping, the rupee, `dd/MM/yyyy` — rather than blanks.
+
 ## Switching between branches
 
 **Switch to** moves you into another branch without signing out. You get a new session carrying that branch and the permissions you hold *there* — permissions are per branch, so the same person can be an accountant in one and a viewer in another.

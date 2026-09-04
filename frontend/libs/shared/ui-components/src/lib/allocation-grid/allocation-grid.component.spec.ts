@@ -4,6 +4,7 @@ import { AllocationGridComponent, AllocationRow } from './allocation-grid.compon
 
 function row(transactionId: number, outstanding: number, allocated = 0): AllocationRow {
   return {
+    transactionTypeCode: 'INV',
     transactionId,
     documentNo: `INV-${transactionId}`,
     documentDate: '2026-08-01',

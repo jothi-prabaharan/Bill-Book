@@ -1,6 +1,16 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit } from '@angular/core';
-import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
+import { Component, inject, OnInit, signal } from '@angular/core';
+import {
+  AllocationModalComponent,
+  AllocationRow,
+  AllocationSubmission,
+  AllocationTarget,
+  ColumnDef,
+  DataGridComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
+import { AllocationApiService, readApiFailure } from '@bill-book/api-client';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,12 +20,28 @@ import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purc
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-purchase-list',
   standalone: true,
-  imports: [DataGridComponent, CommonModule, RouterModule, FormsModule],
+  imports: [
+    DataGridComponent,
+    CommonModule,
+    RouterModule,
+    FormsModule,
+    AllocationModalComponent,
+  ],
   templateUrl: './purchase-list.page.html'
 })
 export class PurchaseListPage implements OnInit {
   private transactionService = inject(TransactionService);
   private router = inject(Router);
+  private readonly allocations = inject(AllocationApiService);
+  protected readonly formatSettings = inject(FormatSettingsService);
+
+  // --- Allocation modal -----------------------------------------------------
+  protected readonly allocateOpen = signal(false);
+  protected readonly allocateTarget = signal<AllocationTarget | null>(null);
+  protected readonly allocateRows = signal<readonly AllocationRow[]>([]);
+  protected readonly allocateLoading = signal(false);
+  protected readonly allocateSaving = signal(false);
+  protected readonly allocateMessages = signal<UiMessage[]>([]);
 
   transactions: PurchaseTransactionListItem[] = [];
   selectedType: string = '';
@@ -69,6 +95,119 @@ export class PurchaseListPage implements OnInit {
 
   navigateToTransaction(transaction: PurchaseTransactionListItem) {
     void this.router.navigate([this.getRouteForTransaction(transaction)]);
+  }
+
+  /**
+   * Only a posted bill is a payable anything can be applied to. A draft owes
+   * nothing yet and a voided one never will, and the other three document types
+   * on this list are not payables at all — a goods receipt moves stock, not
+   * money.
+   */
+  canAllocate(transaction: PurchaseTransactionListItem): boolean {
+    return transaction.transactionType === 'Bill' && transaction.status === 'Posted';
+  }
+
+  /**
+   * Opens the modal for one bill.
+   *
+   * **The cap comes from the ledger, not from this row.** This list carries no
+   * outstanding figure at all, and even where one exists it was fetched some
+   * time ago; reading it from `open-documents` as the modal opens means the
+   * balance the user apportions against is the one the API will check against.
+   */
+  async allocate(transaction: PurchaseTransactionListItem, event?: Event): Promise<void> {
+    // The cells navigate to the bill; the button must not.
+    event?.stopPropagation();
+
+    this.allocateOpen.set(true);
+    this.allocateLoading.set(true);
+    this.allocateMessages.set([]);
+    this.allocateRows.set([]);
+    this.allocateTarget.set(null);
+
+    try {
+      const open = await this.allocations.openDocuments(transaction.contactId);
+
+      const target = open.targets.find(
+        (doc) =>
+          doc.transactionTypeCode === 'BIL' && doc.transactionId === transaction.transactionId,
+      );
+
+      if (!target) {
+        this.allocateMessages.set([
+          { tone: 'warning', text: `${transaction.documentNo} has nothing left to settle.` },
+        ]);
+        return;
+      }
+
+      this.allocateTarget.set({
+        transactionTypeCode: target.transactionTypeCode,
+        transactionId: target.transactionId,
+        documentNo: target.documentNo,
+        documentDate: target.documentDate,
+        totalAmount: target.totalAmount,
+        outstandingAmount: target.unallocatedAmount,
+      });
+
+      this.allocateRows.set(
+        open.sources
+          .filter((source) => source.unallocatedAmount > 0)
+          .map((source) => ({
+            transactionTypeCode: source.transactionTypeCode,
+            transactionId: source.transactionId,
+            documentNo: source.documentNo,
+            documentDate: source.documentDate,
+            totalAmount: source.totalAmount,
+            outstandingAmount: source.unallocatedAmount,
+            allocatedAmount: 0,
+          })),
+      );
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateLoading.set(false);
+    }
+  }
+
+  closeAllocate(): void {
+    this.allocateOpen.set(false);
+  }
+
+  /**
+   * Posts the apportionment, one claim at a time.
+   *
+   * **Sequential rather than parallel**: each claim is checked against what is
+   * left at the moment it lands, so firing them together makes them race for
+   * the same remaining balance. A refusal stops the run; what already posted
+   * stands, which is safe because the API replaces on (source, target) rather
+   * than appending, so a corrected retry does not double up.
+   */
+  async onAllocate(submission: AllocationSubmission): Promise<void> {
+    this.allocateSaving.set(true);
+    this.allocateMessages.set([]);
+
+    try {
+      for (const decision of submission.decisions) {
+        await this.allocations.allocate({
+          sourceTransactionTypeCode: decision.sourceTransactionTypeCode,
+          sourceTransactionId: decision.sourceTransactionId,
+          targetTransactionTypeCode: submission.target.transactionTypeCode,
+          targetTransactionId: submission.target.transactionId,
+          amount: decision.amount,
+          allocationDate: submission.allocationDate,
+          notes: submission.notes,
+        });
+      }
+
+      this.allocateOpen.set(false);
+      this.loadTransactions();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateSaving.set(false);
+    }
   }
 }
 

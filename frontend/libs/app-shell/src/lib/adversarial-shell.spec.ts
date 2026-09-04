@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, Event as RouterEvent } from '@angular/router';
 import { Subject } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
@@ -55,6 +57,12 @@ describe('Adversarial Stress Test Suite: Milestone 3 App Shell', () => {
 
     TestBed.configureTestingModule({
       providers: [
+// The shell fetches the branch's display formats on boot, so it needs an
+// HttpClient. Testing backend rather than a real one: these specs assert
+// navigation and labels, and a stray request to a live backend would make them
+// depend on something none of them are about.
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: Router, useValue: mockRouter },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ElementRef, useValue: mockElementRef },

@@ -552,6 +552,29 @@ public class AdminDbContext : DbContext
                 Value = "30",
                 Category = "Documents",
                 IsSystem = true,
+            },
+
+            // The only display format the product did not already own.
+            //
+            // Currency and number formatting were never missing: mst.Currency
+            // carries Symbol, SymbolPosition, DecimalPlaces and Format — the
+            // grouping mask that distinguishes Indian ##,##,##0.00 from Western
+            // ###,###,##0.00 — and unitPrice.decimals and quantity.decimals
+            // above cover the non-money cases. Duplicating any of that into a
+            // config key would give two places to change a currency's rendering
+            // and no rule about which one wins. A date pattern belongs to the
+            // branch rather than to a currency, so it has nowhere else to live.
+            new Configuration
+            {
+                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000005"),
+                OrgId = null,
+                Code = "format.date",
+                Name = "Date Format",
+                Description = "Display pattern for dates, e.g. dd/MM/yyyy",
+                DataType = ConfigDataType.Text,
+                Value = "dd/MM/yyyy",
+                Category = "Formatting",
+                IsSystem = true,
             });
     }
 

@@ -128,6 +128,7 @@ export class CreditNoteFormComponent implements OnInit {
 
   private toAllocationRow(b: OutstandingBalance): AllocationRow {
     return {
+      transactionTypeCode: b.transactionTypeCode,
       transactionId: b.transactionId,
       documentNo: b.documentNo,
       documentDate: b.documentDate,

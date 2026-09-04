@@ -1,0 +1,111 @@
+@if (open()) {
+  <div class="dialog-backdrop" (click)="onDismiss()" (keydown)="onKeydown($event)" tabindex="-1">
+    <!-- Stops the click reaching the backdrop: keying an amount inside the
+         dialog would otherwise dismiss it through the overlay behind. -->
+    <div
+      class="dialog allocation-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Allocate credits"
+      (click)="$event.stopPropagation()"
+      (keydown)="onKeydown($event)"
+      tabindex="-1"
+    >
+      <header class="flex items-start justify-between gap-2">
+        <div class="min-w-0">
+          <h2 class="dialog-title">Allocate credits</h2>
+          @if (target(); as doc) {
+            <p class="note m-0">
+              Against {{ doc.documentNo }} &middot; {{ date(doc.documentDate) }}
+            </p>
+          }
+        </div>
+        <button type="button" class="btn btn-icon" aria-label="Close" (click)="onDismiss()">
+          &times;
+        </button>
+      </header>
+
+      <!-- Rule errors live here, field errors live on their fields. -->
+      <bb-message-box [messages]="allMessages()"></bb-message-box>
+
+      @if (target(); as doc) {
+        <dl class="allocation-modal__summary">
+          <div>
+            <dt>Document total</dt>
+            <dd>{{ money(doc.totalAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Still owing</dt>
+            <dd>{{ money(doc.outstandingAmount) }}</dd>
+          </div>
+          <div>
+            <dt>Allocated now</dt>
+            <dd>{{ money(totalAllocated()) }}</dd>
+          </div>
+          <div [class.allocation-modal__over]="isOver()">
+            <dt>Remaining</dt>
+            <dd>{{ money(remaining()) }}</dd>
+          </div>
+        </dl>
+      }
+
+      <div class="dialog-body allocation-modal__body">
+        @if (loading()) {
+          <p class="note text-center">Loading credits&hellip;</p>
+        } @else if (!target()) {
+          <p class="note text-center">No document selected.</p>
+        } @else if (draft().length === 0) {
+          <p class="note text-center">
+            There are no unallocated credits for this contact.
+          </p>
+        } @else {
+          <!-- The grid owns the arithmetic: each row capped by that credit's own
+               remaining amount, the sum capped by what the target still owes. -->
+          <bb-allocation-grid
+            [rows]="draft()"
+            [amountToAllocate]="outstanding()"
+            (rowsChange)="onRowsChange($event)"
+          ></bb-allocation-grid>
+        }
+      </div>
+
+      <div class="form-grid allocation-modal__fields">
+        <div class="field">
+          <label for="allocation-date">Allocation date</label>
+          <bb-date-input
+            id="allocation-date"
+            name="allocationDate"
+            ariaLabel="Allocation date"
+            [ngModel]="allocationDate()"
+            (valueChange)="allocationDate.set($event)"
+          ></bb-date-input>
+          <span class="hint">Leave empty to book it today.</span>
+        </div>
+
+        <div class="field">
+          <label for="allocation-notes">Notes</label>
+          <bb-text-input
+            id="allocation-notes"
+            name="notes"
+            ariaLabel="Notes"
+            [maxlength]="300"
+            [ngModel]="notes()"
+            (valueChange)="notes.set($event)"
+          ></bb-text-input>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" (click)="onDismiss()">Cancel</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!canSave()"
+          (click)="onSave()"
+        >
+          {{ saving() ? 'Allocating…' : 'Allocate' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

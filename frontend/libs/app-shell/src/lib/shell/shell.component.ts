@@ -3,6 +3,7 @@ import { Component, computed, inject, signal, ElementRef, HostListener } from '@
 import { Router, RouterOutlet } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { SearchInputComponent } from '@bill-book/ui-components';
 import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
 import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
@@ -32,6 +33,7 @@ export class ShellComponent {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  private readonly formats = inject(FormatSettingsService);
 
   private readonly all: NavItem[] = [
     { path: '/dashboard', label: 'Home', icon: 'home', module: null },
@@ -137,6 +139,13 @@ export class ShellComponent {
     void this.auth.accessibleOrganizations().then((orgs) => {
       this.allOrgs.set(orgs);
     });
+
+    // The branch's date and money formats, fetched once for every screen under
+    // the shell. Not awaited: the service starts at the shipped defaults, so a
+    // page that renders first shows the common case rather than blanks. Nothing
+    // resets it on an org switch because `pickOrg` reloads the window, which
+    // rebuilds the service along with everything else.
+    void this.formats.load();
 
     this.router.events.subscribe((event) => {
       if (event.constructor.name === 'NavigationEnd') {
