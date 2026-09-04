@@ -17,6 +17,15 @@
     <ProjectReference Include="..\Shared.Kernel.Tests\Shared.Kernel.Tests.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- The permission catalogue lives in Master, and the guard test asserts
+         that every module and permission these controllers demand is one the
+         catalogue seeds. A test's reference, never the service's — Accounting
+         does not read Master's DbContext at run time and must not. -->
+    <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
+  </ItemGroup>
+
 </Project>
 
 

@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
@@ -96,21 +95,39 @@ public sealed class SmtpSettingsController : ControllerBase
         await _service.DeleteOverrideAsync(customerId, ct) ? NoContent() : NotFound();
 
     /// <summary>
-    /// Proves the credentials work before anyone relies on them.
+    /// Proves the platform's own credentials work, before anyone relies on them.
     ///
-    /// The customer is a query parameter rather than a route value, so the
-    /// route attribute cannot see it and the check is written out here. Sending
-    /// as somebody else would use their mail account and their reputation.
+    /// <b>Two routes rather than one with a query parameter.</b> It was one, and
+    /// the authority was decided in the method body — <c>MaySendAs</c> read the
+    /// customer id off the query string and compared it to the token. That check
+    /// was correct and invisible: a controller guarded inside its method looks,
+    /// to a reader of attributes and to a test reflecting over them, exactly like
+    /// one guarded nowhere. It also asked only "is this your account", never "may
+    /// you send as it", so any signed-in user of a customer could send through
+    /// that customer's mail account and spend its reputation.
+    ///
+    /// Split, each half states its own authority where it can be seen and
+    /// asserted: the platform mailbox belongs to the operator, a customer's
+    /// mailbox to somebody who may edit that customer's settings.
     /// </summary>
-    [HttpPost("test")]
-    public async Task<IActionResult> SendTest(
-        [FromQuery] Guid? customerId, [FromBody] SendTestEmailRequest request, CancellationToken ct)
-    {
-        if (!MaySendAs(customerId))
-        {
-            return Forbid();
-        }
+    [RequirePermission("platform.edit")]
+    [HttpPost("default/test")]
+    public Task<IActionResult> SendTestFromDefault(
+        [FromBody] SendTestEmailRequest request, CancellationToken ct) =>
+        SendAsync(null, request, ct);
 
+    /// <summary>Proves a customer's own credentials work.</summary>
+    [CustomerRouteMustMatchToken]
+    [RequirePermission("settings.edit")]
+    [HttpPost("customers/{customerId:guid}/test")]
+    public Task<IActionResult> SendTestForCustomer(
+        Guid customerId, [FromBody] SendTestEmailRequest request, CancellationToken ct) =>
+        SendAsync(customerId, request, ct);
+
+    [NonAction]
+    private async Task<IActionResult> SendAsync(
+        Guid? customerId, SendTestEmailRequest request, CancellationToken ct)
+    {
         try
         {
             await _email.SendAsync(new EmailMessage
@@ -121,6 +138,7 @@ public sealed class SmtpSettingsController : ControllerBase
                 TextBody = "Your SMTP settings are working.",
                 CustomerId = customerId,
             }, ct);
+
             return Ok(new MessageResponse { Message = $"Test email sent to {request.ToEmail}." });
         }
         catch (Exception ex)
@@ -128,20 +146,5 @@ public sealed class SmtpSettingsController : ControllerBase
             // The reason matters here — the admin is debugging their own credentials.
             return BadRequest(new MessageResponse { Message = $"Send failed: {ex.Message}" });
         }
-    }
-
-    /// <summary>
-    /// No customer means the platform's own mailbox, which is the operator's.
-    /// Any other value has to be the caller's own account.
-    /// </summary>
-    private bool MaySendAs(Guid? customerId)
-    {
-        if (customerId is not Guid target)
-        {
-            return User.FindAll("permission")
-                .Any(c => string.Equals(c.Value, "platform.edit", StringComparison.OrdinalIgnoreCase));
-        }
-
-        return Guid.TryParse(User.FindFirstValue("customer_id"), out Guid caller) && caller == target;
     }
 }

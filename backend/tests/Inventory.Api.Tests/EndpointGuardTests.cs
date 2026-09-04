@@ -1,7 +1,7 @@
 using Shared.Kernel.Internal;
 using Xunit;
 
-namespace Reporting.Api.Tests;
+namespace Inventory.Api.Tests;
 
 /// <summary>
 /// Every endpoint in this service carries an authority check, and every
@@ -19,7 +19,7 @@ namespace Reporting.Api.Tests;
 public sealed class EndpointGuardTests
 {
     private static System.Reflection.Assembly Service =>
-        typeof(Reporting.Api.Controllers.ReportsController).Assembly;
+        typeof(Inventory.Api.Controllers.ItemCategoriesController).Assembly;
 
     [Fact]
     public void Every_endpoint_carries_a_guard()

@@ -130,7 +130,13 @@ export class SmtpSettingsPage implements OnInit {
     this.busy.set(true);
     try {
       const id = this.customerId();
-      const url = id ? `/api/smtp-settings/test?customerId=${id}` : '/api/smtp-settings/test';
+      // Two routes, because the two carry different authority: sending from
+      // the platform mailbox is the operator's, sending from a customer's is
+      // theirs. The server states each in an attribute rather than deciding
+      // between them from a query parameter.
+      const url = id
+        ? `/api/smtp-settings/customers/${id}/test`
+        : '/api/smtp-settings/default/test';
       const res = await this.req<{ message: string }>('POST', url, { toEmail: to });
       this.show(res.message, false);
     } catch (err: unknown) {
