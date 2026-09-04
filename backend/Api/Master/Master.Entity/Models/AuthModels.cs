@@ -44,6 +44,19 @@ public class SelectOrganizationRequest
     public Guid OrgId { get; set; }
 }
 
+/// <summary>
+/// A refresh token presented for rotation, or for logout.
+///
+/// <b>In the body, not a header or a query string.</b> A credential in a URL is
+/// written to every access log and proxy cache between the client and here.
+/// </summary>
+public class RefreshRequest
+{
+    [Required(ErrorMessage = "Refresh token is required.")]
+    [MaxLength(200, ErrorMessage = "Refresh token cannot exceed 200 characters.")]
+    public string RefreshToken { get; set; } = null!;
+}
+
 public class TokenResponse
 {
     public string AccessToken { get; set; } = null!;

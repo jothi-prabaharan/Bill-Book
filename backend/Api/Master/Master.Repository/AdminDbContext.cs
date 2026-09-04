@@ -255,8 +255,18 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<RefreshToken>(b =>
         {
             b.HasKey(e => e.RefreshTokenId);
-            b.HasIndex(e => e.TokenHash);
+
+            // Unique: the hash is how a presented token is found, and two rows
+            // sharing one would make "which token is this" ambiguous at exactly
+            // the moment it must not be. It also makes a replay of a hash that
+            // somehow got re-minted a write failure rather than a silent second
+            // session.
+            b.HasIndex(e => e.TokenHash).IsUnique();
             b.HasIndex(e => new { e.UserId, e.ExpiresAt });
+
+            // Reuse detection revokes a whole family at once, so the family is
+            // the access path.
+            b.HasIndex(e => e.FamilyId);
         });
 
         modelBuilder.Entity<LoginHistory>(b =>

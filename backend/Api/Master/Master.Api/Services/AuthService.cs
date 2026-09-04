@@ -138,6 +138,163 @@ public sealed class AuthService
     public async Task<TokenResponse> SelectOrganizationAsync(
         Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct)
     {
+        // A fresh sign-in into a branch starts a new family. Nothing links it to
+        // whatever chain the previous session was on, which is what makes a
+        // reuse of an old chain detectable rather than merely confusing.
+        return await IssueAsync(userId, orgId, Guid.NewGuid(), ip, userAgent, ct);
+    }
+
+    // ---- Refresh: rotation, with reuse detection --------------------------
+
+    /// <summary>
+    /// Exchanges a refresh token for a new access token and a new refresh token.
+    ///
+    /// <b>Rotation, not renewal.</b> The presented token is spent by this call:
+    /// it is revoked and a new one is issued in its place, in the same family.
+    /// A refresh token that stayed valid for its whole seven days would be a
+    /// seven-day credential sitting in browser storage, and stealing it once
+    /// would be worth as much as stealing the password.
+    ///
+    /// <b>Presenting a token that was already spent ends the whole family.</b>
+    /// Either it was stolen and is being replayed, or the legitimate client
+    /// replayed it — and nothing in the request distinguishes those, so the safe
+    /// reading is the hostile one. Revoking only the presented token would leave
+    /// whoever holds its successor still signed in, which is exactly the wrong
+    /// half to keep.
+    ///
+    /// <b>Two simultaneous refreshes cannot both succeed.</b> The revocation is a
+    /// guarded <c>ExecuteUpdate</c> whose row count is the answer: the first
+    /// caller updates one row and proceeds, the second updates none and is
+    /// refused. A read-then-write would let both pass the check before either
+    /// wrote, and two live chains from one token is the thing rotation exists to
+    /// prevent.
+    /// </summary>
+    public async Task<TokenResponse> RefreshAsync(
+        string presented, string? ip, string? userAgent, CancellationToken ct)
+    {
+        DateTimeOffset now = _clock.GetUtcNow();
+        string hash = HashUtil.Sha256(presented);
+
+        RefreshToken? token = await _db.RefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == hash, ct);
+
+        // No such token. Indistinguishable, deliberately, from an expired or a
+        // revoked one at the API surface — see AuthController.
+        if (token is null)
+        {
+            throw new InvalidRefreshTokenException();
+        }
+
+        if (token.RevokedAt is not null)
+        {
+            // Reuse. Everything still live in this family goes, including the
+            // successor the thief or the client is about to use.
+            await _db.RefreshTokens
+                .Where(t => t.FamilyId == token.FamilyId && t.RevokedAt == null)
+                .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
+
+            _db.LoginHistories.Add(new LoginHistory
+            {
+                UserId = token.UserId,
+                LoginAt = now,
+                IpAddress = ip,
+                UserAgent = userAgent,
+                IsSuccessful = false,
+                // The event, not the secret. Nothing here names the token.
+                FailureReason = "Refresh token reuse detected; session family revoked.",
+            });
+
+            await _db.SaveChangesAsync(ct);
+
+            throw new RefreshTokenReuseException();
+        }
+
+        if (token.ExpiresAt <= now)
+        {
+            throw new InvalidRefreshTokenException();
+        }
+
+        // The guard. One row updated means this caller won the race and owns the
+        // rotation; zero means someone else already spent this token between the
+        // read above and here, and this caller gets nothing.
+        int claimed = await _db.RefreshTokens
+            .Where(t => t.RefreshTokenId == token.RefreshTokenId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, now), ct);
+
+        if (claimed != 1)
+        {
+            throw new InvalidRefreshTokenException();
+        }
+
+        // ExecuteUpdate writes past the change tracker, so the entity we read is
+        // now stale. Detaching it stops a later SaveChanges writing the old
+        // RevokedAt back over the one just set.
+        _db.Entry(token).State = EntityState.Detached;
+
+        try
+        {
+            return await IssueAsync(token.UserId, token.OrgId, token.FamilyId, ip, userAgent, ct);
+        }
+        catch (NoOrganizationAccessException)
+        {
+            // Access to the branch was taken away while the session was live.
+            // The old token is already spent and no new one is issued, so the
+            // session ends here rather than refreshing into a branch the user no
+            // longer belongs to.
+            throw new InvalidRefreshTokenException();
+        }
+    }
+
+    /// <summary>
+    /// Ends a session: revokes the presented token and everything else in its
+    /// family.
+    ///
+    /// <b>The family, not the token.</b> Signing out on one device should not
+    /// leave the chain alive for whatever else holds a link in it; and since a
+    /// family is one sign-in, ending it is exactly what "sign out" means. Other
+    /// devices signed in separately have their own families and are untouched.
+    ///
+    /// Silent about whether the token was real. A logout that answered
+    /// differently for an unknown token would be an oracle for guessing them.
+    /// </summary>
+    public async Task LogoutAsync(string presented, CancellationToken ct)
+    {
+        string hash = HashUtil.Sha256(presented);
+
+        Guid? family = await _db.RefreshTokens
+            .Where(t => t.TokenHash == hash)
+            .Select(t => (Guid?)t.FamilyId)
+            .FirstOrDefaultAsync(ct);
+
+        if (family is not Guid familyId)
+        {
+            return;
+        }
+
+        await _db.RefreshTokens
+            .Where(t => t.FamilyId == familyId && t.RevokedAt == null)
+            .ExecuteUpdateAsync(set => set.SetProperty(t => t.RevokedAt, _clock.GetUtcNow()), ct);
+    }
+
+    /// <summary>
+    /// Mints an access token and a refresh token for one user in one branch.
+    ///
+    /// Shared by sign-in, branch switching and refresh, so all three produce
+    /// identical claims — a refreshed token that carried a different permission
+    /// set from the one it replaced would be a privilege change nobody asked
+    /// for, in either direction.
+    ///
+    /// <paramref name="familyId"/> is new for a sign-in and carried through for a
+    /// refresh, which is what keeps a rotated chain recognisable as one session.
+    /// </summary>
+    private async Task<TokenResponse> IssueAsync(
+        Guid userId,
+        Guid orgId,
+        Guid familyId,
+        string? ip,
+        string? userAgent,
+        CancellationToken ct)
+    {
         UserOrganizationRole? assignment = await _db.UserOrganizationRoles
             .FirstOrDefaultAsync(u => u.UserId == userId && u.OrgId == orgId && u.IsActive, ct);
         if (assignment is null)
@@ -153,6 +310,13 @@ public sealed class AuthService
         }
 
         User user = await _db.Users.FirstAsync(u => u.UserId == userId, ct);
+
+        if (!user.IsActive)
+        {
+            // A deactivated account must not be able to refresh its way past the
+            // deactivation. Sign-in already refuses one; this is the other door.
+            throw new NoOrganizationAccessException();
+        }
 
         List<string> permissions = await (
             from rp in _db.RolePermissions
@@ -178,6 +342,8 @@ public sealed class AuthService
         _db.RefreshTokens.Add(new RefreshToken
         {
             UserId = user.UserId,
+            OrgId = orgId,
+            FamilyId = familyId,
             TokenHash = hash,
             ExpiresAt = expiresAt,
             IpAddress = ip,

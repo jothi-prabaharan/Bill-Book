@@ -16,6 +16,7 @@ describe('ShellComponent (libs/app-shell)', () => {
     accessibleOrganizations: ReturnType<typeof vi.fn>;
     switchOrganization: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
   };
   let mockElementRef: ElementRef;
 
@@ -38,7 +39,10 @@ describe('ShellComponent (libs/app-shell)', () => {
       canView: vi.fn().mockReturnValue(true),
       accessibleOrganizations: vi.fn().mockResolvedValue(mockOrgs),
       switchOrganization: vi.fn().mockResolvedValue(undefined),
-      logout: vi.fn()
+      logout: vi.fn(),
+      // signOut, not logout: signing out revokes the token family server-side
+      // as well as clearing local storage.
+      signOut: vi.fn().mockResolvedValue(undefined)
     };
 
     const mockNativeElement = document.createElement('div');
@@ -154,7 +158,7 @@ describe('ShellComponent (libs/app-shell)', () => {
       const comp = createComponent();
       comp.logout();
 
-      expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
+      expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
       expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/login');
     });
   });

@@ -21,7 +21,7 @@ export class AppComponent {
   private readonly router = inject(Router);
 
   signOut(): void {
-    this.auth.logout();
+    void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
 }

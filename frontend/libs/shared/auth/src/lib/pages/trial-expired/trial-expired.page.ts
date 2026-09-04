@@ -49,7 +49,10 @@ export class TrialExpiredPage {
    * the user here. Saying so is better than leaving them to work it out.
    */
   logout(): void {
-    this.auth.logout();
+    // signOut, not logout: it revokes the token family server-side as well as
+    // clearing storage, so a refresh token left on a shared machine cannot be
+    // spent for the seven days it would otherwise stay live.
+    void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
 }

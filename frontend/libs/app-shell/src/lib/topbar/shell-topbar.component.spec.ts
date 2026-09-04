@@ -12,6 +12,7 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
     accessibleOrganizations: ReturnType<typeof vi.fn>;
     switchOrganization: ReturnType<typeof vi.fn>;
     logout: ReturnType<typeof vi.fn>;
+    signOut: ReturnType<typeof vi.fn>;
   };
   let mockElementRef: ElementRef;
 
@@ -33,6 +34,9 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
       accessibleOrganizations: vi.fn().mockResolvedValue(mockOrgs),
       switchOrganization: vi.fn().mockResolvedValue(undefined),
       logout: vi.fn(),
+      // signOut revokes the token family server-side as well as clearing
+      // storage, which is what "sign out" has to mean on a shared machine.
+      signOut: vi.fn().mockResolvedValue(undefined),
     };
 
     const mockNativeElement = document.createElement('div');
@@ -147,7 +151,7 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
 
     comp.doLogout();
     expect(loggedOut).toBe(true);
-    expect(mockAuthService.logout).toHaveBeenCalledTimes(1);
+    expect(mockAuthService.signOut).toHaveBeenCalledTimes(1);
     expect(mockRouter.navigateByUrl).toHaveBeenCalledWith('/login');
   });
 

@@ -40,6 +40,16 @@ describe('authInterceptor', () => {
     vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockImplementation(navigate);
   });
 
+  /**
+   * Lets the pending microtasks run.
+   *
+   * The refresh goes out from a promise (`firstValueFrom`), so it is not on the
+   * mock backend the instant the 401 is flushed — it arrives a microtask later.
+   * Without this the assertions run before the request exists and read as "no
+   * refresh was sent".
+   */
+  const tick = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
   const send = (): Promise<unknown> =>
     new Promise((resolve) => {
       http.get('/api/anything').subscribe({ next: resolve, error: resolve });
@@ -67,6 +77,115 @@ describe('authInterceptor', () => {
     expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
     await done;
+  });
+
+  it('refreshes and replays the request on a 401, rather than ending the session', async () => {
+    // The whole point of rotation. Before it, a fifteen-minute access token was
+    // a fifteen-minute session, because this branch sent the user to /login.
+    auth.accessToken.set('stale-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const done = send();
+
+    httpMock.expectOne('/api/anything').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await tick();
+
+    const refresh = httpMock.expectOne('/api/auth/refresh');
+    expect(refresh.request.body).toEqual({ refreshToken: 'a-refresh-token' });
+
+    refresh.flush({
+      accessToken: 'fresh-token',
+      refreshToken: 'a-new-refresh-token',
+      accessExpiresInSeconds: 900,
+      licenseStatus: 'Active',
+      licenseExpiry: null,
+      expiryIsBranchLevel: false,
+    });
+    await tick();
+
+    // Replayed with the new token, not the stale one.
+    const replay = httpMock.expectOne('/api/anything');
+    expect(replay.request.headers.get('Authorization')).toBe('Bearer fresh-token');
+    replay.flush({ ok: true });
+
+    await done;
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(auth.isAuthenticated()).toBe(true);
+
+    // The rotated token replaced the spent one. Keeping the old one would make
+    // the next refresh look like reuse and end the session.
+    expect(localStorage.getItem('bb.refresh')).toBe('a-new-refresh-token');
+  });
+
+  it('signs the user out when the refresh itself is refused', async () => {
+    auth.accessToken.set('stale-token');
+    localStorage.setItem('bb.refresh', 'a-spent-token');
+
+    const done = send();
+
+    httpMock.expectOne('/api/anything').flush(null, { status: 401, statusText: 'Unauthorized' });
+    await tick();
+
+    httpMock
+      .expectOne('/api/auth/refresh')
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    await done;
+
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(navigate).toHaveBeenCalledWith('/login');
+  });
+
+  it('does not try to refresh a 401 from an auth endpoint', async () => {
+    // /api/auth/refresh answering 401 must not start another refresh, or a
+    // spent token loops until the stack gives out.
+    auth.accessToken.set('a-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const done = new Promise((resolve) => {
+      http.post('/api/auth/select-organization', {}).subscribe({ next: resolve, error: resolve });
+    });
+
+    httpMock
+      .expectOne('/api/auth/select-organization')
+      .flush(null, { status: 401, statusText: 'Unauthorized' });
+
+    await done;
+
+    httpMock.verify();
+  });
+
+  it('sends one refresh for a burst of 401s, not one each', async () => {
+    // Two refreshes with the same token is precisely what the server reads as
+    // reuse — it would end the session this is trying to save.
+    auth.accessToken.set('stale-token');
+    localStorage.setItem('bb.refresh', 'a-refresh-token');
+
+    const first = send();
+    const second = send();
+
+    const failures = httpMock.match('/api/anything');
+    expect(failures.length).toBe(2);
+    failures.forEach((r) => r.flush(null, { status: 401, statusText: 'Unauthorized' }));
+    await tick();
+
+    const refreshes = httpMock.match('/api/auth/refresh');
+    expect(refreshes.length).toBe(1);
+
+    refreshes[0].flush({
+      accessToken: 'fresh-token',
+      refreshToken: 'a-new-refresh-token',
+      accessExpiresInSeconds: 900,
+      licenseStatus: 'Active',
+      licenseExpiry: null,
+      expiryIsBranchLevel: false,
+    });
+    await tick();
+
+    httpMock.match('/api/anything').forEach((r) => r.flush({ ok: true }));
+
+    await Promise.all([first, second]);
   });
 
   it('signs the user out and returns to login on 401', async () => {

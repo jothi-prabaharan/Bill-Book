@@ -143,6 +143,58 @@ public sealed class AuthController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Exchanges a refresh token for a new access token and a new refresh token.
+    ///
+    /// <b>Anonymous, because the access token it replaces has expired</b> — that
+    /// is the whole point of the call. The refresh token in the body is the
+    /// credential, and it is checked against the stored SHA-256 rather than
+    /// trusted.
+    ///
+    /// <b>Every refusal is the same 401 with the same message.</b> Unknown,
+    /// expired, revoked, replayed, or lost a race — the client does the same
+    /// thing in all five cases, and answering differently would tell whoever is
+    /// guessing which half of the guess was right. Reuse is distinguished in the
+    /// log and in <c>mst.LoginHistory</c>, never in the response.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request, CancellationToken ct)
+    {
+        try
+        {
+            TokenResponse response = await _auth.RefreshAsync(
+                request.RefreshToken, Ip(), UserAgent(), ct);
+
+            return Ok(response);
+        }
+        catch (AuthException)
+        {
+            return Unauthorized(new MessageResponse
+            {
+                Message = "Your session has ended. Please sign in again.",
+            });
+        }
+    }
+
+    /// <summary>
+    /// Ends the session: the presented refresh token and every other token in
+    /// its family are revoked.
+    ///
+    /// <b>Always 204, whether or not the token was real.</b> A logout that
+    /// answered differently for an unknown token would be a way to test guesses
+    /// at live ones, and there is nothing a caller can usefully do with the
+    /// difference anyway.
+    /// </summary>
+    [AllowAnonymous]
+    [HttpPost("logout")]
+    public async Task<IActionResult> Logout([FromBody] RefreshRequest request, CancellationToken ct)
+    {
+        await _auth.LogoutAsync(request.RefreshToken, ct);
+
+        return NoContent();
+    }
+
     /// <summary>The user on the access token, for endpoints that need no pre-auth step.</summary>
     private Guid? CallerUserId() =>
         Guid.TryParse(

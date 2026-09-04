@@ -285,7 +285,7 @@ export class ShellComponent {
   }
 
   logout(): void {
-    this.auth.logout();
+    void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
 }

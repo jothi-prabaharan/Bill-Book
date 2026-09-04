@@ -180,7 +180,9 @@ export class ShellTopbarComponent {
 
   doLogout(): void {
     this.logout.emit();
-    this.auth.logout();
+    // Revokes the session server-side too, so the refresh token cannot be spent
+    // after the user has walked away from the machine.
+    void this.auth.signOut();
     void this.router.navigateByUrl('/login');
   }
 }
