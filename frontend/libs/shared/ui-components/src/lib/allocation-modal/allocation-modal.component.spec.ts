@@ -101,14 +101,14 @@ describe('allocation modal rules', () => {
       // Posting a zero allocation is a refusal from the API, not a no-op, so it
       // is dropped here rather than by every host that opens the modal.
       expect(decisionsFrom([credit(1, 3000, 2500), credit(2, 3000, 0)])).toEqual([
-        { sourceTransactionTypeCode: 'CRN', sourceTransactionId: 1, amount: 2500 },
+        { transactionTypeCode: 'CRN', transactionId: 1, amount: 2500 },
       ]);
     });
 
-    it('carries the source type code the API keys on', () => {
+    it('carries the type code the API keys on', () => {
       const [decision] = decisionsFrom([credit(7, 500, 500)]);
-      expect(decision.sourceTransactionTypeCode).toBe('CRN');
-      expect(decision.sourceTransactionId).toBe(7);
+      expect(decision.transactionTypeCode).toBe('CRN');
+      expect(decision.transactionId).toBe(7);
     });
 
     it('emits nothing when every row is zero', () => {

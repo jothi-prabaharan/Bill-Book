@@ -39,6 +39,55 @@ export interface CreateAllocation {
   notes?: string | null;
 }
 
+/** One end of an allocation, named the way the API keys on it. */
+export interface AllocationEnd {
+  transactionTypeCode: string;
+  transactionId: number;
+}
+
+/**
+ * Which side of the ledger the document being settled sits on.
+ *
+ * `open-documents` splits by the direction the control balance runs, not by
+ * what a user would call a credit: an invoice is `Dr AR`, so it is a
+ * **target**; a bill is `Cr AP`, so it is a **source**. The words invert
+ * between receivables and payables, which is exactly why this is named and
+ * passed in rather than assumed.
+ */
+export type LedgerSide = 'source' | 'target';
+
+/**
+ * The body to post for one claim, with the two ends put on the right sides.
+ *
+ * **The order is not cosmetic.** The API replaces on the ordered pair
+ * (source, target), so posting a bill-and-its-debit-note one way round and the
+ * settlement workspace posting it the other would write two live rows for one
+ * economic fact, each unaware of the other. The workspace takes its source from
+ * `sources` and its target from `targets`; this keeps every caller to that same
+ * convention.
+ */
+export function allocationPair(
+  documentSide: LedgerSide,
+  document: AllocationEnd,
+  counterpart: AllocationEnd,
+  amount: number,
+  allocationDate: string | null = null,
+  notes: string | null = null,
+): CreateAllocation {
+  const source = documentSide === 'source' ? document : counterpart;
+  const target = documentSide === 'source' ? counterpart : document;
+
+  return {
+    sourceTransactionTypeCode: source.transactionTypeCode,
+    sourceTransactionId: source.transactionId,
+    targetTransactionTypeCode: target.transactionTypeCode,
+    targetTransactionId: target.transactionId,
+    amount,
+    allocationDate,
+    notes,
+  };
+}
+
 /**
  * The client behind the allocation modal, shared by `sal` and `pur`.
  *

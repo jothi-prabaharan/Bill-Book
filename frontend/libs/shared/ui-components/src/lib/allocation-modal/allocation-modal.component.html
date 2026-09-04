@@ -69,15 +69,14 @@
         }
       </div>
 
-      <div class="form-grid allocation-modal__fields">
+      <div class="form-grid allocation-modal__fields" [formGroup]="form">
         <div class="field">
           <label for="allocation-date">Allocation date</label>
           <bb-date-input
             id="allocation-date"
-            name="allocationDate"
+            class="input"
             ariaLabel="Allocation date"
-            [ngModel]="allocationDate()"
-            (valueChange)="allocationDate.set($event)"
+            formControlName="allocationDate"
           ></bb-date-input>
           <span class="hint">Leave empty to book it today.</span>
         </div>
@@ -86,11 +85,10 @@
           <label for="allocation-notes">Notes</label>
           <bb-text-input
             id="allocation-notes"
-            name="notes"
+            class="input"
             ariaLabel="Notes"
             [maxlength]="300"
-            [ngModel]="notes()"
-            (valueChange)="notes.set($event)"
+            formControlName="notes"
           ></bb-text-input>
         </div>
       </div>

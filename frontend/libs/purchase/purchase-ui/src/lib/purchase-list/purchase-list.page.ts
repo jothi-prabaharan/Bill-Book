@@ -9,7 +9,7 @@ import {
   DataGridComponent,
   UiMessage,
 } from '@bill-book/ui-components';
-import { AllocationApiService, readApiFailure } from '@bill-book/api-client';
+import { AllocationApiService, allocationPair, readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -128,7 +128,12 @@ export class PurchaseListPage implements OnInit {
     try {
       const open = await this.allocations.openDocuments(transaction.contactId);
 
-      const target = open.targets.find(
+      // **A bill is on the source side, not the target side.** open-documents
+      // splits by the direction the control balance runs: an invoice is Dr AR
+      // and lands in `targets`, but a bill is Cr AP and lands in `sources`. The
+      // words invert between receivables and payables, so looking for a bill
+      // among the targets finds nothing, every time.
+      const target = open.sources.find(
         (doc) =>
           doc.transactionTypeCode === 'BIL' && doc.transactionId === transaction.transactionId,
       );
@@ -149,16 +154,19 @@ export class PurchaseListPage implements OnInit {
         outstandingAmount: target.unallocatedAmount,
       });
 
+      // And what settles a bill — a debit note, an advance paid — carries a
+      // debit balance, so those are the `targets`. Mirror image of the invoice
+      // screen, for the same reason.
       this.allocateRows.set(
-        open.sources
-          .filter((source) => source.unallocatedAmount > 0)
-          .map((source) => ({
-            transactionTypeCode: source.transactionTypeCode,
-            transactionId: source.transactionId,
-            documentNo: source.documentNo,
-            documentDate: source.documentDate,
-            totalAmount: source.totalAmount,
-            outstandingAmount: source.unallocatedAmount,
+        open.targets
+          .filter((credit) => credit.unallocatedAmount > 0)
+          .map((credit) => ({
+            transactionTypeCode: credit.transactionTypeCode,
+            transactionId: credit.transactionId,
+            documentNo: credit.documentNo,
+            documentDate: credit.documentDate,
+            totalAmount: credit.totalAmount,
+            outstandingAmount: credit.unallocatedAmount,
             allocatedAmount: 0,
           })),
       );
@@ -189,15 +197,19 @@ export class PurchaseListPage implements OnInit {
 
     try {
       for (const decision of submission.decisions) {
-        await this.allocations.allocate({
-          sourceTransactionTypeCode: decision.sourceTransactionTypeCode,
-          sourceTransactionId: decision.sourceTransactionId,
-          targetTransactionTypeCode: submission.target.transactionTypeCode,
-          targetTransactionId: submission.target.transactionId,
-          amount: decision.amount,
-          allocationDate: submission.allocationDate,
-          notes: submission.notes,
-        });
+        // The bill posts as the source here, the credit as the target — the
+        // opposite of the invoice screen, and the same way round the settlement
+        // workspace pairs them.
+        await this.allocations.allocate(
+          allocationPair(
+            'source',
+            submission.target,
+            decision,
+            decision.amount,
+            submission.allocationDate,
+            submission.notes,
+          ),
+        );
       }
 
       this.allocateOpen.set(false);

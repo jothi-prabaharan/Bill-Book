@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AllocationApiService, readApiFailure } from '@bill-book/api-client';
+import { AllocationApiService, allocationPair, readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { InvoiceListItem, InvoiceService } from '@bill-book/sales-core';
 import {
@@ -257,15 +257,21 @@ export class InvoiceListComponent implements OnInit {
 
     try {
       for (const decision of submission.decisions) {
-        await this.allocations.allocate({
-          sourceTransactionTypeCode: decision.sourceTransactionTypeCode,
-          sourceTransactionId: decision.sourceTransactionId,
-          targetTransactionTypeCode: submission.target.transactionTypeCode,
-          targetTransactionId: submission.target.transactionId,
-          amount: decision.amount,
-          allocationDate: submission.allocationDate,
-          notes: submission.notes,
-        });
+        // An invoice is Dr AR, so open-documents lists it as a *target* and the
+        // credits settling it as sources. That is the same way round the
+        // settlement workspace posts them, which matters: the API replaces on
+        // the ordered pair, so the two screens disagreeing would write two live
+        // rows for one settlement.
+        await this.allocations.allocate(
+          allocationPair(
+            'target',
+            submission.target,
+            decision,
+            decision.amount,
+            submission.allocationDate,
+            submission.notes,
+          ),
+        );
       }
 
       this.allocateOpen.set(false);

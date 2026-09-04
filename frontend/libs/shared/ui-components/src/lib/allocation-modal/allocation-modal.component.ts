@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, output, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import {
   DEFAULT_FORMAT_SETTINGS,
   FormatSettings,
@@ -57,7 +57,7 @@ import {
   selector: 'bb-allocation-modal',
   standalone: true,
   imports: [
-    FormsModule,
+    ReactiveFormsModule,
     AllocationGridComponent,
     MessageBoxComponent,
     DateInputComponent,
@@ -103,8 +103,18 @@ export class AllocationModalComponent {
    */
   protected readonly draft = signal<AllocationRow[]>([]);
 
-  protected readonly allocationDate = signal<string | null>(null);
-  protected readonly notes = signal<string>('');
+  /**
+   * Reactive rather than `ngModel`, because that is how every other screen
+   * drives these inputs — `bb-date-input` and `bb-text-input` are value
+   * accessors and each of their existing callers reaches them through
+   * `formControlName`. A one-way `[ngModel]` would probably have worked; on a
+   * screen that moves money, matching the mechanism the rest of the product
+   * already exercises beats being fairly sure.
+   */
+  protected readonly form = new FormGroup({
+    allocationDate: new FormControl<string | null>(null),
+    notes: new FormControl<string>('', { nonNullable: true }),
+  });
 
   /** Set once Save has been attempted, so errors appear on submit rather than while typing. */
   protected readonly submitted = signal(false);
@@ -116,8 +126,7 @@ export class AllocationModalComponent {
     effect(() => {
       if (this.open()) {
         this.draft.set(this.rows().map((row) => ({ ...row, allocatedAmount: row.allocatedAmount || 0 })));
-        this.allocationDate.set(null);
-        this.notes.set('');
+        this.form.reset({ allocationDate: null, notes: '' });
         this.submitted.set(false);
       }
     });
@@ -174,8 +183,8 @@ export class AllocationModalComponent {
     this.save.emit({
       target,
       decisions: decisionsFrom(this.draft()),
-      allocationDate: this.allocationDate(),
-      notes: this.notes().trim() || null,
+      allocationDate: this.form.controls.allocationDate.value,
+      notes: this.form.controls.notes.value.trim() || null,
     });
   }
 }

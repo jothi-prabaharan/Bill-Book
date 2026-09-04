@@ -29,10 +29,20 @@ export interface AllocationTarget {
   outstandingAmount: number;
 }
 
-/** One allocation the user has decided on, ready to post. */
+/**
+ * One allocation the user has decided on: which credit, and how much of it.
+ *
+ * **Deliberately not called a source.** `open-documents` splits documents by
+ * the direction their control balance runs, and those words invert between
+ * receivables and payables — an invoice is a target and a bill is a source, so
+ * the credit settling one is a source and the credit settling the other is a
+ * target. Naming this end after a ledger side would be right on the sales
+ * screen and wrong on the purchase one. The host decides the sides with
+ * `allocationPair`; this just names the row.
+ */
 export interface AllocationDecision {
-  sourceTransactionTypeCode: string;
-  sourceTransactionId: number;
+  transactionTypeCode: string;
+  transactionId: number;
   amount: number;
 }
 
@@ -100,8 +110,8 @@ export function decisionsFrom(rows: readonly AllocationRow[]): AllocationDecisio
   return rows
     .filter((row) => (row.allocatedAmount || 0) > 0)
     .map((row) => ({
-      sourceTransactionTypeCode: row.transactionTypeCode,
-      sourceTransactionId: row.transactionId,
+      transactionTypeCode: row.transactionTypeCode,
+      transactionId: row.transactionId,
       amount: row.allocatedAmount,
     }));
 }
