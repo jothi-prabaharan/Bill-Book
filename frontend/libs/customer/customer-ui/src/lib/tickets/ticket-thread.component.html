@@ -1,35 +1,39 @@
-<div class="bb-card thread-container">
-  <div class="ticket-header">
-    <h3>{{ ticket.subject }}</h3>
-    <div class="ticket-meta">
-      <span class="badge status-{{ ticket.status | lowercase }}">{{ ticket.status }}</span>
-      <span class="badge priority-{{ ticket.priority | lowercase }}">{{ ticket.priority }}</span>
+<div class="thread-overlay">
+  <div class="thread-content bb-card">
+    <div class="header">
+      <h3>{{ _ticket()?.subject }} <span class="badge">{{ _ticket()?.status }}</span></h3>
+      <button class="bb-btn bb-btn-icon" (click)="closed.emit()">&times;</button>
     </div>
-  </div>
-  <p class="ticket-desc">{{ ticket.description }}</p>
-
-  <hr>
-
-  <div class="messages">
-    <div *ngIf="loading()" class="loading">Loading messages...</div>
     
-    <div class="message bb-card" *ngFor="let msg of messages()" [class.from-contact]="msg.authorType === 'Contact'">
-      <div class="msg-header">
-        <strong>{{ msg.authorType }}</strong>
-        <span class="date">{{ msg.createdAt | date:'short' }}</span>
+    <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
+    
+    <div *ngIf="loading()" class="loading-state">
+      <p>Loading thread...</p>
+    </div>
+
+    <div class="messages" *ngIf="!loading()">
+      <div *ngFor="let msg of messages()" class="message" [class.staff]="msg.authorType === 'User'">
+        <div class="meta">
+          <strong>{{ msg.authorType }}</strong> - {{ msg.createdAt | date:'short' }}
+        </div>
+        <div class="body">{{ msg.body }}</div>
       </div>
-      <div class="msg-body">{{ msg.body }}</div>
+      <div *ngIf="messages().length === 0" class="empty-state">
+        <p>No messages yet.</p>
+      </div>
     </div>
 
-    <div *ngIf="!loading() && messages().length === 0" class="empty-state">
-      No messages yet.
+    <div class="reply-box">
+      <textarea 
+        [disabled]="sending()"
+        [ngModel]="replyBody()" 
+        (ngModelChange)="replyBody.set($event)"
+        class="bb-input" 
+        rows="3" 
+        placeholder="Type a reply..."></textarea>
+      <button class="bb-btn bb-btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
+        {{ sending() ? 'Sending...' : 'Reply' }}
+      </button>
     </div>
-  </div>
-
-  <div class="reply-box">
-    <textarea [(ngModel)]="newMessage" class="bb-input" rows="3" placeholder="Type your reply..."></textarea>
-    <button class="bb-btn bb-btn-primary" [disabled]="sending() || !newMessage().trim()" (click)="sendMessage()">
-      {{ sending() ? 'Sending...' : 'Send Reply' }}
-    </button>
   </div>
 </div>

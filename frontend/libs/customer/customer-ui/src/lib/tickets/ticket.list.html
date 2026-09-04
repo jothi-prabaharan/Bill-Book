@@ -1,27 +1,31 @@
 <div class="tickets-container">
-  <div class="header-actions" *ngIf="!selectedTicket()">
-    <h2>Support Tickets</h2>
+  <div class="header-actions">
+    <h2>Tickets</h2>
     <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">New Ticket</button>
   </div>
-
-  <div *ngIf="!selectedTicket()">
-    <bb-data-grid
-      [data]="tickets()"
-      [columns]="columns"
-      gridCode="tickets-list"
-      [pageSize]="25"
-      [totalCount]="tickets().length"
-    >
-      <ng-template bbCellTemplate="actions" let-row="row">
-        <button class="bb-btn bb-btn-secondary" (click)="selectedTicket.set(row)">View Thread</button>
-      </ng-template>
-    </bb-data-grid>
+  
+  <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
+  
+  <div *ngIf="loading()" class="loading-state">
+    <p>Loading tickets...</p>
+  </div>
+  
+  <div *ngIf="!loading() && tickets().length === 0" class="empty-state">
+    <p>No tickets found.</p>
   </div>
 
-  <div *ngIf="selectedTicket() as ticket">
-    <button class="bb-btn bb-btn-secondary back-btn" (click)="selectedTicket.set(null)">← Back to Tickets</button>
-    <bb-ticket-thread [ticket]="ticket"></bb-ticket-thread>
-  </div>
+  <bb-data-grid
+    *ngIf="!loading() && tickets().length > 0"
+    [data]="tickets()"
+    [columns]="columns"
+    gridCode="tickets-list"
+    [pageSize]="25"
+    [totalCount]="tickets().length"
+  >
+    <ng-template bbCellTemplate="actions" let-row="row">
+      <button class="bb-btn bb-btn-secondary bb-btn-sm" (click)="viewThread(row)">View Thread</button>
+    </ng-template>
+  </bb-data-grid>
 </div>
 
 <bb-ticket-form 
@@ -29,3 +33,9 @@
   (saved)="onSaved()" 
   (cancelled)="showForm.set(false)">
 </bb-ticket-form>
+
+<bb-ticket-thread
+  *ngIf="selectedTicket()"
+  [ticket]="selectedTicket()!"
+  (closed)="selectedTicket.set(null)"
+></bb-ticket-thread>

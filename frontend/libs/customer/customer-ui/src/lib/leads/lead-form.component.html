@@ -2,47 +2,47 @@
   <div class="modal-content bb-card">
     <h3>New Lead</h3>
     
+    <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
+    
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>
-          Name
-          <input type="text" formControlName="name" class="bb-input">
-        </label>
+        <label>Name</label>
+        <div *ngIf="form.controls.name.invalid && (form.controls.name.touched || form.controls.name.dirty)" class="field-error">
+          Name is required
+        </div>
+        <bb-text-input formControlName="name"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Company Name
-          <input type="text" formControlName="companyName" class="bb-input">
-        </label>
+        <label>Company Name</label>
+        <bb-text-input formControlName="companyName"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Email
-          <input type="email" formControlName="email" class="bb-input">
-        </label>
+        <label>Email</label>
+        <div *ngIf="form.controls.email.invalid && (form.controls.email.touched || form.controls.email.dirty)" class="field-error">
+          Valid email is required
+        </div>
+        <bb-text-input type="email" formControlName="email"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Phone
-          <input type="tel" formControlName="phone" class="bb-input">
-        </label>
+        <label>Phone</label>
+        <bb-text-input type="tel" formControlName="phone"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Source
-          <select formControlName="source" class="bb-input">
-            <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
-          </select>
-        </label>
+        <label>Source</label>
+        <select formControlName="source" class="bb-select">
+          <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
+        </select>
       </div>
 
       <div class="actions">
         <button type="button" class="bb-btn bb-btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
-        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">Save</button>
+        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">
+          {{ saving() ? 'Saving...' : 'Save' }}
+        </button>
       </div>
     </form>
   </div>

@@ -2,40 +2,45 @@
   <div class="modal-content bb-card">
     <h3>New Ticket</h3>
     
+    <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
+    
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>
-          Subject
-          <input type="text" formControlName="subject" class="bb-input">
-        </label>
+        <label>Subject</label>
+        <div *ngIf="form.controls.subject.invalid && (form.controls.subject.touched || form.controls.subject.dirty)" class="field-error">
+          Subject is required
+        </div>
+        <bb-text-input formControlName="subject"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Description
-          <textarea formControlName="description" class="bb-input" rows="4"></textarea>
-        </label>
+        <label>Description</label>
+        <div *ngIf="form.controls.description.invalid && (form.controls.description.touched || form.controls.description.dirty)" class="field-error">
+          Description is required
+        </div>
+        <bb-text-input formControlName="description"></bb-text-input>
       </div>
 
       <div class="form-group">
-        <label>
-          Priority
-          <select formControlName="priority" class="bb-input">
-            <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
-          </select>
-        </label>
+        <label>Priority</label>
+        <select formControlName="priority" class="bb-select">
+          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
+        </select>
       </div>
 
       <div class="form-group">
-        <label for="ticketContact">
-          Contact ID (Lookup)
-        </label>
+        <label for="ticketContact">Contact</label>
+        <div *ngIf="form.controls.contactId.invalid && (form.controls.contactId.touched || form.controls.contactId.dirty)" class="field-error">
+          Contact is required
+        </div>
         <bb-master-select id="ticketContact" [masterType]="'contact'" formControlName="contactId"></bb-master-select>
       </div>
 
       <div class="actions">
         <button type="button" class="bb-btn bb-btn-secondary" (click)="cancelled.emit()" [disabled]="saving()">Cancel</button>
-        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">Save</button>
+        <button type="submit" class="bb-btn bb-btn-primary" [disabled]="form.invalid || saving()">
+          {{ saving() ? 'Saving...' : 'Save' }}
+        </button>
       </div>
     </form>
   </div>
