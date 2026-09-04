@@ -2,6 +2,7 @@ using Master.Api.Services;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Master.Repository;
 
 namespace Master.Api.Controllers;
 
@@ -46,9 +47,37 @@ public sealed class AuthController : ControllerBase
         {
             return StatusCode(StatusCodes.Status403Forbidden, new MessageResponse
             {
-                Message = "This account has no organization access.",
+                Message = "No active organizations found. Please contact support or the owner.",
             });
         }
+    }
+
+    /// <summary>
+    /// Frontend fetches this session state to drive its routing guards 
+    /// without decoding the JWT on the client side.
+    /// </summary>
+    [Authorize]
+    [HttpGet("session")]
+    public async Task<IActionResult> GetSessionState([FromServices] AdminDbContext db, CancellationToken ct)
+    {
+        if (CallerUserId() is not Guid userId)
+        {
+            return Unauthorized();
+        }
+
+        var user = await db.Users.FindAsync(new object[] { userId }, ct);
+        if (user == null || !user.IsActive)
+        {
+            return Unauthorized();
+        }
+
+        var orgs = await _auth.AccessibleOrgsAsync(userId, ct);
+
+        return Ok(new SessionStateResponse
+        {
+            LastAccessedOrgId = user.LastAccessedOrgId,
+            Organizations = orgs
+        });
     }
 
     /// <summary>Step two: exchange the pre-auth token + chosen org for access and refresh tokens.</summary>

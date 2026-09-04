@@ -90,12 +90,22 @@ public sealed class AuthService
             throw new NoOrganizationAccessException();
         }
 
+        Guid targetOrgId = user.LastAccessedOrgId.HasValue && orgs.Any(o => o.OrgId == user.LastAccessedOrgId.Value)
+            ? user.LastAccessedOrgId.Value
+            : orgs[0].OrgId;
+
+        TokenResponse tokens = await SelectOrganizationAsync(user.UserId, targetOrgId, ip, userAgent, ct);
+
         return new LoginResponse
         {
-            PreAuthToken = _tokens.CreatePreAuthToken(user.UserId, user.Email),
-            ExpiresInSeconds = 5 * 60,
-            Organizations = orgs,
-            RequiresOrgSelection = orgs.Count != 1 || orgs.Any(o => o.OrgName == "(unavailable)"),
+            AccessToken = tokens.AccessToken,
+            RefreshToken = tokens.RefreshToken,
+            AccessExpiresInSeconds = tokens.AccessExpiresInSeconds,
+            LicenseStatus = tokens.LicenseStatus,
+            LicenseExpiry = tokens.LicenseExpiry,
+            ExpiryIsBranchLevel = tokens.ExpiryIsBranchLevel,
+            CurrentOrgId = targetOrgId,
+            Organizations = orgs
         };
     }
 
@@ -310,6 +320,7 @@ public sealed class AuthService
         }
 
         User user = await _db.Users.FirstAsync(u => u.UserId == userId, ct);
+        user.LastAccessedOrgId = orgId;
 
         if (!user.IsActive)
         {

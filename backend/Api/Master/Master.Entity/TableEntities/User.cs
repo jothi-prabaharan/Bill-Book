@@ -38,5 +38,7 @@ public class User : AuditableEntity
 
     public DateTimeOffset? LockedOutUntil { get; set; }
 
+    public Guid? LastAccessedOrgId { get; set; }
+
     public DateTimeOffset? LastLoginAt { get; set; }
 }

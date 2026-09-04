@@ -24,16 +24,17 @@ public class AccessibleOrgDto
     public string RoleName { get; set; } = null!;
 }
 
-public class LoginResponse
+public class SessionStateResponse
 {
-    public string PreAuthToken { get; set; } = null!;
+    public Guid? LastAccessedOrgId { get; set; }
+    public IReadOnlyList<AccessibleOrgDto> Organizations { get; set; } = new List<AccessibleOrgDto>();
+}
 
-    public int ExpiresInSeconds { get; set; }
+public class LoginResponse : TokenResponse
+{
+    public Guid CurrentOrgId { get; set; }
 
     public IReadOnlyList<AccessibleOrgDto> Organizations { get; set; } = new List<AccessibleOrgDto>();
-
-    /// <summary>False when the user has exactly one org — the client auto-selects it.</summary>
-    public bool RequiresOrgSelection { get; set; }
 }
 
 // ---- Organization selection ---------------------------------------------
