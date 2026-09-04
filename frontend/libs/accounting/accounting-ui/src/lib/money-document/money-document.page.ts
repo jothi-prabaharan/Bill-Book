@@ -4,7 +4,26 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  AllocationModalComponent,
+  AllocationRow,
+  AllocationSubmission,
+  AllocationTarget,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  TextInputComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
+import {
+  AllocationApiService,
+  LedgerSide,
+  allocationPair,
+  locateDocument,
+  readApiFailure,
+} from '@bill-book/api-client';
+import { FormatSettingsService } from '@bill-book/currency-format';
 import { AllocationFormComponent } from '../allocation-form/allocation-form.component';
 import {
   MoneySource,
@@ -113,7 +132,7 @@ interface LineForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, AllocationFormComponent],
+  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, AllocationFormComponent, AllocationModalComponent],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })
@@ -153,6 +172,20 @@ export class MoneyDocumentPage implements OnInit {
   protected readonly allocating = signal(false);
   protected readonly message = signal<string | null>(null);
   protected readonly messageIsError = signal(false);
+
+  // --- Allocation modal -----------------------------------------------------
+  private readonly allocations = inject(AllocationApiService);
+  protected readonly formatSettings = inject(FormatSettingsService);
+
+  protected readonly allocateOpen = signal(false);
+  protected readonly allocateTarget = signal<AllocationTarget | null>(null);
+  protected readonly allocateRows = signal<readonly AllocationRow[]>([]);
+  protected readonly allocateLoading = signal(false);
+  protected readonly allocateSaving = signal(false);
+  protected readonly allocateMessages = signal<UiMessage[]>([]);
+
+  /** Which side the opened prepayment sits on, as `locateDocument` found it. */
+  protected readonly allocateSide = signal<LedgerSide>('source');
 
   statusFilter = '';
   protected editingId: number | null = null;
@@ -671,5 +704,126 @@ export class MoneyDocumentPage implements OnInit {
       this.http.request<T>(method, url, { body }).subscribe({ next: resolve, error: reject }),
     );
   }
-}
 
+  /**
+   * The transaction type code this screen's documents are known by in the
+   * ledger. Spend money and receive money are one component told which way
+   * round it is, and they post under different codes.
+   */
+  private get typeCode(): string {
+    return this.direction() === 'spend' ? 'SPM' : 'RCM';
+  }
+
+  /**
+   * A posted prepayment against a named contact is the only row here that can
+   * be allocated.
+   *
+   * A draft has not reached the ledger and a voided one holds nothing. A
+   * payment with no contact is a bank movement rather than a balance on
+   * somebody's account, so there is no position to settle it against.
+   */
+  protected canAllocate(row: MoneyDocumentListItem): boolean {
+    return row.status === 'Posted' && row.contactId !== null;
+  }
+
+  /**
+   * Applies an advance against what the contact owes, or is owed.
+   *
+   * <b>The side is derived, not assumed from the direction.</b> An advance
+   * received is Cr AR and lands among the sources; an advance paid is Dr AP and
+   * lands among the targets — so the answer does invert with the direction, but
+   * reading it off the payload means this screen never has to encode that, and
+   * cannot be wrong about it the way the purchase screen once was.
+   */
+  protected async allocate(row: MoneyDocumentListItem, event?: Event): Promise<void> {
+    event?.stopPropagation();
+
+    if (row.contactId === null) {
+      return;
+    }
+
+    this.allocateOpen.set(true);
+    this.allocateLoading.set(true);
+    this.allocateMessages.set([]);
+    this.allocateRows.set([]);
+    this.allocateTarget.set(null);
+
+    try {
+      const open = await this.allocations.openDocuments(row.contactId);
+      const located = locateDocument(open, this.typeCode, row.documentId);
+
+      if (!located) {
+        this.allocateMessages.set([
+          {
+            tone: 'warning',
+            text: `${row.transactionNo ?? 'This payment'} has nothing left to apply.`,
+          },
+        ]);
+        return;
+      }
+
+      this.allocateSide.set(located.side);
+
+      this.allocateTarget.set({
+        transactionTypeCode: located.document.transactionTypeCode,
+        transactionId: located.document.transactionId,
+        documentNo: located.document.documentNo,
+        documentDate: located.document.documentDate,
+        totalAmount: located.document.totalAmount,
+        outstandingAmount: located.document.unallocatedAmount,
+      });
+
+      this.allocateRows.set(
+        located.counterparts
+          .filter((counterpart) => counterpart.unallocatedAmount > 0)
+          .map((counterpart) => ({
+            transactionTypeCode: counterpart.transactionTypeCode,
+            transactionId: counterpart.transactionId,
+            documentNo: counterpart.documentNo,
+            documentDate: counterpart.documentDate,
+            totalAmount: counterpart.totalAmount,
+            outstandingAmount: counterpart.unallocatedAmount,
+            allocatedAmount: 0,
+          })),
+      );
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateLoading.set(false);
+    }
+  }
+
+  protected closeAllocate(): void {
+    this.allocateOpen.set(false);
+  }
+
+  /** One claim at a time, so they cannot race each other for the same balance. */
+  protected async onAllocate(submission: AllocationSubmission): Promise<void> {
+    this.allocateSaving.set(true);
+    this.allocateMessages.set([]);
+
+    try {
+      for (const decision of submission.decisions) {
+        await this.allocations.allocate(
+          allocationPair(
+            this.allocateSide(),
+            submission.target,
+            decision,
+            decision.amount,
+            submission.allocationDate,
+            submission.notes,
+          ),
+        );
+      }
+
+      this.allocateOpen.set(false);
+      await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.allocateMessages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.allocateSaving.set(false);
+    }
+  }
+}

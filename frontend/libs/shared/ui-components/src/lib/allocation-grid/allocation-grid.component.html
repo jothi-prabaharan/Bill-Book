@@ -1,10 +1,12 @@
 <div class="allocation-grid-container">
   <div class="allocation-header">
-    <div class="summary-info">
-      <div>Amount to Allocate: <strong>{{ amountToAllocate | number:'1.2-2' }}</strong></div>
-      <div>Allocated: <strong>{{ totalAllocated | number:'1.2-2' }}</strong></div>
-      <div>Remaining: <strong>{{ remainingToAllocate | number:'1.2-2' }}</strong></div>
-    </div>
+    @if (showSummary) {
+      <div class="summary-info">
+        <div>Amount to Allocate: <strong>{{ money(amountToAllocate) }}</strong></div>
+        <div>Allocated: <strong>{{ money(totalAllocated) }}</strong></div>
+        <div>Remaining: <strong>{{ money(remainingToAllocate) }}</strong></div>
+      </div>
+    }
     <button class="secondary" (click)="autoAllocate()" [disabled]="amountToAllocate <= 0 || rows.length === 0">Auto Allocate</button>
   </div>
 
@@ -25,10 +27,10 @@
       </tr>
       <tr *ngFor="let row of rows; let i = index" [class.fully-allocated]="row.outstandingAmount === row.allocatedAmount">
         <td>{{ row.documentNo }}</td>
-        <td>{{ row.documentDate | date }}</td>
-        <td>{{ row.dueDate | date }}</td>
-        <td class="number-cell">{{ row.totalAmount | number:'1.2-2' }}</td>
-        <td class="number-cell">{{ row.outstandingAmount | number:'1.2-2' }}</td>
+        <td>{{ date(row.documentDate) }}</td>
+        <td>{{ date(row.dueDate) }}</td>
+        <td class="number-cell">{{ money(row.totalAmount) }}</td>
+        <td class="number-cell">{{ money(row.outstandingAmount) }}</td>
         <td class="number-cell">
           <input 
             type="number" 

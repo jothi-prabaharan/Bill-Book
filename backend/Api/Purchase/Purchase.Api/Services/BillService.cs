@@ -602,6 +602,9 @@ public sealed class BillService
                 OrgId = orgId,
                 TransactionTypeCode = "BIL",
                 TransactionId = bill.BillId,
+                // The number on the document's face, so the ledger can report it
+                // without reaching into this service's schema to look it up.
+                DocumentNo = bill.DocumentNo,
                 LedgerDate = bill.DocumentDate,
                 ContactId = bill.ContactId,
                 SourceDocumentId = bill.BillId,
@@ -785,6 +788,9 @@ public sealed class BillService
                     OrgId = orgId,
                     TransactionTypeCode = "BIL",
                     TransactionId = bill.BillId,
+                    // The number on the document's face, so the ledger can report it
+                    // without reaching into this service's schema to look it up.
+                    DocumentNo = bill.DocumentNo,
                     LedgerDate = bill.DocumentDate,
                     ContactId = bill.ContactId,
                     SourceDocumentId = bill.BillId,

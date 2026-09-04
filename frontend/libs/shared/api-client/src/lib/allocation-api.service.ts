@@ -88,6 +88,51 @@ export function allocationPair(
   };
 }
 
+/** Where a document turned out to sit, and what it can be settled against. */
+export interface LocatedDocument {
+  side: LedgerSide;
+  document: OpenDocument;
+
+  /** Everything on the opposite side — the credits this document can take, or the debts it can cover. */
+  counterparts: OpenDocument[];
+}
+
+/**
+ * Finds a document in whichever half of `open-documents` it landed in.
+ *
+ * <b>Derived rather than declared, because declaring it is what went wrong.</b>
+ * The first cut of the purchase screen hardcoded "look in targets" from the
+ * invoice screen it was copied from, and a bill is never in targets — so every
+ * Allocate click reported nothing left to settle. The rule is not per screen
+ * and not per document type; it is simply the direction that document's control
+ * balance happens to run, which is a fact the payload already carries. Reading
+ * it off the payload means a screen cannot hold a stale opinion about it, and
+ * the counterparts come back from the opposite side by construction.
+ *
+ * Returns null when the document has nothing open — fully settled, or never
+ * posted — which is a thing to tell the user rather than an error.
+ */
+export function locateDocument(
+  open: OpenDocuments,
+  transactionTypeCode: string,
+  transactionId: number,
+): LocatedDocument | null {
+  const matches = (doc: OpenDocument): boolean =>
+    doc.transactionTypeCode === transactionTypeCode && doc.transactionId === transactionId;
+
+  const asTarget = open.targets.find(matches);
+  if (asTarget) {
+    return { side: 'target', document: asTarget, counterparts: open.sources };
+  }
+
+  const asSource = open.sources.find(matches);
+  if (asSource) {
+    return { side: 'source', document: asSource, counterparts: open.targets };
+  }
+
+  return null;
+}
+
 /**
  * The client behind the allocation modal, shared by `sal` and `pur`.
  *

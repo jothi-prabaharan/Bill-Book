@@ -3,7 +3,13 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { AllocationApiService, allocationPair, readApiFailure } from '@bill-book/api-client';
+import {
+  AllocationApiService,
+  LedgerSide,
+  allocationPair,
+  locateDocument,
+  readApiFailure,
+} from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { InvoiceListItem, InvoiceService } from '@bill-book/sales-core';
 import {
@@ -71,6 +77,9 @@ export class InvoiceListComponent implements OnInit {
   protected readonly allocateLoading = signal(false);
   protected readonly allocateSaving = signal(false);
   protected readonly allocateMessages = signal<UiMessage[]>([]);
+
+  /** Which side the opened document sits on, as `locateDocument` found it. */
+  protected readonly allocateSide = signal<LedgerSide>('target');
 
   /** Bound with ngModel, so they are plain fields rather than signals. */
   protected status = '';
@@ -193,39 +202,42 @@ export class InvoiceListComponent implements OnInit {
     try {
       const open = await this.allocations.openDocuments(invoice.contactId);
 
-      const target = open.targets.find(
-        (doc) => doc.transactionTypeCode === 'INV' && doc.transactionId === invoice.invoiceId,
-      );
+      // Which side this document sits on is read off the payload rather than
+      // assumed by this screen: an invoice is Dr AR and lands among the
+      // targets, a bill is Cr AP and lands among the sources, and a credit note
+      // is a source too. Deriving it means no screen can hold a stale opinion
+      // about the direction, and the counterparts arrive from the other side by
+      // construction.
+      const located = locateDocument(open, 'INV', invoice.invoiceId);
 
-      if (!target) {
+      if (!located) {
         this.allocateMessages.set([
-          {
-            tone: 'warning',
-            text: `${invoice.documentNo} has nothing left to settle.`,
-          },
+          { tone: 'warning', text: `${invoice.documentNo} has nothing left to settle.` },
         ]);
         return;
       }
 
+      this.allocateSide.set(located.side);
+
       this.allocateTarget.set({
-        transactionTypeCode: target.transactionTypeCode,
-        transactionId: target.transactionId,
-        documentNo: target.documentNo,
-        documentDate: target.documentDate,
-        totalAmount: target.totalAmount,
-        outstandingAmount: target.unallocatedAmount,
+        transactionTypeCode: located.document.transactionTypeCode,
+        transactionId: located.document.transactionId,
+        documentNo: located.document.documentNo,
+        documentDate: located.document.documentDate,
+        totalAmount: located.document.totalAmount,
+        outstandingAmount: located.document.unallocatedAmount,
       });
 
       this.allocateRows.set(
-        open.sources
-          .filter((source) => source.unallocatedAmount > 0)
-          .map((source) => ({
-            transactionTypeCode: source.transactionTypeCode,
-            transactionId: source.transactionId,
-            documentNo: source.documentNo,
-            documentDate: source.documentDate,
-            totalAmount: source.totalAmount,
-            outstandingAmount: source.unallocatedAmount,
+        located.counterparts
+          .filter((counterpart) => counterpart.unallocatedAmount > 0)
+          .map((counterpart) => ({
+            transactionTypeCode: counterpart.transactionTypeCode,
+            transactionId: counterpart.transactionId,
+            documentNo: counterpart.documentNo,
+            documentDate: counterpart.documentDate,
+            totalAmount: counterpart.totalAmount,
+            outstandingAmount: counterpart.unallocatedAmount,
             allocatedAmount: 0,
           })),
       );
@@ -264,7 +276,7 @@ export class InvoiceListComponent implements OnInit {
         // rows for one settlement.
         await this.allocations.allocate(
           allocationPair(
-            'target',
+            this.allocateSide(),
             submission.target,
             decision,
             decision.amount,

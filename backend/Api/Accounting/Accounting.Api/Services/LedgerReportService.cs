@@ -398,7 +398,12 @@ public sealed class LedgerReportService
                 g.Key.TransactionId,
                 TotalDebit = g.Sum(x => x.DebitAmountBase),
                 TotalCredit = g.Sum(x => x.CreditAmountBase),
-                MinDate = g.Min(x => x.LedgerDate)
+                MinDate = g.Min(x => x.LedgerDate),
+
+                // Every leg of one document carries the same number, so Max is
+                // "the one that is there", and it survives a group whose older
+                // legs predate the column and hold null.
+                DocumentNo = g.Max(x => x.DocumentNo)
             })
             .ToListAsync(ct);
 
@@ -416,7 +421,10 @@ public sealed class LedgerReportService
                     ContactId = l.ContactId,
                     TransactionTypeCode = l.TransactionTypeCode,
                     TransactionId = l.TransactionId,
-                    DocumentNo = $"{l.TransactionTypeCode}-{l.TransactionId}", // fallback
+                    // What the poster called it. The type-and-id label is only
+                    // a stand-in for rows written before the ledger carried a
+                    // document number.
+                    DocumentNo = l.DocumentNo ?? $"{l.TransactionTypeCode}-{l.TransactionId}",
                     DocumentDate = l.MinDate,
                     DueDate = null,
                     TotalAmount = totalAmount,
@@ -440,7 +448,12 @@ public sealed class LedgerReportService
                 g.Key.TransactionId,
                 TotalDebit = g.Sum(x => x.DebitAmountBase),
                 TotalCredit = g.Sum(x => x.CreditAmountBase),
-                MinDate = g.Min(x => x.LedgerDate)
+                MinDate = g.Min(x => x.LedgerDate),
+
+                // Every leg of one document carries the same number, so Max is
+                // "the one that is there", and it survives a group whose older
+                // legs predate the column and hold null.
+                DocumentNo = g.Max(x => x.DocumentNo)
             })
             .ToListAsync(ct);
 
@@ -458,7 +471,10 @@ public sealed class LedgerReportService
                     ContactId = contactId,
                     TransactionTypeCode = l.TransactionTypeCode,
                     TransactionId = l.TransactionId,
-                    DocumentNo = $"{l.TransactionTypeCode}-{l.TransactionId}", // fallback
+                    // What the poster called it. The type-and-id label is only
+                    // a stand-in for rows written before the ledger carried a
+                    // document number.
+                    DocumentNo = l.DocumentNo ?? $"{l.TransactionTypeCode}-{l.TransactionId}",
                     DocumentDate = l.MinDate,
                     DueDate = null,
                     TotalAmount = totalAmount,

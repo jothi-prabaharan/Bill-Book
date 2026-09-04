@@ -1245,6 +1245,9 @@ public sealed class InvoiceService : IInvoiceService
             OrgId = invoice.OrgId,
             TransactionTypeCode = invoice.TransactionTypeCode,
             TransactionId = invoice.InvoiceId,
+            // The number on the document's face, so the ledger can report it
+            // without reaching into this service's schema to look it up.
+            DocumentNo = invoice.DocumentNo,
             LedgerDate = invoice.DocumentDate,
             CurrencyCode = invoice.CurrencyCode == baseCurrency ? null : invoice.CurrencyCode,
             ExchangeRate = invoice.CurrencyCode == baseCurrency ? null : invoice.ExchangeRate,
@@ -1484,6 +1487,9 @@ public sealed class InvoiceService : IInvoiceService
                     OrgId = orgId,
                     TransactionTypeCode = invoice.TransactionTypeCode,
                     TransactionId = invoice.InvoiceId,
+                    // The number on the document's face, so the ledger can report it
+                    // without reaching into this service's schema to look it up.
+                    DocumentNo = invoice.DocumentNo,
                     LedgerDate = invoice.DocumentDate,
                     ContactId = invoice.ContactId,
                     SourceDocumentId = invoice.InvoiceId,

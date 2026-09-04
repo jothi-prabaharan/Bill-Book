@@ -333,9 +333,18 @@ If a settlement is refused, the screen shows the server's own words — what the
 
 ## Settling from a document list
 
-The full workspace is for working through a contact's whole position. When you only want to settle **one** document, **Allocate** on a row of the invoice list or the purchase list opens the same apportionment in a dialog, without leaving the list.
+The full workspace is for working through a contact's whole position. When you only want to settle **one** document, **Allocate** opens the same apportionment in a dialog, without leaving the list you are on. It is offered in four places:
 
-It is available on an invoice that is unpaid or part paid, and on a posted bill. A draft owes nothing yet and a voided document never will, so neither offers it.
+| Where | On what |
+|---|---|
+| Invoices | An invoice that is unpaid or part paid |
+| Purchase | A posted bill |
+| Sales | A posted credit note — which invoices does this note cover |
+| Spend / receive money | A posted advance against a named contact |
+
+A draft has not reached the ledger and a voided document holds nothing, so neither offers it. A payment with no contact is a bank movement rather than a balance on somebody's account, so it has no position to settle against.
+
+**Which way round a document is applied is worked out for you.** An invoice takes credits; a credit note gives them; a bill is owed and an advance pays it. The screen reads that from the document's own balance rather than from which list you happened to open, so the same settlement is recorded identically wherever you start it.
 
 The dialog shows what the document was raised for, what is still owing, what you have apportioned so far, and what would be left — with the credits available to that contact listed beneath. **Allocate** is disabled until something is apportioned, and stays disabled if the total ever exceeds what the document still owes.
 

@@ -2,6 +2,12 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import {
+  DEFAULT_FORMAT_SETTINGS,
+  FormatSettings,
+  formatDate,
+  formatNumber,
+} from '@bill-book/currency-format';
 
 export interface AllocationRow {
   /**
@@ -49,7 +55,35 @@ export class AllocationGridComponent {
     return this._amountToAllocate;
   }
 
+  /**
+   * The branch's formats. Without this the grid drew Western thousands and a
+   * US-style date beside a host showing Indian lakhs and dd/MM/yyyy — three
+   * formats for the same figures on one screen, which a screenshot found and
+   * no unit test could have.
+   */
+  @Input() formats: FormatSettings = DEFAULT_FORMAT_SETTINGS;
+
+  /**
+   * Whether to draw the grid's own Amount/Allocated/Remaining bar.
+   *
+   * A host with its own summary — the allocation modal has a richer one,
+   * carrying the document total and what it still owes — would otherwise show
+   * the same three figures twice. Defaults to true so every existing caller is
+   * untouched.
+   */
+  @Input() showSummary = true;
+
   @Output() rowsChange = new EventEmitter<AllocationRow[]>();
+
+  /** Money the branch's way: symbol, decimals and lakh-or-thousands grouping. */
+  money(value: number | null | undefined): string {
+    return formatNumber(value, this.formats.currencyDecimals, this.formats.currencyMask);
+  }
+
+  /** A DateOnly in the branch's pattern, without a timezone shifting the day. */
+  date(value: string | null | undefined): string {
+    return formatDate(value, this.formats.datePattern);
+  }
 
   get totalAllocated(): number {
     return this.rows.reduce((sum, r) => sum + (r.allocatedAmount || 0), 0);

@@ -78,6 +78,17 @@ public class PostLedgerRequest
     public long? SourceDocumentId { get; set; }
 
     /// <summary>
+    /// What the document is called on its face — <c>INV-2026-0042</c>. Supplied
+    /// by the poster because Accounting has no way to look it up: the number
+    /// lives in the calling service's own schema, and reaching for it would
+    /// either cross a DbContext boundary or invert the dependency between the
+    /// services. Optional, so an existing caller that does not send one still
+    /// posts; the reports fall back to a type-and-id label when it is absent.
+    /// </summary>
+    [MaxLength(30, ErrorMessage = "Document number cannot exceed 30 characters.")]
+    public string? DocumentNo { get; set; }
+
+    /// <summary>
     /// The manual journal behind this posting. Set only when
     /// <see cref="LedgerSourceId"/> is 12 (Journal) — it is what lets a ledger
     /// row drill back to the journal that wrote it rather than only to a

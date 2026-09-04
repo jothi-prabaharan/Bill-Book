@@ -222,6 +222,7 @@ public sealed class LedgerPostingService
                 LedgerSourceId = leg.LedgerSourceId,
                 SourceDocumentId = request.SourceDocumentId,
                 TransactionDesc = leg.TransactionDesc,
+                DocumentNo = request.DocumentNo,
                 JournalId = request.JournalId,
             });
 

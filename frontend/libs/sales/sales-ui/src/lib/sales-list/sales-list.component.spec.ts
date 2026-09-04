@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { of } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
@@ -65,6 +67,12 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        // The sales list fetches a contact's open documents to offer Allocate,
+        // so it needs an HttpClient. Testing backend rather than a real one:
+        // these specs are about filtering and routing, and a stray request
+        // would make them depend on something they are not about.
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: TransactionService, useValue: mockTransactionService },
         { provide: Router, useValue: mockRouter }
       ]

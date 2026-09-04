@@ -407,6 +407,9 @@ public sealed class DeliveryChallanService
                 OrgId = deliveryChallan.OrgId,
                 TransactionTypeCode = deliveryChallan.TransactionTypeCode,
                 TransactionId = deliveryChallan.DeliveryChallanId,
+                // The number on the document's face, so the ledger can report it
+                // without reaching into this service's schema to look it up.
+                DocumentNo = deliveryChallan.DocumentNo,
                 LedgerDate = deliveryChallan.DocumentDate,
                 CurrencyCode = deliveryChallan.CurrencyCode == baseCurrency ? null : deliveryChallan.CurrencyCode,
                 ExchangeRate = deliveryChallan.CurrencyCode == baseCurrency ? null : deliveryChallan.ExchangeRate,

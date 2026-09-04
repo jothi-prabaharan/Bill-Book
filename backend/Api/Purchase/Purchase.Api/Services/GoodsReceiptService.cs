@@ -506,6 +506,9 @@ public sealed class GoodsReceiptService
                     OrgId = orgId,
                     TransactionTypeCode = "GRN",
                     TransactionId = receipt.GoodsReceiptId,
+                    // The number on the document's face, so the ledger can report it
+                    // without reaching into this service's schema to look it up.
+                    DocumentNo = receipt.DocumentNo,
                     LedgerDate = receipt.DocumentDate,
                     ContactId = receipt.ContactId,
                     SourceDocumentId = receipt.GoodsReceiptId,

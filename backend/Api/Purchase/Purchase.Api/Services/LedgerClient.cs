@@ -72,6 +72,15 @@ public sealed class PostLedgerRequest
 
     public long? SourceDocumentId { get; set; }
 
+    /// <summary>
+    /// What the document is called on its face — <c>INV-2026-0042</c>.
+    /// Accounting cannot look this up: the number lives in this service's own
+    /// schema, and reaching for it would cross a DbContext boundary or invert
+    /// the dependency between the two. So it is sent once, at post time, and
+    /// the ledger keeps it for every report that has to name the document.
+    /// </summary>
+    public string? DocumentNo { get; set; }
+
     /// <summary>Which leg types to clear when <see cref="Legs"/> is empty — a withdrawal.</summary>
     public List<int> WithdrawLedgerTypeIds { get; set; } = [];
 

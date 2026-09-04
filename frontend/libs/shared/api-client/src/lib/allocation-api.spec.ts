@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allocationPair } from './allocation-api.service';
+import { OpenDocument, OpenDocuments, allocationPair, locateDocument } from './allocation-api.service';
 
 /**
  * The one thing about allocation that is easy to get backwards and expensive
@@ -67,5 +67,69 @@ describe('allocationPair', () => {
       allocationDate: null,
       notes: null,
     });
+  });
+});
+
+describe('locateDocument', () => {
+  const doc = (code: string, id: number): OpenDocument => ({
+    transactionTypeCode: code,
+    transactionId: id,
+    documentNo: `${code}-${id}`,
+    documentDate: '2026-09-01',
+    totalAmount: 1000,
+    allocatedAmount: 0,
+    unallocatedAmount: 1000,
+    settlementStatus: 'Unallocated',
+  });
+
+  const open: OpenDocuments = {
+    contactId: 5,
+    // As the API splits them: debit balances are targets, credit balances sources.
+    targets: [doc('INV', 42), doc('DBN', 3)],
+    sources: [doc('CRN', 7), doc('BIL', 90)],
+    totalOutstanding: 2000,
+    totalAvailableCredit: 2000,
+  };
+
+  it('finds an invoice on the target side and offers the sources against it', () => {
+    const found = locateDocument(open, 'INV', 42);
+    expect(found?.side).toBe('target');
+    expect(found?.counterparts.map((c) => c.transactionTypeCode)).toEqual(['CRN', 'BIL']);
+  });
+
+  it('finds a bill on the source side and offers the targets against it', () => {
+    // The case the first cut of the purchase screen got wrong by assuming the
+    // invoice screen's answer. Nothing here is per-screen: it is read off the
+    // payload.
+    const found = locateDocument(open, 'BIL', 90);
+    expect(found?.side).toBe('source');
+    expect(found?.counterparts.map((c) => c.transactionTypeCode)).toEqual(['INV', 'DBN']);
+  });
+
+  it('finds a credit note on the source side', () => {
+    expect(locateDocument(open, 'CRN', 7)?.side).toBe('source');
+  });
+
+  it('returns null when the document has nothing open', () => {
+    // Fully settled or never posted — something to tell the user, not an error.
+    expect(locateDocument(open, 'INV', 999)).toBeNull();
+  });
+
+  it('does not confuse two documents sharing an id across types', () => {
+    // INV-42 and a hypothetical BIL-42 are different documents; the type code is
+    // half the key, and matching on id alone would settle the wrong one.
+    const clash: OpenDocuments = { ...open, sources: [doc('BIL', 42)] };
+    expect(locateDocument(clash, 'BIL', 42)?.side).toBe('source');
+    expect(locateDocument(clash, 'INV', 42)?.side).toBe('target');
+  });
+
+  it('pairs correctly when fed straight into allocationPair', () => {
+    // The two functions are meant to be used together: whatever side the
+    // document was found on is the side it posts on.
+    const bill = locateDocument(open, 'BIL', 90);
+    const pair = allocationPair(bill!.side, bill!.document, bill!.counterparts[0], 500);
+
+    expect(pair.sourceTransactionTypeCode).toBe('BIL');
+    expect(pair.targetTransactionTypeCode).toBe('INV');
   });
 });

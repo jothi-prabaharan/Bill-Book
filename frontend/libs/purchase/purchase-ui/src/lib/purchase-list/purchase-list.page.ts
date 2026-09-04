@@ -9,7 +9,13 @@ import {
   DataGridComponent,
   UiMessage,
 } from '@bill-book/ui-components';
-import { AllocationApiService, allocationPair, readApiFailure } from '@bill-book/api-client';
+import {
+  AllocationApiService,
+  LedgerSide,
+  allocationPair,
+  locateDocument,
+  readApiFailure,
+} from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
@@ -42,6 +48,9 @@ export class PurchaseListPage implements OnInit {
   protected readonly allocateLoading = signal(false);
   protected readonly allocateSaving = signal(false);
   protected readonly allocateMessages = signal<UiMessage[]>([]);
+
+  /** Which side the opened document sits on, as `locateDocument` found it. */
+  protected readonly allocateSide = signal<LedgerSide>('target');
 
   transactions: PurchaseTransactionListItem[] = [];
   selectedType: string = '';
@@ -128,45 +137,42 @@ export class PurchaseListPage implements OnInit {
     try {
       const open = await this.allocations.openDocuments(transaction.contactId);
 
-      // **A bill is on the source side, not the target side.** open-documents
-      // splits by the direction the control balance runs: an invoice is Dr AR
-      // and lands in `targets`, but a bill is Cr AP and lands in `sources`. The
-      // words invert between receivables and payables, so looking for a bill
-      // among the targets finds nothing, every time.
-      const target = open.sources.find(
-        (doc) =>
-          doc.transactionTypeCode === 'BIL' && doc.transactionId === transaction.transactionId,
-      );
+      // Which side this document sits on is read off the payload rather than
+      // assumed by this screen: an invoice is Dr AR and lands among the
+      // targets, a bill is Cr AP and lands among the sources, and a credit note
+      // is a source too. Deriving it means no screen can hold a stale opinion
+      // about the direction, and the counterparts arrive from the other side by
+      // construction.
+      const located = locateDocument(open, 'BIL', transaction.transactionId);
 
-      if (!target) {
+      if (!located) {
         this.allocateMessages.set([
           { tone: 'warning', text: `${transaction.documentNo} has nothing left to settle.` },
         ]);
         return;
       }
 
+      this.allocateSide.set(located.side);
+
       this.allocateTarget.set({
-        transactionTypeCode: target.transactionTypeCode,
-        transactionId: target.transactionId,
-        documentNo: target.documentNo,
-        documentDate: target.documentDate,
-        totalAmount: target.totalAmount,
-        outstandingAmount: target.unallocatedAmount,
+        transactionTypeCode: located.document.transactionTypeCode,
+        transactionId: located.document.transactionId,
+        documentNo: located.document.documentNo,
+        documentDate: located.document.documentDate,
+        totalAmount: located.document.totalAmount,
+        outstandingAmount: located.document.unallocatedAmount,
       });
 
-      // And what settles a bill — a debit note, an advance paid — carries a
-      // debit balance, so those are the `targets`. Mirror image of the invoice
-      // screen, for the same reason.
       this.allocateRows.set(
-        open.targets
-          .filter((credit) => credit.unallocatedAmount > 0)
-          .map((credit) => ({
-            transactionTypeCode: credit.transactionTypeCode,
-            transactionId: credit.transactionId,
-            documentNo: credit.documentNo,
-            documentDate: credit.documentDate,
-            totalAmount: credit.totalAmount,
-            outstandingAmount: credit.unallocatedAmount,
+        located.counterparts
+          .filter((counterpart) => counterpart.unallocatedAmount > 0)
+          .map((counterpart) => ({
+            transactionTypeCode: counterpart.transactionTypeCode,
+            transactionId: counterpart.transactionId,
+            documentNo: counterpart.documentNo,
+            documentDate: counterpart.documentDate,
+            totalAmount: counterpart.totalAmount,
+            outstandingAmount: counterpart.unallocatedAmount,
             allocatedAmount: 0,
           })),
       );
@@ -202,7 +208,7 @@ export class PurchaseListPage implements OnInit {
         // workspace pairs them.
         await this.allocations.allocate(
           allocationPair(
-            'source',
+            this.allocateSide(),
             submission.target,
             decision,
             decision.amount,

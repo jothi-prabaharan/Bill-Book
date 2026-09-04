@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, ActivatedRoute, NavigationEnd } from '@angular/router';
 import { FormBuilder } from '@angular/forms';
 import { of } from 'rxjs';
@@ -194,6 +196,12 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
 
     TestBed.configureTestingModule({
       providers: [
+        // The sales list fetches a contact's open documents to offer Allocate,
+        // so it needs an HttpClient. Testing backend rather than a real one:
+        // these specs are about filtering and routing, and a stray request
+        // would make them depend on something they are not about.
+        provideHttpClient(),
+        provideHttpClientTesting(),
         FormBuilder,
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },

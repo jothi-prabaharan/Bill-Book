@@ -15,7 +15,10 @@
         <div class="min-w-0">
           <h2 class="dialog-title">Allocate credits</h2>
           @if (target(); as doc) {
-            <p class="note m-0">
+            <!-- `hint`, not `note`: the global note class is a bordered, tinted
+                 callout, and rendering the document's own name as one made the
+                 subtitle read like a warning. Only a screenshot showed it. -->
+            <p class="hint mt-0">
               Against {{ doc.documentNo }} &middot; {{ date(doc.documentDate) }}
             </p>
           }
@@ -64,6 +67,8 @@
           <bb-allocation-grid
             [rows]="draft()"
             [amountToAllocate]="outstanding()"
+            [formats]="formats()"
+            [showSummary]="false"
             (rowsChange)="onRowsChange($event)"
           ></bb-allocation-grid>
         }

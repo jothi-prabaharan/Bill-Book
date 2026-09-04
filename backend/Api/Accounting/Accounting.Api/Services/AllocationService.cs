@@ -348,6 +348,11 @@ public sealed class AllocationService
                 g.Key.TransactionId,
                 Net = g.Sum(x => x.DebitAmountBase) - g.Sum(x => x.CreditAmountBase),
                 DocumentDate = g.Min(x => x.LedgerDate),
+
+                // Every leg of one document carries the same number, so Max is
+                // just "the one that is there" — and it survives a group where
+                // an older leg predates the column and holds null.
+                DocumentNo = g.Max(x => x.DocumentNo),
             })
             .ToListAsync(ct);
 
@@ -383,6 +388,39 @@ public sealed class AllocationService
             .GroupBy(c => c.Key)
             .ToDictionary(g => g.Key, g => g.Sum(c => c.Amount));
 
+        // Accounting's own money documents, for the numbers the ledger cannot
+        // carry: SpendMoney and ReceiveMoney take their number in the
+        // transaction *after* the one that posts them, so DocumentNo on the
+        // ledger row is null for them however carefully the poster fills it in.
+        // Reading them here crosses no boundary — they are this service's
+        // tables.
+        Dictionary<(string, long), string?> moneyNumbers = [];
+
+        List<long> spendIds = [.. posted.Where(d => d.TransactionTypeCode == "SPM").Select(d => d.TransactionId)];
+        List<long> receiveIds = [.. posted.Where(d => d.TransactionTypeCode == "RCM").Select(d => d.TransactionId)];
+
+        if (spendIds.Count > 0)
+        {
+            foreach (var row in await _db.SpendMoney
+                .Where(m => spendIds.Contains(m.SpendMoneyId))
+                .Select(m => new { m.SpendMoneyId, m.TransactionNo })
+                .ToListAsync(ct))
+            {
+                moneyNumbers[("SPM", row.SpendMoneyId)] = row.TransactionNo;
+            }
+        }
+
+        if (receiveIds.Count > 0)
+        {
+            foreach (var row in await _db.ReceiveMoney
+                .Where(m => receiveIds.Contains(m.ReceiveMoneyId))
+                .Select(m => new { m.ReceiveMoneyId, m.TransactionNo })
+                .ToListAsync(ct))
+            {
+                moneyNumbers[("RCM", row.ReceiveMoneyId)] = row.TransactionNo;
+            }
+        }
+
         var sources = new List<OpenDocumentDto>();
         var targets = new List<OpenDocumentDto>();
 
@@ -410,7 +448,20 @@ public sealed class AllocationService
             {
                 TransactionTypeCode = document.TransactionTypeCode,
                 TransactionId = document.TransactionId,
-                DocumentNo = $"{document.TransactionTypeCode}-{document.TransactionId}",
+
+                // What the document is actually called, when the poster said so.
+                // A money document is the one case Accounting can look up for
+                // itself — SpendMoney and ReceiveMoney are its own tables — and
+                // it has to, because those allocate their number just after
+                // posting rather than before it. Failing both, the old
+                // type-and-id label: ugly beats blank where a number belongs.
+                DocumentNo = document.DocumentNo
+                    ?? (moneyNumbers.TryGetValue(
+                            (document.TransactionTypeCode, document.TransactionId),
+                            out string? moneyNo)
+                        ? moneyNo
+                        : null)
+                    ?? $"{document.TransactionTypeCode}-{document.TransactionId}",
                 DocumentDate = document.DocumentDate,
                 TotalAmount = total,
                 AllocatedAmount = used,

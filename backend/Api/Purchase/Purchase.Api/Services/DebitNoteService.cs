@@ -433,6 +433,9 @@ public sealed class DebitNoteService
                 OrgId = orgId,
                 TransactionTypeCode = "DBN",
                 TransactionId = note.DebitNoteId,
+                // The number on the document's face, so the ledger can report it
+                // without reaching into this service's schema to look it up.
+                DocumentNo = note.DocumentNo,
                 LedgerDate = note.DocumentDate,
                 ContactId = note.ContactId,
                 SourceDocumentId = note.DebitNoteId,
@@ -644,6 +647,9 @@ public sealed class DebitNoteService
                     OrgId = orgId,
                     TransactionTypeCode = "DBN",
                     TransactionId = note.DebitNoteId,
+                    // The number on the document's face, so the ledger can report it
+                    // without reaching into this service's schema to look it up.
+                    DocumentNo = note.DocumentNo,
                     LedgerDate = note.DocumentDate,
                     ContactId = note.ContactId,
                     SourceDocumentId = note.DebitNoteId,

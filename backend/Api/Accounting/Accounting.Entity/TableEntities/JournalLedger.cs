@@ -101,6 +101,29 @@ public class JournalLedger : OrgScopedEntity
     public string? TransactionDesc { get; set; }
 
     /// <summary>
+    /// The number the source document is known by — <c>INV-2026-0042</c>, not
+    /// <c>INV-42</c>.
+    ///
+    /// <b>Carried here because Accounting cannot go and read it.</b> The number
+    /// lives in <c>sal.Invoices</c> or <c>pur.Bills</c>, and a service may not
+    /// reach into another's DbContext; asking over HTTP would invert the
+    /// dependency, since Sales and Purchase are the ones that call Accounting.
+    /// So the poster, which has the document in hand, supplies it once at post
+    /// time.
+    ///
+    /// Three separate reports had each grown the same
+    /// <c>$"{code}-{id}"</c> stand-in, all three commented "fallback" — the
+    /// settlement workspace, the allocation modal and the outstanding-balances
+    /// report. This is what they were standing in for.
+    ///
+    /// <b>Nullable, and the stand-in survives for when it is null</b>: rows
+    /// posted before this column existed carry nothing, and a blank where a
+    /// document number belongs is worse than an ugly one.
+    /// </summary>
+    [MaxLength(30, ErrorMessage = "Document number cannot exceed 30 characters.")]
+    public string? DocumentNo { get; set; }
+
+    /// <summary>
     /// Links a payment back to the document it settles. This pair is the whole
     /// mechanism for tracing a receipt to its invoice.
     /// </summary>

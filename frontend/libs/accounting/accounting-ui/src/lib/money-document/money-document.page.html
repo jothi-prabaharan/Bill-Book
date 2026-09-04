@@ -330,7 +330,22 @@
     @if (row.status === 'Draft') {
       <button type="button" class="link" (click)="discard(row)">Delete</button>
     } @else if (row.status === 'Posted') {
+      @if (canAllocate(row)) {
+        <button type="button" class="link" (click)="allocate(row, $event)">Allocate</button>
+      }
       <button type="button" class="link" (click)="voidDocument(row)">Void</button>
     }
   </ng-template>
 </bb-data-grid>
+
+<bb-allocation-modal
+  [open]="allocateOpen()"
+  [target]="allocateTarget()"
+  [rows]="allocateRows()"
+  [loading]="allocateLoading()"
+  [saving]="allocateSaving()"
+  [messages]="allocateMessages()"
+  [formats]="formatSettings.settings()"
+  (save)="onAllocate($event)"
+  (dismiss)="closeAllocate()"
+></bb-allocation-modal>

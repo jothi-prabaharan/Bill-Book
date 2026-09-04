@@ -38,11 +38,36 @@
     </ng-template>
 
     <ng-template bbCellTemplate="status" let-row>
-      <span class="tag" [ngClass]="{
-        'tag-neutral': row.status === 'Posted' || row.status === 'Closed',
-        'tag-accent': row.status === 'Open' || row.status === 'Sent',
-        'tag-outline': row.status === 'Draft' || row.status === 'Void'
-      }">{{ row.status }}</span>
+      <span class="flex items-center gap-2">
+        <span class="tag" [ngClass]="{
+          'tag-neutral': row.status === 'Posted' || row.status === 'Closed',
+          'tag-accent': row.status === 'Open' || row.status === 'Sent',
+          'tag-outline': row.status === 'Draft' || row.status === 'Void'
+        }">{{ row.status }}</span>
+
+        @if (canAllocate(row)) {
+          <button
+            type="button"
+            class="btn btn-ghost whitespace-nowrap"
+            [attr.aria-label]="'Apply ' + row.documentNo + ' to invoices'"
+            (click)="allocate(row, $event)"
+          >
+            Allocate
+          </button>
+        }
+      </span>
     </ng-template>
   </bb-data-grid>
 </div>
+
+<bb-allocation-modal
+  [open]="allocateOpen()"
+  [target]="allocateTarget()"
+  [rows]="allocateRows()"
+  [loading]="allocateLoading()"
+  [saving]="allocateSaving()"
+  [messages]="allocateMessages()"
+  [formats]="formatSettings.settings()"
+  (save)="onAllocate($event)"
+  (dismiss)="closeAllocate()"
+></bb-allocation-modal>
