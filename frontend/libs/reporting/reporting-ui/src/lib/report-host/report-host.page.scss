@@ -21,6 +21,9 @@ h1 {
 .actions {
   display: flex;
   gap: 0.5rem;
+  /* Four actions do not fit one 360px row. Wrapping keeps every one of them
+     reachable rather than pushing the last off the edge. */
+  flex-wrap: wrap;
 }
 
 .parameters {

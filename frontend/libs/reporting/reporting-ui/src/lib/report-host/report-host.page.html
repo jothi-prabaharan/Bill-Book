@@ -11,8 +11,19 @@
     <button type="button" (click)="choosingColumns.set(true)" [disabled]="busy()">
       Columns
     </button>
-    <button type="button" (click)="exportToExcel()" [disabled]="busy() || exporting()">
-      {{ exporting() ? 'Exporting…' : 'Export to Excel' }}
+    <button
+      type="button"
+      (click)="exportAs('Xlsx')"
+      [disabled]="busy() || exporting() !== null"
+    >
+      {{ exporting() === 'Xlsx' ? 'Exporting…' : 'Export to Excel' }}
+    </button>
+    <button
+      type="button"
+      (click)="exportAs('Csv')"
+      [disabled]="busy() || exporting() !== null"
+    >
+      {{ exporting() === 'Csv' ? 'Exporting…' : 'Export to CSV' }}
     </button>
   </div>
 </header>

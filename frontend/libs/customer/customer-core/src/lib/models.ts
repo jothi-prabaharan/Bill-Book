@@ -54,3 +54,23 @@ export interface TicketMessage {
   authorType: 'Contact' | 'User';
   createdAt: string;
 }
+
+/**
+ * What a conversion gives back — the contact it linked or made, so the screen
+ * can go straight to it rather than making the user find it.
+ */
+export interface ConvertedLead {
+  leadId: number;
+  contactId: number;
+  /** Null when an existing contact was linked: only a new one reports its code. */
+  contactCode: string | null;
+  convertedAt: string;
+}
+
+/** One contact in the picker. A slice of Master's list row, not the whole of it. */
+export interface ContactOption {
+  contactId: number;
+  contactCode: string;
+  displayName: string;
+  gstin: string | null;
+}

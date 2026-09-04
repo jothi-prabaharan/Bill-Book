@@ -89,6 +89,14 @@ public sealed class ReportsController : ControllerBase
     /// <summary>
     /// The report as a file, over the <b>whole</b> result rather than a page.
     ///
+    /// <b><c>format</c> is <c>xlsx</c> or <c>csv</c>.</b> Both run the same query
+    /// the grid ran — same filters, same sort, same grouping, same pivot, same
+    /// selected columns in the same order — with paging removed and the row cap
+    /// enforced here rather than in either writer. Authorization is the
+    /// controller's <c>reports</c> module permission plus the <c>export</c> action
+    /// and the report's own module permission inside the runner, so an export can
+    /// never reach a report its owner could not run.
+    ///
     /// <b>The cap refuses rather than truncates.</b> A 100,000-row ceiling exists
     /// because a bigger export is a background job this product has no broker for
     /// yet — but a file silently missing its last two hundred thousand rows is
@@ -110,7 +118,7 @@ public sealed class ReportsController : ControllerBase
             // PDF that renders Tamil or Chinese. Reporting.md §5.8.
             return BadRequest(new
             {
-                message = "PDF export is not built yet. Export to Excel instead.",
+                message = "PDF export is not supported. Export to Excel or CSV instead.",
             });
         }
 
@@ -142,10 +150,20 @@ public sealed class ReportsController : ControllerBase
                 });
             }
 
-            return File(
-                ExcelReportWriter.Write(result),
-                ExcelReportWriter.ContentType,
-                $"{reportKey}-{DateTime.UtcNow:yyyy-MM-dd}.xlsx");
+            // Both writers take the same result — the same filters, sort,
+            // grouping, pivot and selected columns the grid was showing, with
+            // paging removed above. Neither has any query semantics of its own,
+            // which is what stops the two formats disagreeing with each other or
+            // with the screen.
+            return format == ExportFormat.Csv
+                ? File(
+                    CsvReportWriter.Write(result),
+                    CsvReportWriter.ContentType,
+                    FileName(reportKey, "csv"))
+                : File(
+                    ExcelReportWriter.Write(result),
+                    ExcelReportWriter.ContentType,
+                    FileName(reportKey, "xlsx"));
         }
         catch (ReportQueryException ex)
         {
@@ -158,6 +176,25 @@ public sealed class ReportsController : ControllerBase
     /// export is queued rather than refused.
     /// </summary>
     private const int ExportRowCap = 100_000;
+
+    /// <summary>
+    /// A download name that cannot escape the download folder.
+    ///
+    /// <c>reportKey</c> comes off the route. It has already been looked up in the
+    /// catalog by the time we are here — an unknown key is a 404 above — so it is
+    /// not attacker-chosen in practice; it is sanitised anyway, because the value
+    /// lands in a <c>Content-Disposition</c> header and a path separator or a
+    /// newline in that header is a header-splitting bug rather than an odd
+    /// filename.
+    /// </summary>
+    private static string FileName(string reportKey, string extension)
+    {
+        string safe = new(reportKey
+            .Where(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_')
+            .ToArray());
+
+        return $"{(safe.Length == 0 ? "report" : safe)}-{DateTime.UtcNow:yyyy-MM-dd}.{extension}";
+    }
 
     /// <summary>
     /// The permissions on the token.

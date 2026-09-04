@@ -47,6 +47,31 @@ public sealed class ContactsController : ControllerBase
             new { contactId = result.ContactId, contactCode = result.ContactCode }));
     }
 
+    /// <summary>
+    /// A contact from a name and one way to reach them.
+    ///
+    /// <b>The same authority as any other create</b> — this controller's
+    /// <c>contacts</c> module permission, and POST maps to <c>contacts.edit</c>.
+    /// A CRM user converting a lead into a brand-new contact is creating master
+    /// data, so they need the permission that creating master data needs; without
+    /// it this answers 403 and the conversion tells them why.
+    ///
+    /// Contacts composes the rest of the request — see
+    /// <c>ContactService.CreateQuickAsync</c> — so a caller never has to know
+    /// about person roles, categories or the branch's base currency.
+    /// </summary>
+    [HttpPost("quick")]
+    public async Task<IActionResult> CreateQuick(
+        [FromBody] QuickContactRequest request, CancellationToken ct)
+    {
+        SaveContactResult result = await _contacts.CreateQuickAsync(request, ct);
+
+        return Respond(result.Outcome, () => CreatedAtAction(
+            nameof(Get),
+            new { contactId = result.ContactId },
+            new { contactId = result.ContactId, contactCode = result.ContactCode }));
+    }
+
     [HttpPut("{contactId:long}")]
     public async Task<IActionResult> Update(
         long contactId, [FromBody] SaveContactRequest request, CancellationToken ct)

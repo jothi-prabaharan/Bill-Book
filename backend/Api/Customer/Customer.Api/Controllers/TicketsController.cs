@@ -1,3 +1,4 @@
+using Customer.Api.Services;
 using Customer.Entity.TableEntities;
 using Customer.Repository;
 using Microsoft.AspNetCore.Authorization;
@@ -20,11 +21,14 @@ public sealed class TicketsController : ControllerBase
 {
     private readonly CustomerDbContext _db;
     private readonly ITenantContext _tenant;
+    private readonly IContactsClient _contacts;
 
-    public TicketsController(CustomerDbContext db, ITenantContext tenant)
+    public TicketsController(
+        CustomerDbContext db, ITenantContext tenant, IContactsClient contacts)
     {
         _db = db;
         _tenant = tenant;
+        _contacts = contacts;
     }
 
     [HttpGet]
@@ -64,9 +68,29 @@ public sealed class TicketsController : ControllerBase
         return Ok(ticket);
     }
 
+    /// <summary>
+    /// Raises a ticket against a contact.
+    ///
+    /// <b><c>ContactId</c> is checked against the caller's branch first.</b> The
+    /// column holds a plain id into another service's database, so the number
+    /// alone says nothing about whose books the contact belongs to — a ticket
+    /// created against another branch's contact would leak that contact's
+    /// existence and put a support thread on the wrong customer's account.
+    /// Contacts is asked with the caller's own token forwarded, so the answer
+    /// comes back through that service's query filter and RLS policy.
+    ///
+    /// <c>Forbid()</c> rather than <c>NotFound()</c>, per CLAUDE.md, and the same
+    /// answer for "no such contact" as for "not yours" — distinguishing them is
+    /// the information id-probing is after.
+    /// </summary>
     [HttpPost]
     public async Task<IActionResult> Create([FromBody] SaveTicketRequest request, CancellationToken ct)
     {
+        if (!await _contacts.ExistsInCallerOrgAsync(request.ContactId, ct))
+        {
+            return Forbid();
+        }
+
         var ticket = new Ticket
         {
             ContactId = request.ContactId,

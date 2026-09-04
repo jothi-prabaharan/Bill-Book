@@ -302,6 +302,46 @@ public enum SaveContactOutcome
 
 public sealed record SaveContactResult(SaveContactOutcome Outcome, long? ContactId, string? ContactCode);
 
+/// <summary>
+/// The little a caller knows when it has a name and a way to reach someone, and
+/// wants a contact.
+///
+/// <b>It exists so that contact rules stay in Contacts.</b> A full
+/// <see cref="SaveContactRequest"/> needs a category, a GST registration type, a
+/// currency and at least one person on a valid person role — none of which a CRM
+/// lead, a POS walk-in or a quick-add on an invoice knows anything about. Asking
+/// each of those callers to compose one would put the same four defaults in three
+/// services, and the first time a default changed they would disagree.
+///
+/// Contacts fills the rest in <c>ContactService.CreateQuickAsync</c> and then runs
+/// the ordinary create, so a quick-created contact is validated, numbered and
+/// given its sub-ledger exactly like one typed into the full form.
+/// </summary>
+public class QuickContactRequest
+{
+    [Required(ErrorMessage = "Display name is required.")]
+    [MaxLength(200, ErrorMessage = "Display name cannot exceed 200 characters.")]
+    public string DisplayName { get; set; } = null!;
+
+    [MaxLength(200, ErrorMessage = "Legal name cannot exceed 200 characters.")]
+    public string? LegalName { get; set; }
+
+    [EmailAddress(ErrorMessage = "Email must be a valid email address.")]
+    [MaxLength(150, ErrorMessage = "Email cannot exceed 150 characters.")]
+    public string? Email { get; set; }
+
+    [MaxLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters.")]
+    public string? MobileNumber { get; set; }
+
+    /// <summary>
+    /// What the contact is for. Both false is refused as <c>NoRole</c> by the
+    /// ordinary validation, the same as it would be on the full form.
+    /// </summary>
+    public bool IsCustomer { get; set; } = true;
+
+    public bool IsVendor { get; set; }
+}
+
 public class ContactBankDetailModel
 {
     /// <summary>Zero on a row being added.</summary>

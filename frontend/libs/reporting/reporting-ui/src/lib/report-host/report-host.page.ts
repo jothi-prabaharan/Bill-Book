@@ -3,6 +3,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  ExportFormat,
   ReportMetadata,
   ReportQuery,
   ReportQueryService,
@@ -61,7 +62,8 @@ export class ReportHostPage implements OnInit {
   protected readonly message = signal<string | null>(null);
   protected readonly choosingColumns = signal(false);
   protected readonly choosingView = signal(false);
-  protected readonly exporting = signal(false);
+  /** The format currently exporting, or null. Two buttons, one flag. */
+  protected readonly exporting = signal<ExportFormat | null>(null);
 
   private reportKey = '';
 
@@ -176,18 +178,56 @@ export class ReportHostPage implements OnInit {
     });
   }
 
-  protected async exportToExcel(): Promise<void> {
-    this.exporting.set(true);
+  /**
+   * Exports the report.
+   *
+   * <b>It sends `this.query()` — the state the grid is showing</b>, filters, sort,
+   * grouping, pivot and chosen columns included. The server removes the paging and
+   * runs the same query, so the file cannot disagree with the screen it was asked
+   * for. Only the format differs between the two buttons.
+   */
+  protected async exportAs(format: ExportFormat): Promise<void> {
+    this.exporting.set(format);
     this.message.set(null);
 
     try {
-      const file = await this.reports.export(this.reportKey, this.query());
+      const file = await this.reports.export(this.reportKey, this.query(), format);
 
-      this.save(file, `${this.reportKey}.xlsx`);
+      this.save(file, `${this.reportKey}.${format === 'Csv' ? 'csv' : 'xlsx'}`);
     } catch (error: unknown) {
-      this.message.set(this.readServerMessage(error) ?? 'Could not export this report.');
+      this.message.set(
+        (await this.readBlobMessage(error)) ??
+          this.readServerMessage(error) ??
+          'Could not export this report.',
+      );
     } finally {
-      this.exporting.set(false);
+      this.exporting.set(null);
+    }
+  }
+
+  /**
+   * The `{ message }` from an error whose body arrived as a blob.
+   *
+   * The export request asks for `responseType: 'blob'`, and Angular applies that
+   * to the error body too — so a 400 explaining that the export is over the row
+   * cap arrives as an unread `Blob` and `readServerMessage` finds nothing on it.
+   * Without this the person is told "Could not export this report" and never the
+   * row count that would let them narrow it.
+   */
+  private async readBlobMessage(error: unknown): Promise<string | null> {
+    const body = (error as { error?: unknown } | null)?.error;
+
+    if (!(body instanceof Blob)) {
+      return null;
+    }
+
+    try {
+      const parsed: unknown = JSON.parse(await body.text());
+      const message = (parsed as { message?: unknown } | null)?.message;
+
+      return typeof message === 'string' ? message : null;
+    } catch {
+      return null;
     }
   }
 

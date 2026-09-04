@@ -18,6 +18,15 @@ namespace Master.Api.Services;
 public sealed class ContactService
 {
     private readonly ContactsDbContext _db;
+
+    /// <summary>
+    /// The shared master database, for the branch's base currency. Master is the
+    /// one service mapping two contexts, and this is the boundary that makes it
+    /// two — <c>mst</c> and <c>con</c> are different Postgres databases, so this
+    /// is a second read rather than a join.
+    /// </summary>
+    private readonly AdminDbContext _admin;
+
     private readonly INumberGenerator _numbers;
     private readonly IStateDirectory _states;
     private readonly IAccountingSubAccounts _subAccounts;
@@ -27,6 +36,7 @@ public sealed class ContactService
 
     public ContactService(
         ContactsDbContext db,
+        AdminDbContext admin,
         INumberGenerator numbers,
         IStateDirectory states,
         IAccountingSubAccounts subAccounts,
@@ -35,6 +45,7 @@ public sealed class ContactService
         ITenantContext tenant)
     {
         _db = db;
+        _admin = admin;
         _numbers = numbers;
         _states = states;
         _subAccounts = subAccounts;
@@ -207,6 +218,104 @@ public sealed class ContactService
             .FirstOrDefault(a => a.IsDefault && a.AddressType == AddressType.Billing)?.City;
 
         return detail;
+    }
+
+    /// <summary>
+    /// A contact from the little that a lead, a walk-in or a quick-add knows.
+    ///
+    /// <b>It composes a <see cref="SaveContactRequest"/> and runs the ordinary
+    /// create.</b> Nothing is validated differently and nothing is skipped: the
+    /// code still comes from the numbering series, the GSTIN rules still apply
+    /// (vacuously — a quick contact is unregistered until somebody says
+    /// otherwise), and the six sub-accounts are still provisioned. A caller that
+    /// built its own request instead would be a second copy of these defaults,
+    /// which is the thing to avoid.
+    ///
+    /// The two defaults worth naming:
+    ///
+    /// <list type="bullet">
+    /// <item>The person role is the branch's own default row — <c>PRIMARY</c> as
+    /// seeded, but read rather than assumed, because the seed is renamable and a
+    /// branch may have made a different one default.</item>
+    /// <item>The currency is the branch's base currency, read from
+    /// <c>mst.OrgCurrencies</c>. Writing "INR" here would be right for most of
+    /// this product's customers and silently wrong for the rest.</item>
+    /// </list>
+    ///
+    /// <b>A contact needs a way to be reached.</b> With neither an email nor a
+    /// mobile the ordinary validation refuses it as
+    /// <see cref="SaveContactOutcome.DefaultPersonNeedsContactDetail"/>, and that
+    /// refusal is passed back rather than papered over with a placeholder.
+    /// </summary>
+    public async Task<SaveContactResult> CreateQuickAsync(
+        QuickContactRequest request, CancellationToken ct)
+    {
+        ContactPersonRole? role = await _db.ContactPersonRoles
+            .Where(r => r.IsActive)
+            .OrderByDescending(r => r.IsDefault)
+            .ThenBy(r => r.DisplayOrder)
+            .FirstOrDefaultAsync(ct);
+
+        if (role is null)
+        {
+            // No seeded person roles means an unseeded branch. UnknownRole is
+            // what the full form would answer, so answer the same thing.
+            return new SaveContactResult(SaveContactOutcome.UnknownRole, null, null);
+        }
+
+        string[] names = request.DisplayName.Trim().Split(
+            ' ', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        return await CreateAsync(
+            new SaveContactRequest
+            {
+                DisplayName = request.DisplayName,
+                LegalName = request.LegalName,
+                ContactCategory = nameof(ContactCategory.Business),
+                GstRegistrationType = nameof(GstRegistrationType.Unregistered),
+                IsCustomer = request.IsCustomer,
+                IsVendor = request.IsVendor,
+                CurrencyCode = await BaseCurrencyCodeAsync(ct),
+                IsActive = true,
+                Persons =
+                [
+                    new ContactPersonModel
+                    {
+                        ContactPersonRoleId = role.ContactPersonRoleId,
+                        FirstName = names.Length > 0 ? names[0] : request.DisplayName,
+                        LastName = names.Length > 1 ? names[1] : null,
+                        Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email,
+                        MobileNumber = string.IsNullOrWhiteSpace(request.MobileNumber)
+                            ? null
+                            : request.MobileNumber,
+                        IsDefault = true,
+                        IsActive = true,
+                    },
+                ],
+            },
+            ct);
+    }
+
+    /// <summary>
+    /// The branch's base currency code, from <c>mst.OrgCurrencies</c>.
+    ///
+    /// A different database from <c>con</c>, which is why this is a second
+    /// context and an unenforced id rather than a join — Master maps both, and
+    /// that is a database boundary rather than a service one.
+    /// </summary>
+    private async Task<string> BaseCurrencyCodeAsync(CancellationToken ct)
+    {
+        Guid orgId = _tenant.Require().OrgId;
+
+        string? code = await (
+            from oc in _admin.OrgCurrencies
+            join c in _admin.Currencies on oc.CurrencyId equals c.CurrencyId
+            where oc.OrgId == orgId && oc.IsBaseCurrency
+            select c.Code).FirstOrDefaultAsync(ct);
+
+        // A branch always has one; the fallback is for a half-seeded branch,
+        // where refusing the contact outright would be the worse answer.
+        return code ?? "INR";
     }
 
     public async Task<SaveContactResult> CreateAsync(SaveContactRequest request, CancellationToken ct)

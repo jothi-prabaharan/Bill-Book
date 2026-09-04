@@ -4,6 +4,10 @@
     <button class="bb-btn bb-btn-primary" (click)="showForm.set(true)">Add Lead</button>
   </div>
 
+  @if (message()) {
+    <p class="error" role="alert">{{ message() }}</p>
+  }
+
   <bb-data-grid
     [data]="leads()"
     [columns]="columns"
@@ -12,19 +16,70 @@
     [totalCount]="leads().length"
   >
     <ng-template bbCellTemplate="actions" let-row="row">
-      <button 
-        *ngIf="row.status !== 'Converted'"
-        class="bb-btn bb-btn-secondary" 
-        (click)="convertLead(row)">
-        Convert to Contact
-      </button>
-      <span *ngIf="row.status === 'Converted'" class="text-success">Converted</span>
+      @if (row.status !== 'Converted') {
+        <button
+          class="bb-btn bb-btn-secondary"
+          [disabled]="busy()"
+          (click)="startConvert(row)"
+        >
+          Convert to Contact
+        </button>
+      } @else {
+        <span class="text-success">Converted</span>
+      }
     </ng-template>
   </bb-data-grid>
 </div>
 
-<bb-lead-form 
-  *ngIf="showForm()" 
-  (saved)="onSaved()" 
-  (cancelled)="showForm.set(false)">
-</bb-lead-form>
+<!-- The two paths, named rather than guessed between. -->
+@if (converting(); as lead) {
+  <!-- A button, not a div: a backdrop that dismisses on click has to be
+       reachable by keyboard too, or the sheet traps anyone not using a mouse. -->
+  <button
+    type="button"
+    class="convert-backdrop"
+    aria-label="Cancel converting this lead"
+    (click)="cancelConvert()"
+  ></button>
+  <section class="convert-sheet" role="dialog" aria-label="Convert lead">
+    <h3>Convert {{ lead.name }}</h3>
+    <p class="hint">
+      A lead becomes a contact either by creating a new one from its own details,
+      or by linking one that already exists.
+    </p>
+
+    <div class="convert-actions">
+      <button
+        class="bb-btn bb-btn-primary"
+        [disabled]="busy()"
+        (click)="convertToNewContact()"
+      >
+        Create a new contact
+      </button>
+      <button
+        class="bb-btn bb-btn-secondary"
+        [disabled]="busy()"
+        (click)="openContactPicker()"
+      >
+        Link an existing contact
+      </button>
+      <button class="bb-btn" [disabled]="busy()" (click)="cancelConvert()">Cancel</button>
+    </div>
+  </section>
+}
+
+<bb-lookup-dialog
+  [open]="pickerOpen()"
+  title="Choose a contact"
+  placeholder="Search by name or code"
+  emptyText="No contacts match."
+  [rows]="pickerRows()"
+  [loading]="pickerLoading()"
+  (searchChange)="searchContacts($event)"
+  (choose)="chooseContact($event)"
+  (dismiss)="pickerOpen.set(false)"
+/>
+
+@if (showForm()) {
+  <bb-lead-form (saved)="onSaved()" (cancelled)="showForm.set(false)"></bb-lead-form>
+}

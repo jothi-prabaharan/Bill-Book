@@ -52,6 +52,8 @@ builder.Services.AddDbContext<CustomerDbContext>((sp, options) =>
 
 builder.Services.AddBillBookAuthentication(builder.Configuration);
 
+// Default deny: a controller added later is authenticated because nobody did
+// anything about it.
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = new AuthorizationPolicyBuilder()
@@ -59,12 +61,19 @@ builder.Services.AddAuthorization(options =>
         .Build();
 });
 
-// Add HostedService for database migrations only if there is a worker here
-// Actually, we don't need a worker for migrations, DatabaseMigrationService handles it.
-// I will need to define DatabaseMigrationService in Customer.Api or reference it if it's shared?
-// Let's check where DatabaseMigrationService lives. If it's in Inventory, I can remove it or copy it.
-// Actually, it usually lives in the Api project.
-// Let's leave it out until I check.
+// Contacts, over HTTP, because `con.Contacts` belongs to Master and this service
+// does not reach into another service's DbContext (CLAUDE.md 8). Both things it
+// is used for — proving a ContactId belongs to the caller's branch before a lead
+// or a ticket references it, and creating a contact from a lead — are questions
+// only Contacts can answer correctly, because only Contacts has the query filter
+// and the RLS policy that scope the answer.
+builder.Services.AddHttpClient<IContactsClient, ContactsClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHostedService<DatabaseMigrationService>();
 
 WebApplication app = builder.Build();
 
@@ -82,10 +91,9 @@ app.MapControllers();
 
 app.Run();
 
-#pragma warning disable CS8321
-string RequiredConnectionString(string name) =>
-    builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
         ? value
         : throw new InvalidOperationException(
-            $"ConnectionStrings:{name} is not configured. Set it in appsettings.{{Environment}}.json " +
-            $"or via the ConnectionStrings__{name} environment variable.");
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(':', '_').Replace("_", "__")} environment variable.");

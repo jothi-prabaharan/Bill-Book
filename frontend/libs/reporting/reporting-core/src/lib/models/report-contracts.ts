@@ -59,8 +59,12 @@ export type ReportModule =
   | 'Purchase'
   | 'FixedAssets';
 
-/** `Xlsx` works; `Pdf` is declared and refused server-side. */
-export type ExportFormat = 'Xlsx' | 'Pdf';
+/**
+ * `Xlsx` and `Csv` are the supported export formats. `Pdf` is declared so the
+ * route's shape is stable and is refused server-side — PDF is explicitly outside
+ * the reporting requirement and must not be offered in the export UI.
+ */
+export type ExportFormat = 'Xlsx' | 'Pdf' | 'Csv';
 
 export interface ReportFilter {
   column: string;

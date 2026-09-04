@@ -11,3 +11,70 @@
   color: var(--success-color, #28a745);
   font-weight: 500;
 }
+
+.error {
+  color: var(--color-danger, #b3261e);
+  margin: 0 0 12px;
+}
+
+/* The convert choice. A sheet rather than a dropdown: the two paths are a
+   decision, and at ~360px a dropdown of two long labels is unreadable. */
+.convert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  z-index: 40;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.convert-sheet {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  background: var(--color-surface, #fff);
+  color: var(--color-text, inherit);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 25%);
+}
+
+.convert-sheet h3 {
+  margin: 0 0 0.5rem;
+}
+
+.convert-sheet .hint {
+  margin: 0 0 1rem;
+  color: var(--color-text-muted, #666);
+  font-size: 0.875rem;
+}
+
+.convert-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* At ~360px the sheet fills the screen and the actions stack, per the house
+   rule that a modal becomes a full-screen sheet on a narrow viewport. */
+@media (max-width: 480px) {
+  .convert-sheet {
+    inset: 0;
+    width: auto;
+    transform: none;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+
+  .convert-actions {
+    flex-direction: column;
+  }
+
+  .convert-actions button {
+    width: 100%;
+  }
+}
