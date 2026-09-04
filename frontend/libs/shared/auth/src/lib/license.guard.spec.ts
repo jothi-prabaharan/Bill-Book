@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import {
   ActivatedRouteSnapshot,
   CanActivateFn,
@@ -56,23 +57,32 @@ describe('route guards', () => {
     localStorage.clear();
 
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideRouter([])],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
 
     auth = TestBed.inject(AuthService);
   });
 
   describe('authGuard', () => {
-    it('lets a signed-in user through', () => {
+    it('lets a signed-in user through when session state returns valid orgs', async () => {
       auth.accessToken.set('a-token');
+      localStorage.setItem('bb.orgId', 'org-1');
 
-      expect(run(authGuard)).toBe(true);
+      const runPromise = run(authGuard);
+      
+      const httpMock = TestBed.inject(HttpTestingController);
+      httpMock.expectOne('/api/auth/session').flush({
+        lastAccessedOrgId: 'org-1',
+        organizations: [{ orgId: 'org-1', orgName: 'HQ', roleName: 'Owner' }]
+      });
+
+      expect(await runPromise).toBe(true);
     });
 
-    it('sends a signed-out user to login', () => {
+    it('sends a signed-out user to login', async () => {
       auth.accessToken.set(null);
 
-      const result = run(authGuard);
+      const result = await run(authGuard);
 
       expect(result).toBeInstanceOf(UrlTree);
       expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/login');

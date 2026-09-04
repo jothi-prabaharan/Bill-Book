@@ -26,7 +26,7 @@ export class LoginPage {
     remember: new FormControl(false, { nonNullable: true })
   });
 
-  protected readonly step = signal<'credentials' | 'organization'>('credentials');
+  protected readonly step = signal<'credentials'>('credentials');
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -35,27 +35,10 @@ export class LoginPage {
     this.busy.set(true);
     this.error.set(null);
     try {
-      const response = await this.auth.login(this.loginForm.value.email!, this.loginForm.value.password!);
-      if (response.requiresOrgSelection) {
-        this.step.set('organization');
-      } else {
-        await this.pick(response.organizations[0].orgId);
-      }
-    } catch (err: unknown) {
-      this.error.set(messageOf(err, 'Invalid email or password.'));
-    } finally {
-      this.busy.set(false);
-    }
-  }
-
-  async pick(orgId: string): Promise<void> {
-    this.busy.set(true);
-    this.error.set(null);
-    try {
-      const tokens = await this.auth.selectOrganization(orgId);
+      const tokens = await this.auth.login(this.loginForm.value.email!, this.loginForm.value.password!);
       await this.router.navigateByUrl(tokens.licenseStatus === 'Expired' ? '/expired' : '/');
     } catch (err: unknown) {
-      this.error.set(messageOf(err, 'Could not open that organization.'));
+      this.error.set(messageOf(err, 'Invalid email or password.'));
     } finally {
       this.busy.set(false);
     }

@@ -31,49 +31,23 @@ describe('AuthService', () => {
     configure();
   });
 
-  describe('two-step login', () => {
-    it('holds the pre-auth token and the accessible orgs, and grants nothing yet', async () => {
+  describe('login auto-routing', () => {
+    it('holds the access token and the accessible orgs immediately upon login', async () => {
       const login = auth.login('someone@example.com', 'a-password');
 
       httpMock.expectOne('/api/auth/login').flush({
-        preAuthToken: 'pre-auth',
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        currentOrgId: 'org-1',
         organizations: [{ orgId: 'org-1', orgName: 'Head Office', roleName: 'Owner' }],
+        licenseStatus: 'Active',
       });
       await login;
 
-      expect(auth.preAuthToken()).toBe('pre-auth');
       expect(auth.organizations()).toHaveLength(1);
-
-      // Step one is not a sign-in. Until an organization is chosen there is no
-      // org context, so there is nothing this user is authorised to see.
-      expect(auth.isAuthenticated()).toBe(false);
-      expect(localStorage.getItem('bb.access')).toBeNull();
-    });
-
-    it('sends the pre-auth token as a header when selecting an organization', async () => {
-      auth.preAuthToken.set('pre-auth');
-
-      const select = auth.selectOrganization('org-1');
-      const req = httpMock.expectOne('/api/auth/select-organization');
-
-      expect(req.request.headers.get('X-PreAuth-Token')).toBe('pre-auth');
-      req.flush({ accessToken: 'access', refreshToken: 'refresh', licenseStatus: 'Active' });
-      await select;
-    });
-
-    it('clears the pre-auth token once an organization is selected', async () => {
-      auth.preAuthToken.set('pre-auth');
-
-      const select = auth.selectOrganization('org-1');
-      httpMock
-        .expectOne('/api/auth/select-organization')
-        .flush({ accessToken: 'access', refreshToken: 'refresh', licenseStatus: 'Active' });
-      await select;
-
-      // It is spent. Leaving it set would let a second selection be made on a
-      // credential that has already been exchanged.
-      expect(auth.preAuthToken()).toBeNull();
       expect(auth.isAuthenticated()).toBe(true);
+      expect(localStorage.getItem('bb.access')).toBe('access');
+      expect(localStorage.getItem('bb.orgId')).toBe('org-1');
     });
   });
 
@@ -99,12 +73,15 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('leaves nothing behind in storage', async () => {
-      auth.preAuthToken.set('pre-auth');
-      const select = auth.selectOrganization('org-1');
-      httpMock
-        .expectOne('/api/auth/select-organization')
-        .flush({ accessToken: 'access', refreshToken: 'refresh', licenseStatus: 'Active' });
-      await select;
+      const login = auth.login('someone@example.com', 'a-password');
+      httpMock.expectOne('/api/auth/login').flush({
+        accessToken: 'access',
+        refreshToken: 'refresh',
+        currentOrgId: 'org-1',
+        licenseStatus: 'Active',
+        organizations: []
+      });
+      await login;
 
       auth.logout();
 
@@ -124,16 +101,17 @@ describe('AuthService', () => {
     ) => ({
       accessToken: 'access',
       refreshToken: 'refresh',
+      currentOrgId: 'org-1',
+      organizations: [],
       licenseStatus,
       licenseExpiry,
       expiryIsBranchLevel,
     });
 
     const selectInto = async (token: ReturnType<typeof tokenFor>): Promise<void> => {
-      auth.preAuthToken.set('pre-auth');
-      const select = auth.selectOrganization('org-1');
-      httpMock.expectOne('/api/auth/select-organization').flush(token);
-      await select;
+      const login = auth.login('someone@example.com', 'a-password');
+      httpMock.expectOne('/api/auth/login').flush(token);
+      await login;
     };
 
     it('keeps the effective expiry date and whose date it is', async () => {

@@ -4,11 +4,20 @@ export interface AccessibleOrg {
   roleName: string;
 }
 
-export interface LoginResponse {
-  preAuthToken: string;
-  expiresInSeconds: number;
+export interface SessionState {
+  lastAccessedOrgId: string | null;
   organizations: AccessibleOrg[];
-  requiresOrgSelection: boolean;
+}
+
+export interface LoginResponse {
+  accessToken: string;
+  refreshToken: string;
+  accessExpiresInSeconds: number;
+  licenseStatus: string;
+  licenseExpiry: string | null;
+  expiryIsBranchLevel: boolean;
+  currentOrgId: string;
+  organizations: AccessibleOrg[];
 }
 
 export interface TokenResponse {

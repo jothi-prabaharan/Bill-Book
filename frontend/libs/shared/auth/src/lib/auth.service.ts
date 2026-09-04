@@ -7,6 +7,7 @@ import {
   Country,
   CustomerStatus,
   LoginResponse,
+  SessionState,
   SignupRequest,
   SignupResponse,
   StateRow,
@@ -25,8 +26,6 @@ const ORG_KEY = 'bb.orgId';
 export class AuthService {
   private readonly http = inject(HttpClient);
 
-  /** Pre-auth state between login step one and org selection. */
-  readonly preAuthToken = signal<string | null>(null);
   readonly organizations = signal<AccessibleOrg[]>([]);
 
   readonly accessToken = signal<string | null>(localStorage.getItem(ACCESS_KEY));
@@ -70,27 +69,20 @@ export class AuthService {
     const response = await firstValueFrom(
       this.http.post<LoginResponse>('/api/auth/login', { email, password }),
     );
-    this.preAuthToken.set(response.preAuthToken);
+    
+    // Auto-routed token processing
+    localStorage.setItem(ACCESS_KEY, response.accessToken);
+    localStorage.setItem(REFRESH_KEY, response.refreshToken);
+    localStorage.setItem(ORG_KEY, response.currentOrgId);
+    this.storeLicense(response as unknown as TokenResponse);
+    this.accessToken.set(response.accessToken);
+    
     this.organizations.set(response.organizations);
     return response;
   }
 
-  async selectOrganization(orgId: string): Promise<TokenResponse> {
-    const preAuth = this.preAuthToken();
-    const response = await firstValueFrom(
-      this.http.post<TokenResponse>(
-        '/api/auth/select-organization',
-        { orgId },
-        { headers: { 'X-PreAuth-Token': preAuth ?? '' } },
-      ),
-    );
-    localStorage.setItem(ACCESS_KEY, response.accessToken);
-    localStorage.setItem(REFRESH_KEY, response.refreshToken);
-    localStorage.setItem(ORG_KEY, orgId);
-    this.storeLicense(response);
-    this.accessToken.set(response.accessToken);
-    this.preAuthToken.set(null);
-    return response;
+  async fetchSessionState(): Promise<SessionState> {
+    return firstValueFrom(this.http.get<SessionState>('/api/auth/session'));
   }
 
   /** The branches this user may work in, read after login for the switcher. */
