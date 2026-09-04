@@ -51,3 +51,7 @@ Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. N
 - **Separation of Concerns**: Use separate `templateUrl` and `styleUrl` instead of inline templates.
 - **Frontend Styling**: Absolutely NO inline styles (`style="..."`). Always use global CSS classes and CSS custom properties (e.g., `var(--primary-color)`).
 - **Validation UX**: Field validation errors must display directly on top of inputs. Business validation errors must display inside the shared message box component.
+
+## Database Migration & Seeding Rules
+Whenever the Admin database is deployed or recreated, ensure the corresponding Customer database for my organization is also created successfully.
+During this setup process, you must automatically map my UserID to this organization. Post-migration, I must be able to log in successfully and immediately view my organization's dashboard data without any manual database configuration.
