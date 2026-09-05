@@ -97,7 +97,7 @@ public class DatabaseMigrationService : IHostedService
             // ordinary reset flow, which proves control of the mailbox. Nothing
             // is created if the setting is absent, because inventing an operator
             // is the failure being fixed.
-            await BootstrapFirstOperatorAsync(adminDb, ct);
+            await BootstrapFirstOperatorAsync(adminDb, tenantDbName, ct);
 
             await adminDb.SaveChangesAsync(ct);
         }
@@ -235,7 +235,7 @@ public class DatabaseMigrationService : IHostedService
     /// <c>platform.*</c> to a tenant role would grant it to that role's holders
     /// across every customer.
     /// </summary>
-    private async Task BootstrapFirstOperatorAsync(AdminDbContext adminDb, CancellationToken ct)
+    private async Task BootstrapFirstOperatorAsync(AdminDbContext adminDb, string tenantDbName, CancellationToken ct)
     {
         if (_config["Bootstrap:OwnerEmail"] is not { Length: > 0 } email)
         {
@@ -253,8 +253,8 @@ public class DatabaseMigrationService : IHostedService
             return;
         }
 
-        var customerId = Guid.NewGuid();
-        var orgId = Guid.NewGuid();
+        var customerId = Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var orgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var userId = Guid.NewGuid();
 
         adminDb.Customers.Add(new Master.Entity.TableEntities.Customer
@@ -264,6 +264,7 @@ public class DatabaseMigrationService : IHostedService
             CountryPrefix = _config["Bootstrap:CountryPrefix"] ?? "IN",
             Name = _config["Bootstrap:CompanyName"] ?? "First Customer",
             BillingEmail = email,
+            DatabaseName = tenantDbName,
             PlanTier = "Elite",
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
@@ -278,14 +279,19 @@ public class DatabaseMigrationService : IHostedService
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 
+        string? hash = null;
+        if (_config["Bootstrap:OwnerPassword"] is { Length: > 0 } pass)
+        {
+            hash = BCrypt.Net.BCrypt.EnhancedHashPassword(pass, 12);
+        }
+
         adminDb.Users.Add(new Master.Entity.TableEntities.User
         {
             UserId = userId,
             Email = email,
             DisplayName = _config["Bootstrap:OwnerName"] ?? "Administrator",
-            // Deliberately null. There is no password to leak because there is
-            // no password; the reset flow sets the first one.
-            PasswordHash = null,
+            // If OwnerPassword is provided (e.g. local dev), hash it. Otherwise, force reset flow.
+            PasswordHash = hash,
             EmailConfirmed = false,
             IsActive = true,
         });
