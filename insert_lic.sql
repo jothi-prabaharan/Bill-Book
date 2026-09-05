@@ -1,0 +1,1 @@
+INSERT INTO mst."Licenses" ("LicenseId", "CustomerId", "LicenseType", "StartDate", "ExpiryDate", "MaxUsers", "MaxOrganizations", "IsActive", "GraceDays", "CreatedAt") VALUES ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000001', 'Active', '2026-09-01', '2036-09-01', 100, 100, true, 14, CURRENT_TIMESTAMP);

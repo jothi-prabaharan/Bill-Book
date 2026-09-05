@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Entity.TableEntities;
 
@@ -1141,6 +1141,128 @@ public sealed class ReportCatalogSeeder
                 new("grossAmount", "Gross Amount", ColumnDataType.Money, IsDefault: true,
                     Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
                 new("itemId", "Item", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "receivable-invoice-detail",
+            Title = "Receivable Invoice Detail",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 145,
+            Columns =
+            [
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("itemCode", "Item Code", ColumnDataType.Text, IsDefault: true),
+                new("itemName", "Item Name", ColumnDataType.Text, IsDefault: true),
+                new("quantity", "Quantity", ColumnDataType.Number, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitPrice", "Unit Price", ColumnDataType.Number, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("lineTotal", "Line Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "receivable-invoice-summary",
+            Title = "Receivable Invoice Summary",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 150,
+            Columns =
+            [
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("amountDue", "Amount Due", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "invoice-dn-payment-collection",
+            Title = "Invoice/DN Payment Collection",
+            Module = ReportModule.Sales,
+            RequiredPermission = "sales.view",
+            SortOrder = 155,
+            Columns =
+            [
+                new("receiveMoneyNo", "Receive Money No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("receiptDate", "Receipt Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true),
+                new("amount", "Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "payable-invoice-detail",
+            Title = "Payable Invoice Detail",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 160,
+            Columns =
+            [
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("itemCode", "Item Code", ColumnDataType.Text, IsDefault: true),
+                new("itemName", "Item Name", ColumnDataType.Text, IsDefault: true),
+                new("quantity", "Quantity", ColumnDataType.Number, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("unitPrice", "Unit Price", ColumnDataType.Money, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("lineTotal", "Line Total", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billId", "Bill", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "payable-invoice-summary",
+            Title = "Payable Invoice Summary",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 165,
+            Columns =
+            [
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("amountDue", "Amount Due", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("billId", "Bill", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "bill-dn-payment",
+            Title = "Bill / DN Payment",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 170,
+            Columns =
+            [
+                new("spendMoneyNo", "Spend Money No", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("paymentDate", "Payment Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true),
+                new("amount", "Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("spendMoneyId", "Spend Money", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "purchase-receive-order-details",
+            Title = "Purchase Receive Order Details",
+            Module = ReportModule.Purchase,
+            RequiredPermission = "purchase.view",
+            SortOrder = 175,
+            Columns =
+            [
+                new("documentNo", "Document No", ColumnDataType.Text, IsDefault: true, IsGroupable: true, IsPrimary: true),
+                new("documentDate", "Document Date", ColumnDataType.Date, IsDefault: true),
+                new("contactName", "Contact Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("itemCode", "Item Code", ColumnDataType.Text, IsDefault: true),
+                new("quantity", "Quantity", ColumnDataType.Number, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("goodsReceiptId", "Goods Receipt", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
             ],
         }
     ];

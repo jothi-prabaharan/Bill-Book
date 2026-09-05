@@ -94,6 +94,11 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<PurchaseOrderRead> PurchaseOrders => Set<PurchaseOrderRead>();
     public DbSet<GoodsReceiptRead> GoodsReceipts => Set<GoodsReceiptRead>();
     public DbSet<BillDetailRead> BillDetails => Set<BillDetailRead>();
+    public DbSet<ReceiveMoneyRead> ReceiveMoney => Set<ReceiveMoneyRead>();
+    public DbSet<ReceiveMoneyDetailRead> ReceiveMoneyDetails => Set<ReceiveMoneyDetailRead>();
+    public DbSet<SpendMoneyRead> SpendMoney => Set<SpendMoneyRead>();
+    public DbSet<SpendMoneyDetailRead> SpendMoneyDetails => Set<SpendMoneyDetailRead>();
+    public DbSet<GoodsReceiptDetailRead> GoodsReceiptDetails => Set<GoodsReceiptDetailRead>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -221,6 +226,11 @@ public class ReportingDbContext : TenantDbContext
         MapRead<PurchaseOrderRead>(modelBuilder, "PurchaseOrders", "pur", e => e.PurchaseOrderId);
         MapRead<GoodsReceiptRead>(modelBuilder, "GoodsReceipts", "pur", e => e.GoodsReceiptId);
         MapRead<BillDetailRead>(modelBuilder, "BillDetails", "pur", e => e.BillDetailId);
+        MapRead<ReceiveMoneyRead>(modelBuilder, "ReceiveMoney", "acc", e => e.ReceiveMoneyId);
+        MapRead<ReceiveMoneyDetailRead>(modelBuilder, "ReceiveMoneyDetails", "acc", e => e.ReceiveMoneyDetailId);
+        MapRead<SpendMoneyRead>(modelBuilder, "SpendMoney", "acc", e => e.SpendMoneyId);
+        MapRead<SpendMoneyDetailRead>(modelBuilder, "SpendMoneyDetails", "acc", e => e.SpendMoneyDetailId);
+        MapRead<GoodsReceiptDetailRead>(modelBuilder, "GoodsReceiptDetails", "pur", e => e.GoodsReceiptDetailId);
 
     }
 

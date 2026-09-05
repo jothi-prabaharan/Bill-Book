@@ -269,6 +269,18 @@ public class DatabaseMigrationService : IHostedService
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 
+        adminDb.Licenses.Add(new Master.Entity.TableEntities.License
+        {
+            CustomerId = customerId,
+            LicenseType = Master.Entity.Enums.LicenseType.Elite,
+            StartDate = DateOnly.FromDateTime(DateTime.UtcNow),
+            ExpiryDate = DateOnly.FromDateTime(DateTime.UtcNow).AddYears(10),
+            MaxUsers = 100,
+            MaxOrganizations = 100,
+            IsActive = true,
+            GraceDays = 14,
+        });
+
         adminDb.Organizations.Add(new Master.Entity.TableEntities.Organization
         {
             OrgId = orgId,
@@ -282,7 +294,7 @@ public class DatabaseMigrationService : IHostedService
         string? hash = null;
         if (_config["Bootstrap:OwnerPassword"] is { Length: > 0 } pass)
         {
-            hash = BCrypt.Net.BCrypt.EnhancedHashPassword(pass, 12);
+            hash = BCrypt.Net.BCrypt.HashPassword(pass, 12);
         }
 
         adminDb.Users.Add(new Master.Entity.TableEntities.User
