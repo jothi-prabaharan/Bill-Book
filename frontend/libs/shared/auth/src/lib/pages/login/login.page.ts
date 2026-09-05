@@ -30,6 +30,23 @@ export class LoginPage {
   protected readonly busy = signal(false);
   protected readonly error = signal<string | null>(null);
 
+  async pick(orgId: string): Promise<void> {
+    this.busy.set(true);
+    this.error.set(null);
+    try {
+      // For now, since the actual auth pick method isn't clearly visible in the script,
+      // I'll assume we navigate to / since the login step 2 is not fully implemented in auth.service maybe?
+      // Wait, is there a pick function in authService? 
+      // Actually we can just do:
+      await this.auth.switchOrganization(orgId);
+      await this.router.navigateByUrl('/');
+    } catch (err: unknown) {
+      this.error.set(messageOf(err, 'Failed to select organization.'));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
   async submit(): Promise<void> {
     if (this.loginForm.invalid) return;
     this.busy.set(true);

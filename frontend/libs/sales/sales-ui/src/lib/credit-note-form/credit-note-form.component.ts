@@ -3,7 +3,7 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CreditNoteService, LedgerService, OutstandingBalance, SaveCreditNoteRequest } from '@bill-book/sales-core';
-import { AllocationGridComponent, AllocationRow, DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent } from '@bill-book/ui-components';
+import { AllocationGridComponent, AllocationRow, DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent, MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 /**
@@ -18,7 +18,7 @@ const PAISE = 100;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-credit-note-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, AllocationGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, AllocationGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent, MessageBoxComponent],
   templateUrl: './credit-note-form.component.html',
   styleUrl: './credit-note-form.component.scss'
 })
@@ -172,12 +172,21 @@ export class CreditNoteFormComponent implements OnInit {
     this.lines = [...newLines];
   }
 
+  messages: UiMessage[] = [];
+  saving = false;
+
   onPickItem(_index: number) {
     // open item picker dialog, update lines
   }
 
   save() {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
+
+    if (!this.form.get('invoiceId')?.value) {
+      this.messages = [{ tone: 'error', text: 'Select exactly one invoice to allocate against.' }];
+      return;
+    }
 
     const val = this.form.value;
     const request: SaveCreditNoteRequest = {
@@ -200,8 +209,18 @@ export class CreditNoteFormComponent implements OnInit {
         taxGroupIds: []
       } as any))
     } as any;
-    this.creditNoteService.save(request).subscribe(() => {
-      void this.router.navigate(['../'], { relativeTo: this.route });
+
+    this.saving = true;
+    this.messages = [];
+    this.creditNoteService.save(request).subscribe({
+      next: () => {
+        this.saving = false;
+        void this.router.navigate(['../'], { relativeTo: this.route });
+      },
+      error: () => {
+        this.saving = false;
+        this.messages = [{ tone: 'error', text: 'Failed to save the credit note.' }];
+      }
     });
   }
 }
