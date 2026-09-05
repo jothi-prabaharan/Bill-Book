@@ -112,4 +112,31 @@ public sealed class PurchaseQueryFilterTests
 
         Assert.Empty(unprotected);
     }
+
+    /// <summary>
+    /// Row-level security on pur is on, FORCEd, and has a policy.
+    ///
+    /// <b>All three, because one was being checked and the other two matter
+    /// more.</b> The existing assertion read <c>pg_tables.rowsecurity</c>, which
+    /// says RLS is switched on. It does not say a policy exists — a squashed
+    /// migration that dropped one would leave the flag set — and it does not say
+    /// <c>FORCE</c> is set. Without FORCE, RLS does not apply to the table's
+    /// owner, and the application connects as the role that owns these tables:
+    /// every policy in the product would be inert, leaving the EF query filter
+    /// as the only guard, which is exactly the single point of failure having
+    /// both is meant to avoid.
+    /// </summary>
+    [SkippableFact]
+    public async Task Row_level_security_is_enabled_forced_and_policied_on_every_table()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        await using PurchaseDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        Assert.Equal(
+            string.Empty,
+            string.Join(
+                "; ",
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "pur")));
+    }
 }

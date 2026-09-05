@@ -1,0 +1,134 @@
+# The release gate.
+#
+# There was none. Everything this repository claims about itself — the build is
+# clean, the tests pass, the migrations apply — was verified on whichever
+# machine last ran it, and the claims went stale exactly as often as you would
+# expect: a package pin that made the backend unbuildable went unnoticed until
+# somebody tried, and a test suite that had never run once was described as
+# passing.
+#
+# Every job here is a gate. A red one blocks the merge, so a claim in a document
+# and the state of `main` cannot drift apart again without somebody seeing it.
+#
+# The two halves run in parallel because they share nothing: the frontend needs
+# no database and the backend needs no browser.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push supersedes the run in flight for the same ref. Two runs of the same
+# branch prove nothing twice and queue behind each other.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend — build, migrate, test
+    runs-on: ubuntu-latest
+
+    # A real PostgreSQL, because half of what these tests assert is the
+    # database's: the deferred balance trigger on the journal, the guarded
+    # numbering update, and the RLS policies that no in-memory provider has.
+    # A suite that skipped itself here would be a green gate that checked
+    # nothing, which is worse than no gate.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: '123'
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        working-directory: backend
+        run: dotnet restore
+
+      # TreatWarningsAsErrors is on, so this gate is "no warnings" as well as
+      # "no errors". --no-restore so a restore failure is reported by the step
+      # above rather than buried in build output.
+      - name: Build
+        working-directory: backend
+        run: dotnet build --no-restore -warnaserror
+
+      # From zero, every time. Migration squashing has silently dropped RLS
+      # policies and accounting triggers in this repository before, and the only
+      # thing that catches it is applying the chain to an empty database and
+      # then asserting on what the schema actually carries — which is what the
+      # query-filter suites do.
+      #
+      # The fixtures create and migrate their own databases on first use, so
+      # nothing here has to name them; a stale one is the usual cause of a suite
+      # skipping wholesale, and a fresh container has none.
+      - name: Test
+        working-directory: backend
+        run: dotnet test --no-build --verbosity normal
+
+      # A suite that skipped itself is a suite that did not run, and the fixtures
+      # skip when no server answers. Failing on any skip is what stops a
+      # misconfigured database turning this gate green.
+      - name: Refuse a run with skipped tests
+        working-directory: backend
+        run: |
+          dotnet test --no-build --verbosity quiet 2>&1 | tee results.txt
+          if grep -qE 'Skipped: +[1-9]' results.txt; then
+            echo "::error::Tests were skipped. A skipped database-backed suite is a gate that checked nothing."
+            exit 1
+          fi
+
+  frontend:
+    name: Frontend — lint, typecheck, test, build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # ci, not install: it installs the lockfile rather than resolving afresh,
+      # so the gate tests the dependency tree that is actually committed.
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      # The same four steps `npm run check` runs locally, split so a failure
+      # names which one failed instead of ending at the first.
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: frontend
+        run: npm run test
+
+      # Every app, under strictTemplates. A library can compile while the app
+      # that uses it does not, and the apps are what ship.
+      - name: Build
+        working-directory: frontend
+        run: npm run build

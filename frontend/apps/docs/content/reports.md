@@ -28,11 +28,15 @@ Subtotals and the grand total are computed over the **whole** result, not the pa
 
 ## Exporting
 
-**Export to Excel** produces the whole result — every row the filters allow, not just the page on screen — with the header frozen, amounts as numbers your spreadsheet can total, dates as real dates, and the subtotals as rows.
+Two formats, and both export the whole result — every row the filters allow, not just the page on screen. Whichever you choose, the file is the report as you have it set up: the same filters, the same sorting, the same grouping or pivot, the same columns in the same order, with the paging removed.
+
+**Export to Excel** gives you a workbook with the header frozen, amounts as numbers your spreadsheet can total, dates as real dates, and the subtotals as rows.
+
+**Export to CSV** gives you the same thing as plain text, for loading somewhere else. Amounts come out unformatted — `1234567.89` rather than `12,34,567.89` — so whatever reads the file can parse them; dates come out as `2026-04-01`. Names in Tamil, Chinese or any other script come through intact, and open correctly in Excel.
 
 Exports are capped at 100,000 rows. Above that the export is refused with the row count rather than quietly truncated, because a file missing its last rows looks complete.
 
-PDF export is not available yet.
+PDF export is not offered. Reports export to Excel and CSV only.
 
 ## Sharing a report
 

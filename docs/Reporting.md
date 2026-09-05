@@ -2,9 +2,11 @@
 
 **Schema:** `rpt` (report catalog and saved layouts) + read-only queries across `acc`, `inv`, `sal`, `pur`, `con`
 
-**Status source of truth:** §8.8 is the only report-status table in this document. Report completion must be verified against source files, not older checklists.
+**Status source of truth:** §8 is the only report-status section in this document, and it is a reconciliation against source rather than a checklist. Report completion must be verified against source files.
 
-**Current verified status:** 20 of 46 cataloged reports are built and rendering today. Three explicitly verified reports are Account Movement, Warehouse Tracking Detail, and Sales Register; the remaining 17 verified reports are recorded in §8.8. The remaining 26 reports are not yet completed. 
+**Current verified status (4 September 2026):** **41 report sources are wired end to end** — source, DI registration, catalog seed and test coverage, each of the four asserted against the assembly by `ReportLayerCertificationTests`. Of those, **34 are among the 46 entries in `reports.json`** and 7 are extra reports the engine made cheap to add. **12 of the 46 are not implemented**, and §8.2 says which and why.
+
+**The "20 of 46" this document used to carry was wrong in both directions and is corrected below.** It undercounted what was built by fourteen and mis-stated what remained. Recounted by diffing `reports.json` against the report keys the sources declare, which is a thirty-second answer and worth redoing rather than carrying forward.
 
 ## 1. Decisions already taken
 
@@ -216,55 +218,63 @@ Filtering, sorting, grouping, pivoting and pagination remain server-side. Export
 
 A report is **Completed (100%)** only when its schema/data source, backend query, frontend rendering, validations and authorization are implemented and verified against the source code. A report that exists only in design documentation or an old checklist is not complete.
 
-### 8.2 Current report count
+### 8.2 The reconciliation
 
-| Metric | Status |
-|---|---:|
-| Total cataloged reports | **46** |
-| Completed / verified | **20** |
-| Remaining | **26** |
-| Overall report completion | **43.5%** |
-| Export formats | **Excel + CSV** |
-| PDF export | **Skipped / out of scope** |
+`reports.json` holds **46 distinct `(ReportGroup, ReportName)` pairs**, and that file is where the number 46 comes from. Four of the forty-six declare **no columns at all** — Balance Sheet, Cash Flow Statement – Direct, Profit & Loss and Business Performance. The first three are statement reports with pages of their own and are built; the fourth is a bare name with no column list, which is not a report definition to implement.
 
-### 8.3 Completed report status format
+| | Count |
+|---|---|
+| Entries in `reports.json` | **46** |
+| Implemented | **34** |
+| Not implemented | **12** |
+| Implemented beyond `reports.json` | **7** |
+| **Report sources wired end to end** | **41** |
 
-| Task Name | % Completion | Blocker (Module/Task) | Schema & Table Status | Backend Status | Frontend Status | Validations Handled? | Auth & Authz Done? |
-|---|---:|---|---|---|---|---|---|
-| Account Movement | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Warehouse Tracking Detail | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Sales Register | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Other verified reports (17) | 100% each | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
+The seven beyond the specification are Account Movement, Customer Statement, Vendor Statement, GSTR-1 Summary, Sales Register, Purchase Register and Warehouse Tracking Detail. They are real reports in the product; they simply are not in the file the count is taken from, which is why 34 + 7 = 41 rather than 41 of 46.
 
-### 8.4 Remaining report status
+#### The twelve not implemented
 
-The remaining **26 reports** require implementation and source-level verification before they can be marked complete. They must be added to the status table individually as each report is delivered.
+**Four fixed-asset reports — blocked, not pending.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule all read a fixed-asset register that does not exist: the register is Phase 2 and is itself blocked on two open schema decisions (whether acquisition and disposal get transaction codes of their own, and straight-line only versus books **and** tax depreciation). Nothing can be built here until those are answered — see the roadmap note in `CLAUDE.md`.
 
-### 8.5 Reporting infrastructure status
+**One is not a report.** *Business Performance*, under a group called *Financial performance*, appears in `reports.json` as a group and a name with no columns, no sub-group and nothing else. There is no specification to implement. It needs a business decision about what it is before it can be engineering work.
 
-| Task Name | % Completion | Blocker (Module/Task) | Schema & Table Status | Backend Status | Frontend Status | Validations Handled? | Auth & Authz Done? |
-|---|---:|---|---|---|---|---|---|
-| Report catalog | 100% | None | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Report query engine | 100% | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Common report grid | 100% | None identified | N/A | ✅ | ✅ | ✅ | ✅ |
-| Saved report views | 100% | None identified | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Excel export | 100% design/requirement | Implementation verification as reports are completed | N/A | 🔶 | 🔶 | 🔶 | 🔶 |
-| CSV export | 100% requirement | Implementation verification as reports are completed | N/A | 🔶 | 🔶 | 🔶 | 🔶 |
-| PDF export | N/A | **Out of scope** | N/A | N/A | N/A | N/A | N/A |
+**Seven are genuinely pending and unblocked.** Each is a substantial report of 17–43 columns, and each needs read models that do not exist yet:
 
-### 8.6 Report completion rule
+| Report | Columns | What it needs first |
+|---|---|---|
+| Receivable Invoice Detail | 43 | Invoice ↔ allocation read models |
+| Receivable Invoice Summary | 27 | the same, plus realised/unrealised FX per invoice |
+| Invoice/DN Payment Collection | 33 | `acc.ReceiveMoney` and allocation read models |
+| Payable Invoice Detail | 40 | Bill ↔ allocation read models |
+| Payable Invoice Summary | 26 | the same |
+| Bill/DN Payment | 34 | `acc.SpendMoney` and allocation read models |
+| Purchase Receive Order Details | 17 | a goods-receipt **line** read model |
 
-When a report is implemented, update §8.3/§8.4 with its **actual report name/key** and the five project-status dimensions. Do not update the count merely because a report definition was added; the source implementation and rendering must be verified.
+The common shape is that all seven report a document against what has been settled on it. `ReportingDbContext` maps invoices, bills, receipts and orders, but maps **no allocation, settlement or money-document tables at all** — so every one of the seven starts by adding read models over `acc`, not by writing a query. That is the work, and it has not been done.
 
-### 8.7 Export completion rule
+### 8.3 What "wired" is asserted to mean
 
-A report is not considered fully complete merely because its grid renders. Excel and CSV export must use the same filters, sorting, grouping/pivot state and selected columns as the report query, while removing pagination. Both export formats must enforce authorization, tenant scope and server-side row limits.
+`ReportLayerCertificationTests` asks the assembly, not a list, and fails the build if a report exists in fewer than four places:
 
-### 8.8 Authoritative report status
+```
+source class  →  DI registration  →  catalog seed row per column  →  covered by the source theories
+```
 
-**20 of 46 reports are built and rendering today.** Account Movement, Warehouse Tracking Detail and Sales Register are explicitly verified examples among the completed reports. The other 17 completed reports must remain tied to the source-level verification used to establish the 20/46 count.
+Plus, per report, from the suites beside it: unique column keys, aggregates only on money and quantity columns, groupable columns typed as text, a declared permission beyond `reports.view`, and seed rows matching the source's declared keys exactly in both directions.
 
-**Do not use older `[x]` checklists as evidence of completion.** In particular, Profit & Loss and Balance Sheet must not be marked complete unless their actual source implementation is verified.
+**A report is not complete because its source compiles.** Fifteen tracker and finance reports were once written, registered nowhere and listed in no test, and 239 tests passed over the gap — every test was a theory over a list, and a report absent from the list is a report no theory runs on. That is the failure the certification suite exists to make impossible.
+
+### 8.4 Export status
+
+Both formats are built and asserted, and neither has query semantics of its own — the writers take the `ReportResultView` the engine produced, so an export cannot disagree with the screen it was taken from.
+
+| | Status |
+|---|---|
+| Excel (`format=xlsx`) | **Built.** `ExcelReportWriter`, on the already-pinned OpenXML dependency |
+| CSV (`format=csv`) | **Built.** `CsvReportWriter`, RFC 4180, UTF-8 with a BOM, invariant numbers |
+| PDF (`format=pdf`) | **Refused by design**, and outside the reporting requirement |
+
+The CSV half was a requirement this document recorded as decided while `ExportFormat` carried only `Xlsx` and `Pdf`; `?format=csv` was an unreachable branch of an enum. It is implemented now, with 12 tests over quoting, encoding, multilingual text, null handling and column order.
 
 ## 9. Delivery checklist
 
@@ -276,8 +286,10 @@ A report is not considered fully complete merely because its grid renders. Excel
 - [x] Excel export defined
 - [x] CSV export defined
 - [x] PDF explicitly removed from scope
-- [ ] All 46 reports implemented and verified
-- [ ] Remaining 26 reports implemented
-- [ ] Excel export verified across all completed reports
-- [ ] CSV export verified across all completed reports
-- [ ] End-to-end authorization/tenant verification across all reports
+- [x] Excel export built and verified
+- [x] CSV export built and verified
+- [x] Every wired report certified across source, DI, catalog and tests
+- [x] Authorization and tenant scope asserted over the whole assembly — see `EndpointGuardTests` and `ReportingQueryFilterTests`
+- [ ] The seven pending sales/purchase settlement reports (§8.2)
+- [ ] The four fixed-asset reports — blocked on the Phase 2 register and two open schema decisions
+- [ ] *Business Performance* — undefined in `reports.json`; needs a business decision, not engineering

@@ -82,4 +82,36 @@ public sealed class ReportingQueryFilterTests
 
         Assert.Empty(unprotected);
     }
+
+    /// <summary>
+    /// Row-level security on <c>rpt</c> is on, FORCEd, and has a policy — on
+    /// every table that has a tenant to scope.
+    ///
+    /// <b>Two tables have none, and they are named here rather than skipped by
+    /// a list.</b> The previous assertion checked exactly three tables by name,
+    /// which is a list with exceptions on it — the shape that has hidden every
+    /// gap this project has found, because a table added later is simply not on
+    /// it. <c>ReportMasters</c> and <c>ReportColumns</c> hold the imported
+    /// <c>reports.json</c> specification: global reference data with no
+    /// <c>CustomerId</c> or <c>OrgId</c> column at all, so there is nothing
+    /// per-customer in them to leak and no column a policy could filter on.
+    ///
+    /// The other three are per-branch saved layouts and take the full treatment.
+    /// FORCE is the part nothing was checking anywhere: without it RLS does not
+    /// apply to the owner, which is the role the application connects as.
+    /// </summary>
+    [SkippableFact]
+    public async Task Row_level_security_is_enabled_forced_and_policied_on_every_tenant_table()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        await using ReportingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        Assert.Equal(
+            string.Empty,
+            string.Join(
+                "; ",
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db, "rpt", "ReportMasters", "ReportColumns")));
+    }
 }

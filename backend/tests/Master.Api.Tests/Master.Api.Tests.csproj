@@ -16,4 +16,12 @@
     <ProjectReference Include="..\..\Api\Master\Master.Api\Master.Api.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <!-- One copy of the RLS audit, linked rather than duplicated: it asks the
+         database the same three questions of every schema, and seven copies is
+         how the answers drift. -->
+    <Compile Include="..\Shared\RlsAudit.cs" Link="RlsAudit.cs" />
+  </ItemGroup>
+
 </Project>
