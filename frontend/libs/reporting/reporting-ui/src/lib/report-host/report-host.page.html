@@ -25,6 +25,9 @@
     >
       {{ exporting() === 'Csv' ? 'Exporting…' : 'Export to CSV' }}
     </button>
+    <button type="button" (click)="exportToCsv()" [disabled]="busy() || exporting()">
+      {{ exporting() ? 'Exporting…' : 'Export to CSV' }}
+    </button>
   </div>
 </header>
 
@@ -105,5 +108,7 @@
     </div>
   }
 } @else if (busy()) {
-  <p class="empty">Loading…</p>
+  <div class="data-grid-loading-bar" aria-hidden="true">
+    <div class="loading-pulse"></div>
+  </div>
 }

@@ -219,14 +219,7 @@ export class ReportGridComponent {
         : '1.0-4';
   }
 
-  /** Columns that lead a card at ~360px, where a row cannot be a row. */
-  protected readonly cardTitleColumns = computed(() =>
-    this.columns().filter((column) => column.isPrimary),
-  );
 
-  protected readonly cardBodyColumns = computed(() =>
-    this.columns().filter((column) => !column.isPrimary),
-  );
 
   protected activate(row: Record<string, unknown>): void {
     this.rowActivate.emit(row);

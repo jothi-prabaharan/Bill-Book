@@ -1,7 +1,10 @@
 @if (result(); as report) {
-  <!-- Wide table on desktop, scrolling inside its own container so the page never
-       moves sideways. Below the phone breakpoint the same rows render as cards. -->
   <div class="report-grid" [class.busy]="busy()">
+    @if (busy()) {
+      <div class="data-grid-loading-bar" aria-hidden="true">
+        <div class="loading-pulse"></div>
+      </div>
+    }
     <table class="grid">
       <thead>
         <tr>
@@ -119,43 +122,6 @@
     </table>
   </div>
 
-  <!-- The same rows as cards. One column can never be a row at 360px. -->
-  <ul class="cards">
-    @for (row of rows(); track $index) {
-      <!-- A card is as activatable as a table row, so it takes the keyboard too:
-           a list you can only open with a mouse is one nobody can use on a phone
-           with a keyboard attached, or with a screen reader at all. -->
-      <li
-        tabindex="0"
-        role="button"
-        (click)="activate(row)"
-        (keydown.enter)="activate(row)"
-        (keydown.space)="activate(row)"
-      >
-        <p class="title">
-          @for (column of cardTitleColumns(); track column.key) {
-            <span>{{ display(row, column) }}</span>
-          }
-        </p>
-        <dl>
-          @for (column of cardBodyColumns(); track column.key) {
-            <div>
-              <dt>{{ column.header }}</dt>
-              <dd [class.right]="isNumeric(column)">
-                @if (isNumeric(column)) {
-                  {{ numeric(row, column) | number: format(column) }}
-                } @else {
-                  {{ display(row, column) }}
-                }
-              </dd>
-            </div>
-          }
-        </dl>
-      </li>
-    } @empty {
-      <li class="empty">Nothing to show for these filters.</li>
-    }
-  </ul>
 
   <nav class="pager">
     <span class="count">
@@ -205,5 +171,7 @@
     </button>
   </nav>
 } @else if (busy()) {
-  <p class="empty">Loading…</p>
+  <div class="data-grid-loading-bar" aria-hidden="true">
+    <div class="loading-pulse"></div>
+  </div>
 }
