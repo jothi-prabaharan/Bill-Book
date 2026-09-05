@@ -4,6 +4,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using Xunit;
 
 namespace Master.Api.Tests;
@@ -80,13 +81,54 @@ public sealed class SignupTests
         OrganizationName = $"Head Office {suffix}",
     };
 
+    /// <summary>
+    /// A shard with room, so the allocator has something to allocate.
+    ///
+    /// <b>A real allocator, not a stub.</b> The whole reason signup was broken
+    /// is that nothing ever assigned a database, so a stub returning a name
+    /// would test around the bug rather than over it.
+    /// </summary>
+    private async Task<string> SeedShardAsync(AdminDbContext db, int capacity = 100)
+    {
+        string name = $"TEST{Guid.NewGuid().ToString("N")[..8].ToUpperInvariant()}";
+
+        db.TenantDatabases.Add(new TenantDatabase
+        {
+            DatabaseName = name,
+            PlanType = "Trial",
+            MaxOrganizations = capacity,
+            CurrentOrganizations = 0,
+        });
+
+        await db.SaveChangesAsync();
+
+        return name;
+    }
+
+    /// <summary>
+    /// Takes every existing shard to its limit.
+    ///
+    /// These tests share one database with the rest of the collection, so a
+    /// shard another test seeded would otherwise be a candidate and the
+    /// assertion would be about which test ran first.
+    /// </summary>
+    private static Task<int> FillEveryShardAsync(AdminDbContext db) =>
+        db.TenantDatabases.ExecuteUpdateAsync(
+            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+
     private (SignupService Service, AdminDbContext Db, RecordingQueue Queue) Create()
     {
         AdminDbContext db = _admin.CreateContext();
         RecordingQueue queue = new();
 
         return (
-            new SignupService(db, queue, new StubCurrencies(), new StubSeeder(), new FixedClock()),
+            new SignupService(
+                db,
+                queue,
+                new StubCurrencies(),
+                new StubSeeder(),
+                new TenantDatabaseAllocator(db, NullLogger<TenantDatabaseAllocator>.Instance),
+                new FixedClock()),
             db,
             queue);
     }
@@ -100,6 +142,8 @@ public sealed class SignupTests
         await using AdminDbContext db = context;
 
         string suffix = Guid.NewGuid().ToString("N")[..8];
+
+        await SeedShardAsync(db);
 
         // The whole test. It threw a DbUpdateException here for ten days.
         SignupResponse response = await signup.SignupAsync(Request(suffix), default);
@@ -121,6 +165,8 @@ public sealed class SignupTests
 
         (SignupService signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
+
+        await SeedShardAsync(db);
 
         SignupResponse response = await signup.SignupAsync(
             Request(Guid.NewGuid().ToString("N")[..8]), default);
@@ -158,6 +204,8 @@ public sealed class SignupTests
         (SignupService signup, AdminDbContext context, RecordingQueue queue) = Create();
         await using AdminDbContext db = context;
 
+        await SeedShardAsync(db);
+
         string suffix = Guid.NewGuid().ToString("N")[..8];
         SignupResponse response = await signup.SignupAsync(Request(suffix), default);
 
@@ -175,6 +223,8 @@ public sealed class SignupTests
 
         (SignupService signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
+
+        await SeedShardAsync(db);
 
         SignupResponse response = await signup.SignupAsync(
             Request(Guid.NewGuid().ToString("N")[..8]), default);
@@ -207,6 +257,8 @@ public sealed class SignupTests
         (SignupService signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
+        await SeedShardAsync(db);
+
         SignupResponse response = await signup.SignupAsync(
             Request(Guid.NewGuid().ToString("N")[..8]), default);
 
@@ -227,6 +279,8 @@ public sealed class SignupTests
         (SignupService signup, AdminDbContext context, _) = Create();
         await using AdminDbContext db = context;
 
+        await SeedShardAsync(db);
+
         SignupResponse first = await signup.SignupAsync(
             Request(Guid.NewGuid().ToString("N")[..8]), default);
         SignupResponse second = await signup.SignupAsync(
@@ -238,5 +292,137 @@ public sealed class SignupTests
             .Where(c => c.CustomerId == second.CustomerId).Select(c => c.CustomerCode).FirstAsync();
 
         Assert.NotEqual(firstCode, secondCode);
+    }
+
+    // ---- Shard allocation, which is the step that did not exist ------------
+
+    /// <summary>
+    /// The customer is put on a real shard, and the shard's capacity is
+    /// consumed.
+    ///
+    /// <b>`DatabaseName` is what routes every later request.</b>
+    /// `TenantDatabaseResolver` reads it — in raw SQL, so nothing in the
+    /// compiler or the test suite would object if it stopped being written —
+    /// and uses it to choose the connection for the signed-in user. A customer
+    /// row without one cannot be inserted, and one with the wrong one would read
+    /// somebody else's books.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_new_customer_is_placed_on_a_provisioned_database()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        (SignupService signup, AdminDbContext context, _) = Create();
+        await using AdminDbContext db = context;
+
+        // Fill whatever other tests in this collection left behind, so the
+        // shard under test is the only one with room and the assertion is about
+        // the allocator rather than about test ordering.
+        await FillEveryShardAsync(db);
+        string shard = await SeedShardAsync(db, capacity: 5);
+
+        SignupResponse response = await signup.SignupAsync(
+            Request(Guid.NewGuid().ToString("N")[..8]), default);
+
+        Assert.Equal(
+            shard,
+            await db.Customers.Where(c => c.CustomerId == response.CustomerId)
+                .Select(c => c.DatabaseName).FirstAsync());
+
+        // Capacity consumed. A registry that tracked capacity and never spent
+        // it would let every customer onto the first shard for ever.
+        Assert.Equal(
+            1,
+            await db.TenantDatabases.AsNoTracking()
+                .Where(d => d.DatabaseName == shard)
+                .Select(d => d.CurrentOrganizations).FirstAsync());
+    }
+
+    [SkippableFact]
+    public async Task A_full_shard_is_passed_over_for_one_with_room()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        (SignupService signup, AdminDbContext context, _) = Create();
+        await using AdminDbContext db = context;
+
+        await FillEveryShardAsync(db);
+
+        string full = await SeedShardAsync(db, capacity: 1);
+        await db.TenantDatabases.Where(d => d.DatabaseName == full)
+            .ExecuteUpdateAsync(set => set.SetProperty(d => d.CurrentOrganizations, 1));
+
+        string spare = await SeedShardAsync(db, capacity: 5);
+
+        SignupResponse response = await signup.SignupAsync(
+            Request(Guid.NewGuid().ToString("N")[..8]), default);
+
+        Assert.Equal(
+            spare,
+            await db.Customers.Where(c => c.CustomerId == response.CustomerId)
+                .Select(c => c.DatabaseName).FirstAsync());
+    }
+
+    /// <summary>
+    /// With every shard full, signup refuses rather than inventing a database
+    /// name.
+    ///
+    /// A customer whose books point at a database no migration has run against
+    /// is worse than a refused signup: the account exists, the person can be
+    /// told it worked, and the first query fails.
+    /// </summary>
+    [SkippableFact]
+    public async Task Signup_refuses_when_no_shard_has_capacity()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        (SignupService signup, AdminDbContext context, _) = Create();
+        await using AdminDbContext db = context;
+
+        // Every shard in the database at its limit, including any left by
+        // another test in this collection.
+        await db.TenantDatabases.ExecuteUpdateAsync(
+            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+
+        await Assert.ThrowsAsync<NoTenantCapacityException>(
+            () => signup.SignupAsync(Request(Guid.NewGuid().ToString("N")[..8]), default));
+    }
+
+    /// <summary>
+    /// Two signups racing for the last slot: one wins, one does not overfill
+    /// the shard.
+    ///
+    /// A read-then-write would let both see the free slot and both take it, and
+    /// the second customer's books would land in a database over its plan's
+    /// limit — which is the thing the capacity column exists to prevent.
+    /// </summary>
+    [SkippableFact]
+    public async Task Two_allocations_cannot_both_take_the_last_slot()
+    {
+        Skip.If(_admin.SkipReason is not null, _admin.SkipReason ?? string.Empty);
+
+        await using AdminDbContext seed = _admin.CreateContext();
+        await seed.TenantDatabases.ExecuteUpdateAsync(
+            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+
+        string shard = await SeedShardAsync(seed, capacity: 1);
+
+        await using AdminDbContext one = _admin.CreateContext();
+        await using AdminDbContext two = _admin.CreateContext();
+
+        string?[] results = await Task.WhenAll(
+            new TenantDatabaseAllocator(one, NullLogger<TenantDatabaseAllocator>.Instance)
+                .AllocateAsync("Trial", default),
+            new TenantDatabaseAllocator(two, NullLogger<TenantDatabaseAllocator>.Instance)
+                .AllocateAsync("Trial", default));
+
+        Assert.Equal(1, results.Count(r => r == shard));
+        Assert.Equal(1, results.Count(r => r is null));
+
+        Assert.Equal(
+            1,
+            await seed.TenantDatabases.AsNoTracking()
+                .Where(d => d.DatabaseName == shard)
+                .Select(d => d.CurrentOrganizations).FirstAsync());
     }
 }

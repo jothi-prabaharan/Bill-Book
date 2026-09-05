@@ -100,6 +100,11 @@ builder.Services.AddScoped<UserService>();
 
 // ---- Tenant directory, signup and provisioning. ----
 builder.Services.AddScoped<SignupService>();
+// Picks the physical database a new customer's books go in, and claims the
+// capacity for it with a guarded update. The sharded-tenancy work built the
+// registry and the resolver and left this step out, which is why every signup
+// died on the not-null DatabaseName column.
+builder.Services.AddScoped<ITenantDatabaseAllocator, TenantDatabaseAllocator>();
 builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();

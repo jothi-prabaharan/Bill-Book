@@ -23,8 +23,25 @@ public sealed class CustomersController : ControllerBase
             return BadRequest(new { message = "An account with this email already exists." });
         }
 
-        SignupResponse response = await _signup.SignupAsync(request, ct);
-        return AcceptedAtAction(nameof(GetStatus), new { customerId = response.CustomerId }, response);
+        try
+        {
+            SignupResponse response = await _signup.SignupAsync(request, ct);
+
+            return AcceptedAtAction(
+                nameof(GetStatus), new { customerId = response.CustomerId }, response);
+        }
+        catch (NoTenantCapacityException)
+        {
+            // 503, not 500: the request was correct and the platform is out of
+            // provisioned database capacity. Retrying once an operator has added
+            // a shard will work, and saying so is what stops this reading as a
+            // bug in the form the person just filled in.
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+            {
+                message = "Signups are temporarily unavailable while capacity is added. "
+                    + "Please try again shortly.",
+            });
+        }
     }
 
     /// <summary>Polled by the signup screen until CanLogin is true.</summary>

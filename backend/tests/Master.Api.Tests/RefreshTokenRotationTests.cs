@@ -108,6 +108,9 @@ public sealed class RefreshTokenRotationTests
             BillingEmail = $"billing-{suffix}@example.com",
             Status = TenantStatus.Active,
             PlanTier = "Standard",
+            // Not optional: the resolver reads this to route every request for
+            // the customer, and the column is NOT NULL because of it.
+            DatabaseName = "IN000001",
         });
 
         db.Organizations.Add(new Organization

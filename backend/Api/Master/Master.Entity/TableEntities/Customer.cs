@@ -33,17 +33,25 @@ public class Customer : AuditableEntity
     [MaxLength(30, ErrorMessage = "Plan tier cannot exceed 30 characters.")]
     public string PlanTier { get; set; } = "Standard";
 
-    // DatabaseName was here, [Required] over a NOT NULL column, and it is gone.
-    //
-    // It named the customer's own physical database under the model reversed on
-    // 25 August 2026, when every customer moved into one shared tenant database
-    // isolated by CustomerId, a query filter, an RLS policy and a set_config
-    // call. CustomerDatabase, ITenantConnectionResolver and ProvisioningWorker's
-    // CREATE DATABASE all went with that decision; this column was missed.
-    //
-    // Nothing read it or wrote it afterwards — SignupService never set it — so
-    // every POST /api/customers/signup died on a not-null violation, and there
-    // was no way to create a customer through the product at all. Dropping it
-    // finishes a decision already taken rather than making a new one, which is
-    // why it is a repair and not a tenancy question.
+    /// <summary>
+    /// The physical database this customer's books live in.
+    ///
+    /// <b>Load-bearing, and it very nearly got deleted for looking vestigial.</b>
+    /// It belonged to the one-database-per-customer model recorded as reversed
+    /// on 25 August 2026 — and then the sharded-tenancy work reinstated a
+    /// customer-to-database mapping, so the column is what
+    /// <c>TenantDatabaseResolver</c> reads to pick the connection for a request.
+    /// It reads it in <b>raw SQL</b>, which is why nothing in the compiler or
+    /// the test suite objects when this property goes away: the break is at run
+    /// time, on the first request of every signed-in user.
+    ///
+    /// The reason it looked dead is that <b>nothing ever assigned it</b>. The
+    /// sharded work built the registry (<c>mst.TenantDatabases</c>) and the
+    /// resolver and never wrote the step in between, so every signup died on the
+    /// not-null constraint and no customer row was ever created carrying one.
+    /// <c>ITenantDatabaseAllocator</c> is that step.
+    /// </summary>
+    [Required(ErrorMessage = "Database name is required.")]
+    [MaxLength(50, ErrorMessage = "Database name cannot exceed 50 characters.")]
+    public string DatabaseName { get; set; } = null!;
 }

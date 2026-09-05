@@ -17,6 +17,16 @@ public sealed class SignupService
     private readonly IProvisioningQueue _queue;
     private readonly IMasterCurrencies _master;
     private readonly ITenantSeeder _seeder;
+
+    /// <summary>
+    /// Picks the physical database the customer's books go in. Without it the
+    /// customer row has no <c>DatabaseName</c>, which is a not-null column and
+    /// the value <c>TenantDatabaseResolver</c> reads to route every later
+    /// request — so a signup that skipped this step could not be written, and
+    /// would be unusable if it had been.
+    /// </summary>
+    private readonly ITenantDatabaseAllocator _databases;
+
     private readonly TimeProvider _clock;
 
     public SignupService(
@@ -24,12 +34,14 @@ public sealed class SignupService
         IProvisioningQueue queue,
         IMasterCurrencies master,
         ITenantSeeder seeder,
+        ITenantDatabaseAllocator databases,
         TimeProvider clock)
     {
         _db = db;
         _queue = queue;
         _master = master;
         _seeder = seeder;
+        _databases = databases;
         _clock = clock;
     }
 
@@ -44,6 +56,13 @@ public sealed class SignupService
 
         string countryPrefix = country?.CountryCode ?? "IN";
         string defaultCurrency = country?.CurrencyCode ?? "INR";
+
+        // Before anything is written. A customer row cannot exist without a
+        // database to point at, and finding out after the insert would mean a
+        // half-created customer to clean up.
+        string databaseName = await _databases.AllocateAsync("Trial", ct)
+            ?? await _databases.AllocateAsync("Pro", ct)
+            ?? throw new NoTenantCapacityException("Trial");
 
         CustomerEntity customer = null!;
 
@@ -62,6 +81,7 @@ public sealed class SignupService
                 BillingEmail = request.Email,
                 Status = TenantStatus.Provisioning,
                 PlanTier = "Trial",
+                DatabaseName = databaseName,
             };
             _db.Customers.Add(customer);
 
