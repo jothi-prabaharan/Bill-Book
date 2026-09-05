@@ -33,7 +33,17 @@ public class Customer : AuditableEntity
     [MaxLength(30, ErrorMessage = "Plan tier cannot exceed 30 characters.")]
     public string PlanTier { get; set; } = "Standard";
 
-    [Required(ErrorMessage = "Database name is required.")]
-    [MaxLength(50, ErrorMessage = "Database name cannot exceed 50 characters.")]
-    public string DatabaseName { get; set; } = null!;
+    // DatabaseName was here, [Required] over a NOT NULL column, and it is gone.
+    //
+    // It named the customer's own physical database under the model reversed on
+    // 25 August 2026, when every customer moved into one shared tenant database
+    // isolated by CustomerId, a query filter, an RLS policy and a set_config
+    // call. CustomerDatabase, ITenantConnectionResolver and ProvisioningWorker's
+    // CREATE DATABASE all went with that decision; this column was missed.
+    //
+    // Nothing read it or wrote it afterwards — SignupService never set it — so
+    // every POST /api/customers/signup died on a not-null violation, and there
+    // was no way to create a customer through the product at all. Dropping it
+    // finishes a decision already taken rather than making a new one, which is
+    // why it is a repair and not a tenancy question.
 }

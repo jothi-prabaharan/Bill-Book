@@ -100,13 +100,14 @@ public sealed class RefreshTokenRotationTests
         db.Customers.Add(new Master.Entity.TableEntities.Customer
         {
             CustomerId = customerId,
-            CustomerCode = $"C{suffix}",
+            // Numeric, like every code the product writes. A non-numeric one used to
+            // break every later signup, which SignupTests now covers directly.
+            CustomerCode = Random.Shared.NextInt64(1_000_000_000, 9_999_999_999).ToString(),
             CountryPrefix = "IN",
             Name = "Test Customer",
             BillingEmail = $"billing-{suffix}@example.com",
             Status = TenantStatus.Active,
             PlanTier = "Standard",
-            DatabaseName = "EP_Tenant",
         });
 
         db.Organizations.Add(new Organization

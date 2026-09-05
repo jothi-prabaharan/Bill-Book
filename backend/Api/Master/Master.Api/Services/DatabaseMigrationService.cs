@@ -77,52 +77,27 @@ public class DatabaseMigrationService : IHostedService
             };
             adminDb.TenantDatabases.Add(tenantDbEntry);
             
-            // Also seed the first Customer if not exists
-            if (!await adminDb.Customers.AnyAsync(ct))
-            {
-                var customerId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-                var orgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-                var userId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-
-                adminDb.Customers.Add(new Master.Entity.TableEntities.Customer
-                {
-                    CustomerId = customerId,
-                    CustomerCode = "0000000001",
-                    Name = "Eternal Pathway Private Limited",
-                    BillingEmail = "jothiprabaharan@gmail.com",
-                    DatabaseName = tenantDbName,
-                    PlanTier = "Elite",
-                    Status = Master.Entity.Enums.TenantStatus.Active
-                });
-
-                adminDb.Organizations.Add(new Master.Entity.TableEntities.Organization
-                {
-                    OrgId = orgId,
-                    CustomerId = customerId,
-                    OrgCode = "HO",
-                    Name = "Eternal Pathway Private Limited",
-                    BaseCurrency = "INR"
-                });
-
-                adminDb.Users.Add(new Master.Entity.TableEntities.User
-                {
-                    UserId = userId,
-                    Email = "jothiprabaharan@gmail.com",
-                    DisplayName = "System Admin",
-                    // Empty password allows them to trigger reset/first login flow
-                    PasswordHash = "$2a$12$t58FhfJw8WRnwiVWhEdKQ.jwMqbrlrXaMjVvUQuWXGu8nM9Zpznyi", 
-                    EmailConfirmed = true,
-                    IsActive = true
-                });
-
-                adminDb.UserOrganizationRoles.Add(new Master.Entity.TableEntities.UserOrganizationRole
-                {
-                    UserId = userId,
-                    OrgId = orgId,
-                    RoleId = 1, // Owner Role
-                    IsActive = true
-                });
-            }
+            // The first customer, the first branch and the first operator used
+            // to be seeded here unconditionally, with a real person's email
+            // address and a BCrypt hash committed into this file. Three things
+            // were wrong with that and any one of them is a release blocker:
+            //
+            //   * a password hash in the repository is a credential in the
+            //     repository, and it granted RoleId 1 — Owner;
+            //   * it ran on any deployment starting with an empty admin
+            //     database, production included, so a fresh production install
+            //     came up with a working account nobody had asked for;
+            //   * the account was named after one person, which is not a
+            //     bootstrap, it is somebody's login.
+            //
+            // What replaces it is a bootstrap that cannot hand anybody a way in.
+            // It runs only when there are no users at all, takes the address
+            // from configuration rather than from source, and creates the
+            // account with *no password* — so the only way to use it is the
+            // ordinary reset flow, which proves control of the mailbox. Nothing
+            // is created if the setting is absent, because inventing an operator
+            // is the failure being fixed.
+            await BootstrapFirstOperatorAsync(adminDb, ct);
 
             await adminDb.SaveChangesAsync(ct);
         }
@@ -236,4 +211,109 @@ public class DatabaseMigrationService : IHostedService
         _config.GetConnectionString(name) is { Length: > 0 } value
             ? value
             : throw new InvalidOperationException($"ConnectionStrings:{name} is not configured.");
+
+    /// <summary>
+    /// Creates the first operator account, once, from configuration.
+    ///
+    /// <b>Idempotent by emptiness, which is what stops it being a back door.</b>
+    /// It writes nothing unless <c>mst.Users</c> is completely empty, so it
+    /// cannot be re-run to mint a second Owner on a live system, and it cannot
+    /// be pointed at an existing deployment by setting the configuration key
+    /// afterwards.
+    ///
+    /// <b>No password is set.</b> The account exists, is active, and has no
+    /// credential — signing in is impossible until somebody completes the
+    /// forgot-password flow against that mailbox, which is the proof of
+    /// ownership a bootstrap needs and cannot fake. A generated password would
+    /// have to be printed somewhere, and wherever that is becomes the new
+    /// weakest link.
+    ///
+    /// <b>It grants a tenant Owner role, not <c>platform.*</c>.</b> How a
+    /// platform operator acquires <c>platform.*</c> is still undecided — see
+    /// CLAUDE.md's Undecided section — and this deliberately does not settle it
+    /// by seeding one: <c>Role</c> rows are shared system rows, so granting
+    /// <c>platform.*</c> to a tenant role would grant it to that role's holders
+    /// across every customer.
+    /// </summary>
+    private async Task BootstrapFirstOperatorAsync(AdminDbContext adminDb, CancellationToken ct)
+    {
+        if (_config["Bootstrap:OwnerEmail"] is not { Length: > 0 } email)
+        {
+            _logger.LogInformation(
+                "No Bootstrap:OwnerEmail configured, so no first account was created. "
+                + "Set it to create one; it takes effect only while there are no users.");
+
+            return;
+        }
+
+        if (await adminDb.Users.AnyAsync(ct))
+        {
+            // Not an error, and not logged as one: this is the normal state of
+            // every start after the first.
+            return;
+        }
+
+        var customerId = Guid.NewGuid();
+        var orgId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+
+        adminDb.Customers.Add(new Master.Entity.TableEntities.Customer
+        {
+            CustomerId = customerId,
+            CustomerCode = "0000000001",
+            CountryPrefix = _config["Bootstrap:CountryPrefix"] ?? "IN",
+            Name = _config["Bootstrap:CompanyName"] ?? "First Customer",
+            BillingEmail = email,
+            PlanTier = "Elite",
+            Status = Master.Entity.Enums.TenantStatus.Active,
+        });
+
+        adminDb.Organizations.Add(new Master.Entity.TableEntities.Organization
+        {
+            OrgId = orgId,
+            CustomerId = customerId,
+            OrgCode = "HO",
+            Name = _config["Bootstrap:CompanyName"] ?? "Head Office",
+            BaseCurrency = _config["Bootstrap:BaseCurrency"] ?? "INR",
+            Status = Master.Entity.Enums.TenantStatus.Active,
+        });
+
+        adminDb.Users.Add(new Master.Entity.TableEntities.User
+        {
+            UserId = userId,
+            Email = email,
+            DisplayName = _config["Bootstrap:OwnerName"] ?? "Administrator",
+            // Deliberately null. There is no password to leak because there is
+            // no password; the reset flow sets the first one.
+            PasswordHash = null,
+            EmailConfirmed = false,
+            IsActive = true,
+        });
+
+        Role? owner = await adminDb.Roles
+            .FirstOrDefaultAsync(r => r.IsSystemRole && r.SystemName == "Owner", ct);
+
+        if (owner is null)
+        {
+            _logger.LogWarning(
+                "The Owner role is not seeded, so the first account was created without one. "
+                + "It cannot sign in to a branch until a role is assigned.");
+        }
+        else
+        {
+            adminDb.UserOrganizationRoles.Add(new UserOrganizationRole
+            {
+                UserId = userId,
+                OrgId = orgId,
+                RoleId = owner.RoleId,
+                IsActive = true,
+            });
+        }
+
+        // The address, never a credential — there is none to log.
+        _logger.LogInformation(
+            "Created the first account for {Email}. It has no password: use forgot-password "
+            + "to set one.",
+            email);
+    }
 }

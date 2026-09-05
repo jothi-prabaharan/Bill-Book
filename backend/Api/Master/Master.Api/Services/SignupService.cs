@@ -258,11 +258,43 @@ public sealed class SignupService
         return RetryProvisioningResult.OkResult;
     }
 
+    /// <summary>
+    /// The next customer code: one past the highest numeric one in use.
+    ///
+    /// <b>Codes that are not numbers are skipped rather than parsed.</b> This
+    /// took the single greatest <c>CustomerCode</c> and called
+    /// <c>long.Parse</c> on it, so one row whose code was not ten digits —
+    /// imported, hand-written, or written by a future feature that codes
+    /// customers differently — would throw <c>FormatException</c> and make
+    /// <i>every subsequent signup</i> fail, permanently, with an error naming
+    /// neither the row nor the reason. Every code the product writes today is
+    /// numeric, which is exactly why nothing had noticed.
+    ///
+    /// <c>MaxAsync</c> also compared codes as text, where "9" sorts above "10".
+    /// It happens to be right for zero-padded ten-digit codes and wrong for
+    /// anything else, so the ordering is now done on the parsed number.
+    ///
+    /// The insert is still the authority: a duplicate loses the unique index and
+    /// the caller retries with the next code, which is what makes two
+    /// simultaneous signups safe. This only has to be a good guess.
+    /// </summary>
     private async Task<string> NextCustomerCodeAsync(CancellationToken ct)
     {
-        string? max = await _db.Customers.MaxAsync(c => (string?)c.CustomerCode, ct);
-        long next = max is null ? 1 : long.Parse(max) + 1;
-        return next.ToString("D10");
+        List<string> codes = await _db.Customers
+            .Select(c => c.CustomerCode)
+            .ToListAsync(ct);
+
+        long highest = 0;
+
+        foreach (string code in codes)
+        {
+            if (long.TryParse(code, out long value) && value > highest)
+            {
+                highest = value;
+            }
+        }
+
+        return (highest + 1).ToString("D10");
     }
 
     public async Task<bool> EmailExistsAsync(string email, CancellationToken ct)
