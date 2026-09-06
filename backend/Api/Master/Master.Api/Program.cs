@@ -111,6 +111,7 @@ builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<FormatSettingsService>();
 builder.Services.AddScoped<SmtpSettingsService>();
 builder.Services.AddScoped<OrganizationService>();
+builder.Services.AddScoped<PrintTemplateSeeder>();
 builder.Services.AddScoped<LicenseService>();
 builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
 

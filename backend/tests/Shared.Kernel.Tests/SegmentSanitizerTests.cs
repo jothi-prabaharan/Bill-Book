@@ -143,7 +143,7 @@ public class SegmentSanitizerTests
     }
 
     [Fact]
-    public void SanitizeContent_reports_which_segments_it_had_to_change()
+    public void SanitizeContent_names_the_segment_and_what_was_removed()
     {
         var content = new PrintContent
         {
@@ -151,10 +151,25 @@ public class SegmentSanitizerTests
             DetailsHtml = "<div onclick=\"x()\">dirty</div>",
         };
 
-        IReadOnlyList<PrintSegment> changed = new SegmentSanitizer().SanitizeContent(content);
+        IReadOnlyList<SegmentViolation> violations = new SegmentSanitizer().SanitizeContent(content);
 
-        Assert.Equal([PrintSegment.Details], changed);
+        SegmentViolation violation = Assert.Single(violations);
+        Assert.Equal("attribute", violation.Kind);
+        Assert.Contains("d: onclick", violation.Detail, StringComparison.Ordinal);
         Assert.DoesNotContain("onclick", content.DetailsHtml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Reformatting_css_is_not_a_violation()
+    {
+        // AngleSharp re-serialises CSS canonically, so a browser-authored
+        // "font-weight:bold" comes back with a space in it. Treating any
+        // textual difference as a refusal would reject every legitimate save
+        // in the product — the refusal has to mean something was removed.
+        SegmentSanitizeResult result = Sanitizer.Inspect("<div style=\"font-weight:bold\">x</div>");
+
+        Assert.Empty(result.Violations);
+        Assert.Contains("font-weight: bold", result.Html, StringComparison.Ordinal);
     }
 
     private static int CountOccurrences(string haystack, string needle)

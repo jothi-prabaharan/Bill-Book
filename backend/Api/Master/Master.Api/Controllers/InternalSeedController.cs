@@ -41,10 +41,15 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.OrgId = request.OrgId;
 
         var roles = _services.GetRequiredService<ContactPersonRoleService>();
+        var printTemplates = _services.GetRequiredService<PrintTemplateSeeder>();
 
         var response = new SeedOrganizationResponse
         {
-            Seeded = { ["contactPersonRoles"] = await roles.SeedForOrganizationAsync(request.OrgId, ct) },
+            Seeded =
+            {
+                ["contactPersonRoles"] = await roles.SeedForOrganizationAsync(request.OrgId, ct),
+                ["printTemplates"] = await printTemplates.SeedForOrganizationAsync(request.OrgId, ct),
+            },
         };
 
         _log.LogInformation(
