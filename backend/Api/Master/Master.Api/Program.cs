@@ -15,6 +15,7 @@ using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Storage;
+using Shared.Kernel.Printing;
 using Shared.Kernel.Tenancy;
 
 // Master is four services in one: the reference data it always was, the tenant
@@ -112,6 +113,8 @@ builder.Services.AddScoped<FormatSettingsService>();
 builder.Services.AddScoped<SmtpSettingsService>();
 builder.Services.AddScoped<OrganizationService>();
 builder.Services.AddScoped<PrintTemplateSeeder>();
+builder.Services.AddScoped<PrintTemplateService>();
+builder.Services.AddSingleton<PrintRenderer>();
 builder.Services.AddScoped<LicenseService>();
 builder.Services.AddSingleton<ISecretProtector, AesSecretProtector>();
 
