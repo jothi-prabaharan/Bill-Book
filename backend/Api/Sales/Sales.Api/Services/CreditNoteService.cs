@@ -185,6 +185,7 @@ public sealed class CreditNoteService
                 OrgId = orgId,
                 DocumentNo = alloc.Code,
                 TransactionTypeCode = "CRN",
+                PrintTemplateId = request.PrintTemplateId,
                 Status = DocumentStatus.Draft
             };
             _db.CreditNotes.Add(creditNote);
@@ -217,6 +218,7 @@ public sealed class CreditNoteService
         creditNote.PlaceOfSupplyStateId = 0;
         creditNote.IsInterState = pos.IsInterState;
         creditNote.DocumentDate = request.DocumentDate;
+        creditNote.PrintTemplateId = request.PrintTemplateId;
         creditNote.Notes = request.Notes;
         creditNote.CurrencyCode = request.CurrencyCode ?? "USD";
         creditNote.ExchangeRate = request.ExchangeRate;

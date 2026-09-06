@@ -78,6 +78,14 @@ public class CreditNoteLineTaxView
 
 public class SaveCreditNoteRequest
 {
+
+    /// <summary>
+    /// The print template this document should use. Null means the branch's
+    /// default for this document type, which is also where a template that has
+    /// since been deleted resolves to — so the choice can never make a document
+    /// unprintable.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
     public long? CreditNoteId { get; set; }
     
     [Required]

@@ -191,6 +191,7 @@ public sealed class DeliveryChallanService
                 OrgId = orgId,
                 DocumentNo = alloc.Code,
                 TransactionTypeCode = "DLC",
+                PrintTemplateId = request.PrintTemplateId,
                 Status = DocumentStatus.Draft
             };
             _db.DeliveryChallans.Add(deliveryChallan);
@@ -228,6 +229,7 @@ public sealed class DeliveryChallanService
         deliveryChallan.PlaceOfSupplyStateId = 0;
         deliveryChallan.IsInterState = pos.IsInterState;
         deliveryChallan.DocumentDate = request.DocumentDate;
+        deliveryChallan.PrintTemplateId = request.PrintTemplateId;
         deliveryChallan.Notes = request.Notes;
         deliveryChallan.CurrencyCode = request.CurrencyCode ?? "USD";
         deliveryChallan.ExchangeRate = request.ExchangeRate;

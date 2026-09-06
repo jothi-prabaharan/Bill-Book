@@ -72,6 +72,7 @@ public sealed class PurchaseOrderService
         PurchaseOrder order = new()
         {
             TransactionTypeCode = "POR",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentDate = request.DocumentDate,
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
@@ -128,6 +129,7 @@ public sealed class PurchaseOrderService
         }
 
         order.DocumentDate = request.DocumentDate;
+        order.PrintTemplateId = request.PrintTemplateId;
 
         // Lines are replaced wholesale rather than diffed. The tax rows hang off
         // them and are recomputed anyway, so matching old to new would be work

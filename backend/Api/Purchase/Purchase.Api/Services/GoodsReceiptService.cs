@@ -112,6 +112,7 @@ public sealed class GoodsReceiptService
         GoodsReceipt receipt = new()
         {
             TransactionTypeCode = "GRN",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentDate = request.DocumentDate,
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
@@ -165,6 +166,7 @@ public sealed class GoodsReceiptService
         }
 
         receipt.DocumentDate = request.DocumentDate;
+        receipt.PrintTemplateId = request.PrintTemplateId;
 
         _db.GoodsReceiptDetailTaxes.RemoveRange(receipt.Lines.SelectMany(l => l.Taxes));
         _db.GoodsReceiptDetails.RemoveRange(receipt.Lines);

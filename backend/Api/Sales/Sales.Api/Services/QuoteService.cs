@@ -76,6 +76,7 @@ public sealed class QuoteService
         Quote Quote = new()
         {
             TransactionTypeCode = "QTE",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentNo = alloc.Code,
             DocumentDate = request.DocumentDate,
             ValidUntil = request.ValidUntil,
@@ -232,6 +233,7 @@ public sealed class QuoteService
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
 
         Quote.DocumentDate = request.DocumentDate;
+        Quote.PrintTemplateId = request.PrintTemplateId;
         Quote.ValidUntil = request.ValidUntil;
         Quote.ContactId = request.ContactId;
         Quote.ContactGstin = request.ContactGstin;

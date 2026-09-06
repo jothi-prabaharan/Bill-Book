@@ -86,6 +86,7 @@ public sealed class SalesOrderService
         SalesOrder SalesOrder = new()
         {
             TransactionTypeCode = "SOR",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentNo = alloc.Code,
             DocumentDate = request.DocumentDate,
             DeliveryDate = request.DeliveryDate,
@@ -263,6 +264,7 @@ public sealed class SalesOrderService
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
 
         SalesOrder.DocumentDate = request.DocumentDate;
+        SalesOrder.PrintTemplateId = request.PrintTemplateId;
         SalesOrder.DeliveryDate = request.DeliveryDate;
         SalesOrder.ContactId = request.ContactId;
         SalesOrder.ContactGstin = request.ContactGstin;

@@ -14,6 +14,14 @@ namespace Purchase.Entity.Models;
 /// </summary>
 public class SaveBillRequest
 {
+
+    /// <summary>
+    /// The print template this document should use. Null means the branch's
+    /// default for this document type, which is also where a template that has
+    /// since been deleted resolves to — so the choice can never make a document
+    /// unprintable.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
     public DateOnly DocumentDate { get; set; }
 
     [Range(1, long.MaxValue, ErrorMessage = "Choose the vendor.")]

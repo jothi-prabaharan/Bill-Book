@@ -115,6 +115,7 @@ public sealed class BillService
         Bill bill = new()
         {
             TransactionTypeCode = "BIL",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentDate = request.DocumentDate,
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
@@ -174,6 +175,7 @@ public sealed class BillService
         }
 
         bill.DocumentDate = request.DocumentDate;
+        bill.PrintTemplateId = request.PrintTemplateId;
 
         _db.BillDetailTaxes.RemoveRange(bill.Lines.SelectMany(l => l.Taxes));
         _db.BillDetails.RemoveRange(bill.Lines);

@@ -100,6 +100,7 @@ public sealed class DebitNoteService
         DebitNote note = new()
         {
             TransactionTypeCode = "DBN",
+            PrintTemplateId = request.PrintTemplateId,
             DocumentDate = request.DocumentDate,
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
@@ -152,6 +153,7 @@ public sealed class DebitNoteService
         }
 
         note.DocumentDate = request.DocumentDate;
+        note.PrintTemplateId = request.PrintTemplateId;
 
         _db.DebitNoteDetailTaxes.RemoveRange(note.Lines.SelectMany(l => l.Taxes));
         _db.DebitNoteDetails.RemoveRange(note.Lines);

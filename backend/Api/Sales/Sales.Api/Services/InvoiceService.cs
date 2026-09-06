@@ -241,6 +241,7 @@ public sealed class InvoiceService : IInvoiceService
         Invoice invoice = new()
         {
             TransactionTypeCode = typeCode,
+            PrintTemplateId = request.PrintTemplateId,
             DocumentNo = alloc.Code,
             DocumentDate = request.DocumentDate,
             DueDate = request.DueDate,
@@ -457,6 +458,7 @@ public sealed class InvoiceService : IInvoiceService
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
 
         invoice.DocumentDate = request.DocumentDate;
+        invoice.PrintTemplateId = request.PrintTemplateId;
         invoice.DueDate = request.DueDate;
         invoice.QuoteId = request.QuoteId;
         invoice.SalesOrderId = request.SalesOrderId;
