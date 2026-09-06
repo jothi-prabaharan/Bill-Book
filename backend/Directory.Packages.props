@@ -37,7 +37,19 @@
          System.IO.Packaging 8.0.0, which carries two high-severity advisories,
          and this solution builds with TreatWarningsAsErrors. -->
     <PackageVersion Include="DocumentFormat.OpenXml" Version="3.5.1" />
-    <PackageVersion Include="PDFsharp" Version="6.1.1" />  </ItemGroup>
+    <PackageVersion Include="PDFsharp" Version="6.1.1" />
+    <!-- Allow-list HTML sanitiser for print template segments, on write. MIT,
+         built on AngleSharp, so it parses rather than pattern-matches — a regex
+         cannot be trusted with this. Configured in SegmentSanitizer, which must
+         keep contenteditable and the pt-chip class or the editor's placeholder
+         round trip breaks.
+
+         Pinned at 9.2.1039 rather than the 9.0.x line: 9.0.886 carries
+         GHSA-j92c-7v7g-gj3f and drags in AngleSharp 0.17.1, which carries
+         GHSA-pgww-w46g-26qg. Both are NU1902 warnings, and this solution builds
+         with TreatWarningsAsErrors, so the older line does not restore at all. -->
+    <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />
+  </ItemGroup>
   <!-- Test-only. Same caveat as above, and more sharply: these have never been
        restored either, and xunit v3 changed its package layout, so expect the
        first `dotnet restore` to want corrections here. -->
