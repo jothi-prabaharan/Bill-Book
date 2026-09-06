@@ -182,4 +182,17 @@ public abstract class DocumentHeaderBase : OrgScopedEntity
 
     /// <summary>Printed beneath the totals.</summary>
     public string? TermsAndConditions { get; set; }
+
+    /// <summary>
+    /// Which print template this document was, or will be, printed against.
+    ///
+    /// <b>An unenforced id, not a foreign key.</b> Templates live in Master's
+    /// con schema and this row lives in sal or pur; there is no cross-schema
+    /// foreign key anywhere in this product, and adding one would tie two
+    /// services' migrations together for a column that is only ever read on the
+    /// way to a printer. Null means "whatever the branch's default is", which is
+    /// also what a soft-deleted template resolves to — so a template going away
+    /// never makes a document unprintable.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
 }

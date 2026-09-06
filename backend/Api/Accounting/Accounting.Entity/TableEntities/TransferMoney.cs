@@ -81,4 +81,14 @@ public class TransferMoney : OrgScopedEntity
 
     [MaxLength(300, ErrorMessage = "Void reason cannot exceed 300 characters.")]
     public string? VoidReason { get; set; }
+
+    /// <summary>
+    /// Which print template this document was, or will be, printed against.
+    /// An unenforced id: templates live in Master's con schema and this row
+    /// lives in acc, and there is no cross-schema foreign key in this product.
+    /// Null resolves to the branch's default, which is also where a
+    /// soft-deleted template lands — so one going away never makes a document
+    /// unprintable.
+    /// </summary>
+    public long? PrintTemplateId { get; set; }
 }
