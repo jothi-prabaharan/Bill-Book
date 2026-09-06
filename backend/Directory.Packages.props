@@ -49,6 +49,10 @@
          GHSA-pgww-w46g-26qg. Both are NU1902 warnings, and this solution builds
          with TreatWarningsAsErrors, so the older line does not restore at all. -->
     <PackageVersion Include="HtmlSanitizer" Version="9.2.1039" />
+    <!-- The DOM the renderer walks. It arrives under HtmlSanitizer anyway, but
+         PrintSubstitution calls its API directly, so it is declared rather than
+         relied on as a transitive that a sanitiser upgrade could move. -->
+    <PackageVersion Include="AngleSharp" Version="1.7.2" />
   </ItemGroup>
   <!-- Test-only. Same caveat as above, and more sharply: these have never been
        restored either, and xunit v3 changed its package layout, so expect the

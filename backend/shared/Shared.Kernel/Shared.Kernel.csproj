@@ -5,6 +5,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngleSharp" />
     <PackageReference Include="Azure.Storage.Blobs" />
     <!-- Both already pinned in Directory.Packages.props; the vault-backed
          ISecretStore is what was missing, not the dependency. -->
