@@ -26,20 +26,18 @@
 }
 
 <div class="head-fields">
-  <label>
-    Go-live date
-    <bb-date-input  [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
-  </label>
-  <label class="wide">
-    Memo
+  <div class="field">
+    <bb-date-input label="Go-live date"  [(ngModel)]="asOfDate" name="asOfDate" [disabled]="finalized()" />
+  </div>
+  <div class="field wide">
     <bb-text-input
-      
+ label="Memo"      
       [(ngModel)]="memo"
       name="memo"
       placeholder="Which system these came from, and who signed them off"
       [disabled]="finalized()"
     />
-  </label>
+  </div>
 </div>
 
 <bb-data-grid [gridCode]="'OPENING_BALANCE_LINES'" [columns]="linesColumns" [data]="lines()">

@@ -93,10 +93,9 @@
     }
 
     <div class="fields">
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.termName" maxlength="50" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="form.termName" maxlength="50" />
+      </div>
 
       <div class="field">
         <bb-select
@@ -110,37 +109,31 @@
       </div>
 
       @if (form.termType === 'Net' || form.termType === 'EndOfMonth') {
-        <label>
-          Days
-          <bb-number-input  [(ngModel)]="form.dueDays" min="0" max="365" [disabled]="editingIsSystem()" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Days"  [(ngModel)]="form.dueDays" min="0" max="365" [disabled]="editingIsSystem()" />
+        </div>
       }
 
       @if (form.termType === 'DayOfNextMonth') {
-        <label>
-          Day of month
-          <bb-number-input  [(ngModel)]="form.dueDayOfMonth" min="1" max="31" [disabled]="editingIsSystem()" />
-          <small>A day past the end of a short month falls on its last day.</small>
-        </label>
+        <div class="field">
+          <bb-number-input label="Day of month" hint="A day past the end of a short month falls on its last day."  [(ngModel)]="form.dueDayOfMonth" min="1" max="31" [disabled]="editingIsSystem()" />
+        </div>
       }
 
-      <label>
-        Early-payment discount %
+      <div class="field">
         <bb-number-input
-          
+ label="Early-payment discount %"          
           [(ngModel)]="form.discountPercent"
           min="0"
           max="100"
           step="0.01"
           [disabled]="editingIsSystem()"
         />
-      </label>
+      </div>
 
-      <label>
-        Paid within (days)
-        <bb-number-input  [(ngModel)]="form.discountDays" min="0" max="365" [disabled]="editingIsSystem()" />
-        <small>Must not run past the due date, or it could never be earned.</small>
-      </label>
+      <div class="field">
+        <bb-number-input label="Paid within (days)" hint="Must not run past the due date, or it could never be earned."  [(ngModel)]="form.discountDays" min="0" max="365" [disabled]="editingIsSystem()" />
+      </div>
 
       <bb-checkbox
         text="Available on sales documents"

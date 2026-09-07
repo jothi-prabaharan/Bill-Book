@@ -29,17 +29,15 @@
       </p>
     }
 
-    <label>
-      Name
-      <bb-text-input name="taxName" [(ngModel)]="form.taxName" required maxlength="50" />
-    </label>
+    <div class="field">
+      <bb-text-input label="Name" name="taxName" [(ngModel)]="form.taxName" required maxlength="50" />
+    </div>
 
     @if (mode() !== 'rename') {
       <div class="row">
-        <label>
-          Total rate %
+        <div class="field">
           <bb-number-input
-            name="totalRate"
+ label="Total rate %"            name="totalRate"
             
             step="0.01"
             min="0"
@@ -47,11 +45,10 @@
             (ngModelChange)="recalc()"
             required
           />
-        </label>
-        <label>
-          Cess %
-          <bb-number-input name="cessRate"  step="0.01" min="0" [(ngModel)]="form.cessRate" />
-        </label>
+        </div>
+        <div class="field">
+          <bb-number-input label="Cess %" name="cessRate"  step="0.01" min="0" [(ngModel)]="form.cessRate" />
+        </div>
       </div>
 
       <div class="split">
@@ -63,10 +60,9 @@
         </p>
       </div>
 
-      <label>
-        Effective from
-        <bb-date-input name="effectiveFrom"  [(ngModel)]="form.effectiveFrom" required />
-      </label>
+      <div class="field">
+        <bb-date-input label="Effective from" name="effectiveFrom"  [(ngModel)]="form.effectiveFrom" required />
+      </div>
 
       <fieldset>
         <legend>Applies to</legend>

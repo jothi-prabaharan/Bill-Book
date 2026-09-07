@@ -14,10 +14,9 @@
     <div class="field">
       <bb-email-input label="Email" name="email" [required]="true" [(ngModel)]="form.email" />
     </div>
-    <label>
-      Name
-      <bb-text-input name="displayName" [(ngModel)]="form.displayName" required />
-    </label>
+    <div class="field">
+      <bb-text-input label="Name" name="displayName" [(ngModel)]="form.displayName" required />
+    </div>
     <label>
       Mobile <span class="opt">(optional)</span>
       <bb-text-input name="mobileNumber" [(ngModel)]="form.mobileNumber" />

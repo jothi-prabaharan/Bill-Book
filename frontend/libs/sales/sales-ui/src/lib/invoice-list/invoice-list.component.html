@@ -24,13 +24,12 @@
     </div>
 
     <div class="field inv-list__filter inv-list__filter--grow">
-      <label for="inv-search">Invoice number</label>
-      <input
+      <bb-search-input
         id="inv-search"
-        class="input"
-        type="search"
+        label="Invoice number"
         name="search"
         placeholder="INV/2026/0001"
+        [debounceMs]="0"
         [(ngModel)]="search"
       />
     </div>

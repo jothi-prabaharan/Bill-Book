@@ -52,10 +52,9 @@
     </div>
 
     <div class="head-fields">
-      <label>
-        Date column
-        <bb-text-input  [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Date column"  [(ngModel)]="form.dateColumn" name="dateColumn" maxlength="100" />
+      </div>
       <label>
         Value date <span class="optional">optional</span>
         <bb-text-input
@@ -65,15 +64,14 @@
           maxlength="100"
         />
       </label>
-      <label>
-        Description
+      <div class="field">
         <bb-text-input
-          
+ label="Description"          
           [(ngModel)]="form.descriptionColumn"
           name="descriptionColumn"
           maxlength="100"
         />
-      </label>
+      </div>
       <label>
         Reference
         <bb-text-input
@@ -96,41 +94,38 @@
       <legend>Where the amount is</legend>
 
       <div class="head-fields">
-        <label>
-          Withdrawal column
+        <div class="field">
           <bb-text-input
-            
+ label="Withdrawal column"            
             [(ngModel)]="form.withdrawalColumn"
             name="withdrawalColumn"
             maxlength="100"
             (ngModelChange)="onTwoColumns()"
           />
-        </label>
-        <label>
-          Deposit column
+        </div>
+        <div class="field">
           <bb-text-input
-            
+ label="Deposit column"            
             [(ngModel)]="form.depositColumn"
             name="depositColumn"
             maxlength="100"
             (ngModelChange)="onTwoColumns()"
           />
-        </label>
+        </div>
       </div>
 
       <p class="or">or</p>
 
       <div class="head-fields">
-        <label>
-          One signed amount column
+        <div class="field">
           <bb-text-input
-            
+ label="One signed amount column"            
             [(ngModel)]="form.amountColumn"
             name="amountColumn"
             maxlength="100"
             (ngModelChange)="onAmountShape()"
           />
-        </label>
+        </div>
         @if (usesSignedColumn) {
           <bb-checkbox
             text="Negative means money in"

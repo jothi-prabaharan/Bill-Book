@@ -203,9 +203,14 @@
               <span class="muted">
                 {{ isFreeText(line) ? 'No item — posts to' : 'Expense line — posts to' }}
               </span>
-              <input
-                type="number"
+              <!-- An account id, not a figure — so the plain numeric control. -->
+              <bb-number-input
+                ariaLabel="Account"
                 placeholder="Account"
+                min="1"
+                step="1"
+                inputmode="numeric"
+                [name]="'account' + i"
                 [(ngModel)]="line.accountId"
                 [disabled]="context().readonly"
                 (blur)="touch(i)"

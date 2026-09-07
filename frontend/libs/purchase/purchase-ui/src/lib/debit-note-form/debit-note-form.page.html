@@ -83,19 +83,18 @@
           />
         </label>
 
-        <label class="field">
-          <span class="field__label">Reason</span>
+        <div class="field">
           <bb-select
-            ariaLabel="Reason"
+            label="Reason"
             placeholder=""
+            [hint]="reasonHint()"
             [options]="reasonOptions"
             name="reasonCode"
             [disabled]="readonlyDoc()"
             [ngModel]="reasonCode()"
             (ngModelChange)="reasonCode.set($event)"
           />
-          <span class="field__hint">{{ reasonHint() }}</span>
-        </label>
+        </div>
 
         <label class="field">
           <span class="field__label">Place of supply</span>

@@ -12,10 +12,9 @@
     <h2>{{ editingId === null ? 'New ' + title().toLowerCase() : 'Draft' }}</h2>
 
     <div class="head-fields">
-      <label>
-        Date
-        <bb-date-input  [(ngModel)]="transactionDate" name="transactionDate" />
-      </label>
+      <div class="field">
+        <bb-date-input label="Date"  [(ngModel)]="transactionDate" name="transactionDate" />
+      </div>
       <div class="field wide">
         <bb-select
           [label]="direction() === 'spend' ? 'Paid from' : 'Received into'"
@@ -33,17 +32,16 @@
           (ngModelChange)="onContact()"
         />
       </div>
-      <label>
-        Amount
+      <div class="field">
         <bb-number-input
-          
+ label="Amount"          
           inputmode="decimal"
           step="0.01"
           min="0"
           [(ngModel)]="amount"
           name="amount"
         />
-      </label>
+      </div>
       <div class="field">
         <bb-select
           label="Method"
@@ -53,18 +51,15 @@
           [(ngModel)]="paymentMethod"
         />
       </div>
-      <label>
-        Reference
-        <bb-text-input  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
-      </label>
-      <label>
-        Reference date
-        <bb-date-input  [(ngModel)]="referenceDate" name="referenceDate" />
-      </label>
-      <label class="wide">
-        Memo
-        <bb-text-input  [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Reference"  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
+      </div>
+      <div class="field">
+        <bb-date-input label="Reference date"  [(ngModel)]="referenceDate" name="referenceDate" />
+      </div>
+      <div class="field wide">
+        <bb-text-input label="Memo"  [(ngModel)]="memo" name="memo" placeholder="Why this payment was made" />
+      </div>
     </div>
 
     @if (contactId === null) {

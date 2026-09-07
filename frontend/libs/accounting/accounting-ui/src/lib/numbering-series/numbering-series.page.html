@@ -103,16 +103,13 @@
     </div>
 
     <div class="fields">
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.seriesName" maxlength="50" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="form.seriesName" maxlength="50" />
+      </div>
 
-      <label>
-        Code
-        <bb-text-input  [(ngModel)]="form.seriesCode" maxlength="30" />
-        <small>What the rest of the system looks this series up by — CUSTOMER, ITEM, INV.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Code" hint="What the rest of the system looks this series up by — CUSTOMER, ITEM, INV."  [(ngModel)]="form.seriesCode" maxlength="30" />
+      </div>
 
       <div class="field">
         <bb-select
@@ -124,20 +121,17 @@
         />
       </div>
 
-      <label>
-        Prefix
-        <bb-text-input  [(ngModel)]="form.prefix" maxlength="15" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Prefix"  [(ngModel)]="form.prefix" maxlength="15" />
+      </div>
 
-      <label>
-        Separator
-        <bb-text-input  [(ngModel)]="form.separator" maxlength="1" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Separator"  [(ngModel)]="form.separator" maxlength="1" />
+      </div>
 
-      <label>
-        Suffix
-        <bb-text-input  [(ngModel)]="form.suffix" maxlength="15" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Suffix"  [(ngModel)]="form.suffix" maxlength="15" />
+      </div>
 
       <bb-checkbox
         text="Include financial year"
@@ -161,25 +155,18 @@
       />
 
       @if (form.includeBranchCode) {
-        <label>
-          Branch code
-          <bb-text-input  [(ngModel)]="form.branchCode" maxlength="10" />
-          <small>
-            This branch's own code. Stored on the series, so renaming the branch later does not
-            restyle numbers already issued.
-          </small>
-        </label>
+        <div class="field">
+          <bb-text-input label="Branch code" hint="This branch's own code. Stored on the series, so renaming the branch later does not restyle numbers already issued."  [(ngModel)]="form.branchCode" maxlength="10" />
+        </div>
       }
 
-      <label>
-        Digits
-        <bb-number-input  [(ngModel)]="form.numberLength" min="1" max="12" />
-      </label>
+      <div class="field">
+        <bb-number-input label="Digits"  [(ngModel)]="form.numberLength" min="1" max="12" />
+      </div>
 
-      <label>
-        Start at
-        <bb-number-input  [(ngModel)]="form.startNumber" min="0" />
-      </label>
+      <div class="field">
+        <bb-number-input label="Start at"  [(ngModel)]="form.startNumber" min="0" />
+      </div>
 
       <div class="field">
         <bb-select
@@ -220,10 +207,9 @@
       The next record saved from this series takes this number. Moving it backwards over numbers
       already issued will be refused at save time by the uniqueness check on the record itself.
     </p>
-    <label>
-      Next number
-      <bb-number-input  [(ngModel)]="counterValue" [min]="counter.startNumber" />
-    </label>
+    <div class="field">
+      <bb-number-input label="Next number"  [(ngModel)]="counterValue" [min]="counter.startNumber" />
+    </div>
     <div class="sheet-actions">
       <button type="button" (click)="saveCounter()" [disabled]="busy()">Update counter</button>
       <button type="button" class="link" (click)="counterFor.set(null)">Cancel</button>

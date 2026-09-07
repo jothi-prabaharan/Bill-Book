@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CheckboxComponent } from '../forms/checkbox/checkbox.component';
+import { NumberInputComponent } from '../number-input/number-input.component';
 import { PercentageInputComponent } from '../forms/numeric/percentage-input.component';
 import { QuantityInputComponent } from '../forms/numeric/quantity-input.component';
 import { UnitPriceInputComponent } from '../forms/numeric/unit-price-input.component';
@@ -45,6 +46,7 @@ const RATE_SCALE = 10_000;
     UnitPriceInputComponent,
     PercentageInputComponent,
     CheckboxComponent,
+    NumberInputComponent,
   ],
   templateUrl: './document-line-grid.component.html',
   styleUrl: './document-line-grid.component.scss',

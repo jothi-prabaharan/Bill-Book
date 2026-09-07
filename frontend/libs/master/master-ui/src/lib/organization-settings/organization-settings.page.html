@@ -40,27 +40,23 @@
 
   @if (tab() === 'profile') {
     <div class="fields">
-      <label>
-        Branch code
-        <bb-text-input  name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
-        <small>Appears in generated document numbers — INV/2526/CHN/00042.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Branch code" hint="Appears in generated document numbers — INV/2526/CHN/00042."  name="orgCode" [(ngModel)]="org.orgCode" maxlength="10" />
+      </div>
 
-      <label>
-        Name
-        <bb-text-input  name="name" [(ngModel)]="org.name" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  name="name" [(ngModel)]="org.name" maxlength="200" />
+      </div>
 
-      <label class="wide">
-        Address
+      <div class="field wide">
         <bb-text-input
-          
+ label="Address"          
           name="addressLine1"
           [(ngModel)]="org.addressLine1"
           maxlength="200"
           placeholder="Line 1"
         />
-      </label>
+      </div>
 
       <label class="wide">
         <span class="sr-only">Address line 2</span>
@@ -73,10 +69,9 @@
         />
       </label>
 
-      <label>
-        City
-        <bb-text-input  name="city" [(ngModel)]="org.city" maxlength="100" />
-      </label>
+      <div class="field">
+        <bb-text-input label="City"  name="city" [(ngModel)]="org.city" maxlength="100" />
+      </div>
 
       <div class="field">
         <bb-select
@@ -89,37 +84,29 @@
         />
       </div>
 
-      <label>
-        Postal code
-        <bb-text-input  name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Postal code"  name="postalCode" [(ngModel)]="org.postalCode" maxlength="10" />
+      </div>
 
-      <label>
-        Phone
-        <bb-text-input  name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
-        <small>STD code then number.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Phone" hint="STD code then number."  name="phoneNumber" [(ngModel)]="org.phoneNumber" maxlength="20" />
+      </div>
 
-      <label>
-        Mobile
-        <bb-text-input  name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
-        <small>Lead with + for a number outside the branch's country.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Mobile" hint="Lead with + for a number outside the branch's country."  name="mobileNumber" [(ngModel)]="org.mobileNumber" maxlength="20" />
+      </div>
 
       <div class="field">
         <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="org.email" />
       </div>
 
-      <label>
-        Website
-        <bb-text-input  name="website" [(ngModel)]="org.website" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Website"  name="website" [(ngModel)]="org.website" maxlength="200" />
+      </div>
 
-      <label class="wide">
-        Logo URL
-        <bb-text-input  name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
-        <small>Printed on documents. Upload is not built yet — paste a URL.</small>
-      </label>
+      <div class="field wide">
+        <bb-text-input label="Logo URL" hint="Printed on documents. Upload is not built yet — paste a URL."  name="logoUrl" [(ngModel)]="org.logoUrl" maxlength="500" />
+      </div>
     </div>
   }
 
@@ -138,33 +125,25 @@
         }
       </label>
 
-      <label>
-        PAN
-        <bb-text-input  name="pan" [(ngModel)]="org.pan" maxlength="10" />
-      </label>
+      <div class="field">
+        <bb-text-input label="PAN"  name="pan" [(ngModel)]="org.pan" maxlength="10" />
+      </div>
 
-      <label>
-        TAN
-        <bb-text-input  name="tan" [(ngModel)]="org.tan" maxlength="10" />
-        <small>Needed to deduct TDS.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="TAN" hint="Needed to deduct TDS."  name="tan" [(ngModel)]="org.tan" maxlength="10" />
+      </div>
 
-      <label>
-        TIN
-        <bb-text-input  name="tin" [(ngModel)]="org.tin" maxlength="15" />
-      </label>
+      <div class="field">
+        <bb-text-input label="TIN"  name="tin" [(ngModel)]="org.tin" maxlength="15" />
+      </div>
 
-      <label>
-        CIN
-        <bb-text-input  name="cin" [(ngModel)]="org.cin" maxlength="21" />
-        <small>Companies only — issued on incorporation.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="CIN" hint="Companies only — issued on incorporation."  name="cin" [(ngModel)]="org.cin" maxlength="21" />
+      </div>
 
-      <label>
-        Udyam number
-        <bb-text-input  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
-        <small>MSME registration.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Udyam number" hint="MSME registration."  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
+      </div>
     </div>
   }
 

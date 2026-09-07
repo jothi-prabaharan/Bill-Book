@@ -98,6 +98,37 @@ formatted form, with its symbol and its lakh-or-thousand grouping, is what
 shows all six of `1.234567`: truncating the display of a value the field is
 editing is how somebody saves a rounded figure believing they saw the whole one.
 
+### Masks
+
+**Email.** `bb-email-input` drops what an address cannot contain as it is typed:
+whitespace, a second `@`, and upper case. The caret is put back by hand, so
+typing a space mid-address does not throw you to the end of the field. Applied
+to typing only, never to `writeValue` — rewriting a value the server sent would
+put one address on screen and another in the form.
+
+**Amount.** `bb-money-input` shows the figure grouped the way the branch's base
+currency asks for it: `12,34,567.89` on the rupee, `1,234,567.89` on the dollar.
+The grouping mask, the number of decimal places and (when `showCurrency` is on)
+which side the symbol sits all come from `mst.Currency`, and none of them are
+restated in the component.
+
+Those details reach the front end two ways, both reading the same row:
+`FormatSettingsService`, which the app shell loads once for every screen, and
+the **`currency` block on the get-organization response** — a screen that
+already holds the organization can pass it straight in through `formats`.
+
+The grouping applies **only when the field is not being edited**. Focus strips
+it back to plain digits, so no separator moves under the caret and there is no
+caret arithmetic in the numeric controls at all. A masked field is
+`type="text"`, because a `number` input treats a grouped value as invalid and
+blanks it; `min`, `max` and `step` stop being emitted with it rather than
+claiming a check the browser is not doing. Every other numeric control keeps the
+native number input.
+
+The grouping is applied to the exact decimal *text* by `groupDecimalText`, never
+to a number divided back out of paise — the one path this codebase keeps free of
+floating point stays that way.
+
 ---
 
 ## The layers
@@ -303,63 +334,52 @@ what happened rather than dropping them silently.
 
 ## What is migrated, and what is not
 
-A repository search for every typed `<input>` was run before this work and again
-after it, against the same base commit both times. Direct inputs fell from
-**133 to 93**, and the ones left divide into three groups. (The commit message
-for this change says 154, which was counted against an older base and against
-every `<input>` including buttons; 133 is the like-for-like figure.)
+A repository search for every `<input>`, `<select>` and `<textarea>` was run
+before this work and again after it. **Every select and every textarea outside
+the common components themselves is now a common component**, and typed inputs
+fell from 133 to 13.
 
-### Deliberately direct — these should stay
+### Migrated
 
-- **`bb-master-select`** fetches its own options over HTTP and navigates away to
-  create a new master. It is a feature component, not an input primitive, and
-  folding it into `bb-select` would put HTTP inside the common input set.
-- **The bank statement drop zone** (`statement-upload-form.component.html`) is a
-  drag-and-drop target with its own visual states. `bb-file-input` deliberately
-  has no drag-and-drop, so migrating it would lose behaviour.
-- **The one-time-code field** on the password reset page uses `.input--code`, a
-  purpose-built six-character display that is not a text field in any ordinary
-  sense.
-- **Single radios acting as a "default" toggle** across contact address and
-  contact-person cards: one radio per card sharing a name, which is not the
-  shape `bb-radio-group` takes.
-- **The inputs inside the common components themselves** — `numeric-control.html`,
-  `checkbox.component.html`, `radio-group.component.html`,
-  `file-input.component.html`, `search-input.component.html`. Something has to
-  be the native element.
-- **Inline editors inside `bb-data-grid` and `bb-lookup-dialog`** are part of a
-  grid's own cell rendering, sized to the cell rather than to a form row.
-- **`type="button"` and `type="submit"`** are buttons, not inputs.
-
-### Not yet migrated — worth doing, in this order
-
-1. **The 61 remaining checkboxes.** Most are the same two things: an
-   *Include inactive* filter above a list, and an *Active* flag on a master
-   form. `chart-of-accounts` (8), `items` (10) and `numbering-series` (5) are
-   the largest. Mechanical, and the highest count for the least risk.
-2. **The five remaining `type="email"` fields** — admin customer creation, SMTP
-   settings, users, organizations, organization settings. One-line swaps to
-   `bb-email-input`, which brings the shared validator with them.
-3. **The two remaining passwords** — admin customer creation and the SMTP
-   password. Both gain the reveal toggle and the right autocomplete token.
-4. **The dynamically loaded `<select>` lists** on the signup form (country,
-   state, currency, financial-year month) and the tax/account pickers in
-   accounting. They bind `[ngValue]` against lists fetched at runtime, so each
-   needs its options mapped to `BbSelectOption[]` — a real change per screen
-   rather than a swap.
-5. **The date and text fields in the three conversion dialogs**
-   (`quote-to-order`, `order-to-invoice`) — small, and they are the last dates
-   outside the migrated forms.
-
-### Migrated in this change
-
-| Module | Fields |
+| Module | What moved |
 |---|---|
-| **Shared** | The document line grid's quantity, unit price, discount %, description and HSN — the highest-risk financial inputs in the product |
-| **Sales** | Invoice and sales order: date ×2, customer, GSTIN, place of supply, currency, exchange rate, four textareas, void and short-close reasons |
-| **Accounting** | Journal debit and credit, date, reference, memo, line memo; statement file import; fixed-asset cost |
-| **Inventory** | Sales price, purchase price, MRP, minimum sale price, reorder level, reorder quantity, gross and net weight, stock filter |
-| **Purchase** | Goods receipt rejected quantity, debit note quantity |
-| **Master** | Contact roles, TDS, MSME and active flags, max discount %, notes, contact-person email and mobile |
-| **Customer** | Lead name, company, email, phone, source; ticket subject, description, priority |
-| **Auth** | Sign-in email, password and *keep me signed in*; sign-up's whole first step and its address and statutory blocks; forgot-password and accept-invitation passwords |
+| **Shared** | The document line grid: quantity, unit price, discount %, description, HSN, the inclusive-price tick and the account picker |
+| **Sales** | Invoice, sales order, quote, credit note and delivery challan — dates, customer, GSTIN, place of supply, currency, exchange rate, addresses, notes, terms, void and short-close reasons; both list filters and their search boxes; both conversion dialogs |
+| **Purchase** | Goods receipt and debit note quantities, the debit-note reason, and every notes and address block across the four documents |
+| **Accounting** | Journal debit, credit and the account and sub-account pickers; money-in, money-out and transfer — bank account, contact, method, source and status; opening balance — line type, account, item and contact; account ledger; chart of accounts; bank accounts; numbering series; payment terms; statements and their import |
+| **Inventory** | The item master's 21 selects and 10 flags, its four prices and two reorder levels, jewellery weights; stock movement and adjustments in full; categories, purities, warehouses, unit types, price lists |
+| **Master** | Contacts — 11 selects, roles, flags, notes, credit limit, contact-person email and mobile, and the attachment picker; organization settings and branches; users; roles; HSN/SAC; org currencies; configurations; SMTP; API clients |
+| **Customer** | Lead and ticket forms in full |
+| **Auth** | Sign-in, sign-up (all three steps), forgot-password and accept-invitation |
+| **Admin** | Customer creation |
+
+### The 13 direct inputs that remain, and why
+
+- **Five radios** (contacts ×3, item barcodes, unit types) are a *single* radio
+  per card or per grid row, sharing a name, marking "this one is the default".
+  `bb-radio-group` renders a list of options together and is not that shape;
+  wrapping one radio in a group component would be a worse fit, not a better one.
+- **The bank statement drop zone** is a drag-and-drop target with its own visual
+  states. `bb-file-input` deliberately has no drag-and-drop, so migrating it
+  would lose behaviour.
+- **The data grid's boolean cell** is a disabled tick rendering a value. It is a
+  display, not a control.
+- **The mobile nav toggle** is a CSS-only checkbox behind a `:checked` selector.
+  It is not a form field.
+- **`bb-search-input`, `bb-lookup-dialog` and the column chooser** each own the
+  native `<input type="search">` they are built on. Something has to be the
+  element.
+- **`bb-currency-input`** is deprecated in favour of `bb-money-input` and has no
+  callers left; it keeps its own markup until it is deleted.
+- **`bb-allocation-grid`'s amount cell** is a grid cell sized to its column and
+  formatted from the `formats` it is passed. Folding it into `bb-money-input`
+  would mean the grid rendering two formatting paths at once — the exact defect
+  that component's own history records.
+
+### Not built, because nothing needs one
+
+**Multi-select** and **searchable select** are absent by choice, not oversight:
+a search of the repository finds no `<select multiple>` anywhere, and the
+searchable-picker pattern already exists as `bb-search-input` beside
+`bb-lookup-dialog`, which six screens use. Building either speculatively would
+add a component with no caller to keep it honest.

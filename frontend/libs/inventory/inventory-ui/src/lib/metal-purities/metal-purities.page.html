@@ -77,15 +77,12 @@
           [(ngModel)]="form.metalType"
         />
       </div>
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.purityName" maxlength="20" />
-        <small>What the counter calls it: 22K, 916, 999.</small>
-      </label>
-      <label>
-        Factor
-        <bb-number-input  [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Name" hint="What the counter calls it: 22K, 916, 999."  [(ngModel)]="form.purityName" maxlength="20" />
+      </div>
+      <div class="field">
+        <bb-number-input label="Factor"  [(ngModel)]="form.purityFactor" step="0.0001" min="0.0001" max="1" />
+      </div>
       <bb-checkbox
         text="Active"
         [(ngModel)]="form.isActive"

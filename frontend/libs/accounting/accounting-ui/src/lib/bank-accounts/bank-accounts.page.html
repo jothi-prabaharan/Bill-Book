@@ -100,11 +100,9 @@
     <p class="hint">{{ ledgerNote }}</p>
 
     <div class="fields">
-      <label>
-        Account name
-        <bb-text-input  [(ngModel)]="form.accountName" maxlength="100" />
-        <small>Shown wherever the account is picked, and on the ledger account.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Account name" hint="Shown wherever the account is picked, and on the ledger account."  [(ngModel)]="form.accountName" maxlength="100" />
+      </div>
 
       <div class="field">
         <bb-select
@@ -127,48 +125,40 @@
         </div>
       }
 
-      <label>
-        Account number
-        <bb-text-input  [(ngModel)]="form.accountNumber" maxlength="30" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Account number"  [(ngModel)]="form.accountNumber" maxlength="30" />
+      </div>
 
       @if (needsBank) {
-        <label>
-          IFSC
-          <bb-text-input  [(ngModel)]="form.ifsc" maxlength="11" class="uppercase" />
-        </label>
+        <div class="field">
+          <bb-text-input label="IFSC"  [(ngModel)]="form.ifsc" maxlength="11" class="uppercase" />
+        </div>
 
-        <label>
-          Branch
-          <bb-text-input  [(ngModel)]="form.branchName" maxlength="100" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Branch"  [(ngModel)]="form.branchName" maxlength="100" />
+        </div>
 
-        <label>
-          MICR
-          <bb-text-input  [(ngModel)]="form.micr" maxlength="9" />
-        </label>
+        <div class="field">
+          <bb-text-input label="MICR"  [(ngModel)]="form.micr" maxlength="9" />
+        </div>
 
-        <label>
-          SWIFT
-          <bb-text-input  [(ngModel)]="form.swiftCode" maxlength="11" class="uppercase" />
-        </label>
+        <div class="field">
+          <bb-text-input label="SWIFT"  [(ngModel)]="form.swiftCode" maxlength="11" class="uppercase" />
+        </div>
 
-        <label>
-          IBAN
-          <bb-text-input  [(ngModel)]="form.iban" maxlength="34" />
-        </label>
+        <div class="field">
+          <bb-text-input label="IBAN"  [(ngModel)]="form.iban" maxlength="34" />
+        </div>
       }
 
-      <label>
-        Currency
-        <bb-text-input  [(ngModel)]="form.currencyCode" maxlength="3" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Currency"  [(ngModel)]="form.currencyCode" maxlength="3" />
+      </div>
 
       @if (canOverdraw) {
-        <label>
-          Limit
-          <bb-number-input  [(ngModel)]="form.odLimit" step="0.01" min="0" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Limit"  [(ngModel)]="form.odLimit" step="0.01" min="0" />
+        </div>
       }
 
       <bb-checkbox

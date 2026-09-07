@@ -36,16 +36,14 @@
           [(ngModel)]="form.accountTypeId"
         />
       </div>
-      <label>
-        Code
-        <bb-text-input name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
-      </label>
+      <div class="field">
+        <bb-text-input label="Code" name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
+      </div>
     </div>
 
-    <label>
-      Name
-      <bb-text-input name="accountName" [(ngModel)]="form.accountName" required />
-    </label>
+    <div class="field">
+      <bb-text-input label="Name" name="accountName" [(ngModel)]="form.accountName" required />
+    </div>
 
     <div class="field">
       <bb-select

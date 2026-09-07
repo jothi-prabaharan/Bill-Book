@@ -58,10 +58,9 @@
     </p>
 
     <div class="fields">
-      <label>
-        Owner name
-        <bb-text-input [(ngModel)]="form.displayName" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Owner name" [(ngModel)]="form.displayName" maxlength="200" />
+      </div>
 
       <div class="field">
         <bb-email-input
@@ -84,32 +83,27 @@
         />
       </div>
 
-      <label>
-        Mobile
-        <bb-text-input [(ngModel)]="form.mobileNumber" maxlength="20" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Mobile" [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </div>
 
-      <label>
-        Company name
-        <bb-text-input [(ngModel)]="form.companyName" maxlength="200" />
-        <small>The billing entity — the head office.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Company name" hint="The billing entity — the head office." [(ngModel)]="form.companyName" maxlength="200" />
+      </div>
 
-      <label>
-        First branch name
-        <bb-text-input [(ngModel)]="form.organizationName" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-text-input label="First branch name" [(ngModel)]="form.organizationName" maxlength="200" />
+      </div>
 
-      <label>
-        Financial year starts
+      <div class="field">
         <bb-select
-          ariaLabel="Financial year starts"
+ label="Financial year starts"          ariaLabel="Financial year starts"
           placeholder=""
           hint="April for India. Drives the year segment in generated numbers."
           [options]="monthOptions"
           [(ngModel)]="form.financialYearStartMonth"
         />
-      </label>
+      </div>
 
       <div class="field">
         <bb-select

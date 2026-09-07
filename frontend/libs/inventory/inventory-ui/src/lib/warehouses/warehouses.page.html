@@ -69,15 +69,12 @@
   <div class="sheet">
     <h2>{{ editingId() === 0 ? 'New warehouse' : 'Edit warehouse' }}</h2>
     <div class="fields">
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.warehouseName" maxlength="100" />
-      </label>
-      <label>
-        Code
-        <bb-text-input  [(ngModel)]="form.warehouseCode" maxlength="20" [disabled]="editingId() !== 0" />
-        <small>Blank takes the next code from the numbering series.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="form.warehouseName" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Code" hint="Blank takes the next code from the numbering series."  [(ngModel)]="form.warehouseCode" maxlength="20" [disabled]="editingId() !== 0" />
+      </div>
       <div class="field">
         <bb-select
           label="Type"
@@ -94,31 +91,24 @@
           [(ngModel)]="form.storageType"
         />
       </div>
-      <label class="wide">
-        Address line 1
-        <bb-text-input  [(ngModel)]="form.addressLine1" maxlength="200" />
-      </label>
-      <label>
-        City
-        <bb-text-input  [(ngModel)]="form.city" maxlength="100" />
-      </label>
-      <label>
-        Postal code
-        <bb-text-input  [(ngModel)]="form.postalCode" maxlength="10" />
-      </label>
-      <label>
-        GSTIN
-        <bb-text-input  [(ngModel)]="form.gstin" maxlength="15" />
-        <small>A warehouse in another state carries its own registration.</small>
-      </label>
-      <label>
-        Contact person
-        <bb-text-input  [(ngModel)]="form.contactPersonName" maxlength="100" />
-      </label>
-      <label>
-        Mobile
-        <bb-text-input  [(ngModel)]="form.mobileNumber" maxlength="20" />
-      </label>
+      <div class="field wide">
+        <bb-text-input label="Address line 1"  [(ngModel)]="form.addressLine1" maxlength="200" />
+      </div>
+      <div class="field">
+        <bb-text-input label="City"  [(ngModel)]="form.city" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Postal code"  [(ngModel)]="form.postalCode" maxlength="10" />
+      </div>
+      <div class="field">
+        <bb-text-input label="GSTIN" hint="A warehouse in another state carries its own registration."  [(ngModel)]="form.gstin" maxlength="15" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Contact person"  [(ngModel)]="form.contactPersonName" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Mobile"  [(ngModel)]="form.mobileNumber" maxlength="20" />
+      </div>
       <bb-checkbox
         text="Active"
         [(ngModel)]="form.isActive"

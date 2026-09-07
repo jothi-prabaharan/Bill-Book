@@ -88,22 +88,17 @@
 
     @if (tab() === 'general') {
       <div class="fields">
-        <label>
-          Name
-          <bb-text-input  [(ngModel)]="form.itemName" maxlength="200" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Name"  [(ngModel)]="form.itemName" maxlength="200" />
+        </div>
 
-        <label>
-          Print name
-          <bb-text-input  [(ngModel)]="form.printName" maxlength="200" />
-          <small>What prints on the invoice. Blank uses the name.</small>
-        </label>
+        <div class="field">
+          <bb-text-input label="Print name" hint="What prints on the invoice. Blank uses the name."  [(ngModel)]="form.printName" maxlength="200" />
+        </div>
 
-        <label>
-          Code
-          <bb-text-input  [(ngModel)]="form.itemCode" maxlength="50" [disabled]="editingId() !== null" />
-          <small>Blank takes the next code from the numbering series.</small>
-        </label>
+        <div class="field">
+          <bb-text-input label="Code" hint="Blank takes the next code from the numbering series."  [(ngModel)]="form.itemCode" maxlength="50" [disabled]="editingId() !== null" />
+        </div>
 
         <div class="field">
           <bb-select
@@ -377,10 +372,9 @@
             />
           </div>
 
-          <label>
-            Lead time (days)
-            <bb-number-input  [(ngModel)]="form.leadTimeDays" min="0" />
-          </label>
+          <div class="field">
+            <bb-number-input label="Lead time (days)"  [(ngModel)]="form.leadTimeDays" min="0" />
+          </div>
         }
       </div>
     }
@@ -401,15 +395,14 @@
           />
         </div>
 
-        <label>
-          Purity
+        <div class="field">
           <bb-select
-            placeholder=""
+ label="Purity"            placeholder=""
             ariaLabel="Purity"
             [options]="purityOptions()"
             [(ngModel)]="form.jewellery['metalPurityId']"
           />
-        </label>
+        </div>
 
         <div class="field">
           <bb-quantity-input
@@ -432,35 +425,30 @@
           />
         </div>
 
-        <label>
-          Stone weight
-          <bb-number-input  [(ngModel)]="form.jewellery['stoneWeight']" step="0.001" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Stone weight"  [(ngModel)]="form.jewellery['stoneWeight']" step="0.001" />
+        </div>
 
-        <label>
-          Stone charge
-          <bb-number-input  [(ngModel)]="form.jewellery['stoneCharge']" step="0.01" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Stone charge"  [(ngModel)]="form.jewellery['stoneCharge']" step="0.01" />
+        </div>
 
-        <label>
-          Wastage %
-          <bb-number-input  [(ngModel)]="form.jewellery['wastagePercent']" step="0.01" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Wastage %"  [(ngModel)]="form.jewellery['wastagePercent']" step="0.01" />
+        </div>
 
-        <label>
-          Making charge type
+        <div class="field">
           <bb-select
-            placeholder=""
+ label="Making charge type"            placeholder=""
             ariaLabel="Making charge type"
             [options]="makingChargeTypeOptions"
             [(ngModel)]="form.jewellery['makingChargeType']"
           />
-        </label>
+        </div>
 
-        <label>
-          Making charge
-          <bb-number-input  [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Making charge"  [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
+        </div>
 
         <bb-checkbox
           text="Hallmarked"
@@ -472,15 +460,13 @@
 
     @if (tab() === 'profile' && form.itemProfile === 'Pharma' && form.pharma) {
       <div class="fields">
-        <label>
-          Generic name (salt)
-          <bb-text-input  [(ngModel)]="form.pharma['genericName']" maxlength="200" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Generic name (salt)"  [(ngModel)]="form.pharma['genericName']" maxlength="200" />
+        </div>
 
-        <label>
-          Strength
-          <bb-text-input  [(ngModel)]="form.pharma['strength']" maxlength="50" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Strength"  [(ngModel)]="form.pharma['strength']" maxlength="50" />
+        </div>
 
         <div class="field">
           <bb-select
@@ -491,59 +477,49 @@
           />
         </div>
 
-        <label>
-          Pack size
-          <bb-text-input  [(ngModel)]="form.pharma['packSize']" maxlength="50" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Pack size"  [(ngModel)]="form.pharma['packSize']" maxlength="50" />
+        </div>
 
-        <label>
-          Manufacturer
-          <bb-text-input  [(ngModel)]="form.pharma['manufacturerName']" maxlength="200" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Manufacturer"  [(ngModel)]="form.pharma['manufacturerName']" maxlength="200" />
+        </div>
 
-        <label>
-          Marketed by
-          <bb-text-input  [(ngModel)]="form.pharma['marketedBy']" maxlength="200" />
-        </label>
+        <div class="field">
+          <bb-text-input label="Marketed by"  [(ngModel)]="form.pharma['marketedBy']" maxlength="200" />
+        </div>
 
-        <label>
-          Drug schedule
+        <div class="field">
           <bb-select
-            placeholder=""
+ label="Drug schedule" hint="H, H1 and X require a prescription — set automatically."            placeholder=""
             ariaLabel="Drug schedule"
             [options]="drugScheduleOptions"
             [(ngModel)]="form.pharma['drugSchedule']"
           />
-          <small>H, H1 and X require a prescription — set automatically.</small>
-        </label>
+        </div>
 
         <bb-checkbox text="Narcotic" name="isNarcotic" [(ngModel)]="form.pharma['isNarcotic']" />
 
-        <label>
-          Storage
+        <div class="field">
           <bb-select
-            placeholder=""
+ label="Storage"            placeholder=""
             ariaLabel="Storage condition"
             [options]="storageConditionOptions"
             [(ngModel)]="form.pharma['storageCondition']"
           />
-        </label>
+        </div>
 
-        <label>
-          Shelf life (days)
-          <bb-number-input  [(ngModel)]="form.pharma['shelfLifeDays']" min="1" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Shelf life (days)"  [(ngModel)]="form.pharma['shelfLifeDays']" min="1" />
+        </div>
 
-        <label>
-          Minimum expiry on receipt (days)
-          <bb-number-input  [(ngModel)]="form.pharma['minExpiryDaysOnReceipt']" min="0" />
-          <small>Inward stock expiring sooner than this is refused.</small>
-        </label>
+        <div class="field">
+          <bb-number-input label="Minimum expiry on receipt (days)" hint="Inward stock expiring sooner than this is refused."  [(ngModel)]="form.pharma['minExpiryDaysOnReceipt']" min="0" />
+        </div>
 
-        <label>
-          Expiry alert (days)
-          <bb-number-input  [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
-        </label>
+        <div class="field">
+          <bb-number-input label="Expiry alert (days)"  [(ngModel)]="form.pharma['expiryAlertDays']" min="0" />
+        </div>
       </div>
     }
 
@@ -555,32 +531,29 @@
       @for (barcode of form.barcodes; track $index) {
         <div class="child-card">
           <div class="fields">
-            <label>
-              Barcode
-              <bb-text-input  [(ngModel)]="barcode.barcode" [name]="'bc' + $index" maxlength="50" />
-            </label>
+            <div class="field">
+              <bb-text-input label="Barcode"  [(ngModel)]="barcode.barcode" [name]="'bc' + $index" maxlength="50" />
+            </div>
 
-            <label>
-              Type
+            <div class="field">
               <bb-select
-                placeholder=""
+ label="Type"                placeholder=""
                 ariaLabel="Barcode type"
                 [options]="barcodeTypeOptions"
                 [name]="'bcType' + $index"
                 [(ngModel)]="barcode.barcodeType"
               />
-            </label>
+            </div>
 
-            <label>
-              Scans as
+            <div class="field">
               <bb-select
-                placeholder="Inventory unit"
+ label="Scans as"                placeholder="Inventory unit"
                 ariaLabel="Barcode unit"
                 [options]="barcodeUnitOptions()"
                 [name]="'bcUom' + $index"
                 [(ngModel)]="barcode.uomId"
               />
-            </label>
+            </div>
           </div>
 
           <div class="child-footer">

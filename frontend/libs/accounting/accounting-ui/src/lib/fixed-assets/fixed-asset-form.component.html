@@ -11,27 +11,21 @@
   }
 
   <form (ngSubmit)="save()">
-    <label>
-      Category
-      <bb-number-input [(ngModel)]="model.fixedAssetCategoryId" name="fixedAssetCategoryId" required />
-      <small>The category carries the accounts this asset posts to.</small>
-    </label>
+    <div class="field">
+      <bb-number-input label="Category" hint="The category carries the accounts this asset posts to." [(ngModel)]="model.fixedAssetCategoryId" name="fixedAssetCategoryId" required />
+    </div>
 
-    <label>
-      Asset code
-      <bb-text-input [(ngModel)]="model.assetCode" name="assetCode" maxlength="30" required />
-    </label>
+    <div class="field">
+      <bb-text-input label="Asset code" [(ngModel)]="model.assetCode" name="assetCode" maxlength="30" required />
+    </div>
 
-    <label>
-      Asset name
-      <bb-text-input [(ngModel)]="model.assetName" name="assetName" maxlength="100" required />
-    </label>
+    <div class="field">
+      <bb-text-input label="Asset name" [(ngModel)]="model.assetName" name="assetName" maxlength="100" required />
+    </div>
 
-    <label>
-      Purchase bill
-      <bb-number-input [(ngModel)]="model.purchaseBillId" name="purchaseBillId" />
-      <small>Optional — leave empty for an asset that came across on migration.</small>
-    </label>
+    <div class="field">
+      <bb-number-input label="Purchase bill" hint="Optional — leave empty for an asset that came across on migration." [(ngModel)]="model.purchaseBillId" name="purchaseBillId" />
+    </div>
 
     <div class="field">
       <!-- An amount in decimal rupees, which is what the API takes, so the
@@ -39,10 +33,9 @@
       <bb-money-input label="Cost" [(ngModel)]="model.purchasePrice" name="purchasePrice" [required]="true" />
     </div>
 
-    <label>
-      Purchase date
-      <bb-date-input [(ngModel)]="model.purchaseDate" name="purchaseDate" required />
-    </label>
+    <div class="field">
+      <bb-date-input label="Purchase date" [(ngModel)]="model.purchaseDate" name="purchaseDate" required />
+    </div>
 
     <div class="sheet-actions">
       <button type="button" (click)="close()" [disabled]="saving()">Cancel</button>

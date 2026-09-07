@@ -34,14 +34,12 @@
   <div class="sheet">
     <h2>{{ editingId() === 'new' ? 'New tier' : 'Edit tier' }}</h2>
     <div class="fields">
-      <label>
-        Tier Name
-        <bb-text-input [(ngModel)]="form.name" maxlength="100" />
-      </label>
-      <label>
-        Description
-        <bb-text-input [(ngModel)]="form.description" maxlength="255" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Tier Name" [(ngModel)]="form.name" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Description" [(ngModel)]="form.description" maxlength="255" />
+      </div>
       <bb-checkbox
         text="Active"
         [(ngModel)]="form.isActive"

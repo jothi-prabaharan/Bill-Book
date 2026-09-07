@@ -56,15 +56,12 @@
   <div class="sheet narrow">
     <h2>{{ editingId() === 0 ? 'New bank' : 'Edit bank' }}</h2>
     <div class="fields">
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.bankName" maxlength="100" />
-      </label>
-      <label>
-        Code
-        <bb-text-input  [(ngModel)]="form.bankCode" maxlength="20" [disabled]="editingId() !== 0" />
-        <small>Blank takes the next code from the numbering series.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="form.bankName" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Code" hint="Blank takes the next code from the numbering series."  [(ngModel)]="form.bankCode" maxlength="20" [disabled]="editingId() !== 0" />
+      </div>
       <bb-checkbox
         text="Active"
         [(ngModel)]="form.isActive"

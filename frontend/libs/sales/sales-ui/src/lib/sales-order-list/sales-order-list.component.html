@@ -24,13 +24,12 @@
     </div>
 
     <div class="field sor-list__filter sor-list__filter--grow">
-      <label for="sor-search">Order number</label>
-      <input
+      <bb-search-input
         id="sor-search"
-        class="input"
-        type="search"
+        label="Order number"
         name="search"
         placeholder="SO/2026/0001"
+        [debounceMs]="0"
         [(ngModel)]="search"
       />
     </div>

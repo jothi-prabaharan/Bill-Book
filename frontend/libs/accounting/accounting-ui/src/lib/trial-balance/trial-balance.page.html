@@ -8,14 +8,12 @@
 }
 
 <form class="filters" (ngSubmit)="load()">
-  <label>
-    From
-    <bb-date-input  [(ngModel)]="from" name="from" />
-  </label>
-  <label>
-    To
-    <bb-date-input  [(ngModel)]="to" name="to" />
-  </label>
+  <div class="field">
+    <bb-date-input label="From"  [(ngModel)]="from" name="from" />
+  </div>
+  <div class="field">
+    <bb-date-input label="To"  [(ngModel)]="to" name="to" />
+  </div>
   <button type="submit" [disabled]="busy()">Show</button>
   <button type="button" class="ghost" (click)="clear()" [disabled]="busy()">All dates</button>
 </form>

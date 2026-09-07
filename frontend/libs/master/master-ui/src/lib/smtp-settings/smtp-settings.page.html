@@ -15,14 +15,12 @@
 
 <form (ngSubmit)="save()">
   <div class="row">
-    <label class="grow">
-      SMTP host
-      <bb-text-input name="host" [(ngModel)]="form.host" required placeholder="smtp.gmail.com" />
-    </label>
-    <label class="narrow">
-      Port
-      <bb-number-input name="port"  [(ngModel)]="form.port" required />
-    </label>
+    <div class="field grow">
+      <bb-text-input label="SMTP host" name="host" [(ngModel)]="form.host" required placeholder="smtp.gmail.com" />
+    </div>
+    <div class="field narrow">
+      <bb-number-input label="Port" name="port"  [(ngModel)]="form.port" required />
+    </div>
   </div>
 
   <bb-checkbox text="Use SSL/TLS" name="useSsl" [(ngModel)]="form.useSsl" />
@@ -36,16 +34,14 @@
         [(ngModel)]="form.fromEmail"
       />
     </div>
-    <label class="grow">
-      From name
-      <bb-text-input name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
-    </label>
+    <div class="field grow">
+      <bb-text-input label="From name" name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
+    </div>
   </div>
 
-  <label>
-    Username
-    <bb-text-input name="username" [(ngModel)]="form.username" required />
-  </label>
+  <div class="field">
+    <bb-text-input label="Username" name="username" [(ngModel)]="form.username" required />
+  </div>
 
   <div class="field">
     <bb-password-input

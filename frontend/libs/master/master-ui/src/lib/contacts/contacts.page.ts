@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
+  BbFileSelection,
   BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   DateInputComponent,
   EmailInputComponent,
+  FileInputComponent,
   MoneyInputComponent,
   NumberInputComponent,
   PercentageInputComponent,
@@ -203,6 +205,7 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
     TextareaComponent,
     MoneyInputComponent,
     SelectComponent,
+    FileInputComponent,
   ],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
@@ -588,9 +591,17 @@ export class ContactsPage implements OnInit {
    * Uploads immediately rather than on save. Files cannot ride in the contact's
    * JSON body, and holding them in memory until save would lose them on cancel.
    */
-  async uploadFile(event: Event): Promise<void> {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+  /**
+   * The attachment the picker settled on.
+   *
+   * `bb-file-input` reports the accepted files rather than the DOM event: it
+   * has already checked the kind and the size, which a browser only applies to
+   * its own dialogue — a file dragged in or chosen through "All files" reaches
+   * the element regardless. The API checks both again, and that is the one that
+   * counts.
+   */
+  async uploadFile(selection: BbFileSelection): Promise<void> {
+    const file = selection.files[0];
     const contactId = this.editingId();
 
     if (!file || contactId === null) {
@@ -625,8 +636,8 @@ export class ContactsPage implements OnInit {
       this.fail(this.messageOf(err, 'Could not upload that file.'));
     } finally {
       this.uploading.set(false);
-      // Clears the picker so choosing the same file again still fires a change.
-      input.value = '';
+      // `bb-file-input` clears its own element after a pick, so choosing the
+      // same file again still reports it.
     }
   }
 

@@ -153,28 +153,21 @@
     </bb-data-grid>
 
     <div class="fields" style="margin-top: 1rem;">
-      <label>
-        Code
-        <bb-text-input  [(ngModel)]="newUnit.uomCode" maxlength="10" />
-      </label>
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="newUnit.uomName" maxlength="50" />
-      </label>
-      <label>
-        UQC
-        <bb-text-input  [(ngModel)]="newUnit.uqcCode" maxlength="3" />
-        <small>The notified GST unit this reports as. OTH when there is none.</small>
-      </label>
-      <label>
-        Factor to base
-        <bb-number-input  [(ngModel)]="newUnit.conversionToBase" step="0.000001" />
-      </label>
-      <label>
-        Decimals
-        <bb-number-input  [(ngModel)]="newUnit.decimalPlaces" min="0" max="6" />
-        <small>Drives quantity rounding, not just display.</small>
-      </label>
+      <div class="field">
+        <bb-text-input label="Code"  [(ngModel)]="newUnit.uomCode" maxlength="10" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="newUnit.uomName" maxlength="50" />
+      </div>
+      <div class="field">
+        <bb-text-input label="UQC" hint="The notified GST unit this reports as. OTH when there is none."  [(ngModel)]="newUnit.uqcCode" maxlength="3" />
+      </div>
+      <div class="field">
+        <bb-number-input label="Factor to base"  [(ngModel)]="newUnit.conversionToBase" step="0.000001" />
+      </div>
+      <div class="field">
+        <bb-number-input label="Decimals" hint="Drives quantity rounding, not just display."  [(ngModel)]="newUnit.decimalPlaces" min="0" max="6" />
+      </div>
     </div>
 
     <div class="sheet-actions">

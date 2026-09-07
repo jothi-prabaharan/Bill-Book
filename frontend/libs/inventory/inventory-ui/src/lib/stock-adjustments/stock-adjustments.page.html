@@ -101,11 +101,9 @@
     </p>
 
     <div class="fields">
-      <label>
-        Date
-        <bb-date-input  [(ngModel)]="form.adjustmentDate" />
-        <small>The date it happened, not the date it was typed.</small>
-      </label>
+      <div class="field">
+        <bb-date-input label="Date" hint="The date it happened, not the date it was typed."  [(ngModel)]="form.adjustmentDate" />
+      </div>
 
       <div class="field">
         <bb-select label="Reason" placeholder="" [options]="reasons" [(ngModel)]="form.reason" />
@@ -121,10 +119,9 @@
         />
       </div>
 
-      <label class="wide">
-        Notes
-        <bb-text-input  [(ngModel)]="form.notes" maxlength="500" />
-      </label>
+      <div class="field wide">
+        <bb-text-input label="Notes"  [(ngModel)]="form.notes" maxlength="500" />
+      </div>
     </div>
 
     <bb-data-grid [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">

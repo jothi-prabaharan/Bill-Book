@@ -18,14 +18,12 @@
       (ngModelChange)="choose()"
     />
   </div>
-  <label>
-    From
-    <bb-date-input  [(ngModel)]="from" name="from" />
-  </label>
-  <label>
-    To
-    <bb-date-input  [(ngModel)]="to" name="to" />
-  </label>
+  <div class="field">
+    <bb-date-input label="From"  [(ngModel)]="from" name="from" />
+  </div>
+  <div class="field">
+    <bb-date-input label="To"  [(ngModel)]="to" name="to" />
+  </div>
   <button type="submit" [disabled]="busy() || accountId === null">Show</button>
 </form>
 

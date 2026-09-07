@@ -65,14 +65,12 @@
   <div class="sheet">
     <h2>{{ editingId() === 0 ? 'New category' : 'Edit category' }}</h2>
     <div class="fields">
-      <label>
-        Name
-        <bb-text-input  [(ngModel)]="form.categoryName" maxlength="100" />
-      </label>
-      <label>
-        Code
-        <bb-text-input  [(ngModel)]="form.categoryCode" maxlength="20" />
-      </label>
+      <div class="field">
+        <bb-text-input label="Name"  [(ngModel)]="form.categoryName" maxlength="100" />
+      </div>
+      <div class="field">
+        <bb-text-input label="Code"  [(ngModel)]="form.categoryCode" maxlength="20" />
+      </div>
       <div class="field">
         <bb-select
           label="Parent"
