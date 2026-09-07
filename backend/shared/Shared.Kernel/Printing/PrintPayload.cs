@@ -69,22 +69,27 @@ public static class MaskFormatter
             return string.Empty;
         }
 
+        // The fallback mask is per type. Sharing one made every unformatted
+        // Number take the Amount mask's two fixed decimals, so a line number
+        // printed as 1.00 — which is what a serial number looks like when it
+        // has been told it is money.
         return placeholder.Type switch
         {
-            PlaceholderType.Amount or PlaceholderType.Number => Number(value, placeholder.Format, context),
+            PlaceholderType.Amount =>
+                Number(value, placeholder.Format ?? PlaceholderCatalog.AmountFormat, context),
+            PlaceholderType.Number =>
+                Number(value, placeholder.Format ?? PlaceholderCatalog.NumberFormat, context),
             PlaceholderType.Date => Date(value, placeholder.Format, context),
             _ => Convert.ToString(value, context.Culture) ?? string.Empty,
         };
     }
 
-    private static string Number(object value, string? mask, PrintFormatContext context)
+    private static string Number(object value, string mask, PrintFormatContext context)
     {
         if (!TryDecimal(value, context, out decimal number))
         {
             return Convert.ToString(value, context.Culture) ?? string.Empty;
         }
-
-        mask ??= PlaceholderCatalog.AmountFormat;
 
         int decimals = Decimals(mask);
         decimal rounded = Math.Round(number, decimals, MidpointRounding.AwayFromZero);

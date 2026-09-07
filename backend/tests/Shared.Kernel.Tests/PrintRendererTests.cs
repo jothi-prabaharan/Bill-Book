@@ -286,6 +286,64 @@ public class PrintRendererTests
         Assert.DoesNotContain("«", result.Html, StringComparison.Ordinal);
     }
 
+    // ---- Found by looking at a rendered page, not by a test ---------------
+
+    [Fact]
+    public void A_tables_column_headings_are_printed_once_per_page()
+    {
+        PrintRenderResult result = Renderer.Render(Request(42));
+        IDocument document = Parse(result.Html);
+
+        foreach (IElement page in Pages(document))
+        {
+            int headings = page.QuerySelectorAll("th")
+                .Count(th => th.TextContent == "Description");
+
+            // The heading row lives in thead and is re-emitted from the table's
+            // opening markup. It was also being packed as a body row, so every
+            // table printed its headings twice, one line apart — visible on the
+            // page and invisible to every structural assertion above.
+            Assert.True(headings <= 1, $"A page printed the headings {headings} times.");
+        }
+    }
+
+    [Fact]
+    public void A_heading_row_is_never_packed_as_a_body_row()
+    {
+        PrintRenderResult result = Renderer.Render(Request(42));
+        IDocument document = Parse(result.Html);
+
+        Assert.DoesNotContain(
+            document.QuerySelectorAll("tbody tr"),
+            tr => tr.TextContent.Contains("HSN/SAC", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_line_number_prints_as_a_whole_number_not_as_money()
+    {
+        PrintRenderResult result = Renderer.Render(Request(3));
+        IDocument document = Parse(result.Html);
+
+        IReadOnlyList<string> serials = [.. document.QuerySelectorAll("tbody tr")
+            .Where(tr => tr.TextContent.Contains("Product ", StringComparison.Ordinal))
+            .Select(tr => tr.Children[0].TextContent.Trim())];
+
+        // Number and Amount had one fallback mask between them, so an
+        // unformatted line number took the Amount mask's two fixed decimals and
+        // a serial number printed as 1.00.
+        Assert.Equal(["1", "2", "3"], serials);
+    }
+
+    [Fact]
+    public void An_amount_still_keeps_its_two_decimals()
+    {
+        PrintRenderResult result = Renderer.Render(Request(1));
+
+        // The other half of the same fix: splitting the fallback must not have
+        // cost Amount its fixed decimals.
+        Assert.Contains("1,500.50", result.Html, StringComparison.Ordinal);
+    }
+
     // ---- 11. Thermal -----------------------------------------------------
 
     [Fact]

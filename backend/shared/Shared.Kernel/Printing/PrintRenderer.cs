@@ -421,12 +421,20 @@ public sealed class PrintRenderer
             string key = $"{code}-{tableIndex++}";
             string attributes = Attributes(element);
             string head = element.QuerySelector("thead")?.OuterHtml ?? string.Empty;
-            // This table's own rows, not every row beneath it. A descendant
-            // selector reaches into nested tables, and a nested row picked up
-            // here would be emitted twice — once inside its wrapper row's markup
-            // and again as a chunk of its own. Closest("table") is the same test
-            // the substitution rule uses to decide which row a chip belongs to.
-            List<IElement> rows = [.. element.QuerySelectorAll("tr").Where(r => r.Closest("table") == element)];
+            // This table's own body rows, and only those. Two exclusions, both
+            // of which printed something wrong on a real page:
+            //
+            // Closest("table") == element drops rows of a nested table — a
+            // descendant selector reaches into them, and such a row would be
+            // emitted twice, once inside its wrapper row's markup and again as
+            // a chunk of its own.
+            //
+            // Closest("thead") is null drops the column headings, which are
+            // re-emitted from TableOpen on every page the table appears on.
+            // Without it the heading row was also packed as a body row, so
+            // every table printed its headings twice, one line apart.
+            List<IElement> rows = [.. element.QuerySelectorAll("tr")
+                .Where(r => r.Closest("table") == element && r.Closest("thead") is null)];
 
             for (int i = 0; i < rows.Count; i++)
             {
