@@ -276,6 +276,35 @@ Both formats are built and asserted, and neither has query semantics of its own 
 
 The CSV half was a requirement this document recorded as decided while `ExportFormat` carried only `Xlsx` and `Pdf`; `?format=csv` was an unreachable branch of an enum. It is implemented now, with 12 tests over quoting, encoding, multilingual text, null handling and column order.
 
+### 8.5 Column presentation in `reports.json`
+
+Every column entry in `reports.json` carries the seven presentation properties
+`ReportColumnView` exposes — `DataType`, `Alignment`, `Width`, `IsFilterable`,
+`IsSortable`, `IsGroupable`, `IsPivotable`. The file held only
+`ReportGroup` / `ReportSubGroup` / `ReportName` / `ColumnName` before, so a
+report's specification said which columns it has and nothing about how any of
+them behaves; the two halves of that answer then lived in different places, and
+the seeded catalog was the only one of them anybody could read.
+
+**The file is still a specification, not a runtime input.** Nothing loads it —
+the catalog a branch actually runs on is seeded from `ReportCatalogSeeder`, and
+`ReportLayerCertificationTests` still asserts over that. What the properties buy
+is that a report's spec and its seed row can now be compared at all.
+
+The values follow the conventions the seeder already set:
+
+| Property | Rule |
+|---|---|
+| `DataType` | `Money` for an amount — including every `(%CurCode%)` and `(Source)` pair; `Quantity` for stock, which carries more decimals; `Percent` for a rate stated as a percentage (18 is 18%); `Rate` for an exchange rate; `Enum` for a closed set — a status, a type, a costing or depreciation method, a ledger source; `Link` for a document number that opens its document; `Number` for a count or an internal id; `Date`, `DateTime`, `Boolean`, `Text` as they read |
+| `Alignment` | `Right` for anything numeric, `Center` for a tick, `Left` for everything else |
+| `Width` | Pixels, sized to fit the header — the widest headers, such as *Unit Sales Price (%CurCode%)*, are capped at 280 |
+| `IsFilterable` / `IsSortable` | True everywhere except the internal id columns, which are never offered, and *Running Balance*, which is computed over the ordered result and so does not exist as a value to filter or sort by |
+| `IsGroupable` | Text-typed dimensions only, which is the engine's own constraint — `ReportColumn.Of` refuses a non-text grouping key, because grouping concatenates in SQL and a date or an enum would be rendered in a format nobody chose. Free text (a description, a narration, an address, a reference) is excluded: it has as many groups as rows |
+| `IsPivotable` | A subset of groupable, restricted to low-cardinality dimensions — a currency, a category, a warehouse, a status. Contacts and items are deliberately absent: `PivotBuilder.MaxColumns` caps the column axis at 200, and a pivot across a few thousand contacts is a spreadsheet nobody can read |
+
+Four of the forty-six reports declare no columns at all (§8.2) and so carry none
+of these.
+
 ## 9. Delivery checklist
 
 - [x] Common report grid architecture defined
