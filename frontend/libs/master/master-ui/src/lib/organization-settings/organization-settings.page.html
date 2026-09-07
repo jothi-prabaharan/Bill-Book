@@ -106,10 +106,9 @@
         <small>Lead with + for a number outside the branch's country.</small>
       </label>
 
-      <label>
-        Email
-        <input type="email" name="email" [(ngModel)]="org.email" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="org.email" />
+      </div>
 
       <label>
         Website

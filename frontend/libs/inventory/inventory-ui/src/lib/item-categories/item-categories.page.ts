@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 
@@ -46,11 +48,41 @@ interface UomType {
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })
 export class ItemCategoriesPage implements OnInit {
+
+  /**
+   * A getter rather than a computed: `parentOptions` is itself a getter over
+   * the editing state, so there is no signal for a computed to track.
+   */
+  protected get parentCategoryOptions(): BbSelectOption<number>[] {
+    return this.parentOptions.map((parent) => ({
+      value: parent.itemCategoryId,
+      label: parent.categoryName,
+    }));
+  }
+
+  protected readonly profileOptions: BbSelectOption<string>[] = [
+    { value: 'Standard', label: 'Standard' },
+    { value: 'Pharma', label: 'Pharma' },
+    { value: 'Jewellery', label: 'Jewellery' },
+  ];
+
+  protected readonly costingOptions: BbSelectOption<string>[] = [
+    { value: 'WeightedAverage', label: 'Weighted average' },
+    { value: 'Fifo', label: 'FIFO' },
+    { value: 'Lifo', label: 'LIFO' },
+    { value: 'Fefo', label: 'FEFO' },
+    { value: 'SpecificIdentification', label: 'Specific identification' },
+  ];
+
+  protected readonly uomTypeOptions = computed<BbSelectOption<number>[]>(() =>
+    this.types().map((type) => ({ value: type.uomTypeId, label: type.uomTypeName })),
+  );
   columns: ColumnDef[] = [
     { field: 'handle', header: 'Reorder' },
     { field: 'categoryName', header: 'Category' },

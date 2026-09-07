@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
+  EmailInputComponent,
   SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
@@ -83,6 +84,7 @@ const MONTHS = [
     FormsModule,
     TextInputComponent,
     SelectComponent,
+    EmailInputComponent,
   ],
   templateUrl: './organization-settings.page.html',
   styleUrl: './organization-settings.page.scss',

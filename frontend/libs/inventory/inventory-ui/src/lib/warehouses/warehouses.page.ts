@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -45,11 +47,26 @@ interface Warehouse {
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './warehouses.page.html',
   styleUrl: './warehouses.page.scss',
 })
 export class WarehousesPage implements OnInit {
+
+  protected readonly warehouseTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Warehouse', label: 'Warehouse' },
+    { value: 'Store', label: 'Store' },
+    { value: 'Godown', label: 'Godown' },
+    { value: 'Transit', label: 'Transit' },
+  ];
+
+  protected readonly storageTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Ambient', label: 'Ambient' },
+    { value: 'CoolDry', label: 'Cool and dry' },
+    { value: 'ColdChain', label: 'Cold chain (2–8 °C)' },
+    { value: 'Frozen', label: 'Frozen' },
+  ];
   columns: ColumnDef[] = [
     { field: 'handle', header: 'Reorder' },
     { field: 'warehouseCode', header: 'Code' },

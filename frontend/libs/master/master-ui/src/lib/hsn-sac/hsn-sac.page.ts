@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   SearchInputComponent,
+  SelectComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -62,11 +64,17 @@ const PAGE_SIZE = 50;
     FormsModule,
     SearchInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './hsn-sac.page.html',
   styleUrl: './hsn-sac.page.scss',
 })
 export class HsnSacPage implements OnInit {
+
+  protected readonly codeTypeOptions: BbSelectOption<string>[] = [
+    { value: 'HSN', label: 'HSN — goods' },
+    { value: 'SAC', label: 'SAC — services' },
+  ];
   columns: ColumnDef[] = [
     { field: 'code', header: 'Code' },
     { field: 'codeType', header: 'Type' },

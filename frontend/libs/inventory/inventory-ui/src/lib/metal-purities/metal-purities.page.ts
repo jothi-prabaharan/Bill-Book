@@ -1,10 +1,12 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -39,11 +41,25 @@ interface Purity {
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './metal-purities.page.html',
   styleUrl: './metal-purities.page.scss',
 })
 export class MetalPuritiesPage implements OnInit {
+
+  /** The filter offers no "Other": nothing is seeded under it. */
+  protected readonly metalFilterOptions: BbSelectOption<string>[] = [
+    { value: 'Gold', label: 'Gold' },
+    { value: 'Silver', label: 'Silver' },
+    { value: 'Platinum', label: 'Platinum' },
+    { value: 'Diamond', label: 'Diamond' },
+  ];
+
+  protected readonly metalOptions: BbSelectOption<string>[] = [
+    ...this.metalFilterOptions,
+    { value: 'Other', label: 'Other' },
+  ];
   private readonly http = inject(HttpClient);
 
   columns: ColumnDef[] = [

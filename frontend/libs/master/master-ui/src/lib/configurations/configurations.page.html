@@ -26,10 +26,13 @@
         <div class="control">
           @switch (row.dataType) {
             @case ('Boolean') {
-              <select [(ngModel)]="row.value" (ngModelChange)="save(row)">
-                <option value="true">Yes</option>
-                <option value="false">No</option>
-              </select>
+              <bb-select
+                ariaLabel="Value"
+                placeholder=""
+                [options]="booleanOptions"
+                [(ngModel)]="row.value"
+                (ngModelChange)="save(row)"
+              />
             }
             @case ('Number') {
               <bb-number-input  [(ngModel)]="row.value" (blur)="save(row)" />

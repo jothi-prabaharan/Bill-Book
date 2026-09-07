@@ -3,7 +3,13 @@
   <p>Generate secure API keys to integrate external systems with this branch.</p>
 
   <div class="create-form">
-    <input type="text" [ngModel]="newClientName()" (ngModelChange)="newClientName.set()" placeholder="E.g. Shopify POS Integration" />
+    <bb-text-input
+      ariaLabel="Integration name"
+      placeholder="E.g. Shopify POS Integration"
+      name="newClientName"
+      [ngModel]="newClientName()"
+      (ngModelChange)="newClientName.set($event)"
+    />
     <button (click)="createClient()">Generate API Key</button>
   </div>
 

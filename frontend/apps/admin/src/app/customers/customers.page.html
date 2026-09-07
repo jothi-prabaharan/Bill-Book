@@ -63,17 +63,26 @@
         <bb-text-input [(ngModel)]="form.displayName" maxlength="200" />
       </label>
 
-      <label>
-        Owner email
-        <input type="email" [(ngModel)]="form.email" maxlength="200" />
-        <small>Becomes the sign-in for the account owner.</small>
-      </label>
+      <div class="field">
+        <bb-email-input
+          label="Owner email"
+          maxlength="200"
+          hint="Becomes the sign-in for the account owner."
+          name="email"
+          [(ngModel)]="form.email"
+        />
+      </div>
 
-      <label>
-        Temporary password
-        <input type="password" [(ngModel)]="form.password" minlength="8" />
-        <small>At least 8 characters. The owner can change it after signing in.</small>
-      </label>
+      <div class="field">
+        <bb-password-input
+          label="Temporary password"
+          purpose="new"
+          minlength="8"
+          hint="At least 8 characters. The owner can change it after signing in."
+          name="password"
+          [(ngModel)]="form.password"
+        />
+      </div>
 
       <label>
         Mobile
@@ -93,23 +102,24 @@
 
       <label>
         Financial year starts
-        <select [(ngModel)]="form.financialYearStartMonth">
-          @for (month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track month) {
-            <option [ngValue]="month">Month {{ month }}</option>
-          }
-        </select>
-        <small>April for India. Drives the year segment in generated numbers.</small>
+        <bb-select
+          ariaLabel="Financial year starts"
+          placeholder=""
+          hint="April for India. Drives the year segment in generated numbers."
+          [options]="monthOptions"
+          [(ngModel)]="form.financialYearStartMonth"
+        />
       </label>
 
-      <label>
-        Base currency
-        <select [(ngModel)]="form.baseCurrency">
-          @for (curr of currencies(); track curr.code) {
-            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
-          }
-        </select>
-        <small>Every posting in this branch converts to it. Fixed once created.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Base currency"
+          placeholder=""
+          hint="Every posting in this branch converts to it. Fixed once created."
+          [options]="currencyOptions()"
+          [(ngModel)]="form.baseCurrency"
+        />
+      </div>
     </div>
 
     <div class="sheet-actions">

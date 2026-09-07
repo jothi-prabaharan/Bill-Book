@@ -78,24 +78,22 @@
         <bb-text-input  [(ngModel)]="form.warehouseCode" maxlength="20" [disabled]="editingId() !== 0" />
         <small>Blank takes the next code from the numbering series.</small>
       </label>
-      <label>
-        Type
-        <select [(ngModel)]="form.warehouseType">
-          <option value="Warehouse">Warehouse</option>
-          <option value="Store">Store</option>
-          <option value="Godown">Godown</option>
-          <option value="Transit">Transit</option>
-        </select>
-      </label>
-      <label>
-        Storage
-        <select [(ngModel)]="form.storageType">
-          <option value="Ambient">Ambient</option>
-          <option value="CoolDry">Cool and dry</option>
-          <option value="ColdChain">Cold chain (2–8 °C)</option>
-          <option value="Frozen">Frozen</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Type"
+          placeholder=""
+          [options]="warehouseTypeOptions"
+          [(ngModel)]="form.warehouseType"
+        />
+      </div>
+      <div class="field">
+        <bb-select
+          label="Storage"
+          placeholder=""
+          [options]="storageTypeOptions"
+          [(ngModel)]="form.storageType"
+        />
+      </div>
       <label class="wide">
         Address line 1
         <bb-text-input  [(ngModel)]="form.addressLine1" maxlength="200" />

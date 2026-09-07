@@ -1,7 +1,9 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   CheckboxComponent,
+  EmailInputComponent,
   NumberInputComponent,
+  PasswordInputComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -36,11 +38,25 @@ interface SmtpSettings {
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    EmailInputComponent,
+    PasswordInputComponent,
   ],
   templateUrl: './smtp-settings.page.html',
   styleUrl: './smtp-settings.page.scss',
 })
 export class SmtpSettingsPage implements OnInit {
+
+  /**
+   * The note under the password, which differs by whether one is stored.
+   *
+   * A method rather than two branches in the template: the hint is a string
+   * input on the control, and a template `@if` cannot produce one.
+   */
+  protected passwordHint(): string {
+    return this.hasPassword()
+      ? 'Leave blank to keep the stored password. It is encrypted, never shown again.'
+      : 'Stored encrypted — the mail server needs the real value, so this one secret is reversible rather than hashed.';
+  }
   private readonly http = inject(HttpClient);
 
   /** Null targets the platform default row; a customer id targets that customer's override. */

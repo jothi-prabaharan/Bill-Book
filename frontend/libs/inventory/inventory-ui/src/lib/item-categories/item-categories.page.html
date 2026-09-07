@@ -73,44 +73,38 @@
         Code
         <bb-text-input  [(ngModel)]="form.categoryCode" maxlength="20" />
       </label>
-      <label>
-        Parent
-        <select [(ngModel)]="form.parentCategoryId">
-          <option [ngValue]="null">Top level</option>
-          @for (parent of parentOptions; track parent.itemCategoryId) {
-            <option [ngValue]="parent.itemCategoryId">{{ parent.categoryName }}</option>
-          }
-        </select>
-      </label>
-      <label>
-        Default profile
-        <select [(ngModel)]="form.defaultItemProfile">
-          <option [ngValue]="null">Not set</option>
-          <option value="Standard">Standard</option>
-          <option value="Pharma">Pharma</option>
-          <option value="Jewellery">Jewellery</option>
-        </select>
-      </label>
-      <label>
-        Default costing
-        <select [(ngModel)]="form.defaultCostingType">
-          <option [ngValue]="null">Not set</option>
-          <option value="WeightedAverage">Weighted average</option>
-          <option value="Fifo">FIFO</option>
-          <option value="Lifo">LIFO</option>
-          <option value="Fefo">FEFO</option>
-          <option value="SpecificIdentification">Specific identification</option>
-        </select>
-      </label>
-      <label>
-        Default unit type
-        <select [(ngModel)]="form.defaultUomTypeId">
-          <option [ngValue]="null">Not set</option>
-          @for (type of types(); track type.uomTypeId) {
-            <option [ngValue]="type.uomTypeId">{{ type.uomTypeName }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Parent"
+          placeholder="Top level"
+          [options]="parentCategoryOptions"
+          [(ngModel)]="form.parentCategoryId"
+        />
+      </div>
+      <div class="field">
+        <bb-select
+          label="Default profile"
+          placeholder="Not set"
+          [options]="profileOptions"
+          [(ngModel)]="form.defaultItemProfile"
+        />
+      </div>
+      <div class="field">
+        <bb-select
+          label="Default costing"
+          placeholder="Not set"
+          [options]="costingOptions"
+          [(ngModel)]="form.defaultCostingType"
+        />
+      </div>
+      <div class="field">
+        <bb-select
+          label="Default unit type"
+          placeholder="Not set"
+          [options]="uomTypeOptions()"
+          [(ngModel)]="form.defaultUomTypeId"
+        />
+      </div>
       <bb-checkbox
         text="Active"
         [(ngModel)]="form.isActive"

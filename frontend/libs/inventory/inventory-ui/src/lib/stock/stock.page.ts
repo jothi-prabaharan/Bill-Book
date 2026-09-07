@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
@@ -8,11 +9,14 @@ import {
   LookupDialogComponent,
   LookupRow,
   NumberInputComponent,
+  QuantityInputComponent,
   SearchInputComponent,
+  SelectComponent,
   TextInputComponent,
+  TextareaComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface StockPosition {
@@ -161,6 +165,9 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
     SearchInputComponent,
     LookupDialogComponent,
     CheckboxComponent,
+    QuantityInputComponent,
+    SelectComponent,
+    TextareaComponent,
   ],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
@@ -224,6 +231,43 @@ export class StockPage implements OnInit {
   protected readonly movementFor = signal<StockPosition | null>(null);
 
   protected readonly movementTypes = MANUAL_TYPES;
+
+  protected readonly directionOptions: BbSelectOption<string>[] = [
+    { value: 'In', label: 'In — found, written on' },
+    { value: 'Out', label: 'Out — short, broken, written off' },
+  ];
+
+  protected readonly warehouseOptions = computed<BbSelectOption<number>[]>(() =>
+    this.warehouses().map((warehouse) => ({
+      value: warehouse.warehouseId,
+      label: warehouse.warehouseName,
+    })),
+  );
+
+  /**
+   * A getter, not a computed: `enterableUnits` is itself derived from the item
+   * being edited rather than from a signal.
+   */
+  protected get unitOptions(): BbSelectOption<number>[] {
+    return this.enterableUnits.map((unit) => ({
+      value: unit.uomId,
+      label: `${unit.uomCode} — ${unit.uomName}`,
+    }));
+  }
+
+  protected readonly issueOptions = computed<BbSelectOption<number>[]>(() =>
+    this.issues().map((issue) => ({
+      value: issue.stockMovementId,
+      label: issue.sourceType
+        ? `${issue.movementDate} — ${issue.quantity} (${issue.sourceType}-${issue.sourceId})`
+        : `${issue.movementDate} — ${issue.quantity}`,
+    })),
+  );
+
+  /** Named here so the unit's hint can quote the item's own inventory unit. */
+  protected unitHint(inventoryUomCode: string): string {
+    return `Enter in whichever unit you counted in. It converts into ${inventoryUomCode}, which is what stock is held in.`;
+  }
   protected readonly allocations = signal<CostAllocation[]>([]);
   protected readonly recostings = signal<Recosting[]>([]);
   protected readonly costingQueue = signal<CostingQueue | null>(null);

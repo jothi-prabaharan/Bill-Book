@@ -1,8 +1,16 @@
 import { HttpClient } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ColumnDef, DataGridComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  EmailInputComponent,
+  PasswordInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { Currency } from '@bill-book/auth';
 
 interface CustomerListItem {
@@ -37,11 +45,31 @@ interface CreateCustomerForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-customers-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    SelectComponent,
+    EmailInputComponent,
+    PasswordInputComponent,
+  ],
   templateUrl: './customers.page.html',
   styleUrl: './customers.page.scss',
 })
 export class CustomersPage implements OnInit {
+
+  /** Month numbers, which is what the branch stores. */
+  protected readonly monthOptions: BbSelectOption<number>[] = Array.from(
+    { length: 12 },
+    (_, at) => ({ value: at + 1, label: `Month ${at + 1}` }),
+  );
+
+  protected readonly currencyOptions = computed<BbSelectOption<string>[]>(() =>
+    this.currencies().map((currency) => ({
+      value: currency.code,
+      label: `${currency.code} - ${currency.name}`,
+    })),
+  );
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
 

@@ -99,44 +99,42 @@
         <bb-text-input  [(ngModel)]="form.name" maxlength="200" />
       </label>
 
-      <label>
-        Trade Vertical
-        <select [(ngModel)]="form.vertical">
-          <option value="General">General / Other</option>
-          <option value="Pharma">Pharmacy / Medical Store</option>
-          <option value="Jewellery">Jewellery Store</option>
-        </select>
-        <small>Decides what this branch is seeded with and which settings apply.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Trade Vertical"
+          placeholder=""
+          hint="Decides what this branch is seeded with and which settings apply."
+          [options]="verticalOptions"
+          [(ngModel)]="form.vertical"
+        />
+      </div>
 
-      <label>
-        Base currency
-        <select
-          [(ngModel)]="form.baseCurrency"
+      <div class="field">
+        <bb-select
+          label="Base currency"
+          placeholder=""
+          [options]="currencyOptions()"
           [disabled]="currencyLocked"
-        >
-          @for (curr of currencies(); track curr.code) {
-            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
-          }
-        </select>
-        <small>
+          [(ngModel)]="form.baseCurrency"
+        />
+        <small class="field-hint">
           @if (currencyLocked) {
             Fixed — every amount already posted here was converted to it.
           } @else {
             Every posting in this branch converts to it. It cannot be changed afterwards.
           }
         </small>
-      </label>
+      </div>
 
-      <label>
-        Financial year starts
-        <select [(ngModel)]="form.financialYearStartMonth">
-          @for (month of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]; track month) {
-            <option [ngValue]="month">Month {{ month }}</option>
-          }
-        </select>
-        <small>April for India. Drives the year segment in generated numbers.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Financial year starts"
+          placeholder=""
+          hint="April for India. Drives the year segment in generated numbers."
+          [options]="monthOptions"
+          [(ngModel)]="form.financialYearStartMonth"
+        />
+      </div>
 
       <label>
         GSTIN
@@ -164,15 +162,14 @@
         <bb-text-input  [(ngModel)]="form.city" maxlength="100" />
       </label>
 
-      <label>
-        State
-        <select [(ngModel)]="form.stateId">
-          <option [ngValue]="null">Not set</option>
-          @for (state of states(); track state.stateId) {
-            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="State"
+          placeholder="Not set"
+          [options]="stateOptions()"
+          [(ngModel)]="form.stateId"
+        />
+      </div>
 
       <label>
         Postal code
@@ -189,10 +186,9 @@
         <bb-text-input  [(ngModel)]="form.mobileNumber" maxlength="20" />
       </label>
 
-      <label>
-        Email
-        <input type="email" [(ngModel)]="form.email" maxlength="200" />
-      </label>
+      <div class="field">
+        <bb-email-input label="Email" name="email" maxlength="200" [(ngModel)]="form.email" />
+      </div>
     </div>
 
     <div class="sheet-actions">

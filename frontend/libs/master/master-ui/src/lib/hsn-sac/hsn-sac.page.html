@@ -39,11 +39,15 @@
   />
 
   <label class="sr-only" for="hsn-type">Type</label>
-  <select id="hsn-type" name="codeType" [(ngModel)]="codeType" (ngModelChange)="applyFilters()">
-    <option value="">All types</option>
-    <option value="HSN">HSN — goods</option>
-    <option value="SAC">SAC — services</option>
-  </select>
+  <bb-select
+    id="hsn-type"
+    name="codeType"
+    ariaLabel="Filter by code type"
+    placeholder="All types"
+    [options]="codeTypeOptions"
+    [(ngModel)]="codeType"
+    (ngModelChange)="applyFilters()"
+  />
 
   <bb-checkbox
     text="Chapter headings"

@@ -61,46 +61,43 @@
 
         <div class="q2o__fields">
           <div class="field">
-            <label for="q2o-date">Order date</label>
-            <input id="q2o-date" class="input" type="date" formControlName="documentDate" />
-
-            @if (showError('documentDate')) {
-              <span class="field-error" role="alert">Give the order a date.</span>
-            }
+            <bb-date-input
+              id="q2o-date"
+              label="Order date"
+              formControlName="documentDate"
+              [required]="true"
+              [error]="showError('documentDate') ? 'Give the order a date.' : ''"
+            />
           </div>
 
           <div class="field">
-            <label for="q2o-delivery">Delivery date</label>
-            <input id="q2o-delivery" class="input" type="date" formControlName="deliveryDate" />
-            <small class="field-hint">When the customer is expecting the goods.</small>
+            <bb-date-input
+              id="q2o-delivery"
+              label="Delivery date"
+              hint="When the customer is expecting the goods."
+              formControlName="deliveryDate"
+            />
           </div>
 
           <div class="field">
-            <label for="q2o-pos">Place of supply</label>
-            <input
+            <bb-text-input
               id="q2o-pos"
-              class="input"
-              type="text"
+              label="Place of supply"
               inputmode="numeric"
               maxlength="2"
               placeholder="33"
+              hint="Leave blank for a registered customer — their GSTIN settles it."
               formControlName="placeOfSupplyStateCode"
+              [error]="
+                showError('placeOfSupplyStateCode')
+                  ? 'Place of supply is a two-digit state code.'
+                  : ''
+              "
             />
-
-            @if (showError('placeOfSupplyStateCode')) {
-              <span class="field-error" role="alert">
-                Place of supply is a two-digit state code.
-              </span>
-            } @else {
-              <small class="field-hint">
-                Leave blank for a registered customer — their GSTIN settles it.
-              </small>
-            }
           </div>
 
           <div class="field q2o__wide">
-            <label for="q2o-notes">Notes</label>
-            <textarea id="q2o-notes" class="input" rows="2" formControlName="notes"></textarea>
+            <bb-textarea id="q2o-notes" label="Notes" rows="2" formControlName="notes" />
           </div>
         </div>
 

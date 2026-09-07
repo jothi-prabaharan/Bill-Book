@@ -5,7 +5,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-import { ColumnDef, DataGridComponent, DateInputComponent, DocumentLine, DocumentLineContext, DocumentLineGridComponent, LookupDialogComponent, LookupRow, QuantityInputComponent, TaxGroupOption, TextInputComponent, recalculate } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  DocumentLine,
+  DocumentLineContext,
+  DocumentLineGridComponent,
+  LookupDialogComponent,
+  LookupRow,
+  QuantityInputComponent,
+  TaxGroupOption,
+  TextInputComponent,
+  TextareaComponent,
+  recalculate,
+} from '@bill-book/ui-components';
 
 import {
   GoodsReceiptService,
@@ -52,13 +66,18 @@ interface ReceivingLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-goods-receipt-form',
   standalone: true,
-  imports: [DataGridComponent, 
+  imports: [
+    DataGridComponent,
     CommonModule,
     FormsModule,
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  DateInputComponent, TextInputComponent, QuantityInputComponent],
+    DateInputComponent,
+    TextInputComponent,
+    QuantityInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './goods-receipt-form.page.html',
   styleUrl: './goods-receipt-form.page.scss',
 })

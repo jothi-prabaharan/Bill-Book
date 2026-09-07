@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  SelectComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface OrgCurrency {
@@ -41,11 +43,19 @@ interface MasterCurrency {
     DataGridComponent,
     FormsModule,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './org-currencies.page.html',
   styleUrl: './org-currencies.page.scss',
 })
 export class OrgCurrenciesPage implements OnInit {
+
+  protected readonly availableOptions = computed<BbSelectOption<number>[]>(() =>
+    this.available().map((currency) => ({
+      value: currency.currencyId,
+      label: `${currency.code} — ${currency.name} (${currency.symbol})`,
+    })),
+  );
   private readonly http = inject(HttpClient);
 
   /** Replace with the org id from the auth token once the org context service lands. */

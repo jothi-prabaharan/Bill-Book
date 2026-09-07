@@ -5,7 +5,18 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-import { ColumnDef, DataGridComponent, DateInputComponent, LookupDialogComponent, LookupRow, QuantityInputComponent, TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  LookupDialogComponent,
+  LookupRow,
+  QuantityInputComponent,
+  SelectComponent,
+  TextInputComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 
 import {
   BillService,
@@ -58,11 +69,27 @@ interface ReturnLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-debit-note-form',
   standalone: true,
-  imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, QuantityInputComponent],
+  imports: [
+    DataGridComponent,
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    LookupDialogComponent,
+    DateInputComponent,
+    TextInputComponent,
+    QuantityInputComponent,
+    SelectComponent,
+    TextareaComponent,
+  ],
   templateUrl: './debit-note-form.page.html',
   styleUrl: './debit-note-form.page.scss',
 })
 export class DebitNoteFormPage {
+
+  /** A getter for the same reason: `reasons` is declared below this. */
+  protected get reasonOptions(): BbSelectOption<string>[] {
+    return this.reasons.map((reason) => ({ value: reason.code, label: reason.label }));
+  }
   private readonly notes = inject(DebitNoteService);
   private readonly bills = inject(BillService);
   private readonly lookups = inject(PurchaseLookupService);

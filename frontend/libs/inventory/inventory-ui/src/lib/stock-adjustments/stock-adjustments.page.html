@@ -107,25 +107,19 @@
         <small>The date it happened, not the date it was typed.</small>
       </label>
 
-      <label>
-        Reason
-        <select [(ngModel)]="form.reason">
-          @for (reason of reasons; track reason.value) {
-            <option [value]="reason.value">{{ reason.label }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select label="Reason" placeholder="" [options]="reasons" [(ngModel)]="form.reason" />
+      </div>
 
-      <label>
-        Warehouse
-        <select [(ngModel)]="form.warehouseId">
-          <option [ngValue]="null">Not recorded</option>
-          @for (warehouse of warehouses(); track warehouse.warehouseId) {
-            <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
-          }
-        </select>
-        <small>Where it was counted. Stock is one pool per branch either way.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Warehouse"
+          placeholder="Not recorded"
+          hint="Where it was counted. Stock is one pool per branch either way."
+          [options]="warehouseOptions()"
+          [(ngModel)]="form.warehouseId"
+        />
+      </div>
 
       <label class="wide">
         Notes
@@ -135,12 +129,13 @@
 
     <bb-data-grid [gridCode]="'ADJUSTMENT_LINES'" [columns]="draftColumns" [data]="lines">
       <ng-template bbCellTemplate="item" let-row let-index="index">
-        <select [(ngModel)]="row.itemId" [name]="'item' + index">
-          <option [ngValue]="null">Choose an item</option>
-          @for (item of items(); track item.itemId) {
-            <option [ngValue]="item.itemId">{{ item.itemCode }} — {{ item.itemName }}</option>
-          }
-        </select>
+        <bb-select
+          ariaLabel="Item"
+          placeholder="Choose an item"
+          [options]="itemOptions()"
+          [name]="'item' + index"
+          [(ngModel)]="row.itemId"
+        />
       </ng-template>
 
       <ng-template bbCellTemplate="countedQuantity" let-row let-index="index">
@@ -164,10 +159,13 @@
       </ng-template>
 
       <ng-template bbCellTemplate="direction" let-row let-index="index">
-        <select [(ngModel)]="row.direction" [name]="'dir' + index">
-          <option value="Out">Out — written off</option>
-          <option value="In">In — added back</option>
-        </select>
+        <bb-select
+          ariaLabel="Direction"
+          placeholder=""
+          [options]="directionOptions"
+          [name]="'dir' + index"
+          [(ngModel)]="row.direction"
+        />
       </ng-template>
 
       <ng-template bbCellTemplate="unitCost" let-row let-index="index">

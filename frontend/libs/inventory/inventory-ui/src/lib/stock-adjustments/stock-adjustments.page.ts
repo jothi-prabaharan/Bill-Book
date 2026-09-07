@@ -1,7 +1,15 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface AdjustmentLine {
@@ -91,7 +99,14 @@ const REASONS: readonly { value: string; label: string }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-adjustments-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',
 })
@@ -120,6 +135,25 @@ export class StockAdjustmentsPage implements OnInit {
   protected readonly viewing = signal<Adjustment | null>(null);
 
   protected readonly reasons = REASONS;
+
+  protected readonly directionOptions: BbSelectOption<string>[] = [
+    { value: 'Out', label: 'Out — written off' },
+    { value: 'In', label: 'In — added back' },
+  ];
+
+  protected readonly warehouseOptions = computed<BbSelectOption<number>[]>(() =>
+    this.warehouses().map((warehouse) => ({
+      value: warehouse.warehouseId,
+      label: warehouse.warehouseName,
+    })),
+  );
+
+  protected readonly itemOptions = computed<BbSelectOption<number>[]>(() =>
+    this.items().map((item) => ({
+      value: item.itemId,
+      label: `${item.itemCode} — ${item.itemName}`,
+    })),
+  );
 
   form = this.blank();
   lines: DraftLine[] = [];

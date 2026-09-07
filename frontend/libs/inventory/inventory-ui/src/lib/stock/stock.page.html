@@ -104,23 +104,25 @@
     <h2>Record a movement — {{ item.itemName }}</h2>
 
     <div class="fields">
-      <label>
-        Type
-        <select [(ngModel)]="form.movementType" (ngModelChange)="loadIssues()">
-          @for (type of movementTypes; track type.value) {
-            <option [value]="type.value">{{ type.label }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Type"
+          placeholder=""
+          [options]="movementTypes"
+          [(ngModel)]="form.movementType"
+          (ngModelChange)="loadIssues()"
+        />
+      </div>
 
       @if (directionEditable) {
-        <label>
-          Direction
-          <select [(ngModel)]="form.direction">
-            <option value="In">In — found, written on</option>
-            <option value="Out">Out — short, broken, written off</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Direction"
+            placeholder=""
+            [options]="directionOptions"
+            [(ngModel)]="form.direction"
+          />
+        </div>
       }
 
       <label>
@@ -128,54 +130,39 @@
         <bb-date-input  [(ngModel)]="form.movementDate" />
       </label>
 
-      <label>
-        Quantity
-        <bb-number-input  [(ngModel)]="form.quantity" min="0" step="0.001" />
-      </label>
+      <div class="field">
+        <bb-quantity-input label="Quantity" decimals="3" [(ngModel)]="form.quantity" />
+      </div>
 
-      <label>
-        Unit
-        <select [(ngModel)]="form.uomId">
-          @for (unit of enterableUnits; track unit.uomId) {
-            <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
-          }
-        </select>
-        <small>
-          Enter in whichever unit you counted in. It converts into {{ item.inventoryUomCode }},
-          which is what stock is held in.
-        </small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Unit"
+          placeholder=""
+          [hint]="unitHint(item.inventoryUomCode)"
+          [options]="unitOptions"
+          [(ngModel)]="form.uomId"
+        />
+      </div>
 
-      <label>
-        Warehouse
-        <select [(ngModel)]="form.warehouseId">
-          <option [ngValue]="null">Not recorded</option>
-          @for (warehouse of warehouses(); track warehouse.warehouseId) {
-            <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Warehouse"
+          placeholder="Not recorded"
+          [options]="warehouseOptions()"
+          [(ngModel)]="form.warehouseId"
+        />
+      </div>
 
       @if (isReturn) {
-        <label class="wide">
-          Sale being returned
-          <select [(ngModel)]="form.returnsStockMovementId">
-            <option [ngValue]="null">Not linked</option>
-            @for (issue of issues(); track issue.stockMovementId) {
-              <option [ngValue]="issue.stockMovementId">
-                {{ issue.movementDate }} — {{ issue.quantity }} {{ item.inventoryUomCode }}
-                @if (issue.sourceType) {
-                  ({{ issue.sourceType }}-{{ issue.sourceId }})
-                }
-              </option>
-            }
-          </select>
-          <small>
-            Naming the sale puts the stock back on the layers it left from, at the cost it left
-            at. Left unlinked it re-enters at the running average, which changes what the stock
-            is worth.
-          </small>
-        </label>
+        <div class="field wide">
+          <bb-select
+            label="Sale being returned"
+            placeholder="Not linked"
+            [options]="issueOptions()"
+            hint="Naming the sale puts the stock back on the layers it left from, at the cost it left at. Left unlinked it re-enters at the running average, which changes what the stock is worth."
+            [(ngModel)]="form.returnsStockMovementId"
+          />
+        </div>
       }
 
       @if (item.isBatchTracked) {
@@ -219,17 +206,23 @@
       }
 
       @if (item.isSerialTracked) {
-        <label class="wide">
-          Serial numbers
-          <textarea rows="4" [(ngModel)]="serialText"></textarea>
-          <small>One per line — exactly one for every unit in the quantity.</small>
-        </label>
+        <div class="field wide">
+          <bb-textarea
+            label="Serial numbers"
+            hint="One per line — exactly one for every unit in the quantity."
+            rows="4"
+            [(ngModel)]="serialText"
+          />
+        </div>
 
-        <label class="wide">
-          HUIDs
-          <textarea rows="4" [(ngModel)]="hallmarkText"></textarea>
-          <small>Optional, one per line, matching the serials above line for line.</small>
-        </label>
+        <div class="field wide">
+          <bb-textarea
+            label="HUIDs"
+            hint="Optional, one per line, matching the serials above line for line."
+            rows="4"
+            [(ngModel)]="hallmarkText"
+          />
+        </div>
       }
 
       @if (costRequired) {

@@ -12,17 +12,15 @@
   <form class="sor-list__filters" (ngSubmit)="onFilterChange()">
     <div class="field sor-list__filter">
       <label for="sor-status">Status</label>
-      <select
+      <bb-select
         id="sor-status"
-        class="input"
         name="status"
+        ariaLabel="Filter by status"
+        placeholder=""
+        [options]="statuses"
         [(ngModel)]="status"
         (ngModelChange)="onFilterChange()"
-      >
-        @for (option of statuses; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
+      />
     </div>
 
     <div class="field sor-list__filter sor-list__filter--grow">

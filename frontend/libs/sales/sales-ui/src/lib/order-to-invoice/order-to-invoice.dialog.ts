@@ -4,7 +4,13 @@ import { Component, computed, inject, OnInit, output, signal } from '@angular/co
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { InvoiceService, SalesOrderListItem, SalesOrderService } from '@bill-book/sales-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  DateInputComponent,
+  MessageBoxComponent,
+  TextInputComponent,
+  TextareaComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 /** How many confirmed orders to offer. Enough to pick from without a second pager. */
 const CANDIDATE_PAGE = 100;
@@ -26,7 +32,14 @@ const CANDIDATE_PAGE = 100;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-order-to-invoice-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MessageBoxComponent,
+    DateInputComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './order-to-invoice.dialog.html',
   styleUrl: './order-to-invoice.dialog.scss',
 })

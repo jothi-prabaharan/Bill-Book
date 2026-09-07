@@ -11,10 +11,9 @@
 
 @if (inviting()) {
   <form class="invite" (ngSubmit)="invite()">
-    <label>
-      Email
-      <input name="email" type="email" [(ngModel)]="form.email" required />
-    </label>
+    <div class="field">
+      <bb-email-input label="Email" name="email" [required]="true" [(ngModel)]="form.email" />
+    </div>
     <label>
       Name
       <bb-text-input name="displayName" [(ngModel)]="form.displayName" required />
@@ -23,15 +22,16 @@
       Mobile <span class="opt">(optional)</span>
       <bb-text-input name="mobileNumber" [(ngModel)]="form.mobileNumber" />
     </label>
-    <label>
-      Role
-      <select name="roleId" [(ngModel)]="form.roleId" required>
-        <option [ngValue]="0">Select…</option>
-        @for (r of roles(); track r.roleId) {
-          <option [ngValue]="r.roleId">{{ r.displayName }}</option>
-        }
-      </select>
-    </label>
+    <div class="field">
+      <bb-select
+        label="Role"
+        placeholder="Select…"
+        name="roleId"
+        [required]="true"
+        [options]="roleOptions()"
+        [(ngModel)]="form.roleId"
+      />
+    </div>
     <div class="invite-actions">
       <button type="submit" [disabled]="busy() || !form.roleId">Send invitation</button>
       <button type="button" class="link" (click)="inviting.set(false)">Cancel</button>

@@ -28,10 +28,14 @@
   <bb-checkbox text="Use SSL/TLS" name="useSsl" [(ngModel)]="form.useSsl" />
 
   <div class="row">
-    <label class="grow">
-      From address
-      <input name="fromEmail" type="email" [(ngModel)]="form.fromEmail" required />
-    </label>
+    <div class="field grow">
+      <bb-email-input
+        label="From address"
+        name="fromEmail"
+        [required]="true"
+        [(ngModel)]="form.fromEmail"
+      />
+    </div>
     <label class="grow">
       From name
       <bb-text-input name="fromName" [(ngModel)]="form.fromName" required placeholder="Bill-Book" />
@@ -43,25 +47,17 @@
     <bb-text-input name="username" [(ngModel)]="form.username" required />
   </label>
 
-  <label>
-    Password
-    <input
+  <div class="field">
+    <bb-password-input
+      label="Password"
       name="password"
-      type="password"
-      [(ngModel)]="form.password"
+      purpose="new"
       [placeholder]="hasPassword() ? '•••••••• (unchanged)' : 'Required'"
+      [hint]="passwordHint()"
       [required]="!hasPassword()"
-      autocomplete="new-password"
+      [(ngModel)]="form.password"
     />
-    <span class="field-hint">
-      @if (hasPassword()) {
-        Leave blank to keep the stored password. It is encrypted, never shown again.
-      } @else {
-        Stored encrypted — the mail server needs the real value, so this one secret is
-        reversible rather than hashed.
-      }
-    </span>
-  </label>
+  </div>
 
   <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
 

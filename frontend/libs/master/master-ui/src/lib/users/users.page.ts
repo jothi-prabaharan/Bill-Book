@@ -1,8 +1,15 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  EmailInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 interface UserRow {
@@ -31,11 +38,22 @@ interface RoleOption {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-users-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, DatePipe, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    DatePipe,
+    TextInputComponent,
+    SelectComponent,
+    EmailInputComponent,
+  ],
   templateUrl: './users.page.html',
   styleUrl: './users.page.scss',
 })
 export class UsersPage implements OnInit {
+
+  protected readonly roleOptions = computed<BbSelectOption<number>[]>(() =>
+    this.roles().map((role) => ({ value: role.roleId, label: role.displayName })),
+  );
   private readonly http = inject(HttpClient);
 
   protected readonly users = signal<UserRow[]>([]);

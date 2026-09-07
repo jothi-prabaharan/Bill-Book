@@ -231,17 +231,16 @@
 
     <section class="card">
       <h2 class="card__title">Notes</h2>
-      <label class="field field--wide">
-        <span class="field__label">Notes</span>
-        <textarea
-          class="input"
+      <div class="field field--wide">
+        <bb-textarea
+          label="Notes"
           rows="2"
           [disabled]="readonlyDoc()"
           [ngModel]="notes()"
           (ngModelChange)="notes.set($event)"
           name="notes"
-        ></textarea>
-      </label>
+        />
+      </div>
     </section>
 
     @if (!readonlyDoc()) {

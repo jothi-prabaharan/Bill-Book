@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
@@ -6,7 +9,11 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'bb-api-clients-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TextInputComponent,
+  ],
   templateUrl: './api-clients.list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

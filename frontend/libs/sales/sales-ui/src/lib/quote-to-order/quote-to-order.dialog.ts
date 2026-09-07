@@ -5,7 +5,13 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { readApiFailure } from '@bill-book/api-client';
 import { QuoteListItem, QuoteService, SalesOrderService } from '@bill-book/sales-core';
-import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  DateInputComponent,
+  MessageBoxComponent,
+  TextInputComponent,
+  TextareaComponent,
+  UiMessage,
+} from '@bill-book/ui-components';
 
 /**
  * Turning an accepted quote into a sales order.
@@ -24,7 +30,14 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-quote-to-order-dialog',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    MessageBoxComponent,
+    DateInputComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './quote-to-order.dialog.html',
   styleUrl: './quote-to-order.dialog.scss',
 })

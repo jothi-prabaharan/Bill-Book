@@ -2,13 +2,21 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService, Ticket, TicketMessage } from '@bill-book/customer-core';
-import { MessageBoxComponent } from '@bill-book/ui-components';
+import {
+  MessageBoxComponent,
+  TextareaComponent,
+} from '@bill-book/ui-components';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-ticket-thread',
   standalone: true,
-  imports: [CommonModule, FormsModule, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MessageBoxComponent,
+    TextareaComponent,
+  ],
   templateUrl: './ticket-thread.component.html',
   styleUrl: './ticket-thread.component.scss'
 })

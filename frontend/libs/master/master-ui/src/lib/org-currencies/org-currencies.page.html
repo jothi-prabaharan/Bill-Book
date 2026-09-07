@@ -12,12 +12,12 @@
 
 @if (adding()) {
   <div class="add-row">
-    <select [(ngModel)]="selectedCurrencyId">
-      <option [ngValue]="0">Select a currency…</option>
-      @for (c of available(); track c.currencyId) {
-        <option [ngValue]="c.currencyId">{{ c.code }} — {{ c.name }} ({{ c.symbol }})</option>
-      }
-    </select>
+    <bb-select
+      ariaLabel="Currency to add"
+      placeholder="Select a currency…"
+      [options]="availableOptions()"
+      [(ngModel)]="selectedCurrencyId"
+    />
     <button type="button" (click)="save()" [disabled]="!selectedCurrencyId || busy()">Save</button>
     <button type="button" class="link" (click)="adding.set(false)">Cancel</button>
   </div>

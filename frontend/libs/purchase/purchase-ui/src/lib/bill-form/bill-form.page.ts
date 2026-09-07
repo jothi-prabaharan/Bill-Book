@@ -4,13 +4,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
+  DateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
   LookupDialogComponent,
   LookupRow,
   TaxGroupOption,
-  recalculate, DateInputComponent , TextInputComponent } from '@bill-book/ui-components';
+  TextInputComponent,
+  TextareaComponent,
+  recalculate,
+} from '@bill-book/ui-components';
 import {
   BillService,
   BillView,
@@ -44,7 +48,10 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  DateInputComponent, TextInputComponent],
+    DateInputComponent,
+    TextInputComponent,
+    TextareaComponent,
+  ],
   templateUrl: './bill-form.page.html',
   styleUrl: './bill-form.page.scss',
 })

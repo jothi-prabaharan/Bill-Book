@@ -71,29 +71,31 @@
                                formControlName="organizationName" [required]="true" />
               </div>
               <div class="field">
-                <label for="su-fy">Financial year starts</label>
-                <select class="input" id="su-fy" formControlName="financialYearStartMonth">
-                  @for (month of months; track month.value) {
-                    <option [ngValue]="month.value">{{ month.name }}</option>
-                  }
-                </select>
+                <bb-select
+                  id="su-fy"
+                  label="Financial year starts"
+                  placeholder=""
+                  [options]="monthOptions"
+                  formControlName="financialYearStartMonth"
+                />
               </div>
               <div class="field">
-                <label for="su-country">Country</label>
-                <select class="input" id="su-country" formControlName="countryId">
-                  @for (c of countries(); track c.countryId) {
-                    <option [ngValue]="c.countryId">{{ c.countryName }}</option>
-                  }
-                </select>
+                <bb-select
+                  id="su-country"
+                  label="Country"
+                  placeholder=""
+                  [options]="countryOptions()"
+                  formControlName="countryId"
+                />
               </div>
               <div class="field">
-                <label for="su-state">State</label>
-                <select class="input" id="su-state" formControlName="stateId">
-                  <option [ngValue]="null">—</option>
-                  @for (s of states(); track s.stateId) {
-                    <option [ngValue]="s.stateId">{{ s.stateName }}</option>
-                  }
-                </select>
+                <bb-select
+                  id="su-state"
+                  label="State"
+                  placeholder="—"
+                  [options]="stateOptions()"
+                  formControlName="stateId"
+                />
               </div>
               <div class="field field--wide">
                 <bb-text-input id="su-addr1" label="Address line 1" maxlength="200"
@@ -112,13 +114,14 @@
                                autocomplete="postal-code" formControlName="postalCode" />
               </div>
               <div class="field">
-                <label for="su-currency">Base currency</label>
-                <select class="input" id="su-currency" formControlName="baseCurrency">
-                  @for (c of currencies(); track c.code) {
-                    <option [ngValue]="c.code">{{ c.code }} — {{ c.name }}</option>
-                  }
-                </select>
-                <small class="text-muted">Defaults from the country — change it only if you keep books in another currency.</small>
+                <bb-select
+                  id="su-currency"
+                  label="Base currency"
+                  placeholder=""
+                  hint="Defaults from the country — change it only if you keep books in another currency."
+                  [options]="currencyOptions()"
+                  formControlName="baseCurrency"
+                />
               </div>
             </div>
           }

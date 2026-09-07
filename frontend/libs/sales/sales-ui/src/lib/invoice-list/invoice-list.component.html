@@ -12,17 +12,15 @@
   <form class="inv-list__filters" (ngSubmit)="onFilterChange()">
     <div class="field inv-list__filter">
       <label for="inv-status">Status</label>
-      <select
+      <bb-select
         id="inv-status"
-        class="input"
         name="status"
+        ariaLabel="Filter by status"
+        placeholder=""
+        [options]="statuses"
         [(ngModel)]="status"
         (ngModelChange)="onFilterChange()"
-      >
-        @for (option of statuses; track option.value) {
-          <option [value]="option.value">{{ option.label }}</option>
-        }
-      </select>
+      />
     </div>
 
     <div class="field inv-list__filter inv-list__filter--grow">

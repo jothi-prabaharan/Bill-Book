@@ -22,6 +22,7 @@ import {
   DataGridCellTemplateDirective,
   DataGridComponent,
   MessageBoxComponent,
+  SelectComponent,
   UiMessage,
 } from '@bill-book/ui-components';
 
@@ -54,6 +55,7 @@ const PAGE_SIZE = 25;
     MessageBoxComponent,
     AllocationModalComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './invoice-list.component.html',
   styleUrl: './invoice-list.component.scss',

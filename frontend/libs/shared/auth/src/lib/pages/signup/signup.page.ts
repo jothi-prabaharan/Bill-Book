@@ -1,14 +1,16 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { AuthShellComponent } from '../../components/auth-shell/auth-shell.component';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { Country, StateRow, Currency } from '../../auth.models';
 import { AuthService } from '../../auth.service';
 import {
+  BbSelectOption,
   EmailInputComponent,
   PasswordInputComponent,
   PhoneInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 
@@ -31,11 +33,38 @@ import {
     EmailInputComponent,
     PhoneInputComponent,
     PasswordInputComponent,
+    SelectComponent,
   ],
   templateUrl: './signup.page.html',
   styleUrl: './signup.page.scss',
 })
 export class SignupPage implements OnInit {
+
+  /**
+   * A getter, not a field: `months` is declared further down the class, and a
+   * field initialiser reading it would run before it exists.
+   */
+  protected get monthOptions(): BbSelectOption<number>[] {
+    return this.months.map((month) => ({ value: month.value, label: month.name }));
+  }
+
+  protected readonly countryOptions = computed<BbSelectOption<number>[]>(() =>
+    this.countries().map((country) => ({
+      value: country.countryId,
+      label: country.countryName,
+    })),
+  );
+
+  protected readonly stateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.states().map((state) => ({ value: state.stateId, label: state.stateName })),
+  );
+
+  protected readonly currencyOptions = computed<BbSelectOption<string>[]>(() =>
+    this.currencies().map((currency) => ({
+      value: currency.code,
+      label: `${currency.code} — ${currency.name}`,
+    })),
+  );
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
 

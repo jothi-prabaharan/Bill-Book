@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  DateInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -24,11 +30,23 @@ interface ConfigurationRow {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-configurations-page',
   standalone: true,
-  imports: [FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './configurations.page.html',
   styleUrl: './configurations.page.scss',
 })
 export class ConfigurationsPage implements OnInit {
+
+  /** Stored as the strings "true" and "false", which is what the row holds. */
+  protected readonly booleanOptions: BbSelectOption<string>[] = [
+    { value: 'true', label: 'Yes' },
+    { value: 'false', label: 'No' },
+  ];
   private readonly http = inject(HttpClient);
 
   /** Replace with the org id from the auth token once org context lands. */

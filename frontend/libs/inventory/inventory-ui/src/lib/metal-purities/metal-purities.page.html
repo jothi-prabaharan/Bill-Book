@@ -1,13 +1,13 @@
 <header class="page-head">
   <h1>Metal purities</h1>
   <div class="head-actions">
-    <select [(ngModel)]="metalFilter" (ngModelChange)="load()" aria-label="Filter by metal">
-      <option value="">All metals</option>
-      <option value="Gold">Gold</option>
-      <option value="Silver">Silver</option>
-      <option value="Platinum">Platinum</option>
-      <option value="Diamond">Diamond</option>
-    </select>
+    <bb-select
+      ariaLabel="Filter by metal"
+      placeholder="All metals"
+      [options]="metalFilterOptions"
+      [(ngModel)]="metalFilter"
+      (ngModelChange)="load()"
+    />
     <bb-checkbox
       text="Show inactive"
       [(ngModel)]="showInactive"
@@ -68,16 +68,15 @@
   <div class="sheet narrow">
     <h2>{{ editingId() === 0 ? 'New purity' : 'Edit purity' }}</h2>
     <div class="fields">
-      <label>
-        Metal
-        <select [(ngModel)]="form.metalType" [disabled]="editingId() !== 0">
-          <option value="Gold">Gold</option>
-          <option value="Silver">Silver</option>
-          <option value="Platinum">Platinum</option>
-          <option value="Diamond">Diamond</option>
-          <option value="Other">Other</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Metal"
+          placeholder=""
+          [options]="metalOptions"
+          [disabled]="editingId() !== 0"
+          [(ngModel)]="form.metalType"
+        />
+      </div>
       <label>
         Name
         <bb-text-input  [(ngModel)]="form.purityName" maxlength="20" />

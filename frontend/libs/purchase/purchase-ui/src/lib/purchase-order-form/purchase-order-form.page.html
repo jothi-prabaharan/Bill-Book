@@ -118,29 +118,27 @@
       </div>
 
       <div class="grid">
-        <label class="field field--wide">
-          <span class="field__label">Billing address</span>
-          <textarea
-            class="input"
+        <div class="field field--wide">
+          <bb-textarea
+            label="Billing address"
             rows="2"
             [disabled]="readonlyDoc()"
             [ngModel]="billingAddress()"
             (ngModelChange)="billingAddress.set($event)"
             name="billingAddress"
-          ></textarea>
-        </label>
+          />
+        </div>
 
-        <label class="field field--wide">
-          <span class="field__label">Deliver to</span>
-          <textarea
-            class="input"
+        <div class="field field--wide">
+          <bb-textarea
+            label="Deliver to"
             rows="2"
             [disabled]="readonlyDoc()"
             [ngModel]="shippingAddress()"
             (ngModelChange)="shippingAddress.set($event)"
             name="shippingAddress"
-          ></textarea>
-        </label>
+          />
+        </div>
       </div>
     </section>
 
@@ -172,29 +170,27 @@
     <section class="card">
       <h2 class="card__title">Notes</h2>
       <div class="grid">
-        <label class="field field--wide">
-          <span class="field__label">Notes to the vendor</span>
-          <textarea
-            class="input"
+        <div class="field field--wide">
+          <bb-textarea
+            label="Notes to the vendor"
             rows="2"
             [disabled]="readonlyDoc()"
             [ngModel]="notes()"
             (ngModelChange)="notes.set($event)"
             name="notes"
-          ></textarea>
-        </label>
+          />
+        </div>
 
-        <label class="field field--wide">
-          <span class="field__label">Terms &amp; conditions</span>
-          <textarea
-            class="input"
+        <div class="field field--wide">
+          <bb-textarea
+            label="Terms &amp; conditions"
             rows="2"
             [disabled]="readonlyDoc()"
             [ngModel]="termsAndConditions()"
             (ngModelChange)="termsAndConditions.set($event)"
             name="termsAndConditions"
-          ></textarea>
-        </label>
+          />
+        </div>
       </div>
     </section>
 

@@ -24,13 +24,14 @@
     </div>
 
     <div class="reply-box">
-      <textarea 
+      <bb-textarea
+        ariaLabel="Reply"
+        placeholder="Type a reply..."
+        rows="3"
         [disabled]="sending()"
-        [ngModel]="replyBody()" 
+        [ngModel]="replyBody()"
         (ngModelChange)="replyBody.set($event)"
-        class="bb-input" 
-        rows="3" 
-        placeholder="Type a reply..."></textarea>
+      />
       <button class="bb-btn bb-btn-primary" [disabled]="!replyBody().trim() || sending()" (click)="sendMessage()">
         {{ sending() ? 'Sending...' : 'Reply' }}
       </button>
