@@ -37,30 +37,25 @@
       </ng-template>
 
       <ng-template bbCellTemplate="account" let-row let-index="index">
-        <select
-          [(ngModel)]="row.accountId"
+        <bb-select
+          ariaLabel="Account"
+          [options]="accountOptions()"
           [name]="'account' + index"
+          [(ngModel)]="row.accountId"
           (ngModelChange)="onAccount(row)"
-        >
-          <option [ngValue]="null">Choose…</option>
-          @for (a of postable(); track a.accountId) {
-            <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
-          }
-        </select>
+        />
       </ng-template>
 
       <ng-template bbCellTemplate="subAccount" let-row let-index="index">
         @if (subAccountsFor(row.accountId).length > 0) {
-          <select
-            [(ngModel)]="row.subAccountId"
+          <bb-select
+            ariaLabel="Sub-account"
+            placeholder="—"
+            [options]="subAccountOptionsFor(row.accountId)"
             [name]="'sub' + index"
+            [(ngModel)]="row.subAccountId"
             (ngModelChange)="touch()"
-          >
-            <option [ngValue]="null">—</option>
-            @for (s of subAccountsFor(row.accountId); track s.subAccountId) {
-              <option [ngValue]="s.subAccountId">{{ s.subAccountName }}</option>
-            }
-          </select>
+          />
         } @else {
           <span class="none">—</span>
         }
@@ -211,15 +206,16 @@
 }
 
 <div class="filters">
-  <label>
-    Status
-    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
-      <option value="">All</option>
-      <option value="Draft">Draft</option>
-      <option value="Posted">Posted</option>
-      <option value="Reversed">Reversed</option>
-    </select>
-  </label>
+  <div class="field">
+    <bb-select
+      label="Status"
+      placeholder="All"
+      [options]="statusOptions"
+      name="statusFilter"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="load()"
+    />
+  </div>
 </div>
 
 <bb-data-grid [gridCode]="'JOURNALS'" [columns]="columns" [data]="rows()">

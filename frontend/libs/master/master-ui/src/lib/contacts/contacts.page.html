@@ -26,10 +26,14 @@
 <div class="actbar">
   <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Name, code or GSTIN" aria-label="Search contacts" class="w-auto flex-1 input text-sm actbar-search"/>
 
-  <select [(ngModel)]="showInactive" (ngModelChange)="load()" aria-label="Filter by status" class="w-auto input text-sm actbar-select">
-    <option [ngValue]="false">Active only</option>
-    <option [ngValue]="true">Any status</option>
-  </select>
+  <bb-select
+    ariaLabel="Filter by status"
+    class="w-auto text-sm actbar-select"
+    placeholder=""
+    [options]="statusFilterOptions"
+    [(ngModel)]="statusFilter"
+    (ngModelChange)="load()"
+  />
 
   
   
@@ -119,13 +123,14 @@
           <small>Leave empty to take the next code from the numbering series.</small>
         </label>
 
-        <label>
-          Category
-          <select [(ngModel)]="form.contactCategory">
-            <option value="Business">Business</option>
-            <option value="Individual">Individual</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Category"
+            placeholder=""
+            [options]="categoryOptions"
+            [(ngModel)]="form.contactCategory"
+          />
+        </div>
 
         <fieldset class="roles">
           <legend>Roles</legend>
@@ -136,17 +141,15 @@
           <small>Tick every role that applies — one contact, not one per role.</small>
         </fieldset>
 
-        <label>
-          GST registration
-          <select [(ngModel)]="form.gstRegistrationType" (ngModelChange)="onRegistrationChange()">
-            <option value="Regular">Regular</option>
-            <option value="Composition">Composition</option>
-            <option value="Unregistered">Unregistered</option>
-            <option value="Sez">SEZ</option>
-            <option value="Overseas">Overseas</option>
-            <option value="Consumer">Consumer</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="GST registration"
+            placeholder=""
+            [options]="gstRegistrationOptions"
+            [(ngModel)]="form.gstRegistrationType"
+            (ngModelChange)="onRegistrationChange()"
+          />
+        </div>
 
         @if (gstinAllowed) {
           <label>
@@ -156,16 +159,15 @@
           </label>
         }
 
-        <label>
-          Place of supply
-          <select [(ngModel)]="form.placeOfSupplyStateId">
-            <option [ngValue]="null">Not set</option>
-            @for (state of states(); track state.stateId) {
-              <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
-            }
-          </select>
-          <small>Decides CGST + SGST versus IGST.</small>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Place of supply"
+            placeholder="Not set"
+            hint="Decides CGST + SGST versus IGST."
+            [options]="stateOptions()"
+            [(ngModel)]="form.placeOfSupplyStateId"
+          />
+        </div>
 
         <label>
           PAN
@@ -177,21 +179,23 @@
           <bb-text-input  [(ngModel)]="form.currencyCode" maxlength="3" />
         </label>
 
-        <label>
-          Payment terms
-          <select [(ngModel)]="form.paymentTermId">
-            <option [ngValue]="null">Not set</option>
-            @for (term of terms(); track term.paymentTermId) {
-              <option [ngValue]="term.paymentTermId">{{ term.termName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Payment terms"
+            placeholder="Not set"
+            [options]="paymentTermOptions()"
+            [(ngModel)]="form.paymentTermId"
+          />
+        </div>
 
-        <label>
-          Credit limit
-          <bb-number-input  [(ngModel)]="form.creditLimit" min="0" step="0.01" />
-          <small>Empty means no limit.</small>
-        </label>
+        <div class="field">
+          <bb-money-input
+            label="Credit limit"
+            hint="Empty means no limit."
+            name="creditLimit"
+            [(ngModel)]="form.creditLimit"
+          />
+        </div>
 
         <label>
           Max outstanding days
@@ -246,13 +250,15 @@
       @for (address of form.addresses; track $index) {
         <div class="child-card">
           <div class="fields">
-            <label>
-              Type
-              <select [(ngModel)]="address.addressType" [name]="'addrType' + $index">
-                <option value="Billing">Billing</option>
-                <option value="Shipping">Shipping</option>
-              </select>
-            </label>
+            <div class="field">
+              <bb-select
+                label="Type"
+                placeholder=""
+                [options]="addressTypeOptions"
+                [name]="'addrType' + $index"
+                [(ngModel)]="address.addressType"
+              />
+            </div>
 
             <label>
               Label
@@ -274,15 +280,15 @@
               <bb-text-input  [(ngModel)]="address.city" [name]="'city' + $index" maxlength="100" />
             </label>
 
-            <label>
-              State
-              <select [(ngModel)]="address.stateId" [name]="'state' + $index">
-                <option [ngValue]="null">Not set</option>
-                @for (state of states(); track state.stateId) {
-                  <option [ngValue]="state.stateId">{{ state.stateName }}</option>
-                }
-              </select>
-            </label>
+            <div class="field">
+              <bb-select
+                label="State"
+                placeholder="Not set"
+                [options]="stateNameOptions()"
+                [name]="'state' + $index"
+                [(ngModel)]="address.stateId"
+              />
+            </div>
 
             <label>
               Postal code
@@ -322,14 +328,15 @@
       @for (person of form.persons; track $index) {
         <div class="child-card">
           <div class="fields">
-            <label>
-              Role
-              <select [(ngModel)]="person.contactPersonRoleId" [name]="'role' + $index">
-                @for (role of roles(); track role.contactPersonRoleId) {
-                  <option [ngValue]="role.contactPersonRoleId">{{ role.roleName }}</option>
-                }
-              </select>
-            </label>
+            <div class="field">
+              <bb-select
+                label="Role"
+                placeholder=""
+                [options]="personRoleOptions()"
+                [name]="'role' + $index"
+                [(ngModel)]="person.contactPersonRoleId"
+              />
+            </div>
 
             <label>
               First name
@@ -427,14 +434,15 @@
               <bb-text-input  [(ngModel)]="bank.accountNumber" [name]="'acctNo' + $index" maxlength="30" />
             </label>
 
-            <label>
-              Account type
-              <select [(ngModel)]="bank.accountKind" [name]="'acctKind' + $index">
-                <option value="Savings">Savings</option>
-                <option value="Current">Current</option>
-                <option value="Other">Other</option>
-              </select>
-            </label>
+            <div class="field">
+              <bb-select
+                label="Account type"
+                placeholder=""
+                [options]="bankAccountKindOptions"
+                [name]="'acctKind' + $index"
+                [(ngModel)]="bank.accountKind"
+              />
+            </div>
 
             <label>
               IFSC
@@ -488,14 +496,15 @@
       @for (licence of form.licences; track $index) {
         <div class="child-card">
           <div class="fields">
-            <label>
-              Type
-              <select [(ngModel)]="licence.licenceType" [name]="'licType' + $index">
-                @for (type of licenceTypes; track type.value) {
-                  <option [value]="type.value">{{ type.label }}</option>
-                }
-              </select>
-            </label>
+            <div class="field">
+              <bb-select
+                label="Type"
+                placeholder=""
+                [options]="licenceTypes"
+                [name]="'licType' + $index"
+                [(ngModel)]="licence.licenceType"
+              />
+            </div>
 
             <label>
               Number
@@ -568,11 +577,13 @@
         <div class="fields">
           <label>
             Document type
-            <select [(ngModel)]="uploadDocumentType" name="uploadType">
-              @for (type of documentTypes; track type.value) {
-                <option [value]="type.value">{{ type.label }}</option>
-              }
-            </select>
+            <bb-select
+              ariaLabel="Document type"
+              placeholder=""
+              [options]="documentTypes"
+              name="uploadType"
+              [(ngModel)]="uploadDocumentType"
+            />
           </label>
 
           <label>

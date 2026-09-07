@@ -8,15 +8,16 @@
 }
 
 <form class="filters" (ngSubmit)="load()">
-  <label class="wide">
-    Account
-    <select [(ngModel)]="accountId" name="accountId" (ngModelChange)="choose()">
-      <option [ngValue]="null">Choose an account…</option>
-      @for (a of accounts(); track a.accountId) {
-        <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
-      }
-    </select>
-  </label>
+  <div class="field wide">
+    <bb-select
+      label="Account"
+      placeholder="Choose an account…"
+      [options]="accountOptions()"
+      name="accountId"
+      [(ngModel)]="accountId"
+      (ngModelChange)="choose()"
+    />
+  </div>
   <label>
     From
     <bb-date-input  [(ngModel)]="from" name="from" />

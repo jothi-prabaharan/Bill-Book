@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
@@ -51,11 +53,23 @@ interface AccountType {
     FormsModule,
     TextInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './chart-of-accounts.page.html',
   styleUrl: './chart-of-accounts.page.scss',
 })
 export class ChartOfAccountsPage implements OnInit {
+
+  protected readonly accountTypeOptions = computed<BbSelectOption<number>[]>(() =>
+    this.types().map((type) => ({ value: type.accountTypeId, label: type.displayName })),
+  );
+
+  protected readonly parentAccountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.parentOptions().map((account) => ({
+      value: account.accountId,
+      label: `${account.accountCode} · ${account.accountName}`,
+    })),
+  );
   private readonly http = inject(HttpClient);
 
   protected readonly accounts = signal<AccountRow[]>([]);

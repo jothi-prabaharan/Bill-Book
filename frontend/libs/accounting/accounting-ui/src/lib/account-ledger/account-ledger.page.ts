@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , DateInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  SelectComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -68,11 +74,25 @@ interface AccountType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-account-ledger-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    DateInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './account-ledger.page.html',
   styleUrl: './account-ledger.page.scss',
 })
 export class AccountLedgerPage implements OnInit {
+
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.accounts().map((account) => ({
+      value: account.accountId,
+      label: `${account.accountCode} — ${account.accountName}`,
+    })),
+  );
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

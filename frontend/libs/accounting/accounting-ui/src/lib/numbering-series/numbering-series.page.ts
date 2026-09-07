@@ -4,10 +4,12 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 
@@ -70,11 +72,36 @@ type FormModel = Omit<
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './numbering-series.page.html',
   styleUrl: './numbering-series.page.scss',
 })
 export class NumberingSeriesPage implements OnInit {
+
+  protected readonly seriesForFilterOptions: BbSelectOption<string>[] = [
+    { value: 'Master', label: 'Masters' },
+    { value: 'Document', label: 'Documents' },
+  ];
+
+  protected readonly seriesForOptions: BbSelectOption<string>[] = [
+    { value: 'Master', label: 'Master records' },
+    { value: 'Document', label: 'Documents' },
+  ];
+
+  protected readonly yearFormatOptions: BbSelectOption<string>[] = [
+    { value: 'Compact', label: '2526' },
+    { value: 'FullYearRange', label: '2025-26' },
+    { value: 'ShortYearRange', label: '25-26' },
+    { value: 'StartYear', label: '2025' },
+  ];
+
+  protected readonly resetFrequencyOptions: BbSelectOption<string>[] = [
+    { value: 'Never', label: 'Never' },
+    { value: 'Yearly', label: 'Every financial year' },
+    { value: 'Monthly', label: 'Every month' },
+    { value: 'Daily', label: 'Every day' },
+  ];
   /** Held as a property so the template binding stays a plain expression. */
   protected readonly documentSeriesNote = 'Document numbers must run consecutively.';
 

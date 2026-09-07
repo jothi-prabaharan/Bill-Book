@@ -48,57 +48,46 @@
   </ng-template>
 
   <ng-template bbCellTemplate="what" let-row>
-    <select
-      [(ngModel)]="row.lineType"
+    <bb-select
+      ariaLabel="What this line is"
+      placeholder=""
+      [options]="lineTypeOptions"
       [name]="'type' + lines().indexOf(row)"
+      [(ngModel)]="row.lineType"
       (ngModelChange)="onLineType(row)"
       [disabled]="finalized()"
-    >
-      <option value="GlAccount">Account balance</option>
-      <option value="ContactReceivable">Owed to us</option>
-      <option value="ContactPayable">We owe</option>
-      <option value="Item">Stock on hand</option>
-    </select>
+    />
   </ng-template>
 
   <ng-template bbCellTemplate="which" let-row>
     @if (row.lineType === 'GlAccount') {
-      <select
-        [(ngModel)]="row.accountId"
+      <bb-select
+        ariaLabel="Account"
+        [options]="accountOptions()"
         [name]="'account' + lines().indexOf(row)"
+        [(ngModel)]="row.accountId"
         (ngModelChange)="touch()"
         [disabled]="finalized()"
-      >
-        <option [ngValue]="null">Choose…</option>
-        @for (a of postable(); track a.accountId) {
-          <option [ngValue]="a.accountId">{{ a.accountCode }} — {{ a.accountName }}</option>
-        }
-      </select>
+      />
     } @else if (row.lineType === 'Item') {
-      <select
-        [(ngModel)]="row.itemId"
+      <bb-select
+        ariaLabel="Item"
+        [options]="itemOptions()"
         [name]="'item' + lines().indexOf(row)"
+        [(ngModel)]="row.itemId"
         (ngModelChange)="touch()"
         [disabled]="finalized()"
-      >
-        <option [ngValue]="null">Choose…</option>
-        @for (i of items(); track i.itemId) {
-          <option [ngValue]="i.itemId">{{ i.itemCode }} — {{ i.itemName }}</option>
-        }
-      </select>
+      />
       <span class="sub">Posts to Inventory at this cost</span>
     } @else {
-      <select
-        [(ngModel)]="row.contactId"
+      <bb-select
+        ariaLabel="Contact"
+        [options]="contactOptions()"
         [name]="'contact' + lines().indexOf(row)"
+        [(ngModel)]="row.contactId"
         (ngModelChange)="touch()"
         [disabled]="finalized()"
-      >
-        <option [ngValue]="null">Choose…</option>
-        @for (c of contacts(); track c.contactId) {
-          <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
-        }
-      </select>
+      />
       <span class="sub">
         {{ row.lineType === 'ContactReceivable' ? 'Accounts Receivable' : 'Accounts Payable' }}
         — this contact's own balance

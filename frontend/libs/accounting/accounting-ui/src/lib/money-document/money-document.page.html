@@ -16,24 +16,23 @@
         Date
         <bb-date-input  [(ngModel)]="transactionDate" name="transactionDate" />
       </label>
-      <label class="wide">
-        {{ direction() === 'spend' ? 'Paid from' : 'Received into' }}
-        <select [(ngModel)]="bankAccountId" name="bankAccountId">
-          <option [ngValue]="null">Choose…</option>
-          @for (a of usableAccounts(); track a.bankAccountId) {
-            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
-          }
-        </select>
-      </label>
-      <label class="wide">
-        {{ contactLabel() }}
-        <select [(ngModel)]="contactId" name="contactId" (ngModelChange)="onContact()">
-          <option [ngValue]="null">Choose…</option>
-          @for (c of contacts(); track c.contactId) {
-            <option [ngValue]="c.contactId">{{ c.displayName }} ({{ c.contactCode }})</option>
-          }
-        </select>
-      </label>
+      <div class="field wide">
+        <bb-select
+          [label]="direction() === 'spend' ? 'Paid from' : 'Received into'"
+          [options]="bankAccountOptions()"
+          name="bankAccountId"
+          [(ngModel)]="bankAccountId"
+        />
+      </div>
+      <div class="field wide">
+        <bb-select
+          [label]="contactLabel()"
+          [options]="contactOptions()"
+          name="contactId"
+          [(ngModel)]="contactId"
+          (ngModelChange)="onContact()"
+        />
+      </div>
       <label>
         Amount
         <bb-number-input
@@ -45,14 +44,15 @@
           name="amount"
         />
       </label>
-      <label>
-        Method
-        <select [(ngModel)]="paymentMethod" name="paymentMethod">
-          @for (m of paymentMethods; track m.value) {
-            <option [ngValue]="m.value">{{ m.label }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Method"
+          placeholder=""
+          [options]="paymentMethods"
+          name="paymentMethod"
+          [(ngModel)]="paymentMethod"
+        />
+      </div>
       <label>
         Reference
         <bb-text-input  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
@@ -85,16 +85,13 @@
       </ng-template>
 
       <ng-template bbCellTemplate="source" let-row let-index="index">
-        <select
-          [(ngModel)]="row.ledgerSourceId"
+        <bb-select
+          ariaLabel="Source"
+          [options]="sourceOptions()"
           [name]="'source' + index"
+          [(ngModel)]="row.ledgerSourceId"
           (ngModelChange)="onSource(row)"
-        >
-          <option [ngValue]="null">Choose…</option>
-          @for (s of sources(); track s.ledgerSourceId) {
-            <option [ngValue]="s.ledgerSourceId">{{ s.label }}</option>
-          }
-        </select>
+        />
         @if (sourceFor(row.ledgerSourceId); as s) {
           <span class="sub">{{ s.hint }}</span>
         }
@@ -288,15 +285,16 @@
 }
 
 <div class="filters">
-  <label>
-    Status
-    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
-      <option value="">All</option>
-      <option value="Draft">Draft</option>
-      <option value="Posted">Posted</option>
-      <option value="Void">Void</option>
-    </select>
-  </label>
+  <div class="field">
+    <bb-select
+      label="Status"
+      placeholder="All"
+      [options]="statusOptions"
+      name="statusFilter"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="load()"
+    />
+  </div>
 </div>
 
 <bb-data-grid [gridCode]="'MONEY_DOCUMENT_LIST'" [columns]="columns()" [data]="rows()">

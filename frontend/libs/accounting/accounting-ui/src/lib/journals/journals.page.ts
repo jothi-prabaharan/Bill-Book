@@ -5,10 +5,12 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
+  BbSelectOption,
   ColumnDef,
   DataGridComponent,
   DateInputComponent,
   MoneyInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 
@@ -97,11 +99,38 @@ interface LineForm {
     DateInputComponent,
     TextInputComponent,
     MoneyInputComponent,
+    SelectComponent,
   ],
   templateUrl: './journals.page.html',
   styleUrl: './journals.page.scss',
 })
 export class JournalsPage implements OnInit {
+
+  /*
+   * The account and sub-account pickers, in the shape `bb-select` takes.
+   * Mapped on the class so a grid of journal lines builds each list once
+   * rather than per row per render.
+   */
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.postable().map((account) => ({
+      value: account.accountId,
+      label: `${account.accountCode} — ${account.accountName}`,
+    })),
+  );
+
+  /** Keyed by account, because which sub-accounts apply depends on it. */
+  protected subAccountOptionsFor(accountId: number | null): BbSelectOption<number>[] {
+    return this.subAccountsFor(accountId).map((sub) => ({
+      value: sub.subAccountId,
+      label: sub.subAccountName,
+    }));
+  }
+
+  protected readonly statusOptions: BbSelectOption<string>[] = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Posted', label: 'Posted' },
+    { value: 'Reversed', label: 'Reversed' },
+  ];
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);

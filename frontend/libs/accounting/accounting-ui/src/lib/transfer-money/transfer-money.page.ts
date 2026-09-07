@@ -2,7 +2,15 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { PAYMENT_METHODS } from '../money-document/money-sources';
 
 interface BankAccountOption {
@@ -47,7 +55,14 @@ interface TransferListItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-transfer-money-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './transfer-money.page.html',
   styleUrl: './transfer-money.page.scss',
 })
@@ -64,6 +79,19 @@ export class TransferMoneyPage implements OnInit {
   private readonly http = inject(HttpClient);
 
   protected readonly paymentMethods = PAYMENT_METHODS;
+
+  protected readonly bankAccountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.usableAccounts().map((account) => ({
+      value: account.bankAccountId,
+      label: `${account.accountName} (${account.currencyCode})`,
+    })),
+  );
+
+  protected readonly statusOptions: BbSelectOption<string>[] = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Posted', label: 'Posted' },
+    { value: 'Void', label: 'Void' },
+  ];
 
   protected readonly rows = signal<TransferListItem[]>([]);
   protected readonly bankAccounts = signal<BankAccountOption[]>([]);

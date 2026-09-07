@@ -1,11 +1,13 @@
 <header class="page-head">
   <h1>Numbering series</h1>
   <div class="head-actions">
-    <select [(ngModel)]="filter" (ngModelChange)="load()" aria-label="Filter by what the series numbers">
-      <option value="">All series</option>
-      <option value="Master">Masters</option>
-      <option value="Document">Documents</option>
-    </select>
+    <bb-select
+      ariaLabel="Filter by what the series numbers"
+      placeholder="All series"
+      [options]="seriesForFilterOptions"
+      [(ngModel)]="filter"
+      (ngModelChange)="load()"
+    />
     <bb-checkbox
       text="Show inactive"
       [(ngModel)]="showInactive"
@@ -112,13 +114,15 @@
         <small>What the rest of the system looks this series up by — CUSTOMER, ITEM, INV.</small>
       </label>
 
-      <label>
-        Numbers
-        <select [(ngModel)]="form.seriesFor" (ngModelChange)="onSeriesForChange()">
-          <option value="Master">Master records</option>
-          <option value="Document">Documents</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Numbers"
+          placeholder=""
+          [options]="seriesForOptions"
+          [(ngModel)]="form.seriesFor"
+          (ngModelChange)="onSeriesForChange()"
+        />
+      </div>
 
       <label>
         Prefix
@@ -141,15 +145,14 @@
       />
 
       @if (form.includeFinancialYear) {
-        <label>
-          Year format
-          <select [(ngModel)]="form.financialYearFormat">
-            <option value="Compact">2526</option>
-            <option value="FullYearRange">2025-26</option>
-            <option value="ShortYearRange">25-26</option>
-            <option value="StartYear">2025</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Year format"
+            placeholder=""
+            [options]="yearFormatOptions"
+            [(ngModel)]="form.financialYearFormat"
+          />
+        </div>
       }
 
       <bb-checkbox
@@ -178,15 +181,14 @@
         <bb-number-input  [(ngModel)]="form.startNumber" min="0" />
       </label>
 
-      <label>
-        Reset
-        <select [(ngModel)]="form.resetFrequency">
-          <option value="Never">Never</option>
-          <option value="Yearly">Every financial year</option>
-          <option value="Monthly">Every month</option>
-          <option value="Daily">Every day</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Reset"
+          placeholder=""
+          [options]="resetFrequencyOptions"
+          [(ngModel)]="form.resetFrequency"
+        />
+      </div>
 
       <bb-checkbox
         text="Allow typing a code by hand"

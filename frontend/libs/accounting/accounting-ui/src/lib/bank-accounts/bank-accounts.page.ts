@@ -1,9 +1,11 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -67,11 +69,26 @@ interface BankAccount {
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './bank-accounts.page.html',
   styleUrl: './bank-accounts.page.scss',
 })
 export class BankAccountsPage implements OnInit {
+
+  protected readonly accountTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Savings', label: 'Savings' },
+    { value: 'Current', label: 'Current' },
+    { value: 'OverDraft', label: 'Overdraft' },
+    { value: 'CashCredit', label: 'Cash credit' },
+    { value: 'CreditCard', label: 'Credit card' },
+    { value: 'Wallet', label: 'Wallet' },
+    { value: 'Cash', label: 'Cash in hand' },
+  ];
+
+  protected readonly bankOptions = computed<BbSelectOption<number>[]>(() =>
+    this.banks().map((bank) => ({ value: bank.bankId, label: bank.bankName })),
+  );
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<BankAccount[]>([]);

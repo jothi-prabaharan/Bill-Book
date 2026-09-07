@@ -78,16 +78,16 @@
         <bb-text-input  name="city" [(ngModel)]="org.city" maxlength="100" />
       </label>
 
-      <label>
-        State
-        <select name="stateId" [(ngModel)]="org.stateId">
-          <option [ngValue]="null">Not set</option>
-          @for (state of states(); track state.stateId) {
-            <option [ngValue]="state.stateId">{{ state.stateCode }} — {{ state.stateName }}</option>
-          }
-        </select>
-        <small>Decides the place of supply, so it decides CGST/SGST against IGST.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="State"
+          placeholder="Not set"
+          hint="Decides the place of supply, so it decides CGST/SGST against IGST."
+          name="stateId"
+          [options]="stateOptions()"
+          [(ngModel)]="org.stateId"
+        />
+      </div>
 
       <label>
         Postal code
@@ -171,28 +171,28 @@
 
   @if (tab() === 'financial') {
     <div class="fields">
-      <label>
-        Base currency
-        <select name="baseCurrency" [ngModel]="org.baseCurrency" disabled>
-          @for (curr of currencies(); track curr.code) {
-            <option [ngValue]="curr.code">{{ curr.code }} - {{ curr.name }}</option>
-          }
-        </select>
-        <small>
-          Fixed once the branch exists. Every posting converts to it, so changing
-          it would restate the books.
-        </small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Base currency"
+          placeholder=""
+          hint="Fixed once the branch exists. Every posting converts to it, so changing it would restate the books."
+          name="baseCurrency"
+          [options]="currencyOptions()"
+          [disabled]="true"
+          [ngModel]="org.baseCurrency"
+        />
+      </div>
 
-      <label>
-        Financial year starts
-        <select name="financialYearStartMonth" [(ngModel)]="org.financialYearStartMonth">
-          @for (month of months; track month; let i = $index) {
-            <option [ngValue]="i + 1">{{ month }}</option>
-          }
-        </select>
-        <small>April in India. Decides the year segment in document numbers and when series reset.</small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Financial year starts"
+          placeholder=""
+          hint="April in India. Decides the year segment in document numbers and when series reset."
+          name="financialYearStartMonth"
+          [options]="monthOptions"
+          [(ngModel)]="org.financialYearStartMonth"
+        />
+      </div>
     </div>
 
     <h3>Documents</h3>
@@ -203,43 +203,38 @@
     </p>
 
     <div class="grid">
-      <label>
-        Lines without an item
-        <select name="allowFreeTextLines" [(ngModel)]="org.allowFreeTextLines">
-          <option [ngValue]="true">Allowed</option>
-          <option [ngValue]="false">Every line must name an item</option>
-        </select>
-        <small>
-          A line with no item carries a description, quantity and price — useful for a
-          service or a one-off charge. It moves no stock and never appears in a
-          sales-by-item report.
-        </small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Lines without an item"
+          placeholder=""
+          name="allowFreeTextLines"
+          [options]="freeTextLineOptions"
+          hint="A line with no item carries a description, quantity and price — useful for a service or a one-off charge. It moves no stock and never appears in a sales-by-item report."
+          [(ngModel)]="freeTextLines"
+        />
+      </div>
 
-      <label>
-        Discount entered at
-        <select name="discountLevel" [(ngModel)]="org.discountLevel">
-          <option value="Line">Line</option>
-          <option value="Header">Header</option>
-          <option value="Both">Both</option>
-        </select>
-        <small>
-          A header discount is spread across the lines by taxable value before tax,
-          because GST is charged per line.
-        </small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Discount entered at"
+          placeholder=""
+          name="discountLevel"
+          [options]="discountLevelOptions"
+          hint="A header discount is spread across the lines by taxable value before tax, because GST is charged per line."
+          [(ngModel)]="org.discountLevel"
+        />
+      </div>
 
-      <label>
-        Discount reduces tax
-        <select name="discountBeforeTax" [(ngModel)]="org.discountBeforeTax">
-          <option [ngValue]="true">Yes — taken off before GST</option>
-          <option [ngValue]="false">No — GST on the full value</option>
-        </select>
-        <small>
-          Yes is the trade-discount case. No is a settlement discount: it does not
-          reduce GST liability and must still be shown on the invoice.
-        </small>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Discount reduces tax"
+          placeholder=""
+          hint="Yes is the trade-discount case. No is a settlement discount: it does not reduce GST liability and must still be shown on the invoice."
+          name="discountBeforeTax"
+          [options]="discountBeforeTaxOptions"
+          [(ngModel)]="discountBeforeTax"
+        />
+      </div>
     </div>
 
     <p class="hint">

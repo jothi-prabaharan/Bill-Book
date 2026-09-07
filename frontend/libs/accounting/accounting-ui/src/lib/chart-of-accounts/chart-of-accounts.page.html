@@ -25,14 +25,17 @@
     }
 
     <div class="row">
-      <label>
-        Type
-        <select name="accountTypeId" [(ngModel)]="form.accountTypeId" [disabled]="locked()" required>
-          @for (t of types(); track t.accountTypeId) {
-            <option [ngValue]="t.accountTypeId">{{ t.displayName }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Type"
+          placeholder=""
+          name="accountTypeId"
+          [options]="accountTypeOptions()"
+          [disabled]="locked()"
+          [required]="true"
+          [(ngModel)]="form.accountTypeId"
+        />
+      </div>
       <label>
         Code
         <bb-text-input name="accountCode" [(ngModel)]="form.accountCode" [disabled]="locked()" required />
@@ -44,15 +47,16 @@
       <bb-text-input name="accountName" [(ngModel)]="form.accountName" required />
     </label>
 
-    <label>
-      Parent account <span class="opt">(same type only)</span>
-      <select name="parentAccountId" [(ngModel)]="form.parentAccountId">
-        <option [ngValue]="null">— none —</option>
-        @for (a of parentOptions(); track a.accountId) {
-          <option [ngValue]="a.accountId">{{ a.accountCode }} · {{ a.accountName }}</option>
-        }
-      </select>
-    </label>
+    <div class="field">
+      <bb-select
+        label="Parent account"
+        hint="Only an account of the same type may be a parent."
+        placeholder="— none —"
+        name="parentAccountId"
+        [options]="parentAccountOptions()"
+        [(ngModel)]="form.parentAccountId"
+      />
+    </div>
 
     <fieldset>
       <legend>Usage</legend>

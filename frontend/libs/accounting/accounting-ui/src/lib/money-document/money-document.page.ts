@@ -9,10 +9,12 @@ import {
   AllocationRow,
   AllocationSubmission,
   AllocationTarget,
+  BbSelectOption,
   ColumnDef,
   DataGridComponent,
   DateInputComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -132,7 +134,17 @@ interface LineForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-money-document-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, AllocationFormComponent, AllocationModalComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    AllocationFormComponent,
+    AllocationModalComponent,
+    SelectComponent,
+  ],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',
 })
@@ -159,6 +171,40 @@ export class MoneyDocumentPage implements OnInit {
   ];
 
   protected readonly paymentMethods = PAYMENT_METHODS;
+
+  /*
+   * The option lists, in the shape `bb-select` takes. Mapped on the class so
+   * each is built once per change rather than rebuilt in markup every render.
+   * `PAYMENT_METHODS` is already `{ value, label }` and is passed straight in.
+   */
+
+  protected readonly bankAccountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.usableAccounts().map((account) => ({
+      value: account.bankAccountId,
+      label: `${account.accountName} (${account.currencyCode})`,
+    })),
+  );
+
+  protected readonly contactOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contacts().map((contact) => ({
+      value: contact.contactId,
+      label: `${contact.displayName} (${contact.contactCode})`,
+    })),
+  );
+
+  protected readonly sourceOptions = computed<BbSelectOption<number>[]>(() =>
+    this.sources().map((source) => ({
+      value: source.ledgerSourceId,
+      label: source.label,
+    })),
+  );
+
+  /** Draft, posted or void. Empty is "All", which the placeholder carries. */
+  protected readonly statusOptions: BbSelectOption<string>[] = [
+    { value: 'Draft', label: 'Draft' },
+    { value: 'Posted', label: 'Posted' },
+    { value: 'Void', label: 'Void' },
+  ];
 
   protected readonly direction = signal<Direction>('spend');
   protected readonly rows = signal<MoneyDocumentListItem[]>([]);

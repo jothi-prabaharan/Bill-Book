@@ -21,15 +21,14 @@
         Date
         <bb-date-input  [(ngModel)]="transactionDate" name="transactionDate" />
       </label>
-      <label class="wide">
-        From
-        <select [(ngModel)]="fromBankAccountId" name="fromBankAccountId">
-          <option [ngValue]="null">Choose…</option>
-          @for (a of usableAccounts(); track a.bankAccountId) {
-            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
-          }
-        </select>
-      </label>
+      <div class="field wide">
+        <bb-select
+          label="From"
+          [options]="bankAccountOptions()"
+          name="fromBankAccountId"
+          [(ngModel)]="fromBankAccountId"
+        />
+      </div>
       <div class="swap-cell">
         <button
           type="button"
@@ -41,15 +40,14 @@
           ⇅
         </button>
       </div>
-      <label class="wide">
-        To
-        <select [(ngModel)]="toBankAccountId" name="toBankAccountId">
-          <option [ngValue]="null">Choose…</option>
-          @for (a of usableAccounts(); track a.bankAccountId) {
-            <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
-          }
-        </select>
-      </label>
+      <div class="field wide">
+        <bb-select
+          label="To"
+          [options]="bankAccountOptions()"
+          name="toBankAccountId"
+          [(ngModel)]="toBankAccountId"
+        />
+      </div>
       <label>
         Amount
         <bb-number-input
@@ -61,14 +59,15 @@
           name="amount"
         />
       </label>
-      <label>
-        Method
-        <select [(ngModel)]="paymentMethod" name="paymentMethod">
-          @for (m of paymentMethods; track m.value) {
-            <option [ngValue]="m.value">{{ m.label }}</option>
-          }
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Method"
+          placeholder=""
+          [options]="paymentMethods"
+          name="paymentMethod"
+          [(ngModel)]="paymentMethod"
+        />
+      </div>
       <label>
         Reference
         <bb-text-input  [(ngModel)]="referenceNo" name="referenceNo" maxlength="50" />
@@ -132,15 +131,16 @@
 }
 
 <div class="filters">
-  <label>
-    Status
-    <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
-      <option value="">All</option>
-      <option value="Draft">Draft</option>
-      <option value="Posted">Posted</option>
-      <option value="Void">Void</option>
-    </select>
-  </label>
+  <div class="field">
+    <bb-select
+      label="Status"
+      placeholder="All"
+      [options]="statusOptions"
+      name="statusFilter"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="load()"
+    />
+  </div>
 </div>
 
 <bb-data-grid [gridCode]="'TRANSFER_MONEY'" [columns]="columns" [data]="rows()">

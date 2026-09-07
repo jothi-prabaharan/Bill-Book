@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
@@ -62,11 +64,19 @@ type FormModel = Pick<
     TextInputComponent,
     NumberInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './payment-terms.page.html',
   styleUrl: './payment-terms.page.scss',
 })
 export class PaymentTermsPage implements OnInit {
+
+  protected readonly termTypeOptions: BbSelectOption<string>[] = [
+    { value: 'DueOnReceipt', label: 'Due on receipt' },
+    { value: 'Net', label: 'A number of days after the invoice' },
+    { value: 'EndOfMonth', label: 'End of the invoice month' },
+    { value: 'DayOfNextMonth', label: 'A day of the following month' },
+  ];
   private readonly http = inject(HttpClient);
 
   protected readonly rows = signal<PaymentTerm[]>([]);

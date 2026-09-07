@@ -1,16 +1,19 @@
-import { ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, computed } from '@angular/core';
 import {
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   DateInputComponent,
   EmailInputComponent,
+  MoneyInputComponent,
   NumberInputComponent,
   PercentageInputComponent,
   PhoneInputComponent,
   SearchInputComponent,
-  TextareaComponent,
+  SelectComponent,
   TextInputComponent,
+  TextareaComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -198,6 +201,8 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
     PercentageInputComponent,
     CheckboxComponent,
     TextareaComponent,
+    MoneyInputComponent,
+    SelectComponent,
   ],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
@@ -222,6 +227,77 @@ export class ContactsPage implements OnInit {
   protected readonly uploading = signal(false);
 
   protected readonly licenceTypes = LICENCE_TYPES;
+
+  /*
+   * The option lists, in the shape `bb-select` takes. `LICENCE_TYPES` and
+   * `DOCUMENT_TYPES` are already `{ value, label }` and are passed straight in.
+   */
+
+  protected readonly statusFilterOptions: BbSelectOption<string>[] = [
+    { value: 'active', label: 'Active only' },
+    { value: 'any', label: 'Any status' },
+  ];
+
+  protected readonly categoryOptions: BbSelectOption<string>[] = [
+    { value: 'Business', label: 'Business' },
+    { value: 'Individual', label: 'Individual' },
+  ];
+
+  protected readonly gstRegistrationOptions: BbSelectOption<string>[] = [
+    { value: 'Regular', label: 'Regular' },
+    { value: 'Composition', label: 'Composition' },
+    { value: 'Unregistered', label: 'Unregistered' },
+    { value: 'Sez', label: 'SEZ' },
+    { value: 'Overseas', label: 'Overseas' },
+    { value: 'Consumer', label: 'Consumer' },
+  ];
+
+  protected readonly addressTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Billing', label: 'Billing' },
+    { value: 'Shipping', label: 'Shipping' },
+  ];
+
+  protected readonly bankAccountKindOptions: BbSelectOption<string>[] = [
+    { value: 'Savings', label: 'Savings' },
+    { value: 'Current', label: 'Current' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  /** Place of supply names the code as well: it is what decides CGST/SGST vs IGST. */
+  protected readonly stateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.states().map((state) => ({
+      value: state.stateId,
+      label: `${state.stateCode} — ${state.stateName}`,
+    })),
+  );
+
+  /** An address only needs the name; the code is not what somebody posts to. */
+  protected readonly stateNameOptions = computed<BbSelectOption<number>[]>(() =>
+    this.states().map((state) => ({ value: state.stateId, label: state.stateName })),
+  );
+
+  protected readonly paymentTermOptions = computed<BbSelectOption<number>[]>(() =>
+    this.terms().map((term) => ({ value: term.paymentTermId, label: term.termName })),
+  );
+
+  protected readonly personRoleOptions = computed<BbSelectOption<number>[]>(() =>
+    this.roles().map((role) => ({
+      value: role.contactPersonRoleId,
+      label: role.roleName,
+    })),
+  );
+
+  /**
+   * The status filter as a value a select can carry. `showInactive` is a
+   * boolean the page already reads; mapping here leaves it untouched.
+   */
+  protected get statusFilter(): string {
+    return this.showInactive ? 'any' : 'active';
+  }
+
+  protected set statusFilter(value: string) {
+    this.showInactive = value === 'any';
+  }
   protected readonly documentTypes = DOCUMENT_TYPES;
 
   search = '';

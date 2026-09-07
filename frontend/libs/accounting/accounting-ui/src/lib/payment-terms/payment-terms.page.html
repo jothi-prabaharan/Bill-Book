@@ -98,15 +98,16 @@
         <bb-text-input  [(ngModel)]="form.termName" maxlength="50" />
       </label>
 
-      <label>
-        Due date rule
-        <select [(ngModel)]="form.termType" (ngModelChange)="onTermTypeChange()" [disabled]="editingIsSystem()">
-          <option value="DueOnReceipt">Due on receipt</option>
-          <option value="Net">A number of days after the invoice</option>
-          <option value="EndOfMonth">End of the invoice month</option>
-          <option value="DayOfNextMonth">A day of the following month</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Due date rule"
+          placeholder=""
+          [options]="termTypeOptions"
+          [disabled]="editingIsSystem()"
+          [(ngModel)]="form.termType"
+          (ngModelChange)="onTermTypeChange()"
+        />
+      </div>
 
       @if (form.termType === 'Net' || form.termType === 'EndOfMonth') {
         <label>

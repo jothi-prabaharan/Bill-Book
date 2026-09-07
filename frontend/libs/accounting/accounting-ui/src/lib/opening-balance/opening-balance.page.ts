@@ -1,5 +1,13 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { ColumnDef, DataGridComponent , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -127,11 +135,48 @@ interface LineForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-opening-balance-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './opening-balance.page.html',
   styleUrl: './opening-balance.page.scss',
 })
 export class OpeningBalancePage implements OnInit {
+
+  /** What a line brings across: an account balance, a contact, or stock. */
+  protected readonly lineTypeOptions: BbSelectOption<string>[] = [
+    { value: 'GlAccount', label: 'Account balance' },
+    { value: 'ContactReceivable', label: 'Owed to us' },
+    { value: 'ContactPayable', label: 'We owe' },
+    { value: 'Item', label: 'Stock on hand' },
+  ];
+
+  protected readonly accountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.postable().map((account) => ({
+      value: account.accountId,
+      label: `${account.accountCode} — ${account.accountName}`,
+    })),
+  );
+
+  protected readonly itemOptions = computed<BbSelectOption<number>[]>(() =>
+    this.items().map((item) => ({
+      value: item.itemId,
+      label: `${item.itemCode} — ${item.itemName}`,
+    })),
+  );
+
+  protected readonly contactOptions = computed<BbSelectOption<number>[]>(() =>
+    this.contacts().map((contact) => ({
+      value: contact.contactId,
+      label: `${contact.displayName} (${contact.contactCode})`,
+    })),
+  );
   linesColumns: ColumnDef[] = [
     { field: 'lineNo', header: '#' },
     { field: 'what', header: 'What' },

@@ -106,29 +106,25 @@
         <small>Shown wherever the account is picked, and on the ledger account.</small>
       </label>
 
-      <label>
-        Type
-        <select [(ngModel)]="form.accountType" (ngModelChange)="onTypeChange()">
-          <option value="Savings">Savings</option>
-          <option value="Current">Current</option>
-          <option value="OverDraft">Overdraft</option>
-          <option value="CashCredit">Cash credit</option>
-          <option value="CreditCard">Credit card</option>
-          <option value="Wallet">Wallet</option>
-          <option value="Cash">Cash in hand</option>
-        </select>
-      </label>
+      <div class="field">
+        <bb-select
+          label="Type"
+          placeholder=""
+          [options]="accountTypeOptions"
+          [(ngModel)]="form.accountType"
+          (ngModelChange)="onTypeChange()"
+        />
+      </div>
 
       @if (needsBank) {
-        <label>
-          Bank
-          <select [(ngModel)]="form.bankId">
-            <option [ngValue]="null">Select a bank…</option>
-            @for (bank of banks(); track bank.bankId) {
-              <option [ngValue]="bank.bankId">{{ bank.bankName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Bank"
+            placeholder="Select a bank…"
+            [options]="bankOptions()"
+            [(ngModel)]="form.bankId"
+          />
+        </div>
       }
 
       <label>

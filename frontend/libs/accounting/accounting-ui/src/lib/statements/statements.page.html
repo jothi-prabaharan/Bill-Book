@@ -1,13 +1,15 @@
 <header class="page-head">
   <h1>Statements</h1>
-  <label class="account">
-    Account
-    <select [(ngModel)]="bankAccountId" name="bankAccountId" (ngModelChange)="onAccountChange()">
-      @for (a of usableAccounts(); track a.bankAccountId) {
-        <option [ngValue]="a.bankAccountId">{{ a.accountName }} ({{ a.currencyCode }})</option>
-      }
-    </select>
-  </label>
+  <div class="field account">
+    <bb-select
+      label="Account"
+      placeholder=""
+      name="bankAccountId"
+      [options]="bankAccountOptions()"
+      [(ngModel)]="bankAccountId"
+      (ngModelChange)="onAccountChange()"
+    />
+  </div>
 </header>
 
 @if (message()) {

@@ -1,11 +1,13 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbFileSelection,
+  BbSelectOption,
   CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   FileInputComponent,
   NumberInputComponent,
+  SelectComponent,
   TextInputComponent,
 } from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
@@ -109,11 +111,19 @@ interface StatementLine {
     NumberInputComponent,
     FileInputComponent,
     CheckboxComponent,
+    SelectComponent,
   ],
   templateUrl: './statements.page.html',
   styleUrl: './statements.page.scss',
 })
 export class StatementsPage implements OnInit {
+
+  protected readonly bankAccountOptions = computed<BbSelectOption<number>[]>(() =>
+    this.usableAccounts().map((account) => ({
+      value: account.bankAccountId,
+      label: `${account.accountName} (${account.currencyCode})`,
+    })),
+  );
   private readonly http = inject(HttpClient);
 
   protected readonly accounts = signal<BankAccountOption[]>([]);

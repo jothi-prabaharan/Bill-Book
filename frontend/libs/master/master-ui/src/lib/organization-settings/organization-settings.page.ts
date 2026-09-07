@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { TextInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  SelectComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -75,11 +79,78 @@ const MONTHS = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-organization-settings-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    SelectComponent,
+  ],
   templateUrl: './organization-settings.page.html',
   styleUrl: './organization-settings.page.scss',
 })
 export class OrganizationSettingsPage implements OnInit {
+
+  /*
+   * The option lists, in the shape `bb-select` takes.
+   *
+   * The two boolean settings are carried as strings: a select's value is a
+   * string, and mapping them here rather than binding `[ngValue]` keeps the
+   * control's value one type while the branch record keeps its booleans.
+   */
+
+  protected readonly monthOptions: BbSelectOption<number>[] = MONTHS.map((month, at) => ({
+    value: at + 1,
+    label: month,
+  }));
+
+  protected readonly discountLevelOptions: BbSelectOption<string>[] = [
+    { value: 'Line', label: 'Line' },
+    { value: 'Header', label: 'Header' },
+    { value: 'Both', label: 'Both' },
+  ];
+
+  protected readonly freeTextLineOptions: BbSelectOption<string>[] = [
+    { value: 'yes', label: 'Allowed' },
+    { value: 'no', label: 'Every line must name an item' },
+  ];
+
+  protected readonly discountBeforeTaxOptions: BbSelectOption<string>[] = [
+    { value: 'yes', label: 'Yes — taken off before GST' },
+    { value: 'no', label: 'No — GST on the full value' },
+  ];
+
+  protected readonly stateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.states().map((state) => ({
+      value: state.stateId,
+      label: `${state.stateCode} — ${state.stateName}`,
+    })),
+  );
+
+  protected readonly currencyOptions = computed<BbSelectOption<string>[]>(() =>
+    this.currencies().map((currency) => ({
+      value: currency.code,
+      label: `${currency.code} - ${currency.name}`,
+    })),
+  );
+
+  protected get freeTextLines(): string {
+    return this.form?.allowFreeTextLines ? 'yes' : 'no';
+  }
+
+  protected set freeTextLines(value: string) {
+    if (this.form) {
+      this.form.allowFreeTextLines = value === 'yes';
+    }
+  }
+
+  protected get discountBeforeTax(): string {
+    return this.form?.discountBeforeTax ? 'yes' : 'no';
+  }
+
+  protected set discountBeforeTax(value: string) {
+    if (this.form) {
+      this.form.discountBeforeTax = value === 'yes';
+    }
+  }
   private readonly http = inject(HttpClient);
 
   protected readonly tab = signal<Tab>('profile');
