@@ -1,0 +1,52 @@
+:host {
+  display: block;
+}
+
+.bb-radio-group {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-inline-size: 0; /* a fieldset will not shrink below its content without this */
+}
+
+.bb-radio-group__options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 9px);
+}
+
+/* Horizontal until the screen is too narrow for it, then stacked — the ~360px
+   rule, applied to the one control where wrapping mid-option reads badly. */
+.bb-radio-group__options--row {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--space-4, 18px);
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: var(--space-2, 9px);
+  }
+}
+
+.bb-radio {
+  align-items: flex-start;
+
+  .dot {
+    margin-top: 2px;
+  }
+}
+
+.bb-radio--disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.bb-radio__body {
+  display: flex;
+  flex-direction: column;
+}
+
+.bb-radio__description {
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 55%, transparent);
+}

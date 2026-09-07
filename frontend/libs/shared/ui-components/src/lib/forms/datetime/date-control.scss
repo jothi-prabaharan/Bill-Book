@@ -1,0 +1,19 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-date__field {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: var(--font-body, system-ui, sans-serif);
+
+  &::-webkit-calendar-picker-indicator {
+    opacity: 0.45;
+    cursor: pointer;
+  }
+
+  &:disabled::-webkit-calendar-picker-indicator {
+    cursor: not-allowed;
+  }
+}

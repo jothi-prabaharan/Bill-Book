@@ -1,0 +1,77 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-num {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.bb-num__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  /* Figures line up in a column only if the digits are the same width. */
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+  text-align: right;
+  /* Ahead of the nested rules: Sass warns about declarations after them. */
+  appearance: textfield;
+
+  &--left {
+    text-align: left;
+  }
+
+  &--center {
+    text-align: center;
+  }
+
+  /* The spinner arrows eat a third of the width of a narrow grid cell and are
+     unreachable by keyboard anyway — the arrow keys do the same job. */
+  &::-webkit-outer-spin-button,
+  &::-webkit-inner-spin-button {
+    appearance: none;
+    margin: 0;
+  }
+}
+
+.bb-num__affix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 65%, transparent);
+  background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.bb-num--affixed {
+  .bb-num__affix--prefix {
+    border-right: none;
+    border-radius: var(--radius-md, 4px) 0 0 var(--radius-md, 4px);
+  }
+
+  .bb-num__affix--suffix {
+    border-left: none;
+    border-radius: 0 var(--radius-md, 4px) var(--radius-md, 4px) 0;
+  }
+
+  .bb-num__field {
+    border-radius: 0;
+  }
+
+  .bb-num__field:first-child {
+    border-top-left-radius: var(--radius-md, 4px);
+    border-bottom-left-radius: var(--radius-md, 4px);
+  }
+
+  .bb-num__field:last-child {
+    border-top-right-radius: var(--radius-md, 4px);
+    border-bottom-right-radius: var(--radius-md, 4px);
+  }
+}

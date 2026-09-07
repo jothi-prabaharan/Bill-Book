@@ -204,30 +204,43 @@
           Prices include tax
         </label>
 
-        <label>
-          Sales price
-          <bb-number-input  [(ngModel)]="form.salesPrice" step="0.0001" />
-          <small>Per the inventory unit, always.</small>
-        </label>
+        <div class="field">
+          <bb-unit-price-input
+            label="Sales price"
+            name="salesPrice"
+            decimals="4"
+            hint="Per the inventory unit, always."
+            [(ngModel)]="form.salesPrice"
+          />
+        </div>
 
-        <label>
-          Purchase price
-          <bb-number-input  [(ngModel)]="form.purchasePrice" step="0.0001" />
-        </label>
+        <div class="field">
+          <bb-unit-price-input
+            label="Purchase price"
+            name="purchasePrice"
+            decimals="4"
+            [(ngModel)]="form.purchasePrice"
+          />
+        </div>
 
-        <label>
-          MRP
-          <bb-number-input  [(ngModel)]="form.mrp" step="0.01" />
-          @if (form.isBatchTracked) {
-            <small>A batch's own MRP wins over this.</small>
-          }
-        </label>
+        <div class="field">
+          <bb-unit-price-input
+            label="MRP"
+            name="mrp"
+            [hint]="form.isBatchTracked ? batchMrpHint : ''"
+            [(ngModel)]="form.mrp"
+          />
+        </div>
 
-        <label>
-          Minimum sale price
-          <bb-number-input  [(ngModel)]="form.minSalePrice" step="0.0001" />
-          <small>The floor a discount may not cross.</small>
-        </label>
+        <div class="field">
+          <bb-unit-price-input
+            label="Minimum sale price"
+            name="minSalePrice"
+            decimals="4"
+            hint="The floor a discount may not cross."
+            [(ngModel)]="form.minSalePrice"
+          />
+        </div>
 
         <label class="inline">
           <input type="checkbox" [(ngModel)]="form.isSales" />
@@ -361,15 +374,23 @@
             </select>
           </label>
 
-          <label>
-            Reorder level
-            <bb-number-input  [(ngModel)]="form.reorderLevel" step="0.001" />
-          </label>
+          <div class="field">
+            <bb-quantity-input
+              label="Reorder level"
+              name="reorderLevel"
+              decimals="3"
+              [(ngModel)]="form.reorderLevel"
+            />
+          </div>
 
-          <label>
-            Reorder quantity
-            <bb-number-input  [(ngModel)]="form.reorderQuantity" step="0.001" />
-          </label>
+          <div class="field">
+            <bb-quantity-input
+              label="Reorder quantity"
+              name="reorderQuantity"
+              decimals="3"
+              [(ngModel)]="form.reorderQuantity"
+            />
+          </div>
 
           <label>
             Lead time (days)
@@ -408,16 +429,26 @@
           </select>
         </label>
 
-        <label>
-          Gross weight
-          <bb-number-input  [(ngModel)]="form.jewellery['grossWeight']" step="0.001" />
-        </label>
+        <div class="field">
+          <bb-quantity-input
+            label="Gross weight"
+            name="grossWeight"
+            decimals="3"
+            uom="g"
+            [(ngModel)]="form.jewellery['grossWeight']"
+          />
+        </div>
 
-        <label>
-          Net weight
-          <bb-number-input  [(ngModel)]="form.jewellery['netWeight']" step="0.001" />
-          <small>The metal rate applies to this, not to gross.</small>
-        </label>
+        <div class="field">
+          <bb-quantity-input
+            label="Net weight"
+            name="netWeight"
+            decimals="3"
+            uom="g"
+            hint="The metal rate applies to this, not to gross."
+            [(ngModel)]="form.jewellery['netWeight']"
+          />
+        </div>
 
         <label>
           Stone weight

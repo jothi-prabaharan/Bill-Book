@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-import { ColumnDef, DataGridComponent, DateInputComponent, DocumentLine, DocumentLineContext, DocumentLineGridComponent, LookupDialogComponent, LookupRow, NumberInputComponent, TaxGroupOption, TextInputComponent, recalculate } from '@bill-book/ui-components';
+import { ColumnDef, DataGridComponent, DateInputComponent, DocumentLine, DocumentLineContext, DocumentLineGridComponent, LookupDialogComponent, LookupRow, QuantityInputComponent, TaxGroupOption, TextInputComponent, recalculate } from '@bill-book/ui-components';
 
 import {
   GoodsReceiptService,
@@ -58,7 +58,7 @@ interface ReceivingLine {
     RouterModule,
     DocumentLineGridComponent,
     LookupDialogComponent,
-  DateInputComponent, TextInputComponent, NumberInputComponent],
+  DateInputComponent, TextInputComponent, QuantityInputComponent],
   templateUrl: './goods-receipt-form.page.html',
   styleUrl: './goods-receipt-form.page.scss',
 })

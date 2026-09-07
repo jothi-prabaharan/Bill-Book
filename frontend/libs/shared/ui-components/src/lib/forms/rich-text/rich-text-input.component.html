@@ -1,0 +1,81 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-rich" [class.bb-rich--disabled]="!editable()">
+    @if (editable() && buttons().length > 0) {
+      <!-- A toolbar, named and reachable by tab. Each button says what it does
+           and whether it is currently applied. -->
+      <div class="bb-rich__toolbar" role="toolbar" [attr.aria-label]="'Formatting'" [attr.aria-controls]="controlId()">
+        @for (button of buttons(); track button.command) {
+          <button
+            type="button"
+            class="bb-rich__tool"
+            [class.bb-rich__tool--on]="isActive(button)"
+            [attr.aria-label]="button.label"
+            [attr.aria-pressed]="isActive(button)"
+            [title]="button.label"
+            (mousedown)="$event.preventDefault()"
+            (click)="onCommand(button)"
+          >
+            @switch (button.command) {
+              @case ('bold') { <span class="bb-rich__glyph bb-rich__glyph--bold" aria-hidden="true">B</span> }
+              @case ('italic') { <span class="bb-rich__glyph bb-rich__glyph--italic" aria-hidden="true">I</span> }
+              @case ('underline') { <span class="bb-rich__glyph bb-rich__glyph--underline" aria-hidden="true">U</span> }
+              @case ('bulletList') { <span class="bb-rich__glyph" aria-hidden="true">&bull;&#8212;</span> }
+              @case ('numberList') { <span class="bb-rich__glyph" aria-hidden="true">1.</span> }
+              @default { <span class="bb-rich__glyph" aria-hidden="true">&#10005;</span> }
+            }
+          </button>
+        }
+      </div>
+    }
+
+    @if (editable()) {
+      <!--
+        The editable region. `contenteditable` has no `readonly`, so a
+        read-only or disabled field renders instead of editing — which is also
+        what stops a disabled field being editable through a devtools attribute
+        flip.
+      -->
+      <div
+        #region
+        class="bb-rich__region"
+        contenteditable="true"
+        role="textbox"
+        aria-multiline="true"
+        [id]="controlId()"
+        [style.min-height.em]="rows() * 1.5"
+        [attr.aria-label]="regionAriaLabel()"
+        [attr.aria-required]="required() ? 'true' : null"
+        [attr.aria-invalid]="invalid() ? 'true' : null"
+        [attr.aria-describedby]="describedBy()"
+        [attr.data-placeholder]="placeholder()"
+        [class.bb-rich__region--empty]="isEmpty()"
+        (input)="onRegionInput()"
+        (blur)="onRegionBlur()"
+        (paste)="onPaste($event)"
+      ></div>
+    } @else {
+      <!-- Filtered by the allowlist on the way in, and bound without a trust
+           bypass so Angular's own sanitiser filters it again on the way out. -->
+      <div
+        class="bb-rich__region bb-rich__region--readonly"
+        [id]="controlId()"
+        [style.min-height.em]="rows() * 1.5"
+        [attr.aria-label]="regionAriaLabel()"
+        [attr.aria-describedby]="describedBy()"
+        [innerHTML]="html()"
+      ></div>
+    }
+  </div>
+
+  @if (counterVisible()) {
+    <small class="bb-rich__counter" aria-live="polite">{{ plainLength() }} / {{ maxlength() }}</small>
+  }
+</bb-form-field>

@@ -5,7 +5,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
-import { ColumnDef, DataGridComponent, DateInputComponent, LookupDialogComponent, LookupRow, NumberInputComponent, TextInputComponent } from '@bill-book/ui-components';
+import { ColumnDef, DataGridComponent, DateInputComponent, LookupDialogComponent, LookupRow, QuantityInputComponent, TextInputComponent } from '@bill-book/ui-components';
 
 import {
   BillService,
@@ -58,7 +58,7 @@ interface ReturnLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-debit-note-form',
   standalone: true,
-  imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [DataGridComponent, CommonModule, FormsModule, RouterModule, LookupDialogComponent, DateInputComponent, TextInputComponent, QuantityInputComponent],
   templateUrl: './debit-note-form.page.html',
   styleUrl: './debit-note-form.page.scss',
 })

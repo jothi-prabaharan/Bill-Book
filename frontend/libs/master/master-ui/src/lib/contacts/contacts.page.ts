@@ -1,5 +1,17 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  EmailInputComponent,
+  NumberInputComponent,
+  PercentageInputComponent,
+  PhoneInputComponent,
+  SearchInputComponent,
+  TextareaComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -173,7 +185,20 @@ const DOCUMENT_TYPES: readonly { value: string; label: string }[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-contacts-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, ContactPersonRolesDialog, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    ContactPersonRolesDialog,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SearchInputComponent,
+    EmailInputComponent,
+    PhoneInputComponent,
+    PercentageInputComponent,
+    CheckboxComponent,
+    TextareaComponent,
+  ],
   templateUrl: './contacts.page.html',
   styleUrl: './contacts.page.scss',
 })

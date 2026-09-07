@@ -156,10 +156,9 @@
             {{ row.available }}
           </ng-template>
           <ng-template bbCellTemplate="quantity" let-row="row" let-index="index">
-            <bb-number-input
-              
-              class="input input--qty"
-              min="0"
+            <bb-quantity-input
+              ariaLabel="Quantity to debit"
+              class="input--qty"
               [max]="row.available"
               [disabled]="readonlyDoc()"
               [ngModel]="row.quantity"

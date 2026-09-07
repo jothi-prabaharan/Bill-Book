@@ -1,0 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-select__field {
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

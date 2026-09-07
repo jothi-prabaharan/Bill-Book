@@ -1,0 +1,50 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <select
+    class="input bb-select__field"
+    [id]="controlId()"
+    [name]="name() || null"
+    [disabled]="effectiveDisabled() || readonly() || loading()"
+    [required]="required()"
+    [attr.aria-label]="effectiveAriaLabel()"
+    [attr.aria-invalid]="invalid() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    [attr.aria-busy]="loading() ? 'true' : null"
+    (change)="onSelect($event)"
+    (blur)="onBlur()"
+  >
+    @if (loading()) {
+      <option value="">Loading…</option>
+    } @else if (isEmpty()) {
+      <option value="">{{ emptyText() }}</option>
+    } @else {
+      @if (placeholder()) {
+        <!-- `selected` is set per option rather than `value` on the select: on
+             the first render the select's property is written before its
+             options exist, so the value would not stick. -->
+        <option value="" [selected]="selectedIndex() === ''" [disabled]="!clearable() && selectedIndex() !== ''">
+          {{ placeholder() }}
+        </option>
+      }
+
+      @for (option of ungrouped(); track option.value) {
+        <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
+      }
+
+      @for (group of groups(); track group) {
+        <optgroup [label]="group">
+          @for (option of optionsIn(group); track option.value) {
+            <option [value]="indexOf(option)" [selected]="isSelected(option)" [disabled]="!!option.disabled">{{ option.label }}</option>
+          }
+        </optgroup>
+      }
+    }
+  </select>
+</bb-form-field>

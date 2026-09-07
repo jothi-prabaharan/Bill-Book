@@ -1,0 +1,10 @@
+/* No box of its own: label, control, hint and error become children of the
+   caller's `.field`, which is what `_forms.scss` already styles. */
+:host {
+  display: contents;
+}
+
+.field-required {
+  margin-left: 2px;
+  color: var(--color-danger, #a2332a);
+}

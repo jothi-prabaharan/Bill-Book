@@ -14,10 +14,10 @@
   .loading-state, .empty-state {
     padding: 3rem;
     text-align: center;
-    color: var(--text-secondary);
-    background: var(--bg-surface);
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
+    background: var(--color-surface);
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
   }
 }
 .bb-btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; }

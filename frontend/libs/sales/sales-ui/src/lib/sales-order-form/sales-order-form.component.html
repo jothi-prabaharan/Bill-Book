@@ -63,175 +63,156 @@
 
   @if (canVoid()) {
     <form class="field sor-form__void" [formGroup]="voidForm">
-      <label for="sor-void-reason">Reason, if voiding</label>
-      <input
+      <bb-text-input
         id="sor-void-reason"
-        class="input"
-        type="text"
+        label="Reason, if voiding"
         maxlength="300"
         placeholder="Customer cancelled the order"
         formControlName="reason"
+        [required]="true"
+        [error]="
+          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+            ? 'Say why this order is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+            : ''
+        "
       />
-
-      @if (voidForm.controls.reason.invalid && voidForm.controls.reason.touched) {
-        <span class="field-error" role="alert">
-          Say why this order is being voided. Its number stays on record, and the reason is what
-          makes the gap in the sequence answerable.
-        </span>
-      }
     </form>
   }
 
   @if (canShortClose()) {
     <form class="field sor-form__void" [formGroup]="shortCloseForm">
-      <label for="sor-shortclose-reason">Reason, if closing short</label>
-      <input
+      <bb-text-input
         id="sor-shortclose-reason"
-        class="input"
-        type="text"
+        label="Reason, if closing short"
         maxlength="300"
         placeholder="Customer took four of ten and cancelled the rest"
         formControlName="reason"
+        [required]="true"
+        [error]="
+          shortCloseForm.controls.reason.invalid && shortCloseForm.controls.reason.touched
+            ? 'Say why this order is being closed short. It is what tells an order that was fulfilled apart from one that was stopped.'
+            : ''
+        "
       />
-
-      @if (shortCloseForm.controls.reason.invalid && shortCloseForm.controls.reason.touched) {
-        <span class="field-error" role="alert">
-          Say why this order is being closed short. It is what tells an order that was fulfilled
-          apart from one that was stopped.
-        </span>
-      }
     </form>
   }
 
+  <!--
+    Common inputs throughout, so this form and the invoice form are the same
+    field for the same job. The messages and when they show are unchanged.
+  -->
   <form class="sor-form__fields" [formGroup]="form">
     <div class="field">
-      <label for="sor-date">Order date</label>
-      <input id="sor-date" class="input" type="date" formControlName="documentDate" />
-
-      @if (showError('documentDate')) {
-        <span class="field-error" role="alert">Give the order a date.</span>
-      }
+      <bb-date-input
+        id="sor-date"
+        label="Order date"
+        formControlName="documentDate"
+        [required]="true"
+        [error]="showError('documentDate') ? 'Give the order a date.' : ''"
+      />
     </div>
 
     <div class="field">
-      <label for="sor-delivery">Delivery date</label>
-      <input id="sor-delivery" class="input" type="date" formControlName="deliveryDate" />
-      <small class="field-hint">When the customer is expecting the goods.</small>
+      <bb-date-input
+        id="sor-delivery"
+        label="Delivery date"
+        hint="When the customer is expecting the goods."
+        formControlName="deliveryDate"
+      />
     </div>
 
     <div class="field">
-      <label for="sor-contact">Customer</label>
-      <input
+      <!-- A contact id rather than a business quantity, so the plain numeric
+           control. It becomes a lookup when the contact search endpoint lands. -->
+      <bb-number-input
         id="sor-contact"
-        class="input"
-        type="number"
+        label="Customer"
         min="1"
         step="1"
+        inputmode="numeric"
         formControlName="contactId"
+        [required]="true"
+        [error]="showError('contactId') ? 'Choose the customer.' : ''"
       />
-
-      @if (showError('contactId')) {
-        <span class="field-error" role="alert">Choose the customer.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="sor-gstin">Customer GSTIN</label>
-      <input
+      <bb-text-input
         id="sor-gstin"
-        class="input"
-        type="text"
+        label="Customer GSTIN"
         maxlength="15"
+        [uppercase]="true"
         formControlName="contactGstin"
+        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
       />
-
-      @if (showError('contactGstin')) {
-        <span class="field-error" role="alert">A GSTIN is 15 characters.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="sor-pos">Place of supply</label>
-      <input
+      <bb-text-input
         id="sor-pos"
-        class="input"
-        type="text"
+        label="Place of supply"
         inputmode="numeric"
         maxlength="2"
         placeholder="33"
+        hint="Leave blank to take it from the GSTIN."
         formControlName="placeOfSupplyStateCode"
+        [error]="
+          showError('placeOfSupplyStateCode')
+            ? 'Place of supply is a two-digit state code.'
+            : ''
+        "
       />
-
-      @if (showError('placeOfSupplyStateCode')) {
-        <span class="field-error" role="alert">
-          Place of supply is a two-digit state code.
-        </span>
-      } @else {
-        <small class="field-hint">Leave blank to take it from the GSTIN.</small>
-      }
     </div>
 
     <div class="field">
-      <label for="sor-currency">Currency</label>
-      <input
+      <bb-text-input
         id="sor-currency"
-        class="input"
-        type="text"
+        label="Currency"
         maxlength="3"
+        [uppercase]="true"
         formControlName="currencyCode"
+        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
       />
-
-      @if (showError('currencyCode')) {
-        <span class="field-error" role="alert">Currency is a three-letter code.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="sor-rate">Exchange rate</label>
-      <input
+      <!-- Eight places, matching decimal(18,8) on the column. The field this
+           replaced stepped by 0.0001 and showed four. -->
+      <bb-exchange-rate-input
         id="sor-rate"
-        class="input"
-        type="number"
-        min="0.00000001"
-        step="0.0001"
+        label="Exchange rate"
+        hint="A snapshot at the order's date, never looked up live."
+        [fromCurrency]="form.controls.currencyCode.value"
         formControlName="exchangeRate"
+        [required]="true"
+        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
       />
-
-      @if (showError('exchangeRate')) {
-        <span class="field-error" role="alert">Exchange rate must be greater than zero.</span>
-      } @else {
-        <small class="field-hint">A snapshot at the order's date, never looked up live.</small>
-      }
     </div>
 
     <div class="field">
-      <label for="sor-billing">Billing address</label>
-      <textarea id="sor-billing" class="input" rows="2" formControlName="billingAddress"></textarea>
+      <bb-textarea id="sor-billing" label="Billing address" rows="2" formControlName="billingAddress" />
     </div>
 
     <div class="field">
-      <label for="sor-shipping">Shipping address</label>
-      <textarea
+      <bb-textarea
         id="sor-shipping"
-        class="input"
+        label="Shipping address"
         rows="2"
         formControlName="shippingAddress"
-      ></textarea>
+      />
     </div>
 
     <div class="field sor-form__wide">
-      <label for="sor-notes">Notes</label>
-      <textarea id="sor-notes" class="input" rows="2" formControlName="notes"></textarea>
+      <bb-textarea id="sor-notes" label="Notes" rows="2" formControlName="notes" />
     </div>
 
     <div class="field sor-form__wide">
-      <label for="sor-terms">Terms and conditions</label>
-      <textarea
+      <bb-textarea
         id="sor-terms"
-        class="input"
+        label="Terms and conditions"
         rows="2"
         formControlName="termsAndConditions"
-      ></textarea>
+      />
     </div>
   </form>
 

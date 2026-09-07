@@ -1,0 +1,31 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <input
+    class="input bb-date__field"
+    [type]="inputType"
+    [id]="controlId()"
+    [name]="name() || null"
+    [placeholder]="placeholder()"
+    [attr.min]="min()"
+    [attr.max]="max()"
+    [attr.step]="stepAttr"
+    [attr.autocomplete]="autocomplete() || 'off'"
+    [disabled]="effectiveDisabled()"
+    [readonly]="readonly()"
+    [required]="required()"
+    [attr.aria-label]="effectiveAriaLabel()"
+    [attr.aria-invalid]="invalid() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    [value]="innerValue()"
+    (input)="onInput($event)"
+    (blur)="onBlur($event)"
+    (focus)="onFocus($event)"
+  />
+</bb-form-field>

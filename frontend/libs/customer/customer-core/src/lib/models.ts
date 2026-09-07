@@ -44,7 +44,13 @@ export interface Ticket {
   description: string;
   priority: TicketPriority;
   status: TicketStatus;
-  contactId: string;
+  /**
+   * A `con.Contacts` id, which is an `int` everywhere else in the product —
+   * every picker publishes one and the API takes one. It was declared `string`
+   * here, and the ticket form's `as any` on the way to `createTicket` is what
+   * kept the two from ever meeting.
+   */
+  contactId: number;
 }
 
 export interface TicketMessage {

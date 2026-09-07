@@ -35,8 +35,8 @@ interface CurrencyInputHarness {
 }
 
 interface NumberInputHarness {
-  displayValue: () => string;
-  rawNumericValue: number | null;
+  displayText: () => string;
+  readonly value: number | null;
   effectiveDisabled: () => boolean;
   decimals: () => number | null;
   onInput: (event: Event) => void;
@@ -107,7 +107,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
 
       expect(dateH.innerValue()).toBe('2026-08-18');
       expect(currH.displayValue()).toBe('1500.50');
-      expect(numH.displayValue()).toBe('42');
+      expect(numH.displayText()).toBe('42');
       expect(searchH.innerValue()).toBe('initial query');
       expect(textH.innerValue()).toBe('Acme Corp');
       expect(form.valid).toBe(true);
@@ -128,7 +128,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
 
       expect(dateH.innerValue()).toBe('2027-01-01');
       expect(currH.displayValue()).toBe('9999.99');
-      expect(numH.displayValue()).toBe('88');
+      expect(numH.displayText()).toBe('88');
       expect(searchH.innerValue()).toBe('new search');
       expect(textH.innerValue()).toBe('Global Retail');
 
@@ -312,7 +312,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
       expect(form.touched).toBe(false);
       expect((dateComp as unknown as DateInputHarness).innerValue()).toBe('');
       expect((currComp as unknown as CurrencyInputHarness).displayValue()).toBe('');
-      expect((numComp as unknown as NumberInputHarness).displayValue()).toBe('');
+      expect((numComp as unknown as NumberInputHarness).displayText()).toBe('');
       expect((searchComp as unknown as SearchInputHarness).innerValue()).toBe('');
       expect((textComp as unknown as TextInputHarness).innerValue()).toBe('');
     });
@@ -353,7 +353,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
 
       expect((dateComp as unknown as DateInputHarness).innerValue()).toBe('2026-05-10');
       expect((currComp as unknown as CurrencyInputHarness).displayValue()).toBe('1200.00');
-      expect((numComp as unknown as NumberInputHarness).displayValue()).toBe('15');
+      expect((numComp as unknown as NumberInputHarness).displayText()).toBe('15');
       expect((searchComp as unknown as SearchInputHarness).innerValue()).toBe('supplier search');
       expect((textComp as unknown as TextInputHarness).innerValue()).toBe('Initial Vendor');
 
@@ -380,7 +380,7 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
 
       expect((dateComp as unknown as DateInputHarness).innerValue()).toBe('2027-12-31');
       expect((currComp as unknown as CurrencyInputHarness).displayValue()).toBe('888.88');
-      expect((numComp as unknown as NumberInputHarness).displayValue()).toBe('99');
+      expect((numComp as unknown as NumberInputHarness).displayText()).toBe('99');
       expect((searchComp as unknown as SearchInputHarness).innerValue()).toBe('fresh query');
       expect((textComp as unknown as TextInputHarness).innerValue()).toBe('External Update');
     });
@@ -521,20 +521,20 @@ describe('Empirical Form Lifecycle & CVA Stress Test Suite (Challenger 2)', () =
 
       // 0 is valid numeric zero
       comp.writeValue(0);
-      expect(harness.displayValue()).toBe('0');
-      expect(harness.rawNumericValue).toBe(0);
+      expect(harness.displayText()).toBe('0');
+      expect(harness.value).toBe(0);
 
       // null clears
       comp.writeValue(null);
-      expect(harness.displayValue()).toBe('');
-      expect(harness.rawNumericValue).toBeNull();
+      expect(harness.displayText()).toBe('');
+      expect(harness.value).toBeNull();
 
       // Fractional stepping (0.005)
       const changeSpy = vi.fn();
       comp.registerOnChange(changeSpy);
       harness.onInput({ target: { value: '0.005' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(0.005);
-      expect(harness.rawNumericValue).toBe(0.005);
+      expect(harness.value).toBe(0.005);
     });
 
     it('BOUND-04: SearchInput debounce timer cancellation on clear and destroy', () => {

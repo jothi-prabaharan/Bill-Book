@@ -10,6 +10,21 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
+/**
+ * @deprecated Use `bb-money-input`, which is the same job done by the shared
+ * numeric implementation.
+ *
+ * **Kept only so an out-of-tree caller does not break.** It has no callers in
+ * this repository any more — the fixed-asset form was the last one. What
+ * `bb-money-input` does that this does not: it carries a label, a hint and an
+ * error like every other common input; it converts between typed text and
+ * scaled units by string surgery rather than by `parseFloat` and a multiply,
+ * so `1.15` in paise is 115 and never 114.99999999999999; and its display
+ * precision is a floor rather than a cap, so a value carrying more places than
+ * the field shows is not truncated in front of the person editing it.
+ *
+ * `inPaise` maps to `minorDigits="2"`.
+ */
 @Component({
   selector: 'bb-currency-input',
   standalone: true,

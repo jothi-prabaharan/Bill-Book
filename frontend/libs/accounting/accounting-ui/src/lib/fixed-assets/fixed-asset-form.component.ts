@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Output, inject, signa
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import {
-  CurrencyInputComponent,
+  MoneyInputComponent,
   DateInputComponent,
   NumberInputComponent,
   TextInputComponent,
@@ -36,7 +36,7 @@ interface CapitalizeAssetModel {
     FormsModule,
     TextInputComponent,
     NumberInputComponent,
-    CurrencyInputComponent,
+    MoneyInputComponent,
     DateInputComponent,
   ],
   templateUrl: './fixed-asset-form.component.html',

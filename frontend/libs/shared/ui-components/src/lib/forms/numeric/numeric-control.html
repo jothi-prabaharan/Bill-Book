@@ -1,0 +1,50 @@
+<!--
+  One template for all five numeric controls. What separates a money field from
+  a quantity field is precision, range, affix and meaning — every one of which
+  is computed on the class — so five copies of this markup would be five places
+  for one `aria-describedby` to go missing.
+-->
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-num" [class.bb-num--affixed]="resolvedPrefix() || resolvedSuffix()">
+    @if (resolvedPrefix()) {
+      <span class="bb-num__affix bb-num__affix--prefix" aria-hidden="true">{{ resolvedPrefix() }}</span>
+    }
+
+    <input
+      type="number"
+      class="input bb-num__field"
+      [class.bb-num__field--left]="resolvedAlign() === 'left'"
+      [class.bb-num__field--center]="resolvedAlign() === 'center'"
+      [id]="controlId()"
+      [name]="name() || null"
+      [placeholder]="placeholder()"
+      [attr.inputmode]="inputMode()"
+      [attr.min]="minAttr()"
+      [attr.max]="maxAttr()"
+      [attr.step]="resolvedStep()"
+      [attr.autocomplete]="autocomplete() || 'off'"
+      [disabled]="effectiveDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      [value]="displayText()"
+      (input)="onInput($event)"
+      (focus)="onFocus($event)"
+      (blur)="onBlur($event)"
+    />
+
+    @if (resolvedSuffix()) {
+      <span class="bb-num__affix bb-num__affix--suffix" aria-hidden="true">{{ resolvedSuffix() }}</span>
+    }
+  </div>
+</bb-form-field>

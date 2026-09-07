@@ -129,10 +129,10 @@
 
         <fieldset class="roles">
           <legend>Roles</legend>
-          <label class="inline"><input type="checkbox" [(ngModel)]="form.isCustomer" /> Customer</label>
-          <label class="inline"><input type="checkbox" [(ngModel)]="form.isVendor" /> Vendor</label>
-          <label class="inline"><input type="checkbox" [(ngModel)]="form.isJobWorker" /> Job worker</label>
-          <label class="inline"><input type="checkbox" [(ngModel)]="form.isPrescriber" /> Prescriber</label>
+          <bb-checkbox text="Customer" name="isCustomer" [(ngModel)]="form.isCustomer" />
+          <bb-checkbox text="Vendor" name="isVendor" [(ngModel)]="form.isVendor" />
+          <bb-checkbox text="Job worker" name="isJobWorker" [(ngModel)]="form.isJobWorker" />
+          <bb-checkbox text="Prescriber" name="isPrescriber" [(ngModel)]="form.isPrescriber" />
           <small>Tick every role that applies — one contact, not one per role.</small>
         </fieldset>
 
@@ -199,15 +199,17 @@
           <small>Counted from the due date, not the invoice date.</small>
         </label>
 
-        <label>
-          Max discount %
-          <bb-number-input  [(ngModel)]="form.maxDiscountPercent" min="0" max="100" step="0.01" />
-        </label>
+        <div class="field">
+          <!-- A percentage, not a plain number: 10 means ten per cent, which is
+               what the column holds and what the line maths divides by 100. -->
+          <bb-percentage-input
+            label="Max discount %"
+            name="maxDiscountPercent"
+            [(ngModel)]="form.maxDiscountPercent"
+          />
+        </div>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isTdsApplicable" />
-          TDS applicable
-        </label>
+        <bb-checkbox text="TDS applicable" name="isTdsApplicable" [(ngModel)]="form.isTdsApplicable" />
 
         @if (form.isTdsApplicable) {
           <label>
@@ -216,10 +218,7 @@
           </label>
         }
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isMsme" />
-          MSME registered
-        </label>
+        <bb-checkbox text="MSME registered" name="isMsme" [(ngModel)]="form.isMsme" />
 
         @if (form.isMsme) {
           <label>
@@ -228,15 +227,11 @@
           </label>
         }
 
-        <label class="wide">
-          Notes
-          <textarea [(ngModel)]="form.notes" maxlength="500" rows="2"></textarea>
-        </label>
+        <div class="field wide">
+          <bb-textarea label="Notes" name="notes" maxlength="500" rows="2" [(ngModel)]="form.notes" />
+        </div>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isActive" />
-          Active
-        </label>
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
       </div>
     }
 
@@ -351,15 +346,23 @@
               <bb-text-input  [(ngModel)]="person.designation" [name]="'desig' + $index" maxlength="100" />
             </label>
 
-            <label>
-              Email
-              <input type="email" [(ngModel)]="person.email" [name]="'email' + $index" maxlength="150" />
-            </label>
+            <div class="field">
+              <bb-email-input
+                label="Email"
+                maxlength="150"
+                [(ngModel)]="person.email"
+                [name]="'email' + $index"
+              />
+            </div>
 
-            <label>
-              Mobile
-              <bb-text-input  [(ngModel)]="person.mobileNumber" [name]="'mobile' + $index" maxlength="20" />
-            </label>
+            <div class="field">
+              <bb-phone-input
+                label="Mobile"
+                maxlength="20"
+                [(ngModel)]="person.mobileNumber"
+                [name]="'mobile' + $index"
+              />
+            </div>
 
             <label>
               Phone

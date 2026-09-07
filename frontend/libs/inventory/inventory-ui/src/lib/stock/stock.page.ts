@@ -1,5 +1,16 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , DateInputComponent , TextInputComponent , NumberInputComponent , SearchInputComponent, LookupDialogComponent, LookupRow } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  DateInputComponent,
+  LookupDialogComponent,
+  LookupRow,
+  NumberInputComponent,
+  SearchInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -140,7 +151,17 @@ const MANUAL_TYPES: readonly { value: string; label: string; needsCost: boolean 
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-stock-page',
   standalone: true,
-  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent, SearchInputComponent, LookupDialogComponent],
+  imports: [
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    SearchInputComponent,
+    LookupDialogComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './stock.page.html',
   styleUrl: './stock.page.scss',
 })

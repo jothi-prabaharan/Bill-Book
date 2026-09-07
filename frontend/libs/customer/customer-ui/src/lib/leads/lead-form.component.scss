@@ -9,7 +9,7 @@
   z-index: 1000;
 }
 .modal-content {
-  background: var(--bg-surface);
+  background: var(--color-surface);
   padding: 1.5rem;
   border-radius: 8px;
   width: 100%;
@@ -34,7 +34,7 @@
 .bb-select {
   width: 100%;
   padding: 0.5rem;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--color-border);
   border-radius: 4px;
 }
 .actions {

@@ -5,6 +5,9 @@ import { TextInputComponent } from './text-input.component';
 
 interface TextInputTestHarness {
   innerValue: () => string;
+  resolvedType: () => string;
+  resolvedAutocomplete: () => string;
+  effectiveAriaLabel: () => string | null;
   effectiveDisabled: () => boolean;
   uppercase: () => boolean;
   onInput: (event: Event) => void;
@@ -74,14 +77,21 @@ describe('TextInputComponent', () => {
     it('TXT-T1-05: default input signal attributes are correctly initialized', () => {
       expect(cva.id()).toBe('');
       expect(cva.name()).toBe('');
-      expect(cva.type()).toBe('text');
+      // `type` is now an override rather than the value itself: unset, with
+      // `resolvedType()` supplying the semantic default each subclass names.
+      expect(cva.type()).toBe('');
+      expect(harness.resolvedType()).toBe('text');
       expect(cva.placeholder()).toBe('');
       expect(cva.maxlength()).toBeNull();
       expect(cva.uppercase()).toBe(false);
       expect(cva.disabled()).toBe(false);
       expect(cva.readonly()).toBe(false);
       expect(cva.required()).toBe(false);
-      expect(cva.autocomplete()).toBe('off');
+      // Unset, with `off` as the rendered default — an ERP is full of fields a
+      // browser would fill with the wrong person's details. Email, phone, URL
+      // and password are the four that name a token instead.
+      expect(cva.autocomplete()).toBe('');
+      expect(harness.resolvedAutocomplete()).toBe('off');
       expect(cva.ariaLabel()).toBe('');
     });
 

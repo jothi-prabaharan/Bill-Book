@@ -1,0 +1,27 @@
+@if (label()) {
+  @if (labelAsCaption()) {
+    <span class="field-label">
+      {{ label() }}
+      @if (required()) {
+        <span class="field-required" aria-hidden="true">*</span>
+      }
+    </span>
+  } @else {
+    <label class="field-label" [attr.for]="controlId() || null">
+      {{ label() }}
+      @if (required()) {
+        <span class="field-required" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+}
+
+<ng-content />
+
+@if (error()) {
+  <!-- role="alert" so a screen reader announces the refusal as it appears,
+       rather than only when the field is next visited. -->
+  <span class="field-error" role="alert" [attr.id]="errorId() || null">{{ error() }}</span>
+} @else if (showHint()) {
+  <small class="field-hint" [attr.id]="hintId() || null">{{ hint() }}</small>
+}

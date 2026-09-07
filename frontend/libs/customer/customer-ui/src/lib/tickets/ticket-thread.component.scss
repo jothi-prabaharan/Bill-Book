@@ -9,7 +9,7 @@
   z-index: 1000;
 }
 .thread-content {
-  background: var(--bg-surface);
+  background: var(--color-surface);
   border-radius: 8px;
   width: 100%;
   max-width: 600px;
@@ -19,7 +19,7 @@
 }
 .header {
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -28,7 +28,7 @@
   .badge {
     font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
-    background: var(--bg-secondary);
+    background: var(--color-surface);
     border-radius: 4px;
   }
 }
@@ -41,7 +41,7 @@
   gap: 1rem;
 }
 .message {
-  background: var(--bg-secondary);
+  background: var(--color-surface);
   padding: 1rem;
   border-radius: 8px;
   max-width: 85%;
@@ -53,13 +53,13 @@
   
   .meta {
     font-size: 0.875rem;
-    color: var(--text-secondary);
+    color: color-mix(in srgb, var(--color-text) 60%, transparent);
     margin-bottom: 0.5rem;
   }
 }
 .reply-box {
   padding: 1.5rem;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -67,7 +67,7 @@
   .bb-input {
     width: 100%;
     padding: 0.75rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-border);
     border-radius: 4px;
     resize: vertical;
   }
@@ -77,14 +77,14 @@
 .loading-state, .empty-state {
   padding: 2rem;
   text-align: center;
-  color: var(--text-secondary);
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
 }
 .bb-btn-icon {
   background: transparent;
   border: none;
   font-size: 1.5rem;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
   
-  &:hover { color: var(--text-primary); }
+  &:hover { color: var(--color-text); }
 }

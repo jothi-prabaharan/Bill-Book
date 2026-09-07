@@ -1,0 +1,33 @@
+<bb-form-field
+  [label]="groupLabel()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+  [labelAsCaption]="true"
+>
+  <label class="checkbox bb-checkbox" [attr.for]="controlId()">
+    <input
+      #box
+      type="checkbox"
+      [id]="controlId()"
+      [name]="name() || null"
+      [checked]="checked()"
+      [disabled]="effectiveDisabled() || readonly()"
+      [required]="required()"
+      [attr.aria-label]="boxText() ? null : (ariaLabel() || null)"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      (change)="onChangeEvent($event)"
+    />
+
+    @if (boxText()) {
+      <span class="bb-checkbox__text">{{ boxText() }}</span>
+      @if (required()) {
+        <span class="field-required" aria-hidden="true">*</span>
+      }
+    }
+  </label>
+</bb-form-field>

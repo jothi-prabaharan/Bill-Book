@@ -1,5 +1,59 @@
 /* Classical — Forms & Inputs */
 
+/*
+ * Label, hint and error, styled wherever they appear rather than only as a
+ * direct child of `.field`.
+ *
+ * `bb-form-field` renders these three for every common input, and its host is
+ * `display: contents` so it adds no box — but a `>` combinator still reads the
+ * DOM tree, so `.field > label` would not have matched through it. Hoisting the
+ * rules is what lets one wrapper serve a field on a page and a control in a
+ * grid cell with no styling of its own.
+ *
+ * The `.field`-scoped block below stays: it is what the hand-written forms
+ * across the product already rely on.
+ */
+.field-label {
+  display: block;
+  font-size: 12px;
+  margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+  letter-spacing: 0.02em;
+}
+
+.field-hint {
+  display: block;
+  font-size: 11px;
+  margin-top: 3px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.field-error {
+  display: block;
+  font-size: 12px;
+  margin-top: 3px;
+  color: var(--color-danger);
+}
+
+/*
+ * A control the server or a validator has refused. Colour alone must never be
+ * the signal — the message under the field is the primary one — but the border
+ * is what makes the field findable on a long form.
+ */
+.input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+
+  &:focus-visible {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-danger) 14%, transparent);
+  }
+}
+
+.input[readonly] {
+  background: color-mix(in srgb, var(--color-text) 3%, transparent);
+  cursor: default;
+}
+
 .field {
   display: block;
   margin: 0;

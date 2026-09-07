@@ -3,6 +3,11 @@ import { AuthShellComponent } from '../../components/auth-shell/auth-shell.compo
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
+import {
+  CheckboxComponent,
+  EmailInputComponent,
+  PasswordInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * Two-step login. Step one posts credentials; step two picks the organization
@@ -12,7 +17,14 @@ import { AuthService } from '../../auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-login-page',
   standalone: true,
-  imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
+  imports: [
+    AuthShellComponent,
+    ReactiveFormsModule,
+    RouterLink,
+    EmailInputComponent,
+    PasswordInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './login.page.html',
   styleUrl: './login.page.scss',
 })

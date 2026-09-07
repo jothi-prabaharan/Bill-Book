@@ -112,157 +112,150 @@
 
   @if (canVoid()) {
     <form class="field inv-form__void" [formGroup]="voidForm">
-      <label for="inv-void-reason">Reason, if voiding</label>
-      <input
+      <bb-text-input
         id="inv-void-reason"
-        class="input"
-        type="text"
+        label="Reason, if voiding"
         maxlength="300"
         placeholder="Raised against the wrong customer"
         formControlName="reason"
+        [required]="true"
+        [error]="
+          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+            ? 'Say why this invoice is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+            : ''
+        "
       />
-
-      @if (voidForm.controls.reason.invalid && voidForm.controls.reason.touched) {
-        <span class="field-error" role="alert">
-          Say why this invoice is being voided. Its number stays on record, and the reason is what
-          makes the gap in the sequence answerable.
-        </span>
-      }
     </form>
   }
 
+  <!--
+    Every field here is a common input from `libs/shared/ui-components`, which
+    is what makes the label, the hint, the error and the accessibility wiring
+    identical to the same field on any other screen. The messages are unchanged:
+    the page still decides which one to show and when, because only the page
+    knows whether a control has been touched and what the server said.
+  -->
   <form class="inv-form__fields" [formGroup]="form">
     <div class="field">
-      <label for="inv-date">Invoice date</label>
-      <input id="inv-date" class="input" type="date" formControlName="documentDate" />
-
-      @if (showError('documentDate')) {
-        <span class="field-error" role="alert">Give the invoice a date.</span>
-      }
+      <bb-date-input
+        id="inv-date"
+        label="Invoice date"
+        formControlName="documentDate"
+        [required]="true"
+        [error]="showError('documentDate') ? 'Give the invoice a date.' : ''"
+      />
     </div>
 
     <div class="field">
-      <label for="inv-due">Due date</label>
-      <input id="inv-due" class="input" type="date" formControlName="dueDate" />
-
-      @if (showError('dueDate')) {
-        <span class="field-error" role="alert">An invoice needs a due date.</span>
-      } @else {
-        <small class="field-hint">When payment is expected.</small>
-      }
+      <bb-date-input
+        id="inv-due"
+        label="Due date"
+        hint="When payment is expected."
+        formControlName="dueDate"
+        [required]="true"
+        [error]="showError('dueDate') ? 'An invoice needs a due date.' : ''"
+      />
     </div>
 
     <div class="field">
-      <label for="inv-contact">Customer</label>
-      <input
+      <!--
+        A contact id, not a quantity of anything — so the plain numeric control
+        rather than one of the five semantic ones. It becomes a lookup when the
+        item and contact search endpoints land.
+      -->
+      <bb-number-input
         id="inv-contact"
-        class="input"
-        type="number"
+        label="Customer"
         min="1"
         step="1"
+        inputmode="numeric"
         formControlName="contactId"
+        [required]="true"
+        [error]="showError('contactId') ? 'Choose the customer.' : ''"
       />
-
-      @if (showError('contactId')) {
-        <span class="field-error" role="alert">Choose the customer.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="inv-gstin">Customer GSTIN</label>
-      <input
+      <bb-text-input
         id="inv-gstin"
-        class="input"
-        type="text"
+        label="Customer GSTIN"
         maxlength="15"
+        [uppercase]="true"
         formControlName="contactGstin"
+        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
       />
-
-      @if (showError('contactGstin')) {
-        <span class="field-error" role="alert">A GSTIN is 15 characters.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="inv-pos">Place of supply</label>
-      <input
+      <bb-text-input
         id="inv-pos"
-        class="input"
-        type="text"
+        label="Place of supply"
         inputmode="numeric"
         maxlength="2"
         placeholder="33"
+        hint="Leave blank to take it from the GSTIN."
         formControlName="placeOfSupplyStateCode"
+        [error]="
+          showError('placeOfSupplyStateCode')
+            ? 'Place of supply is a two-digit state code.'
+            : ''
+        "
       />
-
-      @if (showError('placeOfSupplyStateCode')) {
-        <span class="field-error" role="alert">Place of supply is a two-digit state code.</span>
-      } @else {
-        <small class="field-hint">Leave blank to take it from the GSTIN.</small>
-      }
     </div>
 
     <div class="field">
-      <label for="inv-currency">Currency</label>
-      <input
+      <bb-text-input
         id="inv-currency"
-        class="input"
-        type="text"
+        label="Currency"
         maxlength="3"
+        [uppercase]="true"
         formControlName="currencyCode"
+        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
       />
-
-      @if (showError('currencyCode')) {
-        <span class="field-error" role="alert">Currency is a three-letter code.</span>
-      }
     </div>
 
     <div class="field">
-      <label for="inv-rate">Exchange rate</label>
-      <input
+      <!--
+        Eight decimal places, because `ExchangeRate` is decimal(18,8) — the
+        hand-written field before this stepped by 0.0001 and showed four, so a
+        rate keyed to the eighth place was rounded on screen while the server
+        kept all of it.
+      -->
+      <bb-exchange-rate-input
         id="inv-rate"
-        class="input"
-        type="number"
-        min="0.00000001"
-        step="0.0001"
+        label="Exchange rate"
+        hint="A snapshot at the invoice's date, never looked up live."
+        [fromCurrency]="form.controls.currencyCode.value"
         formControlName="exchangeRate"
+        [required]="true"
+        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
       />
-
-      @if (showError('exchangeRate')) {
-        <span class="field-error" role="alert">Exchange rate must be greater than zero.</span>
-      } @else {
-        <small class="field-hint">A snapshot at the invoice's date, never looked up live.</small>
-      }
     </div>
 
     <div class="field">
-      <label for="inv-billing">Billing address</label>
-      <textarea id="inv-billing" class="input" rows="2" formControlName="billingAddress"></textarea>
+      <bb-textarea id="inv-billing" label="Billing address" rows="2" formControlName="billingAddress" />
     </div>
 
     <div class="field">
-      <label for="inv-shipping">Shipping address</label>
-      <textarea
+      <bb-textarea
         id="inv-shipping"
-        class="input"
+        label="Shipping address"
         rows="2"
         formControlName="shippingAddress"
-      ></textarea>
+      />
     </div>
 
     <div class="field inv-form__wide">
-      <label for="inv-notes">Notes</label>
-      <textarea id="inv-notes" class="input" rows="2" formControlName="notes"></textarea>
+      <bb-textarea id="inv-notes" label="Notes" rows="2" formControlName="notes" />
     </div>
 
     <div class="field inv-form__wide">
-      <label for="inv-terms">Terms and conditions</label>
-      <textarea
+      <bb-textarea
         id="inv-terms"
-        class="input"
+        label="Terms and conditions"
         rows="2"
         formControlName="termsAndConditions"
-      ></textarea>
+      />
     </div>
   </form>
 

@@ -24,34 +24,33 @@
             <p class="text-muted lede">This becomes the owner user for the books we create.</p>
             <div class="grid-2">
               <div class="field">
-                <label for="su-first">First name</label>
-                <input class="input" id="su-first" maxlength="100" autocomplete="given-name"
-                       formControlName="firstName" />
+                <bb-text-input id="su-first" label="First name" maxlength="100"
+                               autocomplete="given-name" formControlName="firstName"
+                               [required]="true" />
               </div>
               <div class="field">
-                <label for="su-last">Last name</label>
-                <input class="input" id="su-last" maxlength="100" autocomplete="family-name"
-                       formControlName="lastName" />
+                <bb-text-input id="su-last" label="Last name" maxlength="100"
+                               autocomplete="family-name" formControlName="lastName"
+                               [required]="true" />
               </div>
               <div class="field">
-                <label for="su-email">Email</label>
-                <input class="input" id="su-email" maxlength="200" autocomplete="email" formControlName="email" />
+                <bb-email-input id="su-email" label="Email" maxlength="200"
+                                formControlName="email" [required]="true" />
               </div>
               <div class="field">
-                <label for="su-mobile">Mobile</label>
-                <input class="input" id="su-mobile" inputmode="tel" maxlength="20" autocomplete="tel" formControlName="mobileNumber" />
+                <!-- A mobile number carries no pattern: lengths vary too much by
+                     country, and the leading `+` is what marks a foreign one. -->
+                <bb-phone-input id="su-mobile" label="Mobile" maxlength="20"
+                                formControlName="mobileNumber" [required]="true" />
               </div>
               <div class="field">
-                <label for="su-password">Password</label>
-                <input class="input" id="su-password" type="password"
-                       autocomplete="new-password" placeholder="At least 8 characters"
-                       formControlName="password" />
+                <bb-password-input id="su-password" label="Password" purpose="new"
+                                   placeholder="At least 8 characters" minlength="8"
+                                   formControlName="password" [required]="true" />
               </div>
               <div class="field">
-                <label for="su-password2">Confirm password</label>
-                <input class="input" id="su-password2" type="password"
-                       autocomplete="new-password"
-                       formControlName="confirmPassword" />
+                <bb-password-input id="su-password2" label="Confirm password" purpose="new"
+                                   formControlName="confirmPassword" [required]="true" />
               </div>
             </div>
             <p style="margin: var(--space-2) 0 0" class="text-muted text-xs">
@@ -63,12 +62,13 @@
             <p class="text-muted lede">One company can hold many organizations later. Start with one.</p>
             <div class="grid-2">
               <div class="field">
-                <label for="su-company">Company name</label>
-                <input class="input" id="su-company" maxlength="200" autocomplete="organization" formControlName="companyName" />
+                <bb-text-input id="su-company" label="Company name" maxlength="200"
+                               autocomplete="organization" formControlName="companyName"
+                               [required]="true" />
               </div>
               <div class="field">
-                <label for="su-org">Organization name</label>
-                <input class="input" id="su-org" maxlength="200" formControlName="organizationName" />
+                <bb-text-input id="su-org" label="Organization name" maxlength="200"
+                               formControlName="organizationName" [required]="true" />
               </div>
               <div class="field">
                 <label for="su-fy">Financial year starts</label>
@@ -96,20 +96,20 @@
                 </select>
               </div>
               <div class="field field--wide">
-                <label for="su-addr1">Address line 1</label>
-                <input class="input" id="su-addr1" maxlength="200" autocomplete="address-line1" formControlName="addressLine1" />
+                <bb-text-input id="su-addr1" label="Address line 1" maxlength="200"
+                               autocomplete="address-line1" formControlName="addressLine1" />
               </div>
               <div class="field field--wide">
-                <label for="su-addr2">Address line 2</label>
-                <input class="input" id="su-addr2" maxlength="200" autocomplete="address-line2" formControlName="addressLine2" />
+                <bb-text-input id="su-addr2" label="Address line 2" maxlength="200"
+                               autocomplete="address-line2" formControlName="addressLine2" />
               </div>
               <div class="field">
-                <label for="su-city">City</label>
-                <input class="input" id="su-city" maxlength="100" autocomplete="address-level2" formControlName="city" />
+                <bb-text-input id="su-city" label="City" maxlength="100"
+                               autocomplete="address-level2" formControlName="city" />
               </div>
               <div class="field">
-                <label for="su-postal">Postal code</label>
-                <input class="input" id="su-postal" inputmode="numeric" maxlength="10" autocomplete="postal-code" formControlName="postalCode" />
+                <bb-text-input id="su-postal" label="Postal code" inputmode="numeric" maxlength="10"
+                               autocomplete="postal-code" formControlName="postalCode" />
               </div>
               <div class="field">
                 <label for="su-currency">Base currency</label>
@@ -127,28 +127,28 @@
             <p class="text-muted lede">All optional — you can add them later in Organization settings.</p>
             <div class="grid-2">
               <div class="field">
-                <label for="su-gstin">GSTIN</label>
-                <input class="input" id="su-gstin" maxlength="15" formControlName="gstin" />
+                <bb-text-input id="su-gstin" label="GSTIN" maxlength="15"
+                               [uppercase]="true" formControlName="gstin" />
               </div>
               <div class="field">
-                <label for="su-pan">PAN</label>
-                <input class="input" id="su-pan" maxlength="10" formControlName="pan" />
+                <bb-text-input id="su-pan" label="PAN" maxlength="10"
+                               [uppercase]="true" formControlName="pan" />
               </div>
               <div class="field">
-                <label for="su-tan">TAN</label>
-                <input class="input" id="su-tan" maxlength="10" formControlName="tan" />
+                <bb-text-input id="su-tan" label="TAN" maxlength="10"
+                               [uppercase]="true" formControlName="tan" />
               </div>
               <div class="field">
-                <label for="su-tin">TIN</label>
-                <input class="input" id="su-tin" maxlength="15" formControlName="tin" />
+                <bb-text-input id="su-tin" label="TIN" maxlength="15"
+                               [uppercase]="true" formControlName="tin" />
               </div>
               <div class="field">
-                <label for="su-cin">CIN</label>
-                <input class="input" id="su-cin" maxlength="21" formControlName="cin" />
+                <bb-text-input id="su-cin" label="CIN" maxlength="21"
+                               [uppercase]="true" formControlName="cin" />
               </div>
               <div class="field">
-                <label for="su-udyam">Udyam</label>
-                <input class="input" id="su-udyam" maxlength="20" formControlName="udyamNumber" />
+                <bb-text-input id="su-udyam" label="Udyam" maxlength="20"
+                               [uppercase]="true" formControlName="udyamNumber" />
               </div>
             </div>
             <p class="text-muted lede mt-3">

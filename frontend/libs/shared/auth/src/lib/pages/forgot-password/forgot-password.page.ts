@@ -4,6 +4,7 @@ import { Component, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../auth.service';
+import { EmailInputComponent, PasswordInputComponent } from '@bill-book/ui-components';
 
 /**
  * OTP wizard: request → verify → reset. The request step always advances,
@@ -13,7 +14,13 @@ import { AuthService } from '../../auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-forgot-password-page',
   standalone: true,
-  imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
+  imports: [
+    AuthShellComponent,
+    ReactiveFormsModule,
+    RouterLink,
+    EmailInputComponent,
+    PasswordInputComponent,
+  ],
   templateUrl: './forgot-password.page.html',
   styleUrl: './forgot-password.page.scss',
 })

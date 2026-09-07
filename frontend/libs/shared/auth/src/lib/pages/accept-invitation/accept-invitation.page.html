@@ -39,12 +39,13 @@
         <p style="margin:0 0 var(--space-4)" class="text-muted text-13">Welcome{{ email() ? ', ' + email() : '' }}. Choose a password to finish.</p>
         <form #acceptForm="ngForm" (ngSubmit)="submit(acceptForm)">
           <div class="field mb-3">
-            <label for="a-pass">New password</label>
-            <input class="input" id="a-pass" name="password" type="password" minlength="8" [(ngModel)]="password" required placeholder="At least 8 characters">
+            <bb-password-input id="a-pass" name="password" label="New password" purpose="new"
+                               minlength="8" placeholder="At least 8 characters"
+                               [(ngModel)]="password" [required]="true" />
           </div>
           <div class="field mb-4">
-            <label for="a-conf">Confirm password</label>
-            <input class="input" id="a-conf" name="confirmPassword" type="password" [(ngModel)]="confirmPassword" required>
+            <bb-password-input id="a-conf" name="confirmPassword" label="Confirm password"
+                               purpose="new" [(ngModel)]="confirmPassword" [required]="true" />
           </div>
           @if (error()) {
             <p class="error-msg">{{ error() }}</p>

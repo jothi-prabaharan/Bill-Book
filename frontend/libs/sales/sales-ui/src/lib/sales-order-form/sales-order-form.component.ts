@@ -15,10 +15,15 @@ import {
   toGridLine,
 } from '@bill-book/sales-core';
 import {
+  DateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
+  ExchangeRateInputComponent,
   MessageBoxComponent,
+  NumberInputComponent,
+  TextareaComponent,
+  TextInputComponent,
   totalsOf,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -58,6 +63,11 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
     RouterModule,
     DocumentLineGridComponent,
     MessageBoxComponent,
+    TextInputComponent,
+    TextareaComponent,
+    NumberInputComponent,
+    DateInputComponent,
+    ExchangeRateInputComponent,
     QuoteToOrderDialogComponent,
     StockAvailabilityDrawerComponent,
   ],

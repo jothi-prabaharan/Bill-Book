@@ -171,10 +171,11 @@
             {{ deliveredOf(index) }}
           </ng-template>
           <ng-template bbCellTemplate="rejected" let-row="row" let-index="index">
-            <bb-number-input
-              
-              class="input input--qty"
-              min="0"
+            <!-- A quantity of goods, not a plain number: fractional, never
+                 negative, and capped at what was delivered. -->
+            <bb-quantity-input
+              ariaLabel="Rejected quantity"
+              class="input--qty"
               [max]="deliveredOf(index)"
               [disabled]="readonlyDoc()"
               [ngModel]="row.rejectedQuantity"

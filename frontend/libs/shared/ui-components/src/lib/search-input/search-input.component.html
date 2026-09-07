@@ -1,13 +1,53 @@
-<input
-  type="search"
-  class="search-input"
-  [id]="id() || null"
-  [name]="name() || null"
-  [placeholder]="placeholder()"
-  [disabled]="effectiveDisabled()"
-  [attr.aria-label]="ariaLabel()"
-  [value]="innerValue()"
-  (input)="onInput($event)"
-  (keydown)="onKeyDown($event)"
-  (blur)="onBlur()"
-/>
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-search" [class.bb-search--busy]="loading()">
+    <svg class="bb-search__icon" width="14" height="14" viewBox="0 0 24 24" fill="none"
+         stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+         aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+
+    <input
+      type="search"
+      class="search-input bb-search__field"
+      [id]="controlId()"
+      [name]="name() || null"
+      [placeholder]="placeholder()"
+      [disabled]="effectiveDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
+      [attr.autocomplete]="autocomplete() || 'off'"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      [attr.aria-controls]="controlsId() || null"
+      [attr.aria-busy]="loading() ? 'true' : null"
+      [value]="innerValue()"
+      (input)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      (blur)="onBlur()"
+    />
+
+    @if (loading()) {
+      <span class="bb-search__spinner" role="status" aria-label="Searching"></span>
+    } @else if (innerValue()) {
+      <button
+        type="button"
+        class="bb-search__clear"
+        aria-label="Clear search"
+        [disabled]="effectiveDisabled() || readonly()"
+        (click)="onClear()"
+      >
+        ×
+      </button>
+    }
+  </div>
+</bb-form-field>

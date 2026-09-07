@@ -1,39 +1,58 @@
 <div class="overlay">
   <div class="modal-content bb-card">
     <h3>New Ticket</h3>
-    
-    <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
-    
+
+    @if (errorMessage(); as failure) {
+      <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+    }
+
+    <!--
+      Common inputs, so the label is tied to its control rather than floating
+      beside it — the three loose `<label>` elements this replaced named nothing,
+      which is what a screen reader would have reported.
+    -->
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>Subject</label>
-        <div *ngIf="form.controls.subject.invalid && (form.controls.subject.touched || form.controls.subject.dirty)" class="field-error">
-          Subject is required
-        </div>
-        <bb-text-input formControlName="subject"></bb-text-input>
+        <bb-text-input
+          label="Subject"
+          maxlength="200"
+          formControlName="subject"
+          [required]="true"
+          [error]="showError('subject') ? 'Subject is required' : ''"
+        />
       </div>
 
       <div class="form-group">
-        <label>Description</label>
-        <div *ngIf="form.controls.description.invalid && (form.controls.description.touched || form.controls.description.dirty)" class="field-error">
-          Description is required
-        </div>
-        <bb-text-input formControlName="description"></bb-text-input>
+        <!-- A ticket's description runs to paragraphs, so a textarea rather
+             than the single line it used to be. -->
+        <bb-textarea
+          label="Description"
+          rows="4"
+          formControlName="description"
+          [required]="true"
+          [error]="showError('description') ? 'Description is required' : ''"
+        />
       </div>
 
       <div class="form-group">
-        <label>Priority</label>
-        <select formControlName="priority" class="bb-select">
-          <option *ngFor="let p of priorities" [value]="p">{{ p }}</option>
-        </select>
+        <bb-select
+          label="Priority"
+          placeholder=""
+          [options]="priorityOptions"
+          formControlName="priority"
+          [required]="true"
+        />
       </div>
 
       <div class="form-group">
-        <label for="ticketContact">Contact</label>
-        <div *ngIf="form.controls.contactId.invalid && (form.controls.contactId.touched || form.controls.contactId.dirty)" class="field-error">
-          Contact is required
-        </div>
-        <bb-master-select id="ticketContact" [masterType]="'contact'" formControlName="contactId"></bb-master-select>
+        <label class="field-label" for="ticketContact">Contact</label>
+        <!-- `bb-master-select` fetches its own options and is not part of the
+             common input set; it keeps its own label until it is folded into
+             `bb-select` with a lookup behind it. -->
+        <bb-master-select id="ticketContact" [masterType]="'contact'" formControlName="contactId" />
+        @if (showError('contactId')) {
+          <span class="field-error" role="alert">Contact is required</span>
+        }
       </div>
 
       <div class="actions">

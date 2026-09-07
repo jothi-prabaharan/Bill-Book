@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { DateInputComponent } from './date-input.component';
 
 interface DateInputTestHarness {
+  effectiveAriaLabel: () => string | null;
   innerValue: () => string;
   effectiveDisabled: () => boolean;
   onInput: (event: Event) => void;
@@ -78,7 +79,10 @@ describe('DateInputComponent', () => {
       expect(cva.disabled()).toBe(false);
       expect(cva.readonly()).toBe(false);
       expect(cva.required()).toBe(false);
-      expect(cva.ariaLabel()).toBe('Date');
+      // Unset, with the spoken fallback applied only when nothing else labels
+      // the field — a `label` now takes precedence over it.
+      expect(cva.ariaLabel()).toBe('');
+      expect(harness.effectiveAriaLabel()).toBe('Date');
     });
 
     it('DATE-T1-06: onFocus dispatches focus output event', () => {

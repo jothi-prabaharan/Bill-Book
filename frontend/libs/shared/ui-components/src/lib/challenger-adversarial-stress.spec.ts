@@ -131,24 +131,24 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
       const comp = TestBed.runInInjectionContext(() => new NumberInputComponent());
 
       comp.writeValue(0);
-      expect((comp as any).displayValue()).toBe('0');
-      expect((comp as any).rawNumericValue).toBe(0);
+      expect((comp as any).displayText()).toBe('0');
+      expect((comp as any).value).toBe(0);
 
       comp.writeValue('0');
-      expect((comp as any).displayValue()).toBe('0');
-      expect((comp as any).rawNumericValue).toBe(0);
+      expect((comp as any).displayText()).toBe('0');
+      expect((comp as any).value).toBe(0);
 
       const changeSpy = vi.fn();
       comp.registerOnChange(changeSpy);
 
       (comp as any).onInput({ target: { value: '0' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(0);
-      expect((comp as any).rawNumericValue).toBe(0);
+      expect((comp as any).value).toBe(0);
 
       // Empty should emit null
       (comp as any).onInput({ target: { value: '' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(null);
-      expect((comp as any).rawNumericValue).toBeNull();
+      expect((comp as any).value).toBeNull();
     });
 
     it('NUM-STRESS-02: Micro-step precision (0.0001, 0.001) for gold weights and ratios', () => {
@@ -160,18 +160,18 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
       });
 
       comp.writeValue(0.9165);
-      expect((comp as any).displayValue()).toBe('0.9165');
-      expect((comp as any).rawNumericValue).toBe(0.9165);
+      expect((comp as any).displayText()).toBe('0.9165');
+      expect((comp as any).value).toBe(0.9165);
 
       const changeSpy = vi.fn();
       comp.registerOnChange(changeSpy);
 
       (comp as any).onInput({ target: { value: '0.9999' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(0.9999);
-      expect((comp as any).rawNumericValue).toBe(0.9999);
+      expect((comp as any).value).toBe(0.9999);
 
       (comp as any).onBlur(new FocusEvent('blur'));
-      expect((comp as any).displayValue()).toBe('0.9999');
+      expect((comp as any).displayText()).toBe('0.9999');
     });
 
     it('NUM-STRESS-03: Malformed numeric typing rejections', () => {
@@ -182,17 +182,17 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
       // Invalid text
       (comp as any).onInput({ target: { value: 'abc' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(null);
-      expect((comp as any).rawNumericValue).toBeNull();
+      expect((comp as any).value).toBeNull();
 
       // Whitespace
       (comp as any).onInput({ target: { value: '   ' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(null);
-      expect((comp as any).rawNumericValue).toBeNull();
+      expect((comp as any).value).toBeNull();
 
       // Minus only
       (comp as any).onInput({ target: { value: '-' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(null);
-      expect((comp as any).rawNumericValue).toBeNull();
+      expect((comp as any).value).toBeNull();
     });
   });
 
@@ -342,7 +342,11 @@ describe('Adversarial Empirical Stress Tests - M1 UI Primitives', () => {
       comp.clear.subscribe(clearSpy);
 
       // Escape key clears
-      const escEvt = { key: 'Escape', preventDefault: vi.fn() } as unknown as KeyboardEvent;
+      const escEvt = {
+        key: 'Escape',
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      } as unknown as KeyboardEvent;
       (comp as any).onKeyDown(escEvt);
 
       expect(escEvt.preventDefault).toHaveBeenCalled();

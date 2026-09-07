@@ -5,18 +5,30 @@
         <h2>Welcome back.</h2>
 
         <div class="field">
-          <label for="login-email">Email</label>
-          <input class="input" id="login-email" placeholder="you@company.in"
-                 formControlName="email" autocomplete="username" />
+          <bb-email-input
+            id="login-email"
+            label="Email"
+            placeholder="you@company.in"
+            autocomplete="username"
+            formControlName="email"
+            [required]="true"
+          />
         </div>
         <div class="field">
-          <label for="login-password">Password</label>
-          <input class="input" id="login-password" type="password" placeholder="••••••••"
-                 formControlName="password" autocomplete="current-password" />
+          <!-- The reveal toggle is a named button rather than an icon with no
+               accessible name; the value never leaves the input. -->
+          <bb-password-input
+            id="login-password"
+            label="Password"
+            placeholder="••••••••"
+            purpose="current"
+            formControlName="password"
+            [required]="true"
+          />
         </div>
 
         <div class="form-row">
-          <label class="checkbox"><input type="checkbox" formControlName="remember" /> Keep me signed in</label>
+          <bb-checkbox text="Keep me signed in" formControlName="remember" />
           <a routerLink="/forgot-password">Forgot password?</a>
         </div>
 

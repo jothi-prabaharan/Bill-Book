@@ -1,0 +1,63 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-text {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+}
+
+.bb-text__affix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 12px;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 65%, transparent);
+  background: color-mix(in srgb, var(--color-text, #201f1d) 4%, transparent);
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  box-sizing: border-box;
+  user-select: none;
+}
+
+/* Only the affixed form re-cuts the corners; a bare field keeps the house
+   `.input` shape exactly, so the 180 existing bb-text-input usages are
+   untouched. */
+.bb-text--affixed {
+  .bb-text__affix:first-child {
+    border-right: none;
+    border-radius: var(--radius-md, 4px) 0 0 var(--radius-md, 4px);
+  }
+
+  .bb-text__affix:last-child {
+    border-left: none;
+    border-radius: 0 var(--radius-md, 4px) var(--radius-md, 4px) 0;
+  }
+
+  .text-input {
+    border-radius: 0;
+  }
+
+  .bb-text__affix:last-child ~ .text-input,
+  .text-input:first-child {
+    border-top-left-radius: var(--radius-md, 4px);
+    border-bottom-left-radius: var(--radius-md, 4px);
+  }
+
+  .text-input:last-child {
+    border-top-right-radius: var(--radius-md, 4px);
+    border-bottom-right-radius: var(--radius-md, 4px);
+  }
+}
+
+.text-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+
+  &.uppercase {
+    text-transform: uppercase;
+  }
+}

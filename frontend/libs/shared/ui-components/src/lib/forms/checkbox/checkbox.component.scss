@@ -1,0 +1,25 @@
+:host {
+  display: block;
+}
+
+/* `.checkbox` on the label is the house class from _forms.scss — the accent
+   colour and the gap come from there rather than being restated. */
+.bb-checkbox {
+  input:focus-visible {
+    outline: 2px solid var(--color-accent, #b68235);
+    outline-offset: 2px;
+  }
+
+  input:disabled {
+    cursor: not-allowed;
+  }
+
+  &:has(input:disabled) {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+}
+
+.bb-checkbox__text {
+  line-height: 1.3;
+}
