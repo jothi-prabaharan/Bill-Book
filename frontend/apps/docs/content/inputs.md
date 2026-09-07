@@ -303,9 +303,11 @@ what happened rather than dropping them silently.
 
 ## What is migrated, and what is not
 
-A repository search for every `<input>`, `<select>` and `<textarea>` was run
-before this work and again after it. Direct inputs fell from **154 to 93**, and
-the ones left divide into three groups.
+A repository search for every typed `<input>` was run before this work and again
+after it, against the same base commit both times. Direct inputs fell from
+**133 to 93**, and the ones left divide into three groups. (The commit message
+for this change says 154, which was counted against an older base and against
+every `<input>` including buttons; 133 is the like-for-like figure.)
 
 ### Deliberately direct — these should stay
 
