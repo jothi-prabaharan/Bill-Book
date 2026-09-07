@@ -1,6 +1,6 @@
 import { Directive, computed, input, output, signal } from '@angular/core';
 import { BbControlBase } from '../control-base';
-import { scaledToText, stepFor, textToScaled } from '../decimal';
+import { groupDecimalText, scaledToText, stepFor, textToScaled } from '../decimal';
 
 /**
  * The one numeric implementation. Money, Unit Price, Quantity, Percentage and
@@ -83,6 +83,24 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
   /** Empty takes the semantic default — right for every figure but a counter. */
   readonly align = input<'left' | 'right' | 'center' | ''>('');
 
+  /**
+   * Group the figure with separators when the field is not being edited.
+   *
+   * Off for most controls and on for money — see `bb-money-input`. When it is
+   * on the element becomes `type="text"`, because `type="number"` cannot hold
+   * `12,34,567.89`: a browser treats a grouped value as invalid and blanks it.
+   */
+  readonly masked = input<boolean, boolean | string>(false, {
+    transform: (value) => value === '' || value === 'true' || value === true,
+  });
+
+  /**
+   * The grouping mask, as `mst.Currency.Format` holds it — `##,##,##0.00` for
+   * the rupee, `###,###,##0.00` for thousands. Empty means the control asks its
+   * own source; `bb-money-input` reads the branch's currency.
+   */
+  readonly mask = input<string>('');
+
   /** Overrides the keyboard the derived one would ask for. */
   readonly inputmode = input<'decimal' | 'numeric' | ''>('');
 
@@ -137,6 +155,22 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
 
   protected readonly resolvedAlign = computed(() => this.align() || this.defaultAlign());
 
+  protected readonly isMasked = computed(() => this.masked() || this.defaultMasked());
+
+  protected readonly resolvedMask = computed(() => this.mask() || this.defaultMask());
+
+  /**
+   * `text` while masked, because grouping is invalid in a `number` input.
+   *
+   * The cost is the spinner arrows and the browser's own range checking, which
+   * is why this is not the default: only money is worth the trade, and `min`,
+   * `max` and `step` stop being emitted with it.
+   */
+  protected readonly fieldType = computed(() => (this.isMasked() ? 'text' : 'number'));
+
+  /** True while the field has focus, when it shows plain digits. */
+  protected readonly isFocused = signal(false);
+
   /**
    * `decimal` rather than `numeric` whenever fractions are allowed, because
    * `numeric` gives a phone keypad with no decimal point on it.
@@ -165,9 +199,9 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
     }
 
     this.storedValue = numeric;
-    this.displayText.set(
-      scaledToText(numeric, this.minorDigits(), this.resolvedDecimals()),
-    );
+    // Grouped unless the field is being edited: a value arriving from the form
+    // while somebody types would otherwise punctuate itself under the caret.
+    this.displayText.set(this.isFocused() ? this.plainText() : this.settledText());
   }
 
   protected emitValue(value: number | null): void {
@@ -194,7 +228,21 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
     this.publish(parsed);
   }
 
+  /**
+   * Focus strips the grouping back to plain digits.
+   *
+   * Editing a grouped figure means every keystroke moves a separator and the
+   * caret with it. Showing the number plainly while it is being edited and
+   * punctuating it on the way out is the trade this control makes, and it is
+   * why there is no caret arithmetic here at all.
+   */
   protected onFocus(event: FocusEvent): void {
+    this.isFocused.set(true);
+
+    if (this.isMasked()) {
+      this.displayText.set(this.plainText());
+    }
+
     this.focus.emit(event);
   }
 
@@ -203,13 +251,32 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
    * field's precision, so `1.5` reads `1.50` and `007` reads `7`.
    */
   protected onBlur(event: FocusEvent): void {
-    this.displayText.set(
-      this.storedValue === null
-        ? ''
-        : scaledToText(this.storedValue, this.minorDigits(), this.resolvedDecimals()),
-    );
+    this.isFocused.set(false);
+    this.displayText.set(this.settledText());
     this.onTouched();
     this.blur.emit(event);
+  }
+
+  /** The value as plain digits — what the field shows while it is being edited. */
+  private plainText(): string {
+    return this.storedValue === null
+      ? ''
+      : scaledToText(this.storedValue, this.minorDigits(), this.resolvedDecimals());
+  }
+
+  /**
+   * The value as the field shows it at rest: grouped when masked, plain
+   * otherwise. Both come from the same exact decimal string, so the two forms
+   * can never disagree about the figure itself.
+   */
+  private settledText(): string {
+    const plain = this.plainText();
+
+    if (plain === '' || !this.isMasked()) {
+      return plain;
+    }
+
+    return groupDecimalText(plain, this.resolvedMask());
   }
 
   /** Decimal places when the caller names none. */
@@ -238,5 +305,15 @@ export abstract class BbNumericControlBase extends BbControlBase<number | null> 
 
   protected defaultInputmode(): 'decimal' | 'numeric' {
     return this.resolvedDecimals() > 0 || this.minorDigits() > 0 ? 'decimal' : 'numeric';
+  }
+
+  /** Whether this control groups its figure at rest. Money does; nothing else. */
+  protected defaultMasked(): boolean {
+    return false;
+  }
+
+  /** The grouping mask when the caller names none. */
+  protected defaultMask(): string {
+    return '';
   }
 }

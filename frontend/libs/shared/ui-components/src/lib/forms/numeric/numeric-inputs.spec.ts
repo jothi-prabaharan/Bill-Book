@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { DEFAULT_FORMAT_SETTINGS, FormatSettings } from '@bill-book/currency-format';
+import { groupDecimalText } from '../decimal';
 import { ExchangeRateInputComponent } from './exchange-rate-input.component';
 import { MoneyInputComponent } from './money-input.component';
 import { PercentageInputComponent } from './percentage-input.component';
@@ -24,6 +26,8 @@ interface NumericHarness {
   resolvedStep: () => number;
   resolvedPrefix: () => string;
   resolvedSuffix: () => string;
+  fieldType: () => string;
+  onFocus: (event: FocusEvent) => void;
   minAttr: () => string | null;
   maxAttr: () => string | null;
   inputMode: () => string;
@@ -60,8 +64,10 @@ describe('Numeric inputs', () => {
       const { component, harness } = build(() => new MoneyInputComponent());
       expect(harness.resolvedDecimals()).toBe(2);
 
+      // Grouped at rest, in the branch's own style — the shipped default here
+      // is the rupee's lakh-crore mask.
       component.writeValue(1250.5);
-      expect(harness.displayText()).toBe('1250.50');
+      expect(harness.displayText()).toBe('1,250.50');
     });
 
     it('MON-02: a valid decimal reaches the form as typed', () => {
@@ -144,20 +150,109 @@ describe('Numeric inputs', () => {
         expect(Number.isInteger(harness.value)).toBe(true);
 
         component.writeValue(paise);
+        // Grouped at rest; the figure underneath is exact either way.
+        expect(harness.displayText()).toBe(
+          groupDecimalText(Number(text).toFixed(2), '##,##,##0.00'),
+        );
+
+        // And plain the moment the field is focused, so no separator moves
+        // under the caret while somebody types.
+        harness.onFocus(new FocusEvent('focus'));
         expect(harness.displayText()).toBe(Number(text).toFixed(2));
+        harness.onBlur(new FocusEvent('blur'));
       }
     });
 
-    it('MON-08: a currency symbol is shown only when one is given', () => {
+    it('MON-08: a currency symbol is shown only when one is asked for', () => {
+      // A column of amounts under a currency heading wants none, and a grid
+      // full of repeated symbols is noise.
       const bare = build(() => new MoneyInputComponent());
       expect(bare.harness.resolvedPrefix()).toBe('');
 
-      const rupees = build(() => {
+      const explicit = build(() => {
         const component = new MoneyInputComponent();
         set(component, 'currencySymbol', '₹');
         return component;
       });
-      expect(rupees.harness.resolvedPrefix()).toBe('₹');
+      expect(explicit.harness.resolvedPrefix()).toBe('₹');
+
+      // `showCurrency` takes the branch's own symbol rather than a hard-coded one.
+      const branch = build(() => {
+        const component = new MoneyInputComponent();
+        set(component, 'showCurrency', true);
+        return component;
+      });
+      expect(branch.harness.resolvedPrefix()).toBe(DEFAULT_FORMAT_SETTINGS.currencySymbol);
+    });
+
+    it('MON-10: the mask, the precision and the symbol side come from the org currency', () => {
+      // "Organization currency, currency format": the grouping, the decimal
+      // places and which side the symbol sits are the currency's, not this
+      // component's. A dollar org groups in threes; a rupee org in lakhs.
+      const western: FormatSettings = {
+        ...DEFAULT_FORMAT_SETTINGS,
+        currencyCode: 'USD',
+        currencySymbol: '$',
+        currencyMask: '###,###,##0.00',
+      };
+
+      const { component, harness } = build(() => {
+        const made = new MoneyInputComponent();
+        set(made, 'formats', western);
+        set(made, 'showCurrency', true);
+        return made;
+      });
+
+      component.writeValue(1234567.89);
+      expect(harness.displayText()).toBe('1,234,567.89');
+      expect(harness.resolvedPrefix()).toBe('$');
+
+      const suffixed = build(() => {
+        const made = new MoneyInputComponent();
+        set(made, 'formats', { ...western, symbolPosition: 'Suffix' as const });
+        set(made, 'showCurrency', true);
+        return made;
+      });
+      expect(suffixed.harness.resolvedPrefix()).toBe('');
+      expect(suffixed.harness.resolvedSuffix()).toBe('$');
+    });
+
+    it('MON-11: a currency with no decimal places is drawn with none', () => {
+      const yen: FormatSettings = {
+        ...DEFAULT_FORMAT_SETTINGS,
+        currencyCode: 'JPY',
+        currencyMask: '###,###,##0',
+        currencyDecimals: 0,
+      };
+
+      const { component, harness } = build(() => {
+        const made = new MoneyInputComponent();
+        set(made, 'formats', yen);
+        return made;
+      });
+
+      expect(harness.resolvedDecimals()).toBe(0);
+      component.writeValue(1234567);
+      expect(harness.displayText()).toBe('1,234,567');
+    });
+
+    it('MON-12: the masked field is a text input, because a number one blanks a grouped value', () => {
+      const { harness } = build(() => new MoneyInputComponent());
+      expect(harness.fieldType()).toBe('text');
+      expect(harness.inputMode()).toBe('decimal');
+
+      // Everything else keeps the native number input and its range attributes.
+      const plain = build(() => new QuantityInputComponent());
+      expect(plain.harness.fieldType()).toBe('number');
+    });
+
+    it('MON-13: a grouped figure pasted back in is parsed, not rejected', () => {
+      const { component, harness } = build(() => new MoneyInputComponent());
+      const changed = vi.fn();
+      component.registerOnChange(changed);
+
+      type(harness, '12,34,567.89');
+      expect(changed).toHaveBeenCalledWith(1234567.89);
     });
 
     it('MON-09: binds into a reactive form and carries its validators', () => {

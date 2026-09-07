@@ -55,6 +55,34 @@ export class EmailInputComponent extends BbTextControlBase {
     return BB_EMAIL_PATTERN;
   }
 
+  /**
+   * The email mask: what an address cannot contain, removed as it is typed.
+   *
+   * - **Whitespace goes.** A space is never part of an address, and the one
+   *   that gets typed is almost always a stray from pasting or a phone
+   *   keyboard's auto-space after the domain.
+   * - **Lower case.** Addresses are compared case-insensitively everywhere that
+   *   matters, and storing the case somebody happened to use makes two rows
+   *   look different when they are the same person.
+   * - **One `@`.** The first one is the separator; any after it are a paste
+   *   that went wrong, and they are dropped rather than left to fail
+   *   validation later.
+   *
+   * **This is convenience, not validation.** The pattern above still checks the
+   * shape, `bbEmail` checks it again in the form, and the API checks it a third
+   * time — that last one is the only one that counts.
+   */
+  protected override mask(text: string): string {
+    const cleaned = text.toLowerCase().replace(/\s+/g, '');
+    const at = cleaned.indexOf('@');
+
+    if (at < 0) {
+      return cleaned;
+    }
+
+    return cleaned.slice(0, at + 1) + cleaned.slice(at + 1).replace(/@/g, '');
+  }
+
   protected override fallbackAriaLabel(): string {
     return 'Email address';
   }

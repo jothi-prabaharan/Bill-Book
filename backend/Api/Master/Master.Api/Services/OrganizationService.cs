@@ -77,7 +77,15 @@ public sealed class OrganizationService
         // from the truth, and this cannot.
         Guid? firstOrgId = rows.Count > 0 ? rows[0].OrgId : null;
 
-        return rows.Select(o => Project(o, o.OrgId == firstOrgId)).ToList();
+        IReadOnlyDictionary<Guid, CurrencyDetails> currencies =
+            await BaseCurrenciesAsync(rows.Select(o => o.OrgId).ToList(), ct);
+
+        return rows
+            .Select(o => Project(
+                o,
+                o.OrgId == firstOrgId,
+                currencies.TryGetValue(o.OrgId, out CurrencyDetails? currency) ? currency : null))
+            .ToList();
     }
 
     public async Task<OrganizationListItem?> GetAsync(
@@ -429,12 +437,59 @@ public sealed class OrganizationService
     private static string? Trimmed(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-    private static OrganizationListItem Project(Organization o, bool isFirst) => new()
+    /// <summary>
+    /// Each branch's base currency, in one query rather than one per branch.
+    ///
+    /// <b>Batched because this feeds a list.</b> The branches screen draws every
+    /// branch on the account, and a lookup inside the projection would be the
+    /// N+1 the house rules call out for <c>CreatedBy</c> name resolution.
+    ///
+    /// A branch with no active base currency simply has no entry: it is
+    /// mid-setup, and the caller falls back to the shipped default rather than
+    /// the response failing.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, CurrencyDetails>> BaseCurrenciesAsync(
+        IReadOnlyList<Guid> orgIds, CancellationToken ct)
+    {
+        if (orgIds.Count == 0)
+        {
+            return new Dictionary<Guid, CurrencyDetails>();
+        }
+
+        var rows = await _db.OrgCurrencies
+            .Where(oc => orgIds.Contains(oc.OrgId) && oc.IsBaseCurrency && oc.IsActive)
+            .Join(
+                _db.Currencies,
+                oc => oc.CurrencyId,
+                c => c.CurrencyId,
+                (oc, c) => new { oc.OrgId, Currency = c })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        return rows.ToDictionary(
+            row => row.OrgId,
+            row => new CurrencyDetails
+            {
+                CurrencyId = row.Currency.CurrencyId,
+                Code = row.Currency.Code,
+                Name = row.Currency.Name,
+                Symbol = row.Currency.Symbol,
+                Format = row.Currency.Format,
+                DecimalPlaces = row.Currency.DecimalPlaces,
+                SymbolPosition = row.Currency.SymbolPosition == SymbolPosition.Suffix
+                    ? nameof(SymbolPosition.Suffix)
+                    : nameof(SymbolPosition.Prefix),
+            });
+    }
+
+    private static OrganizationListItem Project(
+        Organization o, bool isFirst, CurrencyDetails? currency) => new()
     {
         OrgId = o.OrgId,
         OrgCode = o.OrgCode,
         Name = o.Name,
         BaseCurrency = o.BaseCurrency,
+        Currency = currency,
         AllowFreeTextLines = o.AllowFreeTextLines,
         DiscountLevel = o.DiscountLevel.ToString(),
         Vertical = o.Vertical.ToString(),

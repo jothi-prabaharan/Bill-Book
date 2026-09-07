@@ -36,6 +36,25 @@ function type(harness: TextHarness, text: string): void {
   harness.onInput({ target: { value: text } } as unknown as Event);
 }
 
+/**
+ * An input element as far as the mask is concerned: a value, a caret, and a
+ * `setSelectionRange` that records where the caret was put back.
+ */
+function fakeInput(value: string, caret: number) {
+  return {
+    value,
+    selectionStart: caret,
+    setSelectionRange(start: number) {
+      this.selectionStart = start;
+    },
+  };
+}
+
+/** Types through a real-shaped element, so the mask can write the value back. */
+function typeInto(harness: TextHarness, text: string): void {
+  harness.onInput({ target: fakeInput(text, text.length) } as unknown as Event);
+}
+
 function set(component: unknown, name: string, value: unknown): void {
   (component as Record<string, unknown>)[name] = () => value;
 }
@@ -78,6 +97,46 @@ describe('Text inputs', () => {
       expect(validate(new FormControl('ravi@acme'))).toEqual({ bbEmail: true });
       expect(validate(new FormControl('ravi acme@x.com'))).toEqual({ bbEmail: true });
       expect(validate(new FormControl('@acme.com'))).toEqual({ bbEmail: true });
+    });
+
+    it('EML-05: the mask drops what an address cannot contain, as it is typed', () => {
+      const component = build(() => new EmailInputComponent());
+      const harness = component as unknown as TextHarness;
+      const changed = vi.fn();
+      component.registerOnChange(changed);
+
+      // A stray space from a paste or a phone keyboard's auto-space.
+      typeInto(harness, ' ravi@acme.co.in ');
+      expect(changed).toHaveBeenLastCalledWith('ravi@acme.co.in');
+
+      // Case folded: two rows that differ only in case are the same person.
+      typeInto(harness, 'Ravi@ACME.co.in');
+      expect(changed).toHaveBeenLastCalledWith('ravi@acme.co.in');
+
+      // The first @ is the separator; later ones are a paste that went wrong.
+      typeInto(harness, 'ravi@acme@co.in');
+      expect(changed).toHaveBeenLastCalledWith('ravi@acmeco.in');
+    });
+
+    it('EML-06: the caret stays where it was typed, not at the end', () => {
+      // A mask that shortens the text sends the caret to the end unless it is
+      // put back — so typing a space mid-address would throw you to the end.
+      const component = build(() => new EmailInputComponent());
+      const harness = component as unknown as TextHarness;
+      const target = fakeInput('ravi @acme.co.in', 5);
+
+      harness.onInput({ target } as unknown as Event);
+
+      expect(target.value).toBe('ravi@acme.co.in');
+      expect(target.selectionStart).toBe(4);
+    });
+
+    it('EML-07: a value from the server is shown as it is, never rewritten', () => {
+      // Masking on load would put one address on screen and another in the
+      // form. The mask governs typing only.
+      const component = build(() => new EmailInputComponent());
+      component.writeValue('Ravi@Acme.co.in');
+      expect((component as unknown as TextHarness).innerValue()).toBe('Ravi@Acme.co.in');
     });
 
     it('EML-04: an empty optional field is valid; requiredness is stated separately', () => {

@@ -8,44 +8,54 @@
 
   <form [formGroup]="form" class="form-grid">
     <div class="field">
-      <label for="docDate">Document Date</label>
-      <bb-date-input id="docDate"  class="input" formControlName="documentDate" />
+      <bb-date-input id="docDate" label="Document Date" formControlName="documentDate" [required]="true" />
     </div>
     <div class="field">
-      <label for="contactId">Contact (ID)</label>
-      <bb-number-input id="contactId"  class="input" formControlName="contactId" (valueChange)="onContactChange()" />
+      <bb-number-input
+        id="contactId"
+        label="Contact (ID)"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="contactId"
+        (valueChange)="onContactChange()"
+      />
     </div>
     <div class="field">
-      <label for="reasonCode">Reason Code</label>
-      <select id="reasonCode" formControlName="reasonCode">
-        <option [value]="1">Sales Return</option>
-        <option [value]="2">Post Sale Discount</option>
-        <option [value]="3">Deficiency in Services</option>
-        <option [value]="4">Correction in Invoice</option>
-        <option [value]="5">Change in POS</option>
-        <option [value]="6">Finalization of Provisional Assessment</option>
-        <option [value]="7">Others</option>
-      </select>
+      <bb-select
+        id="reasonCode"
+        label="Reason Code"
+        placeholder=""
+        [options]="reasonCodes"
+        formControlName="reasonCode"
+      />
     </div>
     <div class="field">
-      <label for="currencyCode">Currency</label>
-      <bb-text-input id="currencyCode" formControlName="currencyCode" maxlength="3" />
+      <bb-text-input
+        id="currencyCode"
+        label="Currency"
+        maxlength="3"
+        [uppercase]="true"
+        formControlName="currencyCode"
+      />
     </div>
     <div class="field">
-      <label for="exchangeRate">Exchange Rate</label>
-      <bb-text-input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
+      <!-- Eight places, matching decimal(18,8). It was a text box stepping by
+           a hundredth. -->
+      <bb-exchange-rate-input
+        id="exchangeRate"
+        label="Exchange Rate"
+        formControlName="exchangeRate"
+      />
     </div>
     <div class="field">
-      <label for="billingAddress">Billing Address</label>
-      <textarea id="billingAddress" formControlName="billingAddress" rows="2"></textarea>
+      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
     </div>
     <div class="field">
-      <label for="shippingAddress">Shipping Address</label>
-      <textarea id="shippingAddress" formControlName="shippingAddress" rows="2"></textarea>
+      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
     </div>
     <div class="field full-width">
-      <label for="notes">Notes</label>
-      <textarea id="notes" formControlName="notes" rows="2"></textarea>
+      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
     </div>
   </form>
 

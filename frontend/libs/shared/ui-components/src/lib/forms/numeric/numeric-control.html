@@ -18,8 +18,14 @@
       <span class="bb-num__affix bb-num__affix--prefix" aria-hidden="true">{{ resolvedPrefix() }}</span>
     }
 
+    <!--
+      `text` rather than `number` when the field is masked: a browser treats a
+      grouped value as an invalid number and blanks it. min, max and step go
+      with it, because they mean nothing on a text input and emitting them
+      would claim a check the browser is not doing.
+    -->
     <input
-      type="number"
+      [type]="fieldType()"
       class="input bb-num__field"
       [class.bb-num__field--left]="resolvedAlign() === 'left'"
       [class.bb-num__field--center]="resolvedAlign() === 'center'"
@@ -27,9 +33,9 @@
       [name]="name() || null"
       [placeholder]="placeholder()"
       [attr.inputmode]="inputMode()"
-      [attr.min]="minAttr()"
-      [attr.max]="maxAttr()"
-      [attr.step]="resolvedStep()"
+      [attr.min]="isMasked() ? null : minAttr()"
+      [attr.max]="isMasked() ? null : maxAttr()"
+      [attr.step]="isMasked() ? null : resolvedStep()"
       [attr.autocomplete]="autocomplete() || 'off'"
       [disabled]="effectiveDisabled()"
       [readonly]="readonly()"

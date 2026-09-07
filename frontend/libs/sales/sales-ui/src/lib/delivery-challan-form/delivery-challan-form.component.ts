@@ -3,14 +3,37 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { DeliveryChallanService, SaveDeliveryChallanRequest } from '@bill-book/sales-core';
-import { DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbSelectOption,
+  DateInputComponent,
+  DocumentLine,
+  DocumentLineContext,
+  DocumentLineGridComponent,
+  ExchangeRateInputComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextareaComponent,
+  TextInputComponent,
+  totalsOf,
+} from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-delivery-challan-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DocumentLineGridComponent,
+    RouterModule,
+    DateInputComponent,
+    TextInputComponent,
+    TextareaComponent,
+    NumberInputComponent,
+    SelectComponent,
+    ExchangeRateInputComponent,
+  ],
   templateUrl: './delivery-challan-form.component.html',
   styleUrls: ['./delivery-challan-form.component.scss']
 })
@@ -35,6 +58,13 @@ export class DeliveryChallanFormComponent implements OnInit {
     shippingAddress: [''],
     notes: ['']
   });
+
+  /** Sale, job work or transfer — what the challan is moving goods for. */
+  readonly challanTypes: BbSelectOption<number>[] = [
+    { value: 0, label: 'Sale' },
+    { value: 1, label: 'Job Work' },
+    { value: 2, label: 'Transfer' },
+  ];
 
   lines: DocumentLine[] = [];
   context: DocumentLineContext = {

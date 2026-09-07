@@ -1,3 +1,5 @@
+import { groupSizesFromMask } from '@bill-book/currency-format';
+
 /**
  * Decimal text in, exact numbers out — without floating point in the middle.
  *
@@ -234,4 +236,65 @@ function fractionDigitsOf(value: number): number {
  */
 export function stepFor(decimals: number): number {
   return decimals <= 0 ? 1 : Number(`1e-${decimals}`);
+}
+
+/**
+ * Grouping separators inserted into decimal text, per a currency's mask.
+ *
+ * **Takes text and returns text, so nothing is ever converted back to a
+ * number.** `formatNumber` in `@bill-book/currency-format` does the same job
+ * from a `number`, which is right for a figure that already is one — but a
+ * money field's value may be integer paise, and turning 125050 into 1250.50 to
+ * group it would put a division back into the one path this file exists to keep
+ * free of them. `scaledToText` has already produced the exact decimal; this
+ * only punctuates it.
+ *
+ * The group sizes come from the mask, right to left with the last repeating:
+ * `##,##,##0.00` gives threes then twos — lakh-crore grouping — and
+ * `###,###,##0.00` gives threes throughout. A mask with no separator groups
+ * nothing, which is a currency asking to be written plainly rather than one
+ * falling back to threes.
+ */
+export function groupDecimalText(text: string, mask: string): string {
+  if (!text) {
+    return '';
+  }
+
+  const negative = text.startsWith('-');
+  const body = negative ? text.slice(1) : text;
+  const [whole, fraction] = body.split('.');
+
+  const sizes = groupSizesFromMask(mask);
+  const grouped = sizes.length === 0 ? whole : insertSeparators(whole, sizes[0], sizes[1] ?? sizes[0]);
+  const punctuated = fraction === undefined ? grouped : `${grouped}.${fraction}`;
+
+  return negative ? `-${punctuated}` : punctuated;
+}
+
+/**
+ * The group sizes a mask asks for: `[first, rest]`, read right to left.
+ *
+ * Deliberately the same reading as `groupSizesFromMask` in
+ * `@bill-book/currency-format`, and imported from it rather than rewritten —
+ * two implementations of one mask would eventually disagree about the rupee.
+ */
+function insertSeparators(digits: string, first: number, rest: number): string {
+  if (digits.length <= first) {
+    return digits;
+  }
+
+  const tail = digits.slice(digits.length - first);
+  let head = digits.slice(0, digits.length - first);
+  const parts: string[] = [];
+
+  while (head.length > rest) {
+    parts.unshift(head.slice(head.length - rest));
+    head = head.slice(0, head.length - rest);
+  }
+
+  if (head.length > 0) {
+    parts.unshift(head);
+  }
+
+  return [...parts, tail].join(',');
 }

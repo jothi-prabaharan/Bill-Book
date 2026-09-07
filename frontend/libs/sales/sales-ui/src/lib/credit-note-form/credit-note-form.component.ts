@@ -3,7 +3,23 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CreditNoteService, LedgerService, OutstandingBalance, SaveCreditNoteRequest } from '@bill-book/sales-core';
-import { AllocationGridComponent, AllocationRow, DocumentLineGridComponent, DocumentLine, DocumentLineContext, totalsOf, DateInputComponent, TextInputComponent, NumberInputComponent, MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
+import {
+  AllocationGridComponent,
+  AllocationRow,
+  BbSelectOption,
+  DateInputComponent,
+  DocumentLine,
+  DocumentLineContext,
+  DocumentLineGridComponent,
+  ExchangeRateInputComponent,
+  MessageBoxComponent,
+  NumberInputComponent,
+  SelectComponent,
+  TextareaComponent,
+  TextInputComponent,
+  UiMessage,
+  totalsOf,
+} from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 /**
@@ -18,7 +34,20 @@ const PAISE = 100;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-credit-note-form',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DocumentLineGridComponent, AllocationGridComponent, RouterModule, DateInputComponent, TextInputComponent, NumberInputComponent, MessageBoxComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    DocumentLineGridComponent,
+    AllocationGridComponent,
+    RouterModule,
+    DateInputComponent,
+    TextInputComponent,
+    TextareaComponent,
+    NumberInputComponent,
+    SelectComponent,
+    ExchangeRateInputComponent,
+    MessageBoxComponent,
+  ],
   templateUrl: './credit-note-form.component.html',
   styleUrl: './credit-note-form.component.scss'
 })
@@ -43,6 +72,22 @@ export class CreditNoteFormComponent implements OnInit {
     shippingAddress: [''],
     notes: ['']
   });
+
+  /**
+   * The GST credit-note reasons, as the return expects them. Numbers, not the
+   * strings a native `<select>` publishes — `bb-select` gives back the value it
+   * was given rather than the element's string, which is why the `+` coercion
+   * on save is now belt and braces rather than load-bearing.
+   */
+  readonly reasonCodes: BbSelectOption<number>[] = [
+    { value: 1, label: 'Sales Return' },
+    { value: 2, label: 'Post Sale Discount' },
+    { value: 3, label: 'Deficiency in Services' },
+    { value: 4, label: 'Correction in Invoice' },
+    { value: 5, label: 'Change in POS' },
+    { value: 6, label: 'Finalization of Provisional Assessment' },
+    { value: 7, label: 'Others' },
+  ];
 
   lines: DocumentLine[] = [];
   context: DocumentLineContext = {

@@ -6,48 +6,58 @@
 
   <form [formGroup]="form" class="form-grid">
     <div class="field">
-      <label for="docDate">Document Date</label>
-      <bb-date-input id="docDate"  class="input" formControlName="documentDate" />
+      <bb-date-input id="docDate" label="Document Date" formControlName="documentDate" [required]="true" />
     </div>
     <div class="field">
-      <label for="contactId">Contact (ID)</label>
-      <bb-number-input id="contactId"  class="input" formControlName="contactId" />
+      <bb-number-input
+        id="contactId"
+        label="Contact (ID)"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="contactId"
+      />
     </div>
     <div class="field">
-      <label for="challanType">Challan Type</label>
-      <select id="challanType" formControlName="challanType">
-        <option [value]="0">Sale</option>
-        <option [value]="1">Job Work</option>
-        <option [value]="2">Transfer</option>
-      </select>
+      <bb-select
+        id="challanType"
+        label="Challan Type"
+        placeholder=""
+        [options]="challanTypes"
+        formControlName="challanType"
+      />
     </div>
     <div class="field">
-      <label for="dispatchDate">Dispatch Date</label>
-      <bb-text-input id="dispatchDate" formControlName="dispatchDate" />
+      <!-- A date, not free text: it was a plain text box. -->
+      <bb-date-input id="dispatchDate" label="Dispatch Date" formControlName="dispatchDate" />
     </div>
     <div class="field">
-      <label for="vehicleNo">Vehicle No.</label>
-      <bb-text-input id="vehicleNo" formControlName="vehicleNo" />
+      <bb-text-input id="vehicleNo" label="Vehicle No." [uppercase]="true" formControlName="vehicleNo" />
     </div>
     <div class="field">
-      <label for="currencyCode">Currency</label>
-      <bb-text-input id="currencyCode" formControlName="currencyCode" maxlength="3" />
+      <bb-text-input
+        id="currencyCode"
+        label="Currency"
+        maxlength="3"
+        [uppercase]="true"
+        formControlName="currencyCode"
+      />
     </div>
     <div class="field">
-      <label for="exchangeRate">Exchange Rate</label>
-      <bb-text-input id="exchangeRate" formControlName="exchangeRate" step="0.01" />
+      <bb-exchange-rate-input
+        id="exchangeRate"
+        label="Exchange Rate"
+        formControlName="exchangeRate"
+      />
     </div>
     <div class="field">
-      <label for="billingAddress">Billing Address</label>
-      <textarea id="billingAddress" formControlName="billingAddress" rows="2"></textarea>
+      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
     </div>
     <div class="field">
-      <label for="shippingAddress">Shipping Address</label>
-      <textarea id="shippingAddress" formControlName="shippingAddress" rows="2"></textarea>
+      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
     </div>
     <div class="field full-width">
-      <label for="notes">Notes</label>
-      <textarea id="notes" formControlName="notes" rows="2"></textarea>
+      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
     </div>
   </form>
 

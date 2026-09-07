@@ -14,6 +14,23 @@ public class OrganizationListItem
 
     public string BaseCurrency { get; set; } = null!;
 
+    /// <summary>
+    /// The branch's base currency as <c>mst.Currency</c> holds it — code,
+    /// symbol, grouping mask, decimal places and which side the symbol sits.
+    ///
+    /// <b>Read here rather than restated as columns on the branch.</b>
+    /// <see cref="BaseCurrency"/> above is only the three-letter code, which is
+    /// enough to say <i>which</i> currency and nothing about how to draw an
+    /// amount in it. Copying the mask onto the branch would make it editable in
+    /// two places that then disagree; carrying the row it comes from keeps one
+    /// answer.
+    ///
+    /// Null for a branch mid-setup that has not declared a base currency yet. A
+    /// screen that cannot draw an amount is worse than one drawing it in the
+    /// shipped default, so callers fall back rather than refusing to render.
+    /// </summary>
+    public CurrencyDetails? Currency { get; set; }
+
     public int FinancialYearStartMonth { get; set; }
 
     public string? Gstin { get; set; }
@@ -73,6 +90,39 @@ public class OrganizationListItem
     /// because an account with no usable branch has nowhere to sign in to.
     /// </summary>
     public bool IsFirst { get; set; }
+}
+
+/// <summary>
+/// How to draw an amount in a given currency.
+///
+/// The same five fields <c>mst.Currency</c> owns. Deliberately not a copy of
+/// them on any other table: a currency's symbol and grouping belong to the
+/// currency, and a second copy is a second answer.
+/// </summary>
+public class CurrencyDetails
+{
+    public int CurrencyId { get; set; }
+
+    /// <summary>ISO 4217, e.g. INR.</summary>
+    public string Code { get; set; } = null!;
+
+    public string Name { get; set; } = null!;
+
+    public string Symbol { get; set; } = null!;
+
+    /// <summary>
+    /// The grouping mask — <c>##,##,##0.00</c> for the rupee's lakh-crore
+    /// grouping, <c>###,###,##0.00</c> for thousands. The mask <i>is</i> the
+    /// difference between the two, so a currency added later needs no code
+    /// change and no new enum member.
+    /// </summary>
+    public string Format { get; set; } = null!;
+
+    /// <summary>Drives rounding, not only display.</summary>
+    public int DecimalPlaces { get; set; }
+
+    /// <summary>Prefix or Suffix.</summary>
+    public string SymbolPosition { get; set; } = null!;
 }
 
 public class SaveOrganizationRequest

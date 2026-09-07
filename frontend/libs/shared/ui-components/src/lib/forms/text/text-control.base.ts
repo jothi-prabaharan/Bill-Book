@@ -94,19 +94,52 @@ export abstract class BbTextControlBase extends BbControlBase<string> {
     this.valueChange.emit(value);
   }
 
+  /**
+   * Every keystroke, through the field's mask.
+   *
+   * **The caret is put back by hand.** A mask that drops characters shortens
+   * the text, and writing the shortened value into the element sends the caret
+   * to the end — so typing a space in the middle of an email address would
+   * throw you to the end of the field. Masking the text *before* the caret
+   * gives its new position: the mask only removes and maps characters, never
+   * inserts, so the length of the masked prefix is where the caret belongs.
+   */
   protected onInput(event: Event): void {
     const target = event.target as HTMLInputElement;
-    let text = target.value;
+    const typed = target.value;
+    const masked = this.mask(typed);
 
-    if (this.uppercase()) {
-      text = text.toUpperCase();
-      // Written back so the caret does not jump: the element keeps its own
-      // value, and letting it hold the lower-case one would fight the signal.
-      target.value = text;
+    if (masked !== typed) {
+      const caret = target.selectionStart ?? typed.length;
+      const moved = this.mask(typed.slice(0, caret)).length;
+
+      target.value = masked;
+      // Only a text-ish input has a selection to set. Guarded because the DOM
+      // throws on the input types that do not.
+      try {
+        target.setSelectionRange(moved, moved);
+      } catch {
+        // Nothing to restore; the value is still correct.
+      }
     }
 
-    this.innerValue.set(text);
-    this.publish(text);
+    this.innerValue.set(masked);
+    this.publish(masked);
+  }
+
+  /**
+   * What the field will accept, given what was typed.
+   *
+   * **Only ever removes or maps characters — never inserts.** The caret
+   * arithmetic above depends on that, and so does the promise that the value
+   * you see is the value that is stored.
+   *
+   * Applied to typing only, **not to `writeValue`**: a value the server sent is
+   * what it is, and quietly rewriting it on load would put one thing on screen
+   * and another in the form.
+   */
+  protected mask(text: string): string {
+    return this.uppercase() ? text.toUpperCase() : text;
   }
 
   protected onKeyDown(event: KeyboardEvent): void {

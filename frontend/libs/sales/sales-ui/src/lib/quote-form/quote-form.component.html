@@ -4,50 +4,85 @@
     <button class="primary" (click)="save()">Save</button>
   </header>
 
+  <!--
+    Common inputs throughout. The fields this replaced were all `bb-text-input`,
+    including the two dates and the exchange rate — so a date was keyed as free
+    text and a rate that needs eight decimal places stepped by a hundredth.
+  -->
   <form [formGroup]="form" class="form-grid">
     <div class="form-group">
-      <label for="documentDate">Date</label>
-      <bb-text-input id="documentDate" formControlName="documentDate"></bb-text-input>
+      <bb-date-input id="documentDate" label="Date" formControlName="documentDate" [required]="true" />
     </div>
     <div class="form-group">
-      <label for="validUntil">Valid Until</label>
-      <bb-text-input id="validUntil" formControlName="validUntil"></bb-text-input>
+      <bb-date-input id="validUntil" label="Valid Until" formControlName="validUntil" [required]="true" />
     </div>
     <div class="form-group">
-      <label for="contactId">Contact (ID)</label>
-      <bb-text-input id="contactId" formControlName="contactId"></bb-text-input>
+      <!-- A contact id, not a business quantity. It becomes a lookup when the
+           contact search endpoint lands. -->
+      <bb-number-input
+        id="contactId"
+        label="Contact (ID)"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="contactId"
+        [required]="true"
+      />
     </div>
     <div class="form-group">
-      <label for="contactGstin">Contact GSTIN</label>
-      <bb-text-input id="contactGstin" formControlName="contactGstin" maxlength="15"></bb-text-input>
+      <bb-text-input
+        id="contactGstin"
+        label="Contact GSTIN"
+        maxlength="15"
+        [uppercase]="true"
+        formControlName="contactGstin"
+      />
     </div>
     <div class="form-group">
-      <label for="placeOfSupplyStateCode">Place of Supply State Code</label>
-      <bb-text-input id="placeOfSupplyStateCode" formControlName="placeOfSupplyStateCode" maxlength="2"></bb-text-input>
+      <bb-text-input
+        id="placeOfSupplyStateCode"
+        label="Place of Supply State Code"
+        inputmode="numeric"
+        maxlength="2"
+        formControlName="placeOfSupplyStateCode"
+      />
     </div>
     <div class="form-group">
-      <label for="currencyCode">Currency</label>
-      <bb-text-input id="currencyCode" formControlName="currencyCode" maxlength="3"></bb-text-input>
+      <bb-text-input
+        id="currencyCode"
+        label="Currency"
+        maxlength="3"
+        [uppercase]="true"
+        formControlName="currencyCode"
+        [required]="true"
+      />
     </div>
     <div class="form-group">
-      <label for="exchangeRate">Exchange Rate</label>
-      <bb-text-input id="exchangeRate" formControlName="exchangeRate" step="0.01"></bb-text-input>
+      <!-- Eight decimal places, matching decimal(18,8) on the column. -->
+      <bb-exchange-rate-input
+        id="exchangeRate"
+        label="Exchange Rate"
+        [fromCurrency]="form.controls.currencyCode.value ?? ''"
+        formControlName="exchangeRate"
+        [required]="true"
+      />
     </div>
     <div class="form-group">
-      <label for="billingAddress">Billing Address</label>
-      <textarea id="billingAddress" formControlName="billingAddress" rows="2"></textarea>
+      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
     </div>
     <div class="form-group">
-      <label for="shippingAddress">Shipping Address</label>
-      <textarea id="shippingAddress" formControlName="shippingAddress" rows="2"></textarea>
+      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
     </div>
     <div class="form-group full-width">
-      <label for="notes">Notes</label>
-      <textarea id="notes" formControlName="notes" rows="2"></textarea>
+      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
     </div>
     <div class="form-group full-width">
-      <label for="termsAndConditions">Terms and Conditions</label>
-      <textarea id="termsAndConditions" formControlName="termsAndConditions" rows="2"></textarea>
+      <bb-textarea
+        id="termsAndConditions"
+        label="Terms and Conditions"
+        rows="2"
+        formControlName="termsAndConditions"
+      />
     </div>
   </form>
 

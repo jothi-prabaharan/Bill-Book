@@ -12,11 +12,39 @@ import { firstValueFrom } from 'rxjs';
  * statements with the same block; three copies of this fetch is two that fall
  * out of step the day a field is added.
  */
+/**
+ * How to draw an amount in the branch's base currency, as `mst.Currency` holds
+ * it — the grouping mask, the precision, the symbol and which side it sits.
+ *
+ * **Carried on the organization rather than restated anywhere.** `baseCurrency`
+ * below is only the three-letter code, which says *which* currency and nothing
+ * about how to write a figure in it. `bb-money-input` takes these to group an
+ * amount the way the branch expects: `12,34,567.89` on the rupee,
+ * `1,234,567.89` on the dollar.
+ *
+ * Null for a branch mid-setup that has declared no base currency yet, in which
+ * case a screen falls back to the shipped defaults rather than refusing to draw.
+ */
+export interface OrganizationCurrency {
+  currencyId: number;
+  /** ISO 4217, e.g. INR. */
+  code: string;
+  name: string;
+  symbol: string;
+  /** `##,##,##0.00` for lakh-crore grouping, `###,###,##0.00` for thousands. */
+  format: string;
+  /** Drives rounding, not only display. */
+  decimalPlaces: number;
+  symbolPosition: 'Prefix' | 'Suffix';
+}
+
 export interface OrganizationSummary {
   orgId: string;
   orgCode: string;
   name: string;
   baseCurrency: string;
+  /** The base currency's full details, including its display format. */
+  currency: OrganizationCurrency | null;
   gstin: string | null;
   pan: string | null;
   addressLine1: string | null;
