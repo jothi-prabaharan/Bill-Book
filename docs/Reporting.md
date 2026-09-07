@@ -276,7 +276,7 @@ Both formats are built and asserted, and neither has query semantics of its own 
 
 The CSV half was a requirement this document recorded as decided while `ExportFormat` carried only `Xlsx` and `Pdf`; `?format=csv` was an unreachable branch of an enum. It is implemented now, with 12 tests over quoting, encoding, multilingual text, null handling and column order.
 
-### 8.5 Column presentation in `reports.json`
+### 8.5 Column presentation
 
 Every column entry in `reports.json` carries the seven presentation properties
 `ReportColumnView` exposes — `DataType`, `Alignment`, `Width`, `IsFilterable`,
@@ -286,10 +286,27 @@ report's specification said which columns it has and nothing about how any of
 them behaves; the two halves of that answer then lived in different places, and
 the seeded catalog was the only one of them anybody could read.
 
-**The file is still a specification, not a runtime input.** Nothing loads it —
-the catalog a branch actually runs on is seeded from `ReportCatalogSeeder`, and
-`ReportLayerCertificationTests` still asserts over that. What the properties buy
-is that a report's spec and its seed row can now be compared at all.
+`rpt.ReportColumns` carries the same seven under the same names, so the
+imported specification in the database says what the file says. `ReportColumn`
+was reshaped to match — `DataType` is a `ColumnDataType` rather than free text,
+and `IsGroup` / `IsSort` / `IsFilter` / `FilterType` gave way to `IsGroupable`,
+`IsSortable`, `IsFilterable` and `IsPivotable`, with `Alignment` and `Width`
+added beside them.
+
+**`reports.json` itself is still a specification, not a runtime input.** Nothing
+loads the file; the migration carries its values. Nor is `rpt.ReportColumns` the
+catalog a branch runs on — that is `rpt.ReportDetails`, seeded per branch from
+`ReportCatalogSeeder` and renamed, reordered or switched off by whoever owns
+those books, and `ReportLayerCertificationTests` still asserts over it. What the
+properties buy is that a report's specification and its catalog row can now be
+compared at all, column for column, rather than one of them being silent.
+
+**The migration drops the old columns and adds the new ones rather than renaming
+them.** EF scaffolded renames matched by position — `IsGroup` would have become
+`IsPivotable` and `IsFilter` `IsGroupable`, each old value landing under a name
+meaning something else — and an in-place `varchar → integer` cast of `DataType`,
+which Postgres refuses on the seeded `'Text'` values. That migration would have
+failed on any database that had already run the initial one.
 
 The values follow the conventions the seeder already set:
 
