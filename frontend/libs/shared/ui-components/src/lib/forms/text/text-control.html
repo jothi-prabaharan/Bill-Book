@@ -1,0 +1,50 @@
+<!--
+  One template for bb-text-input, bb-email-input, bb-phone-input and
+  bb-url-input. Four components reference this same file rather than carrying
+  four copies of it: what differs between them is the type, the inputmode and
+  the autocomplete token, and all three are computed on the class.
+-->
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-text" [class.bb-text--affixed]="resolvedPrefix() || suffix()">
+    @if (resolvedPrefix()) {
+      <span class="bb-text__affix" aria-hidden="true">{{ resolvedPrefix() }}</span>
+    }
+
+    <input
+      class="input text-input"
+      [class.uppercase]="uppercase()"
+      [type]="resolvedType()"
+      [id]="controlId()"
+      [name]="name() || null"
+      [placeholder]="placeholder()"
+      [attr.minlength]="minlength()"
+      [attr.maxlength]="maxlength()"
+      [attr.pattern]="resolvedPattern()"
+      [attr.inputmode]="resolvedInputmode()"
+      [attr.autocomplete]="resolvedAutocomplete()"
+      [disabled]="effectiveDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      [value]="innerValue()"
+      (input)="onInput($event)"
+      (keydown)="onKeyDown($event)"
+      (blur)="onBlur($event)"
+      (focus)="onFocus($event)"
+    />
+
+    @if (suffix()) {
+      <span class="bb-text__affix" aria-hidden="true">{{ suffix() }}</span>
+    }
+  </div>
+</bb-form-field>

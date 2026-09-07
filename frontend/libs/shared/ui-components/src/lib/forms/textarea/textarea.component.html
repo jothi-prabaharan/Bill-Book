@@ -1,0 +1,37 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <textarea
+    class="input bb-textarea__field"
+    [class.bb-textarea__field--fixed]="resize() === 'none'"
+    [class.bb-textarea__field--both]="resize() === 'both'"
+    [id]="controlId()"
+    [name]="name() || null"
+    [rows]="rows()"
+    [placeholder]="placeholder()"
+    [attr.minlength]="minlength()"
+    [attr.maxlength]="maxlength()"
+    [attr.autocomplete]="autocomplete() || 'off'"
+    [disabled]="effectiveDisabled()"
+    [readonly]="readonly()"
+    [required]="required()"
+    [attr.aria-label]="effectiveAriaLabel()"
+    [attr.aria-invalid]="invalid() ? 'true' : null"
+    [attr.aria-describedby]="describedBy()"
+    [value]="innerValue()"
+    (input)="onInput($event)"
+    (blur)="onBlur($event)"
+  ></textarea>
+
+  @if (counterVisible()) {
+    <!-- polite, not assertive: it changes on every keystroke and an assertive
+         region would interrupt the person typing with each one. -->
+    <small class="bb-textarea__counter" aria-live="polite">{{ counterText() }}</small>
+  }
+</bb-form-field>

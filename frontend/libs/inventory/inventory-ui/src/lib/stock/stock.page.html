@@ -8,10 +8,12 @@
       placeholder="Search items"
       aria-label="Search items"
     />
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="belowReorderOnly" (ngModelChange)="load()" />
-      Below reorder level
-    </label>
+    <bb-checkbox
+      text="Below reorder level"
+      name="belowReorderOnly"
+      [(ngModel)]="belowReorderOnly"
+      (ngModelChange)="load()"
+    />
   </div>
 </header>
 

@@ -1,0 +1,68 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="error()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-file">
+    <!--
+      A real file input, styled rather than replaced. It is the label that is
+      the button: clicking a `<label for>` opens the picker, so the control
+      stays keyboard-reachable and screen-reader-announced without a click
+      handler forwarding to a hidden element.
+    -->
+    <input
+      #picker
+      type="file"
+      class="bb-file__picker"
+      [id]="controlId()"
+      [name]="name() || null"
+      [attr.accept]="accept() || null"
+      [multiple]="multiple()"
+      [disabled]="effectiveDisabled() || readonly()"
+      [required]="required() && files().length === 0"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="invalid() ? 'true' : null"
+      [attr.aria-describedby]="describedBy()"
+      (change)="onPicked($event)"
+    />
+
+    <div class="bb-file__row">
+      <label class="btn btn-secondary bb-file__button" [attr.for]="controlId()">
+        {{ buttonText() }}
+      </label>
+      <span class="bb-file__summary">{{ summary() }}</span>
+    </div>
+
+    @if (files().length > 0) {
+      <ul class="bb-file__list">
+        @for (file of files(); track file.name + file.size + file.lastModified; let i = $index) {
+          <li class="bb-file__item">
+            <span class="bb-file__name">{{ file.name }}</span>
+            <span class="bb-file__size">{{ sizeOf(file) }}</span>
+            <button
+              type="button"
+              class="bb-file__remove"
+              [attr.aria-label]="'Remove ' + file.name"
+              [disabled]="effectiveDisabled() || readonly()"
+              (click)="remove(i)"
+            >
+              ×
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (rejected().length > 0) {
+      <ul class="bb-file__rejected" role="alert">
+        @for (entry of rejected(); track entry.name + entry.size) {
+          <li>{{ reasonOf(entry) }}</li>
+        }
+      </ul>
+    }
+  </div>
+</bb-form-field>

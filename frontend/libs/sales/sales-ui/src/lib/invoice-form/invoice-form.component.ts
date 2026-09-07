@@ -15,10 +15,15 @@ import {
   toGridLine,
 } from '@bill-book/sales-core';
 import {
+  DateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
+  ExchangeRateInputComponent,
   MessageBoxComponent,
+  NumberInputComponent,
+  TextareaComponent,
+  TextInputComponent,
   totalsOf,
   UiMessage,
 } from '@bill-book/ui-components';
@@ -58,6 +63,11 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
     DocumentLineGridComponent,
     MessageBoxComponent,
     OrderToInvoiceDialogComponent,
+    TextInputComponent,
+    TextareaComponent,
+    NumberInputComponent,
+    DateInputComponent,
+    ExchangeRateInputComponent,
   ],
   templateUrl: './invoice-form.component.html',
   styleUrl: './invoice-form.component.scss',

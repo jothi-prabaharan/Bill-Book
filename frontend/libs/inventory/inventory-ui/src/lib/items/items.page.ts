@@ -1,5 +1,14 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { TextInputComponent , NumberInputComponent , SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  NumberInputComponent,
+  QuantityInputComponent,
+  SearchInputComponent,
+  TextInputComponent,
+  UnitPriceInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -143,12 +152,27 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-items-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, NumberInputComponent, SearchInputComponent, DataGridComponent, DataGridCellTemplateDirective],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    SearchInputComponent,
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    UnitPriceInputComponent,
+    QuantityInputComponent,
+  ],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
 })
 export class ItemsPage implements OnInit {
   private readonly http = inject(HttpClient);
+
+  /**
+   * Held as a property rather than written inline, so the apostrophe does not
+   * have to be escaped inside a template binding.
+   */
+  protected readonly batchMrpHint = "A batch's own MRP wins over this.";
 
   protected readonly rows = signal<ItemListRow[]>([]);
   protected readonly types = signal<UomType[]>([]);

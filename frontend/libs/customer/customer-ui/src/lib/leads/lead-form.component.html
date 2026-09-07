@@ -1,41 +1,52 @@
 <div class="overlay">
   <div class="modal-content bb-card">
     <h3>New Lead</h3>
-    
-    <bb-message-box *ngIf="errorMessage()" [messages]="[{ tone: 'error', text: errorMessage()! }]"></bb-message-box>
-    
+
+    @if (errorMessage(); as failure) {
+      <bb-message-box [messages]="[{ tone: 'error', text: failure }]" />
+    }
+
+    <!--
+      Common inputs throughout: the label, the error and the accessibility
+      wiring belong to the control now, so this form reads the same as every
+      other one in the product. The validation rules are unchanged — the email
+      validator is the shared one, which is the same expression the field
+      renders as its `pattern`.
+    -->
     <form [formGroup]="form" (ngSubmit)="save()">
       <div class="form-group">
-        <label>Name</label>
-        <div *ngIf="form.controls.name.invalid && (form.controls.name.touched || form.controls.name.dirty)" class="field-error">
-          Name is required
-        </div>
-        <bb-text-input formControlName="name"></bb-text-input>
+        <bb-text-input
+          label="Name"
+          formControlName="name"
+          [required]="true"
+          [error]="showError('name') ? 'Name is required' : ''"
+        />
       </div>
 
       <div class="form-group">
-        <label>Company Name</label>
-        <bb-text-input formControlName="companyName"></bb-text-input>
+        <bb-text-input label="Company Name" formControlName="companyName" />
       </div>
 
       <div class="form-group">
-        <label>Email</label>
-        <div *ngIf="form.controls.email.invalid && (form.controls.email.touched || form.controls.email.dirty)" class="field-error">
-          Valid email is required
-        </div>
-        <bb-text-input type="email" formControlName="email"></bb-text-input>
+        <bb-email-input
+          label="Email"
+          formControlName="email"
+          [error]="showError('email') ? 'Valid email is required' : ''"
+        />
       </div>
 
       <div class="form-group">
-        <label>Phone</label>
-        <bb-text-input type="tel" formControlName="phone"></bb-text-input>
+        <bb-phone-input label="Phone" formControlName="phone" />
       </div>
 
       <div class="form-group">
-        <label>Source</label>
-        <select formControlName="source" class="bb-select">
-          <option *ngFor="let s of sources" [value]="s">{{ s }}</option>
-        </select>
+        <bb-select
+          label="Source"
+          placeholder=""
+          [options]="sourceOptions"
+          formControlName="source"
+          [required]="true"
+        />
       </div>
 
       <div class="actions">

@@ -3,11 +3,20 @@ import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NumberInputComponent } from './number-input.component';
 
+/**
+ * The component's internals, named as they are after the move onto
+ * `BbNumericControlBase`: the text on screen is `displayText`, the parsed value
+ * behind it is the `value` getter, and the defaults a caller did not supply are
+ * the `resolved*` computeds rather than the raw inputs.
+ */
 interface NumberInputTestHarness {
-  displayValue: () => string;
-  rawNumericValue: number | null;
+  displayText: () => string;
+  readonly value: number | null;
   effectiveDisabled: () => boolean;
   decimals: () => number | null;
+  resolvedDecimals: () => number;
+  resolvedStep: () => number;
+  effectiveAriaLabel: () => string | null;
   onInput: (event: Event) => void;
   onBlur: (event: FocusEvent) => void;
   onFocus: (event: FocusEvent) => void;
@@ -26,8 +35,8 @@ describe('NumberInputComponent', () => {
   describe('Tier 1: Feature / Contract Coverage', () => {
     it('NUM-T1-01: writeValue with number updates internal state and displayValue', () => {
       cva.writeValue(42);
-      expect(harness.displayValue()).toBe('42');
-      expect(harness.rawNumericValue).toBe(42);
+      expect(harness.displayText()).toBe('42');
+      expect(harness.value).toBe(42);
     });
 
     it('NUM-T1-02: onInput invokes registered onChange callback and emits valueChange with numeric value', () => {
@@ -45,7 +54,7 @@ describe('NumberInputComponent', () => {
 
       expect(changeSpy).toHaveBeenCalledWith(100);
       expect(valueChangeSpy).toHaveBeenCalledWith(100);
-      expect(harness.rawNumericValue).toBe(100);
+      expect(harness.value).toBe(100);
     });
 
     it('NUM-T1-03: onBlur invokes registered onTouched callback and emits blur event', () => {
@@ -77,7 +86,6 @@ describe('NumberInputComponent', () => {
       expect(cva.name()).toBe('');
       expect(cva.min()).toBeNull();
       expect(cva.max()).toBeNull();
-      expect(cva.step()).toBe(1);
       expect(cva.decimals()).toBeNull();
       expect(cva.placeholder()).toBe('');
       expect(cva.prefix()).toBeNull();
@@ -85,9 +93,18 @@ describe('NumberInputComponent', () => {
       expect(cva.disabled()).toBe(false);
       expect(cva.readonly()).toBe(false);
       expect(cva.required()).toBe(false);
-      expect(cva.align()).toBe('left');
-      expect(cva.inputmode()).toBe('decimal');
-      expect(cva.ariaLabel()).toBe('Number');
+
+      // Step, alignment, keyboard and the spoken name are now unset inputs with
+      // a semantic default behind them, so what the field actually renders is
+      // the `resolved*` value rather than the raw input. The rendered answers
+      // are the same ones this component has always drawn: step 1, left
+      // aligned, a decimal keypad and "Number" when nothing labels it.
+      expect(cva.step()).toBeNull();
+      expect(harness.resolvedStep()).toBe(1);
+      expect(cva.align()).toBe('');
+      expect(cva.inputmode()).toBe('');
+      expect(cva.ariaLabel()).toBe('');
+      expect(harness.effectiveAriaLabel()).toBe('Number');
     });
 
     it('NUM-T1-06: onFocus dispatches focus output event', () => {
@@ -104,16 +121,16 @@ describe('NumberInputComponent', () => {
   describe('Tier 2: Boundary & Corner Cases', () => {
     it('NUM-T2-01: writeValue handles null, undefined, empty string, and clearing input emits null', () => {
       cva.writeValue(null);
-      expect(harness.displayValue()).toBe('');
-      expect(harness.rawNumericValue).toBeNull();
+      expect(harness.displayText()).toBe('');
+      expect(harness.value).toBeNull();
 
       cva.writeValue(undefined);
-      expect(harness.displayValue()).toBe('');
-      expect(harness.rawNumericValue).toBeNull();
+      expect(harness.displayText()).toBe('');
+      expect(harness.value).toBeNull();
 
       cva.writeValue('');
-      expect(harness.displayValue()).toBe('');
-      expect(harness.rawNumericValue).toBeNull();
+      expect(harness.displayText()).toBe('');
+      expect(harness.value).toBeNull();
 
       const changeSpy = vi.fn();
       cva.registerOnChange(changeSpy);
@@ -127,7 +144,7 @@ describe('NumberInputComponent', () => {
 
       harness.onInput({ target: { value: '1.005' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(1.005);
-      expect(harness.rawNumericValue).toBe(1.005);
+      expect(harness.value).toBe(1.005);
     });
 
     it('NUM-T2-03: min and max boundary signals verify configured bounds', () => {
@@ -145,10 +162,10 @@ describe('NumberInputComponent', () => {
       const decHarness = decCva as unknown as NumberInputTestHarness;
 
       decCva.writeValue(12.3);
-      expect(decHarness.displayValue()).toBe('12.300');
+      expect(decHarness.displayText()).toBe('12.300');
 
       decHarness.onBlur(new FocusEvent('blur'));
-      expect(decHarness.displayValue()).toBe('12.300');
+      expect(decHarness.displayText()).toBe('12.300');
     });
 
     it('NUM-T2-05: non-numeric malformed string emits null and clears numeric value', () => {
@@ -157,7 +174,7 @@ describe('NumberInputComponent', () => {
 
       harness.onInput({ target: { value: 'not_a_number' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(null);
-      expect(harness.rawNumericValue).toBeNull();
+      expect(harness.value).toBeNull();
     });
 
     it('NUM-T2-06: negative numeric input parsed correctly', () => {
@@ -166,33 +183,33 @@ describe('NumberInputComponent', () => {
 
       harness.onInput({ target: { value: '-15.5' } } as unknown as Event);
       expect(changeSpy).toHaveBeenCalledWith(-15.5);
-      expect(harness.rawNumericValue).toBe(-15.5);
+      expect(harness.value).toBe(-15.5);
     });
   });
 
   describe('Tier 3: Cross-Feature Interactions', () => {
     it('NUM-T3-01: dynamic disabled state toggling preserves numeric value', () => {
       cva.writeValue(100);
-      expect(harness.displayValue()).toBe('100');
+      expect(harness.displayText()).toBe('100');
 
       cva.setDisabledState(true);
       expect(harness.effectiveDisabled()).toBe(true);
-      expect(harness.rawNumericValue).toBe(100);
+      expect(harness.value).toBe(100);
 
       cva.setDisabledState(false);
       expect(harness.effectiveDisabled()).toBe(false);
-      expect(harness.rawNumericValue).toBe(100);
+      expect(harness.value).toBe(100);
     });
 
     it('NUM-T3-02: dynamic decimal places configuration across multiple writeValue cycles', () => {
       cva.writeValue(25.4);
-      expect(harness.displayValue()).toBe('25.4');
+      expect(harness.displayText()).toBe('25.4');
 
       cva.writeValue(0);
-      expect(harness.displayValue()).toBe('0');
+      expect(harness.displayText()).toBe('0');
 
       cva.writeValue(99.999);
-      expect(harness.displayValue()).toBe('99.999');
+      expect(harness.displayText()).toBe('99.999');
     });
   });
 
@@ -252,7 +269,7 @@ describe('NumberInputComponent', () => {
       // Reset
       form.reset();
       cva.writeValue(control.value);
-      expect(harness.displayValue()).toBe('');
+      expect(harness.displayText()).toBe('');
       expect(control.valid).toBe(false);
       expect(control.touched).toBe(false);
     });

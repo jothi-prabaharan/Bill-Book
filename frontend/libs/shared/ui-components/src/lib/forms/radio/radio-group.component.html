@@ -1,0 +1,54 @@
+<!--
+  A fieldset and a legend rather than a div and a label: the legend is what a
+  screen reader announces ahead of each option, so "Delivery — by courier" reads
+  as one answer rather than two unrelated words.
+-->
+<fieldset
+  class="bb-radio-group"
+  [attr.aria-invalid]="invalid() ? 'true' : null"
+  [attr.aria-describedby]="describedBy()"
+  [disabled]="effectiveDisabled()"
+>
+  @if (label()) {
+    <legend class="field-label">
+      {{ label() }}
+      @if (required()) {
+        <span class="field-required" aria-hidden="true">*</span>
+      }
+    </legend>
+  }
+
+  <div class="bb-radio-group__options" [class.bb-radio-group__options--row]="orientation() === 'horizontal'">
+    @for (option of options(); track option.value; let i = $index) {
+      <label class="radio bb-radio" [class.bb-radio--disabled]="option.disabled || readonly()">
+        <input
+          type="radio"
+          [id]="optionId(i)"
+          [name]="groupName()"
+          [value]="option.value"
+          [checked]="isSelected(option)"
+          [disabled]="effectiveDisabled() || readonly() || !!option.disabled"
+          [required]="required()"
+          [attr.aria-describedby]="option.description ? optionDescriptionId(i) : null"
+          (change)="onSelect(option)"
+        />
+        <span class="dot" aria-hidden="true"></span>
+
+        <span class="bb-radio__body">
+          <span class="bb-radio__label">{{ option.label }}</span>
+          @if (option.description) {
+            <small class="bb-radio__description" [id]="optionDescriptionId(i)">
+              {{ option.description }}
+            </small>
+          }
+        </span>
+      </label>
+    }
+  </div>
+</fieldset>
+
+@if (error()) {
+  <span class="field-error" role="alert" [id]="errorId()">{{ error() }}</span>
+} @else if (hint()) {
+  <small class="field-hint" [id]="hintId()">{{ hint() }}</small>
+}

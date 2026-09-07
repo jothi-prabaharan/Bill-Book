@@ -1,0 +1,147 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-rich {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  border-radius: var(--radius-md, 4px);
+  background: transparent;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  &:focus-within {
+    border-color: var(--color-accent, #b68235);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #b68235) 12%, transparent);
+  }
+
+  &--disabled {
+    opacity: 0.85;
+    background: color-mix(in srgb, var(--color-text, #201f1d) 3%, transparent);
+  }
+
+  &:has([aria-invalid='true']) {
+    border-color: var(--color-danger, #a2332a);
+  }
+}
+
+.bb-rich__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-bottom: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+}
+
+.bb-rich__tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* Comfortably tappable on a phone without dominating a desktop toolbar. */
+  min-width: 28px;
+  height: 26px;
+  padding: 0 6px;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 75%, transparent);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm, 3px);
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-text, #201f1d) 7%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent, #b68235);
+    outline-offset: -1px;
+  }
+
+  &--on {
+    color: var(--color-accent, #b68235);
+    background: color-mix(in srgb, var(--color-accent, #b68235) 12%, transparent);
+  }
+}
+
+@media (max-width: 480px) {
+  .bb-rich__tool {
+    min-width: 36px;
+    height: 32px;
+  }
+}
+
+.bb-rich__glyph {
+  line-height: 1;
+
+  &--bold {
+    font-weight: 700;
+  }
+
+  &--italic {
+    font-style: italic;
+  }
+
+  &--underline {
+    text-decoration: underline;
+  }
+}
+
+.bb-rich__region {
+  padding: 6px 9px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--color-text, #201f1d);
+  outline: none;
+  overflow-wrap: anywhere;
+
+  /* The placeholder: contenteditable has none of its own. */
+  &--empty::before {
+    content: attr(data-placeholder);
+    opacity: 0.26;
+    pointer-events: none;
+  }
+
+  p {
+    margin: 0 0 6px;
+  }
+
+  ul,
+  ol {
+    margin: 0 0 6px;
+    padding-left: 20px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    margin: 0 0 6px;
+    font-size: 14px;
+  }
+
+  blockquote {
+    margin: 0 0 6px;
+    padding-left: 9px;
+    border-left: 2px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  }
+
+  a {
+    color: var(--color-accent, #b68235);
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.bb-rich__counter {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 55%, transparent);
+}

@@ -42,10 +42,11 @@
                    which meant a branch that requires an item on every line got a
                    description box it may not use and no way to choose one. -->
               @if (context().allowFreeTextLines) {
-                <input
-                  type="text"
+                <bb-text-input
                   placeholder="Description"
+                  ariaLabel="Description"
                   [(ngModel)]="line.description"
+                  [name]="'description' + i"
                   [disabled]="context().readonly"
                   (blur)="touch(i)"
                 />
@@ -70,30 +71,46 @@
                 }
               </select>
             }
-            <input
-              type="text"
+            <bb-text-input
               class="hsn"
               placeholder="HSN / SAC"
+              ariaLabel="HSN or SAC code"
+              maxlength="8"
               [(ngModel)]="line.hsnSacCode"
+              [name]="'hsn' + i"
               [disabled]="context().readonly"
               (blur)="touch(i)"
             />
           </td>
 
           <td class="right">
-            <input
-              type="number"
+            <!--
+              `minorDigits` of six is the scale the line actually holds:
+              `Quantity` is decimal(18,6) and the grid keeps it as a whole
+              number of millionths, so one unit is 1,000,000. The control does
+              that conversion, which is why this field shows "1.00" rather than
+              the raw figure it used to.
+            -->
+            <bb-quantity-input
+              ariaLabel="Quantity"
+              minorDigits="6"
+              [uom]="line.uomLabel || ''"
               [(ngModel)]="line.quantity"
+              [name]="'quantity' + i"
               [disabled]="context().readonly"
               (blur)="touch(i)"
             />
-            <small>{{ line.uomLabel }}</small>
           </td>
 
           <td class="right">
-            <input
-              type="number"
+            <!-- Paise, so `minorDigits` is two. Shown to the branch's own
+                 number of places, which is what the grid formats its totals to. -->
+            <bb-unit-price-input
+              ariaLabel="Unit price"
+              minorDigits="2"
+              [decimals]="context().currencyDecimals"
               [(ngModel)]="line.unitPrice"
+              [name]="'unitPrice' + i"
               [disabled]="context().readonly"
               (blur)="touch(i)"
             />
@@ -101,6 +118,7 @@
               <input
                 type="checkbox"
                 [(ngModel)]="line.isPriceInclusive"
+                [name]="'inclusive' + i"
                 [disabled]="context().readonly"
                 (ngModelChange)="touch(i)"
               />
@@ -110,10 +128,14 @@
 
           <td class="right">
             @if (context().discountLevel !== 'Header') {
-              <input
-                type="number"
-                [(ngModel)]="line.discountPercent"
+              <!-- A percent, not a scaled integer: `DiscountPercent` is
+                   decimal(9,6) and ten per cent is 10. -->
+              <bb-percentage-input
+                ariaLabel="Discount percent"
                 placeholder="%"
+                [showSuffix]="false"
+                [(ngModel)]="line.discountPercent"
+                [name]="'discountPercent' + i"
                 [disabled]="context().readonly"
                 (blur)="touch(i)"
               />

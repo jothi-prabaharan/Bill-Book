@@ -5,6 +5,12 @@ import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { Country, StateRow, Currency } from '../../auth.models';
 import { AuthService } from '../../auth.service';
+import {
+  EmailInputComponent,
+  PasswordInputComponent,
+  PhoneInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 /**
  * Public trial signup. On submit shows the "setting up your account" state and
@@ -17,7 +23,15 @@ import { AuthService } from '../../auth.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-signup-page',
   standalone: true,
-  imports: [AuthShellComponent, ReactiveFormsModule, RouterLink],
+  imports: [
+    AuthShellComponent,
+    ReactiveFormsModule,
+    RouterLink,
+    TextInputComponent,
+    EmailInputComponent,
+    PhoneInputComponent,
+    PasswordInputComponent,
+  ],
   templateUrl: './signup.page.html',
   styleUrl: './signup.page.scss',
 })

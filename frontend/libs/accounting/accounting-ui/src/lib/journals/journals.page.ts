@@ -4,7 +4,13 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  MoneyInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface JournalListItem {
   journalId: number;
@@ -83,7 +89,15 @@ interface LineForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-journals-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, RouterLink, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    RouterLink,
+    DateInputComponent,
+    TextInputComponent,
+    MoneyInputComponent,
+  ],
   templateUrl: './journals.page.html',
   styleUrl: './journals.page.scss',
 })

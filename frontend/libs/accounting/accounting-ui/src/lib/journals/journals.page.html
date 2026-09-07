@@ -15,18 +15,20 @@
     <h2>{{ editingId === null ? 'New entry' : 'Draft entry' }}</h2>
 
     <div class="head-fields">
-      <label>
-        Date
-        <bb-date-input  [(ngModel)]="journalDate" name="journalDate" />
-      </label>
-      <label class="wide">
-        Reference
-        <bb-text-input  [(ngModel)]="reference" name="reference" maxlength="200" />
-      </label>
-      <label class="wide">
-        Memo
-        <bb-text-input  [(ngModel)]="memo" name="memo" placeholder="Why this entry was made" />
-      </label>
+      <div class="field">
+        <bb-date-input label="Date" [(ngModel)]="journalDate" name="journalDate" [required]="true" />
+      </div>
+      <div class="field wide">
+        <bb-text-input label="Reference" [(ngModel)]="reference" name="reference" maxlength="200" />
+      </div>
+      <div class="field wide">
+        <bb-text-input
+          label="Memo"
+          placeholder="Why this entry was made"
+          [(ngModel)]="memo"
+          name="memo"
+        />
+      </div>
     </div>
 
     <bb-data-grid [gridCode]="'JOURNAL_EDIT_LINES'" [columns]="editLinesColumns" [data]="lines()">
@@ -66,7 +68,7 @@
 
       <ng-template bbCellTemplate="memo" let-row let-index="index">
         <bb-text-input
-          
+          ariaLabel="Line memo"
           [(ngModel)]="row.lineMemo"
           [name]="'memo' + index"
           maxlength="300"
@@ -75,11 +77,15 @@
       </ng-template>
 
       <ng-template bbCellTemplate="debit" let-row let-index="index">
-        <bb-number-input
-          
-          inputmode="decimal"
-          step="0.01"
-          min="0"
+        <!--
+          Money, not a plain number: two decimal places because `DebitAmount`
+          is decimal(18,2), never negative because a line is debit **xor**
+          credit and a sign here would say the same thing twice. Held in
+          decimal rupees — accounting's units — so `minorDigits` stays at its
+          default of zero and nothing about the payload changes.
+        -->
+        <bb-money-input
+          ariaLabel="Debit amount"
           [(ngModel)]="row.debit"
           [name]="'debit' + index"
           (ngModelChange)="onDebit(row)"
@@ -87,11 +93,8 @@
       </ng-template>
 
       <ng-template bbCellTemplate="credit" let-row let-index="index">
-        <bb-number-input
-          
-          inputmode="decimal"
-          step="0.01"
-          min="0"
+        <bb-money-input
+          ariaLabel="Credit amount"
           [(ngModel)]="row.credit"
           [name]="'credit' + index"
           (ngModelChange)="onCredit(row)"

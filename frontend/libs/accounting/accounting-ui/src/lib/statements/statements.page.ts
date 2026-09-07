@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  BbFileSelection,
+  ColumnDef,
+  DataGridComponent,
+  FileInputComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -93,7 +100,14 @@ interface StatementLine {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-statements-page',
   standalone: true,
-  imports: [DataGridComponent, DecimalPipe, FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    DecimalPipe,
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    FileInputComponent,
+  ],
   templateUrl: './statements.page.html',
   styleUrl: './statements.page.scss',
 })
@@ -260,8 +274,16 @@ export class StatementsPage implements OnInit {
     }
   }
 
-  onFile(event: Event): void {
-    this.file = (event.target as HTMLInputElement).files?.[0] ?? null;
+  /**
+   * The file the picker settled on.
+   *
+   * `bb-file-input` reports the accepted files rather than the DOM event: it
+   * has already checked the kind against `accept`, which a browser only applies
+   * to its own dialogue — a file dragged in or chosen through "All files"
+   * reaches the element regardless.
+   */
+  onFileChosen(selection: BbFileSelection): void {
+    this.file = selection.files[0] ?? null;
   }
 
   async import(): Promise<void> {

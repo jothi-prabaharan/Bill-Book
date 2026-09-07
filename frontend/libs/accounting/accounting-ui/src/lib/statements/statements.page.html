@@ -152,7 +152,12 @@
   <section class="import">
     @if (profile()) {
       <div class="import-row">
-        <input type="file" accept=".csv,.tsv,.txt,.xlsx,.xlsm" (change)="onFile($event)" />
+        <bb-file-input
+          ariaLabel="Statement file"
+          accept=".csv,.tsv,.txt,.xlsx,.xlsm"
+          buttonText="Choose statement"
+          (selectionChange)="onFileChosen($event)"
+        />
         <button type="button" class="primary" (click)="import()" [disabled]="busy() || !file">
           Import
         </button>

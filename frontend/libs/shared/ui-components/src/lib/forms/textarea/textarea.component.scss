@@ -1,0 +1,27 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-textarea__field {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+
+  &--fixed {
+    resize: none;
+  }
+
+  &--both {
+    resize: both;
+  }
+}
+
+.bb-textarea__counter {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 55%, transparent);
+}

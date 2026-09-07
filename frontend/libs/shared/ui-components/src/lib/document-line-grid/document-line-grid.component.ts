@@ -1,6 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { PercentageInputComponent } from '../forms/numeric/percentage-input.component';
+import { QuantityInputComponent } from '../forms/numeric/quantity-input.component';
+import { UnitPriceInputComponent } from '../forms/numeric/unit-price-input.component';
+import { TextInputComponent } from '../text-input/text-input.component';
 import {
   DocumentLine,
   DocumentLineContext,
@@ -33,7 +37,13 @@ const RATE_SCALE = 10_000;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-document-line-grid',
   standalone: true,
-  imports: [FormsModule],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    QuantityInputComponent,
+    UnitPriceInputComponent,
+    PercentageInputComponent,
+  ],
   templateUrl: './document-line-grid.component.html',
   styleUrl: './document-line-grid.component.scss',
 })
@@ -92,10 +102,6 @@ export class DocumentLineGridComponent {
     const decimals = this.context().currencyDecimals;
     const unit = 10 ** decimals;
     return (paise / unit).toFixed(decimals);
-  }
-
-  protected quantity(scaled: number): string {
-    return (scaled / 1_000_000).toString();
   }
 
   protected addLine(): void {

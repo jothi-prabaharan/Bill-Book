@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { SearchInputComponent } from './search-input.component';
 
 interface SearchInputTestHarness {
+  effectiveAriaLabel: () => string | null;
   innerValue: () => string;
   effectiveDisabled: () => boolean;
   onInput: (event: Event) => void;
@@ -73,7 +74,8 @@ describe('SearchInputComponent', () => {
       expect(cva.id()).toBe('');
       expect(cva.name()).toBe('');
       expect(cva.placeholder()).toBe('Search...');
-      expect(cva.ariaLabel()).toBe('Search');
+      expect(cva.ariaLabel()).toBe('');
+      expect(harness.effectiveAriaLabel()).toBe('Search');
       expect(cva.disabled()).toBe(false);
       expect(cva.debounceMs()).toBe(300);
     });
@@ -136,11 +138,15 @@ describe('SearchInputComponent', () => {
       const escapeEvent = {
         key: 'Escape',
         preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
       } as unknown as KeyboardEvent;
 
       harness.onKeyDown(escapeEvent);
 
       expect(escapeEvent.preventDefault).toHaveBeenCalled();
+      // Escape is also stopped from bubbling: a search box inside a dialog
+      // would otherwise close the dialog somebody was only trying to empty.
+      expect(escapeEvent.stopPropagation).toHaveBeenCalled();
       expect(clearSpy).toHaveBeenCalledTimes(1);
       expect(harness.innerValue()).toBe('');
     });

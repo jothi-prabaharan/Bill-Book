@@ -33,10 +33,11 @@
       <small>Optional — leave empty for an asset that came across on migration.</small>
     </label>
 
-    <label>
-      Cost
-      <bb-currency-input [(ngModel)]="model.purchasePrice" name="purchasePrice" required />
-    </label>
+    <div class="field">
+      <!-- An amount in decimal rupees, which is what the API takes, so the
+           default `minorDigits` of zero is right. -->
+      <bb-money-input label="Cost" [(ngModel)]="model.purchasePrice" name="purchasePrice" [required]="true" />
+    </div>
 
     <label>
       Purchase date

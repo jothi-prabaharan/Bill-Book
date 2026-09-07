@@ -1,0 +1,119 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 9px);
+}
+
+/*
+ * Visually hidden rather than `display: none`: a hidden input is removed from
+ * the accessibility tree and cannot be focused, so the field would be
+ * unreachable by keyboard. This keeps it focusable and lets the focus ring show
+ * on the label standing in for it.
+ */
+.bb-file__picker {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.bb-file__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 9px);
+  flex-wrap: wrap;
+}
+
+.bb-file__button {
+  cursor: pointer;
+  margin: 0;
+}
+
+.bb-file__picker:focus-visible + .bb-file__row .bb-file__button {
+  outline: 2px solid var(--color-accent, #b68235);
+  outline-offset: 2px;
+}
+
+.bb-file__picker:disabled + .bb-file__row .bb-file__button {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.bb-file__summary {
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 60%, transparent);
+}
+
+.bb-file__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.bb-file__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 9px);
+  font-size: 12px;
+  padding: 3px 6px;
+  border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
+  border-radius: var(--radius-md, 4px);
+}
+
+.bb-file__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bb-file__size {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 55%, transparent);
+}
+
+.bb-file__remove {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  font-size: 15px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--color-text, #201f1d) 60%, transparent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--color-danger, #a2332a);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent, #b68235);
+    outline-offset: 1px;
+  }
+}
+
+.bb-file__rejected {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12px;
+  color: var(--color-danger, #a2332a);
+}

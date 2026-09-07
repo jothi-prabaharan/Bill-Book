@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CustomerService } from './customer.service';
-import { Lead, LeadSource, LeadStatus, Ticket, TicketPriority, TicketStatus, TicketMessage } from './models';
+import { Lead, LeadSource, LeadStatus } from './models';
 
 describe('CustomerService', () => {
   let service: CustomerService;
@@ -21,7 +22,7 @@ describe('CustomerService', () => {
   });
 
   it('should get leads', async () => {
-    const mockLeads: Lead[] = [{ leadId: 1, orgId: 'org1', name: 'John', source: LeadSource.Website, status: LeadStatus.New }];
+    const mockLeads: Lead[] = [{ leadId: '1', name: 'John', source: LeadSource.Website, status: LeadStatus.New }];
     const promise = service.getLeads();
     const req = httpMock.expectOne('/api/leads');
     expect(req.request.method).toBe('GET');
@@ -30,7 +31,7 @@ describe('CustomerService', () => {
   });
 
   it('should convert lead', async () => {
-    const promise = service.convertLead(1, 100);
+    const promise = service.convertLead('1', 100);
     const req = httpMock.expectOne('/api/leads/1/convert');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ contactId: 100 });
