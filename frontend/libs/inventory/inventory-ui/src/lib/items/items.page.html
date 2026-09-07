@@ -19,10 +19,14 @@
 <div class="actbar">
   <bb-search-input  [(ngModel)]="search" (keyup.enter)="load()" placeholder="Search this list" aria-label="Search items" class="w-auto flex-1 input text-sm actbar-search"/>
   
-  <select [(ngModel)]="showInactive" (ngModelChange)="load()" aria-label="Filter by status" class="w-auto input text-sm actbar-select">
-    <option [ngValue]="false">Active only</option>
-    <option [ngValue]="true">Any status</option>
-  </select>
+  <bb-select
+    ariaLabel="Filter by status"
+    class="w-auto text-sm actbar-select"
+    placeholder=""
+    [options]="statusFilterOptions"
+    [(ngModel)]="statusFilter"
+    (ngModelChange)="load()"
+  />
 
 
 
@@ -101,32 +105,36 @@
           <small>Blank takes the next code from the numbering series.</small>
         </label>
 
-        <label>
-          Category
-          <select [(ngModel)]="form.itemCategoryId" (ngModelChange)="onCategoryChange()">
-            <option [ngValue]="null">Not set</option>
-            @for (category of categories(); track category.itemCategoryId) {
-              <option [ngValue]="category.itemCategoryId">{{ category.categoryName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Category"
+            placeholder="Not set"
+            [options]="categoryOptions()"
+            [(ngModel)]="form.itemCategoryId"
+            (ngModelChange)="onCategoryChange()"
+          />
+        </div>
 
-        <label>
-          Profile
-          <select [(ngModel)]="form.itemProfile" (ngModelChange)="onProfileChange()" [disabled]="locked">
-            <option value="Standard">Standard</option>
-            <option value="Pharma">Pharma</option>
-            <option value="Jewellery">Jewellery</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Profile"
+            placeholder=""
+            [options]="profileOptions"
+            [disabled]="locked"
+            [(ngModel)]="form.itemProfile"
+            (ngModelChange)="onProfileChange()"
+          />
+        </div>
 
-        <label>
-          Type
-          <select [(ngModel)]="form.itemType" (ngModelChange)="onItemTypeChange()">
-            <option value="Goods">Goods</option>
-            <option value="Service">Service</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Type"
+            placeholder=""
+            [options]="itemTypeOptions"
+            [(ngModel)]="form.itemType"
+            (ngModelChange)="onItemTypeChange()"
+          />
+        </div>
 
         <!-- A div, not a label: once a code is picked this block contains no form
              control for a label to be associated with. -->
@@ -177,32 +185,26 @@
           }
         </div>
 
-        <label>
-          GST rate
-          <select [(ngModel)]="form.taxGroupId">
-            <option [ngValue]="null">Not set</option>
-            @for (rate of taxRates(); track rate.taxGroupId) {
-              <option [ngValue]="rate.taxGroupId">{{ rate.taxName }}</option>
-            }
-          </select>
-          <small>The item's own rate is what reaches an invoice; the code only suggests it.</small>
-        </label>
+        <div class="field">
+          <bb-select
+            label="GST rate"
+            placeholder="Not set"
+            hint="The item's own rate is what reaches an invoice; the code only suggests it."
+            [options]="taxRateOptions()"
+            [(ngModel)]="form.taxGroupId"
+          />
+        </div>
 
-        <label>
-          Tax preference
-          <select [(ngModel)]="form.taxPreference">
-            <option value="Taxable">Taxable</option>
-            <option value="Exempt">Exempt</option>
-            <option value="NilRated">Nil rated</option>
-            <option value="NonGst">Non-GST</option>
-            <option value="ZeroRated">Zero rated</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Tax preference"
+            placeholder=""
+            [options]="taxPreferenceOptions"
+            [(ngModel)]="form.taxPreference"
+          />
+        </div>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isPriceInclusiveOfTax" />
-          Prices include tax
-        </label>
+        <bb-checkbox text="Prices include tax" name="isPriceInclusiveOfTax" [(ngModel)]="form.isPriceInclusiveOfTax" />
 
         <div class="field">
           <bb-unit-price-input
@@ -242,25 +244,13 @@
           />
         </div>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isSales" />
-          Sold
-        </label>
+        <bb-checkbox text="Sold" name="isSales" [(ngModel)]="form.isSales" />
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isPurchase" />
-          Purchased
-        </label>
+        <bb-checkbox text="Purchased" name="isPurchase" [(ngModel)]="form.isPurchase" />
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isReturnable" />
-          Returnable
-        </label>
+        <bb-checkbox text="Returnable" name="isReturnable" [(ngModel)]="form.isReturnable" />
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isActive" />
-          Active
-        </label>
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
       </div>
     }
 
@@ -272,107 +262,102 @@
       </p>
 
       <div class="fields">
-        <label>
-          Unit type
-          <select [(ngModel)]="form.uomTypeId" (ngModelChange)="onUomTypeChange()" [disabled]="locked">
-            @for (type of types(); track type.uomTypeId) {
-              <option [ngValue]="type.uomTypeId">{{ type.uomTypeName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Unit type"
+            placeholder=""
+            [options]="uomTypeOptions()"
+            [disabled]="locked"
+            [(ngModel)]="form.uomTypeId"
+            (ngModelChange)="onUomTypeChange()"
+          />
+        </div>
 
-        <label>
-          Inventory unit
-          <select [(ngModel)]="form.inventoryUomId" [disabled]="locked">
-            @for (unit of unitsOfType(); track unit.uomId) {
-              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
-            }
-          </select>
-          <small>Stock, cost and precision. Frozen once stock moves.</small>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Inventory unit"
+            placeholder=""
+            hint="Stock, cost and precision. Frozen once stock moves."
+            [options]="unitOptions()"
+            [disabled]="locked"
+            [(ngModel)]="form.inventoryUomId"
+          />
+        </div>
 
-        <label>
-          Sales unit
-          <select [(ngModel)]="form.salesUomId">
-            @for (unit of unitsOfType(); track unit.uomId) {
-              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Sales unit"
+            placeholder=""
+            [options]="unitOptions()"
+            [(ngModel)]="form.salesUomId"
+          />
+        </div>
 
-        <label>
-          Purchase unit
-          <select [(ngModel)]="form.purchaseUomId">
-            @for (unit of unitsOfType(); track unit.uomId) {
-              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
-            }
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Purchase unit"
+            placeholder=""
+            [options]="unitOptions()"
+            [(ngModel)]="form.purchaseUomId"
+          />
+        </div>
 
-        <label>
-          Report unit
-          <select [(ngModel)]="form.reportUomId">
-            @for (unit of unitsOfType(); track unit.uomId) {
-              <option [ngValue]="unit.uomId">{{ unit.uomCode }} — {{ unit.uomName }}</option>
-            }
-          </select>
-          <small>What stock reports display in. Presentation only.</small>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Report unit"
+            placeholder=""
+            hint="What stock reports display in. Presentation only."
+            [options]="unitOptions()"
+            [(ngModel)]="form.reportUomId"
+          />
+        </div>
       </div>
     }
 
     @if (tab() === 'stock') {
       <div class="fields">
-        <label>
-          Costing method
-          <select [(ngModel)]="form.costingType" (ngModelChange)="onCostingChange()" [disabled]="locked">
-            <option value="None">Not stocked</option>
-            <option value="WeightedAverage">Weighted average</option>
-            <option value="Fifo">FIFO</option>
-            <option value="Lifo">LIFO</option>
-            <option value="Fefo">FEFO — earliest expiry</option>
-            <option value="SpecificIdentification">Specific identification</option>
-          </select>
-          <small>{{ costingNote }}</small>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Costing method"
+            placeholder=""
+            [hint]="costingNote"
+            [options]="costingOptions"
+            [disabled]="locked"
+            [(ngModel)]="form.costingType"
+            (ngModelChange)="onCostingChange()"
+          />
+        </div>
 
         @if (form.costingType !== 'None') {
-          <label class="inline">
-            <input
-              type="checkbox"
-              [(ngModel)]="form.isBatchTracked"
-              [disabled]="locked || form.costingType === 'Fefo'"
-            />
-            Track batches
-          </label>
+          <bb-checkbox
+            text="Track batches"
+            name="isBatchTracked"
+            [disabled]="locked || form.costingType === 'Fefo'"
+            [(ngModel)]="form.isBatchTracked"
+          />
 
-          <label class="inline">
-            <input
-              type="checkbox"
-              [(ngModel)]="form.isExpiryTracked"
-              [disabled]="locked || form.costingType === 'Fefo' || !form.isBatchTracked"
-            />
-            Track expiry
-          </label>
+          <bb-checkbox
+            text="Track expiry"
+            name="isExpiryTracked"
+            [disabled]="locked || form.costingType === 'Fefo' || !form.isBatchTracked"
+            [(ngModel)]="form.isExpiryTracked"
+          />
 
-          <label class="inline">
-            <input
-              type="checkbox"
-              [(ngModel)]="form.isSerialTracked"
-              [disabled]="locked || form.costingType === 'SpecificIdentification'"
-            />
-            Track serial numbers
-          </label>
+          <bb-checkbox
+            text="Track serial numbers"
+            name="isSerialTracked"
+            [disabled]="locked || form.costingType === 'SpecificIdentification'"
+            [(ngModel)]="form.isSerialTracked"
+          />
 
-          <label>
-            Default warehouse
-            <select [(ngModel)]="form.defaultWarehouseId">
-              <option [ngValue]="null">Not set</option>
-              @for (warehouse of warehouses(); track warehouse.warehouseId) {
-                <option [ngValue]="warehouse.warehouseId">{{ warehouse.warehouseName }}</option>
-              }
-            </select>
-          </label>
+          <div class="field">
+            <bb-select
+              label="Default warehouse"
+              placeholder="Not set"
+              [options]="warehouseOptions()"
+              [(ngModel)]="form.defaultWarehouseId"
+            />
+          </div>
 
           <div class="field">
             <bb-quantity-input
@@ -407,26 +392,23 @@
       </p>
 
       <div class="fields">
-        <label>
-          Metal
-          <select [(ngModel)]="form.jewellery['metalType']">
-            <option value="Gold">Gold</option>
-            <option value="Silver">Silver</option>
-            <option value="Platinum">Platinum</option>
-            <option value="Diamond">Diamond</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Metal"
+            placeholder=""
+            [options]="metalTypeOptions"
+            [(ngModel)]="form.jewellery['metalType']"
+          />
+        </div>
 
         <label>
           Purity
-          <select [(ngModel)]="form.jewellery['metalPurityId']">
-            @for (purity of purities(); track purity.metalPurityId) {
-              <option [ngValue]="purity.metalPurityId">
-                {{ purity.metalType }} — {{ purity.purityName }} ({{ purity.purityFactor }})
-              </option>
-            }
-          </select>
+          <bb-select
+            placeholder=""
+            ariaLabel="Purity"
+            [options]="purityOptions()"
+            [(ngModel)]="form.jewellery['metalPurityId']"
+          />
         </label>
 
         <div class="field">
@@ -467,11 +449,12 @@
 
         <label>
           Making charge type
-          <select [(ngModel)]="form.jewellery['makingChargeType']">
-            <option value="PerGram">Per gram</option>
-            <option value="Percentage">Percentage</option>
-            <option value="Fixed">Fixed</option>
-          </select>
+          <bb-select
+            placeholder=""
+            ariaLabel="Making charge type"
+            [options]="makingChargeTypeOptions"
+            [(ngModel)]="form.jewellery['makingChargeType']"
+          />
         </label>
 
         <label>
@@ -479,10 +462,11 @@
           <bb-number-input  [(ngModel)]="form.jewellery['makingChargeValue']" step="0.0001" />
         </label>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.jewellery['isHallmarked']" />
-          Hallmarked
-        </label>
+        <bb-checkbox
+          text="Hallmarked"
+          name="isHallmarked"
+          [(ngModel)]="form.jewellery['isHallmarked']"
+        />
       </div>
     }
 
@@ -498,19 +482,14 @@
           <bb-text-input  [(ngModel)]="form.pharma['strength']" maxlength="50" />
         </label>
 
-        <label>
-          Dosage form
-          <select [(ngModel)]="form.pharma['dosageForm']">
-            <option value="Tablet">Tablet</option>
-            <option value="Capsule">Capsule</option>
-            <option value="Syrup">Syrup</option>
-            <option value="Injection">Injection</option>
-            <option value="Ointment">Ointment</option>
-            <option value="Drops">Drops</option>
-            <option value="Powder">Powder</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
+        <div class="field">
+          <bb-select
+            label="Dosage form"
+            placeholder=""
+            [options]="dosageFormOptions"
+            [(ngModel)]="form.pharma['dosageForm']"
+          />
+        </div>
 
         <label>
           Pack size
@@ -529,29 +508,25 @@
 
         <label>
           Drug schedule
-          <select [(ngModel)]="form.pharma['drugSchedule']">
-            <option value="None">None</option>
-            <option value="G">G</option>
-            <option value="H">H</option>
-            <option value="H1">H1</option>
-            <option value="X">X</option>
-          </select>
+          <bb-select
+            placeholder=""
+            ariaLabel="Drug schedule"
+            [options]="drugScheduleOptions"
+            [(ngModel)]="form.pharma['drugSchedule']"
+          />
           <small>H, H1 and X require a prescription — set automatically.</small>
         </label>
 
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.pharma['isNarcotic']" />
-          Narcotic
-        </label>
+        <bb-checkbox text="Narcotic" name="isNarcotic" [(ngModel)]="form.pharma['isNarcotic']" />
 
         <label>
           Storage
-          <select [(ngModel)]="form.pharma['storageCondition']">
-            <option value="Ambient">Ambient</option>
-            <option value="CoolDry">Cool and dry</option>
-            <option value="ColdChain">Cold chain (2–8 °C)</option>
-            <option value="Frozen">Frozen</option>
-          </select>
+          <bb-select
+            placeholder=""
+            ariaLabel="Storage condition"
+            [options]="storageConditionOptions"
+            [(ngModel)]="form.pharma['storageCondition']"
+          />
         </label>
 
         <label>
@@ -587,23 +562,24 @@
 
             <label>
               Type
-              <select [(ngModel)]="barcode.barcodeType" [name]="'bcType' + $index">
-                <option value="Ean13">EAN-13</option>
-                <option value="Code128">Code 128</option>
-                <option value="Gs1DataMatrix">GS1 DataMatrix</option>
-                <option value="QrCode">QR code</option>
-                <option value="JewelleryTag">Jewellery tag</option>
-              </select>
+              <bb-select
+                placeholder=""
+                ariaLabel="Barcode type"
+                [options]="barcodeTypeOptions"
+                [name]="'bcType' + $index"
+                [(ngModel)]="barcode.barcodeType"
+              />
             </label>
 
             <label>
               Scans as
-              <select [(ngModel)]="barcode.uomId" [name]="'bcUom' + $index">
-                <option [ngValue]="null">Inventory unit</option>
-                @for (unit of unitsOfType(); track unit.uomId) {
-                  <option [ngValue]="unit.uomId">{{ unit.uomCode }}</option>
-                }
-              </select>
+              <bb-select
+                placeholder="Inventory unit"
+                ariaLabel="Barcode unit"
+                [options]="barcodeUnitOptions()"
+                [name]="'bcUom' + $index"
+                [(ngModel)]="barcode.uomId"
+              />
             </label>
           </div>
 

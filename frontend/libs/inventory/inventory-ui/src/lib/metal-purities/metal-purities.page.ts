@@ -1,5 +1,12 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef, DataGridCellTemplateDirective , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridCellTemplateDirective,
+  DataGridComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -25,7 +32,14 @@ interface Purity {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-metal-purities-page',
   standalone: true,
-  imports: [DataGridComponent, DataGridCellTemplateDirective, FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    DataGridCellTemplateDirective,
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './metal-purities.page.html',
   styleUrl: './metal-purities.page.scss',
 })

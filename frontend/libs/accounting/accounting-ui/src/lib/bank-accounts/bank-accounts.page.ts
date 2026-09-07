@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -55,7 +61,13 @@ interface BankAccount {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-bank-accounts-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './bank-accounts.page.html',
   styleUrl: './bank-accounts.page.scss',
 })

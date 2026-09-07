@@ -42,10 +42,11 @@
         <bb-text-input  [(ngModel)]="form.dateFormat" name="dateFormat" maxlength="40" />
         <span class="sub">e.g. dd/MM/yyyy or dd-MMM-yyyy</span>
       </label>
-      <label class="check">
-        <input type="checkbox" [(ngModel)]="form.hasHeaderRow" name="hasHeaderRow" />
-        The first row names the columns
-      </label>
+      <bb-checkbox
+        text="The first row names the columns"
+        [(ngModel)]="form.hasHeaderRow"
+        name="hasHeaderRow"
+      />
     </div>
 
     <div class="head-fields">
@@ -129,14 +130,11 @@
           />
         </label>
         @if (usesSignedColumn) {
-          <label class="check">
-            <input
-              type="checkbox"
-              [(ngModel)]="form.negativeIsDeposit"
-              name="negativeIsDeposit"
-            />
-            Negative means money in
-          </label>
+          <bb-checkbox
+            text="Negative means money in"
+            [(ngModel)]="form.negativeIsDeposit"
+            name="negativeIsDeposit"
+          />
         }
       </div>
     </fieldset>
@@ -187,10 +185,11 @@
     </h2>
 
     <div class="statement-actions">
-      <label class="check">
-        <input type="checkbox" [(ngModel)]="showAll" name="showAll" />
-        Show matched and set-aside lines too
-      </label>
+      <bb-checkbox
+        text="Show matched and set-aside lines too"
+        [(ngModel)]="showAll"
+        name="showAll"
+      />
       <span class="spacer"></span>
       <a class="link" [href]="exportUrl('csv')" download>Export CSV</a>
       <a class="link" [href]="exportUrl('xlsx')" download>Export Excel</a>

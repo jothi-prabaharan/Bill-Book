@@ -51,15 +51,13 @@
         </legend>
         <div class="actions-grid">
           @for (p of group.permissions; track p.permissionId) {
-            <label class="check">
-              <input
-                type="checkbox"
-                [disabled]="isSystem()"
-                [checked]="selected().has(p.permissionId)"
-                (change)="togglePermission(p.permissionId)"
-              />
-              {{ p.action }}
-            </label>
+            <bb-checkbox
+              [text]="p.action"
+              [name]="'perm' + p.permissionId"
+              [disabled]="isSystem()"
+              [ngModel]="selected().has(p.permissionId)"
+              (ngModelChange)="togglePermission(p.permissionId)"
+            />
           }
         </div>
       </fieldset>

@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Item categories</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="startAdd(null)" [disabled]="busy()">+ Add category</button>
   </div>
 </header>
@@ -110,10 +111,10 @@
           }
         </select>
       </label>
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isActive" />
-        Active
-      </label>
+      <bb-checkbox
+        text="Active"
+        [(ngModel)]="form.isActive"
+      />
     </div>
     <div class="sheet-actions">
       <button type="button" (click)="save()" [disabled]="busy() || !form.categoryName || !form.categoryCode">

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbFileSelection,
+  CheckboxComponent,
   ColumnDef,
   DataGridComponent,
   FileInputComponent,
@@ -107,6 +108,7 @@ interface StatementLine {
     TextInputComponent,
     NumberInputComponent,
     FileInputComponent,
+    CheckboxComponent,
   ],
   templateUrl: './statements.page.html',
   styleUrl: './statements.page.scss',

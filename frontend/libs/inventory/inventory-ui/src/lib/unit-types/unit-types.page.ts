@@ -1,5 +1,11 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -43,7 +49,13 @@ interface UomType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-unit-types-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './unit-types.page.html',
   styleUrl: './unit-types.page.scss',
 })

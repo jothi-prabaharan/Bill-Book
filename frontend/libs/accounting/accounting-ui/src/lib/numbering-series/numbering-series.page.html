@@ -6,10 +6,11 @@
       <option value="Master">Masters</option>
       <option value="Document">Documents</option>
     </select>
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add series</button>
   </div>
 </header>
@@ -134,10 +135,10 @@
         <bb-text-input  [(ngModel)]="form.suffix" maxlength="15" />
       </label>
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.includeFinancialYear" />
-        Include financial year
-      </label>
+      <bb-checkbox
+        text="Include financial year"
+        [(ngModel)]="form.includeFinancialYear"
+      />
 
       @if (form.includeFinancialYear) {
         <label>
@@ -151,10 +152,10 @@
         </label>
       }
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.includeBranchCode" />
-        Include branch code
-      </label>
+      <bb-checkbox
+        text="Include branch code"
+        [(ngModel)]="form.includeBranchCode"
+      />
 
       @if (form.includeBranchCode) {
         <label>
@@ -187,22 +188,18 @@
         </select>
       </label>
 
-      <label class="inline">
-        <input
-          type="checkbox"
-          [(ngModel)]="form.allowManualOverride"
-          [disabled]="form.seriesFor === 'Document'"
-        />
-        Allow typing a code by hand
-        @if (form.seriesFor === 'Document') {
-          <small>Document numbers must run consecutively.</small>
-        }
-      </label>
+      <bb-checkbox
+        text="Allow typing a code by hand"
+        name="allowManualOverride"
+        [hint]="form.seriesFor === 'Document' ? documentSeriesNote : ''"
+        [disabled]="form.seriesFor === 'Document'"
+        [(ngModel)]="form.allowManualOverride"
+      />
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isActive" />
-        Active
-      </label>
+      <bb-checkbox
+        text="Active"
+        [(ngModel)]="form.isActive"
+      />
     </div>
 
     <div class="sheet-actions">

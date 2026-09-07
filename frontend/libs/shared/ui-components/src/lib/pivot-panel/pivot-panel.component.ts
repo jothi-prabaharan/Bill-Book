@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy } from '@angular/core';
+import { CheckboxComponent } from '../forms/checkbox/checkbox.component';
 import { Component, computed, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -22,7 +23,7 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-pivot-panel',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, CheckboxComponent],
   templateUrl: './pivot-panel.component.html',
   styleUrl: './pivot-panel.component.scss',
 })

@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -33,7 +37,11 @@ interface MasterCurrency {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-org-currencies-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    CheckboxComponent,
+  ],
   templateUrl: './org-currencies.page.html',
   styleUrl: './org-currencies.page.scss',
 })

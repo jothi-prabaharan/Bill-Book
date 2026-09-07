@@ -2,7 +2,14 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef , DateInputComponent , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  DateInputComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface TaxRate {
   taxMasterId: number;
@@ -35,7 +42,14 @@ type Mode = 'create' | 'revise' | 'rename';
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-tax-master-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, DateInputComponent, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    DateInputComponent,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './tax-master.page.html',
   styleUrl: './tax-master.page.scss',
 })

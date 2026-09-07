@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Chart of accounts</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="startCreate()" [disabled]="busy()">+ New account</button>
   </div>
 </header>
@@ -56,38 +57,52 @@
     <fieldset>
       <legend>Usage</legend>
       <div class="flags">
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isSales" name="isSales" [disabled]="locked()" />
-          Sales documents
-        </label>
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isPurchase" name="isPurchase" [disabled]="locked()" />
-          Purchase documents
-        </label>
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isPayment" name="isPayment" [disabled]="locked()" />
-          Payments
-        </label>
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isBank" name="isBank" [disabled]="locked()" />
-          Bank / cash account
-        </label>
-        <label class="inline">
-          <input type="checkbox" [(ngModel)]="form.isContra" name="isContra" [disabled]="locked()" />
-          Contra <span class="opt">(reports subtract)</span>
-        </label>
+        <bb-checkbox
+          text="Sales documents"
+          [(ngModel)]="form.isSales"
+          name="isSales"
+          [disabled]="locked()"
+        />
+        <bb-checkbox
+          text="Purchase documents"
+          [(ngModel)]="form.isPurchase"
+          name="isPurchase"
+          [disabled]="locked()"
+        />
+        <bb-checkbox
+          text="Payments"
+          [(ngModel)]="form.isPayment"
+          name="isPayment"
+          [disabled]="locked()"
+        />
+        <bb-checkbox
+          text="Bank / cash account"
+          [(ngModel)]="form.isBank"
+          name="isBank"
+          [disabled]="locked()"
+        />
+        <bb-checkbox
+          text="Contra"
+          hint="Reports subtract this account rather than adding it."
+          name="isContra"
+          [disabled]="locked()"
+          [(ngModel)]="form.isContra"
+        />
       </div>
     </fieldset>
 
     <div class="row">
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isActive" name="isActive" />
-        Active
-      </label>
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isLock" name="isLock" />
-        Posting locked <span class="opt">(freeze all posting)</span>
-      </label>
+      <bb-checkbox
+        text="Active"
+        [(ngModel)]="form.isActive"
+        name="isActive"
+      />
+      <bb-checkbox
+        text="Posting locked"
+        hint="Freezes all posting to this account."
+        name="isLock"
+        [(ngModel)]="form.isLock"
+      />
     </div>
 
     <div class="editor-actions">

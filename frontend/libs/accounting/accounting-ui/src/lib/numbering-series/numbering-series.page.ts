@@ -3,7 +3,13 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef , TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface NumberingSeries {
   numberingSeriesId: number;
@@ -58,11 +64,20 @@ type FormModel = Omit<
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-numbering-series-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './numbering-series.page.html',
   styleUrl: './numbering-series.page.scss',
 })
 export class NumberingSeriesPage implements OnInit {
+  /** Held as a property so the template binding stays a plain expression. */
+  protected readonly documentSeriesNote = 'Document numbers must run consecutively.';
+
   private readonly http = inject(HttpClient);
 
   columns: ColumnDef[] = [

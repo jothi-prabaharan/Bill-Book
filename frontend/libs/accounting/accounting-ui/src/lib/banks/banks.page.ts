@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
@@ -24,7 +29,12 @@ interface Bank {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-banks-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './banks.page.html',
   styleUrl: './banks.page.scss',
 })

@@ -1,14 +1,11 @@
 @if (canPivot()) {
   <div class="pivot-panel">
-    <label class="switch">
-      <input
-        type="checkbox"
-        name="pivotOn"
-        [ngModel]="active()"
-        (ngModelChange)="toggle($event)"
-      />
-      Pivot
-    </label>
+    <bb-checkbox
+      text="Pivot"
+      name="pivotOn"
+      [ngModel]="active()"
+      (ngModelChange)="toggle($event)"
+    />
 
     @if (pivot(); as spec) {
       <label>

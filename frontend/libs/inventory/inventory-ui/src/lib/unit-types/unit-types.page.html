@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Unit types</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <bb-text-input  [(ngModel)]="newTypeName" maxlength="50" placeholder="New type name" />
     <button type="button" (click)="addType()" [disabled]="busy() || !newTypeName.trim()">
       + Add type
@@ -129,9 +130,10 @@
 
       <ng-template bbCellTemplate="isActive" let-row>
         @if (editingUnitId() === row.uomId) {
-          <label class="inline">
-            <input type="checkbox" [(ngModel)]="editUnit.isActive" />
-          </label>
+          <bb-checkbox
+            text=""
+            [(ngModel)]="editUnit.isActive"
+          />
         } @else {
           {{ row.isActive ? 'Active' : 'Inactive' }}
         }

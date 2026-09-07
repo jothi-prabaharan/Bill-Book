@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Tax master</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showHistory" (ngModelChange)="load()" />
-      Show superseded
-    </label>
+    <bb-checkbox
+      text="Show superseded"
+      [(ngModel)]="showHistory"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="startCreate()" [disabled]="busy()">+ New rate</button>
   </div>
 </header>
@@ -69,14 +70,13 @@
 
       <fieldset>
         <legend>Applies to</legend>
-        <label class="inline">
-          <input type="checkbox" name="isSales" [(ngModel)]="form.isSales" />
-          Sales <span class="opt">(output tax)</span>
-        </label>
-        <label class="inline">
-          <input type="checkbox" name="isPurchase" [(ngModel)]="form.isPurchase" />
-          Purchases <span class="opt">(input tax)</span>
-        </label>
+        <bb-checkbox text="Sales" hint="Output tax." name="isSales" [(ngModel)]="form.isSales" />
+        <bb-checkbox
+          text="Purchases"
+          hint="Input tax."
+          name="isPurchase"
+          [(ngModel)]="form.isPurchase"
+        />
         <p class="hint">
           At least one is required. Each direction gets its own CGST, SGST and IGST
           sub-accounts.

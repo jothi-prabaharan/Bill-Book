@@ -42,10 +42,10 @@
         Description
         <bb-text-input [(ngModel)]="form.description" maxlength="255" />
       </label>
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isActive" />
-        Active
-      </label>
+      <bb-checkbox
+        text="Active"
+        [(ngModel)]="form.isActive"
+      />
     </div>
     <div class="sheet-actions">
       <button type="button" (click)="save()" [disabled]="busy() || !form.name">

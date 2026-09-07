@@ -1,5 +1,8 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { Component, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-core';
@@ -19,7 +22,11 @@ import { ReportQuery, SavedView, SavedViewService } from '@bill-book/reporting-c
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-saved-view-dialog',
   standalone: true,
-  imports: [FormsModule, TextInputComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './saved-view.dialog.html',
   styleUrl: './saved-view.dialog.scss',
 })

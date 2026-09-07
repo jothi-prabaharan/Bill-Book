@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  SearchInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -52,7 +57,12 @@ const PAGE_SIZE = 50;
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-hsn-sac-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, SearchInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    SearchInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './hsn-sac.page.html',
   styleUrl: './hsn-sac.page.scss',
 })

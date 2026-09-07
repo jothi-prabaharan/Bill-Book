@@ -25,10 +25,7 @@
     </label>
   </div>
 
-  <label class="inline">
-    <input name="useSsl" type="checkbox" [(ngModel)]="form.useSsl" />
-    Use SSL/TLS
-  </label>
+  <bb-checkbox text="Use SSL/TLS" name="useSsl" [(ngModel)]="form.useSsl" />
 
   <div class="row">
     <label class="grow">
@@ -66,10 +63,7 @@
     </span>
   </label>
 
-  <label class="inline">
-    <input name="isActive" type="checkbox" [(ngModel)]="form.isActive" />
-    Active
-  </label>
+  <bb-checkbox text="Active" name="isActive" [(ngModel)]="form.isActive" />
 
   <div class="actions">
     <button type="submit" [disabled]="busy()">Save</button>

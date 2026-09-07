@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -41,7 +46,12 @@ interface AccountType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-chart-of-accounts-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './chart-of-accounts.page.html',
   styleUrl: './chart-of-accounts.page.scss',
 })

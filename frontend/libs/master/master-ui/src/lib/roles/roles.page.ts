@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -39,7 +44,12 @@ interface PermissionGroup {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-roles-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './roles.page.html',
   styleUrl: './roles.page.scss',
 })

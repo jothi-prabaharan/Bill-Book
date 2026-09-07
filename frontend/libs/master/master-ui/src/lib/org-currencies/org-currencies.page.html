@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Currencies</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add currency</button>
   </div>
 </header>

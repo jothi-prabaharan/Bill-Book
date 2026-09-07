@@ -37,16 +37,14 @@
       />
     </div>
 
-    <label class="inv-list__check" for="inv-overdue">
-      <input
-        id="inv-overdue"
-        type="checkbox"
-        name="overdueOnly"
-        [(ngModel)]="overdueOnly"
-        (ngModelChange)="onFilterChange()"
-      />
-      <span>Overdue only</span>
-    </label>
+    <bb-checkbox
+      id="inv-overdue"
+      class="inv-list__check"
+      text="Overdue only"
+      name="overdueOnly"
+      [(ngModel)]="overdueOnly"
+      (ngModelChange)="onFilterChange()"
+    />
 
     <button type="submit" class="btn btn-secondary inv-list__apply">Search</button>
   </form>

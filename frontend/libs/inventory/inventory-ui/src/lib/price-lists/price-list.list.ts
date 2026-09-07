@@ -2,7 +2,12 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef, TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface PriceList {
   id: string;
@@ -14,7 +19,13 @@ interface PriceList {
 @Component({
   selector: 'bb-price-list-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, DataGridComponent, TextInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DataGridComponent,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './price-list.list.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

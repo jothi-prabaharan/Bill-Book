@@ -45,25 +45,19 @@
     <option value="SAC">SAC — services</option>
   </select>
 
-  <label class="inline">
-    <input
-      type="checkbox"
-      name="includeChapters"
-      [(ngModel)]="includeChapters"
-      (ngModelChange)="applyFilters()"
-    />
-    Chapter headings
-  </label>
+  <bb-checkbox
+    text="Chapter headings"
+    name="includeChapters"
+    [(ngModel)]="includeChapters"
+    (ngModelChange)="applyFilters()"
+  />
 
-  <label class="inline">
-    <input
-      type="checkbox"
-      name="includeInactive"
-      [(ngModel)]="includeInactive"
-      (ngModelChange)="applyFilters()"
-    />
-    Retired
-  </label>
+  <bb-checkbox
+    text="Retired"
+    name="includeInactive"
+    [(ngModel)]="includeInactive"
+    (ngModelChange)="applyFilters()"
+  />
 
   <button type="button" (click)="applyFilters()" [disabled]="busy()">Search</button>
 </div>

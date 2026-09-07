@@ -51,15 +51,17 @@
       />
     </label>
 
-    <label class="check">
-      <input type="checkbox" name="shared" [(ngModel)]="shareWithBranch" />
-      Share with the branch
-    </label>
+    <bb-checkbox
+      text="Share with the branch"
+      name="shared"
+      [(ngModel)]="shareWithBranch"
+    />
 
-    <label class="check">
-      <input type="checkbox" name="isDefault" [(ngModel)]="makeDefault" />
-      Open this by default
-    </label>
+    <bb-checkbox
+      text="Open this by default"
+      name="isDefault"
+      [(ngModel)]="makeDefault"
+    />
 
     <button type="submit" [disabled]="busy() || name.trim() === ''">Save</button>
   </form>

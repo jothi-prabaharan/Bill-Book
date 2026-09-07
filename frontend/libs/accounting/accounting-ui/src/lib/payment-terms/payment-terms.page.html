@@ -1,10 +1,11 @@
 <header class="page-head">
   <h1>Payment terms</h1>
   <div class="head-actions">
-    <label class="inline">
-      <input type="checkbox" [(ngModel)]="showInactive" (ngModelChange)="load()" />
-      Show inactive
-    </label>
+    <bb-checkbox
+      text="Show inactive"
+      [(ngModel)]="showInactive"
+      (ngModelChange)="load()"
+    />
     <button type="button" (click)="openAdd()" [disabled]="busy()">+ Add term</button>
   </div>
 </header>
@@ -140,20 +141,20 @@
         <small>Must not run past the due date, or it could never be earned.</small>
       </label>
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isSales" />
-        Available on sales documents
-      </label>
+      <bb-checkbox
+        text="Available on sales documents"
+        [(ngModel)]="form.isSales"
+      />
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isPurchase" />
-        Available on purchase documents
-      </label>
+      <bb-checkbox
+        text="Available on purchase documents"
+        [(ngModel)]="form.isPurchase"
+      />
 
-      <label class="inline">
-        <input type="checkbox" [(ngModel)]="form.isActive" />
-        Active
-      </label>
+      <bb-checkbox
+        text="Active"
+        [(ngModel)]="form.isActive"
+      />
     </div>
 
     <div class="sheet-actions">

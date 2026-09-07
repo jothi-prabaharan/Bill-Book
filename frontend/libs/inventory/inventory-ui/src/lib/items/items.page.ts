@@ -1,11 +1,14 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
+  BbSelectOption,
+  CheckboxComponent,
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
   NumberInputComponent,
   QuantityInputComponent,
   SearchInputComponent,
+  SelectComponent,
   TextInputComponent,
   UnitPriceInputComponent,
 } from '@bill-book/ui-components';
@@ -161,6 +164,8 @@ type Tab = 'general' | 'units' | 'stock' | 'profile' | 'barcodes';
     DataGridCellTemplateDirective,
     UnitPriceInputComponent,
     QuantityInputComponent,
+    SelectComponent,
+    CheckboxComponent,
   ],
   templateUrl: './items.page.html',
   styleUrl: './items.page.scss',
@@ -215,6 +220,151 @@ export class ItemsPage implements OnInit {
   );
 
   /** Quantity precision comes from the inventory unit, not the item. */
+  /*
+   * The option lists, in the shape `bb-select` takes.
+   *
+   * Mapped here rather than in the template so each list is built once per
+   * change rather than on every render, and so the fixed vocabularies read as
+   * data — which is what they are — instead of as markup.
+   */
+
+  protected readonly categoryOptions = computed<BbSelectOption<number>[]>(() =>
+    this.categories().map((category) => ({
+      value: category.itemCategoryId,
+      label: category.categoryName,
+    })),
+  );
+
+  protected readonly taxRateOptions = computed<BbSelectOption<number>[]>(() =>
+    this.taxRates().map((rate) => ({ value: rate.taxGroupId, label: rate.taxName })),
+  );
+
+  protected readonly uomTypeOptions = computed<BbSelectOption<number>[]>(() =>
+    this.types().map((type) => ({ value: type.uomTypeId, label: type.uomTypeName })),
+  );
+
+  protected readonly unitOptions = computed<BbSelectOption<number>[]>(() =>
+    this.unitsOfType().map((unit) => ({
+      value: unit.uomId,
+      label: `${unit.uomCode} — ${unit.uomName}`,
+    })),
+  );
+
+  /** Barcodes name a unit by code alone; the full name would not fit the row. */
+  protected readonly barcodeUnitOptions = computed<BbSelectOption<number>[]>(() =>
+    this.unitsOfType().map((unit) => ({ value: unit.uomId, label: unit.uomCode })),
+  );
+
+  protected readonly warehouseOptions = computed<BbSelectOption<number>[]>(() =>
+    this.warehouses().map((warehouse) => ({
+      value: warehouse.warehouseId,
+      label: warehouse.warehouseName,
+    })),
+  );
+
+  protected readonly purityOptions = computed<BbSelectOption<number>[]>(() =>
+    this.purities().map((purity) => ({
+      value: purity.metalPurityId,
+      label: `${purity.metalType} — ${purity.purityName} (${purity.purityFactor})`,
+    })),
+  );
+
+  protected readonly statusFilterOptions: BbSelectOption<string>[] = [
+    { value: 'active', label: 'Active only' },
+    { value: 'any', label: 'Any status' },
+  ];
+
+  protected readonly profileOptions: BbSelectOption<string>[] = [
+    { value: 'Standard', label: 'Standard' },
+    { value: 'Pharma', label: 'Pharma' },
+    { value: 'Jewellery', label: 'Jewellery' },
+  ];
+
+  protected readonly itemTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Goods', label: 'Goods' },
+    { value: 'Service', label: 'Service' },
+  ];
+
+  protected readonly taxPreferenceOptions: BbSelectOption<string>[] = [
+    { value: 'Taxable', label: 'Taxable' },
+    { value: 'Exempt', label: 'Exempt' },
+    { value: 'NilRated', label: 'Nil rated' },
+    { value: 'NonGst', label: 'Non-GST' },
+    { value: 'ZeroRated', label: 'Zero rated' },
+  ];
+
+  protected readonly costingOptions: BbSelectOption<string>[] = [
+    { value: 'None', label: 'Not stocked' },
+    { value: 'WeightedAverage', label: 'Weighted average' },
+    { value: 'Fifo', label: 'FIFO' },
+    { value: 'Lifo', label: 'LIFO' },
+    { value: 'Fefo', label: 'FEFO — earliest expiry' },
+    { value: 'SpecificIdentification', label: 'Specific identification' },
+  ];
+
+  protected readonly metalTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Gold', label: 'Gold' },
+    { value: 'Silver', label: 'Silver' },
+    { value: 'Platinum', label: 'Platinum' },
+    { value: 'Diamond', label: 'Diamond' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  protected readonly makingChargeTypeOptions: BbSelectOption<string>[] = [
+    { value: 'PerGram', label: 'Per gram' },
+    { value: 'Percentage', label: 'Percentage' },
+    { value: 'Fixed', label: 'Fixed' },
+  ];
+
+  protected readonly dosageFormOptions: BbSelectOption<string>[] = [
+    { value: 'Tablet', label: 'Tablet' },
+    { value: 'Capsule', label: 'Capsule' },
+    { value: 'Syrup', label: 'Syrup' },
+    { value: 'Injection', label: 'Injection' },
+    { value: 'Ointment', label: 'Ointment' },
+    { value: 'Drops', label: 'Drops' },
+    { value: 'Powder', label: 'Powder' },
+    { value: 'Other', label: 'Other' },
+  ];
+
+  protected readonly drugScheduleOptions: BbSelectOption<string>[] = [
+    { value: 'None', label: 'None' },
+    { value: 'G', label: 'G' },
+    { value: 'H', label: 'H' },
+    { value: 'H1', label: 'H1' },
+    { value: 'X', label: 'X' },
+  ];
+
+  protected readonly storageConditionOptions: BbSelectOption<string>[] = [
+    { value: 'Ambient', label: 'Ambient' },
+    { value: 'CoolDry', label: 'Cool and dry' },
+    { value: 'ColdChain', label: 'Cold chain (2–8 °C)' },
+    { value: 'Frozen', label: 'Frozen' },
+  ];
+
+  protected readonly barcodeTypeOptions: BbSelectOption<string>[] = [
+    { value: 'Ean13', label: 'EAN-13' },
+    { value: 'Code128', label: 'Code 128' },
+    { value: 'Gs1DataMatrix', label: 'GS1 DataMatrix' },
+    { value: 'QrCode', label: 'QR code' },
+    { value: 'JewelleryTag', label: 'Jewellery tag' },
+  ];
+
+  /**
+   * The status filter, as a value `bb-select` can carry.
+   *
+   * `showInactive` is a boolean and the filter has two named states; mapping
+   * between them here keeps the control's value a string, which is what a
+   * select is good at, and leaves the flag the page already reads untouched.
+   */
+  protected get statusFilter(): string {
+    return this.showInactive ? 'any' : 'active';
+  }
+
+  protected set statusFilter(value: string) {
+    this.showInactive = value === 'any';
+  }
+
   protected readonly inventoryDecimals = computed(
     () => this.unitsOfType().find((u) => u.uomId === this.form.inventoryUomId)?.decimalPlaces ?? 0,
   );

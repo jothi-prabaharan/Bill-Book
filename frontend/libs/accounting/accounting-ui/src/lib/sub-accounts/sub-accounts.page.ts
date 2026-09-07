@@ -1,5 +1,10 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { DataGridComponent, ColumnDef , SearchInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  SearchInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -37,7 +42,12 @@ type ReferenceType = (typeof REFERENCE_TYPES)[number];
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-sub-accounts-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, SearchInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    SearchInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './sub-accounts.page.html',
   styleUrl: './sub-accounts.page.scss',
 })

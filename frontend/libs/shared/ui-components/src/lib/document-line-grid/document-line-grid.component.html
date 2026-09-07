@@ -114,16 +114,13 @@
               [disabled]="context().readonly"
               (blur)="touch(i)"
             />
-            <label class="inclusive">
-              <input
-                type="checkbox"
-                [(ngModel)]="line.isPriceInclusive"
-                [name]="'inclusive' + i"
-                [disabled]="context().readonly"
-                (ngModelChange)="touch(i)"
-              />
-              incl.
-            </label>
+            <bb-checkbox
+              text="incl."
+              [(ngModel)]="line.isPriceInclusive"
+              [name]="'inclusive' + i"
+              [disabled]="context().readonly"
+              (ngModelChange)="touch(i)"
+            />
           </td>
 
           <td class="right">

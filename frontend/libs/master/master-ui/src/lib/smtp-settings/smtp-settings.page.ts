@@ -1,5 +1,9 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { TextInputComponent , NumberInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  NumberInputComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -27,7 +31,12 @@ interface SmtpSettings {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-smtp-settings-page',
   standalone: true,
-  imports: [FormsModule, TextInputComponent, NumberInputComponent],
+  imports: [
+    FormsModule,
+    TextInputComponent,
+    NumberInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './smtp-settings.page.html',
   styleUrl: './smtp-settings.page.scss',
 })

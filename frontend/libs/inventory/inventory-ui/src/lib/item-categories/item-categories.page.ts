@@ -3,7 +3,12 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DataGridComponent, ColumnDef , TextInputComponent } from '@bill-book/ui-components';
+import {
+  CheckboxComponent,
+  ColumnDef,
+  DataGridComponent,
+  TextInputComponent,
+} from '@bill-book/ui-components';
 
 interface Category {
   itemCategoryId: number;
@@ -36,7 +41,12 @@ interface UomType {
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-item-categories-page',
   standalone: true,
-  imports: [DataGridComponent, FormsModule, TextInputComponent],
+  imports: [
+    DataGridComponent,
+    FormsModule,
+    TextInputComponent,
+    CheckboxComponent,
+  ],
   templateUrl: './item-categories.page.html',
   styleUrl: './item-categories.page.scss',
 })
