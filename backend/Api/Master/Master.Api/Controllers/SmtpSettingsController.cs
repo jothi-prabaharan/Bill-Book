@@ -1,3 +1,6 @@
+using System.Net.Mail;
+using System.Net.Sockets;
+using System.Security.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
@@ -26,10 +29,16 @@ public sealed class SmtpSettingsController : ControllerBase
     /// </summary>
     private readonly SmtpEmailSender _email;
 
-    public SmtpSettingsController(SmtpSettingsService service, SmtpEmailSender email)
+    private readonly ILogger<SmtpSettingsController> _logger;
+
+    public SmtpSettingsController(
+        SmtpSettingsService service,
+        SmtpEmailSender email,
+        ILogger<SmtpSettingsController> logger)
     {
         _service = service;
         _email = email;
+        _logger = logger;
     }
 
     /// <summary>
@@ -54,8 +63,11 @@ public sealed class SmtpSettingsController : ControllerBase
             Guid id = await _service.SaveAsync(null, request, ct);
             return Ok(new { smtpSettingsId = id });
         }
-        catch (InvalidOperationException ex)
+        catch (SmtpConfigurationException ex)
         {
+            // Only this type. Its message is written to be read by the
+            // administrator; any other failure goes to GlobalExceptionHandler,
+            // which decides what a caller is allowed to see.
             return BadRequest(new MessageResponse { Message = ex.Message });
         }
     }
@@ -81,8 +93,11 @@ public sealed class SmtpSettingsController : ControllerBase
             Guid id = await _service.SaveAsync(customerId, request, ct);
             return Ok(new { smtpSettingsId = id });
         }
-        catch (InvalidOperationException ex)
+        catch (SmtpConfigurationException ex)
         {
+            // Only this type. Its message is written to be read by the
+            // administrator; any other failure goes to GlobalExceptionHandler,
+            // which decides what a caller is allowed to see.
             return BadRequest(new MessageResponse { Message = ex.Message });
         }
     }
@@ -141,9 +156,20 @@ public sealed class SmtpSettingsController : ControllerBase
 
             return Ok(new MessageResponse { Message = $"Test email sent to {request.ToEmail}." });
         }
-        catch (Exception ex)
+        catch (SmtpConfigurationException ex)
         {
-            // The reason matters here — the admin is debugging their own credentials.
+            return BadRequest(new MessageResponse { Message = ex.Message });
+        }
+        catch (Exception ex) when (ex is SmtpException or SmtpFailedRecipientException
+            or SocketException or AuthenticationException)
+        {
+            // The reason matters here — the admin is debugging their own
+            // credentials, and this text comes from their mail server rather
+            // than from anything of ours. Narrowed to the transport exceptions
+            // for exactly that reason: the bare catch this replaces would have
+            // forwarded a database error's own words just as happily, as a 400.
+            _logger.LogWarning(ex, "A test email to {ToEmail} was refused.", request.ToEmail);
+
             return BadRequest(new MessageResponse { Message = $"Send failed: {ex.Message}" });
         }
     }

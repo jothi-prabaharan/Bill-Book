@@ -53,7 +53,7 @@ public sealed class SmtpSettingsService
         {
             if (string.IsNullOrWhiteSpace(request.Password))
             {
-                throw new InvalidOperationException("A password is required when creating SMTP settings.");
+                throw new SmtpConfigurationException("A password is required when creating SMTP settings.");
             }
 
             row = new SmtpSettings

@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Xunit;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Inventory.Api.Tests;
 
@@ -374,7 +375,8 @@ public class StockAdjustmentServiceTests
                 UomTypeId = uomType.UomTypeId,
                 UomId = uom.UomId,
                 Adjustments = new StockAdjustmentService(
-                    db, stock, numbers, new StubCurrentUser(), clock),
+                    db, stock, numbers, new StubCurrentUser(), clock,
+                    NullLogger<StockAdjustmentService>.Instance),
             };
         }
 

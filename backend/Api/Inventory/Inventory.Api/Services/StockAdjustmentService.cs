@@ -35,19 +35,22 @@ public sealed class StockAdjustmentService
     private readonly INumberGenerator _numbers;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
+    private readonly ILogger<StockAdjustmentService> _logger;
 
     public StockAdjustmentService(
         InventoryDbContext db,
         StockService stock,
         INumberGenerator numbers,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        ILogger<StockAdjustmentService> logger)
     {
         _db = db;
         _stock = stock;
         _numbers = numbers;
         _user = user;
         _clock = clock;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<StockAdjustmentListItem>> ListAsync(
@@ -463,10 +466,16 @@ public sealed class StockAdjustmentService
         {
             await tx.RollbackAsync(ct);
 
+            // The reason is logged, not returned. NumberGenerator raises
+            // InvalidOperationException for a missing series and for several
+            // things that are not that, and appending its text handed a caller
+            // whichever one it happened to be.
+            _logger.LogError(ex, "No {TypeCode} numbering series for stock adjustment {Id}.", TypeCode, id);
+
             return new StockAdjustmentResult(
                 StockAdjustmentOutcome.SeriesMissing, id,
                 "No STA numbering series exists for this branch, so the sheet could not be "
-                    + $"numbered and nothing was posted. Re-run the branch seed. ({ex.Message})");
+                    + "numbered and nothing was posted. Re-run the branch seed.");
         }
 
         document.AdjustmentNo = allocation.Code;

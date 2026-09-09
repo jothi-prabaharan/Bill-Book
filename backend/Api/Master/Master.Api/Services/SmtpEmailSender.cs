@@ -26,7 +26,7 @@ public sealed class SmtpEmailSender : IEmailSender
         if (smtp is null)
         {
             // No mailbox configured — surface it rather than dropping the mail silently.
-            throw new InvalidOperationException(
+            throw new SmtpConfigurationException(
                 "No active SMTP settings are configured. Set them in Settings → Email.");
         }
 
