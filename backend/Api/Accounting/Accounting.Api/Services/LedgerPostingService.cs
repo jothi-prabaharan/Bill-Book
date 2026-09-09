@@ -4,6 +4,7 @@ using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 namespace Accounting.Api.Services;
 
@@ -249,47 +250,32 @@ public sealed class LedgerPostingService
         // Join the caller's transaction when there is one — a manual journal
         // allocates its number, flips its status and posts its legs, and those
         // three are one act. Only open a transaction when nothing else has.
-        IDbContextTransaction? own = _db.Database.CurrentTransaction is null
-            ? await _db.Database.BeginTransactionAsync(ct)
-            : null;
+        await using ITransactionScope own = await _db.Database.BeginScopeAsync(ct);
 
-        try
+        int replaced = await ReplaceAsync(request, typeCode, rows, ct);
+
+        // ExecuteDelete goes straight to the database and the change tracker
+        // never hears about it. A row this context had already read is now
+        // tracked with nothing behind it, and the SaveChanges below would
+        // try to write it again against a row count of zero.
+        foreach (var stale in _db.ChangeTracker.Entries<JournalLedger>()
+            .Where(e => e.Entity.TransactionTypeCode == typeCode
+                && e.Entity.TransactionId == request.TransactionId)
+            .ToList())
         {
-            int replaced = await ReplaceAsync(request, typeCode, rows, ct);
-
-            // ExecuteDelete goes straight to the database and the change tracker
-            // never hears about it. A row this context had already read is now
-            // tracked with nothing behind it, and the SaveChanges below would
-            // try to write it again against a row count of zero.
-            foreach (var stale in _db.ChangeTracker.Entries<JournalLedger>()
-                .Where(e => e.Entity.TransactionTypeCode == typeCode
-                    && e.Entity.TransactionId == request.TransactionId)
-                .ToList())
-            {
-                stale.State = EntityState.Detached;
-            }
-
-            _db.JournalLedger.AddRange(rows);
-            await _db.SaveChangesAsync(ct);
-
-            // The balance trigger is deferred, so it fires at commit rather than
-            // on the first row — which is the only way a multi-leg posting can
-            // be inserted at all. When the caller owns the transaction, that
-            // commit is theirs and so is the check.
-            if (own is not null)
-            {
-                await own.CommitAsync(ct);
-            }
-
-            return new PostLedgerResult(PostLedgerOutcome.Ok, rows.Count, replaced);
+            stale.State = EntityState.Detached;
         }
-        finally
-        {
-            if (own is not null)
-            {
-                await own.DisposeAsync();
-            }
-        }
+
+        _db.JournalLedger.AddRange(rows);
+        await _db.SaveChangesAsync(ct);
+
+        // The balance trigger is deferred, so it fires at commit rather than
+        // on the first row — which is the only way a multi-leg posting can
+        // be inserted at all. When the caller owns the transaction, that
+        // commit is theirs and so is the check, and this call does nothing.
+        await own.CommitAsync(ct);
+
+        return new PostLedgerResult(PostLedgerOutcome.Ok, rows.Count, replaced);
     }
 
     /// <summary>

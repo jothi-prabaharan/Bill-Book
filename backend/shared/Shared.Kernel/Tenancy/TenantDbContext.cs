@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Entities;
+using Shared.Kernel.Errors;
 
 namespace Shared.Kernel.Tenancy;
 
@@ -45,9 +46,41 @@ public abstract class TenantDbContext : DbContext
 
     public Guid CurrentOrgId => Tenant.OrgId ?? Guid.Empty;
 
+    /// <summary>The service's own error log. See <see cref="ErrorLog"/> for why every tenant schema has one.</summary>
+    public DbSet<ErrorLog> ErrorLogs => Set<ErrorLog>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Mapped here rather than in each of the seven contexts, so a service
+        // cannot ship without somewhere to record its failures. It lands in
+        // whichever schema the derived context declared as its default, which
+        // gives acc.ErrorLogs, sal.ErrorLogs and so on — one table per service,
+        // owned and migrated by that service, nothing shared across a boundary.
+        //
+        // Declared before the loop below on purpose: it is an OrgScopedEntity,
+        // so the loop gives it the same query filter, the same tenant index and
+        // the same xmin token as every other table, and the RLS audit sees it
+        // as a table needing a policy.
+        modelBuilder.Entity<ErrorLog>(b =>
+        {
+            b.ToTable("ErrorLogs");
+            b.HasKey(e => e.ErrorLogId);
+
+            // The only column a caller ever sees. Unique because it is quoted
+            // to a user as "the" reference for their failure.
+            b.HasIndex(e => e.ErrorReference).IsUnique();
+
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Code).HasConversion<string>().HasMaxLength(40);
+            b.Property(e => e.FollowUpStatus).HasConversion<string>().HasMaxLength(20);
+
+            // The task list: everything still open in this branch, newest
+            // first. It is the only query anybody runs against this table
+            // often enough to index for.
+            b.HasIndex(e => new { e.OrgId, e.FollowUpStatus, e.OccurredAt });
+        });
 
         foreach (var entityType in modelBuilder.Model.GetEntityTypes())
         {

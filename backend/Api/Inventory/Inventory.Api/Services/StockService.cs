@@ -4,6 +4,7 @@ using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Shared.Kernel.Persistence;
 
 namespace Inventory.Api.Services;
 
@@ -34,33 +35,6 @@ public sealed class StockService
 
     /// <summary>Quantities are held to three decimals; the movement check constraint asserts the same.</summary>
     private const int QuantityScale = 3;
-
-    /// <summary>
-    /// Commits only a transaction this service opened. Null means the caller
-    /// owns it, and the caller decides — committing someone else's transaction
-    /// from inside one of its steps is how a sheet of twenty ends up half
-    /// posted.
-    /// </summary>
-    private static async Task Settle(IDbContextTransaction? owned, CancellationToken ct)
-    {
-        if (owned is not null)
-        {
-            await owned.CommitAsync(ct);
-        }
-    }
-
-    /// <summary>
-    /// Rolls back only a transaction this service opened. When the caller owns
-    /// it, returning the failure outcome is enough — the caller rolls back, and
-    /// unwinding from here would abort work it had not finished deciding about.
-    /// </summary>
-    private static async Task Unwind(IDbContextTransaction? owned, CancellationToken ct)
-    {
-        if (owned is not null)
-        {
-            await owned.RollbackAsync(ct);
-        }
-    }
 
     public async Task<StockPosition?> GetAsync(long itemId, CancellationToken ct)
     {
@@ -417,11 +391,7 @@ public sealed class StockService
         // The one that opened it is the one that finishes it: `owned` is null
         // when this call is a participant, and every commit and rollback below
         // is a no-op in that case, leaving the outcome to the caller.
-        IDbContextTransaction? owned = _db.Database.CurrentTransaction is null
-            ? await _db.Database.BeginTransactionAsync(ct)
-            : null;
-
-        await using IDbContextTransaction? tx = owned;
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
         decimal? resultingCost = null;
 
@@ -441,7 +411,7 @@ public sealed class StockService
                 if (moved == 0)
                 {
                     // No row, or not enough in it. Either way nothing changed.
-                    await Unwind(owned, ct);
+                    await tx.RollbackAsync(ct);
                     return Fail(StockOutcome.InsufficientStock);
                 }
             }
@@ -460,7 +430,7 @@ public sealed class StockService
 
             if (!enough)
             {
-                await Unwind(owned, ct);
+                await tx.RollbackAsync(ct);
                 return Fail(StockOutcome.InsufficientStock);
             }
         }
@@ -516,7 +486,7 @@ public sealed class StockService
 
         if (prepared != StockOutcome.Ok)
         {
-            await Unwind(owned, ct);
+            await tx.RollbackAsync(ct);
             return Fail(prepared);
         }
 
@@ -540,7 +510,7 @@ public sealed class StockService
                     s => s.SetProperty(x => x.LastMovementAt, _clock.GetUtcNow()), ct);
         }
 
-        await Settle(owned, ct);
+        await tx.CommitAsync(ct);
 
         return new RecordStockMovementResult(
             StockOutcome.Ok, movement.StockMovementId, await GetAsync(item.ItemId, ct));

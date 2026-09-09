@@ -9,6 +9,7 @@ using Sales.Entity.Enums;
 using Sales.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Persistence;
 
 namespace Sales.Api.Controllers;
 
@@ -101,6 +102,13 @@ public sealed class SalesOrdersController : ControllerBase
     /// </summary>
     [HttpPost("{SalesOrderId:long}/fulfill")]
     [PermissionAction("approve")]
+    // Serializable, and declared here rather than only inside the method: the
+    // request-wide TransactionFilter opens the transaction before this action
+    // runs, so the level has to be asked for where the filter can see it. The
+    // guard below counts what has already been invoiced against each line and
+    // decides on that count — two concurrent fulfilments at Read Committed
+    // would each read the same total, each find room, and each write.
+    [Transactional(IsolationLevel.Serializable)]
     public async Task<IActionResult> Fulfill(
         long SalesOrderId,
         [FromBody] FulfillSalesOrderRequest request,
@@ -147,8 +155,8 @@ public sealed class SalesOrdersController : ControllerBase
             });
         }
 
-        await using var transaction = await _db.Database.BeginTransactionAsync(
-            IsolationLevel.Serializable, ct);
+        await using ITransactionScope transaction =
+            await _db.Database.BeginScopeAsync(IsolationLevel.Serializable, ct);
 
         try
         {

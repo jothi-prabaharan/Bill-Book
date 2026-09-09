@@ -50,6 +50,13 @@ builder.Services.AddDbContext<InventoryDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
+// A worker gets no transaction filter and no exception handler: it serves no
+// requests, and the one transaction it needs — claim, cost, mark Costed — it
+// opens itself. What it gets instead is somewhere to record a failure nobody
+// was watching. Every failure lands in inv.ErrorLogs with FollowUpStatus Open,
+// and that set of rows is the task list.
+builder.Services.AddBillBookWorkerErrorAudit<InventoryDbContext>();
+
 builder.Services.AddScoped<CostingService>();
 
 // Posting to the ledger. A second pass over the same table rather than work

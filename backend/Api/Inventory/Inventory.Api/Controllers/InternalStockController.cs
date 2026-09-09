@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 namespace Inventory.Api.Controllers;
 
@@ -269,7 +270,7 @@ public sealed class InternalStockController : ControllerBase
         var stock = _services.GetRequiredService<StockService>();
         var db = _services.GetRequiredService<InventoryDbContext>();
         
-        using var transaction = await db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope transaction = await db.Database.BeginScopeAsync(ct);
 
         var response = new IssueStockResponse { Success = true };
 

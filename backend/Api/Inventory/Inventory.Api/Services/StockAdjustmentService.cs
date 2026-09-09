@@ -5,6 +5,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
+using Shared.Kernel.Persistence;
 
 namespace Inventory.Api.Services;
 
@@ -410,7 +411,7 @@ public sealed class StockAdjustmentService
                 "The sheet has no lines that move anything.");
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
         foreach (StockAdjustmentLine line in lines)
         {

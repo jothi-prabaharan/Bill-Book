@@ -54,6 +54,15 @@ builder.Services.AddDbContext<CustomerDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
+// Every write endpoint runs in a transaction and rolls back unless the action
+// succeeded, and every failure is translated through the SQLSTATE catalogue,
+// recorded in CustomerDbContext's own ErrorLogs table, and answered with the exact
+// error in Development or a curated sentence everywhere else. Registered as one
+// call because half of it is worse than neither: transactions without the
+// handler leak SQL to callers, the handler without transactions reports a
+// failure that was partly applied.
+builder.Services.AddBillBookReliability<CustomerDbContext>();
+
 builder.Services.AddBillBookAuthentication(builder.Configuration);
 
 // Default deny: a controller added later is authenticated because nobody did
@@ -85,6 +94,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// First in the pipeline. A failure in authentication or in the tenant
+// middleware below is answered in the product's shape rather than by Kestrel.
+app.UseBillBookErrorHandling();
 
 app.UseAuthentication();
 app.UseAuthorization();

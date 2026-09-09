@@ -159,6 +159,15 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
+// Every write endpoint runs in a transaction and rolls back unless the action
+// succeeded, and every failure is translated through the SQLSTATE catalogue,
+// recorded in PurchaseDbContext's own ErrorLogs table, and answered with the exact
+// error in Development or a curated sentence everywhere else. Registered as one
+// call because half of it is worse than neither: transactions without the
+// handler leak SQL to callers, the handler without transactions reports a
+// failure that was partly applied.
+builder.Services.AddBillBookReliability<PurchaseDbContext>();
+
 // Must match Master's key exactly: Master mints the tokens, Purchase only
 // validates them. Never fall back to a constant here.
 builder.Services.AddBillBookAuthentication(builder.Configuration);
@@ -182,6 +191,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// First in the pipeline. A failure in authentication or in the tenant
+// middleware below is answered in the product's shape rather than by Kestrel.
+app.UseBillBookErrorHandling();
 
 app.UseAuthentication();
 app.UseAuthorization();

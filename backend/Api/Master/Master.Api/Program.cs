@@ -228,6 +228,18 @@ if (string.IsNullOrWhiteSpace(jwt.SigningKey))
         "Jwt__SigningKey environment variable.");
 }
 
+// Two DbContexts, so two transactions per write request, settled independently —
+// mst and con are different physical databases and there is no two-phase commit
+// here. An operation writing to both can still half-succeed; that is a reason to
+// not write to both in one action, not a reason to skip the transaction.
+//
+// The error log goes to ContactsDbContext because it is the tenant-scoped one:
+// ErrorLog is an OrgScopedEntity and mst has no CustomerId to scope a row by.
+// The consequence is stated on ErrorLog itself and it bites hardest here — a
+// failed sign-in has no tenant yet, so it is logged and not recorded.
+builder.Services.AddBillBookReliability<ContactsDbContext>();
+builder.Services.AddBillBookReliability<AdminDbContext>(writesErrorLog: false);
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -261,6 +273,10 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+// First in the pipeline. A failure in authentication or in the tenant
+// middleware below is answered in the product's shape rather than by Kestrel.
+app.UseBillBookErrorHandling();
 
 app.UseAuthentication();
 app.UseAuthorization();

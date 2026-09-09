@@ -3,6 +3,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Printing;
+using Shared.Kernel.Persistence;
 
 namespace Master.Api.Services;
 
@@ -186,7 +187,7 @@ public sealed class PrintTemplateService
             return PrintTemplateOutcome.NotFound;
         }
 
-        await using var transaction = await _db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope transaction = await _db.Database.BeginScopeAsync(ct);
 
         await _db.PrintTemplates
             .Where(t => t.DocumentTypeCode == template.DocumentTypeCode

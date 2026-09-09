@@ -26,6 +26,34 @@
 - **Dynamic Formatting**: Always dynamically retrieve date, currency, and number formats from backend settings and apply them globally.
 
 
+## Transaction Handling (STRICT)
+
+Every write endpoint runs in a database transaction, and it is **not** the controller's job to open one.
+
+- **`AddBillBookReliability<TContext>()` in `Program.cs` is the whole registration.** It adds `TransactionFilter` to the MVC pipeline, which opens a transaction before any `POST`/`PUT`/`PATCH`/`DELETE` action and settles it after. Call it once per `DbContext`; Master calls it twice.
+- **Never call `Database.BeginTransactionAsync` directly.** Use `await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);`. It opens a transaction, or joins the one already open and makes its own commit and rollback no-ops. A raw `BeginTransactionAsync` throws the instant anything above it has started a transaction, which is what made `AllocationService`, `JournalService`, the money-document services and `StockAdjustmentService` impossible to compose.
+- **Commit is earned by the status, not by the absence of an exception.** The filter rolls back on any result of 400 or above, on `Forbid()`, on a cancelled action and on an exception. A service that wrote two of three rows and returned `Conflict()` keeps neither.
+- **Raise isolation with the attribute, never inside the method.** `[Transactional(IsolationLevel.Serializable)]` on the action. Postgres only accepts `SET TRANSACTION ISOLATION LEVEL` before the transaction's first statement, so by the time an inner service runs it is too late — `BeginScopeAsync` throws with the attribute to add rather than silently giving you the weaker level.
+- **`[NoTransaction]` is the escape hatch and needs a reason in the code.** For an action that must commit part of its work before calling out, or that imports in batches.
+- **Workers get no filter.** They serve no requests. Where a worker needs atomicity it opens its own scope; where it fails, it audits (below).
+- **Two contexts are two transactions, not a distributed one.** There is no two-phase commit. An action writing to both `mst` and `con` can still half-succeed, so do not write to both in one action.
+- **A cross-service call inside a transaction is a saga, not a rollback.** The filter protects this service's own rows. A remote `POST` to Inventory or Accounting has already committed there and no rollback here undoes it — those steps are made safe by being idempotent (the ledger replaces by `(TransactionTypeCode, TransactionId)`, Inventory dedupes by `(SourceType, SourceId, SourceLineId)`), not by the transaction.
+
+## Error Handling (STRICT)
+
+No `catch` block formats its own message for a caller, and no raw database text ever reaches production.
+
+- **One handler, registered with the transactions.** `GlobalExceptionHandler` translates, records, and answers. `app.UseBillBookErrorHandling()` goes first in the pipeline, before authentication.
+- **Every failure is answered from `SqlErrorCatalog`.** SQLSTATE → status, `ApiErrorCode`, and a curated sentence. Exact code first, then its two-character class, then `Unexpected`. Add a new state to the catalogue; never branch on an exception message.
+- **Development returns the exact error. Every other environment returns the curated sentence.** The switch is `IHostEnvironment.IsDevelopment()` and there is deliberately no configuration key that overrides it — a setting like that is one deployment mistake from publishing the schema.
+- **A curated message may never name a table, column, constraint, schema or figure.** `SqlErrorCatalogTests` asserts this over every entry. The ledger balance trigger's own text quotes the branch's total debits and credits; that is exactly what must not be forwarded.
+- **`Code` is the contract, `Message` is for humans.** Clients branch on `ApiErrorCode`. It is identical in every environment, and so is `Message`.
+- **The detail goes to `{schema}.ErrorLogs`, and the caller gets a reference.** `ErrorReference` is a Guid on the response; support looks it up. Users never see the detail.
+- **`ErrorLogs` is tenant scoped like everything else** — `CustomerId`, `OrgId`, query filter, RLS ENABLEd and FORCEd. The consequence is accepted, not overlooked: **an error raised before the tenant is known cannot be recorded** — a failed sign-in, a request with no token — and goes to `ILogger` alone.
+- **No endpoint returns rows from `ErrorLogs`.**
+- **A worker failure goes on the task list.** Call `IWorkerErrorAuditor.AuditAsync(workerName, jobReference, exception, ct)`. It writes `Source = Worker` and `FollowUpStatus = Open`, and the set of open rows is the list an operator works through. Nobody saw the failure, so a log line alone is the same as nothing.
+
+
 # Claude Design → Existing Angular Project Design Rules
 
 ## Purpose

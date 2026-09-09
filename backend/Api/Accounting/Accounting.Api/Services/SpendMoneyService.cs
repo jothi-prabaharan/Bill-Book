@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 namespace Accounting.Api.Services;
 
@@ -373,7 +374,7 @@ public sealed class SpendMoneyService
                 "The ledger did not accept the payment, so nothing was posted.");
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
         NumberAllocation allocation = await _numbers.NextAsync(
             TypeCode, document.TransactionDate, ct);

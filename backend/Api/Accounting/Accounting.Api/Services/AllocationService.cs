@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
 using Npgsql;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 namespace Accounting.Api.Services;
 
@@ -66,8 +67,8 @@ public sealed class AllocationService
 
         // Read, decide and write as one act: two requests racing the same target
         // must not both pass a guard based on rows neither saw being written.
-        await using IDbContextTransaction tx =
-            await _db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
+        await using ITransactionScope tx =
+            await _db.Database.BeginScopeAsync(IsolationLevel.Serializable, ct);
 
         try
         {

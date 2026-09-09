@@ -39,6 +39,12 @@ builder.Services.AddDbContext<GatewayDbContext>((sp, options) =>
     options.UseNpgsql(RequiredConnectionString("AdminDatabase"));
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
+// The Gateway proxies rather than serving controllers, so there is no
+// transaction filter to add and no tenant schema to record into: failures are
+// translated and logged, and the response carries a trace id with no error
+// reference on it.
+builder.Services.AddBillBookErrorHandling();
+
 builder.Services.AddHostedService<RequestLogWriter>();
 builder.Services.AddHostedService<RequestLogPurger>();
 
@@ -46,6 +52,8 @@ WebApplication app = builder.Build();
 
 // First in the pipeline: the duration it records should cover everything the
 // gateway does, not just the proxying.
+app.UseBillBookErrorHandling();
+
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 // Minimal home/status page so hitting the gateway root shows something useful.

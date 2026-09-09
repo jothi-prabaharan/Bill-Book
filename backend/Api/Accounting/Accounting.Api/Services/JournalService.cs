@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 namespace Accounting.Api.Services;
 
@@ -341,7 +342,7 @@ public sealed class JournalService
                     + $"the entry is out by {Math.Abs(debits - credits):0.00}.");
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
         NumberAllocation allocation = await _numbers.NextAsync(
             JournalTypeCode, journal.JournalDate, ct);
@@ -425,7 +426,7 @@ public sealed class JournalService
                     + "Reverse this entry on a later date instead.");
         }
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
         NumberAllocation allocation = await _numbers.NextAsync(
             JournalTypeCode, reversalDate, ct);

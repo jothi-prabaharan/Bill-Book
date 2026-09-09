@@ -5,6 +5,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Errors;
 
 namespace CostingEngine.Worker.Consumers;
 
@@ -83,6 +84,9 @@ public sealed class CostingWorker : BackgroundService
     private int LedgerBatchSize =>
         int.TryParse(_config["Ledger:BatchSize"], out int size) ? size : 100;
 
+    /// <summary>Recorded on every error row, so one schema's log can name which loop wrote it.</summary>
+    private const string WorkerName = "CostingEngine";
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _log.LogInformation("Costing engine started, polling every {Interval}", PollInterval);
@@ -107,6 +111,12 @@ public sealed class CostingWorker : BackgroundService
             {
                 // One bad tick must not take the loop down; the work is still in
                 // the table and the next tick picks it up.
+                //
+                // Logged and not recorded, deliberately. A tick fails before any
+                // organization has been picked — listing them is the first thing
+                // it does — so there is no tenant, and ErrorLogs is tenant
+                // scoped. Anything that fails after an organization is chosen is
+                // recorded; see ProcessOrganizationAsync.
                 _log.LogError(ex, "Costing tick failed");
             }
 
@@ -137,6 +147,7 @@ public sealed class CostingWorker : BackgroundService
 
         InventoryDbContext db = scope.ServiceProvider.GetRequiredService<InventoryDbContext>();
         CostingService costing = scope.ServiceProvider.GetRequiredService<CostingService>();
+        var auditor = scope.ServiceProvider.GetRequiredService<IWorkerErrorAuditor>();
 
         await ReclaimStaleAsync(db, ct);
 
@@ -153,7 +164,7 @@ public sealed class CostingWorker : BackgroundService
 
         foreach (StockMovement movement in pending)
         {
-            await CostOneAsync(db, costing, movement, ct);
+            await CostOneAsync(db, costing, auditor, movement, ct);
         }
 
         // Posting runs after costing in the same tick, so a movement costed a
@@ -193,10 +204,14 @@ public sealed class CostingWorker : BackgroundService
         }
         catch (Exception ex)
         {
-            _log.LogError(
-                ex,
-                "Posting stock movements failed for organization {OrgId}",
-                organization.OrgId);
+            // The tenant is set on this scope, so this one can be recorded.
+            await scope.ServiceProvider
+                .GetRequiredService<IWorkerErrorAuditor>()
+                .AuditAsync(
+                    WorkerName,
+                    $"LedgerPosting OrgId={organization.OrgId}",
+                    ex,
+                    ct);
         }
     }
 
@@ -218,7 +233,11 @@ public sealed class CostingWorker : BackgroundService
     }
 
     private async Task CostOneAsync(
-        InventoryDbContext db, CostingService costing, StockMovement movement, CancellationToken ct)
+        InventoryDbContext db,
+        CostingService costing,
+        IWorkerErrorAuditor auditor,
+        StockMovement movement,
+        CancellationToken ct)
     {
         // The claim. Guarded on still being Pending, so two workers racing for
         // the same movement means one of them changes no rows and walks away.
@@ -276,8 +295,16 @@ public sealed class CostingWorker : BackgroundService
         {
             await tx.RollbackAsync(ct);
 
-            _log.LogError(
-                ex, "Costing movement {MovementId} failed", movement.StockMovementId);
+            // Onto the task list, naming the movement so the follow-up has
+            // something to act on. CostingError on the row says a movement
+            // failed; this says why, in the database's own words, which the row
+            // has no space for and which nobody should have to read a log to
+            // find.
+            await auditor.AuditAsync(
+                WorkerName,
+                $"StockMovementId={movement.StockMovementId}",
+                ex,
+                ct);
 
             await ParkAsync(db, movement, ex.Message, ct);
         }

@@ -152,6 +152,111 @@ Two development stand-ins are in place and clearly marked in code: the email sen
 
 
 
+# Transactions and errors
+
+Both are wired once per service and neither is a controller's concern.
+
+## Every write runs in a transaction
+
+`AddBillBookReliability<TContext>()` in a service's `Program.cs` adds
+`TransactionFilter` to the MVC pipeline. It opens a transaction before any
+`POST`, `PUT`, `PATCH` or `DELETE` action and settles it afterwards. Reads take
+none.
+
+**Commit is earned by the status the action returned, not by the absence of an
+exception.** Anything from 400 up rolls back, as does `Forbid()`, a cancelled
+action and any exception. A service that wrote two of three rows and returned
+`Conflict()` keeps neither of them.
+
+Inside a service, never call `BeginTransactionAsync` — it throws the moment
+something above it has already started one. Use:
+
+```csharp
+await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
+// ... work ...
+await tx.CommitAsync(ct);
+```
+
+which opens a transaction or joins the one already open, making its own commit
+and rollback no-ops so the outermost owner decides. Disposing without committing
+rolls back.
+
+To need more than Read Committed, put it on the action —
+`[Transactional(IsolationLevel.Serializable)]` — not inside the method. Postgres
+only accepts `SET TRANSACTION ISOLATION LEVEL` before a transaction's first
+statement, so asking from an inner service is always too late; `BeginScopeAsync`
+throws and names the attribute to add rather than quietly giving you the weaker
+level. `[NoTransaction]` opts an action out.
+
+**What this does not cover.** The filter protects this service's own rows. A
+posting path that calls Inventory and then Accounting over HTTP has already
+committed in those services, and no rollback here undoes it. Those steps are safe
+because they are idempotent — the ledger replaces rows for a given
+`(TransactionTypeCode, TransactionId)`, Inventory dedupes on
+`(SourceType, SourceId, SourceLineId)` — so a retry corrects a half-finished
+post. That is a saga, not a transaction, and it is worth knowing which one you
+are relying on.
+
+## Every failure is translated, recorded, and answered
+
+`GlobalExceptionHandler` runs first in the pipeline, before authentication.
+
+**Translate.** `SqlErrorCatalog` maps SQLSTATE to a status, an `ApiErrorCode` and
+a sentence — exact code first, then its two-character class, then `Unexpected`.
+Nothing branches on an exception's message. A new state goes in the catalogue.
+
+**Answer.** The body is the same shape everywhere:
+
+```json
+{
+  "code": "DuplicateRecord",
+  "message": "A record with these details already exists.",
+  "status": 409,
+  "errorReference": "0f2e...",
+  "traceId": "00-...",
+  "isTransient": false,
+  "diagnostics": null
+}
+```
+
+`code` and `message` are identical in every environment — branch on `code`, show
+`message`. `diagnostics` is the difference:
+
+| | Development | Everywhere else |
+|---|---|---|
+| `diagnostics` | the exact error — Postgres's own message, SQLSTATE, constraint, table, schema, `DETAIL`, `HINT`, the plpgsql `WHERE`, the EF entries and the stack | `null` |
+| `message` | the curated sentence | the same curated sentence |
+
+The switch is `IHostEnvironment.IsDevelopment()`. **There is deliberately no
+configuration key that turns detail on in Production** — a setting like that is
+one deployment mistake from publishing the schema, and the error reference gets
+support to the same information without publishing anything.
+
+**Record.** The unabridged failure goes to the service's own `ErrorLogs` table —
+`acc.ErrorLogs`, `sal.ErrorLogs`, one per schema, each owned and migrated by its
+own service. The caller is handed `errorReference` and nothing else; no endpoint
+returns rows from these tables.
+
+`ErrorLogs` is tenant scoped like every other table: `CustomerId`, `OrgId`, the
+query filter, and an RLS policy that is ENABLEd and FORCEd. **The consequence is
+accepted rather than overlooked — an error raised before the tenant is known
+cannot be recorded at all.** A failed sign-in, a request with no token, a startup
+fault: those go to `ILogger` and the response carries a trace id with no
+reference on it.
+
+## Workers audit instead
+
+A worker gets no filter and no handler — it serves no requests, and where it
+needs atomicity it opens its own scope. What it gets is
+`IWorkerErrorAuditor.AuditAsync(workerName, jobReference, exception, ct)`, which
+writes the failure with `Source = Worker` and `FollowUpStatus = Open`.
+
+That matters because **nobody is watching**. An API failure produces a response
+somebody reads and usually retries; a worker failure produces a log line on a
+server, which is the same as producing nothing. The set of rows still `Open` is
+the task list, and `JobReference` names what the run was working on — a
+`StockMovementId`, an organization — so the follow-up has something to act on.
+
 # Environments
 
 **Status: built.**
