@@ -267,7 +267,7 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
 | **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
-| **Part built** | T3.4 print — a browser print view of the tax invoice exists; **the archived PDF/A copy does not**, and is blocked on a licence decision for the PDF library |
+| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). Neither the per-document print route nor **the archived PDF/A copy** is built; they are blocked on different things — a tenancy decision and the PDF licence |
 | **Not built** | T7.1 POS till screen (Phase 3); the item and customer pickers on every sales form, which wait on the item lookup endpoint |
 
 ---
@@ -459,6 +459,27 @@ These live in `TRANSACTIONS.md`. **T0.1** (the ledger door) and **T0.6** (ledger
   **Not done: the archived PDF/A copy.** It needs a server-side PDF library, and the one this project intends — Syncfusion — is **licensed and not installed**; `Directory.Packages.props` names it only in a comment. Adding a commercial dependency is the repository owner's call. Until then nothing is written to blob storage against `SourceType` + `SourceId`.
 
   When it lands, the server-side renderer should reproduce the layout above rather than inventing a second one, or the printed and the archived invoice will drift apart.
+
+  **A server-side renderer landed on 6 September 2026, and it is not that layout — it is a
+  template a customer designs.** `Shared.Kernel.Printing.PrintRenderer` takes a stored template
+  and a document's data and produces paginated HTML: fixed header repeated on every page, the
+  footer once on the last, breaks only between whole rows, a thermal roll as one continuous
+  page. The template master behind it is `con.PrintTemplates`, seeded per branch with a
+  generated layout per document type. See stage 7 in [`Master.md`](./Master.md).
+
+  **This does not close T3.4, and it changes what the remaining work is.** Two things are
+  missing and they are blocked on different things:
+
+  - **The per-document route.** The renderer is pure and needs the template, which Master holds
+    and Sales may not read (rule 8). How an internal call carries its branch is undecided —
+    `TenantMiddleware` fills the tenant context only for an authenticated request — so an
+    `[InternalOnly]` endpoint has no branch to scope to. That is a tenancy decision. See 7.7.
+  - **PDF/A.** Unchanged: the Syncfusion licence. Note for whoever returns to it that
+    **PDFsharp 6.1.1 is already pinned** and is not licence-blocked.
+
+  **The hand-written page is deliberately untouched.** Two layouts for one invoice is exactly
+  the drift this entry warns about, so `/sales/invoices/{id}/print` should be routed through the
+  saved template when the route above exists, and deleted rather than maintained beside it.
 
 - [x] **T3.5 — `sal.SalesRegister`.** Written inside the post's transaction, replaced by key, deleted on void.
   *Done when*: intra- and inter-state invoices register the right halves and `chk_register_tax_split` refuses the wrong one; a re-post leaves no orphans; period taxable value equals the Output GST legs.

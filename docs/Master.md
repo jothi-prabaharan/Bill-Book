@@ -368,6 +368,126 @@ Independent of the stages above; take any of them whenever.
 
 ---
 
+## Stage 7 — Print templates
+
+**Built 6 September 2026.** The print template master lives in Master because it is master
+data and its rows are branch-scoped like every other `con` table. What it is *for* lives in
+Sales, Purchase and Accounting, which is the reason the renderer is not here — see the
+boundary note below.
+
+- [x] **7.1 — `con.PrintTemplates`.** One layout per document type per branch: printer type,
+      paper size or roll width, four margins, the two footer positions, and the five segments
+      as jsonb behind typed value objects.
+      *Done when*: two templates of one document type keep their own settings and content with
+      no bleed, and a branch cannot see another branch's row.
+
+      **Built.** `PrintTemplate : OrgScopedEntity`, mapped in `ContactsDbContext`, RLS added by
+      hand in the migration as EF generates none. Two guarantees are the database's rather than
+      the application's: **one default per branch per document type** is a filtered unique index,
+      so two concurrent requests setting a default cannot both win; **names are unique among
+      active rows only**, so a soft-deleted template does not hold its name hostage.
+
+      `TemplateVersion` is a separate integer from `AuditableEntity.Version`, which is already
+      Postgres `xmin`. The first is the caller's optimistic-concurrency token and a mismatch is
+      `TEMPLATE_STALE`; the second is EF's.
+
+- [x] **7.2 — The catalogue is code, not a table.** Twelve printable document types and every
+      merge field they offer.
+      *Done when*: every chip in a generated layout resolves for its document type, and the
+      generated layout survives its own sanitiser unchanged.
+
+      **Built, and the shape is the decision.** A placeholder only resolves because a payload
+      builder puts a value there, so a row a user could add would render empty for ever. The
+      catalogue is therefore `Shared.Kernel.Printing`, beside the renderer that consumes it,
+      and the list the editor offers cannot drift from the list the renderer honours.
+
+      **Twelve of the seventeen `mst.TransactionTypes` are printable.** Left out on purpose:
+      `TRM` (a transfer between the business's own accounts has no counterparty to hand it to),
+      `OPB` (read-only after go-live), `DEP` and `STA` (produced by a job), and `POS` — a POS
+      sale is an `sal.Invoices` row printed as an ESC/POS receipt, which is not a page layout.
+      `TRM` and `OPB` carry the column anyway, so adding either later is code and no migration.
+
+      **`Kind` is declared, never inferred from the tag.** `Item.ItemName` repeats and
+      `Organization.Name` does not, and both carry a dot. Guessing from the dot was tried and
+      was wrong.
+
+- [x] **7.3 — The API.** Ten routes, the specification's five refusal codes.
+      *Done when*: a stale save writes nothing, the default cannot be deleted, and a rename is
+      visible in the list the transaction-entry picker reads.
+
+      **Built.** Guarded as `settings` rather than a `print_template` module: both the module
+      list and the action list are closed sets seeded in `AdminDbContext`, and a controller
+      naming an unseeded module is a locked door for every role including Owner — which shipped
+      once already, in Customer. Refusals extend `MessageResponse` with a `Code` rather than
+      replacing the envelope every other endpoint returns.
+
+      **Segment HTML is refused, not silently cleaned.** `SegmentSanitizer` wraps Ganss.Xss,
+      which parses through AngleSharp rather than pattern-matching — a regex cannot know that
+      `<img src=x onerror=…>` and `<img/src=x/onerror=…>` are the same document. The allow-list
+      keeps `contenteditable` and the `pt-chip` class on purpose: a stock configuration drops
+      both and the only symptom is a template whose merge fields quietly stopped merging.
+
+      **A refusal means something was *removed*, never that something was reformatted.**
+      AngleSharp re-serialises CSS canonically, so `font-weight:bold` returns with a space in
+      it. Judging `INVALID_SEGMENT_HTML` by comparing strings would have rejected every
+      legitimate save from a browser.
+
+- [x] **7.4 — Documents name their template.** `PrintTemplateId` on all fourteen document
+      headers, and the resolution chain behind it.
+      *Done when*: deleting a referenced template leaves its documents printable.
+
+      **Built.** The property is on `DocumentHeaderBase`, so all nine sales and purchase
+      documents carry it and a tenth cannot be added without one; the five accounting documents
+      have it individually. **An unenforced id, not a foreign key** — templates are in `con` and
+      these rows are in `sal`, `pur` and `acc`, there is no cross-schema foreign key anywhere in
+      this product, and adding fourteen would tie four services' migrations together for a
+      column only read on the way to a printer.
+
+      Resolution is **explicit id → branch default → platform seed**, and every step of it has
+      to work: a template can be soft-deleted after a document named it, and a branch seeded
+      before a document type was added has no default for it.
+
+- [ ] **7.5 — The editor and the master screen.** Nothing in Angular exists.
+      *Done when*: a user can lay a template out, insert merge fields and see a paginated
+      preview, without leaving the browser.
+
+      **Not started, by decision** — the backend brief scoped the frontend out. A mockup of both
+      screens exists and is not code. The invariants the screens depend on are already pure
+      functions on the server (`PrintSettingsValidator`, `PrintRenderer`, `MergeTags`), which is
+      deliberate: this workspace's Vitest cannot compile a `templateUrl` component, so anything
+      left in a component is untestable here.
+
+- [ ] **7.6 — PDF/A, and the per-document print route.** Both blocked, and on different things.
+      *Done when*: `GET /api/{module}/{document}/{id}/print` renders a real document, and its
+      PDF/A copy reaches blob storage keyed by `SourceType` + `SourceId`.
+
+      **The renderer is built and the route is not.** `PrintRenderer` is pure and lives in
+      `Shared.Kernel.Printing` — template plus payload to paginated HTML, with the fixed header
+      on every page, the footer once on the last, no row split across a break, and a thermal
+      roll as one continuous page. It is covered by 22 tests that need no database.
+
+      **What is missing is how the document's own service gets the template.** Master holds it;
+      the documents are in three other services, and rule 8 forbids reaching across. An internal
+      call is the obvious answer and this repository has not decided how tenancy crosses one:
+      `TenantMiddleware` populates the tenant context only for an authenticated request, so an
+      `[InternalOnly]` endpoint has no branch to scope to. That is a tenancy decision, not a
+      passing repair. **See 7.7.**
+
+      PDF/A is blocked separately, on the Syncfusion licence — unchanged by any of this. Worth
+      recording for whoever picks it up: **PDFsharp 6.1.1 is already in
+      `Directory.Packages.props`** and is not licence-blocked, which may reopen the choice.
+
+- [ ] **7.7 — How an internal call carries its tenant.** *(needs a decision, not code)*
+
+      Every cross-service call in the product today either runs under a user's token or does not
+      need a branch. Printing is the first that needs a branch without one. The options are a
+      tenant pair in the body (as `InternalSeedController` already does), forwarding the caller's
+      token, or a signed internal claim — and they differ in what an attacker who reaches the
+      internal port can ask for. Not decided.
+
+
+---
+
 ## Stage 6 — Transactions → two files
 
 The sixteen document types, none of which is built. They live in their own files because together they are larger than everything above put together, and they keep their boxes there rather than duplicating them here. Stage numbers run T0–T10 across both, and are **not** renumbered by the split — the gaps in each file say where the missing stage went.

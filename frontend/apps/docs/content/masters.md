@@ -1037,5 +1037,75 @@ Whether a line may stand without an item, where a discount is keyed, and whether
 
 They are frozen the same way the base currency is: editable until the branch posts its first sales or purchase document, fixed after that.
 
+# Print templates
 
+How your printed documents look — the letterhead, the columns, the terms at the foot — is a
+template you design, one per document type, per branch.
+
+## What a template is made of
+
+Five bands, and they always print in this order:
+
+| Band | Prints |
+|---|---|
+| Fixed header | Every page. Your letterhead |
+| Header | Once, at the top. Who the document is for, its number and date |
+| Details | The line items. This is the part that runs onto a second page |
+| Footer | Once, on the last page. Tax summary and totals |
+| Fixed footer | Every page. Terms and the signature block |
+
+Nothing you can set will reorder them.
+
+## Merge fields
+
+A merge field is a placeholder that fills itself in when the document prints — «Document.No»,
+«Party.Name», «Totals.GrandTotal». Insert them from the panel on the right of the editor.
+
+Fields marked with a repeat mark (↻) come from a list rather than a single value: put
+«Item.ItemName» in a table row and that row prints once per item on the document. A field with
+no repeat mark prints once wherever you put it.
+
+**A field that cannot be filled in prints as nothing** — never as its own name. The template
+list tells you if a template has any, so you can find them before a customer does.
+
+## Paper
+
+A4, A5, Letter or Legal for a laser or inkjet printer, with margins in millimetres. Or a thermal
+roll — 58, 80 or 112 mm — which prints as one continuous strip with no page breaks. You can
+enter a roll width in inches if that is how your printer is sold; it is stored in millimetres
+either way.
+
+## Where the footer sits
+
+The footer and the fixed footer can each either flow straight after the content, or be pinned to
+the bottom of the page.
+
+**Pinning the footer pins the fixed footer with it**, and the control says so. A pinned footer
+leaves the normal flow of the page; if the fixed footer stayed inline it would slide up into the
+gap and print *above* the footer, which is the one thing the order above promises cannot happen.
+Your own choice for the fixed footer is remembered, and comes back the moment you unpin the
+footer.
+
+## Defaults
+
+One template per document type is the default — the one used when a document does not name
+another. Making a different one the default releases the old one automatically.
+
+**The default cannot be deleted, and neither can the last template for a document type**, since
+either would leave a document type with nothing to print. Make something else the default first.
+
+Deleting is not destructive: documents already raised against a template keep working, and fall
+back to the branch's default.
+
+## Two people editing at once
+
+If somebody else saves while you have a template open, your save is refused rather than
+overwriting theirs, and nothing is written. Reload and apply your changes again.
+
+## What is not here yet
+
+- **The editor itself.** The templates, the fields and the printing all exist on the server; the
+  screen to design them in has not been built
+- **A saved PDF of every document.** Printing goes through your browser. Archiving a copy needs a
+  PDF library that has not been chosen yet
 
