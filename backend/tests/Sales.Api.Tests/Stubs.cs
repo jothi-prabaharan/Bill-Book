@@ -277,3 +277,28 @@ public sealed class RecordingInventory : IInventoryClient
                 })],
         });
 }
+
+/// <summary>
+/// Saves nothing and reports the key back. Public here rather than private to
+/// one test class, so a second suite needing an InvoiceService does not have to
+/// write its own.
+/// </summary>
+public sealed class StubDocumentStorage : Shared.Kernel.Storage.IFileStorage
+{
+    public Task<string> SaveAsync(string key, Stream content, string contentType, CancellationToken ct = default) =>
+        Task.FromResult(key);
+
+    public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<Stream?>(null);
+
+    public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
+
+    public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) =>
+        Task.FromResult<Uri?>(null);
+}
+
+/// <summary>Renders a single byte, which is enough for anything not about the PDF.</summary>
+public sealed class StubInvoicePdf : Sales.Api.Services.Pdf.IInvoicePdfRenderer
+{
+    public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model) => [0x25];
+}
