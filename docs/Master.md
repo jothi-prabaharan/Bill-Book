@@ -375,6 +375,12 @@ data and its rows are branch-scoped like every other `con` table. What it is *fo
 Sales, Purchase and Accounting, which is the reason the renderer is not here — see the
 boundary note below.
 
+**It is planned to move out.** [`Printing.md`](./Printing.md) holds the design for extracting
+all of this into an eighth service on schema `prt`, and answers 7.7 rather than carrying it:
+callers push the payload under the user's own token, so tenancy rides the JWT and no internal
+endpoint has to invent a branch. Nothing of that is built. **This stage stays the record of
+what exists** until P3 moves it.
+
 - [x] **7.1 — `con.PrintTemplates`.** One layout per document type per branch: printer type,
       paper size or roll width, four margins, the two footer positions, and the five segments
       as jsonb behind typed value objects.

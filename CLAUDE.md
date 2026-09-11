@@ -87,7 +87,7 @@ State what is built, what is designed but uncoded, and what is not designed — 
 
 ## When asked to add a table
 
-Column-level schemas and page specs live under [`docs/`](./docs/) — check there before designing anything new. One file per module: [`docs/Sales.md`](./docs/Sales.md), [`docs/Purchase.md`](./docs/Purchase.md), [`docs/Accounting.md`](./docs/Accounting.md), [`docs/Inventory.md`](./docs/Inventory.md), [`docs/Master.md`](./docs/Master.md), [`docs/Customer.md`](./docs/Customer.md), [`docs/Reporting.md`](./docs/Reporting.md), each with its columns, decisions and tasks in one place.
+Column-level schemas and page specs live under [`docs/`](./docs/) — check there before designing anything new. One file per module: [`docs/Sales.md`](./docs/Sales.md), [`docs/Purchase.md`](./docs/Purchase.md), [`docs/Accounting.md`](./docs/Accounting.md), [`docs/Inventory.md`](./docs/Inventory.md), [`docs/Master.md`](./docs/Master.md), [`docs/Customer.md`](./docs/Customer.md), [`docs/Reporting.md`](./docs/Reporting.md), each with its columns, decisions and tasks in one place. [`docs/Printing.md`](./docs/Printing.md) is the odd one out: printing has no service yet, so that file is the design for giving it one rather than a record of a module that exists — what is built is in `Master.md` stage 7.
 
 **`SPEC.md`, `SALES.md` and `PURCHASE.md` do not exist and have not for some time** — they are named throughout older notes, and every reference to them means the `docs/` file above. `docs/Purchase.md` is itself two documents concatenated: the first half is current, the second half from "designed, not coded" onward is stale and contradicts it.
 
