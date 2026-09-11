@@ -1,5 +1,4 @@
 /* Classical — Design System Tokens */
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lora:wght@400;600&display=swap');
 
 :root {
   /* Core Color Palette */
@@ -54,10 +53,16 @@
   --color-success-bg: #e2f3e9;
 
   /* Typography */
-  --font-heading: "Cormorant Garamond", system-ui, sans-serif;
+  /* One monospace stack for every role. Monospace fixes every glyph to a
+     single advance width, so digits line up in a column without needing the
+     `tnum` feature the previous proportional faces depended on. System fonts
+     only - no webfont request, so no FOUT and no network dependency. */
+  --font-stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  --font-heading: var(--font-stack-mono);
   --font-heading-weight: 600;
-  --font-body: "Lora", system-ui, sans-serif;
-  --font-mono: Consolas, "Courier New", monospace;
+  --font-body: var(--font-stack-mono);
+  --font-mono: var(--font-stack-mono);
 
   /* Spacing Scale (Classical 4.6px multiplier) */
   --space-1: 4.6px;

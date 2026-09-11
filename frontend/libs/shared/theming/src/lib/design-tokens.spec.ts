@@ -51,10 +51,16 @@ describe('Design Tokens & Classical Styling System (shared/theming)', () => {
       }
     });
 
-    it('TOK-T1-04: Typography tokens specify Cormorant Garamond and Lora pairing', () => {
-      expect(fileContent).toContain('--font-heading: "Cormorant Garamond"');
-      expect(fileContent).toContain('--font-body: "Lora"');
+    it('TOK-T1-04: Typography tokens resolve every font role to the monospace stack', () => {
+      expect(fileContent).toContain('--font-stack-mono: ui-monospace');
+      expect(fileContent).toContain('--font-heading: var(--font-stack-mono)');
+      expect(fileContent).toContain('--font-body: var(--font-stack-mono)');
+      expect(fileContent).toContain('--font-mono: var(--font-stack-mono)');
       expect(fileContent).toContain('--font-heading-weight: 600');
+    });
+
+    it('TOK-T1-04b: No webfont is fetched at runtime', () => {
+      expect(fileContent).not.toContain('fonts.googleapis.com');
     });
 
     it('TOK-T1-05: Spacing scale follows 4.6px classical base multiplier', () => {

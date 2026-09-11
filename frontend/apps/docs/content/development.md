@@ -39,6 +39,43 @@ libs/accounting/accounting-ui/src/lib/
 
 No inline `template:` or `styles:` blocks. Components with no styling of their own still get a `.scss` file so the trio is predictable — editors, search and the "go to file" list all behave the same for every page. Styles are SCSS, matching the app-level `styles.scss`.
 
+## Typography — one monospace stack, every app
+
+Every font role resolves to a single monospace stack, defined once in
+`libs/shared/theming/src/lib/_tokens.scss`:
+
+```scss
+--font-stack-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+  "Liberation Mono", "Courier New", monospace;
+--font-heading: var(--font-stack-mono);
+--font-body:    var(--font-stack-mono);
+--font-mono:    var(--font-stack-mono);
+```
+
+**Why monospace.** A monospace font gives every glyph one advance width, so a
+column of figures lines up without any per-element opt-in. The previous pairing
+(Cormorant Garamond headings, Lora body) was proportional: `1` was 41% narrower
+than `0` in Lora, so `1,111.11` and `9,999.99` in the same column ended at
+different places unless that element had explicitly asked for the `tnum`
+OpenType feature. Every amount cell that forgot the class drifted, and one
+shared grid had never asked at all.
+
+The `font-variant-numeric: tabular-nums` rules throughout the theme are now
+redundant — they are no-ops against a monospace face — and are kept so the
+opt-in still works if a proportional font is ever reinstated.
+
+**System fonts only.** Nothing is fetched from Google Fonts, so there is no
+webfont request, no flash of unstyled text, and no third-party dependency in
+the render path. The stack covers macOS (`ui-monospace`, SF Mono, Menlo),
+Windows (Consolas) and Linux (Liberation Mono), landing on the generic
+`monospace` if none match.
+
+**Where the tokens reach.** `apps/web` imports the full theming entry point and
+`apps/desktop` inherits it by importing web's stylesheet. `apps/admin` and
+`apps/portal` import the same entry point. `apps/docs` imports only the tokens
+partial — it keeps its own component styling and takes just the font roles.
+A new app gets the fonts by importing `libs/shared/theming/src/index.scss`.
+
 ## By hand
 
 ```bash

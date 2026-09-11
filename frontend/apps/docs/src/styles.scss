@@ -1,8 +1,10 @@
+@use '../../../libs/shared/theming/src/lib/tokens' as *;
+
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-body);
   color: #1c1e26;
   background: #fff;
   line-height: 1.6;
