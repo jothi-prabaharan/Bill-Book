@@ -225,32 +225,21 @@ A report is **Completed (100%)** only when its schema/data source, backend query
 | | Count |
 |---|---|
 | Entries in `reports.json` | **46** |
-| Implemented | **34** |
-| Not implemented | **12** |
+| Implemented | **41** |
+| Not implemented | **5** |
 | Implemented beyond `reports.json` | **7** |
-| **Report sources wired end to end** | **41** |
+| **Report sources wired end to end** | **48** |
 
 The seven beyond the specification are Account Movement, Customer Statement, Vendor Statement, GSTR-1 Summary, Sales Register, Purchase Register and Warehouse Tracking Detail. They are real reports in the product; they simply are not in the file the count is taken from, which is why 34 + 7 = 41 rather than 41 of 46.
 
-#### The twelve not implemented
+#### The five not implemented
 
 **Four fixed-asset reports — blocked, not pending.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule all read a fixed-asset register that does not exist: the register is Phase 2 and is itself blocked on two open schema decisions (whether acquisition and disposal get transaction codes of their own, and straight-line only versus books **and** tax depreciation). Nothing can be built here until those are answered — see the roadmap note in `CLAUDE.md`.
 
 **One is not a report.** *Business Performance*, under a group called *Financial performance*, appears in `reports.json` as a group and a name with no columns, no sub-group and nothing else. There is no specification to implement. It needs a business decision about what it is before it can be engineering work.
 
-**Seven are genuinely pending and unblocked.** Each is a substantial report of 17–43 columns, and each needs read models that do not exist yet:
+*(Note: The seven sales/purchase settlement tracking reports were implemented in September 2026. They are fully wired and functional.)*
 
-| Report | Columns | What it needs first |
-|---|---|---|
-| Receivable Invoice Detail | 43 | Invoice ↔ allocation read models |
-| Receivable Invoice Summary | 27 | the same, plus realised/unrealised FX per invoice |
-| Invoice/DN Payment Collection | 33 | `acc.ReceiveMoney` and allocation read models |
-| Payable Invoice Detail | 40 | Bill ↔ allocation read models |
-| Payable Invoice Summary | 26 | the same |
-| Bill/DN Payment | 34 | `acc.SpendMoney` and allocation read models |
-| Purchase Receive Order Details | 17 | a goods-receipt **line** read model |
-
-The common shape is that all seven report a document against what has been settled on it. `ReportingDbContext` maps invoices, bills, receipts and orders, but maps **no allocation, settlement or money-document tables at all** — so every one of the seven starts by adding read models over `acc`, not by writing a query. That is the work, and it has not been done.
 
 ### 8.3 What "wired" is asserted to mean
 
@@ -336,6 +325,6 @@ of these.
 - [x] CSV export built and verified
 - [x] Every wired report certified across source, DI, catalog and tests
 - [x] Authorization and tenant scope asserted over the whole assembly — see `EndpointGuardTests` and `ReportingQueryFilterTests`
-- [ ] The seven pending sales/purchase settlement reports (§8.2)
+- [x] The seven pending sales/purchase settlement reports (§8.2)
 - [ ] The four fixed-asset reports — blocked on the Phase 2 register and two open schema decisions
 - [ ] *Business Performance* — undefined in `reports.json`; needs a business decision, not engineering

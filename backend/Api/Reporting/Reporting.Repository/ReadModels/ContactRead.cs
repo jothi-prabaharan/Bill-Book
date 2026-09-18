@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -11,6 +11,7 @@ namespace Reporting.Repository.ReadModels;
 /// customer's own — which is why it can be joined at all. The master database's
 /// tables (countries, states, users) cannot, and have to be resolved in C#.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Contact", Schema = "acc")]
 public class ContactRead : OrgScopedEntity
 {
     public long ContactId { get; set; }
@@ -35,5 +36,6 @@ public class ContactRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
 
 

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("DeliveryChallan", Schema = "sal")]
 public class DeliveryChallanRead : OrgScopedEntity
 {
     public long DeliveryChallanId { get; set; }
@@ -44,3 +45,4 @@ public class DeliveryChallanRead : OrgScopedEntity
     public string? Notes { get; set; }
     public string? TermsAndConditions { get; set; }
 }
+

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("PurchaseOrder", Schema = "pur")]
 public class PurchaseOrderRead : OrgScopedEntity
 {
     public long PurchaseOrderId { get; set; }
@@ -39,3 +40,4 @@ public class PurchaseOrderRead : OrgScopedEntity
     public string? Notes { get; set; }
     public string? TermsAndConditions { get; set; }
 }
+

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("BillDetail", Schema = "pur")]
 public class BillDetailRead : OrgScopedEntity
 {
     public long BillDetailId { get; set; }
@@ -38,3 +39,4 @@ public class BillDetailRead : OrgScopedEntity
     public long? ItemBatchId { get; set; }
     public string? LineNotes { get; set; }
 }
+

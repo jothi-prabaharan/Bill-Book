@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -21,6 +21,7 @@ namespace Reporting.Repository.ReadModels;
 /// <see cref="ItemId"/> is the key and the foreign key both, so a second row for
 /// one item is structurally impossible rather than merely unlikely.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("ItemStock", Schema = "acc")]
 public class ItemStockRead : OrgScopedEntity
 {
     public long ItemId { get; set; }
@@ -59,6 +60,7 @@ public class ItemStockRead : OrgScopedEntity
     /// <summary>When stock last moved. Read by reports; never a substitute for the movement rows.</summary>
     public DateTimeOffset? LastMovementAt { get; set; }
 }
+
 
 
 

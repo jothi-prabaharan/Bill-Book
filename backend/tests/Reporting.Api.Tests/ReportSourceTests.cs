@@ -56,6 +56,13 @@ public class ReportSourceTests
     private static readonly BillsTrackSource BillsTrack = new();
     private static readonly AgedPayablesDetailsSource AgedPayablesDetails = new();
     private static readonly PurchaseAnalysisSource PurchaseAnalysis = new();
+    private static readonly ReceivableInvoiceDetailSource ReceivableInvoiceDetail = new();
+    private static readonly ReceivableInvoiceSummarySource ReceivableInvoiceSummary = new();
+    private static readonly InvoiceDnPaymentCollectionSource InvoiceDnPaymentCollection = new();
+    private static readonly PayableInvoiceDetailSource PayableInvoiceDetail = new();
+    private static readonly PayableInvoiceSummarySource PayableInvoiceSummary = new();
+    private static readonly BillDnPaymentSource BillDnPayment = new();
+    private static readonly PurchaseReceiveOrderDetailsSource PurchaseReceiveOrderDetails = new();
 
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
@@ -111,6 +118,13 @@ public class ReportSourceTests
         BillsTrack,
         AgedPayablesDetails,
         PurchaseAnalysis,
+        ReceivableInvoiceDetail,
+        ReceivableInvoiceSummary,
+        InvoiceDnPaymentCollection,
+        PayableInvoiceDetail,
+        PayableInvoiceSummary,
+        BillDnPayment,
+        PurchaseReceiveOrderDetails,
     ];
 
     [Theory]

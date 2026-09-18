@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -21,6 +21,7 @@ namespace Reporting.Repository.ReadModels;
 /// opposite direction, the same way a posted journal is reversed rather than
 /// changed.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("StockMovement", Schema = "acc")]
 public class StockMovementRead : OrgScopedEntity
 {
     public long StockMovementId { get; set; }
@@ -133,6 +134,7 @@ public class StockMovementRead : OrgScopedEntity
 
     public string? Notes { get; set; }
 }
+
 
 
 

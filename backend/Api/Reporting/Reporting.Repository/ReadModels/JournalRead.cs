@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -15,6 +15,7 @@ namespace Reporting.Repository.ReadModels;
 /// user ids resolve against <c>mst.Users</c> in another database, so they are
 /// resolved in C# and <b>batched</b> — a 200-row page must not be 200 lookups.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Journal", Schema = "acc")]
 public class JournalRead : OrgScopedEntity
 {
     public long JournalId { get; set; }
@@ -42,5 +43,6 @@ public class JournalRead : OrgScopedEntity
 
     public long? ReversedByJournalId { get; set; }
 }
+
 
 

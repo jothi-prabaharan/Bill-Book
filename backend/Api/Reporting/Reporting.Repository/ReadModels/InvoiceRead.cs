@@ -1,8 +1,9 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("Invoice", Schema = "sal")]
 public class InvoiceRead : OrgScopedEntity
 {
     public long InvoiceId { get; set; }
@@ -14,3 +15,4 @@ public class InvoiceRead : OrgScopedEntity
     public decimal TotalAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 }
+

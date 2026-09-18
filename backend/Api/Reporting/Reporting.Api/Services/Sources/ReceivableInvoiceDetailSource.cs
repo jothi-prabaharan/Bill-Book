@@ -34,8 +34,8 @@ public sealed class ReceivableInvoiceDetailSource : ReportSource<ReceivableInvoi
         ReportColumn.Of<ReceivableInvoiceDetailRow, string>("contactName", ColumnDataType.Text, r => r.ContactName, groupable: true),
         ReportColumn.Of<ReceivableInvoiceDetailRow, string?>("itemCode", ColumnDataType.Text, r => r.ItemCode),
         ReportColumn.Of<ReceivableInvoiceDetailRow, string?>("itemName", ColumnDataType.Text, r => r.ItemName),
-        ReportColumn.Of<ReceivableInvoiceDetailRow, decimal>("quantity", ColumnDataType.Number, r => r.Quantity, aggregate: AggregateFunction.Sum),
-        ReportColumn.Of<ReceivableInvoiceDetailRow, decimal>("unitPrice", ColumnDataType.Number, r => r.UnitPrice),
+        ReportColumn.Of<ReceivableInvoiceDetailRow, decimal>("quantity", ColumnDataType.Quantity, r => r.Quantity, aggregate: AggregateFunction.Sum),
+        ReportColumn.Of<ReceivableInvoiceDetailRow, decimal>("unitPrice", ColumnDataType.Money, r => r.UnitPrice),
         ReportColumn.Of<ReceivableInvoiceDetailRow, decimal>("lineTotal", ColumnDataType.Money, r => r.LineTotal, aggregate: AggregateFunction.Sum),
     ];
 

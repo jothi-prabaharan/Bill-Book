@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -11,6 +11,7 @@ namespace Reporting.Repository.ReadModels;
 /// opening balance, the money received and the money spent all come from ledger
 /// rows against that account rather than from anything stored here.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("BankAccount", Schema = "acc")]
 public class BankAccountRead : OrgScopedEntity
 {
     public long BankAccountId { get; set; }
@@ -27,5 +28,6 @@ public class BankAccountRead : OrgScopedEntity
     public string CurrencyCode { get; set; }
     public bool IsActive { get; set; }
 }
+
 
 

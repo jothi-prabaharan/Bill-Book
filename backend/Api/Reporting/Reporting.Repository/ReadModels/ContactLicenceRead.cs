@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -15,6 +15,7 @@ namespace Reporting.Repository.ReadModels;
 /// showing nothing, which is why <c>IsActive</c> and <c>ExpiresOn</c> are both
 /// carried rather than just the number.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("ContactLicence", Schema = "acc")]
 public class ContactLicenceRead : OrgScopedEntity
 {
     public long ContactLicenceId { get; set; }
@@ -30,3 +31,4 @@ public class ContactLicenceRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+

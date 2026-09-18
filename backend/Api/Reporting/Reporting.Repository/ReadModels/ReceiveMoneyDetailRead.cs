@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("ReceiveMoneyDetail", Schema = "acc")]
 public class ReceiveMoneyDetailRead : OrgScopedEntity
 {
     public long ReceiveMoneyDetailId { get; set; }
@@ -15,3 +16,4 @@ public class ReceiveMoneyDetailRead : OrgScopedEntity
     public decimal AmountBase { get; set; }
     public string? LineMemo { get; set; }
 }
+

@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -14,6 +14,7 @@ namespace Reporting.Repository.ReadModels;
 /// <c>AccountTypeId</c> points at <c>mst.AccountTypes</c> in the master database.
 /// There is no join to be had: resolve the name in C#, batched.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Account", Schema = "acc")]
 public class AccountRead : OrgScopedEntity
 {
     public long AccountId { get; set; }
@@ -42,5 +43,6 @@ public class AccountRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
 
 

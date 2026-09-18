@@ -29,7 +29,7 @@ public sealed class PurchaseReceiveOrderDetailsSource : ReportSource<PurchaseRec
         ReportColumn.Of<PurchaseReceiveOrderDetailsRow, DateOnly>("documentDate", ColumnDataType.Date, r => r.DocumentDate),
         ReportColumn.Of<PurchaseReceiveOrderDetailsRow, string>("contactName", ColumnDataType.Text, r => r.ContactName, groupable: true),
         ReportColumn.Of<PurchaseReceiveOrderDetailsRow, string?>("itemCode", ColumnDataType.Text, r => r.ItemCode),
-        ReportColumn.Of<PurchaseReceiveOrderDetailsRow, decimal>("quantity", ColumnDataType.Number, r => r.Quantity, aggregate: AggregateFunction.Sum),
+        ReportColumn.Of<PurchaseReceiveOrderDetailsRow, decimal>("quantity", ColumnDataType.Quantity, r => r.Quantity, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<PurchaseReceiveOrderDetailsRow, long>("goodsReceiptId", ColumnDataType.Number, r => r.GoodsReceiptId, filterable: false)
     ];
 

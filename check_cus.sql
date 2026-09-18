@@ -1,1 +1,0 @@
-SELECT * FROM mst."Customers" WHERE "CustomerId" = '00000000-0000-0000-0000-000000000001';

@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("Quote", Schema = "sal")]
 public class QuoteRead : OrgScopedEntity
 {
     public long QuoteId { get; set; }
@@ -38,3 +39,4 @@ public class QuoteRead : OrgScopedEntity
     public string? Notes { get; set; }
     public string? TermsAndConditions { get; set; }
 }
+

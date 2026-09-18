@@ -1,8 +1,9 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("Bill", Schema = "pur")]
 public class BillRead : OrgScopedEntity
 {
     public long BillId { get; set; }
@@ -15,3 +16,4 @@ public class BillRead : OrgScopedEntity
     public decimal TotalAmount { get; set; }
     public Shared.Kernel.Documents.DocumentStatus Status { get; set; }
 }
+

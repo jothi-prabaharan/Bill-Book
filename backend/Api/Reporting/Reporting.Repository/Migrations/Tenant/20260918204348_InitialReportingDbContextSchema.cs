@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -1147,6 +1147,22 @@ namespace Reporting.Repository.Migrations.Tenant
                 table: "Reports",
                 columns: new[] { "OrgId", "ReportKey" },
                 unique: true);
+
+            migrationBuilder.Sql("ALTER TABLE rpt.\"Reports\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE rpt.\"Reports\" FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \"TenantPolicy\" ON rpt.\"Reports\" AS PERMISSIVE FOR ALL TO public USING (\"OrgId\" = current_setting('tenant.orgid', true)::uuid);");
+
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ReportViews\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ReportViews\" FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \"TenantPolicy\" ON rpt.\"ReportViews\" AS PERMISSIVE FOR ALL TO public USING (\"OrgId\" = current_setting('tenant.orgid', true)::uuid);");
+
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ReportDetails\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ReportDetails\" FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \"TenantPolicy\" ON rpt.\"ReportDetails\" AS PERMISSIVE FOR ALL TO public USING (\"OrgId\" = current_setting('tenant.orgid', true)::uuid);");
+
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ErrorLogs\" ENABLE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("ALTER TABLE rpt.\"ErrorLogs\" FORCE ROW LEVEL SECURITY;");
+            migrationBuilder.Sql("CREATE POLICY \"TenantPolicy\" ON rpt.\"ErrorLogs\" AS PERMISSIVE FOR ALL TO public USING (\"OrgId\" = current_setting('tenant.orgid', true)::uuid);");
         }
 
         /// <inheritdoc />

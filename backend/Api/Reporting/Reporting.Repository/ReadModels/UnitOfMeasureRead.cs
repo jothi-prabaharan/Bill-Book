@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -13,6 +13,7 @@ namespace Reporting.Repository.ReadModels;
 /// Pack sizes are units of their type, not per-item facts: a 50 kg bag is a
 /// Weight unit with a factor of 50.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("UnitOfMeasure", Schema = "acc")]
 public class UnitOfMeasureRead : OrgScopedEntity
 {
     public long UomId { get; set; }
@@ -57,6 +58,7 @@ public class UnitOfMeasureRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -18,6 +18,7 @@ namespace Reporting.Repository.ReadModels;
 /// never a read followed by a write. Two sales cannot consume the same last unit
 /// of a layer.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("CostLayer", Schema = "acc")]
 public class CostLayerRead : OrgScopedEntity
 {
     public long CostLayerId { get; set; }
@@ -52,6 +53,7 @@ public class CostLayerRead : OrgScopedEntity
 
     public decimal UnitCost { get; set; }
 }
+
 
 
 

@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Validation;
@@ -11,6 +11,7 @@ namespace Reporting.Repository.ReadModels;
 /// company-wide. Per-warehouse quantities come from aggregating movements, never
 /// from a separate cost pool.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Warehouse", Schema = "acc")]
 public class WarehouseRead : OrgScopedEntity
 {
     public long WarehouseId { get; set; }
@@ -56,6 +57,7 @@ public class WarehouseRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
 
 
 

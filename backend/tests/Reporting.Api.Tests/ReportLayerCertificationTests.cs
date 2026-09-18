@@ -94,7 +94,7 @@ public sealed class ReportLayerCertificationTests
     {
         // Guards every assertion below: if reflection found nothing, they would
         // all pass over an empty set and prove the opposite of what they claim.
-        Assert.Equal(41, SourceTypes.Count);
+        Assert.Equal(48, SourceTypes.Count);
     }
 
     [Fact]

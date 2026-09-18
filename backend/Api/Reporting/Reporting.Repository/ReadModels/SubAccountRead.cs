@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -18,6 +18,7 @@ namespace Reporting.Repository.ReadModels;
 /// receivables must report advances apart from trade balances, and this column is
 /// what splits them.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("SubAccount", Schema = "acc")]
 public class SubAccountRead : OrgScopedEntity
 {
     public long SubAccountId { get; set; }
@@ -36,5 +37,6 @@ public class SubAccountRead : OrgScopedEntity
 
     public string SubAccountName { get; set; }
 }
+
 
 

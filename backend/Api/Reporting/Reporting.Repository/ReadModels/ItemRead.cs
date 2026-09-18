@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -11,6 +11,7 @@ namespace Reporting.Repository.ReadModels;
 /// third vertical costs a CREATE TABLE rather than a migration on the busiest
 /// table in the system.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Item", Schema = "acc")]
 public class ItemRead : OrgScopedEntity
 {
     public long ItemId { get; set; }
@@ -121,6 +122,7 @@ public class ItemRead : OrgScopedEntity
 
     // CreatedAt is inherited from OrgScopedEntity → AuditableEntity — already available.
 }
+
 
 
 

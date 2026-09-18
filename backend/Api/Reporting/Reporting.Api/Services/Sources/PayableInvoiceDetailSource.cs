@@ -33,7 +33,7 @@ public sealed class PayableInvoiceDetailSource : ReportSource<PayableInvoiceDeta
         ReportColumn.Of<PayableInvoiceDetailRow, string>("contactName", ColumnDataType.Text, r => r.ContactName, groupable: true),
         ReportColumn.Of<PayableInvoiceDetailRow, string?>("itemCode", ColumnDataType.Text, r => r.ItemCode),
         ReportColumn.Of<PayableInvoiceDetailRow, string?>("itemName", ColumnDataType.Text, r => r.ItemName),
-        ReportColumn.Of<PayableInvoiceDetailRow, decimal>("quantity", ColumnDataType.Number, r => r.Quantity, aggregate: AggregateFunction.Sum),
+        ReportColumn.Of<PayableInvoiceDetailRow, decimal>("quantity", ColumnDataType.Quantity, r => r.Quantity, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<PayableInvoiceDetailRow, decimal>("unitPrice", ColumnDataType.Money, r => r.UnitPrice),
         ReportColumn.Of<PayableInvoiceDetailRow, decimal>("lineTotal", ColumnDataType.Money, r => r.LineTotal, aggregate: AggregateFunction.Sum),
         ReportColumn.Of<PayableInvoiceDetailRow, long>("billId", ColumnDataType.Number, r => r.BillId, filterable: false)

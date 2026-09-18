@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -15,6 +15,7 @@ namespace Reporting.Repository.ReadModels;
 /// The HUID lives here rather than on the item, because a hallmark identifies a
 /// piece, not a design — two rings of the same SKU carry two different HUIDs.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("ItemSerial", Schema = "acc")]
 public class ItemSerialRead : OrgScopedEntity
 {
     public long ItemSerialId { get; set; }
@@ -51,6 +52,7 @@ public class ItemSerialRead : OrgScopedEntity
     /// <summary>The movement that took it out. Null while it is still in stock.</summary>
     public long? IssuedMovementId { get; set; }
 }
+
 
 
 

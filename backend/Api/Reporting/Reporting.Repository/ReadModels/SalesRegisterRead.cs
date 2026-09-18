@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -6,6 +6,7 @@ namespace Reporting.Repository.ReadModels;
 /// <summary>
 /// Mapped over sal."SalesRegisters" with ExcludeFromMigrations.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("SalesRegister", Schema = "sal")]
 public class SalesRegisterRead : OrgScopedEntity
 {
     [Key]
@@ -69,3 +70,4 @@ public class SalesRegisterRead : OrgScopedEntity
     public string? OriginalInvoiceNo { get; set; }
     public DateOnly? OriginalInvoiceDate { get; set; }
 }
+

@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -6,6 +6,7 @@ namespace Reporting.Repository.ReadModels;
 /// <summary>
 /// <c>acc.Banks</c>, read-only. The institution a bank account belongs to.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("Bank", Schema = "acc")]
 public class BankRead : OrgScopedEntity
 {
     public long BankId { get; set; }
@@ -14,5 +15,6 @@ public class BankRead : OrgScopedEntity
     public string BankName { get; set; }
     public bool IsActive { get; set; }
 }
+
 
 

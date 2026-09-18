@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -7,6 +7,7 @@ namespace Reporting.Repository.ReadModels;
 /// <c>acc.JournalDetails</c>, read-only. The lines of a manual journal, in both
 /// the document's currency and the base one.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("JournalDetail", Schema = "acc")]
 public class JournalDetailRead : OrgScopedEntity
 {
     public long JournalDetailId { get; set; }
@@ -29,5 +30,6 @@ public class JournalDetailRead : OrgScopedEntity
 
     public string? LineMemo { get; set; }
 }
+
 
 

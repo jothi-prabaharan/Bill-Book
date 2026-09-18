@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -17,6 +17,7 @@ namespace Reporting.Repository.ReadModels;
 /// <c>EffectiveFrom</c>; joining on the id alone is right, because the posting's
 /// sub-account already names the row that was in force on the day.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("TaxMaster", Schema = "acc")]
 public class TaxMasterRead : OrgScopedEntity
 {
     public long TaxMasterId { get; set; }
@@ -45,3 +46,4 @@ public class TaxMasterRead : OrgScopedEntity
 
     public bool IsPurchase { get; set; }
 }
+

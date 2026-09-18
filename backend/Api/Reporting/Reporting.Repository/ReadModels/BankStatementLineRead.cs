@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
@@ -13,6 +13,7 @@ namespace Reporting.Repository.ReadModels;
 /// non-negative columns, the same convention the ledger uses — one signed column
 /// cannot be summed without knowing which way its writer meant it.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("BankStatementLine", Schema = "acc")]
 public class BankStatementLineRead : OrgScopedEntity
 {
     public long BankStatementLineId { get; set; }
@@ -46,5 +47,6 @@ public class BankStatementLineRead : OrgScopedEntity
 
     public bool MatchedAutomatically { get; set; }
 }
+
 
 

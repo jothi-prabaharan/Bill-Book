@@ -129,6 +129,13 @@ builder.Services.AddScoped<IReportSource, ReceiveOrderTrackSource>();
 builder.Services.AddScoped<IReportSource, BillsTrackSource>();
 builder.Services.AddScoped<IReportSource, AgedPayablesDetailsSource>();
 builder.Services.AddScoped<IReportSource, PurchaseAnalysisSource>();
+builder.Services.AddScoped<IReportSource, ReceivableInvoiceDetailSource>();
+builder.Services.AddScoped<IReportSource, ReceivableInvoiceSummarySource>();
+builder.Services.AddScoped<IReportSource, InvoiceDnPaymentCollectionSource>();
+builder.Services.AddScoped<IReportSource, PayableInvoiceDetailSource>();
+builder.Services.AddScoped<IReportSource, PayableInvoiceSummarySource>();
+builder.Services.AddScoped<IReportSource, BillDnPaymentSource>();
+builder.Services.AddScoped<IReportSource, PurchaseReceiveOrderDetailsSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

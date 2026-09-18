@@ -1,8 +1,9 @@
-using System;
+﻿using System;
 using Shared.Kernel.Tenancy;
 
 namespace Reporting.Repository.ReadModels;
 
+[System.ComponentModel.DataAnnotations.Schema.Table("ReceiveMoney", Schema = "acc")]
 public class ReceiveMoneyRead : OrgScopedEntity
 {
     public long ReceiveMoneyId { get; set; }
@@ -26,3 +27,4 @@ public class ReceiveMoneyRead : OrgScopedEntity
     public Guid? VoidedBy { get; set; }
     public string? VoidReason { get; set; }
 }
+

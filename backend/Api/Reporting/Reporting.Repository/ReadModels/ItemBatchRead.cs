@@ -1,4 +1,4 @@
-#pragma warning disable CS8618
+﻿#pragma warning disable CS8618
 
 using Shared.Kernel.Tenancy;
 
@@ -13,6 +13,7 @@ namespace Reporting.Repository.ReadModels;
 /// which one goes out of the door first is a legal question before it is a
 /// costing one. FEFO reads <see cref="ExpiryDate"/> and nothing else.
 /// </summary>
+[System.ComponentModel.DataAnnotations.Schema.Table("ItemBatch", Schema = "acc")]
 public class ItemBatchRead : OrgScopedEntity
 {
     public long ItemBatchId { get; set; }
@@ -44,6 +45,7 @@ public class ItemBatchRead : OrgScopedEntity
 
     public bool IsActive { get; set; }
 }
+
 
 
 
