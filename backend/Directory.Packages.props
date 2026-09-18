@@ -55,9 +55,11 @@
     <PackageVersion Include="PDFsharp" Version="6.1.1" />
     <!-- Allow-list HTML sanitiser for print template segments, on write. MIT,
          built on AngleSharp, so it parses rather than pattern-matches — a regex
-         cannot be trusted with this. Configured in SegmentSanitizer, which must
-         keep contenteditable and the pt-chip class or the editor's placeholder
-         round trip breaks.
+         cannot be trusted with this. Configured in SegmentSanitizer, whose
+         allow-list is the print specification's. It admitted contenteditable
+         and the pt-chip class while a placeholder was a chip element; a
+         placeholder is {{Tag}} text now, so nothing about merging depends on
+         an attribute surviving and both are gone.
 
          Pinned at 9.2.1039 rather than the 9.0.x line: 9.0.886 carries
          GHSA-j92c-7v7g-gj3f and drags in AngleSharp 0.17.1, which carries

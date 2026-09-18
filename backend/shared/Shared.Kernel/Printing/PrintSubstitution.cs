@@ -14,13 +14,19 @@ public sealed class SubstitutionResult
 }
 
 /// <summary>
-/// Replaces merge chips with values, repeating the rows that carry list chips.
+/// Replaces <c>{{Tag}}</c> with values, repeating the rows that carry list tags.
+///
+/// <b>A placeholder is text, not an element.</b> It is written into the markup
+/// as <c>{{Item.ItemName}}</c> and carries no wrapper, class or attribute, so
+/// substitution walks text nodes rather than elements. The consequence worth
+/// having: merging cannot be broken by a sanitiser, an editor, or anything else
+/// that rewrites attributes — the only way to lose a tag is to delete its text.
 ///
 /// <b>The repeat rule, stated once so it cannot drift:</b> a row repeats for
-/// exactly those list chips whose <i>closest</i> ancestor row is that row. A
-/// chip sitting inside a nested table belongs to the inner row, not the outer
-/// one, so a row that merely wraps other tables has no chips of its own and
-/// never repeats.
+/// exactly those list tags whose <i>closest</i> ancestor row is that row. A tag
+/// sitting inside a nested table belongs to the inner row, not the outer one,
+/// so a row that merely wraps other tables has no tags of its own and never
+/// repeats.
 ///
 /// That is not a special case bolted on: it is what "only the innermost row
 /// repeats" means, expressed the way the DOM already models it. Reading it any
@@ -29,8 +35,6 @@ public sealed class SubstitutionResult
 /// </summary>
 public static class PrintSubstitution
 {
-    private const string ChipSelector = "span.pt-chip";
-
     public static SubstitutionResult Resolve(
         string? html,
         string documentTypeCode,
@@ -53,10 +57,10 @@ public static class PrintSubstitution
 
         ExpandRepeatingRows(document, documentTypeCode, payload, format, sanitizer, unknown);
 
-        // Whatever chips remain are singles, wherever they sit.
-        foreach (IElement chip in document.QuerySelectorAll(ChipSelector).ToList())
+        // Whatever tags remain are singles, wherever they sit.
+        foreach (IText node in TextNodesWithTags(document.Body))
         {
-            ReplaceChip(chip, documentTypeCode, payload.Singles, format, sanitizer, unknown);
+            ReplaceIn(node, documentTypeCode, payload.Singles, format, sanitizer, unknown, fallbackToShortName: false);
         }
 
         return new SubstitutionResult
@@ -92,23 +96,22 @@ public static class PrintSubstitution
                 continue;
             }
 
-            IReadOnlyList<IReadOnlyDictionary<string, object?>> data = payload.Rows(group);
             INode parent = row.Parent;
 
             // No rows means no line. Printing one blank row instead would look
             // like a line item nobody can account for.
-            foreach (IReadOnlyDictionary<string, object?> values in data)
+            foreach (IReadOnlyDictionary<string, object?> values in payload.Rows(group))
             {
                 var clone = (IElement)row.Clone(deep: true);
 
-                foreach (IElement chip in clone.QuerySelectorAll(ChipSelector).ToList())
+                foreach (IText node in TextNodesWithTags(clone))
                 {
-                    // Inside the clone, this row's own chips take the row's
-                    // values; anything belonging to a nested row is left for the
-                    // singles pass, which is where it was already resolved.
-                    if (ClosestRow(chip) == clone)
+                    // Inside the clone, this row's own tags take the row's
+                    // values; anything belonging to a nested row was resolved
+                    // already, and anything else is left for the singles pass.
+                    if (ClosestRow(node) == clone)
                     {
-                        ReplaceChip(chip, documentTypeCode, values, format, sanitizer, unknown, fallbackToShortName: true);
+                        ReplaceIn(node, documentTypeCode, values, format, sanitizer, unknown, fallbackToShortName: true);
                     }
                 }
 
@@ -120,29 +123,63 @@ public static class PrintSubstitution
     }
 
     /// <summary>
-    /// The list this row repeats for, or null. Only chips whose closest row is
+    /// The list this row repeats for, or null. Only tags whose closest row is
     /// this one count — see the type comment.
     /// </summary>
     private static string? OwnListGroup(IElement row)
     {
-        foreach (IElement chip in row.QuerySelectorAll(ChipSelector))
+        foreach (IText node in TextNodesWithTags(row))
         {
-            if (ClosestRow(chip) != row)
+            if (ClosestRow(node) != row)
             {
                 continue;
             }
 
-            string? group = MergeTags.ListGroup(TagOf(chip));
-            if (group is not null)
+            foreach (System.Text.RegularExpressions.Match match in MergeTags.TagPattern.Matches(node.Data))
             {
-                return group;
+                string? group = MergeTags.ListGroup(match.Groups[1].Value.Trim());
+                if (group is not null)
+                {
+                    return group;
+                }
             }
         }
 
         return null;
     }
 
-    private static IElement? ClosestRow(IElement element) => element.Closest("tr");
+    /// <summary>Every text node under this node that contains at least one tag.</summary>
+    private static List<IText> TextNodesWithTags(INode? root)
+    {
+        var found = new List<IText>();
+        if (root is null)
+        {
+            return found;
+        }
+
+        Walk(root);
+        return found;
+
+        void Walk(INode node)
+        {
+            foreach (INode child in node.ChildNodes.ToList())
+            {
+                if (child is IText text)
+                {
+                    if (MergeTags.TagPattern.IsMatch(text.Data))
+                    {
+                        found.Add(text);
+                    }
+                }
+                else
+                {
+                    Walk(child);
+                }
+            }
+        }
+    }
+
+    private static IElement? ClosestRow(INode node) => node.ParentElement?.Closest("tr");
 
     private static int Depth(IElement element)
     {
@@ -155,51 +192,85 @@ public static class PrintSubstitution
         return depth;
     }
 
-    private static string TagOf(IElement chip) =>
-        chip.TextContent.Trim().Trim('«', '»').TrimStart(MergeTags.ListMarker).Trim('«', '»').Trim();
-
-    private static void ReplaceChip(
-        IElement chip,
+    /// <summary>
+    /// Replaces every tag in one text node.
+    ///
+    /// Most values are text and the node's own data is simply rewritten. An
+    /// image or a rich-text value is markup, so the node is replaced by the
+    /// nodes that markup parses to — which is why this builds an HTML string
+    /// and only re-parses when it has to.
+    /// </summary>
+    private static void ReplaceIn(
+        IText node,
         string documentTypeCode,
         IReadOnlyDictionary<string, object?> values,
         PrintFormatContext format,
         SegmentSanitizer sanitizer,
         List<string> unknown,
-        bool fallbackToShortName = false)
+        bool fallbackToShortName)
     {
-        string tag = TagOf(chip);
-        PlaceholderDefinition? placeholder = PlaceholderCatalog.Find(documentTypeCode, tag);
+        bool anyMarkup = false;
 
-        if (placeholder is null)
+        string replaced = MergeTags.TagPattern.Replace(node.Data, match =>
         {
-            // Never print the raw tag. A customer's document showing
-            // «Something.Unknown» is worse than one showing nothing there.
-            unknown.Add(tag);
-            Replace(chip, string.Empty);
+            string tag = match.Groups[1].Value.Trim();
+            PlaceholderDefinition? placeholder = PlaceholderCatalog.Find(documentTypeCode, tag);
+
+            if (placeholder is null)
+            {
+                // Never print the raw tag. A customer's document showing
+                // {{Something.Unknown}} is worse than one showing nothing there.
+                unknown.Add(tag);
+                return string.Empty;
+            }
+
+            object? value = Lookup(values, tag, fallbackToShortName);
+
+            switch (placeholder.Type)
+            {
+                case PlaceholderType.Image:
+                    string? url = value as string;
+                    if (string.IsNullOrWhiteSpace(url))
+                    {
+                        return string.Empty;
+                    }
+
+                    anyMarkup = true;
+                    return sanitizer.Sanitize($"<img src=\"{Escape(url)}\" alt=\"\">");
+
+                case PlaceholderType.RichText:
+                    string markup = sanitizer.Sanitize(value as string ?? string.Empty);
+                    anyMarkup |= markup.Length > 0;
+                    return markup;
+
+                default:
+                    return Escape(MaskFormatter.Format(value, placeholder, format));
+            }
+        });
+
+        if (!anyMarkup)
+        {
+            // The common case by a long way: no re-parse, no new nodes.
+            node.TextContent = Unescape(replaced);
             return;
         }
 
-        object? value = Lookup(values, tag, fallbackToShortName);
-
-        switch (placeholder.Type)
+        IDocument? document = node.Owner;
+        INode? parent = node.Parent;
+        if (document is null || parent is null)
         {
-            case PlaceholderType.Image:
-                string? url = value as string;
-                Replace(
-                    chip,
-                    string.IsNullOrWhiteSpace(url)
-                        ? string.Empty
-                        : sanitizer.Sanitize($"<img src=\"{Escape(url)}\" alt=\"\">"));
-                break;
-
-            case PlaceholderType.RichText:
-                Replace(chip, sanitizer.Sanitize(value as string ?? string.Empty));
-                break;
-
-            default:
-                Replace(chip, Escape(MaskFormatter.Format(value, placeholder, format)));
-                break;
+            return;
         }
+
+        IElement holder = document.CreateElement("span");
+        holder.InnerHtml = replaced;
+
+        foreach (INode child in holder.ChildNodes.ToList())
+        {
+            parent.InsertBefore(child, node);
+        }
+
+        parent.RemoveChild(node);
     }
 
     /// <summary>
@@ -223,17 +294,6 @@ public static class PrintSubstitution
         return dot >= 0 && values.TryGetValue(tag[(dot + 1)..], out object? shortValue) ? shortValue : null;
     }
 
-    private static void Replace(IElement chip, string html)
-    {
-        if (html.Length == 0)
-        {
-            chip.Remove();
-            return;
-        }
-
-        chip.OuterHtml = html;
-    }
-
     private static string Escape(string text)
     {
         var builder = new StringBuilder(text.Length);
@@ -252,4 +312,15 @@ public static class PrintSubstitution
 
         return builder.ToString();
     }
+
+    /// <summary>
+    /// Undoes <see cref="Escape"/> for the text-only path, where the value goes
+    /// back as a text node rather than as markup and would otherwise show its
+    /// entities literally.
+    /// </summary>
+    private static string Unescape(string text) =>
+        text.Replace("&quot;", "\"", StringComparison.Ordinal)
+            .Replace("&gt;", ">", StringComparison.Ordinal)
+            .Replace("&lt;", "<", StringComparison.Ordinal)
+            .Replace("&amp;", "&", StringComparison.Ordinal);
 }

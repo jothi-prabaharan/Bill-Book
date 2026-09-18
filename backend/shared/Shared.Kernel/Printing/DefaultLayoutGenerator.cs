@@ -20,20 +20,26 @@ public static class DefaultLayoutGenerator
     /// The generation of these layouts. <b>Bump it whenever the markup below
     /// changes</b> — a template stamped with an older value is one a customer
     /// can be offered a reset for.
+    ///
+    /// <b>2</b> — placeholders became <c>{{Tag}}</c> text rather than a chip
+    /// element. A template still stamped 1 carries the old markup and will not
+    /// merge; CanResetToLatest is what surfaces that.
     /// </summary>
-    public const int SeedVersion = 1;
+    public const int SeedVersion = 2;
 
-    /// <summary>A merge chip, exactly as the sanitiser's allow-list and the renderer both expect it.</summary>
-    public static string Chip(PlaceholderDefinition placeholder) =>
-        placeholder.Kind == PlaceholderKind.List
-            ? $"<span contenteditable=\"false\" class=\"pt-chip\">↻«{placeholder.Tag}»</span>"
-            : $"<span contenteditable=\"false\" class=\"pt-chip\">«{placeholder.Tag}»</span>";
+    /// <summary>
+    /// A placeholder, as it is stored: <c>{{Tag}}</c> and nothing else.
+    ///
+    /// <b>No wrapper element.</b> The editor draws a chip around this on load
+    /// and writes it back as plain text on save, so nothing about merging
+    /// depends on an attribute surviving a sanitiser. Whether a tag repeats is
+    /// read from the catalogue's declared Kind, not from a marker in the text —
+    /// which is also why there is no longer a ↻ to preserve.
+    /// </summary>
+    public static string Placeholder(string tag) => $"{{{{{tag}}}}}";
 
-    /// <summary>A chip by tag, for building markup without looking the definition up first.</summary>
-    public static string Chip(string tag, PlaceholderKind kind = PlaceholderKind.Single) =>
-        kind == PlaceholderKind.List
-            ? $"<span contenteditable=\"false\" class=\"pt-chip\">↻«{tag}»</span>"
-            : $"<span contenteditable=\"false\" class=\"pt-chip\">«{tag}»</span>";
+    /// <summary>The same, when the definition is already in hand.</summary>
+    public static string Placeholder(PlaceholderDefinition placeholder) => Placeholder(placeholder.Tag);
 
     public static PrintContent Build(DocumentTypeProfile profile)
     {
@@ -54,15 +60,15 @@ public static class DefaultLayoutGenerator
     /// <summary>The letterhead. Repeats on every page, which is what makes page two recognisable.</summary>
     private static string FixedHeader() =>
         "<table width=\"100%\"><tbody><tr>"
-        + $"<td width=\"20%\">{Chip("Organization.Logo")}</td>"
+        + $"<td width=\"20%\">{Placeholder("Organization.Logo")}</td>"
         + "<td align=\"left\">"
-        + $"<div style=\"font-weight: bold\">{Chip("Organization.Name")}</div>"
-        + $"<div>{Chip("Organization.Address")}</div>"
-        + $"<div>GSTIN: {Chip("Organization.Gstin")}</div>"
+        + $"<div style=\"font-weight: bold\">{Placeholder("Organization.Name")}</div>"
+        + $"<div>{Placeholder("Organization.Address")}</div>"
+        + $"<div>GSTIN: {Placeholder("Organization.Gstin")}</div>"
         + "</td>"
         + "<td align=\"right\">"
-        + $"<div>{Chip("Organization.Phone")}</div>"
-        + $"<div>{Chip("Organization.Email")}</div>"
+        + $"<div>{Placeholder("Organization.Phone")}</div>"
+        + $"<div>{Placeholder("Organization.Email")}</div>"
         + "</td>"
         + "</tr></tbody></table>";
 
@@ -79,19 +85,19 @@ public static class DefaultLayoutGenerator
             string label = profile.Party == PartyKind.Customer ? "Bill to" : "Vendor";
             html.Append("<td align=\"left\" width=\"55%\">");
             html.Append($"<div>{label}</div>");
-            html.Append($"<div style=\"font-weight: bold\">{Chip("Party.Name")}</div>");
-            html.Append($"<div>{Chip("Party.Address")}</div>");
-            html.Append($"<div>GSTIN: {Chip("Party.Gstin")}</div>");
+            html.Append($"<div style=\"font-weight: bold\">{Placeholder("Party.Name")}</div>");
+            html.Append($"<div>{Placeholder("Party.Address")}</div>");
+            html.Append($"<div>GSTIN: {Placeholder("Party.Gstin")}</div>");
             html.Append("</td>");
         }
 
         html.Append("<td align=\"right\">");
-        html.Append($"<div>No: {Chip("Document.No")}</div>");
-        html.Append($"<div>Date: {Chip("Document.Date")}</div>");
+        html.Append($"<div>No: {Placeholder("Document.No")}</div>");
+        html.Append($"<div>Date: {Placeholder("Document.Date")}</div>");
 
         if (profile.HasTax)
         {
-            html.Append($"<div>Place of supply: {Chip("Document.PlaceOfSupply")}</div>");
+            html.Append($"<div>Place of supply: {Placeholder("Document.PlaceOfSupply")}</div>");
         }
 
         html.Append("</td></tr></tbody></table>");
@@ -107,32 +113,32 @@ public static class DefaultLayoutGenerator
         LineShape.Item => Rows(
             ["#", "Description", "HSN/SAC", "Qty", "Rate", "Amount"],
             [
-                Chip("Item.SlNo", PlaceholderKind.List),
-                Chip("Item.ItemName", PlaceholderKind.List),
-                Chip("Item.HsnSac", PlaceholderKind.List),
-                Chip("Item.Quantity", PlaceholderKind.List),
-                Chip("Item.Rate", PlaceholderKind.List),
-                Chip("Item.Amount", PlaceholderKind.List),
+                Placeholder("Item.SlNo"),
+                Placeholder("Item.ItemName"),
+                Placeholder("Item.HsnSac"),
+                Placeholder("Item.Quantity"),
+                Placeholder("Item.Rate"),
+                Placeholder("Item.Amount"),
             ],
             ["left", "left", "left", "right", "right", "right"]),
 
         LineShape.Allocation => Rows(
             ["Document", "Date", "Document total", "Applied"],
             [
-                Chip("Alloc.DocumentNo", PlaceholderKind.List),
-                Chip("Alloc.DocumentDate", PlaceholderKind.List),
-                Chip("Alloc.DocumentTotal", PlaceholderKind.List),
-                Chip("Alloc.Amount", PlaceholderKind.List),
+                Placeholder("Alloc.DocumentNo"),
+                Placeholder("Alloc.DocumentDate"),
+                Placeholder("Alloc.DocumentTotal"),
+                Placeholder("Alloc.Amount"),
             ],
             ["left", "left", "right", "right"]),
 
         LineShape.Ledger => Rows(
             ["Account", "Narration", "Debit", "Credit"],
             [
-                Chip("Line.AccountName", PlaceholderKind.List),
-                Chip("Line.Description", PlaceholderKind.List),
-                Chip("Line.Debit", PlaceholderKind.List),
-                Chip("Line.Credit", PlaceholderKind.List),
+                Placeholder("Line.AccountName"),
+                Placeholder("Line.Description"),
+                Placeholder("Line.Debit"),
+                Placeholder("Line.Credit"),
             ],
             ["left", "left", "right", "right"]),
 
@@ -179,10 +185,10 @@ public static class DefaultLayoutGenerator
                 .Append("<th align=\"left\">Tax</th><th align=\"right\">Rate</th>")
                 .Append("<th align=\"right\">Taxable</th><th align=\"right\">Amount</th>")
                 .Append("</tr></thead><tbody><tr>")
-                .Append($"<td align=\"left\">{Chip("Tax.Component", PlaceholderKind.List)}</td>")
-                .Append($"<td align=\"right\">{Chip("Tax.Rate", PlaceholderKind.List)}</td>")
-                .Append($"<td align=\"right\">{Chip("Tax.TaxableValue", PlaceholderKind.List)}</td>")
-                .Append($"<td align=\"right\">{Chip("Tax.Amount", PlaceholderKind.List)}</td>")
+                .Append($"<td align=\"left\">{Placeholder("Tax.Component")}</td>")
+                .Append($"<td align=\"right\">{Placeholder("Tax.Rate")}</td>")
+                .Append($"<td align=\"right\">{Placeholder("Tax.TaxableValue")}</td>")
+                .Append($"<td align=\"right\">{Placeholder("Tax.Amount")}</td>")
                 .Append("</tr></tbody></table>");
         }
 
@@ -199,7 +205,7 @@ public static class DefaultLayoutGenerator
 
             html.Append(TotalRow("Round off", "Totals.RoundOff"));
             html.Append("<tr><td align=\"left\" style=\"font-weight: bold\">Total</td>")
-                .Append($"<td align=\"right\" style=\"font-weight: bold\">{Chip("Totals.GrandTotal")}</td></tr>");
+                .Append($"<td align=\"right\" style=\"font-weight: bold\">{Placeholder("Totals.GrandTotal")}</td></tr>");
         }
 
         if (profile.HasPayments)
@@ -212,20 +218,20 @@ public static class DefaultLayoutGenerator
 
         if (profile.HasTotals)
         {
-            html.Append($"<div>Amount in words: {Chip("Totals.AmountInWords")}</div>");
+            html.Append($"<div>Amount in words: {Placeholder("Totals.AmountInWords")}</div>");
         }
 
         return html.ToString();
     }
 
     private static string TotalRow(string label, string tag) =>
-        $"<tr><td align=\"left\">{label}</td><td align=\"right\">{Chip(tag)}</td></tr>";
+        $"<tr><td align=\"left\">{label}</td><td align=\"right\">{Placeholder(tag)}</td></tr>";
 
     /// <summary>Terms and the signature block. Repeats on every page.</summary>
     private static string FixedFooter() =>
-        $"<div>{Chip("Document.Terms")}</div>"
+        $"<div>{Placeholder("Document.Terms")}</div>"
         + "<table width=\"100%\"><tbody><tr>"
         + "<td align=\"left\">&nbsp;</td>"
-        + $"<td align=\"right\">For {Chip("Organization.Name")}</td>"
+        + $"<td align=\"right\">For {Placeholder("Organization.Name")}</td>"
         + "</tr></tbody></table>";
 }

@@ -6,16 +6,19 @@ namespace Shared.Kernel.Tests;
 /// <summary>
 /// Acceptance test 5.
 ///
-/// Two halves, and the second is the one that fails silently. Stripping script
-/// is what a sanitiser is for and it fails loudly if it regresses. Keeping the
-/// placeholder chips intact is a configuration choice — a stock allow-list
-/// drops contenteditable and class, and the only symptom is a template whose
-/// merge fields quietly stopped merging.
+/// Stripping script is what a sanitiser is for, and it fails loudly if it
+/// regresses.
+///
+/// The second half of this file used to guard the placeholder chip, because a
+/// stock allow-list drops contenteditable and class and the only symptom was a
+/// template whose merge fields had quietly stopped merging. A placeholder is
+/// {{Tag}} text now, so that failure cannot happen and the tests below assert
+/// the stronger property instead: tags survive a sanitiser that keeps nothing.
 /// </summary>
 public class SegmentSanitizerTests
 {
-    private const string Chip = "<span contenteditable=\"false\" class=\"pt-chip\">«Invoice.No»</span>";
-    private const string ListChip = "<span contenteditable=\"false\" class=\"pt-chip\">↻«Item.ItemName»</span>";
+    private const string Single = "{{Invoice.No}}";
+    private const string ListTag = "{{Item.ItemName}}";
 
     private static readonly SegmentSanitizer Sanitizer = new();
 
@@ -94,38 +97,38 @@ public class SegmentSanitizerTests
     }
 
     [Fact]
-    public void A_placeholder_chip_survives_unchanged()
+    public void A_placeholder_is_text_and_passes_through_untouched()
     {
-        string clean = Sanitizer.Sanitize(Chip);
+        string clean = Sanitizer.Sanitize($"<div>{Single}</div>");
 
-        Assert.Contains("contenteditable=\"false\"", clean, StringComparison.Ordinal);
-        Assert.Contains("class=\"pt-chip\"", clean, StringComparison.Ordinal);
-        Assert.Contains("«Invoice.No»", clean, StringComparison.Ordinal);
+        Assert.Contains("{{Invoice.No}}", clean, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void A_list_chip_keeps_its_repeat_marker()
+    public void A_list_placeholder_is_no_different_from_a_single_one()
     {
-        string clean = Sanitizer.Sanitize(ListChip);
+        // Whether a tag repeats is the catalogue's declared Kind. Nothing in
+        // the markup distinguishes them, so nothing in the markup can be lost.
+        string clean = Sanitizer.Sanitize($"<td>{ListTag}</td>");
 
-        Assert.Contains("↻", clean, StringComparison.Ordinal);
-        Assert.Contains("«Item.ItemName»", clean, StringComparison.Ordinal);
-        Assert.Contains("contenteditable=\"false\"", clean, StringComparison.Ordinal);
+        Assert.Contains("{{Item.ItemName}}", clean, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Chips_survive_sitting_inside_a_hostile_document()
+    public void Placeholders_survive_a_hostile_document_losing_every_attribute()
     {
-        string html = $"<table><tr><td>{ListChip}<script>alert(1)</script></td>"
-            + $"<td onclick=\"x()\">{Chip}</td></tr></table>";
+        string html = $"<table><tr><td onclick=\"x()\" class=\"gone\" contenteditable=\"true\">{ListTag}"
+            + $"<script>alert(1)</script></td><td>{Single}</td></tr></table>";
 
         string clean = Sanitizer.Sanitize(html);
 
         Assert.DoesNotContain("script", clean, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("onclick", clean, StringComparison.OrdinalIgnoreCase);
-        Assert.Contains("«Item.ItemName»", clean, StringComparison.Ordinal);
-        Assert.Contains("«Invoice.No»", clean, StringComparison.Ordinal);
-        Assert.Equal(2, CountOccurrences(clean, "contenteditable=\"false\""));
+        Assert.DoesNotContain("contenteditable", clean, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("class", clean, StringComparison.OrdinalIgnoreCase);
+
+        // Every attribute it arrived with is gone, and both tags still resolve.
+        Assert.Equal(["Item.ItemName", "Invoice.No"], MergeTags.Extract(clean));
     }
 
     [Fact]

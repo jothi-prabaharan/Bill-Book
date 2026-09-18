@@ -90,12 +90,28 @@ public class DefaultLayoutTests
     }
 
     [Fact]
-    public void A_list_chips_repeat_marker_is_not_part_of_its_tag()
+    public void A_placeholder_is_text_and_carries_no_markup_at_all()
     {
-        string chip = DefaultLayoutGenerator.Chip("Item.Rate", PlaceholderKind.List);
+        string placeholder = DefaultLayoutGenerator.Placeholder("Item.Rate");
 
-        Assert.Contains("↻", chip, StringComparison.Ordinal);
-        Assert.Equal(["Item.Rate"], MergeTags.Extract(chip));
+        // Whether it repeats is the catalogue's Kind, not a marker in the text,
+        // so there is nothing here for a sanitiser or an editor to strip.
+        Assert.Equal("{{Item.Rate}}", placeholder);
+        Assert.Equal(["Item.Rate"], MergeTags.Extract(placeholder));
+        Assert.DoesNotContain("<", placeholder, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_placeholder_survives_a_sanitiser_that_strips_every_attribute()
+    {
+        // The point of making it text: even an allow-list admitting no
+        // attributes at all cannot break merging.
+        string html = "<div style=\"font-weight: bold\" onclick=\"x()\">"
+            + DefaultLayoutGenerator.Placeholder("Document.No") + "</div>";
+
+        string clean = new SegmentSanitizer().Sanitize(html);
+
+        Assert.Equal(["Document.No"], MergeTags.Extract(clean));
     }
 
     [Fact]

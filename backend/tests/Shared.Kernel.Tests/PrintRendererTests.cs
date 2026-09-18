@@ -251,7 +251,7 @@ public class PrintRendererTests
     {
         var content = new PrintContent
         {
-            HeaderHtml = "<div>Ref: " + DefaultLayoutGenerator.Chip("Document.NotAThing") + "</div>",
+            HeaderHtml = "<div>Ref: " + DefaultLayoutGenerator.Placeholder("Document.NotAThing") + "</div>",
         };
 
         PrintRenderResult result = Renderer.Render(new PrintRenderRequest
@@ -263,7 +263,7 @@ public class PrintRendererTests
 
         Assert.Contains("Document.NotAThing", result.UnknownTags);
         Assert.DoesNotContain("Document.NotAThing", result.Html, StringComparison.Ordinal);
-        Assert.DoesNotContain("«", result.Html, StringComparison.Ordinal);
+        Assert.DoesNotContain("{{", result.Html, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -271,7 +271,7 @@ public class PrintRendererTests
     {
         var content = new PrintContent
         {
-            HeaderHtml = "<div>Due: " + DefaultLayoutGenerator.Chip("Document.DueDate") + "</div>",
+            HeaderHtml = "<div>Due: " + DefaultLayoutGenerator.Placeholder("Document.DueDate") + "</div>",
         };
 
         PrintRenderResult result = Renderer.Render(new PrintRenderRequest
@@ -283,7 +283,7 @@ public class PrintRendererTests
 
         // Known but absent is not an error — the document simply has no due date.
         Assert.Empty(result.UnknownTags);
-        Assert.DoesNotContain("«", result.Html, StringComparison.Ordinal);
+        Assert.DoesNotContain("{{", result.Html, StringComparison.Ordinal);
     }
 
     // ---- Found by looking at a rendered page, not by a test ---------------
@@ -437,7 +437,7 @@ public class PrintRendererTests
             Content = new PrintContent
             {
                 DetailsHtml = "<table><tbody><tr><td>"
-                    + DefaultLayoutGenerator.Chip("Item.ItemName", PlaceholderKind.List)
+                    + DefaultLayoutGenerator.Placeholder("Item.ItemName")
                     + "</td></tr></tbody></table>",
             },
             DocumentTypeCode = "INV",

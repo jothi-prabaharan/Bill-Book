@@ -32,13 +32,13 @@ public sealed class SegmentSanitizeResult
 /// <c>&lt;img/src="x"/onerror=alert(1)&gt;</c> are the same document, and the
 /// list of encodings separating them is not finite.
 ///
-/// <b>The part that breaks quietly is the chips.</b> A placeholder is stored as
-/// <c>&lt;span contenteditable="false" class="pt-chip"&gt;«Tag»&lt;/span&gt;</c>,
-/// list chips carrying a leading ↻. A stock configuration drops both
-/// <c>contenteditable</c> and <c>class</c>, and the editor then loads a template
-/// whose merge fields have become ordinary text — no error anywhere, just a
-/// document that silently stops merging. Both are on the allow-list on purpose,
-/// and a test watches them.
+/// <b>Placeholders need nothing from this class, by design.</b> A placeholder is
+/// <c>{{Tag}}</c> text, so every attribute in the document can be stripped and
+/// the tags still resolve. That was not true of the earlier chip element, which
+/// a stock allow-list quietly disarmed — the failure being a template whose
+/// merge fields had become ordinary text, with no error anywhere. Making the
+/// placeholder text rather than markup removed the failure instead of guarding
+/// against it.
 ///
 /// <b>A refusal means something was removed, never that something was
 /// reformatted.</b> AngleSharp re-serialises CSS canonically, so
@@ -63,20 +63,23 @@ public sealed class SegmentSanitizer
     ];
 
     /// <summary>
-    /// The specification names style, colspan, rowspan, align and width. Seven
-    /// more are here, each because an allowed tag is inert without it, and each
-    /// called out rather than folded in silently:
+    /// The specification names style, colspan, rowspan, align and width. Five
+    /// more are here, each because an allowed tag is inert without it:
     ///
     /// <list type="bullet">
-    /// <item><c>contenteditable</c> and <c>class</c> — the placeholder chip is defined by them.</item>
     /// <item><c>src</c> and <c>alt</c> — an img with no src draws nothing, and the approved-host rule presupposes a src to check.</item>
     /// <item><c>color</c>, <c>face</c>, <c>size</c> — the font tag carries no meaning without them.</item>
     /// </list>
+    ///
+    /// <b><c>contenteditable</c> and <c>class</c> were here and are not any
+    /// more.</b> They were admitted to keep the placeholder chip intact, back
+    /// when a placeholder was an element. It is <c>{{Tag}}</c> text now, so
+    /// nothing about merging rests on an attribute and the list is the
+    /// specification's again.
     /// </summary>
     private static readonly string[] Attributes =
     [
         "style", "colspan", "rowspan", "align", "width",
-        "contenteditable", "class",
         "src", "alt",
         "color", "face", "size",
     ];

@@ -1058,12 +1058,13 @@ Nothing you can set will reorder them.
 
 ## Merge fields
 
-A merge field is a placeholder that fills itself in when the document prints — «Document.No»,
-«Party.Name», «Totals.GrandTotal». Insert them from the panel on the right of the editor.
+A merge field is a placeholder that fills itself in when the document prints — `{{Document.No}}`,
+`{{Party.Name}}`, `{{Totals.GrandTotal}}`. Insert them from the panel on the right of the editor,
+which shows each one as a tidy chip rather than as braces.
 
-Fields marked with a repeat mark (↻) come from a list rather than a single value: put
-«Item.ItemName» in a table row and that row prints once per item on the document. A field with
-no repeat mark prints once wherever you put it.
+Fields marked with a repeat mark come from a list rather than a single value: put
+`{{Item.ItemName}}` in a table row and that row prints once per item on the document. A field
+with no repeat mark prints once wherever you put it.
 
 **A field that cannot be filled in prints as nothing** — never as its own name. The template
 list tells you if a template has any, so you can find them before a customer does.

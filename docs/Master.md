@@ -429,9 +429,19 @@ what exists** until P3 moves it.
 
       **Segment HTML is refused, not silently cleaned.** `SegmentSanitizer` wraps Ganss.Xss,
       which parses through AngleSharp rather than pattern-matching — a regex cannot know that
-      `<img src=x onerror=…>` and `<img/src=x/onerror=…>` are the same document. The allow-list
-      keeps `contenteditable` and the `pt-chip` class on purpose: a stock configuration drops
-      both and the only symptom is a template whose merge fields quietly stopped merging.
+      `<img src=x onerror=…>` and `<img/src=x/onerror=…>` are the same document.
+
+      **A placeholder is `{{Tag}}` text, and that is a correctness decision rather than a
+      notation one** (18 September 2026). It was briefly a chip element —
+      `<span contenteditable="false" class="pt-chip">«Tag»</span>` — which forced the allow-list
+      to admit `contenteditable` and `class`, because a stock configuration drops both and the
+      only symptom is a template whose merge fields have quietly stopped merging. Making the
+      placeholder text removed that failure instead of guarding against it: every attribute in
+      the document can now be stripped and the tags still resolve, and the allow-list is the
+      specification's again. The editor draws the chip on load and writes plain text on save.
+
+      The `↻` marker went with it. Whether a tag repeats is the catalogue's declared `Kind`,
+      which was always the authority — a marker in the text was a second place to say it.
 
       **A refusal means something was *removed*, never that something was reformatted.**
       AngleSharp re-serialises CSS canonically, so `font-weight:bold` returns with a space in
