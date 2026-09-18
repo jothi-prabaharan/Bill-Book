@@ -236,7 +236,7 @@ describe('Adversarial Stress Test Suite: Milestone 3 App Shell', () => {
     it('ADV-ORG-03: Switching org IDs triggers auth service switch and emits change', async () => {
       const topbar = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
       topbar.allOrgs.set(mockOrgs);
-      topbar.orgOpen.set(true);
+      topbar.toggleOrg();
 
       let emittedOrg = '';
       topbar.organizationChange.subscribe((id) => (emittedOrg = id));
@@ -250,33 +250,54 @@ describe('Adversarial Stress Test Suite: Milestone 3 App Shell', () => {
     it('ADV-ORG-04: Picking current active org ID closes popup without re-triggering switch', async () => {
       const topbar = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
       topbar.allOrgs.set(mockOrgs);
-      topbar.orgOpen.set(true);
+      topbar.toggleOrg();
 
       await topbar.pickOrg('org-hq'); // currentOrgId is org-hq
       expect(mockAuthService.switchOrganization).not.toHaveBeenCalled();
       expect(topbar.orgOpen()).toBe(false);
     });
 
-    it('ADV-ORG-05: Escape key handling closes org switcher and all open overlays', () => {
+    it('ADV-ORG-05: Only one panel is ever open, and Escape closes it', () => {
       const topbar = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
-      topbar.orgOpen.set(true);
-      topbar.newOpen.set(true);
-      topbar.favOpen.set(true);
+
+      // Opening one panel closes whichever was open — they share a single slot.
+      topbar.toggleOrg();
+      expect(topbar.orgOpen()).toBe(true);
+
+      topbar.toggleNew();
+      expect(topbar.orgOpen()).toBe(false);
+      expect(topbar.newOpen()).toBe(true);
+
+      topbar.toggleFav();
+      expect(topbar.newOpen()).toBe(false);
+      expect(topbar.favOpen()).toBe(true);
 
       topbar.onEscape();
       expect(topbar.orgOpen()).toBe(false);
       expect(topbar.newOpen()).toBe(false);
       expect(topbar.favOpen()).toBe(false);
+      expect(topbar.searchOpen()).toBe(false);
+      expect(topbar.notifOpen()).toBe(false);
     });
 
-    it('ADV-ORG-06: Outside click dismisses open organization switcher dropdown', () => {
+    it('ADV-ORG-07: Escape also clears whatever was typed into a panel', () => {
       const topbar = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
-      topbar.orgOpen.set(true);
+      topbar.toggleOrg();
+      topbar.setOrgQuery('mumbai');
+      expect(topbar.orgQuery()).toBe('mumbai');
+
+      topbar.onEscape();
+      expect(topbar.orgQuery()).toBe('');
+    });
+
+    it('ADV-ORG-06: Pointerdown outside the bar dismisses the open panel', () => {
+      const topbar = TestBed.runInInjectionContext(() => new ShellTopbarComponent());
+      topbar.toggleOrg();
 
       const outsideElement = document.createElement('div');
       document.body.appendChild(outsideElement);
 
-      topbar.onClickOutside(outsideElement);
+      topbar.onPointerDownOutside(outsideElement);
       expect(topbar.orgOpen()).toBe(false);
 
       document.body.removeChild(outsideElement);

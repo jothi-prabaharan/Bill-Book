@@ -1,114 +1,241 @@
 <header class="shell-header">
-  <img src="assets/bill-book-mark.png" alt="Bill-Book" class="mobile-header-elements" style="width: 26px; height: auto; flex: none;">
+  <img src="assets/bill-book-mark.png" alt="Bill-Book" class="mobile-header-elements" />
 
+  <!-- Branch switcher -->
   <div class="shell-org-picker org-dropdown-container">
     <button
       type="button"
+      class="shell-org-toggle org-toggle-btn"
       (click)="toggleOrg()"
       [attr.aria-expanded]="orgOpen()"
       aria-label="Switch organization"
-      class="shell-org-toggle org-toggle-btn"
-      style="all: unset; cursor: pointer; display: flex; align-items: center; gap: var(--space-2); min-width: 0; padding: 4px 8px; margin: 0 -8px; border-radius: var(--radius-md);"
     >
-      <span style="min-width: 0">
-        <span style="display: block; font-family: var(--font-heading); font-weight: 600; font-size: 15px; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ currentOrgName() }}</span>
-        <span style="display: block; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-variant-numeric: tabular-nums; color: color-mix(in srgb, var(--color-text) 55%, transparent);">{{ currentOrgBranch() }}</span>
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-toggle-icon"><path d="M3 21h18"/><path d="M5 21V5l7-3v19"/><path d="M19 21V9l-7-4"/><path d="M9 9h.01"/><path d="M9 13h.01"/><path d="M9 17h.01"/></svg>
+      <span class="org-toggle-text">
+        <span class="org-company-name">{{ currentOrgName() }}</span>
+        <span class="org-role-name">{{ currentOrgBranch() }}</span>
       </span>
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex: none; opacity: 0.55;"><path d="m6 9 6 6 6-6"/></svg>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-toggle-chevron"><path d="m6 9 6 6 6-6"/></svg>
     </button>
 
     @if (orgOpen()) {
-      <div class="shell-org-dropdown" style="position: absolute; z-index: var(--z-dropdown); top: calc(100% + 6px); left: -8px; width: 290px; padding: var(--space-2); background: var(--color-bg); border: 1px solid var(--color-divider); border-radius: var(--radius-md); box-shadow: var(--shadow-lg);">
-        <bb-search-input
-          placeholder="Search organizations"
-          [ngModel]="orgQuery()"
-          (ngModelChange)="setOrgQuery($event)"
-          class="org-search-input"
-        ></bb-search-input>
-        <div class="org-list-container" style="max-height: 250px; overflow-y: auto; display: grid; gap: 2px;">
+      <div class="popover popover--left shell-org-dropdown" role="dialog" aria-label="Switch organization">
+        <div class="popover-head">
+          <span class="popover-title">Branches</span>
+          <span class="popover-count">{{ orgCount() }}</span>
+        </div>
+
+        <input
+          class="input org-search-input"
+          type="search"
+          placeholder="Search organisation, branch or role"
+          aria-label="Search organizations"
+          [value]="orgQuery()"
+          (input)="setOrgQuery($any($event.target).value)"
+        />
+
+        <div class="org-list-container">
           @for (org of filteredOrgs(); track org.orgId) {
             <button
               type="button"
+              class="org-list-btn"
               (click)="pickOrg(org.orgId)"
               [attr.aria-current]="org.orgId === currentOrgId() ? 'true' : null"
-              style="all: unset; cursor: pointer; display: block; padding: 7px 9px; border-radius: var(--radius-md); background: transparent;"
             >
-              <span style="display: block; font-size: 13px;">{{ org.orgName }}</span>
-              <span style="display: block; font-size: 11px; color: color-mix(in srgb, var(--color-text) 50%, transparent); font-variant-numeric: tabular-nums;">{{ org.roleName }}</span>
+              <span class="avatar" aria-hidden="true">{{ initials(org.orgName) }}</span>
+              <span class="org-list-text">
+                <span class="org-item-name">{{ org.orgName }}</span>
+                <span class="org-item-role">{{ org.roleName }}</span>
+              </span>
+              @if (org.orgId === currentOrgId()) {
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--color-accent)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="org-current-check"><path d="M20 6 9 17l-5-5"/></svg>
+              }
             </button>
           }
-          @if (filteredOrgs().length === 0) {
-            <div style="padding: 9px; font-size: 12px; color: color-mix(in srgb, var(--color-text) 50%, transparent);">No organization matches that.</div>
+          @if (orgEmpty()) {
+            <div class="popover-empty">No branch matches that.</div>
           }
+        </div>
+
+        <div class="popover-foot">
+          <button class="btn btn-ghost popover-foot-main" type="button" (click)="manageOrganizations()">Manage organizations</button>
         </div>
       </div>
     }
   </div>
 
-  <!-- Display-only Financial Year Tag -->
-  <span class="tag tag-outline" style="font-size: 11px; padding: 3px 10px; border-radius: calc(var(--radius-md) * 0.75); border: 1px solid var(--color-accent); color: var(--color-accent);" aria-label="Current financial year">{{ financialYear() }}</span>
+  <!-- Financial year is display only, never a control -->
+  <span class="tag tag-outline fy-tag" aria-label="Current financial year">{{ financialYear() }}</span>
 
   <div class="topbar-spacer"></div>
 
   <div class="topacts">
-    <button class="btn btn-ghost" type="button" (click)="openNew()" title="New transaction" aria-label="New transaction" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block;"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
-    </button>
-    <button class="btn btn-ghost" type="button" (click)="openFav()" title="Favourites" aria-label="Favourites" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/></svg>
-    </button>
-    <button class="btn btn-ghost" type="button" title="Help" aria-label="Help" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
-    </button>
-    <button class="btn btn-ghost" type="button" title="Sign out" aria-label="Sign out" (click)="doLogout()" style="width: 38px; height: 34px; min-height: 0; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border-radius: 0; border-left: 1px solid var(--color-divider);">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display: block"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
-    </button>
-  </div>
-</header>
-
-@if (newOpen()) {
-  <div class="dialog-backdrop" (click)="closeNew()" (keyup.enter)="closeNew()" tabindex="0">
-    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
-      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);">
-        <div class="dialog-title" style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px;">New transaction</div>
-        <button type="button" (click)="closeNew()" (keyup.enter)="closeNew()" class="btn btn-ghost" style="margin: 0;">Close</button>
-      </div>
-      <div style="font-size: 14px; opacity: 0.85; color: var(--color-text);">Every document you can raise from this branch.</div>
-
-      @for (grp of newGroups; track grp.name) {
-        <div>
-          <div style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-2);">{{ grp.name }}</div>
-          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2);">
-            @for (doc of grp.docs; track doc.code) {
-              <button type="button" (click)="selectDoc(doc.code)" class="btn btn-secondary" style="margin: 0; display: flex; justify-content: space-between; align-items: center; gap: var(--space-2); text-align: left;">
-                {{ doc.label }}<span style="font-size: 10px; letter-spacing: 0.1em; color: color-mix(in srgb, var(--color-text) 55%, transparent); font-variant-numeric: tabular-nums;">{{ doc.code }}</span>
-              </button>
+    <!-- New transaction -->
+    <div class="topact">
+      <button class="btn btn-ghost" type="button" (click)="toggleNew()" [attr.aria-expanded]="newOpen()" title="New transaction" aria-label="New transaction">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+      </button>
+      @if (newOpen()) {
+        <div class="popover popover--right popover--tall popover--new" role="dialog" aria-label="New transaction">
+          <div class="popover-head">
+            <span class="popover-title">New transaction</span>
+            <span class="popover-count">{{ newCount() }}</span>
+          </div>
+          <input
+            class="input popover-search"
+            type="search"
+            placeholder="Search transaction types"
+            aria-label="Search transaction types"
+            [value]="newQuery()"
+            (input)="setNewQuery($any($event.target).value)"
+          />
+          <div class="popover-body popover-body--columns">
+            @for (grp of newFilteredGroups(); track grp.name) {
+              <div class="popover-group">
+                <div class="grouphead">
+                  <span class="menuhead">{{ grp.name }}</span>
+                  <span class="popover-count">{{ grp.docs.length }}</span>
+                </div>
+                @for (doc of grp.docs; track doc.code) {
+                  <button class="menuitem menuitem--split" type="button" (click)="selectDoc(doc)">
+                    <span class="truncate">{{ doc.label }}</span>
+                    <span class="menuitem-code">{{ doc.code }}</span>
+                  </button>
+                }
+              </div>
+            }
+            @if (newEmpty()) {
+              <div class="popover-empty">No transaction type matches that.</div>
             }
           </div>
         </div>
       }
     </div>
-  </div>
-}
 
-@if (favOpen()) {
-  <div class="dialog-backdrop" (click)="closeFav()" (keyup.enter)="closeFav()" tabindex="0">
-    <div style="width: min(640px, 100%); max-height: 86dvh" (click)="$event.stopPropagation()" (keyup.enter)="$event.stopPropagation()" tabindex="0" class="dialog overflow-y-auto">
-      <div style="display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-3);">
-        <div class="dialog-title" style="font-family: var(--font-heading); font-weight: var(--font-heading-weight); font-size: 20px;">Favourites</div>
-        <button type="button" (click)="closeFav()" (keyup.enter)="closeFav()" class="btn btn-ghost" style="margin: 0;">Close</button>
-      </div>
-      <div style="font-size: 14px; opacity: 0.85; color: var(--color-text);">Your most frequently used screens.</div>
-
-      <div>
-        <div style="font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); margin-bottom: var(--space-2);">Quick Links</div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--space-2);">
-          <button type="button" (click)="closeFav()" routerLink="/sales" class="btn btn-secondary" style="margin: 0; text-align: left;">Sales Overview</button>
-          <button type="button" (click)="closeFav()" routerLink="/purchase" class="btn btn-secondary" style="margin: 0; text-align: left;">Purchase Overview</button>
-          <button type="button" (click)="closeFav()" routerLink="/banking" class="btn btn-secondary" style="margin: 0; text-align: left;">Banking</button>
-          <button type="button" (click)="closeFav()" routerLink="/reports" class="btn btn-secondary" style="margin: 0; text-align: left;">Reports</button>
+    <!-- Search -->
+    <div class="topact">
+      <button class="btn btn-ghost" type="button" (click)="toggleSearch()" [attr.aria-expanded]="searchOpen()" title="Search" aria-label="Search">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+      </button>
+      @if (searchOpen()) {
+        <div class="popover popover--right popover--tall popover--search" role="dialog" aria-label="Search">
+          <input
+            class="input popover-search"
+            type="search"
+            placeholder="Screen, document type or setting"
+            aria-label="Search everything"
+            [value]="searchQuery()"
+            (input)="setSearchQuery($any($event.target).value)"
+          />
+          <div class="popover-body popover-body--rows">
+            @for (grp of searchGroups(); track grp.name) {
+              <div>
+                <div class="menuhead">{{ grp.name }}</div>
+                <div class="popover-rows">
+                  @for (hit of grp.items; track hit.path) {
+                    <button class="menuitem menuitem--split" type="button" (click)="goTo(hit.path)">
+                      <span class="truncate">{{ hit.label }}</span>
+                      <span class="menuitem-meta">Screen</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+            @if (searchEmpty()) {
+              <div class="popover-empty">Nothing matches that.</div>
+            }
+          </div>
         </div>
-      </div>
+      }
     </div>
+
+    <!-- Favourites -->
+    <div class="topact">
+      <button class="btn btn-ghost" type="button" (click)="toggleFav()" [attr.aria-expanded]="favOpen()" title="Favourites" aria-label="Favourites">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.166.756a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.611 1.878l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.973 0L6.396 21.01a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.16 9.795a.53.53 0 0 1 .294-.906l5.165-.755a2.12 2.12 0 0 0 1.597-1.16z"/></svg>
+      </button>
+      @if (favOpen()) {
+        <div class="popover popover--right popover--tall popover--fav" role="dialog" aria-label="Favourites">
+          <div class="popover-head">
+            <span class="popover-title">Favourites</span>
+            <span class="popover-count">{{ favCount() }}</span>
+          </div>
+          <input
+            class="input popover-search"
+            type="search"
+            placeholder="Search favourites"
+            aria-label="Search favourites"
+            [value]="favQuery()"
+            (input)="setFavQuery($any($event.target).value)"
+          />
+          <div class="popover-body popover-body--columns">
+            @for (grp of favGroups(); track grp.name) {
+              <div class="popover-group">
+                <div class="grouphead">
+                  <span class="menuhead">{{ grp.name }}</span>
+                  <span class="popover-count">{{ grp.items.length }}</span>
+                </div>
+                @for (fav of grp.items; track fav.path) {
+                  <span class="favrow">
+                    <button class="menuitem" type="button" (click)="goTo(fav.path)">{{ fav.label }}</button>
+                    <button class="favrow-star" type="button" (click)="unstar(fav, $event)" [attr.aria-label]="'Remove ' + fav.label + ' from favourites'">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z"/></svg>
+                    </button>
+                  </span>
+                }
+              </div>
+            }
+            @if (favEmpty()) {
+              <div class="popover-empty">Star a screen to keep it here.</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Notifications -->
+    <div class="topact">
+      <button class="btn btn-ghost notif-btn" type="button" (click)="toggleNotif()" [attr.aria-expanded]="notifOpen()" title="Notifications" aria-label="Notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.268 21a2 2 0 0 0 3.464 0"/><path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326"/></svg>
+        @if (notifications.hasUnread()) {
+          <span class="notif-dot" aria-hidden="true"></span>
+        }
+      </button>
+      @if (notifOpen()) {
+        <div class="popover popover--right popover--notif" role="dialog" aria-label="Notifications">
+          <div class="popover-head">
+            <span class="popover-title">Notifications</span>
+            <button class="notif-markall" type="button" (click)="markAllRead()">Mark all read</button>
+          </div>
+          <div class="notif-list">
+            @for (note of notifications.notifications(); track note.id) {
+              <button class="notif-row" type="button" (click)="note.path ? goTo(note.path) : closeAll()">
+                <span class="notif-row-top">
+                  <span class="notif-row-kind">
+                    @if (note.unread) {
+                      <span class="notif-unread" aria-hidden="true"></span>
+                    }
+                    <span class="notif-kind">{{ note.kind }}</span>
+                  </span>
+                  <span class="notif-when">{{ note.when }}</span>
+                </span>
+                <span class="notif-text">{{ note.text }}</span>
+              </button>
+            }
+            @if (!notifications.notifications().length) {
+              <div class="popover-empty">Nothing new. You are all caught up.</div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <button class="btn btn-ghost" type="button" title="Help" aria-label="Help">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+    </button>
+
+    <button class="btn btn-ghost" type="button" title="Sign out" aria-label="Sign out" (click)="doLogout()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg>
+    </button>
   </div>
-}
+</header>

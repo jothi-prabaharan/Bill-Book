@@ -6,7 +6,9 @@
 
 .shell-grid-container {
   display: grid;
-  grid-template-columns: 56px 1fr;
+  /* Rail, secondary menu, content. The middle column is `auto` so it takes the
+     panel's own width and collapses to nothing when there is no panel. */
+  grid-template-columns: 56px auto 1fr;
   grid-template-rows: 46px auto 1fr;
   height: 100dvh;
   width: 100vw;
@@ -24,19 +26,29 @@
 }
 
 .shell-topbar-cell {
-  grid-column: 2;
+  /* The bar runs across the secondary menu as well: the panel sits under it, the
+     way the design has it, so the bar's shadow covers both. */
+  grid-column: 2 / span 2;
   grid-row: 1;
   z-index: var(--z-topbar);
 }
 
-.shell-breadcrumb-cell {
+.shell-subpanel-cell {
   grid-column: 2;
+  grid-row: 2 / span 2;
+  min-height: 0;
+  display: flex;
+  z-index: var(--z-rail);
+}
+
+.shell-breadcrumb-cell {
+  grid-column: 3;
   grid-row: 2;
   z-index: var(--z-breadcrumb);
 }
 
 .shell-content-cell {
-  grid-column: 2;
+  grid-column: 3;
   grid-row: 3;
   min-height: 0;
   min-width: 0;
@@ -57,6 +69,12 @@
   .shell-grid-container {
     grid-template-columns: 1fr;
     grid-template-rows: 46px auto 1fr auto;
+  }
+
+  /* The design moves the secondary menu into a bottom sheet on a phone; until
+     that exists there is nowhere to put it. */
+  .shell-subpanel-cell {
+    display: none;
   }
 
   .shell-topbar-cell {

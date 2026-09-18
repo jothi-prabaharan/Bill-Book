@@ -1,18 +1,31 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, computed, inject, signal, ElementRef, HostListener } from '@angular/core';
-import { Router, RouterOutlet } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { AuthService } from '@bill-book/auth';
 import { FormatSettingsService } from '@bill-book/currency-format';
-import { SearchInputComponent } from '@bill-book/ui-components';
 import { ShellNavComponent, NavItem } from '../nav/shell-nav.component';
 import { ShellTopbarComponent } from '../topbar/shell-topbar.component';
-import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-breadcrumb.component';
+import { ShellSubpanelComponent } from '../subpanel/shell-subpanel.component';
+import {
+  ShellBreadcrumbComponent,
+  BreadcrumbItem,
+} from '../breadcrumb/shell-breadcrumb.component';
+import { ShellBoardService } from '../board-state.service';
+import { FavouritesService } from '../favourites.service';
+import { MenuService } from '../menu.service';
+import { FALLBACK_RAIL, SHELL_SCREENS } from '../shell-screens';
 
 /**
  * Root CSS Grid layout orchestrator (`bb-shell`).
- * Coordinates fixed 56px left rail (`bb-shell-nav`), 46px top bar (`bb-shell-topbar`),
- * sticky breadcrumb strip (`bb-shell-breadcrumb`), and scrolling content viewport (`<router-outlet />`).
+ *
+ * Owns the frame — 56px rail, 46px top bar, breadcrumb strip, scrolling outlet —
+ * and the breadcrumb trail. Panels belong to the top bar; board state belongs to
+ * `ShellBoardService`. Nothing about either is duplicated here.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -20,10 +33,9 @@ import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-br
   standalone: true,
   imports: [
     RouterOutlet,
-    FormsModule,
-    SearchInputComponent,
     ShellNavComponent,
     ShellTopbarComponent,
+    ShellSubpanelComponent,
     ShellBreadcrumbComponent,
   ],
   templateUrl: './shell.component.html',
@@ -32,129 +44,88 @@ import { ShellBreadcrumbComponent, BreadcrumbItem } from '../breadcrumb/shell-br
 export class ShellComponent {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly elementRef = inject(ElementRef);
   private readonly formats = inject(FormatSettingsService);
+  private readonly board = inject(ShellBoardService);
+  private readonly favourites = inject(FavouritesService);
+  private readonly menuService = inject(MenuService);
 
-  private readonly all: NavItem[] = [
-    { path: '/dashboard', label: 'Home', icon: 'home', module: null },
-    { path: '/contacts', label: 'Contacts', icon: 'contacts', module: 'contacts' },
-    { path: '/inventory', label: 'Inventory', icon: 'inventory', module: 'inventory' },
-    { path: '/purchase', label: 'Purchase', icon: 'purchase', module: 'purchase' },
-    { path: '/sales', label: 'Sales', icon: 'sales', module: 'sales' },
-    { path: '/banking', label: 'Banking', icon: 'banking', module: 'banking' },
-    { path: '/accounting', label: 'Accounts', icon: 'accounting', module: 'accounting' }, // STRICT UI RULE: Accounts
-    { path: '/reports', label: 'Reports', icon: 'reports', module: 'reports' },
-    { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
-  ];
+  /** The rail before `/api/menu` answers — see `shell-screens.ts`. */
+  private readonly all: readonly NavItem[] = FALLBACK_RAIL;
 
   /**
-   * What this user can actually open based on active permissions.
+   * What this user can actually open.
+   *
+   * The server's tree is already filtered to this role, so `canView` changes
+   * nothing there; it still guards the fallback, which knows nothing about who
+   * is signed in.
    */
-  readonly nav = computed(() =>
-    this.all.filter((item) => item.module === null || this.auth.canView(item.module)),
-  );
-
-  // Organization Switcher State
-  readonly orgOpen = signal(false);
-  readonly orgQuery = signal('');
-  readonly allOrgs = signal<AccessibleOrg[]>([]);
-
-  // New Transaction Popup State
-  readonly newOpen = signal(false);
-
-  // Favourites Popup State
-  readonly favOpen = signal(false);
-
-  // Navigation / Crumbs State
-  readonly crumbs = signal<BreadcrumbItem[]>([]);
-  readonly isHome = computed(() => this.router.url === '/dashboard' || this.router.url === '/');
-  readonly isRegister = computed(
-    () =>
-      this.router.url.includes('/sales') ||
-      this.router.url.includes('/purchase') ||
-      this.router.url.includes('/inventory') ||
-      this.router.url.includes('/contacts'),
-  );
-
-  // Dashboard Actions State
-  readonly base = signal(false);
-  readonly baseLabel = signal('Accrual basis');
-  readonly editing = signal(false);
-  readonly notEditing = computed(() => !this.editing());
-
-  readonly newGroups = [
-    {
-      name: 'Sales',
-      docs: [
-        { label: 'Invoice', code: 'INV' },
-        { label: 'Sales order', code: 'SOR' },
-        { label: 'Quote', code: 'QOT' },
-        { label: 'Delivery challan', code: 'DLC' },
-        { label: 'Credit note', code: 'CRN' },
-        { label: 'POS sale', code: 'POS' },
-      ],
-    },
-    {
-      name: 'Purchase',
-      docs: [
-        { label: 'Bill', code: 'BIL' },
-        { label: 'Purchase order', code: 'POR' },
-        { label: 'Goods receipt', code: 'GRN' },
-        { label: 'Debit note', code: 'DBN' },
-      ],
-    },
-    {
-      name: 'Banking',
-      docs: [
-        { label: 'Receive money', code: 'REC' },
-        { label: 'Spend money', code: 'PAY' },
-        { label: 'Transfer money', code: 'TRF' },
-      ],
-    },
-  ];
-
-  readonly currentOrgId = computed(() => localStorage.getItem('bb.orgId'));
-
-  readonly currentOrgName = computed(() => 'Eternal Pathway');
-
-  readonly currentOrgRole = computed(() => {
-    const orgs = this.allOrgs();
-    const id = this.currentOrgId();
-    const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
-    return current ? current.orgName : 'Head Office';
+  readonly nav = computed(() => {
+    const fromServer = this.menuService.rail();
+    const source = fromServer.length > 0 ? fromServer : this.all;
+    return source.filter((item) => item.module === null || this.auth.canView(item.module));
   });
 
-  readonly filteredOrgs = computed(() => {
-    const query = this.orgQuery().toLowerCase();
-    if (!query) return this.allOrgs();
-    return this.allOrgs().filter(
-      (o: AccessibleOrg) =>
-        o.orgName.toLowerCase().includes(query) ||
-        o.roleName.toLowerCase().includes(query),
+  /** The URL as a signal, so anything derived from the route recomputes. */
+  private readonly url = signal('/');
+
+  readonly crumbs = signal<BreadcrumbItem[]>([]);
+
+  readonly isHome = computed(() => this.url() === '/dashboard' || this.url() === '/');
+
+  readonly base = computed(() => this.board.base());
+  readonly baseLabel = computed(() => this.board.baseLabel());
+  readonly editing = computed(() => this.board.editing());
+
+  /**
+   * Only a screen the menu knows about can be starred — a document being edited
+   * is not one. The server's tree answers first; the static registry covers the
+   * moment before it loads.
+   */
+  private readonly currentScreen = computed(() => {
+    const url = this.url();
+    const fromServer = this.menuService.screens();
+    const source = fromServer.length > 0 ? fromServer : SHELL_SCREENS;
+
+    // Exact first: a typed register — /sales/transactions?type=Invoice — is its
+    // own screen and stars separately from the mixed list it shares a path with.
+    // Bare-path matching is for screens that carry no query; a typed register is
+    // matched exactly or not at all, or starring one would star them all.
+    return (
+      source.find((s) => s.path === url) ??
+      source.find((s) => !s.path.includes('?') && s.path === url.split('?')[0]) ??
+      null
     );
   });
 
-  constructor() {
-    // Load organizations when shell boots
-    void this.auth.accessibleOrganizations().then((orgs) => {
-      this.allOrgs.set(orgs);
-    });
+  readonly currentIsStarrable = computed(() => this.currentScreen() !== null);
 
+  readonly currentIsStarred = computed(() => {
+    const screen = this.currentScreen();
+    return screen !== null && this.favourites.starred().includes(screen.path);
+  });
+
+  constructor() {
     // The branch's date and money formats, fetched once for every screen under
     // the shell. Not awaited: the service starts at the shipped defaults, so a
     // page that renders first shows the common case rather than blanks. Nothing
-    // resets it on an org switch because `pickOrg` reloads the window, which
+    // resets it on an org switch because the switch reloads the window, which
     // rebuilds the service along with everything else.
     void this.formats.load();
 
+    // The rail, the search index and every "may I create here" answer come from
+    // this one call. Nothing waits on it: the shell paints from the fallback and
+    // swaps to the server's tree when it lands.
+    void this.menuService.load();
+
     this.router.events.subscribe((event) => {
-      if (event.constructor.name === 'NavigationEnd') {
-        this.updateCrumbs((event as any).urlAfterRedirects);
+      if (event instanceof NavigationEnd) {
+        this.url.set(event.urlAfterRedirects);
+        this.updateCrumbs(event.urlAfterRedirects);
       }
     });
 
-    // Initialize crumbs
-    setTimeout(() => this.updateCrumbs(this.router.url), 0);
+    this.url.set(this.router.url);
+    this.updateCrumbs(this.router.url);
   }
 
   updateCrumbs(url: string): void {
@@ -193,95 +164,38 @@ export class ShellComponent {
     this.crumbs.set(result);
   }
 
-  toggleOrg(): void {
-    this.orgOpen.update((v) => !v);
-    if (this.orgOpen()) {
-      this.orgQuery.set('');
-    }
-  }
-
-  setOrgQuery(value: string): void {
-    this.orgQuery.set(value);
-  }
-
-  async pickOrg(orgId: string): Promise<void> {
-    if (orgId === this.currentOrgId()) {
-      this.orgOpen.set(false);
-      return;
-    }
-    await this.auth.switchOrganization(orgId);
-    this.orgOpen.set(false);
-    try {
-      if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
-        window.location.reload();
-      }
-    } catch {
-      // Ignored in non-browser/test environments
-    }
-  }
-
-  openNew(): void {
-    this.newOpen.set(true);
-  }
-
-  closeNew(): void {
-    this.newOpen.set(false);
+  toggleStar(): void {
+    const screen = this.currentScreen();
+    if (screen) this.favourites.toggle(screen.path);
   }
 
   toggleBase(): void {
-    this.base.update((v) => !v);
-    this.baseLabel.set(this.base() ? 'Cash basis' : 'Accrual basis');
+    this.board.toggleBase();
   }
 
   startEdit(): void {
-    this.editing.set(true);
-  }
-
-  resetLayout(): void {
-    // Reset layout logic
+    this.board.startEdit();
   }
 
   stopEdit(): void {
-    this.editing.set(false);
+    this.board.stopEdit();
   }
 
-  openExport(): void {
-    // Open export dialog
+  resetLayout(): void {
+    this.board.requestReset();
+  }
+
+  /**
+   * Export is owned by the screen being exported, not the shell — the shell
+   * only carries the control. Until a register opts in, the chosen format goes
+   * nowhere.
+   */
+  openExport(_format: string): void {
+    // Intentionally empty: wired per register.
   }
 
   openImport(): void {
-    // Open import dialog
-  }
-
-  openFav(): void {
-    this.favOpen.set(true);
-  }
-
-  closeFav(): void {
-    this.favOpen.set(false);
-  }
-
-  @HostListener('document:click', ['$event.target'])
-  onClickOutside(target: HTMLElement): void {
-    if (this.orgOpen()) {
-      const container = this.elementRef.nativeElement.querySelector('.org-dropdown-container');
-      if (container && !container.contains(target)) {
-        this.orgOpen.set(false);
-      }
-    }
-  }
-
-  @HostListener('document:keydown.escape')
-  onEscape(): void {
-    this.orgOpen.set(false);
-    this.newOpen.set(false);
-    this.favOpen.set(false);
-  }
-
-  selectDoc(_code: string): void {
-    // Hide the new popup and navigate or emit an event
-    this.newOpen.set(false);
-    // Add logic here to route to the correct 'new' document page based on code
+    // Intentionally empty: wired per register.
   }
 
   logout(): void {
@@ -289,4 +203,3 @@ export class ShellComponent {
     void this.router.navigateByUrl('/login');
   }
 }
-

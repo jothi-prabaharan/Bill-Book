@@ -1,4 +1,6 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { Subject } from 'rxjs';
 import { describe, expect, it, beforeEach } from 'vitest';
@@ -16,7 +18,14 @@ describe('ShellBreadcrumbComponent (libs/app-shell)', () => {
     };
 
     TestBed.configureTestingModule({
-      providers: [{ provide: Router, useValue: mockRouter }],
+      providers: [
+        // The strip asks MenuService whether this screen has a secondary menu, and
+        // that service fetches one. A testing backend rather than a real one: these
+        // specs are about crumbs, not about what the server returns.
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: Router, useValue: mockRouter },
+      ],
     });
   });
 
@@ -80,20 +89,48 @@ describe('ShellBreadcrumbComponent (libs/app-shell)', () => {
     expect(comp.crumbs()[0].label).toBe('Contacts');
   });
 
-  it.skip('CRUMB-07: Dashboard basis toggle works seamlessly', () => {
+  it('CRUMB-07: Home and register controls follow the route, not a manual flag', () => {
     const comp = createComponent();
-    // Set isHome input to true for dashboard route
-    comp.isHome.set(true);
-    expect(comp.base()).toBe(false);
-    expect(comp.baseLabel()).toBe('Accrual basis');
+    // The mock router starts on /dashboard, so the board controls are on and
+    // the register controls are off.
+    expect(comp.isHome()).toBe(true);
+    expect(comp.isRegister()).toBe(false);
 
-    comp.onToggleBase();
-    expect(comp.base()).toBe(true);
-    expect(comp.baseLabel()).toBe('Cash basis');
+    routerEvents$.next(new NavigationEnd(1, '/sales', '/sales'));
+    expect(comp.isHome()).toBe(false);
+    expect(comp.isRegister()).toBe(true);
 
-    comp.onToggleBase();
-    expect(comp.base()).toBe(false);
-    expect(comp.baseLabel()).toBe('Accrual basis');
+    // A create form is not a register: nothing there is exportable.
+    routerEvents$.next(new NavigationEnd(2, '/sales/invoices/new', '/sales/invoices/new'));
+    expect(comp.isRegister()).toBe(false);
+  });
+
+  it('CRUMB-09: Export menu opens, emits the chosen extension, and closes behind it', () => {
+    const comp = createComponent();
+    routerEvents$.next(new NavigationEnd(1, '/sales', '/sales'));
+
+    let emitted: string | null = null;
+    comp.openExport.subscribe((ext) => {
+      emitted = ext;
+    });
+
+    expect(comp.exportMenuOpen()).toBe(false);
+    comp.toggleExportMenu();
+    expect(comp.exportMenuOpen()).toBe(true);
+
+    comp.pickExport({ label: 'Excel workbook', ext: 'xlsx' });
+    expect(emitted).toBe('xlsx');
+    expect(comp.exportMenuOpen()).toBe(false);
+  });
+
+  it('CRUMB-10: Navigating closes an open export menu', () => {
+    const comp = createComponent();
+    routerEvents$.next(new NavigationEnd(1, '/sales', '/sales'));
+    comp.toggleExportMenu();
+    expect(comp.exportMenuOpen()).toBe(true);
+
+    routerEvents$.next(new NavigationEnd(2, '/purchase', '/purchase'));
+    expect(comp.exportMenuOpen()).toBe(false);
   });
 
   it('CRUMB-08: onCrumbClicked emits crumbClick output', () => {

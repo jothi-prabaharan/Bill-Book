@@ -81,3 +81,43 @@
   justify-content: flex-end;
   background: var(--color-accent-200);
 }
+
+.crumb-star {
+  width: 22px;
+  height: 22px;
+  margin-left: var(--space-1);
+
+  &[aria-pressed='true'] {
+    color: var(--color-accent);
+  }
+}
+
+.crumb-export {
+  position: relative;
+  display: flex;
+}
+
+.crumb-export-chevron {
+  flex: none;
+  opacity: 0.65;
+}
+
+.crumb-export-menu {
+  width: 190px;
+  right: 0;
+  top: calc(100% + 5px);
+  padding: var(--space-1);
+}
+
+.menuitem-ext {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* The secondary-menu toggle, first thing in the strip. */
+.crumb-panel-toggle {
+  margin-right: var(--space-1);
+}

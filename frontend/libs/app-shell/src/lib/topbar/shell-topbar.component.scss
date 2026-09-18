@@ -13,6 +13,7 @@
   padding: 0 var(--space-4);
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-divider);
+  /* The shadow that stops a sticky table header reading through the chrome. */
   box-shadow: var(--shadow-header);
 
   img {
@@ -22,30 +23,42 @@
   }
 }
 
+/* Branch switcher ------------------------------------------------------- */
+
 .shell-org-picker {
   min-width: 180px;
-  max-width: 220px;
+  max-width: 240px;
   position: relative;
   flex: none;
 }
 
 .shell-org-toggle {
   all: unset;
-  margin: 0 -8px;
   box-sizing: border-box;
   cursor: pointer;
   min-width: 0;
+  width: 100%;
+  margin: 0 -8px;
   padding: 4px 8px;
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  width: 100%;
   transition: background 120ms ease;
 
   &:hover {
     background: color-mix(in srgb, var(--color-text) 6%, transparent);
   }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.org-toggle-icon {
+  flex: none;
+  opacity: 0.7;
 }
 
 .org-toggle-text {
@@ -55,11 +68,12 @@
 }
 
 .org-company-name {
+  display: block;
   line-height: 1.2;
   font-family: var(--font-heading);
-  font-weight: 600;
-  display: block;
+  font-weight: var(--font-heading-weight);
   font-size: 15px;
+  letter-spacing: 0.005em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -67,53 +81,54 @@
 
 .org-role-name {
   display: block;
+  line-height: 1.3;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  opacity: 0.55;
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-variant-numeric: tabular-nums;
 }
 
 .org-toggle-chevron {
   flex: none;
-  opacity: 0.55;
+  margin-left: var(--space-3);
+  opacity: 0.5;
 }
 
 .shell-org-dropdown {
-  position: absolute;
+  /* Stated here as well as on .popover: the layering of this panel against the
+     rail and the sticky table header is load-bearing, so it is worth reading
+     off the component rather than chasing it through the theme. */
   z-index: var(--z-dropdown);
-  top: calc(100% + 6px);
-  left: -8px;
-  min-width: 290px;
-  padding: var(--space-2);
-  background: var(--color-bg);
-  border: 1px solid var(--color-divider);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
+  width: 376px;
 }
 
 .org-search-input {
+  display: block;
+  width: 100%;
   min-height: 32px;
   padding: 4px 9px;
   font-size: 13px;
   margin-bottom: var(--space-2);
-  display: block;
 }
 
 .org-list-container {
-  max-height: 250px;
+  max-height: 352px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   display: grid;
-  gap: 2px;
+  gap: 1px;
 }
 
 .org-list-btn {
   all: unset;
+  box-sizing: border-box;
   cursor: pointer;
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
   padding: 7px 9px;
   border-radius: var(--radius-md);
   transition: background 120ms ease;
@@ -122,14 +137,23 @@
     background: color-mix(in srgb, var(--color-text) 7%, transparent);
   }
 
-  &[aria-current='true'] {
-    background: color-mix(in srgb, var(--color-text) 4%, transparent);
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
   }
+}
+
+.org-list-text {
+  flex: 1;
+  min-width: 0;
 }
 
 .org-item-name {
   display: block;
-  font-size: 13px;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13.5px;
+  line-height: 1.25;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -137,18 +161,26 @@
 
 .org-item-role {
   display: block;
+  font-size: 10.5px;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
 }
 
-.org-empty-msg {
-  padding: 9px;
+.org-current-check {
+  flex: none;
+}
+
+.popover-foot-main {
+  flex: 1;
+  min-height: 30px;
   font-size: 12px;
-  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+  justify-content: flex-start;
+  margin: 0;
 }
 
 .fy-tag {
@@ -162,6 +194,8 @@
   flex: 1;
   min-width: 0;
 }
+
+/* Action group ---------------------------------------------------------- */
 
 .topacts {
   margin-left: auto;
@@ -180,6 +214,7 @@
     justify-content: center;
     padding: 0;
     border-radius: 0;
+    /* Hairline separators, no gaps. */
     border-left: 1px solid var(--color-divider);
     transition: background 120ms ease, color 120ms ease;
 
@@ -187,6 +222,199 @@
       display: block;
     }
   }
+}
+
+/* Each action owns the positioned context its popover anchors to. */
+.topact {
+  position: relative;
+  display: flex;
+}
+
+.popover--new {
+  width: min(516px, 88vw);
+  max-height: min(560px, 74dvh);
+}
+
+.popover--search {
+  width: min(440px, 88vw);
+  max-height: min(520px, 74dvh);
+}
+
+.popover--fav {
+  width: min(486px, 88vw);
+  max-height: min(520px, 74dvh);
+}
+
+.popover--notif {
+  width: 320px;
+}
+
+.popover-body--rows {
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+
+.popover-rows {
+  display: grid;
+  gap: 1px;
+}
+
+.popover-group {
+  min-width: 0;
+}
+
+.menuitem-meta {
+  flex: none;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* Favourites ------------------------------------------------------------ */
+
+.favrow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .menuitem {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 7px;
+    text-align: left;
+  }
+}
+
+.favrow-star {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+
+  svg {
+    display: block;
+  }
+}
+
+/* Notifications --------------------------------------------------------- */
+
+.notif-btn {
+  position: relative;
+}
+
+.notif-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  /* Punched out of the bar so the dot reads at any icon colour. */
+  box-shadow: 0 0 0 2px var(--color-bg);
+}
+
+.notif-markall {
+  all: unset;
+  cursor: pointer;
+  font-size: 11px;
+  color: var(--color-accent-700);
+  border-bottom: 1px solid currentcolor;
+
+  &:hover {
+    color: var(--color-accent-800);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+.notif-list {
+  max-height: 296px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  gap: 2px;
+}
+
+.notif-row {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: grid;
+  gap: 2px;
+  padding: 8px 9px 8px 7px;
+  border-radius: var(--radius-md);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-text) 7%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+}
+
+.notif-row-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.notif-row-kind {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.notif-unread {
+  flex: none;
+  width: 4px;
+  height: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
+.notif-kind {
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.notif-when {
+  flex: none;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.notif-text {
+  font-size: 13px;
+  line-height: 1.35;
 }
 
 @media (min-width: 861px) {

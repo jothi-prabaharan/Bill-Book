@@ -2,22 +2,23 @@ import { ChangeDetectionStrategy } from '@angular/core';
 import { Component, computed, inject, input, output } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '@bill-book/auth';
+import { MenuService } from '../menu.service';
+import { FALLBACK_RAIL, ShellRailItem } from '../shell-screens';
 
-export interface NavItem {
-  path: string;
-  label: string;
-  icon: string;
-  /**
-   * The module this entry leads to, or null for one every role can reach.
-   * Drawn only when the user holds `{module}.view`.
-   */
-  module: string | null;
-}
+/**
+ * One entry in the rail. Kept as an exported name because the shell and its specs
+ * refer to it; the shape lives with the fallback it is declared alongside.
+ */
+export type NavItem = ShellRailItem;
 
 /**
  * 56px fixed left rail (z-index: 5, ink ground `--color-ink`).
  * Contains module navigation items, active cutout rule with 4px left accent rule,
  * bottom user profile menu, and responsive mobile bottom tab bar navigation (<860px).
+ *
+ * The rail is drawn from `GET /api/menu`: the server owns which modules exist,
+ * their labels, their Lucide icons and where they lead. `FALLBACK_RAIL` covers the
+ * gap before that call answers, and the case where it never does.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,30 +30,28 @@ export interface NavItem {
 })
 export class ShellNavComponent {
   protected readonly auth = inject(AuthService);
+  private readonly menuService = inject(MenuService);
 
   readonly userDisplayName = input<string>('Praba');
   readonly userRoleName = input<string>('Owner');
 
   readonly logout = output<void>();
 
-  readonly allNavItems: NavItem[] = [
-    { path: '/dashboard', label: 'Home', icon: 'home', module: null },
-    { path: '/contacts', label: 'Contacts', icon: 'contacts', module: 'contacts' },
-    { path: '/inventory', label: 'Inventory', icon: 'inventory', module: 'inventory' },
-    { path: '/purchase', label: 'Purchase', icon: 'purchase', module: 'purchase' },
-    { path: '/sales', label: 'Sales', icon: 'sales', module: 'sales' },
-    { path: '/banking', label: 'Banking', icon: 'banking', module: 'banking' },
-    { path: '/accounting', label: 'Accounts', icon: 'accounting', module: 'accounting' }, // STRICT UI RULE: Accounts
-    { path: '/reports', label: 'Reports', icon: 'reports', module: 'reports' },
-    { path: '/settings', label: 'Settings', icon: 'settings', module: 'settings' },
-  ];
+  /** What the rail shows until the server's tree arrives. */
+  readonly allNavItems: readonly NavItem[] = FALLBACK_RAIL;
 
   /**
-   * What this user can actually open based on permissions.
+   * What this user can actually open.
+   *
+   * The server has already filtered its own tree to this role, so `canView`
+   * changes nothing there — it still guards the fallback, which knows nothing
+   * about who is signed in.
    */
-  readonly nav = computed(() =>
-    this.allNavItems.filter((item) => item.module === null || this.auth.canView(item.module)),
-  );
+  readonly nav = computed(() => {
+    const fromServer = this.menuService.rail();
+    const source = fromServer.length > 0 ? fromServer : this.allNavItems;
+    return source.filter((item) => item.module === null || this.auth.canView(item.module));
+  });
 
   readonly primaryNav = computed(() =>
     this.nav().filter((item) => item.path !== '/settings'),
@@ -74,4 +73,3 @@ export class ShellNavComponent {
     this.logout.emit();
   }
 }
-

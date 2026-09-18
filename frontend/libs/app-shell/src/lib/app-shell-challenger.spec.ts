@@ -1,5 +1,7 @@
 import { ElementRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, Event as RouterEvent } from '@angular/router';
 import { Subject } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
@@ -52,6 +54,10 @@ describe('Milestone 3 Empirical Challenger: App Shell Decomposition Suite', () =
 
     TestBed.configureTestingModule({
       providers: [
+        // MenuService fetches the navigation tree; the breadcrumb and the rail both
+        // read it. Testing backend so these specs stay about the chrome.
+        provideHttpClient(),
+        provideHttpClientTesting(),
         { provide: Router, useValue: mockRouter },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ElementRef, useValue: mockElementRef },
@@ -141,30 +147,31 @@ describe('Milestone 3 Empirical Challenger: App Shell Decomposition Suite', () =
       expect(template).toContain('<ng-content select="[bbShellActions], .acts"');
     });
 
-    it.skip('CHAL-M3-05: Dashboard contextual actions render only when on dashboard route', () => {
+    it('CHAL-M3-05: Dashboard contextual actions render only when on the dashboard route', () => {
       const comp = TestBed.runInInjectionContext(() => new ShellBreadcrumbComponent());
-      // Set isHome input to true for dashboard route
-      comp.isHome.set(true);
-      comp.isRegister.set(false);
+
+      // isHome and isRegister are derived from the router, not set by hand —
+      // the strip cannot disagree with the URL the person is looking at.
       expect(comp.isHome()).toBe(true);
       expect(comp.isRegister()).toBe(false);
 
-      // Basis toggle
+      // The board's basis and edit state are inputs: the shell owns them, and
+      // the strip only relays the presses back out.
       expect(comp.base()).toBe(false);
       expect(comp.baseLabel()).toBe('Accrual basis');
-      comp.onToggleBase();
-      expect(comp.base()).toBe(true);
-      expect(comp.baseLabel()).toBe('Cash basis');
+      expect(comp.editing()).toBe(false);
+      expect(comp.notEditing()).toBe(true);
 
-      // Customization edit state
-      expect(comp.editing()).toBe(false);
-      expect(comp.notEditing()).toBe(true);
+      let basisPresses = 0;
+      let editPresses = 0;
+      comp.toggleBase.subscribe(() => (basisPresses += 1));
+      comp.startEdit.subscribe(() => (editPresses += 1));
+
+      comp.onToggleBase();
       comp.onStartEdit();
-      expect(comp.editing()).toBe(true);
-      expect(comp.notEditing()).toBe(false);
-      comp.onStopEdit();
-      expect(comp.editing()).toBe(false);
-      expect(comp.notEditing()).toBe(true);
+
+      expect(basisPresses).toBe(1);
+      expect(editPresses).toBe(1);
     });
   });
 
@@ -298,7 +305,9 @@ describe('Milestone 3 Empirical Challenger: App Shell Decomposition Suite', () =
       const groups = topbarComp.newGroups;
 
       const salesDocs = groups.find((g) => g.name === 'Sales')?.docs.map((d) => d.code);
-      expect(salesDocs).toEqual(['INV', 'SOR', 'QOT', 'DLC', 'CRN', 'POS']);
+      // POS is absent on purpose: there is no point-of-sale route to land on,
+      // and a tile that leads nowhere is worse than no tile.
+      expect(salesDocs).toEqual(['INV', 'SOR', 'QOT', 'DLC', 'CRN']);
 
       const purchaseDocs = groups.find((g) => g.name === 'Purchase')?.docs.map((d) => d.code);
       expect(purchaseDocs).toEqual(['BIL', 'POR', 'GRN', 'DBN']);

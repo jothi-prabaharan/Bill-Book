@@ -1,0 +1,231 @@
+:host {
+  display: contents;
+}
+
+.subpanel {
+  position: relative;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--color-surface);
+  border-right: 1px solid var(--color-divider);
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Enough to separate it from the page without reading as a floating panel. */
+  box-shadow: 8px 0 20px -16px rgba(32, 31, 29, 0.75);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+}
+
+/* The drag target is wider than the hairline it sits on, or it cannot be hit. */
+.subhandle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 5px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 2;
+  touch-action: none;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 30%, transparent);
+  }
+}
+
+.subhead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 42px;
+  box-sizing: border-box;
+  padding: 0 var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.subhead-label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-heading);
+  font-size: 11.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--color-neutral-700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subhead-count {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.subsearch {
+  flex: none;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+
+  .input {
+    width: 100%;
+    min-height: 30px;
+    font-size: 12.5px;
+  }
+}
+
+.subbody {
+  flex: 1;
+  min-height: 0;
+}
+
+/* A section heading, on a faint accent ground so it reads as structure. */
+.grouphead-row {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 9px var(--space-3);
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--color-accent-800);
+  border-bottom: 1px solid var(--color-divider);
+  background: color-mix(in srgb, var(--color-accent) 7%, transparent);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+}
+
+.grouphead-chevron {
+  flex: none;
+  transition: transform 120ms ease;
+
+  &.shut {
+    transform: rotate(-90deg);
+  }
+}
+
+.grouphead-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.grouphead-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.subrow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--color-divider);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  }
+
+  &[data-on='1'] {
+    box-shadow: inset 3px 0 0 var(--color-accent);
+    background: color-mix(in srgb, var(--color-accent) 11%, transparent);
+
+    .subrow-link {
+      color: var(--color-accent-800);
+      font-family: var(--font-heading);
+      font-weight: var(--font-heading-weight);
+    }
+  }
+}
+
+.subrow-link {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  padding: 10px 0 10px var(--space-3);
+  font-size: 13.5px;
+  line-height: 1.35;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+}
+
+/* Indented under a section heading, flush without one. */
+.subrow.nested .subrow-link {
+  padding-left: 30px;
+}
+
+/* Hidden until the row is hovered, but never hidden from the keyboard. */
+.subrow-plus {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+  opacity: 0;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  margin-right: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-neutral-600);
+  transition: opacity 120ms linear, background 120ms linear, color 120ms linear;
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 14%, transparent);
+    color: var(--color-accent);
+  }
+
+  svg {
+    display: block;
+  }
+}
+
+.subrow:hover .subrow-plus,
+.subrow-plus:focus-visible {
+  opacity: 1;
+}
+
+.subrow-plus:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.subempty {
+  padding: var(--space-3);
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* Below the rail's own breakpoint the panel has nowhere to sit: the design moves
+   this menu into a bottom sheet, which is not built yet. */
+@media (max-width: 860px) {
+  .subpanel {
+    display: none;
+  }
+}

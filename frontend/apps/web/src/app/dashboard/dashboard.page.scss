@@ -99,3 +99,138 @@
 .tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
 .tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
 .tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+
+// Customize mode
+.board > .card {
+  position: relative;
+}
+
+.board.editing > .card {
+  outline: 1px dashed color-mix(in srgb, var(--color-accent) 55%, transparent);
+  outline-offset: 2px;
+  // Room for the control bar, which sits over the card's top-right corner.
+  padding-top: 38px;
+}
+
+.widget-tray {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  background: var(--color-accent-100);
+  margin-bottom: var(--space-3);
+}
+
+.widget-tray-label {
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-accent-800);
+  margin-right: var(--space-2);
+}
+
+.board-empty {
+  margin: var(--space-4) 0 0;
+  font-size: 13px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+// Profit & loss bars
+.pl-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: var(--space-2);
+}
+
+.pl-line {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+  font-size: 12px;
+}
+
+.pl-track {
+  height: 7px;
+  background: var(--color-neutral-200);
+  border-radius: var(--radius-sm);
+}
+
+.pl-fill {
+  height: 7px;
+  border-radius: var(--radius-sm);
+  background: var(--color-neutral-500);
+}
+
+.pl-fill--accent {
+  background: var(--color-accent);
+}
+
+.pl-total {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-2);
+  border-top: 1px solid var(--color-divider);
+  margin-top: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+.pl-total-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.pl-total-value {
+  font-family: var(--font-heading);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-accent-700);
+}
+
+// Trend chart
+.trend {
+  width: 100%;
+  height: auto;
+  margin-top: var(--space-2);
+}
+
+.trend-axis {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+
+.trend-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: 11px;
+  margin-top: var(--space-1);
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+}
+
+.swatch {
+  width: 12px;
+  height: 2px;
+  flex: none;
+}
+
+.swatch--accent {
+  background: var(--color-accent);
+}
+
+.swatch--neutral {
+  background: var(--color-neutral-600);
+}

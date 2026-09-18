@@ -1,35 +1,79 @@
-<nav aria-label="Breadcrumb" class="crumbs" style="position: relative; z-index: var(--z-breadcrumb); display: flex; align-items: center; gap: 7px; padding: 4px var(--space-4); border-bottom: 1px solid var(--color-divider); font-size: 12px;">
-  <a routerLink="/dashboard" style="color: color-mix(in srgb, var(--color-text) 60%, transparent); text-decoration: none;" (click)="onCrumbClicked({ label: 'Home', path: '/dashboard', isLink: true, isLast: false })">Home</a>
+<nav aria-label="Breadcrumb" class="crumbs">
+  <button
+    class="iconbtn crumb-panel-toggle"
+    type="button"
+    (click)="togglePanel()"
+    [disabled]="!hasPanel()"
+    [attr.aria-pressed]="panelShown()"
+    [attr.aria-label]="panelToggleLabel()"
+    [title]="panelToggleLabel()"
+  >
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg>
+  </button>
+
+  <a routerLink="/dashboard" (click)="onCrumbClicked({ label: 'Home', path: '/dashboard', isLink: true, isLast: false })">Home</a>
+
   @for (crumb of effectiveCrumbs(); track crumb.label) {
-    <span class="sep" aria-hidden="true" style="opacity: 0.4;">›</span>
+    <span class="sep" aria-hidden="true">›</span>
     @if (crumb.isLink) {
-      <a [routerLink]="crumb.path" (click)="onCrumbClicked(crumb)" style="color: color-mix(in srgb, var(--color-text) 60%, transparent); text-decoration: none;">{{ crumb.label }}</a>
+      <a [routerLink]="crumb.path" (click)="onCrumbClicked(crumb)">{{ crumb.label }}</a>
     }
     @if (crumb.isLast) {
-      <span aria-current="page" style="font-family: var(--font-heading); font-weight: 600; font-size: 13px; color: var(--color-accent-800);">{{ crumb.label }}</span>
+      <span aria-current="page">{{ crumb.label }}</span>
     }
   }
 
-  <div class="acts" style="margin-left: auto; display: flex; align-items: center; gap: var(--space-2);">
-    <!-- Projected Actions from child views -->
+  @if (starrable()) {
+    <button
+      class="iconbtn crumb-star"
+      type="button"
+      (click)="onToggleStar()"
+      [attr.aria-pressed]="starred()"
+      [attr.aria-label]="starred() ? 'Remove this screen from favourites' : 'Add this screen to favourites'"
+      [title]="starred() ? 'Remove from favourites' : 'Add to favourites'"
+    >
+      @if (starred()) {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z"/></svg>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.6l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.42l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z"/></svg>
+      }
+    </button>
+  }
+
+  <div class="acts">
+    <!-- Controls projected by the screen itself -->
     <ng-content select="[bbShellActions], .acts" />
 
     @if (isHome()) {
-      <button class="btn btn-ghost" type="button" (click)="toggleBase.emit()" [attr.aria-pressed]="base()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">
-        <span class="knob" aria-hidden="true" style="width: 26px; height: 14px; flex: none; border: 1px solid var(--color-accent); border-radius: 999px; display: inline-flex; align-items: center; padding: 1px; justify-content: flex-start; background: transparent;"></span>{{ baseLabel() }}
+      <button class="btn btn-ghost" type="button" (click)="onToggleBase()" [attr.aria-pressed]="base()">
+        <span class="knob" aria-hidden="true"></span>{{ baseLabel() }}
       </button>
       @if (notEditing()) {
-        <button class="btn btn-secondary" type="button" (click)="startEdit.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Customize</button>
-      }
-      @if (editing()) {
-        <button class="btn btn-ghost" type="button" (click)="resetLayout.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Reset</button>
-        <button class="btn btn-secondary" type="button" (click)="stopEdit.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Done</button>
+        <button class="btn btn-secondary" type="button" (click)="onStartEdit()">Customize</button>
+      } @else {
+        <button class="btn btn-ghost" type="button" (click)="onResetLayout()">Reset</button>
+        <button class="btn btn-secondary" type="button" (click)="onStopEdit()">Done</button>
       }
     }
 
     @if (isRegister()) {
-      <button class="btn btn-ghost" type="button" (click)="openExport.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Export</button>
-      <button class="btn btn-secondary" type="button" (click)="openImport.emit()" style="margin: 0; min-height: 26px; font-size: 12px; padding: 2px 9px; display: inline-flex; align-items: center; gap: 8px;">Import</button>
+      <span class="crumb-export">
+        <button class="btn btn-secondary" type="button" (click)="toggleExportMenu()" [attr.aria-expanded]="exportMenuOpen()">
+          Export
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" class="crumb-export-chevron"><path d="m6 9 6 6 6-6"/></svg>
+        </button>
+        @if (exportMenuOpen()) {
+          <div class="popover crumb-export-menu" role="menu" aria-label="Export format">
+            @for (format of exportFormats; track format.ext) {
+              <button class="menuitem menuitem--split" type="button" role="menuitem" (click)="pickExport(format)">
+                <span>{{ format.label }}</span>
+                <span class="menuitem-ext">{{ format.ext }}</span>
+              </button>
+            }
+          </div>
+        }
+      </span>
+      <button class="btn btn-secondary" type="button" (click)="onOpenImport()">Import</button>
     }
   </div>
 </nav>

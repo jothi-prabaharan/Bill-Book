@@ -192,15 +192,16 @@ describe('Cross-Module E2E Integration & Layout Architecture Suite', () => {
       const shell = TestBed.runInInjectionContext(() => new ShellComponent());
       const salesList = TestBed.runInInjectionContext(() => new SalesListComponent());
 
-      // 1. Shell boots on org-1
-      expect(shell.currentOrgId()).toBe('org-1');
+      // 1. Shell boots with the rail populated for this role. The active org
+      // lives on the top bar, which owns the switcher.
+      expect(shell.nav().length).toBeGreaterThan(0);
 
       // 2. User navigates to Sales List
       shell.updateCrumbs('/sales/transactions');
       salesList.ngOnInit();
 
       expect(shell.crumbs().length).toBe(2);
-      expect(salesList.transactions.length).toBe(2);
+      expect(salesList.transactions().length).toBe(2);
 
       // 3. User filters by Invoice in sales list
       salesList.setType('Invoice');
@@ -306,10 +307,10 @@ describe('Cross-Module E2E Integration & Layout Architecture Suite', () => {
       // 3. Load Sales List Component
       const salesList = TestBed.runInInjectionContext(() => new SalesListComponent());
       salesList.ngOnInit();
-      expect(salesList.transactions.length).toBe(2);
+      expect(salesList.transactions().length).toBe(2);
 
       // 4. Drill down to specific transaction
-      const targetInvoice = salesList.transactions[0];
+      const targetInvoice = salesList.transactions()[0];
       expect(targetInvoice.transactionType).toBe('Invoice');
       expect(salesList.getRouteForTransaction(targetInvoice)).toBe('/sales/invoices/201');
 

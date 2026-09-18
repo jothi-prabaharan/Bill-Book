@@ -1,0 +1,79 @@
+@if (visible()) {
+  <nav class="subpanel" [attr.aria-label]="label()" [style.width]="panel.widthPx()">
+    <div
+      class="subhandle"
+      role="separator"
+      aria-label="Resize menu"
+      aria-orientation="vertical"
+      (pointerdown)="startResize($event)"
+    ></div>
+
+    <div class="subhead">
+      <span class="subhead-label">{{ label() }}</span>
+      <span class="subhead-count">{{ count() }}</span>
+    </div>
+
+    @if (searchable()) {
+      <div class="subsearch">
+        <input
+          class="input"
+          type="search"
+          [attr.placeholder]="'Search ' + label().toLowerCase()"
+          [attr.aria-label]="'Search ' + label().toLowerCase()"
+          [value]="query()"
+          (input)="setQuery($any($event.target).value)"
+        />
+      </div>
+    }
+
+    <div class="subbody">
+      @for (group of groups(); track group.code) {
+        @if (group.name) {
+          <button
+            class="grouphead-row"
+            type="button"
+            (click)="toggleGroup(group)"
+            [attr.aria-expanded]="isOpen(group)"
+          >
+            <svg
+              width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"
+              class="grouphead-chevron" [class.shut]="!isOpen(group)"
+            ><path d="m6 9 6 6 6-6"/></svg>
+            <span class="grouphead-name">{{ group.name }}</span>
+            <span class="grouphead-count">{{ group.subMenus.length }}</span>
+          </button>
+        }
+
+        @if (isOpen(group)) {
+          @for (sub of group.subMenus; track sub.subMenuId) {
+            <span class="subrow" [attr.data-on]="isCurrent(sub) ? '1' : null" [class.nested]="!!group.name">
+              <button
+                class="subrow-link"
+                type="button"
+                (click)="go(sub)"
+                [attr.aria-current]="isCurrent(sub) ? 'page' : null"
+              >{{ sub.name }}</button>
+
+              @if (canCreate(sub)) {
+                <button
+                  class="subrow-plus"
+                  type="button"
+                  (click)="create(sub, $event)"
+                  [attr.aria-label]="createLabel(sub)"
+                  [title]="createLabel(sub)"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>
+                </button>
+              }
+            </span>
+          }
+        }
+      }
+
+      @if (count() === 0) {
+        <div class="subempty">Nothing matches that.</div>
+      }
+    </div>
+  </nav>
+}

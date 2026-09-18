@@ -1,35 +1,67 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, computed, inject, input, output, signal, ElementRef, HostListener } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { SearchInputComponent } from '@bill-book/ui-components';
-import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { AccessibleOrg, AuthService } from '@bill-book/auth';
+import { FavouritesService } from '../favourites.service';
+import { MenuService } from '../menu.service';
+import { ShellNotificationsService } from '../notifications.service';
+import {
+  SHELL_SCREENS,
+  ShellScreen,
+  ShellScreenGroup,
+  groupScreens,
+} from '../shell-screens';
 
+/** One creatable document in the New popover. */
 export interface DocGroupItem {
-  label: string;
-  code: string;
+  readonly label: string;
+  readonly code: string;
+  /** Where "new" actually goes. Every entry points at a route that exists. */
+  readonly path: string;
 }
 
 export interface DocGroup {
-  name: string;
-  docs: DocGroupItem[];
+  readonly name: string;
+  readonly docs: readonly DocGroupItem[];
 }
 
+/** Which of the top bar's panels is open. Only ever one. */
+type Panel = 'org' | 'new' | 'search' | 'fav' | 'notif' | null;
+
 /**
- * 46px sticky bar (z-index: 6).
- * Contains searchable organization switcher dropdown, display-only FY tag,
- * and action group buttons (`New`, `Favourites`, `Help`, `Sign out`).
+ * The 46px top bar.
+ *
+ * Left: the branch switcher and the display-only financial-year tag. Right: the
+ * action group, each button owning an anchored popover — New, Search,
+ * Favourites, Notifications — plus Help and Sign out.
+ *
+ * Every panel is anchored to its own button rather than centred over the page,
+ * and only one is open at a time: opening any panel closes the rest, Escape
+ * closes all of them and clears their queries, a pointerdown outside the header
+ * closes them, and so does navigating.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-shell-topbar',
   standalone: true,
-  imports: [RouterLink, FormsModule, SearchInputComponent],
+  imports: [],
   templateUrl: './shell-topbar.component.html',
   styleUrl: './shell-topbar.component.scss',
 })
 export class ShellTopbarComponent {
   protected readonly auth = inject(AuthService);
+  protected readonly favourites = inject(FavouritesService);
+  private readonly menuService = inject(MenuService);
+  protected readonly notifications = inject(ShellNotificationsService);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
 
@@ -41,141 +73,278 @@ export class ShellTopbarComponent {
   readonly quickAction = output<string>();
   readonly logout = output<void>();
 
-  // Organization Switcher State
-  readonly orgOpen = signal(false);
+  /** The one open panel, or null. */
+  private readonly panel = signal<Panel>(null);
+
+  readonly orgOpen = computed(() => this.panel() === 'org');
+  readonly newOpen = computed(() => this.panel() === 'new');
+  readonly searchOpen = computed(() => this.panel() === 'search');
+  readonly favOpen = computed(() => this.panel() === 'fav');
+  readonly notifOpen = computed(() => this.panel() === 'notif');
+
   readonly orgQuery = signal('');
+  readonly newQuery = signal('');
+  readonly searchQuery = signal('');
+  readonly favQuery = signal('');
+
   readonly allOrgs = signal<AccessibleOrg[]>([]);
 
-  // New Transaction Popup State
-  readonly newOpen = signal(false);
-
-  // Favourites Popup State
-  readonly favOpen = signal(false);
-
-  readonly newGroups: DocGroup[] = [
+  /**
+   * Every document a person can raise. Each `path` is a route that exists in
+   * `app.routes.ts` — a tile that leads nowhere is worse than no tile.
+   */
+  readonly newGroups: readonly DocGroup[] = [
     {
       name: 'Sales',
       docs: [
-        { label: 'Invoice', code: 'INV' },
-        { label: 'Sales order', code: 'SOR' },
-        { label: 'Quote', code: 'QOT' },
-        { label: 'Delivery challan', code: 'DLC' },
-        { label: 'Credit note', code: 'CRN' },
-        { label: 'POS sale', code: 'POS' },
+        { label: 'Invoice', code: 'INV', path: '/sales/invoices/new' },
+        { label: 'Sales order', code: 'SOR', path: '/sales/sales-orders/new' },
+        { label: 'Quote', code: 'QOT', path: '/sales/quotes/new' },
+        { label: 'Delivery challan', code: 'DLC', path: '/sales/delivery-challans/new' },
+        { label: 'Credit note', code: 'CRN', path: '/sales/credit-notes/new' },
       ],
     },
     {
       name: 'Purchase',
       docs: [
-        { label: 'Bill', code: 'BIL' },
-        { label: 'Purchase order', code: 'POR' },
-        { label: 'Goods receipt', code: 'GRN' },
-        { label: 'Debit note', code: 'DBN' },
+        { label: 'Bill', code: 'BIL', path: '/purchase/bills/new' },
+        { label: 'Purchase order', code: 'POR', path: '/purchase/purchase-orders/new' },
+        { label: 'Goods receipt', code: 'GRN', path: '/purchase/goods-receipts/new' },
+        { label: 'Debit note', code: 'DBN', path: '/purchase/debit-notes/new' },
       ],
     },
     {
       name: 'Banking',
       docs: [
-        { label: 'Receive money', code: 'REC' },
-        { label: 'Spend money', code: 'PAY' },
-        { label: 'Transfer money', code: 'TRF' },
+        { label: 'Receive money', code: 'REC', path: '/banking/receive-money' },
+        { label: 'Spend money', code: 'PAY', path: '/banking/spend-money' },
+        { label: 'Transfer money', code: 'TRF', path: '/banking/transfer-money' },
       ],
     },
   ];
 
-  readonly currentOrgId = computed(() => localStorage.getItem('bb.orgId'));
+  readonly currentOrgId = computed(() => readOrgId());
 
+  /**
+   * The API returns one name per accessible org and it is the branch name —
+   * there is no separate company field on `AccessibleOrg` — so the trigger sets
+   * the branch as the primary line and the role beneath it.
+   */
   readonly currentOrgName = computed(() => {
-    return 'Eternal Pathway'; // Fallback company name since API lacks CustomerName
+    const current = this.allOrgs().find((o) => o.orgId === this.currentOrgId());
+    return current ? current.orgName : 'Head Office';
   });
 
   readonly currentOrgBranch = computed(() => {
-    const orgs = this.allOrgs();
-    const id = this.currentOrgId();
-    const current = orgs.find((o: AccessibleOrg) => o.orgId === id);
-    return current ? current.orgName : 'Head Office'; // API orgName is the Branch Name
+    const current = this.allOrgs().find((o) => o.orgId === this.currentOrgId());
+    return current ? current.roleName : '';
   });
 
+  readonly orgCount = computed(() => this.allOrgs().length);
+
   readonly filteredOrgs = computed(() => {
-    const query = this.orgQuery().toLowerCase();
+    const query = this.orgQuery().trim().toLowerCase();
     if (!query) return this.allOrgs();
     return this.allOrgs().filter(
-      (o: AccessibleOrg) =>
-        o.orgName.toLowerCase().includes(query) ||
-        o.roleName.toLowerCase().includes(query),
+      (o) =>
+        o.orgName.toLowerCase().includes(query) || o.roleName.toLowerCase().includes(query),
     );
   });
 
+  readonly orgEmpty = computed(() => this.filteredOrgs().length === 0);
+
+  /**
+   * Screens this role may actually open — what Search and Favourites are drawn
+   * from. The server's menu answers when it has loaded; the static registry
+   * covers the moment before it does, and is filtered by `canView` because it
+   * knows nothing about this role.
+   */
+  private readonly visibleScreens = computed<readonly ShellScreen[]>(() => {
+    const fromServer = this.menuService.screens();
+    if (fromServer.length > 0) return fromServer;
+    return SHELL_SCREENS.filter((s) => s.module === null || this.auth.canView(s.module));
+  });
+
+  readonly newFilteredGroups = computed<readonly DocGroup[]>(() => {
+    const query = this.newQuery().trim().toLowerCase();
+    if (!query) return this.newGroups;
+    return this.newGroups
+      .map((group) => ({
+        name: group.name,
+        docs: group.docs.filter(
+          (doc) =>
+            doc.label.toLowerCase().includes(query) || doc.code.toLowerCase().includes(query),
+        ),
+      }))
+      .filter((group) => group.docs.length > 0);
+  });
+
+  readonly newCount = computed(() =>
+    this.newFilteredGroups().reduce((sum, g) => sum + g.docs.length, 0),
+  );
+
+  readonly newEmpty = computed(() => this.newCount() === 0);
+
+  /**
+   * Search covers the screens the chrome knows about. Documents, contacts,
+   * items and accounts want a server-side index the API does not expose yet;
+   * when it does, its hits join these groups.
+   */
+  readonly searchGroups = computed<ShellScreenGroup[]>(() => {
+    const query = this.searchQuery().trim().toLowerCase();
+    if (!query) return [];
+    return groupScreens(
+      this.visibleScreens().filter((s) => s.label.toLowerCase().includes(query)),
+    );
+  });
+
+  readonly searchEmpty = computed(
+    () => this.searchQuery().trim().length > 0 && this.searchGroups().length === 0,
+  );
+
+  readonly favGroups = computed<ShellScreenGroup[]>(() => {
+    const starred = this.favourites.starred();
+    const query = this.favQuery().trim().toLowerCase();
+    const screens = this.visibleScreens().filter(
+      (s) => starred.includes(s.path) && (!query || s.label.toLowerCase().includes(query)),
+    );
+    return groupScreens(screens);
+  });
+
+  readonly favCount = computed(() =>
+    this.favGroups().reduce((sum, g) => sum + g.items.length, 0),
+  );
+
+  readonly favEmpty = computed(() => this.favCount() === 0);
+
   constructor() {
-    void this.auth.accessibleOrganizations().then((orgs) => {
-      this.allOrgs.set(orgs);
+    void this.auth.accessibleOrganizations().then((orgs) => this.allOrgs.set(orgs));
+
+    // Navigating closes whatever was open — a panel left hanging over a screen
+    // the person has already moved on from is just in the way.
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) this.closeAll();
     });
   }
 
+  /** Opening one panel closes the others; clicking the same button closes it. */
+  private toggle(next: Exclude<Panel, null>): void {
+    const closing = this.panel() === next;
+    this.clearQueries();
+    this.panel.set(closing ? null : next);
+  }
+
   toggleOrg(): void {
-    this.orgOpen.update((v) => !v);
-    if (this.orgOpen()) {
-      this.orgQuery.set('');
-    }
+    this.toggle('org');
+  }
+
+  toggleNew(): void {
+    this.toggle('new');
+  }
+
+  toggleSearch(): void {
+    this.toggle('search');
+  }
+
+  toggleFav(): void {
+    this.toggle('fav');
+  }
+
+  toggleNotif(): void {
+    this.toggle('notif');
+  }
+
+  closeAll(): void {
+    this.panel.set(null);
+    this.clearQueries();
+  }
+
+  private clearQueries(): void {
+    this.orgQuery.set('');
+    this.newQuery.set('');
+    this.searchQuery.set('');
+    this.favQuery.set('');
   }
 
   setOrgQuery(value: string): void {
     this.orgQuery.set(value);
   }
 
+  setNewQuery(value: string): void {
+    this.newQuery.set(value);
+  }
+
+  setSearchQuery(value: string): void {
+    this.searchQuery.set(value);
+  }
+
+  setFavQuery(value: string): void {
+    this.favQuery.set(value);
+  }
+
+  /** Two letters from the branch name, for the row's stroke-drawn avatar. */
+  initials(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    if (words.length === 0) return '—';
+    if (words.length === 1) return words[0].slice(0, 2).toUpperCase();
+    return (words[0][0] + words[words.length - 1][0]).toUpperCase();
+  }
+
   async pickOrg(orgId: string): Promise<void> {
     if (orgId === this.currentOrgId()) {
-      this.orgOpen.set(false);
+      this.closeAll();
       return;
     }
     await this.auth.switchOrganization(orgId);
     this.organizationChange.emit(orgId);
-    this.orgOpen.set(false);
+    this.closeAll();
     try {
-      if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+      if (typeof window !== 'undefined' && typeof window.location?.reload === 'function') {
         window.location.reload();
       }
     } catch {
-      // Ignored in non-browser/test environments
+      // Ignored in non-browser/test environments.
     }
   }
 
-  openNew(): void {
-    this.newOpen.set(true);
+  goTo(path: string): void {
+    this.closeAll();
+    void this.router.navigateByUrl(path);
   }
 
-  closeNew(): void {
-    this.newOpen.set(false);
+  manageOrganizations(): void {
+    this.goTo('/settings/branches');
   }
 
-  openFav(): void {
-    this.favOpen.set(true);
+  selectDoc(doc: DocGroupItem): void {
+    this.quickAction.emit(doc.code);
+    this.goTo(doc.path);
   }
 
-  closeFav(): void {
-    this.favOpen.set(false);
+  unstar(screen: ShellScreen, event: Event): void {
+    event.stopPropagation();
+    this.favourites.unstar(screen.path);
   }
 
-  selectDoc(code: string): void {
-    this.quickAction.emit(code);
-    this.closeNew();
+  markAllRead(): void {
+    this.notifications.markAllRead();
   }
 
-  @HostListener('document:click', ['$event.target'])
-  onClickOutside(target: HTMLElement): void {
-    if (this.orgOpen()) {
-      const container = this.elementRef.nativeElement.querySelector('.org-dropdown-container');
-      if (container && !container.contains(target)) {
-        this.orgOpen.set(false);
-      }
-    }
+  /**
+   * Pointerdown rather than click: a panel should be gone by the time the
+   * pointer lifts, and click would also fire for a press that began inside.
+   */
+  @HostListener('document:pointerdown', ['$event.target'])
+  onPointerDownOutside(target: EventTarget | null): void {
+    if (this.panel() === null) return;
+    const host = this.elementRef.nativeElement as HTMLElement;
+    if (target instanceof Node && host.contains(target)) return;
+    this.closeAll();
   }
 
   @HostListener('document:keydown.escape')
   onEscape(): void {
-    this.orgOpen.set(false);
-    this.newOpen.set(false);
-    this.favOpen.set(false);
+    this.closeAll();
   }
 
   doLogout(): void {
@@ -187,3 +356,11 @@ export class ShellTopbarComponent {
   }
 }
 
+/** Storage can throw in a private window; a missing org id is not fatal here. */
+function readOrgId(): string | null {
+  try {
+    return localStorage.getItem('bb.orgId');
+  } catch {
+    return null;
+  }
+}
