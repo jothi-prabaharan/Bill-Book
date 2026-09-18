@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   AllocationApiService,
@@ -20,7 +20,11 @@ import {
   ColumnDef,
   DataGridCellTemplateDirective,
   DataGridComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
   UiMessage,
+  isWithin,
+  rangeForPreset,
 } from '@bill-book/ui-components';
 
 @Component({
@@ -34,12 +38,20 @@ import {
     DataGridComponent,
     DataGridCellTemplateDirective,
     AllocationModalComponent,
+    PeriodFilterBarComponent,
   ],
   templateUrl: './sales-list.component.html'
 })
 export class SalesListComponent implements OnInit {
   private transactionService = inject(TransactionService);
   private router = inject(Router);
+
+  /*
+   * Optional because this component is also constructed directly in specs, where
+   * there is no routed context to inject. Without a route it simply opens on the
+   * mixed list, which is the same thing as arriving with no type in the URL.
+   */
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly allocations = inject(AllocationApiService);
   protected readonly formatSettings = inject(FormatSettingsService);
 
@@ -54,8 +66,23 @@ export class SalesListComponent implements OnInit {
   /** Which side the opened document sits on, as `locateDocument` found it. */
   protected readonly allocateSide = signal<LedgerSide>('target');
 
-  transactions: SalesTransactionListItem[] = [];
+  readonly transactions = signal<SalesTransactionListItem[]>([]);
   selectedType: string = '';
+
+  /**
+   * Sales is a dated register, so the period bar — not a search box — is what
+   * narrows it. The grid's own column filters narrow whatever survives this.
+   */
+  readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
+
+  readonly visibleTransactions = computed(() =>
+    this.transactions().filter((t) => isWithin(this.range(), String(t.documentDate ?? ''))),
+  );
+
+  /** What the bar's "Total in INR" figure sums: the rows on screen, nothing else. */
+  readonly periodTotal = computed(() =>
+    this.visibleTransactions().reduce((sum, t) => sum + (t.totalAmount ?? 0), 0),
+  );
 
   columns: ColumnDef[] = [
     { field: 'documentDate', header: 'Date' },
@@ -70,15 +97,48 @@ export class SalesListComponent implements OnInit {
 
 
   ngOnInit() {
+    // The type lives in the URL so the menu can link straight to one document's
+    // register — /sales/transactions?type=Invoice — and so a filtered list can be
+    // bookmarked, shared and reached by the back button. Subscribed rather than
+    // read once: moving between two document types is the same route with a
+    // different parameter, and Angular reuses the component.
+    if (this.route) {
+      this.route.queryParamMap.subscribe((params) => {
+        const type = params.get('type') ?? '';
+        if (type === this.selectedType) return;
+        this.selectedType = type;
+        this.loadTransactions();
+      });
+      return;
+    }
+
     this.loadTransactions();
   }
 
   loadTransactions() {
-    this.transactionService.list(this.selectedType).subscribe(t => this.transactions = t);
+    this.transactionService.list(this.selectedType).subscribe((t) => this.transactions.set(t));
+  }
+
+  setRange(range: PeriodRange) {
+    this.range.set(range);
   }
 
   setType(type: string) {
     this.selectedType = type;
+
+    // Push the tab into the URL rather than only into local state, so what the
+    // person is looking at and what the address bar says cannot disagree. With a
+    // route present the subscription above does the reload; without one there is
+    // nothing to subscribe to, so load here.
+    if (this.route) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { type: type || null },
+        queryParamsHandling: 'merge',
+      });
+      return;
+    }
+
     this.loadTransactions();
   }
 

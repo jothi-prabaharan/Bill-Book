@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import {
   AllocationModalComponent,
   AllocationRow,
@@ -7,7 +7,11 @@ import {
   AllocationTarget,
   ColumnDef,
   DataGridComponent,
+  PeriodFilterBarComponent,
+  PeriodRange,
   UiMessage,
+  isWithin,
+  rangeForPreset,
 } from '@bill-book/ui-components';
 import {
   AllocationApiService,
@@ -18,7 +22,7 @@ import {
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purchase-core';
 
@@ -32,12 +36,20 @@ import { TransactionService, PurchaseTransactionListItem } from '@bill-book/purc
     RouterModule,
     FormsModule,
     AllocationModalComponent,
+    PeriodFilterBarComponent,
   ],
   templateUrl: './purchase-list.page.html'
 })
 export class PurchaseListPage implements OnInit {
   private transactionService = inject(TransactionService);
   private router = inject(Router);
+
+  /*
+   * Optional because this page is also constructed directly in specs, where there
+   * is no routed context to inject. Without a route it opens on the mixed list,
+   * which is what arriving with no type in the URL means anyway.
+   */
+  private readonly route = inject(ActivatedRoute, { optional: true });
   private readonly allocations = inject(AllocationApiService);
   protected readonly formatSettings = inject(FormatSettingsService);
 
@@ -52,30 +64,70 @@ export class PurchaseListPage implements OnInit {
   /** Which side the opened document sits on, as `locateDocument` found it. */
   protected readonly allocateSide = signal<LedgerSide>('target');
 
-  transactions: PurchaseTransactionListItem[] = [];
+  readonly transactions = signal<PurchaseTransactionListItem[]>([]);
   selectedType: string = '';
-  openFilter: string | null = null;
-  filterOp: string = 'contains';
-  filterVal: string = '';
 
-  toggleFilter(col: string, event: Event) {
-    event.stopPropagation();
-    this.openFilter = this.openFilter === col ? null : col;
+  /**
+   * Purchase is a dated register: the period bar narrows it, and the grid's own
+   * column filters narrow whatever survives that. There is no list-level search.
+   */
+  readonly range = signal<PeriodRange>(rangeForPreset('this-month'));
+
+  readonly visibleTransactions = computed(() =>
+    this.transactions().filter((t) => isWithin(this.range(), String(t.documentDate ?? ''))),
+  );
+
+  /** The bar's total sums the rows on screen, nothing else. */
+  readonly periodTotal = computed(() =>
+    this.visibleTransactions().reduce((sum, t) => sum + (t.totalAmount ?? 0), 0),
+  );
+
+  setRange(range: PeriodRange) {
+    this.range.set(range);
   }
 
   // Mock properties for parity with design
 
 
   ngOnInit() {
+    // The type lives in the URL so the menu can link straight to one document's
+    // register — /purchase/transactions?type=Bill — and so a filtered list can be
+    // bookmarked, shared and reached by the back button. Subscribed rather than
+    // read once: moving between two document types is the same route with a
+    // different parameter, and Angular reuses the page.
+    if (this.route) {
+      this.route.queryParamMap.subscribe((params) => {
+        const type = params.get('type') ?? '';
+        if (type === this.selectedType) return;
+        this.selectedType = type;
+        this.loadTransactions();
+      });
+      return;
+    }
+
     this.loadTransactions();
   }
 
   loadTransactions() {
-    this.transactionService.list(this.selectedType).subscribe(t => this.transactions = t);
+    this.transactionService.list(this.selectedType).subscribe((t) => this.transactions.set(t));
   }
 
   setType(type: string) {
     this.selectedType = type;
+
+    // Push the tab into the URL rather than only into local state, so what the
+    // person is looking at and what the address bar says cannot disagree. With a
+    // route present the subscription above does the reload; without one there is
+    // nothing to subscribe to, so load here.
+    if (this.route) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { type: type || null },
+        queryParamsHandling: 'merge',
+      });
+      return;
+    }
+
     this.loadTransactions();
   }
 

@@ -90,8 +90,8 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       comp.ngOnInit();
 
       expect(mockTransactionService.list).toHaveBeenCalledWith('');
-      expect(comp.transactions.length).toBe(4);
-      expect(comp.transactions).toEqual(sampleTransactions);
+      expect(comp.transactions().length).toBe(4);
+      expect(comp.transactions()).toEqual(sampleTransactions);
     });
 
     it('SLIST-T1-02: Column definitions define 6 columns with proper alignment', () => {
@@ -122,7 +122,7 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       comp.setType('Invoice');
       expect(comp.selectedType).toBe('Invoice');
       expect(mockTransactionService.list).toHaveBeenCalledWith('Invoice');
-      expect(comp.transactions.length).toBe(1);
+      expect(comp.transactions().length).toBe(1);
     });
 
     it('SLIST-T1-04: onTypeChange refreshes list using current selectedType', () => {
@@ -173,7 +173,7 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       const comp = createComponent();
       comp.ngOnInit();
 
-      expect(comp.transactions).toEqual([]);
+      expect(comp.transactions()).toEqual([]);
       expect(comp.columns.length).toBe(6);
     });
 
@@ -213,7 +213,7 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
     it('SLIST-T4-01: Complete sales list workflow: init -> filter by Invoice -> drill down into transaction', () => {
       const comp = createComponent();
       comp.ngOnInit();
-      expect(comp.transactions.length).toBe(4);
+      expect(comp.transactions().length).toBe(4);
 
       // User filters for Invoices only
       const invoiceData = [sampleTransactions[0]];
@@ -221,11 +221,11 @@ describe('SalesListComponent (sales/sales-ui/sales-list)', () => {
       comp.setType('Invoice');
 
       expect(comp.selectedType).toBe('Invoice');
-      expect(comp.transactions.length).toBe(1);
-      expect(comp.transactions[0].documentNo).toBe('INV-2026-0001');
+      expect(comp.transactions().length).toBe(1);
+      expect(comp.transactions()[0].documentNo).toBe('INV-2026-0001');
 
       // User clicks row
-      comp.navigateToTransaction(comp.transactions[0]);
+      comp.navigateToTransaction(comp.transactions()[0]);
       expect(mockRouter.navigate).toHaveBeenCalledWith(['/sales/invoices/101']);
     });
   });
