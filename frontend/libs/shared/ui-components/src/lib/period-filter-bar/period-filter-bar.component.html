@@ -1,0 +1,40 @@
+<div class="period-bar">
+  <div class="period-presets">
+    @for (option of presets; track option.key) {
+      <button
+        class="btn btn-secondary"
+        type="button"
+        (click)="pick(option.key)"
+        [attr.aria-pressed]="preset() === option.key"
+      >{{ option.label }}</button>
+    }
+  </div>
+
+  <div class="period-dates">
+    <label class="period-date">
+      <span class="period-date-label">From</span>
+      <input
+        class="input"
+        type="date"
+        [value]="from()"
+        [disabled]="!isCustom()"
+        (change)="setFrom($any($event.target).value)"
+      />
+    </label>
+    <label class="period-date">
+      <span class="period-date-label">To</span>
+      <input
+        class="input"
+        type="date"
+        [value]="to()"
+        [disabled]="!isCustom()"
+        (change)="setTo($any($event.target).value)"
+      />
+    </label>
+  </div>
+
+  <div class="period-total">
+    <span class="period-total-label">{{ totalLabel() }}</span>
+    <span class="period-total-value">{{ formattedTotal() }}</span>
+  </div>
+</div>

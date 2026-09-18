@@ -74,12 +74,15 @@
   font-feature-settings: "tnum";
 }
 
-/* Sticky Header in Scrollable Table Wrapper */
+/* Sticky Header in Scrollable Table Wrapper.
+   The header ground is --color-surface, a step off the page, so a row scrolling
+   under it is hidden rather than showing through; the rule beneath it is an
+   inset shadow rather than a border, because a border can bleed during scroll. */
 .listwrap .table thead th {
   position: sticky;
   top: 0;
   z-index: var(--z-table-head);
-  background: var(--color-bg);
+  background: var(--color-surface);
   background-clip: padding-box;
   border-bottom: 0;
   box-shadow: var(--shadow-table-head);

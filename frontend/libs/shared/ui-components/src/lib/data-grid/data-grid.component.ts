@@ -96,6 +96,13 @@ export class DataGridComponent implements OnInit {
   }
 
   @Input() compact = true;
+
+  /**
+   * The permanent column-filter row. Filtering is per column and always
+   * available — there is no list-level search box and no toggle to reveal this,
+   * because a filter you have to go and find is a filter nobody uses.
+   */
+  @Input() showColumnFilters = true;
   @Input() emptyTemplate?: TemplateRef<any>;
   @Input() sortable = true;
   @Input() showExport = true;
@@ -225,6 +232,41 @@ export class DataGridComponent implements OnInit {
   clearFilter(field: string, event: Event) {
     event.stopPropagation();
     this.activeFilters.set(this.activeFilters().filter(f => f.field !== field));
+    this.openFilterField.set(null);
+    this.saveState();
+  }
+
+  /** What is currently typed into one column's filter input. */
+  columnFilter(field: string): string {
+    return this.activeFilters().find((f) => f.field === field)?.value ?? '';
+  }
+
+  /**
+   * Type into a column's filter. An empty box is not a filter, so it removes
+   * itself rather than matching everything.
+   */
+  setColumnFilter(field: string, value: string): void {
+    const trimmed = value.trim();
+    const rest = this.activeFilters().filter((f) => f.field !== field);
+    this.activeFilters.set(
+      trimmed ? [...rest, { field, operator: 'contains' as const, value: trimmed }] : rest,
+    );
+    this.saveState();
+  }
+
+  /** True while anything is narrowing or reordering what the person sees. */
+  readonly isNarrowed = computed(
+    () => this.activeFilters().length > 0 || this.sortField() !== null,
+  );
+
+  /** How many rows survive the filters — what the Clear button is measured against. */
+  readonly visibleRowCount = computed(() => this.filteredData().length);
+
+  /** Drop every column filter and the sort in one press. */
+  clearAll(): void {
+    this.activeFilters.set([]);
+    this.sortField.set(null);
+    this.sortDirection.set(null);
     this.openFilterField.set(null);
     this.saveState();
   }

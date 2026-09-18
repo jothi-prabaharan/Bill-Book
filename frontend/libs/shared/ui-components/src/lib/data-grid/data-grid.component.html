@@ -4,6 +4,16 @@
     <div class="loading-pulse"></div>
   </div>
 
+  <!-- Above the table sit only a Clear button and the visible-row count: no
+       list-level search, no status select, no filter toggle. -->
+  <div class="grid-bar">
+    <button *ngIf="isNarrowed()"
+            type="button"
+            class="btn btn-ghost grid-clear"
+            (click)="clearAll()">Clear</button>
+    <span class="grid-count">{{ visibleRowCount() }} shown</span>
+  </div>
+
   <div class="listwrap" [class.compact]="compact">
     <table class="table" [class.compact]="compact">
       <thead>
@@ -24,6 +34,15 @@
                 <span *ngIf="sortField() !== col.field" class="sort-idle">↕</span>
               </span>
             </button>
+          </th>
+        </tr>
+        <tr *ngIf="showColumnFilters" class="fltrow">
+          <th *ngFor="let col of visibleColumns()" [class.numeric]="isNumericCol(col)">
+            <input class="input"
+                   type="search"
+                   [attr.aria-label]="'Filter by ' + (col.header || col.title || col.field)"
+                   [value]="columnFilter(col.field)"
+                   (input)="setColumnFilter(col.field, $any($event.target).value)" />
           </th>
         </tr>
       </thead>

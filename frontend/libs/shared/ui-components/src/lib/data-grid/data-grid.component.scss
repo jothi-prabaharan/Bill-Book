@@ -108,3 +108,32 @@
   padding: 4px 9px;
   min-height: 28px;
 }
+/* The strip above the table: Clear, and how many rows survived the filters. */
+.grid-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-3);
+  min-height: 26px;
+}
+
+.grid-clear {
+  margin: 0;
+  min-height: 22px;
+  font-size: 11.5px;
+  padding: 1px 8px;
+}
+
+.grid-count {
+  margin-left: auto;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* The filter row's sticky offset, size and hairline live in the theming layer
+   (_table.scss) with the header they hang from — only the full-width input is
+   this component's business. */
+.listwrap .table thead tr.fltrow .input {
+  width: 100%;
+}

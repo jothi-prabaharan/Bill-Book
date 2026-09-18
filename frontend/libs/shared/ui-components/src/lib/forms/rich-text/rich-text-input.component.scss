@@ -12,8 +12,8 @@
   transition: border-color 150ms ease, box-shadow 150ms ease;
 
   &:focus-within {
-    border-color: var(--color-accent, #b68235);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #b68235) 12%, transparent);
+    border-color: var(--color-accent, #f06311);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #f06311) 12%, transparent);
   }
 
   &--disabled {
@@ -54,13 +54,13 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent, #b68235);
+    outline: 2px solid var(--color-accent, #f06311);
     outline-offset: -1px;
   }
 
   &--on {
-    color: var(--color-accent, #b68235);
-    background: color-mix(in srgb, var(--color-accent, #b68235) 12%, transparent);
+    color: var(--color-accent, #f06311);
+    background: color-mix(in srgb, var(--color-accent, #f06311) 12%, transparent);
   }
 }
 
@@ -129,7 +129,7 @@
   }
 
   a {
-    color: var(--color-accent, #b68235);
+    color: var(--color-accent, #f06311);
   }
 
   > :last-child {

@@ -25,14 +25,14 @@ export const TOKENS = {
     },
     accentRamp: {
       100: '#fdefe4',
-      200: '#ffe3bf',
-      300: '#facb8d',
+      200: '#ffccad',
+      300: '#ffa97b',
       400: '#f7853f',
       500: '#f06311',
       600: '#c94d08',
       700: '#a03d05',
       800: '#7a2f04',
-      900: '#3a270d',
+      900: '#691e00',
     },
     accent2Ramp: {
       100: '#fff3e4',

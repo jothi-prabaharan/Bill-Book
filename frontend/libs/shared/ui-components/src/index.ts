@@ -9,6 +9,8 @@ export * from './lib/lookup-dialog/lookup-dialog.component';
 export * from './lib/report-grid/report-grid.component';
 export * from './lib/filter-bar/filter-operators';
 export * from './lib/filter-bar/filter-bar.component';
+export * from './lib/period-filter-bar/period-filter-bar.component';
+export * from './lib/period-filter-bar/period-range';
 export * from './lib/column-chooser-dialog/column-chooser.dialog';
 export * from './lib/group-panel/group-panel.component';
 export * from './lib/pivot-panel/pivot-panel.component';

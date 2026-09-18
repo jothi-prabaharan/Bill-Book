@@ -41,7 +41,7 @@
 }
 
 .bb-file__picker:focus-visible + .bb-file__row .bb-file__button {
-  outline: 2px solid var(--color-accent, #b68235);
+  outline: 2px solid var(--color-accent, #f06311);
   outline-offset: 2px;
 }
 
@@ -105,7 +105,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent, #b68235);
+    outline: 2px solid var(--color-accent, #f06311);
     outline-offset: 1px;
   }
 }

@@ -1,0 +1,201 @@
+/* Classical — Popovers, menus and the small primitives they are built from.
+   Lifted from the shell design's own override block so every panel in the app
+   (org switcher, New, Search, Favourites, Notifications) shares one grammar
+   instead of each re-declaring the same border, shadow and spacing inline. */
+
+/* A panel anchored under its trigger. Anchoring is the caller's job — it owns
+   the positioned ancestor — everything else about the surface lives here. */
+.popover {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  top: calc(100% + 6px);
+  padding: var(--space-2);
+  background: var(--color-bg);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Right-anchored is the default for the action group; the org switcher opts
+   into the left edge instead. */
+.popover--right {
+  right: -6px;
+}
+
+.popover--left {
+  left: -8px;
+}
+
+/* A popover that scrolls its body rather than the page. */
+.popover--tall {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.popover-head {
+  flex: none;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 2px 7px var(--space-2);
+  border-bottom: 1px solid var(--color-divider);
+  margin-bottom: var(--space-2);
+}
+
+.popover-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.popover-count {
+  flex: none;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.popover-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Two columns of grouped rows — New and Favourites. */
+.popover-body--columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2) var(--space-4);
+  align-content: start;
+}
+
+.popover-foot {
+  flex: none;
+  border-top: 1px solid var(--color-divider);
+  margin-top: var(--space-2);
+  padding-top: var(--space-2);
+  display: flex;
+  gap: var(--space-2);
+}
+
+.popover-search {
+  flex: none;
+  margin-bottom: var(--space-2);
+}
+
+.popover-empty {
+  padding: 9px;
+  font-size: 12px;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+/* A row inside a menu or popover. */
+.menuitem {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  display: block;
+  width: 100%;
+  padding: 5px 7px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--color-accent-800);
+
+  &:hover {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: -2px;
+  }
+}
+
+/* The label + trailing code shape New and Favourites rows use. */
+.menuitem--split {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 6px 7px;
+}
+
+.menuitem-code {
+  flex: none;
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.menuhead {
+  font-family: var(--font-heading);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-neutral-600);
+  padding: 0 7px var(--space-1);
+}
+
+/* A group header carrying a count, above its own rows. */
+.grouphead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: 0 7px var(--space-1);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+/* Square initials, drawn as a stroke — never a filled circle. */
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--color-accent-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--color-accent-800);
+}
+
+/* A bare icon button for chrome that is not part of the action group. */
+.iconbtn {
+  all: unset;
+  box-sizing: border-box;
+  cursor: pointer;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: color-mix(in srgb, var(--color-text) 62%, transparent);
+
+  &:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+    color: var(--color-accent-700);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  svg {
+    display: block;
+  }
+}

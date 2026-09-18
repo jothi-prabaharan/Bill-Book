@@ -36,7 +36,7 @@
   font-size: 14px;
   font-variant-numeric: tabular-nums;
   color: var(--color-text, #201f1d);
-  caret-color: var(--color-accent, #b68235);
+  caret-color: var(--color-accent, #f06311);
   background: transparent;
   border: 1px solid var(--color-divider, color-mix(in srgb, #201f1d 16%, transparent));
   border-radius: var(--radius-md, 4px);
@@ -57,8 +57,8 @@
   }
 
   &:focus-visible {
-    border-color: var(--color-accent, #b68235);
-    outline: 2px solid var(--color-accent, #b68235);
+    border-color: var(--color-accent, #f06311);
+    outline: 2px solid var(--color-accent, #f06311);
     outline-offset: 0;
   }
 

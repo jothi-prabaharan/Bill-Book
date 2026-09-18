@@ -26,14 +26,14 @@ describe('Design Tokens Contract (TypeScript Exports)', () => {
 
     it('should define complete 100-900 primary accent ramp', () => {
       expect(TOKENS.colors.accentRamp[100]).toBe('#fdefe4');
-      expect(TOKENS.colors.accentRamp[200]).toBe('#ffe3bf');
-      expect(TOKENS.colors.accentRamp[300]).toBe('#facb8d');
+      expect(TOKENS.colors.accentRamp[200]).toBe('#ffccad');
+      expect(TOKENS.colors.accentRamp[300]).toBe('#ffa97b');
       expect(TOKENS.colors.accentRamp[400]).toBe('#f7853f');
       expect(TOKENS.colors.accentRamp[500]).toBe('#f06311');
       expect(TOKENS.colors.accentRamp[600]).toBe('#c94d08');
       expect(TOKENS.colors.accentRamp[700]).toBe('#a03d05');
       expect(TOKENS.colors.accentRamp[800]).toBe('#7a2f04');
-      expect(TOKENS.colors.accentRamp[900]).toBe('#3a270d');
+      expect(TOKENS.colors.accentRamp[900]).toBe('#691e00');
     });
 
     it('should define complete 100-900 gold accent-2 ramp', () => {

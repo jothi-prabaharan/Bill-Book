@@ -21,8 +21,8 @@
   }
 
   &:focus-within {
-    border-color: var(--color-accent, #b68235);
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #b68235) 12%, transparent);
+    border-color: var(--color-accent, #f06311);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-accent, #f06311) 12%, transparent);
   }
 
   &:has(input:disabled) {
@@ -79,7 +79,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--color-accent, #b68235);
+    outline: 2px solid var(--color-accent, #f06311);
     outline-offset: 1px;
   }
 }
@@ -89,7 +89,7 @@
   width: 12px;
   height: 12px;
   border: 2px solid color-mix(in srgb, var(--color-text, #201f1d) 20%, transparent);
-  border-top-color: var(--color-accent, #b68235);
+  border-top-color: var(--color-accent, #f06311);
   border-radius: 50%;
   animation: bb-search-spin 700ms linear infinite;
 }

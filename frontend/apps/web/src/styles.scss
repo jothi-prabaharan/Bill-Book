@@ -286,21 +286,6 @@ nav[aria-label='Modules']::-webkit-scrollbar { width: 0; height: 0; }
   }
 }
 
-/* Table Improvements & Sticky Header */
-.listwrap .table thead th {
-  position: sticky;
-  top: 0;
-  z-index: var(--z-table-head);
-  background: var(--color-surface);
-  background-clip: padding-box;
-  border-bottom: 0;
-  box-shadow: var(--shadow-table-head);
-  color: var(--color-accent-800);
-  white-space: nowrap;
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
-}
-
 /* Form editor button styles */
 .sheet button:not(.link):not(.btn):not(.tabs button) {
   padding: 0.5rem 0.9rem;

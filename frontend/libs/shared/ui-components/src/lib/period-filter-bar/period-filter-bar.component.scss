@@ -1,0 +1,97 @@
+:host {
+  display: block;
+}
+
+.period-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-divider);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.period-presets {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+
+  .btn {
+    margin: 0;
+    font-size: 12px;
+    padding: 4px 9px;
+    min-height: 28px;
+  }
+}
+
+.period-dates {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.period-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.period-date-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.period-date .input {
+  min-height: 28px;
+  font-size: 12px;
+  /* Dates read as body copy, never as a heading. */
+  font-family: var(--font-body);
+}
+
+.period-date .input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--color-text) 4%, transparent);
+}
+
+/* The total sits behind a hairline at the right end of the bar. */
+.period-total {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  padding-left: var(--space-3);
+  border-left: 1px solid var(--color-divider);
+}
+
+.period-total-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.period-total-value {
+  font-family: var(--font-heading);
+  font-size: 21px;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .period-total {
+    margin-left: 0;
+    align-items: flex-start;
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid var(--color-divider);
+    padding-top: var(--space-2);
+    width: 100%;
+  }
+}
