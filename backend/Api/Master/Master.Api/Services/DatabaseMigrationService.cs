@@ -7,6 +7,7 @@ using Master.Repository;
 using Master.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using Printing.Repository;
 using Purchase.Repository;
 using Reporting.Repository;
 using Sales.Repository;
@@ -109,7 +110,7 @@ public class DatabaseMigrationService : IHostedService
         // Ensure Postgres physical database exists
         await EnsureDatabaseExistsAsync(tenantConnectionString, ct);
 
-        // Migrate all 7 schemas inside IN000001
+        // Migrate all 8 schemas inside IN000001
         _logger.LogInformation("Migrating tenant schemas for {Database}...", tenantDbName);
         var dummyTenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
 
@@ -118,6 +119,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<CustomerDbContext>(tenantConnectionString, dummyTenant, "cus", ct);
         await MigrateContextAsync<InventoryDbContext>(tenantConnectionString, dummyTenant, "inv", ct);
         await MigrateContextAsync<PurchaseDbContext>(tenantConnectionString, dummyTenant, "pur", ct);
+        await MigrateContextAsync<PrintingDbContext>(tenantConnectionString, dummyTenant, "prt", ct);
         await MigrateContextAsync<ReportingDbContext>(tenantConnectionString, dummyTenant, "rpt", ct);
         await MigrateContextAsync<SalesDbContext>(tenantConnectionString, dummyTenant, "sal", ct);
         

@@ -90,21 +90,47 @@ gain on its own: seven services currently carry an HTML parser none of them touc
 
 ## Stage P — the extraction
 
-- [ ] **P1 — Scaffold the service.** Three projects under `backend/Api/Printing/` plus
-      `tests/Printing.Api.Tests/`, added to `Bill-Book.sln`. `PrintingDbContext : TenantDbContext`
-      on schema `prt`, mapping `PrintTemplate` and the shared `ErrorLog`.
+- [x] **P1 — Scaffold the service.** Three projects under `backend/Api/Printing/` plus
+      `tests/Printing.Api.Tests/`, added to `Bill-Book.sln` (51 projects). `PrintingDbContext :
+      TenantDbContext` on schema `prt`, mapping `PrintTemplate` and the `ErrorLog` the base class
+      supplies.
       *Done when*: the service builds, starts, and answers nothing — with Master's copy untouched.
+      **Done.** It builds with zero warnings under `TreatWarningsAsErrors`, starts on port 4508,
+      migrates `prt` into `IN000001`, and answers 401 to every route including `/openapi/v1.json`
+      — the `FallbackPolicy` default-deny, with no controller yet to let anything through.
 
-      `Program.cs` mirrors any existing service: JWT, `TenantContext`,
-      `RlsConnectionInterceptor`, `AuditSaveChangesInterceptor`,
-      `AddBillBookReliability<PrintingDbContext>()` (hard rule 13), the tenant database resolver,
-      OpenAPI.
+      `Program.cs` mirrors Customer's: JWT, `TenantContext`, `RlsConnectionInterceptor`,
+      `AuditSaveChangesInterceptor`, `AddBillBookReliability<PrintingDbContext>()` (hard rule 13),
+      the tenant database resolver, OpenAPI. `Master:BaseUrl` is required in `appsettings` even
+      though Printing calls Master for nothing: `AddBillBookAuthentication` reads it to fetch the
+      signing key, and startup throws without it.
 
-      **Nothing is deleted in this slice.** `main` is never in a state where printing is half-moved.
+      **Nothing is deleted in this slice.** `main` is never in a state where printing is
+      half-moved. `Printing.Entity.TableEntities.PrintTemplate` is therefore a second class rather
+      than a moved one, and `PrintSettings` / `PrintContent` stay in `Shared.Kernel.Printing`
+      where Master is still reading them. Both copies exist on purpose until P3.
+
+      One thing that had to be added rather than shared: `HttpCurrentUser` is copied verbatim into
+      each of the seven services, so Printing has the eighth copy. Folding the eight into
+      `Shared.Kernel` is a change to seven services that had nothing to do with this one.
 
 - [ ] **P2 — Schema, and the cutover.** Create `prt.PrintTemplates`; drop `con.PrintTemplates`.
       *Done when*: `prt` carries both filtered unique indexes and an RLS policy that is enabled
       **and FORCEd**, and `con` no longer has the table.
+
+      **The create half is done; the drop is not, and is what this box is still open for.**
+      `20260918205343_InitialPrintingSchema` creates `prt.PrintTemplates` and `prt.ErrorLogs`
+      with both filtered unique indexes and a hand-written RLS block — `ENABLE`, `FORCE`, and a
+      `FOR ALL USING` policy per table. Applied to a database dropped and rebuilt from zero,
+      `pg_class` reports `relrowsecurity` and `relforcerowsecurity` true with one policy each, and
+      `information_schema` reports no `%Id1` shadow column. `prt` joins the schema list in
+      Master's `DatabaseMigrationService` (7 → 8), and `Printing.Api.Tests` links
+      `tests/Shared/RlsAudit.cs` — five tests, no skips, from a dropped database.
+
+      The policy was checked for being vacuous, not just for being green: dropping
+      `printtemplates_tenant_isolation` by hand turns the assertion red with
+      `PrintTemplates (no policy)`. That check is worth repeating on any suite that claims RLS,
+      for the reason in the note directly below this stage.
 
       > **⚠ This slice drops a table. Confirm before running it.**
       > It is safe only on the greenfield assumption `CLAUDE.md` relies on — no released
@@ -168,6 +194,55 @@ gain on its own: seven services currently carry an HTML parser none of them touc
       with its answer**. `Sales.md`: T3.4 gains the route that now exists.
       `frontend/apps/docs/content/`: the print-template section gets its own page, the manifest
       gains it, and `releases.md` gets a bullet.
+
+---
+
+## RLS is missing from every other schema, and `prt` is the only one that has it
+
+**Found on 18 September 2026 while writing P2's RLS block, by trying to copy the one the other
+seven schemas use. There isn't one.**
+
+`ALTER TABLE ... ENABLE ROW LEVEL SECURITY`, `FORCE`, and `CREATE POLICY` appear nowhere in the
+repository. `migrationBuilder.Sql` is called in no migration at all, and no startup path issues
+them either — `DatabaseMigrationService` runs `CREATE DATABASE` and nothing else. The thirteen
+migrations are all dated 14 September 2026, which is the squash: the hand-written RLS blocks were
+in the chains that were squashed away, and nothing carried them forward.
+
+**It went unnoticed because the developer databases predate the squash.** They still carry
+policies an older chain created, named `{table}_tenant_isolation`, a string that exists nowhere in
+the source any more. Every RLS assertion passes against them and fails against a database built
+from the current migrations. `dotnet test` from dropped databases, 18 September:
+
+| | Tests | Pass | Fail | Skip |
+|---|---|---|---|---|
+| Backend total | 1,042 | 1,022 | **20** | 0 |
+
+Of the 20: **16 are RLS**, two in each of `acc`, `con`, `cus`, `inv`, `pur`, `rpt`, `sal` — every
+schema in the product except this one. The remaining 4 are
+`Reporting.Api.Tests.ReportLayerCertificationTests`, which were already red and are unrelated.
+`Printing.Api.Tests` is 5 of 5.
+
+**What this means, plainly.** RLS is the second of the two guards the tenancy model is built on,
+and `CLAUDE.md` is explicit that neither is trusted alone. On any database provisioned from the
+current chain — which is every database that will ever be provisioned, since nothing has shipped —
+the EF query filter is the only thing keeping one branch's rows from another. Nothing leaks today,
+because the filter works. But `IgnoreQueryFilters`, a raw command, or a context that forgets
+`base.OnModelCreating` (which is exactly what `SalesDbContext` did) would walk straight past the
+only guard left.
+
+**Not fixed here.** Restoring it is a migration per service across roughly ninety tables, and it is
+not the printing task. It is also not hard — this file's own `prt` block is the shape, and the
+policy text is recoverable verbatim from any un-dropped developer database:
+
+```sql
+SELECT tablename, policyname, qual FROM pg_policies WHERE schemaname = 'cus';
+```
+
+Two things to carry into that work. The first is that **a passing RLS test proves nothing until it
+has been made to fail** — drop one policy by hand and confirm the suite goes red, as P2 did here.
+The second is that **CI does not catch this today and should**: it runs on a fresh `postgres:16`
+service container with no databases, so it is already testing from zero, and it is therefore
+already red on this. That it was believed green is the same stale-database story one level up.
 
 ---
 
