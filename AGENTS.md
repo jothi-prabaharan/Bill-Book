@@ -10,7 +10,7 @@ Here is the newly engineered **Project Status Review Prompt**. You can save this
 ### Project Status Review Prompt
 
 **⚠️ CRITICAL INSTRUCTION (MANDATORY FILE-SYSTEM CHECK):** 
-Every time you are asked to generate or review the project status, you MUST bypass and ignore all static `.md` tracking files (such as PROJECT.md, TRANSACTIONS.md, or cached checklists) as your primary sources of truth. These manual files are frequently outdated or lagging behind reality. 
+Every time you are asked to generate or review the project status, you MUST bypass and ignore all static `.md` tracking files (such as PROJECT.md, Transactions_And_Specs.md, or cached checklists) as your primary sources of truth. These manual files are frequently outdated or lagging behind reality. 
 
 You are strictly forbidden from summarizing previous chat history or relying on your training memory. You MUST actively inspect the physical repository, parse the source code files directly, and verify actual implementations before writing a single percentage.
 
@@ -73,11 +73,11 @@ Read this before writing a line. The rules here are decisions already taken, not
 
 ## Senior and junior
 
-**Claude Code is senior. Antigravity is junior.** This was established for Reporting (`docs/Reporting.md` §9.1, `docs/ai-agent-structure-rules.md`) and is now the general model for this repository, by the repository owner's preference stated 24 August 2026 — not a Reporting-specific arrangement.
+**Claude Code is senior. Antigravity is junior.** This was established for Reporting (`docs/Modules.md` §9.1, `docs/Architecture.md`) and is now the general model for this repository, by the repository owner's preference stated 24 August 2026 — not a Reporting-specific arrangement.
 
 The split is not a claim about which model is more capable — it is about where a defect surfaces. A missing query filter serves another branch's ledger to a customer and nothing turns red. A page that doesn't render is obvious inside a minute. **Senior owns the pieces whose mistakes are silent: schema, tenancy, RLS, the ledger, anything a passing test could still get wrong. Junior owns the pieces whose mistakes are loud: controllers, pages, seed data, the volume work built on a foundation senior already laid.**
 
-**Senior reviews every junior commit before it merges.** Where a stage has verification gates (a schema whose `OrgId`/RLS/query-filter coverage cannot be confirmed by reading the diff), those gates are signed off by querying as a second organization and getting zero rows back — never by reading the code. `docs/Reporting.md` §9.1's G1–G3 gates are the worked example of what this looks like and why "cleared by inspection" was found broken by measurement once already.
+**Senior reviews every junior commit before it merges.** Where a stage has verification gates (a schema whose `OrgId`/RLS/query-filter coverage cannot be confirmed by reading the diff), those gates are signed off by querying as a second organization and getting zero rows back — never by reading the code. `docs/Modules.md` §9.1's G1–G3 gates are the worked example of what this looks like and why "cleared by inspection" was found broken by measurement once already.
 
 **Stop and ask rather than invent.** A junior that guesses at the tenancy model, a column's meaning, or a lifecycle rule writes code that passes its own tests and is wrong in production. Ambiguity in a brief is a question, not a judgement call.
 
@@ -85,7 +85,7 @@ The split is not a claim about which model is more capable — it is about where
 
 ## The five rules that cause damage when broken
 
-The full list is in [`docs/ai-agent-structure-rules.md`](./docs/ai-agent-structure-rules.md), which is written for you by name. These five are the ones where a mistake is silent — it compiles, it passes tests, and it is wrong in production.
+The full list is in [`docs/Architecture.md`](./docs/Architecture.md), which is written for you by name. These five are the ones where a mistake is silent — it compiles, it passes tests, and it is wrong in production.
 
 **1. LINQ only. Never write raw SQL.** The only exceptions, because no LINQ equivalent exists: `CREATE DATABASE`, RLS policies, triggers, `set_config`. Every query, insert, update and delete is LINQ.
 
@@ -95,7 +95,7 @@ The full list is in [`docs/ai-agent-structure-rules.md`](./docs/ai-agent-structu
 
 **4. Entities are plain property bags.** No constructors, no methods, no validation logic, no computed properties. Just `public X Y { get; set; }` with Data Annotations — and **every Data Annotation carries an `ErrorMessage`**.
 
-**5. Never reference another service's `DbContext`.** Use its API or an event. The reporting service has a **recorded exception** to this, described in `docs/Reporting.md` §2 — that exception is specific to reporting and does not generalize. (One nuance worth stating explicitly: `cus` and `con` are schemas in the **same** per-customer physical database, unlike `mst`, so a real foreign key between them is possible and preferred over an unenforced id — this is different from the `mst` case, where cross-database ids are always unenforced and validated in C#.)
+**5. Never reference another service's `DbContext`.** Use its API or an event. The reporting service has a **recorded exception** to this, described in `docs/Modules.md` §2 — that exception is specific to reporting and does not generalize. (One nuance worth stating explicitly: `cus` and `con` are schemas in the **same** per-customer physical database, unlike `mst`, so a real foreign key between them is possible and preferred over an unenforced id — this is different from the `mst` case, where cross-database ids are always unenforced and validated in C#.)
 
 Also, without exception: **PascalCase table and column names** matching the C# property names; **PostgreSQL only**, never add SQL Server compatibility; **enums, not magic strings**; **never set audit fields manually** — `AuditSaveChangesInterceptor` does it.
 
@@ -126,9 +126,9 @@ git pull --rebase origin main
 
 ## What you own
 
-**The active brief is Customer service (CRM/Support), stage C2/C3** — see [`docs/Customer.md`](./docs/Customer.md). C0 (the four open questions) and C1 (schema, tenancy, RLS) are done and audited as of 2 September 2026; C2 (controllers) is written but has two open findings (C1-3, C1-4 in that doc) to pick up before starting C3. **C3 is not untouched either**: `customer-ui` has five real components and `apps/web` lazy-loads `customer/leads` and `customer/tickets` today.
+**The active brief is Customer service (CRM/Support), stage C2/C3** — see [`docs/Modules.md`](./docs/Modules.md). C0 (the four open questions) and C1 (schema, tenancy, RLS) are done and audited as of 2 September 2026; C2 (controllers) is written but has two open findings (C1-3, C1-4 in that doc) to pick up before starting C3. **C3 is not untouched either**: `customer-ui` has five real components and `apps/web` lazy-loads `customer/leads` and `customer/tickets` today.
 
-Reporting (`docs/Reporting.md` §9–12) is **built but was not "finished with nothing waiting on review"** — that was true when written and was overtaken the same week. Fifteen tracker and finance sources landed registered in neither the container, the catalog seeder, nor `ReportSourceTests.Sources`, so 239 tests passed over reports no screen could reach. All 41 are wired now and the suite is 344; wiring them surfaced a real fault two of them had been hiding. The lesson generalises: a report needs a **registered source, a seeded row, and a line in the test list**, and only the third makes the first two check each other.
+Reporting (`docs/Modules.md` §9–12) is **built but was not "finished with nothing waiting on review"** — that was true when written and was overtaken the same week. Fifteen tracker and finance sources landed registered in neither the container, the catalog seeder, nor `ReportSourceTests.Sources`, so 239 tests passed over reports no screen could reach. All 41 are wired now and the suite is 344; wiring them surfaced a real fault two of them had been hiding. The lesson generalises: a report needs a **registered source, a seeded row, and a line in the test list**, and only the third makes the first two check each other.
 
 ---
 
@@ -168,7 +168,7 @@ cd backend  && dotnet build && dotnet test
 
 **A commit that does not build blocks whoever is working in parallel with you.**
 
-Commit messages follow [`docs/commit-rules.md`](./docs/commit-rules.md): `feat(customer): add the lead entity`. Imperative mood, no capital, no full stop.
+Commit messages follow [`docs/Architecture.md`](./docs/Architecture.md): `feat(customer): add the lead entity`. Imperative mood, no capital, no full stop.
 
 **Documentation ships in the same commit as the feature.** A user-visible change updates its page under `frontend/apps/docs/content/`, its status in `docs.manifest.ts`, and adds a bullet under **Unreleased** in `release-notes.md`. Not a sweep before release — by then the detail is gone.
 
@@ -178,12 +178,12 @@ Commit messages follow [`docs/commit-rules.md`](./docs/commit-rules.md): `feat(c
 
 | Area | File |
 |---|---|
-| **Customer service (CRM/Support) — the active brief** | [`docs/Customer.md`](./docs/Customer.md) |
-| **Reports — the grid, the engine, the report catalog** | [`docs/Reporting.md`](./docs/Reporting.md) — start at §9 |
-| Structural rules for agents | [`docs/ai-agent-structure-rules.md`](./docs/ai-agent-structure-rules.md) |
-| Coding standards | [`docs/coding-standards.md`](./docs/coding-standards.md) |
-| Project layout | [`docs/project-structure.md`](./docs/project-structure.md) |
-| Overall specification | [`docs/Specification.md`](./docs/Specification.md) |
+| **Customer service (CRM/Support) — the active brief** | [`docs/Modules.md`](./docs/Modules.md) |
+| **Reports — the grid, the engine, the report catalog** | [`docs/Modules.md`](./docs/Modules.md) — start at §9 |
+| Structural rules for agents | [`docs/Architecture.md`](./docs/Architecture.md) |
+| Coding standards | [`docs/Architecture.md`](./docs/Architecture.md) |
+| Project layout | [`docs/Architecture.md`](./docs/Architecture.md) |
+| Overall specification | [`docs/Transactions_And_Specs.md`](./docs/Transactions_And_Specs.md) |
 | Per-module task checklists | [`docs/`](./docs/) |
 
 ---

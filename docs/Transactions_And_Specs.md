@@ -1,3 +1,4 @@
+# --- Specification.md ---
 # SPEC.md — Tables & Pages
 
 Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard rules; this file is the concrete what-to-build.
@@ -1492,7 +1493,6 @@ These slot into build step 1 (Identity/Platform) and step 7 (Notification worker
 - `licenseActiveGuard` (frontend) + the `403 LicenseExpired` middleware (every service)
 - SMS delivery is **deferred** until an SMS provider is chosen — mobile OTP stays hidden until then
 
-
 # Original User Request
 
 ## 2026-08-19T14:44:01Z
@@ -1584,3 +1584,130 @@ Integrity mode: benchmark
 - [ ] The Invoice creation form successfully posts a new invoice to the backend.
 - [ ] The GL Breakdown preview correctly renders the Debit/Credit legs before submission.
 
+
+
+# --- Transactions.md ---
+# TRANSACTIONS.md — the trading documents
+
+`CLAUDE.md` holds the conventions. [`SPEC.md`](./SPEC.md) holds tables and pages. [`master.md`](./master.md) holds the build order up to here. **This file holds the plan for the eleven document types owned by Sales, Purchase and Inventory** — the trading half, none of which is built.
+
+The documents owned by **Accounting and Banking** are in [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md) and are not repeated here. **Stage numbers were not renumbered when the two files were split**, so the numbering below skips T1, T6, T8 and T10 — those stages live in that file, and the gaps are deliberate rather than a mistake.
+
+Same rules as `master.md`: take the first unticked box, check it against its **Done when** line, tick it in the same commit as the work, and strike a task rather than deleting it if it turns out to be wrong.
+
+> **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
+
+**Flow documents, beside this plan and not part of it**: [`Sales.md`](./Sales.md), [`Purchase.md`](./Purchase.md) and [`Inventory.md`](./Inventory.md) describe how these documents behave once built. No checkboxes — this file is the work, those are the behaviour.
+
+---
+
+## Scope — the eleven trading documents
+
+The rows of `mst.TransactionTypes` owned by Sales, Purchase and Inventory. Three post nothing; eight reach the ledger. All eleven trade something — an item, a price, GST, a cost layer — which is what separates them from the money documents in the other file and why they need the foundations below.
+
+| Code | Document | Owner | Posts | Moves stock | Stage |
+|---|---|---|---|---|---|
+| QTE | Quote | Sales | no | no | T2 |
+| SOR | Sales order | Sales | no | reserves | T2 |
+| DLC | Delivery challan | Sales | yes | **issues** | T3 |
+| INV | Invoice | Sales | yes | issues | T3 |
+| POR | Purchase order | Purchase | no | no | T4 |
+| GRN | Goods receipt | Purchase | yes | receives | T4 |
+| BIL | Bill | Purchase | yes | no¹ | T4 |
+| CRN | Credit note | Sales | yes | returns | T5 |
+| DBN | Debit note | Purchase | yes | returns | T5 |
+| POS | POS sale | Sales | yes | issues | T7 |
+| STA | Stock adjustment | Inventory | yes | adjusts | T9 |
+
+¹ A bill against a goods receipt moves no stock — the receipt already did. A bill with no receipt behind it does, and is the common case for services and for a trader who never raises a GRN.
+
+---
+
+## What these land on
+
+Worth stating, because the foundations below are the gaps in it rather than a rewrite of it.
+
+- **`acc.JournalLedger` and `LedgerPostingService`** — the single posting target and the one door into it. Accounts are named, never numbered; a posting is replaced by key, never appended to; balance is checked in the service, by an insert-time constraint and by a deferred trigger at `COMMIT`.
+- **Stock** — a guarded conditional decrement, reserve and release, cost layers under five costing methods, returns to the originating layer, and backdated recosting. `inv.StockMovements` is idempotent on `(OrgId, SourceType, SourceId, SourceLineId)`, which is the key every document below writes through.
+- **`NumberGenerator`** — takes a number inside the caller's transaction, so a failed insert gives the number back.
+- **Masters** — 16 transaction types seeded (`DLC` is the seventeenth and arrives with T3.6), 6 ledger types, 15 ledger sources, effective-dated GST rates, payment terms, a chart of accounts with ten control accounts, and AR/AP sub-accounts per contact and Inventory/COGS/Revenue sub-accounts per item, all seeded at branch creation.
+- **`sales.*` and `purchase.*` permissions** are already seeded and granted to the system roles. Nothing needs adding to the matrix.
+
+---
+
+## Stage T0 — foundations, before the first document
+
+None of these is a document. All five are things a document immediately needs and none of which exists, and each one found later is a schema change in the same commit as a screen.
+
+**T0.5 (`acc.Journals`) and T0.7 (does a document write a `Journals` row?) moved** to [`TRANSACTIONS-ACCOUNTING-BANKING.md`](./TRANSACTIONS-ACCOUNTING-BANKING.md#foundations-owned-here) — both exist only for the manual journal. The five below stayed because Sales and Purchase need them too, and a shared prerequisite belongs with the shared prerequisites.
+
+
+# --- SalesOrderFulfillment.md ---
+# Sales Order Fulfillment
+
+## Endpoint
+
+`POST /api/sales/sales-orders/{SalesOrderId}/fulfill`
+
+Permission: `sales.approve`.
+
+The endpoint creates and posts an invoice through the existing `InvoiceService` pipeline.
+That means tax calculation, stock issue/reservation release, ledger posting and Sales Register
+recording remain owned by the existing invoice implementation.
+
+## Full fulfillment
+
+Send an empty `lines` array (or omit it):
+
+```json
+{
+  "dueDate": "2026-08-31",
+  "lines": []
+}
+```
+
+The server invoices every remaining quantity that has not already been invoiced by a non-void invoice.
+
+## Partial fulfillment
+
+Send only the order lines and quantities to fulfill now:
+
+```json
+{
+  "dueDate": "2026-08-31",
+  "lines": [
+    {
+      "salesOrderDetailId": 101,
+      "quantity": 40
+    },
+    {
+      "salesOrderDetailId": 102,
+      "quantity": 10
+    }
+  ]
+}
+```
+
+The server validates that each line belongs to the order and that the requested quantity does not exceed:
+
+`Ordered Quantity - Existing Non-Void Invoiced Quantity`
+
+## Fulfillment accounting
+
+For stock lines, posting the generated invoice issues stock and releases the corresponding reservation.
+The Sales Order line then reconciles `DeliveredQuantity` and `ReservedQuantity` so the order can move from:
+
+`Open → PartlyDelivered → Closed`
+
+Delivery Challans continue to use their existing path and update the same Sales Order fulfillment quantities.
+
+## Concurrency
+
+The fulfillment operation uses a serializable database transaction while calculating remaining quantities,
+creating/posting the invoice, and updating the Sales Order. This prevents two concurrent fulfillment requests
+from intentionally invoicing the same remaining quantity based on the same stale read.
+
+## Important existing behavior
+
+`InvoiceService.CreateFromSalesOrderAsync` remains the legacy all-or-nothing conversion path. The new
+`/fulfill` endpoint is the partial/full fulfillment path and does not use the legacy single-invoice guard.
