@@ -15,13 +15,13 @@ export const reportingRoutes: Routes = [
     data: { permission: 'reports.view' },
   },
   {
-    path: 'statements/profit-and-loss',
+    path: 'profit-and-loss',
     loadComponent: () =>
       import('./statements/profit-and-loss.page').then((m) => m.ProfitAndLossPage),
     data: { permission: 'reports.view' },
   },
   {
-    path: 'statements/balance-sheet',
+    path: 'balance-sheet',
     loadComponent: () =>
       import('./statements/balance-sheet.page').then((m) => m.BalanceSheetPage),
     data: { permission: 'reports.view' },
