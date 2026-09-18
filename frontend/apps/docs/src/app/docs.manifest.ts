@@ -58,6 +58,10 @@ export const DOCS: DocSection[] = [
     pages: [
       { slug: 'development', title: 'Development', status: 'built' },
       { slug: 'inputs', title: 'Input components', status: 'built' },
+      // 'partial' rather than 'built': the Google Cloud path is complete and the
+      // Azure one is not — no Service Bus publisher exists, and no Azure
+      // infrastructure is written.
+      { slug: 'deployment', title: 'Deployment', status: 'partial' },
     ],
   },
 ];

@@ -1,4 +1,3 @@
-using Azure.Storage.Blobs;
 using Shared.Kernel.Security;
 using Shared.Kernel.Storage;
 using System.Text;
@@ -68,24 +67,11 @@ builder.Services.AddDbContext<SalesDbContext>((sp, options) =>
         sp.GetRequiredService<RlsConnectionInterceptor>());
 });
 
-// Uploaded files (the invoice PDF archive). Blob storage when a connection
-// string is configured, local disk otherwise — same choice Master.Api makes,
-// copied here because InvoiceService needed it and nothing had registered it.
-if (builder.Configuration["Storage:ConnectionString"] is { Length: > 0 } storageConnection)
-{
-    string containerName = builder.Configuration["Storage:Container"] ?? "documents";
-
-    builder.Services.AddSingleton<IFileStorage>(_ =>
-    {
-        var container = new BlobContainerClient(storageConnection, containerName);
-        container.CreateIfNotExists();
-        return new AzureBlobFileStorage(container);
-    });
-}
-else
-{
-    builder.Services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
-}
+// Uploaded files. Blob Storage, Cloud Storage or local disk, chosen by which
+// setting is present rather than by an environment name. The choice itself lives
+// in Shared.Kernel because this block was previously copied between here and the
+// other service that needed it.
+builder.Services.AddFileStorage(builder.Configuration);
 
 // T2.2 is schema only. The document services arrive with the screens that use
 // them — the quote at T2.3, the order at T2.4 — and are registered here then.

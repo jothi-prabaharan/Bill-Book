@@ -1,7 +1,6 @@
 global using CustomerEntity = Master.Entity.TableEntities.Customer;
 using Shared.Kernel.Security;
 using System.Text;
-using Azure.Storage.Blobs;
 using Master.Api.Services;
 using Master.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -11,6 +10,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Secrets;
+using Shared.Kernel.Messaging;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -165,31 +165,11 @@ builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(cl
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-// Uploaded files. Blob storage when a connection string is configured, local
-// disk otherwise — chosen by whether the setting is present rather than by an
-// environment name, so a developer can point at real storage without pretending
-// to be Production and a deployment cannot silently fall back to a disk that
-// disappears with the container.
-if (builder.Configuration["Storage:ConnectionString"] is { Length: > 0 } storageConnection)
-{
-    string containerName = builder.Configuration["Storage:Container"] ?? "documents";
-
-    builder.Services.AddSingleton<IFileStorage>(_ =>
-    {
-        var container = new BlobContainerClient(storageConnection, containerName);
-
-        // Created on startup rather than per upload: it is one call, it is
-        // idempotent, and the alternative is every first upload in a fresh
-        // deployment failing on a container nobody made.
-        container.CreateIfNotExists();
-
-        return new AzureBlobFileStorage(container);
-    });
-}
-else
-{
-    builder.Services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
-}
+// Uploaded files. Blob Storage, Cloud Storage or local disk, chosen by which
+// setting is present rather than by an environment name. The choice itself lives
+// in Shared.Kernel because this block was previously copied between here and the
+// other service that needed it.
+builder.Services.AddFileStorage(builder.Configuration);
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's contacts context so a contact code is allocated inside
@@ -206,15 +186,19 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Dev infrastructure — swap for Key Vault / Service Bus in production.
-// Key Vault when KeyVault:Uri is set, configuration otherwise — and a startup
-// failure in Production if neither. Master is the one service that *writes* a
-// secret (the SMTP-password key), and only the vault-backed store can: the
-// configuration store refuses rather than pretending, which is why the
-// in-memory dictionary that used to stand here was worse than nothing — it
-// accepted every write and lost it on the next restart.
+// Secrets and events, both chosen from configuration in Shared.Kernel.
+//
+// Key Vault when KeyVault:Uri is set, Secret Manager when Gcp:ProjectId is,
+// configuration otherwise — and a startup failure in Production if none. Master
+// is the one service that *writes* a secret (the SMTP-password key), and only a
+// managed store can: the configuration store refuses rather than pretending,
+// which is why the in-memory dictionary that used to stand here was worse than
+// nothing — it accepted every write and lost it on the next restart.
+//
+// Events deliver for the first time on Pub/Sub; on Azure and locally they still
+// only log, because no Service Bus publisher was ever written.
 builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
-builder.Services.AddSingleton<IEventPublisher, LoggingEventPublisher>();
+builder.Services.AddEventPublisher(builder.Configuration);
 
 // This service mints the tokens as well as validating them, so the signing key
 // is the one every other service is configured with. Never fall back to a

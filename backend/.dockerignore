@@ -1,0 +1,35 @@
+# Keeps the build context to source. Everything here is either rebuilt inside the
+# image or has no business in one.
+
+# Build output. Copying a host bin/ or obj/ into the image is worse than wasteful:
+# obj/ carries project.assets.json pinned to host paths, and a restore that finds
+# it may skip work it needed to do, producing an image built against whatever the
+# last local build resolved.
+**/bin/
+**/obj/
+
+# Test projects. They are not published into any service image, and leaving them
+# out keeps a test-only package out of the context entirely.
+tests/
+
+# Local developer configuration. appsettings.Development.json carries a local
+# connection string and would otherwise sit in the image alongside the real one,
+# where the only thing keeping it from being read is the environment name.
+**/appsettings.Development.json
+**/*.user
+**/.vs/
+**/.idea/
+
+# Secrets, in case one is ever written here by mistake. This is belt and braces —
+# nothing in this repository writes these — but the cost of the line is nothing
+# and the cost of the omission is a credential in a published layer.
+**/*.pfx
+**/*.p12
+**/*.key
+**/.env
+**/.env.*
+
+# Version control and CI.
+.git/
+.github/
+**/.gitignore

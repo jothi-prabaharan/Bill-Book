@@ -31,6 +31,21 @@
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.7.0" />
     <PackageVersion Include="Azure.Messaging.ServiceBus" Version="7.18.2" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.22.2" />
+    <!-- Google Cloud, for deployments hosted there. These sit beside the Azure
+         packages above rather than replacing them: the three infrastructure
+         interfaces each have a cloud implementation per provider and a local
+         one, and which is registered is a configuration question answered at
+         startup, not a compile-time choice. A build carries all of them; a
+         deployment uses one.
+
+         Authentication is Application Default Credentials throughout, which on
+         Cloud Run is the service account attached to the revision — the direct
+         counterpart of DefaultAzureCredential and a managed identity. No key
+         file is ever mounted, which is the property that makes this worth doing
+         rather than putting a JSON credential in configuration. -->
+    <PackageVersion Include="Google.Cloud.SecretManager.V1" Version="2.8.0" />
+    <PackageVersion Include="Google.Cloud.Storage.V1" Version="4.16.0" />
+    <PackageVersion Include="Google.Cloud.PubSub.V1" Version="3.38.0" />
     <!-- Reading and writing .xlsx, for bank statement import and export.
          Microsoft's own, MIT, no licence key — unlike the Syncfusion suite used
          for PDF. Pinned at 3.5.1 rather than 3.1.x: the older line drags in

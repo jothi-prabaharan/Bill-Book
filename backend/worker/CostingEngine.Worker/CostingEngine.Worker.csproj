@@ -12,6 +12,36 @@
     <ProjectReference Include="..\..\Api\Inventory\Inventory.Api\Inventory.Api.csproj" />
   </ItemGroup>
 
+  <!--
+    This project could not be published at all until this target existed, and
+    `dotnet build` never said so.
+
+    It references Inventory.Api for the costing services and the DbContext, and
+    both projects ship an appsettings.json and an appsettings.Development.json.
+    Publish collects the referenced project's content as well as its own, both
+    land at the same relative path, and the SDK stops with NETSDK1152. Build does
+    not collect content that way, so the only gate this repository runs — which
+    builds and tests, and never publishes — was green throughout.
+
+    The consequence is worth stating plainly: the costing worker has never been
+    packaged for any deployment, on any cloud. It was not a Google Cloud problem
+    and the container build only surfaced it because a container build is the
+    first thing here that ever ran `dotnet publish` on this project.
+
+    The worker's own settings win, which is the only defensible choice — the file
+    beside a program is the one an operator expects to be configuring, and
+    Inventory.Api's copy names ports and connection strings for a web host this
+    process is not.
+  -->
+  <Target Name="DropReferencedApiSettingsFromPublish"
+          AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish
+        Remove="@(ResolvedFileToPublish)"
+        Condition="'%(ResolvedFileToPublish.Filename)' != ''
+                   AND $([System.String]::Copy('%(ResolvedFileToPublish.Filename)').StartsWith('appsettings'))
+                   AND !$([System.String]::Copy('%(ResolvedFileToPublish.FullPath)').StartsWith('$(MSBuildProjectDirectory)'))" />
+    </ItemGroup>
+  </Target>
+
 </Project>
-
-

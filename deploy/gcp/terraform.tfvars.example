@@ -1,0 +1,36 @@
+# Copy to terraform.tfvars and fill in. terraform.tfvars is gitignored — it names
+# a real project and, once applied, its state holds real credentials.
+
+project_id = "bill-book-prod"
+
+# The commit SHA the images were built at. Never "latest": a mutable tag makes
+# two revisions of the same service potentially different builds, and makes a
+# rollback a matter of hoping the tag still points where it did.
+image_tag = "0000000000000000000000000000000000000000"
+
+# Mumbai. asia-south2 is Delhi. Changing this after the first apply replaces the
+# Cloud SQL instance.
+region = "asia-south1"
+
+# db-custom-2-7680 is two vCPUs and 7.5 GB — the smallest shape that is not
+# shared-core burstable, and the right default for production.
+#
+# For a staging environment this is the single biggest line on the bill and the
+# first thing to cut: db-f1-micro or db-g1-small is fine for a database nobody's
+# livelihood depends on.
+sql_tier = "db-custom-2-7680"
+
+# Leave true in production. `terraform destroy` against a misconfigured workspace
+# is otherwise the last thing that happens to a customer's books.
+sql_deletion_protection = true
+
+# Zero means nothing runs and nothing is billed until a request arrives, at the
+# cost of a cold start on the first one. Raise the gateway's first when cold
+# starts start showing in the UI. The costing worker ignores this and is always
+# on by design.
+min_instances = 0
+
+# The first account, created once and only while the users table is empty. It is
+# created with no password — the only way in is the ordinary reset flow, which
+# proves control of the mailbox. Leave empty to create nothing.
+bootstrap_owner_email = ""
