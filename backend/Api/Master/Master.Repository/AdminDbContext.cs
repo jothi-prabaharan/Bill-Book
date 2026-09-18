@@ -75,9 +75,7 @@ public class AdminDbContext : DbContext
 
     public DbSet<Menu> Menus => Set<Menu>();
 
-    public DbSet<SubMenu> SubMenus => Set<SubMenu>();
-
-    public DbSet<SubMenuPermission> SubMenuPermissions => Set<SubMenuPermission>();
+    public DbSet<MenuPermission> MenuPermissions => Set<MenuPermission>();
 
     public DbSet<UserOrganizationRole> UserOrganizationRoles => Set<UserOrganizationRole>();
 
@@ -289,25 +287,39 @@ public class AdminDbContext : DbContext
             b.Property(e => e.Channel).HasConversion<string>().HasMaxLength(10);
         });
 
-        // ---- Menu & SubMenu ----
+        // ---- Menu ----
+        // Rail modules, the sections in their panels and the screens in those
+        // sections are all Menu rows, told apart by Type and joined by ParentId.
         modelBuilder.Entity<Menu>(b =>
         {
             b.HasKey(e => e.MenuId);
-            b.HasIndex(e => e.Code).IsUnique();
-            b.HasMany(e => e.SubMenus).WithOne(e => e.Menu).HasForeignKey(e => e.MenuId).OnDelete(DeleteBehavior.Cascade);
+            b.Property(e => e.Type).HasConversion<string>().HasMaxLength(10);
+
+            // Unique among siblings, which is what a code is for. Postgres treats
+            // NULLs as distinct in a unique index, so rail modules — whose ParentId
+            // is null — need the second, filtered index to be held to the same rule.
+            b.HasIndex(e => new { e.ParentId, e.Code }).IsUnique();
+            b.HasIndex(e => e.Code).IsUnique().HasFilter("\"ParentId\" IS NULL");
+
+            b.HasIndex(e => new { e.ParentId, e.DisplayOrder });
+
+            // Deleting a section takes its screens with it. Restrict would make a
+            // populated module undeletable, which is not the same thing as safe.
+            b.HasMany(e => e.Children)
+                .WithOne(e => e.Parent!)
+                .HasForeignKey(e => e.ParentId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            b.HasMany(e => e.Permissions)
+                .WithOne(e => e.Menu)
+                .HasForeignKey(e => e.MenuId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
-        modelBuilder.Entity<SubMenu>(b =>
+        modelBuilder.Entity<MenuPermission>(b =>
         {
-            b.HasKey(e => e.SubMenuId);
-            b.HasIndex(e => new { e.MenuId, e.Code }).IsUnique();
-            b.HasMany(e => e.Permissions).WithOne(e => e.SubMenu).HasForeignKey(e => e.SubMenuId).OnDelete(DeleteBehavior.Cascade);
-        });
-
-        modelBuilder.Entity<SubMenuPermission>(b =>
-        {
-            b.HasKey(e => e.SubMenuPermissionId);
-            b.HasIndex(e => new { e.SubMenuId, e.PermissionCode }).IsUnique();
+            b.HasKey(e => e.MenuPermissionId);
+            b.HasIndex(e => new { e.MenuId, e.PermissionCode }).IsUnique();
         });
 
         MapXminConcurrency(modelBuilder);
@@ -320,31 +332,10 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<HsnSacCode>().HasData(SeedData.HsnSacSeed.Build());
         SeedConfigurations(modelBuilder);
         SeedRolesAndPermissions(modelBuilder);
-        // HasData seeds by scalar property values only — a seeded entity cannot
-        // carry a populated navigation, so each of the three projects into a
-        // fresh instance rather than reusing MenuSeed's richly-linked objects.
-        modelBuilder.Entity<Menu>().HasData(MenuSeed.Build().Select(m => new Menu
-        {
-            MenuId = m.MenuId,
-            Code = m.Code,
-            Name = m.Name,
-            Icon = m.Icon,
-            DisplayOrder = m.DisplayOrder,
-            IsActive = m.IsActive,
-        }));
-        modelBuilder.Entity<SubMenu>().HasData(MenuSeed.Build().SelectMany(m => m.SubMenus).Select(sm => new SubMenu
-        {
-            SubMenuId = sm.SubMenuId,
-            MenuId = sm.MenuId,
-            Code = sm.Code,
-            Name = sm.Name,
-            RoutePath = sm.RoutePath,
-            Icon = sm.Icon,
-            DisplayOrder = sm.DisplayOrder,
-            IsActive = sm.IsActive,
-        }));
-        modelBuilder.Entity<SubMenuPermission>().HasData(
-            MenuSeed.Build().SelectMany(m => m.SubMenus.SelectMany(sm => sm.Permissions)));
+        // The seed sets scalar properties only — HasData cannot carry a populated
+        // navigation — so both lists go in as they are built.
+        modelBuilder.Entity<Menu>().HasData(MenuSeed.Build());
+        modelBuilder.Entity<MenuPermission>().HasData(MenuSeed.BuildPermissions());
     }
 
     /// <summary>Expose the Postgres xmin system column as the concurrency token on every audited entity.</summary>

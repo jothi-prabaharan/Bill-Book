@@ -33,16 +33,13 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly IHostEnvironment _environment;
     private readonly ILogger<GlobalExceptionHandler> _logger;
-    private readonly IServiceProvider _services;
 
     public GlobalExceptionHandler(
         IHostEnvironment environment,
-        ILogger<GlobalExceptionHandler> logger,
-        IServiceProvider services)
+        ILogger<GlobalExceptionHandler> logger)
     {
         _environment = environment;
         _logger = logger;
-        _services = services;
     }
 
     public async ValueTask<bool> TryHandleAsync(
@@ -119,13 +116,13 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         string traceId,
         CancellationToken ct)
     {
-        if (_services.GetService(typeof(IErrorLogStore)) is not IErrorLogStore store)
+        if (httpContext.RequestServices.GetService(typeof(IErrorLogStore)) is not IErrorLogStore store)
         {
             return null;
         }
 
-        var tenant = _services.GetService(typeof(ITenantContext)) as ITenantContext;
-        var user = _services.GetService(typeof(ICurrentUser)) as ICurrentUser;
+        var tenant = httpContext.RequestServices.GetService(typeof(ITenantContext)) as ITenantContext;
+        var user = httpContext.RequestServices.GetService(typeof(ICurrentUser)) as ICurrentUser;
 
         var entry = new ErrorLog
         {

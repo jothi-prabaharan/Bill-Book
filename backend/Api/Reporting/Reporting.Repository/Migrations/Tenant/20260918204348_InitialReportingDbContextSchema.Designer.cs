@@ -12,7 +12,7 @@ using Reporting.Repository;
 namespace Reporting.Repository.Migrations.Tenant
 {
     [DbContext(typeof(ReportingDbContext))]
-    [Migration("20260914032137_InitialReportingDbContextSchema")]
+    [Migration("20260918204348_InitialReportingDbContextSchema")]
     partial class InitialReportingDbContextSchema
     {
         /// <inheritdoc />

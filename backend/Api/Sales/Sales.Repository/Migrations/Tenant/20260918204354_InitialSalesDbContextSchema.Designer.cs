@@ -12,7 +12,7 @@ using Sales.Repository;
 namespace Sales.Repository.Migrations.Tenant
 {
     [DbContext(typeof(SalesDbContext))]
-    [Migration("20260914032143_InitialSalesDbContextSchema")]
+    [Migration("20260918204354_InitialSalesDbContextSchema")]
     partial class InitialSalesDbContextSchema
     {
         /// <inheritdoc />

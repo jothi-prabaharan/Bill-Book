@@ -12,7 +12,7 @@ using Purchase.Repository;
 namespace Purchase.Repository.Migrations.Tenant
 {
     [DbContext(typeof(PurchaseDbContext))]
-    [Migration("20260914032131_InitialPurchaseDbContextSchema")]
+    [Migration("20260918204341_InitialPurchaseDbContextSchema")]
     partial class InitialPurchaseDbContextSchema
     {
         /// <inheritdoc />

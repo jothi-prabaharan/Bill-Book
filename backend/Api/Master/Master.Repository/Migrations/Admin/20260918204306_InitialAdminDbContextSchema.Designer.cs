@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Master.Repository.Migrations.Admin
 {
     [DbContext(typeof(AdminDbContext))]
-    [Migration("20260914032059_InitialAdminDbContextSchema")]
+    [Migration("20260918204306_InitialAdminDbContextSchema")]
     partial class InitialAdminDbContextSchema
     {
         /// <inheritdoc />
@@ -6727,6 +6727,9 @@ namespace Master.Repository.Migrations.Admin
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MenuId"));
 
+                    b.Property<bool>("CanCreate")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(50)
@@ -6748,16 +6751,38 @@ namespace Master.Repository.Migrations.Admin
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsSearchable")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTimeOffset?>("ModifiedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Module")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
                     b.Property<string>("Name")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("ParentId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RoutePath")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SingularName")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.Property<uint>("Version")
                         .IsConcurrencyToken()
@@ -6768,7 +6793,13 @@ namespace Master.Repository.Migrations.Admin
                     b.HasKey("MenuId");
 
                     b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("\"ParentId\" IS NULL");
+
+                    b.HasIndex("ParentId", "Code")
                         .IsUnique();
+
+                    b.HasIndex("ParentId", "DisplayOrder");
 
                     b.ToTable("Menus", "mst");
 
@@ -6776,91 +6807,5825 @@ namespace Master.Repository.Migrations.Admin
                         new
                         {
                             MenuId = 1,
-                            Code = "dashboard",
+                            CanCreate = false,
+                            Code = "home",
                             DisplayOrder = 1,
-                            Icon = "home",
+                            Icon = "house",
                             IsActive = true,
-                            Name = "Dashboard",
+                            IsSearchable = false,
+                            Module = "dashboard",
+                            Name = "Home",
+                            RoutePath = "/dashboard",
+                            Type = "Rail",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 2,
-                            Code = "sales",
+                            CanCreate = false,
+                            Code = "contacts",
                             DisplayOrder = 2,
-                            Icon = "shopping_cart",
+                            Icon = "users-round",
                             IsActive = true,
-                            Name = "Sales",
+                            IsSearchable = false,
+                            Module = "contacts",
+                            Name = "Contacts",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 101,
+                            CanCreate = false,
+                            Code = "contacts-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 2,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1001,
+                            CanCreate = true,
+                            Code = "both",
+                            DisplayOrder = 1,
+                            Icon = "users-round",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "contacts",
+                            Name = "Customer & vendor",
+                            ParentId = 101,
+                            RoutePath = "/contacts",
+                            SingularName = "Contact",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1002,
+                            CanCreate = true,
+                            Code = "cus",
+                            DisplayOrder = 2,
+                            Icon = "user-round",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "contacts",
+                            Name = "Customers",
+                            ParentId = 101,
+                            SingularName = "Customer",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1003,
+                            CanCreate = true,
+                            Code = "ven",
+                            DisplayOrder = 3,
+                            Icon = "truck",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "contacts",
+                            Name = "Vendors",
+                            ParentId = 101,
+                            SingularName = "Vendor",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 3,
-                            Code = "purchase",
+                            CanCreate = false,
+                            Code = "inventory",
                             DisplayOrder = 3,
-                            Icon = "inventory",
+                            Icon = "boxes",
                             IsActive = true,
-                            Name = "Purchase",
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Inventory",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 102,
+                            CanCreate = false,
+                            Code = "inventory-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 3,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1004,
+                            CanCreate = true,
+                            Code = "itm",
+                            DisplayOrder = 1,
+                            Icon = "package",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Items",
+                            ParentId = 102,
+                            RoutePath = "/inventory/items",
+                            SingularName = "Item",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1005,
+                            CanCreate = true,
+                            Code = "adj",
+                            DisplayOrder = 2,
+                            Icon = "sliders-horizontal",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Stock adjustments",
+                            ParentId = 102,
+                            RoutePath = "/inventory/stock-adjustments",
+                            SingularName = "Stock adjustment",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1006,
+                            CanCreate = true,
+                            Code = "cat",
+                            DisplayOrder = 3,
+                            Icon = "tags",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Item categories",
+                            ParentId = 102,
+                            RoutePath = "/inventory/categories",
+                            SingularName = "Item group",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1007,
+                            CanCreate = false,
+                            Code = "uom",
+                            DisplayOrder = 4,
+                            Icon = "ruler",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Units of measure",
+                            ParentId = 102,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1008,
+                            CanCreate = false,
+                            Code = "uot",
+                            DisplayOrder = 5,
+                            Icon = "ruler",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "UOM types",
+                            ParentId = 102,
+                            RoutePath = "/settings/unit-types",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1009,
+                            CanCreate = false,
+                            Code = "whs",
+                            DisplayOrder = 6,
+                            Icon = "warehouse",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Warehouses",
+                            ParentId = 102,
+                            RoutePath = "/inventory/warehouses",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1010,
+                            CanCreate = false,
+                            Code = "hsn",
+                            DisplayOrder = 7,
+                            Icon = "hash",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "HSN and SAC codes",
+                            ParentId = 102,
+                            RoutePath = "/settings/hsn-sac",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1011,
+                            CanCreate = false,
+                            Code = "mtp",
+                            DisplayOrder = 8,
+                            Icon = "gem",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Metal purity",
+                            ParentId = 102,
+                            RoutePath = "/settings/metal-purities",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1012,
+                            CanCreate = false,
+                            Code = "stk",
+                            DisplayOrder = 9,
+                            Icon = "layers",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Stock",
+                            ParentId = 102,
+                            RoutePath = "/inventory/stock",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1013,
+                            CanCreate = false,
+                            Code = "prl",
+                            DisplayOrder = 10,
+                            Icon = "tag",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "inventory",
+                            Name = "Price lists",
+                            ParentId = 102,
+                            RoutePath = "/inventory/price-lists",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 4,
-                            Code = "inventory",
+                            CanCreate = false,
+                            Code = "purchase",
                             DisplayOrder = 4,
-                            Icon = "warehouse",
+                            Icon = "package",
                             IsActive = true,
-                            Name = "Inventory",
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "Purchase",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 103,
+                            CanCreate = false,
+                            Code = "purchase-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 4,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1014,
+                            CanCreate = false,
+                            Code = "all",
+                            DisplayOrder = 1,
+                            Icon = "list",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "All transactions",
+                            ParentId = 103,
+                            RoutePath = "/purchase/transactions",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1015,
+                            CanCreate = true,
+                            Code = "por",
+                            DisplayOrder = 2,
+                            Icon = "clipboard-list",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "Purchase orders",
+                            ParentId = 103,
+                            RoutePath = "/purchase/transactions?type=PurchaseOrder",
+                            SingularName = "Purchase order",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1016,
+                            CanCreate = true,
+                            Code = "grn",
+                            DisplayOrder = 3,
+                            Icon = "package-check",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "Goods receipts",
+                            ParentId = 103,
+                            RoutePath = "/purchase/transactions?type=GoodsReceipt",
+                            SingularName = "Goods receipt",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1017,
+                            CanCreate = true,
+                            Code = "bil",
+                            DisplayOrder = 4,
+                            Icon = "receipt",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "Bills",
+                            ParentId = 103,
+                            RoutePath = "/purchase/transactions?type=Bill",
+                            SingularName = "Bill",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1018,
+                            CanCreate = true,
+                            Code = "dbn",
+                            DisplayOrder = 5,
+                            Icon = "file-minus",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "purchase",
+                            Name = "Debit notes",
+                            ParentId = 103,
+                            RoutePath = "/purchase/transactions?type=DebitNote",
+                            SingularName = "Debit note",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 5,
-                            Code = "accounting",
+                            CanCreate = false,
+                            Code = "sales",
                             DisplayOrder = 5,
-                            Icon = "account_balance",
+                            Icon = "shopping-cart",
                             IsActive = true,
-                            Name = "Accounts",
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Sales",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 104,
+                            CanCreate = false,
+                            Code = "sales-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 5,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1019,
+                            CanCreate = false,
+                            Code = "all",
+                            DisplayOrder = 1,
+                            Icon = "list",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "All transactions",
+                            ParentId = 104,
+                            RoutePath = "/sales/transactions",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1020,
+                            CanCreate = true,
+                            Code = "qot",
+                            DisplayOrder = 2,
+                            Icon = "file-text",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Quotes",
+                            ParentId = 104,
+                            RoutePath = "/sales/transactions?type=Quote",
+                            SingularName = "Quote",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1021,
+                            CanCreate = true,
+                            Code = "sor",
+                            DisplayOrder = 3,
+                            Icon = "clipboard-list",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Sales orders",
+                            ParentId = 104,
+                            RoutePath = "/sales/sales-orders",
+                            SingularName = "Sales order",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1022,
+                            CanCreate = true,
+                            Code = "dlc",
+                            DisplayOrder = 4,
+                            Icon = "truck",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Delivery challans",
+                            ParentId = 104,
+                            RoutePath = "/sales/transactions?type=DeliveryChallan",
+                            SingularName = "Delivery challan",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1023,
+                            CanCreate = true,
+                            Code = "inv",
+                            DisplayOrder = 5,
+                            Icon = "receipt",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Invoices",
+                            ParentId = 104,
+                            RoutePath = "/sales/invoices",
+                            SingularName = "Invoice",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1024,
+                            CanCreate = true,
+                            Code = "crn",
+                            DisplayOrder = 6,
+                            Icon = "file-minus",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "sales",
+                            Name = "Credit notes",
+                            ParentId = 104,
+                            RoutePath = "/sales/transactions?type=CreditNote",
+                            SingularName = "Credit note",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 6,
+                            CanCreate = false,
                             Code = "banking",
                             DisplayOrder = 6,
-                            Icon = "account_balance_wallet",
+                            Icon = "landmark",
                             IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
                             Name = "Banking",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 105,
+                            CanCreate = false,
+                            Code = "banking-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 6,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1025,
+                            CanCreate = false,
+                            Code = "dash",
+                            DisplayOrder = 1,
+                            Icon = "layout-dashboard",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Dashboard",
+                            ParentId = 105,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1026,
+                            CanCreate = false,
+                            Code = "tx",
+                            DisplayOrder = 2,
+                            Icon = "arrow-left-right",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Transaction",
+                            ParentId = 105,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1027,
+                            CanCreate = true,
+                            Code = "spd",
+                            DisplayOrder = 3,
+                            Icon = "arrow-up-right",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Spend Money",
+                            ParentId = 105,
+                            RoutePath = "/banking/spend-money",
+                            SingularName = "Payment",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1028,
+                            CanCreate = true,
+                            Code = "rcv",
+                            DisplayOrder = 4,
+                            Icon = "arrow-down-left",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Receive Money",
+                            ParentId = 105,
+                            RoutePath = "/banking/receive-money",
+                            SingularName = "Receipt",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1029,
+                            CanCreate = true,
+                            Code = "trf",
+                            DisplayOrder = 5,
+                            Icon = "arrow-left-right",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Transfer Money",
+                            ParentId = 105,
+                            RoutePath = "/banking/transfer-money",
+                            SingularName = "Transfer",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1030,
+                            CanCreate = false,
+                            Code = "sta",
+                            DisplayOrder = 6,
+                            Icon = "file-spreadsheet",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Statement",
+                            ParentId = 105,
+                            RoutePath = "/banking/statements",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1031,
+                            CanCreate = false,
+                            Code = "rec",
+                            DisplayOrder = 7,
+                            Icon = "check-check",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Reconciliation",
+                            ParentId = 105,
+                            RoutePath = "/accounting/reconciliation",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1032,
+                            CanCreate = false,
+                            Code = "bnk",
+                            DisplayOrder = 8,
+                            Icon = "landmark",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Banks",
+                            ParentId = 105,
+                            RoutePath = "/banking/banks",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1033,
+                            CanCreate = false,
+                            Code = "acc",
+                            DisplayOrder = 9,
+                            Icon = "wallet",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "banking",
+                            Name = "Bank accounts",
+                            ParentId = 105,
+                            RoutePath = "/banking/accounts",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 7,
-                            Code = "contacts",
+                            CanCreate = false,
+                            Code = "accounting",
                             DisplayOrder = 7,
-                            Icon = "people",
+                            Icon = "book-open",
                             IsActive = true,
-                            Name = "Contacts",
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Accounts",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 106,
+                            CanCreate = false,
+                            Code = "accounting-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 7,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1034,
+                            CanCreate = true,
+                            Code = "coa",
+                            DisplayOrder = 1,
+                            Icon = "list-tree",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Chart of accounts",
+                            ParentId = 106,
+                            RoutePath = "/accounting/chart-of-accounts",
+                            SingularName = "Account",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1035,
+                            CanCreate = false,
+                            Code = "act",
+                            DisplayOrder = 2,
+                            Icon = "shapes",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Account types",
+                            ParentId = 106,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1036,
+                            CanCreate = false,
+                            Code = "sub",
+                            DisplayOrder = 3,
+                            Icon = "git-branch",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Sub-accounts",
+                            ParentId = 106,
+                            RoutePath = "/accounting/sub-accounts",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1037,
+                            CanCreate = true,
+                            Code = "jrn",
+                            DisplayOrder = 4,
+                            Icon = "book-open",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Manual journals",
+                            ParentId = 106,
+                            RoutePath = "/accounting/journals",
+                            SingularName = "Journal",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1038,
+                            CanCreate = false,
+                            Code = "opb",
+                            DisplayOrder = 5,
+                            Icon = "scale",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Opening balances",
+                            ParentId = 106,
+                            RoutePath = "/accounting/opening-balance",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 8,
+                            CanCreate = false,
                             Code = "reports",
                             DisplayOrder = 8,
-                            Icon = "bar_chart",
+                            Icon = "chart-no-axes-combined",
                             IsActive = true,
+                            IsSearchable = true,
+                            Module = "reports",
                             Name = "Reports",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 107,
+                            CanCreate = false,
+                            Code = "reports-g1",
+                            DisplayOrder = 1,
+                            Icon = "wallet",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Finance",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1039,
+                            CanCreate = false,
+                            Code = "r-balance-sheet",
+                            DisplayOrder = 1,
+                            Icon = "scale",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Balance Sheet",
+                            ParentId = 107,
+                            RoutePath = "/reports/statements/balance-sheet",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1040,
+                            CanCreate = false,
+                            Code = "r-profit-loss",
+                            DisplayOrder = 2,
+                            Icon = "trending-up",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Profit & Loss",
+                            ParentId = 107,
+                            RoutePath = "/reports/statements/profit-and-loss",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1041,
+                            CanCreate = false,
+                            Code = "r-cash-flow-statement-direct",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Cash Flow Statement - Direct",
+                            ParentId = 107,
+                            RoutePath = "/reports/r-cash-flow-statement-direct",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1042,
+                            CanCreate = false,
+                            Code = "r-reconciliation-report",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Reconciliation Report",
+                            ParentId = 107,
+                            RoutePath = "/reports/r-reconciliation-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 108,
+                            CanCreate = false,
+                            Code = "reports-g2",
+                            DisplayOrder = 2,
+                            Icon = "trending-up",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Financial performance",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1043,
+                            CanCreate = false,
+                            Code = "r-business-performance",
+                            DisplayOrder = 1,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Business Performance",
+                            ParentId = 108,
+                            RoutePath = "/reports/r-business-performance",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 109,
+                            CanCreate = false,
+                            Code = "reports-g3",
+                            DisplayOrder = 3,
+                            Icon = "book-open",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Accounting",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1044,
+                            CanCreate = false,
+                            Code = "r-trial-balance",
+                            DisplayOrder = 1,
+                            Icon = "scale",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "Trial Balance",
+                            ParentId = 109,
+                            RoutePath = "/accounting/trial-balance",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1045,
+                            CanCreate = false,
+                            Code = "r-general-ledger",
+                            DisplayOrder = 2,
+                            Icon = "book-open",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "accounting",
+                            Name = "General ledger",
+                            ParentId = 109,
+                            RoutePath = "/accounting/ledger",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1046,
+                            CanCreate = false,
+                            Code = "r-journal-report",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Journal Report",
+                            ParentId = 109,
+                            RoutePath = "/reports/r-journal-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1047,
+                            CanCreate = false,
+                            Code = "r-account-transaction",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Account Transaction",
+                            ParentId = 109,
+                            RoutePath = "/reports/r-account-transaction",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1048,
+                            CanCreate = false,
+                            Code = "r-bank-summary",
+                            DisplayOrder = 5,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Bank Summary",
+                            ParentId = 109,
+                            RoutePath = "/reports/r-bank-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1049,
+                            CanCreate = false,
+                            Code = "r-foreign-currency-gain-or-loss",
+                            DisplayOrder = 6,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Foreign Currency Gain or Loss",
+                            ParentId = 109,
+                            RoutePath = "/reports/r-foreign-currency-gain-or-loss",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1050,
+                            CanCreate = false,
+                            Code = "r-foreign-currency-gain-or-loss-details",
+                            DisplayOrder = 7,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Foreign Currency Gain or Loss Details",
+                            ParentId = 109,
+                            RoutePath = "/reports/r-foreign-currency-gain-or-loss-details",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 110,
+                            CanCreate = false,
+                            Code = "reports-g4",
+                            DisplayOrder = 4,
+                            Icon = "shopping-cart",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Sales Reports",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1051,
+                            CanCreate = false,
+                            Code = "r-aged-receivables-summary",
+                            DisplayOrder = 1,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Aged Receivables Summary",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-aged-receivables-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1052,
+                            CanCreate = false,
+                            Code = "r-aged-receivables-detail",
+                            DisplayOrder = 2,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Aged Receivables Detail",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-aged-receivables-detail",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1053,
+                            CanCreate = false,
+                            Code = "r-receivable-invoice-summary",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Receivable Invoice Summary",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-receivable-invoice-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1054,
+                            CanCreate = false,
+                            Code = "r-receivable-invoice-detail",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Receivable Invoice Detail",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-receivable-invoice-detail",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1055,
+                            CanCreate = false,
+                            Code = "r-invoice-track-report",
+                            DisplayOrder = 5,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Invoice Track Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-invoice-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1056,
+                            CanCreate = false,
+                            Code = "r-invoice-dn-payment-collection-report",
+                            DisplayOrder = 6,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Invoice/DN Payment Collection Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-invoice-dn-payment-collection-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1057,
+                            CanCreate = false,
+                            Code = "r-sales-analysis",
+                            DisplayOrder = 7,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Sales Analysis",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-sales-analysis",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1058,
+                            CanCreate = false,
+                            Code = "r-sales-analysis-detail-report",
+                            DisplayOrder = 8,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Sales Analysis Detail Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-sales-analysis-detail-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1059,
+                            CanCreate = false,
+                            Code = "r-sales-order-track-report",
+                            DisplayOrder = 9,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Sales Order Track Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-sales-order-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1060,
+                            CanCreate = false,
+                            Code = "r-quotation-track-report",
+                            DisplayOrder = 10,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Quotation Track Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-quotation-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1061,
+                            CanCreate = false,
+                            Code = "r-delivery-order-track-report",
+                            DisplayOrder = 11,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Delivery Order Track Report",
+                            ParentId = 110,
+                            RoutePath = "/reports/r-delivery-order-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 111,
+                            CanCreate = false,
+                            Code = "reports-g5",
+                            DisplayOrder = 5,
+                            Icon = "package",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Purchase Report",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1062,
+                            CanCreate = false,
+                            Code = "r-aged-payables-summary",
+                            DisplayOrder = 1,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Aged Payables Summary",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-aged-payables-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1063,
+                            CanCreate = false,
+                            Code = "r-aged-payables-details",
+                            DisplayOrder = 2,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Aged Payables Details",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-aged-payables-details",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1064,
+                            CanCreate = false,
+                            Code = "r-payable-invoice-summary",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Payable Invoice Summary",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-payable-invoice-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1065,
+                            CanCreate = false,
+                            Code = "r-payable-invoice-detail",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Payable Invoice Detail",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-payable-invoice-detail",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1066,
+                            CanCreate = false,
+                            Code = "r-bills-track-report",
+                            DisplayOrder = 5,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Bills Track Report",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-bills-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1067,
+                            CanCreate = false,
+                            Code = "r-bill-dn-payment-report",
+                            DisplayOrder = 6,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Bill/DN Payment Report",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-bill-dn-payment-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1068,
+                            CanCreate = false,
+                            Code = "r-purchase-analysis",
+                            DisplayOrder = 7,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Purchase Analysis",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-purchase-analysis",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1069,
+                            CanCreate = false,
+                            Code = "r-purchase-order-track-report",
+                            DisplayOrder = 8,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Purchase Order Track Report",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-purchase-order-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1070,
+                            CanCreate = false,
+                            Code = "r-purchase-receive-order-details",
+                            DisplayOrder = 9,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Purchase Receive Order Details",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-purchase-receive-order-details",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1071,
+                            CanCreate = false,
+                            Code = "r-receive-order-track-report",
+                            DisplayOrder = 10,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Receive Order Track Report",
+                            ParentId = 111,
+                            RoutePath = "/reports/r-receive-order-track-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 112,
+                            CanCreate = false,
+                            Code = "reports-g6",
+                            DisplayOrder = 6,
+                            Icon = "boxes",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Inventory Report",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1072,
+                            CanCreate = false,
+                            Code = "r-inventory-item-summary",
+                            DisplayOrder = 1,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Inventory Item Summary",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-inventory-item-summary",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1073,
+                            CanCreate = false,
+                            Code = "r-inventory-item-detail",
+                            DisplayOrder = 2,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Inventory Item Detail",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-inventory-item-detail",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1074,
+                            CanCreate = false,
+                            Code = "r-inventory-item-list",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Inventory Item List",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-inventory-item-list",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1075,
+                            CanCreate = false,
+                            Code = "r-inventory-aging-report",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Inventory Aging Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-inventory-aging-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1076,
+                            CanCreate = false,
+                            Code = "r-batch-tracking-status-report",
+                            DisplayOrder = 5,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Batch Tracking Status Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-batch-tracking-status-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1077,
+                            CanCreate = false,
+                            Code = "r-batch-tracking-detail-report",
+                            DisplayOrder = 6,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Batch Tracking Detail Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-batch-tracking-detail-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1078,
+                            CanCreate = false,
+                            Code = "r-serial-tracking-status-report",
+                            DisplayOrder = 7,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Serial Tracking Status Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-serial-tracking-status-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1079,
+                            CanCreate = false,
+                            Code = "r-serial-tracking-detail-report",
+                            DisplayOrder = 8,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Serial Tracking Detail Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-serial-tracking-detail-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1080,
+                            CanCreate = false,
+                            Code = "r-warehouse-tracking-status-report",
+                            DisplayOrder = 9,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Warehouse Tracking Status Report",
+                            ParentId = 112,
+                            RoutePath = "/reports/r-warehouse-tracking-status-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 113,
+                            CanCreate = false,
+                            Code = "reports-g7",
+                            DisplayOrder = 7,
+                            Icon = "building-2",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Fixed Asset",
+                            ParentId = 8,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1081,
+                            CanCreate = false,
+                            Code = "r-fixed-assets-schedule",
+                            DisplayOrder = 1,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Fixed Assets Schedule",
+                            ParentId = 113,
+                            RoutePath = "/reports/r-fixed-assets-schedule",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1082,
+                            CanCreate = false,
+                            Code = "r-depreciation-schedule",
+                            DisplayOrder = 2,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Depreciation Schedule",
+                            ParentId = 113,
+                            RoutePath = "/reports/r-depreciation-schedule",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1083,
+                            CanCreate = false,
+                            Code = "r-disposal-schedule-report",
+                            DisplayOrder = 3,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Disposal Schedule Report",
+                            ParentId = 113,
+                            RoutePath = "/reports/r-disposal-schedule-report",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1084,
+                            CanCreate = false,
+                            Code = "r-fixed-asset-reconciliation",
+                            DisplayOrder = 4,
+                            Icon = "chart-column",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "reports",
+                            Name = "Fixed Asset Reconciliation",
+                            ParentId = 113,
+                            RoutePath = "/reports/r-fixed-asset-reconciliation",
+                            Type = "Item",
                             Version = 0u
                         },
                         new
                         {
                             MenuId = 9,
+                            CanCreate = false,
                             Code = "settings",
                             DisplayOrder = 9,
                             Icon = "settings",
                             IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
                             Name = "Settings",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 114,
+                            CanCreate = false,
+                            Code = "settings-g1",
+                            DisplayOrder = 1,
+                            Icon = "building-2",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Organisation",
+                            ParentId = 9,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1085,
+                            CanCreate = false,
+                            Code = "org",
+                            DisplayOrder = 1,
+                            Icon = "building-2",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Organisation profile",
+                            ParentId = 114,
+                            RoutePath = "/settings/organization",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1086,
+                            CanCreate = false,
+                            Code = "brn",
+                            DisplayOrder = 2,
+                            Icon = "git-fork",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Branches",
+                            ParentId = 114,
+                            RoutePath = "/settings/branches",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1087,
+                            CanCreate = false,
+                            Code = "cfg",
+                            DisplayOrder = 3,
+                            Icon = "sliders-horizontal",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Configuration",
+                            ParentId = 114,
+                            RoutePath = "/settings/configuration",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1088,
+                            CanCreate = false,
+                            Code = "ser",
+                            DisplayOrder = 4,
+                            Icon = "hash",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Number series",
+                            ParentId = 114,
+                            RoutePath = "/settings/numbering",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1089,
+                            CanCreate = false,
+                            Code = "ocu",
+                            DisplayOrder = 5,
+                            Icon = "coins",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Organisation currencies",
+                            ParentId = 114,
+                            RoutePath = "/settings/currencies",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1090,
+                            CanCreate = false,
+                            Code = "smtp",
+                            DisplayOrder = 6,
+                            Icon = "mail",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Email and SMTP",
+                            ParentId = 114,
+                            RoutePath = "/settings/email",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1091,
+                            CanCreate = false,
+                            Code = "lic",
+                            DisplayOrder = 7,
+                            Icon = "badge-check",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Licences",
+                            ParentId = 114,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1092,
+                            CanCreate = false,
+                            Code = "cpr",
+                            DisplayOrder = 8,
+                            Icon = "user-cog",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Contact person roles",
+                            ParentId = 114,
+                            RoutePath = "/settings/contact-person-roles",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 115,
+                            CanCreate = false,
+                            Code = "settings-g2",
+                            DisplayOrder = 2,
+                            Icon = "users-round",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Users and access",
+                            ParentId = 9,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1093,
+                            CanCreate = false,
+                            Code = "usr",
+                            DisplayOrder = 1,
+                            Icon = "users-round",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Users",
+                            ParentId = 115,
+                            RoutePath = "/settings/users",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1094,
+                            CanCreate = false,
+                            Code = "rol",
+                            DisplayOrder = 2,
+                            Icon = "shield",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Roles",
+                            ParentId = 115,
+                            RoutePath = "/settings/roles",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1095,
+                            CanCreate = false,
+                            Code = "prm",
+                            DisplayOrder = 3,
+                            Icon = "key-round",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Permissions",
+                            ParentId = 115,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1096,
+                            CanCreate = false,
+                            Code = "uor",
+                            DisplayOrder = 4,
+                            Icon = "user-check",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "User organisation roles",
+                            ParentId = 115,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1097,
+                            CanCreate = false,
+                            Code = "log",
+                            DisplayOrder = 5,
+                            Icon = "history",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Login history",
+                            ParentId = 115,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 116,
+                            CanCreate = false,
+                            Code = "settings-g3",
+                            DisplayOrder = 3,
+                            Icon = "book-open",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Accounting",
+                            ParentId = 9,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1098,
+                            CanCreate = false,
+                            Code = "tax",
+                            DisplayOrder = 1,
+                            Icon = "percent",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Tax master",
+                            ParentId = 116,
+                            RoutePath = "/settings/tax",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1099,
+                            CanCreate = false,
+                            Code = "ptm",
+                            DisplayOrder = 2,
+                            Icon = "calendar-clock",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Payment terms",
+                            ParentId = 116,
+                            RoutePath = "/settings/payment-terms",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1100,
+                            CanCreate = false,
+                            Code = "lck",
+                            DisplayOrder = 3,
+                            Icon = "lock",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Period locks",
+                            ParentId = 116,
+                            RoutePath = "/settings/closing-dates",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 117,
+                            CanCreate = false,
+                            Code = "settings-g4",
+                            DisplayOrder = 4,
+                            Icon = "printer",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Name = "Print templates",
+                            ParentId = 9,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1101,
+                            CanCreate = false,
+                            Code = "pt-qot",
+                            DisplayOrder = 1,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Quote",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1102,
+                            CanCreate = false,
+                            Code = "pt-sor",
+                            DisplayOrder = 2,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Sales order",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1103,
+                            CanCreate = false,
+                            Code = "pt-dlc",
+                            DisplayOrder = 3,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Delivery challan",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1104,
+                            CanCreate = false,
+                            Code = "pt-inv",
+                            DisplayOrder = 4,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Sales invoice",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1105,
+                            CanCreate = false,
+                            Code = "pt-crn",
+                            DisplayOrder = 5,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Credit note",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1106,
+                            CanCreate = false,
+                            Code = "pt-por",
+                            DisplayOrder = 6,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Purchase order",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1107,
+                            CanCreate = false,
+                            Code = "pt-grn",
+                            DisplayOrder = 7,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Goods receipt",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1108,
+                            CanCreate = false,
+                            Code = "pt-bil",
+                            DisplayOrder = 8,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Bill",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1109,
+                            CanCreate = false,
+                            Code = "pt-dbn",
+                            DisplayOrder = 9,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Debit note",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1110,
+                            CanCreate = false,
+                            Code = "pt-rec",
+                            DisplayOrder = 10,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Receipt voucher",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1111,
+                            CanCreate = false,
+                            Code = "pt-pay",
+                            DisplayOrder = 11,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Payment voucher",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1112,
+                            CanCreate = false,
+                            Code = "pt-jrn",
+                            DisplayOrder = 12,
+                            Icon = "printer",
+                            IsActive = false,
+                            IsSearchable = false,
+                            Module = "settings",
+                            Name = "Journal voucher",
+                            ParentId = 117,
+                            Type = "Item",
+                            Version = 0u
+                        });
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.MenuPermission", b =>
+                {
+                    b.Property<int>("MenuPermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("MenuPermissionId"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("MenuId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ModifiedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("PermissionCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("MenuPermissionId");
+
+                    b.HasIndex("MenuId", "PermissionCode")
+                        .IsUnique();
+
+                    b.ToTable("MenuPermissions", "mst");
+
+                    b.HasData(
+                        new
+                        {
+                            MenuPermissionId = 1,
+                            Action = "view",
+                            MenuId = 1001,
+                            Module = "contacts",
+                            PermissionCode = "contacts.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 2,
+                            Action = "create",
+                            MenuId = 1001,
+                            Module = "contacts",
+                            PermissionCode = "contacts.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 3,
+                            Action = "edit",
+                            MenuId = 1001,
+                            Module = "contacts",
+                            PermissionCode = "contacts.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 4,
+                            Action = "delete",
+                            MenuId = 1001,
+                            Module = "contacts",
+                            PermissionCode = "contacts.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 5,
+                            Action = "export",
+                            MenuId = 1001,
+                            Module = "contacts",
+                            PermissionCode = "contacts.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 6,
+                            Action = "view",
+                            MenuId = 1002,
+                            Module = "contacts",
+                            PermissionCode = "contacts.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 7,
+                            Action = "create",
+                            MenuId = 1002,
+                            Module = "contacts",
+                            PermissionCode = "contacts.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 8,
+                            Action = "edit",
+                            MenuId = 1002,
+                            Module = "contacts",
+                            PermissionCode = "contacts.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 9,
+                            Action = "delete",
+                            MenuId = 1002,
+                            Module = "contacts",
+                            PermissionCode = "contacts.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 10,
+                            Action = "export",
+                            MenuId = 1002,
+                            Module = "contacts",
+                            PermissionCode = "contacts.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 11,
+                            Action = "view",
+                            MenuId = 1003,
+                            Module = "contacts",
+                            PermissionCode = "contacts.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 12,
+                            Action = "create",
+                            MenuId = 1003,
+                            Module = "contacts",
+                            PermissionCode = "contacts.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 13,
+                            Action = "edit",
+                            MenuId = 1003,
+                            Module = "contacts",
+                            PermissionCode = "contacts.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 14,
+                            Action = "delete",
+                            MenuId = 1003,
+                            Module = "contacts",
+                            PermissionCode = "contacts.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 15,
+                            Action = "export",
+                            MenuId = 1003,
+                            Module = "contacts",
+                            PermissionCode = "contacts.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 16,
+                            Action = "view",
+                            MenuId = 1004,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 17,
+                            Action = "create",
+                            MenuId = 1004,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 18,
+                            Action = "edit",
+                            MenuId = 1004,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 19,
+                            Action = "delete",
+                            MenuId = 1004,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 20,
+                            Action = "export",
+                            MenuId = 1004,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 21,
+                            Action = "view",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 22,
+                            Action = "create",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 23,
+                            Action = "edit",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 24,
+                            Action = "delete",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 25,
+                            Action = "print",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 26,
+                            Action = "export",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 27,
+                            Action = "void",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 28,
+                            Action = "approve",
+                            MenuId = 1005,
+                            Module = "inventory",
+                            PermissionCode = "inventory.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 29,
+                            Action = "view",
+                            MenuId = 1006,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 30,
+                            Action = "create",
+                            MenuId = 1006,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 31,
+                            Action = "edit",
+                            MenuId = 1006,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 32,
+                            Action = "delete",
+                            MenuId = 1006,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 33,
+                            Action = "export",
+                            MenuId = 1006,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 34,
+                            Action = "view",
+                            MenuId = 1007,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 35,
+                            Action = "create",
+                            MenuId = 1007,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 36,
+                            Action = "edit",
+                            MenuId = 1007,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 37,
+                            Action = "delete",
+                            MenuId = 1007,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 38,
+                            Action = "export",
+                            MenuId = 1007,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 39,
+                            Action = "view",
+                            MenuId = 1008,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 40,
+                            Action = "create",
+                            MenuId = 1008,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 41,
+                            Action = "edit",
+                            MenuId = 1008,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 42,
+                            Action = "delete",
+                            MenuId = 1008,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 43,
+                            Action = "view",
+                            MenuId = 1009,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 44,
+                            Action = "create",
+                            MenuId = 1009,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 45,
+                            Action = "edit",
+                            MenuId = 1009,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 46,
+                            Action = "delete",
+                            MenuId = 1009,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 47,
+                            Action = "export",
+                            MenuId = 1009,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 48,
+                            Action = "view",
+                            MenuId = 1010,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 49,
+                            Action = "create",
+                            MenuId = 1010,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 50,
+                            Action = "edit",
+                            MenuId = 1010,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 51,
+                            Action = "delete",
+                            MenuId = 1010,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 52,
+                            Action = "view",
+                            MenuId = 1011,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 53,
+                            Action = "create",
+                            MenuId = 1011,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 54,
+                            Action = "edit",
+                            MenuId = 1011,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 55,
+                            Action = "delete",
+                            MenuId = 1011,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 56,
+                            Action = "view",
+                            MenuId = 1012,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 57,
+                            Action = "export",
+                            MenuId = 1012,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 58,
+                            Action = "view",
+                            MenuId = 1013,
+                            Module = "inventory",
+                            PermissionCode = "inventory.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 59,
+                            Action = "create",
+                            MenuId = 1013,
+                            Module = "inventory",
+                            PermissionCode = "inventory.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 60,
+                            Action = "edit",
+                            MenuId = 1013,
+                            Module = "inventory",
+                            PermissionCode = "inventory.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 61,
+                            Action = "delete",
+                            MenuId = 1013,
+                            Module = "inventory",
+                            PermissionCode = "inventory.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 62,
+                            Action = "export",
+                            MenuId = 1013,
+                            Module = "inventory",
+                            PermissionCode = "inventory.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 63,
+                            Action = "view",
+                            MenuId = 1014,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 64,
+                            Action = "export",
+                            MenuId = 1014,
+                            Module = "purchase",
+                            PermissionCode = "purchase.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 65,
+                            Action = "view",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 66,
+                            Action = "create",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 67,
+                            Action = "edit",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 68,
+                            Action = "delete",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 69,
+                            Action = "print",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 70,
+                            Action = "export",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 71,
+                            Action = "void",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 72,
+                            Action = "approve",
+                            MenuId = 1015,
+                            Module = "purchase",
+                            PermissionCode = "purchase.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 73,
+                            Action = "view",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 74,
+                            Action = "create",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 75,
+                            Action = "edit",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 76,
+                            Action = "delete",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 77,
+                            Action = "print",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 78,
+                            Action = "export",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 79,
+                            Action = "void",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 80,
+                            Action = "approve",
+                            MenuId = 1016,
+                            Module = "purchase",
+                            PermissionCode = "purchase.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 81,
+                            Action = "view",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 82,
+                            Action = "create",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 83,
+                            Action = "edit",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 84,
+                            Action = "delete",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 85,
+                            Action = "print",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 86,
+                            Action = "export",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 87,
+                            Action = "void",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 88,
+                            Action = "approve",
+                            MenuId = 1017,
+                            Module = "purchase",
+                            PermissionCode = "purchase.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 89,
+                            Action = "view",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 90,
+                            Action = "create",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 91,
+                            Action = "edit",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 92,
+                            Action = "delete",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 93,
+                            Action = "print",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 94,
+                            Action = "export",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 95,
+                            Action = "void",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 96,
+                            Action = "approve",
+                            MenuId = 1018,
+                            Module = "purchase",
+                            PermissionCode = "purchase.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 97,
+                            Action = "view",
+                            MenuId = 1019,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 98,
+                            Action = "export",
+                            MenuId = 1019,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 99,
+                            Action = "view",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 100,
+                            Action = "create",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 101,
+                            Action = "edit",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 102,
+                            Action = "delete",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 103,
+                            Action = "print",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 104,
+                            Action = "export",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 105,
+                            Action = "void",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 106,
+                            Action = "approve",
+                            MenuId = 1020,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 107,
+                            Action = "view",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 108,
+                            Action = "create",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 109,
+                            Action = "edit",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 110,
+                            Action = "delete",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 111,
+                            Action = "print",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 112,
+                            Action = "export",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 113,
+                            Action = "void",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 114,
+                            Action = "approve",
+                            MenuId = 1021,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 115,
+                            Action = "view",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 116,
+                            Action = "create",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 117,
+                            Action = "edit",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 118,
+                            Action = "delete",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 119,
+                            Action = "print",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 120,
+                            Action = "export",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 121,
+                            Action = "void",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 122,
+                            Action = "approve",
+                            MenuId = 1022,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 123,
+                            Action = "view",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 124,
+                            Action = "create",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 125,
+                            Action = "edit",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 126,
+                            Action = "delete",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 127,
+                            Action = "print",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 128,
+                            Action = "export",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 129,
+                            Action = "void",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 130,
+                            Action = "approve",
+                            MenuId = 1023,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 131,
+                            Action = "view",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 132,
+                            Action = "create",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 133,
+                            Action = "edit",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 134,
+                            Action = "delete",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 135,
+                            Action = "print",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 136,
+                            Action = "export",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 137,
+                            Action = "void",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 138,
+                            Action = "approve",
+                            MenuId = 1024,
+                            Module = "sales",
+                            PermissionCode = "sales.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 139,
+                            Action = "view",
+                            MenuId = 1025,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 140,
+                            Action = "export",
+                            MenuId = 1025,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 141,
+                            Action = "view",
+                            MenuId = 1026,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 142,
+                            Action = "export",
+                            MenuId = 1026,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 143,
+                            Action = "view",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 144,
+                            Action = "create",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 145,
+                            Action = "edit",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 146,
+                            Action = "delete",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 147,
+                            Action = "print",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 148,
+                            Action = "export",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 149,
+                            Action = "void",
+                            MenuId = 1027,
+                            Module = "banking",
+                            PermissionCode = "banking.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 150,
+                            Action = "view",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 151,
+                            Action = "create",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 152,
+                            Action = "edit",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 153,
+                            Action = "delete",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 154,
+                            Action = "print",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 155,
+                            Action = "export",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 156,
+                            Action = "void",
+                            MenuId = 1028,
+                            Module = "banking",
+                            PermissionCode = "banking.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 157,
+                            Action = "view",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 158,
+                            Action = "create",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 159,
+                            Action = "edit",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 160,
+                            Action = "delete",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 161,
+                            Action = "print",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 162,
+                            Action = "export",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 163,
+                            Action = "void",
+                            MenuId = 1029,
+                            Module = "banking",
+                            PermissionCode = "banking.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 164,
+                            Action = "view",
+                            MenuId = 1030,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 165,
+                            Action = "export",
+                            MenuId = 1030,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 166,
+                            Action = "view",
+                            MenuId = 1031,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 167,
+                            Action = "export",
+                            MenuId = 1031,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 168,
+                            Action = "view",
+                            MenuId = 1032,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 169,
+                            Action = "create",
+                            MenuId = 1032,
+                            Module = "banking",
+                            PermissionCode = "banking.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 170,
+                            Action = "edit",
+                            MenuId = 1032,
+                            Module = "banking",
+                            PermissionCode = "banking.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 171,
+                            Action = "delete",
+                            MenuId = 1032,
+                            Module = "banking",
+                            PermissionCode = "banking.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 172,
+                            Action = "export",
+                            MenuId = 1032,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 173,
+                            Action = "view",
+                            MenuId = 1033,
+                            Module = "banking",
+                            PermissionCode = "banking.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 174,
+                            Action = "create",
+                            MenuId = 1033,
+                            Module = "banking",
+                            PermissionCode = "banking.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 175,
+                            Action = "edit",
+                            MenuId = 1033,
+                            Module = "banking",
+                            PermissionCode = "banking.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 176,
+                            Action = "delete",
+                            MenuId = 1033,
+                            Module = "banking",
+                            PermissionCode = "banking.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 177,
+                            Action = "export",
+                            MenuId = 1033,
+                            Module = "banking",
+                            PermissionCode = "banking.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 178,
+                            Action = "view",
+                            MenuId = 1034,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 179,
+                            Action = "create",
+                            MenuId = 1034,
+                            Module = "accounting",
+                            PermissionCode = "accounting.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 180,
+                            Action = "edit",
+                            MenuId = 1034,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 181,
+                            Action = "delete",
+                            MenuId = 1034,
+                            Module = "accounting",
+                            PermissionCode = "accounting.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 182,
+                            Action = "export",
+                            MenuId = 1034,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 183,
+                            Action = "view",
+                            MenuId = 1035,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 184,
+                            Action = "create",
+                            MenuId = 1035,
+                            Module = "accounting",
+                            PermissionCode = "accounting.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 185,
+                            Action = "edit",
+                            MenuId = 1035,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 186,
+                            Action = "delete",
+                            MenuId = 1035,
+                            Module = "accounting",
+                            PermissionCode = "accounting.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 187,
+                            Action = "export",
+                            MenuId = 1035,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 188,
+                            Action = "view",
+                            MenuId = 1036,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 189,
+                            Action = "export",
+                            MenuId = 1036,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 190,
+                            Action = "view",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 191,
+                            Action = "create",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 192,
+                            Action = "edit",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 193,
+                            Action = "delete",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 194,
+                            Action = "print",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 195,
+                            Action = "export",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 196,
+                            Action = "void",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 197,
+                            Action = "approve",
+                            MenuId = 1037,
+                            Module = "accounting",
+                            PermissionCode = "accounting.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 198,
+                            Action = "view",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 199,
+                            Action = "create",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 200,
+                            Action = "edit",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 201,
+                            Action = "delete",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 202,
+                            Action = "print",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.print",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 203,
+                            Action = "export",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 204,
+                            Action = "void",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.void",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 205,
+                            Action = "approve",
+                            MenuId = 1038,
+                            Module = "accounting",
+                            PermissionCode = "accounting.approve",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 206,
+                            Action = "view",
+                            MenuId = 1039,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 207,
+                            Action = "export",
+                            MenuId = 1039,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 208,
+                            Action = "view",
+                            MenuId = 1040,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 209,
+                            Action = "export",
+                            MenuId = 1040,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 210,
+                            Action = "view",
+                            MenuId = 1041,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 211,
+                            Action = "export",
+                            MenuId = 1041,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 212,
+                            Action = "view",
+                            MenuId = 1042,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 213,
+                            Action = "export",
+                            MenuId = 1042,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 214,
+                            Action = "view",
+                            MenuId = 1043,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 215,
+                            Action = "export",
+                            MenuId = 1043,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 216,
+                            Action = "view",
+                            MenuId = 1044,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 217,
+                            Action = "export",
+                            MenuId = 1044,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 218,
+                            Action = "view",
+                            MenuId = 1045,
+                            Module = "accounting",
+                            PermissionCode = "accounting.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 219,
+                            Action = "export",
+                            MenuId = 1045,
+                            Module = "accounting",
+                            PermissionCode = "accounting.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 220,
+                            Action = "view",
+                            MenuId = 1046,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 221,
+                            Action = "export",
+                            MenuId = 1046,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 222,
+                            Action = "view",
+                            MenuId = 1047,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 223,
+                            Action = "export",
+                            MenuId = 1047,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 224,
+                            Action = "view",
+                            MenuId = 1048,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 225,
+                            Action = "export",
+                            MenuId = 1048,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 226,
+                            Action = "view",
+                            MenuId = 1049,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 227,
+                            Action = "export",
+                            MenuId = 1049,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 228,
+                            Action = "view",
+                            MenuId = 1050,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 229,
+                            Action = "export",
+                            MenuId = 1050,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 230,
+                            Action = "view",
+                            MenuId = 1051,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 231,
+                            Action = "export",
+                            MenuId = 1051,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 232,
+                            Action = "view",
+                            MenuId = 1052,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 233,
+                            Action = "export",
+                            MenuId = 1052,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 234,
+                            Action = "view",
+                            MenuId = 1053,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 235,
+                            Action = "export",
+                            MenuId = 1053,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 236,
+                            Action = "view",
+                            MenuId = 1054,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 237,
+                            Action = "export",
+                            MenuId = 1054,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 238,
+                            Action = "view",
+                            MenuId = 1055,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 239,
+                            Action = "export",
+                            MenuId = 1055,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 240,
+                            Action = "view",
+                            MenuId = 1056,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 241,
+                            Action = "export",
+                            MenuId = 1056,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 242,
+                            Action = "view",
+                            MenuId = 1057,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 243,
+                            Action = "export",
+                            MenuId = 1057,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 244,
+                            Action = "view",
+                            MenuId = 1058,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 245,
+                            Action = "export",
+                            MenuId = 1058,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 246,
+                            Action = "view",
+                            MenuId = 1059,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 247,
+                            Action = "export",
+                            MenuId = 1059,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 248,
+                            Action = "view",
+                            MenuId = 1060,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 249,
+                            Action = "export",
+                            MenuId = 1060,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 250,
+                            Action = "view",
+                            MenuId = 1061,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 251,
+                            Action = "export",
+                            MenuId = 1061,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 252,
+                            Action = "view",
+                            MenuId = 1062,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 253,
+                            Action = "export",
+                            MenuId = 1062,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 254,
+                            Action = "view",
+                            MenuId = 1063,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 255,
+                            Action = "export",
+                            MenuId = 1063,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 256,
+                            Action = "view",
+                            MenuId = 1064,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 257,
+                            Action = "export",
+                            MenuId = 1064,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 258,
+                            Action = "view",
+                            MenuId = 1065,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 259,
+                            Action = "export",
+                            MenuId = 1065,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 260,
+                            Action = "view",
+                            MenuId = 1066,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 261,
+                            Action = "export",
+                            MenuId = 1066,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 262,
+                            Action = "view",
+                            MenuId = 1067,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 263,
+                            Action = "export",
+                            MenuId = 1067,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 264,
+                            Action = "view",
+                            MenuId = 1068,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 265,
+                            Action = "export",
+                            MenuId = 1068,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 266,
+                            Action = "view",
+                            MenuId = 1069,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 267,
+                            Action = "export",
+                            MenuId = 1069,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 268,
+                            Action = "view",
+                            MenuId = 1070,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 269,
+                            Action = "export",
+                            MenuId = 1070,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 270,
+                            Action = "view",
+                            MenuId = 1071,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 271,
+                            Action = "export",
+                            MenuId = 1071,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 272,
+                            Action = "view",
+                            MenuId = 1072,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 273,
+                            Action = "export",
+                            MenuId = 1072,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 274,
+                            Action = "view",
+                            MenuId = 1073,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 275,
+                            Action = "export",
+                            MenuId = 1073,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 276,
+                            Action = "view",
+                            MenuId = 1074,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 277,
+                            Action = "export",
+                            MenuId = 1074,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 278,
+                            Action = "view",
+                            MenuId = 1075,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 279,
+                            Action = "export",
+                            MenuId = 1075,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 280,
+                            Action = "view",
+                            MenuId = 1076,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 281,
+                            Action = "export",
+                            MenuId = 1076,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 282,
+                            Action = "view",
+                            MenuId = 1077,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 283,
+                            Action = "export",
+                            MenuId = 1077,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 284,
+                            Action = "view",
+                            MenuId = 1078,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 285,
+                            Action = "export",
+                            MenuId = 1078,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 286,
+                            Action = "view",
+                            MenuId = 1079,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 287,
+                            Action = "export",
+                            MenuId = 1079,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 288,
+                            Action = "view",
+                            MenuId = 1080,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 289,
+                            Action = "export",
+                            MenuId = 1080,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 290,
+                            Action = "view",
+                            MenuId = 1081,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 291,
+                            Action = "export",
+                            MenuId = 1081,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 292,
+                            Action = "view",
+                            MenuId = 1082,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 293,
+                            Action = "export",
+                            MenuId = 1082,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 294,
+                            Action = "view",
+                            MenuId = 1083,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 295,
+                            Action = "export",
+                            MenuId = 1083,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 296,
+                            Action = "view",
+                            MenuId = 1084,
+                            Module = "reports",
+                            PermissionCode = "reports.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 297,
+                            Action = "export",
+                            MenuId = 1084,
+                            Module = "reports",
+                            PermissionCode = "reports.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 298,
+                            Action = "view",
+                            MenuId = 1085,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 299,
+                            Action = "create",
+                            MenuId = 1085,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 300,
+                            Action = "edit",
+                            MenuId = 1085,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 301,
+                            Action = "delete",
+                            MenuId = 1085,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 302,
+                            Action = "view",
+                            MenuId = 1086,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 303,
+                            Action = "create",
+                            MenuId = 1086,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 304,
+                            Action = "edit",
+                            MenuId = 1086,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 305,
+                            Action = "delete",
+                            MenuId = 1086,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 306,
+                            Action = "view",
+                            MenuId = 1087,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 307,
+                            Action = "create",
+                            MenuId = 1087,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 308,
+                            Action = "edit",
+                            MenuId = 1087,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 309,
+                            Action = "delete",
+                            MenuId = 1087,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 310,
+                            Action = "view",
+                            MenuId = 1088,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 311,
+                            Action = "create",
+                            MenuId = 1088,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 312,
+                            Action = "edit",
+                            MenuId = 1088,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 313,
+                            Action = "delete",
+                            MenuId = 1088,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 314,
+                            Action = "view",
+                            MenuId = 1089,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 315,
+                            Action = "create",
+                            MenuId = 1089,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 316,
+                            Action = "edit",
+                            MenuId = 1089,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 317,
+                            Action = "delete",
+                            MenuId = 1089,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 318,
+                            Action = "view",
+                            MenuId = 1090,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 319,
+                            Action = "create",
+                            MenuId = 1090,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 320,
+                            Action = "edit",
+                            MenuId = 1090,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 321,
+                            Action = "delete",
+                            MenuId = 1090,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 322,
+                            Action = "view",
+                            MenuId = 1091,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 323,
+                            Action = "view",
+                            MenuId = 1092,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 324,
+                            Action = "create",
+                            MenuId = 1092,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 325,
+                            Action = "edit",
+                            MenuId = 1092,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 326,
+                            Action = "delete",
+                            MenuId = 1092,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 327,
+                            Action = "view",
+                            MenuId = 1093,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 328,
+                            Action = "create",
+                            MenuId = 1093,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 329,
+                            Action = "edit",
+                            MenuId = 1093,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 330,
+                            Action = "delete",
+                            MenuId = 1093,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 331,
+                            Action = "view",
+                            MenuId = 1094,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 332,
+                            Action = "create",
+                            MenuId = 1094,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 333,
+                            Action = "edit",
+                            MenuId = 1094,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 334,
+                            Action = "delete",
+                            MenuId = 1094,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 335,
+                            Action = "view",
+                            MenuId = 1095,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 336,
+                            Action = "create",
+                            MenuId = 1095,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 337,
+                            Action = "edit",
+                            MenuId = 1095,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 338,
+                            Action = "delete",
+                            MenuId = 1095,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 339,
+                            Action = "view",
+                            MenuId = 1096,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 340,
+                            Action = "create",
+                            MenuId = 1096,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 341,
+                            Action = "edit",
+                            MenuId = 1096,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 342,
+                            Action = "delete",
+                            MenuId = 1096,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 343,
+                            Action = "view",
+                            MenuId = 1097,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 344,
+                            Action = "view",
+                            MenuId = 1098,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 345,
+                            Action = "create",
+                            MenuId = 1098,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 346,
+                            Action = "edit",
+                            MenuId = 1098,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 347,
+                            Action = "delete",
+                            MenuId = 1098,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 348,
+                            Action = "view",
+                            MenuId = 1099,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 349,
+                            Action = "create",
+                            MenuId = 1099,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 350,
+                            Action = "edit",
+                            MenuId = 1099,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 351,
+                            Action = "delete",
+                            MenuId = 1099,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 352,
+                            Action = "view",
+                            MenuId = 1100,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 353,
+                            Action = "create",
+                            MenuId = 1100,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 354,
+                            Action = "edit",
+                            MenuId = 1100,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 355,
+                            Action = "delete",
+                            MenuId = 1100,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 356,
+                            Action = "view",
+                            MenuId = 1101,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 357,
+                            Action = "create",
+                            MenuId = 1101,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 358,
+                            Action = "edit",
+                            MenuId = 1101,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 359,
+                            Action = "delete",
+                            MenuId = 1101,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 360,
+                            Action = "view",
+                            MenuId = 1102,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 361,
+                            Action = "create",
+                            MenuId = 1102,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 362,
+                            Action = "edit",
+                            MenuId = 1102,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 363,
+                            Action = "delete",
+                            MenuId = 1102,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 364,
+                            Action = "view",
+                            MenuId = 1103,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 365,
+                            Action = "create",
+                            MenuId = 1103,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 366,
+                            Action = "edit",
+                            MenuId = 1103,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 367,
+                            Action = "delete",
+                            MenuId = 1103,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 368,
+                            Action = "view",
+                            MenuId = 1104,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 369,
+                            Action = "create",
+                            MenuId = 1104,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 370,
+                            Action = "edit",
+                            MenuId = 1104,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 371,
+                            Action = "delete",
+                            MenuId = 1104,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 372,
+                            Action = "view",
+                            MenuId = 1105,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 373,
+                            Action = "create",
+                            MenuId = 1105,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 374,
+                            Action = "edit",
+                            MenuId = 1105,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 375,
+                            Action = "delete",
+                            MenuId = 1105,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 376,
+                            Action = "view",
+                            MenuId = 1106,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 377,
+                            Action = "create",
+                            MenuId = 1106,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 378,
+                            Action = "edit",
+                            MenuId = 1106,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 379,
+                            Action = "delete",
+                            MenuId = 1106,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 380,
+                            Action = "view",
+                            MenuId = 1107,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 381,
+                            Action = "create",
+                            MenuId = 1107,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 382,
+                            Action = "edit",
+                            MenuId = 1107,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 383,
+                            Action = "delete",
+                            MenuId = 1107,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 384,
+                            Action = "view",
+                            MenuId = 1108,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 385,
+                            Action = "create",
+                            MenuId = 1108,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 386,
+                            Action = "edit",
+                            MenuId = 1108,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 387,
+                            Action = "delete",
+                            MenuId = 1108,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 388,
+                            Action = "view",
+                            MenuId = 1109,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 389,
+                            Action = "create",
+                            MenuId = 1109,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 390,
+                            Action = "edit",
+                            MenuId = 1109,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 391,
+                            Action = "delete",
+                            MenuId = 1109,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 392,
+                            Action = "view",
+                            MenuId = 1110,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 393,
+                            Action = "create",
+                            MenuId = 1110,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 394,
+                            Action = "edit",
+                            MenuId = 1110,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 395,
+                            Action = "delete",
+                            MenuId = 1110,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 396,
+                            Action = "view",
+                            MenuId = 1111,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 397,
+                            Action = "create",
+                            MenuId = 1111,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 398,
+                            Action = "edit",
+                            MenuId = 1111,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 399,
+                            Action = "delete",
+                            MenuId = 1111,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 400,
+                            Action = "view",
+                            MenuId = 1112,
+                            Module = "settings",
+                            PermissionCode = "settings.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 401,
+                            Action = "create",
+                            MenuId = 1112,
+                            Module = "settings",
+                            PermissionCode = "settings.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 402,
+                            Action = "edit",
+                            MenuId = 1112,
+                            Module = "settings",
+                            PermissionCode = "settings.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 403,
+                            Action = "delete",
+                            MenuId = 1112,
+                            Module = "settings",
+                            PermissionCode = "settings.delete",
                             Version = 0u
                         });
                 });
@@ -10535,2271 +16300,6 @@ namespace Master.Repository.Migrations.Admin
                     b.ToTable("States", "mst");
                 });
 
-            modelBuilder.Entity("Master.Entity.TableEntities.SubMenu", b =>
-                {
-                    b.Property<int>("SubMenuId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubMenuId"));
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<int>("DisplayOrder")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Icon")
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("MenuId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("RoutePath")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("SubMenuId");
-
-                    b.HasIndex("MenuId", "Code")
-                        .IsUnique();
-
-                    b.ToTable("SubMenus", "mst");
-
-                    b.HasData(
-                        new
-                        {
-                            SubMenuId = 1,
-                            Code = "dashboard",
-                            DisplayOrder = 1,
-                            Icon = "dashboard",
-                            IsActive = true,
-                            MenuId = 1,
-                            Name = "Dashboard",
-                            RoutePath = "/dashboard",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 2,
-                            Code = "sales_invoice",
-                            DisplayOrder = 1,
-                            Icon = "receipt",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "Invoice",
-                            RoutePath = "/sales/invoices",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 3,
-                            Code = "sales_order",
-                            DisplayOrder = 2,
-                            Icon = "assignment",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "Sales Order",
-                            RoutePath = "/sales/orders",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 4,
-                            Code = "sales_quote",
-                            DisplayOrder = 3,
-                            Icon = "description",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "Quote",
-                            RoutePath = "/sales/quotes",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 5,
-                            Code = "sales_delivery_challan",
-                            DisplayOrder = 4,
-                            Icon = "local_shipping",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "Delivery Challan",
-                            RoutePath = "/sales/delivery-challans",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 6,
-                            Code = "sales_credit_note",
-                            DisplayOrder = 5,
-                            Icon = "credit_card",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "Credit Note",
-                            RoutePath = "/sales/credit-notes",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 7,
-                            Code = "sales_pos",
-                            DisplayOrder = 6,
-                            Icon = "point_of_sale",
-                            IsActive = true,
-                            MenuId = 2,
-                            Name = "POS Sale",
-                            RoutePath = "/sales/pos",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 8,
-                            Code = "purchase_bill",
-                            DisplayOrder = 1,
-                            Icon = "receipt_long",
-                            IsActive = true,
-                            MenuId = 3,
-                            Name = "Bill",
-                            RoutePath = "/purchase/bills",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 9,
-                            Code = "purchase_order",
-                            DisplayOrder = 2,
-                            Icon = "shopping_cart",
-                            IsActive = true,
-                            MenuId = 3,
-                            Name = "Purchase Order",
-                            RoutePath = "/purchase/orders",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 10,
-                            Code = "purchase_goods_receipt",
-                            DisplayOrder = 3,
-                            Icon = "inventory_2",
-                            IsActive = true,
-                            MenuId = 3,
-                            Name = "Goods Receipt",
-                            RoutePath = "/purchase/goods-receipts",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 11,
-                            Code = "purchase_debit_note",
-                            DisplayOrder = 4,
-                            Icon = "note",
-                            IsActive = true,
-                            MenuId = 3,
-                            Name = "Debit Note",
-                            RoutePath = "/purchase/debit-notes",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 12,
-                            Code = "inventory_items",
-                            DisplayOrder = 1,
-                            Icon = "inventory",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Items",
-                            RoutePath = "/inventory/items",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 13,
-                            Code = "inventory_categories",
-                            DisplayOrder = 2,
-                            Icon = "category",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Categories",
-                            RoutePath = "/inventory/categories",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 14,
-                            Code = "inventory_stock",
-                            DisplayOrder = 3,
-                            Icon = "storage",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Stock",
-                            RoutePath = "/inventory/stock",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 15,
-                            Code = "inventory_warehouses",
-                            DisplayOrder = 4,
-                            Icon = "warehouse",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Warehouses",
-                            RoutePath = "/inventory/warehouses",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 16,
-                            Code = "inventory_uom",
-                            DisplayOrder = 5,
-                            Icon = "straighten",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Units of Measure",
-                            RoutePath = "/inventory/uom",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 17,
-                            Code = "inventory_stock_adjustment",
-                            DisplayOrder = 6,
-                            Icon = "tune",
-                            IsActive = true,
-                            MenuId = 4,
-                            Name = "Stock Adjustment",
-                            RoutePath = "/inventory/stock-adjustments",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 18,
-                            Code = "accounting_chart",
-                            DisplayOrder = 1,
-                            Icon = "account_tree",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Chart of Accounts",
-                            RoutePath = "/accounting/chart-of-accounts",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 19,
-                            Code = "accounting_journal",
-                            DisplayOrder = 2,
-                            Icon = "edit_note",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Journal Entries",
-                            RoutePath = "/accounting/journals",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 20,
-                            Code = "accounting_ledger",
-                            DisplayOrder = 3,
-                            Icon = "ledger",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Account Ledger",
-                            RoutePath = "/accounting/ledger",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 21,
-                            Code = "accounting_trial_balance",
-                            DisplayOrder = 4,
-                            Icon = "balance",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Trial Balance",
-                            RoutePath = "/accounting/trial-balance",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 22,
-                            Code = "accounting_opening_balance",
-                            DisplayOrder = 5,
-                            Icon = "open_in_new",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Opening Balance",
-                            RoutePath = "/accounting/opening-balance",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 23,
-                            Code = "accounting_period_lock",
-                            DisplayOrder = 6,
-                            Icon = "lock",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Period Locks",
-                            RoutePath = "/accounting/period-locks",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 24,
-                            Code = "accounting_tax",
-                            DisplayOrder = 7,
-                            Icon = "receipt",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Tax Master",
-                            RoutePath = "/accounting/tax-master",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 25,
-                            Code = "accounting_payment_terms",
-                            DisplayOrder = 8,
-                            Icon = "schedule",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Payment Terms",
-                            RoutePath = "/accounting/payment-terms",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 26,
-                            Code = "accounting_numbering",
-                            DisplayOrder = 9,
-                            Icon = "format_list_numbered",
-                            IsActive = true,
-                            MenuId = 5,
-                            Name = "Numbering Series",
-                            RoutePath = "/accounting/numbering-series",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 27,
-                            Code = "banking_banks",
-                            DisplayOrder = 1,
-                            Icon = "business",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Banks",
-                            RoutePath = "/banking/banks",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 28,
-                            Code = "banking_accounts",
-                            DisplayOrder = 2,
-                            Icon = "account_balance",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Bank Accounts",
-                            RoutePath = "/banking/accounts",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 29,
-                            Code = "banking_spend_money",
-                            DisplayOrder = 3,
-                            Icon = "money_off",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Spend Money",
-                            RoutePath = "/banking/spend-money",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 30,
-                            Code = "banking_receive_money",
-                            DisplayOrder = 4,
-                            Icon = "monetization_on",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Receive Money",
-                            RoutePath = "/banking/receive-money",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 31,
-                            Code = "banking_transfer_money",
-                            DisplayOrder = 5,
-                            Icon = "swap_horiz",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Transfer Money",
-                            RoutePath = "/banking/transfer-money",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 32,
-                            Code = "banking_statements",
-                            DisplayOrder = 6,
-                            Icon = "description",
-                            IsActive = true,
-                            MenuId = 6,
-                            Name = "Bank Statements",
-                            RoutePath = "/banking/statements",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 33,
-                            Code = "contacts_list",
-                            DisplayOrder = 1,
-                            Icon = "person",
-                            IsActive = true,
-                            MenuId = 7,
-                            Name = "Contacts",
-                            RoutePath = "/contacts",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 34,
-                            Code = "reports_list",
-                            DisplayOrder = 1,
-                            Icon = "list",
-                            IsActive = true,
-                            MenuId = 8,
-                            Name = "Reports",
-                            RoutePath = "/reports",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 35,
-                            Code = "settings_organization",
-                            DisplayOrder = 1,
-                            Icon = "business",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Organization",
-                            RoutePath = "/settings/organization",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 36,
-                            Code = "settings_currencies",
-                            DisplayOrder = 2,
-                            Icon = "currency_exchange",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Currencies",
-                            RoutePath = "/settings/currencies",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 37,
-                            Code = "settings_smtp",
-                            DisplayOrder = 3,
-                            Icon = "email",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Email Settings",
-                            RoutePath = "/settings/email",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 38,
-                            Code = "settings_users",
-                            DisplayOrder = 4,
-                            Icon = "person_add",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Users",
-                            RoutePath = "/settings/users",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 39,
-                            Code = "settings_roles",
-                            DisplayOrder = 5,
-                            Icon = "security",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Roles",
-                            RoutePath = "/settings/roles",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 40,
-                            Code = "settings_branches",
-                            DisplayOrder = 6,
-                            Icon = "location_city",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Branches",
-                            RoutePath = "/settings/branches",
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuId = 41,
-                            Code = "settings_config",
-                            DisplayOrder = 7,
-                            Icon = "tune",
-                            IsActive = true,
-                            MenuId = 9,
-                            Name = "Configuration",
-                            RoutePath = "/settings/configuration",
-                            Version = 0u
-                        });
-                });
-
-            modelBuilder.Entity("Master.Entity.TableEntities.SubMenuPermission", b =>
-                {
-                    b.Property<int>("SubMenuPermissionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("SubMenuPermissionId"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTimeOffset?>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("ModifiedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("ModifiedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Module")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)");
-
-                    b.Property<string>("PermissionCode")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<int>("SubMenuId")
-                        .HasColumnType("integer");
-
-                    b.Property<uint>("Version")
-                        .IsConcurrencyToken()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("xid")
-                        .HasColumnName("xmin");
-
-                    b.HasKey("SubMenuPermissionId");
-
-                    b.HasIndex("SubMenuId", "PermissionCode")
-                        .IsUnique();
-
-                    b.ToTable("SubMenuPermissions", "mst");
-
-                    b.HasData(
-                        new
-                        {
-                            SubMenuPermissionId = 1,
-                            Action = "view",
-                            Module = "dashboard",
-                            PermissionCode = "dashboard.view",
-                            SubMenuId = 1,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 2,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 3,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 4,
-                            Action = "edit",
-                            Module = "sales",
-                            PermissionCode = "sales.edit",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 5,
-                            Action = "delete",
-                            Module = "sales",
-                            PermissionCode = "sales.delete",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 6,
-                            Action = "approve",
-                            Module = "sales",
-                            PermissionCode = "sales.approve",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 7,
-                            Action = "void",
-                            Module = "sales",
-                            PermissionCode = "sales.void",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 8,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 9,
-                            Action = "export",
-                            Module = "sales",
-                            PermissionCode = "sales.export",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 10,
-                            Action = "import",
-                            Module = "sales",
-                            PermissionCode = "sales.import",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 11,
-                            Action = "AllUserData",
-                            Module = "sales",
-                            PermissionCode = "sales.AllUserData",
-                            SubMenuId = 2,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 12,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 13,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 14,
-                            Action = "edit",
-                            Module = "sales",
-                            PermissionCode = "sales.edit",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 15,
-                            Action = "approve",
-                            Module = "sales",
-                            PermissionCode = "sales.approve",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 16,
-                            Action = "void",
-                            Module = "sales",
-                            PermissionCode = "sales.void",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 17,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 18,
-                            Action = "export",
-                            Module = "sales",
-                            PermissionCode = "sales.export",
-                            SubMenuId = 3,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 19,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 20,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 21,
-                            Action = "edit",
-                            Module = "sales",
-                            PermissionCode = "sales.edit",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 22,
-                            Action = "approve",
-                            Module = "sales",
-                            PermissionCode = "sales.approve",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 23,
-                            Action = "void",
-                            Module = "sales",
-                            PermissionCode = "sales.void",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 24,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 25,
-                            Action = "export",
-                            Module = "sales",
-                            PermissionCode = "sales.export",
-                            SubMenuId = 4,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 26,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 27,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 28,
-                            Action = "edit",
-                            Module = "sales",
-                            PermissionCode = "sales.edit",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 29,
-                            Action = "void",
-                            Module = "sales",
-                            PermissionCode = "sales.void",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 30,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 31,
-                            Action = "export",
-                            Module = "sales",
-                            PermissionCode = "sales.export",
-                            SubMenuId = 5,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 32,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 33,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 34,
-                            Action = "edit",
-                            Module = "sales",
-                            PermissionCode = "sales.edit",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 35,
-                            Action = "void",
-                            Module = "sales",
-                            PermissionCode = "sales.void",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 36,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 37,
-                            Action = "export",
-                            Module = "sales",
-                            PermissionCode = "sales.export",
-                            SubMenuId = 6,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 38,
-                            Action = "view",
-                            Module = "sales",
-                            PermissionCode = "sales.view",
-                            SubMenuId = 7,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 39,
-                            Action = "create",
-                            Module = "sales",
-                            PermissionCode = "sales.create",
-                            SubMenuId = 7,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 40,
-                            Action = "print",
-                            Module = "sales",
-                            PermissionCode = "sales.print",
-                            SubMenuId = 7,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 41,
-                            Action = "view",
-                            Module = "purchase",
-                            PermissionCode = "purchase.view",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 42,
-                            Action = "create",
-                            Module = "purchase",
-                            PermissionCode = "purchase.create",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 43,
-                            Action = "edit",
-                            Module = "purchase",
-                            PermissionCode = "purchase.edit",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 44,
-                            Action = "delete",
-                            Module = "purchase",
-                            PermissionCode = "purchase.delete",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 45,
-                            Action = "approve",
-                            Module = "purchase",
-                            PermissionCode = "purchase.approve",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 46,
-                            Action = "void",
-                            Module = "purchase",
-                            PermissionCode = "purchase.void",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 47,
-                            Action = "print",
-                            Module = "purchase",
-                            PermissionCode = "purchase.print",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 48,
-                            Action = "export",
-                            Module = "purchase",
-                            PermissionCode = "purchase.export",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 49,
-                            Action = "import",
-                            Module = "purchase",
-                            PermissionCode = "purchase.import",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 50,
-                            Action = "AllUserData",
-                            Module = "purchase",
-                            PermissionCode = "purchase.AllUserData",
-                            SubMenuId = 8,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 51,
-                            Action = "view",
-                            Module = "purchase",
-                            PermissionCode = "purchase.view",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 52,
-                            Action = "create",
-                            Module = "purchase",
-                            PermissionCode = "purchase.create",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 53,
-                            Action = "edit",
-                            Module = "purchase",
-                            PermissionCode = "purchase.edit",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 54,
-                            Action = "approve",
-                            Module = "purchase",
-                            PermissionCode = "purchase.approve",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 55,
-                            Action = "void",
-                            Module = "purchase",
-                            PermissionCode = "purchase.void",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 56,
-                            Action = "print",
-                            Module = "purchase",
-                            PermissionCode = "purchase.print",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 57,
-                            Action = "export",
-                            Module = "purchase",
-                            PermissionCode = "purchase.export",
-                            SubMenuId = 9,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 58,
-                            Action = "view",
-                            Module = "purchase",
-                            PermissionCode = "purchase.view",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 59,
-                            Action = "create",
-                            Module = "purchase",
-                            PermissionCode = "purchase.create",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 60,
-                            Action = "edit",
-                            Module = "purchase",
-                            PermissionCode = "purchase.edit",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 61,
-                            Action = "void",
-                            Module = "purchase",
-                            PermissionCode = "purchase.void",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 62,
-                            Action = "print",
-                            Module = "purchase",
-                            PermissionCode = "purchase.print",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 63,
-                            Action = "export",
-                            Module = "purchase",
-                            PermissionCode = "purchase.export",
-                            SubMenuId = 10,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 64,
-                            Action = "view",
-                            Module = "purchase",
-                            PermissionCode = "purchase.view",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 65,
-                            Action = "create",
-                            Module = "purchase",
-                            PermissionCode = "purchase.create",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 66,
-                            Action = "edit",
-                            Module = "purchase",
-                            PermissionCode = "purchase.edit",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 67,
-                            Action = "void",
-                            Module = "purchase",
-                            PermissionCode = "purchase.void",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 68,
-                            Action = "print",
-                            Module = "purchase",
-                            PermissionCode = "purchase.print",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 69,
-                            Action = "export",
-                            Module = "purchase",
-                            PermissionCode = "purchase.export",
-                            SubMenuId = 11,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 70,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 71,
-                            Action = "create",
-                            Module = "inventory",
-                            PermissionCode = "inventory.create",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 72,
-                            Action = "edit",
-                            Module = "inventory",
-                            PermissionCode = "inventory.edit",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 73,
-                            Action = "delete",
-                            Module = "inventory",
-                            PermissionCode = "inventory.delete",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 74,
-                            Action = "print",
-                            Module = "inventory",
-                            PermissionCode = "inventory.print",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 75,
-                            Action = "export",
-                            Module = "inventory",
-                            PermissionCode = "inventory.export",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 76,
-                            Action = "import",
-                            Module = "inventory",
-                            PermissionCode = "inventory.import",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 77,
-                            Action = "AllUserData",
-                            Module = "inventory",
-                            PermissionCode = "inventory.AllUserData",
-                            SubMenuId = 12,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 78,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 13,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 79,
-                            Action = "create",
-                            Module = "inventory",
-                            PermissionCode = "inventory.create",
-                            SubMenuId = 13,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 80,
-                            Action = "edit",
-                            Module = "inventory",
-                            PermissionCode = "inventory.edit",
-                            SubMenuId = 13,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 81,
-                            Action = "delete",
-                            Module = "inventory",
-                            PermissionCode = "inventory.delete",
-                            SubMenuId = 13,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 82,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 14,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 83,
-                            Action = "export",
-                            Module = "inventory",
-                            PermissionCode = "inventory.export",
-                            SubMenuId = 14,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 84,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 15,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 85,
-                            Action = "create",
-                            Module = "inventory",
-                            PermissionCode = "inventory.create",
-                            SubMenuId = 15,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 86,
-                            Action = "edit",
-                            Module = "inventory",
-                            PermissionCode = "inventory.edit",
-                            SubMenuId = 15,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 87,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 16,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 88,
-                            Action = "create",
-                            Module = "inventory",
-                            PermissionCode = "inventory.create",
-                            SubMenuId = 16,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 89,
-                            Action = "edit",
-                            Module = "inventory",
-                            PermissionCode = "inventory.edit",
-                            SubMenuId = 16,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 90,
-                            Action = "view",
-                            Module = "inventory",
-                            PermissionCode = "inventory.view",
-                            SubMenuId = 17,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 91,
-                            Action = "create",
-                            Module = "inventory",
-                            PermissionCode = "inventory.create",
-                            SubMenuId = 17,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 92,
-                            Action = "void",
-                            Module = "inventory",
-                            PermissionCode = "inventory.void",
-                            SubMenuId = 17,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 93,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 94,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 95,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 96,
-                            Action = "delete",
-                            Module = "accounting",
-                            PermissionCode = "accounting.delete",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 97,
-                            Action = "print",
-                            Module = "accounting",
-                            PermissionCode = "accounting.print",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 98,
-                            Action = "export",
-                            Module = "accounting",
-                            PermissionCode = "accounting.export",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 99,
-                            Action = "AllUserData",
-                            Module = "accounting",
-                            PermissionCode = "accounting.AllUserData",
-                            SubMenuId = 18,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 100,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 101,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 102,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 103,
-                            Action = "approve",
-                            Module = "accounting",
-                            PermissionCode = "accounting.approve",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 104,
-                            Action = "void",
-                            Module = "accounting",
-                            PermissionCode = "accounting.void",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 105,
-                            Action = "print",
-                            Module = "accounting",
-                            PermissionCode = "accounting.print",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 106,
-                            Action = "export",
-                            Module = "accounting",
-                            PermissionCode = "accounting.export",
-                            SubMenuId = 19,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 107,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 20,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 108,
-                            Action = "export",
-                            Module = "accounting",
-                            PermissionCode = "accounting.export",
-                            SubMenuId = 20,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 109,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 21,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 110,
-                            Action = "export",
-                            Module = "accounting",
-                            PermissionCode = "accounting.export",
-                            SubMenuId = 21,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 111,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 22,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 112,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 22,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 113,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 22,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 114,
-                            Action = "void",
-                            Module = "accounting",
-                            PermissionCode = "accounting.void",
-                            SubMenuId = 22,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 115,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 23,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 116,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 23,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 117,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 24,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 118,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 24,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 119,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 24,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 120,
-                            Action = "export",
-                            Module = "accounting",
-                            PermissionCode = "accounting.export",
-                            SubMenuId = 24,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 121,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 25,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 122,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 25,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 123,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 25,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 124,
-                            Action = "delete",
-                            Module = "accounting",
-                            PermissionCode = "accounting.delete",
-                            SubMenuId = 25,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 125,
-                            Action = "view",
-                            Module = "accounting",
-                            PermissionCode = "accounting.view",
-                            SubMenuId = 26,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 126,
-                            Action = "create",
-                            Module = "accounting",
-                            PermissionCode = "accounting.create",
-                            SubMenuId = 26,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 127,
-                            Action = "edit",
-                            Module = "accounting",
-                            PermissionCode = "accounting.edit",
-                            SubMenuId = 26,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 128,
-                            Action = "delete",
-                            Module = "accounting",
-                            PermissionCode = "accounting.delete",
-                            SubMenuId = 26,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 129,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 27,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 130,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 27,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 131,
-                            Action = "edit",
-                            Module = "banking",
-                            PermissionCode = "banking.edit",
-                            SubMenuId = 27,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 132,
-                            Action = "delete",
-                            Module = "banking",
-                            PermissionCode = "banking.delete",
-                            SubMenuId = 27,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 133,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 28,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 134,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 28,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 135,
-                            Action = "edit",
-                            Module = "banking",
-                            PermissionCode = "banking.edit",
-                            SubMenuId = 28,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 136,
-                            Action = "delete",
-                            Module = "banking",
-                            PermissionCode = "banking.delete",
-                            SubMenuId = 28,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 137,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 138,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 139,
-                            Action = "edit",
-                            Module = "banking",
-                            PermissionCode = "banking.edit",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 140,
-                            Action = "void",
-                            Module = "banking",
-                            PermissionCode = "banking.void",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 141,
-                            Action = "print",
-                            Module = "banking",
-                            PermissionCode = "banking.print",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 142,
-                            Action = "export",
-                            Module = "banking",
-                            PermissionCode = "banking.export",
-                            SubMenuId = 29,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 143,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 144,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 145,
-                            Action = "edit",
-                            Module = "banking",
-                            PermissionCode = "banking.edit",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 146,
-                            Action = "void",
-                            Module = "banking",
-                            PermissionCode = "banking.void",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 147,
-                            Action = "print",
-                            Module = "banking",
-                            PermissionCode = "banking.print",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 148,
-                            Action = "export",
-                            Module = "banking",
-                            PermissionCode = "banking.export",
-                            SubMenuId = 30,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 149,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 31,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 150,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 31,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 151,
-                            Action = "void",
-                            Module = "banking",
-                            PermissionCode = "banking.void",
-                            SubMenuId = 31,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 152,
-                            Action = "view",
-                            Module = "banking",
-                            PermissionCode = "banking.view",
-                            SubMenuId = 32,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 153,
-                            Action = "create",
-                            Module = "banking",
-                            PermissionCode = "banking.create",
-                            SubMenuId = 32,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 154,
-                            Action = "edit",
-                            Module = "banking",
-                            PermissionCode = "banking.edit",
-                            SubMenuId = 32,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 155,
-                            Action = "print",
-                            Module = "banking",
-                            PermissionCode = "banking.print",
-                            SubMenuId = 32,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 156,
-                            Action = "export",
-                            Module = "banking",
-                            PermissionCode = "banking.export",
-                            SubMenuId = 32,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 157,
-                            Action = "view",
-                            Module = "contacts",
-                            PermissionCode = "contacts.view",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 158,
-                            Action = "create",
-                            Module = "contacts",
-                            PermissionCode = "contacts.create",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 159,
-                            Action = "edit",
-                            Module = "contacts",
-                            PermissionCode = "contacts.edit",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 160,
-                            Action = "delete",
-                            Module = "contacts",
-                            PermissionCode = "contacts.delete",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 161,
-                            Action = "export",
-                            Module = "contacts",
-                            PermissionCode = "contacts.export",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 162,
-                            Action = "AllUserData",
-                            Module = "contacts",
-                            PermissionCode = "contacts.AllUserData",
-                            SubMenuId = 33,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 163,
-                            Action = "view",
-                            Module = "reports",
-                            PermissionCode = "reports.view",
-                            SubMenuId = 34,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 164,
-                            Action = "export",
-                            Module = "reports",
-                            PermissionCode = "reports.export",
-                            SubMenuId = 34,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 165,
-                            Action = "AllUserData",
-                            Module = "reports",
-                            PermissionCode = "reports.AllUserData",
-                            SubMenuId = 34,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 166,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 35,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 167,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 35,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 168,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 36,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 169,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 36,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 170,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 37,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 171,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 37,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 172,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 38,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 173,
-                            Action = "create",
-                            Module = "settings",
-                            PermissionCode = "settings.create",
-                            SubMenuId = 38,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 174,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 38,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 175,
-                            Action = "delete",
-                            Module = "settings",
-                            PermissionCode = "settings.delete",
-                            SubMenuId = 38,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 176,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 39,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 177,
-                            Action = "create",
-                            Module = "settings",
-                            PermissionCode = "settings.create",
-                            SubMenuId = 39,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 178,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 39,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 179,
-                            Action = "delete",
-                            Module = "settings",
-                            PermissionCode = "settings.delete",
-                            SubMenuId = 39,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 180,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 40,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 181,
-                            Action = "create",
-                            Module = "settings",
-                            PermissionCode = "settings.create",
-                            SubMenuId = 40,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 182,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 40,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 183,
-                            Action = "view",
-                            Module = "settings",
-                            PermissionCode = "settings.view",
-                            SubMenuId = 41,
-                            Version = 0u
-                        },
-                        new
-                        {
-                            SubMenuPermissionId = 184,
-                            Action = "edit",
-                            Module = "settings",
-                            PermissionCode = "settings.edit",
-                            SubMenuId = 41,
-                            Version = 0u
-                        });
-                });
-
             modelBuilder.Entity("Master.Entity.TableEntities.TenantDatabase", b =>
                 {
                     b.Property<string>("DatabaseName")
@@ -13151,6 +16651,27 @@ namespace Master.Repository.Migrations.Admin
                     b.ToTable("UserOrganizationRoles", "mst");
                 });
 
+            modelBuilder.Entity("Master.Entity.TableEntities.Menu", b =>
+                {
+                    b.HasOne("Master.Entity.TableEntities.Menu", "Parent")
+                        .WithMany("Children")
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Master.Entity.TableEntities.MenuPermission", b =>
+                {
+                    b.HasOne("Master.Entity.TableEntities.Menu", "Menu")
+                        .WithMany("Permissions")
+                        .HasForeignKey("MenuId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Menu");
+                });
+
             modelBuilder.Entity("Master.Entity.TableEntities.State", b =>
                 {
                     b.HasOne("Master.Entity.TableEntities.Country", "Country")
@@ -13162,28 +16683,6 @@ namespace Master.Repository.Migrations.Admin
                     b.Navigation("Country");
                 });
 
-            modelBuilder.Entity("Master.Entity.TableEntities.SubMenu", b =>
-                {
-                    b.HasOne("Master.Entity.TableEntities.Menu", "Menu")
-                        .WithMany("SubMenus")
-                        .HasForeignKey("MenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Menu");
-                });
-
-            modelBuilder.Entity("Master.Entity.TableEntities.SubMenuPermission", b =>
-                {
-                    b.HasOne("Master.Entity.TableEntities.SubMenu", "SubMenu")
-                        .WithMany("Permissions")
-                        .HasForeignKey("SubMenuId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("SubMenu");
-                });
-
             modelBuilder.Entity("Master.Entity.TableEntities.Country", b =>
                 {
                     b.Navigation("States");
@@ -13191,11 +16690,8 @@ namespace Master.Repository.Migrations.Admin
 
             modelBuilder.Entity("Master.Entity.TableEntities.Menu", b =>
                 {
-                    b.Navigation("SubMenus");
-                });
+                    b.Navigation("Children");
 
-            modelBuilder.Entity("Master.Entity.TableEntities.SubMenu", b =>
-                {
                     b.Navigation("Permissions");
                 });
 #pragma warning restore 612, 618
