@@ -27,6 +27,24 @@ These are non-negotiable. Violating them means the code gets rejected.
 
 ---
 
+## Pending work — `docs/TASKS.md`
+
+**All pending work is one queue in [`docs/TASKS.md`](./docs/TASKS.md).** Before starting any
+task:
+- read its section 0;
+- take the first card that is claimable. That means it is open, its dependencies are done, no
+  decision blocks it, and none of its lanes is held by another card;
+- **claim it with a claim commit on `main` before doing any work**;
+- mark it `working (AI name)`, and later `completed (AI name)`.
+
+Every card is **Senior** or **Junior**:
+- Senior cards go to the most capable model available.
+- A Junior agent that finds Senior-type work escalates the card rather than guessing.
+
+Lanes are what let several agents work at once without editing the same files.
+
+---
+
 ## Git — how work reaches main
 
 > **Note. Never create a new branch. Commit every change directly to the default branch, `main`.**
