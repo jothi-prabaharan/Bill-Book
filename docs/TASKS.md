@@ -290,7 +290,7 @@ If the code has moved on since a card was written, correct the card in your clai
 
 ### TK-02 · RLS template: restore it in `acc`
 - [~] working (Claude Opus 5.5) — since 2026-09-23
-- **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
+- **Lanes:** L-ACC, L-MST (Master's startup bootstrap writes `acc` rows) · **Depends on:** — · **Decision:** —
 - **Where:**
   - The template: `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:130-172`.
   - The code that sets the tenant: `backend/shared/Shared.Kernel/Tenancy/RlsConnectionInterceptor.cs`.
