@@ -1062,3 +1062,855 @@ gain on its own: seven services currently carry an HTML parser none of them touc
 ---
 
 ## Stage P — the extraction
+
+# --- School.md ---
+# School — management and campus maintenance
+
+A second product on the same platform as RetailErp. It covers running a school (students, classes,
+admissions, attendance, fees, exams, a parent portal) and maintaining its campus (facilities, work
+orders, preventive maintenance, AMC contracts). Staff, leave and salary are **not** here: they are
+the HRMS & Payroll app in the section after this one, which School consumes.
+
+**Nothing in this section is built.** It is a design, written on the owner's instruction of
+23 September 2026 to design first and build later. No stage has been started.
+
+## Where things stand
+
+| | |
+|---|---|
+| **Built** | Nothing |
+| **Planned here** | Eight services, one per schema — `sis` `adm` `att` `fee` `fac` `wrk` `ppm` `amc` — an `apps/school` Nx app on the shared shell, and parent pages in `apps/portal` |
+| **Depends on** | The `App` flag on `mst` roles, permissions and menus (S0, below); the `IsGuardian` contact flag; Accounting's internal posting API; the HRMS `Employee` master for staff |
+| **Decided** | One service per schema; `adm` rather than reusing `cus` Leads; the existing frontend stack; `apps/school` separate from `apps/web`; build nothing until the owner picks a stage |
+| **Waiting on the owner** | The open questions at the end of this section, and which of the uncovered features in "What this does not cover yet" join the design |
+
+## Decisions
+
+| Decision | Why |
+|---|---|
+| **One service per schema** — eight services | The owner's choice. Its cost is stated plainly under "What it costs" below |
+| **Every table lives in the tenant database**, in its own three-letter schema | The same shard every other per-customer schema is in. Identity — users, roles, permissions — stays in `mst` in the master database, exactly as for RetailErp. Nothing school-specific goes in `mst` except permission and menu rows |
+| **Admissions get their own schema, `adm`**, not `cus` Leads | The prompt asked for `crm`; `crm` was folded into `cus` long ago. An admission has stages a sales lead does not (application, documents, test, offer) and ends in a Student, not a Contact |
+| **Keys are `{Entity}Id long`**, not a bare `Id` | The prompt said `Id`; every table in the product is `{Entity}Id` (`Lead.LeadId`, `InvoiceId`). One convention across both products. `CustomerId`, `OrgId` and `UserId` stay `Guid` |
+| **`DateOnly` for dates, `DateTimeOffset` only for an exact instant** | A date of birth or an attendance date has no time zone; an audit stamp does |
+| **Money, tax and quantity are `decimal(18,4)`** in Fluent config | The prompt's rule. Rounding for display comes from the branch's currency, not the column |
+| **Every `string` carries `[MaxLength]`; every boolean is `Is`/`Has`/`Can`** | The prompt's rule, already the house style |
+| **The existing frontend stack** — signals, async/await, shared `ui-components`, `--color-*` tokens | The prompt named RxJS, Bootstrap and FontAwesome. None of the three is the stack the other 28 pages use, and a second visual language on one shell is worse than either. No new UI library is added |
+| **`apps/school` is a separate app** on `libs/app-shell` and `libs/shared/*` | The owner's choice. The shell is already app-agnostic except for the menu, which the `App` flag fixes |
+| **New apps do not decode the JWT** | The prompt's rule. `libs/shared/auth/src/lib/token-claims.ts` does decode it today, for `apps/web`'s menu; the school libs instead read a backend "current context" endpoint returning names, roles and permissions without internal ids. Whether `apps/web` moves too is not part of this design |
+| **A campus is an `OrgId`** | A branch is already "one place the business trades from, and one complete set of books". A second campus is a second branch, seeded the same way. No `CampusId` column — for the same reason there is no `BranchId` |
+| **Students are not contacts; guardians are** | The guardian pays, receives the fee demand and signs in to the portal, so a guardian is a `con.Contact` with `IsGuardian`. A student is a `sis` row pointing at up to two guardian contacts |
+
+The prompt referred to `docs/project-structure.md`, `docs/coding-standards.md` and
+`docs/ai-agent-structure-rules.md`. **None of the three exists.** `CLAUDE.md` and
+`docs/Architecture.md` are what they would have said.
+
+## Service map
+
+| Service | Schema | Port | Owns | Calls |
+|---|---|---|---|---|
+| `Sis` | `sis` | 4509 | Academic years, classes, sections, subjects, students, guardians-of-student, enrolments, exams, marks | Master (guardian contact) |
+| `Admission` | `adm` | 4510 | Enquiries, applications, application documents | Sis (create student on admit), Master (create guardian contact) |
+| `Attendance` | `att` | 4511 | **Student** attendance — staff attendance is HRMS | Sis (roll of a section) |
+| `Fee` | `fee` | 4512 | Fee heads, structures, concessions, demands, receipts, allocations | Sis (enrolment), Accounting (posting), Master (guardian contact) |
+| `Facility` | `fac` | 4513 | Buildings, spaces, facility assets | — |
+| `WorkOrder` | `wrk` | 4514 | Work orders, tasks, parts used | Facility, Inventory (parts), Hrm (assignee) |
+| `Preventive` | `ppm` | 4515 | Maintenance plans and their schedule | Facility, WorkOrder (generates) |
+| `Amc` | `amc` | 4516 | Annual maintenance contracts, covered assets, visits | Facility, Master (vendor contact), WorkOrder (a visit may raise one) |
+
+Every id that crosses a service is an unenforced `long`, validated in C# by calling the owning
+service's API (hard rule 8). The layout is the usual three projects per service under
+`backend/Api/{Service}/`, a test project per service under `backend/tests/`, and a Gateway route
+set per service.
+
+## Columns
+
+Every table below also carries, and the tables do not repeat:
+`CustomerId Guid` and `OrgId Guid` (from `OrgScopedEntity`, with the query filter), and the four
+nullable audit columns (from `AuditableEntity`). Every table's `{Entity}Id` is `long`, identity.
+`string(n)` means `[MaxLength(n)]`. `money` means `decimal(18,4)`.
+
+### `sis`
+
+**AcademicYear**
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(20) | `2026-27`. Unique per OrgId |
+| StartDate / EndDate | DateOnly | End after start; years in one OrgId do not overlap |
+| IsCurrent | bool | Exactly one per OrgId — filtered unique index |
+| IsClosed | bool | A closed year refuses new enrolments, attendance and marks |
+
+**SchoolClass** (Grade) — `Class` is a C# keyword, hence the name
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(20) | `LKG`, `I`, `X`. Unique per OrgId |
+| Name | string(100) | |
+| SortOrder | int | Promotion goes to the next SortOrder |
+| IsActive | bool | |
+
+**Section**
+
+| Column | Type | Rules |
+|---|---|---|
+| AcademicYearId | long | FK |
+| SchoolClassId | long | FK |
+| Name | string(20) | `A`, `B`. Unique per year + class |
+| Capacity | int? | Enrolment beyond it is refused, not warned |
+| ClassTeacherEmployeeId | long? | Unenforced — HRMS `hrm.Employees` |
+| RoomSpaceId | long? | Unenforced — `fac.Spaces` |
+
+**Subject**
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(20) | Unique per OrgId |
+| Name | string(100) | |
+| SubjectKind | enum | Core, Language, Elective, CoCurricular |
+| IsActive | bool | |
+
+**Student**
+
+| Column | Type | Rules |
+|---|---|---|
+| AdmissionNo | string(30) | From a numbering series `ADM`. Unique per OrgId, never reused |
+| FirstName / LastName | string(100) | Tamil and other scripts allowed — `varchar` counts characters |
+| DateOfBirth | DateOnly | |
+| Gender | enum | Male, Female, Other, NotStated |
+| AdmissionDate | DateOnly | |
+| StudentStatus | enum | Active, Alumni, Withdrawn, Transferred |
+| LeavingDate | DateOnly? | Required when status leaves Active |
+| BloodGroup | string(5)? | |
+| NationalId | string(20)? | APAAR / Aadhaar. Stored, masked on every list screen |
+| PhotoAttachmentId | long? | `IFileStorage` |
+| SourceApplicationId | long? | Unenforced — `adm.Applications`, set on admit |
+
+**StudentGuardian**
+
+| Column | Type | Rules |
+|---|---|---|
+| StudentId | long | FK |
+| ContactId | long | Unenforced — a `con.Contact` with `IsGuardian`. Validated through Master |
+| Relationship | enum | Father, Mother, Guardian, Other |
+| IsPrimary | bool | Exactly one per student. The primary guardian is the one invoiced |
+| HasPortalAccess | bool | Whether a portal link may be issued |
+
+**Enrolment**
+
+| Column | Type | Rules |
+|---|---|---|
+| StudentId | long | FK |
+| AcademicYearId | long | FK. One enrolment per student per year |
+| SectionId | long | FK. Must belong to the same year |
+| RollNo | int? | Unique per section |
+| EnrolmentStatus | enum | Active, Promoted, Detained, Withdrawn |
+
+**Exam**, **ExamSubject**, **ExamMark**
+
+| Column | Type | Rules |
+|---|---|---|
+| Exam.AcademicYearId | long | FK |
+| Exam.Name | string(100) | `Term 1` |
+| Exam.StartDate / EndDate | DateOnly | |
+| Exam.ExamStatus | enum | Planned, MarksOpen, Published, Locked. Marks are writable only while MarksOpen |
+| ExamSubject.ExamId / SubjectId / SchoolClassId | long | Unique triple |
+| ExamSubject.MaxMarks / PassMarks | money | Pass ≤ Max |
+| ExamMark.ExamSubjectId / EnrolmentId | long | Unique pair |
+| ExamMark.Marks | money? | 0 ≤ Marks ≤ MaxMarks; null with `IsAbsent` |
+| ExamMark.IsAbsent | bool | |
+
+### `adm`
+
+**Enquiry**
+
+| Column | Type | Rules |
+|---|---|---|
+| EnquiryDate | DateOnly | |
+| ChildName | string(200) | |
+| DateOfBirth | DateOnly? | |
+| SeekingClassId | long | Unenforced — `sis.SchoolClasses` |
+| AcademicYearId | long | Unenforced — `sis.AcademicYears` |
+| ParentName | string(200) | |
+| Phone | string(20) | Phone rule: local without prefix, foreign with `+` |
+| Email | string(255)? | |
+| EnquirySource | enum | WalkIn, Website, Referral, Advertisement, Other |
+| EnquiryStatus | enum | Open, FollowUp, Converted, Lost |
+| FollowUpDate | DateOnly? | |
+
+**Application**
+
+| Column | Type | Rules |
+|---|---|---|
+| ApplicationNo | string(30) | Numbering series `APL` |
+| EnquiryId | long? | FK |
+| ApplicationDate | DateOnly | |
+| ChildFirstName / ChildLastName | string(100) | |
+| DateOfBirth | DateOnly | |
+| SeekingClassId / AcademicYearId | long | Unenforced, as above |
+| ApplicationStage | enum | Submitted → DocumentsVerified → Assessed → Offered → Admitted, or Rejected / Withdrawn |
+| AssessmentScore | money? | |
+| AdmittedStudentId | long? | Unenforced — the `sis.Students` row admit created |
+| ApplicationFee | money | Collected as a `fee` receipt, not here |
+
+**ApplicationDocument** — `ApplicationId`, `DocumentKind` (enum: BirthCertificate, TransferCertificate,
+ReportCard, Photo, AddressProof, Other), `AttachmentKey string(500)`, `IsVerified bool`.
+
+### `att`
+
+**StudentAttendance**
+
+| Column | Type | Rules |
+|---|---|---|
+| AttendanceDate | DateOnly | Inside the section's academic year; not in the future |
+| SectionId | long | Unenforced — `sis.Sections` |
+| EnrolmentId | long | Unenforced. Unique per date + enrolment (+ period, when timetables exist) |
+| AttendanceStatus | enum | Present, Absent, Late, HalfDay, Leave, Holiday |
+| Remarks | string(200)? | |
+
+**AttendanceLock** — `SectionId`, `AttendanceDate`, `IsLocked`. A locked day refuses edits except by
+a holder of `attendance.unlock`.
+
+### `fee`
+
+**FeeHead**
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(20) | `TUITION`, `TRANSPORT`, `EXAM`. Unique per OrgId |
+| Name | string(100) | |
+| IncomeAccountId | long | Unenforced — `acc.Accounts`, Income type. Validated through Accounting |
+| IsRefundable | bool | A caution deposit is; it posts to a liability instead |
+| HsnSacCode | string(8)? | SAC for the rare taxable head |
+
+**FeeStructure** and **FeeStructureLine**
+
+| Column | Type | Rules |
+|---|---|---|
+| FeeStructure.AcademicYearId / SchoolClassId | long | Unenforced. Unique pair + Name |
+| FeeStructure.Name | string(100) | `Day scholar`, `Hosteller` |
+| FeeStructureLine.FeeHeadId | long | FK |
+| FeeStructureLine.Amount | money | > 0 |
+| FeeStructureLine.Frequency | enum | OneTime, Monthly, Quarterly, Termly, Annual |
+| FeeStructureLine.DueDay | int | 1–28, day of the period |
+
+**FeeConcession** — `StudentId` (unenforced), `FeeHeadId`, `ConcessionKind` (enum: Percent, Amount),
+`Value money`, `Reason string(200)`, `ValidFrom`/`ValidTo DateOnly`, `IsApproved bool`.
+
+**FeeDemand** (the invoice) and **FeeDemandLine**
+
+| Column | Type | Rules |
+|---|---|---|
+| FeeDemand.DemandNo | string(30) | Numbering series `FDM`, gapless — `NumberGenerator` in the caller's transaction |
+| FeeDemand.StudentId / EnrolmentId | long | Unenforced |
+| FeeDemand.ContactId | long | Unenforced — the primary guardian, **snapshotted** at issue |
+| FeeDemand.DemandDate / DueDate | DateOnly | |
+| FeeDemand.DocumentStatus | enum | `Shared.Kernel.Documents` lifecycle: Draft → Posted → Void. A posted demand is never edited |
+| FeeDemand.CurrencyCode / ExchangeRate | string(3) / money | Snapshot at demand date |
+| FeeDemand.TotalAmount / ConcessionAmount / NetAmount | money | Computed on write, stored |
+| FeeDemand.JournalId | long? | Unenforced — the posted JE |
+| FeeDemandLine.FeeHeadId | long | FK |
+| FeeDemandLine.Amount / ConcessionAmount | money | Concession ≤ Amount |
+
+**FeeReceipt** and **FeeReceiptAllocation**
+
+| Column | Type | Rules |
+|---|---|---|
+| FeeReceipt.ReceiptNo | string(30) | Numbering series `FRC` |
+| FeeReceipt.ContactId | long | Unenforced |
+| FeeReceipt.ReceiptDate | DateOnly | |
+| FeeReceipt.PaymentMode | enum | Cash, Cheque, Upi, Card, BankTransfer |
+| FeeReceipt.BankAccountId | long | Unenforced — `acc.BankAccounts` |
+| FeeReceipt.Amount | money | > 0 |
+| FeeReceipt.Reference | string(50)? | Cheque / UTR number |
+| FeeReceiptAllocation.FeeReceiptId / FeeDemandId | long | Allocation ≤ the demand's open balance |
+| FeeReceiptAllocation.Amount | money | |
+
+**Posting.** Fee posts through Accounting's internal posting API, the way
+`Sales.Api/Services/LedgerClient.cs` does — never by writing GL rows.
+
+- Demand: `Dr Accounts Receivable (guardian sub-account) / Cr Fee Income per head`, with concession as
+  `Dr Discount Given` (contra).
+- Receipt: `Dr Bank / Cr Accounts Receivable`.
+- Unallocated money: an overpayment advance sub-account.
+
+### `fac`
+
+**Building** — `Code string(20)`, `Name string(100)`, `Floors int`, `IsActive bool`.
+
+**Space**
+
+| Column | Type | Rules |
+|---|---|---|
+| BuildingId | long | FK |
+| Code | string(20) | `B1-204`. Unique per OrgId |
+| Name | string(100) | |
+| SpaceKind | enum | Classroom, Laboratory, Office, Toilet, Hall, Playground, Store, Other |
+| Floor | int | |
+| Capacity | int? | |
+
+**FacilityAsset**
+
+| Column | Type | Rules |
+|---|---|---|
+| AssetTag | string(30) | Unique per OrgId |
+| Name | string(200) | `Split AC 1.5T`, `RO plant` |
+| AssetCategory | enum | Electrical, Plumbing, Hvac, Furniture, It, Lab, Vehicle, Civil, Other |
+| SpaceId | long? | FK |
+| Make / Model / SerialNo | string(100) | |
+| PurchaseDate / WarrantyUntil | DateOnly? | |
+| PurchaseCost | money? | |
+| AssetStatus | enum | InUse, UnderRepair, Idle, Disposed |
+| FixedAssetId | long? | Reserved for the Phase 2 register — see open questions |
+
+### `wrk`
+
+**WorkOrder**
+
+| Column | Type | Rules |
+|---|---|---|
+| WorkOrderNo | string(30) | Numbering series `WRK` |
+| Title | string(200) | |
+| Description | string(2000)? | |
+| WorkOrderSource | enum | Complaint, Preventive, Amc, Inspection |
+| Priority | enum | Low, Medium, High, Critical |
+| FacilityAssetId / SpaceId | long? | Unenforced — `fac`. At least one of them |
+| ReportedDate | DateOnly | |
+| DueDate | DateOnly? | |
+| AssignedEmployeeId | long? | Unenforced — `hrm.Employees` |
+| AmcContractId | long? | Unenforced — `amc.Contracts`; the vendor attends instead |
+| PreventivePlanId | long? | Unenforced — `ppm.Plans` |
+| WorkOrderStatus | enum | See lifecycle |
+| CompletedDate | DateOnly? | Required at Completed |
+| LabourCost | money | |
+
+**WorkOrderTask** — `WorkOrderId`, `Description string(500)`, `IsDone bool`, `SortOrder int`.
+
+**WorkOrderPart** — `WorkOrderId`, `ItemId long` (unenforced — `inv.Items`), `WarehouseId long`,
+`Quantity money`, `UnitCost money` (from Inventory at issue). Issuing a part is a stock movement
+Inventory performs, synchronously and guarded, like any other issue.
+
+**Lifecycle.** `Open → Assigned → InProgress ⇄ OnHold → Completed → Closed`, and `Cancelled` from
+Open or Assigned.
+
+- The header is editable only while `Open`. Anything later is a status change or a task tick, never
+  an edit.
+- `Closed` is terminal and needs `wrk.close`.
+- Every refusal is one `DocumentLifecycle`-style message.
+
+### `ppm`
+
+**PreventivePlan**
+
+| Column | Type | Rules |
+|---|---|---|
+| Name | string(200) | `Quarterly AC service` |
+| FacilityAssetId / SpaceId | long? | Unenforced — one of them |
+| Frequency | enum | Daily, Weekly, Monthly, Quarterly, HalfYearly, Yearly |
+| Interval | int | Every *n* of Frequency; ≥ 1 |
+| StartDate | DateOnly | |
+| EndDate | DateOnly? | |
+| NextDueDate | DateOnly | Advanced when an occurrence is generated |
+| LeadDays | int | Raise the work order this many days early |
+| DefaultAssigneeEmployeeId | long? | Unenforced |
+| IsActive | bool | |
+
+**PreventiveOccurrence** — `PreventivePlanId`, `DueDate DateOnly`, `WorkOrderId long?`
+(unenforced), `OccurrenceStatus` (enum: Scheduled, Raised, Done, Skipped). Unique on plan + due date,
+which is what makes generation idempotent: a second run finds the row and raises nothing.
+
+**Generation.** A hosted service in `Preventive.Api` generates occurrences, claiming each due plan
+with a guarded conditional update, the same pattern `CostingEngine.Worker` uses — not a broker.
+
+### `amc`
+
+**AmcContract**
+
+| Column | Type | Rules |
+|---|---|---|
+| ContractNo | string(30) | The vendor's number |
+| VendorContactId | long | Unenforced — `con.Contact` with `IsVendor` |
+| StartDate / EndDate | DateOnly | End after start |
+| ContractValue | money | Billed through Purchase as a bill; never posted from here |
+| BillingFrequency | enum | Upfront, Quarterly, HalfYearly, Annual |
+| VisitsPerYear | int | |
+| AmcCoverage | enum | Comprehensive, NonComprehensive — whether parts are covered |
+| RenewalReminderDays | int | |
+| ContractStatus | enum | Draft, Active, Expired, Terminated. Expiry is derived from EndDate, stored for the list filter |
+
+**AmcCoveredAsset** — `AmcContractId`, `FacilityAssetId` (unenforced). An asset may be under only one
+active contract.
+
+**AmcVisit** — `AmcContractId`, `VisitDate DateOnly`, `VisitKind` (enum: Scheduled, Breakdown),
+`Remarks string(1000)?`, `WorkOrderId long?`.
+
+## Endpoints
+
+The same shape on every controller, `[Authorize]` and `[RequireModulePermission("{module}")]` at class
+level. Tenant is checked against the token, and cross-org access returns `Forbid()`, never
+`NotFound()`.
+
+| Route | Method | Action |
+|---|---|---|
+| `GET /api/{resource}` | `GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, …filters)` | `{module}.view` |
+| `GET /api/{resource}/{id:long}` | `GetById(long id)` | `{module}.view` |
+| `POST /api/{resource}` | `Create([FromBody] Create{X}Request request)` | `{module}.create` |
+| `PUT /api/{resource}/{id:long}` | `Update(long id, [FromBody] Update{X}Request request)` | `{module}.edit` |
+| `POST /api/{resource}/{id:long}/{verb}` | lifecycle — `post`, `void`, `assign`, `complete`, `close`, `admit`, `publish` | `[PermissionAction("{verb}")]` |
+
+There is no DELETE on a document row, the same as the rest of the product. Masters (heads, spaces,
+subjects) deactivate.
+
+The modules seeded into `mst.Permissions` with `App = School`:
+`sis`, `admission`, `attendance`, `fee`, `facility`, `workorder`, `preventive`, `amc`.
+
+## The `App` flag — stage S0, shared with HRMS
+
+One set of users, roles and permissions in `mst` now serves three products, so the rows have to say
+which one they belong to.
+
+- **`Master.Entity/Enums/App.cs`**: `RetailErp = 1`, `School = 2`, `Hrms = 3`.
+  - This is not `Vertical`. `Vertical` is the trade *inside* RetailErp (General, Pharma, Jewellery)
+    and stays as it is.
+- **`App App` on `mst.Roles`, `mst.Permissions` and `mst.Menus`**, required and indexed. Every
+  existing seed row becomes `RetailErp`.
+- **`RolePermission` and `UserOrganizationRole` do not carry it.** They inherit it through `RoleId`.
+  A second copy of the same fact is one that can disagree — the reason there is no `BranchId`.
+- **A role is granted only its own app's permissions.** This is checked in C# on write, with the
+  catalogue test extended to assert it over every seed.
+- **One user may hold roles in several apps.** A teacher holds a School role and an HRMS
+  self-service role, one `UserOrganizationRole` row each.
+- **Menus are filtered by app.**
+  - `libs/app-shell` takes an `APP_ID` injection token from the app that hosts it.
+  - `menu.service.ts` sends it as `GET /api/menu?app=School`.
+  - `shell-screens.ts` — the rail drawn before the menu answers — becomes input from the app rather
+    than a retail list.
+
+## Frontend
+
+- **`apps/school`**, a new Nx app, bootstrapped like `apps/web`:
+  - `libs/app-shell` as its authenticated root;
+  - `libs/shared/{auth, api-client, ui-components, currency-format, theming}` for everything else.
+- **One lib pair per service**, mirroring `backend/Api/`, e.g. `libs/sis/{sis-core, sis-ui}` and
+  `libs/work-order/{work-order-core, work-order-ui}`.
+  - `-core` stays Ionic-compatible.
+  - Pages use `.page.ts` / `.list.ts` / `.dialog.ts`, `templateUrl` + `styleUrl`, `inject()`, signals.
+- **Only existing shared components.** When a screen needs a component `ui-components` does not
+  have, the build stops and asks — the timetable grid and the attendance register are the two
+  likely cases.
+- **Formats come from `GET /api/formats`** through `FormatSettingsService`, never invented on the
+  page.
+- **Validation display.** Field errors sit on top of their input; rule errors go in the shared
+  message box.
+- **Styling.** No inline styles; colours only as `var(--color-*)`.
+- **Parent portal.** New routes in `apps/portal` for fee demands, receipts, attendance and published
+  marks.
+  - Controllers take `[RequirePortalAccess]`.
+  - A guardian's link is minted by `JwtTokenService.CreatePortalToken` against their `ContactId`.
+- **Every page works at ~360px.**
+
+## Tenancy and security, per service
+
+- **The DbContext** derives from `TenantDbContext` and calls `base.OnModelCreating` — `SalesDbContext`
+  once did not, and lost its query filter and `xmin` concurrency for its whole life.
+- **RLS is written into each service's migration** — ENABLE, **FORCE**, and a policy on `CustomerId`
+  and `OrgId` — copying the `prt` migration. It is the only schema that currently has RLS from a
+  clean build.
+- **Each test project links `tests/Shared/RlsAudit.cs` and runs `EndpointGuardAudit`.** The RLS
+  test must be seen red against a dropped database before it counts.
+- **Writes use `BeginScopeAsync`**, and every failure goes through `SqlErrorCatalog` into the
+  service's own `{schema}.ErrorLogs`.
+- **Seeding at branch creation.**
+  - Seeded: fee heads, numbering series (`ADM`, `APL`, `FDM`, `FRC`, `WRK`), permission and menu
+    rows, and the system roles Principal, Office Admin, Accountant, Teacher, Maintenance, Viewer —
+    all with `App = School`.
+  - `SchoolClass` is seeded with LKG–XII; the owner may delete what they do not teach.
+
+## The shard model — a platform gap this design depends on
+
+The prompt describes pooled databases of **100 customers** each, with the 101st customer causing a
+new shard to be provisioned, and **Elite customers on a physical database of their own**.
+
+What `main` has is close but not that:
+
+- `mst.TenantDatabases` counts **`MaxOrganizations`**, not customers.
+- `PlanType` is a free string (`"Pro"`), against hard rule 7.
+- Nothing provisions a new shard when the last one fills. Signup answers 503 instead.
+
+The fix belongs to Master and to both products equally:
+
+- a `PlanType` enum;
+- a customer-count capacity;
+- an allocator that provisions a shard rather than refusing;
+- an Elite path that allocates a shard with a capacity of one.
+
+It is listed as part of S0 and is not school-specific.
+
+## What it costs, stated plainly
+
+**Eight services here, plus two for HRMS, take the product from seven (eight with Printing) to
+seventeen or eighteen.**
+
+- The history in `CLAUDE.md` is three merges made because pairs of services turned out to be two
+  halves of one job.
+- `fac`/`wrk`/`ppm`/`amc` are that shape: a work order cannot be raised without an asset, and a
+  plan and a contract exist only to raise work orders.
+- `sis`/`att`/`fee` are that shape too.
+- Every such read becomes an HTTP call, and no two of them can share a transaction.
+  - Admitting a student creates a Student in `sis` and marks the application in `adm`. If the
+    second write fails, the first is already committed.
+  - It needs a compensating step, or an idempotent retry keyed on `SourceApplicationId`. The design
+    takes the retry.
+
+This is the owner's decision and the design follows it. It is written down so that if these services
+are merged later — as the last three pairs were — nobody has to rediscover why.
+
+## What this does not cover yet
+
+Features a working school usually needs that none of the eight schemas holds. The owner asked to be
+told; none of them is designed until one is picked.
+
+| Feature | Why it matters | Would need |
+|---|---|---|
+| **Timetable** | Period-wise attendance and teacher load both need it | A new schema, or `sis`; a grid component `ui-components` lacks |
+| **Report cards** | What marks are *for* | Grading scales in `sis`; a print template per class |
+| **Certificates** — TC, bonafide, character | Issued daily by the office | Print templates plus a certificate register with a numbering series |
+| **Parent communication** — circulars, SMS, email | Absence alerts, fee reminders | `Notification.Worker`, which is still an empty project |
+| **Homework / assignments** | | A new schema |
+| **Student documents and ID cards** | | `IFileStorage` (built); a print template |
+| **Transport** — routes, stops, vehicles, transport fee | Very common in Indian schools | A new service under the one-per-schema rule; its fee is a `fee` head |
+| **Hostel** and **Library** | | A new service each |
+| **School store** — uniforms, books | | Nothing new: Inventory + Sales already do it |
+
+## Open questions
+
+- **Do exams belong in `sis` or in their own `exm` schema?**
+  *Recommend `sis`: marks are meaningless without enrolments, and splitting them would be a ninth
+  service for one table's worth of rules.*
+- **Academic year against financial year.** An April–March school year matches the financial year;
+  a June–May one does not.
+  *Recommend keeping them independent — fee income is recognised by demand date, so reports never
+  need to align the two.*
+- **GST on fees.** Most school education is exempt, but some heads (transport by a third party,
+  uniforms) may not be.
+  *Recommend a nullable SAC on `FeeHead` and exempt by default, using `Shared.Kernel.Tax` when a
+  head is taxable, rather than a second tax path.*
+- **Is a `FacilityAsset` the Phase 2 fixed asset?**
+  *Recommend no, but linked. A chair is maintained and never depreciated separately; an AC is
+  both. `FixedAssetId` is the link, filled when the register exists.*
+- **Should `License` record which apps a customer has bought**, so the token carries an `app` claim?
+  *Recommend yes. Without it, a school-only customer's user can sign in to `apps/web` and see an
+  empty chart of accounts.*
+
+## Stages
+
+- [ ] **S0 — Platform prerequisites.**
+  - The `App` enum and column on `Role`, `Permission` and `Menu`, seeds marked `RetailErp`.
+  - `GET /api/menu?app=`, and `APP_ID` in `libs/app-shell`.
+  - The "current context" endpoint.
+  - `IsGuardian` on `con.Contact`.
+  - The shard-model fix above.
+  - An empty `apps/school` that signs in and draws the shell.
+
+  *Done when*: `apps/web` is unchanged for a RetailErp user, `apps/school` shows only School menus,
+  and granting a School permission to a RetailErp role is refused.
+- [ ] **S1 — Sis.** Scaffold, schema, seeds, API, pages for years, classes, sections, subjects,
+  students with guardians, and enrolment.
+
+  *Done when*: a student is admitted directly, enrolled in a section and listed. RLS and the guard
+  audit pass from a dropped database.
+- [ ] **S2 — Admission.** Enquiry → application → admit, creating the student through Sis.
+
+  *Done when*: admitting twice creates one student.
+- [ ] **S3 — Attendance.** The daily register per section, and locking.
+
+  *Done when*: a locked day refuses an edit from a teacher and accepts one from `attendance.unlock`.
+- [ ] **S4 — Fee.** Heads, structures, concessions, demand generation per enrolment, receipts,
+  allocation, and posting.
+
+  *Done when*: a demand and its receipt post balanced JEs, and the guardian's AR sub-account ties
+  to the open demands.
+- [ ] **S5 — Facility.** Buildings, spaces and assets.
+- [ ] **S6 — WorkOrder.** The lifecycle, tasks, and parts issued from Inventory.
+
+  *Done when*: editing an Assigned work order is refused, and issuing a part moves stock.
+- [ ] **S7 — Preventive.** Plans, and occurrence generation by the hosted service.
+
+  *Done when*: running generation twice raises one work order per occurrence.
+- [ ] **S8 — Amc.** Contracts, covered assets, visits, and renewal reminders.
+- [ ] **S9 — Parent portal.** Guardian pages for demands, receipts, attendance and published marks.
+
+Every stage is built in the same order: migration, then seed, then API with field and business
+validation, then UI. Each is committed to `main` as it stands up, with its docs page in
+`frontend/apps/docs/content/` and a release-notes bullet in the same commit.
+
+# --- Hrms.md ---
+# HRMS & Payroll
+
+A third product on the platform, and a separate app, **`apps/hrms`**. It holds employees, leave,
+staff attendance and payroll.
+
+- **School consumes it.** Teachers, office staff and maintenance technicians are employees.
+  `sis.Sections.ClassTeacherEmployeeId` and `wrk.WorkOrders.AssignedEmployeeId` point here.
+- **RetailErp customers can use it on its own.**
+
+**Nothing in this section is built.** It was designed on 23 September 2026, alongside School, on the
+owner's instruction to design first.
+
+## Where things stand
+
+| | |
+|---|---|
+| **Built** | Nothing |
+| **Planned here** | Two services, one per schema — `Hrm` on `hrm` and `Payroll` on `pay` — and one app, `apps/hrms`, on the shared shell |
+| **Depends on** | School S0: the `App` flag (`App.Hrms = 3`), `APP_ID` in `libs/app-shell`, and the shard-model fix. Accounting's internal posting API |
+| **Decided** | Separate app; one service per schema; employees are not contacts; payroll posts through Accounting, never writes GL rows |
+| **Waiting on the owner** | The open questions below. Whether HRMS and Payroll should be **two** apps rather than one — designed here as one app with two services; only the frontend section and the `App` enum would change |
+
+## Decisions
+
+| Decision | Why |
+|---|---|
+| **An employee is not a `con.Contact`** | Contacts are trade counterparties, visible across the sales and purchase screens. Salary, PAN, bank details and date of birth of staff are not trade data. Payroll pays employees by its own bank detail rows |
+| **An employee may link to a `mst.Users` row** (`UserId Guid?`) | For self-service — payslips, leave. Many employees (cleaning staff, drivers) never sign in, so the link is optional |
+| **Staff attendance is here, not in `att`** | It drives leave balances and loss-of-pay in payroll, which are this product's rules. Student attendance drives nothing here |
+| **Salary is its own permission module** | `payroll.view` is distinct from `hrm.view`. Most HR users may see an employee record; far fewer may see what they earn |
+| **A payroll run posts one journal, per run, through Accounting** | The same rule as every other money document. A posted run is never edited; a correction is a reversal and a re-run |
+| **Same types and conventions as School** | `{Entity}Id long`, `Guid` for user/customer/org, `DateOnly`, `decimal(18,4)`, bounded strings, `Is`/`Has`/`Can` booleans, enums |
+
+## Service map
+
+| Service | Schema | Port | Owns | Calls |
+|---|---|---|---|---|
+| `Hrm` | `hrm` | 4517 | Departments, designations, employees, employment history, employee documents, holidays, shifts, staff attendance, leave types, policies, balances and applications | Master (user link) |
+| `Payroll` | `pay` | 4518 | Salary components, structures, employee salary assignments, payroll runs, payslips, loans and advances, statutory settings | Hrm (employees, attendance, leave), Accounting (posting, bank accounts) |
+
+## Columns
+
+The same as School: every table carries `CustomerId` and `OrgId` from `OrgScopedEntity` and the audit
+columns, `{Entity}Id` is `long` identity, `string(n)` is `[MaxLength(n)]`, and `money` is
+`decimal(18,4)`.
+
+### `hrm`
+
+**Department** / **Designation** — `Code string(20)` unique per OrgId, `Name string(100)`,
+`IsActive bool`. Department also has `HeadEmployeeId long?`.
+
+**Employee**
+
+| Column | Type | Rules |
+|---|---|---|
+| EmployeeCode | string(30) | Numbering series `EMP`. Unique per OrgId, never reused |
+| FirstName / LastName | string(100) | |
+| DateOfBirth | DateOnly | |
+| Gender | enum | Male, Female, Other, NotStated |
+| DepartmentId / DesignationId | long | FK |
+| ReportsToEmployeeId | long? | FK, self. No cycles — checked in C# |
+| JoiningDate | DateOnly | |
+| ConfirmationDate | DateOnly? | |
+| EmploymentType | enum | Permanent, Probation, Contract, PartTime, Intern |
+| EmployeeStatus | enum | Active, OnNotice, Exited |
+| ExitDate | DateOnly? | Required at Exited |
+| UserId | Guid? | Unenforced — `mst.Users`. Unique per OrgId when set |
+| WorkEmail | string(255)? | |
+| Phone | string(20) | Phone rule |
+| Pan | string(10)? | Validated format. Masked on lists |
+| Uan / EsiNumber | string(20)? | PF and ESI numbers |
+| ShiftId | long? | FK |
+
+**EmployeeBankDetail** — `EmployeeId`, `AccountHolder string(200)`, `AccountNo string(30)`,
+`Ifsc string(11)`, `IsPrimary bool`. Exactly one primary.
+
+**EmploymentHistory** — `EmployeeId`, `EffectiveDate DateOnly`, `ChangeKind` (enum: Joined,
+Promotion, Transfer, Redesignation, Exit), `DepartmentId`, `DesignationId`, `Remarks string(500)?`.
+Rows are appended, never updated.
+
+**EmployeeDocument** — `EmployeeId`, `DocumentKind` (enum), `AttachmentKey string(500)`,
+`ValidUntil DateOnly?`.
+
+**Holiday** — `HolidayDate DateOnly` unique per OrgId, `Name string(100)`, `IsOptional bool`.
+
+**Shift** — `Code string(20)`, `StartTime`/`EndTime` (`TimeOnly`), `GraceMinutes int`,
+`IsNightShift bool`.
+
+**StaffAttendance**
+
+| Column | Type | Rules |
+|---|---|---|
+| EmployeeId | long | FK. Unique per date |
+| AttendanceDate | DateOnly | |
+| CheckIn / CheckOut | DateTimeOffset? | An exact instant, so not `DateOnly` |
+| AttendanceStatus | enum | Present, Absent, HalfDay, OnLeave, Holiday, WeeklyOff |
+| AttendanceSource | enum | Manual, Biometric, Mobile |
+| IsLocked | bool | Set when a payroll run that covers the date is posted |
+
+**LeaveType**
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(10) | `CL`, `SL`, `EL`, `LOP` |
+| Name | string(100) | |
+| AnnualQuota | money | Days; half days allowed |
+| IsPaid | bool | Unpaid leave is loss of pay in payroll |
+| CanCarryForward | bool | |
+| MaxCarryForward | money? | |
+| IsEncashable | bool | |
+
+**LeaveBalance** — `EmployeeId`, `LeaveTypeId`, `LeaveYear int`, `Opening`/`Accrued`/`Taken`/
+`Encashed money`. Unique triple. Taken is moved by approval with a guarded conditional update, so two
+approvals cannot both spend the last day.
+
+**LeaveApplication**
+
+| Column | Type | Rules |
+|---|---|---|
+| EmployeeId / LeaveTypeId | long | FK |
+| FromDate / ToDate | DateOnly | To ≥ From |
+| IsHalfDay | bool | Only when From = To |
+| Days | money | Computed on write, excluding holidays and weekly offs |
+| Reason | string(500) | |
+| LeaveStatus | enum | Draft → Submitted → Approved / Rejected; Cancelled from Draft, Submitted or Approved-and-not-yet-started |
+| ApproverEmployeeId | long? | The employee's `ReportsTo` at submission, snapshotted |
+
+### `pay`
+
+**SalaryComponent**
+
+| Column | Type | Rules |
+|---|---|---|
+| Code | string(20) | `BASIC`, `HRA`, `PF_EE`, `PT` |
+| Name | string(100) | |
+| ComponentKind | enum | Earning, Deduction, EmployerContribution |
+| CalculationKind | enum | Fixed, PercentOfBasic, PercentOfGross, Statutory |
+| Value | money? | For Fixed and Percent kinds |
+| IsTaxable | bool | |
+| IsProratedByAttendance | bool | Earnings reduced by loss-of-pay days |
+| LedgerAccountId | long | Unenforced — `acc.Accounts`. Expense for earnings and employer contributions, liability for deductions |
+
+**SalaryStructure** + **SalaryStructureLine** — a named set of components with their values.
+
+**EmployeeSalary** — `EmployeeId`, `SalaryStructureId`, `EffectiveFrom DateOnly`, `AnnualCtc money`.
+A revision is a new row with a later date, and payroll reads the row in force for the month.
+
+**StatutorySetting**
+
+- `IsPfEnabled`, `PfWageCeiling money`, `PfEmployeeRate`/`PfEmployerRate money`.
+- `IsEsiEnabled`, `EsiWageCeiling money`, `EsiEmployeeRate`/`EsiEmployerRate money`.
+- `ProfessionalTaxStateCode string(2)`.
+- One row per OrgId, **effective-dated** like the Tax Master, because the rates are revised.
+
+**ProfessionalTaxSlab** — `StateCode string(2)`, `EffectiveFrom DateOnly`, `SalaryFrom`/`SalaryTo`/
+`Amount money`. Seeded reference data per state.
+
+**PayrollRun**
+
+| Column | Type | Rules |
+|---|---|---|
+| RunNo | string(30) | Numbering series `PAY` |
+| PayMonth | DateOnly | The first of the month. One non-reversed run per OrgId per month |
+| PayDate | DateOnly | |
+| PayrollStatus | enum | Draft → Processed → Posted → Paid; Reversed |
+| TotalGross / TotalDeductions / TotalNet / TotalEmployerCost | money | Computed, stored |
+| JournalId | long? | Unenforced — the posted JE |
+
+**Payslip** + **PayslipLine**
+
+- Payslip: `PayrollRunId`, `EmployeeId` (unique pair), `WorkingDays`/`PaidDays`/`LopDays money`,
+  `Gross`/`Deductions`/`Net money`.
+- PayslipLine: `SalaryComponentId`, `Amount money`.
+- The component's name and kind are **snapshotted** on the line, so a later rename does not rewrite
+  an old payslip.
+
+**EmployeeLoan** — `EmployeeId`, `LoanDate DateOnly`, `Principal money`, `InstalmentAmount money`,
+`Outstanding money`, `LoanStatus` (enum: Active, Closed). Instalments are deducted through a payslip
+line.
+
+**Posting.** Payroll posts through Accounting's internal posting API:
+
+- On post: `Dr Payroll Expense (per earning and employer-contribution account) / Cr Salary Payable,
+  PF Payable, ESI Payable, PT Payable, TDS Payable, Employee Loan (asset)`.
+- Paying salaries is a Spend Money in Accounting against Salary Payable. It is not a posting made
+  from here.
+
+**Lifecycle rules.**
+
+- Processing reads attendance and leave for the month and fills the payslips. A Draft or Processed
+  run may be re-processed.
+- A Posted run locks the month's staff attendance and is never edited. A correction is a reversal
+  (a line-paired reversing JE) and a new run.
+
+## Endpoints
+
+- **The same shape as School.** Class-level `[Authorize]` + `[RequireModulePermission("hrm")]` or
+  `("payroll")`, paged `GetAll`, `GetById`, `Create`, `Update`.
+- **Lifecycle verbs** under `[PermissionAction]`: `submit`, `approve`, `reject`, `cancel` on leave;
+  `process`, `post`, `reverse`, `markpaid` on a payroll run.
+- **`Forbid()` on cross-org access.**
+- **Self-service routes** (`/api/me/payslips`, `/api/me/leave`) resolve the employee from the
+  token's `sub` → `Employee.UserId`. They never take an employee id from the URL.
+
+The modules seeded into `mst.Permissions` with `App = Hrms` are `hrm`, `leave`, `payroll` and
+`selfservice`. The system roles seeded with `App = Hrms` are HR Admin, HR Executive, Payroll Admin,
+Manager (approves the reportees' leave) and Employee (self-service only).
+
+## Frontend
+
+- **`apps/hrms`**, on `libs/app-shell` with `APP_ID = Hrms`, and `libs/shared/{auth, api-client,
+  ui-components, currency-format, theming}`.
+- **Libs** `libs/hrm/{hrm-core, hrm-ui}` and `libs/payroll/{payroll-core, payroll-ui}`.
+- **Employee self-service** — own payslips, leave balance and applications — is a route set inside
+  `apps/hrms`, shown to a user whose only HRMS role is Employee.
+- **The same UI rules as School**:
+  - existing shared components only, stopping to ask before adding one;
+  - formats from `GET /api/formats`;
+  - field errors above their input, rule errors in the shared message box;
+  - no inline styles, `var(--color-*)` only;
+  - every page works at ~360px.
+- **The monthly attendance grid** is the component most likely to be missing from `ui-components`.
+
+## Tenancy and security
+
+- **The same rules as School**: `TenantDbContext` with `base.OnModelCreating`, RLS written into the
+  migration with FORCE, `RlsAudit` and `EndpointGuardAudit` in each test project, `BeginScopeAsync`
+  for writes, and `SqlErrorCatalog` for failures.
+- **Masking.** PAN, bank account numbers and salary figures are masked on every list and appear in
+  full only to a holder of `payroll.view` on the detail screen.
+- **Error logs.** No salary figure is written to an error log's curated message — hard rule 14
+  already forbids figures there.
+
+## Open questions
+
+- **Is statutory compliance India-only in v1** (PF, ESI, PT, TDS on salary)?
+  *Recommend yes. The effective-dated setting rows leave room for another country without a
+  schema change.*
+- **Should an exited employee's login be revoked automatically?**
+  *Recommend yes. At Exited, the linked user's `UserOrganizationRole` rows for that branch are
+  deactivated and their refresh-token families revoked.*
+- **Biometric device integration.** `AttendanceSource.Biometric` is reserved. Which devices, and
+  pushed or pulled, is undecided.
+- **Gratuity, bonus, and Form 16 / 24Q.** None is designed. Form 16 is a print template, and 24Q is
+  a report over posted payslips.
+- **Salary advance against loan.** Designed as one `EmployeeLoan` table for both.
+  *Recommend keeping it one.*
+
+## Stages
+
+- [ ] **H0 — App shell.** `apps/hrms` signing in and drawing HRMS menus only.
+  - Depends on School S0, which builds the `App` flag once for all three products.
+- [ ] **H1 — Hrm core.** Departments, designations, employees, bank details, documents, history.
+
+  *Done when*: an employee is created, linked to a user and listed. RLS and the guard audit pass
+  from a dropped database.
+- [ ] **H2 — Leave and holidays.** Types, balances, applications, approval by the reporting manager.
+
+  *Done when*: two simultaneous approvals cannot overspend a balance.
+- [ ] **H3 — Staff attendance and shifts.** Manual entry and a monthly grid.
+- [ ] **H4 — Payroll.** Components, structures, statutory settings and slabs, run processing,
+  payslips, posting, reversal.
+
+  *Done when*: a run posts one balanced JE, Salary Payable ties to the unpaid net, and a reversal
+  restores both.
+- [ ] **H5 — Self-service.** Own payslips (printable), leave balance and applications.
+
+Each stage is built migration → seed → API → UI, and is committed to `main` with its docs page and
+release-notes bullet in the same commit.
