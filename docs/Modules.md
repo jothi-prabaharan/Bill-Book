@@ -1486,7 +1486,7 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 | `TimeLeave` | `tla` | 4510 | HRMS | Holidays, shifts, rosters, weekly offs, punches, daily attendance, regularisation, overtime, comp-off, leave policy, balances, applications | Hrm (employees) |
 | `Payroll` | `pay` | 4511 | Payroll | Components, structures, salaries, revisions and arrears, one-off pay, loans, runs, payslips, statutory settings and returns, income tax, F&F, bank files, journal posting and export | Hrm, TimeLeave (when HRMS is licensed), Claims (likewise), Accounting |
 | `Recruitment` | `rec` | 4512 | HRMS | Requisitions, openings, candidates, pipeline, interviews, offers | Hrm (creates the employee), Master (print templates) |
-| `Performance` | `prf` | 4513 | HRMS | Goals, review cycles, reviews, ratings, appraisal outcomes | Hrm, Payroll (revision) |
+| `Performance` | `prf` | 4513 | HRMS | Review cycles, goals, competencies, self-evaluation, level reviews, calibration, appraisal outcomes | Hrm (employees, approval chains), Payroll (revision, when licensed) |
 | `Claims` | `clm` | 4514 | HRMS | Claim categories and limits, expense claims, approval, payout | Hrm, Payroll (payout in a run, when licensed), Accounting (payout as Spend Money) |
 
 Every cross-service id is an unenforced `long`, validated in C# through the owning service (hard
@@ -1499,7 +1499,8 @@ Every table below also carries, and the tables do not repeat:
 `CustomerId Guid` and `OrgId Guid` (from `OrgScopedEntity`, with the query filter), and the four
 nullable audit columns (from `AuditableEntity`). Every table's `{Entity}Id` is `long`, identity.
 `string(n)` means `[MaxLength(n)]`. `money` means `decimal(18,4)`. Every approval-bearing row carries
-the approval columns described under "Approvals" and does not repeat them.
+the approval summary described under "Approvals" (`ApprovalStatus`, `CurrentStepLabel`,
+`CurrentApproverEmployeeId`) and does not repeat it; the steps themselves are `ApprovalSteps` rows.
 
 ### `hrm` — organisation
 
@@ -1955,22 +1956,143 @@ is a print template.
 `EmployeeSalary` through Payroll, and the onboarding checklist. It is idempotent on the application
 id, so a retry creates one employee.
 
-### `prf` — performance
+### `prf` — performance and appraisal
 
-**ReviewCycle** — `Name string(100)`, `PeriodFrom`/`PeriodTo DateOnly`, `CycleStatus` (enum: Draft,
-GoalSetting, SelfReview, ManagerReview, Calibration, Closed), `IsPeerReviewEnabled bool`.
+**The flow of one appraisal:**
 
-**RatingScale** + **RatingLevel** — `Score int`, `Label string(50)` (e.g. 1–5).
+```
+Goal setting → Self-evaluation → Approval levels (configurable: e.g. Lead → Project Lead → Manager → HR)
+            → Calibration (optional) → Released to employee → Acknowledged → Salary revision (Payroll)
+```
 
-**Goal** — `ReviewCycleId`, `EmployeeId`, `Title string(200)`, `Description string(1000)?`, `Weightage
-money` (weights add to 100 per employee per cycle), `Target string(200)?`.
+**ReviewCycle**
 
-**PerformanceReview** — `ReviewCycleId`, `EmployeeId` (unique pair), `SelfRating`/`ManagerRating`/
-`FinalRating int?`, `SelfComments`/`ManagerComments string(4000)?`, `RecommendedIncreasePercent money?`,
-`IsPromotionRecommended bool`, `ReviewStatus` (enum). **GoalRating** holds per-goal ratings from self
-and manager; **PeerFeedback** holds optional peer comments.
+| Column | Type | Rules |
+|---|---|---|
+| Name | string(100) | "FY 2026-27 Annual" |
+| PeriodFrom / PeriodTo | DateOnly | The performance period being assessed |
+| CycleKind | enum | Annual, HalfYearly, Quarterly, Probation |
+| RatingScaleId | long | FK |
+| GoalWeightPercent / CompetencyWeightPercent | money | Add to 100; the final score blends the two |
+| GoalSettingDueDate / SelfEvaluationDueDate / ReviewDueDate | DateOnly | Deadlines per phase |
+| IsSelfEvaluationRequired | bool | When false, the appraisal starts at level 1 |
+| IsPeerFeedbackEnabled | bool | |
+| IsCalibrationEnabled | bool | |
+| CycleStatus | enum | Draft, GoalSetting, SelfEvaluation, InReview, Calibration, Released, Closed |
 
-Closing a cycle can raise a `SalaryRevision` in Payroll from each recommended increase, for approval.
+**Eligibility** — employees joined before a cut-off date and not on notice are enrolled when the
+cycle opens; HR can add or remove anyone. Each enrolment is one **PerformanceReview**.
+
+**RatingScale** + **RatingLevel** — `Score int`, `Label string(50)`, `Description string(200)`
+(e.g. 1 Needs improvement … 5 Outstanding).
+
+**Competency** + **CompetencyGroup** — the behaviours rated beside goals ("Ownership", "Teamwork"),
+each with a description per rating level; **CycleCompetency** picks which apply to a cycle, per grade.
+
+**Goal** — `ReviewCycleId`, `EmployeeId`, `Title string(200)`, `Description string(1000)?`,
+`Weightage money` (weights add to 100 per employee per cycle), `Measure string(200)?`, `Target
+string(200)?`. Set by the employee or the manager; approved through the same chain as the appraisal
+before self-evaluation opens, when the cycle says so.
+
+**PerformanceReview** — one per employee per cycle:
+
+| Column | Type | Rules |
+|---|---|---|
+| ReviewCycleId / EmployeeId | long | Unique pair |
+| ReviewStatus | enum | NotStarted, SelfEvaluationDraft, SelfEvaluationSubmitted, InApproval, SentBack, Calibration, Released, Acknowledged, Closed |
+| SelfSubmittedAt | DateTimeOffset? | |
+| FinalGoalScore / FinalCompetencyScore / FinalScore | money? | Computed from the last level that rated |
+| FinalRatingLevelId | long? | The score mapped onto the scale; changed only by a level with `CanEdit`, or by calibration |
+| RecommendedIncreasePercent | money? | |
+| IsPromotionRecommended | bool | |
+| RecommendedDesignationId | long? | |
+| ReleasedAt / AcknowledgedAt | DateTimeOffset? | |
+| EmployeeAcknowledgementComment | string(2000)? | The employee may record disagreement; it does not reopen the review |
+
+Plus the approval summary columns (Approvals, above).
+
+#### Self-evaluation
+
+**The employee assesses themselves first**, and every approval level sees what they wrote.
+
+**SelfEvaluation** — one per review:
+
+| Column | Type | Rules |
+|---|---|---|
+| PerformanceReviewId | long | Unique |
+| OverallSelfRatingLevelId | long? | Required on submit when the cycle asks for an overall rating |
+| Achievements | string(4000) | "What did you achieve this period?" — required on submit |
+| Challenges | string(4000)? | |
+| Strengths | string(2000)? | |
+| AreasToImprove | string(2000)? | |
+| TrainingNeeds | string(2000)? | Feeds a training-needs report for HR |
+| CareerAspirations | string(2000)? | |
+| IsSubmitted | bool | Locked once true |
+
+**GoalSelfAssessment** — per goal: `GoalId`, `SelfRatingLevelId`, `AchievementPercent money?`,
+`Comments string(2000)`, and **SelfEvidence** attachments (`AttachmentKey string(500)`, `Title
+string(200)`) — the documents, reports or screenshots that back the claim.
+
+**CompetencySelfAssessment** — per competency: `CompetencyId`, `SelfRatingLevelId`, `Comments
+string(1000)?`.
+
+The rules:
+
+- **Draft, then submit.** The form saves as a draft as often as the employee likes; submitting
+  checks every goal and competency is rated and every required text is filled, then locks it and
+  starts the approval chain at level 1.
+- **The deadline is soft.** After `SelfEvaluationDueDate` the form still accepts a submission, and HR
+  sees who is overdue; HR can also **start the chain without it**, recorded as such, when an employee
+  is on long leave.
+- **Reopening** is HR's alone (`performance.reopen`), before level 1 has acted, and is logged.
+- **Nobody edits the employee's words.** Approvers add their own ratings and comments beside the
+  self-evaluation; they never change it.
+- **Self-service only.** The employee reaches it from `apps/hrms` self-service, through
+  `/api/me/appraisals/...`, resolved from the token — never from an employee id in the URL.
+
+#### Approval levels
+
+The chain is the **Appraisal** workflow from Approvals — for example *Lead → Project Lead → Manager →
+HR* — configured per department or grade, with any number of levels, each named by the customer.
+
+**LevelReview** — what each level recorded, kept whole, never overwritten:
+
+| Column | Type | Rules |
+|---|---|---|
+| PerformanceReviewId | long | FK |
+| ApprovalStepId | long | The step it belongs to; unique |
+| Sequence / Label | int / string(50) | Copied from the step |
+| ReviewerEmployeeId | long | |
+| RatingLevelId | long? | Only when the level has `CanEdit` |
+| IncreasePercent | money? | Likewise |
+| IsPromotionRecommended | bool? | Likewise |
+| Comments | string(4000) | Required when the level says so |
+| Decision | enum | Approved, SentBack, Rejected |
+
+**LevelGoalRating** and **LevelCompetencyRating** hold that level's per-goal and per-competency
+ratings, beside the employee's own.
+
+- **Each level sees everything before it** — the self-evaluation and every earlier level's ratings
+  and comments — side by side, and rates without being able to change what earlier levels wrote.
+- **The final figures come from the last level that rated.** A level without `CanEdit` (HR, say, as
+  a sign-off) approves or sends back only.
+- **Send back** returns the review to the previous level — or to the employee to revise their
+  self-evaluation, from level 1 — with a mandatory comment, and the chain resumes from there.
+- **Peer feedback**, when enabled, is gathered in parallel with the chain (**PeerFeedback**:
+  reviewer, comments, optional rating), visible to every level and never to the employee by name.
+
+#### Calibration, release and outcome
+
+- **Calibration** (optional): HR sees the rating distribution per department against **CalibrationGuide**
+  targets (e.g. 10% / 20% / 40% / 20% / 10%) and may move final ratings, each move recorded in
+  **CalibrationAdjustment** (from, to, reason, by whom).
+- **Release**: HR releases a department or the whole cycle; only then does the employee see the final
+  rating, the comments each level chose to share, and the increment.
+- **Acknowledgement**: the employee acknowledges, optionally recording disagreement.
+- **Outcome**: closing the cycle raises a `SalaryRevision` in Payroll for each recommended increase —
+  itself approved through the SalaryRevision chain — and, when a promotion is recommended and approved,
+  a Promotion entry in `hrm.EmploymentHistory`. The increment letter is a print template. When Payroll
+  is not licensed, the increment is recorded on the review and nothing is sent.
 
 ### `clm` — expense claims
 
@@ -1993,17 +2115,103 @@ Spend Money in Accounting (`Direct`). The branch sets the default.
 
 ## Approvals
 
-One simple chain per request type, configured per branch in **ApprovalRule**: `RequestKind` (enum:
-Leave, Regularisation, Overtime, CompOff, LeaveEncashment, SalaryRevision, Loan, JobRequisition,
-Offer, Claim, Separation, FullAndFinal), `FirstApprover` (enum: ReportingManager, DepartmentHead,
-Role), `SecondApprover` (enum?, same), `SecondApproverAboveAmount money?`.
+**Every approval is a chain of levels the customer configures** (owner's decision, 23 September
+2026): how many levels, in what order, what each is called, and who stands at each. An appraisal
+might go *Lead → Project Lead → Manager → HR*; leave might go *Manager* alone; a claim above ₹10,000
+might add *Finance*. Nothing about the number or names of levels is fixed in code.
 
-Every approvable row carries `ApprovalStatus` (enum: Pending, Approved, Rejected), `CurrentApprover
-EmployeeId long?`, `ApprovedByUserId Guid?`, `ApprovedAt DateTimeOffset?`, `RejectionReason
-string(500)?`. The approver is resolved and **snapshotted** at submission, so a manager change later
-does not move pending items.
+### Configuration
 
-An approver can see only requests routed to them; HR Admin sees all.
+**ApprovalWorkflow** — one chain for one kind of request, for a group of employees:
+
+| Column | Type | Rules |
+|---|---|---|
+| Name | string(100) | "Engineering appraisal", "Default leave" |
+| RequestKind | enum | Leave, Regularisation, Overtime, CompOff, LeaveEncashment, Appraisal, SalaryRevision, Loan, JobRequisition, Offer, Claim, Separation, FullAndFinal |
+| DepartmentId / GradeId / WorkLocationId | long? | Who it applies to. Null means all. The most specific match wins; one fallback workflow per kind (all three null) is required |
+| EffectiveFrom | DateOnly | A changed chain applies to requests submitted from this date; requests already in flight keep theirs |
+| IsActive | bool | |
+
+**ApprovalWorkflowLevel** — the levels, in order:
+
+| Column | Type | Rules |
+|---|---|---|
+| ApprovalWorkflowId | long | FK |
+| Sequence | int | 1, 2, 3…; unique per workflow |
+| Label | string(50) | What the customer calls the level: "Lead", "Project Lead", "Manager", "HR" |
+| ApproverKind | enum | How the person is found — see below |
+| ReportingDepth | int? | For `ReportingChain`: 1 = direct manager, 2 = their manager, … |
+| RelationshipTypeId | long? | For `Relationship`: which named relation ("Lead", "Project Lead") |
+| RoleId | int? | For `RoleHolder`: any holder of this role in the branch, e.g. HR Admin |
+| EmployeeId | long? | For `NamedEmployee`: one fixed person |
+| AboveAmount | money? | The level applies only when the request's amount exceeds this (claims, loans, revisions) |
+| IsOptional | bool | Skipped, not blocked, when no approver can be resolved |
+| CanEdit | bool | Whether this level may change the request (for an appraisal: ratings and increment), or only approve, reject or send back |
+| IsCommentRequired | bool | |
+| EscalateAfterDays | int? | Past this, the step is routed to the approver's own manager and both are notified |
+
+**ApproverKind** (enum):
+
+| Value | Finds | Typical label |
+|---|---|---|
+| `ReportingChain` | Walks `ReportsToEmployeeId` up `ReportingDepth` steps | Manager, Skip-level manager |
+| `Relationship` | The person named for this employee under a relationship type (below) | Lead, Project Lead, Mentor |
+| `DepartmentHead` | `Department.HeadEmployeeId` of the employee's department | Department Head |
+| `RoleHolder` | Anyone holding the role in the branch — the first to act takes it | HR, Finance |
+| `NamedEmployee` | One fixed person | Principal, CFO |
+
+**Lead and Project Lead are relationships, not the reporting line.** An employee reports to one
+manager, but may also have a lead and a project lead who are not in that line. Those are held as data,
+so a customer can add whatever relations their organisation uses:
+
+- **RelationshipType** — `Code string(20)`, `Name string(50)` ("Lead", "Project Lead", "Mentor").
+  Seeded with Lead and Project Lead; the customer adds more.
+- **EmployeeRelationship** — `EmployeeId`, `RelationshipTypeId`, `RelatedEmployeeId`,
+  `FromDate DateOnly`, `ToDate DateOnly?`. One active row per employee per type. Edited on the
+  employee's page, or in bulk by import when a project team changes.
+
+### At run time
+
+When a request is submitted, its chain is **resolved and snapshotted**: each level becomes an
+**ApprovalStep** with the actual person, so a later change of manager, lead or workflow does not move
+a request already in flight.
+
+**ApprovalStep** — `RequestKind`, `RequestId long`, `Sequence int`, `Label string(50)` (copied),
+`ApproverEmployeeId long?` (null for `RoleHolder`, filled by whoever acts), `RoleId int?`,
+`StepStatus` (enum: Waiting, Pending, Approved, Rejected, SentBack, Skipped, Escalated),
+`ActedByUserId Guid?`, `ActedAt DateTimeOffset?`, `Comments string(2000)?`, `DueDate DateOnly?`.
+
+The rules:
+
+- **One step is `Pending` at a time**, in sequence; the rest wait. Approving moves to the next level;
+  the last approval approves the request.
+- **Reject** ends the request. **Send back** returns it to the previous level — or to the employee
+  from level 1 — with a mandatory comment, and the chain resumes from there.
+- **Skip rules**, applied when the chain is resolved: a level whose approver cannot be found and is
+  `IsOptional` is `Skipped`; a level whose approver is the requester, or the same person as the level
+  before, is `Skipped` so nobody approves twice or approves their own request. A required level that
+  cannot be resolved blocks submission, and says which level and why.
+- **Delegation**: **ApprovalDelegate** (`EmployeeId`, `DelegateEmployeeId`, `FromDate`/`ToDate`) —
+  while it is active, the delegate acts in the approver's place, and the step records both.
+- **Escalation** runs in the owning service's hosted service, claiming each overdue step once with a
+  guarded status update.
+- **The request row keeps a summary** for lists: `ApprovalStatus` (enum: Draft, InApproval, Approved,
+  Rejected), `CurrentStepLabel string(50)?`, `CurrentApproverEmployeeId long?`.
+
+### Where it lives
+
+- **Configuration and resolution belong to `Hrm`**, which owns the employees, the reporting line and
+  the relationships the chain is resolved from. It serves
+  `POST internal/approval-chains/resolve` (request kind, employee, amount) → the list of steps.
+- **Steps are stored by the service that owns the request** — `tla` for leave, `prf` for appraisals,
+  `clm` for claims — in its own `ApprovalSteps` table, mapped from one shared shape in
+  `Shared.Kernel.Approvals` (base entity, state machine and refusal messages), so every service
+  moves steps the same way and none reads another's tables (rule 8).
+- **One approvals inbox** in `apps/hrms` (and `apps/payroll` for its own kinds) lists "waiting on me"
+  by asking each service's `GET /api/approvals/mine`. An approver sees only steps routed to them or
+  to a role they hold; HR Admin sees all.
+- **The configuration screen** — Settings › Approval workflows — lists workflows per request kind;
+  levels are added, removed and reordered by drag, each with its label and approver kind.
 
 ## Reports
 
@@ -2140,10 +2348,14 @@ Payroll** is H0, H1, H4, H5, H6 and the settlement half of H7, plus Payroll's se
   *Done when*: an employee is created with family, nominees and bank details, linked to a user and
   listed; RLS and the guard audit pass from a dropped database.
 - [ ] **H2 — Leave** *(HRMS)*. Types, policies, accrual and rollover, balances, applications, encashment,
-  approvals.
+  approvals. **The configurable approval engine is built here**, because leave is the first request
+  that needs it: workflows, levels, relationships (Lead, Project Lead), snapshotting, skip rules,
+  send back, delegation, escalation — used by every request kind after it.
 
-  *Done when*: two simultaneous approvals cannot overspend a balance, and the sandwich rule counts
-  a weekend between two leave days.
+  *Done when*: two simultaneous approvals cannot overspend a balance; the sandwich rule counts a
+  weekend between two leave days; and changing a workflow leaves requests already in flight on their
+  old chain.
+
 - [ ] **H3 — Time and attendance** *(HRMS)*. Holidays, shifts, rosters, weekly offs, punches, daily derivation,
   regularisation, overtime, comp-off, locking.
 
@@ -2175,7 +2387,14 @@ Payroll** is H0, H1, H4, H5, H6 and the settlement half of H7, plus Payroll's se
 - [ ] **H10 — Recruitment and onboarding** *(HRMS)*.
 
   *Done when*: accepting an offer twice creates one employee.
-- [ ] **H11 — Performance** *(HRMS)*.
+- [ ] **H11 — Performance** *(HRMS)*. Cycles, goals, competencies, self-evaluation, multi-level
+  review over the configurable Appraisal chain, peer feedback, calibration, release, acknowledgement,
+  and the revision and promotion it raises.
+
+  *Done when*: a four-level chain (Lead → Project Lead → Manager → HR) configured for one department
+  and a two-level one for another route their reviews differently; a level sent back returns to the
+  one before it; the employee's self-evaluation is unchanged after every level has acted; and a
+  manager who is also the lead is asked once, not twice.
 - [ ] **H12 — Reports** *(both — each report flagged with the app it serves)*.
 
 Each stage is built migration → seed → API → UI, and is committed to `main` with its docs page and
