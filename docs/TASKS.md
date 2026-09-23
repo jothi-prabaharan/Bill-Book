@@ -252,7 +252,7 @@ If the code has moved on since a card was written, correct the card in your clai
     second one, while nothing is released.
 
 ### TK-71 · New branches are never seeded for Purchase or the report catalog
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-23
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-01 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
