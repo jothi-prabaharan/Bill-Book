@@ -201,7 +201,7 @@ If the code has moved on since a card was written, correct the card in your clai
 ### A · Blockers: startup, seeding and security
 
 ### TK-01 · Master fails to start on a fresh database
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-MST · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Repository/AdminDbContext.cs:337-338`: the `Menu` and `MenuPermission` `HasData`.
@@ -213,20 +213,43 @@ If the code has moved on since a card was written, correct the card in your clai
   migration doesn't fix it. EF emits 379 `UpdateData` calls, and one of them collides on
   `IX_MenuPermissions_MenuId_PermissionCode`.
 - **Sub-tasks:**
-  - [ ] Run `git log -- backend/Api/Master/Master.Repository/SeedData/MenuSeed.cs` (the last change
+  - [x] Run `git log -- backend/Api/Master/Master.Repository/SeedData/MenuSeed.cs` (the last change
         was `a3d066c`) and confirm the seed isn't mid-change.
-  - [ ] Delete the three files in `Migrations/Admin/`, then regenerate one migration:
+  - [x] Delete the three files in `Migrations/Admin/`, then regenerate one migration:
         `dotnet ef migrations add InitialAdminDbContextSchema --context AdminDbContext --project backend/Api/Master/Master.Repository --startup-project backend/Api/Master/Master.Api --output-dir Migrations/Admin`.
-  - [ ] Diff the new `Up()` against the deleted one. Every table, index and `HasData` table must
+  - [x] Diff the new `Up()` against the deleted one. Every table, index and `HasData` table must
         survive. `mst` has no RLS on purpose: it holds shared reference data.
-  - [ ] Confirm `dotnet ef migrations has-pending-model-changes --context AdminDbContext …` reports none.
-  - [ ] Confirm `dotnet build backend/Bill-Book.sln` is clean.
-  - [ ] Rewrite the "Master cannot start on a fresh database" bullet in `CLAUDE.md` in the same
+  - [x] Confirm `dotnet ef migrations has-pending-model-changes --context AdminDbContext …` reports none.
+  - [x] Confirm `dotnet build backend/Bill-Book.sln` is clean.
+  - [x] Rewrite the "Master cannot start on a fresh database" bullet in `CLAUDE.md` in the same
         commit. You may take `L-DOC` for that one commit.
   - [ ] Owner: drop `ADMIN_TEST_DB` and `CONTACTS_TEST_DB`, run `Master.Api.Tests`, and start
         Master against empty databases.
 - **Done when:** Master starts against dropped databases, and `has-pending-model-changes` is clean.
 - **Notes:** TK-36 (H0.1) changes the same seed, so this card goes first.
+- **Notes (Claude Opus 5.5, 2026-09-23):**
+  - The seed was not mid-change: `MenuSeed.cs` last changed in `a3d066c`, the same commit that wrote the
+    snapshot. The snapshot was generated before the tree was renumbered, which is the whole drift (32
+    deletes and 379 updates across `Menus` and `MenuPermissions`, nothing else). The seed is deterministic
+    (fixed ids, no clocks or GUIDs), so the re-squash holds.
+  - `UpdateAdminModel` was empty and neither admin migration had any `migrationBuilder.Sql`, so the squash
+    lost nothing. It is now `20260923161008_InitialAdminDbContextSchema`, with the same 26 tables and 38
+    indexes. The `Up()` diff against the old one is seed rows only.
+  - The new id is deliberate. Reusing `20260918204306` would let an old developer database treat the
+    migration as applied while it holds stale menu rows. Under a new id that database fails loudly on
+    `CREATE TABLE` instead. Drop it.
+  - Verified by starting Master (`Migrations:ExitWhenDone=true`) against an empty PostgreSQL 16 with scratch
+    database names. Exit 0; `mst` migrated and seeded with 131 menus and 378 menu permissions, matching the
+    seed; `IN000001` created and every tenant schema migrated. The one `fail:` line in the log is EF probing
+    `__EFMigrationsHistory` before it exists, which is normal on a new database. The scratch databases were
+    dropped afterwards. This was a startup check, not a test run.
+  - `has-pending-model-changes` is clean for both `AdminDbContext` and `ContactsDbContext`.
+    `dotnet build backend/Bill-Book.sln` builds with 0 warnings.
+  - Test written: `backend/tests/Master.Api.Tests/MigrationModelTests.cs`. It asserts no pending model
+    changes for both Master contexts (no connection is opened, so it cannot skip), plus the menu seed's
+    `(MenuId, PermissionCode)` uniqueness and its parent and permission references.
+  - TK-36 (H0.1) can start. After it changes the seed, regenerate this one migration rather than adding a
+    second one, while nothing is released.
 
 ### TK-71 · New branches are never seeded for Purchase or the report catalog
 - [ ] open
