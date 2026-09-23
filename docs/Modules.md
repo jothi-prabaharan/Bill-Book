@@ -1067,11 +1067,11 @@ gain on its own: seven services currently carry an HTML parser none of them touc
 # --- Platform.md ---
 # One customer, many applications
 
-RetailErp is no longer the only product. **HRMS & Payroll** and **School** are designed next to it,
-and each is sold on its own. A customer may buy one app, two, or all three (owner's decision,
-23 September 2026).
+RetailErp is no longer the only product. **HRMS**, **Payroll** and **School** are designed next to it,
+and each is sold on its own. A customer may buy one app, several, or all four (owner's decisions,
+23 September 2026). Payroll became an app of its own the same day, sellable **without** HRMS.
 
-This section is the platform all three share. It is **stage H0**, built before any HRMS table,
+This section is the platform all four share. It is **stage H0**, built before any HRMS table,
 because nothing in a second app works without per-app licences, tokens and menus.
 
 **Nothing in this section is built.**
@@ -1081,7 +1081,7 @@ because nothing in a second app works without per-app licences, tokens and menus
 | | |
 |---|---|
 | **Built** | One customer (`mst.Customers`), many branches (`mst.Organizations`), users, roles, permissions, the two-step login, branch switching, one licence per customer, the shard registry |
-| **Planned here** | An `App` on roles, permissions, menus, licences and refresh tokens; per-app sign-in; an app switcher; an Applications page to start another app's trial; per-app signup; per-app seeding |
+| **Planned here** | An `App` on roles, licences and refresh tokens, and a set of apps on permissions and menus; per-app sign-in; an app switcher; an Applications page to start another app's trial; per-app signup; per-app seeding |
 | **Decided** | One customer and one set of branches across every app; one licence **per app**; each app has its own public signup with a 14-day trial; the customer and branch screens are shared, not copied |
 | **Waiting on the owner** | Pricing per app (per user, per branch or per employee); how a platform operator gets `platform.*` (already in Undecided in `CLAUDE.md`) |
 
@@ -1091,7 +1091,7 @@ because nothing in a second app works without per-app licences, tokens and menus
   - `mst.Customers` is the head office and `mst.Organizations` its branches, exactly as today.
   - There is no per-app customer or branch table.
   - **A branch is a legal trading unit, not an app's**, so one `OrgId` can run several apps. A school
-    campus runs School and HRMS on the same branch; a shop runs RetailErp and HRMS.
+    campus runs School, HRMS and Payroll on the same branch; a shop runs RetailErp and Payroll.
 - **Isolation does not change.** Every app's tables carry `CustomerId` and `OrgId` with the query
   filter and a FORCEd RLS policy, in the same shard. An app is not a tenant boundary; a customer
   and a branch are.
@@ -1100,21 +1100,33 @@ because nothing in a second app works without per-app licences, tokens and menus
 
 ## `App`
 
-`Master.Entity/Enums/App.cs`: `RetailErp = 1`, `School = 2`, `Hrms = 3`.
+`Master.Entity/Enums/App.cs` is a `[Flags]` enum: `RetailErp = 1`, `School = 2`, `Hrms = 4`,
+`Payroll = 8`.
 
 It is **not** `Vertical`. `Vertical` is the trade inside RetailErp (General, Pharma, Jewellery) and
 stays as it is.
 
+**A role belongs to one app; a permission or a menu may belong to several.** That difference is the
+whole design. A screen shared by several apps — users, roles, branches, settings, and the employee
+master HRMS and Payroll both use — has one permission code (`Permission.Code` is unique) and one
+menu row, marked with every app that shows it. Duplicating those codes per app would give two
+permissions for one screen and two answers to "can this person edit users".
+
 | Table | Change | Why |
 |---|---|---|
-| `mst.Roles` | `App App`, required, indexed | Owner of RetailErp and Owner of HRMS are different rows |
-| `mst.Permissions` | `App App`, required, indexed | A role may be granted only its own app's permissions — checked in C# on write, and asserted over every seed |
-| `mst.Menus` | `App App`, required, indexed | Each app draws only its own navigation |
-| `mst.Licenses` | `App App`, required; unique on (`CustomerId`, `App`) | One licence per app per customer |
-| `mst.RefreshTokens` | `App App`, required | A refresh mints a token for the same app, as `OrgId` already makes it mint one for the same branch |
+| `mst.Roles` | `App App`, one value, required, indexed | Owner of RetailErp and Owner of Payroll are different rows |
+| `mst.Permissions` | `App Apps`, one or more flags, required | `users.*`, `roles.*`, `organizations.*`, `settings.*` are every app's; `employee.*` is HRMS's and Payroll's; `sales.*` is RetailErp's only |
+| `mst.Menus` | `App Apps`, one or more flags, required | The branches screen appears in every app; the employee list in HRMS and Payroll; the ledger in RetailErp only |
+| `mst.Licenses` | `App App`, one value; unique on (`CustomerId`, `App`) | One licence per app per customer |
+| `mst.RefreshTokens` | `App App`, one value | A refresh mints a token for the same app, as `OrgId` already makes it mint one for the same branch |
 | `RolePermission`, `UserOrganizationRole` | none | They reach the app through `RoleId`. A second copy of the same fact could disagree — the reasoning that removed `BranchId` |
 
-Every existing seed row becomes `RetailErp`.
+**The grant rule**: a role may be granted a permission only when `permission.Apps` includes
+`role.App`. Checked in C# on write, and asserted over every seed.
+
+Every existing role and licence becomes `RetailErp`. Every existing permission and menu becomes
+`RetailErp`, except the shared screens — users, roles, branches, organization settings, currencies,
+configuration and SMTP — which become all four.
 
 **Two magic strings become enums while this is open** (hard rule 7): `Customer.PlanTier` and
 `TenantDatabase.PlanType`.
@@ -1126,6 +1138,8 @@ Each licence has its own `LicenseType` (Trial, Paid), start and expiry, grace da
 
 - Expiring one app's licence locks that app only. A customer whose RetailErp trial lapses keeps
   running payroll.
+- **HRMS and Payroll share the employee master.** Either licence unlocks it; neither needs the other.
+  Buying the second later adds its screens over the same employee records — nothing is re-entered.
 - A user counts once per app they hold a role in, against that app's `MaxUsers`.
 - A branch counts once per app it is used in, against that app's `MaxOrganizations`.
 - `apps/admin` shows and edits licences per app, per customer.
@@ -1141,8 +1155,11 @@ The two-step login stays. The second step says which app it is for.
   - an `app` claim;
   - `license_status` and `license_expiry` **from that app's licence**;
   - `permission[]` built only from roles of that app.
-- Services check the `app` claim against the app they belong to, so an HRMS token cannot call a
-  RetailErp endpoint even if a permission name matched. `EndpointGuardAudit` gains that question.
+- **Services check the `app` claim**, per controller, with `[RequireApp(...)]` naming the apps it
+  serves. The Hrm service's employee controllers take `App.Hrms | App.Payroll`; its recruitment and
+  lifecycle controllers take `App.Hrms` alone; Master's user, role and branch controllers take all
+  four. An HRMS token cannot call a RetailErp endpoint even if a permission name matched.
+  `EndpointGuardAudit` gains that question: every controller names its apps.
 - **Switching app** is the same move as switching branch today: mint a new token. The refresh-token
   family is per app.
 
@@ -1156,7 +1173,7 @@ Every app is an Nx app on `libs/app-shell` and imports these existing libs rathe
 | Branch switcher | `libs/app-shell` — `topbar/shell-topbar.component.ts` |
 | Branches (create, edit, settings) | `libs/master/master-ui` — `organizations/`, `organization-settings/` |
 | Users and invitations | `libs/master/master-ui` — `users/` |
-| Roles and permissions | `libs/master/master-ui` — `roles/`, now showing only the current app's roles and permissions |
+| Roles and permissions | `libs/master/master-ui` — `roles/`, now showing only the current app's roles, and the permissions whose apps include it |
 | Currencies, configuration, SMTP | `libs/master/master-ui` — `org-currencies/`, `configurations/`, `smtp-settings/` |
 | Licence guard | `libs/shared/auth/src/lib/license.guard.ts`, now reading the current app's licence |
 
@@ -1215,61 +1232,87 @@ H0 fixes all three:
 
 ## Stage H0
 
-- [ ] **H0.1 — `App` in `mst`.** The enum; the column on the five tables; the enums for plan tier
-  and plan type; seeds marked `RetailErp`; the same-app grant guard.
+- [ ] **H0.1 — `App` in `mst`.** The flags enum; `App` on roles, licences and refresh tokens; `Apps`
+  on permissions and menus; the enums for plan tier and plan type; seeds marked; the grant rule.
 
-  *Done when*: granting an HRMS permission to a RetailErp role is refused, and `apps/web` is
-  unchanged for every existing user.
+  **It starts by fixing the admin migration drift** recorded in `CLAUDE.md` — Master cannot start on
+  a fresh database because the menu seed changed after the admin migration was squashed. H0.1 changes
+  that same seed, so the admin migration is re-squashed first and
+  `dotnet ef migrations has-pending-model-changes` must come back clean before and after.
+
+  *Done when*: granting a Payroll-only permission to a RetailErp role is refused; a Payroll role can
+  be granted `users.view`; and `apps/web` is unchanged for every existing user.
 - [ ] **H0.2 — Per-app sign-in and licences.** Per-app login filtering, the `app` claim,
   licence claims per app, per-app refresh families, the service-side `app` check, and the
   current-context endpoint.
 
-  *Done when*: an HRMS token calling a RetailErp endpoint gets 403; an expired RetailErp licence
-  leaves HRMS working.
+  *Done when*: an HRMS token calling a RetailErp endpoint gets 403; a Payroll token reads employees
+  but not recruitment; an expired RetailErp licence leaves Payroll working.
 - [ ] **H0.3 — Shell.** `APP_ID`, `GET /api/menu?app=`, the app switcher, the Applications page.
 - [ ] **H0.4 — Signup and seeding per app**, and starting another app's trial.
 
-  *Done when*: signing up for HRMS then starting RetailErp gives one customer, one branch and two
-  licences, with RetailErp's master data seeded into the existing branch.
+  *Done when*: signing up for Payroll then starting HRMS gives one customer, one branch, two
+  licences and one set of employees, with HRMS's master data seeded into the existing branch.
 - [ ] **H0.5 — Sharding.** Per the section above.
-- [ ] **H0.6 — `apps/hrms`.** An empty app that signs in, selects a branch, draws the HRMS menu and
-  switches to `apps/web`.
+- [ ] **H0.6 — `apps/hrms` and `apps/payroll`.** Two empty apps that sign in, select a branch, draw
+  their own menus, and switch to each other and to `apps/web`.
 
 # --- Hrms.md ---
 # HRMS & Payroll
 
-A product of its own, **`apps/hrms`**, sold separately and alongside RetailErp and School (owner's
-decisions, 23 September 2026). It covers the whole employee lifecycle: hire, onboard, organise, time
-and leave, pay, comply with Indian statute, claim expenses, review performance, and exit.
+**Two apps, each sold on its own** (owner's decisions, 23 September 2026):
 
-- **It is built first**, before School, and its stage H0 is the Platform section above.
+- **`apps/hrms`** — the employee lifecycle: hire, onboard, organise, time and leave, expense claims,
+  performance, exit.
+- **`apps/payroll`** — pay: salary, runs, payslips, Indian statutory (PF, ESI, PT, LWF, gratuity,
+  bonus), income tax and Form 16, loans, full & final settlement, bank files and the journal.
+
+A customer may buy either, or both. **Payroll works without HRMS**, and neither app asks for anything
+twice when a customer has both:
+
+| | Payroll alone | Payroll with HRMS |
+|---|---|---|
+| **Employees** | The shared employee master (`hrm`), shown inside `apps/payroll` | The same records, also shown in `apps/hrms` |
+| **Paid days and loss of pay** | Entered or imported per month in Payroll (`pay.MonthlyAttendanceInput`) | Read from HRMS's daily attendance and approved leave (`tla`) |
+| **Leave encashment, F&F leave days** | Entered on the encashment or settlement | Read from HRMS's leave balances |
+| **Self-service** | Payslips, Form 16 and tax declarations in `apps/payroll` | The same, plus leave, attendance and claims in `apps/hrms` |
+
+The two share one design section because they share one employee master, one set of conventions and
+one set of services; which app shows a screen is a matter of the `App` flags in the Platform section,
+not of separate tables.
+
+- **They are built first**, before School, and their stage H0 is the Platform section above.
 - **School consumes it.** Teachers, office staff and technicians are employees;
   `sis.Sections.ClassTeacherEmployeeId` and `wrk.WorkOrders.AssignedEmployeeId` point here.
 - **The rules this section states** — column conventions, endpoint shape, frontend, tenancy — are
   the ones School refers back to.
 
 **Nothing in this section is built.** It was designed on 23 September 2026 and deepened the same day,
-when the owner decided to sell it as a separate app.
+when the owner decided to sell HRMS and Payroll as separate apps.
 
 ## Where things stand
 
 | | |
 |---|---|
 | **Built** | Nothing |
-| **Planned here** | Six services, one per schema — `hrm`, `tla`, `pay`, `rec`, `prf`, `clm` — HR report sources in Reporting, and `apps/hrms` on the shared shell |
+| **Planned here** | Six services, one per schema — `hrm`, `tla`, `pay`, `rec`, `prf`, `clm` — HR and payroll report sources in Reporting, and two apps, `apps/hrms` and `apps/payroll`, on the shared shell |
 | **Depends on** | The Platform section (H0); Accounting's internal posting API (built); the print templates, for letters, payslips and Form 16 |
-| **Decided** | Sold on its own; built before School; one service per schema; employees are not contacts; payroll posts through Accounting and never writes GL rows; an HRMS-only customer's journals post to a hidden ledger and are exported for their accountant |
+| **Decided** | HRMS and Payroll are two apps, each sold on its own, Payroll fully standalone; one shared employee master; built before School; one service per schema; employees are not contacts; payroll posts through Accounting and never writes GL rows; a customer without RetailErp has its journals posted to a hidden ledger and exported for their accountant |
 | **Waiting on the owner** | The open questions at the end of this section |
 
 ## Decisions
 
 | Decision | Why |
 |---|---|
+| **Payroll is an app of its own, sellable without HRMS** | The owner's decision. Standalone payroll is a common purchase for a business that keeps HR on paper |
+| **One employee master, owned by the `Hrm` service, shared by both apps** | Payroll cannot run without employees, and a customer with both apps must not enter anyone twice. The master's permissions (`employee.*`) and menus carry both apps' flags |
+| **Payroll takes paid days from HRMS when it is licensed, and from its own monthly input when not** | One run, two sources for the same figures; the run records which it used. A customer who adds HRMS later switches source from the next unposted month |
+| **Expense claims stay in HRMS** | Paid through a payroll line when Payroll is licensed, or as a Spend Money otherwise |
 | **An employee is not a `con.Contact`** | Contacts are trade counterparties, visible across sales and purchase screens. Salary, PAN, bank details, family and date of birth are not trade data |
 | **An employee may link to a `mst.Users` row** (`UserId Guid?`) | For self-service. Many employees (cleaners, drivers) never sign in, so the link is optional |
 | **Salary is its own permission** | `payroll.view` is distinct from `hrm.view`. Most HR users may see an employee record; far fewer may see what they earn |
 | **Payroll posts one journal per run through Accounting** | The rule every money document follows. A posted run is never edited; a correction is a reversal and a re-run |
-| **An HRMS-only customer still posts journals** | Accounting is seeded for every branch (Platform § Signup). The ledger is simply not in HRMS's menu, and a journal export serves their external accountant |
+| **A customer without RetailErp still posts journals** | Accounting is seeded for every branch (Platform § Signup). The ledger is simply not in the Payroll or HRMS menu, and a journal export serves their external accountant |
 | **Statutory settings are effective-dated rows**, not constants | PF, ESI, PT, LWF, gratuity, bonus and tax rules are revised; a past month must recompute to the figures in force then, as the Tax Master already does for GST |
 | **Approvals are one approver chain per request type** | Reporting manager, then optionally an HR or finance approver. It covers leave, regularisation, overtime, requisitions, offers and claims. Configurable workflows are the Phase 3 engine and are not waited on |
 | **Keys are `{Entity}Id long`**, not a bare `Id` | The house convention (`Lead.LeadId`). `CustomerId`, `OrgId` and `UserId` stay `Guid` |
@@ -1277,18 +1320,18 @@ when the owner decided to sell it as a separate app.
 | **Money, rates, days and quantities are `decimal(18,4)`** in Fluent config | Half days and pro-rated days are fractions; display rounding comes from the branch's currency |
 | **Every `string` carries `[MaxLength]`; booleans are `Is`/`Has`/`Can`; enums, never magic strings** | The house style |
 | **The existing frontend stack** — signals, async/await, shared `ui-components`, `--color-*` tokens | One shell should not carry two visual languages |
-| **HR reports are Reporting sources** with `App = Hrms` | The Reporting service already carries grids, filters, Excel and CSV export for 41 reports; a second report engine would be a second answer to every formatting question |
+| **HR and payroll reports are Reporting sources**, each flagged with `App.Hrms` or `App.Payroll` | The Reporting service already carries grids, filters, Excel and CSV export for 41 reports; a second report engine would be a second answer to every formatting question |
 
 ## Service map
 
-| Service | Schema | Port | Owns | Calls |
-|---|---|---|---|---|
-| `Hrm` | `hrm` | 4509 | Organisation setup, employees and everything about them, lifecycle (onboarding, exit), letters, assets issued, announcements | Master (user link, print templates) |
-| `TimeLeave` | `tla` | 4510 | Holidays, shifts, rosters, weekly offs, punches, daily attendance, regularisation, overtime, comp-off, leave policy, balances, applications | Hrm (employees) |
-| `Payroll` | `pay` | 4511 | Components, structures, salaries, revisions and arrears, one-off pay, loans, runs, payslips, statutory settings and returns, income tax, F&F, bank files, journal posting and export | Hrm, TimeLeave, Claims, Accounting |
-| `Recruitment` | `rec` | 4512 | Requisitions, openings, candidates, pipeline, interviews, offers | Hrm (creates the employee), Master (print templates) |
-| `Performance` | `prf` | 4513 | Goals, review cycles, reviews, ratings, appraisal outcomes | Hrm, Payroll (revision) |
-| `Claims` | `clm` | 4514 | Claim categories and limits, expense claims, approval, payout | Hrm, Payroll (payout in a run), Accounting (payout as Spend Money) |
+| Service | Schema | Port | Serves app | Owns | Calls |
+|---|---|---|---|---|---|
+| `Hrm` | `hrm` | 4509 | HRMS; the employee master also Payroll | Organisation setup, employees and everything about them, lifecycle (onboarding, exit), letters, assets issued, announcements | Master (user link, print templates) |
+| `TimeLeave` | `tla` | 4510 | HRMS | Holidays, shifts, rosters, weekly offs, punches, daily attendance, regularisation, overtime, comp-off, leave policy, balances, applications | Hrm (employees) |
+| `Payroll` | `pay` | 4511 | Payroll | Components, structures, salaries, revisions and arrears, one-off pay, loans, runs, payslips, statutory settings and returns, income tax, F&F, bank files, journal posting and export | Hrm, TimeLeave (when HRMS is licensed), Claims (likewise), Accounting |
+| `Recruitment` | `rec` | 4512 | HRMS | Requisitions, openings, candidates, pipeline, interviews, offers | Hrm (creates the employee), Master (print templates) |
+| `Performance` | `prf` | 4513 | HRMS | Goals, review cycles, reviews, ratings, appraisal outcomes | Hrm, Payroll (revision) |
+| `Claims` | `clm` | 4514 | HRMS | Claim categories and limits, expense claims, approval, payout | Hrm, Payroll (payout in a run, when licensed), Accounting (payout as Spend Money) |
 
 Every cross-service id is an unenforced `long`, validated in C# through the owning service (hard
 rule 8). Each service is the usual three projects under `backend/Api/{Service}/` with a test project
@@ -1582,6 +1625,21 @@ Held pay is computed and posted but not paid until released.
 `Outstanding money`, `LoanStatus` (enum: Active, Closed, WrittenOff), approval columns.
 **LoanRepayment** records each deduction or manual repayment.
 
+**MonthlyAttendanceInput** — the paid-days source for a customer **without** HRMS:
+
+| Column | Type | Rules |
+|---|---|---|
+| EmployeeId | long | Unenforced — `hrm.Employees`. Unique per pay month |
+| PayMonth | DateOnly | First of the month |
+| PaidDays / LopDays | money | Paid + LOP ≤ days in the month |
+| OvertimeHours | money | Paid at the component's overtime rate |
+| LeaveEncashDays | money | Paid in this month's run |
+| InputSource | enum | Manual, Import |
+| IsLocked | bool | Set when the run covering the month posts |
+
+Entered on a monthly grid or imported from a spreadsheet. With HRMS licensed, the grid is read-only
+and shows what `tla` supplied. A run records its `PaidDaysSource` (enum: TimeLeave, MonthlyInput).
+
 ### `pay` — statutory
 
 All settings are **effective-dated rows per OrgId** (the Tax Master pattern), seeded with the rates in
@@ -1657,6 +1715,7 @@ not generated.
 | PayMonth | DateOnly | First of the month. One non-reversed run per pay group per month |
 | PayDate | DateOnly | |
 | RunKind | enum | Regular, OffCycle, FullAndFinal |
+| PaidDaysSource | enum | TimeLeave, MonthlyInput — which one the run read |
 | PayrollStatus | enum | Draft → Processed → Approved → Posted → Paid; Reversed |
 | TotalGross / TotalDeductions / TotalNet / TotalEmployerCost | money | Computed, stored |
 | JournalId | long? | Unenforced — the posted JE |
@@ -1671,7 +1730,8 @@ are **snapshotted** on the line, so a later rename or remapping never rewrites a
 
 **Lifecycle.**
 
-- **Process** reads attendance and leave up to the pay group's cutoff, salaries in force, one-time
+- **Process** reads paid days — from `tla` up to the pay group's cutoff when HRMS is licensed, from
+  `MonthlyAttendanceInput` otherwise — salaries in force, one-time
   payments, approved claims and encashments, loan instalments and statutory settings, and fills the
   payslips. Draft and Processed runs may be re-processed.
 - **Approve** needs `payroll.approve` — a different person from whoever processed it, when the branch
@@ -1688,7 +1748,7 @@ are **snapshotted** on the line, so a later rename or remapping never rewrites a
   Loans (asset) and Reimbursements Payable;
 - a monthly gratuity provision, when enabled: `Dr Gratuity Expense / Cr Gratuity Provision`.
 
-Paying the salaries is a Spend Money in Accounting against Salary Payable — for an HRMS-only customer,
+Paying the salaries is a Spend Money in Accounting against Salary Payable — for a customer without RetailErp,
 recorded from Payroll's **Mark paid** action, which calls the same Accounting API.
 
 **Outputs.**
@@ -1791,7 +1851,7 @@ An approver can see only requests routed to them; HR Admin sees all.
 
 ## Reports
 
-Reporting sources with `App = Hrms`, on the existing grid, filters and Excel/CSV writers:
+Reporting sources, each flagged with the app it serves — Payroll for the pay and statutory groups, HRMS for the rest — on the existing grid, filters and Excel/CSV writers:
 
 - **People**: headcount by department, location and grade; joiners and leavers; attrition rate;
   probation due; birthdays and work anniversaries; document expiry.
@@ -1810,7 +1870,7 @@ Reporting sources with `App = Hrms`, on the existing grid, filters and Excel/CSV
 
 The same shape on every controller, in this product and in School: `[Authorize]` and
 `[RequireModulePermission("{module}")]` at class level. The tenant is checked against the token,
-cross-org access returns `Forbid()` (never `NotFound()`), and the token's `app` must be `Hrms`.
+cross-org access returns `Forbid()` (never `NotFound()`), and `[RequireApp(...)]` names the apps a controller serves — `Hrms`, `Payroll`, or both for the employee master.
 
 | Route | Method | Action |
 |---|---|---|
@@ -1826,28 +1886,45 @@ There is no DELETE on a document row, the same as the rest of the product; maste
   `process`, `approve`, `post`, `reverse`, `markpaid` on a run; `accept`, `decline` on an offer;
   `lock` and `unlock` on a tax declaration and on attendance.
 - **Self-service routes** under `/api/me/...` — profile, payslips, Form 16, tax declaration, leave,
-  attendance, punches, claims, documents, announcements — resolve the employee from the token's `sub`
+  attendance, punches, claims, documents, announcements — each guarded by its own app (payslips and
+  tax by Payroll, the rest by HRMS), resolve the employee from the token's `sub`
   → `Employee.UserId`. They never take an employee id from the URL.
 - **Manager routes** under `/api/team/...` return only the caller's direct and indirect reports.
 
-**Permission modules** seeded with `App = Hrms`: `hrm`, `timeleave`, `payroll`, `statutory`,
-`incometax`, `recruitment`, `performance`, `claims`, `selfservice`, `team`.
+**Permission modules** and the apps they belong to:
 
-**System roles** seeded with `App = Hrms`: Owner, HR Admin, HR Executive, Payroll Admin, Recruiter,
-Manager (the `team` module, approvals routed to them), Employee (`selfservice` only).
+| Module | Apps |
+|---|---|
+| `employee` — the employee master and organisation setup | HRMS, Payroll |
+| `hrm` — lifecycle, letters, assets, announcements | HRMS |
+| `timeleave`, `recruitment`, `performance`, `claims`, `team`, `selfservice` | HRMS |
+| `payroll`, `statutory`, `incometax`, `payselfservice` | Payroll |
+
+**System roles**:
+
+- **HRMS**: Owner, HR Admin, HR Executive, Recruiter, Manager (the `team` module, approvals routed to
+  them), Employee (`selfservice` only).
+- **Payroll**: Owner, Payroll Admin, Payroll Executive, Employee (`payselfservice` only — payslips,
+  Form 16, tax declarations).
+
+A person using both apps holds one role in each.
 
 ## Frontend
 
-- **`apps/hrms`**, on `libs/app-shell` with `APP_ID = Hrms`, and `libs/shared/{auth, api-client,
-  ui-components, currency-format, theming}`. The customer, branch, user and role screens are the
-  shared ones from the Platform section, not copies.
+- **Two apps on the same shell**, each with `libs/shared/{auth, api-client, ui-components,
+  currency-format, theming}` and the shared customer, branch, user and role screens from the Platform
+  section:
+  - **`apps/hrms`**, `APP_ID = Hrms`.
+  - **`apps/payroll`**, `APP_ID = Payroll`.
 - **Libs**, one pair per service: `libs/hrm/*`, `libs/time-leave/*`, `libs/payroll/*`,
-  `libs/recruitment/*`, `libs/performance/*`, `libs/claims/*`.
-- **Three audiences in one app**, chosen by role rather than by separate apps:
-  - **HR and payroll** — the full menus.
-  - **Manager** — team calendar, team attendance, approvals inbox.
-  - **Employee** — profile, payslips, Form 16, tax declaration, leave, attendance and punch-in,
-    claims, documents, announcements. Laid out mobile-first.
+  `libs/recruitment/*`, `libs/performance/*`, `libs/claims/*`. **The employee master pages live in
+  `libs/hrm/hrm-ui` and are mounted by both apps**; the menu decides which of them each app shows.
+- **Audiences, chosen by role rather than by further apps:**
+  - `apps/hrms` — HR (full menus); Manager (team calendar, team attendance, approvals inbox);
+    Employee (profile, leave, attendance and punch-in, claims, documents, announcements).
+  - `apps/payroll` — Payroll Admin and Executive (full menus); Employee (payslips, Form 16, tax
+    declaration and proofs).
+  - The employee screens are laid out mobile-first in both.
 - **`-core` libs stay Ionic-compatible**, so employee self-service can become a mobile app without a
   rewrite.
 - **UI rules**, for this app and School alike:
@@ -1875,13 +1952,14 @@ The rules below hold for every service in this product and in School.
 - **Sensitive fields.** PAN, Aadhaar, bank account numbers, salary figures and tax declarations are
   masked on every list, and shown in full only on the detail screen to a holder of `payroll.view`
   (or to the employee, for their own).
-- **Seeding at branch creation**, for a customer licensed for HRMS:
-  - leave types and a default policy; a default shift and weekly-off policy;
-  - salary components, a default structure and pay group;
-  - statutory settings, PT and LWF slabs for every state, tax slabs and rules for the year;
-  - claim categories; checklist templates; bank file formats;
-  - numbering series `EMP`, `PAY`, `CLM`;
-  - the permission, menu and role rows with `App = Hrms`.
+- **Seeding at branch creation**, per licensed app:
+  - either app: organisation defaults (one department, designation, grade, location) and the `EMP`
+    series;
+  - **HRMS**: leave types and a default policy; a default shift and weekly-off policy; claim
+    categories; checklist templates; the `CLM` series;
+  - **Payroll**: salary components, a default structure and pay group; statutory settings, PT and
+    LWF slabs for every state, tax slabs and rules for the year; bank file formats; the `PAY` series;
+  - each app's role and menu rows, and the permissions flagged with it.
 
 ## Open questions
 
@@ -1891,52 +1969,61 @@ The rules below hold for every service in this product and in School.
   connector pulls from them. *Recommend push, with ZKTeco and eSSL as the first two.*
 - **A separate mobile app for employees.** *Recommend later*: the `-core` libs keep it open.
 - **Statutory rules outside India.** *Recommend not in v1*; effective-dated rows leave room.
+- **Does School also unlock the employee master?** A school without HRMS or Payroll still has to
+  name its class teachers. *Recommend yes: flag `employee.*` with School too, so a School licence
+  alone gives the employee list without leave or pay.*
 - **Payroll for a customer with many branches** — one run per branch, or a consolidated run across
   them. *Recommend per branch*: each branch is its own set of books and its own PF/ESI registration.
 
 ## Stages
 
-H0 is the Platform section above. What a first sellable version needs is H1–H8.
+H0 is the Platform section above. Each stage says which app it belongs to. **The first sellable
+Payroll** is H0, H1, H4, H5, H6 and the settlement half of H7, plus Payroll's self-service in H8.
+**The first sellable HRMS** is H0–H3, H7 and H8.
 
-- [ ] **H1 — Core HR.** Organisation setup, employee master with every child table, history,
+- [ ] **H1 — Core HR** *(both apps: the shared employee master)*. Organisation setup, employee master with every child table, history,
   documents, assets, announcements, policy documents.
 
   *Done when*: an employee is created with family, nominees and bank details, linked to a user and
   listed; RLS and the guard audit pass from a dropped database.
-- [ ] **H2 — Leave.** Types, policies, accrual and rollover, balances, applications, encashment,
+- [ ] **H2 — Leave** *(HRMS)*. Types, policies, accrual and rollover, balances, applications, encashment,
   approvals.
 
   *Done when*: two simultaneous approvals cannot overspend a balance, and the sandwich rule counts
   a weekend between two leave days.
-- [ ] **H3 — Time and attendance.** Holidays, shifts, rosters, weekly offs, punches, daily derivation,
+- [ ] **H3 — Time and attendance** *(HRMS)*. Holidays, shifts, rosters, weekly offs, punches, daily derivation,
   regularisation, overtime, comp-off, locking.
 
   *Done when*: a biometric import derives a late-marked half day, and a regularisation approval
   corrects it.
-- [ ] **H4 — Payroll core.** Components, structures, salaries, revisions with arrears, one-time pay,
-  holds, loans, runs, payslips, posting, reversal, bank file, journal export.
+- [ ] **H4 — Payroll core** *(Payroll)*. Components, structures, salaries, revisions with arrears,
+  one-time pay, holds, loans, the monthly attendance input, runs, payslips, posting, reversal, bank
+  file, journal export.
 
   *Done when*: a run posts one balanced JE, Salary Payable ties to the unpaid net, a back-dated
-  revision pays arrears in the next run, and a reversal restores both.
-- [ ] **H5 — Statutory.** PF, ESI, PT, LWF, gratuity provision, bonus, and the return files.
+  revision pays arrears in the next run, and a reversal restores both; the same run with no HRMS
+  licence reads the monthly input, and with one reads `tla`.
+- [ ] **H5 — Statutory** *(Payroll)*. PF, ESI, PT, LWF, gratuity provision, bonus, and the return files.
 
   *Done when*: the ECR file for a month matches the posted payslips to the rupee.
-- [ ] **H6 — Income tax.** Slabs and rules, declarations and proofs, projection and monthly TDS,
+- [ ] **H6 — Income tax** *(Payroll)*. Slabs and rules, declarations and proofs, projection and monthly TDS,
   Form 16 Part B, Form 12BA, 24Q.
 
   *Done when*: a mid-year joiner with a previous employer's income is taxed the same under both
   a monthly run and a year-end recomputation.
-- [ ] **H7 — Lifecycle and exit.** Onboarding and exit checklists, separation, clearance, F&F, letters.
+- [ ] **H7 — Lifecycle and exit** *(HRMS: checklists, separation, clearance, letters; Payroll: F&F)*.
+  A Payroll-only customer records the last working day on the settlement itself.
 
   *Done when*: settling an exit pays through a `FullAndFinal` run, and the employee's login stops
   working.
-- [ ] **H8 — Self-service and approvals.** The employee and manager screens and the approval inbox.
-- [ ] **H9 — Expense claims.**
-- [ ] **H10 — Recruitment and onboarding.**
+- [ ] **H8 — Self-service and approvals** *(both)*. HRMS's employee and manager screens and the
+  approval inbox; Payroll's payslips, Form 16 and tax declarations.
+- [ ] **H9 — Expense claims** *(HRMS)*.
+- [ ] **H10 — Recruitment and onboarding** *(HRMS)*.
 
   *Done when*: accepting an offer twice creates one employee.
-- [ ] **H11 — Performance.**
-- [ ] **H12 — Reports.**
+- [ ] **H11 — Performance** *(HRMS)*.
+- [ ] **H12 — Reports** *(both — each report flagged with the app it serves)*.
 
 Each stage is built migration → seed → API → UI, and is committed to `main` with its docs page and
 release-notes bullet in the same commit.
@@ -1946,7 +2033,8 @@ release-notes bullet in the same commit.
 A third product on the same platform as RetailErp, built after HRMS & Payroll. It covers running a school (students, classes,
 admissions, attendance, fees, exams, a parent portal) and maintaining its campus (facilities, work
 orders, preventive maintenance, AMC contracts). Staff, leave and salary are **not** here: they are
-the HRMS & Payroll app in the section before this one, which School consumes.
+the HRMS and Payroll apps in the section before this one. School uses their shared employee
+master for teachers and technicians.
 
 **School is built after HRMS & Payroll** (owner's decision, 23 September 2026). It relies on HRMS
 for three things:
