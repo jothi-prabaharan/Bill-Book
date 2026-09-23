@@ -1163,19 +1163,61 @@ The two-step login stays. The second step says which app it is for.
 - **Switching app** is the same move as switching branch today: mint a new token. The refresh-token
   family is per app.
 
-## Shared screens — built once, mounted by every app
+## Shared master pages — one page, every app
 
-Every app is an Nx app on `libs/app-shell` and imports these existing libs rather than copying them:
+**Every master page that is not about one app's trade is shared by all apps** (owner's decision,
+23 September 2026). There is one users page, one roles page, one branches page, and so on: every app
+mounts the same page from the same lib, reads the same rows through the same API, and never carries
+a copy. A change to the users page is a change in all four apps at once.
 
-| Screen | Where it already is |
-|---|---|
-| Sign-in and branch selection | `libs/shared/auth` — `pages/login/login.page.ts`, `auth.service.ts` |
-| Branch switcher | `libs/app-shell` — `topbar/shell-topbar.component.ts` |
-| Branches (create, edit, settings) | `libs/master/master-ui` — `organizations/`, `organization-settings/` |
-| Users and invitations | `libs/master/master-ui` — `users/` |
-| Roles and permissions | `libs/master/master-ui` — `roles/`, now showing only the current app's roles, and the permissions whose apps include it |
-| Currencies, configuration, SMTP | `libs/master/master-ui` — `org-currencies/`, `configurations/`, `smtp-settings/` |
-| Licence guard | `libs/shared/auth/src/lib/license.guard.ts`, now reading the current app's licence |
+**The rule, for these pages and for every master page added later:**
+
+1. **The page lives in a shared lib** (`libs/master/master-ui` or `libs/shared/auth`), never in an
+   app or in one app's feature lib. An app only adds its route.
+2. **Its menu row carries every app that shows it** in `Menus.Apps`, and its permission codes carry
+   the same set in `Permissions.Apps` — one code per screen, not one per app.
+3. **Its controller names the same apps** in `[RequireApp(...)]`, so any of those apps' tokens can
+   call it.
+4. **The data is the customer's, not the app's.** A user, a branch or a currency added in Payroll is
+   the same row RetailErp sees.
+5. **A page that is shared by only some apps says which, and why**, in the table below. The default
+   for a new master page is all four; narrowing it needs a reason written down.
+
+| Page | Lib (already exists unless noted) | Owned by | Apps |
+|---|---|---|---|
+| Sign-in, branch selection, forgot password, accept invitation, trial expired | `libs/shared/auth` — `pages/` | Master | All |
+| Signup | `libs/shared/auth` — `pages/signup` | Master | All — each app's page passes its `App` |
+| Branch switcher and app switcher | `libs/app-shell` — `topbar/` (the app switcher is new) | Master | All |
+| My profile and change password | new, `libs/shared/auth` | Master | All |
+| **Users and invitations** | `libs/master/master-ui` — `users/` | Master | All |
+| **Roles and permissions** | `libs/master/master-ui` — `roles/` | Master | All |
+| **Branches** (create, edit) | `libs/master/master-ui` — `organizations/` | Master | All |
+| **Organization settings** | `libs/master/master-ui` — `organization-settings/` | Master | All |
+| Currencies | `libs/master/master-ui` — `org-currencies/` | Master | All |
+| Configuration (formats, preferences) | `libs/master/master-ui` — `configurations/` | Master | All |
+| SMTP settings | `libs/master/master-ui` — `smtp-settings/` | Master | All |
+| API clients | `libs/master/master-ui` — `api-clients/` | Master | All |
+| **Applications** (licences, start a trial) | new, `libs/master/master-ui` | Master | All |
+| Numbering series | `libs/accounting/accounting-ui` — `numbering-series/` | Accounting | All — every app numbers its documents (`EMP`, `PAY`, `ADM`, `FDM`, …) from the one shared table; the page moves to `libs/master/master-ui` so no app imports an accounting lib for it, and keeps calling Accounting's API |
+| Print templates (editor not yet built) | `libs/master/master-ui` when built | Master, moving to Printing (stage P) | All — payslips, Form 16, HR letters and fee receipts are templates like invoices |
+| Contacts, contact person roles | `libs/master/master-ui` — `contacts/`, `contact-person-roles-*` | Master | RetailErp and School — customers, vendors and guardians. HRMS and Payroll have employees, not trade contacts |
+| HSN/SAC codes | `libs/master/master-ui` — `hsn-sac/` | Master | RetailErp and School — GST on goods and on the rare taxable fee head |
+| **Employee master** and organisation setup (departments, designations, grades, locations) | `libs/hrm/hrm-ui` | Hrm | HRMS, Payroll and School — School's class teachers and technicians are employees, so a School licence alone shows the employee list without leave or pay |
+
+**How the shared pages behave inside one app**, so a shared page is not a confusing one:
+
+- **Roles** lists and creates only the current app's roles, and offers only permissions whose `Apps`
+  include it. A RetailErp Owner and a Payroll Owner are different rows, and editing one never
+  touches the other.
+- **Users** lists every user of the customer, with an **Apps** column showing where each holds a
+  role. Inviting or editing from inside an app assigns that app's roles; the user record, password
+  and sign-in are shared.
+- **Branches** is identical everywhere. Creating a branch seeds it for every app the customer is
+  licensed for (Signup and seeding, below), not only for the app it was created from.
+- **Licence limits** count per app: a user counts against an app's `MaxUsers` only when they hold a
+  role in it; a branch counts against an app's `MaxOrganizations` only when that app is used there.
+
+The licence guard (`libs/shared/auth/src/lib/license.guard.ts`) reads the current app's licence.
 
 New, in the shared libs:
 
@@ -1248,7 +1290,12 @@ H0 fixes all three:
 
   *Done when*: an HRMS token calling a RetailErp endpoint gets 403; a Payroll token reads employees
   but not recruitment; an expired RetailErp licence leaves Payroll working.
-- [ ] **H0.3 — Shell.** `APP_ID`, `GET /api/menu?app=`, the app switcher, the Applications page.
+- [ ] **H0.3 — Shell and shared master pages.** `APP_ID`, `GET /api/menu?app=`, the app switcher,
+  the Applications page, and every page in the shared master pages table flagged, guarded and
+  mounted per its row — including moving the numbering series page to `libs/master/master-ui`.
+
+  *Done when*: a user created from `apps/payroll` appears in `apps/web`'s users page with both apps
+  in its Apps column, and no app's source tree contains a copy of a shared page.
 - [ ] **H0.4 — Signup and seeding per app**, and starting another app's trial.
 
   *Done when*: signing up for Payroll then starting HRMS gives one customer, one branch, two
@@ -1305,7 +1352,7 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 | Decision | Why |
 |---|---|
 | **Payroll is an app of its own, sellable without HRMS** | The owner's decision. Standalone payroll is a common purchase for a business that keeps HR on paper |
-| **One employee master, owned by the `Hrm` service, shared by both apps** | Payroll cannot run without employees, and a customer with both apps must not enter anyone twice. The master's permissions (`employee.*`) and menus carry both apps' flags |
+| **One employee master, owned by the `Hrm` service, shared by HRMS, Payroll and School** | Payroll cannot run without employees, a school has to name its teachers, and a customer with several apps must not enter anyone twice. The master's permissions (`employee.*`) and menus carry all three apps' flags — see Platform § Shared master pages |
 | **Payroll takes paid days from HRMS when it is licensed, and from its own monthly input when not** | One run, two sources for the same figures; the run records which it used. A customer who adds HRMS later switches source from the next unposted month |
 | **Expense claims stay in HRMS** | Paid through a payroll line when Payroll is licensed, or as a Spend Money otherwise |
 | **An employee is not a `con.Contact`** | Contacts are trade counterparties, visible across sales and purchase screens. Salary, PAN, bank details, family and date of birth are not trade data |
@@ -1895,7 +1942,7 @@ There is no DELETE on a document row, the same as the rest of the product; maste
 
 | Module | Apps |
 |---|---|
-| `employee` — the employee master and organisation setup | HRMS, Payroll |
+| `employee` — the employee master and organisation setup | HRMS, Payroll, School |
 | `hrm` — lifecycle, letters, assets, announcements | HRMS |
 | `timeleave`, `recruitment`, `performance`, `claims`, `team`, `selfservice` | HRMS |
 | `payroll`, `statutory`, `incometax`, `payselfservice` | Payroll |
@@ -1969,9 +2016,6 @@ The rules below hold for every service in this product and in School.
   connector pulls from them. *Recommend push, with ZKTeco and eSSL as the first two.*
 - **A separate mobile app for employees.** *Recommend later*: the `-core` libs keep it open.
 - **Statutory rules outside India.** *Recommend not in v1*; effective-dated rows leave room.
-- **Does School also unlock the employee master?** A school without HRMS or Payroll still has to
-  name its class teachers. *Recommend yes: flag `employee.*` with School too, so a School licence
-  alone gives the employee list without leave or pay.*
 - **Payroll for a customer with many branches** — one run per branch, or a consolidated run across
   them. *Recommend per branch*: each branch is its own set of books and its own PF/ESI registration.
 
@@ -2514,8 +2558,8 @@ told; none of them is designed until one is picked.
   - `IsGuardian` on `con.Contact`.
   - School permission, menu and role seeds with `App = School`.
   - School signup with its 14-day trial, and School seeding per branch (Platform § Signup).
-  - An empty `apps/school` on the shell that H0 made app-aware, mounting the shared customer, branch,
-    user and role screens.
+  - An empty `apps/school` on the shell that H0 made app-aware, mounting the shared master pages
+    (Platform § Shared master pages) and the shared employee master.
 
   *Done when*: `apps/school` shows only School menus, and a guardian contact can be created and
   filtered.
