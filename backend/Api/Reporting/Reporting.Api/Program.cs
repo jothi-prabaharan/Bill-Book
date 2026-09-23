@@ -136,6 +136,10 @@ builder.Services.AddScoped<IReportSource, PayableInvoiceDetailSource>();
 builder.Services.AddScoped<IReportSource, PayableInvoiceSummarySource>();
 builder.Services.AddScoped<IReportSource, BillDnPaymentSource>();
 builder.Services.AddScoped<IReportSource, PurchaseReceiveOrderDetailsSource>();
+builder.Services.AddScoped<IReportSource, DepreciationScheduleSource>();
+builder.Services.AddScoped<IReportSource, DisposalScheduleSource>();
+builder.Services.AddScoped<IReportSource, FixedAssetReconciliationSource>();
+builder.Services.AddScoped<IReportSource, FixedAssetsScheduleSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

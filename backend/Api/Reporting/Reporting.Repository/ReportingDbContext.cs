@@ -100,6 +100,14 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<SpendMoneyDetailRead> SpendMoneyDetails => Set<SpendMoneyDetailRead>();
     public DbSet<GoodsReceiptDetailRead> GoodsReceiptDetails => Set<GoodsReceiptDetailRead>();
 
+    public DbSet<FixedAssetRead> FixedAssets => Set<FixedAssetRead>();
+
+    public DbSet<FixedAssetCategoryRead> FixedAssetCategories => Set<FixedAssetCategoryRead>();
+
+    public DbSet<DepreciationScheduleRead> DepreciationSchedules => Set<DepreciationScheduleRead>();
+
+    public DbSet<AssetTransactionRead> AssetTransactions => Set<AssetTransactionRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -232,6 +240,26 @@ public class ReportingDbContext : TenantDbContext
         MapRead<SpendMoneyDetailRead>(modelBuilder, "SpendMoneyDetails", "acc", e => e.SpendMoneyDetailId);
         MapRead<GoodsReceiptDetailRead>(modelBuilder, "GoodsReceiptDetails", "pur", e => e.GoodsReceiptDetailId);
 
+        // The fixed-asset register. Accounting stores its four enums by name, so
+        // each is read through the same string conversion it is written with —
+        // left as the default int mapping, every comparison against a status
+        // would be a type error at the first query rather than at compile time.
+        MapRead<FixedAssetRead>(modelBuilder, "FixedAssets", "acc", e => e.FixedAssetId);
+        MapRead<FixedAssetCategoryRead>(
+            modelBuilder, "FixedAssetCategories", "acc", e => e.FixedAssetCategoryId);
+        MapRead<DepreciationScheduleRead>(
+            modelBuilder, "DepreciationSchedules", "acc", e => e.DepreciationScheduleId);
+        MapRead<AssetTransactionRead>(
+            modelBuilder, "AssetTransactions", "acc", e => e.AssetTransactionId);
+
+        modelBuilder.Entity<FixedAssetRead>()
+            .Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<DepreciationScheduleRead>()
+            .Property(e => e.ScheduleType).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<DepreciationScheduleRead>()
+            .Property(e => e.DepreciationMethod).HasConversion<string>().HasMaxLength(20);
+        modelBuilder.Entity<AssetTransactionRead>()
+            .Property(e => e.TransactionType).HasConversion<string>().HasMaxLength(20);
     }
 
     private static void MapRead<TEntity>(

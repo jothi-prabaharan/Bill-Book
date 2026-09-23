@@ -621,6 +621,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Owner: run `Reporting.Api.Tests` from a dropped `REPORTING_TEST_DB`.
 - **Done when:** `ReportLayerCertificationTests` has 0 failures.
 - **Notes:**
+  - TK-31 moved the expected count at `ReportLayerCertificationTests.cs:97` from 48 to 52, and added four sources to the `Sources` list, `Program.cs` and the seeder. There are 52 of each now.
 
 ### TK-11 · Correct the stale facts in `CLAUDE.md`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · documentation only, no tests
@@ -1292,22 +1293,64 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:**
 
 ### TK-31 · The four fixed-asset reports
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-RPT · **Depends on:** TK-30 · **Decision:** —
 - **Where:**
   - `docs/Modules.md` §8.2 (the four names).
   - An existing source to copy, e.g. `AccountMovementSource`.
-  - `ReportingDbContext.cs:246`: read-only mappings using `ExcludeFromMigrations`.
+  - `ReportingDbContext.cs`, `ConfigureReadModels`: read-only mappings using `ExcludeFromMigrations`.
 - **Sub-tasks:**
-  - [ ] Map `acc.FixedAssets`, `FixedAssetCategories`, `DepreciationSchedules` and
+  - [x] Map `acc.FixedAssets`, `FixedAssetCategories`, `DepreciationSchedules` and
         `AssetTransactions` read-only on `ReportingDbContext`.
-  - [ ] Build four sources: Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation
+  - [x] Build four sources: Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation
         and Fixed Assets Schedule. Take their columns from `reports.json`.
-  - [ ] For each source, add the `AddScoped<IReportSource, …>` in `Program.cs`, an entry in the
+  - [x] For each source, add the `AddScoped<IReportSource, …>` in `Program.cs`, an entry in the
         `ReportSourceTests.Sources` list, and a catalog seed row per column. Then change the
         expected count in `ReportLayerCertificationTests.cs:97` to 52.
+  - [x] Test: `FixedAssetReportTests` — the roll-forward, disposals and the gain / capital gain /
+        loss split, Books-only depreciation, and both sides of the reconciliation, over lists.
+  - [ ] Owner: run `Reporting.Api.Tests`.
+  - [ ] Owner: open the four reports on a branch with registered, depreciated and disposed
+        assets. The lists prove the arithmetic, not the data a real branch holds.
 - **Done when:** `ReportLayerCertificationTests` counts all four.
 - **Notes:**
+  - Claimed by the owner's instruction by name while TK-30 was still open. TK-30 changes
+    Accounting's controller and service only, not the four tables these reports read.
+  - **One query behind four reports.** `FixedAssetRegister.Rows` rolls each asset forward over
+    the period. Three sources read its row directly, and the reconciliation totals it by account,
+    so the four reports cannot disagree about what is opening, what is an addition or what a
+    disposal removes. The rules are in its doc comment.
+  - **Translation was checked, and behaviour was not.** Every source was executed through
+    `ReportSource.ExecuteAsync` against an empty `acc` schema on PostgreSQL 16, in a scratch
+    database. That covered with and without dates, a sort with a counted third page, a group-by,
+    and a money filter. All of them ran. The reconciliation needed three rewrites to get there:
+    - EF cannot translate a `let` over a composed query;
+    - it evaluates a null test on an outer-joined aggregate on the client;
+    - it will not union projections that assign different members.
+
+    The shape that translates is a union of flat movements, grouped by account and side. Don't
+    "simplify" it back into joins.
+  - **SQL size.** The per-asset SQL is around 27 KB, because EF inlines the correlated
+    subqueries in every expression that uses them. That's fine for a register of hundreds of
+    assets. At tens of thousands, it will need a flatter query.
+  - **Columns left out.** Brand, Outlet, Warranty Expiry, Cost Limit and Averaging Method /
+    Avg Method are in `reports.json`, but the register has no field for them.
+  - **Columns added.** The Disposal Schedule also has Disposal Date, Accum Dep and Gain on
+    Disposal. The reconciliation has Account Code and Account.
+  - **How the Disposal Schedule's columns are read.** Purchased = purchase price,
+    Disposed = cost removed, AssetValue = book value on the disposal date, Sale Price = proceeds.
+  - **Found, not fixed (outside this card):**
+    - `ReportSource<TRow>.FormatRowsAsync` is never called by `ExecuteAsync`. The account-type
+      names that `AccountMovementSource`, `TrialBalanceSource` and the others resolve there are
+      therefore always empty. This is a one-line fix in `IReportSource.cs`, but it changes the
+      output of existing reports, so it needs its own card.
+    - The report list prints `ReportModule` as it is named. The heading reads "FixedAssets"
+      (L-RPT-UI, `report-list.page.html:14`).
+    - `docs/Modules.md` §8.2 and `CLAUDE.md` "Still not built" still say the four reports are
+      unbuilt. They now stand at **52 sources wired end to end, 45 of the 46 in `reports.json`**.
+      Updating them needs L-DOC.
+  - No migration was needed. Read models excluded from migrations don't change the migration
+    diff, and `dotnet ef migrations has-pending-model-changes` reports none.
 
 ### TK-32 · *Business Performance* report
 - [!] blocked — D-15

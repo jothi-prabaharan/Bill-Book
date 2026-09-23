@@ -46,6 +46,26 @@ The address bar carries your columns, filters, sorting and grouping. Copy the li
 
 Below tablet width each row becomes a card, with the report's key columns as its title. Pivot is not offered at that width — a matrix has no card form.
 
+## Fixed asset reports
+
+Four reports read the fixed asset register, under **Fixed Assets** in the list. Each takes a **From** and **To** date; both are optional.
+
+- **Fixed Assets Schedule** — the register as a roll-forward. For every asset: its cost at the start of the period, what was bought and disposed of during it, and its cost at the end; the same for accumulated depreciation; and the book value at both ends. Every row adds up across itself, so the column totals do too.
+- **Depreciation Schedule** — each asset with its depreciation method, rate, useful life and residual value, and what was charged over the period.
+- **Disposal Schedule Report** — only the assets disposed of in the period: what each cost, its book value on the day it went, what it sold for, and the result. Proceeds below book value are a **loss**; proceeds above book value are a **gain on disposal** up to the asset's cost, and a **capital gain** beyond it.
+- **Fixed Asset Reconciliation** — the register read against the ledger, account by account. Every account a category uses — its asset account and its accumulated depreciation account — shows two rows: **Register**, what the register says the account should hold, and **Ledger**, what has actually been posted to it. Where the two rows differ, the books and the register disagree. This report has no totals, because adding the register to the ledger means nothing; group by **Source** to see each side on its own.
+
+A few rules decide what appears:
+
+- An asset still in **Draft** is not on the register and appears in none of these reports.
+- An asset bought before **From** is carried in at its opening cost; one bought within the period is an addition. With no **From**, everything is an addition.
+- An asset disposed of before **From** has left the register and is not shown. One disposed of after **To** was still held at the end of the period, so it is shown as held.
+- Only the **book** depreciation schedule is reported, because it is the one depreciation is charged against. A tax schedule, if an asset has one, does not change these figures.
+
+**Expect the reconciliation to show differences for now.** Registering, capitalising and disposing of an asset do not yet post to the ledger, and a purchase bill posts an asset to a single Fixed Asset account rather than to its category's. The reconciliation shows exactly those gaps, and they will close once those postings are built.
+
+The register does not record brand, outlet, warranty expiry, cost limit or averaging method, so these reports have no columns for them.
+
 ## If a branch shows no reports
 
 The report catalog is seeded per branch. A branch created before reporting existed has an empty catalog until it is seeded, which an administrator can trigger; it only adds what is missing, so it is safe to run again.

@@ -64,6 +64,12 @@ public class ReportSourceTests
     private static readonly BillDnPaymentSource BillDnPayment = new();
     private static readonly PurchaseReceiveOrderDetailsSource PurchaseReceiveOrderDetails = new();
 
+    // The fixed-asset register's four reports, over one roll-forward.
+    private static readonly DepreciationScheduleSource DepreciationSchedule = new();
+    private static readonly DisposalScheduleSource DisposalSchedule = new();
+    private static readonly FixedAssetReconciliationSource FixedAssetReconciliation = new();
+    private static readonly FixedAssetsScheduleSource FixedAssetsSchedule = new();
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -125,6 +131,10 @@ public class ReportSourceTests
         PayableInvoiceSummary,
         BillDnPayment,
         PurchaseReceiveOrderDetails,
+        DepreciationSchedule,
+        DisposalSchedule,
+        FixedAssetReconciliation,
+        FixedAssetsSchedule,
     ];
 
     [Theory]
