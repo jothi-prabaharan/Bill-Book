@@ -768,7 +768,7 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Done when:** the terminal builds a cart of real items for a real customer. Posting the sale is TK-33.
 - **Notes:**
 
-### TK-71 · Weighted average recalculation in `CostingEngine.Worker`
+### TK-77 · Weighted average recalculation in `CostingEngine.Worker`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-INV, L-ACC · **Depends on:** — · **Decision:** —
 - **Touches:** `backend/worker/CostingEngine.Worker`, `backend/Api/Inventory/Inventory.Api/Services`,
@@ -788,6 +788,9 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Done when:** the worked example recalculates to −20.57, −20.57, −10.99, −32.95 (total −85.08),
   and the negative-stock example values the out at 9.00.
 - **Notes:**
+  - Claimed as TK-71 (commit `edae6a6`); the number was reused minutes later by the rewrite in
+    `58a48e5` for a different card, which other cards already cite. Renumbered here, since only
+    this card may be edited. The feature commit `ebccbf7` still says TK-71 and means this card.
   - Tests written, not run: `backend/tests/Inventory.Api.Tests/WeightedAverageCalculatorTests.cs`
     (pure — both owner examples, lock date, ordering, rounding),
     `WeightedAverageRecostingTests.cs` (database — write-back, closed period, repost only on a
