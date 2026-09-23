@@ -397,6 +397,27 @@ running tests. An AI doesn't wait on CI or react to its results unless the owner
   is TK-33.
 - **Notes:**
 
+### TK-71 · Weighted average recalculation in `CostingEngine.Worker`
+- [~] working (Claude Opus 5.5) — since 2026-09-23
+- **Lanes:** L-INV, L-ACC · **Depends on:** — · **Decision:** —
+- **Touches:** `backend/worker/CostingEngine.Worker`, `backend/Api/Inventory/Inventory.Api/Services`,
+  `inv` migrations (unit-cost precision), one internal read in `backend/Api/Accounting` for the lock date
+- **The problem:** a weighted-average item's average is kept in arrival order by the request path,
+  so a backdated receipt, or a sale entered before its stock arrived, leaves every later stock-out
+  valued at the wrong average, with nothing to restate it. Assigned by the owner on 23 September
+  2026; the specification is the owner's "Weighted Average Cost — Calculation Concept".
+- **Sub-tasks:**
+  - [ ] Pure calculator: date order, in before out, entry order; negative-stock reordering; lock
+        date; 12-dp average, 2-dp lines with the cumulative cent correction
+  - [ ] Worker recosts a weighted-average item once per batch, and requeues only the lines whose
+        value changed for reposting
+  - [ ] Lock date from Accounting's period locks (the branch's strictest)
+  - [ ] Unit cost and average stored to 12 decimals
+  - [ ] Tests, including the owner's worked example and the negative-stock example
+- **Done when:** the worked example recalculates to −20.57, −20.57, −10.99, −32.95 (total −85.08),
+  and the negative-stock example values the out at 9.00.
+- **Notes:**
+
 ### C · Phase 2
 
 ### TK-22 · Printing: how an internal call carries its branch
