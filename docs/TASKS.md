@@ -722,7 +722,7 @@ If the code has moved on since a card was written, correct the card in your clai
     challan half of `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-13 · Sales credit note: guards, void reason and stock return
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-23
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Controllers/CreditNotesController.cs`: lines 22-61.
