@@ -42,7 +42,7 @@ you.
 that does nothing.
 
 **Printing is deployed but has no gateway route.** Its callers push payloads to it
-service-to-service, which is the design in `docs/Printing.md`. Exposing it through
+service-to-service, which is the design in stage P of `docs/Modules.md`. Exposing it through
 the gateway means adding it to `gatewayClusters` in `main.bicep` alongside its
 routes in the gateway's `appsettings.json`.
 

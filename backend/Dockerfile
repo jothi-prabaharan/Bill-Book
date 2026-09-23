@@ -63,10 +63,10 @@ ARG ASSEMBLY
 WORKDIR /app
 COPY --from=build /app/publish .
 
-# Cloud Run sends traffic to $PORT and defaults it to 8080, which is also
-# ASP.NET Core's default since .NET 8. Stated rather than relied on: the two
-# agreeing today is a coincidence worth pinning, and a platform that sets PORT
-# to something else is then a one-variable change.
+# Container Apps sends traffic to the target port deploy/azure declares, 8080,
+# which is also ASP.NET Core's default since .NET 8. Stated rather than relied
+# on: the two agreeing today is a coincidence worth pinning, and a host that
+# wants another port is then a one-variable change.
 # DOTNET_SYSTEM_GLOBALIZATION_INVARIANT matches InvariantGlobalization in
 # Directory.Build.props; saying so here stops the runtime probing for ICU data
 # the image does not carry.
@@ -92,7 +92,7 @@ RUN ln -s "/app/${ASSEMBLY}" /app/service
 USER app
 
 # Exec form, no shell: the process is PID 1 and receives SIGTERM directly. Behind
-# a shell it would not, and Cloud Run's ten-second drain would become a
-# ten-second wait followed by a kill — dropping whatever was in flight, which for
-# the costing worker means a movement claimed and never finished.
+# a shell it would not, so the platform's shutdown grace period would pass
+# unused and end in a kill — dropping whatever was in flight, which for the
+# costing worker means a movement claimed and never finished.
 ENTRYPOINT ["/app/service"]
