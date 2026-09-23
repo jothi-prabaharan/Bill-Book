@@ -405,7 +405,7 @@ Numbering follows `TRANSACTIONS.md`, so a cross-reference written before this fi
 | **Written, unverified end to end** | T3.6 delivery challan, T5.2 credit note — both can now save, neither has been driven through a full path |
 | **Written, defective in a named line** | T5.2 (`ReturnsStockMovementId`), T3.6 (invoice re-issues challan stock) |
 | **Part built** | T3.3 outstanding — settlement now shows on the invoice list (Paid / Part-paid / Unpaid, from `internal/ledger/settlements`), still no aging buckets |
-| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). Neither the per-document print route nor **the archived PDF/A copy** is built; they are blocked on different things — a tenancy decision and the PDF licence |
+| **Part built** | T3.4 print — the browser print view exists, and since 6 September a **template master and server-side renderer** exist behind it (`docs/Master.md` stage 7). The per-document print route is not built, blocked on a tenancy decision. An archived copy **is** written: posting an invoice renders it with PDFsharp and saves it to storage — but as plain PDF rather than PDF/A, in a fixed layout rather than the template, for invoices only, and with no endpoint to fetch it (TK-26, D-11 in `docs/TASKS.md`) |
 | **Not built** | T7.1 POS till screen (Phase 3); the item and customer pickers on every sales form, which wait on the item lookup endpoint |
 
 ---
@@ -892,7 +892,7 @@ The seven beyond the specification are Account Movement, Customer Statement, Ven
 
 #### The five not implemented
 
-**Four fixed-asset reports — blocked, not pending.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule all read a fixed-asset register that does not exist: the register is Phase 2 and is itself blocked on two open schema decisions (whether acquisition and disposal get transaction codes of their own, and straight-line only versus books **and** tax depreciation). Nothing can be built here until those are answered — see the roadmap note in `CLAUDE.md`.
+**Four fixed-asset reports — no longer blocked on the register.** Depreciation Schedule, Disposal Schedule, Fixed Asset Reconciliation and Fixed Assets Schedule read the fixed-asset register, and the register now exists: `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules` (Books and Tax) and `acc.AssetTransactions`. What is missing on the reporting side is a read model for each in `ReportingDbContext` and a source per report. Two of them are still only half-meaningful until owner decisions D-19 and D-20 (`docs/TASKS.md`) are answered: capitalisation and disposal post nothing to the ledger yet, so a reconciliation of the register against its control account, or a disposal schedule with a gain or loss, has nothing to tie to. See the fixed-assets roadmap note in `CLAUDE.md`.
 
 **One is not a report.** *Business Performance*, under a group called *Financial performance*, appears in `reports.json` as a group and a name with no columns, no sub-group and nothing else. There is no specification to implement. It needs a business decision about what it is before it can be engineering work.
 
@@ -2857,7 +2857,7 @@ told; none of them is designed until one is picked.
 | **Timetable** | Period-wise attendance and teacher load both need it | A new schema, or `sis`; a grid component `ui-components` lacks |
 | **Report cards** | What marks are *for* | Grading scales in `sis`; a print template per class |
 | **Certificates** — TC, bonafide, character | Issued daily by the office | Print templates plus a certificate register with a numbering series |
-| **Parent communication** — circulars, SMS, email | Absence alerts, fee reminders | `Notification.Worker`, which is still an empty project |
+| **Parent communication** — circulars, SMS, email | Absence alerts, fee reminders | `Notification.Worker`, which today holds only a `PaymentReminderWorker` that logs and sends nothing (TK-72) |
 | **Homework / assignments** | | A new schema |
 | **Student documents and ID cards** | | `IFileStorage` (built); a print template |
 | **Transport** — routes, stops, vehicles, transport fee | Very common in Indian schools | A new service under the one-per-schema rule; its fee is a `fee` head |

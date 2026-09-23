@@ -486,26 +486,39 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:**
 
 ### TK-11 · Correct the stale facts in `CLAUDE.md`
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · documentation only, no tests
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** —
 - **Where:** `CLAUDE.md` sections "Still not built", "Standing caveats" and "Roadmap"; `docs/Modules.md` §8.2.
 - **Sub-tasks:** fix each statement against the code:
-  - [ ] Reporting: it says "twelve of the 46 not built". It should say five: four fixed-asset
+  - [x] Reporting: it says "twelve of the 46 not built". It should say five: four fixed-asset
         reports plus *Business Performance*, since 48 sources are wired.
-  - [ ] Workers: "Notification.Worker … nothing else" is wrong. It has `PaymentReminderWorker`
+  - [x] Workers: "Notification.Worker … nothing else" is wrong. It has `PaymentReminderWorker`
         (see TK-72).
-  - [ ] Numbering series: "Sales and Purchase seed theirs when those services land" is wrong. Both
+  - [x] Numbering series: "Sales and Purchase seed theirs when those services land" is wrong. Both
         have `SeedData/NumberingSeriesSeed.cs`, but Purchase's is never called (TK-71).
-  - [ ] "There is no `Modules.md`" is wrong. `docs/Modules.md` exists and holds every module's file.
-  - [ ] Fixed assets are described as blocked on two decisions and not started. In fact
+  - [x] "There is no `Modules.md`" is wrong. `docs/Modules.md` exists and holds every module's file.
+  - [x] Fixed assets are described as blocked on two decisions and not started. In fact
         `acc.FixedAssets`, `FixedAssetCategories`, `DepreciationSchedules` (Books and Tax) and
         `AssetTransactions`, the `FixedAssetsController`, `DepreciationService` and two pages are
         built (see TK-30 and TK-74).
-  - [ ] PDF/A: it says it is "blocked on the Syncfusion licence". In fact
+  - [x] PDF/A: it says it is "blocked on the Syncfusion licence". In fact
         `Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs` already archives invoice PDFs (TK-26).
-  - [ ] T7.3: it says "`apps/desktop` declares `targets: {}`". It has real build targets.
+  - [x] T7.3: it says "`apps/desktop` declares `targets: {}`". It has real build targets.
 - **Done when:** each statement above matches the code.
 - **Notes:**
+  - Beyond the seven listed, the same commit fixes: the `ReportLayerCertificationTests` sentence
+    in the test-count caveat (it expects 48 now; left for TK-10 to confirm by a run); the
+    fixed-asset line under Undecided, now pointing at D-19/D-20; `Modules.md`'s T3.4 status row
+    and its School table's "`Notification.Worker` is still an empty project"; and the
+    weighted-average section of "Inventory & costing", which TK-77 handed here.
+  - Two of the card's statements needed sharpening against the code. Purchase's
+    `NumberingSeriesSeed` **is** called, by `PurchaseSeeder` behind its seed endpoint; it is
+    `TenantSeeder` and the startup bootstrap that never reach it. And the archived invoice PDF is
+    plain PDF, not PDF/A.
+  - The Undecided line on straight-line versus books-and-tax is reworded, not struck: the code
+    built both, but the owner has not confirmed it, so it now points at D-08.
+  - Not fixed, out of this card's list: `CLAUDE.md` still cites `docs/modules/Sales.md`,
+    `docs/Master.md` and `TRANSACTIONS-ACCOUNTING-BANKING.md`, none of which exist.
 
 ### B · Phase 1: finish what's in flight
 
@@ -1012,8 +1025,10 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: a second run in the same month posts nothing.
   - [ ] Test: another branch's asset gets `Forbid()`.
 - **Done when:** the register follows the house rules, and depreciation is idempotent per period.
-- **Notes:** in code, D-08 is answered with both Books and Tax schedules; the owner still has to
-  confirm it.
+- **Notes:**
+  - In code, D-08 is answered with both Books and Tax schedules; the owner still has to confirm it.
+  - From TK-11: the two pages in `accounting-ui/src/lib/fixed-assets/` are neither exported from
+    the lib's `index.ts` nor routed anywhere in `apps/web`, so no user can reach them.
 
 ### TK-74 · Fixed assets: capitalisation and disposal postings
 - [!] blocked — D-19, D-20
