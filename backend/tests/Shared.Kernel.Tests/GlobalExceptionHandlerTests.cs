@@ -41,12 +41,17 @@ public class GlobalExceptionHandlerTests
     {
         var handler = new GlobalExceptionHandler(
             new StubEnvironment(environmentName),
-            NullLogger<GlobalExceptionHandler>.Instance,
-            // No IErrorLogStore: this is the Gateway-shaped case, and it keeps
-            // the test to the one thing it is about.
-            new EmptyServiceProvider());
+            NullLogger<GlobalExceptionHandler>.Instance);
 
-        var context = new DefaultHttpContext();
+        var context = new DefaultHttpContext
+        {
+            // No IErrorLogStore: this is the Gateway-shaped case, and it keeps
+            // the test to the one thing it is about. The handler resolves its
+            // collaborators from the request's scope rather than the root
+            // provider, and DefaultHttpContext leaves RequestServices null, so
+            // the empty provider has to be set here rather than passed in.
+            RequestServices = new EmptyServiceProvider(),
+        };
         context.Request.Method = "POST";
         context.Request.Path = "/api/contacts";
         var body = new MemoryStream();
@@ -132,10 +137,9 @@ public class GlobalExceptionHandlerTests
     {
         var handler = new GlobalExceptionHandler(
             new StubEnvironment(Environments.Production),
-            NullLogger<GlobalExceptionHandler>.Instance,
-            new EmptyServiceProvider());
+            NullLogger<GlobalExceptionHandler>.Instance);
 
-        var context = new DefaultHttpContext();
+        var context = new DefaultHttpContext { RequestServices = new EmptyServiceProvider() };
         var aborted = new CancellationTokenSource();
         await aborted.CancelAsync();
         context.RequestAborted = aborted.Token;
