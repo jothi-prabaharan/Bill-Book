@@ -401,7 +401,7 @@ If the code has moved on since a card was written, correct the card in your clai
     never set a tenant.
 
 ### TK-03 · RLS for `con`
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-CON · **Depends on:** TK-01, TK-02 · **Decision:** —
 - **Where:**
   - The migrations: `backend/Api/Master/Master.Repository/Migrations/Tenant/`, via `--context ContactsDbContext`.
@@ -413,15 +413,42 @@ If the code has moved on since a card was written, correct the card in your clai
     with `IgnoreQueryFilters()` across every branch of one customer. A policy that requires
     `OrgId` would hide every key and break internal authentication.
 - **Sub-tasks:**
-  - [ ] Write the migration using TK-02's template.
-  - [ ] Give `ApiClients` a customer-only policy (`"CustomerId" = …` alone). Or set the branch
+  - [x] Write the migration using TK-02's template.
+  - [x] Give `ApiClients` a customer-only policy (`"CustomerId" = …` alone). Or set the branch
         before the lookup, or exempt the table. Write the choice down.
-  - [ ] Check `PrintTemplateSeeder` and `ContactPersonRoleService`, which use
+  - [x] Check `PrintTemplateSeeder` and `ContactPersonRoleService`, which use
         `IgnoreQueryFilters`. Both must run with a tenant set.
-  - [ ] Test: API-key validation still succeeds with RLS on.
+  - [x] Test: API-key validation still succeeds with RLS on.
   - [ ] Owner: run the suite from a dropped `CONTACTS_TEST_DB`.
 - **Done when:** `con`'s RLS assertion passes from a dropped database, and API-key validation still works.
-- **Notes:**
+- **Notes (Claude Opus 5.5, 2026-09-23):**
+  - Migration: `Master.Repository/Migrations/Tenant/20260923182437_EnableRowLevelSecurity.cs`, from
+    TK-02's template. All 10 tables carry both tenant columns and none is exempt. `con` has no
+    `HasData`, so nothing is inserted after RLS is on.
+  - **`ApiClients`: a variant policy, not an exemption.** It is
+    `"CustomerId" = cust AND ("OrgId" = org OR org IS NULL)`. A request that sets a customer and no
+    branch sees every branch of that customer's keys. That is exactly what
+    `InternalApiKeysController` does, because the key `bb_{customer}_{secret}` names its customer
+    but not its branch. Any request with a branch set is held to that branch, as on every other
+    table, and nothing crosses customers. Rejected alternatives: exempting the table would leave it
+    with no second guard at all, and putting the branch in the key would change a format already
+    handed to clients.
+  - `PrintTemplateSeeder` and `ContactPersonRoleService.SeedForOrganizationAsync` only run from
+    `InternalSeedController` and `TenantSeeder.SeedContactRolesAsync`. Both set the tenant to the
+    branch being seeded before resolving the context, so their `IgnoreQueryFilters()` reads still
+    see that branch's rows. Nothing to change.
+  - Verified by starting Master as a `NOSUPERUSER NOBYPASSRLS` owner against empty databases. It
+    exited 0 with 10 of 10 `con` tables enabled, FORCEd and policied. Checked by hand as that owner:
+    no tenant 0 keys; customer only 2 (both branches), and the `LastUsedAt` update went through;
+    branch A 1 key; a branch with no customer 0. The scratch databases were dropped.
+  - **Tests written:** `backend/tests/Master.Api.Tests/ContactsRowLevelSecurityTests.cs` (four
+    tests). It logs in as `con_rls_probe`, a password login rather than `SET ROLE`, because the
+    API-key test runs the real controller through a DI-built `ContactsDbContext` with
+    `RlsConnectionInterceptor`. `ContactsQueryFilterTests` now exempts `__EFMigrationsHistory` in
+    its audit.
+  - **For TK-09:** `CLAUDE.md`'s RLS bullet says only `acc` is back. Add `con`; this card does not
+    hold `L-DOC`.
+  - `InternalContactNamesController` also reads `con` with no tenant set. Noted on TK-79.
 
 ### TK-04 · RLS for `cus`
 - [ ] open
@@ -602,6 +629,12 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: rates for a seeded branch come back non-empty through the controller.
 - **Done when:** a Sales invoice resolves its GST rates from Accounting for its own branch.
 - **Notes:** found while doing TK-02.
+  - From TK-03: the same gap in Master. `InternalContactNamesController` (`internal/contacts/names`)
+    reads `con.Contacts` with no tenant set, and `HttpContactNameLookup` in
+    `Shared.Kernel/Documents/INameLookup.cs` sends only the internal key. So every document list's
+    contact names come back empty, and the item names from Inventory's matching endpoint probably do
+    too. The fix is the same one: carry the org and set the tenant. That touches `L-CON` / `L-INV`
+    and `L-KERNEL`.
 
 ### TK-10 · `ReportLayerCertificationTests`: likely already fixed
 - [ ] open

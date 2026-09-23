@@ -158,6 +158,11 @@ public sealed class ContactsQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "con")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "con",
+                    // EF's own bookkeeping, no tenant column. Master keeps it in
+                    // con in a deployed database; this fixture leaves it in public.
+                    "__EFMigrationsHistory")));
     }
 }
