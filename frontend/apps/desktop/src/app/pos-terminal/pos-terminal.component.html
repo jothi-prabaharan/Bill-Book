@@ -1,7 +1,160 @@
 <div class="pos-terminal">
-  <h2>POS Terminal</h2>
-  <div class="cart">
-    <!-- Item list goes here -->
+  <header class="pos-head">
+    <h2>POS Terminal</h2>
+
+    <div class="pos-customer">
+      <span class="pos-label">Customer</span>
+      @if (customer(); as chosen) {
+        <span class="pos-customer-name">{{ chosen.contactCode }} · {{ chosen.displayName }}</span>
+        @if (chosen.gstin) {
+          <span class="pos-customer-meta">{{ chosen.gstin }}</span>
+        }
+      } @else {
+        <span class="pos-customer-name pos-muted">None chosen</span>
+      }
+      <button type="button" class="btn btn-secondary" (click)="openCustomerPicker()">
+        Change
+      </button>
+    </div>
+  </header>
+
+  <bb-message-box [messages]="messages()" />
+
+  <div class="pos-actions">
+    <button type="button" class="btn btn-primary" (click)="openItemPicker()">Add item</button>
+    <button
+      type="button"
+      class="btn btn-ghost"
+      [disabled]="lines().length === 0"
+      (click)="clearCart()"
+    >
+      Clear
+    </button>
   </div>
-  <button (click)="checkout()">Checkout</button>
+
+  <section class="cart" aria-label="Cart">
+    @if (lines().length === 0) {
+      <p class="cart-empty">The cart is empty. Add an item to start a sale.</p>
+    } @else {
+      <ul class="cart-lines">
+        @for (line of lines(); track line.itemId; let i = $index) {
+          <li class="cart-line">
+            <div class="cart-item">
+              <span class="cart-item-name">{{ line.itemLabel }}</span>
+              @if (missingRate(line)) {
+                <span class="cart-warn">No current GST rate for this item</span>
+              } @else if (line.taxAmount > 0) {
+                <span class="cart-item-meta">GST {{ rupees(line.taxAmount) }}</span>
+              }
+            </div>
+
+            <div class="cart-qty">
+              <button
+                type="button"
+                class="btn btn-icon"
+                aria-label="One fewer"
+                (click)="increment(i, -1)"
+              >
+                −
+              </button>
+              <input
+                type="number"
+                min="0"
+                step="any"
+                inputmode="decimal"
+                aria-label="Quantity"
+                [value]="quantityOf(line)"
+                (change)="onQuantity(i, $any($event.target).value)"
+              />
+              <button
+                type="button"
+                class="btn btn-icon"
+                aria-label="One more"
+                (click)="increment(i, 1)"
+              >
+                +
+              </button>
+            </div>
+
+            <label class="cart-price">
+              <span class="pos-label">Price{{ line.isPriceInclusive ? ' (incl. GST)' : '' }}</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                inputmode="decimal"
+                [value]="unitPriceOf(line)"
+                (change)="onUnitPrice(i, $any($event.target).value)"
+              />
+            </label>
+
+            <span class="cart-total">{{ rupees(line.lineTotal) }}</span>
+
+            <button
+              type="button"
+              class="btn btn-ghost"
+              aria-label="Remove line"
+              (click)="remove(i)"
+            >
+              Remove
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <footer class="pos-totals">
+    <dl>
+      <div>
+        <dt>Taxable</dt>
+        <dd>{{ rupees(totals().taxableAmount) }}</dd>
+      </div>
+      @if (isInterState()) {
+        <div>
+          <dt>IGST</dt>
+          <dd>{{ rupees(totals().igstAmount) }}</dd>
+        </div>
+      } @else {
+        <div>
+          <dt>CGST</dt>
+          <dd>{{ rupees(totals().cgstAmount) }}</dd>
+        </div>
+        <div>
+          <dt>SGST</dt>
+          <dd>{{ rupees(totals().sgstAmount) }}</dd>
+        </div>
+      }
+      @if (totals().cessAmount > 0) {
+        <div>
+          <dt>Cess</dt>
+          <dd>{{ rupees(totals().cessAmount) }}</dd>
+        </div>
+      }
+      <div class="pos-grand">
+        <dt>Total</dt>
+        <dd>{{ rupees(totals().totalAmount) }}</dd>
+      </div>
+    </dl>
+
+    <button
+      type="button"
+      class="btn btn-primary btn-block"
+      [disabled]="!canCheckout()"
+      (click)="checkout()"
+    >
+      Checkout
+    </button>
+  </footer>
+
+  <bb-lookup-dialog
+    [open]="picker() !== 'none'"
+    [title]="pickerTitle()"
+    [placeholder]="pickerPlaceholder()"
+    [rows]="pickerRows()"
+    [loading]="pickerLoading()"
+    (searchChange)="onPickerSearch($event)"
+    (choose)="onPickerChoose($event)"
+    (dismiss)="closePicker()"
+  />
 </div>

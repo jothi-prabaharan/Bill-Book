@@ -807,6 +807,10 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Owner: `npm run test`, then pick a customer and an item on each form at 360px.
 - **Done when:** every sales form picks its customer and items by name.
 - **Notes:** TK-15 later improves item search (barcode); this card doesn't wait for it.
+  - TK-21 (2026-09-23) built the till's own `PosLookupService` in
+    `frontend/apps/desktop/src/app/pos-terminal/pos-lookup.service.ts`, because this card was open
+    when TK-21 ran. Once `SalesLookupService` exists, move the till's `customers()` and `items()`
+    onto it and keep only the till's own lookups (walk-in, item detail, sales rates, branch).
 
 ### TK-76 · Contact picker on the support ticket form
 - [ ] open
@@ -898,23 +902,46 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:**
 
 ### TK-21 · `apps/desktop`: a real cart
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-DSK · **Depends on:** TK-17 · **Decision:** —
 - **Where:**
-  - `frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.ts`: 59 lines, with
-    `contactId: 1` hard-coded at line 31.
-  - `esc-pos.service.ts`
-  - `frontend/apps/desktop/project.json`: real `build` and `serve` targets.
+  - `frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.{ts,html,scss}`: the till.
+  - `pos-cart.ts`: the cart as pure functions over `DocumentLine`, all arithmetic through `line-math.ts`.
+  - `pos-lookup.service.ts`: customers, the walk-in contact, items, item detail, sales rates, branch.
+  - `esc-pos.service.ts`: receipt bytes, unchanged apart from a typed `generateReceipt`.
+  - `frontend/apps/desktop/src/app/app.config.ts`: now carries `authInterceptor`.
 - **Sub-tasks:**
-  - [ ] Add a cart held in signals: lines, quantity, price, line total, and a GST preview from
+  - [x] Add a cart held in signals: lines, quantity, price, line total, and a GST preview from
         `line-math.ts`.
-  - [ ] Add items by search, reusing TK-17's `SalesLookupService.items()`.
-  - [ ] Replace `contactId: 1` with the customer picker, defaulting to a walk-in contact looked up
-        by code rather than by id.
-  - [ ] Split the component into `.html` and `.scss` if it's still inline (house rule).
-  - [ ] `nx build desktop` and lint are clean.
+  - [x] Add items by search. ~~Reusing TK-17's `SalesLookupService.items()`~~: that service doesn't
+        exist and its lane was held by TK-12, so `PosLookupService` in `apps/desktop` does it for now.
+  - [x] Replace `contactId: 1` with the customer picker, defaulting to a walk-in contact looked up
+        by code (`WALKIN`) rather than by id.
+  - [x] Split the component into `.html` and `.scss` if it's still inline (house rule). It already was.
+  - [x] `nx build desktop` and lint are clean. Typecheck is clean too.
+  - [x] Test: `pos-cart.spec.ts` (add, merge, quantity, price, remove, reprice across a state line,
+        totals) and `pos-lookup.service.spec.ts` (URLs, walk-in exact-code match, MRP fallback,
+        sales-rate filter).
+  - [ ] Owner: `npm run test`, then build a cart on the desktop app at 360px.
 - **Done when:** the terminal builds a cart of real items for a real customer. Posting the sale is TK-33.
 - **Notes:**
+  - Claimed by name on the owner's instruction while TK-17 was still open.
+  - **Nothing seeds a `WALKIN` contact.** The till falls back to a warning and a chosen customer
+    until one exists. Seeding one per branch belongs in Master's contacts seed (L-CON). It needs a
+    card, and it is a decision too: a walk-in contact is one customer for every counter sale.
+  - **The till never sent a bearer token.** `apps/desktop` registered only `apiBaseUrlInterceptor`,
+    so every call after sign-in would have been a 401. `authInterceptor` now follows it, in the same
+    order as `apps/web`.
+  - **A tax-inclusive price can land a paisa off at the till.** Two units at ₹45 inclusive of 18%
+    GST total ₹89.99 intra-state and ₹90.00 inter-state, because `line-math.ts` rounds each
+    component separately after backing out the taxable value. This matches the C# side and the
+    shared fixture, so it's not a till bug. But a customer handed ₹89.99 for a ₹90 MRP will notice.
+    A round-off line on POS invoices is the usual answer; TK-34 should decide.
+  - Checkout still sends the scaffold's plain draft invoice (now with real lines and customer).
+    Replacing it with TK-33's endpoint is TK-34's "Post through TK-33".
+  - Checked by screenshot, not tests: `dist/apps/desktop/browser` served with the API mocked in
+    Playwright, at 1280px and 360px. Lines stack into cards at 360px. Choosing a customer from
+    another state switches the totals from CGST + SGST to IGST.
 
 ### TK-77 · Weighted average recalculation in `CostingEngine.Worker`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
@@ -1249,6 +1276,10 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Lint and build are clean.
 - **Done when:** a barcode-scanned sale posts from `apps/desktop`.
 - **Notes:**
+  - From TK-21: the cart is `pos-cart.ts` (pure) plus signals in `pos-terminal.component.ts`.
+    `checkout()` still posts the scaffold's plain draft invoice; replace it with TK-33's endpoint.
+    Two open questions to settle here: a `WALKIN` contact is not seeded anywhere, and a
+    tax-inclusive price can total a paisa under its MRP (see TK-21's Notes).
 
 ### TK-35 · POS receipt, ESC/POS (T7.3)
 - [ ] open

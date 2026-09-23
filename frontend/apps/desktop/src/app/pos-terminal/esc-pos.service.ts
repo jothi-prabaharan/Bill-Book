@@ -57,7 +57,11 @@ export class EscPosService {
   }
 
   // Example helper to print a receipt
-  generateReceipt(storeName: string, items: any[], total: number): Uint8Array {
+  generateReceipt(
+    storeName: string,
+    items: readonly { name: string; amount: number }[],
+    total: number,
+  ): Uint8Array {
     this.init()
       .alignCenter()
       .bold(true)

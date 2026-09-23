@@ -1,5 +1,6 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { authInterceptor } from '@bill-book/auth';
 import {
   API_BASE_URL,
   apiBaseUrlInterceptor,
@@ -17,7 +18,10 @@ export const appConfig: ApplicationConfig = {
     // a till talks to whichever server that shop runs — so the origin comes
     // from the runtime config the installer writes.
     { provide: API_BASE_URL, useValue: resolveApiBaseUrl('') },
-    provideHttpClient(withInterceptors([apiBaseUrlInterceptor])),
+    // Order matters, as in apps/web: rewrite the URL onto the configured origin
+    // first, then attach the bearer token. Without the second the till signs in
+    // and then has every lookup refused.
+    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor])),
     provideRouter(appRoutes, withHashLocation())
   ]
 };

@@ -59,7 +59,20 @@ The figure under the list is **the page's own total**, and says so. The list pag
 
 A till sale is an invoice with `POS` on it rather than `INV` — same table, same tax determination, same posting. It carries a till, a payment mode and the cash tendered, and it needs no due date.
 
-**The till screen itself is Phase 3** and lives in the desktop app, because a receipt is printed with ESC/POS commands straight to a USB or serial printer and a browser cannot reach one. Nothing else waits on it: the counter sale it replaces is an invoice raised directly.
+**The till screen lives in the desktop app**, because a receipt is printed with ESC/POS commands straight to a USB or serial printer and a browser cannot reach one. Nothing else waits on it: the counter sale it replaces is an invoice raised directly.
+
+### The cart
+
+The till opens on an empty cart for the branch's **walk-in customer** — the contact whose code is `WALKIN`. If the branch has no such contact the till says so, and a customer has to be chosen for each sale.
+
+- **Add item** searches items by name or code. Adding the same item again raises its quantity rather than starting a second line.
+- Each line's **quantity** and **price** can be changed where they stand; a quantity of zero removes the line. The price starts at the item's sales price, or at its MRP when it has none — and an MRP always includes GST.
+- **Change** picks another customer. A customer registered in a different state turns CGST and SGST into IGST on every line at once.
+- The GST under each line and the totals beneath the cart are a **preview**, worked out exactly as the invoice form works them out. The server recalculates them when the sale is saved.
+
+A taxable item with no current sales rate in the tax master shows a warning on its line and carries no GST until the rate is fixed.
+
+**Tender, change and the till itself are not built yet**, so checkout does not finish a POS sale. Barcode scanning is not built either.
 
 ## Finding one
 

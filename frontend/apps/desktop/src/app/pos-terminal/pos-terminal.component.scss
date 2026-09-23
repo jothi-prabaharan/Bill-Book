@@ -1,11 +1,194 @@
 .pos-terminal {
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
   height: 100vh;
-  padding: 1rem;
-  .cart {
-    flex: 1;
-    border: 1px solid #ccc;
-    margin-bottom: 1rem;
+  padding: var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.pos-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.pos-customer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pos-label,
+.pos-customer-meta,
+.cart-item-meta {
+  font-size: 0.85em;
+  color: var(--color-neutral-600, var(--color-text));
+}
+
+.pos-customer-name {
+  font-weight: 600;
+}
+
+.pos-muted {
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.pos-actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.cart {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.cart-empty {
+  margin: 0;
+  padding: var(--space-6);
+  text-align: center;
+  opacity: 0.7;
+}
+
+.cart-lines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 9rem 8rem auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.cart-item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cart-item-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cart-warn {
+  font-size: 0.85em;
+  color: var(--color-warning);
+}
+
+.cart-qty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+
+  input {
+    width: 4.5rem;
+    text-align: right;
+  }
+}
+
+.cart-price {
+  display: flex;
+  flex-direction: column;
+
+  input {
+    width: 100%;
+    text-align: right;
+  }
+}
+
+.cart-total {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.pos-totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+
+  dl {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+
+    div {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    dt,
+    dd {
+      margin: 0;
+    }
+
+    dd {
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .pos-grand {
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--color-border);
+    font-size: 1.25em;
+    font-weight: 600;
+  }
+}
+
+/* ~360px. Each cart line becomes a card: the item on its own row, quantity and
+   price side by side beneath it, the total and remove on the last row. */
+@media (max-width: 480px) {
+  .pos-terminal {
+    padding: var(--space-2);
+  }
+
+  .cart-line {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      'item item'
+      'qty price'
+      'total remove';
+  }
+
+  .cart-item {
+    grid-area: item;
+  }
+
+  .cart-qty {
+    grid-area: qty;
+  }
+
+  .cart-price {
+    grid-area: price;
+  }
+
+  .cart-total {
+    grid-area: total;
+    text-align: left;
+    font-weight: 600;
+  }
+
+  .cart-line > .btn-ghost {
+    grid-area: remove;
+    justify-self: end;
   }
 }
