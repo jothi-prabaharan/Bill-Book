@@ -11,6 +11,7 @@ The order to build things in, and how to tell when each one is actually done.
 2. Do it, and check it against its **Done when** line. That line is the test; "it compiles" is not the same as "it works".
 3. Tick the box **in the same commit as the work**, the way release notes and docs already work here.
 4. If a task turns out to be wrong or unnecessary, strike it and say why rather than deleting it. The reason is worth more than the tidiness.
+5. **Mark who is on a box, not just whether it's done.** Before starting, change `- [ ]` to `- [~] working (AI name)` so two sessions don't pick up the same item. On completion, change it to `- [x] completed (AI name) — YYYY-MM-DD`. This applies to every checklist in this file, not only the one you're reading right now. See [`docs/TASKS.md`](./TASKS.md), which aggregates every pending task across the whole project under this same rule — check there for the current cross-project work order before picking a box here in isolation.
 
 > **Note. Work on the designated branch and merge it into `main`. Never create a new branch.** A branch invented mid-task splits the work across two places and leaves whichever one nobody merges behind. See *Git — how work reaches main* in `CLAUDE.md`.
 

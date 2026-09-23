@@ -5,6 +5,11 @@ Build spec for **RetailErp**. Read `CLAUDE.md` first for conventions and hard ru
 
 **Status key**: ✅ built · 🔨 designed, not built · 📋 scoped only, needs design
 
+**Checklist marking rule**: any `- [ ]` box in this file (e.g. the Definition-of-Done lists) is
+marked `- [~] working (AI name)` when picked up and `- [x] completed (AI name) — YYYY-MM-DD` when
+verified, same convention as [`docs/Modules.md`](./Modules.md) and the master list at
+[`docs/TASKS.md`](./TASKS.md).
+
 ---
 
 # PART 1 — TABLES
