@@ -201,7 +201,7 @@ If the code has moved on since a card was written, correct the card in your clai
 ### A · Blockers: startup, seeding and security
 
 ### TK-01 · Master fails to start on a fresh database
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-23
 - **Lanes:** L-MST · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Repository/AdminDbContext.cs:337-338`: the `Menu` and `MenuPermission` `HasData`.
