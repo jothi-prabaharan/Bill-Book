@@ -109,11 +109,10 @@ public sealed class AllocationsController : ControllerBase
     /// <summary>
     /// One allocation with the target's live balances beside it.
     ///
-    /// The query filter already hides another branch's rows, so a miss here is
-    /// either "no such allocation" or "not yours" and the two must not be
-    /// answered alike: <see cref="AllocationService.ExistsInAnotherOrgAsync"/>
-    /// looks past the filter to tell them apart, and a cross-branch id is
-    /// forbidden rather than reported missing.
+    /// Another branch's allocation is not found, the same as one that does not
+    /// exist. Row-level security hides it from this service entirely, so there
+    /// is nothing to tell the two apart with, and a 403 would confirm to the
+    /// caller that the id exists in someone else's books.
     /// </summary>
     [HttpGet("{id:long}")]
     public async Task<IActionResult> GetById(long id, CancellationToken ct)
@@ -127,9 +126,7 @@ public sealed class AllocationsController : ControllerBase
             return Ok(allocation);
         }
 
-        return await _allocations.ExistsInAnotherOrgAsync(id, ct)
-            ? Forbid()
-            : NotFound(new MessageResponse { Message = $"Allocation {id} was not found." });
+        return NotFound(new MessageResponse { Message = $"Allocation {id} was not found." });
     }
 
     /// <summary>
@@ -164,13 +161,8 @@ public sealed class AllocationsController : ControllerBase
             return Ok();
         }
 
-        // Nothing live was updated. Either it is another branch's, or it does
-        // not exist, or it was voided already — three different answers.
-        if (await _allocations.ExistsInAnotherOrgAsync(id, ct))
-        {
-            return Forbid();
-        }
-
+        // Nothing live was updated. Either it does not exist here (another
+        // branch's allocation included; RLS hides it) or it was voided already.
         AllocationDetailDto? existing = await _allocations.GetAsync(id, ct);
 
         return existing is null

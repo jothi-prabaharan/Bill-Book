@@ -493,29 +493,6 @@ public sealed class AllocationService
     }
 
     /// <summary>
-    /// Whether an allocation with this id exists in some other branch's books.
-    ///
-    /// <b>The only place the query filter is deliberately stepped past.</b> It
-    /// answers one bit — does this id belong to somebody else — so a caller
-    /// reaching for another branch's allocation is told it is forbidden rather
-    /// than that it does not exist. Returning "not found" instead would make the
-    /// id space a probe: absent and forbidden would be indistinguishable, so
-    /// guessing ids would map out what other branches hold. Nothing about the
-    /// row itself is read or returned.
-    /// </summary>
-    public Task<bool> ExistsInAnotherOrgAsync(long transactionRatioId, CancellationToken ct)
-    {
-        (Guid customerId, Guid orgId) = _tenant.Require();
-
-        return _db.TransactionRatios
-            .IgnoreQueryFilters()
-            .AnyAsync(
-                t => t.TransactionRatioId == transactionRatioId
-                    && (t.CustomerId != customerId || t.OrgId != orgId),
-                ct);
-    }
-
-    /// <summary>
     /// What a document was posted for, from its CONTROL legs netted in base
     /// currency — the same convention the balance trigger, the trial balance and
     /// the outstanding report all use. Unsigned: the caller knows which way it runs.

@@ -129,7 +129,7 @@ Every per-customer table needs `OrgId` plus a global query filter. Master-databa
 1. Request/response models in `{Module}.Entity/Models/` (Data Annotations with error messages)
 2. Controller action in `{Module}.Api/Controllers/`
 3. Validate the caller's `OrgId` matches the target resource's — always
-4. Return `Forbid()` on cross-org access, not `NotFound()`
+4. Return `Forbid()` when the token's org does not match an org id the route names. A row id that is not in the caller's branch is `NotFound()`: row-level security hides other branches' rows from the service itself, so there is nothing to tell "another branch's" from "no such row", and a 403 would confirm the id exists in someone else's books. Never step past the query filter to find out (decided 23 September 2026, TK-02)
 
 ---
 
@@ -306,7 +306,7 @@ Everything — invoices, bills, payments, depreciation, opening balances — pro
 
 - Lines are debit **xor** credit. Never both. Never negative.
 - Lifecycle: Draft → Posted → Reversed. **Never edit a posted entry.** Reverse it with an offsetting entry.
-- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built the interceptor is the missing one** — the other two are in place for both `acc.Journals` and `acc.JournalLedger`, and there are in fact two triggers on the journal, because posting a draft changes the header and never touches the lines
+- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built only the domain guard exists.** The interceptor was never written, and the triggers — two on the journal, because posting a draft changes the header and never touches the lines, plus the one on `acc.JournalLedger` and the allocation triggers on the money documents — were in the migration chains squashed in `2c5ed6f` and did not survive it; no migration creates a trigger today. TK-78 in `docs/TASKS.md` restores them
 - Sales and Purchase **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows. The money documents are Accounting's own now, so they post through `LedgerPostingService` directly — in the same transaction, which is what the merge was for.
 
 ### Fixed Assets
@@ -482,7 +482,15 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 - **There is CI now, and there was none before 4 September 2026.** Everything this file claimed about itself was verified on whichever machine last ran it, which is exactly how a package pin that made the backend unbuildable went unnoticed and a suite that had never run once was described as passing. `.github/workflows/ci.yml` gates on the backend building with `-warnaserror`, the backend tests passing against a real PostgreSQL 16 service container **with zero skips** (a skipped database-backed suite is a green gate that checked nothing), and the frontend's lint, typecheck, tests and all five app builds.
 - **`FORCE ROW LEVEL SECURITY` was enforced everywhere and asserted nowhere.** Each schema had a test reading `pg_tables.rowsecurity`, which says RLS is switched on. It does not say a policy exists, and it does not say FORCE is set — and **without FORCE, RLS does not apply to the table's owner, which is the role the application connects as**. Every policy in the product would have been inert, leaving the EF query filter as the only guard, which is the single point of failure having both is meant to avoid. One shared `tests/Shared/RlsAudit.cs`, linked into all seven suites, now asks the catalog all three questions of every table in a schema, with exemptions named as arguments: `rpt.ReportMasters` and `rpt.ReportColumns` hold the imported `reports.json` specification and carry no tenant column at all, so there is nothing in them to scope.
 
-  **The title of this bullet is now false, and how it became false is the point.** RLS is not
+  **Being restored schema by schema (TK-02 to TK-08 in `docs/TASKS.md`).** `acc` is back as of
+  23 September 2026, and its `EnableRowLevelSecurity` migration is the template the others copy.
+  **Every developer and CI connection is `postgres`, a superuser, and a superuser bypasses RLS even
+  when it is FORCEd** — so no ordinary test can see a policy work or fail. `RlsAudit` reads the
+  catalog; `Accounting.Api.Tests.RowLevelSecurityTests` switches to a role without the bypass to see
+  what the policy lets through. Azure's server admin is not a superuser, so deployments are where
+  RLS actually binds.
+
+  **The title of this bullet was false, and how it became false is the point.** RLS was not
   enforced anywhere except `prt`. `ENABLE ROW LEVEL SECURITY`, `FORCE` and `CREATE POLICY` appear
   nowhere in this repository — `migrationBuilder.Sql` is called in no migration at all, and no
   startup path issues them either. The thirteen migrations all date from the squash of 14

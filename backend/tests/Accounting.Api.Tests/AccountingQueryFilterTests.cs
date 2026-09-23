@@ -80,7 +80,8 @@ public sealed class AccountingQueryFilterTests
         await using (var command = db.Database.GetDbConnection().CreateCommand())
         {
             command.CommandText =
-                "SELECT tablename FROM pg_tables WHERE schemaname = 'acc' AND NOT rowsecurity";
+                "SELECT tablename FROM pg_tables WHERE schemaname = 'acc' AND NOT rowsecurity "
+                + "AND tablename <> '__EFMigrationsHistory'";
 
             await db.Database.OpenConnectionAsync(CancellationToken.None);
             await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
@@ -118,6 +119,12 @@ public sealed class AccountingQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "acc")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "acc",
+                    // EF's own bookkeeping, no tenant column. Each service keeps
+                    // it in its own schema in a deployed database; this fixture
+                    // leaves it in public, so the exemption matters only there.
+                    "__EFMigrationsHistory")));
     }
 }

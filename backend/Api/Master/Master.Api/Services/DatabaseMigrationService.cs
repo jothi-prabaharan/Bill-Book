@@ -153,9 +153,18 @@ public class DatabaseMigrationService : IHostedService
         
         var targetOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var seedTenant = new Shared.Kernel.Tenancy.TenantContext { CustomerId = Guid.Parse("00000000-0000-0000-0000-000000000001"), OrgId = targetOrgId };
+
+        // These contexts are built by hand, so nothing registers the tenant
+        // interceptor for them — it has to be added here. Without it the
+        // connection never sets app.current_customer_id / app.current_org_id,
+        // and under a FORCEd RLS policy the existence checks below see no rows
+        // and every seed insert is refused. A superuser bypasses RLS entirely,
+        // which is why this only shows up on a role that does not (Azure's
+        // server admin is not a superuser).
+        var seedRls = new RlsConnectionInterceptor(seedTenant);
         
         // Seed Accounting
-        await using (var accDb = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).Options, seedTenant))
+        await using (var accDb = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
             if (!await accDb.Accounts.IgnoreQueryFilters().AnyAsync(a => a.OrgId == targetOrgId, ct))
             {
@@ -168,7 +177,7 @@ public class DatabaseMigrationService : IHostedService
         }
 
         // Seed Inventory
-        await using (var invDb = new InventoryDbContext(new DbContextOptionsBuilder<InventoryDbContext>().UseNpgsql(tenantConnectionString).Options, seedTenant))
+        await using (var invDb = new InventoryDbContext(new DbContextOptionsBuilder<InventoryDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
             if (!await invDb.UomTypes.IgnoreQueryFilters().AnyAsync(u => u.OrgId == targetOrgId, ct))
             {
@@ -183,7 +192,7 @@ public class DatabaseMigrationService : IHostedService
             }
         }
         
-        await using (var accDb2 = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).Options, seedTenant))
+        await using (var accDb2 = new AccountingDbContext(new DbContextOptionsBuilder<AccountingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
         {
             bool hasInvSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "STA", ct);
             if (!hasInvSeries)

@@ -289,7 +289,7 @@ If the code has moved on since a card was written, correct the card in your clai
   seeding is idempotent.
 
 ### TK-02 · RLS template: restore it in `acc`
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-ACC, L-MST (Master's startup bootstrap writes `acc` rows) · **Depends on:** — · **Decision:** —
 - **Where:**
   - The template: `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:130-172`.
@@ -307,34 +307,98 @@ If the code has moved on since a card was written, correct the card in your clai
     `InvoiceService.cs:1562` and `AllocationService.cs:511`. Under RLS those probes stop seeing
     other branches' rows.
 - **Sub-tasks:**
-  - [ ] Settle the policy expression once, for every schema, and write it under Notes. The
+  - [x] Settle the policy expression once, for every schema, and write it under Notes. The
         recommended form lets a request with no tenant see no rows instead of throwing:
         `"CustomerId" = NULLIF(current_setting('app.current_customer_id', true), '')::uuid AND "OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid`.
-  - [ ] Create an empty migration:
+  - [x] Create an empty migration:
         `dotnet ef migrations add EnableRowLevelSecurity --context AccountingDbContext --project backend/Api/Accounting/Accounting.Repository --startup-project backend/Api/Accounting/Accounting.Api --output-dir Migrations/Tenant`.
-  - [ ] In `Up()`, loop over an explicit list of the 27 tables, the way `prt` does. For each one,
+  - [x] In `Up()`, loop over an explicit list of the 27 tables, the way `prt` does. For each one,
         emit `ENABLE`, `FORCE` and `CREATE POLICY {table}_tenant_isolation ON acc."{table}" FOR ALL USING (…)`.
         The tables: `Accounts, AssetTransactions, BankAccounts, BankStatementLines, BankStatements, Banks,
         DepreciationSchedules, ErrorLogs, FixedAssetCategories, FixedAssets, JournalDetails,
         JournalLedger, Journals, NumberingSeries, OpeningBalanceLines, OpeningBalances, PaymentTerms,
         PeriodLocks, ReceiveMoney, ReceiveMoneyDetails, SpendMoney, SpendMoneyDetails,
         StatementImportProfiles, SubAccounts, TaxMasters, TransactionRatios, TransferMoney`.
-  - [ ] In `Down()`, emit `DROP POLICY IF EXISTS`, `NO FORCE ROW LEVEL SECURITY` and `DISABLE ROW LEVEL SECURITY`.
-  - [ ] Decide what happens to the Forbid probes. Either accept `NotFound()` under RLS and change
+  - [x] In `Down()`, emit `DROP POLICY IF EXISTS`, `NO FORCE ROW LEVEL SECURITY` and `DISABLE ROW LEVEL SECURITY`.
+  - [x] Decide what happens to the Forbid probes. Either accept `NotFound()` under RLS and change
         `CLAUDE.md`'s endpoint rule, or keep `Forbid()` through a `SECURITY DEFINER` function
         (e.g. `acc.row_in_other_org(table, id)`). Record the choice under Notes so TK-03 to TK-08
         treat their probes the same way.
-  - [ ] Check whether a view exists in `acc`. A view needs `WITH (security_invoker = true)`, or it
+  - [x] Check whether a view exists in `acc`. A view needs `WITH (security_invoker = true)`, or it
         bypasses RLS.
-  - [ ] Confirm `dotnet build` is clean and `has-pending-model-changes` is clean.
-  - [ ] Write the template under Notes for TK-03 to TK-08 and TK-75: the expression, the loop,
+  - [x] Confirm `dotnet build` is clean and `has-pending-model-changes` is clean.
+  - [x] Write the template under Notes for TK-03 to TK-08 and TK-75: the expression, the loop,
         `Down()`, how to derive the table list, and how to name an exemption.
-  - [ ] Test: with the tenant cleared, a query on `acc.Accounts` returns zero rows and doesn't throw.
+  - [x] Test: with the tenant cleared, a query on `acc.Accounts` returns zero rows and doesn't throw.
   - [ ] Owner: drop `ACCOUNTING_TEST_DB` and run the suite. Then drop one policy by hand and watch
         the RLS test go red.
 - **Done when:** `acc`'s RLS assertion passes from a dropped database, and fails when one policy is
   removed.
-- **Notes:**
+- **Notes (Claude Opus 5.5, 2026-09-23):**
+  - **Policy expression, settled for every schema:**
+    `"CustomerId" = NULLIF(current_setting('app.current_customer_id', true), '')::uuid AND "OrgId" = NULLIF(current_setting('app.current_org_id', true), '')::uuid`.
+    A tenant that was never set, or was cleared to `''`, gives NULL, so the request sees no rows
+    and cannot write instead of throwing on `''::uuid`. Checked by hand as a non-superuser table
+    owner: never set gives 0, cleared gives 0, own branch 16, another branch 0, and a cross-branch
+    insert is refused with `new row violates row-level security policy`.
+  - **Forbid probes: decided by the owner on 2026-09-23. Accept 404.** Another branch's row is
+    `NotFound()`, because RLS hides it from the service itself. No bypass function and no
+    `BYPASSRLS` role. `AllocationService.ExistsInAnotherOrgAsync` and both of its call sites in
+    `AllocationsController` are gone. The endpoint rule in `CLAUDE.md` and `docs/Architecture.md`
+    now says: 403 only when the token's org differs from an org id the route names, and 404 for a
+    row outside the branch. The only other probe in the backend is Sales' (see TK-07's Notes).
+  - `acc` has no views (`vw_LedgerDetail` was never built) and no `HasData`, so no migration
+    inserts rows after RLS is on.
+  - **Found and fixed in `L-MST`.** Master's startup bootstrap (`DatabaseMigrationService`)
+    builds `AccountingDbContext` and `InventoryDbContext` by hand without
+    `RlsConnectionInterceptor`, so its connection never set the tenant. Under a non-superuser owner
+    the seed probes would see nothing and the inserts would be refused, and Master would fail to
+    start. It now adds the interceptor to all three hand-built contexts, `inv` included, ahead of
+    TK-05. Verified by running Master (`Migrations:ExitWhenDone`) as a
+    `NOSUPERUSER NOBYPASSRLS CREATEDB` role against empty databases. It exited 0; `acc` was owned by
+    that role with 27 of 27 tables enabled, FORCEd and policied; org `…0001` got 16 accounts and 17
+    series.
+  - **The `ErrorLogs` write with no tenant is refused, and that is by design.**
+    `GlobalExceptionHandler` writes `Guid.Empty` when a request has no tenant. The policy refuses
+    it, and `ErrorLogStore` swallows the refusal and logs a warning. The caller still gets its
+    curated answer. Nothing to change.
+  - The seeders' `IgnoreQueryFilters()` reads (`AccountService`, `TaxMasterService`,
+    `PaymentTermService`, `NumberingSeriesService`) all filter on the org the request has already
+    set as its tenant, so RLS leaves them working.
+  - **Test written:** `backend/tests/Accounting.Api.Tests/RowLevelSecurityTests.cs` (five tests).
+    It seeds as the superuser, then switches to `acc_rls_probe` with `SET LOCAL ROLE` inside one
+    uncommitted transaction. The suite connects as `postgres`, and a superuser bypasses RLS even
+    when FORCEd, so no other test can see a policy work. That is also why none broke.
+    `AccountingQueryFilterTests` now exempts `__EFMigrationsHistory`: every service keeps it in its
+    own schema in a deployed database, while this fixture leaves it in `public`.
+  - **The template for TK-03 to TK-08 and TK-75.** Copy
+    `Accounting.Repository/Migrations/Tenant/20260923173706_EnableRowLevelSecurity.cs`:
+    1. `dotnet ef migrations add EnableRowLevelSecurity --context {Ctx} … --output-dir Migrations/Tenant`.
+       The generated migration must be empty and the snapshot unchanged. If it isn't, the model has
+       drifted: stop and fix that first.
+    2. Derive the table list from the migrations, not from memory:
+       `grep -A2 "CreateTable(" Migrations/Tenant/*.cs | grep -oE 'name: "[A-Za-z]+"'`. Check that
+       every table has both `CustomerId` and `OrgId`, and write the list out as a
+       `private static readonly string[] Tables`. Keep it inline. A migration must do the same thing
+       forever, and a shared helper changed later would silently rewrite old migrations.
+    3. `Up()`, per table: `ENABLE`, `FORCE`, `DROP POLICY IF EXISTS {table}_tenant_isolation`
+       (lower-cased, so an un-dropped developer database with the old policy doesn't collide),
+       then `CREATE POLICY … FOR ALL USING (<the expression above>)`. There is no `WITH CHECK`,
+       because USING doubles as the insert and update check.
+    4. `Down()`, per table: `DROP POLICY IF EXISTS`, `NO FORCE ROW LEVEL SECURITY`,
+       `DISABLE ROW LEVEL SECURITY`.
+    5. **An exemption** is a table with no tenant column, e.g. `rpt.ReportMasters` and
+       `rpt.ReportColumns`. Leave it out of `Tables` and name it as an argument to
+       `RlsAudit.UnprotectedAsync(db, schema, "Table", "__EFMigrationsHistory")`, with a comment
+       saying why.
+    6. Grep the service for `IgnoreQueryFilters()` and for any `new {Ctx}(` built without
+       `RlsConnectionInterceptor`. Both stop seeing rows under RLS.
+    7. Copy `RowLevelSecurityTests.cs` for the schema, changing the role name, schema and seed.
+       (Lifting its helpers into `tests/Shared` needs `L-KERNEL`.)
+    8. Check `has-pending-model-changes`, and that `dotnet build backend/Bill-Book.sln` has 0 warnings.
+  - Two problems found outside this card, now cards of their own: **TK-78**, the journal-balance
+    and allocation triggers, which the same squash dropped; and **TK-79**, internal endpoints that
+    never set a tenant.
 
 ### TK-03 · RLS for `con`
 - [ ] open
@@ -428,6 +492,9 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Owner: run the suite from a dropped `SALES_TEST_DB`.
 - **Done when:** `sal`'s RLS assertion passes from a dropped database.
 - **Notes:**
+  - From TK-02 (2026-09-23): the owner decided on **404**. Delete the `IgnoreQueryFilters()` probe
+    at `InvoiceService.cs:1562-1563` and return `NotFound()`. Under RLS it can never see another
+    branch's row anyway. `AllocationsController` in `acc` is the worked example.
 
 ### TK-08 · RLS for `rpt`: replace the broken policies
 - [ ] open
@@ -488,6 +555,51 @@ If the code has moved on since a card was written, correct the card in your clai
         failures. Then drop one policy by hand and watch it go red.
 - **Done when:** a non-superuser connection can't read another branch's rows in any tenant schema.
 - **Notes:**
+
+### TK-78 · Restore the ledger's deferred balance and allocation triggers
+- [ ] open
+- **Lanes:** L-ACC · **Depends on:** TK-02 · **Decision:** —
+- **Where:**
+  - What was dropped: `git show 2c5ed6f^:backend/Api/Accounting/Accounting.Repository/Migrations/20260902151402_InitialAccountingSchema.cs`,
+    from `acc.assert_ledger_balanced()` onwards, plus any later pre-squash migration that
+    `git log -S "CONSTRAINT TRIGGER" 2c5ed6f^ -- backend` names.
+  - `backend/Api/Accounting/Accounting.Repository/Migrations/Tenant/`
+- **State (checked 2026-09-23):** no migration creates a function or a trigger. `CLAUDE.md`
+  described a deferred balance trigger on `acc.Journals` and `acc.JournalLedger`, plus the
+  allocation triggers on the money documents, as built. They were in the chains squashed in
+  `2c5ed6f` and did not survive. Of the three balance checks, only the domain guard on Post is
+  left. The same squash dropped RLS (TK-02).
+- **Sub-tasks:**
+  - [ ] Recover every `CREATE FUNCTION` / `CREATE CONSTRAINT TRIGGER` block from the pre-squash chain.
+  - [ ] Check each against today's columns: the schema changed since, so do not paste blindly.
+  - [ ] Add them in a new `acc` migration, with a matching `Down()`.
+  - [ ] Test: an unbalanced posted journal is refused at commit; a draft is not.
+  - [ ] Owner: run `Accounting.Api.Tests` from a dropped `ACCOUNTING_TEST_DB`.
+- **Done when:** a posted, unbalanced journal cannot be committed, and a draft can.
+- **Notes:** found while doing TK-02.
+
+### TK-79 · Internal endpoints that set no tenant
+- [ ] open
+- **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
+- **Where:**
+  - `backend/Api/Accounting/Accounting.Api/Controllers/InternalTaxController.cs`: `GET internal/tax/rates`.
+  - `backend/shared/Shared.Kernel/Tax/ITaxRateProvider.cs:80`: the caller, which sends no org.
+  - `backend/Api/Accounting/Accounting.Api/Controllers/InternalBankAccountsController.cs`
+- **State (checked 2026-09-23):** every other `Internal*Controller` in Accounting copies
+  `CustomerId`/`OrgId` from the request into `TenantContext` before it resolves a service. These
+  two don't, and the caller authenticates with the internal key only, so `TenantMiddleware`
+  fills nothing. The query filter (and now RLS) sees no tenant, so `internal/tax/rates` returns
+  an empty list to Sales and Purchase whatever the branch. `HttpTaxRateProvider` caches per org,
+  but the request doesn't carry the org. The bank-account pair would be refused writes under RLS,
+  though nothing calls it over HTTP today.
+- **Sub-tasks:**
+  - [ ] Confirm by reading `HttpTaxRateProvider` and its Sales/Purchase callers.
+  - [ ] Carry `customerId` and `orgId` on the rates request (query or header) and set the tenant
+        the way `InternalLedgerController` does. Touching the kernel client needs `L-KERNEL`.
+  - [ ] Delete `InternalBankAccountsController` if it has no caller, or give it the same treatment.
+  - [ ] Test: rates for a seeded branch come back non-empty through the controller.
+- **Done when:** a Sales invoice resolves its GST rates from Accounting for its own branch.
+- **Notes:** found while doing TK-02.
 
 ### TK-10 · `ReportLayerCertificationTests`: likely already fixed
 - [ ] open
