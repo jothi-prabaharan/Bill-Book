@@ -401,7 +401,7 @@ If the code has moved on since a card was written, correct the card in your clai
     never set a tenant.
 
 ### TK-03 · RLS for `con`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-23
 - **Lanes:** L-CON · **Depends on:** TK-01, TK-02 · **Decision:** —
 - **Where:**
   - The migrations: `backend/Api/Master/Master.Repository/Migrations/Tenant/`, via `--context ContactsDbContext`.
