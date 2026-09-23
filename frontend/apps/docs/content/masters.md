@@ -632,27 +632,53 @@ Per-warehouse quantities, when they are needed, come from adding up the movement
 
 ## Weighted average cost
 
-One cost per item in the branch, moved only by what you buy:
+One moving average cost per item in the branch. Every stock-out is valued at the average in force at the moment it happens, and that average changes only when stock comes in.
 
-```
-newAverage = (oldQty × oldAverage + receivedQty × receivedCost) ÷ (oldQty + receivedQty)
-```
-
-Everything else leaves it alone:
-
-| Movement | Quantity | Average cost |
+| Movement | Quantity | Cost |
 |---|---|---|
-| Opening balance | + | sets it |
-| Receipt | + | recalculated |
-| Issue (a sale) | − | unchanged |
-| Sales return | + | unchanged — it comes back at what it left at |
-| Purchase return | − | unchanged |
-| Adjustment | ± | unchanged — a count is not a purchase |
-| Transfer in / out | no change | unchanged |
-
-An issue moves quantity only. That is what makes gross profit meaningful: the cost of what was sold is settled when it was bought, not when it was sold.
+| Stock in — opening balance, receipt, sales return, count found | + | keeps its own cost, and starts a new average |
+| Stock out — sale, purchase return, write-off, count short | − | valued at the current average |
+| Transfer in / out | no change | ignored — the pool is shared across warehouses |
 
 Anything that brings stock in and sets the cost — an opening balance or a receipt — **requires a unit cost**. Receiving without one would drag the average toward zero and quietly understate the cost of every sale after it.
+
+### Recalculated in date order, after the sale
+
+The till gets an immediate answer: a sale is valued at the average as it stands when it is keyed. That figure is **provisional**. Moments later the costing engine recalculates the item over its whole history, **in date order**, and settles every stock-out's value — so the movement shows "costing…" rather than a cost until it does, and nothing reaches the ledger until it has.
+
+That is what puts two everyday mistakes right without anybody doing anything:
+
+- **A receipt keyed late for an earlier date** changes the cost of every sale since that date, and those sales are revalued.
+- **A sale keyed before its stock was received** is valued at the cost of the stock that actually covered it, not at nothing.
+
+**Order.** Movements are taken by date; on the same date, every stock-in before every stock-out; then in the order they were entered.
+
+**Stock that would go negative.** If a stock-out would take the running quantity below zero, the next stock-in after it is moved ahead of it, and again, until the quantity holds or there is no later stock-in left. An out of 5 dated before an in of 8 at ₹9.00 is valued at ₹45.00.
+
+**The average.** At each stock-in, average = running value ÷ running quantity, and every stock-out up to the next stock-in is valued at it. The running value moves by each stock-in's quantity × its own cost, and by each stock-out's unrounded value.
+
+**Closed periods are left alone.** A stock-out dated on or before the branch's period lock is never revalued. It still counts toward the running quantity and value, so it still shapes every average after it. The date used is the branch's **strictest** lock — the latest date closed to any role — because a period closed to anybody is one the engine must not restate.
+
+**Rounding.** The average and each unrounded line value are held to 12 decimals, and the value posted to 2. Rounding every line on its own would let the total drift by a cent, so after each stock-out the lines posted so far must equal the unrounded running total rounded to 2 decimals, and the line where they first part takes the difference. The item's total cost of sales is then exact to the cent — which means one line can sit ₹0.01 away from its own quantity × average.
+
+**Only what changed is reposted.** Stock-outs whose value moved go back to the ledger and replace their own rows; everything else is left as it was. The item's average on the stock screen is set to where the recalculation ended.
+
+### A worked example
+
+| # | Movement | Qty | Unit cost | Line value | Running qty | Running value |
+|---|---|---|---|---|---|---|
+| 1 | In | 3 | 10.0000 | 30.00 | 3 | 30.0000 |
+| 2 | In | 4 | 10.5000 | 42.00 | 7 | 72.0000 |
+| 3 | Out | −2 | 10.2857 | −20.57 | 5 | 51.4286 |
+| 4 | Out | −2 | 10.2857 | −20.57 | 3 | 30.8571 |
+| 5 | In | 6 | 11.3333 | 68.00 | 9 | 98.8569 |
+| 6 | Out | −1 | 10.9841 | −10.99 | 8 | 87.8728 |
+| 7 | Out | −3 | 10.9841 | −32.95 | 5 | 54.9205 |
+
+- After row 2 the average is 72 ÷ 7 = 10.2857, and rows 3 and 4 use it.
+- After row 5 it is 98.8569 ÷ 9 = 10.9841, and rows 6 and 7 use it.
+- Row 5 adds 6 × 11.3333 = 67.9998 to the running value, not its 68.00 line value.
+- Row 6 on its own rounds to 10.98; the cumulative correction moves it to 10.99, so the stock-outs total exactly 85.08.
 
 ## Entering quantities in any unit
 

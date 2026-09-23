@@ -33,9 +33,14 @@ public class ItemStock : OrgScopedEntity
     /// <c>(oldQty × oldWac + recvQty × recvCost) ÷ (oldQty + recvQty)</c>.
     /// An issue moves quantity and leaves this alone.
     ///
-    /// Six decimal places rather than the usual four because it is a derived
-    /// average that then multiplies a quantity — rounding it at the money scale
-    /// puts the error into every COGS posting that follows.
+    /// That running figure is kept in the order movements arrive, so the
+    /// costing worker resets it to where a date-ordered recalculation of the
+    /// item's history ends (<c>WeightedAverageRecosting</c>).
+    ///
+    /// Twelve decimal places, the precision the recalculation holds an average
+    /// to: it is a derived average that then multiplies a quantity, and
+    /// rounding it at the money scale puts the error into every COGS posting
+    /// that follows.
     /// </summary>
     [Range(0, 999999999999.999999, ErrorMessage = "Weighted average cost cannot be negative.")]
     public decimal WeightedAverageCost { get; set; }

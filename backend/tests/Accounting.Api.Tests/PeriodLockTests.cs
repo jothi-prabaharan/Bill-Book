@@ -105,6 +105,27 @@ public class PeriodLockTests
         Assert.Equal(new DateOnly(2026, 3, 31), await anonymous.Locks.LockedUptoAsync(ct));
     }
 
+    /// <summary>
+    /// The costing worker is no person and holds no role, and asks for the
+    /// branch's strictest lock by name rather than by having no role — so the
+    /// answer cannot change because of what its identity happens to carry. Even
+    /// a caller whose own role is open gets the strictest date from this.
+    /// </summary>
+    [SkippableFact]
+    public async Task The_branch_lock_is_the_strictest_whoever_asks()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres, Accountant);
+        CancellationToken ct = CancellationToken.None;
+
+        Assert.Null(await h.Locks.BranchLockedUptoAsync(ct));
+
+        await h.Lock(Accountant, new DateOnly(2026, 1, 31), ct);
+        await h.Lock(Clerk, new DateOnly(2026, 3, 31), ct);
+
+        Assert.Equal(new DateOnly(2026, 1, 31), await h.Locks.LockedUptoAsync(ct));
+        Assert.Equal(new DateOnly(2026, 3, 31), await h.Locks.BranchLockedUptoAsync(ct));
+    }
+
     /// <summary>One row per role — setting the same role again moves the date.</summary>
     [SkippableFact]
     public async Task Setting_a_role_twice_moves_the_date_rather_than_adding_a_row()

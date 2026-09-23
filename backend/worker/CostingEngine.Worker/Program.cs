@@ -59,6 +59,16 @@ builder.Services.AddBillBookWorkerErrorAudit<InventoryDbContext>();
 
 builder.Services.AddScoped<CostingService>();
 
+// The weighted average, recalculated per item in date order. It needs the
+// branch's lock date, which is Accounting's, so that comes over the wire too —
+// the same base address and the same internal key as the ledger posting.
+builder.Services.AddScoped<WeightedAverageRecosting>();
+builder.Services.AddHttpClient<IAccountingPeriodLock, AccountingPeriodLock>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // Posting to the ledger. A second pass over the same table rather than work
 // done inside the costing transaction: tying a stock movement's fate to
 // Accounting being reachable at that instant would either roll back a settled

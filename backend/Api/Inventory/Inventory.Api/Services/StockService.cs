@@ -619,9 +619,14 @@ public sealed class StockService
     }
 
     /// <summary>
-    /// Whether the worker has anything to do. A transfer moves nothing to cost,
-    /// and an issue on weighted average is already costed by the running average
-    /// — marking those Pending would leave a queue that never drains.
+    /// Whether the worker has anything to do. A transfer moves nothing to cost.
+    ///
+    /// An issue on weighted average is valued here at the running average, but
+    /// only provisionally: that average is kept in the order movements arrive,
+    /// and the worker recalculates the item in date order — which is what puts a
+    /// backdated receipt, or a sale keyed before its stock arrived, right. So it
+    /// is Pending like everything else, and it is not posted until the worker
+    /// has settled it.
     /// </summary>
     private static bool NeedsCosting(
         Item item, StockMovementType type, StockDirection direction)
@@ -634,7 +639,8 @@ public sealed class StockService
         // Inbound always creates a layer, whatever the method: the layer is the
         // receipt, and one never written could not be reconstructed later.
         return direction == StockDirection.In
-            || CostingService.ConsumesLayers(item.CostingType);
+            || CostingService.ConsumesLayers(item.CostingType)
+            || item.CostingType == CostingType.WeightedAverage;
     }
 
     /// <summary>Only a return can name a movement it reverses.</summary>

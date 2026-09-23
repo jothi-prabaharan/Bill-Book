@@ -352,7 +352,7 @@ public class InventoryDbContext : TenantDbContext
 
             b.Property(e => e.QuantityOnHand).HasColumnType("decimal(18,3)");
             b.Property(e => e.QuantityReserved).HasColumnType("decimal(18,3)");
-            b.Property(e => e.WeightedAverageCost).HasColumnType("decimal(18,6)");
+            b.Property(e => e.WeightedAverageCost).HasColumnType("decimal(28,12)");
 
             b.HasOne<Item>()
                 .WithOne()
@@ -431,8 +431,8 @@ public class InventoryDbContext : TenantDbContext
             }
 
             b.Property(e => e.ConversionFactor).HasColumnType("decimal(18,6)");
-            b.Property(e => e.UnitCost).HasColumnType("decimal(18,6)");
-            b.Property(e => e.ResultingWeightedAverageCost).HasColumnType("decimal(18,6)");
+            b.Property(e => e.UnitCost).HasColumnType("decimal(28,12)");
+            b.Property(e => e.ResultingWeightedAverageCost).HasColumnType("decimal(28,12)");
             b.Property(e => e.TotalCost).HasColumnType("decimal(18,2)");
 
             b.HasOne<Item>()

@@ -60,6 +60,21 @@ public sealed class PeriodLockService
     }
 
     /// <summary>
+    /// The branch's strictest lock, whoever holds it — the latest date closed to
+    /// any role, or null when no role is locked.
+    ///
+    /// For a caller that is no person: the costing worker, deciding which
+    /// stock-outs it may restate. It is the same answer <see cref="LockedUptoAsync"/>
+    /// gives a caller with no role, asked for explicitly so that it cannot come
+    /// to depend on what the worker's identity happens to carry.
+    /// </summary>
+    public async Task<DateOnly?> BranchLockedUptoAsync(CancellationToken ct) =>
+        await _db.PeriodLocks
+            .OrderByDescending(p => p.LockedUpto)
+            .Select(p => (DateOnly?)p.LockedUpto)
+            .FirstOrDefaultAsync(ct);
+
+    /// <summary>
     /// Whether a document dated <paramref name="on"/> may reach the ledger.
     /// Returns the lock that refused it, so the caller can say which date it was
     /// rather than only that it failed.

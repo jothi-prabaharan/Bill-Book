@@ -70,11 +70,22 @@ public class StockMovement : OrgScopedEntity
 
     // --- Cost. Set on the way in; on the way out it is what the costing engine decided.
 
-    /// <summary>Cost of one inventory unit for this movement. Null when nothing costed it yet.</summary>
+    /// <summary>
+    /// Cost of one inventory unit for this movement, to 12 decimals. Null when
+    /// nothing costed it yet. On a weighted-average stock-out it is the average
+    /// in force when the stock went out, restated by the worker when a
+    /// date-ordered recalculation of the item says otherwise.
+    /// </summary>
     [Range(0, 999999999999.999999, ErrorMessage = "Unit cost cannot be negative.")]
     public decimal? UnitCost { get; set; }
 
-    /// <summary><c>Quantity × UnitCost</c>, held so a valuation report does not re-multiply.</summary>
+    /// <summary>
+    /// <c>Quantity × UnitCost</c> to 2 decimals — the amount posted — held so a
+    /// valuation report does not re-multiply. On a weighted-average stock-out it
+    /// can sit 0.01 away from that product: the recalculation keeps the item's
+    /// total cost of sales exact to the cent, and the line where the rounding
+    /// drift first appears absorbs it.
+    /// </summary>
     [Range(0, 999999999999.99, ErrorMessage = "Total cost cannot be negative.")]
     public decimal? TotalCost { get; set; }
 

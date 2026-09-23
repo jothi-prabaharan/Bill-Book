@@ -61,7 +61,14 @@ public sealed class StockLedgerPoster
         // has nothing to post, and one whose costing failed is owed a posting it
         // cannot be given yet — it stays queued rather than being parked twice
         // for the same underlying problem.
+        //
+        // Untracked, and that is load-bearing. Costing runs just before this on
+        // the same context and settles costs with ExecuteUpdate, which never
+        // reaches the change tracker — so a tracked read would hand back the
+        // instance costing loaded, still carrying the provisional figure, and
+        // this would post that. Every write below is a statement anyway.
         List<StockMovement> pending = await _db.StockMovements
+            .AsNoTracking()
             .Where(m => m.LedgerStatus == LedgerStatus.Pending
                 && m.LedgerAttempts < maxAttempts
                 && (m.CostingStatus == CostingStatus.Costed
@@ -180,8 +187,7 @@ public sealed class StockLedgerPoster
         switch (outcome)
         {
             case LedgerPostOutcome.Posted:
-                await SettleAsync(movement, LedgerStatus.Posted, null, ct);
-                return true;
+                return await SettlePostedAsync(movement, amount, ct);
 
             case LedgerPostOutcome.Retry:
                 // Back to the queue, and the attempt already counted. The bound
@@ -227,6 +233,43 @@ public sealed class StockLedgerPoster
             isDebit ? amount : 0m,
             isDebit ? 0m : amount,
             description);
+    }
+
+    /// <summary>
+    /// Marks the movement posted — but only if what was posted is still what
+    /// the movement is worth.
+    ///
+    /// A weighted average recalculation can restate a stock-out's value while
+    /// this posting is in flight. Settling unconditionally would stamp the new
+    /// value as posted when the ledger holds the old one, and nothing would ever
+    /// look at it again. Guarded on the amount instead, a restated movement
+    /// settles nothing and goes back to the queue, and the next pass posts the
+    /// figure it now carries — replacing the rows this pass just wrote.
+    /// </summary>
+    private async Task<bool> SettlePostedAsync(
+        StockMovement movement, decimal amount, CancellationToken ct)
+    {
+        int settled = await _db.StockMovements
+            .Where(m => m.StockMovementId == movement.StockMovementId && m.TotalCost == amount)
+            .ExecuteUpdateAsync(
+                m => m
+                    .SetProperty(x => x.LedgerStatus, LedgerStatus.Posted)
+                    .SetProperty(x => x.LedgerPostedAt, _clock.GetUtcNow())
+                    .SetProperty(x => x.LedgerError, (string?)null),
+                ct);
+
+        if (settled > 0)
+        {
+            return true;
+        }
+
+        await _db.StockMovements
+            .Where(m => m.StockMovementId == movement.StockMovementId
+                && m.LedgerStatus == LedgerStatus.InProgress)
+            .ExecuteUpdateAsync(
+                m => m.SetProperty(x => x.LedgerStatus, LedgerStatus.Pending), ct);
+
+        return false;
     }
 
     private async Task SettleAsync(

@@ -769,7 +769,7 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:**
 
 ### TK-71 · Weighted average recalculation in `CostingEngine.Worker`
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-INV, L-ACC · **Depends on:** — · **Decision:** —
 - **Touches:** `backend/worker/CostingEngine.Worker`, `backend/Api/Inventory/Inventory.Api/Services`,
   `inv` migrations (unit-cost precision), one internal read in `backend/Api/Accounting` for the lock date
@@ -778,16 +778,33 @@ If the code has moved on since a card was written, correct the card in your clai
   valued at the wrong average, with nothing to restate it. Assigned by the owner on 23 September
   2026; the specification is the owner's "Weighted Average Cost — Calculation Concept".
 - **Sub-tasks:**
-  - [ ] Pure calculator: date order, in before out, entry order; negative-stock reordering; lock
+  - [x] Pure calculator: date order, in before out, entry order; negative-stock reordering; lock
         date; 12-dp average, 2-dp lines with the cumulative cent correction
-  - [ ] Worker recosts a weighted-average item once per batch, and requeues only the lines whose
+  - [x] Worker recosts a weighted-average item once per batch, and requeues only the lines whose
         value changed for reposting
-  - [ ] Lock date from Accounting's period locks (the branch's strictest)
-  - [ ] Unit cost and average stored to 12 decimals
-  - [ ] Tests, including the owner's worked example and the negative-stock example
+  - [x] Lock date from Accounting's period locks (the branch's strictest)
+  - [x] Unit cost and average stored to 12 decimals
+  - [x] Tests, including the owner's worked example and the negative-stock example
 - **Done when:** the worked example recalculates to −20.57, −20.57, −10.99, −32.95 (total −85.08),
   and the negative-stock example values the out at 9.00.
 - **Notes:**
+  - Tests written, not run: `backend/tests/Inventory.Api.Tests/WeightedAverageCalculatorTests.cs`
+    (pure — both owner examples, lock date, ordering, rounding),
+    `WeightedAverageRecostingTests.cs` (database — write-back, closed period, repost only on a
+    changed value, a posting overtaken by a recalculation), and
+    `The_branch_lock_is_the_strictest_whoever_asks` in `Accounting.Api.Tests/PeriodLockTests.cs`.
+  - Weighted-average movements are now `Pending` until the worker settles them, so the ledger no
+    longer posts the request path's provisional figure. `StockLedgerPoster` reads untracked and
+    settles `Posted` only if the amount it posted is still the movement's value.
+  - Lock date: the branch's **strictest** period lock (`GET internal/period-locks/branch`). If
+    Accounting cannot be reached, weighted-average items are left unclaimed for the next tick
+    rather than recalculated with no lock.
+  - The worker does not overwrite `ItemStock.QuantityOnHand` — that is the guarded decrement's —
+    it logs when the movements disagree with it.
+  - A stock-in keeps its stored cost, per the specification, including a sales return; it is not
+    re-read from the issue it returns. Say so if returns should come back at the original cost.
+  - `CLAUDE.md`'s "Inventory & costing" section still gives only the arrival-order formula. It is
+    `L-DOC`, so it is left for TK-11.
 
 ### C · Phase 2
 

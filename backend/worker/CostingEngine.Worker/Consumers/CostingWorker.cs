@@ -4,8 +4,9 @@ using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
-using Shared.Kernel.Tenancy;
 using Shared.Kernel.Errors;
+using Shared.Kernel.Persistence;
+using Shared.Kernel.Tenancy;
 
 namespace CostingEngine.Worker.Consumers;
 
@@ -162,9 +163,44 @@ public sealed class CostingWorker : BackgroundService
             .Take(BatchSize)
             .ToListAsync(ct);
 
-        foreach (StockMovement movement in pending)
+        // Asked for at most once per organization per tick, and only when a
+        // weighted-average item has work — most ticks for most branches have none.
+        PeriodLockLookup? periodLock = null;
+
+        // GroupBy keeps the read's order, both of the groups and within each.
+        foreach (IGrouping<long, StockMovement> group in pending.GroupBy(m => m.ItemId))
         {
-            await CostOneAsync(db, costing, auditor, movement, ct);
+            CostingType? costingType = await db.Items
+                .AsNoTracking()
+                .Where(i => i.ItemId == group.Key)
+                .Select(i => (CostingType?)i.CostingType)
+                .FirstOrDefaultAsync(ct);
+
+            if (costingType == CostingType.WeightedAverage)
+            {
+                periodLock ??= await scope.ServiceProvider
+                    .GetRequiredService<IAccountingPeriodLock>()
+                    .LockedUptoAsync(organization.CustomerId, organization.OrgId, ct);
+
+                if (!periodLock.Known)
+                {
+                    // Without the lock date there is no telling which stock-outs
+                    // are in a closed period, and guessing "none" would restate
+                    // them. The movements stay Pending, unclaimed and with no
+                    // attempt counted, and the next tick asks again.
+                    continue;
+                }
+
+                await CostWeightedAverageAsync(
+                    scope, db, costing, auditor, group.Key, [.. group], periodLock.LockedUpto, ct);
+
+                continue;
+            }
+
+            foreach (StockMovement movement in group)
+            {
+                await CostOneAsync(db, costing, auditor, movement, ct);
+            }
         }
 
         // Posting runs after costing in the same tick, so a movement costed a
@@ -307,6 +343,151 @@ public sealed class CostingWorker : BackgroundService
                 ct);
 
             await ParkAsync(db, movement, ex.Message, ct);
+        }
+    }
+
+    /// <summary>
+    /// Costs a weighted-average item's pending movements together, and then
+    /// recalculates the item once.
+    ///
+    /// <b>Once per item, not once per movement.</b> The recalculation walks the
+    /// item's whole history in date order and revalues every stock-out after
+    /// the lock date, so a till that sold the same item a hundred times since
+    /// the last tick needs one pass, not a hundred.
+    ///
+    /// <b>One transaction for the lot.</b> A stock-in's layer, the revalued
+    /// stock-outs, the item's average and the Costed status commit together or
+    /// not at all. Marking a movement Costed before its value is settled would
+    /// let the ledger post a figure the recalculation is about to change.
+    /// </summary>
+    private async Task CostWeightedAverageAsync(
+        IServiceScope scope,
+        InventoryDbContext db,
+        CostingService costing,
+        IWorkerErrorAuditor auditor,
+        long itemId,
+        List<StockMovement> movements,
+        DateOnly? lockDate,
+        CancellationToken ct)
+    {
+        // The same guarded claim as one movement at a time: a movement another
+        // worker already holds changes no rows and is left to that worker.
+        var claimed = new List<StockMovement>(movements.Count);
+
+        foreach (StockMovement movement in movements)
+        {
+            int taken = await db.StockMovements
+                .Where(m => m.StockMovementId == movement.StockMovementId
+                    && m.CostingStatus == CostingStatus.Pending)
+                .ExecuteUpdateAsync(
+                    m => m
+                        .SetProperty(x => x.CostingStatus, CostingStatus.InProgress)
+                        .SetProperty(x => x.CostingAttempts, x => x.CostingAttempts + 1)
+                        .SetProperty(x => x.ModifiedAt, DateTimeOffset.UtcNow),
+                    ct);
+
+            if (taken > 0)
+            {
+                claimed.Add(movement);
+            }
+        }
+
+        if (claimed.Count == 0)
+        {
+            return;
+        }
+
+        Item? item = await db.Items
+            .AsNoTracking()
+            .FirstOrDefaultAsync(i => i.ItemId == itemId, ct);
+
+        if (item is null)
+        {
+            foreach (StockMovement movement in claimed)
+            {
+                await ParkAsync(db, movement, "The item no longer exists.", ct);
+            }
+
+            return;
+        }
+
+        var recosting = scope.ServiceProvider.GetRequiredService<WeightedAverageRecosting>();
+
+        await using ITransactionScope tx = await db.Database.BeginScopeAsync(ct);
+
+        try
+        {
+            // Layers first. A stock-in on weighted average still records its
+            // receipt as a layer — history rather than an allocation pool — and
+            // a stock-out has nothing to do here: its value is the
+            // recalculation's to decide.
+            foreach (StockMovement movement in claimed)
+            {
+                Inventory.Entity.Models.StockOutcome outcome =
+                    await costing.CostMovementAsync(item, movement, ct);
+
+                if (outcome != Inventory.Entity.Models.StockOutcome.Ok)
+                {
+                    await tx.RollbackAsync(ct);
+                    db.ChangeTracker.Clear();
+
+                    foreach (StockMovement parked in claimed)
+                    {
+                        await ParkAsync(
+                            db,
+                            parked,
+                            $"Costing movement {movement.StockMovementId} returned {outcome}.",
+                            ct);
+                    }
+
+                    return;
+                }
+            }
+
+            WeightedAverageRecostResult result =
+                await recosting.RecalculateAsync(item.ItemId, lockDate, ct);
+
+            long[] ids = [.. claimed.Select(m => m.StockMovementId)];
+
+            await db.StockMovements
+                .Where(m => ids.Contains(m.StockMovementId))
+                .ExecuteUpdateAsync(
+                    m => m
+                        .SetProperty(x => x.CostingStatus, CostingStatus.Costed)
+                        .SetProperty(x => x.CostedAt, DateTimeOffset.UtcNow)
+                        .SetProperty(x => x.CostingError, (string?)null),
+                    ct);
+
+            await tx.CommitAsync(ct);
+
+            if (result.StockOutsRevalued > 0)
+            {
+                _log.LogInformation(
+                    "Recalculated the weighted average of item {ItemId}: {Revalued} stock-out(s) "
+                        + "revalued, {Requeued} requeued for posting, average now {Average}",
+                    item.ItemId,
+                    result.StockOutsRevalued,
+                    result.StockOutsRequeuedForPosting,
+                    result.AverageCost);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException || !ct.IsCancellationRequested)
+        {
+            await tx.RollbackAsync(ct);
+
+            // The rollback undid the rows; the tracker still believes in them.
+            db.ChangeTracker.Clear();
+
+            await auditor.AuditAsync(
+                WorkerName,
+                $"WeightedAverage ItemId={item.ItemId}",
+                ex,
+                ct);
+
+            foreach (StockMovement movement in claimed)
+            {
+                await ParkAsync(db, movement, ex.Message, ct);
+            }
         }
     }
 
