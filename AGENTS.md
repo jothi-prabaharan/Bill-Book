@@ -223,4 +223,4 @@ Where a task says "copy `Inventory.Api/Program.cs`" or "copy `AccountMovementSou
 
 ### Picking up work
 
-The work queue is `docs/TASKS.md`. Read its section 0 before starting anything: it holds the claim protocol and the lanes that let several agents work in parallel. The reality check above applies to the queue as well: verify a card's claims against the code before starting it, and correct the card in your claim commit if it is wrong.
+The work queue is `docs/TASKS.md`. Read its section 0 before starting anything: it holds the claim protocol and the lanes that let several agents work in parallel. **AI agents write unit tests but never run them**: the owner runs the tests (section 0.5 of `docs/TASKS.md`). The reality check above applies to the queue as well: verify a card's claims against the code before starting it, and correct the card in your claim commit if it is wrong.

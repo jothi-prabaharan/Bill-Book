@@ -20,7 +20,8 @@ Each card's first line is its status. Sub-task boxes use the same markers.
 |---|---|
 | `- [ ] open` | Nobody has it |
 | `- [~] working (AI name) — since YYYY-MM-DD` | Claimed and in progress. Only one agent holds a card |
-| `- [x] completed (AI name) — YYYY-MM-DD` | Done and checked against its **Done when** line. Compiling is not enough |
+| `- [x] completed (AI name) — YYYY-MM-DD · tests written, not run` | An AI finished the work and wrote its tests, but did not run them (section 0.5) |
+| `- [x] completed (AI name) — YYYY-MM-DD · tests passed (owner) — YYYY-MM-DD` | The owner ran the tests and they passed. The card is now checked against its **Done when** line |
 | `- [!] blocked — D-xx` or `- [!] blocked — reason` | Can't start yet. Waiting on an owner decision (section 3), or on a problem written in the card's Notes |
 
 - **AI name** is the model that did the work, as `get_session` reports it (e.g. `Claude Opus 5.5`,
@@ -66,7 +67,8 @@ normal for agent 1 to be on TK-01 while agent 2 is on TK-05.
   Two suites dropping the same database will break each other's results.
 
 **Releasing a card**
-- **Done**: tick it in the same commit as the last piece of work, then push.
+- **Done**: tick it in the same commit as the last piece of work, then push. An AI adds
+  `· tests written, not run` to the status line (section 0.5).
 - **Stopping unfinished**: don't leave a `[~]` behind. Set it back to `- [ ] open` and add a
   `Handover:` line to Notes: what's done, what's next, and anything surprising.
 - **Stale claims**: if a `[~]` card has had no commit to its lanes for **48 hours**, another agent
@@ -100,6 +102,45 @@ If you can't push to `main`, say so to the user and take only the cards they ass
 
 Cards that build a feature (the HRMS, Payroll and School stages) also carry the **standard
 delivery** sub-tasks in section 5.
+
+### 0.5 Testing: AI writes the tests, the owner runs them
+
+**AI agents write unit tests for every change and never run them.** The repository owner runs
+the tests.
+
+**An AI writes:**
+- a test for every behaviour it adds or changes, following the patterns already in
+  `backend/tests/*` and the frontend `*.spec.ts` files;
+- a test for each clause of the card's **Done when** line, where a test can prove it;
+- the `RlsAudit` and `EndpointGuardAudit` tests for any new schema or controller.
+
+**An AI does not run:** `dotnet test`, `npm run test`, `npm run check` (which includes the tests),
+Vitest, Playwright, or any other test runner. It also doesn't drop and recreate test databases to
+run a suite.
+
+**An AI still runs:** the build and the static checks, since these compile the tests without
+running them. That means `dotnet build`, `npm run lint`, the TypeScript typecheck, the `nx`
+builds and `dotnet ef migrations has-pending-model-changes`. A change that doesn't build is not
+finished.
+
+**Where a card says to run a suite**, the AI writes the tests that step needs and leaves the run
+to the owner. Examples are "suite green from a dropped database", "watch `RlsAudit` fail" and
+"confirm `dotnet test` is green". The AI does not tick that sub-task; the owner ticks it after
+running the tests.
+
+**Completing a card:**
+1. The AI marks it `- [x] completed (AI name) — YYYY-MM-DD · tests written, not run`, and lists
+   the test files it wrote under Notes.
+2. The owner runs the tests. If they pass, the owner appends
+   `· tests passed (owner) — YYYY-MM-DD`.
+3. If a test fails, the owner sets the card back to `- [ ] open` and writes the failure under
+   Notes. The next agent picks it up from there.
+
+Cards that depend on a `tests written, not run` card may start without waiting for the owner's
+run.
+
+**CI still runs the tests on every push to `main`.** That is the owner's check, not the AI
+running tests. An AI doesn't wait on CI or react to its results unless the owner asks it to.
 
 ---
 
@@ -729,8 +770,9 @@ Copy these into any card that builds a feature, and tick them as you go:
       (`BeginScopeAsync`, never `BeginTransactionAsync`). Errors go through `SqlErrorCatalog`. The
       controller carries a guard attribute. A request for another branch's data gets `Forbid()`.
 - [ ] `-core` view-model and `-ui` page: standalone components, `inject()`, signals, working at 360px.
-- [ ] Tests against a **dropped** database, plus the `RlsAudit` and `EndpointGuardAudit` tests for
-      the new schema and controllers.
+- [ ] Write the tests: behaviour, the **Done when** line, and the `RlsAudit` and `EndpointGuardAudit`
+      tests for the new schema and controllers. An AI writes them and does not run them (section 0.5).
 - [ ] Update the docs page under `frontend/apps/docs/content/` and `docs.manifest.ts`, and add a
       `release-notes.md` bullet under **Unreleased**, all in the same commit.
-- [ ] `npm run check` in `frontend/` and `dotnet build && dotnet test` in `backend/` are both green.
+- [ ] `dotnet build` in `backend/`, and `npm run lint`, the typecheck and the builds in `frontend/`, are
+      all clean. Running the tests (`dotnet test`, `npm run test`) is the owner's step (section 0.5).

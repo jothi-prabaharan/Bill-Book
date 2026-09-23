@@ -37,6 +37,13 @@ task:
 - **claim it with a claim commit on `main` before doing any work**;
 - mark it `working (AI name)`, and later `completed (AI name)`.
 
+**AI agents write unit tests and never run them.** An AI writes the tests for every change. It does
+not run `dotnet test`, `npm run test`, `npm run check` or any other test runner, because the
+repository owner runs the tests. It still runs the build, lint and typecheck. A finished card is
+marked `completed (AI name) · tests written, not run`. The rule is in section 0.5 of
+`docs/TASKS.md`, and it overrides every instruction below to run tests before claiming something
+works.
+
 Lanes are what let several agents work at once without editing the same files.
 
 ---
