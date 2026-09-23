@@ -149,13 +149,3 @@ Thumbs.db
 
 # Throwaway Edge profile created by the "Web (Edge, 4200)" debug config.
 .vscode/.edge-debug-profile/
-
-# Terraform. The state file holds the generated database password, the JWT
-# signing key and the internal API key in clear, and terraform.tfvars names a
-# real project. Neither belongs in git — use a GCS backend with versioning and
-# restricted IAM for the state.
-deploy/**/.terraform/
-deploy/**/*.tfstate
-deploy/**/*.tfstate.*
-deploy/**/terraform.tfvars
-deploy/**/*.tfplan

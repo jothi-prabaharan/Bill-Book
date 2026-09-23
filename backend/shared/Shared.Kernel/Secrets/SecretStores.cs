@@ -1,7 +1,6 @@
 using Azure;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
-using Google.Cloud.SecretManager.V1;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -114,10 +113,9 @@ public sealed class KeyVaultSecretStore : ISecretStore
 ///
 /// <b>Development, and deliberately not silently usable in production.</b>
 /// <see cref="SecretStoreRegistration"/> refuses to register it when the
-/// environment is Production and neither managed store is configured, so a
-/// deployment that forgot its vault or its project id fails at startup with a
-/// message rather than serving requests off whatever happened to be in
-/// <c>appsettings.json</c>.
+/// environment is Production and no vault is configured, so a deployment that
+/// forgot its vault fails at startup with a message rather than serving
+/// requests off whatever happened to be in <c>appsettings.json</c>.
 ///
 /// Configuration is not a poor stand-in for a vault so much as a different
 /// trust model: environment variables and mounted files both arrive through it,
@@ -148,14 +146,13 @@ public sealed class ConfigurationSecretStore : ISecretStore
 
         throw new KeyNotFoundException(
             $"Secret '{name}' is not configured. Set Secrets:{name}, or configure "
-            + "KeyVault:Uri or Gcp:ProjectId to read it from a managed store.");
+            + "KeyVault:Uri to read it from the vault.");
     }
 
     public Task SetSecretAsync(
         string name, string value, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException(
-            "Configuration is read-only. Writing a secret needs a managed store — set "
-            + "KeyVault:Uri or Gcp:ProjectId.");
+            "Configuration is read-only. Writing a secret needs the vault — set KeyVault:Uri.");
 }
 
 /// <summary>
@@ -164,14 +161,8 @@ public sealed class ConfigurationSecretStore : ISecretStore
 public static class SecretStoreRegistration
 {
     /// <summary>
-    /// Key Vault when <c>KeyVault:Uri</c> is set, Secret Manager when
-    /// <c>Gcp:ProjectId</c> is, configuration otherwise — and a startup failure
-    /// if the environment is Production and none of them is true.
-    ///
-    /// <b>Key Vault wins when both are set</b>, which is not a judgement about
-    /// the two clouds: a deployment configured for both is misconfigured, and
-    /// the useful property is that it resolves the same way every time rather
-    /// than depending on which key an operator happened to set last.
+    /// Key Vault when <c>KeyVault:Uri</c> is set, configuration otherwise — and
+    /// a startup failure if the environment is Production and neither is true.
     ///
     /// <b>Failing at startup is the point.</b> A service that started anyway
     /// would serve requests reading secrets out of whatever configuration it
@@ -179,13 +170,17 @@ public static class SecretStoreRegistration
     /// place nobody meant to put one. The exception names the setting to fix
     /// and nothing else.
     ///
-    /// Authentication is ambient on both clouds — <c>DefaultAzureCredential</c>
-    /// on Azure, Application Default Credentials on Google Cloud. Each resolves
-    /// to a managed identity in a deployment and to the developer's own
-    /// signed-in credential locally. No secret is needed to read the secrets,
-    /// which is the property that makes this worth doing at all: a store reached
-    /// with a credential in configuration would have moved the problem rather
-    /// than solved it.
+    /// Authentication is <c>DefaultAzureCredential</c>: a managed identity in a
+    /// deployment, the developer's own signed-in credential locally. No secret
+    /// is needed to read the secrets, which is the property that makes this
+    /// worth doing at all — a vault reached with a connection string in
+    /// configuration would have moved the problem rather than solved it.
+    ///
+    /// <b>A user-assigned identity needs <c>AZURE_CLIENT_ID</c>.</b> Without it
+    /// the credential looks for a system-assigned identity, finds none, and
+    /// fails at the first secret read rather than at startup. Container Apps
+    /// uses user-assigned identities so an app can pull its image on first
+    /// create, which is why deploy/azure sets the variable on every container.
     /// </summary>
     public static IServiceCollection AddSecretStore(
         this IServiceCollection services,
@@ -203,24 +198,12 @@ public static class SecretStoreRegistration
             return services;
         }
 
-        string? project = configuration["Gcp:ProjectId"];
-
-        if (!string.IsNullOrWhiteSpace(project))
-        {
-            services.AddSingleton<ISecretStore>(provider => new GoogleSecretManagerSecretStore(
-                SecretManagerServiceClient.Create(),
-                project,
-                provider.GetRequiredService<TimeProvider>()));
-
-            return services;
-        }
-
         if (environment.IsProduction())
         {
             throw new InvalidOperationException(
-                "Neither KeyVault:Uri nor Gcp:ProjectId is configured. A production "
-                + "deployment must read its secrets from a managed store; starting "
-                + "without one would serve requests off whatever is in configuration.");
+                "KeyVault:Uri is not configured. A production deployment must read its "
+                + "secrets from a vault; starting without one would serve requests off "
+                + "whatever is in configuration.");
         }
 
         services.AddSingleton<ISecretStore, ConfigurationSecretStore>();

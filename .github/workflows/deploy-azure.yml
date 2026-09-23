@@ -1,0 +1,299 @@
+# Deploys everything to Azure: infrastructure, images, migrations, apps and the
+# four web apps, in the one order that is safe.
+#
+# Manual, not on push. There is no released deployment yet and no staging
+# environment to prove a change in first, so a deploy is a decision somebody
+# makes rather than something that happens because a commit landed.
+#
+# The order, and why:
+#
+#   1. infra       Bicep with deployApps=false: everything except the apps, and
+#                  the migration job pointed at this commit's image. Creates the
+#                  registry on a first run, which step 2 needs.
+#   2. images      Build and push all ten images, tagged with the commit SHA.
+#   3. migrate     Run the job and wait. It migrates every schema and exits 0; a
+#                  failure stops the deploy here, with the running version
+#                  untouched.
+#   4. apps        Bicep with deployApps=true: every app rolls to this commit.
+#                  Every service also migrates its own schema on startup — step 3
+#                  is what stops eight of them racing to do it at once.
+#   5. web         Build the four SPAs once, point them at the gateway through
+#                  config.js, and upload each to its Static Web App.
+#
+# The same five steps run on the very first deploy and on every one after it.
+name: Deploy — Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type the resource group name to confirm the target'
+        required: true
+        type: string
+
+concurrency:
+  # Never two at once. The second would push images and start a migration
+  # against a database the first is still migrating.
+  group: deploy-azure
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  # OIDC: a short-lived token federated to an Entra ID app registration. There
+  # is no client secret in this repository to leak or to expire.
+  id-token: write
+
+env:
+  RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+
+jobs:
+  guard:
+    name: Confirm target
+    runs-on: ubuntu-latest
+    steps:
+      - name: Refuse a deploy aimed at the wrong resource group
+        env:
+          CONFIRM: ${{ inputs.confirm }}
+        run: |
+          if [ "$CONFIRM" != "$RESOURCE_GROUP" ]; then
+            echo "::error::Confirmation '$CONFIRM' does not match AZURE_RESOURCE_GROUP."
+            exit 1
+          fi
+
+  infra:
+    name: 1 · Infrastructure and migration job
+    needs: guard
+    runs-on: ubuntu-latest
+    # The GitHub environment scopes the secrets below and can require a
+    # reviewer's approval before anything reaches Azure.
+    environment: production
+    outputs:
+      registry: ${{ steps.deploy.outputs.registry }}
+      loginServer: ${{ steps.deploy.outputs.loginServer }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy infrastructure (no apps)
+        id: deploy
+        env:
+          PG_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          INTERNAL_KEY: ${{ secrets.INTERNAL_API_KEY }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          OWNER_EMAIL: ${{ vars.BOOTSTRAP_OWNER_EMAIL }}
+        run: |
+          outputs=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "infra-${GITHUB_SHA::12}" \
+            --template-file deploy/azure/main.bicep \
+            --parameters imageTag="$GITHUB_SHA" deployApps=false \
+                         postgresAdminPassword="$PG_PASSWORD" \
+                         jwtSigningKey="$JWT_KEY" \
+                         internalApiKey="$INTERNAL_KEY" \
+                         encryptionKey="$ENCRYPTION_KEY" \
+                         bootstrapOwnerEmail="$OWNER_EMAIL" \
+            --query properties.outputs --output json)
+          echo "registry=$(echo "$outputs" | jq -r .registryName.value)" >> "$GITHUB_OUTPUT"
+          echo "loginServer=$(echo "$outputs" | jq -r .registryLoginServer.value)" >> "$GITHUB_OUTPUT"
+
+  images:
+    name: 2 · Build and push ${{ matrix.image }}
+    needs: infra
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      # fail-fast off: on a deploy already decided, the useful output is the full
+      # list of which images build, not the first that does not.
+      fail-fast: false
+      matrix:
+        include:
+          - { image: master,         project: Api/Master/Master.Api,             assembly: Master.Api }
+          - { image: accounting,     project: Api/Accounting/Accounting.Api,     assembly: Accounting.Api }
+          - { image: inventory,      project: Api/Inventory/Inventory.Api,       assembly: Inventory.Api }
+          - { image: sales,          project: Api/Sales/Sales.Api,               assembly: Sales.Api }
+          - { image: purchase,       project: Api/Purchase/Purchase.Api,         assembly: Purchase.Api }
+          - { image: customer,       project: Api/Customer/Customer.Api,         assembly: Customer.Api }
+          - { image: reporting,      project: Api/Reporting/Reporting.Api,       assembly: Reporting.Api }
+          - { image: printing,       project: Api/Printing/Printing.Api,         assembly: Printing.Api }
+          - { image: gateway,        project: Gateway/Gateway.Api,               assembly: Gateway.Api }
+          - { image: costing-worker, project: worker/CostingEngine.Worker,       assembly: CostingEngine.Worker }
+          # Notification.Worker and RateSync.Worker are a .csproj and an empty
+          # Consumers folder. Deploying them would run a host that does nothing,
+          # so they are left out until they do something.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push
+        env:
+          REGISTRY: ${{ needs.infra.outputs.registry }}
+          LOGIN_SERVER: ${{ needs.infra.outputs.loginServer }}
+        run: |
+          az acr login --name "$REGISTRY"
+          image="$LOGIN_SERVER/${{ matrix.image }}:$GITHUB_SHA"
+
+          # The commit SHA, never "latest": a mutable tag makes two revisions of
+          # one service potentially different builds, and a rollback a matter of
+          # hoping the tag still points where it did.
+          docker build backend \
+            --file backend/Dockerfile \
+            --build-arg PROJECT="${{ matrix.project }}" \
+            --build-arg ASSEMBLY="${{ matrix.assembly }}" \
+            --tag "$image"
+          docker push "$image"
+
+  migrate:
+    name: 3 · Run migrations
+    needs: images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      # Container Apps commands live in a CLI extension a fresh runner does not
+      # have, and the CLI would otherwise stop to ask before installing it.
+      - name: Add the Container Apps CLI extension
+        run: az extension add --name containerapp --upgrade --yes
+
+      - name: Start the job and wait for it
+        run: |
+          execution=$(az containerapp job start --name migrate --resource-group "$RESOURCE_GROUP" \
+            --query name --output tsv)
+          echo "Started $execution"
+
+          # Thirty minutes, polled every fifteen seconds. The job's own replica
+          # timeout is the same, so this cannot outwait a job that is still
+          # legitimately running.
+          for _ in $(seq 1 120); do
+            status=$(az containerapp job execution show --name migrate --resource-group "$RESOURCE_GROUP" \
+              --job-execution-name "$execution" --query properties.status --output tsv)
+            case "$status" in
+              Succeeded) echo "Migrations applied."; exit 0 ;;
+              Failed|Stopped|Degraded)
+                echo "::error::Migration job $execution ended $status. Nothing has been rolled out; the running version is untouched. Its logs are in the Log Analytics workspace under ContainerAppConsoleLogs_CL, job name migrate."
+                exit 1 ;;
+            esac
+            sleep 15
+          done
+
+          echo "::error::Migration job $execution did not finish within 30 minutes."
+          exit 1
+
+  apps:
+    name: 4 · Roll out apps
+    needs: migrate
+    runs-on: ubuntu-latest
+    environment: production
+    outputs:
+      gateway: ${{ steps.deploy.outputs.gateway }}
+      sites: ${{ steps.deploy.outputs.sites }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy everything, apps included
+        id: deploy
+        env:
+          PG_PASSWORD: ${{ secrets.POSTGRES_ADMIN_PASSWORD }}
+          JWT_KEY: ${{ secrets.JWT_SIGNING_KEY }}
+          INTERNAL_KEY: ${{ secrets.INTERNAL_API_KEY }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          OWNER_EMAIL: ${{ vars.BOOTSTRAP_OWNER_EMAIL }}
+        run: |
+          outputs=$(az deployment group create \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "apps-${GITHUB_SHA::12}" \
+            --template-file deploy/azure/main.bicep \
+            --parameters imageTag="$GITHUB_SHA" deployApps=true \
+                         postgresAdminPassword="$PG_PASSWORD" \
+                         jwtSigningKey="$JWT_KEY" \
+                         internalApiKey="$INTERNAL_KEY" \
+                         encryptionKey="$ENCRYPTION_KEY" \
+                         bootstrapOwnerEmail="$OWNER_EMAIL" \
+            --query properties.outputs --output json)
+          echo "gateway=$(echo "$outputs" | jq -r .gatewayUrl.value)" >> "$GITHUB_OUTPUT"
+          echo "sites=$(echo "$outputs" | jq -c .sites.value)" >> "$GITHUB_OUTPUT"
+          echo "Gateway: $(echo "$outputs" | jq -r .gatewayUrl.value)"
+
+  web:
+    name: 5 · Web apps
+    needs: apps
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        working-directory: frontend
+        run: npm ci
+
+      # Every app, under strictTemplates — the same gate CI runs. Built once and
+      # deployed as built: the environment differs only in config.js below, so
+      # the artifact that passed is the artifact that ships.
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Point the apps at the gateway and upload them
+        env:
+          GATEWAY: ${{ needs.apps.outputs.gateway }}
+          SITES: ${{ needs.apps.outputs.sites }}
+        run: |
+          npm install --global @azure/static-web-apps-cli@2
+
+          for app in web portal admin docs; do
+            dir="frontend/dist/apps/$app/browser"
+            site=$(echo "$SITES" | jq -r --arg a "$app" '.[] | select(.app == $a) | .name')
+
+            # Routing fallback, cache headers and security headers, identical for
+            # all four.
+            cp deploy/azure/staticwebapp.config.json "$dir/"
+
+            # The one file that differs per environment. docs does not call the
+            # API, so it is left with the build's own empty config.
+            if [ "$app" != "docs" ]; then
+              printf "window.__BB_CONFIG__ = { apiBaseUrl: '%s' };\n" "$GATEWAY" > "$dir/config.js"
+            fi
+
+            # Fetched at deploy time rather than stored as four repository
+            # secrets: the federated login already has the right to read it, and a
+            # token that is never stored cannot go stale or leak from settings.
+            token=$(az staticwebapp secrets list --name "$site" --resource-group "$RESOURCE_GROUP" \
+              --query properties.apiKey --output tsv)
+            echo "::add-mask::$token"
+
+            swa deploy "$dir" --deployment-token "$token" --env production
+            echo "Deployed $app to $site"
+          done

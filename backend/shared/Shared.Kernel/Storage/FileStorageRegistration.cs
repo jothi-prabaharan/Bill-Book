@@ -1,5 +1,5 @@
+using Azure.Identity;
 using Azure.Storage.Blobs;
-using Google.Cloud.Storage.V1;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -11,8 +11,8 @@ namespace Shared.Kernel.Storage;
 ///
 /// <b>This was copied between two services before it was a method.</b> Master
 /// registered it, Sales copied the block when <c>InvoiceService</c> needed it,
-/// and a third implementation arriving would have meant editing both — which is
-/// the shape of change that gets done once and forgotten once. There is now one
+/// and a third way of connecting would have meant editing both — which is the
+/// shape of change that gets done once and forgotten once. There is now one
 /// place that knows how the choice is made.
 ///
 /// <b>Presence of a setting decides, not the environment name.</b> A developer
@@ -23,13 +23,19 @@ namespace Shared.Kernel.Storage;
 public static class FileStorageRegistration
 {
     /// <summary>
-    /// Blob Storage when <c>Storage:ConnectionString</c> is set, Cloud Storage
-    /// when <c>Gcp:ProjectId</c> is, local disk otherwise.
+    /// Blob Storage by connection string when <c>Storage:ConnectionString</c>
+    /// is set, Blob Storage by managed identity when <c>Storage:AccountUrl</c>
+    /// is, local disk otherwise.
     ///
-    /// <b>Azure wins when both are set</b>, matching the secret store's
-    /// precedence for the same reason: a deployment configured for both clouds
-    /// is misconfigured, and resolving the same way every time beats resolving
-    /// by whichever key was set last.
+    /// <b>The connection string is for development</b> — Azurite, or pointing
+    /// a local run at a real account. It carries the account key, and the
+    /// storage account deploy/azure creates refuses shared-key access outright,
+    /// so in a deployment only the account-URL path can work. That is the
+    /// point: a key that is not accepted cannot leak into being useful.
+    ///
+    /// <b>The connection string wins when both are set</b>, so a developer who
+    /// has one configured is not surprised by the other. A deployment has no
+    /// reason to set it.
     ///
     /// <b>There is no Production guard here, unlike the secret store.</b> Local
     /// disk holds uploaded attachments, and losing them with the container is a
@@ -39,17 +45,17 @@ public static class FileStorageRegistration
     public static IServiceCollection AddFileStorage(
         this IServiceCollection services, IConfiguration configuration)
     {
-        string bucketOrContainer = configuration["Storage:Container"] ?? "documents";
+        string containerName = configuration["Storage:Container"] ?? "documents";
 
-        if (configuration["Storage:ConnectionString"] is { Length: > 0 } azure)
+        if (configuration["Storage:ConnectionString"] is { Length: > 0 } connection)
         {
             services.AddSingleton<IFileStorage>(_ =>
             {
-                var container = new BlobContainerClient(azure, bucketOrContainer);
+                var container = new BlobContainerClient(connection, containerName);
 
                 // Created on startup rather than per upload: it is one call, it
                 // is idempotent, and the alternative is every first upload in a
-                // fresh deployment failing on a container nobody made.
+                // fresh development account failing on a container nobody made.
                 container.CreateIfNotExists();
 
                 return new AzureBlobFileStorage(container);
@@ -58,26 +64,19 @@ public static class FileStorageRegistration
             return services;
         }
 
-        if (configuration["Gcp:ProjectId"] is { Length: > 0 } project)
+        if (configuration["Storage:AccountUrl"] is { Length: > 0 } accountUrl)
         {
-            // A bucket name is global across all of Google Cloud, so "documents"
-            // is certainly taken by somebody else. Qualifying it with the project
-            // id gives a name that is unique without an operator having to think
-            // of one, and Storage:Container still overrides it when they have.
-            string bucket = configuration["Storage:Bucket"] is { Length: > 0 } named
-                ? named
-                : $"{project}-{bucketOrContainer}";
-
             services.AddSingleton<IFileStorage>(_ =>
             {
-                StorageClient client = StorageClient.Create();
+                var service = new BlobServiceClient(new Uri(accountUrl), new DefaultAzureCredential());
 
-                GcsFileStorage.EnsureBucket(client, project, bucket);
-
-                // Resolved once here rather than per request: it reads the
-                // ambient credential, which on Cloud Run is a metadata-server
-                // round trip.
-                return new GcsFileStorage(client, bucket, GcsFileStorage.TryCreateSigner());
+                // No CreateIfNotExists here. The deployment declares the
+                // container, and a managed identity's role assignment can take a
+                // few minutes to propagate after a deploy — a create attempted in
+                // that window fails with 403 and would take the first upload with
+                // it, for a container that already exists.
+                return new AzureBlobFileStorage(
+                    service.GetBlobContainerClient(containerName), service);
             });
 
             return services;

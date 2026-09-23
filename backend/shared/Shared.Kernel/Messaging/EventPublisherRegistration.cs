@@ -1,3 +1,5 @@
+using Azure.Identity;
+using Azure.Messaging.ServiceBus;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,28 +40,29 @@ public sealed class LoggingEventPublisher : IEventPublisher
 public static class EventPublisherRegistration
 {
     /// <summary>
-    /// Pub/Sub when <c>Gcp:ProjectId</c> is set, the logging stand-in otherwise.
+    /// Service Bus when <c>ServiceBus:Namespace</c> is set — the fully qualified
+    /// host, <c>&lt;name&gt;.servicebus.windows.net</c> — the logging stand-in
+    /// otherwise.
     ///
-    /// <b>There is no Service Bus branch, because there is no Service Bus
-    /// implementation.</b> It was the intended answer for a long time and was
-    /// never written; the package is still pinned. An Azure deployment therefore
-    /// still publishes nothing, which is the state the whole product was in
-    /// before this — worth saying plainly rather than leaving the shape of this
-    /// method to imply parity it does not have.
+    /// <b>A namespace, never a connection string.</b> A Service Bus connection
+    /// string carries a shared access key, and a key in configuration is the
+    /// problem the managed identity exists to remove. The identity needs Azure
+    /// Service Bus Data Sender on the namespace; deploy/azure grants it.
+    ///
+    /// <b>No Production guard.</b> An event that is logged rather than sent is
+    /// a feature that does not run — the stand-in says so on every publish,
+    /// with "not delivered" in the line — but not worth refusing to serve the
+    /// requests that do not depend on it.
     /// </summary>
     public static IServiceCollection AddEventPublisher(
         this IServiceCollection services, IConfiguration configuration)
     {
-        if (configuration["Gcp:ProjectId"] is { Length: > 0 } project)
+        if (configuration["ServiceBus:Namespace"] is { Length: > 0 } ns)
         {
-            string? prefix = configuration["Gcp:PubSub:TopicPrefix"];
+            string? prefix = configuration["ServiceBus:TopicPrefix"];
 
-            // Defaults on: a topic missing because nobody declared it should not
-            // be discovered at the moment an event is first published.
-            bool create = configuration.GetValue("Gcp:PubSub:CreateMissingTopics", true);
-
-            services.AddSingleton<IEventPublisher>(
-                _ => new PubSubEventPublisher(project, prefix, create));
+            services.AddSingleton<IEventPublisher>(_ => new ServiceBusEventPublisher(
+                new ServiceBusClient(ns, new DefaultAzureCredential()), prefix));
 
             return services;
         }

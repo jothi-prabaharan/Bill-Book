@@ -25,12 +25,18 @@ public class DatabaseMigrationService : IHostedService
     private readonly IServiceProvider _services;
     private readonly ILogger<DatabaseMigrationService> _logger;
     private readonly IConfiguration _config;
+    private readonly IHostApplicationLifetime _lifetime;
 
-    public DatabaseMigrationService(IServiceProvider services, ILogger<DatabaseMigrationService> logger, IConfiguration config)
+    public DatabaseMigrationService(
+        IServiceProvider services,
+        ILogger<DatabaseMigrationService> logger,
+        IConfiguration config,
+        IHostApplicationLifetime lifetime)
     {
         _services = services;
         _logger = logger;
         _config = config;
+        _lifetime = lifetime;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -59,6 +65,28 @@ public class DatabaseMigrationService : IHostedService
 
         // 3. Ensure IN000001 Database Exists and seed it
         await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", cancellationToken);
+
+        // Migrate-and-exit, for a deployment that runs migrations as a job ahead
+        // of rolling out new revisions. Without it a job running this image
+        // would migrate and then serve HTTP forever, and the job would time out
+        // and be recorded as failed after doing everything it was asked to.
+        //
+        // A graceful stop exits 0, which is what marks the job succeeded. A
+        // migration that throws never reaches this line: the host fails to
+        // start, the process exits non-zero, and the job fails — which is how a
+        // deploy pipeline learns to stop before shifting traffic.
+        //
+        // The stop waits for ApplicationStarted rather than happening here.
+        // This runs *during* host startup, before Kestrel binds, and a stop
+        // requested now cancels that bind — which surfaces as an unhandled
+        // TaskCanceledException, exit code 134, and a job recorded as failed
+        // after every migration succeeded. Found by running it, not by reading
+        // it: the log said "stopping" and the process crashed anyway.
+        if (_config.GetValue<bool>("Migrations:ExitWhenDone"))
+        {
+            _logger.LogInformation("Migrations:ExitWhenDone is set; migrations are complete, stopping once started.");
+            _lifetime.ApplicationStarted.Register(_lifetime.StopApplication);
+        }
     }
 
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;

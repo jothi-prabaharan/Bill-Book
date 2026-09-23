@@ -26,6 +26,10 @@
             "glob": "**/*",
             "input": "apps/web/src/assets",
             "output": "assets"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/web/public"
           }
         ],
         "styles": [

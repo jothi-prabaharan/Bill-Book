@@ -58,9 +58,10 @@ export const DOCS: DocSection[] = [
     pages: [
       { slug: 'development', title: 'Development', status: 'built' },
       { slug: 'inputs', title: 'Input components', status: 'built' },
-      // 'partial' rather than 'built': the Google Cloud path is complete and the
-      // Azure one is not — no Service Bus publisher exists, and no Azure
-      // infrastructure is written.
+      // 'partial' rather than 'built': the Azure templates and pipeline are
+      // complete and verified locally, but have not been run against Azure, and
+      // the first run stops at the migration step until the admin migration is
+      // re-squashed — see deploy/azure/README.md.
       { slug: 'deployment', title: 'Deployment', status: 'partial' },
     ],
   },

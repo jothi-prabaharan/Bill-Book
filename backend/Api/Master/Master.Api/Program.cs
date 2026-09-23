@@ -188,15 +188,15 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 
 // Secrets and events, both chosen from configuration in Shared.Kernel.
 //
-// Key Vault when KeyVault:Uri is set, Secret Manager when Gcp:ProjectId is,
-// configuration otherwise — and a startup failure in Production if none. Master
-// is the one service that *writes* a secret (the SMTP-password key), and only a
-// managed store can: the configuration store refuses rather than pretending,
-// which is why the in-memory dictionary that used to stand here was worse than
-// nothing — it accepted every write and lost it on the next restart.
+// Key Vault when KeyVault:Uri is set, configuration otherwise — and a startup
+// failure in Production if neither. Master is the one service that *writes* a
+// secret (the SMTP-password key), and only the vault-backed store can: the
+// configuration store refuses rather than pretending, which is why the
+// in-memory dictionary that used to stand here was worse than nothing — it
+// accepted every write and lost it on the next restart.
 //
-// Events deliver for the first time on Pub/Sub; on Azure and locally they still
-// only log, because no Service Bus publisher was ever written.
+// Events go to Service Bus when ServiceBus:Namespace is set, and are logged and
+// dropped otherwise.
 builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
 builder.Services.AddEventPublisher(builder.Configuration);
 
