@@ -1232,6 +1232,109 @@ New, in the shared libs:
   signed-in user's name, branch, app, licence and permissions from Master, without internal ids.
   `apps/web` keeps `token-claims.ts` for now.
 
+## How role, app and permission map
+
+**Six rows decide what a person can do, and each answers one question:**
+
+```
+User ──< UserOrganizationRole >── Role ──< RolePermission >── Permission
+          (UserId, OrgId, RoleId)   (App: one)                  (Code, Apps: one or more)
+
+Menu (Apps: one or more) ──< MenuPermission (PermissionCode)
+```
+
+| Question | Answered by |
+|---|---|
+| Which apps can this person open, in this branch? | `UserOrganizationRole` → `Role.App` |
+| What can they do in this app? | The permissions of their roles whose `Role.App` is this app |
+| Which menu entries do they see? | `Menu.Apps` includes the app **and** they hold one of its `MenuPermission` codes |
+| Can this app call this endpoint at all? | `[RequireApp(...)]` on the controller, against the token's `app` |
+| May the customer use this app? | That app's row in `mst.Licenses` |
+| Their own profile? | Nothing — `[Authorize]` only, and always their own record |
+
+**Worked example.** Priya works at the Chennai branch of a customer who bought RetailErp and Payroll.
+
+| Row | Value |
+|---|---|
+| Role 3 | Accountant, `App = RetailErp` — granted `accounting.view`, `settings.view` |
+| Role 41 | Payroll Admin, `App = Payroll` — granted `payroll.*`, `employee.*`, `settings.view`, `settings.edit`. Granting it `accounting.view` is **refused**: that permission's `Apps` is RetailErp only |
+| UserOrganizationRole | Priya · Chennai · 3, and Priya · Chennai · 41 |
+
+- **Signing in to `apps/payroll`** in Chennai takes her roles there whose app is Payroll — role 41 only
+  — and mints a token with `app = Payroll`, role 41's permissions and the Payroll licence. Signing in
+  to `apps/web` mints another with role 3's. One login, two tokens, each carrying only its own app.
+- **The users page in Payroll**: the `usr` menu row is flagged for all apps and needs `settings.view`,
+  which she holds, so it shows. It lists every user of the customer with an Apps column; hers reads
+  "RetailErp, Payroll". Editing a user offers only Payroll's roles.
+- **The Tax Master from a Payroll token**: its menu row is RetailErp only, so it never shows; a typed
+  request is refused by `[RequireApp(RetailErp)]` with 403. **The app check is what refuses it** —
+  `settings.view` is shared, so the permission alone would have let it through.
+- **Her profile**: `libs/shared/auth`, reached from the topbar's avatar menu rather than the rail, so
+  it has no menu row. `GET/PUT /api/me/profile` is `[Authorize]` and `[RequireApp(All)]` with no
+  module permission, resolves the user from the token's `sub`, never from the URL, and is a named
+  exemption in `EndpointGuardAudit` beside the menu and formats endpoints.
+
+## Page validation in the shell
+
+**Every page under the shell is validated by the shell, not by the app that mounts it**, and a page
+that declares nothing is refused (owner's decisions, 23 September 2026).
+
+What is on `main` today, and why it is not enough:
+
+- `permissionGuard` in `libs/shared/auth/src/lib/license.guard.ts` reads `data.permission` off a route
+  and sends the user to `/dashboard` when the token lacks it.
+- `apps/web/src/app/app.routes.ts` attaches it **by hand** (`canActivateChild: [licenseActiveGuard,
+  permissionGuard]`). A new app that forgets the line has no page validation at all.
+- **A route that declares no permission is allowed.** A page nobody remembered to tag is open to
+  every signed-in user, and nothing notices.
+- It checks the permission only, not the app, and reads it from the decoded JWT, which the new apps
+  may not do.
+
+**The design:**
+
+1. **The shell owns the route.** `libs/app-shell` exports `shellRoutes({ app, children })`, which
+   returns the shell route with its guards already attached as `canActivate` and `canActivateChild`.
+   An app passes its `APP_ID` and its page routes; it never lists a guard itself.
+2. **Every page declares its access** in `data.access`, one of:
+   - `{ permission: 'payroll.view' }` — the user must hold it in the current app;
+   - `{ signedIn: true }` — any signed-in user of the app: the dashboard, the profile page;
+   - optionally `apps: [...]` on a shared page's route, when a shared lib exports routes that only
+     some apps may mount (contacts: RetailErp and School).
+3. **The shell's page guard checks, in order**, and stops at the first failure:
+
+   | # | Check | Source | On failure |
+   |---|---|---|---|
+   | 1 | Signed in | `AuthService` | `/login` |
+   | 2 | The current app's licence is active | Current context | `/expired` |
+   | 3 | The page's `apps`, when given, include the current app | `APP_ID` | No-access page |
+   | 4 | The page declares `access` at all | the route | No-access page — **deny by default** |
+   | 5 | The user holds `access.permission` in the current app | Current context | No-access page |
+
+4. **The source is the current-context endpoint**, not the decoded token. A `SessionContextService` in
+   `libs/shared/auth` fetches it once under the shell, holds it in a signal, and refetches on a branch
+   or app switch. `permissionGuard` and `licenseActiveGuard` are rewritten over it and `token-claims.ts`
+   is retired with them.
+5. **A refused page shows why**, on a shared no-access page inside the shell ("You don't have access
+   to this page in Payroll — ask your administrator for *Payroll: view*"), rather than bouncing to the
+   dashboard silently as today. It never names a role, because roles are customer-defined and the
+   permission is what is actually missing.
+6. **Actions inside a page use the same answer.** A shared `*bbIfCan="'payroll.post'"` structural
+   directive in `libs/shared/auth` hides a button the user cannot use, reading the same
+   `SessionContextService`, so a page and its buttons can never disagree about one permission.
+7. **The menu and the guard agree by construction.** The menu comes from `GET /api/menu?app=`,
+   filtered by the same app and permissions; the guard exists for what the menu cannot stop — a typed
+   URL, a bookmark, a link from another app.
+8. **An audit fails the build** when any route under the shell declares no `access`. `libs/app-shell`
+   exports `auditShellRoutes(routes)`, and each app's route spec calls it — the frontend twin of the
+   backend's `EndpointGuardAudit`, for the same reason: a missing tag is invisible in a file nobody
+   is reading.
+9. **All of this is the user-interface half.** The server's `[RequireApp]` and
+   `[RequireModulePermission]` decide everything; the shell only stops a user walking into a page
+   that will answer 403 on its first request.
+
+**Moving `apps/web` onto it** is part of H0.3: its routes already carry `data.permission`, which
+becomes `data.access`; the dashboard becomes `{ signedIn: true }`; the hand-attached guards go.
+
 ## Signup, buying another app, and seeding
 
 - **Each app has its own public signup page**, on one `SignupService`.
@@ -1294,8 +1397,14 @@ H0 fixes all three:
   the Applications page, and every page in the shared master pages table flagged, guarded and
   mounted per its row — including moving the numbering series page to `libs/master/master-ui`.
 
+  It also builds **page validation in the shell** (above): `shellRoutes`, `data.access` on every page,
+  the five-step page guard over the current-context endpoint, the no-access page, `*bbIfCan`, and
+  `auditShellRoutes`, with `apps/web` moved onto it.
+
   *Done when*: a user created from `apps/payroll` appears in `apps/web`'s users page with both apps
-  in its Apps column, and no app's source tree contains a copy of a shared page.
+  in its Apps column; no app's source tree contains a copy of a shared page; a typed URL to a page the
+  user lacks the permission for shows the no-access page; and removing `data.access` from any shell
+  route fails that app's route spec.
 - [ ] **H0.4 — Signup and seeding per app**, and starting another app's trial.
 
   *Done when*: signing up for Payroll then starting HRMS gives one customer, one branch, two
