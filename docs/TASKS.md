@@ -21,7 +21,7 @@ Each card's first line is its status. Sub-task boxes use the same markers.
 | `- [ ] open` | Nobody has it |
 | `- [~] working (AI name) — since YYYY-MM-DD` | Claimed and in progress. Only one agent holds a card |
 | `- [x] completed (AI name) — YYYY-MM-DD` | Done and checked against its **Done when** line. Compiling is not enough |
-| `- [!] blocked — D-xx` / `- [!] escalated (AI name) — reason` | Can't start yet. Waiting on an owner decision (section 3), or a Junior agent handed it to a Senior |
+| `- [!] blocked — D-xx` or `- [!] blocked — reason` | Can't start yet. Waiting on an owner decision (section 3), or on a problem written in the card's Notes |
 
 - **AI name** is the model that did the work, as `get_session` reports it (e.g. `Claude Opus 5.5`,
   `Claude Sonnet 5`). A human uses their own name.
@@ -32,39 +32,7 @@ Each card's first line is its status. Sub-task boxes use the same markers.
 - **Card IDs never change.** To change priority, move the card and keep its `TK-nn`. A new card
   takes the next unused number, even if it goes in the middle of the queue.
 
-### 0.2 Senior and Junior tasks
-
-Every card has a **Level**. The level describes the task, not the agent.
-
-**Senior**: the task does at least one of these:
-- changes a schema's shape: new tables or relationships, a migration squash, `HasData` drift;
-- touches security: RLS, auth, tokens, permissions, endpoint guards, tenant resolution;
-- moves money, stock or cost: ledger postings, reservations, costing, fulfilment quantities;
-- adds or changes a contract between services: internal APIs, events, seeding calls;
-- needs a design choice, or could fail without any visible error.
-
-**Junior**: the task follows a pattern that already exists and that the card names:
-- tests that assert behaviour the code already has;
-- seed data in a shape that already exists;
-- a page over an endpoint that already exists;
-- correcting a count or doc, or config wiring;
-- repeating a Senior card's template in another service.
-
-**Who takes what**
-1. **Senior cards** go to the most capable model available (e.g. an Opus-class model) or a senior
-   human.
-2. **Junior cards** can go to any agent. A Senior-capable agent takes a Junior card only when no
-   Senior card is claimable, so senior capacity stays on senior work.
-3. **Escalate instead of guessing.** A Junior agent may find that a card needs Senior-type work:
-   a schema change, a guard, a posting, or a choice between designs. If so, it stops, sets
-   `- [!] escalated (AI name) — <what it found>`, writes its findings under the card's Notes,
-   and pushes only work that keeps CI green. **It never pushes a failing or skipped test to hold
-   the finding.** The card's Level changes to Senior, and a Senior agent picks it up.
-4. **Only a Senior agent or the owner can lower a Level**, and only with a written reason.
-5. **Junior repeats of a Senior template get reviewed.** A Senior card that sets a template names
-   a review card, and that card cannot start until every repeat is `[x]` (e.g. TK-09 for RLS).
-
-### 0.3 Working in parallel
+### 0.2 Working in parallel
 
 Two agents can't edit the same files at once. **Lanes** make sure they don't (section 1). Each
 lane owns a set of paths, and each card lists every lane it writes to.
@@ -105,7 +73,7 @@ normal for agent 1 to be on TK-01 while agent 2 is on TK-05.
   may take it over. It writes `taken over from <AI name>` in Notes, and continues from
   whatever that agent pushed.
 
-### 0.4 Git
+### 0.3 Git
 
 All work goes to `main`, per `CLAUDE.md` hard rules 11 and 12. **Claims only mean something on
 `main`.** A claim on any other branch is invisible to the other agents, and two of them will take
@@ -117,17 +85,17 @@ If a harness starts your session on another branch:
 
 If you can't push to `main`, say so to the user and take only the cards they assign you by name.
 
-### 0.5 Card format
+### 0.4 Card format
 
 ```
 ### TK-nn · Title
 - [ ] open
-- **Level:** Senior | Junior · **Lanes:** L-… · **Depends on:** TK-… | — · **Decision:** D-… | —
+- **Lanes:** L-… · **Depends on:** TK-… | — · **Decision:** D-… | —
 - **Touches:** paths
 - **Sub-tasks:**
   - [ ] …
 - **Done when:** the test that proves it
-- **Notes:** handovers, findings, escalations
+- **Notes:** handovers and findings
 ```
 
 Cards that build a feature (the HRMS, Payroll and School stages) also carry the **standard
@@ -164,7 +132,7 @@ delivery** sub-tasks in section 5.
 | `Directory.Packages.props`, `Bill-Book.sln`, `Directory.Build.*`, `package.json`, `package-lock.json`, `nx.json`, `tsconfig.base.json`, `.github/workflows/*` | Take lane **`L-DEPS`** as well for the commit that changes them. Hold it for that one commit only. `Npgsql` and `Npgsql.EntityFrameworkCore.PostgreSQL` move together |
 | `release-notes.md`, `frontend/apps/docs/docs.manifest.ts` | Add lines only. On a rebase conflict, keep both sides |
 | `frontend/apps/docs/content/**` | Edit only your module's page. A shared page takes `L-DOC` |
-| `docs/TASKS.md` | Edit only your own card (section 0.3) |
+| `docs/TASKS.md` | Edit only your own card (section 0.2) |
 
 ---
 
@@ -174,7 +142,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-01 · Master fails to start on a fresh database
 - [ ] open
-- **Level:** Senior · **Lanes:** L-MST · **Depends on:** — · **Decision:** —
+- **Lanes:** L-MST · **Depends on:** — · **Decision:** —
 - **Touches:** `backend/Api/Master/Master.Repository/Migrations` (admin), the `mst.Menus` / `mst.MenuPermissions` `HasData`
 - **The problem:** `AdminDbContext` has drifted from its migrations, so `MigrateAsync` throws
   `PendingModelChangesWarning`. No host starts on an empty database. Adding one more migration
@@ -192,7 +160,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-02 · RLS template: restore it in `acc`
 - [ ] open
-- **Level:** Senior · **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
+- **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Touches:** a new `acc` migration, `Accounting.Api.Tests`
 - **The problem:** `ENABLE`, `FORCE` and `CREATE POLICY` appear in no migration except `prt`'s.
   The squash on 14 September dropped them. Right now the EF query filter is the only guard.
@@ -210,36 +178,36 @@ delivery** sub-tasks in section 5.
 
 ### TK-03 · RLS for `con`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-CON · **Depends on:** TK-01, TK-02 · **Decision:** —
+- **Lanes:** L-CON · **Depends on:** TK-01, TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template · [ ] suite green from dropped `CONTACTS_TEST_DB`
-- **Done when:** `con`'s RLS assertions pass against a dropped database. **Escalate** if any `con`
-  table has no `CustomerId` or `OrgId`.
+- **Done when:** `con`'s RLS assertions pass against a dropped database. If any `con` table has
+  no `CustomerId` or `OrgId`, stop and write it in Notes before going on.
 - **Notes:**
 
 ### TK-04 · RLS for `cus`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-CUS · **Depends on:** TK-02 · **Decision:** —
+- **Lanes:** L-CUS · **Depends on:** TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template · [ ] suite green from a dropped database
 - **Done when:** as TK-03, for `cus`.
 - **Notes:**
 
 ### TK-05 · RLS for `inv`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-INV · **Depends on:** TK-02 · **Decision:** —
+- **Lanes:** L-INV · **Depends on:** TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template · [ ] suite green from dropped `INVENTORY_TEST_DB`
 - **Done when:** as TK-03, for `inv`.
 - **Notes:**
 
 ### TK-06 · RLS for `pur`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-PUR · **Depends on:** TK-02 · **Decision:** —
+- **Lanes:** L-PUR · **Depends on:** TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template · [ ] suite green from dropped `PURCHASE_TEST_DB`
 - **Done when:** as TK-03, for `pur`.
 - **Notes:**
 
 ### TK-07 · RLS for `sal`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-SAL · **Depends on:** TK-02 · **Decision:** —
+- **Lanes:** L-SAL · **Depends on:** TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template, including `sal.SalesRegister`, which has been
   missed before · [ ] suite green from dropped `SALES_TEST_DB`
 - **Done when:** as TK-03, for `sal`.
@@ -247,16 +215,16 @@ delivery** sub-tasks in section 5.
 
 ### TK-08 · RLS for `rpt`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-RPT · **Depends on:** TK-02 · **Decision:** —
+- **Lanes:** L-RPT · **Depends on:** TK-02 · **Decision:** —
 - **Sub-tasks:** [ ] migration per TK-02's template, leaving out `rpt.ReportMasters` and
   `rpt.ReportColumns` (they have no tenant column, and the exemption is documented) · [ ] suite
   green from dropped `REPORTING_TEST_DB`
 - **Done when:** as TK-03, for `rpt`.
 - **Notes:**
 
-### TK-09 · Senior review of the RLS work
+### TK-09 · Review of the RLS work
 - [ ] open
-- **Level:** Senior · **Lanes:** L-DOC · **Depends on:** TK-02 … TK-08 · **Decision:** —
+- **Lanes:** L-DOC · **Depends on:** TK-02 … TK-08 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Read every RLS migration from TK-03 to TK-08 against TK-02's template.
   - [ ] Drop all seven test databases and run the whole backend suite: 0 RLS failures.
@@ -268,7 +236,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-10 · `ReportLayerCertificationTests`: 4 failures, already red on `main`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
+- **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
 - **Sub-tasks:**
   - [ ] Compare the test's expected count and list with `docs/Modules.md` §8.2. That section records
         41 of the 46 reports implemented and 7 beyond them.
@@ -279,7 +247,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-11 · Correct the stale facts in `CLAUDE.md`
 - [ ] open
-- **Level:** Junior · **Lanes:** L-DOC · **Depends on:** — · **Decision:** —
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** —
 - **Sub-tasks:**
   - [ ] Reporting: "twelve of the 46 not built" should be five (4 fixed-asset reports and
         *Business Performance*). The 7 settlement reports are built (Modules.md §8.2).
@@ -295,7 +263,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-12 · Sales delivery challan: prove it saves
 - [ ] open
-- **Level:** Junior · **Lanes:** L-SAL · **Depends on:** — · **Decision:** —
+- **Lanes:** L-SAL · **Depends on:** — · **Decision:** —
 - **Sub-tasks:**
   - [ ] Write a create → save → reload test through the service, the way `SalesSchemaTests` does.
   - [ ] If the test finds a shadow-FK column (`…Id1`), bind the navigation in
@@ -306,15 +274,15 @@ delivery** sub-tasks in section 5.
 
 ### TK-13 · Sales credit note: prove it saves
 - [ ] open
-- **Level:** Junior · **Lanes:** L-SAL · **Depends on:** — · **Decision:** —
-- **Sub-tasks:** same three as TK-12, for credit notes. **Escalate** if the credit note's posting
-  or stock return turns out to be wrong. That's Senior work.
+- **Lanes:** L-SAL · **Depends on:** — · **Decision:** —
+- **Sub-tasks:** same three as TK-12, for credit notes. If the credit note's posting
+  or stock return turns out to be wrong, write it in Notes and raise a new card rather than widening this one.
 - **Done when:** a credit note round-trips through the service against a real PostgreSQL.
 - **Notes:**
 
 ### TK-14 · Partial fulfilment (T3.6)
 - [ ] open
-- **Level:** Senior · **Lanes:** L-SAL (plus L-INV if the reservation API changes) · **Depends on:** TK-12 · **Decision:** —
+- **Lanes:** L-SAL (plus L-INV if the reservation API changes) · **Depends on:** TK-12 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Advance `DeliveredQuantity` when a challan posts.
   - [ ] Advance `InvoicedQuantity` when an invoice posts.
@@ -328,7 +296,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-15 · Item lookup endpoint
 - [ ] open
-- **Level:** Junior · **Lanes:** L-INV · **Depends on:** — · **Decision:** —
+- **Lanes:** L-INV · **Depends on:** — · **Decision:** —
 - **Sub-tasks:** [ ] search by name, SKU or barcode, paged and scoped to the branch · [ ] guard
   attribute, so the `EndpointGuardAudit` test passes · [ ] tests
 - **Done when:** a search returns only the caller's branch's items.
@@ -336,7 +304,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-16 · Contact lookup endpoint
 - [ ] open
-- **Level:** Junior · **Lanes:** L-CON · **Depends on:** TK-01 · **Decision:** —
+- **Lanes:** L-CON · **Depends on:** TK-01 · **Decision:** —
 - **Sub-tasks:** [ ] search by name, code, GSTIN or phone, filtered by role (customer or vendor) ·
   [ ] guard · [ ] tests
 - **Done when:** as TK-15, for contacts.
@@ -344,7 +312,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-17 · Picker component, used on the sales forms
 - [ ] open
-- **Level:** Junior · **Lanes:** L-UI, L-SAL-UI · **Depends on:** TK-15, TK-16 · **Decision:** —
+- **Lanes:** L-UI, L-SAL-UI · **Depends on:** TK-15, TK-16 · **Decision:** —
 - **Sub-tasks:** [ ] a shared typeahead picker in `libs/shared/ui-components` that works at 360px ·
   [ ] replace the numeric id fields on the quote, order, invoice, challan and credit-note forms ·
   [ ] docs page and release-notes bullet
@@ -353,14 +321,14 @@ delivery** sub-tasks in section 5.
 
 ### TK-18 · Picker on the purchase forms
 - [ ] open
-- **Level:** Junior · **Lanes:** L-PUR-UI · **Depends on:** TK-17 · **Decision:** —
+- **Lanes:** L-PUR-UI · **Depends on:** TK-17 · **Decision:** —
 - **Sub-tasks:** [ ] replace the numeric id fields on the PO, GRN, bill and debit-note forms · [ ] docs
 - **Done when:** every purchase form picks its item and vendor by name.
 - **Notes:**
 
 ### TK-19 · Customer module seed data (stage C4)
 - [ ] open
-- **Level:** Junior · **Lanes:** L-CUS · **Depends on:** — · **Decision:** —
+- **Lanes:** L-CUS · **Depends on:** — · **Decision:** —
 - **Sub-tasks:** [ ] list the reference data Leads and Tickets need (sources, priorities, statuses)
   and check it against the enums already in the code · [ ] seed it idempotently when a branch is
   created · [ ] test that seeding twice adds nothing
@@ -370,7 +338,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-20 · Notification.Worker takes over email from Master
 - [ ] open
-- **Level:** Senior · **Lanes:** L-NTF, L-MST · **Depends on:** TK-01 · **Decision:** —
+- **Lanes:** L-NTF, L-MST · **Depends on:** TK-01 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Design the consumer on `IEventPublisher`. Delivery is at least once, so dedupe on `MessageId`.
   - [ ] Move sending from Master's `SmtpEmailSender` and in-process `EmailQueue` to the worker.
@@ -381,7 +349,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-21 · `apps/desktop`: a real cart
 - [ ] open
-- **Level:** Junior · **Lanes:** L-DSK · **Depends on:** TK-17 · **Decision:** —
+- **Lanes:** L-DSK · **Depends on:** TK-17 · **Decision:** —
 - **Sub-tasks:** [ ] cart state with signals · [ ] replace the hardcoded walk-in customer with the
   picker · [ ] `nx build desktop` green
 - **Done when:** the terminal sketch builds a cart of real items for a real customer. Posting it
@@ -392,7 +360,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-22 · Printing: how an internal call carries its branch
 - [ ] open
-- **Level:** Senior · **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-13
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-13
 - **Sub-tasks:** [ ] write up the options in `docs/Modules.md` stage P: a service token that
   carries `OrgId`, or `[InternalOnly]` plus an explicit org, with RLS `set_config` in each case ·
   [ ] recommend one and put it to the owner as D-13
@@ -401,7 +369,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-23 · Printing.Api controllers
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PRT · **Depends on:** TK-22 · **Decision:** D-13
+- **Lanes:** L-PRT · **Depends on:** TK-22 · **Decision:** D-13
 - **Sub-tasks:** [ ] template CRUD and render endpoints, with guards · [ ] internal render endpoint
   using D-13's mechanism · [ ] tests from a dropped database
 - **Done when:** Printing answers requests instead of returning 401 to everything.
@@ -409,7 +377,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-24 · Switch serving from `con.PrintTemplates` to `prt.PrintTemplates`
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PRT, L-CON · **Depends on:** TK-23 · **Decision:** —
+- **Lanes:** L-PRT, L-CON · **Depends on:** TK-23 · **Decision:** —
 - **Sub-tasks:** [ ] copy the data · [ ] switch callers · [ ] drop `con.PrintTemplates` ·
   [ ] change the service count in `CLAUDE.md` from 7 to 8
 - **Done when:** a sales invoice prints through Printing, and `con.PrintTemplates` no longer exists.
@@ -417,7 +385,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-25 · Print-template editor screen
 - [ ] open
-- **Level:** Junior · **Lanes:** L-MASTER-UI · **Depends on:** TK-23 · **Decision:** —
+- **Lanes:** L-MASTER-UI · **Depends on:** TK-23 · **Decision:** —
 - **Sub-tasks:** [ ] list and edit the five bands and their merge fields · [ ] preview through the
   render endpoint · [ ] works at 360px · [ ] docs
 - **Done when:** a user changes a template and sees the change in the preview.
@@ -425,7 +393,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-26 · Document PDF/A archive (T3.4)
 - [!] blocked — D-11
-- **Level:** Senior · **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
+- **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
 - **Sub-tasks:** [ ] PDF/A from the existing print layout · [ ] archive through `IFileStorage` and
   `StorageKey` (the invoice archive is already `FileWriteMode.Replace`) · [ ] link by
   `SourceType` + `SourceId`
@@ -434,7 +402,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-27 · Date input that follows the branch's format
 - [ ] open
-- **Level:** Senior · **Lanes:** L-UI · **Depends on:** — · **Decision:** —
+- **Lanes:** L-UI · **Depends on:** — · **Decision:** —
 - **Sub-tasks:** [ ] design a replacement for the native `<input type="date">` in `bb-date-input`
   that shows `FormatSettingsService.formatDate` and stores ISO · [ ] propose it to the owner
   before swapping it in, since it changes every date field · [ ] check it with Playwright
@@ -443,21 +411,21 @@ delivery** sub-tasks in section 5.
 
 ### TK-28 · RateSync.Worker: metals (IBJA)
 - [!] blocked — D-14
-- **Level:** Senior · **Lanes:** L-RATE · **Depends on:** — · **Decision:** D-14
+- **Lanes:** L-RATE · **Depends on:** — · **Decision:** D-14
 - **Sub-tasks:** [ ] client for IBJA's paid API · [ ] store dated history · [ ] schedule and retry
 - **Done when:** the day's metal rates appear in `rat` with their date.
 - **Notes:**
 
 ### TK-29 · RateSync.Worker: currency (RBI)
 - [!] blocked — D-03
-- **Level:** Senior · **Lanes:** L-RATE · **Depends on:** — · **Decision:** D-03
+- **Lanes:** L-RATE · **Depends on:** — · **Decision:** D-03
 - **Sub-tasks:** follow D-03's answer · [ ] store dated history
 - **Done when:** the day's exchange rates appear in `rat` with their date.
 - **Notes:**
 
 ### TK-30 · Fixed-asset register
 - [!] blocked — D-08, D-09
-- **Level:** Senior · **Lanes:** L-ACC · **Depends on:** — · **Decision:** D-08, D-09
+- **Lanes:** L-ACC · **Depends on:** — · **Decision:** D-08, D-09
 - **Sub-tasks:** [ ] register schema, with the GL mapping held on the category · [ ] capitalise
   from a bill · [ ] depreciation run (`DEP`) · [ ] disposal · [ ] migrate fixed assets through the
   opening balance
@@ -467,7 +435,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-31 · The four fixed-asset reports
 - [ ] open
-- **Level:** Junior · **Lanes:** L-RPT · **Depends on:** TK-30 · **Decision:** —
+- **Lanes:** L-RPT · **Depends on:** TK-30 · **Decision:** —
 - **Sub-tasks:** [ ] Depreciation Schedule · [ ] Disposal Schedule · [ ] Fixed Asset Reconciliation ·
   [ ] Fixed Assets Schedule. Wire each through the four layers that `ReportLayerCertificationTests`
   checks.
@@ -476,7 +444,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-32 · *Business Performance* report
 - [!] blocked — D-15
-- **Level:** Junior · **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15
+- **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15
 - **Sub-tasks:** build whatever D-15 specifies
 - **Done when:** the certification suite counts it.
 - **Notes:**
@@ -485,7 +453,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-33 · POS till API (T7.1)
 - [ ] open
-- **Level:** Senior · **Lanes:** L-SAL · **Depends on:** TK-14 · **Decision:** —
+- **Lanes:** L-SAL · **Depends on:** TK-14 · **Decision:** —
 - **Sub-tasks:** [ ] a POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'`, using
   T3.1's posting · [ ] the stock decrement happens synchronously in the request · [ ] tests
 - **Done when:** two concurrent sales of the last unit leave exactly one sale succeeding.
@@ -493,7 +461,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-34 · POS till screen (T7.2)
 - [ ] open
-- **Level:** Senior · **Lanes:** L-DSK · **Depends on:** TK-21, TK-33 · **Decision:** —
+- **Lanes:** L-DSK · **Depends on:** TK-21, TK-33 · **Decision:** —
 - **Sub-tasks:** [ ] keyboard- and barcode-driven · [ ] decide how it behaves offline and record it ·
   [ ] posts through TK-33
 - **Done when:** a barcode-scanned sale posts from `apps/desktop`.
@@ -501,7 +469,7 @@ delivery** sub-tasks in section 5.
 
 ### TK-35 · POS receipt, ESC/POS (T7.3)
 - [ ] open
-- **Level:** Junior · **Lanes:** L-DSK · **Depends on:** TK-34 · **Decision:** —
+- **Lanes:** L-DSK · **Depends on:** TK-34 · **Decision:** —
 - **Sub-tasks:** [ ] build on `esc-pos.service.ts` · [ ] fixed-width layout · [ ] print from the
   till after a sale
 - **Done when:** a completed sale prints a receipt on an ESC/POS printer, or on an emulator.
@@ -514,7 +482,7 @@ is built. HRMS, Payroll and School can't start until TK-36 to TK-41 are done.
 
 ### TK-36 · H0.1: `App` in `mst`
 - [ ] open
-- **Level:** Senior · **Lanes:** L-MST · **Depends on:** TK-01 · **Decision:** —
+- **Lanes:** L-MST · **Depends on:** TK-01 · **Decision:** —
 - **Sub-tasks:** [ ] `[Flags] App` enum · [ ] `App` on roles, licences and refresh tokens; `Apps`
   on permissions and menus · [ ] the grant rule, checked in C# and asserted over every seed ·
   [ ] turn `PlanTier` and `PlanType` into enums
@@ -524,7 +492,7 @@ is built. HRMS, Payroll and School can't start until TK-36 to TK-41 are done.
 
 ### TK-37 · H0.2: per-app sign-in and licences
 - [ ] open
-- **Level:** Senior · **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-36 · **Decision:** —
+- **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-36 · **Decision:** —
 - **Sub-tasks:** [ ] `App` on `SelectOrganizationRequest` · [ ] an `app` claim, with licence and
   permission claims taken from that app · [ ] `[RequireApp]`, plus an `EndpointGuardAudit`
   question that asks for it
@@ -534,7 +502,7 @@ is built. HRMS, Payroll and School can't start until TK-36 to TK-41 are done.
 
 ### TK-38 · H0.3: shell and shared master pages
 - [ ] open
-- **Level:** Senior · **Lanes:** L-UI, L-MASTER-UI, L-WEB · **Depends on:** TK-37 · **Decision:** —
+- **Lanes:** L-UI, L-MASTER-UI, L-WEB · **Depends on:** TK-37 · **Decision:** —
 - **Sub-tasks:** [ ] `APP_ID`, `GET /api/menu?app=` · [ ] app switcher · [ ] `data.access`
   required on every route in `shellRoutes`, with an audit spec
 - **Done when:** as H0.3 in `docs/Modules.md`.
@@ -542,19 +510,19 @@ is built. HRMS, Payroll and School can't start until TK-36 to TK-41 are done.
 
 ### TK-39 · H0.4: signup and seeding per app
 - [ ] open
-- **Level:** Senior · **Lanes:** L-MST · **Depends on:** TK-37 · **Decision:** D-12
+- **Lanes:** L-MST · **Depends on:** TK-37 · **Decision:** D-12
 - **Done when:** signing up for Payroll and then starting HRMS gives one customer, one branch, two
   licences and one set of employees.
 - **Notes:**
 
 ### TK-40 · H0.5: sharding in the multi-app model
 - [ ] open
-- **Level:** Senior · **Lanes:** L-MST · **Depends on:** TK-36 · **Decision:** —
+- **Lanes:** L-MST · **Depends on:** TK-36 · **Decision:** —
 - **Notes:** Shares `L-MST` with TK-39, so these two run one after the other.
 
 ### TK-41 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
 - [ ] open
-- **Level:** Junior · **Lanes:** L-DEPS (new apps), plus new lanes `L-HRMS-APP` and `L-PAY-APP` · **Depends on:** TK-38 · **Decision:** —
+- **Lanes:** L-DEPS (new apps), plus new lanes `L-HRMS-APP` and `L-PAY-APP` · **Depends on:** TK-38 · **Decision:** —
 - **Done when:** both apps sign in, select a branch and draw the shared shell.
 - **Notes:**
 
@@ -566,72 +534,72 @@ and 49. **The first sellable HRMS** needs TK-42 to 44, 48 and 49.
 
 ### TK-42 · H1: Core HR (the shared employee master)
 - [ ] open
-- **Level:** Senior · **Lanes:** L-HRM (new) · **Depends on:** TK-41
+- **Lanes:** L-HRM (new) · **Depends on:** TK-41
 - **Done when:** an employee is created with family, nominees and bank details, linked to a user
   and listed; RLS and the guard audit pass from a dropped database.
 
 ### TK-43 · H2: Leave
 - [ ] open
-- **Level:** Senior · **Lanes:** L-HRM · **Depends on:** TK-42
+- **Lanes:** L-HRM · **Depends on:** TK-42
 - **Done when:** two simultaneous approvals can't overspend a balance; the sandwich rule is
   applied correctly; and changing a workflow leaves requests already in flight on their old chain.
 
 ### TK-44 · H3: Time and attendance
 - [ ] open
-- **Level:** Senior · **Lanes:** L-TLA (new) · **Depends on:** TK-42
+- **Lanes:** L-TLA (new) · **Depends on:** TK-42
 - **Done when:** a biometric import derives a late-marked half day, and a regularisation approval
   corrects it.
 
 ### TK-45 · H4: Payroll core
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PAY (new) · **Depends on:** TK-42
+- **Lanes:** L-PAY (new) · **Depends on:** TK-42
 - **Done when:** a run posts one balanced JE; Salary Payable ties to the unpaid net; a back-dated
   revision pays arrears in the next run; a reversal restores both; and the run reads monthly input
   without an HRMS licence and `tla` with one.
 
 ### TK-46 · H5: Statutory
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PAY · **Depends on:** TK-45
+- **Lanes:** L-PAY · **Depends on:** TK-45
 - **Done when:** a month's ECR file matches the posted payslips to the rupee.
 
 ### TK-47 · H6: Income tax
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PAY · **Depends on:** TK-45
+- **Lanes:** L-PAY · **Depends on:** TK-45
 - **Done when:** a mid-year joiner with income from a previous employer is taxed the same by a
   monthly run and by the year-end recomputation.
 
 ### TK-48 · H7: Lifecycle and exit
 - [ ] open
-- **Level:** Senior · **Lanes:** L-HRM, L-PAY · **Depends on:** TK-42, TK-45
+- **Lanes:** L-HRM, L-PAY · **Depends on:** TK-42, TK-45
 - **Done when:** settling an exit pays through a `FullAndFinal` run, and the employee's login stops
   working.
 
 ### TK-49 · H8: Self-service and approvals
 - [ ] open
-- **Level:** Junior · **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-43, TK-45
+- **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-43, TK-45
 - **Done when:** an employee applies for leave and a manager approves it, both from their own
   screens; the employee downloads a payslip.
 
 ### TK-50 · H9: Expense claims
 - [ ] open
-- **Level:** Junior · **Lanes:** L-CLM (new) · **Depends on:** TK-42
+- **Lanes:** L-CLM (new) · **Depends on:** TK-42
 - **Done when:** a claim is submitted, approved and paid, and the payment posts a balanced JE.
-  **Escalate** the posting half if it isn't already covered by an existing posting pattern.
+  If the posting isn't already covered by an existing posting pattern, raise it as a card of its own.
 
 ### TK-51 · H10: Recruitment and onboarding
 - [ ] open
-- **Level:** Senior · **Lanes:** L-REC (new) · **Depends on:** TK-42
+- **Lanes:** L-REC (new) · **Depends on:** TK-42
 - **Done when:** accepting an offer twice creates one employee.
 
 ### TK-52 · H11: Performance
 - [ ] open
-- **Level:** Senior · **Lanes:** L-PRF (new) · **Depends on:** TK-42
+- **Lanes:** L-PRF (new) · **Depends on:** TK-42
 - **Done when:** as H11 in `docs/Modules.md`: routing by level, send-back, self-evaluation left
   unchanged, and a manager who is also the lead asked only once.
 
 ### TK-53 · H12: HRMS and Payroll reports
 - [ ] open
-- **Level:** Junior · **Lanes:** L-RPT · **Depends on:** TK-45
+- **Lanes:** L-RPT · **Depends on:** TK-45
 - **Done when:** each report is flagged with its app, and the certification suite counts them.
 
 ### G · School (S0–S9)
@@ -639,72 +607,72 @@ and 49. **The first sellable HRMS** needs TK-42 to 44, 48 and 49.
 Needs TK-36 to TK-41 and TK-42. Each card also carries the standard delivery sub-tasks in section 5.
 
 ### TK-54 · S0: School prerequisites
-- [ ] open · **Level:** Junior · **Lanes:** L-DEPS, L-SCH-APP (new) · **Depends on:** TK-41, TK-42
+- [ ] open · **Lanes:** L-DEPS, L-SCH-APP (new) · **Depends on:** TK-41, TK-42
 - **Done when:** `apps/school` shows only School menus, and a guardian contact can be created and filtered.
 
 ### TK-55 · S1: Sis
-- [ ] open · **Level:** Senior · **Lanes:** L-SIS (new) · **Depends on:** TK-54
+- [ ] open · **Lanes:** L-SIS (new) · **Depends on:** TK-54
 - **Done when:** a student is admitted directly, enrolled in a section and listed; RLS and the
   guard audit pass from a dropped database.
 
 ### TK-56 · S2: Admission
-- [ ] open · **Level:** Junior · **Lanes:** L-ADMN (new) · **Depends on:** TK-55
+- [ ] open · **Lanes:** L-ADMN (new) · **Depends on:** TK-55
 - **Done when:** admitting twice creates one student.
 
 ### TK-57 · S3: Attendance
-- [ ] open · **Level:** Junior · **Lanes:** L-ATT (new) · **Depends on:** TK-55
+- [ ] open · **Lanes:** L-ATT (new) · **Depends on:** TK-55
 - **Done when:** a locked day refuses an edit from a teacher and accepts one from `attendance.unlock`.
 
 ### TK-58 · S4: Fee
-- [ ] open · **Level:** Senior · **Lanes:** L-FEE (new) · **Depends on:** TK-55
+- [ ] open · **Lanes:** L-FEE (new) · **Depends on:** TK-55
 - **Done when:** a demand and its receipt post balanced JEs, and the guardian's AR sub-account ties
   to the open demands.
 
 ### TK-59 · S5: Facility
-- [ ] open · **Level:** Junior · **Lanes:** L-FAC (new) · **Depends on:** TK-54
+- [ ] open · **Lanes:** L-FAC (new) · **Depends on:** TK-54
 - **Done when:** buildings, spaces and assets can be created and listed.
 
 ### TK-60 · S6: WorkOrder
-- [ ] open · **Level:** Senior · **Lanes:** L-WRK (new) · **Depends on:** TK-59
+- [ ] open · **Lanes:** L-WRK (new) · **Depends on:** TK-59
 - **Done when:** editing an Assigned work order is refused, and issuing a part moves stock.
 
 ### TK-61 · S7: Preventive
-- [ ] open · **Level:** Junior · **Lanes:** L-PPM (new) · **Depends on:** TK-60
+- [ ] open · **Lanes:** L-PPM (new) · **Depends on:** TK-60
 - **Done when:** running generation twice raises one work order per occurrence.
 
 ### TK-62 · S8: AMC
-- [ ] open · **Level:** Junior · **Lanes:** L-AMC (new) · **Depends on:** TK-59
+- [ ] open · **Lanes:** L-AMC (new) · **Depends on:** TK-59
 - **Done when:** contracts, covered assets and visits are recorded, and renewal reminders fire.
 
 ### TK-63 · S9: Parent portal
-- [ ] open · **Level:** Junior · **Lanes:** L-PTL · **Depends on:** TK-57, TK-58
+- [ ] open · **Lanes:** L-PTL · **Depends on:** TK-57, TK-58
 - **Done when:** a guardian sees their child's demands, receipts, attendance and published marks.
 
 ### H · Phase 3: not designed yet
 
-The owner has to approve each of these before the design is written. Each is a Senior design card
+The owner has to approve each of these before the design is written. Each is a design card
 that ends in a design section under `docs/` and a new batch of cards in this queue.
 
 ### TK-64 · Design: `apps/portal`, the next screens
-- [!] blocked — D-16 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-16 · **Lanes:** L-DOC
 
 ### TK-65 · Design: project accounting
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ### TK-66 · Design: budgeting
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ### TK-67 · Design: workflow approvals
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ### TK-68 · Design: custom fields and custom reports
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ### TK-69 · Design: e-invoicing and e-way bill
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ### TK-70 · Design: compliance bundle
-- [!] blocked — D-17 · **Level:** Senior · **Lanes:** L-DOC
+- [!] blocked — D-17 · **Lanes:** L-DOC
 
 ---
 

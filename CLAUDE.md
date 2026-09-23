@@ -37,10 +37,6 @@ task:
 - **claim it with a claim commit on `main` before doing any work**;
 - mark it `working (AI name)`, and later `completed (AI name)`.
 
-Every card is **Senior** or **Junior**:
-- Senior cards go to the most capable model available.
-- A Junior agent that finds Senior-type work escalates the card rather than guessing.
-
 Lanes are what let several agents work at once without editing the same files.
 
 ---
