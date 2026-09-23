@@ -1059,7 +1059,7 @@ If the code has moved on since a card was written, correct the card in your clai
 ### C · Phase 2
 
 ### TK-23 · Printing.Api: move the template API and renderer into the service
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-23
 - **Lanes:** L-PRT, L-KERNEL · **Depends on:** — · **Decision:** —
 - **Where:**
   - `docs/Modules.md` "Printing" (from about line 974): the design, and the list of what moves.
