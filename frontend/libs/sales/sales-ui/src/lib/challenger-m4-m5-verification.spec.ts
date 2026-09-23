@@ -178,10 +178,11 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       save: vi.fn().mockReturnValue(of({ creditNoteId: 1 })),
     };
 
+    // Promises: DeliveryChallanService is awaited since TK-12.
     mockDeliveryChallanService = {
-      get: vi.fn().mockReturnValue(of({ deliveryChallanId: 1, lines: [] })),
-      create: vi.fn().mockReturnValue(of({ deliveryChallanId: 1 })),
-      update: vi.fn().mockReturnValue(of({ deliveryChallanId: 1 })),
+      get: vi.fn().mockResolvedValue({ deliveryChallanId: 1, status: 'Draft', lines: [] }),
+      create: vi.fn().mockResolvedValue({ deliveryChallanId: 1 }),
+      update: vi.fn().mockResolvedValue({ deliveryChallanId: 1 }),
     };
 
     mockLedgerService = {
@@ -527,7 +528,13 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       };
       order.onLinesChange([sampleLine]);
       creditNote.onLinesChange([sampleLine]);
-      deliveryChallan.onLinesChange([sampleLine]);
+
+      // Protected and signal-backed since TK-12, like the sales order.
+      const challan = deliveryChallan as unknown as {
+        onLinesChange(lines: readonly DocumentLine[]): void;
+        totals(): { subTotal: number; totalAmount: number };
+      };
+      challan.onLinesChange([sampleLine]);
 
       expect(quote.totals.subTotal).toBe(5000000);
       expect(quote.totals.totalAmount).toBe(4635000);
@@ -538,8 +545,8 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       expect(creditNote.totals.subTotal).toBe(5000000);
       expect(creditNote.totals.totalAmount).toBe(4635000);
 
-      expect(deliveryChallan.totals.subTotal).toBe(5000000);
-      expect(deliveryChallan.totals.totalAmount).toBe(4635000);
+      expect(challan.totals().subTotal).toBe(5000000);
+      expect(challan.totals().totalAmount).toBe(4635000);
     });
   });
 

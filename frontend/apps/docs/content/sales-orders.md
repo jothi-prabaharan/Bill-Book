@@ -73,4 +73,4 @@ At narrow widths — a phone held upright — the grid becomes one card per orde
 ## What it does not do yet
 
 - **The customer and the items are keyed by id**, not chosen from a lookup. The picker arrives with the item lookup endpoint
-- **Partial fulfilment** — delivering four of ten and leaving the order open — is designed and not yet built. The columns are on the line already
+- **Partial invoicing** — billing four of ten and leaving the rest open — is designed and not yet built. Partial *delivery* works: a [delivery challan](delivery-challans) can deliver part of an order, and the order stays *Partly delivered* until the rest goes out

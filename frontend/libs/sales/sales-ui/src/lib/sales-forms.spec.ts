@@ -20,7 +20,8 @@ import {
   SaveQuoteRequest,
   SaveSalesOrderRequest,
   SaveCreditNoteRequest,
-  SaveDeliveryChallanRequest
+  SaveDeliveryChallanRequest,
+  ChallanType
 } from '@bill-book/sales-core';
 import { AllocationRow, DocumentLine, UiMessage } from '@bill-book/ui-components';
 
@@ -38,6 +39,32 @@ interface SalesOrderFormHarness {
   totals(): { subTotal: number; totalAmount: number };
   onLinesChange(lines: readonly DocumentLine[]): void;
   save(): Promise<void>;
+}
+
+/**
+ * The delivery challan form, by the same declared shape — protected members,
+ * signals and awaited calls since TK-12.
+ */
+interface DeliveryChallanFormHarness {
+  ngOnInit(): void;
+  isEdit(): boolean;
+  challanId(): number | null;
+  status(): string;
+  form: FormGroup;
+  voidForm: FormGroup;
+  messages(): UiMessage[];
+  lines(): (DocumentLine & { salesOrderDetailId?: number | null })[];
+  totals(): { subTotal: number; totalAmount: number };
+  editable(): boolean;
+  canPost(): boolean;
+  canVoid(): boolean;
+  challanTypes: { value: number; label: string }[];
+  onLinesChange(lines: readonly DocumentLine[]): void;
+  load(): Promise<void>;
+  loadOrder(): Promise<void>;
+  save(): Promise<void>;
+  post(): Promise<void>;
+  voidChallan(): Promise<void>;
 }
 
 describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, DeliveryChallan)', () => {
@@ -77,6 +104,8 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
     get: ReturnType<typeof vi.fn>;
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
+    voidChallan: ReturnType<typeof vi.fn>;
   };
 
   const sampleLine: DocumentLine = {
@@ -216,20 +245,25 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       ]))
     };
 
+    // Promises, like the order: a refusal is caught and shown in its own words.
     mockDeliveryChallanService = {
-      get: vi.fn().mockReturnValue(of({
+      get: vi.fn().mockResolvedValue({
         deliveryChallanId: 61,
+        documentNo: 'DC/2026/0061',
         documentDate: '2026-08-18',
         contactId: 5,
+        status: 'Draft',
         challanType: 1,
         vehicleNo: 'KA-01-AB-1234',
         dispatchDate: '2026-08-18',
         currencyCode: 'INR',
         exchangeRate: 1,
         lines: []
-      })),
-      create: vi.fn().mockReturnValue(of({ deliveryChallanId: 61 })),
-      update: vi.fn().mockReturnValue(of({ deliveryChallanId: 61 }))
+      }),
+      create: vi.fn().mockResolvedValue({ deliveryChallanId: 61 }),
+      update: vi.fn().mockResolvedValue({ deliveryChallanId: 61 }),
+      post: vi.fn().mockResolvedValue({ deliveryChallanId: 61 }),
+      voidChallan: vi.fn().mockResolvedValue({ deliveryChallanId: 61 })
     };
 
     TestBed.configureTestingModule({
@@ -551,58 +585,244 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   // SECTION 4: DELIVERY CHALLAN FORM
   // =========================================================================
   describe('4. DeliveryChallanFormComponent (R4 Specification)', () => {
-    it('DLC-T1-01: Form initializes with challanType, vehicleNo, and dispatchDate controls', () => {
-      const comp = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
+    const newChallan = () =>
+      TestBed.runInInjectionContext(
+        () => new DeliveryChallanFormComponent(),
+      ) as unknown as DeliveryChallanFormHarness;
+
+    /** A confirmed order of 10, 4 already delivered, on order line 901. */
+    const confirmedOrder = {
+      salesOrderId: 31,
+      documentNo: 'SO/2026/0031',
+      status: 'Posted',
+      fulfilmentStatus: 'PartlyDelivered',
+      contactId: 5,
+      contactGstin: '33AAAAA0000A1Z5',
+      currencyCode: 'INR',
+      exchangeRate: 1,
+      billingAddress: 'Chennai',
+      shippingAddress: 'Madurai',
+      lines: [
+        {
+          salesOrderDetailId: 901,
+          lineNumber: 1,
+          itemId: 10,
+          itemLabel: 'Gold Bar 24K',
+          quantity: 10,
+          conversionFactor: 1,
+          deliveredQuantity: 4,
+          reservedQuantity: 6,
+          unitPrice: 750,
+          discountPercent: 0,
+          taxGroupId: 3,
+          lineType: 'Stock',
+          taxes: []
+        },
+        {
+          // Fully delivered already — nothing left for this challan to carry.
+          salesOrderDetailId: 902,
+          lineNumber: 2,
+          itemId: 11,
+          quantity: 2,
+          conversionFactor: 1,
+          deliveredQuantity: 2,
+          reservedQuantity: 0,
+          unitPrice: 100,
+          lineType: 'Stock',
+          taxes: []
+        }
+      ]
+    };
+
+    it('DLC-T1-01: Form initializes as a new sale challan dated today', () => {
+      const comp = newChallan();
       comp.ngOnInit();
 
-      expect(comp.isEdit).toBe(false);
-      expect(comp.challanId).toBeNull();
-      expect(comp.form.get('challanType')?.value).toBe(0);
+      expect(comp.isEdit()).toBe(false);
+      expect(comp.challanId()).toBeNull();
+      expect(comp.form.get('challanType')?.value).toBe(ChallanType.Sale);
       expect(comp.form.get('dispatchDate')?.value).toBeTruthy();
       expect(comp.form.get('currencyCode')?.value).toBe('INR');
+      expect(comp.form.get('salesOrderId')?.value).toBeNull();
     });
 
-    it('DLC-T1-02: Create delivery challan saves SaveDeliveryChallanRequest DTO and navigates back', () => {
-      const comp = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
+    it('DLC-T1-02: The challan types are the server enum, value for value', () => {
+      const comp = newChallan();
+
+      // "Transfer" used to be sent as 2, which the server reads as Approval.
+      expect(comp.challanTypes.map((t) => t.value)).toEqual([0, 1, 2, 3, 4]);
+      expect(comp.challanTypes.find((t) => t.value === ChallanType.BranchTransfer)?.label)
+        .toBe('Branch transfer');
+    });
+
+    it('DLC-T1-03: Create sends the transport fields and opens the new challan', async () => {
+      const comp = newChallan();
       comp.ngOnInit();
       comp.form.patchValue({
         documentDate: '2026-08-18',
         contactId: 5,
-        challanType: 1,
+        challanType: ChallanType.Approval,
         vehicleNo: 'KA-04-E-5678',
+        transporterName: 'Swift Logistics',
+        ewayBillNo: '123456789012',
+        ewayBillDate: '2026-08-18',
         dispatchDate: '2026-08-18',
         currencyCode: 'INR',
         exchangeRate: 1,
         notes: 'Supply on approval'
       });
-      comp.onLinesChange([sampleLine]);
-      expect(comp.totals.subTotal).toBe(75000);
-      expect(comp.totals.totalAmount).toBe(77250);
+      comp.onLinesChange([{ ...sampleLine, taxGroupId: 3 }]);
+      expect(comp.totals().subTotal).toBe(75000);
+      expect(comp.totals().totalAmount).toBe(77250);
 
-      comp.save();
+      await comp.save();
 
       expect(mockDeliveryChallanService.create).toHaveBeenCalledTimes(1);
       const req: SaveDeliveryChallanRequest = mockDeliveryChallanService.create.mock.calls[0][0];
       expect(req.documentDate).toBe('2026-08-18');
       expect(req.contactId).toBe(5);
-      expect(req.challanType).toBe(1);
+      expect(req.challanType).toBe(ChallanType.Approval);
       expect(req.vehicleNo).toBe('KA-04-E-5678');
-      expect(req.dispatchDate).toBe('2026-08-18');
+      expect(req.transporterName).toBe('Swift Logistics');
+      expect(req.ewayBillNo).toBe('123456789012');
+      expect(req.ewayBillDate).toBe('2026-08-18');
       expect(req.notes).toBe('Supply on approval');
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['../'], { relativeTo: mockActivatedRoute as any });
+      expect(req.salesOrderId).toBeUndefined();
+
+      // The tax group goes with the line: it was dropped, so every challan saved
+      // from this screen carried no tax at all.
+      expect(req.lines[0].taxGroupId).toBe(3);
+      expect(req.lines[0].itemId).toBe(10);
+      expect(req.lines[0].salesOrderDetailId).toBeUndefined();
+
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/sales/delivery-challans', 61]);
     });
 
-    it('DLC-T1-03: Edit delivery challan loads existing challan by ID and updates', () => {
+    it('DLC-T1-04: Edit loads the challan by id and updates it', async () => {
       mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('61');
-      const comp = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
+      const comp = newChallan();
       comp.ngOnInit();
+      await comp.load();
 
-      expect(comp.isEdit).toBe(true);
-      expect(comp.challanId).toBe(61);
+      expect(comp.isEdit()).toBe(true);
+      expect(comp.challanId()).toBe(61);
       expect(mockDeliveryChallanService.get).toHaveBeenCalledWith(61);
+      expect(comp.form.get('vehicleNo')?.value).toBe('KA-01-AB-1234');
 
-      comp.save();
+      comp.onLinesChange([sampleLine]);
+      await comp.save();
+
       expect(mockDeliveryChallanService.update).toHaveBeenCalledWith(61, expect.any(Object));
+    });
+
+    it('DLC-T1-05: Load order fills the customer and one line per order line still outstanding', async () => {
+      mockSalesOrderService.get.mockResolvedValueOnce(confirmedOrder);
+      const comp = newChallan();
+      comp.ngOnInit();
+      comp.form.patchValue({ salesOrderId: 31 });
+
+      await comp.loadOrder();
+
+      expect(mockSalesOrderService.get).toHaveBeenCalledWith(31);
+      expect(comp.form.get('contactId')?.value).toBe(5);
+      expect(comp.form.get('contactGstin')?.value).toBe('33AAAAA0000A1Z5');
+      expect(comp.form.get('shippingAddress')?.value).toBe('Madurai');
+
+      // The fully delivered line is left out; the other carries what is left.
+      const lines = comp.lines();
+      expect(lines).toHaveLength(1);
+      expect(lines[0].salesOrderDetailId).toBe(901);
+      expect(lines[0].itemId).toBe(10);
+
+      await comp.save();
+
+      const req: SaveDeliveryChallanRequest = mockDeliveryChallanService.create.mock.calls[0][0];
+      expect(req.salesOrderId).toBe(31);
+      expect(req.lines).toHaveLength(1);
+      expect(req.lines[0].salesOrderDetailId).toBe(901);
+      expect(req.lines[0].quantity).toBe(6);
+      expect(req.lines[0].taxGroupId).toBe(3);
+    });
+
+    it('DLC-T1-06: Load order refuses an order that is not confirmed', async () => {
+      mockSalesOrderService.get.mockResolvedValueOnce({ ...confirmedOrder, status: 'Draft' });
+      const comp = newChallan();
+      comp.form.patchValue({ salesOrderId: 31 });
+
+      await comp.loadOrder();
+
+      expect(comp.messages()[0]?.tone).toBe('error');
+      expect(comp.form.get('contactId')?.value).toBe(0);
+    });
+
+    it('DLC-T1-07: Post dispatches the challan and reloads it', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('61');
+      const comp = newChallan();
+      comp.ngOnInit();
+      await comp.load();
+
+      expect(comp.canPost()).toBe(true);
+
+      mockDeliveryChallanService.get.mockResolvedValueOnce({
+        deliveryChallanId: 61,
+        documentNo: 'DC/2026/0061',
+        documentDate: '2026-08-18',
+        dispatchDate: '2026-08-18',
+        contactId: 5,
+        status: 'Posted',
+        challanType: 0,
+        currencyCode: 'INR',
+        exchangeRate: 1,
+        lines: []
+      });
+
+      await comp.post();
+
+      expect(mockDeliveryChallanService.post).toHaveBeenCalledWith(61);
+      expect(comp.status()).toBe('Posted');
+      expect(comp.messages()[0]?.tone).toBe('success');
+
+      // Dispatched: read-only, and answered with a return rather than a void.
+      expect(comp.editable()).toBe(false);
+      expect(comp.canPost()).toBe(false);
+      expect(comp.canVoid()).toBe(false);
+      expect(comp.form.disabled).toBe(true);
+    });
+
+    it('DLC-T1-08: A void needs a reason before it reaches the server', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('61');
+      const comp = newChallan();
+      comp.ngOnInit();
+      await comp.load();
+
+      expect(comp.canVoid()).toBe(true);
+
+      await comp.voidChallan();
+      expect(mockDeliveryChallanService.voidChallan).not.toHaveBeenCalled();
+
+      comp.voidForm.patchValue({ reason: '  Keyed twice  ' });
+      await comp.voidChallan();
+
+      expect(mockDeliveryChallanService.voidChallan).toHaveBeenCalledWith(61, { reason: 'Keyed twice' });
+    });
+
+    it('DLC-T1-09: A refused post shows the server\'s own words', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('61');
+      mockDeliveryChallanService.post.mockRejectedValueOnce(
+        new HttpErrorResponse({
+          status: 409,
+          error: { message: 'Order line 1 has 3 left to deliver, and this challan delivers 4.' }
+        })
+      );
+      const comp = newChallan();
+      comp.ngOnInit();
+      await comp.load();
+
+      await comp.post();
+
+      expect(comp.messages()[0]?.tone).toBe('error');
+      expect(comp.messages()[0]?.text).toContain('left to deliver');
+      expect(comp.status()).toBe('Draft');
     });
   });
 
@@ -616,7 +836,9 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
         () => new SalesOrderFormComponent(),
       ) as unknown as SalesOrderFormHarness;
       const crn = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
-      const dlc = TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent());
+      const dlc = TestBed.runInInjectionContext(
+        () => new DeliveryChallanFormComponent(),
+      ) as unknown as DeliveryChallanFormHarness;
 
       qot.form.patchValue({ documentDate: '', validUntil: '' });
       sor.form.patchValue({ documentDate: '', contactId: 0 });
@@ -626,7 +848,7 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       qot.save();
       await sor.save();
       crn.save();
-      dlc.save();
+      await dlc.save();
 
       expect(mockQuoteService.create).not.toHaveBeenCalled();
       expect(mockSalesOrderService.create).not.toHaveBeenCalled();

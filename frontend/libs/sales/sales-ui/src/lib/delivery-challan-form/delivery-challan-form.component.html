@@ -1,103 +1,281 @@
-<div class="page-container">
-  <header class="page-header">
-    <h1>{{ isEdit ? 'Edit Delivery Challan' : 'New Delivery Challan' }}</h1>
-    <button class="primary" (click)="save()">Save</button>
+<section class="dlc-form">
+  <header class="dlc-form__head">
+    <div class="dlc-form__identity">
+      <h1 class="dlc-form__title">
+        {{ isEdit() ? (documentNo() || 'Delivery challan') : 'New delivery challan' }}
+      </h1>
+
+      @if (isEdit()) {
+        <span class="tag tag-neutral">{{ status() }}</span>
+      }
+
+      @if (form.controls.salesOrderId.value; as orderId) {
+        @if (isEdit()) {
+          <a class="chip" [routerLink]="['/sales/sales-orders', orderId]">from order</a>
+        }
+      }
+    </div>
+
+    <div class="dlc-form__actions">
+      @if (canPost()) {
+        <!-- Dispatch is irreversible: the goods leave stock, and the challan
+             can then only be answered with a return. -->
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
+          Post
+        </button>
+      }
+
+      @if (canVoid()) {
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="voidChallan()">
+          Void
+        </button>
+      }
+
+      @if (editable()) {
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      }
+    </div>
   </header>
 
-  <form [formGroup]="form" class="form-grid">
+  <!-- Rules about the document, and everything the server refused. Field
+       constraints live on their fields, below. -->
+  <bb-message-box [messages]="messages()" />
+
+  @if (canVoid()) {
+    <form class="field dlc-form__void" [formGroup]="voidForm">
+      <bb-text-input
+        id="dlc-void-reason"
+        label="Reason, if voiding"
+        maxlength="300"
+        placeholder="Keyed against the wrong order"
+        formControlName="reason"
+        [required]="true"
+        [error]="
+          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+            ? 'Say why this challan is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+            : ''
+        "
+      />
+    </form>
+  }
+
+  <form class="dlc-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input id="docDate" label="Document Date" formControlName="documentDate" [required]="true" />
+      <bb-date-input
+        id="dlc-date"
+        label="Challan date"
+        formControlName="documentDate"
+        [required]="true"
+        [error]="showError('documentDate') ? 'Give the challan a date.' : ''"
+      />
     </div>
+
     <div class="field">
+      <bb-date-input
+        id="dlc-dispatch"
+        label="Dispatch date"
+        formControlName="dispatchDate"
+        [required]="true"
+        [error]="showError('dispatchDate') ? 'Say when the goods leave.' : ''"
+      />
+    </div>
+
+    <div class="field dlc-form__order">
+      <!-- A sales order id until the order picker lands with the other lookups. -->
       <bb-number-input
-        id="contactId"
-        label="Contact (ID)"
+        id="dlc-order"
+        label="Sales order"
+        hint="Optional. Load it to deliver against the order's lines."
         min="1"
         step="1"
         inputmode="numeric"
-        formControlName="contactId"
+        formControlName="salesOrderId"
+        [error]="showError('salesOrderId') ? 'A sales order number is a whole number.' : ''"
       />
+
+      @if (editable()) {
+        <button
+          type="button"
+          class="btn btn-secondary dlc-form__load"
+          [disabled]="loadingOrder()"
+          (click)="loadOrder()"
+        >
+          {{ loadingOrder() ? 'Loading…' : 'Load order' }}
+        </button>
+      }
     </div>
+
     <div class="field">
       <bb-select
-        id="challanType"
-        label="Challan Type"
+        id="dlc-type"
+        label="Challan type"
+        hint="Only a sale is a supply. The others move stock and sell nothing."
         placeholder=""
         [options]="challanTypes"
         formControlName="challanType"
       />
     </div>
+
     <div class="field">
-      <!-- A date, not free text: it was a plain text box. -->
-      <bb-date-input id="dispatchDate" label="Dispatch Date" formControlName="dispatchDate" />
+      <!-- A contact id, not a quantity — the plain numeric control until the
+           customer picker lands (TK-17). -->
+      <bb-number-input
+        id="dlc-contact"
+        label="Customer"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="contactId"
+        [required]="true"
+        [error]="showError('contactId') ? 'Choose the customer.' : ''"
+      />
     </div>
-    <div class="field">
-      <bb-text-input id="vehicleNo" label="Vehicle No." [uppercase]="true" formControlName="vehicleNo" />
-    </div>
+
     <div class="field">
       <bb-text-input
-        id="currencyCode"
+        id="dlc-gstin"
+        label="Customer GSTIN"
+        maxlength="15"
+        [uppercase]="true"
+        formControlName="contactGstin"
+        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
+      />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="dlc-pos"
+        label="Place of supply"
+        inputmode="numeric"
+        maxlength="2"
+        placeholder="33"
+        hint="Leave blank to take it from the GSTIN."
+        formControlName="placeOfSupplyStateCode"
+        [error]="
+          showError('placeOfSupplyStateCode') ? 'Place of supply is a two-digit state code.' : ''
+        "
+      />
+    </div>
+
+    <div class="field">
+      <bb-text-input id="dlc-vehicle" label="Vehicle no." [uppercase]="true" formControlName="vehicleNo" />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="dlc-transporter"
+        label="Transporter"
+        maxlength="100"
+        formControlName="transporterName"
+      />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="dlc-eway"
+        label="E-way bill no."
+        inputmode="numeric"
+        maxlength="12"
+        formControlName="ewayBillNo"
+        [error]="showError('ewayBillNo') ? 'An e-way bill number is 12 digits.' : ''"
+      />
+    </div>
+
+    <div class="field">
+      <bb-date-input id="dlc-eway-date" label="E-way bill date" formControlName="ewayBillDate" />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="dlc-currency"
         label="Currency"
         maxlength="3"
         [uppercase]="true"
         formControlName="currencyCode"
+        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
       />
     </div>
+
     <div class="field">
       <bb-exchange-rate-input
-        id="exchangeRate"
-        label="Exchange Rate"
+        id="dlc-rate"
+        label="Exchange rate"
+        [fromCurrency]="form.controls.currencyCode.value"
         formControlName="exchangeRate"
+        [required]="true"
+        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
       />
     </div>
+
     <div class="field">
-      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
+      <bb-textarea id="dlc-billing" label="Billing address" rows="2" formControlName="billingAddress" />
     </div>
+
     <div class="field">
-      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
+      <bb-textarea id="dlc-shipping" label="Shipping address" rows="2" formControlName="shippingAddress" />
     </div>
-    <div class="field full-width">
-      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
+
+    <div class="field dlc-form__wide">
+      <bb-textarea id="dlc-notes" label="Notes" rows="2" formControlName="notes" />
     </div>
   </form>
 
-  <div class="line-grid-container">
+  <div class="dlc-form__lines">
     <bb-document-line-grid
-      [lines]="lines"
-      [context]="context"
+      [lines]="lines()"
+      [context]="context()"
       (linesChange)="onLinesChange($event)"
       (pickItem)="onPickItem($event)"
-    ></bb-document-line-grid>
+    />
   </div>
 
-  <div class="totals-panel">
-    <div class="total-row">
-      <span>Sub Total</span>
-      <span>{{ (totals.subTotal / 100) | number:'1.2-2' }}</span>
+  <!-- Paise throughout, divided only to display. -->
+  <div class="dlc-form__totals">
+    <div class="dlc-form__total">
+      <span>Sub total</span>
+      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
     </div>
-    <div class="total-row" *ngIf="totals.discountAmount > 0">
-      <span>Discount</span>
-      <span>-{{ (totals.discountAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cgstAmount > 0">
-      <span>CGST</span>
-      <span>{{ (totals.cgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.sgstAmount > 0">
-      <span>SGST</span>
-      <span>{{ (totals.sgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.igstAmount > 0">
-      <span>IGST</span>
-      <span>{{ (totals.igstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cessAmount > 0">
-      <span>CESS</span>
-      <span>{{ (totals.cessAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row grand-total">
-      <span>Total Amount</span>
-      <span>{{ (totals.totalAmount / 100) | number:'1.2-2' }}</span>
+
+    @if (totals().discountAmount > 0) {
+      <div class="dlc-form__total">
+        <span>Discount</span>
+        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cgstAmount > 0) {
+      <div class="dlc-form__total dlc-form__total--tax">
+        <span>CGST</span>
+        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().sgstAmount > 0) {
+      <div class="dlc-form__total dlc-form__total--tax">
+        <span>SGST</span>
+        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().igstAmount > 0) {
+      <div class="dlc-form__total dlc-form__total--tax">
+        <span>IGST</span>
+        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cessAmount > 0) {
+      <div class="dlc-form__total dlc-form__total--tax">
+        <span>Cess</span>
+        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    <div class="dlc-form__total dlc-form__total--grand">
+      <span>Total</span>
+      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
     </div>
   </div>
-</div>
+</section>

@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { ApiDocumentLine } from './document-line-scale';
 
 /** A challan on the list screen. Mirrors `DeliveryChallanListItem` on the server. */
 export interface DeliveryChallanListItem {
@@ -17,12 +18,26 @@ export interface DeliveryChallanListItem {
   totalAmount: number;
 }
 
+/**
+ * What the goods are going out for. Mirrors `ChallanType` on the server, value
+ * for value — a label list that disagreed with it once sent "Transfer" as
+ * approval.
+ */
+export enum ChallanType {
+  Sale = 0,
+  JobWork = 1,
+  Approval = 2,
+  BranchTransfer = 3,
+  Sample = 4,
+}
+
 export interface SaveDeliveryChallanRequest {
-  deliveryChallanId?: number;
   salesOrderId?: number;
   documentDate: string;
   contactId: number;
-  challanType: number;
+  contactGstin?: string;
+  placeOfSupplyStateCode?: string;
+  challanType: ChallanType;
   vehicleNo?: string;
   transporterName?: string;
   ewayBillNo?: string;
@@ -36,83 +51,103 @@ export interface SaveDeliveryChallanRequest {
   lines: SaveDeliveryChallanLineRequest[];
 }
 
-export interface SaveDeliveryChallanLineRequest {
-  itemId: number;
-  quantity: number;
-  unitPrice: number;
-  discountPercent: number;
-  taxGroupIds?: number[];
-  hsnSacCode?: string;
-  description?: string;
-  accountId?: number;
-  taxTreatment?: string;
-  taxMasterId?: number;
+/**
+ * One line to save. The server takes the item, quantity, price, discount and
+ * tax group, and — on a challan against an order — which order line it
+ * delivers. Every line must name one then, and none may otherwise.
+ */
+export interface SaveDeliveryChallanLineRequest extends ApiDocumentLine {
+  salesOrderDetailId?: number;
+}
+
+export interface DeliveryChallanLineView extends ApiDocumentLine {
+  deliveryChallanDetailId: number;
+  salesOrderDetailId?: number | null;
+  itemLabel?: string | null;
 }
 
 export interface DeliveryChallanView {
   deliveryChallanId: number;
-  salesOrderId?: number;
+  salesOrderId?: number | null;
   documentDate: string;
   documentNo: string;
   contactId: number;
+  contactName?: string;
+  contactGstin?: string | null;
   status: string;
-  challanType: number;
-  vehicleNo?: string;
-  transporterName?: string;
-  ewayBillNo?: string;
-  ewayBillDate?: string;
+  challanType: ChallanType;
+  vehicleNo?: string | null;
+  transporterName?: string | null;
+  ewayBillNo?: string | null;
+  ewayBillDate?: string | null;
   dispatchDate: string;
   currencyCode: string;
   exchangeRate: number;
-  notes?: string;
-  billingAddress?: string;
-  shippingAddress?: string;
-  lines: any[];
+  notes?: string | null;
+  billingAddress?: string | null;
+  shippingAddress?: string | null;
+  voidReason?: string | null;
+  lines: DeliveryChallanLineView[];
 }
 
+export interface VoidDeliveryChallanRequest {
+  reason: string;
+}
+
+/** What the server answers a save, post or void with. */
+export interface DeliveryChallanResult {
+  deliveryChallanId: number;
+}
+
+/**
+ * Sales › Delivery challans.
+ *
+ * Promises rather than streams, like the invoice and order services: every call
+ * is one request and one answer, and awaiting it is what lets a refusal be caught
+ * and shown with the server's own words.
+ */
 @Injectable({ providedIn: 'root' })
 export class DeliveryChallanService {
-  private http = inject(HttpClient);
-  private url = '/api/sales/delivery-challans';
+  private readonly http = inject(HttpClient);
+  private readonly url = '/api/sales/delivery-challans';
 
   /**
    * The challans in a date range, newest first. Both bounds are optional — the
    * list opens on everything.
    */
-  list(from?: string, to?: string): Observable<DeliveryChallanListItem[]> {
-    const params: string[] = [];
+  async list(from?: string, to?: string): Promise<DeliveryChallanListItem[]> {
+    const params: Record<string, string> = {};
     if (from) {
-      params.push(`from=${from}`);
+      params['from'] = from;
     }
     if (to) {
-      params.push(`to=${to}`);
+      params['to'] = to;
     }
 
-    const query = params.length > 0 ? `?${params.join('&')}` : '';
-    return this.http.get<DeliveryChallanListItem[]>(`${this.url}${query}`);
+    return firstValueFrom(this.http.get<DeliveryChallanListItem[]>(this.url, { params }));
   }
 
-  get(id: number): Observable<DeliveryChallanView> {
-    return this.http.get<DeliveryChallanView>(`${this.url}/${id}`);
+  async get(id: number): Promise<DeliveryChallanView> {
+    return firstValueFrom(this.http.get<DeliveryChallanView>(`${this.url}/${id}`));
   }
 
-  /**
-   * Dispatches: issues the stock, releases the order's reservation, and posts
-   * to the ledger only if the challan is a sale.
-   */
-  post(id: number): Observable<void> {
-    return this.http.post<void>(`${this.url}/${id}/post`, {});
+  async create(request: SaveDeliveryChallanRequest): Promise<DeliveryChallanResult> {
+    return firstValueFrom(this.http.post<DeliveryChallanResult>(this.url, request));
   }
 
-  create(request: SaveDeliveryChallanRequest): Observable<{ deliveryChallanId: number }> {
-    return this.http.post<{ deliveryChallanId: number }>(this.url, request);
+  async update(id: number, request: SaveDeliveryChallanRequest): Promise<DeliveryChallanResult> {
+    return firstValueFrom(this.http.put<DeliveryChallanResult>(`${this.url}/${id}`, request));
   }
 
-  update(id: number, request: SaveDeliveryChallanRequest): Observable<void> {
-    return this.http.put<void>(`${this.url}/${id}`, request);
+  /** Dispatches: issues the stock and moves the order's delivered and reserved quantities. */
+  async post(id: number): Promise<DeliveryChallanResult> {
+    return firstValueFrom(this.http.post<DeliveryChallanResult>(`${this.url}/${id}/post`, {}));
   }
 
-  voidChallan(id: number, request: { reason: string }): Observable<void> {
-    return this.http.post<void>(`${this.url}/${id}/void`, request);
+  /** Withdraws a draft. A dispatched challan cannot be voided — raise a return. */
+  async voidChallan(id: number, request: VoidDeliveryChallanRequest): Promise<DeliveryChallanResult> {
+    return firstValueFrom(
+      this.http.post<DeliveryChallanResult>(`${this.url}/${id}/void`, request),
+    );
   }
 }

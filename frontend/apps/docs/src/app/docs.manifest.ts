@@ -42,10 +42,12 @@ export const DOCS: DocSection[] = [
   {
     title: 'Sales',
     // In the order the documents actually run: a quote becomes an order,
-    // an order becomes an invoice.
+    // an order goes out on a challan, and is billed on an invoice.
     pages: [
       { slug: 'quotes', title: 'Quotes', status: 'built' },
       { slug: 'sales-orders', title: 'Sales orders', status: 'built' },
+      // Partial: a sale challan's clearing-account posting is not built.
+      { slug: 'delivery-challans', title: 'Delivery challans', status: 'partial' },
       { slug: 'invoices', title: 'Invoices', status: 'built' },
     ],
   },

@@ -248,8 +248,34 @@ public sealed class RecordingInventory : IInventoryClient
         return Task.FromResult(response);
     }
 
-    public Task<IssueStockResponse> IssueAsync(IssueStockRequest request, CancellationToken ct) =>
-        Task.FromResult(new IssueStockResponse { Success = true });
+    /// <summary>Every issue asked for, in order.</summary>
+    public List<IssueStockRequest> Issues { get; } = [];
+
+    /// <summary>Set to make every issue refused, so a service's stock-refused path is reachable.</summary>
+    public bool RefuseIssues { get; set; }
+
+    /// <summary>
+    /// Each issue succeeds and answers every line with no movement and no cost —
+    /// what the stub always answered, so a suite that never looks at issues is
+    /// unaffected by their being recorded.
+    /// </summary>
+    public Task<IssueStockResponse> IssueAsync(IssueStockRequest request, CancellationToken ct)
+    {
+        Issues.Add(request);
+
+        return Task.FromResult(new IssueStockResponse
+        {
+            Success = !RefuseIssues,
+            Lines = [.. request.Lines.Select(line => new IssueStockLineResult
+            {
+                SourceLineId = line.SourceLineId,
+                ItemId = line.ItemId,
+                RequestedQuantity = line.Quantity,
+                Success = !RefuseIssues,
+                Outcome = RefuseIssues ? "InsufficientStock" : "Ok",
+            })],
+        });
+    }
 
     public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct) =>
         Task.FromResult(new ReceiveStockResponse { Success = true });

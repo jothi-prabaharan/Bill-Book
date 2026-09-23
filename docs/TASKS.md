@@ -495,6 +495,8 @@ If the code has moved on since a card was written, correct the card in your clai
   - From TK-02 (2026-09-23): the owner decided on **404**. Delete the `IgnoreQueryFilters()` probe
     at `InvoiceService.cs:1562-1563` and return `NotFound()`. Under RLS it can never see another
     branch's row anyway. `AllocationsController` in `acc` is the worked example.
+  - From TK-12 (2026-09-23): the delivery challan follows the 404 decision already and has no probe.
+    `InvoiceService.ExistsInOtherOrgAsync` is the only one left in `sal`.
 
 ### TK-08 · RLS for `rpt`: replace the broken policies
 - [ ] open
@@ -658,39 +660,65 @@ If the code has moved on since a card was written, correct the card in your clai
 ### B · Phase 1: finish what's in flight
 
 ### TK-12 · Sales delivery challan: post, void and page
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
-  - `backend/Api/Sales/Sales.Api/Services/DeliveryChallanService.cs`: `PostAsync` at 328, `VoidAsync` at 493.
+  - `backend/Api/Sales/Sales.Api/Services/DeliveryChallanService.cs`: `SaveAsync`, `PostAsync`, `VoidAsync`.
   - `backend/Api/Sales/Sales.Api/Controllers/DeliveryChallansController.cs`
-  - `backend/tests/Sales.Api.Tests/DeliveryChallanServiceTests.cs`: 4 save tests, from 23 September.
-  - `frontend/libs/sales/sales-ui/src/lib/delivery-challan-form/`
-- **State:**
-  - Saving works and is tested. Posting does three things:
-    - issues stock through `InventoryClient.IssueAsync`;
-    - updates the order's `DeliveredQuantity` and `ReservedQuantity`;
-    - for `ChallanType.Sale`, posts Dr *Goods Delivered Not Invoiced* / Cr *Inventory*.
-  - Posting also writes a `SalesRegister` row per line.
-  - Voiding a posted challan is refused on purpose ("Raise a return instead").
-  - Post and void have no tests.
+  - `backend/tests/Sales.Api.Tests/DeliveryChallanServiceTests.cs`
+  - `frontend/libs/sales/sales-ui/src/lib/delivery-challan-form/`, `frontend/libs/sales/sales-core/src/lib/delivery-challan.service.ts`
+- **State (as left, 2026-09-23):**
+  - Save, post and void return `DeliveryChallanResult`; the controller maps 404 / 409 / 422 / 503.
+    Another branch's challan is 404, per TK-02's decision.
+  - Each line carries `SalesOrderDetailId`. On a challan against an order every line must name one
+    of the order's lines (same item, same customer, order confirmed and open); otherwise none may.
+    Posting re-checks the order and refuses a line that would deliver more than is outstanding.
+  - Posting issues stock and moves the order's delivered and reserved quantities. It writes **no**
+    ledger post and **no** `SalesRegister` rows.
+  - Void is draft-only, needs a reason, and moves nothing.
+  - The form: *Load order* (fills the customer and the outstanding lines), transporter, e-way bill
+    no. and date, GSTIN, place of supply, the five challan types, Post and Void.
 - **Sub-tasks:**
-  - [ ] Check the `SalesRegister` rows the post writes (the `_db.SalesRegister.Add` loop from line 456). A delivery challan is not a
-        supply under GST, so these rows may double-count against the invoice raised from the
-        challan in GSTR-1. Confirm against `docs/Modules.md` §T3.5 before changing anything.
-  - [ ] Replace the three `throw new InvalidOperationException` guards in `PostAsync` (lines
-        336, 339, 342, 364, 449) with outcomes the controller maps to 404, 409 or 422, the way `InvoiceService`
-        returns `InvoiceResult`.
-  - [ ] Add form controls for `salesOrderId`, `transporterName`, `ewayBillNo` and `ewayBillDate`.
-        The request already carries all four (`DeliveryChallanModels.cs`). Without `salesOrderId`,
-        no reservation is ever released (TK-14).
-  - [ ] Test: posting a challan against an order moves `DeliveredQuantity` and reduces `ReservedQuantity`.
-  - [ ] Test: posting a `Sale` challan posts a balanced GDNI/Inventory journal (stub `LedgerClient`).
-  - [ ] Test: voiding a draft works; voiding a posted challan is refused.
-  - [ ] Test: another branch's challan is `Forbid()`.
+  - [x] Check the `SalesRegister` rows the post writes. Confirmed against `docs/Modules.md` §6: the
+        register is fed by invoices and credit notes only, and `GstController` reads it with no
+        type filter, so a challan's rows double-counted in GSTR-1 and GSTR-3B. Removed.
+  - [x] Replace the `throw new InvalidOperationException` guards in save, post and void with
+        outcomes the controller maps to 404, 409 or 422 (503 when rates or settings can't be read).
+  - [x] Add form controls for `salesOrderId`, `transporterName`, `ewayBillNo` and `ewayBillDate`,
+        and give each line its `salesOrderDetailId` (the request had nowhere to carry it, so no
+        posted challan ever moved its order).
+  - [x] Test: posting a challan against an order moves `DeliveredQuantity` and reduces `ReservedQuantity`.
+  - [x] ~~Test: posting a `Sale` challan posts a balanced GDNI/Inventory journal.~~ Withdrawn by the
+        owner's decision of 2026-09-23. The challan no longer posts; see TK-78.
+  - [x] Test: voiding a draft works; voiding a posted challan is refused.
+  - [x] Test: another branch's challan is `NotFound()` on every route (was `Forbid()`, before TK-02).
   - [ ] Owner: run `Sales.Api.Tests`.
 - **Done when:** a challan raised from the screen against an order posts, moves stock, and updates
   the order.
 - **Notes:**
+  - **Why the GDNI post went.** `Goods Delivered Not Invoiced` is not in
+    `Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`, so any non-zero post was refused. And
+    `StockLedgerMapping` already posts every sourced `Issue` movement, this challan's included, as
+    Dr COGS / Cr Inventory under the same `(DLC, id)`. The two keys differ (CONTROL at detail 0,
+    COGS per line), so both rows stood and Inventory was credited twice. The owner chose to drop
+    the challan's post here and move the GDNI mapping to TK-78.
+  - The void used to subtract a draft's quantities from its order, and delete `SalesRegister` rows
+    a draft never wrote. Both removed.
+  - Other fixes on the way: the currency defaulted to `USD` (now the branch's base currency); the
+    form sent no tax group, so every challan saved from the screen was untaxed; its type list sent
+    "Transfer" as 2, which the server reads as `Approval`; the list and view sent `Status` as a
+    number while the screen compared names. `Status` is now a string, like the invoice's.
+  - `ReleaseReservation` is now per line (`SalesOrderDetailId.HasValue`). With every line of an
+    order challan required to name an order line, that equals the old header test — see TK-14.
+  - Docs: `frontend/apps/docs/content/delivery-challans.md` (new, `partial` in the manifest),
+    `sales-orders.md`, and release notes.
+  - **Left for `L-DOC`:** `CLAUDE.md` "Still not built" still says the challan has "a scaffold page
+    but no verified path".
+  - Tests written, not run: `backend/tests/Sales.Api.Tests/DeliveryChallanServiceTests.cs` (20
+    tests: save, order-link refusals, post, over-delivery, refused stock, void, cross-branch 404,
+    controller mapping); `RecordingInventory` in `Stubs.cs` now records issues and can refuse them.
+    Frontend: section 4 of `libs/sales/sales-ui/src/lib/sales-forms.spec.ts` (9 tests) and the
+    challan half of `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-13 · Sales credit note: guards, void reason and stock return
 - [ ] open
@@ -758,6 +786,49 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Done when:** an order is delivered and billed in two parts, its status goes Open →
   PartlyDelivered → Closed, and its reservation reaches zero.
 - **Notes:**
+  - From TK-12 (2026-09-23): challan lines now carry `SalesOrderDetailId`, required on every line
+    of a challan against an order, and posting moves the order line by that id.
+    `ReleaseReservation` is per line (`SalesOrderDetailId.HasValue`). The reserved quantity never
+    goes below zero, and posting refuses to deliver more than is outstanding. The invoice's
+    challan branch still matches challan lines to invoice lines **by `ItemId`**, which is wrong
+    when one item appears twice.
+
+### TK-78 · Sale challans post to Goods Delivered Not Invoiced, once
+- [ ] open
+- **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-12 · **Decision:** —
+- **Where:**
+  - `backend/Api/Accounting/Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`: GRNI is 2150; GDNI is missing.
+  - `backend/Api/Inventory/Inventory.Api/Services/StockLedgerMapping.cs:86-87`: every sourced `Issue`
+    posts Dr COGS / Cr Inventory, whatever document it came from.
+  - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs`: the challan branch near 1192, and
+    the COGS legs near 1365 (`GdniAccount` when the invoice names a challan).
+  - `docs/Modules.md` §9, "What a delivery challan posts": the recommendation this card builds.
+- **State (2026-09-23):**
+  - A posted challan's cost reaches the ledger once, through the costing worker, as Dr COGS /
+    Cr Inventory **at dispatch**. That is cost with no revenue against it until the invoice.
+  - An invoice against a challan posts Dr COGS / Cr GDNI at the challan lines' `UnitCost`, which is
+    the request path's provisional figure (TK-77) and names an account that is not seeded, so it
+    is refused whenever the value is non-zero.
+  - **A direct invoice has the same double posting:** it writes its own Dr COGS / Cr Inventory
+    (COGS leg at detail 0, CONTROL leg), and the worker writes the COGS legs per line for the same
+    issue. Both stand.
+- **Sub-tasks:**
+  - [ ] Seed `Goods Delivered Not Invoiced` (Asset, off the manual-journal picker like GRNI), with a
+        `SystemAccount` value, and backfill existing branches through the seeder's idempotent path.
+  - [ ] Decide who posts cost of sale — the worker (at recosted value) or the document. `docs/Modules.md`
+        §7 says Inventory, asynchronously. Write the answer under Notes before changing either side.
+  - [ ] If the worker: map an `Issue` sourced from a `Sale` challan to Dr GDNI / Cr Inventory, and
+        post nothing for job work, approval, branch transfer or sample. The worker can't see
+        `ChallanType`; carry it on the movement (for example, a distinct `SourceType` or a flag on
+        `IssueStockRequest`) rather than reading `sal`.
+  - [ ] The invoice against a challan then clears GDNI: Dr COGS / Cr GDNI at the challan movements'
+        settled cost, never the provisional one.
+  - [ ] Remove whichever of the invoice's own COGS legs and the worker's is the duplicate.
+  - [ ] Test: challan then invoice leaves GDNI at zero, Inventory credited once, COGS debited once.
+  - [ ] Test: a job-work challan posts nothing.
+- **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once,
+  GDNI at zero, and one cost-of-sales debit.
+- **Notes:** raised from TK-12 by the owner's decision of 2026-09-23.
 
 ### TK-15 · Item search: barcode and paging
 - [ ] open

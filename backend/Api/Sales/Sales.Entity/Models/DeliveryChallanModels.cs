@@ -13,7 +13,13 @@ public class DeliveryChallanListItem
     public string DocumentNo { get; set; } = null!;
     public long ContactId { get; set; }
     public string ContactName { get; set; } = null!;
-    public DocumentStatus Status { get; set; }
+
+    /// <summary>
+    /// Draft / ReadyToPost / Posted / Void, by name. A string for the same reason
+    /// the invoice's is: this API serializes enums as numbers, and the screen
+    /// compares against the names.
+    /// </summary>
+    public string Status { get; set; } = null!;
     public DateOnly DispatchDate { get; set; }
     public decimal TotalAmount { get; set; }
 }
@@ -26,8 +32,12 @@ public class DeliveryChallanView
     public string DocumentNo { get; set; } = null!;
     public long ContactId { get; set; }
     public string ContactName { get; set; } = null!;
-    public DocumentStatus Status { get; set; }
+
+    /// <summary>By name — see <see cref="DeliveryChallanListItem.Status"/>.</summary>
+    public string Status { get; set; } = null!;
     public ChallanType ChallanType { get; set; } = ChallanType.Sale;
+    public string? ContactGstin { get; set; }
+    public string? VoidReason { get; set; }
     public string? VehicleNo { get; set; }
     public string? TransporterName { get; set; }
     public string? EwayBillNo { get; set; }
@@ -61,9 +71,14 @@ public class DeliveryChallanView
 public class DeliveryChallanLineView
 {
     public long DeliveryChallanDetailId { get; set; }
+
+    /// <summary>The order line this delivers against. Null on a challan raised without an order.</summary>
+    public long? SalesOrderDetailId { get; set; }
     public long? ItemId { get; set; }
     public string? ItemLabel { get; set; }
+    public string? HsnSacCode { get; set; }
     public string? Description { get; set; }
+    public long? TaxGroupId { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal DiscountPercent { get; set; }
@@ -137,15 +152,39 @@ public class SaveDeliveryChallanRequest
 
 public class SaveDeliveryChallanLineRequest
 {
+    /// <summary>
+    /// Required. A challan moves goods, so every line names the item that moves;
+    /// a free-text line has nothing for Inventory to issue.
+    /// </summary>
+    [Range(1, long.MaxValue, ErrorMessage = "Choose the item on every line.")]
     public long ItemId { get; set; }
-    
-    [Range(0.000001, double.MaxValue)]
+
+    [Range(0.000001, double.MaxValue, ErrorMessage = "Quantity must be greater than zero.")]
     public decimal Quantity { get; set; }
-    
+
+    [Range(typeof(decimal), "0", "79228162514264337593543950335",
+        ErrorMessage = "Unit price cannot be negative.")]
     public decimal UnitPrice { get; set; }
+
+    [Range(typeof(decimal), "0", "100", ErrorMessage = "Discount must be between 0 and 100 percent.")]
     public decimal DiscountPercent { get; set; }
-    
+
+    /// <summary>
+    /// The tax group, the way the invoice takes it. Read ahead of
+    /// <see cref="TaxGroupIds"/>, which stays for callers that already send a list.
+    /// </summary>
+    public long? TaxGroupId { get; set; }
+
     public List<long> TaxGroupIds { get; set; } = [];
+
+    /// <summary>
+    /// The order line this delivers against. <b>Required on every line when the
+    /// challan names a sales order, and refused on every line when it does not</b>
+    /// — it is the only thing that tells posting which order line's delivered and
+    /// reserved quantities to move. Without it a challan against an order issued
+    /// stock and left the order exactly as it was.
+    /// </summary>
+    public long? SalesOrderDetailId { get; set; }
 }
 
 /// <summary>
@@ -162,3 +201,34 @@ public class VoidDeliveryChallanRequest
     [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
     public string Reason { get; set; } = null!;
 }
+
+/// <summary>Why a delivery challan was refused. Every value is something a user can act on.</summary>
+public enum DeliveryChallanOutcome
+{
+    Ok = 0,
+    NotFound = 1,
+
+    /// <summary>The lifecycle refused the move. <c>Detail</c> carries its own words.</summary>
+    LifecycleRefused = 2,
+
+    /// <summary>A line contradicts the challan or its order.</summary>
+    LineInvalid = 3,
+
+    /// <summary>Place of supply could not be resolved, or the GSTIN contradicts it.</summary>
+    PlaceOfSupplyRefused = 4,
+
+    /// <summary>Branch settings or a tax rate could not be read. Transient — retry.</summary>
+    RatesUnavailable = 5,
+
+    /// <summary>The sales order named is missing, unconfirmed, closed, or for another customer.</summary>
+    SourceInvalid = 6,
+
+    /// <summary>A line would deliver more than its order line still has outstanding.</summary>
+    OverDelivered = 7,
+
+    /// <summary>Inventory refused the issue — usually not enough on hand.</summary>
+    StockRefused = 8,
+}
+
+public sealed record DeliveryChallanResult(
+    DeliveryChallanOutcome Outcome, long DeliveryChallanId = 0, string? Detail = null);
