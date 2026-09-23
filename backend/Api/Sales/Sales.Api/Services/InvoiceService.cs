@@ -7,6 +7,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Storage;
 
 namespace Sales.Api.Services;
 
@@ -1149,6 +1150,12 @@ public sealed class InvoiceService : IInvoiceService
     {
         (Guid customerId, Guid orgId) = _tenant.Require();
 
+        // Resolved first, not where the PDF is written. Posting calls Accounting
+        // and Inventory over HTTP before it archives, so a scope that could only
+        // fail at the end would leave the ledger and the stock posted while this
+        // invoice rolled back. Here it fails before anything has happened.
+        StorageScope archiveScope = StorageScope.For(_tenant, StorageApp.RetailErp, StorageModule.Sales);
+
         Invoice? invoice = await _db.Invoices
             .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
 
@@ -1442,8 +1449,13 @@ public sealed class InvoiceService : IInvoiceService
         };
         
         byte[] pdfBytes = _pdfRenderer.Render(pdfModel);
-        string objectKey = $"{orgId}/sales/invoices/{invoice.InvoiceId}.pdf";
-        await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", ct);
+        string objectKey = StorageKey.DocumentKey(archiveScope, "invoices", $"{invoice.InvoiceId}.pdf");
+        // Replace, deliberately. The archive is written before the commit below,
+        // so a post whose commit fails leaves its PDF behind; a strict
+        // create-only save would then find that leftover on the retry and stop
+        // this invoice ever posting. The same key is the same invoice, and blob
+        // versioning keeps whatever is replaced.
+        await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", FileWriteMode.Replace, ct);
 
         await _db.SaveChangesAsync(ct);
         return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);

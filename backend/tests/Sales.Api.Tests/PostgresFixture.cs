@@ -41,7 +41,10 @@ public sealed class PostgresFixture : IAsyncLifetime
             await using var accounting = new Accounting.Repository.AccountingDbContext(
                 new DbContextOptionsBuilder<Accounting.Repository.AccountingDbContext>()
                     .UseNpgsql(ConnectionString).Options,
-                new TenantContext { CustomerId = customerId, OrgId = orgId });
+                // A signed-in request carries customer_code, and posting an invoice
+                // needs it to file the archived PDF; a tenant without one is a token
+                // minted before the claim existed, which PostAsync refuses up front.
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
 
             await accounting.Database.MigrateAsync();
 
@@ -113,7 +116,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             .Options;
 
         return new SalesDbContext(
-            options, new TenantContext { CustomerId = customerId, OrgId = orgId });
+            options, new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
     }
 }
 

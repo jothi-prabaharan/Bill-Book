@@ -89,7 +89,7 @@ public sealed class PostgresFixture : IAsyncLifetime
             .Options;
 
         return new ContactsDbContext(
-            options, new TenantContext { CustomerId = customerId, OrgId = orgId });
+            options, new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
     }
 }
 

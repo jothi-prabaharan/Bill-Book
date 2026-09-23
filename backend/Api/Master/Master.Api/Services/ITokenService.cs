@@ -24,6 +24,13 @@ public sealed class AccessTokenRequest
 
     public required Guid CustomerId { get; init; }
 
+    /// <summary>
+    /// Minted as customer_code. Set only at signup and never changed, which is
+    /// what makes it safe to file documents under: a code that could change
+    /// would strand every file stored under the old one.
+    /// </summary>
+    public required string CustomerCode { get; init; }
+
     public required Guid OrgId { get; init; }
 
     /// <summary>

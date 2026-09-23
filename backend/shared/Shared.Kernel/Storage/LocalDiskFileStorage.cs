@@ -31,13 +31,34 @@ public sealed class LocalDiskFileStorage : IFileStorage
     }
 
     public async Task<string> SaveAsync(
-        string key, Stream content, string contentType, CancellationToken ct = default)
+        string key,
+        Stream content,
+        string contentType,
+        FileWriteMode mode = FileWriteMode.CreateNew,
+        CancellationToken ct = default)
     {
         string path = ResolvePath(key);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-        await using FileStream file = File.Create(path);
-        await content.CopyToAsync(file, ct);
+        FileStream file;
+
+        try
+        {
+            // CreateNew is the operating system's own "only if absent", so the
+            // refusal cannot race with another save the way a File.Exists check
+            // followed by a write could.
+            file = new FileStream(
+                path, mode == FileWriteMode.Replace ? FileMode.Create : FileMode.CreateNew, FileAccess.Write);
+        }
+        catch (IOException) when (mode == FileWriteMode.CreateNew && File.Exists(path))
+        {
+            throw new StorageKeyExistsException(key);
+        }
+
+        await using (file)
+        {
+            await content.CopyToAsync(file, ct);
+        }
 
         _log.LogInformation("Stored {Key} ({ContentType})", key, contentType);
         return key;

@@ -510,13 +510,62 @@ public sealed class InvoicePostingTests
         Assert.Null(h.Pdf.Rendered);
     }
 
+    [SkippableFact]
+    public async Task The_archived_pdf_is_filed_under_customer_branch_app_and_module()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
+        InvoiceResult posted = await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
+        Assert.Equal(InvoiceOutcome.Ok, posted.Outcome);
+
+        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
+
+        Assert.Equal(
+            $"0000000042/{h.Tenant.OrgId}/retail-erp/sales/invoices/{created.InvoiceId}.pdf",
+            key);
+
+        // Replace, deliberately: the archive is written before the commit, so a
+        // retried post must be able to write over its own leftover.
+        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
+    }
+
+    [SkippableFact]
+    public async Task A_token_without_a_customer_code_is_refused_before_anything_is_posted()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 1m, unitPrice: 100m)]), CancellationToken.None);
+
+        // A token minted before customer_code existed.
+        h.Tenant.CustomerCode = null;
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None));
+
+        // The point of resolving the storage path first: Accounting and
+        // Inventory are called over HTTP, outside this transaction, so a refusal
+        // discovered only at the archive step would leave them posted.
+        Assert.Empty(h.Ledger.Posts);
+        Assert.Empty(h.Inventory.Issues);
+        Assert.Empty(h.Storage.Saves);
+        Assert.Null(h.Pdf.Rendered);
+    }
+
     private sealed record Harness(
         SalesDbContext Db,
         InvoiceService Invoices,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
         TenantContext Tenant,
-        StubPdfRenderer Pdf)
+        StubPdfRenderer Pdf,
+        StubFileStorage Storage)
     {
         public static Task<Harness> CreateAsync(PostgresFixture pg) =>
             CreateAsync(pg, new StubOrgIdentity());
@@ -527,7 +576,9 @@ public sealed class InvoicePostingTests
             Guid customerId = Guid.NewGuid();
             Guid orgId = Guid.NewGuid();
 
-            TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId };
+            // A signed-in request carries customer_code, which the archived PDF
+            // is filed under.
+            TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
             SalesDbContext db = pg.CreateContext(customerId, orgId);
 
             db.NumberingSeries.AddRange(Repository.SeedData.NumberingSeriesSeed.Build(orgId));
@@ -543,6 +594,7 @@ public sealed class InvoicePostingTests
             StubCreditCheck creditCheck = new();
 
             StubPdfRenderer pdf = new();
+            StubFileStorage storage = new();
 
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
@@ -561,11 +613,11 @@ public sealed class InvoicePostingTests
                 inventory,
                 ledger,
                 creditCheck,
-                new StubFileStorage(),
+                storage,
                 pdf,
                 orgIdentity);
 
-            return new Harness(db, invoices, inventory, ledger, tenant, pdf);
+            return new Harness(db, invoices, inventory, ledger, tenant, pdf, storage);
         }
     }
 
@@ -713,7 +765,14 @@ public sealed class InvoicePostingTests
 
     private sealed class StubFileStorage : Shared.Kernel.Storage.IFileStorage
     {
-        public Task<string> SaveAsync(string key, Stream content, string contentType, CancellationToken ct = default) => Task.FromResult(key);
+        /// <summary>Every save, in order: where it went and whether it could overwrite.</summary>
+        public List<(string Key, Shared.Kernel.Storage.FileWriteMode Mode)> Saves { get; } = [];
+
+        public Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default)
+        {
+            Saves.Add((key, mode));
+            return Task.FromResult(key);
+        }
         public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) => Task.FromResult<Stream?>(null);
         public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
         public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) => Task.FromResult<Uri?>(null);

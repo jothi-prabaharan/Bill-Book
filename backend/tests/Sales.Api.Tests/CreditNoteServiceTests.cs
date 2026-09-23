@@ -173,7 +173,7 @@ public sealed class CreditNoteServiceTests
 
             CreditNoteService service = new(
                 db,
-                new TenantContext { CustomerId = customerId, OrgId = orgId },
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" },
                 numbering,
                 new StubBaseCurrency(),
                 new StubBranchSettings(),

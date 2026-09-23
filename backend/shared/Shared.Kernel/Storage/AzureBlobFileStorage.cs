@@ -38,24 +38,42 @@ public sealed class AzureBlobFileStorage : IFileStorage
     }
 
     public async Task<string> SaveAsync(
-        string key, Stream content, string contentType, CancellationToken ct = default)
+        string key,
+        Stream content,
+        string contentType,
+        FileWriteMode mode = FileWriteMode.CreateNew,
+        CancellationToken ct = default)
     {
         BlobClient blob = _container.GetBlobClient(key);
 
-        await blob.UploadAsync(
-            content,
-            new BlobUploadOptions
-            {
-                // Set on upload rather than after: a second call to set headers
-                // can fail on its own and leave a blob served as
-                // application/octet-stream, which browsers download instead of
-                // displaying and which loses the type the caller validated.
-                HttpHeaders = new BlobHttpHeaders { ContentType = contentType },
-            },
-            ct);
+        try
+        {
+            await blob.UploadAsync(content, UploadOptions(contentType, mode), ct);
+        }
+        catch (RequestFailedException ex)
+            when (ex.Status == 409 && ex.ErrorCode == BlobErrorCode.BlobAlreadyExists)
+        {
+            throw new StorageKeyExistsException(key);
+        }
 
         return key;
     }
+
+    private static BlobUploadOptions UploadOptions(string contentType, FileWriteMode mode) => new()
+    {
+        // If-None-Match: * — storage refuses the write when anything is already
+        // at the key. The check and the write are one request, so two concurrent
+        // saves cannot both succeed.
+        Conditions = mode == FileWriteMode.CreateNew
+            ? new BlobRequestConditions { IfNoneMatch = ETag.All }
+            : null,
+
+        // Set on upload rather than after: a second call to set headers can fail
+        // on its own and leave a blob served as application/octet-stream, which
+        // browsers download instead of displaying and which loses the type the
+        // caller validated.
+        HttpHeaders = new BlobHttpHeaders { ContentType = contentType },
+    };
 
     public async Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default)
     {

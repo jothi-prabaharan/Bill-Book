@@ -285,7 +285,7 @@ public sealed class RecordingInventory : IInventoryClient
 /// </summary>
 public sealed class StubDocumentStorage : Shared.Kernel.Storage.IFileStorage
 {
-    public Task<string> SaveAsync(string key, Stream content, string contentType, CancellationToken ct = default) =>
+    public Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default) =>
         Task.FromResult(key);
 
     public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) =>

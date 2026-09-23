@@ -110,13 +110,14 @@ public sealed class ContactAttachmentService
             return (AttachmentOutcome.InvalidValue, null);
         }
 
-        (Guid _, Guid orgId) = _tenant.Require();
-
-        // Generated, never derived from the uploaded name: the organization is
-        // the first segment, so the tenant boundary exists in the path as well
-        // as in the row.
-        string key = StorageKey.BuildKey(orgId, "contacts", contactId, fileName);
-        await _storage.SaveAsync(key, content, contentType, ct);
+        // Generated, never derived from the uploaded name: customer and branch
+        // are the first two folders, so the tenant boundary exists in the path
+        // as well as in the row. StoragePath keeps the full key, which is why
+        // attachments stored under the older {orgId}/contacts/… layout stay
+        // readable — every read uses the path on the row, never a recomputed one.
+        StorageScope scope = StorageScope.For(_tenant, StorageApp.RetailErp, StorageModule.Contacts);
+        string key = StorageKey.BuildKey(scope, "attachments", contactId, fileName);
+        await _storage.SaveAsync(key, content, contentType, ct: ct);
 
         var attachment = new ContactAttachment
         {

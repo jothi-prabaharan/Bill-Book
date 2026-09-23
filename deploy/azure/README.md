@@ -180,6 +180,27 @@ replicas × shards × pool size before raising replica counts, and cap
 `Maximum Pool Size` in the connection string or add PgBouncer (built into Flexible
 Server) before moving up a tier.
 
+**Where files go.** One private container, `documents`, laid out so an
+operator can find a customer's files by eye:
+
+```
+documents/
+└── {customerCode}/            0000000042
+    └── {orgId}/               the branch
+        └── {app}/             retail-erp
+            └── {module}/      contacts, sales, …
+                └── {area}/    attachments, invoices, …
+```
+
+Folders are not created or checked: in Blob Storage a folder is only the shared
+start of its files' names, so saving a file brings its whole path into being.
+A save **never overwrites by default** — the upload carries `If-None-Match: *`,
+so storage itself refuses a second file at the same key. The invoice archive is
+the one deliberate exception, and blob versioning keeps what it replaces.
+
+A readable path is not a readable file. The container is private and refuses
+shared keys, so knowing a customer's code gets nobody their documents.
+
 **Download links are signed without a key.** The storage account refuses
 shared-key access outright, so `AzureBlobFileStorage` signs with a user delegation
 key issued to the app's identity instead. That needs Storage Blob Data

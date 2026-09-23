@@ -19,6 +19,7 @@ public sealed class TenantMiddleware
         {
             writable.CustomerId = Claim(context.User, "customer_id");
             writable.OrgId = Claim(context.User, "org_id");
+            writable.CustomerCode = context.User.FindFirst("customer_code")?.Value;
             writable.Permissions = new HashSet<string>(
                 context.User.FindAll("permission").Select(c => c.Value),
                 StringComparer.OrdinalIgnoreCase);

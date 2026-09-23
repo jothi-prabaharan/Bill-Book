@@ -339,6 +339,7 @@ public sealed class AuthService
         {
             UserId = user.UserId,
             CustomerId = ctx.CustomerId,
+            CustomerCode = ctx.CustomerCode,
             OrgId = orgId,
             RoleId = assignment.RoleId,
             DisplayName = user.DisplayName,

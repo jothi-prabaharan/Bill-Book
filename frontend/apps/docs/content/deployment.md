@@ -32,6 +32,17 @@ books belong to Indian businesses, so the data stays in India and the latency th
 matters is to Indian users. South India (Chennai) is the alternative. It is a
 decision to make once — moving afterwards replaces the database.
 
+## How stored files are organised
+
+Uploaded attachments and archived documents are filed by customer first, then by
+branch, then by product and module — for example, a branch's archived sales
+invoices sit together under the customer's code, the branch, `retail-erp` and
+`sales`. So everything belonging to one customer is in one place, which is what
+an export on request or a clean-up on leaving needs.
+
+A file is never overwritten by accident: saving a second file where one already
+exists is refused, and the earlier file is left exactly as it was.
+
 ## A service refuses to start without a vault
 
 A service running in production looks for Key Vault before anything else, and

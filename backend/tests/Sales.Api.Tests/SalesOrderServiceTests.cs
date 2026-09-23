@@ -468,7 +468,7 @@ public sealed class SalesOrderServiceTests
 
             SalesOrderService service = new(
                 db,
-                new TenantContext { CustomerId = customerId ?? Guid.NewGuid(), OrgId = orgId },
+                new TenantContext { CustomerId = customerId ?? Guid.NewGuid(), OrgId = orgId, CustomerCode = "0000000042" },
                 numbering,
                 new StubBaseCurrency(),
                 new StubBranchSettings(),

@@ -38,6 +38,7 @@ public sealed class JwtTokenService : ITokenService
         {
             new(JwtRegisteredClaimNames.Sub, request.UserId.ToString()),
             new("customer_id", request.CustomerId.ToString()),
+            new("customer_code", request.CustomerCode),
             new("org_id", request.OrgId.ToString()),
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),

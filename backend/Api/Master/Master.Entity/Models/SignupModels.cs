@@ -159,6 +159,12 @@ public class OrgContextResponse
 
     public Guid CustomerId { get; set; }
 
+    /// <summary>
+    /// The customer's code, carried into the access token as customer_code so
+    /// every service can file stored documents under it without asking Master.
+    /// </summary>
+    public string CustomerCode { get; set; } = null!;
+
     public string OrgName { get; set; } = null!;
 
     public bool DatabaseReady { get; set; }

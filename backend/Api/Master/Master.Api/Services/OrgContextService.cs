@@ -30,6 +30,7 @@ public sealed class OrgContextService
             {
                 o.OrgId,
                 o.CustomerId,
+                c.CustomerCode,
                 OrgName = o.Name,
                 o.FinancialYearStartMonth,
                 o.BaseCurrency,
@@ -101,6 +102,7 @@ public sealed class OrgContextService
         {
             OrgId = row.OrgId,
             CustomerId = row.CustomerId,
+            CustomerCode = row.CustomerCode,
             OrgName = row.OrgName,
             // No per-customer database to be ready any more — "ready" now means
             // this customer's own seeding finished (Trial/Active) rather than

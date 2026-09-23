@@ -179,7 +179,7 @@ public sealed class DeliveryChallanServiceTests
 
             DeliveryChallanService service = new(
                 db,
-                new TenantContext { CustomerId = customerId, OrgId = orgId },
+                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" },
                 numbering,
                 new StubBaseCurrency(),
                 new StubBranchSettings(),

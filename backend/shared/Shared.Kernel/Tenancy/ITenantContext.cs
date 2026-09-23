@@ -11,6 +11,18 @@ public interface ITenantContext
 
     Guid? OrgId { get; }
 
+    /// <summary>
+    /// The customer's human-readable code, from the <c>customer_code</c> claim.
+    ///
+    /// Not an isolation key — <see cref="CustomerId"/> is — and never used in a
+    /// query filter. It exists for places a person reads, where a GUID is
+    /// useless: the first folder of every stored file is this code, so an
+    /// operator browsing the storage account sees whose files they are.
+    ///
+    /// Null on a token minted before the claim existed, and on portal tokens.
+    /// </summary>
+    string? CustomerCode { get; }
+
     IReadOnlySet<string> Permissions { get; }
 
     /// <summary>Throws when either id is missing, so a query can never silently run unscoped.</summary>
@@ -22,6 +34,8 @@ public sealed class TenantContext : ITenantContext
     public Guid? CustomerId { get; set; }
 
     public Guid? OrgId { get; set; }
+
+    public string? CustomerCode { get; set; }
 
     public IReadOnlySet<string> Permissions { get; set; } = new HashSet<string>();
 
