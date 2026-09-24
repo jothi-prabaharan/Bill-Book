@@ -1497,7 +1497,7 @@ design section exists under `docs/` and new cards for it are added to this queue
 All of these share `L-DOC`, so they run one at a time, alongside code work in other lanes. **E-invoicing comes first** because GST law requires it above the turnover threshold; the portal design comes next because the School parent portal (TK-69) builds on it.
 
 ### TK-31 · Design: e-invoicing and e-way bill
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Notes:** delivery challans already carry `EwayBillNo` and `EwayBillDate`.
 
 ### TK-32 · Design: `apps/portal`, the next screens
