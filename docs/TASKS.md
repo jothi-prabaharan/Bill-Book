@@ -926,7 +926,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     The operator still needs a branch assignment to get through the two-step login.
 
 ### TK-14 · Item search: barcode and paging
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Inventory/Inventory.Api/Services/ItemService.cs:36-78` (`ListAsync`).
