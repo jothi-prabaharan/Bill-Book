@@ -403,8 +403,8 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       tests, role `prt_rls_probe`, one asserting both policies carry the NULLIF form).
 
 ### TK-06 · Internal endpoints that set no tenant
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-ACC, L-KERNEL, L-CON, L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/InternalTaxController.cs`: `GET internal/tax/rates`.
   - `backend/shared/Shared.Kernel/Tax/ITaxRateProvider.cs:80`: the caller, which sends no org.
@@ -417,11 +417,11 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   but the request doesn't carry the org. The bank-account pair would be refused writes under RLS,
   though nothing calls it over HTTP today.
 - **Sub-tasks:**
-  - [ ] Confirm by reading `HttpTaxRateProvider` and its Sales/Purchase callers.
-  - [ ] Carry `customerId` and `orgId` on the rates request (query or header) and set the tenant
+  - [x] Confirm by reading `HttpTaxRateProvider` and its Sales/Purchase callers.
+  - [x] Carry `customerId` and `orgId` on the rates request (query or header) and set the tenant
         the way `InternalLedgerController` does. Touching the kernel client needs `L-KERNEL`.
-  - [ ] Delete `InternalBankAccountsController` if it has no caller, or give it the same treatment.
-  - [ ] Test: rates for a seeded branch come back non-empty through the controller.
+  - [x] Delete `InternalBankAccountsController` if it has no caller, or give it the same treatment.
+  - [x] Test: rates for a seeded branch come back non-empty through the controller.
 - **Done when:** a Sales invoice resolves its GST rates from Accounting for its own branch.
 - **Notes:** found while doing TK-71.
   - From TK-72: the same gap in Master. `InternalContactNamesController` (`internal/contacts/names`)
@@ -430,6 +430,26 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     contact names come back empty. So do the item names: `InternalItemNamesController` in Inventory
     sets no tenant either (confirmed in TK-74). The fix is the same one: carry the org and set the tenant. That touches `L-CON` / `L-INV`
     and `L-KERNEL`.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - Confirmed: `HttpTaxRateProvider`, `HttpContactNameLookup` and `HttpItemNameLookup` are
+      registered in Sales and Purchase with `InternalKeyHandler` only, so no token went with them.
+    - `internal/tax/rates` now takes `customerId` and `orgId` in the query and sets the tenant the
+      way `InternalPeriodLocksController` does; `HttpTaxRateProvider.RatesRoute` builds the URL.
+    - The names gap from TK-72/TK-74 is fixed here too, since it was the same bug. `NameLookupRequest`
+      carries `CustomerId`/`OrgId`, `HttpNameLookup` fills them, and both `internal/contacts/names`
+      and `internal/items/names` set the tenant through the new
+      `Shared.Kernel.Tenancy.InternalTenant.Apply`. It takes the branch from the body, or from a
+      forwarded token when the body names none (`Customer.Api`'s `ContactsClient` does this). A body
+      that disagrees with the token gets a 403. All three controllers now resolve their DbContext
+      *after* setting the tenant, because the context binds its connection when it is built.
+    - `InternalBankAccountsController` had no caller: `BankService` provisions in-process through
+      `BankLedgerService`. Deleted, along with `UpdateBankAccountLedgerRequest`.
+    - The three fixtures (`Accounting`, `Inventory`, `Master` contacts) gained a
+      `CreateContext(TenantContext)` overload, for tests where the controller sets the tenant.
+    - **Tests written:** `backend/tests/Accounting.Api.Tests/InternalTaxControllerTests.cs`,
+      `backend/tests/Master.Api.Tests/InternalContactNamesControllerTests.cs`,
+      `backend/tests/Inventory.Api.Tests/InternalItemNamesControllerTests.cs`,
+      `backend/tests/Shared.Kernel.Tests/InternalTenantTests.cs`.
 
 ### TK-07 · Restore the ledger's deferred balance and allocation triggers
 - [ ] open

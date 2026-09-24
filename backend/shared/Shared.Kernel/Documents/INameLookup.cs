@@ -12,6 +12,17 @@ public sealed record NamedRef(long Id, string Code, string Name);
 public sealed class NameLookupRequest
 {
     public List<long> Ids { get; set; } = [];
+
+    /// <summary>
+    /// The branch to resolve them in. The call carries only the internal key,
+    /// so the answering service has no token to read a tenant from; without
+    /// these its query filter sees no branch and every name comes back missing
+    /// (TK-06). Empty only for a caller that forwards the user's own token,
+    /// which the endpoint then reads instead.
+    /// </summary>
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
 }
 
 /// <summary>
@@ -80,7 +91,7 @@ public abstract class HttpNameLookup
     {
         Dictionary<long, NamedRef> resolved = [];
 
-        if (_tenant.OrgId is not Guid orgId || ids.Count == 0)
+        if (_tenant.CustomerId is not Guid customerId || _tenant.OrgId is not Guid orgId || ids.Count == 0)
         {
             return resolved;
         }
@@ -109,7 +120,9 @@ public abstract class HttpNameLookup
         try
         {
             HttpResponseMessage response = await _http.PostAsJsonAsync(
-                Route, new NameLookupRequest { Ids = missing }, ct);
+                Route,
+                new NameLookupRequest { Ids = missing, CustomerId = customerId, OrgId = orgId },
+                ct);
 
             response.EnsureSuccessStatusCode();
 

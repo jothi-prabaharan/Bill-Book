@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tax;
+using Shared.Kernel.Tenancy;
 
 namespace Accounting.Api.Controllers;
 
@@ -18,6 +19,11 @@ namespace Accounting.Api.Controllers;
 /// could omit it would eventually omit it, and a backdated document taxed at
 /// today's rates is a return that has to be amended. Making the date the only
 /// way in means the mistake cannot be made quietly.
+///
+/// <b>The branch travels in the query</b>, like every other internal door. The
+/// caller holds only the internal key, so nothing fills the tenant from a token;
+/// before TK-06 this route read the rates with no tenant at all, and the query
+/// filter answered every branch with an empty list.
 /// </summary>
 [ApiController]
 [AllowAnonymous]
@@ -25,9 +31,14 @@ namespace Accounting.Api.Controllers;
 [Route("internal/tax")]
 public sealed class InternalTaxController : ControllerBase
 {
-    private readonly TaxMasterService _taxes;
+    private readonly TenantContext _tenant;
+    private readonly IServiceProvider _services;
 
-    public InternalTaxController(TaxMasterService taxes) => _taxes = taxes;
+    public InternalTaxController(TenantContext tenant, IServiceProvider services)
+    {
+        _tenant = tenant;
+        _services = services;
+    }
 
     /// <summary>
     /// Every active rate in force on <paramref name="on"/>, one per tax group.
@@ -37,8 +48,20 @@ public sealed class InternalTaxController : ControllerBase
     /// services, and the copy that drifted would be the one nobody read.
     /// </summary>
     [HttpGet("rates")]
-    public async Task<IActionResult> Rates([FromQuery] DateOnly on, CancellationToken ct)
+    public async Task<IActionResult> Rates(
+        [FromQuery] Guid customerId,
+        [FromQuery] Guid orgId,
+        [FromQuery] DateOnly on,
+        CancellationToken ct)
     {
+        if (customerId == Guid.Empty || orgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required to read tax rates.",
+            });
+        }
+
         if (on == default)
         {
             return BadRequest(new MessageResponse
@@ -48,8 +71,15 @@ public sealed class InternalTaxController : ControllerBase
             });
         }
 
+        // Set before anything resolves a DbContext: the context is built from
+        // the tenant, so resolving the service first would bind it to no tenant.
+        _tenant.CustomerId = customerId;
+        _tenant.OrgId = orgId;
+
+        var taxes = _services.GetRequiredService<TaxMasterService>();
+
         IReadOnlyList<Entity.Models.TaxMasterListItem> rows =
-            await _taxes.ListAsync(includeHistory: true, includeInactive: false, ct);
+            await taxes.ListAsync(includeHistory: true, includeInactive: false, ct);
 
         // In force on the date, newest first per group, and one row per group —
         // the same rule TaxMasterService.ResolveAsync applies to a single group,

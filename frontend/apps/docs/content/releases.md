@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Fixed**: **Sales and purchase documents could not find their GST rates, or show contact and item names.** When a document asked the accounting, contacts and stock areas for these, it did not say which branch it was asking for, so the answer came back empty for every branch: tax could not be worked out, and lists showed numbers where names belonged. Each request now names its branch, and gets that branch's rates and names.
 - **Fixed**: **Reports could disappear for everyone once database-level protection was switched on.** The report list's protection checked a setting nothing supplied, so on a server that enforces it no branch could see its own saved reports. It now checks the signed-in branch and customer, like every other area.
 - **Security**: **Sales documents are kept apart by the database as well.** Quotes, orders, challans, invoices, credit notes, the sales register and payment reminders now carry the same database-level protection. Opening another branch's invoice by its number now answers *not found* rather than *forbidden*, so the answer no longer confirms that the invoice exists elsewhere.
 - **Security**: **Purchase documents are kept apart by the database as well.** Purchase orders, goods receipts, bills and debit notes now carry the same database-level protection as accounting and stock: a row belonging to another branch or another customer cannot be read or written even if a fault in the application were to ask for it.

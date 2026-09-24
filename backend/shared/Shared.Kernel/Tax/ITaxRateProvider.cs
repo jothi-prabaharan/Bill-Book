@@ -63,7 +63,7 @@ public sealed class HttpTaxRateProvider : ITaxRateProvider
     public async Task<IReadOnlyDictionary<long, TaxRate>?> GetRatesAsync(
         DateOnly onDate, CancellationToken ct = default)
     {
-        if (_tenant.OrgId is not Guid orgId)
+        if (_tenant.CustomerId is not Guid customerId || _tenant.OrgId is not Guid orgId)
         {
             return null;
         }
@@ -77,8 +77,11 @@ public sealed class HttpTaxRateProvider : ITaxRateProvider
 
         try
         {
+            // The branch goes in the query: this call carries only the internal
+            // key, so Accounting has no token to read a tenant from, and without
+            // these its query filter answers every branch with no rates (TK-06).
             List<TaxRate>? rates = await _http.GetFromJsonAsync<List<TaxRate>>(
-                $"internal/tax/rates?on={onDate:yyyy-MM-dd}", ct);
+                RatesRoute(customerId, orgId, onDate), ct);
 
             if (rates is null)
             {
@@ -113,6 +116,10 @@ public sealed class HttpTaxRateProvider : ITaxRateProvider
             return null;
         }
     }
+
+    /// <summary>The internal route, with the branch and the date. Public so the route is testable.</summary>
+    public static string RatesRoute(Guid customerId, Guid orgId, DateOnly onDate) =>
+        $"internal/tax/rates?customerId={customerId}&orgId={orgId}&on={onDate:yyyy-MM-dd}";
 
     public async Task<TaxRate?> GetRateAsync(
         long taxGroupId, DateOnly onDate, CancellationToken ct = default)

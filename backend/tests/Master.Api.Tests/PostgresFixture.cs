@@ -82,14 +82,21 @@ public sealed class PostgresFixture : IAsyncLifetime
     /// ids, so the query filter keeps them apart — which also means the tests
     /// exercise the filter rather than working around it.
     /// </summary>
-    public ContactsDbContext CreateContext(Guid customerId, Guid orgId)
+    public ContactsDbContext CreateContext(Guid customerId, Guid orgId) =>
+        CreateContext(new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
+
+    /// <summary>
+    /// A context that reads whatever <paramref name="tenant"/> holds when it
+    /// queries, for a test whose controller sets the tenant itself — an
+    /// internal route that takes the branch from the request (TK-06).
+    /// </summary>
+    public ContactsDbContext CreateContext(TenantContext tenant)
     {
         var options = new DbContextOptionsBuilder<ContactsDbContext>()
             .UseNpgsql(ConnectionString)
             .Options;
 
-        return new ContactsDbContext(
-            options, new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" });
+        return new ContactsDbContext(options, tenant);
     }
 }
 

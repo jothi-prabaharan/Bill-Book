@@ -140,9 +140,11 @@ public class ProvisionSubAccountsRequest
 }
 
 /// <summary>
-/// Asks Accounting to create the GL account behind a bank account. Sent by
-/// Banking on create; idempotent, because the account is keyed on the bank
-/// account id and a retry must not produce a second one.
+/// The GL account behind a bank account, made in-process by
+/// <c>BankLedgerService</c> when the bank account is created. Idempotent,
+/// because the account is keyed on the bank account id and a retry must not
+/// produce a second one. (It was once an internal HTTP route, from when Banking
+/// was a separate service; nothing called it after the merge, and TK-06 removed it.)
 /// </summary>
 public class ProvisionBankAccountRequest
 {
@@ -160,15 +162,6 @@ public class ProvisionBankAccountRequest
     /// <summary>Null when the account is in the organization's base currency.</summary>
     [MaxLength(3, ErrorMessage = "Currency must be a 3-letter code.")]
     public string? CurrencyCode { get; set; }
-}
-
-public class UpdateBankAccountLedgerRequest
-{
-    [Required(ErrorMessage = "Account name is required.")]
-    [MaxLength(200, ErrorMessage = "Account name cannot exceed 200 characters.")]
-    public string AccountName { get; set; } = null!;
-
-    public bool IsActive { get; set; } = true;
 }
 
 public enum BankLedgerOutcome
