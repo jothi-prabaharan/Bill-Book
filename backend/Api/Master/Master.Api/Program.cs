@@ -129,9 +129,21 @@ builder.Services.AddScoped<IIdentityAdmin, InProcessIdentityAdmin>();
 // the decrypted password never leaves this process — which is what the old
 // Identity-to-Platform hop existed to guarantee and now gets for free.
 builder.Services.AddScoped<SmtpEmailSender>();
-builder.Services.AddSingleton<IEmailQueue, InProcessEmailQueue>();
-builder.Services.AddScoped<IEmailSender, QueuedEmailSender>();
-builder.Services.AddHostedService<EmailDispatchWorker>();
+
+// Two paths (TK-19). With the notification worker running, a mail is an
+// EmailRequested event and the worker sends it, surviving a restart here.
+// Without it — local development, or a deployment where the worker is not
+// running — the in-process queue sends it, as it always has.
+if (EmailDelivery.UseWorker(builder.Configuration))
+{
+    builder.Services.AddScoped<IEmailSender, EventEmailSender>();
+}
+else
+{
+    builder.Services.AddSingleton<IEmailQueue, InProcessEmailQueue>();
+    builder.Services.AddScoped<IEmailSender, QueuedEmailSender>();
+    builder.Services.AddHostedService<EmailDispatchWorker>();
+}
 builder.Services.AddSingleton<IProvisioningQueue, InProcessProvisioningQueue>();
 builder.Services.AddHostedService<ProvisioningWorker>();
 

@@ -121,3 +121,46 @@ public sealed class EmailDispatchWorker : BackgroundService
         }
     }
 }
+
+/// <summary>
+/// The IEmailSender callers see when <c>Notification.Worker</c> delivers mail
+/// (TK-19): publishes an <see cref="Shared.Kernel.Messaging.EmailRequested"/>
+/// and returns. The worker reads the customer's mailbox from Master's internal
+/// API, sends it, and records the message id so a redelivery sends nothing.
+///
+/// Chosen by <see cref="EmailDelivery.UseWorker"/>; without it every mail keeps
+/// the in-process queue above, which is how local development and any
+/// deployment without the worker still send.
+/// </summary>
+public sealed class EventEmailSender : IEmailSender
+{
+    private readonly IEventPublisher _events;
+    private readonly TimeProvider _clock;
+
+    public EventEmailSender(IEventPublisher events, TimeProvider clock)
+    {
+        _events = events;
+        _clock = clock;
+    }
+
+    public Task SendAsync(EmailMessage message, CancellationToken cancellationToken = default) =>
+        _events.PublishAsync(
+            Shared.Kernel.Messaging.EmailRequested.From(message, Guid.NewGuid().ToString("N"), _clock.GetUtcNow()),
+            cancellationToken);
+}
+
+/// <summary>Which of the two mail paths this deployment takes.</summary>
+public static class EmailDelivery
+{
+    /// <summary>
+    /// The worker path, only when both hold: Service Bus is configured — a mail
+    /// published with nowhere to go is a mail lost — and
+    /// <c>Notification:EmailWorker</c> says a worker is subscribed to it. Service
+    /// Bus alone is not enough: a deployment can have a namespace and no worker
+    /// running, and switching on the namespace alone would stop every
+    /// invitation and one-time code there.
+    /// </summary>
+    public static bool UseWorker(IConfiguration configuration) =>
+        configuration["ServiceBus:Namespace"] is { Length: > 0 }
+        && configuration.GetValue<bool>("Notification:EmailWorker");
+}

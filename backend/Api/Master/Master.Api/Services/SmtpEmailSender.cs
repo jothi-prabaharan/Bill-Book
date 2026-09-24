@@ -1,13 +1,12 @@
-using System.Net;
-using System.Net.Mail;
+using Shared.Kernel.Email;
 using Shared.Kernel.Interfaces;
 
 namespace Master.Api.Services;
 
 /// <summary>
-/// Sends mail using the credentials in mst.SmtpSettings. Lives in Platform
-/// because Platform owns that table — the decrypted password never crosses a
-/// service boundary. Other services ask Platform to send instead.
+/// Sends mail using the credentials in mst.SmtpSettings, in process — the path
+/// every mail takes when no notification worker is running (TK-19). The SMTP
+/// conversation itself is <see cref="SmtpMailer"/>'s, shared with the worker.
 /// </summary>
 public sealed class SmtpEmailSender : IEmailSender
 {
@@ -30,29 +29,7 @@ public sealed class SmtpEmailSender : IEmailSender
                 "No active SMTP settings are configured. Set them in Settings → Email.");
         }
 
-        using var client = new SmtpClient(smtp.Host, smtp.Port)
-        {
-            EnableSsl = smtp.UseSsl,
-            Credentials = new NetworkCredential(smtp.Username, smtp.Password),
-            DeliveryMethod = SmtpDeliveryMethod.Network,
-        };
-
-        using var mail = new MailMessage
-        {
-            From = new MailAddress(smtp.FromEmail, smtp.FromName),
-            Subject = message.Subject,
-            Body = message.HtmlBody,
-            IsBodyHtml = true,
-        };
-        mail.To.Add(new MailAddress(message.ToEmail, message.ToName ?? message.ToEmail));
-
-        if (!string.IsNullOrEmpty(message.TextBody))
-        {
-            mail.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
-                message.TextBody, null, "text/plain"));
-        }
-
-        await client.SendMailAsync(mail, cancellationToken);
+        await SmtpMailer.SendAsync(smtp, message, cancellationToken);
 
         // Never log the body — invite links and OTP codes travel in it.
         _logger.LogInformation(

@@ -1110,8 +1110,8 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-19 · Notification.Worker takes over email from Master
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-NTF, L-MST · **Depends on:** TK-70 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-NTF, L-MST, L-KERNEL, L-DEPS (one commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/EmailQueue.cs`: `IEmailQueue`, `InProcessEmailQueue`,
     `QueuedEmailSender` and `EmailDispatchWorker`.
@@ -1124,23 +1124,69 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - `IEventPublisher` sends to Service Bus when `ServiceBus:Namespace` is set, and only logs
     otherwise. Nothing consumes an event anywhere.
 - **Sub-tasks:**
-  - [ ] Define an `EmailRequested` event in `Shared.Kernel`, with `MessageId` and the fields of
+  - [x] Define an `EmailRequested` event in `Shared.Kernel`, with `MessageId` and the fields of
         `EmailMessage`. This takes `L-KERNEL` for that commit.
-  - [ ] Replace `QueuedEmailSender` with a sender that publishes `EmailRequested` through
+  - [x] Replace `QueuedEmailSender` with a sender that publishes `EmailRequested` through
         `IEventPublisher`.
-  - [ ] Keep the in-process path when Service Bus isn't configured, so local development still
+  - [x] Keep the in-process path when Service Bus isn't configured, so local development still
         sends mail.
-  - [ ] Add a Service Bus consumer to `Notification.Worker` that sends through `SmtpEmailSender`,
+  - [x] Add a Service Bus consumer to `Notification.Worker` that sends through `SmtpEmailSender`,
         which moves or is shared.
-  - [ ] Dedupe on `MessageId`, since delivery is at least once. A `ntf.ProcessedMessages` table
+  - [x] Dedupe on `MessageId`, since delivery is at least once. A `ntf.ProcessedMessages` table
         (its own migration, with RLS) or an idempotency key is enough.
-  - [ ] SMTP settings are per customer (`mst.SmtpSettings`). The worker reads them through Master's
+  - [x] SMTP settings are per customer (`mst.SmtpSettings`). The worker reads them through Master's
         API, not its `DbContext` (hard rule 8).
-  - [ ] Test: a redelivered message sends once.
-  - [ ] Test: an OTP email still arrives with Service Bus unset.
+  - [x] Test: a redelivered message sends once.
+  - [x] Test: an OTP email still arrives with Service Bus unset.
   - [ ] Owner: send an invitation end to end.
 - **Done when:** an invitation email is sent by the worker, and a redelivered message sends once.
 - **Notes:** ask the owner before moving anything beyond email.
+  - Done (2026-09-24). **Only email moved.**
+  - **Shared.Kernel:**
+    - `Messaging/EmailRequested` carries a `MessageId` in the body (the dedupe key, chosen once by
+      the sender) plus every `EmailMessage` field.
+    - `Email/SmtpMailer` and `ResolvedSmtp` moved out of Master, so both processes build a mail
+      one way.
+  - **Master:**
+    - `EventEmailSender` publishes `EmailRequested`. `QueuedEmailSender` wasn't replaced; it is
+      kept as the default.
+    - `EmailDelivery.UseWorker` picks the path. It needs `ServiceBus:Namespace` **and**
+      `Notification:EmailWorker=true`. A namespace alone would have silently stopped Azure's mail,
+      because the worker isn't deployed there.
+    - New `InternalSmtpController` (`GET internal/smtp/resolved?customerId=`, `[InternalOnly]`).
+      **This returns the decrypted SMTP password to the internal-key holder**, a deliberate change
+      from "the password never leaves Master". It is used only on the worker path, and the worker
+      holds it for one send.
+  - **Worker:**
+    - `NotificationDbContext` (`ntf`), `ProcessedMessage`, and migration `InitialNotificationSchema`
+      (migrated at start).
+    - `ProcessedMessageStore` claims before sending (the PK lets one insert through) and marks sent
+      after. A claim with no send behind it goes stale after 5 minutes, and a guarded update decides
+      the takeover.
+    - `EmailRequestHandler` runs claim → resolve → send → mark, and gives the claim back on failure.
+    - `EmailRequestedConsumer` (Service Bus processor, manual settle, and only when the namespace is
+      set):
+      - sent or duplicate → complete;
+      - in progress or failed → abandon;
+      - unreadable or no mailbox → dead-letter.
+  - **RLS:** `ntf.ProcessedMessages` is a *named exemption*, not "with RLS" as first written. It has
+    no tenant columns, and platform mail has no customer. The reason is written in the migration and
+    added to CLAUDE.md's exemption list.
+  - **L-DEPS:** pinned `System.Security.Cryptography.Xml` to 10.0.12. EF Design under the Worker SDK
+    pulled 9.0.0 (high-severity advisories), and 10.0.0 is flagged too. Also added the test
+    project to `Bill-Book.sln`.
+  - **Not done, for the owner:** neither deployment runs the worker. Azure needs:
+    - an `EmailRequested` topic and a `notification-worker` subscription;
+    - a worker container with an identity holding Data Receiver;
+    - `Notification:EmailWorker=true` on Master.
+
+    Steps are in the docs' Deployment page. Until then everything takes the in-process path.
+  - Tests:
+    - new project `tests/Notification.Worker.Tests` (`NOTIFICATION_TEST_DB`): `ProcessedMessageStoreTests`,
+      `EmailRequestHandlerTests`, `EmailRequestedConsumerTests`;
+    - `Master.Api.Tests/EmailDeliveryTests.cs`;
+    - `Shared.Kernel.Tests/SmtpMailerTests.cs`.
+
 
 ### TK-20 · `PaymentReminderWorker` sends nothing, and reads across tenants
 - [ ] open

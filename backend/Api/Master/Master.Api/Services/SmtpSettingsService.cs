@@ -1,3 +1,4 @@
+using Shared.Kernel.Email;
 using Microsoft.EntityFrameworkCore;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
@@ -141,22 +142,4 @@ public sealed class SmtpSettingsService
         IsActive = row.IsActive,
         IsInherited = inherited,
     };
-}
-
-/// <summary>Decrypted SMTP credentials. Never serialized to a client.</summary>
-public sealed class ResolvedSmtp
-{
-    public required string Host { get; init; }
-
-    public required int Port { get; init; }
-
-    public required bool UseSsl { get; init; }
-
-    public required string FromEmail { get; init; }
-
-    public required string FromName { get; init; }
-
-    public required string Username { get; init; }
-
-    public required string Password { get; init; }
 }

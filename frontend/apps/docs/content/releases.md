@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Email can be delivered by the notification worker.** A deployment that runs `Notification.Worker` with Azure Service Bus can now hand invitations, one-time codes and password resets to it. Queued email then survives a restart, and a message delivered twice is sent once. Without that setup, email is sent exactly as before. See [Deployment](deployment).
 - **Changed**: **Each branch keeps its own support response times.** How soon a ticket must be answered and resolved is now held per branch and per priority, instead of being fixed for everyone. Every branch starts with the times tickets have always had: urgent within 2 hours, high 8 hours, medium 2 days and low 7 days. A new ticket's due time follows its own branch's times. Existing branches get them the next time their setup is re-run.
 - **Added**: **Every branch comes with a walk-in customer.** A new branch has a customer coded `WALKIN`, named *Walk-in Customer*, for counter sales to buyers who give no name. It has no GSTIN, so its sales are B2C. The till uses it by default with no setup. Existing branches get one the next time their setup is re-run from the admin screen. The code `WALKIN` can no longer be given to any other contact.
 - **Changed**: **A support ticket's contact is found by searching.** The ticket form's contact field opens a search by code, name or GSTIN, in place of a dropdown that loaded every contact in the branch before it could show one.
