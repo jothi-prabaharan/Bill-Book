@@ -1363,7 +1363,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: `Master.Api.Tests.RateServiceTests` (on-or-before for both tables, Manual precedence, both unique indexes, upsert correcting, refusals, removal of Manual rows only) and `apps/admin/.../rates.service.spec.ts`.
 
 ### TK-25 · RateSync.Worker: metals (IBJA)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-14
 - **Where:** copy `backend/worker/CostingEngine.Worker/Program.cs`, as the note in
   `RateSync.Worker/Program.cs` asks.
