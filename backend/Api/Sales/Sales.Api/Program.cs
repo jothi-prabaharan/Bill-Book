@@ -33,7 +33,13 @@ builder.Host.UseDefaultServiceProvider(options =>
     options.ValidateScopes = true;
 });
 
-builder.Services.AddControllers();
+// Enums travel by name, both ways (TK-40): the forms send `lineType: "Stock"`
+// and `taxTreatment: "Taxable"`, which the default options refuse, so without
+// this every document saved from a screen failed model binding. Numbers are
+// still accepted.
+builder.Services.AddControllers()
+    .AddJsonOptions(o => o.JsonSerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter()));
 
 // Attaches the shared internal key to every service-to-service call, so a
 // guarded endpoint is reachable by this service and by nothing else.

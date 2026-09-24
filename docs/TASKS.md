@@ -1980,15 +1980,15 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `Sales.Api.Tests.PosSaleTests` (tender rules, debits after change, a cash sale posting to the drawer with no receivable, short tenders posting nothing, **two concurrent sales of the last unit leaving exactly one**) and two `LedgerPostingServiceTests` for the bank-account leg.
 
 ### TK-40 · POS till screen (T7.2)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-DSK · **Depends on:** TK-79, TK-39, TK-17 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-DSK, L-SAL (added 2026-09-24: the JSON enum fix) · **Depends on:** TK-79, TK-39, TK-17 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] Keyboard-driven: F-keys for tender, quantity, void line and hold.
-  - [ ] Add an item on a barcode-scanner keystroke burst, through TK-14's barcode search.
-  - [ ] Decide the offline behaviour (queue sales locally, or refuse when offline), and write it
+  - [x] Keyboard-driven: F-keys for tender, quantity, void line and hold.
+  - [x] Add an item on a barcode-scanner keystroke burst, through TK-14's barcode search.
+  - [x] Decide the offline behaviour (queue sales locally, or refuse when offline), and write it
         under Notes and in the docs page.
-  - [ ] Post through TK-39.
-  - [ ] Lint and build are clean.
+  - [x] Post through TK-39.
+  - [x] Lint and build are clean.
 - **Done when:** a barcode-scanned sale posts from `apps/desktop`.
 - **Notes:**
   - From TK-39 (2026-09-24): post through `POST api/sales/pos/sales` with `Tenders` (`Mode`, `Amount`, `BankAccountId`, `Reference`); list tender accounts with `GET api/bank-accounts/tender-options`. A 409 names the item that ran out; a 422 means the tenders do not pay the total.
@@ -1998,6 +1998,26 @@ The build cards each design in section E produced. Each design section in `docs/
     tax-inclusive price can total a paisa under its MRP (see TK-79's Notes).
   - **Decided by the owner (2026-09-24):** a `WALKIN` contact is seeded per branch (TK-17) and the till defaults to it; POS invoices carry a **round-off line** to the rupee, posted to the seeded Round Off account; the till **refuses sales while offline** (no local queue).
   - Dependency on TK-17 added 2026-09-24: the till defaults to the seeded `WALKIN` contact.
+- **Outcome (2026-09-24):**
+  - **Keys** (`pos-keys.ts`, pure): F2 add item, F3 customer, F4 quantity of the selected line, F6 void it, F8 hold, F7 recall, F9 tender, arrow keys move the selection, Escape closes. Keys with Ctrl, Alt or Meta held are left to the browser. A hint bar shows the keys as buttons.
+  - **Scanner** (`BarcodeBurst`): keys less than 40 ms apart ending in Enter, at least four characters long, count as a scan. A scan adds the item whose code equals it, or the only match; otherwise the item picker opens on the scan. The item list carries no barcode field, so an exact barcode cannot be confirmed on the client; see Notes.
+  - **Tender** (`pos-tender.ts`, the server's rules): cash, card or UPI into an account from `GET api/bank-accounts/tender-options`, split tenders, change from cash, and the total rounded to the rupee (the owner's round-off decision). **Complete sale** posts through `POST api/sales/pos/sales` (`pos-sale.service.ts`) and then prints the existing ESC/POS sketch (TK-41 does the real receipt).
+  - **Offline:** sales are **refused**, and nothing is queued (the owner's decision). An online/offline banner, and checkout disabled while offline.
+  - **Hold and recall** keep carts in memory only. The till id is a per-device setting in `localStorage` (`bb.pos.tillId`, default 1), because there is no till master yet.
+  - **Found and fixed (L-SAL): no screen could save a sales document.** The forms send `lineType: "Stock"` and `taxTreatment: "Taxable"` as names, but no service registers `JsonStringEnumConverter`, so System.Text.Json refused the body and every save got a 400 from model binding. Sales now registers the converter (numbers are still accepted). **The other seven services have the same gap**, so it is queued as TK-124.
+  - Checks: desktop lint and build, typecheck and backend build are clean. Specs: `pos-keys.spec.ts`, `pos-tender.spec.ts`, `pos-sale.service.spec.ts`.
+  - **Not verified end to end:** a barcode-scanned sale posting from `apps/desktop` needs a running stack, a scanner or its emulation, and the owner's run.
+
+### TK-124 · Every service reads enums by name (JSON binding)
+- [ ] open
+- **Lanes:** L-PUR, L-ACC, L-INV, L-MST, L-CON, L-CUS, L-RPT, L-PRT · **Depends on:** — · **Decision:** —
+- **Where:** each `{Service}.Api/Program.cs` `AddControllers()`; Sales' fix in `Sales.Api/Program.cs` (TK-40).
+- **State (2026-09-24):** only Sales registers `JsonStringEnumConverter`. The screens send enum fields as names (the shared line grid sends `lineType: "Stock"` and `taxTreatment: "Taxable"` to Purchase exactly as to Sales), and the default options refuse a name for an enum, so those saves fail model binding with a 400.
+- **Sub-tasks:**
+  - [ ] Register `JsonStringEnumConverter` in every service's `AddControllers().AddJsonOptions(...)`, or once in a `Shared.Kernel` extension every service calls.
+  - [ ] Check each service's responses for enum-typed properties that a screen reads as a number, and fix the screen if one does (none were found in Sales).
+  - [ ] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
+- **Done when:** a purchase bill saved from its screen is accepted.
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [ ] open

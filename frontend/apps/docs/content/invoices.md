@@ -106,7 +106,26 @@ A taxable item with no current sales rate in the tax master shows a warning on i
 
 Until this change a till sale could not be posted at all. It debited an account called "Cash", which no chart of accounts has.
 
-The till screen itself (TK-40) and barcode scanning are not built yet.
+### The till screen
+
+The desktop app's till is driven by the keyboard:
+
+| Key | Does |
+|---|---|
+| **F2** | Add an item |
+| **F3** | Change the customer |
+| **F4** | Change the selected line's quantity |
+| **F6** | Void the selected line |
+| **F8** / **F7** | Hold the cart / recall the last held cart |
+| **F9** | Tender |
+| **↑ ↓** | Move the selection |
+| **Esc** | Close the tender or the search |
+
+- **A barcode scanner adds the item it reads.** A scanner types the code as a fast burst of keys ending in Enter, which the till tells apart from a person typing. The item whose code is exactly the scan is added, or the only item matching it. If several items match, the search opens on the scan rather than adding the wrong one.
+- **Tender** opens with the whole amount ready in cash. Choose cash, card or UPI and the account the money goes into, add as many tenders as the payment needs, and **Complete sale**. The total is rounded to the rupee, as the posted invoice is, and change is shown before the sale is sent.
+- **Held sales** stay on the till only until the app closes.
+- **The till number** is set at the top of the screen and remembered on this computer.
+- **Offline, the till refuses to sell.** The status at the top says so, and nothing is queued to send later. A sale is either posted, with its stock taken, or not made at all.
 
 ## Picking the customer and items
 

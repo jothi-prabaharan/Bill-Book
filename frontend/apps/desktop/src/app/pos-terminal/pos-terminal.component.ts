@@ -1,8 +1,7 @@
-import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { readApiFailure } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
-import { InvoiceService, SaveInvoiceRequest, toApiLine } from '@bill-book/sales-core';
+import { toApiLine } from '@bill-book/sales-core';
 import {
   DocumentLine,
   LookupDialogComponent,
@@ -12,6 +11,9 @@ import {
   UiMessage,
 } from '@bill-book/ui-components';
 import { EscPosService } from './esc-pos.service';
+import { BarcodeBurst, POS_KEYS, PosCommand, commandFor } from './pos-keys';
+import { PosSaleService, TenderAccount } from './pos-sale.service';
+import { TenderLine, TenderMode, roundToRupee, tenderSummary } from './pos-tender';
 import {
   QTY_SCALE,
   addItem,
@@ -32,21 +34,33 @@ import {
 
 type Picker = 'none' | 'customer' | 'item';
 
+/** A cart put aside with F8, to be recalled with F7. Kept in memory only. */
+interface HeldSale {
+  id: number;
+  lines: DocumentLine[];
+  customer: CustomerOption | null;
+  heldAt: Date;
+}
+
+const TILL_KEY = 'bb.pos.tillId';
+
 /**
- * The till: a cart of real items for a real customer.
+ * The till: a cart of real items for a real customer, paid and posted in one
+ * call (TK-40, over TK-39's `POST api/sales/pos/sales`).
  *
- * **A POS sale is an ordinary invoice with a till on it** — an `sal.Invoices`
- * row with `TransactionTypeCode = 'POS'` — so the cart holds invoice lines and
- * every figure on it comes from `line-math.ts`, the same arithmetic the invoice
- * form and the C# calculator share. The GST shown here is a preview; the server
- * recomputes it on save.
+ * **A POS sale is an ordinary invoice with a till on it**, so the cart holds
+ * invoice lines and every figure on it comes from `line-math.ts`, the same
+ * arithmetic the invoice form and the C# calculator share. The GST shown is a
+ * preview; the server recomputes it, and rounds the total to the rupee.
  *
- * The customer defaults to the branch's walk-in contact, found by its code
- * rather than by an id that differs in every database. Choosing another
- * customer can move the sale across a state line, which rebuilds every line's
- * tax rows rather than just recalculating them.
+ * **Keyboard first.** F2 adds an item, F3 changes the customer, F4 edits the
+ * selected line's quantity, F6 voids it, F8 holds the cart and F7 recalls a held
+ * one, F9 opens the tender; the arrow keys move the selection and Escape closes
+ * whatever is open. A barcode scanner's burst of keystrokes adds the item it
+ * names (`BarcodeBurst`).
  *
- * Posting the sale — tender, till, change, the POS transaction type — is TK-39.
+ * **Offline, it refuses to sell** (owner's decision, 24 September 2026). There
+ * is no local queue: a sale is either posted, with stock taken, or not made.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,8 +70,8 @@ type Picker = 'none' | 'customer' | 'item';
   templateUrl: './pos-terminal.component.html',
   styleUrl: './pos-terminal.component.scss',
 })
-export class PosTerminalComponent implements OnInit {
-  private readonly invoiceService = inject(InvoiceService);
+export class PosTerminalComponent implements OnInit, OnDestroy {
+  private readonly posSales = inject(PosSaleService);
   private readonly escPosService = inject(EscPosService);
   private readonly lookups = inject(PosLookupService);
   protected readonly formats = inject(FormatSettingsService);
@@ -88,9 +102,51 @@ export class PosTerminalComponent implements OnInit {
 
   protected readonly isInterState = computed(() => this.context().isInterState);
 
-  protected readonly canCheckout = computed(
-    () => !this.busy() && this.customer() !== null && this.lines().length > 0,
+  protected readonly keys = POS_KEYS;
+
+  /** The line F4 and F6 act on. */
+  protected readonly selected = signal(0);
+
+  protected readonly online = signal(typeof navigator === 'undefined' ? true : navigator.onLine);
+
+  protected readonly tillId = signal(PosTerminalComponent.readTillId());
+
+  protected readonly held = signal<HeldSale[]>([]);
+  private heldSeq = 0;
+
+  // ---- Tender ---------------------------------------------------------------
+
+  protected readonly tenderOpen = signal(false);
+  protected readonly tenders = signal<TenderLine[]>([]);
+  protected readonly tenderAccounts = signal<TenderAccount[]>([]);
+  protected readonly tenderMode = signal<TenderMode>('Cash');
+  protected readonly tenderAccountId = signal<number | null>(null);
+  /** Rupees, as typed. */
+  protected readonly tenderAmount = signal('');
+  protected readonly tenderReference = signal('');
+
+  /** What the customer pays: the cart total rounded to the rupee, in paise. */
+  protected readonly payable = computed(() => roundToRupee(this.totals().totalAmount));
+
+  protected readonly roundOff = computed(() => this.payable() - this.totals().totalAmount);
+
+  protected readonly tenderState = computed(() => tenderSummary(this.payable(), this.tenders()));
+
+  protected readonly accountsForMode = computed(() =>
+    this.tenderAccounts().filter((a) => (this.tenderMode() === 'Cash') === (a.accountType === 'Cash')),
   );
+
+  protected readonly canCheckout = computed(
+    () => !this.busy() && this.online() && this.customer() !== null && this.lines().length > 0,
+  );
+
+  protected readonly canComplete = computed(
+    () => this.canCheckout() && this.tenderState().problem === null,
+  );
+
+  private readonly burst = new BarcodeBurst();
+  private readonly onOnline = () => this.online.set(true);
+  private readonly onOffline = () => this.online.set(false);
 
   protected readonly pickerTitle = computed(() =>
     this.picker() === 'customer' ? 'Choose a customer' : 'Add an item',
@@ -103,6 +159,172 @@ export class PosTerminalComponent implements OnInit {
   ngOnInit(): void {
     void this.formats.load();
     void this.load();
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('online', this.onOnline);
+      window.addEventListener('offline', this.onOffline);
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('online', this.onOnline);
+      window.removeEventListener('offline', this.onOffline);
+    }
+  }
+
+  private static readTillId(): number {
+    try {
+      const stored = Number(localStorage.getItem(TILL_KEY));
+      return Number.isInteger(stored) && stored > 0 ? stored : 1;
+    } catch {
+      return 1;
+    }
+  }
+
+  protected setTillId(value: string): void {
+    const id = Number(value);
+    if (!Number.isInteger(id) || id <= 0) {
+      return;
+    }
+    this.tillId.set(id);
+    try {
+      localStorage.setItem(TILL_KEY, String(id));
+    } catch {
+      // A per-device convenience; the till still works on its default.
+    }
+  }
+
+  // ---- Keyboard -------------------------------------------------------------
+
+  @HostListener('document:keydown', ['$event'])
+  protected onKey(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    const typing = !!target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName);
+
+    // A scan arrives as fast keystrokes wherever the focus is not a field.
+    if (!typing && this.picker() === 'none' && !this.tenderOpen()) {
+      const code = this.burst.push(event.key, event.timeStamp || Date.now());
+      if (code !== null) {
+        event.preventDefault();
+        void this.scan(code);
+        return;
+      }
+    }
+
+    const command = commandFor(event);
+    if (command === null || (typing && !event.key.startsWith('F') && command !== 'cancel')) {
+      return;
+    }
+
+    event.preventDefault();
+    this.run(command);
+  }
+
+  protected run(command: PosCommand): void {
+    const count = this.lines().length;
+
+    switch (command) {
+      case 'addItem':
+        this.openItemPicker();
+        break;
+      case 'customer':
+        this.openCustomerPicker();
+        break;
+      case 'quantity':
+        this.focusQuantity(this.selected());
+        break;
+      case 'voidLine':
+        if (count > 0) {
+          this.remove(Math.min(this.selected(), count - 1));
+        }
+        break;
+      case 'hold':
+        this.hold();
+        break;
+      case 'recall':
+        this.recall();
+        break;
+      case 'tender':
+        void this.openTender();
+        break;
+      case 'selectUp':
+        this.selected.set(Math.max(0, this.selected() - 1));
+        break;
+      case 'selectDown':
+        this.selected.set(Math.min(Math.max(0, count - 1), this.selected() + 1));
+        break;
+      case 'cancel':
+        if (this.tenderOpen()) {
+          this.closeTender();
+        } else if (this.picker() !== 'none') {
+          this.closePicker();
+        }
+        break;
+    }
+  }
+
+  private focusQuantity(index: number): void {
+    setTimeout(() =>
+      document.querySelectorAll<HTMLInputElement>('.cart-qty input')[index]?.select(),
+    );
+  }
+
+  /**
+   * A scanned barcode: the item whose code is exactly the scan, or the only
+   * match for it; otherwise the item picker opens on the scan, so a code that
+   * matches several items never adds the wrong one.
+   */
+  protected async scan(code: string): Promise<void> {
+    try {
+      const matches = await this.lookups.items(code);
+      const exact = matches.find((m) => m.itemCode.toUpperCase() === code.toUpperCase());
+      const item = exact ?? (matches.length === 1 ? matches[0] : null);
+
+      if (item === null) {
+        this.picker.set('item');
+        void this.runSearch(code);
+        return;
+      }
+
+      await this.addToCart(item.itemId);
+    } catch (error) {
+      this.messages.set([this.failure(error)]);
+    }
+  }
+
+  // ---- Hold and recall ------------------------------------------------------
+
+  protected hold(): void {
+    if (this.lines().length === 0) {
+      return;
+    }
+    this.held.set([
+      ...this.held(),
+      { id: ++this.heldSeq, lines: this.lines(), customer: this.customer(), heldAt: new Date() },
+    ]);
+    this.lines.set([]);
+    this.selected.set(0);
+    this.messages.set([{ tone: 'info', text: 'Sale held. Press F7 to recall it.' }]);
+  }
+
+  /** Brings back the most recent held sale, or a chosen one, when the cart is empty. */
+  protected recall(id?: number): void {
+    const held = this.held();
+    const sale = id === undefined ? held[held.length - 1] : held.find((h) => h.id === id);
+    if (!sale) {
+      return;
+    }
+    if (this.lines().length > 0) {
+      this.messages.set([{ tone: 'warning', text: 'Finish or hold the current sale before recalling another.' }]);
+      return;
+    }
+    this.held.set(held.filter((h) => h.id !== sale.id));
+    if (sale.customer) {
+      this.customer.set(sale.customer);
+    }
+    this.lines.set(reprice(sale.lines, this.taxGroups(), this.context()));
+    this.selected.set(0);
   }
 
   /**
@@ -269,14 +491,19 @@ export class PosTerminalComponent implements OnInit {
     }
 
     try {
-      const item = await this.lookups.cartItem(row.id);
-      const group = this.taxGroups().find(
-        (candidate) => candidate.taxGroupId === item.taxGroupId,
-      );
-      this.lines.set(addItem(this.lines(), item, group, this.context()));
+      await this.addToCart(row.id);
     } catch (error) {
       this.messages.set([this.failure(error)]);
     }
+  }
+
+  private async addToCart(itemId: number): Promise<void> {
+    const item = await this.lookups.cartItem(itemId);
+    const group = this.taxGroups().find(
+      (candidate) => candidate.taxGroupId === item.taxGroupId,
+    );
+    this.lines.set(addItem(this.lines(), item, group, this.context()));
+    this.selected.set(Math.max(0, this.lines().findIndex((line) => line.itemId === itemId)));
   }
 
   /** Sets the customer and redoes the tax split, since the state line may move. */
@@ -286,33 +513,103 @@ export class PosTerminalComponent implements OnInit {
     this.messages.set([]);
   }
 
-  // ---- Checkout -------------------------------------------------------------
+  // ---- Tender and checkout --------------------------------------------------
+
+  /** F9: opens the tender, with the whole amount ready in cash. */
+  async openTender(): Promise<void> {
+    if (!this.canCheckout()) {
+      if (!this.online()) {
+        this.messages.set([this.offlineMessage()]);
+      }
+      return;
+    }
+
+    if (this.tenderAccounts().length === 0) {
+      try {
+        this.tenderAccounts.set(await this.posSales.tenderAccounts());
+      } catch (error) {
+        this.messages.set([this.failure(error)]);
+        return;
+      }
+    }
+
+    this.tenders.set([]);
+    this.tenderOpen.set(true);
+    this.chooseMode('Cash');
+  }
+
+  protected closeTender(): void {
+    this.tenderOpen.set(false);
+    this.tenders.set([]);
+  }
+
+  protected chooseMode(mode: TenderMode): void {
+    this.tenderMode.set(mode);
+    this.tenderAccountId.set(PosSaleService.defaultAccountFor(mode, this.tenderAccounts())?.bankAccountId ?? null);
+    this.tenderAmount.set((this.tenderState().remaining / 100).toFixed(2));
+    this.tenderReference.set('');
+  }
+
+  protected addTender(): void {
+    const amount = Math.round(Number(this.tenderAmount()) * 100);
+    const account = this.tenderAccountId();
+    if (!Number.isFinite(amount) || amount <= 0 || account === null) {
+      this.messages.set([{ tone: 'warning', text: 'Enter an amount and choose where the money went.' }]);
+      return;
+    }
+
+    this.tenders.set([
+      ...this.tenders(),
+      {
+        mode: this.tenderMode(),
+        amount,
+        bankAccountId: account,
+        reference: this.tenderReference().trim() || undefined,
+      },
+    ]);
+    this.tenderAmount.set((this.tenderState().remaining / 100).toFixed(2));
+    this.tenderReference.set('');
+  }
+
+  protected removeTender(index: number): void {
+    this.tenders.set(this.tenders().filter((_, at) => at !== index));
+  }
+
+  protected accountName(id: number): string {
+    return this.tenderAccounts().find((a) => a.bankAccountId === id)?.accountName ?? `Account ${id}`;
+  }
 
   /**
-   * Sends the cart as an invoice and prints its receipt.
-   *
-   * Still the scaffold's path: tender, till and the POS transaction type are
-   * TK-39, and until then the server may refuse what this sends. The refusal
-   * is shown in the server's own words rather than swallowed.
+   * Posts the sale through TK-39 and prints its receipt. The server is the
+   * authority: a 409 names an item another till sold first, a 422 means the
+   * tenders do not pay its total, and either way nothing was sold.
    */
-  async checkout(): Promise<void> {
+  async complete(): Promise<void> {
     const customer = this.customer();
-    if (!this.canCheckout() || customer === null) {
+    if (!this.canComplete() || customer === null) {
+      if (!this.online()) {
+        this.messages.set([this.offlineMessage()]);
+      }
       return;
     }
 
     const lines = this.lines();
-    const request: SaveInvoiceRequest = {
-      documentDate: new Date().toISOString().split('T')[0],
-      contactId: customer.contactId,
-      contactGstin: customer.gstin ?? undefined,
-      exchangeRate: 1,
-      lines: lines.map(toApiLine),
-    };
-
     this.busy.set(true);
+
     try {
-      await this.invoiceService.create(request);
+      const result = await this.posSales.sell({
+        tillId: this.tillId(),
+        documentDate: PosTerminalComponent.today(),
+        contactId: customer.contactId,
+        contactGstin: customer.gstin ?? undefined,
+        lines: lines.map(toApiLine),
+        tenders: this.tenders().map((t) => ({
+          mode: t.mode,
+          amount: t.amount / 100,
+          bankAccountId: t.bankAccountId,
+          reference: t.reference,
+        })),
+      });
 
       const receiptBytes = this.escPosService.generateReceipt(
         'BILL-BOOK STORE',
@@ -320,17 +617,43 @@ export class PosTerminalComponent implements OnInit {
           name: line.description ?? line.itemLabel ?? 'Item',
           amount: line.lineTotal / 100,
         })),
-        this.totals().totalAmount / 100,
+        result.totalAmount,
       );
-
       this.printReceipt(receiptBytes);
+
       this.lines.set([]);
-      this.messages.set([{ tone: 'success', text: 'Sale saved.' }]);
+      this.selected.set(0);
+      this.closeTender();
+      this.messages.set([
+        {
+          tone: 'success',
+          text: result.changeAmount > 0
+            ? `Sale ${result.documentNo} posted. Change: ${this.formats.formatMoney(result.changeAmount)}.`
+            : `Sale ${result.documentNo} posted.`,
+        },
+      ]);
     } catch (error) {
-      this.messages.set([this.failure(error)]);
+      this.messages.set([navigator.onLine === false ? this.offlineMessage() : this.failure(error)]);
     } finally {
       this.busy.set(false);
     }
+  }
+
+  /** Kept for the Checkout button: it opens the tender. */
+  async checkout(): Promise<void> {
+    await this.openTender();
+  }
+
+  private offlineMessage(): UiMessage {
+    return {
+      tone: 'error',
+      text: 'The till is offline. Sales are refused until the connection is back; nothing is queued.',
+    };
+  }
+
+  private static today(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 
   private printReceipt(bytes: Uint8Array) {

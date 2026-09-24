@@ -2,6 +2,23 @@
   <header class="pos-head">
     <h2>POS Terminal</h2>
 
+    <label class="pos-till">
+      <span class="pos-label">Till</span>
+      <input
+        type="number"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        aria-label="Till number"
+        [value]="tillId()"
+        (change)="setTillId($any($event.target).value)"
+      />
+    </label>
+
+    <span class="pos-status" [class.pos-offline]="!online()" role="status">
+      {{ online() ? 'Online' : 'Offline — sales refused' }}
+    </span>
+
     <div class="pos-customer">
       <span class="pos-label">Customer</span>
       @if (customer(); as chosen) {
@@ -19,6 +36,25 @@
   </header>
 
   <bb-message-box [messages]="messages()" />
+
+  <nav class="pos-keys" aria-label="Keyboard shortcuts">
+    @for (k of keys; track k.key) {
+      <button type="button" class="pos-key" (click)="run(k.command)">
+        <kbd>{{ k.key }}</kbd> {{ k.label }}
+      </button>
+    }
+  </nav>
+
+  @if (held().length > 0) {
+    <section class="pos-held" aria-label="Held sales">
+      <span class="pos-label">Held</span>
+      @for (h of held(); track h.id) {
+        <button type="button" class="btn btn-secondary" (click)="recall(h.id)">
+          #{{ h.id }} · {{ h.lines.length }} {{ h.lines.length === 1 ? 'line' : 'lines' }}
+        </button>
+      }
+    </section>
+  }
 
   <div class="pos-actions">
     <button type="button" class="btn btn-primary" (click)="openItemPicker()">Add item</button>
@@ -38,7 +74,15 @@
     } @else {
       <ul class="cart-lines">
         @for (line of lines(); track line.itemId; let i = $index) {
-          <li class="cart-line">
+          <li
+            class="cart-line"
+            [class.cart-selected]="i === selected()"
+            [attr.aria-current]="i === selected() ? 'true' : null"
+            tabindex="0"
+            (click)="selected.set(i)"
+            (keydown.enter)="selected.set(i)"
+            (focusin)="selected.set(i)"
+          >
             <div class="cart-item">
               <span class="cart-item-name">{{ line.itemLabel }}</span>
               @if (missingRate(line)) {
@@ -131,9 +175,15 @@
           <dd>{{ rupees(totals().cessAmount) }}</dd>
         </div>
       }
+      @if (roundOff() !== 0) {
+        <div>
+          <dt>Round off</dt>
+          <dd>{{ rupees(roundOff()) }}</dd>
+        </div>
+      }
       <div class="pos-grand">
         <dt>Total</dt>
-        <dd>{{ rupees(totals().totalAmount) }}</dd>
+        <dd>{{ rupees(payable()) }}</dd>
       </div>
     </dl>
 
@@ -143,9 +193,97 @@
       [disabled]="!canCheckout()"
       (click)="checkout()"
     >
-      Checkout
+      Tender (F9)
     </button>
   </footer>
+
+  @if (tenderOpen()) {
+    <div class="tender-backdrop" tabindex="-1" (click)="closeTender()" (keydown.escape)="closeTender()"></div>
+    <section class="tender" role="dialog" aria-modal="true" aria-labelledby="tender-title">
+      <h3 id="tender-title">Tender · {{ rupees(payable()) }}</h3>
+
+      <div class="tender-modes" role="group" aria-label="Payment mode">
+        @for (mode of ['Cash', 'Card', 'Upi']; track mode) {
+          <button
+            type="button"
+            class="btn"
+            [class.btn-primary]="tenderMode() === mode"
+            [class.btn-secondary]="tenderMode() !== mode"
+            [attr.aria-pressed]="tenderMode() === mode"
+            (click)="chooseMode($any(mode))"
+          >
+            {{ mode === 'Upi' ? 'UPI' : mode }}
+          </button>
+        }
+      </div>
+
+      <div class="tender-entry">
+        <label>
+          <span class="pos-label">Amount</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            inputmode="decimal"
+            [value]="tenderAmount()"
+            (input)="tenderAmount.set($any($event.target).value)"
+            (keydown.enter)="addTender()"
+          />
+        </label>
+        <label>
+          <span class="pos-label">Into</span>
+          <select [value]="tenderAccountId() ?? ''" (change)="tenderAccountId.set(+$any($event.target).value || null)">
+            @for (account of accountsForMode(); track account.bankAccountId) {
+              <option [value]="account.bankAccountId">{{ account.accountName }}</option>
+            } @empty {
+              <option value="">No account for this mode</option>
+            }
+          </select>
+        </label>
+        @if (tenderMode() !== 'Cash') {
+          <label>
+            <span class="pos-label">Reference</span>
+            <input
+              type="text"
+              maxlength="50"
+              [value]="tenderReference()"
+              (input)="tenderReference.set($any($event.target).value)"
+            />
+          </label>
+        }
+        <button type="button" class="btn btn-secondary" (click)="addTender()">Add</button>
+      </div>
+
+      @if (tenders().length > 0) {
+        <ul class="tender-lines">
+          @for (t of tenders(); track $index; let i = $index) {
+            <li>
+              <span>{{ t.mode === 'Upi' ? 'UPI' : t.mode }} · {{ accountName(t.bankAccountId) }}</span>
+              <span>{{ rupees(t.amount) }}</span>
+              <button type="button" class="btn btn-ghost" aria-label="Remove tender" (click)="removeTender(i)">Remove</button>
+            </li>
+          }
+        </ul>
+      }
+
+      <dl class="tender-summary">
+        <div><dt>Paid</dt><dd>{{ rupees(tenderState().paid) }}</dd></div>
+        <div><dt>Still to pay</dt><dd>{{ rupees(tenderState().remaining) }}</dd></div>
+        <div class="pos-grand"><dt>Change</dt><dd>{{ rupees(tenderState().change) }}</dd></div>
+      </dl>
+
+      @if (tenderState().problem; as problem) {
+        <p class="tender-problem">{{ problem }}</p>
+      }
+
+      <div class="tender-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeTender()">Back (Esc)</button>
+        <button type="button" class="btn btn-primary" [disabled]="!canComplete()" (click)="complete()">
+          {{ busy() ? 'Posting…' : 'Complete sale' }}
+        </button>
+      </div>
+    </section>
+  }
 
   <bb-lookup-dialog
     [open]="picker() !== 'none'"

@@ -192,3 +192,148 @@
     justify-self: end;
   }
 }
+
+.pos-till {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+
+  input {
+    width: 4.5rem;
+  }
+}
+
+.pos-status {
+  font-size: 0.85rem;
+  color: var(--color-success, #187a4b);
+}
+
+.pos-offline {
+  color: var(--color-danger, #c0392b);
+  font-weight: 600;
+}
+
+.pos-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  margin: var(--space-2, 8px) 0;
+}
+
+.pos-key {
+  border: 1px solid var(--color-border, #d0d5dd);
+  border-radius: 4px;
+  background: var(--color-surface, #fff);
+  padding: 2px 8px;
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+
+  kbd {
+    font-weight: 600;
+  }
+}
+
+.pos-held {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.cart-selected {
+  outline: 2px solid var(--color-primary, #1570ef);
+  outline-offset: -2px;
+}
+
+.tender-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgb(16 24 40 / 45%);
+  z-index: 1000;
+}
+
+.tender {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1001;
+  width: min(32rem, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: var(--space-4, 16px);
+  border-radius: 8px;
+  background: var(--color-surface, #fff);
+  box-shadow: 0 12px 32px rgb(16 24 40 / 25%);
+
+  h3 {
+    margin-top: 0;
+  }
+}
+
+.tender-modes,
+.tender-actions {
+  display: flex;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-3, 12px);
+}
+
+.tender-actions {
+  justify-content: flex-end;
+  margin: var(--space-3, 12px) 0 0;
+}
+
+.tender-entry {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr auto;
+  gap: var(--space-2, 8px);
+  align-items: end;
+
+  label {
+    display: grid;
+    gap: 4px;
+  }
+}
+
+.tender-lines {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-3, 12px) 0;
+
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: var(--space-2, 8px);
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--color-border, #eceef3);
+  }
+}
+
+.tender-summary div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.tender-problem {
+  color: var(--color-danger, #c0392b);
+}
+
+/* At phone width the tender is a full-screen sheet. */
+@media (max-width: 480px) {
+  .tender {
+    inset: 0;
+    top: 0;
+    left: 0;
+    transform: none;
+    width: auto;
+    max-height: none;
+    border-radius: 0;
+  }
+
+  .tender-entry {
+    grid-template-columns: 1fr;
+  }
+}
