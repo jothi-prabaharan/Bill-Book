@@ -512,8 +512,8 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       deleting one leg refused, two postings in one transaction checked together, and the catalogue.
 
 ### TK-08 · Review of the RLS work
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-DOC · **Depends on:** TK-71, TK-72, TK-73, TK-74, TK-02, TK-03, TK-04, TK-05, TK-06 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-DOC, L-KERNEL, L-ACC, L-RPT · **Depends on:** TK-71, TK-72, TK-73, TK-74, TK-02, TK-03, TK-04, TK-05, TK-06 · **Decision:** —
 - **State:** two facts decide whether RLS protects anything at all:
   - **A superuser, or any role with `BYPASSRLS`, ignores RLS even when FORCE is set.** The
     development connection strings use `postgres`, a superuser, so the policies have never been
@@ -522,20 +522,76 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     transaction-local. The code overwrites both values each time a connection opens, which
     mitigates this; the document and the code still disagree.
 - **Sub-tasks:**
-  - [ ] Read each migration from TK-72, TK-73, TK-74, TK-02, TK-03, TK-04 and TK-05 against TK-71's template.
-  - [ ] Check that the deployed application connects as a role that is neither a superuser nor
+  - [x] Read each migration from TK-72, TK-73, TK-74, TK-02, TK-03, TK-04 and TK-05 against TK-71's template.
+  - [x] Check that the deployed application connects as a role that is neither a superuser nor
         `BYPASSRLS` (`deploy/azure`, and each service's connection string).
-  - [ ] Test: one test that connects as a non-superuser role (created in the fixture) and reads
+  - [x] Test: one test that connects as a non-superuser role (created in the fixture) and reads
         another branch's rows. It must get zero.
-  - [ ] Reconcile the session-level vs transaction-local statement. Either change the interceptor
+  - [x] Reconcile the session-level vs transaction-local statement. Either change the interceptor
         or rewrite the rule in `CLAUDE.md`, and write the reason down.
-  - [ ] Rewrite the FORCE bullet in `CLAUDE.md`'s standing caveats to say what is true now.
+  - [x] Rewrite the FORCE bullet in `CLAUDE.md`'s standing caveats to say what is true now.
   - [ ] Owner: drop all seven test databases and run the whole backend suite, expecting 0 RLS
         failures. Then drop one policy by hand and watch it go red.
 - **Done when:** a non-superuser connection can't read another branch's rows in any tenant schema.
 - **Notes:**
   - **Decided by the owner (2026-09-24): transaction-local.** Change `RlsConnectionInterceptor` to `set_config(…, true)` inside each transaction (the reliability filter's scope), and keep `CLAUDE.md`'s rule as written. Reads outside an explicit transaction need one opened for them, or the setting won't hold — check every read path.
   - Dependency on TK-06 added 2026-09-24: internal endpoints that set no tenant break under RLS; the review needs them fixed.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - **Migrations reviewed.** `acc`, `con`, `cus`, `inv`, `pur`, `sal`, `rpt` and `prt` all have
+      TK-71's NULLIF expression, ENABLE and FORCE, and `FOR ALL` with no `WITH CHECK`. The only
+      `tenant.orgid` or bare-cast policy text left is in `Down()` methods. `con.ApiClients` has its
+      documented customer-level variant (`OR org IS NULL`).
+    - **Transaction-local, as decided.** `RlsConnectionInterceptor` is now a `DbCommandInterceptor`.
+      It prefixes every command with `SET LOCAL app.current_customer_id = '…'; SET LOCAL
+      app.current_org_id = '…';`, reading the tenant as it is when the command runs. Npgsql sends
+      the prefix and the command as one batch, and Postgres runs a batch as one transaction: the
+      explicit one if there is one, otherwise an implicit one. So every read path is covered
+      without opening transactions for it: GETs, workers, seeders, the error log. That answers
+      "check every read path" structurally, not route by route. It sends nothing when there is no
+      tenant (null or `Guid.Empty`), so startup and migrations are untouched. I checked it on a
+      scratch database before relying on it:
+      - the setting holds for a command with no transaction, and is gone from the next command on
+        the same connection;
+      - parameterised LINQ, a `SaveChanges` batch and `ExecuteUpdate` row counts are unchanged;
+      - a tenant change in the middle of a transaction applies to the next command.
+      The Tenancy rule in `CLAUDE.md` stands as written; one clause says how it's done.
+    - **What the review found: internal writes would have been refused under RLS.**
+      `TransactionFilter` resolves every `IUnitOfWork` (and so the DbContext) and opens the
+      transaction *before* an internal route copies the branch out of its request. The old
+      interceptor set the tenant at connection open, which was `''` at that point. So every
+      internal POST (ledger postings, stock issues, allocations, seeding) would have failed the
+      policy's write check on any non-superuser connection. The per-command prefix fixes it,
+      because the tenant is read when the command runs.
+    - **Not fixed, and needs its own card: the shard follows the same ordering.** The DbContext
+      takes its connection string from `ITenantDatabaseResolver` when it is built. That happens in
+      the filter, before the internal route sets `CustomerId`, so it gets the default shard
+      (`IN000001`). This is harmless with one shard, but wrong once a second one exists. The fix
+      is to set the tenant from the request before `TransactionFilter` runs, e.g. an ordered
+      action filter reading `customerId`/`orgId` from the bound arguments (see TK-06's
+      `InternalTenant.Apply`).
+    - **Also found and fixed: every allocation failed through the host.** `AllocationService`
+      asks `BeginScopeAsync` for Serializable inside the filter's Read Committed transaction, so
+      `GuardIsolation` threw. Both `AllocationsController.Allocate` and
+      `InternalAllocationsController.Allocate` now carry `[Transactional(IsolationLevel.Serializable)]`.
+      The tests call controllers directly with no filter, which is why this went unseen.
+      Release note added.
+    - **Deployment.** The apps connect as the Flexible Server admin login
+      (`deploy/azure/main.bicep`, `connectionBase`). That login is neither a superuser nor
+      `BYPASSRLS` by default, so the FORCEd policies bind. But it owns the tables and has
+      `CREATEDB`/`CREATEROLE`. **Recommendation for the owner:** a dedicated login with DML rights
+      only, used by the services, with the admin kept for migrations. That is a deployment decision
+      and wants a D-number, so I didn't change it.
+    - `CLAUDE.md`: the FORCE caveat is rewritten to say what is true now. The ledger-trigger line
+      reflects TK-07, the Purchase-seeding bullet is struck (TK-01), and the Tenancy rule names the
+      mechanism.
+    - **Tests written:** `backend/tests/Accounting.Api.Tests/TenantInterceptorTests.cs` (six tests,
+      role `acc_tenant_probe`). Through the real interceptor with no explicit transaction: own
+      branch visible; another branch zero even past the query filter; no tenant zero; a tenant set
+      after `BEGIN` applies; nothing survives on a pooled connection; a write into another branch
+      refused. Also `backend/tests/Shared.Kernel.Tests/RlsConnectionInterceptorTests.cs` (the
+      prefix text) and `backend/tests/Accounting.Api.Tests/AllocationIsolationTests.cs`. The
+      per-schema `*RowLevelSecurityTests` already cover "a non-superuser reads another branch's
+      rows and gets zero" in all eight schemas.
 
 ### TK-09 · `ReportLayerCertificationTests`: likely already fixed
 - [ ] open

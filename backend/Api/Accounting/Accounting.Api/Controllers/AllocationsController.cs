@@ -1,8 +1,10 @@
+using System.Data;
 using Accounting.Api.Services;
 using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
 
 namespace Accounting.Api.Controllers;
@@ -30,6 +32,12 @@ public sealed class AllocationsController : ControllerBase
     /// The user must be authorized, and the operation is scoped to their tenant.
     /// </summary>
     [HttpPost]
+    // Serializable, declared where the request-wide transaction filter can see
+    // it. AllocationService reads what the target still owes and writes against
+    // that in one act, so it asks for Serializable — and without this the filter
+    // had already opened a Read Committed transaction, which cannot be raised,
+    // so BeginScopeAsync refused every allocation made through the host (TK-08).
+    [Transactional(IsolationLevel.Serializable)]
     public async Task<IActionResult> Allocate(
         [FromBody] CreateAllocationDto dto, CancellationToken ct)
     {
