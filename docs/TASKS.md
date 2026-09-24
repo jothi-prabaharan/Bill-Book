@@ -954,7 +954,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - For TK-15 and the till: to page, pass `take`; the response is then `{ total, skip, take, rows }`.
 
 ### TK-15 · Item and customer pickers on the sales forms
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - The pattern to copy: `frontend/libs/purchase/purchase-core/src/lib/purchase-lookup.service.ts`
