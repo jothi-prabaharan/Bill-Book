@@ -594,7 +594,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       rows and gets zero" in all eight schemas.
 
 ### TK-09 · `ReportLayerCertificationTests`: likely already fixed
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/tests/Reporting.Api.Tests/ReportLayerCertificationTests.cs:97`, which expects 48.
