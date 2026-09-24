@@ -452,7 +452,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       `backend/tests/Shared.Kernel.Tests/InternalTenantTests.cs`.
 
 ### TK-07 · Restore the ledger's deferred balance and allocation triggers
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-ACC · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - What was dropped: `git show 2c5ed6f^:backend/Api/Accounting/Accounting.Repository/Migrations/20260902151402_InitialAccountingSchema.cs`,
@@ -465,10 +465,10 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   `2c5ed6f` and did not survive. Of the three balance checks, only the domain guard on Post is
   left. The same squash dropped RLS (TK-71).
 - **Sub-tasks:**
-  - [ ] Recover every `CREATE FUNCTION` / `CREATE CONSTRAINT TRIGGER` block from the pre-squash chain.
-  - [ ] Check each against today's columns: the schema changed since, so do not paste blindly.
-  - [ ] Add them in a new `acc` migration, with a matching `Down()`.
-  - [ ] Test: an unbalanced posted journal is refused at commit; a draft is not.
+  - [x] Recover every `CREATE FUNCTION` / `CREATE CONSTRAINT TRIGGER` block from the pre-squash chain.
+  - [x] Check each against today's columns: the schema changed since, so do not paste blindly.
+  - [x] Add them in a new `acc` migration, with a matching `Down()`.
+  - [x] Test: an unbalanced posted journal is refused at commit; a draft is not.
   - [ ] Owner: run `Accounting.Api.Tests` from a dropped `ACCOUNTING_TEST_DB`.
 - **Done when:** a posted, unbalanced journal cannot be committed, and a draft can.
 - **Notes:** found while doing TK-71.
@@ -476,6 +476,40 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     Not Invoiced, once"**, which was added first (with TK-76, commit `cb7da6c`). One of the two
     needs the next unused number; `CLAUDE.md` cites this one.
   - Renumbered from TK-10 on 2026-09-24: two cards had taken that number, and the GDNI card came first. `CLAUDE.md` is updated to cite TK-07.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - The seven triggers and their functions were all in one pre-squash block
+      (`2c5ed6f^:…/20260902151402_InitialAccountingSchema.cs`); no later pre-squash migration
+      touched them. Every column they read still exists under the same name, and `Status` is still
+      stored as the enum's name (`'Draft'`).
+    - `Accounting.Repository/Migrations/Tenant/20260924063953_RestoreLedgerTriggers.cs` restores them:
+      `trg_ledger_balanced` (JournalLedger, per branch), `trg_journal_balanced` (JournalDetails) and
+      `trg_journal_balanced_on_post` (Journals), plus the allocated/allocated-on-post pair on
+      SpendMoney and ReceiveMoney. All are `DEFERRABLE INITIALLY DEFERRED`. `Down()` drops them all.
+      The snapshot didn't change.
+    - **Two changes from the old text**, both in the ledger trigger:
+      - **Deletes were never checked.** A DELETE read `NEW."OrgId"`, which is NULL on a delete, so
+        the sum ran over no rows and passed. It reads `OLD` now.
+      - **The branch-wide sum ran once per changed row, so large postings were quadratic.** An
+        opening balance of thousands of lines summed the whole branch ledger thousands of times at
+        commit. Every deferred event fires against the same final state, so a transaction-local
+        marker (`acc.ledger_checked` = txid + org) now lets it run once per branch per transaction.
+        `SET CONSTRAINTS … IMMEDIATE` would defeat that; nothing issues it.
+    - Voiding a money document leaves its lines and its amount in place, so the allocation trigger
+      still agrees with a voided document.
+    - `LedgerPostingService` already refuses an unbalanced request. So the branch trigger only fires
+      on a real bug, such as a partial replace that leaves another request's legs behind.
+    - `MoneyDocumentSchemaTests` already asserted the allocation triggers (e.g.
+      `An_under_allocated_payment_cannot_be_posted`). Those tests have failed on any database built
+      since the squash, and should pass now. `ReconciliationMatchingTests` inserts debit-only
+      ledger rows, but with the base amounts left at 0, so the trigger (which sums base) passes.
+    - Applied the scripted chain to a scratch database: all seven triggers are present, deferrable
+      and initially deferred. `has-pending-model-changes` is clean, and the solution builds with
+      0 warnings.
+    - `CLAUDE.md` still says no migration creates a trigger. That is L-DOC; TK-08 holds it next.
+    - **Test written:** `backend/tests/Accounting.Api.Tests/LedgerTriggerTests.cs`. It covers a
+      posted unbalanced journal refused at commit, a draft that may be unbalanced, posting an
+      unbalanced draft refused, editing a posted line refused, unbalanced ledger rows refused,
+      deleting one leg refused, two postings in one transaction checked together, and the catalogue.
 
 ### TK-08 · Review of the RLS work
 - [ ] open
