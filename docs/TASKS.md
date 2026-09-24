@@ -1519,7 +1519,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Raised **D-25**: which payment gateway.
 
 ### TK-33 · Design: workflow approvals
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Notes:** TK-49 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
 
 ### TK-34 · Design: project accounting
