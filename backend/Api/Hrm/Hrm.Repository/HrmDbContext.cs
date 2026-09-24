@@ -50,6 +50,8 @@ public class HrmDbContext : TenantDbContext
     public DbSet<EmployeeChecklist> EmployeeChecklists => Set<EmployeeChecklist>();
     public DbSet<EmployeeChecklistItem> EmployeeChecklistItems => Set<EmployeeChecklistItem>();
     public DbSet<Separation> Separations => Set<Separation>();
+    public DbSet<RelationshipType> RelationshipTypes => Set<RelationshipType>();
+    public DbSet<EmployeeRelationship> EmployeeRelationships => Set<EmployeeRelationship>();
 
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
@@ -231,6 +233,21 @@ public class HrmDbContext : TenantDbContext
             b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.NoticeShortfallDays).HasColumnType("decimal(18,4)");
+        });
+
+        // ---- Relationships (TK-99): "Lead", "Project Lead" ----------------
+        modelBuilder.Entity<RelationshipType>(b =>
+        {
+            b.HasKey(e => e.RelationshipTypeId);
+            b.HasIndex(e => new { e.CustomerId, e.OrgId, e.Code }).IsUnique();
+        });
+        modelBuilder.Entity<EmployeeRelationship>(b =>
+        {
+            b.HasKey(e => e.EmployeeRelationshipId);
+            b.HasOne<Employee>().WithMany().HasForeignKey(e => e.EmployeeId).OnDelete(DeleteBehavior.Cascade);
+            b.HasOne<Employee>().WithMany().HasForeignKey(e => e.RelatedEmployeeId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<RelationshipType>().WithMany().HasForeignKey(e => e.RelationshipTypeId).OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(e => new { e.EmployeeId, e.RelationshipTypeId, e.FromDate });
         });
 
         modelBuilder.ConfigureNumberingSeries(ownsMigration: false);

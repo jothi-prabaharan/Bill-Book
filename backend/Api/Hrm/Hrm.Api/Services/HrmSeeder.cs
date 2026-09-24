@@ -23,6 +23,9 @@ public sealed class HrmSeeder
         seeded["designations"] = await AddWhenEmptyAsync(_db.Designations.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.Designations.Add(HrmSeed.Designation(orgId)));
         seeded["grades"] = await AddWhenEmptyAsync(_db.Grades.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.Grades.Add(HrmSeed.Grade(orgId)));
         seeded["workLocations"] = await AddWhenEmptyAsync(_db.WorkLocations.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.WorkLocations.Add(HrmSeed.WorkLocation(orgId)));
+        seeded["relationshipTypes"] = await AddWhenEmptyAsync(
+            _db.RelationshipTypes.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct),
+            () => _db.RelationshipTypes.AddRange(HrmSeed.RelationshipTypes(orgId)));
         seeded["numberingSeries"] = await AddWhenEmptyAsync(
             _db.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == orgId && n.SeriesCode == HrmSeed.EmployeeSeriesCode, ct),
             () => _db.NumberingSeries.Add(HrmSeed.EmployeeSeries(orgId)));

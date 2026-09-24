@@ -452,3 +452,49 @@ Revoking deactivates the organization assignment rather than deleting the user, 
 
 
 
+
+# Approvals
+
+**Status: partial.** The approval engine is built. Leave is the first request that uses it. Purchase, accounting and sales documents, and the screens for workflows and the approvals inbox, come next.
+
+Every app uses one approval engine. A leave request in HRMS and a purchase bill in RetailErp go through the same steps, with the same rules and the same messages.
+
+## Workflows
+
+A **workflow** says who approves one kind of request in a branch. It is a list of **levels**, approved in order. Each level names who approves it:
+
+| Approver | Who that is |
+|---|---|
+| **Manager** | The employee's manager, or their manager's manager, and so on up the chain. |
+| **Relationship** | The person named as the employee's *Lead* or *Project Lead* (a branch can add more). |
+| **Department head** | The head of the employee's department. A head's own request goes to the head of the department above. |
+| **Role** | Anyone with a role in the branch. The first of them to act takes the step. |
+| **Named employee** or **named user** | One fixed person. RetailErp, which has no employees, uses named users and roles. |
+
+A level can apply only **above an amount**, can be **optional**, and can **require a comment** to approve.
+
+A branch can keep several workflows for one kind of request. The one that names the most of the requester's department, grade and location is used. When two match equally, the one that took effect most recently is used. An HRMS branch starts with one workflow for leave and one for leave encashment, each approved by the employee's manager.
+
+The workflows are managed through `api/approval-workflows` (*Settings: view* and *Settings: edit*). The screen for them comes with the approvals inbox.
+
+## When a request is submitted
+
+The workflow is turned into a list of steps, and the steps are stored with the request. **Changing a workflow afterwards never moves a request already submitted.** It keeps the approvers it was given.
+
+Some levels are skipped when the steps are made:
+
+- a level whose approver is the person asking, because **nobody approves their own request**;
+- a level whose approver has just approved the level before, because **nobody approves twice in a row**;
+- an **optional** level with no one to approve it, such as a manager for someone who has none, or a manager who has left or has no login.
+
+A **required** level with no one to approve it stops the submission. The message names the level, so an administrator can fix it.
+
+## Approving
+
+One step is waiting for a decision at a time. The approver can:
+
+- **approve**: the next level is asked, and the last approval approves the request;
+- **reject**: the request ends. A reason is required;
+- **send back**: the level before looks at it again, or the person who asked, if it was the first level. A reason is required.
+
+Someone away can name a **delegate** for a range of dates. The delegate can then act on their steps, but never on a step that any holder of a role may take.

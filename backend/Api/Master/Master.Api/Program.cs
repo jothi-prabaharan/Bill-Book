@@ -175,6 +175,19 @@ builder.Services.AddScoped<MenuService>();
 // Only Accounting writes ledger rows, so a contact's six sub-accounts are
 // created by calling it. This one stays a real HTTP seam — Accounting is still
 // a separate service with its own database.
+// The approval engine (D-26, TK-99). Hrm answers the employee approver kinds;
+// with Hrm:BaseUrl unset, those levels are simply unresolved.
+builder.Services.AddScoped<ApprovalChainResolver>();
+builder.Services.AddScoped<ApprovalWorkflowService>();
+builder.Services.AddHttpClient<IHrmApproverClient, HrmApproverClient>(client =>
+{
+    if (builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } hrm)
+    {
+        client.BaseAddress = new Uri(hrm);
+    }
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddHttpClient<IAccountingSubAccounts, AccountingSubAccounts>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));

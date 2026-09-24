@@ -20,6 +20,13 @@ public static class HrmSeed
 
     public static WorkLocation WorkLocation(Guid orgId) => new() { OrgId = orgId, Code = "HO", Name = "Head office" };
 
+    /// <summary>The relations an approval level can name, to start with (TK-49).</summary>
+    public static IReadOnlyList<RelationshipType> RelationshipTypes(Guid orgId) =>
+    [
+        new() { OrgId = orgId, Code = "LEAD", Name = "Lead" },
+        new() { OrgId = orgId, Code = "PROJLEAD", Name = "Project Lead" },
+    ];
+
     /// <summary>A master series, like item and contact codes: EMP-00001, never reset.</summary>
     public static NumberingSeries EmployeeSeries(Guid orgId) => new()
     {

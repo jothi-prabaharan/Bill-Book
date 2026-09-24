@@ -41,6 +41,14 @@ public class ContactsDbContext : TenantDbContext
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
     public DbSet<ApiClient> ApiClients => Set<ApiClient>();
 
+    // The approval engine's configuration (D-26, TK-99), in its own tenant
+    // schema beside con: Master is the one service every app has.
+    public DbSet<ApprovalWorkflow> ApprovalWorkflows => Set<ApprovalWorkflow>();
+
+    public DbSet<ApprovalWorkflowLevel> ApprovalWorkflowLevels => Set<ApprovalWorkflowLevel>();
+
+    public DbSet<ApprovalDelegate> ApprovalDelegates => Set<ApprovalDelegate>();
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -246,6 +254,35 @@ public class ContactsDbContext : TenantDbContext
             b.ToTable(table => table.HasCheckConstraint(
                 "chk_attachment_size",
                 "\"FileSizeBytes\" > 0"));
+        });
+
+        // ---- apr: approval workflows (D-26, TK-99) ----
+        modelBuilder.Entity<ApprovalWorkflow>(b =>
+        {
+            b.ToTable("ApprovalWorkflows", "apr");
+            b.HasKey(e => e.ApprovalWorkflowId);
+            b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(40);
+            b.HasIndex(e => new { e.OrgId, e.RequestKind, e.IsActive });
+            b.HasMany(e => e.Levels)
+                .WithOne()
+                .HasForeignKey(l => l.ApprovalWorkflowId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApprovalWorkflowLevel>(b =>
+        {
+            b.ToTable("ApprovalWorkflowLevels", "apr");
+            b.HasKey(e => e.ApprovalWorkflowLevelId);
+            b.Property(e => e.ApproverKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.AboveAmount).HasColumnType("decimal(18,4)");
+            b.HasIndex(e => new { e.ApprovalWorkflowId, e.Sequence }).IsUnique();
+        });
+
+        modelBuilder.Entity<ApprovalDelegate>(b =>
+        {
+            b.ToTable("ApprovalDelegates", "apr");
+            b.HasKey(e => e.ApprovalDelegateId);
+            b.HasIndex(e => new { e.UserId, e.FromDate, e.ToDate });
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

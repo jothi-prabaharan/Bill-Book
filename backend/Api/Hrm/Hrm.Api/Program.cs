@@ -89,6 +89,8 @@ builder.Services.AddScoped<EmployeeService>();
 builder.Services.AddScoped<NoticeService>();
 builder.Services.AddScoped<LifecycleService>();
 builder.Services.AddScoped<HrmSeeder>();
+builder.Services.AddScoped<EmployeeApproverService>();
+builder.Services.AddScoped<EmployeeProfileService>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

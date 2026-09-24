@@ -165,4 +165,17 @@ public sealed class ContactsQueryFilterTests
                     // con in a deployed database; this fixture leaves it in public.
                     "__EFMigrationsHistory")));
     }
+
+    /// <summary>The approval configuration (D-26, TK-99) lives beside con on the same context, and is policed the same way.</summary>
+    [SkippableFact]
+    public async Task Row_level_security_covers_the_apr_schema_too()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        await using ContactsDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        Assert.Equal(
+            string.Empty,
+            string.Join("; ", await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "apr", "__EFMigrationsHistory")));
+    }
 }

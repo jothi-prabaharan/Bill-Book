@@ -1687,17 +1687,23 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
 
 ### TK-99 · Approvals: the shared engine in Master, with user and role approvers
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)
 - **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
 - **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
 - **Sub-tasks:**
-  - [ ] `Shared.Kernel.Approvals`: `ApprovalStepBase` (with `ApproverUserId` and `ApproverEmployeeId`), the step state machine and its refusal messages.
-  - [ ] `apr` configuration tables on Master's tenant context, with the RLS block.
-  - [ ] `POST internal/approval-chains/resolve`: `RoleHolder` and `NamedUser`; the skip rules; the snapshot.
-  - [ ] Test: skip rules (requester, repeat approver, optional); a required unresolvable level refuses with its name; amount-conditional levels; a changed workflow leaves resolved snapshots alone.
+  - [x] `Shared.Kernel.Approvals`: `ApprovalStepBase` (with `ApproverUserId` and `ApproverEmployeeId`), the step state machine and its refusal messages.
+  - [x] `apr` configuration tables on Master's tenant context, with the RLS block.
+  - [x] `POST internal/approval-chains/resolve`: `RoleHolder` and `NamedUser`; the skip rules; the snapshot.
+  - [x] Test: skip rules (requester, repeat approver, optional); a required unresolvable level refuses with its name; amount-conditional levels; a changed workflow leaves resolved snapshots alone.
   - Standard delivery sub-tasks (section 5).
 - **Done when:** a workflow "Accountant, then Owner above ₹1,00,000" resolves to one step for ₹50,000 and two for ₹2,00,000.
+- **As built (2026-09-24):**
+  - `Shared.Kernel.Approvals`: the enums, `ApprovalStepBase`, the pure `ApprovalChain` (start, approve, reject, send back, cancel, who may act) and the contracts for Master and Hrm. Tests: `Shared.Kernel.Tests.ApprovalChainTests`.
+  - Master: `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates` on `ContactsDbContext`, migration `ApprovalWorkflows` with the RLS block. `ApprovalChainResolver` picks the most specific workflow in force, keeps the levels the amount calls for, asks Hrm for employee approvers in one call and applies the skip rules. `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`; `api/approval-workflows` (settings). HRMS branches are seeded with a manager-approved Leave and LeaveEncashment workflow. Tests: `Master.Api.Tests.ApprovalChainResolverTests`, including this card's *Done when*.
+  - Hrm: `internal/approval-chains/resolve-employees` (reporting chain by depth, relationship, department head, named employee), with `hrm.RelationshipTypes` (seeded Lead and Project Lead) and `hrm.EmployeeRelationships`. Tests: `Hrm.Api.Tests.EmployeeApproverTests`.
+  - "A changed workflow leaves resolved snapshots alone" is a property of the owning service's stored steps, so it is tested with the first one, leave (TK-49).
+  - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
 
 ### TK-100 · Approvals: purchase orders, bills and debit notes
 - [ ] open
@@ -2277,6 +2283,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:**
   - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Hrm`, with `Hrm` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
   - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Hrm`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
+  - **Built under TK-99 (2026-09-24), so not to be rebuilt here:** `Shared.Kernel.Approvals` (`ApprovalStepBase`, the `ApprovalChain` state machine, the contracts); Master's `apr` workflows, `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`, and the seeded manager-approved Leave and LeaveEncashment workflows; Hrm's `internal/approval-chains/resolve-employees` with `hrm.RelationshipTypes` and `hrm.EmployeeRelationships`, and `internal/employees/lookup` (`Shared.Kernel.Employees.EmployeeProfile`). What is left for this card: `tla` with `LeaveApprovalStep : ApprovalStepBase`, submit calling Master's resolve and storing the steps, approve/reject/send back through `ApprovalChain`, escalation, and the *Done when* test that a changed workflow leaves requests in flight on their old chain.
 
 ### TK-50 · H3: Time and attendance (`tla`)
 - [~] working (Antigravity) — since 2026-09-25

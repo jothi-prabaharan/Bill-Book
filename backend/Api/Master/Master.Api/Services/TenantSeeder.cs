@@ -215,6 +215,13 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             failed.Add("Contacts");
         }
 
+        // The starting approval workflows (TK-49), in process: they are
+        // Master's own apr tables, so an HTTP call would be to ourselves.
+        if (apps.HasFlag(App.Hrms) && !await SeedApprovalDefaultsAsync(customerId, orgId, apps, ct))
+        {
+            failed.Add("Approvals");
+        }
+
         return failed;
     }
 
@@ -256,6 +263,30 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         {
             // Idempotent, so a retry of the whole fan-out is safe.
             _log.LogError(ex, "Seeding Contacts for organization {OrgId} failed.", orgId);
+            return false;
+        }
+    }
+
+    /// <summary>Default approval workflows for the branch's apps, idempotent (TK-49).</summary>
+    private async Task<bool> SeedApprovalDefaultsAsync(Guid customerId, Guid orgId, App apps, CancellationToken ct)
+    {
+        try
+        {
+            using IServiceScope scope = _services.CreateScope();
+
+            // Tenant first: the context is built from it.
+            var tenant = scope.ServiceProvider.GetRequiredService<TenantContext>();
+            tenant.CustomerId = customerId;
+            tenant.OrgId = orgId;
+
+            var workflows = scope.ServiceProvider.GetRequiredService<ApprovalWorkflowService>();
+            int added = await workflows.SeedDefaultsAsync(orgId, apps, DateOnly.FromDateTime(DateTime.UtcNow), ct);
+            _log.LogInformation("Seeded {Count} approval workflow(s) for organization {OrgId}.", added, orgId);
+            return true;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _log.LogError(ex, "Seeding approval workflows for organization {OrgId} failed.", orgId);
             return false;
         }
     }
