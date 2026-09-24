@@ -252,7 +252,7 @@ If the code has moved on since a card was written, correct the card in your clai
     second one, while nothing is released.
 
 ### TK-71 · New branches are never seeded for Purchase or the report catalog
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [ ] open
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-01 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
@@ -287,6 +287,17 @@ If the code has moved on since a card was written, correct the card in your clai
   seeding by hand.
 - **Notes:** once this lands, the retry in `apps/admin` can repair existing branches, since
   seeding is idempotent.
+  - Handover (Claude Opus 5.5, 2026-09-24): released unfinished, with no code changed, when the
+    owner moved me to TK-32. What I checked:
+    - Both seed endpoints already take `SeedOrganizationRequest` on `internal/seed/organization`,
+      and `PurchaseSeeder` and `ReportCatalogSeeder` are both registered. So the first sub-task
+      needs no change.
+    - Local ports: Purchase `http://localhost:4505/`, Reporting `http://localhost:4506/`.
+    - `settings.bicep`: add both to the `master` block beside `Seeding__Sales`.
+      `serviceUrl.purchase` and `serviceUrl.reporting` exist, because both are in `apiKeys`.
+    - `DatabaseMigrationService`: don't just add Purchase's series to the `accDb2` block. That
+      block runs only when `STA` is missing, so a database bootstrapped before this change would
+      never get `POR`/`GRN`/`BIL`/`DBN`. Give Purchase its own existence check on `POR`.
 
 ### TK-02 · RLS template: restore it in `acc`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
@@ -1435,7 +1446,7 @@ If the code has moved on since a card was written, correct the card in your clai
     diff, and `dotnet ef migrations has-pending-model-changes` reports none.
 
 ### TK-32 · *Business Performance* report
-- [!] blocked — D-15
+- [ ] open
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15
 - **Sub-tasks:** build whatever D-15 specifies, wired through the same four layers as TK-31.
 - **Done when:** `ReportLayerCertificationTests` counts it.
@@ -1999,7 +2010,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-12 | Pricing per app: per user, per branch, or per employee? | TK-39 | |
 | D-13 | Has anything been deployed with real data? Dropping `con.PrintTemplates` loses templates unless they're migrated. | TK-24 | **Nothing is deployed** (owner, 2026-09-24). TK-24 may drop `con.PrintTemplates` in the same change that copies its rows to `prt`. |
 | D-14 | Subscribe to IBJA's paid metals API? | TK-28 | |
-| D-15 | What is the *Business Performance* report? | TK-32 | |
+| D-15 | What is the *Business Performance* report? | TK-32 | **Xero-style KPI ratios over a period** (owner, 2026-09-24): gross profit margin, net profit margin, return on investment, average days customers take to pay, average days to pay suppliers, current assets to current liabilities, term assets to liabilities, and total cash balance. |
 | D-16 | What should the client portal do next? | TK-64 | |
 | D-17 | Go-ahead, and the order, for each Phase 3 design | TK-65 … TK-70 | |
 | D-18 | What is Customer stage C4? The proposal is per-branch SLA hours per priority, replacing the hard-coded ones in `TicketsController.cs:101`. | TK-19 | |
