@@ -375,6 +375,24 @@ public class InvoiceView : InvoiceListItem
     public string? VoidReason { get; set; }
 
     public List<InvoiceLineView> Lines { get; set; } = [];
+
+    /// <summary>
+    /// How a till sale was paid (TK-39), in entry order. Empty for an invoice
+    /// raised off the till. The receipt prints these (TK-41).
+    /// </summary>
+    public List<InvoiceTenderView> Tenders { get; set; } = [];
+}
+
+/// <summary>One tender on a till sale, as the receipt prints it.</summary>
+public class InvoiceTenderView
+{
+    public string Mode { get; set; } = null!;
+
+    public decimal Amount { get; set; }
+
+    public long BankAccountId { get; set; }
+
+    public string? Reference { get; set; }
 }
 
 public class InvoiceLineView

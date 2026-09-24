@@ -321,6 +321,16 @@
   color: var(--color-danger, #c0392b);
 }
 
+.printer-form {
+  display: grid;
+  gap: var(--space-3, 12px);
+
+  label {
+    display: grid;
+    gap: 4px;
+  }
+}
+
 /* At phone width the tender is a full-screen sheet. */
 @media (max-width: 480px) {
   .tender {

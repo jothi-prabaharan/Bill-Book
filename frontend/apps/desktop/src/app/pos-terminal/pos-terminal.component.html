@@ -15,6 +15,8 @@
       />
     </label>
 
+    <button type="button" class="btn btn-ghost" (click)="openPrinter()">Printer</button>
+
     <span class="pos-status" [class.pos-offline]="!online()" role="status">
       {{ online() ? 'Online' : 'Offline — sales refused' }}
     </span>
@@ -281,6 +283,76 @@
         <button type="button" class="btn btn-primary" [disabled]="!canComplete()" (click)="complete()">
           {{ busy() ? 'Posting…' : 'Complete sale' }}
         </button>
+      </div>
+    </section>
+  }
+
+  @if (printerOpen()) {
+    <div class="tender-backdrop" tabindex="-1" (click)="printerOpen.set(false)" (keydown.escape)="printerOpen.set(false)"></div>
+    <section class="tender printer" role="dialog" aria-modal="true" aria-labelledby="printer-title">
+      <h3 id="printer-title">Receipt printer</h3>
+
+      @if (!canPrint) {
+        <p class="tender-problem">This window is not the desktop app, so it cannot reach a printer. Settings saved here apply when the till runs in the desktop app.</p>
+      }
+
+      <div class="printer-form">
+        <label>
+          <span class="pos-label">Paper</span>
+          <select [value]="'' + printerDraft().paper" (change)="setPaper($any($event.target).value)">
+            <option value="80">80 mm (48 columns)</option>
+            <option value="58">58 mm (32 columns)</option>
+          </select>
+        </label>
+
+        <label>
+          <span class="pos-label">Connection</span>
+          <select [value]="printerDraft().target?.kind ?? ''" (change)="setConnection($any($event.target).value)">
+            <option value="">None</option>
+            <option value="device">USB or serial (device path)</option>
+            <option value="network">Network (TCP)</option>
+          </select>
+        </label>
+
+        @if (printerDraft().target; as target) {
+          @if (target.kind === 'device') {
+            <label>
+              <span class="pos-label">Device path</span>
+              <input
+                type="text"
+                placeholder="/dev/usb/lp0 or \\.\COM3"
+                [value]="target.path"
+                (input)="setDevicePath($any($event.target).value)"
+              />
+            </label>
+          } @else {
+            <label>
+              <span class="pos-label">Host</span>
+              <input type="text" placeholder="192.168.1.50" [value]="target.host" (input)="setHost($any($event.target).value)" />
+            </label>
+            <label>
+              <span class="pos-label">Port</span>
+              <input type="number" min="1" max="65535" [value]="target.port" (input)="setPort($any($event.target).value)" />
+            </label>
+          }
+        }
+
+        <label>
+          <span class="pos-label">Footer</span>
+          <input
+            type="text"
+            maxlength="96"
+            placeholder="Thank you. Visit again."
+            [value]="printerDraft().footer ?? ''"
+            (input)="setFooter($any($event.target).value)"
+          />
+        </label>
+      </div>
+
+      <div class="tender-actions">
+        <button type="button" class="btn btn-ghost" (click)="printerOpen.set(false)">Cancel (Esc)</button>
+        <button type="button" class="btn btn-secondary" [disabled]="!canPrint || !printerDraft().target" (click)="testPrinter()">Test print</button>
+        <button type="button" class="btn btn-primary" (click)="savePrinter()">Save</button>
       </div>
     </section>
   }

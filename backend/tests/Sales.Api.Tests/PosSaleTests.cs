@@ -137,7 +137,7 @@ public sealed class PosSaleTests
             Task.FromResult(new StockAvailabilityResponse());
     }
 
-    private sealed record Till(SalesDbContext Db, PosSaleService Sales, RecordingLedger Ledger);
+    private sealed record Till(SalesDbContext Db, PosSaleService Sales, RecordingLedger Ledger, InvoiceService Invoices);
 
     private static Till OpenTill(PostgresFixture pg, Guid customerId, Guid orgId, IInventoryClient inventory)
     {
@@ -154,7 +154,7 @@ public sealed class PosSaleTests
             names, names, cashier, TimeProvider.System, inventory, ledger,
             new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity());
 
-        return new Till(db, new PosSaleService(invoices, db, cashier, TimeProvider.System), ledger);
+        return new Till(db, new PosSaleService(invoices, db, cashier, TimeProvider.System), ledger, invoices);
     }
 
     private static async Task<(Guid CustomerId, Guid OrgId)> NewBranchAsync(PostgresFixture pg)
@@ -218,6 +218,28 @@ public sealed class PosSaleTests
         Assert.Equal(200m, invoice.TenderedAmount);
         Assert.Equal(82m, invoice.ChangeAmount);
         Assert.Single(await till.Db.InvoiceTenders.AsNoTracking().Where(t => t.InvoiceId == result.InvoiceId).ToListAsync());
+    }
+
+    /// <summary>The receipt (TK-41) and a reprint read the tenders off the invoice view.</summary>
+    [SkippableFact]
+    public async Task The_invoice_view_carries_the_tenders_a_receipt_prints()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        (Guid customerId, Guid orgId) = await NewBranchAsync(_pg);
+        Till till = OpenTill(_pg, customerId, orgId, new RecordingInventory());
+        await using SalesDbContext _ = till.Db;
+
+        PosSaleResult result = await till.Sales.SellAsync(
+            Sale(Tender(PosTenderMode.Card, 18m, CardTerminal), Tender(PosTenderMode.Cash, 200m)), default);
+        Assert.Equal(PosSaleOutcome.Ok, result.Outcome);
+
+        InvoiceView? view = await till.Invoices.GetAsync(result.InvoiceId, default);
+
+        Assert.NotNull(view);
+        Assert.Equal(["Card", "Cash"], view.Tenders.Select(t => t.Mode));
+        Assert.Equal(218m, view.Tenders.Sum(t => t.Amount));
+        Assert.Equal(100m, view.ChangeAmount);
     }
 
     [SkippableFact]

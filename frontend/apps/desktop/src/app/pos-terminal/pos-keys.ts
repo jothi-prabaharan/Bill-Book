@@ -13,6 +13,7 @@ export type PosCommand =
   | 'recall'
   | 'hold'
   | 'tender'
+  | 'reprint'
   | 'selectUp'
   | 'selectDown'
   | 'cancel';
@@ -26,6 +27,7 @@ export const POS_KEYS: readonly { key: string; command: PosCommand; label: strin
   { key: 'F7', command: 'recall', label: 'Recall' },
   { key: 'F8', command: 'hold', label: 'Hold' },
   { key: 'F9', command: 'tender', label: 'Tender' },
+  { key: 'F10', command: 'reprint', label: 'Reprint' },
 ];
 
 const EXTRA: Record<string, PosCommand> = {

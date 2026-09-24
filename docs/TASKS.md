@@ -2020,16 +2020,25 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a purchase bill saved from its screen is accepted.
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-DSK · **Depends on:** TK-40 · **Decision:** —
-- **Where:** `frontend/apps/desktop/src/app/pos-terminal/esc-pos.service.ts` (88 lines).
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-DSK (+ L-SAL for the tenders on the invoice view) · **Depends on:** TK-40 · **Decision:** —
+- **Where:** `frontend/apps/desktop/src/app/pos-terminal/{receipt-layout.ts,esc-pos.service.ts,receipt-printer.service.ts}`, `frontend/apps/desktop/{main.js,preload.js,printer.js}`.
 - **Sub-tasks:**
-  - [ ] A fixed-width layout for 58 mm and 80 mm paper: header from the branch, lines, GST split,
-        tender and change.
-  - [ ] Print after a successful sale, and allow a reprint.
-  - [ ] Talk to the printer through Electron (USB or serial). A browser can't.
+  - [x] A fixed-width layout for 58 mm (32 columns) and 80 mm (48 columns) paper: header from the branch, lines, GST split,
+        tender and change. `receipt-layout.ts` is pure: rows of text, no printer commands.
+  - [x] Print after a successful sale, and allow a reprint (F10, marked DUPLICATE).
+  - [x] Talk to the printer through Electron (USB or serial). A browser can't.
+  - [x] Test: `receipt-layout.spec.ts`, `esc-pos.service.spec.ts`, `receipt-printer.service.spec.ts`, and
+        `PosSaleTests.The_invoice_view_carries_the_tenders_a_receipt_prints`.
+  - [ ] Owner: print one sale on a real printer or an emulator listening on port 9100 (the Done-when line).
 - **Done when:** a completed sale prints a receipt on an ESC/POS printer or an emulator.
 - **Notes:**
+  - **Every figure is the posted invoice's**, read from `GET api/sales/invoices/{id}` after the sale, never the cart's. A reprint reads the same invoice. The invoice view had no tenders, so `InvoiceView.Tenders` was added (L-SAL).
+  - **Transport, no native module:** `printer.js` writes a device path as a file (`/dev/usb/lp0`, `/dev/ttyUSB0`, `\\.\COM3`, a shared printer `\\localhost\Receipt`) or sends raw TCP (port 9100, which network printers and emulators use). A serial port's baud rate is set outside the app (`stty` or the Windows port settings). If that proves unreliable, `serialport` is the next step, and it is a native dependency.
+  - **The window is now isolated.** `main.js` had `nodeIntegration: true, contextIsolation: false`. It now uses a preload that exposes only `billBookPrinter.print`.
+  - **The printer settings are per till** (localStorage `bb.pos.printer`), next to the till id. **Printing never undoes a sale:** a failed print leaves the sale posted and says to press F10.
+  - Text is printable ASCII only (`₹` prints as `Rs`), so Tamil names print as `?`. Printing them needs raster rendering, which is not built.
+  - Not verified on hardware or an emulator. Nothing here was run.
 
 ### G · Platform for several apps (stage H0)
 

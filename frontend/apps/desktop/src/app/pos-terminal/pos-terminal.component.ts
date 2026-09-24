@@ -10,9 +10,9 @@ import {
   TaxGroupOption,
   UiMessage,
 } from '@bill-book/ui-components';
-import { EscPosService } from './esc-pos.service';
 import { BarcodeBurst, POS_KEYS, PosCommand, commandFor } from './pos-keys';
 import { PosSaleService, TenderAccount } from './pos-sale.service';
+import { PrinterSettings, ReceiptPrinterService } from './receipt-printer.service';
 import { TenderLine, TenderMode, roundToRupee, tenderSummary } from './pos-tender';
 import {
   QTY_SCALE,
@@ -72,7 +72,7 @@ const TILL_KEY = 'bb.pos.tillId';
 })
 export class PosTerminalComponent implements OnInit, OnDestroy {
   private readonly posSales = inject(PosSaleService);
-  private readonly escPosService = inject(EscPosService);
+  private readonly printer = inject(ReceiptPrinterService);
   private readonly lookups = inject(PosLookupService);
   protected readonly formats = inject(FormatSettingsService);
 
@@ -112,6 +112,14 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
   protected readonly tillId = signal(PosTerminalComponent.readTillId());
 
   protected readonly held = signal<HeldSale[]>([]);
+
+  // ---- Receipt (TK-41) -------------------------------------------------------
+
+  /** The last sale this till posted, so F10 can reprint its receipt. */
+  protected readonly lastSale = signal<{ invoiceId: number; documentNo: string } | null>(null);
+  protected readonly printerOpen = signal(false);
+  protected readonly printerDraft = signal<PrinterSettings>(this.printer.settings());
+  protected readonly canPrint = this.printer.canPrint();
   private heldSeq = 0;
 
   // ---- Tender ---------------------------------------------------------------
@@ -248,6 +256,9 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
       case 'tender':
         void this.openTender();
         break;
+      case 'reprint':
+        void this.reprint();
+        break;
       case 'selectUp':
         this.selected.set(Math.max(0, this.selected() - 1));
         break;
@@ -255,7 +266,9 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
         this.selected.set(Math.min(Math.max(0, count - 1), this.selected() + 1));
         break;
       case 'cancel':
-        if (this.tenderOpen()) {
+        if (this.printerOpen()) {
+          this.printerOpen.set(false);
+        } else if (this.tenderOpen()) {
           this.closeTender();
         } else if (this.picker() !== 'none') {
           this.closePicker();
@@ -611,27 +624,22 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
         })),
       });
 
-      const receiptBytes = this.escPosService.generateReceipt(
-        'BILL-BOOK STORE',
-        lines.map((line) => ({
-          name: line.description ?? line.itemLabel ?? 'Item',
-          amount: line.lineTotal / 100,
-        })),
-        result.totalAmount,
-      );
-      this.printReceipt(receiptBytes);
-
       this.lines.set([]);
       this.selected.set(0);
       this.closeTender();
-      this.messages.set([
-        {
-          tone: 'success',
-          text: result.changeAmount > 0
-            ? `Sale ${result.documentNo} posted. Change: ${this.formats.formatMoney(result.changeAmount)}.`
-            : `Sale ${result.documentNo} posted.`,
-        },
-      ]);
+      this.lastSale.set({ invoiceId: result.invoiceId, documentNo: result.documentNo });
+
+      const posted: UiMessage = {
+        tone: 'success',
+        text: result.changeAmount > 0
+          ? `Sale ${result.documentNo} posted. Change: ${this.formats.formatMoney(result.changeAmount)}.`
+          : `Sale ${result.documentNo} posted.`,
+      };
+      this.messages.set([posted]);
+
+      // The sale stands whether or not the receipt prints: a printer out of
+      // paper is a reprint (F10), never a second sale.
+      await this.printReceipt(result.invoiceId, false, posted);
     } catch (error) {
       this.messages.set([navigator.onLine === false ? this.offlineMessage() : this.failure(error)]);
     } finally {
@@ -656,10 +664,93 @@ export class PosTerminalComponent implements OnInit, OnDestroy {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   }
 
-  private printReceipt(bytes: Uint8Array) {
-    // In a real desktop app (e.g. Electron/Tauri), this would be sent to the main process
-    // which talks to the physical serial/USB thermal printer.
-    console.log('Printing receipt. Bytes generated:', bytes.length);
+  /** F10: the last sale's receipt again, marked DUPLICATE. */
+  async reprint(): Promise<void> {
+    const last = this.lastSale();
+    if (last === null) {
+      this.messages.set([{ tone: 'info', text: 'No sale has been made on this till since it was opened.' }]);
+      return;
+    }
+    await this.printReceipt(last.invoiceId, true);
+    if (this.messages().every((m) => m.tone !== 'error')) {
+      this.messages.set([{ tone: 'success', text: `Receipt for ${last.documentNo} reprinted.` }]);
+    }
+  }
+
+  private async printReceipt(invoiceId: number, reprint: boolean, keep?: UiMessage): Promise<void> {
+    try {
+      await this.printer.printInvoice(invoiceId, reprint);
+    } catch (error) {
+      const problem: UiMessage = {
+        tone: 'error',
+        text: `The receipt did not print: ${this.printFailure(error)} Press F10 to reprint.`,
+      };
+      this.messages.set(keep ? [keep, problem] : [problem]);
+    }
+  }
+
+  private printFailure(error: unknown): string {
+    // Electron's and this service's own refusals are Errors; an HTTP failure is not.
+    return error instanceof Error ? error.message : this.failure(error).text;
+  }
+
+  // ---- Printer settings ------------------------------------------------------
+
+  protected openPrinter(): void {
+    this.printerDraft.set(this.printer.settings());
+    this.printerOpen.set(true);
+  }
+
+  protected setPaper(value: string): void {
+    this.printerDraft.update((d) => ({ ...d, paper: value === '58' ? 58 : 80 }));
+  }
+
+  protected setConnection(kind: string): void {
+    this.printerDraft.update((d) => ({
+      ...d,
+      target: kind === 'network'
+        ? { kind: 'network', host: '', port: 9100 }
+        : kind === 'device'
+          ? { kind: 'device', path: '' }
+          : null,
+    }));
+  }
+
+  protected setDevicePath(path: string): void {
+    this.printerDraft.update((d) => ({ ...d, target: { kind: 'device', path } }));
+  }
+
+  protected setHost(host: string): void {
+    this.printerDraft.update((d) => ({
+      ...d,
+      target: { kind: 'network', host, port: d.target?.kind === 'network' ? d.target.port : 9100 },
+    }));
+  }
+
+  protected setPort(port: string): void {
+    this.printerDraft.update((d) => ({
+      ...d,
+      target: { kind: 'network', host: d.target?.kind === 'network' ? d.target.host : '', port: Number(port) || 9100 },
+    }));
+  }
+
+  protected setFooter(footer: string): void {
+    this.printerDraft.update((d) => ({ ...d, footer: footer.trim() === '' ? undefined : footer }));
+  }
+
+  protected savePrinter(): void {
+    this.printer.saveSettings(this.printerDraft());
+    this.printerOpen.set(false);
+    this.messages.set([{ tone: 'success', text: 'Printer settings saved for this till.' }]);
+  }
+
+  protected async testPrinter(): Promise<void> {
+    try {
+      await this.printer.printTest(this.printerDraft());
+      this.messages.set([{ tone: 'success', text: 'Test page sent to the printer.' }]);
+    } catch (error) {
+      this.messages.set([{ tone: 'error', text: `The test page did not print: ${this.printFailure(error)}` }]);
+    }
   }
 
   private failure(error: unknown): UiMessage {

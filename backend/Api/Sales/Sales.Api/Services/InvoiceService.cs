@@ -926,6 +926,22 @@ public sealed class InvoiceService : IInvoiceService
                 : 0,
         };
 
+        if (invoice.TillId.HasValue)
+        {
+            view.Tenders = await _db.InvoiceTenders
+                .AsNoTracking()
+                .Where(t => t.InvoiceId == invoiceId)
+                .OrderBy(t => t.InvoiceTenderId)
+                .Select(t => new InvoiceTenderView
+                {
+                    Mode = t.Mode.ToString(),
+                    Amount = t.Amount,
+                    BankAccountId = t.BankAccountId,
+                    Reference = t.Reference,
+                })
+                .ToListAsync(ct);
+        }
+
         foreach (var line in invoice.Lines.OrderBy(l => l.LineNumber))
         {
             var lineView = new InvoiceLineView

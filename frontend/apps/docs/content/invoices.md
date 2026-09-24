@@ -118,6 +118,7 @@ The desktop app's till is driven by the keyboard:
 | **F6** | Void the selected line |
 | **F8** / **F7** | Hold the cart / recall the last held cart |
 | **F9** | Tender |
+| **F10** | Reprint the last sale's receipt |
 | **↑ ↓** | Move the selection |
 | **Esc** | Close the tender or the search |
 
@@ -126,6 +127,15 @@ The desktop app's till is driven by the keyboard:
 - **Held sales** stay on the till only until the app closes.
 - **The till number** is set at the top of the screen and remembered on this computer.
 - **Offline, the till refuses to sell.** The status at the top says so, and nothing is queued to send later. A sale is either posted, with its stock taken, or not made at all.
+
+### The receipt
+
+After each sale the till prints a receipt on a thermal receipt printer. It prints the branch's name, address, phone and GSTIN, the bill number and date, and each item with its quantity, rate and amount. It then prints the taxable value, GST split by component and rate, any round-off, the total, how the sale was paid, and the change. Every figure on it comes from the posted invoice.
+
+- **Set up the printer once per till** under **Printer** at the top of the screen. Choose the paper width (80 mm or 58 mm) and how the printer is connected. A USB or serial printer is given by its device path, such as `/dev/usb/lp0` on Linux or `\\.\COM3` on Windows. A network printer is given by its address and port, usually 9100. **Test print** checks the connection before you save. You can also set the line printed at the bottom.
+- **The sale stands if the printer fails.** If the printer is out of paper or unplugged, the sale is still posted and the till says the receipt did not print. Fix the printer and press **F10** to reprint. A reprint is marked *DUPLICATE*.
+- **Receipts print only from the desktop app.** A browser cannot reach a receipt printer.
+- **Names in Tamil or other scripts print as question marks.** Receipt printers print text only in their built-in character set.
 
 ## Picking the customer and items
 

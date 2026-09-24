@@ -9,6 +9,7 @@ describe('commandFor', () => {
     expect(commandFor({ key: 'F6' })).toBe('voidLine');
     expect(commandFor({ key: 'F8' })).toBe('hold');
     expect(commandFor({ key: 'F9' })).toBe('tender');
+    expect(commandFor({ key: 'F10' })).toBe('reprint');
     expect(commandFor({ key: 'Escape' })).toBe('cancel');
   });
 
