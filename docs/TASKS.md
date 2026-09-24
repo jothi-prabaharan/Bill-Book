@@ -452,7 +452,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       `backend/tests/Shared.Kernel.Tests/InternalTenantTests.cs`.
 
 ### TK-07 · Restore the ledger's deferred balance and allocation triggers
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-ACC · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - What was dropped: `git show 2c5ed6f^:backend/Api/Accounting/Accounting.Repository/Migrations/20260902151402_InitialAccountingSchema.cs`,
