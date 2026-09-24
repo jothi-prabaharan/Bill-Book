@@ -1997,7 +1997,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-10 | Does a branch declare its trade (Pharma, Jewellery or General)? | — | |
 | D-11 | PDF library: *PDFsharp 6.1.1 is already in use for invoice PDFs.* Confirm it, or go to Syncfusion. | TK-26 | |
 | D-12 | Pricing per app: per user, per branch, or per employee? | TK-39 | |
-| D-13 | Has anything been deployed with real data? Dropping `con.PrintTemplates` loses templates unless they're migrated. | TK-24 | |
+| D-13 | Has anything been deployed with real data? Dropping `con.PrintTemplates` loses templates unless they're migrated. | TK-24 | **Nothing is deployed** (owner, 2026-09-24). TK-24 may drop `con.PrintTemplates` in the same change that copies its rows to `prt`. |
 | D-14 | Subscribe to IBJA's paid metals API? | TK-28 | |
 | D-15 | What is the *Business Performance* report? | TK-32 | |
 | D-16 | What should the client portal do next? | TK-64 | |
