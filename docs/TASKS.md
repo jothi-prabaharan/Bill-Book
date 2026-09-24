@@ -1013,7 +1013,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-16 · Contact picker on the support ticket form
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-CUSTOMER-UI · **Depends on:** — · **Decision:** —
 - **Where:** `frontend/libs/customer/customer-ui/src/lib/tickets/ticket-form.component.html`
   (a numeric `contactId`).
