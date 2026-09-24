@@ -513,6 +513,10 @@ public sealed class InvoicesControllerTests
             long salesOrderId, CreateInvoiceFromOrderRequest request, CancellationToken ct) =>
             Task.FromResult(CreateResult);
 
+        public Task<(InvoiceResult Result, FulfillSalesOrderResult? Fulfilled)> FulfillSalesOrderAsync(
+            long salesOrderId, FulfillSalesOrderRequest request, CancellationToken ct) =>
+            Task.FromResult<(InvoiceResult, FulfillSalesOrderResult?)>((CreateResult, null));
+
         public Task<InvoiceResult> UpdateAsync(long invoiceId, SaveInvoiceRequest request, CancellationToken ct) =>
             Task.FromResult(UpdateResult);
 

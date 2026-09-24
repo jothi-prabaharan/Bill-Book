@@ -272,8 +272,17 @@ public class SalesOrderListItem
 
     public bool IsInterState { get; set; }
 
-    /// <summary>The invoice this became, when it has. Null otherwise.</summary>
+    /// <summary>The first invoice raised against this order, when there is one. Null otherwise.</summary>
     public long? InvoicedDocumentId { get; set; }
+
+    /// <summary>
+    /// Every line billed in full. The billing half of an order's progress, beside
+    /// <c>FulfilmentStatus</c>, which is the delivery half — an order can be
+    /// delivered and not yet billed, and that gap is what this tells apart. It is
+    /// also what decides whether the order can still be invoiced: one invoice no
+    /// longer means billed, now that an order can be billed in parts.
+    /// </summary>
+    public bool IsFullyInvoiced { get; set; }
 }
 
 /// <summary>A SalesOrder with its lines and their tax rows.</summary>
@@ -349,6 +358,9 @@ public class SalesOrderLineView
     public decimal ReservedQuantity { get; set; }
 
     public decimal DeliveredQuantity { get; set; }
+
+    /// <summary>Billed on posted invoices. Delivered less this is what an invoice is still owed for.</summary>
+    public decimal InvoicedQuantity { get; set; }
 
     public decimal UnitPrice { get; set; }
 

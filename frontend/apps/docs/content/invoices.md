@@ -38,14 +38,14 @@ Once posted:
 
 ## From a sales order
 
-**From an order** lists every sales order that has been confirmed and not already invoiced, and turns the one you pick into an invoice.
+**From an order** lists every confirmed sales order with something left to bill, and turns the one you pick into an invoice for what is left.
 
 - **The lines are read from the order on the server, not sent by the screen.** An invoice that claimed to come from an order it did not match would leave the two disagreeing for the rest of their lives — and this is the document the department eventually reads
 - **The tax is recomputed at the invoice's own date**, not copied from the order. An order taken in March and invoiced in June is charged at June's rates
 - **Only a confirmed order can be invoiced.** An unconfirmed one is holding no stock, so invoicing it would issue goods nobody reserved
 - **A due date is required, and the order has none to give.** An order's delivery date is when goods are expected, not when money is — so either set the due date or choose a payment term
 
-One order becomes at most one invoice. Converting the same order twice is refused.
+An order can be billed on several invoices — the first for part of it, the next for the rest. Each invoice bills only what the order still has to bill, and when part of a line has already gone out on a delivery challan, the invoice bills that part without taking it out of stock a second time. See [Sales orders](sales-orders) for how the order keeps count.
 
 ## Due dates and overdue
 
@@ -98,4 +98,3 @@ The list pages on the server and can be filtered by status, searched by invoice 
 ## What it does not do yet
 
 - **The customer and the items are keyed by id**, not chosen from a lookup. The picker arrives with the item lookup endpoint
-- **Partial invoicing** — billing four of ten on an order and leaving the rest open — is designed and not yet built

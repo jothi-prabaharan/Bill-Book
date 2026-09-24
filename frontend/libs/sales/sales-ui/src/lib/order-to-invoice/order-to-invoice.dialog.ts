@@ -91,7 +91,9 @@ export class OrderToInvoiceDialogComponent implements OnInit {
       // will only convert one in that state.
       const page = await this.orders.list({ skip: 0, take: CANDIDATE_PAGE, status: 'Posted' });
 
-      this.candidates.set(page.rows.filter((o) => !o.invoicedDocumentId));
+      // Anything left to bill, not merely never invoiced: an order billed in
+      // part still owes an invoice for the rest.
+      this.candidates.set(page.rows.filter((o) => !o.isFullyInvoiced));
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);

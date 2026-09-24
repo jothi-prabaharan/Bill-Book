@@ -897,44 +897,53 @@ If the code has moved on since a card was written, correct the card in your clai
     tests) and `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-14 · Partial fulfilment (T3.6): what's left
-- [~] working (Claude Opus 5.5) — since 2026-09-24 · shares L-SAL with TK-24 by the owner's decision (TK-24's Sales work is committed; only TK-14 adds a `sal` migration)
-- **Lanes:** L-SAL (plus L-INV if the reservation API changes) · **Depends on:** TK-12 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-SAL, L-SAL-UI (the billing tag and the From-an-order filter) · **Depends on:** TK-12 · **Decision:** —
 - **Where:**
-  - `DeliveryChallanService.cs`: line 358 (`ReleaseReservation`) and lines 374-398.
-  - `backend/Api/Sales/Sales.Api/Controllers/SalesOrdersController.cs:103-336` (`Fulfill`).
-  - `InvoiceService.cs`: 1192 and 1236.
-  - `backend/Api/Sales/Sales.Entity/TableEntities/SalesOrderDetail.cs:27-30`.
-- **State:** **most of T3.6 is built.**
-  - Posting a challan advances `DeliveredQuantity` and sets `PartlyDelivered` or `Closed`.
-  - `POST sales-orders/{id}/fulfill` invoices part of an order.
-  - What's left:
-    - `ReleaseReservation` is keyed off `SalesOrderId.HasValue`.
-    - There is no `InvoicedQuantity` column, so "delivered but not billed" can't be seen.
-    - `Fulfill` holds all its logic in the controller, and opens `BeginScopeAsync` there. Hard
-      rule 13 says no controller opens a transaction.
-    - `docs/Modules.md` §10 lists "the invoice re-issues challan stock" as a defect.
+  - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs`: `PostAsync` (`ReadBilledOrderAsync`,
+    `IssueQuantities`), `VoidAsync`, `CreateFromSalesOrderAsync`, `FulfillSalesOrderAsync`.
+  - `Services/SalesOrderFulfilment.cs` (new): the one fulfilment-status rule.
+  - `Controllers/SalesOrdersController.cs`: `Fulfill` now only maps the result.
+  - `SalesOrderDetail.InvoicedQuantity` and migration `20260924054101_SalesOrderInvoicedQuantity`.
+- **State (as left, 2026-09-24):**
+  - An order line carries Delivered, Invoiced and Reserved (still held). The invoice's post moves
+    all three for every line naming an order line; a posted invoice's void gives back only
+    Invoiced. `FulfilmentStatus` follows delivery; `IsFullyInvoiced` (list and view) follows billing.
+  - An invoice against an order line bills delivered-not-invoiced goods first and issues only the
+    rest; against a named challan it issues nothing. Over-billing is refused at post.
 - **Sub-tasks:**
-  - [ ] Move `Fulfill`'s body into `SalesOrderService.FulfillAsync`. The controller maps the result
-        and nothing else, and the reliability filter owns the transaction.
-  - [ ] Add `InvoicedQuantity decimal(18,4)` to `SalesOrderDetail`, with a migration. Advance it
-        when an invoice posts against an order line (`SalesOrderDetailId`), and reverse it on void.
-  - [ ] Derive billing status from `InvoicedQuantity`, beside fulfilment status. It needs no new
-        enum; the view model can carry `IsFullyInvoiced`.
-  - [ ] Verify `InvoiceService.cs:1192` and `1496`: an invoice with `DeliveryChallanId` must not
-        issue stock again. Fix it if it does.
-  - [ ] Test: order 10 → challan 4 gives `PartlyDelivered`, delivered 4 and reserved 6.
-  - [ ] Test: challan 6 more gives `Closed` and reserved 0.
-  - [ ] Test: an invoice against the first challan issues no stock and moves `InvoicedQuantity` to 4.
-  - [ ] Owner: run `Sales.Api.Tests`.
+  - [x] Move `Fulfill`'s body out of the controller. It went to `InvoiceService.FulfillSalesOrderAsync`
+        rather than `SalesOrderService`, beside `CreateFromSalesOrderAsync`, sharing one builder and
+        avoiding an invoice dependency in the order service. The controller keeps
+        `[Transactional(Serializable)]` for the filter and opens nothing.
+  - [x] Add `InvoicedQuantity` (`decimal(18,6)` to match its neighbours, not 18,4) with
+        `chk_salesorderdetails_invoiced`; advanced on post, reversed on void.
+  - [x] `IsFullyInvoiced` on `SalesOrderListItem` (so the view has it too).
+  - [x] Verified: an invoice with `DeliveryChallanId` issues no stock. The real double-issue was an
+        invoice against the order that did **not** name the challan, including `Fulfill`; fixed by
+        `IssueQuantities`.
+  - [x] Test: order 10 → challan 4 gives `PartlyDelivered`, delivered 4 and reserved 6.
+  - [x] Test: challan 6 more gives `Closed` and reserved 0.
+  - [x] Test: an invoice against the first challan issues no stock and moves `InvoicedQuantity` to 4.
+  - [ ] Owner: run `Sales.Api.Tests` (and the frontend suite).
 - **Done when:** an order is delivered and billed in two parts, its status goes Open →
   PartlyDelivered → Closed, and its reservation reaches zero.
 - **Notes:**
-  - From TK-12 (2026-09-23): challan lines now carry `SalesOrderDetailId`, required on every line
-    of a challan against an order, and posting moves the order line by that id.
-    `ReleaseReservation` is per line (`SalesOrderDetailId.HasValue`). The reserved quantity never
-    goes below zero, and posting refuses to deliver more than is outstanding. The invoice's
-    challan branch still matches challan lines to invoice lines **by `ItemId`**, which is wrong
-    when one item appears twice.
+  - Found and fixed on the way: short-close released `Reserved − Delivered`, but every delivery
+    already takes its quantity off `Reserved`, so four of ten delivered kept four units reserved
+    for good. It releases `Reserved` now. `CreateFromSalesOrderAsync` refused any order with an
+    invoice at all; it bills what is left. The *From an order* dialog hid any order with an
+    invoice; it filters on `IsFullyInvoiced`. `ReleaseReservation` is per invoice line.
+    `InvoiceService.VoidAsync` never loaded the invoice's lines, so its challan reversal walked an
+    empty list; it includes them now.
+  - Left: the invoice's challan branch still matches challan lines to invoice lines by `ItemId`
+    and does not check the challan is posted or the customer's. Its COGS legs name GDNI, which
+    the GDNI card (TK-78, first of the two) seeds.
+  - Shared `L-SAL` with TK-24 by the owner's decision; TK-24 added no `sal` migration.
+  - Tests written, not run: `backend/tests/Sales.Api.Tests/PartialFulfilmentTests.cs` (10 tests),
+    the `IInvoiceService` stub in `InvoicesControllerTests.cs`;
+    `frontend/libs/sales/sales-ui/src/lib/order-to-invoice/order-to-invoice.dialog.spec.ts` (new)
+    and `SOR-T1-07` in `sales-forms.spec.ts`.
 
 ### TK-78 · Sale challans post to Goods Delivered Not Invoiced, once
 - [ ] open

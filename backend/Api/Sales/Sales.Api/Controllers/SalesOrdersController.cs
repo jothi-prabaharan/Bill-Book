@@ -25,16 +25,13 @@ public sealed class SalesOrdersController : ControllerBase
     private const int DefaultPageSize = 50;
 
     private readonly SalesOrderService _SalesOrders;
-    private readonly SalesDbContext _db;
     private readonly IInvoiceService _invoices;
 
     public SalesOrdersController(
         SalesOrderService SalesOrders,
-        SalesDbContext db,
         IInvoiceService invoices)
     {
         _SalesOrders = SalesOrders;
-        _db = db;
         _invoices = invoices;
     }
 
@@ -93,246 +90,30 @@ public sealed class SalesOrdersController : ControllerBase
     }
 
     /// <summary>
-    /// Fulfill some or all remaining order quantities by creating and posting an invoice.
-    /// Existing non-void invoices are counted server-side, so stale clients cannot
-    /// over-invoice a line. The normal InvoiceService pipeline performs tax, stock
-    /// issue and ledger posting.
-    ///
-    /// Empty <c>Lines</c> means "fulfill everything still uninvoiced".
+    /// Bills some or all of what the order has left, on an invoice that is
+    /// created and posted in one go. Empty <c>Lines</c> means everything still
+    /// unbilled. The work is <see cref="IInvoiceService.FulfillSalesOrderAsync"/>'s;
+    /// this action maps its answer and nothing else.
     /// </summary>
     [HttpPost("{SalesOrderId:long}/fulfill")]
     [PermissionAction("approve")]
-    // Serializable, and declared here rather than only inside the method: the
-    // request-wide TransactionFilter opens the transaction before this action
-    // runs, so the level has to be asked for where the filter can see it. The
-    // guard below counts what has already been invoiced against each line and
-    // decides on that count — two concurrent fulfilments at Read Committed
-    // would each read the same total, each find room, and each write.
+    // Serializable, declared where the request-wide transaction filter can see
+    // it: the posting checks what each line has left to bill and decides on
+    // that — two concurrent fulfilments at Read Committed would each read the
+    // same figure, each find room, and each write. The filter opens and
+    // commits the transaction; this action never does.
     [Transactional(IsolationLevel.Serializable)]
     public async Task<IActionResult> Fulfill(
         long SalesOrderId,
         [FromBody] FulfillSalesOrderRequest request,
         CancellationToken ct)
     {
-        SalesOrderViewResult access = await _SalesOrders.GetAsync(SalesOrderId, ct);
-        if (access.Outcome == SalesOrderOutcome.NotFound)
-        {
-            return NotFound();
-        }
-        if (access.Outcome == SalesOrderOutcome.Forbidden)
-        {
-            return Forbid();
-        }
-        if (access.Outcome != SalesOrderOutcome.Ok || access.View is null)
-        {
-            return BadRequest(new MessageResponse { Message = "The Sales Order could not be read for fulfillment." });
-        }
+        (InvoiceResult result, FulfillSalesOrderResult? fulfilled) =
+            await _invoices.FulfillSalesOrderAsync(SalesOrderId, request, ct);
 
-        SalesOrder? order = await _db.SalesOrders
-            .Include(x => x.Lines)
-            .FirstOrDefaultAsync(x => x.SalesOrderId == SalesOrderId, ct);
-
-        if (order is null)
-        {
-            return NotFound();
-        }
-
-        if (order.Status != DocumentStatus.Posted)
-        {
-            return BadRequest(new MessageResponse { Message = "Only a confirmed Sales Order can be fulfilled." });
-        }
-
-        if (order.FulfilmentStatus is FulfilmentStatus.Closed or FulfilmentStatus.Cancelled)
-        {
-            return Conflict(new MessageResponse { Message = "This Sales Order is already closed." });
-        }
-
-        if (request.DueDate is null)
-        {
-            return BadRequest(new MessageResponse
-            {
-                Message = "An invoice requires a due date. Set the due date or payment term before fulfillment."
-            });
-        }
-
-        await using ITransactionScope transaction =
-            await _db.Database.BeginScopeAsync(IsolationLevel.Serializable, ct);
-
-        try
-        {
-            var orderLineIds = order.Lines.Select(x => x.SalesOrderDetailId).ToList();
-
-            var invoiced = await (
-                from detail in _db.InvoiceDetails
-                join invoice in _db.Invoices on detail.InvoiceId equals invoice.InvoiceId
-                where detail.SalesOrderDetailId.HasValue
-                    && orderLineIds.Contains(detail.SalesOrderDetailId.Value)
-                    && invoice.SalesOrderId == SalesOrderId
-                    && invoice.Status != DocumentStatus.Void
-                group detail by detail.SalesOrderDetailId!.Value into grouped
-                select new
-                {
-                    SalesOrderDetailId = grouped.Key,
-                    Quantity = grouped.Sum(x => x.Quantity)
-                })
-                .ToDictionaryAsync(x => x.SalesOrderDetailId, x => x.Quantity, ct);
-
-            var requestedByLine = request.Lines
-                .GroupBy(x => x.SalesOrderDetailId)
-                .ToDictionary(x => x.Key, x => x.Sum(v => v.Quantity));
-
-            var linesToFulfill = new List<(SalesOrderDetail Line, decimal Quantity, decimal PreviouslyInvoiced)>();
-
-            foreach (SalesOrderDetail line in order.Lines)
-            {
-                decimal previouslyInvoiced = invoiced.GetValueOrDefault(line.SalesOrderDetailId);
-                decimal remaining = Math.Max(0m, line.Quantity - previouslyInvoiced);
-
-                if (requestedByLine.Count == 0)
-                {
-                    if (remaining > 0m)
-                    {
-                        linesToFulfill.Add((line, remaining, previouslyInvoiced));
-                    }
-                    continue;
-                }
-
-                if (!requestedByLine.TryGetValue(line.SalesOrderDetailId, out decimal requested))
-                {
-                    continue;
-                }
-
-                if (requested <= 0m)
-                {
-                    return BadRequest(new MessageResponse { Message = $"Line {line.LineNumber} quantity must be greater than zero." });
-                }
-
-                if (requested > remaining)
-                {
-                    return Conflict(new MessageResponse
-                    {
-                        Message = $"Line {line.LineNumber} can only fulfill {remaining} remaining units; {requested} were requested."
-                    });
-                }
-
-                linesToFulfill.Add((line, requested, previouslyInvoiced));
-            }
-
-            foreach (long requestedLineId in requestedByLine.Keys)
-            {
-                if (order.Lines.All(x => x.SalesOrderDetailId != requestedLineId))
-                {
-                    return BadRequest(new MessageResponse
-                    {
-                        Message = $"Sales Order line {requestedLineId} does not belong to this order."
-                    });
-                }
-            }
-
-            if (linesToFulfill.Count == 0)
-            {
-                return Conflict(new MessageResponse { Message = "There is no remaining quantity to fulfill on this Sales Order." });
-            }
-
-            SaveInvoiceRequest invoiceRequest = new()
-            {
-                DocumentDate = request.DocumentDate ?? DateOnly.FromDateTime(DateTime.UtcNow),
-                DueDate = request.DueDate,
-                PaymentTermId = request.PaymentTermId,
-                ContactId = order.ContactId,
-                QuoteId = order.QuoteId,
-                SalesOrderId = order.SalesOrderId,
-                ContactGstin = order.ContactGstin,
-                PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
-                BillingAddress = order.BillingAddress,
-                ShippingAddress = order.ShippingAddress,
-                CurrencyCode = order.CurrencyCode,
-                ExchangeRate = order.ExchangeRate,
-                Notes = request.Notes ?? order.Notes,
-                TermsAndConditions = order.TermsAndConditions,
-                Lines = linesToFulfill.Select(x => new SaveInvoiceLineRequest
-                {
-                    ItemId = x.Line.ItemId,
-                    Description = x.Line.Description,
-                    HsnSacCode = x.Line.HsnSacCode,
-                    WarehouseId = x.Line.WarehouseId,
-                    Quantity = x.Quantity,
-                    UomId = x.Line.UomId,
-                    ConversionFactor = x.Line.ConversionFactor,
-                    UnitPrice = x.Line.UnitPrice,
-                    IsPriceInclusive = x.Line.IsPriceInclusive,
-                    DiscountPercent = x.Line.DiscountPercent,
-                    DiscountAmount = x.Line.DiscountAmount,
-                    TaxTreatment = x.Line.TaxTreatment,
-                    TaxGroupId = x.Line.TaxGroupId,
-                    LineType = x.Line.LineType,
-                    AccountId = x.Line.AccountId,
-                    FixedAssetCategoryId = x.Line.FixedAssetCategoryId,
-                    ItemBatchId = x.Line.ItemBatchId,
-                    LineNotes = x.Line.LineNotes,
-                    SalesOrderDetailId = x.Line.SalesOrderDetailId,
-                }).ToList()
-            };
-
-            InvoiceResult created = await _invoices.CreateAsync(invoiceRequest, ct);
-            if (created.Outcome != InvoiceOutcome.Ok)
-            {
-                await transaction.RollbackAsync(ct);
-                return InvoiceFailure(created);
-            }
-
-            InvoiceResult posted = await _invoices.PostAsync(created.InvoiceId, ct);
-            if (posted.Outcome != InvoiceOutcome.Ok)
-            {
-                await transaction.RollbackAsync(ct);
-                return InvoiceFailure(posted);
-            }
-
-            // Invoices are one of the two fulfillment documents for a Sales Order;
-            // DeliveryChallanService updates the same fields for the other path.
-            // Reconcile from the durable delivered quantity so older invoices that
-            // predate this endpoint are included as fulfilled as well.
-            foreach ((SalesOrderDetail line, decimal quantity, decimal previouslyInvoiced) in linesToFulfill)
-            {
-                line.DeliveredQuantity = Math.Max(
-                    line.DeliveredQuantity,
-                    previouslyInvoiced + quantity);
-
-                if (line.LineType == DocumentLineType.Stock)
-                {
-                    line.ReservedQuantity = Math.Max(0m, line.Quantity - line.DeliveredQuantity);
-                }
-            }
-
-            bool allDelivered = order.Lines.All(x => x.DeliveredQuantity >= x.Quantity);
-            bool someDelivered = order.Lines.Any(x => x.DeliveredQuantity > 0m);
-            order.FulfilmentStatus = allDelivered
-                ? FulfilmentStatus.Closed
-                : (someDelivered ? FulfilmentStatus.PartlyDelivered : FulfilmentStatus.Open);
-
-            await _db.SaveChangesAsync(ct);
-            await transaction.CommitAsync(ct);
-
-            return Ok(new FulfillSalesOrderResult
-            {
-                SalesOrderId = order.SalesOrderId,
-                InvoiceId = created.InvoiceId,
-                Status = order.FulfilmentStatus.ToString(),
-                Lines = linesToFulfill.Select(x => new FulfilledSalesOrderLine
-                {
-                    SalesOrderDetailId = x.Line.SalesOrderDetailId,
-                    OrderedQuantity = x.Line.Quantity,
-                    PreviouslyInvoicedQuantity = x.PreviouslyInvoiced,
-                    FulfilledQuantity = x.Quantity,
-                    RemainingQuantity = Math.Max(0m, x.Line.Quantity - x.PreviouslyInvoiced - x.Quantity)
-                }).ToList()
-            });
-        }
-        catch
-        {
-            await transaction.RollbackAsync(ct);
-            throw;
-        }
+        return result.Outcome == InvoiceOutcome.Ok && fulfilled is not null
+            ? Ok(fulfilled)
+            : InvoiceFailure(result);
     }
 
     [HttpPut("{SalesOrderId:long}")]
@@ -383,6 +164,8 @@ public sealed class SalesOrdersController : ControllerBase
         result.Outcome switch
         {
             InvoiceOutcome.NotFound => NotFound(),
+            InvoiceOutcome.AlreadyFulfilled => Conflict(new MessageResponse { Message = result.Detail ?? "There is nothing left to bill on this sales order." }),
+            InvoiceOutcome.LineInvalid => BadRequest(new MessageResponse { Message = result.Detail ?? "One or more lines are invalid." }),
             InvoiceOutcome.InsufficientStock => Conflict(new MessageResponse { Message = result.Detail ?? "Insufficient stock to fulfill the Sales Order." }),
             InvoiceOutcome.CreditLimitExceeded => BadRequest(new MessageResponse { Message = result.Detail ?? "Credit limit exceeded or account on hold." }),
             InvoiceOutcome.DueDateMissing => BadRequest(new MessageResponse { Message = result.Detail ?? "An invoice requires a due date." }),

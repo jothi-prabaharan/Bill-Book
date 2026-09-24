@@ -144,14 +144,24 @@ public class SalesDbContext : TenantDbContext
 
             b.Property(e => e.ReservedQuantity).HasColumnType("decimal(18,6)");
             b.Property(e => e.DeliveredQuantity).HasColumnType("decimal(18,6)");
+            b.Property(e => e.InvoicedQuantity).HasColumnType("decimal(18,6)");
 
             b.HasOne<SalesOrder>().WithMany(o => o.Lines).HasForeignKey(e => e.SalesOrderId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            b.ToTable(t => t.HasCheckConstraint(
-                "chk_salesorderdetails_quantities",
-                "\"ReservedQuantity\" >= 0 AND \"DeliveredQuantity\" >= 0 "
-                    + "AND \"DeliveredQuantity\" <= \"Quantity\""));
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint(
+                    "chk_salesorderdetails_quantities",
+                    "\"ReservedQuantity\" >= 0 AND \"DeliveredQuantity\" >= 0 "
+                        + "AND \"DeliveredQuantity\" <= \"Quantity\"");
+
+                // Never billed below zero or past what was ordered — the same
+                // bound the challan line puts on its own InvoicedQuantity.
+                t.HasCheckConstraint(
+                    "chk_salesorderdetails_invoiced",
+                    "\"InvoicedQuantity\" >= 0 AND \"InvoicedQuantity\" <= \"Quantity\"");
+            });
         });
 
         modelBuilder.Entity<SalesOrderDetailTax>(b =>

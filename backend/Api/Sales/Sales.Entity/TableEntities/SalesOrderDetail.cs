@@ -29,5 +29,17 @@ public class SalesOrderDetail : DocumentLineBase
     /// <summary>How much has actually gone out, across every challan and invoice against this line.</summary>
     public decimal DeliveredQuantity { get; set; }
 
+    /// <summary>
+    /// How much has been billed, across every posted invoice against this line.
+    ///
+    /// Beside <see cref="DeliveredQuantity"/> rather than folded into it, because
+    /// the two part company: a challan delivers without billing, and a line
+    /// delivered and not yet billed is the figure that says an invoice is owed.
+    /// An invoice against this line bills that delivered quantity first and
+    /// issues stock only for the rest, which is what stops goods that left on a
+    /// challan being issued a second time by their invoice.
+    /// </summary>
+    public decimal InvoicedQuantity { get; set; }
+
     public List<SalesOrderDetailTax> Taxes { get; set; } = [];
 }

@@ -100,6 +100,8 @@ export interface SalesOrderListItem {
   status: string;
   isInterState: boolean;
   invoicedDocumentId?: number;
+  /** Every line billed in full — the billing half of progress, beside `fulfilmentStatus`. */
+  isFullyInvoiced: boolean;
 }
 
 export interface SalesOrderListPage {
@@ -139,6 +141,8 @@ export interface SalesOrderLineView extends ApiDocumentLine {
   baseQuantity: number;
   reservedQuantity: number;
   deliveredQuantity: number;
+  /** Billed on posted invoices. Delivered less this is what an invoice is still owed for. */
+  invoicedQuantity: number;
   grossAmount: number;
   taxableAmount: number;
   taxAmount: number;

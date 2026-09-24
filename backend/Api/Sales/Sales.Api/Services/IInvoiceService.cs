@@ -12,6 +12,13 @@ public interface IInvoiceService
     /// </summary>
     Task<InvoiceResult> CreateFromSalesOrderAsync(
         long salesOrderId, CreateInvoiceFromOrderRequest request, CancellationToken ct);
+    /// <summary>
+    /// Bills some or all of what a confirmed order has left, and posts it.
+    /// See <see cref="InvoiceService.FulfillSalesOrderAsync"/>.
+    /// </summary>
+    Task<(InvoiceResult Result, FulfillSalesOrderResult? Fulfilled)> FulfillSalesOrderAsync(
+        long salesOrderId, FulfillSalesOrderRequest request, CancellationToken ct);
+
     Task<InvoiceResult> UpdateAsync(long invoiceId, SaveInvoiceRequest request, CancellationToken ct);
     Task<InvoiceResult> SaveAsync(SaveInvoiceRequest request, long? invoiceId, CancellationToken ct);
     Task<InvoiceView?> GetAsync(long invoiceId, CancellationToken ct);

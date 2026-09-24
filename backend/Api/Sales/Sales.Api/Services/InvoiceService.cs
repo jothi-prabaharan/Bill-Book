@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
@@ -125,15 +126,172 @@ public sealed class InvoiceService : IInvoiceService
             .Include(o => o.Lines)
             .FirstOrDefaultAsync(o => o.SalesOrderId == salesOrderId, ct);
 
-        if (order is null)
+        InvoiceResult? refusal = CheckBillable(order);
+        if (refusal is not null)
         {
-            return new InvoiceResult(InvoiceOutcome.NotFound, Detail: "No such sales order.");
+            return refusal;
         }
 
-        if (_tenant.OrgId is not Guid callerOrgId || order.OrgId != callerOrgId)
+        // What is left to bill on each line — the whole order the first time,
+        // the remainder after a partial invoice. It used to refuse any order
+        // that had an invoice at all, so an order billed in part could never
+        // be billed for the rest this way.
+        List<(SalesOrderDetail Line, decimal Quantity)> lines = order!.Lines
+            .Select(l => (Line: l, Quantity: Billable(order, l)))
+            .Where(x => x.Quantity > 0m)
+            .ToList();
+
+        if (lines.Count == 0)
         {
             return new InvoiceResult(
-                InvoiceOutcome.NotFound, Detail: "No such sales order.");
+                InvoiceOutcome.AlreadyFulfilled,
+                Detail: "Everything on this sales order has already been invoiced.");
+        }
+
+        DateOnly documentDate = request.DocumentDate
+            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        return await CreateAsync(
+            FromOrder(order, lines, documentDate, request.DueDate, request.PaymentTermId,
+                request.PlaceOfSupplyStateCode, request.Notes),
+            ct);
+    }
+
+    /// <summary>
+    /// Bills some or all of what a confirmed order has left, and posts the
+    /// invoice, in the caller's transaction.
+    ///
+    /// Moved here from <c>SalesOrdersController</c>, which held all of it and
+    /// opened its own transaction. It also counted only what had been
+    /// <i>invoiced</i>, so an order delivered in part on a challan and then
+    /// fulfilled here issued the challan's goods a second time. The posting
+    /// now bills delivered-but-unbilled goods without issuing them, and moves
+    /// the order's delivered, reserved and invoiced quantities itself — so this
+    /// method only chooses the lines.
+    ///
+    /// Empty <c>Lines</c> means everything still unbilled.
+    /// </summary>
+    public async Task<(InvoiceResult Result, FulfillSalesOrderResult? Fulfilled)> FulfillSalesOrderAsync(
+        long salesOrderId, FulfillSalesOrderRequest request, CancellationToken ct)
+    {
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == salesOrderId, ct);
+
+        InvoiceResult? refusal = CheckBillable(order);
+        if (refusal is not null)
+        {
+            return (refusal, null);
+        }
+
+        if (request.DueDate is null)
+        {
+            return (new InvoiceResult(
+                InvoiceOutcome.DueDateMissing,
+                Detail: "An invoice requires a due date. Set the due date or payment term before fulfilment."), null);
+        }
+
+        Dictionary<long, decimal> requested = request.Lines
+            .GroupBy(l => l.SalesOrderDetailId)
+            .ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+
+        foreach (long lineId in requested.Keys)
+        {
+            if (order!.Lines.All(l => l.SalesOrderDetailId != lineId))
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Sales order line {lineId} does not belong to this order."), null);
+            }
+        }
+
+        var lines = new List<(SalesOrderDetail Line, decimal Quantity, decimal PreviouslyInvoiced)>();
+
+        foreach (SalesOrderDetail line in order!.Lines.OrderBy(l => l.LineNumber))
+        {
+            decimal billable = Billable(order, line);
+
+            if (requested.Count == 0)
+            {
+                if (billable > 0m)
+                {
+                    lines.Add((line, billable, line.InvoicedQuantity));
+                }
+
+                continue;
+            }
+
+            if (!requested.TryGetValue(line.SalesOrderDetailId, out decimal quantity))
+            {
+                continue;
+            }
+
+            if (quantity <= 0m)
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"Line {line.LineNumber} quantity must be greater than zero."), null);
+            }
+
+            if (quantity > billable)
+            {
+                return (new InvoiceResult(
+                    InvoiceOutcome.AlreadyFulfilled,
+                    Detail: $"Line {line.LineNumber} has {billable:0.####} left to bill; "
+                        + $"{quantity:0.####} were requested."), null);
+            }
+
+            lines.Add((line, quantity, line.InvoicedQuantity));
+        }
+
+        if (lines.Count == 0)
+        {
+            return (new InvoiceResult(
+                InvoiceOutcome.AlreadyFulfilled,
+                Detail: "There is nothing left to bill on this sales order."), null);
+        }
+
+        DateOnly documentDate = request.DocumentDate
+            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+
+        InvoiceResult created = await CreateAsync(
+            FromOrder(order, lines.Select(x => (x.Line, x.Quantity)), documentDate, request.DueDate,
+                request.PaymentTermId, request.PlaceOfSupplyStateCode, request.Notes),
+            ct);
+        if (created.Outcome != InvoiceOutcome.Ok)
+        {
+            return (created, null);
+        }
+
+        InvoiceResult posted = await PostAsync(created.InvoiceId, ct);
+        if (posted.Outcome != InvoiceOutcome.Ok)
+        {
+            return (posted, null);
+        }
+
+        // The same tracked order the posting moved, so this is its new status.
+        return (posted, new FulfillSalesOrderResult
+        {
+            SalesOrderId = order.SalesOrderId,
+            InvoiceId = created.InvoiceId,
+            Status = order.FulfilmentStatus.ToString(),
+            Lines = lines.Select(x => new FulfilledSalesOrderLine
+            {
+                SalesOrderDetailId = x.Line.SalesOrderDetailId,
+                OrderedQuantity = x.Line.Quantity,
+                PreviouslyInvoicedQuantity = x.PreviouslyInvoiced,
+                FulfilledQuantity = x.Quantity,
+                RemainingQuantity = Math.Max(0m, x.Line.Quantity - x.PreviouslyInvoiced - x.Quantity),
+            }).ToList(),
+        });
+    }
+
+    /// <summary>Why an order cannot be billed, or null when it can.</summary>
+    private InvoiceResult? CheckBillable(SalesOrder? order)
+    {
+        if (order is null || _tenant.OrgId is not Guid callerOrgId || order.OrgId != callerOrgId)
+        {
+            return new InvoiceResult(InvoiceOutcome.NotFound, Detail: "No such sales order.");
         }
 
         // Confirmed, not merely keyed. An order that has not been confirmed is
@@ -145,66 +303,87 @@ public sealed class InvoiceService : IInvoiceService
                 Detail: "Only a confirmed sales order becomes an invoice. Confirm the order first.");
         }
 
-        if (await _db.Invoices.AnyAsync(i => i.SalesOrderId == salesOrderId, ct))
+        if (order.FulfilmentStatus == FulfilmentStatus.Cancelled)
         {
             return new InvoiceResult(
-                InvoiceOutcome.AlreadyFulfilled,
-                Detail: "This sales order has already been invoiced.");
+                InvoiceOutcome.SourceInvalid, Detail: "This sales order has been cancelled.");
         }
 
-        DateOnly documentDate = request.DocumentDate
-            ?? DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
+        return null;
+    }
 
-        SaveInvoiceRequest invoice = new()
+    /// <summary>
+    /// What an order line has left to bill: all of it not yet invoiced — or,
+    /// on an order closed short, only what was actually delivered, since the
+    /// rest was agreed never to go.
+    /// </summary>
+    private static decimal Billable(SalesOrder order, SalesOrderDetail line) =>
+        Math.Max(0m, (order.ShortCloseReason is null ? line.Quantity : line.DeliveredQuantity)
+            - line.InvoicedQuantity);
+
+    /// <summary>
+    /// An invoice request built from order lines. <b>The lines are read from the
+    /// order, never sent by the caller</b>, and they go through
+    /// <see cref="CreateAsync"/> like any other invoice — so the tax is
+    /// recomputed at the rates in force on the invoice's own date rather than
+    /// copied from an order that may have been taken months ago.
+    ///
+    /// The place of supply is re-resolved from the GSTIN rather than copied:
+    /// the order stored the answer (IsInterState), and copying an answer is how
+    /// a branch that has since changed state files the wrong return.
+    /// </summary>
+    private static SaveInvoiceRequest FromOrder(
+        SalesOrder order,
+        IEnumerable<(SalesOrderDetail Line, decimal Quantity)> lines,
+        DateOnly documentDate,
+        DateOnly? dueDate,
+        long? paymentTermId,
+        string? placeOfSupplyStateCode,
+        string? notes) =>
+        new()
         {
             DocumentDate = documentDate,
-            DueDate = request.DueDate,
-            PaymentTermId = request.PaymentTermId,
+            DueDate = dueDate,
+            PaymentTermId = paymentTermId,
             ContactId = order.ContactId,
             QuoteId = order.QuoteId,
             SalesOrderId = order.SalesOrderId,
             ContactGstin = order.ContactGstin,
-            PlaceOfSupplyStateCode = request.PlaceOfSupplyStateCode,
+            PlaceOfSupplyStateCode = placeOfSupplyStateCode,
             BillingAddress = order.BillingAddress,
             ShippingAddress = order.ShippingAddress,
             CurrencyCode = order.CurrencyCode,
             ExchangeRate = order.ExchangeRate,
-            Notes = request.Notes ?? order.Notes,
+            Notes = notes ?? order.Notes,
             TermsAndConditions = order.TermsAndConditions,
-            Lines = [.. order.Lines
-                .OrderBy(l => l.LineNumber)
-                .Select(l => new SaveInvoiceLineRequest
+            Lines = [.. lines
+                .OrderBy(x => x.Line.LineNumber)
+                .Select(x => new SaveInvoiceLineRequest
                 {
-                    ItemId = l.ItemId,
-                    Description = l.Description,
-                    HsnSacCode = l.HsnSacCode,
-                    WarehouseId = l.WarehouseId,
-                    Quantity = l.Quantity,
-                    UomId = l.UomId,
-                    ConversionFactor = l.ConversionFactor,
-                    UnitPrice = l.UnitPrice,
-                    IsPriceInclusive = l.IsPriceInclusive,
-                    DiscountPercent = l.DiscountPercent,
-                    DiscountAmount = l.DiscountAmount,
-                    TaxTreatment = l.TaxTreatment,
-                    TaxGroupId = l.TaxGroupId,
-                    LineType = l.LineType,
-                    AccountId = l.AccountId,
-                    FixedAssetCategoryId = l.FixedAssetCategoryId,
-                    ItemBatchId = l.ItemBatchId,
-                    LineNotes = l.LineNotes,
+                    ItemId = x.Line.ItemId,
+                    Description = x.Line.Description,
+                    HsnSacCode = x.Line.HsnSacCode,
+                    WarehouseId = x.Line.WarehouseId,
+                    Quantity = x.Quantity,
+                    UomId = x.Line.UomId,
+                    ConversionFactor = x.Line.ConversionFactor,
+                    UnitPrice = x.Line.UnitPrice,
+                    IsPriceInclusive = x.Line.IsPriceInclusive,
+                    DiscountPercent = x.Line.DiscountPercent,
+                    DiscountAmount = x.Line.DiscountAmount,
+                    TaxTreatment = x.Line.TaxTreatment,
+                    TaxGroupId = x.Line.TaxGroupId,
+                    LineType = x.Line.LineType,
+                    AccountId = x.Line.AccountId,
+                    FixedAssetCategoryId = x.Line.FixedAssetCategoryId,
+                    ItemBatchId = x.Line.ItemBatchId,
+                    LineNotes = x.Line.LineNotes,
 
                     // The thread back to the order line. Posting reads it to
-                    // release exactly what this invoice is issuing.
-                    SalesOrderDetailId = l.SalesOrderDetailId,
+                    // bill the line, and to release exactly what it issues.
+                    SalesOrderDetailId = x.Line.SalesOrderDetailId,
                 })],
         };
-
-        // The place of supply is re-resolved from the GSTIN rather than copied:
-        // the order stored the answer (IsInterState), and copying an answer is
-        // how a branch that has since changed state files the wrong return.
-        return await CreateAsync(invoice, ct);
-    }
 
     public async Task<InvoiceResult> CreateAsync(SaveInvoiceRequest request, CancellationToken ct)
     {
@@ -1191,6 +1370,19 @@ public sealed class InvoiceService : IInvoiceService
             return new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // The order lines this invoice bills, checked before anything moves.
+        (SalesOrder? order, InvoiceResult? orderRefusal) = await ReadBilledOrderAsync(invoice, ct);
+        if (orderRefusal is not null)
+        {
+            return orderRefusal;
+        }
+
+        // How much of each line leaves stock on this invoice. Against an order
+        // line, goods already delivered on a challan and not yet billed are
+        // billed first and issued never; only the rest is issued. Against a
+        // named challan, nothing is issued at all.
+        Dictionary<long, decimal> issued = IssueQuantities(invoice, order);
+
         decimal totalCogs = 0;
 
         if (invoice.DeliveryChallanId.HasValue)
@@ -1219,7 +1411,9 @@ public sealed class InvoiceService : IInvoiceService
         else
         {
             var stockLines = invoice.Lines
-                .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
+                .Where(l => l.LineType == DocumentLineType.Stock
+                    && l.ItemId.HasValue
+                    && issued.GetValueOrDefault(l.InvoiceDetailId) > 0m)
                 .ToList();
 
             if (stockLines.Count > 0)
@@ -1235,9 +1429,14 @@ public sealed class InvoiceService : IInvoiceService
                     {
                         SourceLineId = l.InvoiceDetailId,
                         ItemId = l.ItemId!.Value,
-                        Quantity = l.Quantity,
+                        Quantity = issued[l.InvoiceDetailId],
                         WarehouseId = l.WarehouseId,
-                        ReleaseReservation = invoice.SalesOrderId.HasValue,
+
+                        // Per line: only a line billed against an order line
+                        // has a hold to release. Keyed on the header's order,
+                        // a line added beside the order's lines released a
+                        // reservation nobody had taken.
+                        ReleaseReservation = l.SalesOrderDetailId.HasValue,
                     }).ToList(),
                 };
 
@@ -1423,6 +1622,23 @@ public sealed class InvoiceService : IInvoiceService
             });
         }
 
+        // The order catches up only once the ledger has accepted the invoice:
+        // billed on every line, delivered by what this invoice actually issued.
+        if (order is not null)
+        {
+            foreach (InvoiceDetail line in invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue))
+            {
+                SalesOrderDetail orderLine = order.Lines.First(o => o.SalesOrderDetailId == line.SalesOrderDetailId);
+                decimal issuedHere = issued.GetValueOrDefault(line.InvoiceDetailId);
+
+                orderLine.InvoicedQuantity += line.Quantity;
+                orderLine.DeliveredQuantity += issuedHere;
+                orderLine.ReservedQuantity = Math.Max(0m, orderLine.ReservedQuantity - issuedHere);
+            }
+
+            SalesOrderFulfilment.Refresh(order);
+        }
+
         invoice.Status = DocumentStatus.Posted;
         invoice.PostedAt = _clock.GetUtcNow();
         invoice.PostedBy = _user.UserId;
@@ -1471,7 +1687,10 @@ public sealed class InvoiceService : IInvoiceService
     public async Task<InvoiceResult> VoidAsync(
         long invoiceId, VoidInvoiceRequest request, CancellationToken ct)
     {
+        // With its lines: the challan and order reversals below walk them, and
+        // without the Include they walked an empty list and reversed nothing.
         Invoice? invoice = await _db.Invoices
+            .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.InvoiceId == invoiceId, ct);
 
         if (invoice is null)
@@ -1544,6 +1763,30 @@ public sealed class InvoiceService : IInvoiceService
                 return new InvoiceResult(InvoiceOutcome.PostingRefused, Detail: withdrawResult.Detail);
             }
 
+            // The bill is withdrawn; the goods it issued are not. So the order
+            // lines give back what this invoice billed and keep what it
+            // delivered — delivered and not billed again, which the next
+            // invoice against them bills without issuing a second time.
+            if (invoice.SalesOrderId.HasValue)
+            {
+                SalesOrder? order = await _db.SalesOrders
+                    .Include(o => o.Lines)
+                    .FirstOrDefaultAsync(o => o.SalesOrderId == invoice.SalesOrderId.Value, ct);
+
+                if (order is not null)
+                {
+                    foreach (InvoiceDetail line in invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue))
+                    {
+                        SalesOrderDetail? orderLine = order.Lines
+                            .FirstOrDefault(o => o.SalesOrderDetailId == line.SalesOrderDetailId);
+                        if (orderLine is not null)
+                        {
+                            orderLine.InvoicedQuantity = Math.Max(0m, orderLine.InvoicedQuantity - line.Quantity);
+                        }
+                    }
+                }
+            }
+
             var registers = await _db.SalesRegister
                 .Where(r => r.SourceId == invoiceId && r.TransactionTypeCode == invoice.TransactionTypeCode)
                 .ToListAsync(ct);
@@ -1552,6 +1795,125 @@ public sealed class InvoiceService : IInvoiceService
 
         await _db.SaveChangesAsync(ct);
         return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    /// <summary>
+    /// The sales order an invoice bills, checked line by line: the order is
+    /// confirmed and for this customer, every line naming an order line names
+    /// one of its lines for the same item, and none bills more than the line
+    /// has left to bill. Null order when the invoice names none.
+    /// </summary>
+    private async Task<(SalesOrder? Order, InvoiceResult? Refusal)> ReadBilledOrderAsync(
+        Invoice invoice, CancellationToken ct)
+    {
+        List<InvoiceDetail> billed = invoice.Lines.Where(l => l.SalesOrderDetailId.HasValue).ToList();
+
+        if (!invoice.SalesOrderId.HasValue)
+        {
+            return billed.Count == 0
+                ? (null, null)
+                : (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: "A line names a sales order line, but the invoice names no sales order."));
+        }
+
+        SalesOrder? order = await _db.SalesOrders
+            .Include(o => o.Lines)
+            .FirstOrDefaultAsync(o => o.SalesOrderId == invoice.SalesOrderId.Value, ct);
+
+        if (order is null)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "The sales order this invoice bills could not be found in this branch."));
+        }
+
+        if (order.Status != DocumentStatus.Posted)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid, Detail: "Only a confirmed sales order can be billed."));
+        }
+
+        if (order.ContactId != invoice.ContactId)
+        {
+            return (null, new InvoiceResult(
+                InvoiceOutcome.SourceInvalid,
+                Detail: "The invoice's customer is not the sales order's customer."));
+        }
+
+        foreach (var byOrderLine in billed.GroupBy(l => l.SalesOrderDetailId!.Value))
+        {
+            SalesOrderDetail? orderLine = order.Lines.FirstOrDefault(o => o.SalesOrderDetailId == byOrderLine.Key);
+            if (orderLine is null)
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: "A line on this invoice is not a line of its sales order."));
+            }
+
+            if (byOrderLine.Any(l => l.ItemId != orderLine.ItemId))
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.LineInvalid,
+                    Detail: $"A line's item is not the item on order line {orderLine.LineNumber}."));
+            }
+
+            decimal left = orderLine.Quantity - orderLine.InvoicedQuantity;
+            decimal billing = byOrderLine.Sum(l => l.Quantity);
+            if (billing > left)
+            {
+                return (null, new InvoiceResult(
+                    InvoiceOutcome.AlreadyFulfilled,
+                    Detail: $"Order line {orderLine.LineNumber} has {left:0.####} left to bill, "
+                        + $"and this invoice bills {billing:0.####}."));
+            }
+        }
+
+        return (order, null);
+    }
+
+    /// <summary>
+    /// How much of each stock line this invoice issues, by invoice line.
+    ///
+    /// Against a named challan: nothing — the challan already took the goods out.
+    /// Against an order line: the line's quantity less what that order line has
+    /// delivered and not yet billed, taken in line order when two invoice lines
+    /// bill the same order line. That second rule is what stops an invoice raised
+    /// after a challan, without naming it, from issuing the goods again.
+    /// </summary>
+    private static Dictionary<long, decimal> IssueQuantities(Invoice invoice, SalesOrder? order)
+    {
+        var issued = new Dictionary<long, decimal>();
+
+        if (invoice.DeliveryChallanId.HasValue)
+        {
+            return issued;
+        }
+
+        Dictionary<long, decimal> deliveredNotBilled = order?.Lines.ToDictionary(
+            o => o.SalesOrderDetailId, SalesOrderFulfilment.DeliveredNotInvoiced) ?? [];
+
+        foreach (InvoiceDetail line in invoice.Lines.OrderBy(l => l.LineNumber))
+        {
+            if (line.LineType != DocumentLineType.Stock || !line.ItemId.HasValue)
+            {
+                continue;
+            }
+
+            decimal quantity = line.Quantity;
+
+            if (line.SalesOrderDetailId is long orderLineId
+                && deliveredNotBilled.TryGetValue(orderLineId, out decimal alreadyOut))
+            {
+                decimal covered = Math.Min(quantity, alreadyOut);
+                deliveredNotBilled[orderLineId] = alreadyOut - covered;
+                quantity -= covered;
+            }
+
+            issued[line.InvoiceDetailId] = quantity;
+        }
+
+        return issued;
     }
 
     public async Task<bool> ExistsInOtherOrgAsync(long invoiceId, CancellationToken ct)

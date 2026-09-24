@@ -509,11 +509,7 @@ public sealed class DeliveryChallanService
                 orderLine.ReservedQuantity = Math.Max(0m, orderLine.ReservedQuantity - line.Quantity);
             }
 
-            bool allDelivered = salesOrder.Lines.All(x => x.DeliveredQuantity >= x.Quantity);
-            bool someDelivered = salesOrder.Lines.Any(x => x.DeliveredQuantity > 0);
-            salesOrder.FulfilmentStatus = allDelivered
-                ? FulfilmentStatus.Closed
-                : someDelivered ? FulfilmentStatus.PartlyDelivered : FulfilmentStatus.Open;
+            SalesOrderFulfilment.Refresh(salesOrder);
         }
 
         deliveryChallan.Status = DocumentStatus.Posted;

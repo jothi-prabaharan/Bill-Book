@@ -9,6 +9,10 @@
         <span class="tag tag-neutral">{{ status() }}</span>
         <span class="tag tag-accent">{{ fulfilment() }}</span>
 
+        @if (status() === 'Posted') {
+          <span class="tag tag-neutral">{{ fullyInvoiced() ? 'Fully invoiced' : 'Invoice owed' }}</span>
+        }
+
         @if (quoteId()) {
           <a class="chip" [routerLink]="['/sales/quotes', quoteId()]">from quote</a>
         }

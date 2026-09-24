@@ -628,15 +628,17 @@ public sealed class SalesOrderService
                 Detail: "This order is already closed. Nothing further was expected against it.");
         }
 
-        // What is still being held: ordered less delivered, never negative. A
-        // line delivered in full holds nothing back and contributes nothing to
-        // the release.
+        // What is still being held — ReservedQuantity itself. Every delivery,
+        // on a challan or an invoice, already takes what it ships off it, so
+        // subtracting DeliveredQuantity again (as this did) released too little:
+        // four of ten delivered left six held, released two, and kept four
+        // reserved in Inventory for an order that had closed.
         var toRelease = SalesOrder.Lines
             .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue)
             .Select(l => new ReleaseStockLine
             {
                 ItemId = l.ItemId!.Value,
-                Quantity = Math.Max(0m, l.ReservedQuantity - l.DeliveredQuantity),
+                Quantity = l.ReservedQuantity,
             })
             .Where(l => l.Quantity > 0m)
             .ToList();
@@ -669,7 +671,7 @@ public sealed class SalesOrderService
         // them.
         foreach (SalesOrderDetail line in SalesOrder.Lines)
         {
-            line.ReservedQuantity = line.DeliveredQuantity;
+            line.ReservedQuantity = 0m;
         }
 
         SalesOrder.FulfilmentStatus = FulfilmentStatus.Closed;
@@ -808,6 +810,9 @@ public sealed class SalesOrderService
                 VoidedAt = q.VoidedAt,
                 VoidReason = q.VoidReason,
                 ShortCloseReason = q.ShortCloseReason,
+                // Inline rather than SalesOrderFulfilment.IsFullyInvoiced: this is
+                // a query projection, and the database answers it.
+                IsFullyInvoiced = q.Lines.All(l => l.InvoicedQuantity >= l.Quantity),
                 Lines = q.Lines.Select(l => new SalesOrderLineView
                 {
                     SalesOrderDetailId = l.SalesOrderDetailId,
@@ -822,6 +827,7 @@ public sealed class SalesOrderService
                     BaseQuantity = l.BaseQuantity,
                     ReservedQuantity = l.ReservedQuantity,
                     DeliveredQuantity = l.DeliveredQuantity,
+                    InvoicedQuantity = l.InvoicedQuantity,
                     UnitPrice = l.UnitPrice,
                     IsPriceInclusive = l.IsPriceInclusive,
                     DiscountPercent = l.DiscountPercent,
@@ -954,6 +960,7 @@ public sealed class SalesOrderService
                     .Where(i => i.SalesOrderId == o.SalesOrderId)
                     .Select(i => (long?)i.InvoiceId)
                     .FirstOrDefault(),
+                IsFullyInvoiced = o.Lines.All(l => l.InvoicedQuantity >= l.Quantity),
             })
             .ToListAsync(ct);
 

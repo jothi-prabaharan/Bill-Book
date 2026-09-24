@@ -37,6 +37,30 @@ The reservation is the part that matters. Without it an order that is confirmed 
 
 Beside the status, an order carries a **fulfilment status** of its own — Open, Partly delivered, Closed or Cancelled. It is a separate fact because an order closed short by agreement and an order delivered in full produce exactly the same arithmetic over the challans beneath them.
 
+## Delivered and billed in parts
+
+An order can go out in several deliveries and be billed on several invoices, and the two need not line up. Each line keeps three figures:
+
+| | |
+|---|---|
+| **Delivered** | What has left — on a [delivery challan](delivery-challans), or on an invoice raised with nothing delivered before it |
+| **Invoiced** | What has been billed on posted invoices |
+| **Held** | What stock is still reserved for the line. Every delivery takes what it ships off it |
+
+The fulfilment status follows **delivery**: *Partly delivered* after the first goods go out, *Closed* when every line is out in full. Beside it, a confirmed order shows **Fully invoiced** or **Invoice owed** — an order can be closed and still owe an invoice, when its goods went out on challans that have not been billed yet.
+
+**An invoice against the order bills delivered goods first.** When part of a line has already gone out on a challan and not been billed, the invoice bills that part without taking it out of stock again, and issues only the rest. So it does not matter whether the invoice names the challan: the same goods never leave twice.
+
+**Nothing is billed twice either.** An invoice that would bill more of a line than it has left is refused, with how much is left. Voiding a posted invoice gives its billing back to the order, but not its delivery — the goods did leave — so the next invoice bills them without issuing them again.
+
+### Fulfilling an order
+
+**Fulfil** on a confirmed order raises and posts an invoice for everything still unbilled — or for the lines and quantities you choose. It follows the rules above, so goods already delivered on a challan are billed and not issued again.
+
+### Closing one short
+
+**Close short** stops an order that will not be delivered in full, with a reason. Whatever stock the order is still holding is released. What was delivered stays delivered, and can still be billed — only that, since the rest was agreed never to go.
+
 ## Confirming one
 
 **Confirm & reserve** asks Inventory to hold back every stock line on the order.
@@ -73,4 +97,3 @@ At narrow widths — a phone held upright — the grid becomes one card per orde
 ## What it does not do yet
 
 - **The customer and the items are keyed by id**, not chosen from a lookup. The picker arrives with the item lookup endpoint
-- **Partial invoicing** — billing four of ten and leaving the rest open — is designed and not yet built. Partial *delivery* works: a [delivery challan](delivery-challans) can deliver part of an order, and the order stays *Partly delivered* until the rest goes out

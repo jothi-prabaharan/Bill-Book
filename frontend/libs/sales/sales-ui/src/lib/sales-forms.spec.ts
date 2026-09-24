@@ -34,6 +34,9 @@ import { AllocationRow, DocumentLine, UiMessage } from '@bill-book/ui-components
  */
 interface SalesOrderFormHarness {
   ngOnInit(): void;
+  load(): Promise<void>;
+  fulfilment(): string;
+  fullyInvoiced(): boolean;
   isEdit(): boolean;
   salesOrderId(): number | null;
   form: FormGroup;
@@ -485,6 +488,35 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       await comp.save();
 
       expect(mockSalesOrderService.update).toHaveBeenCalledWith(31, expect.any(Object));
+    });
+
+    it('SOR-T1-07: a delivered order still owing an invoice says so beside its fulfilment', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('31');
+      const order = {
+        salesOrderId: 31,
+        documentNo: 'SO/2026/0031',
+        documentDate: '2026-08-18',
+        deliveryDate: '2026-08-25',
+        status: 'Posted',
+        contactId: 5,
+        currencyCode: 'INR',
+        exchangeRate: 1,
+        lines: []
+      };
+
+      // Delivered on challans, not yet billed — Closed, and an invoice owed.
+      mockSalesOrderService.get.mockResolvedValueOnce({ ...order, fulfilmentStatus: 'Closed', isFullyInvoiced: false });
+      const owing = build();
+      owing.ngOnInit();
+      await owing.load();
+      expect(owing.fulfilment()).toBe('Closed');
+      expect(owing.fullyInvoiced()).toBe(false);
+
+      mockSalesOrderService.get.mockResolvedValueOnce({ ...order, fulfilmentStatus: 'Closed', isFullyInvoiced: true });
+      const billed = build();
+      billed.ngOnInit();
+      await billed.load();
+      expect(billed.fullyInvoiced()).toBe(true);
     });
 
     it('SOR-T1-04: a line’s amounts cross the scale boundary rather than going straight through', async () => {

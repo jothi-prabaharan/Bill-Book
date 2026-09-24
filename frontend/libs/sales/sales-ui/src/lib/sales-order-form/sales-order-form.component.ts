@@ -93,6 +93,13 @@ export class SalesOrderFormComponent implements OnInit {
   protected readonly status = signal('Draft');
   protected readonly documentNo = signal('');
   protected readonly fulfilment = signal('Open');
+
+  /**
+   * Whether anything delivered or ordered is still to be billed. Shown beside
+   * the fulfilment status because the two part company: a challan delivers
+   * without billing, so an order can be Closed and still owe an invoice.
+   */
+  protected readonly fullyInvoiced = signal(false);
   protected readonly quoteId = signal<number | null>(null);
 
   protected readonly form = this.fb.nonNullable.group({
@@ -239,6 +246,7 @@ export class SalesOrderFormComponent implements OnInit {
     this.status.set(order.status);
     this.documentNo.set(order.documentNo);
     this.fulfilment.set(order.fulfilmentStatus);
+    this.fullyInvoiced.set(order.isFullyInvoiced ?? false);
     this.quoteId.set(order.quoteId ?? null);
 
     this.form.patchValue({
