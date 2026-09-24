@@ -2256,7 +2256,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Documents and policies take a file key. There is no upload endpoint yet.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [~] working (Antigravity) — since 2026-09-25 (taken over from Claude Opus 5.5)
 - **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
@@ -2279,7 +2279,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Hrm`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
 
 ### TK-50 · H3: Time and attendance (`tla`)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-TLA · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `HolidayList`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`,
   `DailyAttendance`, `RegularisationRequest`, `OvertimeRequest`, `CompOffCredit`.
