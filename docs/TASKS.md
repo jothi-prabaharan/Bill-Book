@@ -1405,7 +1405,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **To unblock:** save the live page into `Fixtures/`, point a test at it, and adjust the parser's two regular expressions if they miss. Then deploy the worker; it is in neither `deploy/azure` nor `deploy/local` yet.
 
 ### TK-27 · Production databases are created by infrastructure (D-02)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST, L-DEPS · **Depends on:** TK-70 · **Decision:** D-02 (answered)
 - **Where:** `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs:50,140` (`EnsureDatabaseExistsAsync`, which issues `CREATE DATABASE` at 263), `deploy/azure/` (Bicep).
 - **Sub-tasks:**
