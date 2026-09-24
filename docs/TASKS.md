@@ -403,7 +403,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       tests, role `prt_rls_probe`, one asserting both policies carry the NULLIF form).
 
 ### TK-06 · Internal endpoints that set no tenant
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/InternalTaxController.cs`: `GET internal/tax/rates`.
