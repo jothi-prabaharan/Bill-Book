@@ -1240,7 +1240,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     `sal`).
 
 ### TK-21 · A blank optional phone is NULL everywhere (D-04)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-CON, L-MST, L-INV, L-CUS · **Depends on:** — · **Decision:** D-04 (answered)
 - **Where:** the phone columns: `con.ContactAddresses` and `con.ContactPersons` (`PhoneNumber`, `MobileNumber`), `mst.Users.MobileNumber`, `mst.Organizations` (`PhoneNumber`, `MobileNumber`), `inv.Warehouses` (`PhoneNumber`, `MobileNumber`), `cus.Leads.Phone`. No shared normaliser exists.
 - **Sub-tasks:**
