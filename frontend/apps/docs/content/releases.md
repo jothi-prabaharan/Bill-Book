@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Every branch comes with a walk-in customer.** A new branch has a customer coded `WALKIN`, named *Walk-in Customer*, for counter sales to buyers who give no name. It has no GSTIN, so its sales are B2C. The till uses it by default with no setup. Existing branches get one the next time their setup is re-run from the admin screen. The code `WALKIN` can no longer be given to any other contact.
 - **Changed**: **A support ticket's contact is found by searching.** The ticket form's contact field opens a search by code, name or GSTIN, in place of a dropdown that loaded every contact in the branch before it could show one.
 - **Changed**: **Sales documents pick their customer and items by name.** On quotes, sales orders, invoices, delivery challans and credit notes, the customer is now chosen from a search by code, name or GSTIN, instead of being typed as a number. Items are chosen the same way from the line grid, where a barcode can also be scanned. Choosing a customer fills in their GSTIN if the field is still empty. A new quote no longer defaults to the branch's first customer, and cannot be saved until one is chosen. See [Invoices](invoices).
 - **Added**: **Search items by barcode.** Typing or scanning a whole barcode into item search now finds the item it belongs to, ahead of any item whose name happens to contain the same digits. Item search can also return one page at a time with the number of matches, which the till needs for a long item list.

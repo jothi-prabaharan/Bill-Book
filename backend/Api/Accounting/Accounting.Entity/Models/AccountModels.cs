@@ -123,6 +123,15 @@ public class SubAccountListItem
 /// </summary>
 public class ProvisionSubAccountsRequest
 {
+    /// <summary>
+    /// The branch the master belongs to, for a caller with no user token to
+    /// forward — seeding a new branch, a background job. Optional: when both are
+    /// empty the caller's token names the branch, as it always has (TK-17).
+    /// </summary>
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
     [Required(ErrorMessage = "Reference type is required.")]
     public SubAccountReferenceType ReferenceType { get; set; }
 

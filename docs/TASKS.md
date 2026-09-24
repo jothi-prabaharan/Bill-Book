@@ -1036,15 +1036,34 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: three added to `ticket-form.component.spec.ts`.
 
 ### TK-17 · Seed a `WALKIN` contact per branch
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-CON · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-40)
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-CON (+ L-ACC for the provisioning fix, see Notes) · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-40)
 - **Where:** `backend/Api/Master/Master.Api/Controllers/InternalSeedController.cs` (Master's own branch seed), the contact service's create path.
 - **Sub-tasks:**
-  - [ ] Seed one contact per branch: code `WALKIN`, name "Walk-in Customer", role customer, no GSTIN (so B2C place of supply is the branch's state).
-  - [ ] Idempotent: seeding twice leaves one; the code can't be reused by a user-created contact.
-  - [ ] Test: a new branch has exactly one `WALKIN`, and `pos-lookup.service`'s exact-code lookup finds it.
+  - [x] Seed one contact per branch: code `WALKIN`, name "Walk-in Customer", role customer, no GSTIN (so B2C place of supply is the branch's state).
+  - [x] Idempotent: seeding twice leaves one; the code can't be reused by a user-created contact.
+  - [x] Test: a new branch has exactly one `WALKIN`, and `pos-lookup.service`'s exact-code lookup finds it.
 - **Done when:** the till's default customer resolves on a new branch with no setup.
 - **Notes:**
+  - Done (2026-09-24):
+    - `ContactService.SeedWalkInAsync(baseCurrency)`: code `WALKIN`, "Walk-in Customer", customer,
+      `Individual`, `GstRegistrationType.Consumer`, no GSTIN and no place of supply, in the branch's
+      base currency.
+    - It is idempotent. It also retries the sub-ledger when an earlier provisioning failed.
+    - Called from the in-process Contacts seed in `TenantSeeder`, after the HTTP services, so
+      Accounting's chart exists first. Also called from `InternalSeedController` (`walkInCustomer`).
+    - `CreateAsync` refuses `WALKIN` in any case as `DuplicateCode`, because the till matches it
+      case-insensitively.
+  - **Fixed on the way (L-ACC):** `internal/sub-accounts/provision` only learned the branch from a
+    forwarded user token, so a caller with none (seeding) provisioned into no branch. The walk-in
+    would have had no receivable sub-account and could never be invoiced.
+    - `ProvisionSubAccountsRequest` now carries an optional `CustomerId`/`OrgId`. The controller uses
+      `InternalTenant.Apply` (TK-06) and resolves `SubAccountService` after the tenant is set.
+    - Master's `AccountingSubAccounts` sends the tenant in the body.
+  - Tests:
+    - `Master.Api.Tests/WalkInContactTests.cs`
+    - `Accounting.Api.Tests/InternalSubAccountsControllerTests.cs`
+    - The till's exact-code lookup is already covered by `pos-lookup.service.spec.ts`.
 
 ### TK-18 · Customer module seed data (stage C4)
 - [ ] open

@@ -404,6 +404,8 @@ Left empty, the code comes from the numbering series: `CUST-00001` for a custome
 
 You can type your own if the series allows a manual override. The code cannot be changed after saving — it is on documents already.
 
+**Every branch has a walk-in customer, coded `WALKIN`.** It is created with the branch, and is the till's default buyer when the customer gives no name. It is a consumer with no GSTIN, so a sale to it is a B2C sale taxed at the branch's own state, in the branch's own currency. Re-running a branch's setup never adds a second one, and repairs its accounts if they failed the first time. The code is reserved: no other contact can be given `WALKIN`, in any case.
+
 ## GST
 
 **Registration type decides whether a GSTIN may exist at all.**

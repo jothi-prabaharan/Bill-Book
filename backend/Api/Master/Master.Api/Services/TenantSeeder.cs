@@ -164,9 +164,14 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             var roles = scope.ServiceProvider.GetRequiredService<ContactPersonRoleService>();
             int seeded = await roles.SeedForOrganizationAsync(orgId, ct);
 
+            // After Accounting has seeded its chart above, so the walk-in's
+            // sub-accounts have control accounts to hang from (TK-17).
+            var contacts = scope.ServiceProvider.GetRequiredService<ContactService>();
+            int walkIn = await contacts.SeedWalkInAsync(await contacts.BranchCurrencyAsync(ct), ct);
+
             _log.LogInformation(
-                "Seeded Contacts for organization {OrgId}: {Seeded} contact person roles.",
-                orgId, seeded);
+                "Seeded Contacts for organization {OrgId}: {Seeded} contact person roles, {WalkIn} walk-in customer.",
+                orgId, seeded, walkIn);
 
             return true;
         }

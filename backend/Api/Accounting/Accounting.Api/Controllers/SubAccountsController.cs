@@ -4,6 +4,7 @@ using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Tenancy;
 
 namespace Accounting.Api.Controllers;
 
@@ -39,15 +40,41 @@ public sealed class SubAccountsController : ControllerBase
 [Route("internal/sub-accounts")]
 public sealed class InternalSubAccountsController : ControllerBase
 {
-    private readonly SubAccountService _subAccounts;
+    private readonly TenantContext _tenant;
+    private readonly IServiceProvider _services;
 
-    public InternalSubAccountsController(SubAccountService subAccounts) => _subAccounts = subAccounts;
+    public InternalSubAccountsController(TenantContext tenant, IServiceProvider services)
+    {
+        _tenant = tenant;
+        _services = services;
+    }
 
+    /// <summary>
+    /// Creates a master's sub-accounts. The branch comes from the body or from a
+    /// forwarded token (<see cref="InternalTenant"/>): before TK-17 only a token
+    /// could name it, so a caller with none — seeding a branch's walk-in
+    /// customer — provisioned into no branch at all.
+    /// </summary>
     [HttpPost("provision")]
     public async Task<IActionResult> Provision(
         [FromBody] ProvisionSubAccountsRequest request, CancellationToken ct)
     {
-        ProvisionSubAccountsResult result = await _subAccounts.ProvisionAsync(request, ct);
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse
+                {
+                    Message = "A customer and an organization are required to provision sub-accounts.",
+                });
+
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        // Resolved after the tenant is set: the context is built from it.
+        var subAccounts = _services.GetRequiredService<SubAccountService>();
+
+        ProvisionSubAccountsResult result = await subAccounts.ProvisionAsync(request, ct);
 
         // A partially provisioned master has an incomplete sub-ledger, so the
         // caller must be able to see it rather than read a bare 200.
@@ -68,7 +95,8 @@ public sealed class InternalSubAccountsController : ControllerBase
         [FromQuery] long referenceId,
         CancellationToken ct)
     {
-        int deactivated = await _subAccounts.DeactivateAsync(referenceType, referenceId, ct);
+        int deactivated = await _services.GetRequiredService<SubAccountService>()
+            .DeactivateAsync(referenceType, referenceId, ct);
         return Ok(new { deactivated });
     }
 }

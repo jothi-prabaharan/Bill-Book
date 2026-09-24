@@ -318,6 +318,72 @@ public sealed class ContactService
         return code ?? "INR";
     }
 
+    /// <summary>
+    /// The walk-in customer's code: one contact per branch that a counter sale
+    /// is made to when the buyer gives no name (TK-17). Reserved — no contact a
+    /// user creates may take it, in any case, because the till finds the
+    /// walk-in by this code alone.
+    /// </summary>
+    public const string WalkInCode = "WALKIN";
+
+    /// <summary>
+    /// Seeds the branch's walk-in customer, once: an individual consumer with no
+    /// GSTIN, so a sale to it is B2C and its place of supply is the branch's own
+    /// state. Its six sub-accounts are provisioned in Accounting, and a walk-in
+    /// whose provisioning failed earlier is retried, so seeding again repairs it.
+    ///
+    /// <paramref name="baseCurrency"/> is the branch's own
+    /// (<see cref="BranchCurrencyAsync"/>): a contact defaults to INR, and a
+    /// walk-in in a branch that trades in another would be priced in the wrong one.
+    ///
+    /// Returns 1 when it created the contact and 0 when the branch had one.
+    /// </summary>
+    public async Task<int> SeedWalkInAsync(string? baseCurrency, CancellationToken ct)
+    {
+        Contact? walkIn = await _db.Contacts
+            .FirstOrDefaultAsync(c => c.ContactCode == WalkInCode, ct);
+
+        int created = 0;
+
+        if (walkIn is null)
+        {
+            string? currency = baseCurrency;
+
+            walkIn = new Contact
+            {
+                ContactCode = WalkInCode,
+                DisplayName = "Walk-in Customer",
+                IsCustomer = true,
+                ContactCategory = ContactCategory.Individual,
+                GstRegistrationType = GstRegistrationType.Consumer,
+                CurrencyCode = string.IsNullOrWhiteSpace(currency) ? "INR" : currency,
+                IsActive = true,
+            };
+
+            _db.Contacts.Add(walkIn);
+            await _db.SaveChangesAsync(ct);
+            created = 1;
+        }
+
+        // Without its receivable sub-account a walk-in sale cannot post, so a
+        // walk-in left without one by an earlier failure is repaired here.
+        if (walkIn.SubLedgerProvisionedAt is null
+            && await _subAccounts.ProvisionForContactAsync(walkIn.ContactId, walkIn.DisplayName, ct))
+        {
+            walkIn.SubLedgerProvisionedAt = _clock.GetUtcNow();
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return created;
+    }
+
+    /// <summary>The signed-in (or seeded) branch's base currency, from the master database.</summary>
+    public Task<string?> BranchCurrencyAsync(CancellationToken ct) =>
+        _admin.Organizations
+            .Where(o => o.OrgId == _tenant.OrgId)
+            .Select(o => o.BaseCurrency)
+            .FirstOrDefaultAsync(ct);
+
     public async Task<SaveContactResult> CreateAsync(SaveContactRequest request, CancellationToken ct)
     {
         if (!TryParse(request, out ContactCategory category, out GstRegistrationType registration))
@@ -333,7 +399,10 @@ public sealed class ContactService
 
         string code = await ResolveCodeAsync(request, ct);
 
-        if (await _db.Contacts.AnyAsync(c => c.ContactCode == code, ct))
+        // Reserved for the branch's walk-in, whichever case it is typed in: the
+        // till matches the code without regard to case.
+        if (string.Equals(code, WalkInCode, StringComparison.OrdinalIgnoreCase)
+            || await _db.Contacts.AnyAsync(c => c.ContactCode == code, ct))
         {
             return new SaveContactResult(SaveContactOutcome.DuplicateCode, null, null);
         }

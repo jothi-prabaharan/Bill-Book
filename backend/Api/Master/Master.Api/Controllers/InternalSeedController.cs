@@ -41,12 +41,17 @@ public sealed class InternalSeedController : ControllerBase
         _tenant.OrgId = request.OrgId;
 
         var roles = _services.GetRequiredService<ContactPersonRoleService>();
+        var contacts = _services.GetRequiredService<ContactService>();
 
         var response = new SeedOrganizationResponse
         {
             Seeded =
             {
                 ["contactPersonRoles"] = await roles.SeedForOrganizationAsync(request.OrgId, ct),
+
+                // The till's default customer (TK-17).
+                ["walkInCustomer"] = await contacts.SeedWalkInAsync(
+                    await contacts.BranchCurrencyAsync(ct), ct),
             },
         };
 

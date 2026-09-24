@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using Shared.Kernel.Tenancy;
 
 namespace Master.Api.Services;
 
@@ -18,13 +19,18 @@ public sealed class AccountingSubAccounts : IAccountingSubAccounts
 {
     private readonly HttpClient _http;
     private readonly IHttpContextAccessor _accessor;
+    private readonly ITenantContext _tenant;
     private readonly ILogger<AccountingSubAccounts> _log;
 
     public AccountingSubAccounts(
-        HttpClient http, IHttpContextAccessor accessor, ILogger<AccountingSubAccounts> log)
+        HttpClient http,
+        IHttpContextAccessor accessor,
+        ITenantContext tenant,
+        ILogger<AccountingSubAccounts> log)
     {
         _http = http;
         _accessor = accessor;
+        _tenant = tenant;
         _log = log;
     }
 
@@ -38,6 +44,13 @@ public sealed class AccountingSubAccounts : IAccountingSubAccounts
                 referenceType = "Contact",
                 referenceId = contactId,
                 name = displayName,
+
+                // The branch, named outright, so a caller with no user token —
+                // seeding a new branch's walk-in customer — still provisions
+                // into the right one (TK-17). Accounting checks it against a
+                // forwarded token when there is one.
+                customerId = _tenant.CustomerId ?? Guid.Empty,
+                orgId = _tenant.OrgId ?? Guid.Empty,
             }),
         };
 
