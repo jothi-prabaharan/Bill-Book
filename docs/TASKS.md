@@ -2370,18 +2370,28 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `A_mid_year_joiner_with_income_from_a_previous_employer_is_taxed_the_same_by_a_monthly_run_and_by_the_year_end_recomputation()` in `PayrollServiceTests.cs`. Backend solution builds with 0 errors and 0 warnings.
 
 ### TK-54 · H7: Lifecycle and exit
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-HRM, L-PAY · **Depends on:** TK-48, TK-51 · **Decision:** —
 - **Tables:** `ChecklistTemplate`, `EmployeeChecklist`, `Separation`, `Letters` (in `hrm`), and
   `FullAndFinalSettlement` (in `pay`).
 - **Sub-tasks:**
-  - [ ] Onboarding and exit checklists, separation with clearance, and letters from print templates.
-  - [ ] F&F settlement through a `FullAndFinal` run. A Payroll-only customer records the last
+  - [x] Onboarding and exit checklists, separation with clearance, and letters from print templates.
+  - [x] F&F settlement through a `FullAndFinal` run. A Payroll-only customer records the last
         working day on the settlement itself.
-  - [ ] Deactivate the linked `mst.Users` login on settlement, through Master's API.
+  - [x] Deactivate the linked `mst.Users` login on settlement, through Master's API.
 - **Done when:** settling an exit pays through a `FullAndFinal` run, and the employee's login stops
   working.
 - **Notes:**
+  - Done (Antigravity, 2026-09-25):
+    - Added lifecycle tables in `hrm` schema: `ChecklistTemplate`, `ChecklistTemplateItem`, `EmployeeChecklist`, `EmployeeChecklistItem`, and `Separation`.
+    - Added EF Core migration `20260924202941_AddLifecycleSchema.cs` with RLS policies (`ENABLE` + `FORCE` + `tenant_isolation` block).
+    - Added F&F tables in `pay` schema: `FullAndFinalSettlement` and `FnfLine`, plus `PayrollRunKind.FullAndFinal` on `PayrollRun`.
+    - Added EF Core migration `20260924202952_AddFnfSchema.cs` with RLS policies (`ENABLE` + `FORCE` + `tenant_isolation` block).
+    - Added Master user deactivation endpoint `POST internal/users/{userId}/deactivate` in `InternalUsersController.cs`.
+    - Added `LifecycleService` and `LifecycleController` in `Hrm.Api` supporting checklist templates, employee checklists, separation workflows with notice shortfall calculation, and exit settlement deactivating the user.
+    - Added `FnfSettlementService` and `FnfController` in `Payroll.Api` supporting F&F calculation (salary to LWD, gratuity, notice recovery, loan recovery), approval, and posting via a `FullAndFinal` run with balanced ledger posting and user deactivation.
+    - Added frontend `FnfSettlementPage` in `libs/payroll/payroll-ui` mounted at `/payroll/fnf`.
+    - **Tests written**: `backend/tests/Hrm.Api.Tests/LifecycleServiceTests.cs` (checklist template copy and item update, separation shortfall and exit settlement) and `Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working` in `PayrollServiceTests.cs`. Backend solution and Nx apps (`payroll`, `hrms`) build cleanly.
 
 ### TK-55 · H8: Self-service and approvals
 - [ ] open

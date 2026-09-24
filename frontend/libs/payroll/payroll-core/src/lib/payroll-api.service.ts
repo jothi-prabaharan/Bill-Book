@@ -159,4 +159,27 @@ export class PayrollApiService {
       }),
     );
   }
+
+  // Full & Final
+  calculateFnf(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/fnf/calculate', body));
+  }
+
+  fnfSettlement(id: number): Promise<any> {
+    return firstValueFrom(this.http.get<any>(`/api/payroll/fnf/${id}`));
+  }
+
+  fnfSettlementByEmployee(employeeId: number): Promise<any> {
+    return firstValueFrom(this.http.get<any>(`/api/payroll/fnf/employee/${employeeId}`));
+  }
+
+  approveFnf(id: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/payroll/fnf/${id}/approve`, {}));
+  }
+
+  postFnf(id: number, linkedUserId?: string): Promise<{ runId: number }> {
+    const params: Record<string, string> = {};
+    if (linkedUserId) params['linkedUserId'] = linkedUserId;
+    return firstValueFrom(this.http.post<{ runId: number }>(`/api/payroll/fnf/${id}/post`, null, { params }));
+  }
 }

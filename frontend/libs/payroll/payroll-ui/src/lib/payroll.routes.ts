@@ -26,4 +26,9 @@ export const payrollRoutes: Routes = [
     loadComponent: () => import('./tax/tax-declarations.page').then((m) => m.TaxDeclarationsPage),
     data: { access: { permission: 'payroll.view' } },
   },
+  {
+    path: 'payroll/fnf',
+    loadComponent: () => import('./fnf/fnf-settlement.page').then((m) => m.FnfSettlementPage),
+    data: { access: { permission: 'payroll.view' } },
+  },
 ];

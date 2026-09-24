@@ -1,0 +1,97 @@
+<div class="payroll-page">
+  <div class="payroll-page__header">
+    <div>
+      <h1 class="payroll-page__title">Full & Final Settlement</h1>
+      <p class="payroll-page__subtitle">Compute exit settlement, salary to LWD, gratuity, notice recovery, and loan settlement.</p>
+    </div>
+    <div class="payroll-page__actions">
+      @if (settlement && settlement.status === 'Draft') {
+        <button type="button" class="btn btn--outline" (click)="approve()" [disabled]="busy()">
+          Approve Settlement
+        </button>
+      }
+      @if (settlement && settlement.status === 'Approved') {
+        <button type="button" class="btn btn--primary" (click)="post()" [disabled]="busy()">
+          Post Settlement (F&F Run)
+        </button>
+      }
+      <button type="button" class="btn btn--primary" (click)="calculate()" [disabled]="busy()">
+        Compute Settlement
+      </button>
+    </div>
+  </div>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()"></bb-message-box>
+  }
+
+  <div class="payroll-card">
+    <div class="payroll-card__header">
+      <h2 class="payroll-card__title">Exit & Service Parameters</h2>
+    </div>
+    <div class="payroll-form-grid">
+      <div class="payroll-form-field">
+        <bb-number-input label="Employee ID" [(ngModel)]="employeeId" (ngModelChange)="load()"></bb-number-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-text-input label="Last Working Date (YYYY-MM-DD)" [(ngModel)]="lastWorkingDate"></bb-text-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-number-input label="Completed Service (Years)" [(ngModel)]="completedYearsOfService"></bb-number-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-number-input label="Notice Shortfall Days" [(ngModel)]="noticeShortfallDays"></bb-number-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-text-input label="Remarks / Clearance Note" [(ngModel)]="remarks"></bb-text-input>
+      </div>
+    </div>
+  </div>
+
+  @if (settlement) {
+    <div class="payroll-card">
+      <div class="payroll-card__header">
+        <h2 class="payroll-card__title">Settlement Breakdown (Status: {{ settlement.status }})</h2>
+      </div>
+
+      <div class="payroll-table-container">
+        <table class="payroll-table">
+          <thead>
+            <tr>
+              <th>Component / Item</th>
+              <th>Type</th>
+              <th>Remarks</th>
+              <th style="text-align: right;">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of settlement.lines; track line.fnfLineId) {
+              <tr>
+                <td>{{ line.kind }}</td>
+                <td>
+                  <span [class]="line.isDeduction ? 'badge badge--danger' : 'badge badge--success'">
+                    {{ line.isDeduction ? 'Deduction' : 'Earning' }}
+                  </span>
+                </td>
+                <td>{{ line.remarks }}</td>
+                <td style="text-align: right; font-weight: 600;">
+                  {{ line.isDeduction ? '-' : '+' }}₹{{ line.amount | number:'1.2-2' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr style="font-size: 1.1rem; font-weight: bold; background: var(--surface-secondary);">
+              <td colspan="3">Net Settlement Payable</td>
+              <td style="text-align: right; color: var(--primary);">₹{{ settlement.netPayable | number:'1.2-2' }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  }
+</div>

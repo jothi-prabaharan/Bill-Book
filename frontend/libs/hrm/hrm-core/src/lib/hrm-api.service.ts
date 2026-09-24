@@ -72,4 +72,59 @@ export class HrmApiService {
         : this.http.put<{ id: number }>(`/api/hrm/policy-documents/${id}`, body),
     );
   }
+
+  // Lifecycle
+  checklistTemplates(kind?: string): Promise<any[]> {
+    const params: Record<string, string> = {};
+    if (kind) params['kind'] = kind;
+    return firstValueFrom(this.http.get<any[]>('/api/hrm/lifecycle/templates', { params }));
+  }
+
+  saveChecklistTemplate(id: number | null, body: any): Promise<{ id: number }> {
+    return firstValueFrom(
+      id === null
+        ? this.http.post<{ id: number }>('/api/hrm/lifecycle/templates', body)
+        : this.http.put<{ id: number }>(`/api/hrm/lifecycle/templates/${id}`, body),
+    );
+  }
+
+  employeeChecklist(employeeId: number, kind = 'Onboarding'): Promise<any> {
+    return firstValueFrom(
+      this.http.get<any>(`/api/hrm/lifecycle/checklists/${employeeId}`, {
+        params: { kind },
+      }),
+    );
+  }
+
+  createEmployeeChecklist(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/hrm/lifecycle/checklists', body));
+  }
+
+  updateChecklistItem(itemId: number, body: any): Promise<void> {
+    return firstValueFrom(this.http.put<void>(`/api/hrm/lifecycle/checklists/items/${itemId}`, body));
+  }
+
+  separation(employeeId: number): Promise<any> {
+    return firstValueFrom(this.http.get<any>(`/api/hrm/lifecycle/separations/${employeeId}`));
+  }
+
+  submitSeparation(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/hrm/lifecycle/separations', body));
+  }
+
+  approveSeparation(id: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/hrm/lifecycle/separations/${id}/approve`, {}));
+  }
+
+  clearSeparation(id: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/hrm/lifecycle/separations/${id}/clear`, {}));
+  }
+
+  settleSeparation(employeeId: number, lastWorkingDate?: string): Promise<void> {
+    const params: Record<string, string> = {};
+    if (lastWorkingDate) params['lastWorkingDate'] = lastWorkingDate;
+    return firstValueFrom(
+      this.http.post<void>(`/api/hrm/lifecycle/separations/${employeeId}/settle`, null, { params }),
+    );
+  }
 }

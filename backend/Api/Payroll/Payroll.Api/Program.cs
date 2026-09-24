@@ -82,11 +82,24 @@ builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+builder.Services.AddHttpClient<IHrmClient, HrmClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddHttpClient<IMasterUserClient, MasterUserClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddScoped<SalarySetupService>();
 builder.Services.AddScoped<PayrollAdjustmentService>();
 builder.Services.AddScoped<PayrollRunService>();
 builder.Services.AddScoped<StatutoryService>();
 builder.Services.AddScoped<TaxCalculationService>();
+builder.Services.AddScoped<FnfSettlementService>();
 builder.Services.AddScoped<PayrollSeeder>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

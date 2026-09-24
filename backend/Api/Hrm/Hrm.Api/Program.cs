@@ -78,9 +78,16 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
+builder.Services.AddHttpClient<IMasterUserClient, MasterUserClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Master:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4504");
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddScoped<OrganisationService>();
 builder.Services.AddScoped<EmployeeService>();
 builder.Services.AddScoped<NoticeService>();
+builder.Services.AddScoped<LifecycleService>();
 builder.Services.AddScoped<HrmSeeder>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

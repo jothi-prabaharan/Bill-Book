@@ -38,6 +38,8 @@ public class PayrollDbContext : TenantDbContext
     public DbSet<TaxDeclarationLine> TaxDeclarationLines => Set<TaxDeclarationLine>();
     public DbSet<RentDetail> RentDetails => Set<RentDetail>();
     public DbSet<PreviousEmployerIncome> PreviousEmployerIncomes => Set<PreviousEmployerIncome>();
+    public DbSet<FullAndFinalSettlement> FullAndFinalSettlements => Set<FullAndFinalSettlement>();
+    public DbSet<FnfLine> FnfLines => Set<FnfLine>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -67,6 +69,21 @@ public class PayrollDbContext : TenantDbContext
         modelBuilder.Entity<LoanRepayment>(b =>
         {
             b.HasOne(e => e.Loan).WithMany(l => l.Repayments).HasForeignKey(e => e.EmployeeLoanId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<FullAndFinalSettlement>(b =>
+        {
+            b.HasKey(e => e.FullAndFinalSettlementId);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.NetPayable).HasColumnType("decimal(18,4)");
+        });
+
+        modelBuilder.Entity<FnfLine>(b =>
+        {
+            b.HasKey(e => e.FnfLineId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.Amount).HasColumnType("decimal(18,4)");
+            b.HasOne(e => e.Settlement).WithMany(s => s.Lines).HasForeignKey(e => e.FullAndFinalSettlementId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // Last, so the base class sees every entity configured above.

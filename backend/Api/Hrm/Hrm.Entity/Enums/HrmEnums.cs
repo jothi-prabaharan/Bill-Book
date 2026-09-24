@@ -97,3 +97,38 @@ public enum AnnouncementAudience
     Location = 3,
     Grade = 4,
 }
+
+public enum ChecklistKind
+{
+    Onboarding = 1,
+    Exit = 2,
+}
+
+public enum ChecklistOwnerRole
+{
+    Hr = 1,
+    Manager = 2,
+    It = 3,
+    Finance = 4,
+    Admin = 5,
+}
+
+public enum SeparationKind
+{
+    Resignation = 1,
+    Termination = 2,
+    Retirement = 3,
+    Death = 4,
+    EndOfContract = 5,
+    Absconding = 6,
+}
+
+public enum SeparationStatus
+{
+    Submitted = 1,
+    Approved = 2,
+    ClearancePending = 3,
+    Cleared = 4,
+    Settled = 5,
+    Withdrawn = 6,
+}

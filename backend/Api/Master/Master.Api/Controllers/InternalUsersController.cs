@@ -68,4 +68,24 @@ public sealed class InternalUsersController : ControllerBase
         await _db.SaveChangesAsync(ct);
         return Ok(new { user.UserId });
     }
+
+    [HttpPost("{userId:guid}/deactivate")]
+    public async Task<IActionResult> DeactivateUser(Guid userId, CancellationToken ct)
+    {
+        var user = await _db.Users.FirstOrDefaultAsync(u => u.UserId == userId, ct);
+        if (user is null)
+        {
+            return NotFound();
+        }
+
+        user.IsActive = false;
+        var roles = await _db.UserOrganizationRoles.Where(r => r.UserId == userId).ToListAsync(ct);
+        foreach (var r in roles)
+        {
+            r.IsActive = false;
+        }
+
+        await _db.SaveChangesAsync(ct);
+        return NoContent();
+    }
 }

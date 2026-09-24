@@ -345,4 +345,105 @@ public sealed class PayrollServiceTests
         Assert.Equal(yearEndRecomputation.TotalAnnualTax, monthlyProjection.TotalAnnualTax);
         Assert.Equal(15000m, yearEndRecomputation.PreviousEmployerTds);
     }
+
+    private sealed class FakeHrmClient : IHrmClient
+    {
+        public List<(long EmployeeId, DateOnly Lwd)> SettledEmployees { get; } = [];
+
+        public Task SettleEmployeeAsync(long employeeId, DateOnly lastWorkingDate, CancellationToken ct)
+        {
+            SettledEmployees.Add((employeeId, lastWorkingDate));
+            return Task.CompletedTask;
+        }
+    }
+
+    private sealed class FakeMasterUserClient : IMasterUserClient
+    {
+        public List<Guid> DeactivatedUsers { get; } = [];
+
+        public Task DeactivateUserAsync(Guid userId, CancellationToken ct)
+        {
+            DeactivatedUsers.Add(userId);
+            return Task.CompletedTask;
+        }
+    }
+
+    [SkippableFact]
+    public async Task Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
+        Guid userId = Guid.NewGuid();
+        var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
+        await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
+
+        var ledger = new FakeLedgerClient();
+        var hrm = new FakeHrmClient();
+        var master = new FakeMasterUserClient();
+        var setup = new SalarySetupService(db);
+        var fnfService = new FnfSettlementService(db, tenant, ledger, hrm, master);
+
+        // 1. Setup Employee Salary
+        long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest
+        {
+            Name = "Basic Salary",
+            Kind = ComponentKind.Earning,
+            ValueType = SalaryValueType.FlatAmount
+        }, default);
+
+        long structId = await setup.SaveStructureAsync(null, new SaveSalaryStructureRequest
+        {
+            Name = "Standard Structure",
+            Components = [new SaveSalaryStructureComponentRequest { SalaryComponentId = compId, FlatAmount = 60000m }]
+        }, default);
+
+        long employeeId = 777;
+        await setup.AssignEmployeeSalaryAsync(new SaveEmployeeSalaryRequest
+        {
+            EmployeeId = employeeId,
+            SalaryStructureId = structId,
+            AnnualCtc = 720000m,
+            EffectiveFrom = new DateOnly(2025, 1, 1)
+        }, default);
+
+        // 2. Calculate and create F&F settlement for exit on 15th Sep
+        DateOnly lwd = new DateOnly(2026, 9, 15);
+        long settlementId = await fnfService.CalculateAndCreateSettlementAsync(new CreateFnfSettlementRequest
+        {
+            EmployeeId = employeeId,
+            LastWorkingDate = lwd,
+            LinkedUserId = userId,
+            CompletedYearsOfService = 5,
+            NoticeShortfallDays = 0,
+            Remarks = "Exit clearance complete"
+        }, default);
+
+        var settlement = await fnfService.GetSettlementAsync(settlementId, default);
+        Assert.NotNull(settlement);
+        Assert.Equal(FnfStatus.Draft, settlement.Status);
+        Assert.True(settlement.NetPayable > 0m);
+
+        // 3. Approve and Post settlement
+        await fnfService.ApproveSettlementAsync(settlementId, default);
+        long runId = await fnfService.PostSettlementAsync(settlementId, userId, default);
+        Assert.True(runId > 0);
+
+        // 4. Verify PayrollRun created of kind FullAndFinal
+        var run = await db.PayrollRuns.FirstOrDefaultAsync(r => r.PayrollRunId == runId);
+        Assert.NotNull(run);
+        Assert.Equal(PayrollRunKind.FullAndFinal, run.Kind);
+        Assert.Equal(PayrollRunStatus.Posted, run.Status);
+        Assert.Equal(settlement.NetPayable, run.TotalNetPay);
+
+        // 5. Verify ledger posting
+        Assert.Single(ledger.PostedRequests);
+        var post = ledger.PostedRequests[0];
+        Assert.Equal("PAY", post.TransactionTypeCode);
+        Assert.Equal(runId, post.TransactionId);
+
+        // 6. Verify HRMS settlement notified and linked login deactivated
+        Assert.Contains((employeeId, lwd), hrm.SettledEmployees);
+        Assert.Contains(userId, master.DeactivatedUsers);
+    }
 }

@@ -45,6 +45,12 @@ public class HrmDbContext : TenantDbContext
     public DbSet<PolicyDocument> PolicyDocuments => Set<PolicyDocument>();
     public DbSet<PolicyAcknowledgement> PolicyAcknowledgements => Set<PolicyAcknowledgement>();
 
+    public DbSet<ChecklistTemplate> ChecklistTemplates => Set<ChecklistTemplate>();
+    public DbSet<ChecklistTemplateItem> ChecklistTemplateItems => Set<ChecklistTemplateItem>();
+    public DbSet<EmployeeChecklist> EmployeeChecklists => Set<EmployeeChecklist>();
+    public DbSet<EmployeeChecklistItem> EmployeeChecklistItems => Set<EmployeeChecklistItem>();
+    public DbSet<Separation> Separations => Set<Separation>();
+
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -184,6 +190,47 @@ public class HrmDbContext : TenantDbContext
             b.HasOne<PolicyDocument>().WithMany().HasForeignKey(e => e.PolicyDocumentId).OnDelete(DeleteBehavior.Cascade);
             b.HasOne<Employee>().WithMany().HasForeignKey(e => e.EmployeeId).OnDelete(DeleteBehavior.Cascade);
             b.HasIndex(e => new { e.PolicyDocumentId, e.EmployeeId }).IsUnique();
+        });
+
+        // ---- Lifecycle & Exit ------------------------------------------------
+        modelBuilder.Entity<ChecklistTemplate>(b =>
+        {
+            b.HasKey(e => e.ChecklistTemplateId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<ChecklistTemplateItem>(b =>
+        {
+            b.HasKey(e => e.ChecklistTemplateItemId);
+            b.Property(e => e.OwnerRole).HasConversion<string>().HasMaxLength(20);
+            b.HasOne(e => e.Template)
+                .WithMany(t => t.Items)
+                .HasForeignKey(e => e.ChecklistTemplateId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EmployeeChecklist>(b =>
+        {
+            b.HasKey(e => e.EmployeeChecklistId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<EmployeeChecklistItem>(b =>
+        {
+            b.HasKey(e => e.EmployeeChecklistItemId);
+            b.Property(e => e.OwnerRole).HasConversion<string>().HasMaxLength(20);
+            b.HasOne(e => e.Checklist)
+                .WithMany(c => c.Items)
+                .HasForeignKey(e => e.EmployeeChecklistId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Separation>(b =>
+        {
+            b.HasKey(e => e.SeparationId);
+            b.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.NoticeShortfallDays).HasColumnType("decimal(18,4)");
         });
 
         modelBuilder.ConfigureNumberingSeries(ownsMigration: false);

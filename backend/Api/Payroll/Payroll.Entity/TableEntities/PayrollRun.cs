@@ -12,6 +12,7 @@ public class PayrollRun : OrgScopedEntity
     public DateOnly Month { get; set; }
     
     public PayrollRunStatus Status { get; set; }
+    public PayrollRunKind Kind { get; set; } = PayrollRunKind.Regular;
     
     public int EmployeeCount { get; set; }
     public decimal TotalNetPay { get; set; }
