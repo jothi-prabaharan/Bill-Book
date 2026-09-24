@@ -883,7 +883,7 @@ If the code has moved on since a card was written, correct the card in your clai
     tests) and `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-14 · Partial fulfilment (T3.6): what's left
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24 · shares L-SAL with TK-24 by the owner's decision (TK-24's Sales work is committed; only TK-14 adds a `sal` migration)
 - **Lanes:** L-SAL (plus L-INV if the reservation API changes) · **Depends on:** TK-12 · **Decision:** —
 - **Where:**
   - `DeliveryChallanService.cs`: line 358 (`ReleaseReservation`) and lines 374-398.
