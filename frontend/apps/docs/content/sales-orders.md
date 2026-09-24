@@ -88,12 +88,12 @@ An order is never deleted. Its number was spent when it was created, so abandoni
 - **An order with an invoice or a delivery challan against it cannot be voided.** Undo that first; voiding underneath it would leave the other document pointing at something that was withdrawn
 - **Voiding a confirmed order gives its reservation back.** If Inventory cannot release it, the void is refused rather than recorded — a voided order still holding stock is stock nobody can sell and no document explains
 
+## Picking the customer and items
+
+**The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
+
 ## Finding one
 
 The list pages on the server, so a branch with ten years of orders opens as fast as a branch with ten. It can be filtered by status and searched by order number.
 
 At narrow widths — a phone held upright — the grid becomes one card per order, the filters stack, and every action is a full-width target.
-
-## What it does not do yet
-
-- **The customer and the items are keyed by id**, not chosen from a lookup. The picker arrives with the item lookup endpoint

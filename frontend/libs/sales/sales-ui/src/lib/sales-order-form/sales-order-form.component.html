@@ -126,18 +126,22 @@
     </div>
 
     <div class="field">
-      <!-- A contact id rather than a business quantity, so the plain numeric
-           control. It becomes a lookup when the contact search endpoint lands. -->
-      <bb-number-input
-        id="sor-contact"
+      <bb-form-field
         label="Customer"
-        min="1"
-        step="1"
-        inputmode="numeric"
-        formControlName="contactId"
+        controlId="sor-contact"
         [required]="true"
         [error]="showError('contactId') ? 'Choose the customer.' : ''"
-      />
+      >
+        <button
+          id="sor-contact"
+          type="button"
+          class="input picker"
+          [disabled]="form.controls.contactId.disabled"
+          (click)="openCustomerPicker()"
+        >
+          {{ contactLabel() || 'Choose a customer' }}
+        </button>
+      </bb-form-field>
     </div>
 
     <div class="field">
@@ -294,3 +298,15 @@
     (cancelled)="showConvert.set(false)"
   />
 }
+
+<bb-lookup-dialog
+  [open]="picker.open()"
+  [title]="picker.title()"
+  [placeholder]="picker.placeholder()"
+  [emptyText]="picker.emptyText()"
+  [rows]="picker.rows()"
+  [loading]="picker.loading()"
+  (searchChange)="picker.search($event)"
+  (choose)="picker.choose($event)"
+  (dismiss)="picker.close()"
+/>

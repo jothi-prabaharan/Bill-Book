@@ -14,7 +14,9 @@ import {
   SaveDeliveryChallanRequest,
   toApiLine,
   toGridLine,
+  SalesLookupService,
 } from '@bill-book/sales-core';
+import { SalesPicker } from '../sales-picker';
 import {
   BbSelectOption,
   DateInputComponent,
@@ -22,6 +24,9 @@ import {
   DocumentLineContext,
   DocumentLineGridComponent,
   ExchangeRateInputComponent,
+  FormFieldComponent,
+  LookupDialogComponent,
+  LookupRow,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -63,6 +68,8 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
   selector: 'bb-delivery-challan-form',
   standalone: true,
   imports: [
+    FormFieldComponent,
+    LookupDialogComponent,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -132,6 +139,16 @@ export class DeliveryChallanFormComponent implements OnInit {
 
   protected readonly lines = signal<ChallanGridLine[]>([blankGridLine(1)]);
 
+  /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
+  protected readonly contactLabel = signal('');
+
+  /** The customer and item pickers (TK-15). */
+  protected readonly picker = new SalesPicker(inject(SalesLookupService), {
+    customer: (row) => this.chooseCustomer(row),
+    item: (index, row) =>
+      this.lines.set(SalesPicker.withItem(this.lines(), index, row, this.context())),
+  });
+
   /** Read through a signal, or a `computed` over the controls never recomputes. */
   private readonly formValue = toSignal(this.form.valueChanges, {
     initialValue: this.form.getRawValue(),
@@ -186,6 +203,8 @@ export class DeliveryChallanFormComponent implements OnInit {
   private apply(challan: DeliveryChallanView): void {
     this.status.set(challan.status);
     this.documentNo.set(challan.documentNo);
+
+    this.contactLabel.set(SalesPicker.savedLabel(null, challan.contactName, challan.contactId));
 
     this.form.patchValue({
       documentDate: challan.documentDate,
@@ -267,6 +286,8 @@ export class DeliveryChallanFormComponent implements OnInit {
         return;
       }
 
+      this.contactLabel.set(SalesPicker.savedLabel(order.contactCode, order.contactName, order.contactId));
+
       this.form.patchValue({
         contactId: order.contactId,
         contactGstin: order.contactGstin ?? '',
@@ -297,9 +318,35 @@ export class DeliveryChallanFormComponent implements OnInit {
     this.lines.set([...lines]);
   }
 
-  protected onPickItem(_index: number): void {
-    // The item picker waits on the item lookup endpoint (TK-15). Until then a
-    // line is keyed by item id, which the grid already supports.
+  protected onPickItem(index: number): void {
+    if (this.context().readonly) {
+      return;
+    }
+
+    void this.picker.openItem(index);
+  }
+
+  protected openCustomerPicker(): void {
+    if (this.form.controls.contactId.disabled) {
+      return;
+    }
+
+    void this.picker.openCustomer();
+  }
+
+  /**
+   * The customer, chosen by name. Their GSTIN fills the field when it is still
+   * empty — the one the user typed wins — because the GSTIN is what decides
+   * intra- against inter-state tax.
+   */
+  private chooseCustomer(row: LookupRow): void {
+    this.contactLabel.set(SalesPicker.label(row));
+    this.form.controls.contactId.setValue(row.id);
+    this.form.controls.contactId.markAsTouched();
+
+    if (row.meta && !this.form.controls.contactGstin.value) {
+      this.form.controls.contactGstin.setValue(row.meta);
+    }
   }
 
   protected async save(): Promise<void> {

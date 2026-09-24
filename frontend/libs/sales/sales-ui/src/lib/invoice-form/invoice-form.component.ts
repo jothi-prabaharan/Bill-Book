@@ -13,15 +13,19 @@ import {
   SaveInvoiceRequest,
   toApiLine,
   toGridLine,
+  SalesLookupService,
 } from '@bill-book/sales-core';
+import { SalesPicker } from '../sales-picker';
 import {
   DateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
   ExchangeRateInputComponent,
+  FormFieldComponent,
+  LookupDialogComponent,
+  LookupRow,
   MessageBoxComponent,
-  NumberInputComponent,
   TextareaComponent,
   TextInputComponent,
   totalsOf,
@@ -57,6 +61,8 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [
+    FormFieldComponent,
+    LookupDialogComponent,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -65,7 +71,6 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
     OrderToInvoiceDialogComponent,
     TextInputComponent,
     TextareaComponent,
-    NumberInputComponent,
     DateInputComponent,
     ExchangeRateInputComponent,
   ],
@@ -116,6 +121,16 @@ export class InvoiceFormComponent implements OnInit {
   });
 
   protected readonly lines = signal<DocumentLine[]>([blankGridLine(1)]);
+
+  /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
+  protected readonly contactLabel = signal('');
+
+  /** The customer and item pickers (TK-15). */
+  protected readonly picker = new SalesPicker(inject(SalesLookupService), {
+    customer: (row) => this.chooseCustomer(row),
+    item: (index, row) =>
+      this.lines.set(SalesPicker.withItem(this.lines(), index, row, this.context())),
+  });
 
   protected readonly context = computed<DocumentLineContext>(() => ({
     isInterState: this.looksInterState(),
@@ -183,6 +198,8 @@ export class InvoiceFormComponent implements OnInit {
     this.salesOrderId.set(invoice.salesOrderId ?? null);
     this.daysOverdue.set(invoice.daysOverdue ?? 0);
 
+    this.contactLabel.set(SalesPicker.savedLabel(invoice.contactCode, invoice.contactName, invoice.contactId));
+
     this.form.patchValue({
       documentDate: invoice.documentDate,
       dueDate: invoice.dueDate ?? '',
@@ -225,10 +242,35 @@ export class InvoiceFormComponent implements OnInit {
     this.lines.set([...lines]);
   }
 
-  protected onPickItem(_index: number): void {
-    // The item picker is a lookup dialog the host opens; wiring it waits on the
-    // item lookup endpoint. Until then a line is keyed by hand, which the grid
-    // already supports.
+  protected onPickItem(index: number): void {
+    if (this.context().readonly) {
+      return;
+    }
+
+    void this.picker.openItem(index);
+  }
+
+  protected openCustomerPicker(): void {
+    if (this.form.controls.contactId.disabled) {
+      return;
+    }
+
+    void this.picker.openCustomer();
+  }
+
+  /**
+   * The customer, chosen by name. Their GSTIN fills the field when it is still
+   * empty — the one the user typed wins — because the GSTIN is what decides
+   * intra- against inter-state tax.
+   */
+  private chooseCustomer(row: LookupRow): void {
+    this.contactLabel.set(SalesPicker.label(row));
+    this.form.controls.contactId.setValue(row.id);
+    this.form.controls.contactId.markAsTouched();
+
+    if (row.meta && !this.form.controls.contactGstin.value) {
+      this.form.controls.contactGstin.setValue(row.meta);
+    }
   }
 
   protected async save(): Promise<void> {

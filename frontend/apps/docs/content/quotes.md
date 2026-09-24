@@ -53,6 +53,10 @@ There is no "posted", because a quote never reaches the books.
 
 ## Keying one
 
+**The customer is picked by name.** Choose **Choose a customer**, then search by code, name or GSTIN and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept. A quote cannot be saved without a customer. It used to default to the first customer in the branch.
+
+**An item is picked the same way**, from the item column of the line grid: search by code or name, or scan its barcode. The line shows the item's code and name.
+
 The line grid is the same one every sales and purchase document uses, so it behaves identically here and on a bill.
 
 - **Choose an item** and its price, unit and tax treatment come across onto the line as a **snapshot**. Repricing the item later does not restate a quote already sent.

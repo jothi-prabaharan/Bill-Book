@@ -4,8 +4,14 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { InvoiceFormComponent } from './invoice-form.component';
-import { InvoiceService, InvoiceView, SaveInvoiceRequest } from '@bill-book/sales-core';
-import { DocumentLine, UiMessage } from '@bill-book/ui-components';
+import {
+  InvoiceService,
+  InvoiceView,
+  SalesLookupService,
+  SaveInvoiceRequest,
+} from '@bill-book/sales-core';
+import { DocumentLine, LookupRow, UiMessage } from '@bill-book/ui-components';
+import { SalesPicker } from '../sales-picker';
 
 /**
  * The form's members are `protected` — a template is the only thing that should
@@ -36,6 +42,10 @@ interface InvoiceFormHarness {
   save(): Promise<void>;
   post(): Promise<void>;
   voidInvoice(): Promise<void>;
+  contactLabel(): string;
+  picker: SalesPicker;
+  openCustomerPicker(): void;
+  onPickItem(index: number): void;
 }
 
 describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
@@ -47,6 +57,10 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
     voidInvoice: ReturnType<typeof vi.fn>;
     previewGl: ReturnType<typeof vi.fn>;
     createFromSalesOrder: ReturnType<typeof vi.fn>;
+  };
+  let mockLookups: {
+    customers: ReturnType<typeof vi.fn>;
+    items: ReturnType<typeof vi.fn>;
   };
   let mockRouter: Partial<Router>;
   let mockActivatedRoute: {
@@ -180,6 +194,29 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
       createFromSalesOrder: vi.fn().mockResolvedValue({ invoiceId: 44 }),
     };
 
+    mockLookups = {
+      customers: vi.fn().mockResolvedValue([
+        {
+          contactId: 77,
+          contactCode: 'C77',
+          displayName: 'Ravi Stores',
+          isCustomer: true,
+          gstin: '33ABCDE1234F1Z5',
+          currencyCode: 'INR',
+          isActive: true,
+        },
+      ]),
+      items: vi.fn().mockResolvedValue([
+        {
+          itemId: 9,
+          itemCode: 'SOAP-1',
+          itemName: 'Sandal soap',
+          inventoryUomCode: 'PCS',
+          isActive: true,
+        },
+      ]),
+    };
+
     mockRouter = { navigate: vi.fn().mockResolvedValue(true) };
 
     mockActivatedRoute = {
@@ -190,6 +227,7 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
       providers: [
         FormBuilder,
         { provide: InvoiceService, useValue: mockInvoiceService },
+        { provide: SalesLookupService, useValue: mockLookups },
         { provide: Router, useValue: mockRouter },
         { provide: ActivatedRoute, useValue: mockActivatedRoute },
       ],
@@ -511,6 +549,78 @@ describe('InvoiceFormComponent (sales/sales-ui/invoice-form)', () => {
 
       expect(mockInvoiceService.post).toHaveBeenCalledWith(42);
       expect(comp.editable()).toBe(false);
+    });
+  });
+  describe('Pickers (TK-15)', () => {
+    const settle = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('INV-PK-01: choosing a customer by name stores the id, shows the name and fills an empty GSTIN', async () => {
+      const comp = createComponent();
+      comp.ngOnInit();
+
+      comp.openCustomerPicker();
+      await settle();
+
+      expect(mockLookups.customers).toHaveBeenCalledWith('');
+      expect(comp.picker.kind()).toBe('customer');
+      const row: LookupRow = comp.picker.rows()[0];
+      expect(row).toEqual({ id: 77, code: 'C77', name: 'Ravi Stores', meta: '33ABCDE1234F1Z5' });
+
+      comp.picker.choose(row);
+
+      expect(comp.form.get('contactId')?.value).toBe(77);
+      expect(comp.contactLabel()).toBe('C77 Ravi Stores');
+      expect(comp.form.get('contactGstin')?.value).toBe('33ABCDE1234F1Z5');
+      expect(comp.picker.open()).toBe(false);
+    });
+
+    it('INV-PK-02: a GSTIN already typed is kept when the customer is chosen', () => {
+      const comp = createComponent();
+      comp.ngOnInit();
+      comp.form.patchValue({ contactGstin: '29AAAAA0000A1Z5' });
+
+      comp.openCustomerPicker();
+      comp.picker.choose({ id: 77, code: 'C77', name: 'Ravi Stores', meta: '33ABCDE1234F1Z5' });
+
+      expect(comp.form.get('contactGstin')?.value).toBe('29AAAAA0000A1Z5');
+    });
+
+    it('INV-PK-03: choosing an item sets that line\'s item and label and leaves the others', () => {
+      const comp = createComponent();
+      comp.ngOnInit();
+      comp.onLinesChange([sampleLines[0], { ...sampleLines[0], lineNumber: 2, itemId: null, itemLabel: null }]);
+
+      comp.onPickItem(1);
+      comp.picker.choose({ id: 9, code: 'SOAP-1', name: 'Sandal soap', meta: 'PCS' });
+
+      expect(comp.lines()[0].itemId).toBe(5);
+      expect(comp.lines()[1].itemId).toBe(9);
+      expect(comp.lines()[1].itemLabel).toBe('SOAP-1 - Sandal soap');
+    });
+
+    it('INV-PK-04: an invoice loaded for editing shows its customer by name', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('42');
+      const comp = createComponent();
+      comp.ngOnInit();
+      await settle();
+
+      expect(comp.form.get('contactId')?.value).toBe(10);
+      expect(comp.contactLabel()).toBe('Royal Jewelers');
+    });
+
+    it('INV-PK-05: a posted invoice opens no picker', async () => {
+      mockInvoiceService.get.mockResolvedValue({ ...sampleInvoiceView, status: 'Posted' });
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('42');
+      const comp = createComponent();
+      comp.ngOnInit();
+      await settle();
+
+      comp.openCustomerPicker();
+      comp.onPickItem(0);
+
+      expect(comp.picker.open()).toBe(false);
+      expect(mockLookups.customers).not.toHaveBeenCalled();
+      expect(mockLookups.items).not.toHaveBeenCalled();
     });
   });
 });

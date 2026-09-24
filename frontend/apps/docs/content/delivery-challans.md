@@ -45,6 +45,10 @@ Type the order's number into **Sales order** and choose **Load order**. The chal
 
 The checks run again when the challan is posted, not only when it is saved: another challan may have delivered against the same order in between. A challan that would deliver more than is still outstanding is refused with how much is left, and nothing is dispatched.
 
+## Picking the customer and items
+
+**The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
+
 ## The statuses
 
 | Status | What it means |
@@ -66,5 +70,5 @@ Only a draft can be voided, and **the reason is required**. A draft moved nothin
 ## What it does not do yet
 
 - **A sale challan does not yet post to *Goods Delivered Not Invoiced*.** The goods' cost reaches the accounts through stock costing, as it does for any other issue, and lands in cost of sales at dispatch. Holding it in a clearing account until the invoice is raised is designed and not yet built
-- **The customer, the items and the order are keyed by id**, not chosen from a lookup. The pickers arrive with the item lookup endpoint
+- **The order is chosen by its number**, not from a lookup. The customer and the items are picked by name
 - **The e-way bill is recorded, not generated.** Its number and date are stored on the challan

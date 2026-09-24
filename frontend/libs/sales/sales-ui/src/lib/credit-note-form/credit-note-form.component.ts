@@ -16,7 +16,9 @@ import {
   SaveCreditNoteRequest,
   toApiLine,
   toGridLine,
+  SalesLookupService,
 } from '@bill-book/sales-core';
+import { SalesPicker } from '../sales-picker';
 import {
   AllocationGridComponent,
   AllocationRow,
@@ -26,6 +28,9 @@ import {
   DocumentLineContext,
   DocumentLineGridComponent,
   ExchangeRateInputComponent,
+  FormFieldComponent,
+  LookupDialogComponent,
+  LookupRow,
   MessageBoxComponent,
   NumberInputComponent,
   SelectComponent,
@@ -59,6 +64,8 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [
+    FormFieldComponent,
+    LookupDialogComponent,
     CommonModule,
     ReactiveFormsModule,
     RouterModule,
@@ -121,6 +128,15 @@ export class CreditNoteFormComponent implements OnInit {
   ];
 
   protected readonly lines = signal<CreditNoteGridLine[]>([]);
+
+  /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
+  protected readonly contactLabel = signal('');
+
+  /** The customer and item pickers (TK-15). */
+  protected readonly picker = new SalesPicker(inject(SalesLookupService), {
+    customer: (row) => this.chooseCustomer(row),
+    item: () => undefined,
+  });
   protected readonly allocationRows = signal<AllocationRow[]>([]);
 
   private readonly formValue = toSignal(this.form.valueChanges, {
@@ -186,6 +202,8 @@ export class CreditNoteFormComponent implements OnInit {
   private apply(note: CreditNoteView): void {
     this.status.set(note.status);
     this.documentNo.set(note.documentNo);
+
+    this.contactLabel.set(SalesPicker.savedLabel(null, note.contactName, note.contactId));
 
     this.form.patchValue({
       documentDate: note.documentDate,
@@ -258,6 +276,8 @@ export class CreditNoteFormComponent implements OnInit {
         ]);
         return;
       }
+
+      this.contactLabel.set(SalesPicker.savedLabel(invoice.contactCode, invoice.contactName, invoice.contactId));
 
       this.form.patchValue({
         contactId: invoice.contactId,
@@ -338,6 +358,31 @@ export class CreditNoteFormComponent implements OnInit {
 
   protected onPickItem(_index: number): void {
     // Lines come from the invoice; there is nothing to pick.
+  }
+
+  protected openCustomerPicker(): void {
+    if (this.form.controls.contactId.disabled) {
+      return;
+    }
+
+    void this.picker.openCustomer();
+  }
+
+  /**
+   * The customer, chosen by name. Their GSTIN fills the field when it is still
+   * empty — the one the user typed wins — because the GSTIN is what decides
+   * intra- against inter-state tax.
+   */
+  private chooseCustomer(row: LookupRow): void {
+    this.contactLabel.set(SalesPicker.label(row));
+    this.form.controls.contactId.setValue(row.id);
+    this.form.controls.contactId.markAsTouched();
+
+    if (row.meta && !this.form.controls.contactGstin.value) {
+      this.form.controls.contactGstin.setValue(row.meta);
+    }
+
+    void this.loadOutstanding();
   }
 
   protected async save(): Promise<void> {

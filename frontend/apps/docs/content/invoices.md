@@ -91,10 +91,10 @@ A taxable item with no current sales rate in the tax master shows a warning on i
 
 **Tender, change and the till itself are not built yet**, so checkout does not finish a POS sale. Barcode scanning is not built either.
 
+## Picking the customer and items
+
+**The customer is picked by name.** Choose the **Customer** field, search by code, name or GSTIN, and pick from the matches. Their GSTIN fills the GSTIN field if it is still empty; one you have already typed is kept, because the GSTIN decides CGST and SGST against IGST. **Items are picked the same way** from the item column of the line grid: search by code or name, or scan a barcode, and the line shows the item's code and name. A document opened for editing shows its customer by name. Once it is posted or voided, neither picker opens.
+
 ## Finding one
 
 The list pages on the server and can be filtered by status, searched by invoice number, and narrowed to overdue. At narrow widths the grid becomes one card per invoice and the filters stack.
-
-## What it does not do yet
-
-- **The customer and the items are keyed by id**, not chosen from a lookup. The picker arrives with the item lookup endpoint

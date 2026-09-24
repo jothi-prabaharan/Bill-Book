@@ -17,17 +17,16 @@
       <bb-date-input id="validUntil" label="Valid Until" formControlName="validUntil" [required]="true" />
     </div>
     <div class="form-group">
-      <!-- A contact id, not a business quantity. It becomes a lookup when the
-           contact search endpoint lands. -->
-      <bb-number-input
-        id="contactId"
-        label="Contact (ID)"
-        min="1"
-        step="1"
-        inputmode="numeric"
-        formControlName="contactId"
+      <bb-form-field
+        label="Customer"
+        controlId="contactId"
         [required]="true"
-      />
+        [error]="form.controls.contactId.touched && form.controls.contactId.invalid ? 'Choose the customer.' : ''"
+      >
+        <button id="contactId" type="button" class="input picker" (click)="openCustomerPicker()">
+          {{ contactLabel() || 'Choose a customer' }}
+        </button>
+      </bb-form-field>
     </div>
     <div class="form-group">
       <bb-text-input
@@ -126,3 +125,15 @@
     </div>
   </div>
 </div>
+
+<bb-lookup-dialog
+  [open]="picker.open()"
+  [title]="picker.title()"
+  [placeholder]="picker.placeholder()"
+  [emptyText]="picker.emptyText()"
+  [rows]="picker.rows()"
+  [loading]="picker.loading()"
+  (searchChange)="picker.search($event)"
+  (choose)="picker.choose($event)"
+  (dismiss)="picker.close()"
+/>

@@ -954,7 +954,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - For TK-15 and the till: to page, pass `take`; the response is then `{ total, skip, take, rows }`.
 
 ### TK-15 · Item and customer pickers on the sales forms
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - The pattern to copy: `frontend/libs/purchase/purchase-core/src/lib/purchase-lookup.service.ts`
@@ -969,16 +969,16 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - The backend needs nothing new: `/api/contacts?search=&role=customer` and `/api/items?search=`
     already exist.
 - **Sub-tasks:**
-  - [ ] Add `sales-lookup.service.ts` to `libs/sales/sales-core`, with `customers(search)` and
+  - [x] Add `sales-lookup.service.ts` to `libs/sales/sales-core`, with `customers(search)` and
         `items(search)`. Mirror `PurchaseLookupService`.
-  - [ ] In each of the five forms:
+  - [x] In each of the five forms:
     - replace the numeric inputs with a button that opens `bb-lookup-dialog`;
     - add `picker` and `pickerRows` signals, as in `bill-form.page.ts`;
     - show the chosen name, and store the id.
-  - [ ] Keep the `contactLabel` or `itemLabel` that edit mode shows when it loads a saved document.
-  - [ ] Test: a `sales-lookup.service.spec.ts` that asserts the URLs and the mapping.
-  - [ ] Update the docs pages for the five sales screens, and add a release-notes bullet.
-  - [ ] `npm run lint`, the typecheck and `nx build web` are all clean.
+  - [x] Keep the `contactLabel` or `itemLabel` that edit mode shows when it loads a saved document.
+  - [x] Test: a `sales-lookup.service.spec.ts` that asserts the URLs and the mapping.
+  - [x] Update the docs pages for the five sales screens, and add a release-notes bullet.
+  - [x] `npm run lint`, the typecheck and `nx build web` are all clean.
   - [ ] Owner: `npm run test`, then pick a customer and an item on each form at 360px.
 - **Done when:** every sales form picks its customer and items by name.
 - **Notes:** TK-14 later improves item search (barcode); this card doesn't wait for it.
@@ -986,6 +986,31 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     `frontend/apps/desktop/src/app/pos-terminal/pos-lookup.service.ts`, because this card was open
     when TK-79 ran. Once `SalesLookupService` exists, move the till's `customers()` and `items()`
     onto it and keep only the till's own lookups (walk-in, item detail, sales rates, branch).
+  - Done (2026-09-24):
+    - **`SalesLookupService`** (sales-core) holds `customers(search)` (`role=customer`) and
+      `items(search)`, which also matches a whole barcode (TK-14).
+    - **`SalesPicker`** (sales-ui) is one helper for all five forms: the dialog's signals, a search
+      token so a late answer never overwrites a newer one, and `withItem` to set a line and
+      recalculate it. It replaces the `picker`/`pickerRows` fields that were copied per form in
+      purchase.
+    - Every form now has a customer button in `bb-form-field` in place of the numeric input, one
+      `bb-lookup-dialog`, and `contactLabel`, which is set from the loaded document's
+      code/name or from its id. Choosing a customer fills the GSTIN only when it is empty.
+    - Item picking is wired on quote, order, invoice and challan. A credit note's lines come from
+      its invoice, so it has no item picker. Choosing its customer loads their open invoices, as
+      the old `valueChange` did.
+    - **Quote:** `contactId` defaulted to `1`, so a quote saved untouched went to the branch's first
+      contact. It is now `0`, with `min(1)`. `QOT-T1-01` was updated to match.
+    - **Till:** `PosLookupService.customers()` and `.items()` now delegate to `SalesLookupService`
+      (`apps/desktop`, the card's note above).
+  - Checks: lint (0 errors), typecheck and `nx build web desktop` are clean.
+  - Tests:
+    - `sales-core/.../sales-lookup.service.spec.ts`
+    - `sales-ui/.../sales-picker.spec.ts`
+    - five picker tests in `invoice-form.component.spec.ts`
+    - four in `sales-forms.spec.ts` (which now provides a stub `SalesLookupService`)
+  - Owner: `npm run test`, then pick a customer and an item on each form at 360px.
+
 
 ### TK-16 · Contact picker on the support ticket form
 - [ ] open

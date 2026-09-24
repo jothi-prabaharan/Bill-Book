@@ -27,7 +27,7 @@ Only a sales return moves stock.
 
 ## Raising one
 
-Type the invoice's number into **Invoice** and choose **Load invoice**, or pick the invoice from the customer's open invoices listed below the form. The note takes the invoice's customer, addresses and currency, and one line per invoice line:
+**Pick the customer by name** from the **Customer** field: search by code, name or GSTIN. Their open invoices are then listed below the form. Pick the invoice from that list, or type its number into **Invoice** and choose **Load invoice**. The note takes the invoice's customer, addresses and currency, and one line per invoice line:
 
 - **for a sales return**, at the quantity still left to come back — what was sold, less what earlier credit notes already returned
 - **for any other reason**, at the quantity invoiced, so the price can be corrected
@@ -65,5 +65,5 @@ Posting a credit note needs the **approve** permission for sales, and voiding on
 
 ## What it does not do yet
 
-- **The customer and the invoice are keyed by number**, not chosen from a lookup
+- **The invoice is keyed by its number** when it is not one of the customer's open invoices listed on the form. The customer is picked by name
 - **Refunding the customer** is a money-out document in Accounts, not part of the credit note

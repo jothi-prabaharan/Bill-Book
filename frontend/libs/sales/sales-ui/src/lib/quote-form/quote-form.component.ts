@@ -1,20 +1,23 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { QuoteService, SaveQuoteRequest } from '@bill-book/sales-core';
+import { QuoteService, SalesLookupService, SaveQuoteRequest } from '@bill-book/sales-core';
 import {
   DateInputComponent,
   DocumentLine,
   DocumentLineContext,
   DocumentLineGridComponent,
   ExchangeRateInputComponent,
-  NumberInputComponent,
+  FormFieldComponent,
+  LookupDialogComponent,
+  LookupRow,
   TextareaComponent,
   TextInputComponent,
   totalsOf,
 } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { SalesPicker } from '../sales-picker';
 
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,8 +30,9 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
     RouterModule,
     TextInputComponent,
     TextareaComponent,
-    NumberInputComponent,
     DateInputComponent,
+    FormFieldComponent,
+    LookupDialogComponent,
     ExchangeRateInputComponent,
   ],
   templateUrl: './quote-form.component.html',
@@ -46,7 +50,7 @@ export class QuoteFormComponent implements OnInit {
   form = this.fb.group({
     documentDate: [new Date().toISOString().split('T')[0], Validators.required],
     validUntil: [new Date().toISOString().split('T')[0], Validators.required],
-    contactId: [1, Validators.required], 
+    contactId: [0, [Validators.required, Validators.min(1)]],
     contactGstin: [''],
     placeOfSupplyStateCode: [''],
     currencyCode: ['INR', Validators.required],
@@ -58,6 +62,17 @@ export class QuoteFormComponent implements OnInit {
   });
   
   lines: DocumentLine[] = [];
+
+  /** The chosen customer as it reads on the form; the id itself is the `contactId` control. */
+  readonly contactLabel = signal('');
+
+  /** The customer and item pickers (TK-15). */
+  readonly picker = new SalesPicker(inject(SalesLookupService), {
+    customer: (row) => this.chooseCustomer(row),
+    item: (index, row) => {
+      this.lines = SalesPicker.withItem(this.lines, index, row, this.context);
+    },
+  });
   context: DocumentLineContext = {
     isInterState: false,
     currencyDecimals: 2,
@@ -83,6 +98,7 @@ export class QuoteFormComponent implements OnInit {
   loadQuote() {
     if (!this.quoteId) return;
     this.quoteService.get(this.quoteId).subscribe(q => {
+      this.contactLabel.set(SalesPicker.savedLabel(null, q.contactName, q.contactId));
       this.form.patchValue({
         documentDate: q.documentDate,
         validUntil: q.validUntil,
@@ -115,11 +131,27 @@ export class QuoteFormComponent implements OnInit {
     this.lines = [...newLines];
   }
 
-  onPickItem(_index: number) {
-    // open item picker dialog, update lines
+  onPickItem(index: number) {
+    void this.picker.openItem(index);
+  }
+
+  openCustomerPicker() {
+    void this.picker.openCustomer();
+  }
+
+  /** The customer, chosen by name. Their GSTIN fills the field only when it is still empty. */
+  private chooseCustomer(row: LookupRow) {
+    this.contactLabel.set(SalesPicker.label(row));
+    this.form.controls.contactId.setValue(row.id);
+    this.form.controls.contactId.markAsTouched();
+
+    if (row.meta && !this.form.controls.contactGstin.value) {
+      this.form.controls.contactGstin.setValue(row.meta);
+    }
   }
 
   save() {
+    this.form.markAllAsTouched();
     if (this.form.invalid) return;
 
     const val = this.form.value;

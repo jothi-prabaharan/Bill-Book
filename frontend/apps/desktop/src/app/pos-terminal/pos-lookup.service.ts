@@ -1,5 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { SalesLookupService } from '@bill-book/sales-core';
 import { TaxGroupOption, TaxTreatment } from '@bill-book/ui-components';
 import { firstValueFrom } from 'rxjs';
 import { CartItem } from './pos-cart';
@@ -65,26 +66,21 @@ export interface TillBranch {
 /**
  * The masters the till looks things up in.
  *
- * **Local to `apps/desktop` for now.** TK-79 was meant to reuse TK-15's
- * `SalesLookupService`, which does not exist yet; when it does, `customers` and
- * `items` move there and this keeps only what is the till's own. Each call goes
- * to the service that owns the data — contacts and the branch to Master, items
- * to Inventory, rates to Accounting — so nothing reads another service's tables.
+ * **Finding a customer or an item is `SalesLookupService`'s** (TK-15), so the
+ * till and every sales form search the same way; this keeps only what is the
+ * till's own — the walk-in, an item as the cart sells it, the sales rates and
+ * the branch. Each call goes to the service that owns the data — contacts and
+ * the branch to Master, items to Inventory, rates to Accounting — so nothing
+ * reads another service's tables.
  */
 @Injectable({ providedIn: 'root' })
 export class PosLookupService {
   private readonly http = inject(HttpClient);
+  private readonly sales = inject(SalesLookupService);
 
   /** Active customers matching a name, code or GSTIN. */
   customers(search: string): Promise<CustomerOption[]> {
-    const query = new URLSearchParams();
-    if (search.trim()) {
-      query.set('search', search.trim());
-    }
-    query.set('role', 'customer');
-    query.set('includeInactive', 'false');
-
-    return firstValueFrom(this.http.get<CustomerOption[]>(`/api/contacts?${query}`));
+    return this.sales.customers(search);
   }
 
   /**
@@ -103,15 +99,13 @@ export class PosLookupService {
     );
   }
 
-  /** Active items matching a name or code. Barcode search is TK-14. */
-  items(search: string): Promise<ItemOption[]> {
-    const query = new URLSearchParams();
-    if (search.trim()) {
-      query.set('search', search.trim());
-    }
-    query.set('includeInactive', 'false');
-
-    return firstValueFrom(this.http.get<ItemOption[]>(`/api/items?${query}`));
+  /**
+   * Active items matching a name or code, or a whole barcode — a scanned
+   * barcode's item comes first (TK-14). The list serves the prices the till
+   * shows, so the shape is the till's own.
+   */
+  async items(search: string): Promise<ItemOption[]> {
+    return (await this.sales.items(search)) as ItemOption[];
   }
 
   /**

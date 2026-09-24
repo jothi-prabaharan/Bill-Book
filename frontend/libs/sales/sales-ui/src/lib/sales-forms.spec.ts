@@ -23,7 +23,8 @@ import {
   SaveSalesOrderRequest,
   SaveCreditNoteRequest,
   SaveDeliveryChallanRequest,
-  ChallanType
+  ChallanType,
+  SalesLookupService
 } from '@bill-book/sales-core';
 import { AllocationRow, DocumentLine, UiMessage } from '@bill-book/ui-components';
 
@@ -100,6 +101,10 @@ interface CreditNoteFormHarness {
 }
 
 describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, DeliveryChallan)', () => {
+  let mockLookups: {
+    customers: ReturnType<typeof vi.fn>;
+    items: ReturnType<typeof vi.fn>;
+  };
   let mockRouter: Partial<Router>;
   let mockActivatedRoute: {
     snapshot: {
@@ -341,6 +346,11 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       voidChallan: vi.fn().mockResolvedValue({ deliveryChallanId: 61 })
     };
 
+    mockLookups = {
+      customers: vi.fn().mockResolvedValue([]),
+      items: vi.fn().mockResolvedValue([]),
+    };
+
     TestBed.configureTestingModule({
       providers: [
         FormBuilder,
@@ -351,7 +361,8 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
         { provide: CreditNoteService, useValue: mockCreditNoteService },
         { provide: InvoiceService, useValue: mockInvoiceService },
         { provide: LedgerService, useValue: mockLedgerService },
-        { provide: DeliveryChallanService, useValue: mockDeliveryChallanService }
+        { provide: DeliveryChallanService, useValue: mockDeliveryChallanService },
+        { provide: SalesLookupService, useValue: mockLookups }
       ]
     });
   });
@@ -368,7 +379,9 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       expect(comp.quoteId).toBeNull();
       expect(comp.form.get('validUntil')?.value).toBeTruthy();
       expect(comp.form.get('currencyCode')?.value).toBe('INR');
-      expect(comp.form.get('contactId')?.value).toBe(1);
+      // No customer until one is picked. It defaulted to 1, so a quote saved
+      // without touching the field went to whichever contact was created first.
+      expect(comp.form.get('contactId')?.value).toBe(0);
     });
 
     it('QOT-T1-02: Create quote saves SaveQuoteRequest DTO and navigates back', () => {
@@ -427,6 +440,71 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   //
   // What has not changed is what these tests were for: that the DTO leaving the
   // screen says what was typed into it.
+  describe('1b. Pickers on the quote, order, challan and credit note (TK-15)', () => {
+    const row = { id: 77, code: 'C77', name: 'Ravi Stores', meta: '33ABCDE1234F1Z5' };
+
+    it('PK-01: the quote picks its customer by name and a quote cannot be saved without one', () => {
+      const comp = TestBed.runInInjectionContext(() => new QuoteFormComponent());
+      comp.ngOnInit();
+
+      comp.save();
+      expect(mockQuoteService.create).not.toHaveBeenCalled();
+
+      comp.openCustomerPicker();
+      comp.picker.choose(row);
+
+      expect(comp.form.get('contactId')?.value).toBe(77);
+      expect(comp.contactLabel()).toBe('C77 Ravi Stores');
+      expect(comp.form.get('contactGstin')?.value).toBe('33ABCDE1234F1Z5');
+    });
+
+    it('PK-02: the quote picks an item onto the line it was opened from', () => {
+      const comp = TestBed.runInInjectionContext(() => new QuoteFormComponent());
+      comp.ngOnInit();
+      comp.onLinesChange([sampleLine, { ...sampleLine, itemId: null, itemLabel: null }]);
+
+      comp.onPickItem(1);
+      comp.picker.choose({ id: 9, code: 'SOAP-1', name: 'Sandal soap' });
+
+      expect(comp.lines[0].itemId).toBe(sampleLine.itemId);
+      expect(comp.lines[1].itemId).toBe(9);
+      expect(comp.lines[1].itemLabel).toBe('SOAP-1 - Sandal soap');
+      expect(mockLookups.items).toHaveBeenCalledWith('');
+    });
+
+    it('PK-03: every other sales form stores the picked customer on its contactId control', () => {
+      const forms = [
+        TestBed.runInInjectionContext(() => new SalesOrderFormComponent()),
+        TestBed.runInInjectionContext(() => new DeliveryChallanFormComponent()),
+        TestBed.runInInjectionContext(() => new CreditNoteFormComponent()),
+      ] as unknown as {
+        form: FormGroup;
+        picker: { choose(row: unknown): void; kind: { set(kind: string): void } };
+        contactLabel(): string;
+      }[];
+
+      for (const comp of forms) {
+        comp.picker.kind.set('customer');
+        comp.picker.choose(row);
+
+        expect(comp.form.get('contactId')?.value).toBe(77);
+        expect(comp.contactLabel()).toBe('C77 Ravi Stores');
+      }
+    });
+
+    it('PK-04: choosing the credit note\'s customer loads their outstanding invoices', async () => {
+      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent()) as unknown as {
+        picker: { choose(row: unknown): void; kind: { set(kind: string): void } };
+      };
+
+      comp.picker.kind.set('customer');
+      comp.picker.choose(row);
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(mockLedgerService.outstandingBalances).toHaveBeenCalledWith(77);
+    });
+  });
+
   describe('2. SalesOrderFormComponent (T2.2)', () => {
     const build = (): SalesOrderFormHarness =>
       TestBed.runInInjectionContext(
