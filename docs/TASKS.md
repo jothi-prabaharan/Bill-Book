@@ -1254,7 +1254,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - No release note: no screen calls either service's template API yet.
 
 ### TK-24 · Printing cutover: serve from `prt`, drop `con.PrintTemplates`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-PRT, L-CON, L-SAL, L-SAL-UI (the invoice print page), L-MST (`TenantSeeder`), L-KERNEL (the machinery move), L-DEPS (package references, per commit), L-DOC (the service count in `CLAUDE.md`, last commit) · **Depends on:** TK-23 · **Decision:** D-13 (answered)
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/PrintTemplateSeeder.cs`
@@ -1300,7 +1300,12 @@ If the code has moved on since a card was written, correct the card in your clai
         stays: `PrintPayload`, `PrintFormatContext`, both catalogues, `PlaceholderType`/`Kind`, and
         `MergeTags`' text-level half. `AngleSharp` and `HtmlSanitizer` moved to `Printing.Api`
         (L-DEPS). The renderer, settings, sanitiser and layout tests moved to `Printing.Api.Tests`.
-  - [ ] Change the service count in `CLAUDE.md` from 7 to 8.
+  - [x] Change the service count in `CLAUDE.md` from 7 to 8. Also updated: the Printing
+        paragraphs, the Master `con` row, a new Printing row, the tenant schema list, and
+        `docs/Modules.md`'s Printing status table.
+  - [ ] Owner: `Printing.Api.Tests`, `Sales.Api.Tests`, `Master.Api.Tests` and
+        `Shared.Kernel.Tests` from dropped databases, since `con` has a new migration and four test
+        files moved between projects. Then `npm run test`.
 - **Done when:** a sales invoice prints through Printing, and `con.PrintTemplates` no longer exists.
 - **Notes:**
   - From TK-23 (owner's decision, 2026-09-24): the physical move out of `Shared.Kernel.Printing`
@@ -1312,8 +1317,18 @@ If the code has moved on since a card was written, correct the card in your clai
     (L-DEPS). Move `Shared.Kernel.Tests`' renderer, sanitiser, settings and layout tests to
     `Printing.Api.Tests`. The contract (`PrintPayload`, `PrintFormatContext`, the two catalogues,
     `MergeTags`) stays.
-  - Printing's `PrintTemplateService` is a port of Master's. Until Master's is deleted, a fix to
-    one belongs in both.
+  - Printing's `PrintTemplateService` was a port of Master's. Master's is deleted now, so there is
+    one copy.
+  - Done in five commits on `main`: seeding, the Sales print route, the print page with watermark,
+    Master's copy dropped, and the kernel move. Then this one.
+  - **Drafts printed as clean tax invoices, briefly, in the middle of this card.** The old print
+    page stamped PROFORMA itself; the standard layout prints no status. `Watermark` on the render
+    request closes that, and the renderer stamps it so a template can't leave it off.
+  - Left for later cards: print routes for the other eleven document types; amount in words in C#;
+    a state-name lookup for the place of supply (Sales stores `PlaceOfSupplyStateId = 0`
+    everywhere, which is its own bug); PDF/A (D-11).
+  - Existing branches other than the bootstrap one get their `prt` templates when their setup is
+    re-run from `apps/admin`. Until then their documents print with the standard layout.
   - D-13 is answered: nothing is deployed, so the drop can go in the same change as the copy.
     On 2026-09-24 this card was still unclaimable only because TK-13 held L-SAL.
   - From TK-25: the editor reads `prt` through the gateway, so it lists nothing until this card

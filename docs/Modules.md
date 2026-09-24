@@ -976,9 +976,10 @@ of these.
 
 The print template master, the renderer, and the plan to move both into a service of their own.
 
-**Nothing in stage P is built.** What *is* built is recorded in [`Master.md`](./Master.md) stage 7,
-because that is where the code lives today. This file is the design for taking it out, written
-down so the argument does not have to be reconstructed from a diff.
+**Stage P is built** (TK-23, TK-24, TK-25; 24 September 2026). Printing serves the template API,
+seeds every branch, renders pushed payloads, and sales invoices print through it; Master's copy
+and `con.PrintTemplates` are gone. What follows is the design as it was argued, kept so the
+argument does not have to be reconstructed from a diff.
 
 ---
 
@@ -986,11 +987,9 @@ down so the argument does not have to be reconstructed from a diff.
 
 | | |
 |---|---|
-| **Built** | `con.PrintTemplates`, the ten-route API, the twelve-type catalogue, the renderer, `PrintTemplateId` on all fourteen document headers. See [`Master.md`](./Master.md) stage 7 |
-| **Not built** | The per-document print route, the Angular editor, PDF/A |
-| **Planned here** | Extracting all of it into an eighth service, `Printing`, on schema `prt` |
-| **Decided** | Full move; callers push the payload under the user's token; build in slices on approval |
-| **Waiting on the owner** | Whether anything has been deployed — P2 drops a table. See the warning there |
+| **Built** | The eighth service, `Printing`, on `prt`: the ten-route template API, `api/print/render`, branch seeding, the renderer and sanitiser, the twelve-type catalogue; the editor (Settings › Print templates); the sales invoice's print route, with PROFORMA/VOID stamped by the renderer |
+| **Not built** | Print routes for the other eleven document types; PDF/A; the amount in words and the place-of-supply state name on the invoice payload |
+| **Decided** | Full move; callers push the payload under the user's token; `con.PrintTemplates` dropped and branches re-seeded rather than copied (D-13: nothing deployed) |
 
 ---
 

@@ -141,7 +141,7 @@ Two top-level halves. Inside `backend/`, four groups — `Api/`, `shared/`, `wor
 backend/
 ├── Bill-Book.sln
 ├── Api/
-│   └── {Module}/                one folder per service (×7)
+│   └── {Module}/                one folder per service (×8)
 │       ├── {Module}.Entity/
 │       ├── {Module}.Repository/
 │       └── {Module}.Api/
@@ -171,7 +171,7 @@ Three projects per service, no more — all three under `backend/Api/{Module}/`:
 
 Dependency direction: `Api` → `Repository` → `Entity` → `Shared.Kernel`. Never backwards.
 
-**Services** (7): Master, Inventory, Accounting, Sales, Purchase, Customer, Reporting
+**Services** (8): Master, Inventory, Accounting, Sales, Purchase, Customer, Reporting, Printing
 **Background workers** (3): Notification, CostingEngine, RateSync
 **Gateway**: YARP
 
@@ -182,6 +182,8 @@ There were twelve. Three merges took them to seven, and the reason each time was
 | **Master** (`mst`, `con`) | Master + Platform + Identity + Contacts | Signing in reads a user, their branches and the customer's licence — one query now, two service hops before |
 | **Accounting** (`acc`) | Accounting + Banking | A money document exists to move a balance in the ledger; the two could not share a transaction while they were separate |
 | **Customer** (`cus`) | Crm + Support | A lead becomes a customer and a customer raises a ticket — one subject, one lifecycle. Both were empty scaffolds |
+
+**Then one split, the other way: Printing (`prt`) left Master** (cut over 24 September 2026, TK-24). It is the only work that shares a transaction with nothing, the only one growing a native dependency (an HTML parser today, a PDF engine next) and the only one that is CPU-bound and bursty, which is the opposite of the reason each merge was made. It owns one table and reads nobody else's. The argument is written out in the Printing section of [`docs/Modules.md`](./docs/Modules.md).
 
 **Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `AdminDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
 
@@ -227,7 +229,7 @@ Per request: resolve `CustomerId` and `OrgId` from JWT → set `app.current_cust
 
 Master database: `mst` (countries and states, users and roles), `rat` (currency + metal rates)
 
-Tenant database — every customer, together: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `ntf`
+Tenant database — every customer, together: `con` `inv` `sal` `pur` `acc` `cus` `rpt` `prt` `ntf`
 
 Platform and Identity schemas were folded into `mst`, and `bnk` into `acc`; `crm` and `sup` became `cus`. Nothing about tenancy changed with them — `mst` is still the shared database and every per-customer schema still carries `CustomerId` and `OrgId` with a query filter and an RLS policy.
 
@@ -250,7 +252,7 @@ The 25 August reversal to a single shared tenant database was itself superseded 
 - **`mst.TenantDatabases` is a shard registry** — a row per physical database, with a `PlanType` and a `MaxOrganizations` / `CurrentOrganizations` capacity.
 - **`mst.Customers.DatabaseName` names the shard a customer's books live in.** It is not vestigial; see the signup caveat above for how nearly it was deleted, and why nothing would have caught that.
 - **`ITenantDatabaseResolver` maps a request's `CustomerId` to a connection string**, cached ten minutes, reading that column in raw SQL.
-- `DatabaseMigrationService` provisions the first shard (`IN000001`) on startup and migrates all seven schemas into it.
+- `DatabaseMigrationService` provisions the first shard (`IN000001`) on startup and migrates all eight schemas into it.
 
 So it is **many customers per database, several databases**, rather than either one-per-customer or one-for-everyone. Isolation inside a shard is unchanged and is still the thing doing the work: `CustomerId` + `OrgId`, an EF query filter, an RLS policy that is enabled **and FORCEd**, and a transaction-local `set_config`. The shard boundary is a capacity and blast-radius measure on top of that, not the isolation mechanism — two customers on one shard are as isolated as two branches of one customer, which is the property the tests assert.
 
@@ -404,26 +406,30 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 - Archive every generated document to blob storage, linked by `SourceType` + `SourceId`
 
 **What a standard document looks like is a template, not code** (6 September 2026).
-`con.PrintTemplates` holds one designable layout per document type per branch — five bands in a
-fixed order, merge fields resolved at print time — and `Shared.Kernel.Printing.PrintRenderer`
-turns one plus a document's data into paginated HTML. Master owns the templates because they are
-master data; the renderer is in `Shared.Kernel` because the documents belong to Sales, Purchase
-and Accounting and rule 8 forbids Master reading them.
+`prt.PrintTemplates` holds one designable layout per document type per branch — five bands in a
+fixed order, merge fields resolved at print time — and Printing's `PrintRenderer` turns one plus
+a document's data into paginated HTML. Settings › Print templates is the editor (TK-25).
 
-**The chain is not joined up yet**, and the missing link is a tenancy question rather than a
-missing endpoint: a document's own service needs the template, Master holds it, and how an
-internal call carries its branch is undecided — `TenantMiddleware` fills the tenant context only
-for an authenticated request. See `docs/Modules.md` 7.6 and 7.7. **PDFsharp 6.1.1 is already
-pinned and is not licence-blocked**, which may reopen the Syncfusion choice above.
+**Printing is the eighth service, and it has carried traffic since 24 September 2026** (TK-23,
+TK-24). A document's own service builds a `PrintPayload` from its own tables — keyed by
+`PlaceholderCatalog`'s tags — and posts it to Printing's `api/print/render` **under the user's own
+token**, so Printing resolves that branch's template through its own query filter and no internal
+endpoint has to be told which branch it is serving. Sales never reads a template and Printing
+never reads an invoice. Only the invoice prints this way so far (`GET api/sales/invoices/{id}/print`);
+the other eleven printable types have no print route yet.
 
-**An eighth service is being extracted for it, and the scaffold is on `main` as of 18 September
-2026.** `backend/Api/Printing/{Entity,Repository,Api}` and `tests/Printing.Api.Tests` build,
-`prt.PrintTemplates` exists with RLS, and the service starts on port 4508 and answers 401 to
-everything because it has no controller yet. **Nothing is wired to it and `con.PrintTemplates` is
-still the copy that serves** — the drop is deliberately not done, and stage P in
-[`docs/Modules.md`](./docs/Modules.md) is the plan, including why an eighth service is
-defensible in a product that merged twelve into seven. The count of services stays **7** in this
-file until the cutover, because saying 8 would imply a boundary that is not carrying traffic.
+- **The contract stays in `Shared.Kernel.Printing`**: `PrintPayload`, `PrintFormatContext`,
+  `DocumentTypeCatalog`, `PlaceholderCatalog` and `MergeTags`' text-level half — what both sides
+  must agree on. Everything else — the stored shape, the renderer, the sanitiser, and the
+  `AngleSharp`/`HtmlSanitizer` references — is Printing's own.
+- **A draft prints stamped PROFORMA and a voided document VOID**, by the renderer, whatever the
+  template holds — the caller passes `Watermark`.
+- Printing seeds each branch through `internal/seed/organization` like every other service.
+  `con.PrintTemplates` was dropped rather than copied (D-13: nothing deployed); an old
+  `PrintTemplateId` that no longer resolves falls back to the branch default, then to the
+  standard layout.
+- **PDFsharp 6.1.1 is already pinned and is not licence-blocked**, which may reopen the Syncfusion
+  choice above (D-11).
 
 **SignalR needs Azure SignalR Service as a backplane** — with multiple replicas a message otherwise lands on the wrong pod.
 
@@ -444,7 +450,8 @@ Schema, API and page all exist for these. Pending work is queued in [`docs/TASKS
 | **Master** | `mst` | AccountType, Country, State, Currency, HsnSacCode, LedgerType, LedgerSource, TransactionType | 37 Indian states with GST codes; HSN/SAC with a CBIC CSV importer |
 | **Master** | `mst` | Customer, Organization, License, OrgCurrency, Configuration, SmtpSettings | Trial signup → seed → Active into the shared tenant database (still via a queue and a background worker, not in the request — see Tenancy); branch (organization) CRUD; per-org currencies, config and SMTP; platform admin (`apps/admin`) — customer list with status, admin-initiated creation, retry for one stuck mid-seed, read-only branch view per customer |
 | **Master** | `mst` | User, Role, Permission, RolePermission, UserOrganizationRole, RefreshToken, PasswordResetToken, OtpVerification, LoginHistory | Two-step login, org switching, invitations, OTP password reset, permission matrix |
-| **Master** | `con` | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment, PrintTemplate | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments; the print template master — one designable layout per document type per branch, seeded at branch creation, with a server-side renderer. **No editor screen** — see `docs/Modules.md` stage 7 |
+| **Master** | `con` | Contact, ContactAddress, ContactPerson, ContactPersonRole, ContactBankDetail, ContactLicence, ContactAttachment | One master with roles; GSTIN vs place-of-supply check; licence expiry report; file attachments |
+| **Printing** | `prt` | PrintTemplate | The print template master — one designable layout per document type per branch, seeded at branch creation — with its editor, the renderer, and `api/print/render`; sales invoices print through it |
 | **Inventory** | `inv` | UomType, UnitOfMeasure, ItemCategory, MetalPurity, Warehouse, Item, ItemBarcode, ItemPharmaDetails, ItemJewelleryDetails, ItemStock, StockMovement, CostLayer, CostLayerConsumption, ItemBatch, ItemSerial, RecostingAdjustment | Item master with pharma/jewellery profiles; guarded stock decrement; WAC + FIFO/LIFO/FEFO/specific layers; batches, serials, backdated recosting |
 | **Accounting** | `acc` | Account, SubAccount, TaxMaster, PaymentTerm, JournalLedger, Journal, JournalDetail, PeriodLock, OpeningBalance, OpeningBalanceLine | Chart of accounts, sub-accounts, effective-dated GST rates, payment terms, numbering series screen; the general ledger with a deferred balance trigger, and the internal posting API every other service writes through; the manual journal (draft → post → line-paired reversal), the account ledger, the trial balance, period locks and the opening balance; document-to-document allocation — the **Settle documents** workspace plus an **Allocate** dialog on invoices, bills, credit notes and money-in/out advances |
 | **Accounting** | `acc` | Bank, BankAccount, SpendMoney, SpendMoneyDetail, ReceiveMoney, ReceiveMoneyDetail, TransferMoney, BankStatement, BankStatementLine, StatementImportProfile | Each bank account provisions its own ledger account; spend, receive and transfer money with allocation, settlement and FX; CSV and XLSX statement import with matching |
@@ -553,7 +560,7 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 **Phase 1** — Contacts, Inventory, Sales, Purchase, Accounting core (CoA, JE, Other Income/Expense, opening balances), Tax Master, COGS + weighted average costing, banking core, **CRM**, **Support helpdesk (SLA/ticketing/chat)**, multi-currency, RBAC, org settings, tenant provisioning
 **Phase 2** — **Reports (Sales, Purchase, Accounting, Inventory, Support SLA, GSTR-1/3B)**, **Fixed assets (register, acquisition, depreciation, disposal)**, recurring invoices, payment reminders, retainer invoices, Client Portal, Paytm, bank feeds/reconciliation, multi-location price lists, API clients, **document print & PDF/A archive (T3.4)**, **report Excel/CSV export**, **POS ESC/POS receipt printing (T7.3)**
 **Phase 3** — **POS (till API, screen)**, Project accounting, budgeting, workflow approvals, custom fields/reports, e-invoicing + e-way bill, compliance bundle
-**Designed, no phase, nothing built — four apps, one customer** (owner's decisions, 23 September 2026). RetailErp, **HRMS**, **Payroll** and **School** are each sold on their own, and one customer may buy any or all of them: one set of branches and users across every app, **one licence per app**, per-app sign-in (an `app` claim, that app's licence claims and only that app's permissions), an app switcher, and a public signup with a 14-day trial per app. `App` is a flags enum: a role belongs to one app, a permission or menu to one or more, so shared screens keep one code each. **Master pages — users, roles, branches, organization settings, currencies, configuration, SMTP, API clients, numbering series, print templates — are shared by every app**: one page in a shared lib, mounted by each app, never copied; a new master page is shared by all apps unless a narrower set is written down with its reason. **Pages are validated by the shell** (`shellRoutes` in `libs/app-shell`): every page declares `data.access` — a permission, or signed-in only — and one that declares nothing is refused, with an audit that fails the build. That platform work is stage H0 and is built first. Then **HRMS** (`apps/hrms`) and **Payroll** (`apps/payroll`) over six services, one per schema: `hrm` `tla` `pay` `rec` `prf` `clm`. **Payroll is sellable without HRMS**: both share one employee master, and Payroll takes paid days from HRMS's attendance when HRMS is licensed and from its own monthly input when not. Then **School management & maintenance** (`apps/school`; `sis` `adm` `att` `fee` `fac` `wrk` `ppm` `amc`). Designs are the `One customer, many applications`, `HRMS & Payroll` and `School` sections at the end of [`docs/Modules.md`](./docs/Modules.md). The service count above stays **7** until one of them carries traffic.
+**Designed, no phase, nothing built — four apps, one customer** (owner's decisions, 23 September 2026). RetailErp, **HRMS**, **Payroll** and **School** are each sold on their own, and one customer may buy any or all of them: one set of branches and users across every app, **one licence per app**, per-app sign-in (an `app` claim, that app's licence claims and only that app's permissions), an app switcher, and a public signup with a 14-day trial per app. `App` is a flags enum: a role belongs to one app, a permission or menu to one or more, so shared screens keep one code each. **Master pages — users, roles, branches, organization settings, currencies, configuration, SMTP, API clients, numbering series, print templates — are shared by every app**: one page in a shared lib, mounted by each app, never copied; a new master page is shared by all apps unless a narrower set is written down with its reason. **Pages are validated by the shell** (`shellRoutes` in `libs/app-shell`): every page declares `data.access` — a permission, or signed-in only — and one that declares nothing is refused, with an audit that fails the build. That platform work is stage H0 and is built first. Then **HRMS** (`apps/hrms`) and **Payroll** (`apps/payroll`) over six services, one per schema: `hrm` `tla` `pay` `rec` `prf` `clm`. **Payroll is sellable without HRMS**: both share one employee master, and Payroll takes paid days from HRMS's attendance when HRMS is licensed and from its own monthly input when not. Then **School management & maintenance** (`apps/school`; `sis` `adm` `att` `fee` `fac` `wrk` `ppm` `amc`). Designs are the `One customer, many applications`, `HRMS & Payroll` and `School` sections at the end of [`docs/Modules.md`](./docs/Modules.md). The service count above stays **8** until one of them carries traffic.
   
 *Reports moved Phase 1 → Phase 2 on 24 August 2026, by decision.*
 
