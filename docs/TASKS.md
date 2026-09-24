@@ -1538,7 +1538,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-104 (masters and dimension), TK-105 (document lines), TK-106 (timesheets and billing), TK-107 (reports). No decision needed.
 
 ### TK-35 · Design: budgeting
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 
 ### TK-36 · Design: custom fields and custom reports
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
