@@ -2938,3 +2938,176 @@ told; none of them is designed until one is picked.
 Every stage is built in the same order: migration, then seed, then API with field and business
 validation, then UI. Each is committed to `main` as it stands up, with its docs page in
 `frontend/apps/docs/content/` and a release-notes bullet in the same commit.
+
+# --- Designs.md ---
+# Approved designs (D-17, D-16, D-06)
+
+The owner gave the go-ahead for these on 24 September 2026. Each section is a **design, not a
+build**: nothing here is coded unless it says so. The build cards each design produced are in
+`docs/TASKS.md`, section E2. Where a design needs an answer the owner has not given, it names the
+D-number raised for it in `docs/TASKS.md` section 3 and does not assume one.
+
+---
+
+# E-invoicing and e-way bill (TK-31)
+
+## Where things stand
+
+Checked against the code on 24 September 2026:
+
+- **Nothing talks to the GST portals.** There is no IRN, no QR code and no e-way bill generation.
+- `sal.DeliveryChallans` carries `EwayBillNo` and `EwayBillDate`, typed by hand, with `VehicleNo`
+  and `TransporterName` beside them. Nothing checks or generates them.
+- `inv.UnitsOfMeasure.UqcCode` exists (default `OTH`), but `sal.SalesRegister.UqcCode` is written
+  as null by both the invoice and the credit note (`InvoiceService.cs` ~1675,
+  `CreditNoteService.cs` ~586), so the unit GST wants is known and not carried through.
+- The branch's address, state and PIN are on `mst.Organizations`; the buyer's are on the document
+  (`BillingAddress`, `ShippingAddress`, `PlaceOfSupplyStateId`) as text, not as separate fields.
+
+## What the law asks, in the shape this design needs
+
+These are the rules the design is built around. **Thresholds and time limits change by
+notification, so each is a branch setting or a constant with one home, never a literal scattered
+through the code.** Check each against the current notification when the card that uses it is
+built.
+
+- **E-invoice** applies to a GST-registered supplier whose aggregate turnover passed the notified
+  threshold (₹5 crore at the time of writing). It covers **B2B** supplies, **exports** and
+  **SEZ** supplies, and their **credit and debit notes**. It does not cover B2C.
+- The supplier reports the invoice to an **Invoice Registration Portal (IRP)** as the notified
+  JSON schema (INV-01). The IRP answers with the **IRN** (a 64-character hash of the supplier's
+  GSTIN, the document type, the number and the financial year), an acknowledgement number and date,
+  the signed invoice and a **signed QR code** that must be printed on the invoice.
+- **An invoice without an IRN is not a valid tax invoice** for a supply that needed one.
+- An IRN can be **cancelled within 24 hours**, whole, with a reason code (duplicate, data-entry
+  mistake, order cancelled, other). After that the only correction is a credit note. The same
+  document number can never be registered again, cancelled or not.
+- Larger taxpayers must report within a notified number of days of the invoice date; the IRP
+  refuses an older one.
+- **E-way bill** is needed to move goods whose consignment value passes the notified limit (₹50,000
+  at the time of writing), whether the movement is a sale, a delivery challan (job work, approval,
+  branch transfer) or a return. Part A is the document; Part B is the vehicle. Its validity is
+  measured in days per distance band. It too can be cancelled within 24 hours.
+- An e-way bill can be generated **from an IRN** at the same IRP, in one step, when the transport
+  details are known at posting.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **Sales owns it.** The e-invoice is a property of an invoice, credit note or challan, all `sal` rows | Nothing else issues an outward supply document. Purchase receives e-invoices and never generates one |
+| 2 | **Post first, register right after, never inside the ledger transaction** | The IRP is a remote call that can take seconds or fail. Holding the posting transaction open across it would lock the ledger and stock rows for that long, and a timeout would roll back a posting the IRP may still have registered |
+| 3 | **An e-invoice is its own row**, `sal.EInvoices`, one per document | It has a life of its own (pending, registered, failed, cancelled) and a retry history. Columns on `Invoice` would be null on every B2C sale and could not hold more than one attempt |
+| 4 | **A document that needs an IRN does not print as a tax invoice until it has one** | It prints stamped `IRN PENDING`, the way a draft prints `PROFORMA`. Printing it without the stamp would hand the buyer a document that is not valid for input credit |
+| 5 | **Voiding a registered document cancels the IRN first**, and is refused after 24 hours with the reason | The void and the IRN must agree. After 24 hours the law allows only a credit note, so the refusal says to raise one |
+| 6 | **Registration is idempotent on the document.** A retry that meets "duplicate IRN" fetches the existing IRN by document details and stores it | The IRP may have registered a request whose answer was lost. Treating the duplicate as a failure would strand a registered invoice as failed forever |
+| 7 | **The gateway is an interface**, `IEInvoiceGateway`, with the credentials behind `ISecretStore` keyed by the branch's GSTIN | Which provider to use (a GST Suvidha Provider or NIC directly) is the owner's choice, **D-24**, and the rest of the design does not depend on it |
+| 8 | **Applicability is a branch setting**, not detected from turnover | Aggregate turnover is across the whole PAN, which this product may not hold all of. The owner of the business knows whether they are in; a setting with a start date is what they can answer |
+| 9 | **E-way bills live beside e-invoices** in `sal.EwayBills`, and the challan's two typed columns become a read of it | One place records what the portal said. The typed columns stay for a bill made outside the product, entered by hand, which the table records with `Source = Manual` |
+
+## Tables (`sal`, all tenant-scoped: `CustomerId`, `OrgId`, query filter, RLS)
+
+**`sal.EInvoices`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `EInvoiceId` | long | PK |
+| `SourceType` | `EInvoiceSource` enum | `Invoice`, `CreditNote`, `DebitNote` (reserved; Sales has no debit note yet) |
+| `SourceId` | long | Unique with `SourceType`. One e-invoice per document, ever |
+| `Status` | `EInvoiceStatus` enum | `Pending`, `Registered`, `Failed`, `Cancelled` |
+| `Irn` | string(64)? | Unique where not null |
+| `AckNo` | string(20)? | |
+| `AckDate` | timestamptz? | The 24-hour cancel window runs from here |
+| `SignedQrCode` | text? | Printed as a QR image |
+| `SignedInvoice` | text? | Kept for audit, never re-signed |
+| `Attempts` | int | Every call to the IRP adds one |
+| `LastErrorCode` | string(20)? | The IRP's own code, e.g. `2150` duplicate |
+| `LastErrorMessage` | string(1000)? | The IRP's text, for the operator; never shown to a buyer |
+| `NextAttemptAt` | timestamptz? | Backoff for the retry worker |
+| `CancelReason` | `EInvoiceCancelReason`? | `Duplicate = 1`, `DataEntryMistake = 2`, `OrderCancelled = 3`, `Other = 4` (the IRP's codes) |
+| `CancelRemark` | string(100)? | |
+| `CancelledAt` | timestamptz? | |
+
+**`sal.EwayBills`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `EwayBillId` | long | PK |
+| `SourceType` / `SourceId` | enum / long | `Invoice`, `DeliveryChallan`, `CreditNote` (a return movement) |
+| `Source` | `EwayBillOrigin` enum | `ByIrn`, `Standalone`, `Manual` |
+| `Status` | enum | `Pending`, `Generated`, `Failed`, `Cancelled`, `Expired` |
+| `EwbNo` | string(12)? | |
+| `EwbDate` | timestamptz? | |
+| `ValidUntil` | timestamptz? | |
+| `TransportMode` | enum | `Road`, `Rail`, `Air`, `Ship` |
+| `VehicleNo` | string(20)? | Part B; may follow later |
+| `TransporterId` | string(15)? | The transporter's GSTIN or enrolment id |
+| `TransporterName` | string(100)? | |
+| `DistanceKm` | int | The portal can compute it from PINs; stored as sent |
+| `Attempts`, `LastErrorCode`, `LastErrorMessage`, `NextAttemptAt` | | As on `EInvoices` |
+| `CancelReason`, `CancelledAt` | | |
+
+**`mst.Organizations`** gains `EInvoiceFrom DateOnly?` and `EwayBillEnabled bool`. A null
+`EInvoiceFrom` means the branch does not e-invoice. Master owns the columns; Sales reads them
+through the org context it already caches.
+
+**`inv.UnitsOfMeasure.UqcCode`** already exists. The line's UQC travels on the document line
+at posting (`sal.SalesRegister.UqcCode` stops being null), because Sales cannot read Inventory's
+tables and the IRP needs it per line.
+
+## Flow
+
+1. **Post** the invoice exactly as today. In the same transaction, when the branch e-invoices from
+   on or before the document date **and** the supply is B2B, export or SEZ, insert a
+   `sal.EInvoices` row with `Status = Pending`. Nothing leaves the building yet.
+2. **After the commit**, the request that posted tries registration once, inline, so the common
+   case prints with its QR at once. Success fills `Irn`, `AckNo`, `AckDate`, `SignedQrCode` and sets
+   `Registered`. Failure sets `Failed` or leaves `Pending` with `NextAttemptAt`, and the post still
+   answers 200, with the e-invoice state in the response.
+3. **A worker** (a hosted service in Sales, not a new process) retries `Pending` and transient
+   `Failed` rows with backoff, and stops at a permanent error (a validation code from the IRP),
+   which stays `Failed` for a person to fix. Those rows are the task list, surfaced on the invoice
+   list as a filter and in the error log with `FollowUpStatus = Open`.
+4. **Print** puts the QR image and the IRN on the document when `Registered`, and stamps
+   `IRN PENDING` when not. The print payload gains `Irn`, `AckNo`, `AckDate` and `QrImage` tags.
+5. **Void**: a `Registered` e-invoice inside 24 hours of `AckDate` is cancelled at the IRP first,
+   with the void's reason mapped to a cancel reason code. If the IRP refuses, the void is refused
+   and nothing changes. After 24 hours the void is refused with "Raise a credit note". A `Pending`
+   or `Failed` e-invoice is simply marked `Cancelled` with the void, since the IRP never had it.
+6. **E-way bill by IRN**: when the invoice carries transport details and the consignment value
+   passes the branch's limit, registration asks for the e-way bill in the same call.
+7. **Standalone e-way bill** for a delivery challan (and an invoice registered without transport
+   details) is a separate action on the document, `POST …/eway-bill`, with Part B details. **Part B
+   update** (a vehicle change) and **cancel** are actions on the e-way bill.
+
+## Validation before anything is sent
+
+The IRP's refusals are slow and cost an attempt, so everything checkable locally is checked before
+the call, and a document that fails it goes to `Failed` with a message naming the field in plain
+words:
+
+- the branch's and the buyer's GSTIN are valid and their state codes match the state fields;
+- every line has an HSN of the right length for the branch's turnover band, and a UQC;
+- PIN codes are six digits and the place of supply is set;
+- totals add up to the rupee in the way INV-01 rounds them;
+- the document date is within the reporting window, when the branch has one.
+
+## Security and tenancy
+
+- The IRP credentials are the branch's, stored with `ISecretStore` under a key built from the
+  GSTIN, never in `appsettings` and never returned by any API. The settings screen shows whether
+  they are set, not what they are.
+- Both tables are tenant tables with the TK-71 RLS block. The retry worker walks branches the way
+  the payment reminder worker does (`ITenantEnumerator`), each in its own scope.
+- `sales.einvoice` is a new permission for the manual actions (retry, generate an e-way bill,
+  cancel an e-way bill). Posting still needs `sales.approve`, and cancelling an IRN rides on
+  `sales.void`.
+
+## What this does not cover
+
+- **Receiving** e-invoices on purchases (auto-populated from GSTR-2B) belongs to the compliance
+  bundle's reconciliation, not here.
+- **B2C dynamic QR** (payment QR on B2C invoices for the largest taxpayers) is left out until a
+  customer needs it.
+- **Bulk upload** of historical invoices is not designed.
+

@@ -1497,8 +1497,14 @@ design section exists under `docs/` and new cards for it are added to this queue
 All of these share `L-DOC`, so they run one at a time, alongside code work in other lanes. **E-invoicing comes first** because GST law requires it above the turnover threshold; the portal design comes next because the School parent portal (TK-69) builds on it.
 
 ### TK-31 · Design: e-invoicing and e-way bill
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Notes:** delivery challans already carry `EwayBillNo` and `EwayBillDate`.
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "E-invoicing and e-way bill": what the law asks (thresholds as settings, not literals), nine decisions, `sal.EInvoices` and `sal.EwayBills`, the post-then-register flow, local validation, security.
+  - Key calls: register **after** the posting commit, never inside it; a document needing an IRN prints stamped `IRN PENDING` until it has one; void cancels the IRN inside 24 hours and is refused after; duplicate-IRN answers are recovered, not failed.
+  - Found while designing: `SalesRegister.UqcCode` is always written null although `inv.UnitsOfMeasure.UqcCode` exists (TK-91 fixes it).
+  - Cards: TK-91 (tables, settings, gateway), TK-92 (IRN lifecycle, retry, print), TK-93 (e-way bill).
+  - Raised **D-24**: which IRP access to use (a GSP, or NIC direct).
 
 ### TK-32 · Design: `apps/portal`, the next screens
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-16 (answered)
@@ -1530,6 +1536,51 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - [ ] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
   - [ ] Add build cards for it to this queue.
 - **Done when:** the design is in `docs/Modules.md` and its cards are queued.
+
+### E2 · Builds from the approved designs
+
+The build cards each design in section E produced. Each design section in `docs/Modules.md`
+("Approved designs") is the specification; a card here names the part it builds.
+
+### TK-91 · E-invoice: tables, branch settings and the IRP gateway
+- [ ] open
+- **Lanes:** L-SAL, L-MST, L-KERNEL · **Depends on:** TK-31 · **Decision:** D-24
+- **Where:** `docs/Modules.md`, "E-invoicing and e-way bill" (Tables, Decisions 3, 7, 8); `Sales.Repository/SalesDbContext.cs`; `Master.Entity/TableEntities/Organization.cs`; `Shared.Kernel/Secrets`.
+- **Tables:** `sal.EInvoices`, `sal.EwayBills`; `mst.Organizations.EInvoiceFrom`, `EwayBillEnabled`
+- **Sub-tasks:**
+  - [ ] The two tables and their enums, with the TK-71 RLS block in the migration.
+  - [ ] `EInvoiceFrom` and `EwayBillEnabled` on the branch, edited in Settings › Organization, and carried on the org context Sales caches.
+  - [ ] `IEInvoiceGateway` (authenticate, generate IRN, get IRN by document, cancel IRN, generate/update/cancel e-way bill) with a **sandbox** implementation first, and the provider D-24 names second. Credentials through `ISecretStore`, keyed by GSTIN.
+  - [ ] The INV-01 mapper from an invoice or credit note, and the local validation list in the design.
+  - [ ] Carry the line's UQC onto the document line so `SalesRegister.UqcCode` stops being null.
+  - [ ] Test: the mapper against a recorded INV-01 sample; each validation refusal; RlsAudit for both tables.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a B2B invoice maps to a schema-valid INV-01 document and a sandbox call returns an IRN.
+
+### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
+- [ ] open
+- **Lanes:** L-SAL, L-PRT, L-SAL-UI · **Depends on:** TK-91 · **Decision:** —
+- **Where:** `InvoiceService.PostAsync` / `VoidAsync`, `CreditNoteService`, `InvoicePrintService`, `Shared.Kernel.Printing.PlaceholderCatalog`.
+- **Sub-tasks:**
+  - [ ] Insert the `Pending` row inside the posting transaction; register once after the commit; answer 200 with the e-invoice state.
+  - [ ] A hosted retry worker in Sales with backoff; permanent IRP errors stay `Failed` and are written to `sal.ErrorLogs` with `FollowUpStatus = Open`.
+  - [ ] Duplicate-IRN recovery through "get IRN by document details" (design, decision 6).
+  - [ ] Void cancels the IRN inside 24 hours and is refused after, naming the credit note as the fix.
+  - [ ] Print: `Irn`, `AckNo`, `AckDate`, `QrImage` tags; `IRN PENDING` stamp until registered.
+  - [ ] The invoice list gains an e-invoice status column and a "needs attention" filter.
+  - [ ] Test: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped.
+- **Done when:** posting a B2B invoice on an e-invoicing branch prints it with its IRN and QR, and voiding it the same day cancels the IRN.
+
+### TK-93 · E-way bill: by IRN and standalone for challans
+- [ ] open
+- **Lanes:** L-SAL, L-SAL-UI · **Depends on:** TK-92 · **Decision:** —
+- **Where:** `DeliveryChallanService`, `sal.DeliveryChallans.EwayBillNo`/`EwayBillDate`, the design's Flow steps 6 and 7.
+- **Sub-tasks:**
+  - [ ] Ask for the e-way bill with the IRN when transport details are present and the value passes the branch limit.
+  - [ ] `POST api/sales/{invoices|delivery-challans}/{id}/eway-bill`, Part B update, cancel within 24 hours (`sales.einvoice`).
+  - [ ] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
+  - [ ] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
+- **Done when:** a delivery challan over the limit gets an e-way bill number from the sandbox and prints it.
 
 ### F · Phase 3: POS
 
@@ -2984,6 +3035,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | *Open.* Raised 2026-09-24 by TK-10; the owner fixed the duplicate first and deferred this |
 | D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
+| D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
 
 ---
 
