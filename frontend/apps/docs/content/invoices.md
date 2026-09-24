@@ -55,6 +55,23 @@ The list has an **overdue** filter and shows how many days late each invoice is.
 
 The figure under the list is **the page's own total**, and says so. The list pages on the server, so a running total across every match is a different query; a number labelled "outstanding" that only covered one page is the kind somebody reconciles against and finds short.
 
+## Printing
+
+**Print** on an invoice lays it out with the branch's print template for invoices — the one marked
+default in Settings › Print templates, or the one the invoice names — so changing the template
+changes how every invoice prints. The page shows the document as it will print, and **Print**
+sends that document alone to the browser's print dialog, where it can also be saved as a PDF.
+
+**Only a posted invoice is a tax invoice.** A draft still prints, so it can be checked before it is
+posted, but every page is stamped **PROFORMA**; a voided invoice is stamped **VOID**. The stamp is
+added whatever the template holds, so a template cannot leave it off.
+
+Printing needs the permission to print sales documents, which Owner, Administrator and Sales
+have and Viewer does not.
+
+Two things do not print yet: the amount in words, and the place of supply's state name — it prints
+as the two-digit state code for now.
+
 ## POS sales
 
 A till sale is an invoice with `POS` on it rather than `INV` — same table, same tax determination, same posting. It carries a till, a payment mode and the cash tendered, and it needs no due date.

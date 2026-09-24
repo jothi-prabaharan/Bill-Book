@@ -1279,7 +1279,12 @@ If the code has moved on since a card was written, correct the card in your clai
         which forwards the caller's `Authorization` header. Not filled yet: the place of supply
         prints as its two-digit state code (Sales stores `PlaceOfSupplyStateId = 0`), and the
         amount in words is blank (there is no C# speller yet).
-  - [ ] Point the frontend's template calls at Printing (the Gateway route).
+  - [x] Point the frontend's template calls at Printing (the Gateway route). TK-25's editor calls
+        `api/print-templates`, which the gateway sends to Printing, and the invoice print page
+        (`invoice-print.page.ts`) now shows Sales' `…/print` result. That page's own hand-built
+        layout is gone. Drafts print stamped PROFORMA and voided invoices VOID, through a new
+        `Watermark` on the render request that the renderer stamps on every page, whatever the
+        template holds.
   - [ ] Drop `con.PrintTemplates` in a `con` migration. **Only after D-13** confirms nothing is
         deployed, or migrate the data in the same step.
   - [ ] Change the service count in `CLAUDE.md` from 7 to 8.

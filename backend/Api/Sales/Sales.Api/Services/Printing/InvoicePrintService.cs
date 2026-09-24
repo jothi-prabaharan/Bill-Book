@@ -78,6 +78,20 @@ public sealed class InvoicePrintService
                 : "INV",
             invoice.PrintTemplateId,
             payload,
+            Watermark(invoice.Status),
             ct);
     }
+
+    /// <summary>
+    /// Only a posted invoice is a tax invoice. A draft still prints — somebody
+    /// proofreads it before posting — but as a proforma, stamped so, because a
+    /// draft handed to a customer as a tax invoice is one they may claim input
+    /// credit on. A voided one says it is void.
+    /// </summary>
+    public static string? Watermark(DocumentStatus status) => status switch
+    {
+        DocumentStatus.Posted => null,
+        DocumentStatus.Void => "VOID",
+        _ => "PROFORMA",
+    };
 }

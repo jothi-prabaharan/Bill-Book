@@ -13,6 +13,16 @@ import { ApiDocumentLine } from './document-line-scale';
  * is filed from, so a caller free to send its own tax is one that can file the
  * wrong return.
  */
+/** A document laid out by its print template, ready for the browser to print. */
+export interface PrintedDocument {
+  html: string;
+  pageCount: number;
+  /** Fields the template names that this document could not fill. They print as nothing. */
+  unknownTags: string[];
+  /** Null when the branch has no template and the standard layout was used. */
+  printTemplateId: number | null;
+}
+
 export interface SaveInvoiceRequest {
   documentDate: string;
   contactId: number;
@@ -231,6 +241,16 @@ export class InvoiceService {
   }
 
   /** What posting would write to the ledger, without writing it. */
+  /**
+   * The invoice laid out by its print template, as HTML. Sales builds the data
+   * and Printing lays it out with the branch's template; needs `sales.print`.
+   */
+  async print(invoiceId: number): Promise<PrintedDocument> {
+    return firstValueFrom(
+      this.http.get<PrintedDocument>(`${this.apiUrl}/${invoiceId}/print`),
+    );
+  }
+
   async previewGl(invoiceId: number): Promise<GlPreviewResult> {
     return firstValueFrom(
       this.http.get<GlPreviewResult>(`${this.apiUrl}/${invoiceId}/gl-preview`),

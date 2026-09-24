@@ -20,8 +20,13 @@ public sealed class PrintedDocument
 
 public interface IPrintingClient
 {
+    /// <param name="watermark">Stamped across every page; null for none.</param>
     Task<PrintedDocument> RenderAsync(
-        string documentTypeCode, long? printTemplateId, PrintPayload payload, CancellationToken ct);
+        string documentTypeCode,
+        long? printTemplateId,
+        PrintPayload payload,
+        string? watermark,
+        CancellationToken ct);
 }
 
 /// <summary>
@@ -48,7 +53,11 @@ public sealed class PrintingClient : IPrintingClient
     }
 
     public async Task<PrintedDocument> RenderAsync(
-        string documentTypeCode, long? printTemplateId, PrintPayload payload, CancellationToken ct)
+        string documentTypeCode,
+        long? printTemplateId,
+        PrintPayload payload,
+        string? watermark,
+        CancellationToken ct)
     {
         using var message = new HttpRequestMessage(HttpMethod.Post, "api/print/render")
         {
@@ -57,6 +66,7 @@ public sealed class PrintingClient : IPrintingClient
                 {
                     documentTypeCode,
                     printTemplateId,
+                    watermark,
                     payload = new { singles = payload.Singles, lists = payload.Lists },
                 },
                 options: Json),

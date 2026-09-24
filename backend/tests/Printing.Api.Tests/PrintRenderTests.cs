@@ -139,6 +139,24 @@ public sealed class PrintRenderTests
     }
 
     [SkippableFact]
+    public async Task The_callers_watermark_is_stamped_on_the_printed_page()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        await using PrintingDbContext db = _postgres.CreateContext(Guid.NewGuid(), Guid.NewGuid());
+
+        PrintTemplateResult<RenderPrintResponse> result = await Service(db).RenderAsync(new RenderPrintRequest
+        {
+            DocumentTypeCode = "INV",
+            Payload = OverTheWire(SamplePayload.For("INV")),
+            Watermark = "PROFORMA",
+        }, Ct);
+
+        Assert.Contains("class=\"pt-watermark\"", result.Value!.Html, StringComparison.Ordinal);
+        Assert.Contains(">PROFORMA<", result.Value.Html, StringComparison.Ordinal);
+    }
+
+    [SkippableFact]
     public async Task A_document_type_with_no_printable_layout_is_refused()
     {
         Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);

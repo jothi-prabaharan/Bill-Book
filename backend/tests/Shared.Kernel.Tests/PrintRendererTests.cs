@@ -446,4 +446,43 @@ public class PrintRendererTests
 
         Assert.Contains("Short key", result.Html, StringComparison.Ordinal);
     }
+
+    // ---- Watermark -------------------------------------------------------
+
+    private static PrintRenderRequest Watermarked(PrintRenderRequest request, string? watermark) => new()
+    {
+        Settings = request.Settings,
+        Content = request.Content,
+        DocumentTypeCode = request.DocumentTypeCode,
+        Payload = request.Payload,
+        Watermark = watermark,
+    };
+
+    [Fact]
+    public void A_watermark_is_stamped_on_every_page_of_a_long_document()
+    {
+        PrintRenderResult result = Renderer.Render(Watermarked(Request(42), "PROFORMA"));
+        IReadOnlyList<IElement> pages = Pages(Parse(result.Html));
+
+        Assert.True(pages.Count > 1);
+        Assert.All(pages, page =>
+            Assert.Equal("PROFORMA", page.QuerySelector(".pt-watermark")?.TextContent));
+    }
+
+    [Fact]
+    public void No_watermark_is_stamped_when_none_is_asked_for()
+    {
+        Assert.Null(Parse(Renderer.Render(Request(3)).Html).QuerySelector(".pt-watermark"));
+        Assert.Null(Parse(Renderer.Render(Watermarked(Request(3), "  ")).Html).QuerySelector(".pt-watermark"));
+    }
+
+    [Fact]
+    public void A_watermark_is_text_and_never_markup()
+    {
+        PrintRenderResult result = Renderer.Render(Watermarked(Request(3), "<b>VOID</b>"));
+
+        IElement? mark = Parse(result.Html).QuerySelector(".pt-watermark");
+        Assert.Equal("<b>VOID</b>", mark?.TextContent);
+        Assert.Null(mark?.QuerySelector("b"));
+    }
 }

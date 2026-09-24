@@ -1162,12 +1162,9 @@ overwriting theirs, and nothing is written. Reload and apply your changes again.
   settings a template already has are kept as they are
 - **Deleting a template from the screen.** The rules under Defaults apply; the button is not there
   yet
-- **The ready-made templates in the editor.** Printing is moving into a service of its own, and the
-  templates each branch was given have not moved with it yet. Until they do, the editor lists
-  none, and a document type prints with the standard layout — create one from it to start
-  designing
-- **Printing a real document through its template.** The sales invoice still prints with its own
-  fixed layout; documents start using their templates when the move above finishes
+- **Printing the other document types through their templates.** Invoices print through theirs
+  (see Invoices); quotes, orders, bills and the rest still print with their own fixed layouts,
+  or not at all
 - **A saved PDF of every document.** Printing goes through your browser. Archiving a copy needs a
   PDF library that has not been chosen yet
 

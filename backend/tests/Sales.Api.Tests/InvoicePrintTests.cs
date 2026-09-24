@@ -124,6 +124,15 @@ public sealed class InvoicePrintPayloadTests
     }
 
     [Theory]
+    [InlineData(DocumentStatus.Posted, null)]
+    [InlineData(DocumentStatus.Draft, "PROFORMA")]
+    [InlineData(DocumentStatus.Void, "VOID")]
+    public void Only_a_posted_invoice_prints_without_a_watermark(DocumentStatus status, string? expected)
+    {
+        Assert.Equal(expected, InvoicePrintService.Watermark(status));
+    }
+
+    [Theory]
     [InlineData("29AABCU9603R1ZX", "33", "29")]
     [InlineData(null, "33", "33")]
     [InlineData("", "33", "33")]
@@ -155,7 +164,7 @@ public sealed class PrintingClientTests
         payload.Singles["Document.No"] = "INV-0007";
         payload.Singles["Totals.GrandTotal"] = 1734.5m;
 
-        PrintedDocument printed = await client.RenderAsync("INV", 5, payload, CancellationToken.None);
+        PrintedDocument printed = await client.RenderAsync("INV", 5, payload, "PROFORMA", CancellationToken.None);
 
         Assert.Equal("/api/print/render", handler.Path);
         Assert.Equal("Bearer user-token", handler.Authorization);
@@ -164,6 +173,7 @@ public sealed class PrintingClientTests
         JsonElement root = body.RootElement;
         Assert.Equal("INV", root.GetProperty("documentTypeCode").GetString());
         Assert.Equal(5, root.GetProperty("printTemplateId").GetInt64());
+        Assert.Equal("PROFORMA", root.GetProperty("watermark").GetString());
 
         // Dictionary keys keep their catalogue spelling; values keep their type.
         JsonElement singles = root.GetProperty("payload").GetProperty("singles");
@@ -183,7 +193,7 @@ public sealed class PrintingClientTests
             new HttpContextAccessor { HttpContext = new DefaultHttpContext() });
 
         await Assert.ThrowsAsync<HttpRequestException>(() =>
-            client.RenderAsync("INV", null, new PrintPayload(), CancellationToken.None));
+            client.RenderAsync("INV", null, new PrintPayload(), null, CancellationToken.None));
     }
 
     private sealed class RecordingHandler : HttpMessageHandler

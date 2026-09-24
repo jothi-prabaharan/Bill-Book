@@ -24,6 +24,17 @@ public sealed class PrintRenderRequest
 
     /// <summary>Hosts an image placeholder may resolve to. Passed to the sanitiser.</summary>
     public IReadOnlyList<string> AllowedImageHosts { get; init; } = [];
+
+    /// <summary>
+    /// Text stamped across every page, faintly — PROFORMA on a draft, VOID on a
+    /// voided document. Null or blank prints none.
+    ///
+    /// Stamped by the renderer rather than left to the template, because it is
+    /// the document's status and not its design: a branch's template must not
+    /// be able to leave it off, and a draft handed over as a clean tax invoice
+    /// is one a buyer may claim input credit on.
+    /// </summary>
+    public string? Watermark { get; init; }
 }
 
 public sealed class PrintRenderResult
@@ -97,8 +108,8 @@ public sealed class PrintRenderer
         double contentWidthMm = paperWidthMm - settings.MarginLeftMm - settings.MarginRightMm;
 
         (string html, int pageCount) = settings.PrinterType == PrinterType.Thermal
-            ? (RenderContinuous(resolved, settings, paperWidthMm, contentWidthMm), 1)
-            : RenderPaged(resolved, settings, metrics, paperWidthMm, paperHeightMm, contentWidthMm);
+            ? (RenderContinuous(resolved, settings, paperWidthMm, contentWidthMm, request.Watermark), 1)
+            : RenderPaged(resolved, settings, metrics, paperWidthMm, paperHeightMm, contentWidthMm, request.Watermark);
 
         return new PrintRenderResult
         {
@@ -113,7 +124,8 @@ public sealed class PrintRenderer
         Dictionary<PrintSegment, string> resolved,
         PrintSettings settings,
         double paperWidthMm,
-        double contentWidthMm)
+        double contentWidthMm,
+        string? watermark)
     {
         var body = new StringBuilder();
 
@@ -127,6 +139,7 @@ public sealed class PrintRenderer
         html.Append(Styles());
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-doc pt-continuous\" style=\"width:{Px(paperWidthMm)}\">");
         html.Append(CultureInfo.InvariantCulture, $"<section class=\"pt-page\" style=\"width:{Px(paperWidthMm)};padding:{Padding(settings)}\">");
+        html.Append(WatermarkDiv(watermark));
         html.Append(CultureInfo.InvariantCulture, $"<div class=\"pt-flow\" style=\"width:{Px(contentWidthMm)}\">");
         html.Append(body);
         html.Append("</div></section></div>");
@@ -140,7 +153,8 @@ public sealed class PrintRenderer
         PrintMetrics metrics,
         double paperWidthMm,
         double paperHeightMm,
-        double contentWidthMm)
+        double contentWidthMm,
+        string? watermark)
     {
         double fixedHeaderMm = BandHeight(resolved[PrintSegment.FixedHeader], PrintSegment.FixedHeader, settings, metrics, contentWidthMm);
         double fixedFooterMm = BandHeight(resolved[PrintSegment.FixedFooter], PrintSegment.FixedFooter, settings, metrics, contentWidthMm);
@@ -187,7 +201,7 @@ public sealed class PrintRenderer
         }
 
         string html = Emit(
-            pages, resolved, settings, paperWidthMm, paperHeightMm, contentWidthMm, fixedFooterPinned, footerPinned);
+            pages, resolved, settings, paperWidthMm, paperHeightMm, contentWidthMm, fixedFooterPinned, footerPinned, watermark);
 
         return (html, pages.Count);
     }
@@ -227,7 +241,8 @@ public sealed class PrintRenderer
         double paperHeightMm,
         double contentWidthMm,
         bool fixedFooterPinned,
-        bool footerPinned)
+        bool footerPinned,
+        string? watermark)
     {
         var html = new StringBuilder();
         html.Append(Styles());
@@ -240,6 +255,7 @@ public sealed class PrintRenderer
 
             html.Append(CultureInfo.InvariantCulture,
                 $"<section class=\"pt-page\" style=\"width:{Px(paperWidthMm)};height:{Px(paperHeightMm)};padding:{Padding(settings)}\">");
+            html.Append(WatermarkDiv(watermark));
 
             // The fixed header flows on page one and repeats as a band after it.
             if (!isFirst)
@@ -468,6 +484,12 @@ public sealed class PrintRenderer
     private static string Px(double millimetres) =>
         string.Create(CultureInfo.InvariantCulture, $"{PrintGeometry.ToPx(millimetres):0.##}px");
 
+    /// <summary>The page's watermark, escaped, or nothing.</summary>
+    private static string WatermarkDiv(string? watermark) =>
+        string.IsNullOrWhiteSpace(watermark)
+            ? string.Empty
+            : $"<div class=\"pt-watermark\" aria-hidden=\"true\">{System.Net.WebUtility.HtmlEncode(watermark.Trim())}</div>";
+
     private static string Padding(PrintSettings settings) =>
         string.Join(' ', new[]
         {
@@ -488,6 +510,8 @@ public sealed class PrintRenderer
         + ".pt-pinned{position:absolute;left:0;right:0;bottom:0}"
         + ".pt-cut{border-top:0.5pt solid currentColor;opacity:0.5}"
         + ".pt-page table{width:100%;border-collapse:collapse}"
+        + ".pt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);"
+        + "font-size:72pt;font-weight:bold;letter-spacing:0.1em;opacity:0.12;white-space:nowrap;pointer-events:none;z-index:1}"
         + "</style>";
 
     /// <summary>One indivisible piece of the flow.</summary>

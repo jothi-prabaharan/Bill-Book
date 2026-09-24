@@ -35,6 +35,13 @@ public class RenderPrintRequest
     /// </summary>
     [MaxLength(8, ErrorMessage = "Currency symbol cannot exceed 8 characters.")]
     public string? CurrencySymbol { get; set; }
+
+    /// <summary>
+    /// Stamped across every page — PROFORMA, VOID. The document's status, which
+    /// the caller knows and the template must not be able to leave off.
+    /// </summary>
+    [MaxLength(20, ErrorMessage = "Watermark cannot exceed 20 characters.")]
+    public string? Watermark { get; set; }
 }
 
 /// <summary>

@@ -336,6 +336,7 @@ public sealed class PrintTemplateService
             DocumentTypeCode = layout.DocumentTypeCode,
             Payload = PrintPayloadReader.Read(request.Payload),
             Format = new PrintFormatContext { CurrencySymbol = request.CurrencySymbol ?? string.Empty },
+            Watermark = request.Watermark,
         });
 
         return PrintTemplateResult<RenderPrintResponse>.Ok(new RenderPrintResponse
