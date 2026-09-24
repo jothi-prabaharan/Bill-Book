@@ -1,6 +1,10 @@
 @if (auth.isAuthenticated()) {
   <header class="bar">
     <a class="brand" routerLink="/customers">Bill-Book Admin</a>
+    <nav class="nav">
+      <a routerLink="/customers" routerLinkActive="active">Customers</a>
+      <a routerLink="/rates" routerLinkActive="active">Rates</a>
+    </nav>
     <button type="button" class="link" (click)="signOut()">Sign out</button>
   </header>
 }

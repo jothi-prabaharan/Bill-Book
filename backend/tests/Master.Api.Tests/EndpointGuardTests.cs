@@ -50,6 +50,11 @@ public sealed class EndpointGuardTests
         //                         nearest permission, settings.view, is not held
         //                         by Accountant or Sales. Shell data, not a
         //                         module's. See the note on FormatsController.
+        //   RatesController     — the rate lookups are global reference data,
+        //                         like MasterController's, and every role that
+        //                         raises a foreign-currency or jewellery document
+        //                         reads them. Its history and writes carry
+        //                         RequirePermission("platform.*") (TK-24).
         //
         // An exemption is a line here that somebody had to write and defend,
         // which is the difference between this and an attribute nobody added.
@@ -61,7 +66,8 @@ public sealed class EndpointGuardTests
                 "CustomersController",
                 "MasterController",
                 "FormatsController",
-                "MenuController")));
+                "MenuController",
+                "RatesController")));
     }
 
     [Fact]

@@ -1329,28 +1329,38 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **To unblock:** the owner tries it (the Playwright sub-task above). If it is right, swap the selector in the 26 templates, delete `bb-date-input`'s "known limitation" note, and add the release note. No release note is written yet, because nothing a user sees has changed.
 
 ### TK-24 · `rat` schema: exchange and metal rate history
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `CLAUDE.md` Schemas: "Master database: `mst`, `rat`".
   - `backend/worker/RateSync.Worker/Program.cs` (an empty host).
 - **State:** no `rat` table exists anywhere, so TK-25 and TK-26 have nowhere to write.
 - **Sub-tasks:**
-  - [ ] Map two tables on `AdminDbContext`, with schema `rat`:
+  - [x] Map two tables on `AdminDbContext`, with schema `rat`:
     - `ExchangeRate`: `ExchangeRateId long`, `FromCurrencyCode string(3)`, `ToCurrencyCode string(3)`,
       `RateDate DateOnly`, `Rate decimal(18,8)`, `Source enum`;
     - `MetalRate`: `MetalRateId long`, `Metal enum`, `PurityCode string(10)`, `RateDate DateOnly`,
       `RatePerGram decimal(18,4)`, `Source enum`.
-  - [ ] Put a unique index on (currency pair or metal and purity, `RateDate`, `Source`). Both are
+  - [x] Put a unique index on (currency pair or metal and purity, `RateDate`, `Source`). Both are
         global rows with no tenant columns, like the rest of the master database.
-  - [ ] Add `GET api/rates/exchange?from=&to=&on=` and `GET api/rates/metal?metal=&purity=&on=`,
+  - [x] Add `GET api/rates/exchange?from=&to=&on=` and `GET api/rates/metal?metal=&purity=&on=`,
         which return the latest rate on or before a date. A document stores the rate as a
         snapshot; it never looks it up live.
-  - [ ] Add a manual entry endpoint and page, so rates can be entered while D-03 and D-14 are open.
-  - [ ] Test: the on-or-before lookup, and the unique index.
+  - [x] Add a manual entry endpoint and page, so rates can be entered while D-03 and D-14 are open.
+  - [x] Test: the on-or-before lookup, and the unique index.
 - **Done when:** a rate entered for a date is returned for that date and every later date until a
   newer one is entered.
 - **Notes:** this would be recreated inside the TK-70 squash if both are done together. Do TK-70 first.
+- **Outcome (2026-09-24):**
+  - `rat.ExchangeRates` and `rat.MetalRates` are mapped on `AdminDbContext`. The enums are `RateSource` (Manual, Rbi, Ibja) and `Metal` (Gold, Silver, Platinum), both stored as strings. The migration is `AddRateHistory`, and `has-pending-model-changes` is clean.
+  - **Lookup rule:** the latest rate on or before the date. On one date, a Manual row wins over a fetched one. The same currency on both sides is 1. A pair is directional and is never inverted.
+  - **Manual entry is operator-only (`platform.edit`), a narrower reading than the card.** The rows are global, and every customer's documents read them, so a customer's own settings user writing one would change another business's rates. The page is therefore in `apps/admin` (Rates), not in a tenant's Settings. Per-branch rate overrides, such as a jewellery shop's own board rate, would be new scope and would need a decision first.
+  - `RatesController` (`api/rates`):
+    - the two lookups are open to any signed-in user, like `MasterController`'s reference data, so `RatesController` is added to Master's `EndpointGuardTests` exemptions with its reason;
+    - the history needs `platform.view`;
+    - `PUT` (upsert of the Manual row) and `DELETE` (Manual rows only) need `platform.edit`.
+  - Gateway route `master-rates` added (`/api/rates/**`).
+  - Tests: `Master.Api.Tests.RateServiceTests` (on-or-before for both tables, Manual precedence, both unique indexes, upsert correcting, refusals, removal of Manual rows only) and `apps/admin/.../rates.service.spec.ts`.
 
 ### TK-25 · RateSync.Worker: metals (IBJA)
 - [ ] open

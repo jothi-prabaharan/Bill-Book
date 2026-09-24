@@ -87,6 +87,12 @@ public class AdminDbContext : DbContext
 
     public DbSet<OtpVerification> OtpVerifications => Set<OtpVerification>();
 
+    /// <summary>Exchange rate history, schema <c>rat</c> (TK-24).</summary>
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+
+    /// <summary>Metal rate history, schema <c>rat</c> (TK-24).</summary>
+    public DbSet<MetalRate> MetalRates => Set<MetalRate>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -104,6 +110,28 @@ public class AdminDbContext : DbContext
             b.HasKey(e => e.StateId);
             b.Property(e => e.StateId).ValueGeneratedNever();
             b.HasIndex(e => new { e.CountryId, e.StateCode }).IsUnique();
+        });
+
+        // rat: global rate history (TK-24). One row per pair or metal and
+        // purity, per date, per source, so a manual correction sits beside the
+        // scraped figure rather than overwriting it.
+        modelBuilder.Entity<ExchangeRate>(b =>
+        {
+            b.ToTable("ExchangeRates", "rat");
+            b.HasKey(e => e.ExchangeRateId);
+            b.Property(e => e.Rate).HasPrecision(18, 8);
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.FromCurrencyCode, e.ToCurrencyCode, e.RateDate, e.Source }).IsUnique();
+        });
+
+        modelBuilder.Entity<MetalRate>(b =>
+        {
+            b.ToTable("MetalRates", "rat");
+            b.HasKey(e => e.MetalRateId);
+            b.Property(e => e.RatePerGram).HasPrecision(18, 4);
+            b.Property(e => e.Metal).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(10);
+            b.HasIndex(e => new { e.Metal, e.PurityCode, e.RateDate, e.Source }).IsUnique();
         });
 
         modelBuilder.Entity<Currency>(b =>

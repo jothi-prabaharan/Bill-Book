@@ -1,0 +1,92 @@
+<header class="page-head">
+  <h1>Rates</h1>
+</header>
+
+@if (message()) {
+  <p [class.error]="messageIsError()" [class.notice]="!messageIsError()" role="status">{{ message() }}</p>
+}
+
+<p class="hint">
+  Every customer's documents read these rates, so only an operator enters them. A rate entered for
+  a date is used for that date and every later one until a newer rate is entered. A rate entered
+  here outranks a fetched one on the same date.
+</p>
+
+<section class="panel" aria-labelledby="exchange-heading">
+  <h2 id="exchange-heading">Exchange rates</h2>
+
+  @if (canEdit()) {
+    <form class="fields" (ngSubmit)="saveExchange()">
+      <bb-text-input label="From" name="from" [(ngModel)]="exchange.fromCurrencyCode" hint="1 unit of this currency" />
+      <bb-text-input label="To" name="to" [(ngModel)]="exchange.toCurrencyCode" hint="is worth this many" />
+      <bb-date-input label="Date" name="exchangeDate" [(ngModel)]="exchange.rateDate" />
+      <bb-number-input label="Rate" name="rate" [decimals]="8" [min]="0" [(ngModel)]="exchange.rate" />
+      <div class="actions">
+        <button type="submit" [disabled]="busy()">Save exchange rate</button>
+      </div>
+    </form>
+  }
+
+  <table class="rates">
+    <thead>
+      <tr><th scope="col">Date</th><th scope="col">Pair</th><th scope="col" class="num">Rate</th><th scope="col">Source</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+    </thead>
+    <tbody>
+      @for (row of exchangeRows(); track row.exchangeRateId) {
+        <tr>
+          <td data-label="Date">{{ row.rateDate }}</td>
+          <td data-label="Pair">1 {{ row.fromCurrencyCode }} = {{ row.toCurrencyCode }}</td>
+          <td data-label="Rate" class="num">{{ row.rate }}</td>
+          <td data-label="Source">{{ row.source }}</td>
+          <td>
+            @if (canEdit() && row.source === 'Manual') {
+              <button type="button" class="link" [disabled]="busy()" (click)="removeExchange(row)">Remove</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty">No exchange rates yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</section>
+
+<section class="panel" aria-labelledby="metal-heading">
+  <h2 id="metal-heading">Metal rates (INR per gram)</h2>
+
+  @if (canEdit()) {
+    <form class="fields" (ngSubmit)="saveMetal()">
+      <bb-select label="Metal" name="metal" [options]="metals" [clearable]="false" [(ngModel)]="metal.metal" />
+      <bb-text-input label="Purity" name="purity" [(ngModel)]="metal.purityCode" hint="As written in the trade: 24K, 22K, 999, 925" />
+      <bb-date-input label="Date" name="metalDate" [(ngModel)]="metal.rateDate" />
+      <bb-number-input label="Rate per gram" name="ratePerGram" [decimals]="4" [min]="0" [(ngModel)]="metal.ratePerGram" />
+      <div class="actions">
+        <button type="submit" [disabled]="busy()">Save metal rate</button>
+      </div>
+    </form>
+  }
+
+  <table class="rates">
+    <thead>
+      <tr><th scope="col">Date</th><th scope="col">Metal</th><th scope="col">Purity</th><th scope="col" class="num">Per gram</th><th scope="col">Source</th><th scope="col"><span class="sr-only">Actions</span></th></tr>
+    </thead>
+    <tbody>
+      @for (row of metalRows(); track row.metalRateId) {
+        <tr>
+          <td data-label="Date">{{ row.rateDate }}</td>
+          <td data-label="Metal">{{ row.metal }}</td>
+          <td data-label="Purity">{{ row.purityCode }}</td>
+          <td data-label="Per gram" class="num">{{ row.ratePerGram }}</td>
+          <td data-label="Source">{{ row.source }}</td>
+          <td>
+            @if (canEdit() && row.source === 'Manual') {
+              <button type="button" class="link" [disabled]="busy()" (click)="removeMetal(row)">Remove</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="6" class="empty">No metal rates yet.</td></tr>
+      }
+    </tbody>
+  </table>
+</section>

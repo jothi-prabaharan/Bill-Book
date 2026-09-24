@@ -33,3 +33,21 @@
     padding: 1rem;
   }
 }
+
+.nav {
+  display: flex;
+  gap: 1rem;
+  margin-right: auto;
+  margin-left: 1.5rem;
+}
+
+.nav a {
+  color: #6a6f80;
+  text-decoration: none;
+  font-size: .9rem;
+}
+
+.nav a.active {
+  color: #1b1e27;
+  font-weight: 600;
+}

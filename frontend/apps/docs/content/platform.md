@@ -276,6 +276,18 @@ There are two ways to become an operator:
 - **At startup.** Every existing user whose address is in `Bootstrap:OperatorEmails` (comma- or semicolon-separated) becomes one at each Master start. This is how the first operator exists. On a single PC (`deploy/local`) it defaults to the owner's address. The setting only grants: removing an address revokes nobody, so a typo cannot lock every operator out.
 - **From another operator**, through `GET` and `PUT api/admin/platform-operators/{userId}`. An operator cannot revoke themselves. A change takes effect at the user's next sign-in or token refresh.
 
+## Exchange and metal rates
+
+The **Rates** screen in the admin app keeps the history of exchange rates and metal rates per gram. The rates live in the `rat` schema of the master database: `rat.ExchangeRates` and `rat.MetalRates`.
+
+- **They are global.** Every customer's documents read the same rows, so only a platform operator can enter or remove a rate. Listing the history needs `platform.view` and entering needs `platform.edit`.
+- **Rates are looked up on or before a date.** `GET api/rates/exchange?from=USD&to=INR&on=2026-09-24` and `GET api/rates/metal?metal=Gold&purity=22K&on=…` return the latest rate on or before that date, or 404 when there is none. Any signed-in user may call them. A rate entered for Monday answers for Tuesday, and for every later day, until a newer one is entered.
+- **A hand-entered rate outranks a fetched one on the same date.** A wrong figure from RBI or IBJA is corrected by entering the right one. Nothing needs deleting. Only a hand-entered rate can be removed.
+- **A pair has a direction.** `USD → INR` is one US dollar in rupees. Nothing is inverted automatically.
+- **A document keeps the rate it used.** It does not look the rate up again later, so correcting a rate never reprices a document already raised.
+
+The daily fetches that fill these tables, RBI for currencies (TK-26) and IBJA for metals (TK-25), are not built yet. Until they are, rates are entered here by hand.
+
 ## Concurrency
 
 `CustomerCode` is generated read-max-then-increment, which races under simultaneous signups. A unique index on the column arbitrates, and the insert retries on conflict — so two signups landing in the same millisecond get different codes rather than one failing.

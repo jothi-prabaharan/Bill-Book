@@ -98,6 +98,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<RoleService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<PlatformOperatorService>();
+builder.Services.AddScoped<RateService>();
 
 // ---- Tenant directory, signup and provisioning. ----
 builder.Services.AddScoped<SignupService>();
