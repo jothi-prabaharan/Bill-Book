@@ -210,7 +210,7 @@ there until the owner has run their tests. If a test fails, the owner moves the 
 Nothing else is trustworthy until these land: the rest of RLS, the seeding gap that leaves new branches without purchase numbering or reports, internal endpoints that lose their tenant, and the ledger triggers the squash dropped.
 
 ### TK-01 · New branches are never seeded for Purchase or the report catalog
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
@@ -258,7 +258,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       never get `POR`/`GRN`/`BIL`/`DBN`. Give Purchase its own existence check on `POR`.
 
 ### TK-02 · RLS for `pur`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-PUR · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Purchase/Purchase.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Purchase.Api.Tests/PurchaseQueryFilterTests.cs:140`.
@@ -273,7 +273,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 - **Notes:**
 
 ### TK-03 · RLS for `sal`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-SAL · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Sales/Sales.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Sales.Api.Tests/SalesQueryFilterTests.cs:218`.
@@ -298,7 +298,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     `InvoiceService.ExistsInOtherOrgAsync` is the only one left in `sal`.
 
 ### TK-04 · RLS for `rpt`: replace the broken policies
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-RPT · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - `backend/Api/Reporting/Reporting.Repository/Migrations/Tenant/20260918204348_InitialReportingDbContextSchema.cs:1151-1165`
@@ -321,7 +321,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 - **Notes:** shares `L-RPT` with TK-09, so the two run one after the other.
 
 ### TK-05 · RLS for `prt`: align it with the template
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-PRT · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:160-171`.
 - **State:** `prt` casts `current_setting(…)::uuid` without `NULLIF`, so a request with no tenant
