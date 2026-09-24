@@ -127,11 +127,14 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-}
-      # UTF8 so Tamil and Chinese names store as characters. Master creates
-      # EP_Admin and IN000001 itself on first start.
+      # UTF8 so Tamil and Chinese names store as characters.
       POSTGRES_INITDB_ARGS: --encoding=UTF8
     volumes:
       - pgdata:/var/lib/postgresql/data
+      # Creates EP_Admin and IN000001 on the container's first start, with an
+      # empty data volume. Master no longer creates databases outside
+      # Development (D-02, TK-27), so this is the one place they come from here.
+      - ./db/init:/docker-entrypoint-initdb.d:ro
       - ./backups:/backups
       - ./db:/scripts:ro
       # Read-only, so the nightly backup can take the uploaded files with it.

@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Changed**: **The app no longer creates its databases outside development.** On Azure the two databases are created by the deployment, and on your own PCs by the database container on its first start. If a database is missing, Master stops and says which one and where it should come from. Existing installations already have both and need nothing. See [Deployment](deployment).
 - **Added**: **Daily RBI reference rates (not yet deployed).** A new rate sync worker reads RBI's reference rates each afternoon and stores them against the rupee with their date. A day's second run writes nothing. A failed fetch writes no rate and is recorded for follow-up. It is not deployed until it has been checked against the live page. See [Deployment](deployment).
 - **Added**: **Exchange and metal rate history.** Platform operators can enter daily exchange rates and metal rates per gram on a new **Rates** screen in the admin app. Each rate is kept with its date, and looking up a date returns the latest rate on or before it. A rate entered by hand takes precedence over a fetched one for the same day. See [Platform](platform).
 - **Added**: **Download a posted invoice's PDF.** The invoice's print page has a **Download PDF** button, which saves the copy filed when the invoice was posted. Credit notes and delivery challans now file a PDF when they are posted too, and each can be downloaded. The files are plain PDFs, not yet the PDF/A archive format. See [Invoices](invoices).

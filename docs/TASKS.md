@@ -1405,16 +1405,23 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **To unblock:** save the live page into `Fixtures/`, point a test at it, and adjust the parser's two regular expressions if they miss. Then deploy the worker; it is in neither `deploy/azure` nor `deploy/local` yet.
 
 ### TK-27 · Production databases are created by infrastructure (D-02)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MST, L-DEPS · **Depends on:** TK-70 · **Decision:** D-02 (answered)
 - **Where:** `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs:50,140` (`EnsureDatabaseExistsAsync`, which issues `CREATE DATABASE` at 263), `deploy/azure/` (Bicep).
 - **Sub-tasks:**
-  - [ ] Call `EnsureDatabaseExistsAsync` only when the environment is Development; elsewhere, a missing database fails startup with a clear message.
-  - [ ] Declare the admin database and the first tenant shard (`IN000001`) as Bicep resources on the flexible server.
-  - [ ] Drop `CREATEDB` from the application role in deployment docs.
-  - [ ] Note for TK-46: provisioning a new shard in production must then go through infrastructure (or an operator action), not the app.
+  - [x] Call `EnsureDatabaseExistsAsync` only when the environment is Development; elsewhere, a missing database fails startup with a clear message.
+  - [x] Declare the admin database and the first tenant shard (`IN000001`) as Bicep resources on the flexible server.
+  - [x] Drop `CREATEDB` from the application role in deployment docs.
+  - [x] Note for TK-46: provisioning a new shard in production must then go through infrastructure (or an operator action), not the app.
 - **Done when:** a Production start against an existing server needs no `CREATEDB`, and a Development start still creates its databases.
 - **Notes:**
+- **Outcome (2026-09-24):**
+  - `DatabaseMigrationService.EnsureOrRequireDatabaseAsync`: in Development it creates the database as before. Elsewhere it only opens a connection, and on `3D000` (`invalid_catalog_name`) it stops startup with `MissingDatabaseMessage`, which names the database, the host, and where the database is made. The password is never included. The rule is `MayCreateDatabases(env) => env.IsDevelopment()`.
+  - **Bicep already declared both databases**, `EP_Admin` and `IN000001`, so only its comment changed: it now says they are the only source, and that a new shard is a new resource here.
+  - **`deploy/local` was the gap.** Nothing there created the databases except the app, and its services run as `SelfHosted`. `deploy/local/db/init/01-create-databases.sql` is now mounted at `/docker-entrypoint-initdb.d`, so Postgres creates both on a first start with an empty volume. Existing installs already have them. The README's troubleshooting explains how to create one by hand if an old volume predates the script.
+  - `CREATEDB`: no deployment doc granted it, so there was nothing to drop. `deploy/azure/README.md` now says the app needs no `CREATEDB`, that the services still connect as the admin login (which has it through `azure_pg_admin`), and that a DML-only login is the owner's call (TK-08).
+  - TK-46 note: a second shard is a new `flexibleServers/databases` resource (or a `CREATE DATABASE` by the operator on a single PC) added **before** its row goes into `mst.TenantDatabases`. It is never created by the app outside Development.
+  - Tests: `Master.Api.Tests.DatabaseCreationPolicyTests` (only Development may create; the message names database and host and hides the password; the compose file mounts the init script and the script creates both; the Bicep declares both).
 
 ### TK-28 · Settings: one Nx lib per sub-screen (D-05)
 - [ ] open

@@ -158,6 +158,16 @@ migrate the same database. The job — Master's image with
 `Migrations:ExitWhenDone=true` — migrates everything first, exits 0, and the
 services then find nothing to do.
 
+**The databases are declared, not created by the app (D-02, TK-27).** `EP_Admin`
+and `IN000001` are `flexibleServers/databases` resources in `main.bicep`. Master
+creates a missing database only in Development; in Production a missing one stops
+it at startup with a message saying where to declare it. The login the services
+connect with therefore needs no `CREATEDB`. It still connects as the server's admin
+login today, which has it through `azure_pg_admin`. A dedicated login with DML rights
+only, and without `CREATEDB`, is the tighter setup, and that is the owner's call
+(TK-08). A second shard is another database resource in `main.bicep`, added before
+it is registered in `mst.TenantDatabases` (TK-46).
+
 **Every service gets every inter-service URL.** Each has a different set of
 required ones, and several ship `localhost` defaults in `appsettings.json`. In
 production a localhost default is worse than a missing setting — it fails by

@@ -27,17 +27,20 @@ public class DatabaseMigrationService : IHostedService
     private readonly ILogger<DatabaseMigrationService> _logger;
     private readonly IConfiguration _config;
     private readonly IHostApplicationLifetime _lifetime;
+    private readonly IHostEnvironment _environment;
 
     public DatabaseMigrationService(
         IServiceProvider services,
         ILogger<DatabaseMigrationService> logger,
         IConfiguration config,
-        IHostApplicationLifetime lifetime)
+        IHostApplicationLifetime lifetime,
+        IHostEnvironment environment)
     {
         _services = services;
         _logger = logger;
         _config = config;
         _lifetime = lifetime;
+        _environment = environment;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken)
@@ -47,7 +50,7 @@ public class DatabaseMigrationService : IHostedService
         using var scope = _services.CreateScope();
 
         string adminDbString = RequiredConnectionString("AdminDatabase");
-        await EnsureDatabaseExistsAsync(adminDbString, cancellationToken);
+        await EnsureOrRequireDatabaseAsync(adminDbString, cancellationToken);
 
         // 1. Run EF Core Migrations for Admin
         var adminDb = scope.ServiceProvider.GetRequiredService<AdminDbContext>();
@@ -150,7 +153,7 @@ public class DatabaseMigrationService : IHostedService
         string tenantConnectionString = builder.ConnectionString;
 
         // Ensure Postgres physical database exists
-        await EnsureDatabaseExistsAsync(tenantConnectionString, ct);
+        await EnsureOrRequireDatabaseAsync(tenantConnectionString, ct);
 
         // Migrate all 8 schemas inside IN000001
         _logger.LogInformation("Migrating tenant schemas for {Database}...", tenantDbName);
@@ -273,6 +276,49 @@ public class DatabaseMigrationService : IHostedService
         var context = (TContext)Activator.CreateInstance(typeof(TContext), options, tenant)!;
         await context.Database.MigrateAsync(ct);
         await context.DisposeAsync();
+    }
+
+    /// <summary>
+    /// Whether this process may create a missing database (D-02, TK-27): in
+    /// Development only. Everywhere else the databases are infrastructure's —
+    /// Bicep on Azure, the Postgres container's init script on a single PC — so
+    /// the application's login never needs <c>CREATEDB</c>.
+    /// </summary>
+    public static bool MayCreateDatabases(IHostEnvironment environment) => environment.IsDevelopment();
+
+    /// <summary>
+    /// Creates the database when this environment may (Development); otherwise
+    /// only checks that it is there, and stops startup with the fix in the
+    /// message when it is not.
+    /// </summary>
+    private async Task EnsureOrRequireDatabaseAsync(string connectionString, CancellationToken ct)
+    {
+        if (MayCreateDatabases(_environment))
+        {
+            await EnsureDatabaseExistsAsync(connectionString, ct);
+            return;
+        }
+
+        try
+        {
+            await using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync(ct);
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.InvalidCatalogName)
+        {
+            throw new InvalidOperationException(MissingDatabaseMessage(connectionString, _environment.EnvironmentName), ex);
+        }
+    }
+
+    /// <summary>What a missing database outside Development says, naming the fix.</summary>
+    public static string MissingDatabaseMessage(string connectionString, string environmentName)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connectionString);
+        return $"The database \"{builder.Database}\" does not exist on {builder.Host}. In the "
+            + $"{environmentName} environment the application does not create databases (D-02): "
+            + "on Azure they are declared in deploy/azure/main.bicep, and on a single PC the "
+            + "Postgres container creates them from deploy/local/db/init on its first start. "
+            + "Create it as the server administrator, then start again.";
     }
 
     private async Task EnsureDatabaseExistsAsync(string connectionString, CancellationToken ct)

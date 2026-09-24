@@ -57,6 +57,15 @@ Each deployment runs the database migration as a single separate step, waits for
 it to finish, and only then moves the services onto the new version. If the
 migration fails, the deployment stops there and the running version is untouched.
 
+## The databases are made by the installation, not the app
+
+Master creates a missing database only on a developer's machine, in the `Development` environment. Everywhere else the databases already exist before Master starts:
+
+- **On Azure**, `EP_Admin` and `IN000001` are declared in `deploy/azure/main.bicep` and created by the deployment.
+- **On your own PCs**, the database container creates both the first time it starts with an empty data volume, from `deploy/local/db/init`.
+
+If one is missing, Master stops at startup and names the database, the server and where it should have been created. The application's database login therefore never needs the right to create databases. A further database for more customers is added the same way, by the installation.
+
 ## Stock costing runs on its own
 
 Costing is the one part of the system that is not driven by someone using it.

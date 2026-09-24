@@ -400,6 +400,18 @@ Test-NetConnection 192.168.1.21 -Port 7501
 `TcpTestSucceeded : False` means an address in `.env` is wrong, that PC's part is
 not running, or its firewall rule is missing.
 
+**`migrate` exits with "The database "EP_Admin" does not exist".** The database
+container creates `EP_Admin` and `IN000001` from `db/init` only on its first start
+with an empty data volume. The app does not create them, because they belong to
+the installation and not to the app. If the volume was created before the init
+script existed, or a database was dropped by hand, create the missing one on the
+database PC and run `migrate` again:
+
+```powershell
+docker compose exec db psql -U postgres -c "CREATE DATABASE \"EP_Admin\" ENCODING 'UTF8' TEMPLATE template0"
+docker compose up migrate
+```
+
 ---
 
 ## Security

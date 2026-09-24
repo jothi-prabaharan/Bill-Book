@@ -261,11 +261,12 @@ resource postgres 'Microsoft.DBforPostgreSQL/flexibleServers@2024-08-01' = {
   dependsOn: [postgresDnsLink]
 }
 
-// Declared so the migration job finds them rather than racing to create them.
-// DatabaseMigrationService would create either if missing — this admin login has
-// CREATEDB through azure_pg_admin — but a database created by Bicep has a known
-// encoding and collation, and one created by whichever process got there first
-// has whatever that process asked for.
+// The databases are infrastructure's, not the application's (D-02, TK-27).
+// DatabaseMigrationService creates a missing database only in Development; in
+// Production it stops with a message naming this file. So these two resources
+// are the only way EP_Admin and IN000001 come to exist here, and the login the
+// services connect with needs no CREATEDB. A further shard is added the same
+// way, as another resource here, never by the app (TK-46).
 resource adminDatabase 'Microsoft.DBforPostgreSQL/flexibleServers/databases@2024-08-01' = {
   parent: postgres
   name: 'EP_Admin'
