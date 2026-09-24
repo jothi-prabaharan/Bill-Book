@@ -190,6 +190,11 @@ public sealed class CustomerQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "cus")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "cus",
+                    // EF's own bookkeeping, no tenant column. Customer keeps it in
+                    // cus in a deployed database; this fixture leaves it in public.
+                    "__EFMigrationsHistory")));
     }
 }

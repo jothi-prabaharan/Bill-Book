@@ -451,17 +451,29 @@ If the code has moved on since a card was written, correct the card in your clai
   - `InternalContactNamesController` also reads `con` with no tenant set. Noted on TK-79.
 
 ### TK-04 · RLS for `cus`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-CUS · **Depends on:** TK-02 · **Decision:** —
 - **Where:** `backend/Api/Customer/Customer.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Customer.Api.Tests/CustomerQueryFilterTests.cs:193`.
 - **State:** 4 tables: `ErrorLogs, Leads, TicketMessages, Tickets`. Nothing in Customer reads with
   `IgnoreQueryFilters`.
 - **Sub-tasks:**
-  - [ ] Write the migration using TK-02's template.
+  - [x] Write the migration using TK-02's template.
   - [ ] Owner: run the suite from a dropped database.
 - **Done when:** `cus`'s RLS assertion passes from a dropped database.
-- **Notes:**
+- **Notes (Claude Opus 5.5, 2026-09-24):**
+  - Migration: `Customer.Repository/Migrations/Tenant/20260924015726_EnableRowLevelSecurity.cs`,
+    TK-02's template over all four tables. All carry both tenant columns and none is exempt.
+    There's no `HasData` and no `IgnoreQueryFilters()`. Customer has no internal endpoints, and its
+    only hosted service migrates.
+  - Verified by starting Master as a `NOSUPERUSER NOBYPASSRLS` owner against empty databases,
+    which migrates every schema. It exited 0 with 4 of 4 `cus` tables enabled, FORCEd and
+    policied. By hand as that owner: no tenant 0 leads, own branch 1, and a cross-branch insert
+    refused.
+  - **Tests written:** `backend/tests/Customer.Api.Tests/CustomerRowLevelSecurityTests.cs` (four
+    tests, `SET LOCAL ROLE cus_rls_probe`). `CustomerQueryFilterTests` now exempts
+    `__EFMigrationsHistory` in its audit.
+  - For TK-09: `CLAUDE.md`'s RLS bullet should now list `acc`, `con` and `cus`.
 
 ### TK-05 · RLS for `inv`
 - [ ] open
