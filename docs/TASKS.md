@@ -2020,7 +2020,7 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a purchase bill saved from its screen is accepted.
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-DSK · **Depends on:** TK-40 · **Decision:** —
 - **Where:** `frontend/apps/desktop/src/app/pos-terminal/esc-pos.service.ts` (88 lines).
 - **Sub-tasks:**
