@@ -1529,7 +1529,13 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-99 (engine in Master; blocked on D-26), TK-100 (purchase), TK-101 (accounting), TK-102 (sales and overrides), TK-103 (inbox and settings). A note is added to TK-49.
 
 ### TK-34 · Design: project accounting
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Project accounting".
+  - A project is a **ledger dimension** (`ProjectId` on `acc.JournalLedger` and journal and document lines), owned by Accounting, so profit by project is a query over the books rather than a second ledger.
+  - Three billing methods (fixed fee by milestone, time and materials, non-billable). Time and re-billable expenses are claimed onto an invoice by a guarded update at post and released on void, so the same hours cannot be billed twice.
+  - Timesheets are for billing and job cost, logged by users, and do not replace HRMS attendance.
+  - Cards: TK-104 (masters and dimension), TK-105 (document lines), TK-106 (timesheets and billing), TK-107 (reports). No decision needed.
 
 ### TK-35 · Design: budgeting
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
@@ -1704,6 +1710,48 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
   - [ ] Menu rows and routes; docs page and release note.
 - **Done when:** an approver sees a waiting purchase order in the inbox and approves it there.
+
+### TK-104 · Projects: masters and the `ProjectId` ledger dimension
+- [ ] open
+- **Lanes:** L-ACC, L-ACC-UI, L-MST · **Depends on:** TK-34 · **Decision:** —
+- **Where:** design "Project accounting"; `acc.JournalLedger`, `acc.JournalDetail`, `LedgerPostingService`, `PostLedgerRequest`.
+- **Tables:** `acc.Projects`, `acc.ProjectTasks`, `acc.ProjectMembers`, `acc.ProjectMilestones`
+- **Sub-tasks:**
+  - [ ] The four tables with RLS; the `PRJ` numbering series; the `projects` permission module (Master seed).
+  - [ ] `ProjectId` on ledger, journal lines, spend- and receive-money lines; `PostLedgerRequest` legs carry it; the posting API refuses another branch's or a completed project.
+  - [ ] `internal/projects/exists` for the other services; project list and form pages.
+  - [ ] Test: a leg with a completed project is refused; the manual journal carries a project to the ledger; RlsAudit.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
+
+### TK-105 · Projects: sales and purchase lines carry the project to the ledger
+- [ ] open
+- **Lanes:** L-KERNEL, L-SAL, L-PUR, L-SAL-UI, L-PUR-UI · **Depends on:** TK-104 · **Decision:** —
+- **Where:** `DocumentLineBase`; every `sal`/`pur` poster that builds `PostLedgerRequest` legs.
+- **Sub-tasks:**
+  - [ ] `ProjectId` on `DocumentLineBase` (migrations in `sal` and `pur`), validated through Accounting.
+  - [ ] Line legs carry the line's project; header legs carry it only when every line agrees (design, decision 4).
+  - [ ] A project picker in the shared line grid.
+  - [ ] Test: an invoice with two projects posts revenue to each and an untagged receivable; one with a single project tags the receivable too.
+- **Done when:** an invoice's revenue lands on the project its lines name.
+
+### TK-106 · Projects: timesheets and billing time, expenses and milestones
+- [ ] open
+- **Lanes:** L-ACC, L-ACC-UI, L-SAL, L-SAL-UI, L-PUR · **Depends on:** TK-105 · **Decision:** —
+- **Tables:** `acc.TimeEntries`; `IsBillable`, `MarkupPercent`, `BilledInvoiceId` on bill and spend-money lines
+- **Sub-tasks:**
+  - [ ] Weekly timesheet and timer; a user logs only their own time without `projects.edit`; 24 hours a day at most.
+  - [ ] "Add project items" on the invoice form; `internal/projects/billing/claim` at post and `…/release` on void, guarded by row count.
+  - [ ] Test: two invoices claiming the same hours — exactly one posts; a void releases the hours; markup applies to re-billed expenses.
+- **Done when:** unbilled hours billed on one invoice cannot be billed on another, and come back when it is voided.
+
+### TK-107 · Projects: reports
+- [ ] open
+- **Lanes:** L-RPT · **Depends on:** TK-106 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
+  - [ ] Test: profitability for a seeded project equals its ledger rows' net by type.
+- **Done when:** the four reports run for a branch with a billed project.
 
 ### F · Phase 3: POS
 

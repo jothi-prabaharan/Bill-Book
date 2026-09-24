@@ -3344,3 +3344,109 @@ Purchase) and on Accounting's money documents and journal.
   engine.
 - Approval of master data changes (a new vendor, a price list) is not designed.
 
+---
+
+# Project accounting (TK-34)
+
+## Where things stand
+
+Checked against the code on 24 September 2026: **nothing tags a transaction with a project.**
+`acc.JournalLedger` has one dimension below the account, `SubAccountId` (contact, item or tax), plus
+`ContactId`. Document lines (`DocumentLineBase`) carry item, account, warehouse and fixed-asset
+category, and nothing that says which job they belong to. There are no timesheets.
+
+## What it is for
+
+A business that does jobs — an interior contractor, an IT services firm, an event company, a shop
+that also installs — wants to know **what each job earned and cost**, to **bill it** by milestone or
+by time, and to **re-bill expenses** it paid on the client's behalf.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **A project is a ledger dimension**: `ProjectId long?` on `acc.JournalLedger` and `acc.JournalDetail`, filled by the posters | Profit by project is then a query over the ledger, the same rows every other report reads. A separate project ledger would drift from the books |
+| 2 | **Accounting owns projects** (`acc.Projects`), and the other services validate a `ProjectId` through Accounting's internal API, as they do contacts through Master | The dimension is Accounting's; the posting API is where it is enforced |
+| 3 | **Projects are per branch**, like everything else | A branch is a complete set of books (Tenancy) |
+| 4 | **Every document line may carry a project**; each ledger leg built from that line carries it. A header-level leg (receivable, payable, round-off) carries the project only when every line has the same one | Income and cost land on the job they belong to. Splitting a receivable across projects would invent sub-balances nobody collects |
+| 5 | **Three billing methods**, per project: `FixedFee` (invoiced by milestone), `TimeAndMaterials` (hours × rate), `NonBillable` (internal jobs, cost tracking only) | These cover what the benchmark offers without a rules engine |
+| 6 | **Time and re-billable expenses become invoice lines only when the invoice posts**, by a guarded claim in Accounting whose row count is the answer | Two invoices drafted at once must not both bill the same hours. The claim is made in the posting request, before commit, like the ledger post; a void releases it |
+| 7 | **Timesheets here are for billing and job cost**, logged by users. They do not replace HRMS attendance | A shop without HRMS still bills time; a customer with HRMS keeps attendance there. Linking the two is left for when both are live |
+
+## Tables (`acc`, tenant-scoped, RLS)
+
+**`acc.Projects`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `ProjectId` | long | PK |
+| `ProjectCode` | string(20) | Numbering series `PRJ`, unique per branch |
+| `ProjectName` | string(150) | |
+| `ContactId` | long? | The client; null for an internal project |
+| `BillingMethod` | enum | `FixedFee`, `TimeAndMaterials`, `NonBillable` |
+| `RateBasis` | enum? | For time and materials: `ProjectRate`, `TaskRate`, `UserRate` |
+| `HourlyRate` | money? | When `RateBasis = ProjectRate` |
+| `FixedFee` | money? | When `FixedFee` |
+| `BudgetAmount` | money? | Cost budget; hours budget is on tasks |
+| `StartDate`, `EndDate` | DateOnly? | |
+| `Status` | enum | `Active`, `OnHold`, `Completed`, `Cancelled`. A completed project accepts no new postings |
+| `CurrencyCode` | string(3) | The client's billing currency |
+
+**`acc.ProjectTasks`** — `ProjectTaskId`, `ProjectId`, `TaskName string(150)`, `HourlyRate money?`,
+`BudgetHours decimal?`, `IsBillable bool`, `IsActive bool`.
+
+**`acc.ProjectMembers`** — `ProjectId`, `UserId Guid`, `HourlyRate money?` (for `UserRate`),
+`CostRate money?` (what an hour of this person costs, for job profit).
+
+**`acc.ProjectMilestones`** — `ProjectId`, `Name`, `Amount money`, `DueDate DateOnly?`,
+`InvoiceId long?` once billed.
+
+**`acc.TimeEntries`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `TimeEntryId` | long | PK |
+| `ProjectId`, `ProjectTaskId` | long | |
+| `UserId` | Guid | Who worked. A user may log only their own time unless they hold `projects.edit` |
+| `WorkDate` | DateOnly | |
+| `Hours` | decimal(6,2) | Greater than 0, at most 24 per user per day across entries |
+| `Notes` | string(500)? | Printed on the invoice line when billed |
+| `IsBillable` | bool | From the task, changeable per entry |
+| `BillingStatus` | enum | `Unbilled`, `Billed`, `WrittenOff` |
+| `InvoiceId` | long? | Set by the claim |
+
+**Ledger and document columns**: `ProjectId long?` on `acc.JournalLedger`, `acc.JournalDetail`,
+`DocumentLineBase` (so every `sal` and `pur` line), `acc.SpendMoneyDetails` and
+`acc.ReceiveMoneyDetails`. `PostLedgerRequest`'s legs gain `ProjectId`. Purchase bill lines and
+spend-money lines gain `IsBillable` and `MarkupPercent` for re-billing, and `BilledInvoiceId`.
+
+## Flow
+
+- **Tagging**: every line editor offers a project picker (the branch's active projects, and the
+  document's customer's projects first). Accounting's posting API refuses a leg whose project is not
+  the branch's or is completed.
+- **Logging time**: a weekly timesheet grid per user (project × task × day), plus a start/stop timer.
+- **Billing**: on an invoice for a client, **Add project items** lists unbilled billable time (grouped
+  by task or by user, the project's choice), unbilled re-billable expenses with their markup, and
+  unbilled milestones. Chosen items become lines tagged with the project. **At post**, Sales asks
+  Accounting to claim them (`POST internal/projects/billing/claim`, invoice id and item ids): a
+  guarded update from `Unbilled` to `Billed` that must touch every row, or the post is refused with
+  "some of these hours were billed on another invoice". **Void** releases them
+  (`…/billing/release`).
+- **Job cost of time**: when time has a `CostRate`, a monthly job-cost journal (optional, a branch
+  setting) moves `hours × cost rate` from a salary clearing account onto the project, so the project's
+  profit counts labour it did not buy through a bill.
+
+## Reports (Reporting)
+
+- **Project profitability**: income, direct cost (bills, spend money, COGS on project lines), labour
+  cost, margin, by project, for a period. Read from the ledger by `ProjectId`.
+- **Budget against actual**: hours by task and amount against `BudgetAmount`.
+- **Unbilled work**: unbilled time, expenses and milestones per project and client.
+- **Time by user**: hours logged, billable share, per period.
+
+## Permissions
+
+New module `projects` (`view`, `create`, `edit`, `delete`, `approve` for write-offs), seeded to
+Owner, Administrator and Accountant; Sales gets `view` and time logging.
+
