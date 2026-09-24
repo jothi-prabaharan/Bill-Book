@@ -894,7 +894,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### C · Phase 1: finish what's in flight
 
 ### TK-13 · Platform operators: `IsPlatformOperator` on the user (D-01)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** D-01 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/User.cs`, `Master.Api/Services/JwtTokenService.cs`, `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `frontend/apps/admin`.
 - **State:** `platform.*` is seeded into the permission catalogue and `apps/admin` checks for it, but nothing grants it, so nobody can sign in to `apps/admin`.
