@@ -2101,7 +2101,7 @@ None of it is built.
   - Nothing sends `app` from the frontend yet. `apps/web` signs in as RetailErp by default, which is correct.
 
 ### TK-44 · H0.3: shell, page validation and shared master pages
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-UI, L-MASTER-UI, L-WEB · **Depends on:** TK-43, TK-28 · **Decision:** —
 - **Where:**
   - `frontend/libs/app-shell/src/lib/{menu.service.ts,shell-screens.ts}`
