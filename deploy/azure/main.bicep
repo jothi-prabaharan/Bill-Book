@@ -106,9 +106,9 @@ var apiKeys = [
 // secrets.
 var identityKeys = concat(apiKeys, ['gateway', 'costing', 'migrate'])
 
-// The gateway proxies seven of the eight. Printing has no public route yet: its
-// callers push payloads to it service-to-service. Adding it here is the gateway
-// half of exposing it, alongside the routes in appsettings.json.
+// The gateway proxies all eight. Printing's routes are api/print-templates (the
+// template editor) and api/print/render (a document's own service pushing its
+// payload under the user's token); both are in the gateway's appsettings.json.
 var gatewayClusters = [
   'master'
   'accounting'
@@ -117,6 +117,7 @@ var gatewayClusters = [
   'purchase'
   'customer'
   'reporting'
+  'printing'
 ]
 
 // One topic per event type. Only CustomerProvisioned is published today. Deployed
