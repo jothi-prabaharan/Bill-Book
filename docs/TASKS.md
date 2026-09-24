@@ -1529,7 +1529,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-99 (engine in Master; blocked on D-26), TK-100 (purchase), TK-101 (accounting), TK-102 (sales and overrides), TK-103 (inbox and settings). A note is added to TK-49.
 
 ### TK-34 · Design: project accounting
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 
 ### TK-35 · Design: budgeting
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
