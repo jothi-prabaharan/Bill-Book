@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "settings-currencies",
+  "projectType": "library",
+  "sourceRoot": "libs/settings/currencies/src",
+  "tags": [
+    "scope:settings",
+    "type:ui"
+  ],
+  "targets": {}
+}

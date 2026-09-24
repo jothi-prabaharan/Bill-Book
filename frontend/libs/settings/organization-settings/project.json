@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "settings-organization-settings",
+  "projectType": "library",
+  "sourceRoot": "libs/settings/organization-settings/src",
+  "tags": [
+    "scope:settings",
+    "type:ui"
+  ],
+  "targets": {}
+}

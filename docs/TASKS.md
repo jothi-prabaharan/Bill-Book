@@ -1424,15 +1424,21 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: `Master.Api.Tests.DatabaseCreationPolicyTests` (only Development may create; the message names database and host and hides the password; the compose file mounts the init script and the script creates both; the Bicep declares both).
 
 ### TK-28 · Settings: one Nx lib per sub-screen (D-05)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · no tests needed (a move); lint, typecheck and all five app builds clean
 - **Lanes:** L-MASTER-UI, L-DEPS, L-WEB · **Depends on:** — · **Decision:** D-05 (answered)
 - **Where:** `frontend/libs/master/master-ui/src/lib/` — today one lib holding `api-clients`, `configurations`, `org-currencies`, `organization-settings`, `organizations`, `print-templates`, `roles`, `smtp-settings`, `users` beside contacts and HSN/SAC.
 - **Sub-tasks:**
-  - [ ] Agree the target layout before moving code (for example `libs/settings/{users,roles,organizations,organization-settings,currencies,configuration,smtp,api-clients,print-templates}`), and write it in `docs/Modules.md`'s shared-master-pages table, since H0 mounts these pages from every app.
-  - [ ] Generate the libs, move each folder, add a path alias per lib in `tsconfig.base.json`, update imports and routes.
-  - [ ] Lint, typecheck and every app build are clean.
+  - [x] Agree the target layout before moving code (for example `libs/settings/{users,roles,organizations,organization-settings,currencies,configuration,smtp,api-clients,print-templates}`), and write it in `docs/Modules.md`'s shared-master-pages table, since H0 mounts these pages from every app.
+  - [x] Generate the libs, move each folder, add a path alias per lib in `tsconfig.base.json`, update imports and routes.
+  - [x] Lint, typecheck and every app build are clean.
 - **Done when:** each settings screen is its own lib and every app still builds and routes to it.
 - **Notes:** do this before TK-44 (H0.3), which mounts the shared pages in several apps.
+- **Outcome (2026-09-24):**
+  - **Layout** (the owner's answer, 2026-09-24): `libs/settings/{users,roles,organizations,organization-settings,currencies,configuration,smtp,api-clients,print-templates}`. Each has a `project.json` (`settings-<screen>`, tags `scope:settings`, `type:ui`), a `src/index.ts` and an alias `@bill-book/settings-<screen>` in `tsconfig.base.json`. It is recorded in `docs/Modules.md`, Shared master pages: rule 1 and the table.
+  - The files were moved with `git mv`, so history follows them. None of the nine folders imported another, so no import changed except the eight lazy routes in `apps/web/src/app/app.routes.ts`.
+  - **Contacts, contact person roles and HSN/SAC stay in `master-ui`**, as agreed. They are reference data for RetailErp and School, not settings for every app.
+  - `api-clients` had no route and no export before this change, and still has no route. It is now exported from its own lib, ready for TK-29's page.
+  - Checks: `npm run typecheck` clean; `nx run-many -t lint` 32 projects clean (an `nx reset` was needed first, because the project graph cache hid the ninth lib); `nx run-many -t build` all 5 apps clean. There are no specs in the moved folders.
 
 ### TK-29 · API clients get per-action permissions through their role (D-07)
 - [ ] open

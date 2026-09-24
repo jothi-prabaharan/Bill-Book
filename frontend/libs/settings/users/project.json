@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "settings-users",
+  "projectType": "library",
+  "sourceRoot": "libs/settings/users/src",
+  "tags": [
+    "scope:settings",
+    "type:ui"
+  ],
+  "targets": {}
+}

@@ -33,41 +33,41 @@ export const appRoutes: Routes = [
       {
         path: 'settings/currencies',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.OrgCurrenciesPage),
+          import('@bill-book/settings-currencies').then((m) => m.OrgCurrenciesPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/organization',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.OrganizationSettingsPage),
+          import('@bill-book/settings-organization-settings').then((m) => m.OrganizationSettingsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/branches',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.OrganizationsPage),
+          import('@bill-book/settings-organizations').then((m) => m.OrganizationsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/configuration',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.ConfigurationsPage),
+          import('@bill-book/settings-configuration').then((m) => m.ConfigurationsPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/roles',
-        loadComponent: () => import('@bill-book/master-ui').then((m) => m.RolesPage),
+        loadComponent: () => import('@bill-book/settings-roles').then((m) => m.RolesPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/users',
-        loadComponent: () => import('@bill-book/master-ui').then((m) => m.UsersPage),
+        loadComponent: () => import('@bill-book/settings-users').then((m) => m.UsersPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/email',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.SmtpSettingsPage),
+          import('@bill-book/settings-smtp').then((m) => m.SmtpSettingsPage),
         data: { permission: 'settings.view' },
       },
       // One menu row per document type, each landing on its own type. Opening
@@ -77,13 +77,13 @@ export const appRoutes: Routes = [
       {
         path: 'settings/print-templates',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.PrintTemplatesPage),
+          import('@bill-book/settings-print-templates').then((m) => m.PrintTemplatesPage),
         data: { permission: 'settings.view' },
       },
       {
         path: 'settings/print-templates/:docType',
         loadComponent: () =>
-          import('@bill-book/master-ui').then((m) => m.PrintTemplatesPage),
+          import('@bill-book/settings-print-templates').then((m) => m.PrintTemplatesPage),
         data: { permission: 'settings.view' },
       },
       // The nav rail points at /accounting, so it needs somewhere to land. The

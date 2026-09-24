@@ -1172,8 +1172,11 @@ a copy. A change to the users page is a change in all four apps at once.
 
 **The rule, for these pages and for every master page added later:**
 
-1. **The page lives in a shared lib** (`libs/master/master-ui` or `libs/shared/auth`), never in an
-   app or in one app's feature lib. An app only adds its route.
+1. **The page lives in a shared lib** (one of `libs/settings/*`, `libs/master/master-ui` or
+   `libs/shared/auth`), never in an app or in one app's feature lib. An app only adds its route.
+   **Each settings screen is a lib of its own** under `libs/settings/<screen>`, imported as
+   `@bill-book/settings-<screen>` (D-05, TK-28), so an app mounts exactly the screens it shows
+   and nothing else.
 2. **Its menu row carries every app that shows it** in `Menus.Apps`, and its permission codes carry
    the same set in `Permissions.Apps` — one code per screen, not one per app.
 3. **Its controller names the same apps** in `[RequireApp(...)]`, so any of those apps' tokens can
@@ -1189,17 +1192,17 @@ a copy. A change to the users page is a change in all four apps at once.
 | Signup | `libs/shared/auth` — `pages/signup` | Master | All — each app's page passes its `App` |
 | Branch switcher and app switcher | `libs/app-shell` — `topbar/` (the app switcher is new) | Master | All |
 | My profile and change password | new, `libs/shared/auth` | Master | All |
-| **Users and invitations** | `libs/master/master-ui` — `users/` | Master | All |
-| **Roles and permissions** | `libs/master/master-ui` — `roles/` | Master | All |
-| **Branches** (create, edit) | `libs/master/master-ui` — `organizations/` | Master | All |
-| **Organization settings** | `libs/master/master-ui` — `organization-settings/` | Master | All |
-| Currencies | `libs/master/master-ui` — `org-currencies/` | Master | All |
-| Configuration (formats, preferences) | `libs/master/master-ui` — `configurations/` | Master | All |
-| SMTP settings | `libs/master/master-ui` — `smtp-settings/` | Master | All |
-| API clients | `libs/master/master-ui` — `api-clients/` | Master | All |
-| **Applications** (licences, start a trial) | new, `libs/master/master-ui` | Master | All |
-| Numbering series | `libs/accounting/accounting-ui` — `numbering-series/` | Accounting | All — every app numbers its documents (`EMP`, `PAY`, `ADM`, `FDM`, …) from the one shared table; the page moves to `libs/master/master-ui` so no app imports an accounting lib for it, and keeps calling Accounting's API |
-| Print templates (editor not yet built) | `libs/master/master-ui` when built | Master, moving to Printing (stage P) | All — payslips, Form 16, HR letters and fee receipts are templates like invoices |
+| **Users and invitations** | `libs/settings/users` (`@bill-book/settings-users`) | Master | All |
+| **Roles and permissions** | `libs/settings/roles` (`@bill-book/settings-roles`) | Master | All |
+| **Branches** (create, edit) | `libs/settings/organizations` (`@bill-book/settings-organizations`) | Master | All |
+| **Organization settings** | `libs/settings/organization-settings` (`@bill-book/settings-organization-settings`) | Master | All |
+| Currencies | `libs/settings/currencies` (`@bill-book/settings-currencies`) | Master | All |
+| Configuration (formats, preferences) | `libs/settings/configuration` (`@bill-book/settings-configuration`) | Master | All |
+| SMTP settings | `libs/settings/smtp` (`@bill-book/settings-smtp`) | Master | All |
+| API clients | `libs/settings/api-clients` (`@bill-book/settings-api-clients`) — the list component exists, no route mounts it yet | Master | All |
+| **Applications** (licences, start a trial) | new, `libs/settings/applications` | Master | All |
+| Numbering series | `libs/accounting/accounting-ui` — `numbering-series/` | Accounting | All — every app numbers its documents (`EMP`, `PAY`, `ADM`, `FDM`, …) from the one shared table; the page moves to `libs/settings/numbering-series` so no app imports an accounting lib for it, and keeps calling Accounting's API |
+| Print templates | `libs/settings/print-templates` (`@bill-book/settings-print-templates`) | Master, moving to Printing (stage P) | All — payslips, Form 16, HR letters and fee receipts are templates like invoices |
 | Contacts, contact person roles | `libs/master/master-ui` — `contacts/`, `contact-person-roles-*` | Master | RetailErp and School — customers, vendors and guardians. HRMS and Payroll have employees, not trade contacts |
 | HSN/SAC codes | `libs/master/master-ui` — `hsn-sac/` | Master | RetailErp and School — GST on goods and on the rare taxable fee head |
 | **Employee master** and organisation setup (departments, designations, grades, locations) | `libs/hrm/hrm-ui` | Hrm | HRMS, Payroll and School — School's class teachers and technicians are employees, so a School licence alone shows the employee list without leave or pay |
