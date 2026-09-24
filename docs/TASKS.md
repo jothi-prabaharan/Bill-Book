@@ -752,7 +752,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 - **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
 
 ### TK-11 · Fixed assets: a service layer, guards and tests
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/FixedAssetsController.cs`
@@ -773,21 +773,46 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - `dispose` uses `{id}` without `:long`, and returns `NotFound()` where `Forbid()` is required;
   - `dispose` and `depreciation-run` have no `[PermissionAction]`.
 - **Sub-tasks:**
-  - [ ] Move register, capitalise and dispose into a `FixedAssetService` that returns outcomes, and
+  - [x] Move register, capitalise and dispose into a `FixedAssetService` that returns outcomes, and
         let the controller only map results.
-  - [ ] Add a `CancellationToken` to every action.
-  - [ ] Change `dispose` to `{id:long}`, and return `Forbid()` for another branch's asset.
-  - [ ] Add `[PermissionAction("approve")]` to `dispose` and `depreciation-run`.
-  - [ ] Make running depreciation twice for one period a no-op, if it isn't already
+  - [x] Add a `CancellationToken` to every action.
+  - [x] Change `dispose` to `{id:long}`. Another branch's asset answers `NotFound()`, not `Forbid()` — see Notes.
+  - [x] Add `[PermissionAction("approve")]` to `dispose` and `depreciation-run`.
+  - [x] Make running depreciation twice for one period a no-op, if it isn't already
         (`DepreciationService.cs:30` says it checks existing transactions).
-  - [ ] Test: straight-line and WDV, one month each.
-  - [ ] Test: a second run in the same month posts nothing.
-  - [ ] Test: another branch's asset gets `Forbid()`.
+  - [x] Test: straight-line and WDV, one month each.
+  - [x] Test: a second run in the same month posts nothing.
+  - [x] Test: another branch's asset gets `NotFound()`.
 - **Done when:** the register follows the house rules, and depreciation is idempotent per period.
 - **Notes:**
   - In code, D-08 is answered with both Books and Tax schedules; the owner still has to confirm it.
   - From TK-75: the two pages in `accounting-ui/src/lib/fixed-assets/` are neither exported from
     the lib's `index.ts` nor routed anywhere in `apps/web`, so no user can reach them.
+  - Done (2026-09-24):
+    - `FixedAssetService` owns list, register, capitalise and dispose, and returns `FixedAssetOutcome`.
+      It checks the category and the asset code first, validates schedules, and writes the asset and
+      its schedules in one scope.
+    - Dispose refuses an asset that isn't Active (so disposing twice fails) and a disposal dated before
+      the purchase.
+    - The controller holds no `DbContext`, every action takes a `CancellationToken`, and `dispose`
+      answers 204.
+  - **`Forbid()` → `NotFound()`**: this card predates the TK-71 rule in `CLAUDE.md` ("When asked
+    to add an endpoint", point 4). Under that rule, a row id outside the caller's branch is 404,
+    because the filter hides it and a 403 would confirm it exists. The card's wording was
+    superseded, so the code follows `CLAUDE.md`.
+  - **Written-down value charged nothing.** `DepreciationService` only knew straight line, so a
+    WDV schedule's amount stayed 0 and the asset was skipped. It is now
+    `DepreciationService.MonthlyCharge`, which is pure:
+    - WDV charges the rate on cost less what was charged to date;
+    - both methods stop at salvage value;
+    - a schedule isn't charged before its `DepreciationStartDate`.
+  - The run returns `DepreciationRunResult` and doesn't throw. It posts the journal and the asset
+    transactions inside one scope, so a refused journal leaves nothing behind. It answers 409 for
+    a closed period. It was already idempotent per month; the guard is unchanged.
+  - Tests: `FixedAssetRulesTests.cs` (new, no database) and `FixedAssetPostingTests.cs` (seven
+    tests added, and the harness parameterised).
+  - Not done here: the pages still aren't routed (TK-75's note above).
+
 
 ### TK-12 · Fixed assets: capitalisation and disposal postings
 - [ ] open

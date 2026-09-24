@@ -1,179 +1,123 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using Accounting.Entity.Enums;
+using Accounting.Api.Services;
 using Accounting.Entity.Models;
-using Accounting.Entity.TableEntities;
-using Accounting.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
-using Shared.Kernel.Tenancy;
 
 namespace Accounting.Api.Controllers;
 
+/// <summary>
+/// The fixed asset register. Every rule lives in <see cref="FixedAssetService"/>
+/// and <see cref="DepreciationService"/>; this only maps their outcomes.
+/// </summary>
 [ApiController]
 [Route("api/accounting/fixed-assets")]
 [Authorize]
 [RequireModulePermission("accounting")]
-public class FixedAssetsController : ControllerBase
+public sealed class FixedAssetsController : ControllerBase
 {
-    private readonly AccountingDbContext _db;
-    private readonly ITenantContext _tenant;
+    private readonly FixedAssetService _assets;
+    private readonly DepreciationService _depreciation;
 
-    public FixedAssetsController(AccountingDbContext db, ITenantContext tenant)
+    public FixedAssetsController(FixedAssetService assets, DepreciationService depreciation)
     {
-        _db = db;
-        _tenant = tenant;
+        _assets = assets;
+        _depreciation = depreciation;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetFixedAssets()
-    {
-        var assets = await _db.FixedAssets
-            .AsNoTracking()
-            .Select(a => new FixedAssetModel(
-                a.FixedAssetId,
-                a.FixedAssetCategoryId,
-                a.AssetCode,
-                a.AssetName,
-                a.Description,
-                a.SerialNumber,
-                a.PurchaseDate,
-                a.PurchasePrice,
-                a.PurchaseBillId,
-                a.Status
-            ))
-            .ToListAsync();
-
-        return Ok(assets);
-    }
+    public async Task<IActionResult> GetFixedAssets(CancellationToken ct) =>
+        Ok(await _assets.ListAsync(ct));
 
     [HttpPost]
-    public async Task<IActionResult> RegisterAsset(CreateFixedAssetRequest request)
+    public async Task<IActionResult> RegisterAsset([FromBody] CreateFixedAssetRequest request, CancellationToken ct)
     {
-        var asset = new FixedAsset
-        {
-            FixedAssetCategoryId = request.FixedAssetCategoryId,
-            AssetCode = request.AssetCode,
-            AssetName = request.AssetName,
-            Description = request.Description,
-            SerialNumber = request.SerialNumber,
-            PurchaseDate = request.PurchaseDate,
-            PurchasePrice = request.PurchasePrice,
-            PurchaseBillId = request.PurchaseBillId,
-            Status = request.Status
-        };
-
-        _db.FixedAssets.Add(asset);
-        await _db.SaveChangesAsync();
-
-        if (request.Schedules != null && request.Schedules.Any())
-        {
-            var schedules = request.Schedules.Select(s => new DepreciationSchedule
-            {
-                FixedAssetId = asset.FixedAssetId,
-                ScheduleType = s.ScheduleType,
-                DepreciationMethod = s.DepreciationMethod,
-                Rate = s.Rate,
-                UsefulLifeYears = s.UsefulLifeYears,
-                DepreciationStartDate = s.DepreciationStartDate,
-                SalvageValue = s.SalvageValue
-            }).ToList();
-
-            _db.DepreciationSchedules.AddRange(schedules);
-            await _db.SaveChangesAsync();
-        }
-
-        return Ok(new { asset.FixedAssetId });
+        FixedAssetResult result = await _assets.RegisterAsync(request, ct);
+        return Respond(result.Outcome, () => Ok(new { fixedAssetId = result.FixedAssetId }));
     }
 
     /// <summary>
-    /// Puts an asset on the register.
-    ///
-    /// <b>It deliberately posts nothing, and that is not the gap it looks
-    /// like.</b> The asset was bought on a bill, and <c>Purchase.BillService</c>
-    /// already posted its capital line to the <c>Fixed Asset</c> account when
-    /// that bill was posted — so debiting the asset again here would carry it
-    /// twice on the balance sheet, balanced both times and contradicted by
-    /// nothing.
-    ///
-    /// What is genuinely missing is the reclassification the category implies:
-    /// the bill posts to one shared <c>Fixed Asset</c> account (its own comment
-    /// says the category will own that mapping once this register exists), so
-    /// capitalizing should move the cost to <see cref="FixedAssetCategory"/>'s
-    /// own asset account. That is a posting decision — which account, and
-    /// whether an asset with no <c>PurchaseBillId</c> (a migrated one) instead
-    /// debits the asset against Opening Balance Equity — and it is open rather
-    /// than merely unwritten. Guessing it wrong doubles an asset, so it is left
-    /// for the decision rather than inferred here.
+    /// Puts an asset bought on a bill on the register. It posts nothing — the
+    /// bill already did; see <see cref="FixedAssetService.CapitalizeAsync"/>.
     /// </summary>
     [HttpPost("capitalize")]
-    public async Task<IActionResult> CapitalizeAsset(CapitalizeAssetRequest request)
+    public async Task<IActionResult> CapitalizeAsset([FromBody] CapitalizeAssetRequest request, CancellationToken ct)
     {
-        var asset = new FixedAsset
-        {
-            FixedAssetCategoryId = request.FixedAssetCategoryId,
-            AssetCode = request.AssetCode,
-            AssetName = request.AssetName,
-            PurchaseDate = request.PurchaseDate,
-            PurchasePrice = request.PurchasePrice,
-            PurchaseBillId = request.PurchaseBillId,
-            Status = FixedAssetStatus.Active
-        };
-
-        _db.FixedAssets.Add(asset);
-        
-        await _db.SaveChangesAsync();
-
-        return Ok(new { asset.FixedAssetId });
+        FixedAssetResult result = await _assets.CapitalizeAsync(request, ct);
+        return Respond(result.Outcome, () => Ok(new { fixedAssetId = result.FixedAssetId }));
     }
 
     /// <summary>
-    /// Retires an asset and records what it sold for.
-    ///
-    /// <b>The ledger side is not written, and needs a decision before it can
-    /// be.</b> A disposal is four legs — the accumulated depreciation written
-    /// back, the asset removed at cost, the proceeds received, and whatever is
-    /// left recognised as gain or loss — and three of the four are determined
-    /// by the category and the asset. The fourth is not: nothing on
-    /// <see cref="DisposeAssetRequest"/> says <i>where</i> the proceeds landed,
-    /// and choosing a bank account here would put money into an account nobody
-    /// picked. Until the request carries that, the disposal is a register
-    /// event: the asset is retired and the sale amount recorded, and the books
-    /// still hold the asset at cost.
+    /// Retires an asset. <c>approve</c>, not <c>create</c>: taking an asset off
+    /// the books is a sign-off, the same separation a journal's post has.
+    /// Another branch's asset answers 404 — see
+    /// <see cref="FixedAssetService.DisposeAsync"/>.
     /// </summary>
-    [HttpPost("{id}/dispose")]
-    public async Task<IActionResult> DisposeAsset(long id, DisposeAssetRequest request)
-    {
-        var asset = await _db.FixedAssets.FindAsync(id);
-        if (asset == null)
-            return NotFound();
+    [HttpPost("{id:long}/dispose")]
+    [PermissionAction("approve")]
+    public async Task<IActionResult> DisposeAsset(long id, [FromBody] DisposeAssetRequest request, CancellationToken ct) =>
+        Respond((await _assets.DisposeAsync(id, request, ct)).Outcome, NoContent);
 
-        asset.Status = FixedAssetStatus.Disposed;
-        
-        var transaction = new AssetTransaction
-        {
-            FixedAssetId = id,
-            TransactionType = AssetTransactionType.Disposal,
-            TransactionDate = request.DisposalDate,
-            Amount = request.SaleAmount,
-            Notes = request.Notes
-        };
-        
-        _db.AssetTransactions.Add(transaction);
-
-        await _db.SaveChangesAsync();
-
-        return Ok();
-    }
-
+    /// <summary>
+    /// Charges the month <paramref name="runDate"/> falls in. Safe to repeat: a
+    /// second run for the same month charges nothing and still answers 200.
+    /// </summary>
     [HttpPost("depreciation-run")]
-    public async Task<IActionResult> RunDepreciation([FromQuery] DateOnly runDate, [FromServices] Services.DepreciationService depreciationService)
+    [PermissionAction("approve")]
+    public async Task<IActionResult> RunDepreciation([FromQuery] DateOnly runDate, CancellationToken ct)
     {
-        await depreciationService.RunDepreciationAsync(runDate, HttpContext.RequestAborted);
-        return Ok();
-    }
-}
+        DepreciationRunResult result = await _depreciation.RunDepreciationAsync(runDate, ct);
 
+        if (result.Outcome == DepreciationRunOutcome.Ok)
+        {
+            return Ok(new { assetsCharged = result.AssetsCharged, journalId = result.JournalId });
+        }
+
+        // 409, as the journal screen answers: the run may be perfectly good,
+        // and a later date will post it.
+        if (result.JournalOutcome == SaveJournalOutcome.PeriodClosed)
+        {
+            return Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "The books are closed for that date.",
+            });
+        }
+
+        return BadRequest(new MessageResponse
+        {
+            Message = result.Detail
+                ?? "The depreciation journal was refused, so nothing was charged. "
+                    + "Check that each category's accounts are open for posting.",
+        });
+    }
+
+    private IActionResult Respond(FixedAssetOutcome outcome, Func<IActionResult> onOk) =>
+        outcome switch
+        {
+            FixedAssetOutcome.Ok => onOk(),
+            FixedAssetOutcome.NotFound => NotFound(),
+            FixedAssetOutcome.CategoryMissing => BadRequest(new MessageResponse
+            {
+                Message = "Choose one of this branch's asset categories.",
+            }),
+            FixedAssetOutcome.DuplicateCode => BadRequest(new MessageResponse
+            {
+                Message = "Another asset in this branch already uses that code.",
+            }),
+            FixedAssetOutcome.InvalidSchedule => BadRequest(new MessageResponse
+            {
+                Message = "Each schedule needs a way to charge: straight line takes a useful life "
+                    + "or a rate, written-down value a rate below 100, salvage cannot exceed cost, "
+                    + "and an asset has at most one books and one tax schedule.",
+            }),
+            FixedAssetOutcome.NotActive => BadRequest(new MessageResponse
+            {
+                Message = "Only an asset in service can be disposed of.",
+            }),
+            FixedAssetOutcome.DisposalBeforePurchase => BadRequest(new MessageResponse
+            {
+                Message = "An asset cannot be disposed of before the date it was bought.",
+            }),
+            _ => StatusCode(StatusCodes.Status500InternalServerError),
+        };
+}

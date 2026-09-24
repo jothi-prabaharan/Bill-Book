@@ -79,6 +79,7 @@ builder.Services.AddScoped<JournalService>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
 builder.Services.AddScoped<DepreciationService>();
+builder.Services.AddScoped<FixedAssetService>();
 builder.Services.AddScoped<ReconciliationService>();
 
 // The money documents, formerly the Banking service. Registered alongside the
