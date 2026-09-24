@@ -379,17 +379,28 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       specification tables stay unpoliced). The audit call now also exempts `__EFMigrationsHistory`.
 
 ### TK-05 · RLS for `prt`: align it with the template
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-PRT · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:160-171`.
 - **State:** `prt` casts `current_setting(…)::uuid` without `NULLIF`, so a request with no tenant
   throws instead of seeing no rows.
 - **Sub-tasks:**
-  - [ ] If TK-71 adopted `NULLIF`, add a migration that recreates both `prt` policies with it.
+  - [x] If TK-71 adopted `NULLIF`, add a migration that recreates both `prt` policies with it.
         Otherwise strike this card.
   - [ ] Owner: run `Printing.Api.Tests` from a dropped database.
 - **Done when:** `prt` uses the same expression as the other six schemas.
 - **Notes:**
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - TK-71 adopted `NULLIF`, so `Printing.Repository/Migrations/20260924061426_EnableRowLevelSecurity.cs`
+      recreates both policies under the same names with it. `Down()` restores the bare cast.
+    - `PrintTemplateSeeder`'s `IgnoreQueryFilters()` read is scoped to the tenant its caller sets;
+      Master's bootstrap builds `PrintingDbContext` with `RlsConnectionInterceptor` already.
+    - Applied by hand, as a `NOSUPERUSER NOBYPASSRLS` owner, to a scratch database built from the
+      scripted chain: every tenant table ENABLEd, FORCEd and on the NULLIF policy, and a query with
+      the tenant set to `''` returned 0 rows without throwing. `has-pending-model-changes` is clean
+      and `dotnet build backend/Bill-Book.sln` has 0 warnings.
+    - **Test written:** `backend/tests/Printing.Api.Tests/PrintingRowLevelSecurityTests.cs` (five
+      tests, role `prt_rls_probe`, one asserting both policies carry the NULLIF form).
 
 ### TK-06 · Internal endpoints that set no tenant
 - [ ] open

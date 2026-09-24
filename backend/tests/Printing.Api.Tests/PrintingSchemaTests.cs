@@ -87,7 +87,12 @@ public sealed class PrintingSchemaTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "prt")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "prt",
+                    // EF's own bookkeeping, no tenant column. Printing keeps it in
+                    // prt in a deployed database; a fixture may leave it in public.
+                    "__EFMigrationsHistory")));
     }
 
     /// <summary>
