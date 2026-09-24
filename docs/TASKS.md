@@ -1066,7 +1066,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - The till's exact-code lookup is already covered by `pos-lookup.service.spec.ts`.
 
 ### TK-18 · Customer module seed data (stage C4)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-CUS · **Depends on:** — · **Decision:** D-18
 - **Where:**
   - `backend/shared/Shared.Kernel/Customer/Enums.cs`: `LeadSource`, `LeadStatus`, `TicketStatus`, `TicketPriority`.
