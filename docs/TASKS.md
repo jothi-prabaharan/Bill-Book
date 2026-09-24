@@ -1259,7 +1259,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### D · Phase 2
 
 ### TK-22 · Document archive: PDF/A, every document, a download link
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs:1440-1460`
