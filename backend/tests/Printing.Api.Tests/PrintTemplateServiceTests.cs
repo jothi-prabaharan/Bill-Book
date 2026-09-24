@@ -16,8 +16,8 @@ namespace Printing.Api.Tests;
 ///
 /// <para>
 /// Carried over from <c>Master.Api.Tests</c> (TK-23), against <c>prt</c>. Master's
-/// copy stays until TK-24 removes the service it tests. The seeding test did not
-/// come across: branch seeding moves to Printing in TK-24, and its test with it.
+/// service and its tests were deleted in TK-24; the seeding test is in
+/// <c>PrintTemplateSeederTests</c>.
 /// </para>
 /// </summary>
 [Collection(nameof(PostgresCollection))]

@@ -15,16 +15,12 @@ namespace Printing.Entity.TableEntities;
 /// be invisible to the very branches meant to read it.
 ///
 /// <para>
-/// This is the <c>prt</c> copy. <c>con.PrintTemplates</c> is the same shape and
-/// is still the one serving requests — the cutover is P2 in
-/// <c>docs/Printing.md</c> and is held on a question about deployed data, so
-/// until then the two coexist deliberately rather than by oversight. Nothing
-/// writes this table yet.
+/// The only copy since TK-24. Master held one in <c>con.PrintTemplates</c> until
+/// then; it was dropped rather than copied, and branches re-seeded here.
 /// </para>
 ///
 /// Settings and Content are jsonb. They are strongly typed on both sides of the
-/// column, and both still live in Shared.Kernel until P3 moves them here —
-/// moving them now would break Master, which is still serving from them.
+/// column.
 /// </summary>
 public class PrintTemplate : OrgScopedEntity
 {

@@ -1285,8 +1285,12 @@ If the code has moved on since a card was written, correct the card in your clai
         layout is gone. Drafts print stamped PROFORMA and voided invoices VOID, through a new
         `Watermark` on the render request that the renderer stamps on every page, whatever the
         template holds.
-  - [ ] Drop `con.PrintTemplates` in a `con` migration. **Only after D-13** confirms nothing is
-        deployed, or migrate the data in the same step.
+  - [x] Drop `con.PrintTemplates` in a `con` migration. **Only after D-13** confirms nothing is
+        deployed, or migrate the data in the same step. `DropPrintTemplates` (D-13: nothing
+        deployed). Master's `PrintTemplatesController`, `PrintTemplateService`,
+        `PrintTemplateSeeder`, entity, models and `PrintTemplateServiceTests` are deleted, and its
+        seed endpoint no longer seeds templates. `has-pending-model-changes` is clean for both
+        Master contexts.
   - [ ] Change the service count in `CLAUDE.md` from 7 to 8.
 - **Done when:** a sales invoice prints through Printing, and `con.PrintTemplates` no longer exists.
 - **Notes:**

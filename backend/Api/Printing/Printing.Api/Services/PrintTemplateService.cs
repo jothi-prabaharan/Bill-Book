@@ -14,9 +14,8 @@ namespace Printing.Api.Services;
 /// them and none can forget to.
 ///
 /// <para>
-/// Ported from Master's <c>PrintTemplateService</c> (TK-23), which still serves
-/// <c>con.PrintTemplates</c> until the cutover in TK-24. The two are meant to
-/// behave identically; a fix to one before then belongs in both.
+/// Ported from Master's <c>PrintTemplateService</c> (TK-23); Master's was
+/// deleted with <c>con.PrintTemplates</c> in TK-24, so this is the only one.
 /// </para>
 /// </summary>
 public sealed class PrintTemplateService

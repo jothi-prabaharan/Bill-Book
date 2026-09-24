@@ -21,9 +21,8 @@ namespace Printing.Api.Controllers;
 /// split the specification asks for under the names this product has.
 ///
 /// <para>
-/// The same ten routes Master serves, on the same path, against <c>prt</c>
-/// (TK-23). The gateway routes <c>api/print-templates</c> here; Master's copy
-/// has no gateway route and stays until TK-24 drops it.
+/// The ten routes Master used to serve, on the same path, against <c>prt</c>
+/// (TK-23). Master's copy was deleted in TK-24.
 /// </para>
 /// </summary>
 [ApiController]

@@ -69,7 +69,7 @@ builder.Services.AddAuthorization(options =>
 
 // The template API and the render endpoint. The renderer holds no state and
 // its sanitiser is thread-safe, so one instance serves every request — as it
-// does in Master, whose copy stays until TK-24.
+// did in Master before templates moved here.
 builder.Services.AddScoped<PrintTemplateService>();
 builder.Services.AddScoped<PrintTemplateSeeder>();
 builder.Services.AddSingleton<PrintRenderer>();
