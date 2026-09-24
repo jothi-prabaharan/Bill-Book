@@ -1519,8 +1519,14 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Raised **D-25**: which payment gateway.
 
 ### TK-33 · Design: workflow approvals
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Notes:** TK-49 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Workflow approvals for RetailErp documents".
+  - **The engine is shared, not duplicated.** The HRMS engine's state machine and step shape stay in `Shared.Kernel.Approvals`. Its configuration and resolution move from `Hrm` to Master (new tenant schema `apr`), because RetailErp is sold without HRMS and has users and roles but no employees. `Hrm` becomes a resolver for the employee-based approver kinds. That amends TK-49's plan, so it is raised as **D-26**, and TK-99 is blocked on it.
+  - A chain governs the existing `Draft → ReadyToPost` "approve" transition; with no matching workflow, nothing changes. Editing mid-chain returns the document to Draft.
+  - Nine document kinds, including two overrides (discount limit and credit limit), which turn today's outright refusals into approvable requests.
+  - Cards: TK-99 (engine in Master; blocked on D-26), TK-100 (purchase), TK-101 (accounting), TK-102 (sales and overrides), TK-103 (inbox and settings). A note is added to TK-49.
 
 ### TK-34 · Design: project accounting
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
@@ -1648,6 +1654,56 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
   - [ ] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
 - **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
+
+### TK-99 · Approvals: the shared engine in Master, with user and role approvers
+- [!] blocked — D-26
+- **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26
+- **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
+- **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
+- **Sub-tasks:**
+  - [ ] `Shared.Kernel.Approvals`: `ApprovalStepBase` (with `ApproverUserId` and `ApproverEmployeeId`), the step state machine and its refusal messages.
+  - [ ] `apr` configuration tables on Master's tenant context, with the RLS block.
+  - [ ] `POST internal/approval-chains/resolve`: `RoleHolder` and `NamedUser`; the skip rules; the snapshot.
+  - [ ] Test: skip rules (requester, repeat approver, optional); a required unresolvable level refuses with its name; amount-conditional levels; a changed workflow leaves resolved snapshots alone.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a workflow "Accountant, then Owner above ₹1,00,000" resolves to one step for ₹50,000 and two for ₹2,00,000.
+
+### TK-100 · Approvals: purchase orders, bills and debit notes
+- [ ] open
+- **Lanes:** L-PUR, L-PUR-UI · **Depends on:** TK-99 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `pur.ApprovalSteps`; summary columns on the purchase documents.
+  - [ ] Submit, act, edit-sends-back, per the design's Flow; the ordinary approve action when no workflow matches.
+  - [ ] `GET api/approvals/mine` for Purchase; the chain shown on each document.
+  - [ ] Test: a PO over the threshold waits for both levels; editing it mid-chain returns it to Draft; a user who is not the approver is refused.
+- **Done when:** a purchase order above the limit reaches `ReadyToPost` only after both levels approve.
+
+### TK-101 · Approvals: spend money and manual journals
+- [ ] open
+- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
+  - [ ] The same flow; `GET api/approvals/mine` for Accounting.
+  - [ ] Test: a journal is approved by two levels; the second approver cannot be the first.
+- **Done when:** a manual journal configured for two levels posts only after both.
+
+### TK-102 · Approvals: credit notes and the two overrides
+- [ ] open
+- **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
+  - [ ] `SalesDiscountOverride` and `CreditLimitOverride`: a save that the discount limit or the credit check would refuse offers "request approval" instead, and an approved override lets that one document through.
+  - [ ] Test: a sale past the credit limit is refused without an approved override and accepted with one; the override does not carry to another document.
+- **Done when:** a credit-limit breach can be approved by the Owner and the invoice then posts.
+
+### TK-103 · Approvals: the inbox and Settings › Approval workflows
+- [ ] open
+- **Lanes:** L-UI, L-WEB, L-DEPS · **Depends on:** TK-100 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
+  - [ ] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
+  - [ ] Menu rows and routes; docs page and release note.
+- **Done when:** an approver sees a waiting purchase order in the inbox and approves it there.
 
 ### F · Phase 3: POS
 
@@ -1888,6 +1944,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   weekend between two leave days; and changing a workflow leaves requests already in flight on
   their old chain.
 - **Notes:**
+  - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Hrm`, with `Hrm` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
 
 ### TK-50 · H3: Time and attendance (`tla`)
 - [ ] open
@@ -3104,6 +3161,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
 | D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
+| D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | *Open.* Raised 2026-09-24 by TK-33 |
 
 ---
 

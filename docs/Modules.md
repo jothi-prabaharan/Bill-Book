@@ -3241,3 +3241,106 @@ other (TK-18), at `Medium` priority unless staff change it.
 - `POST api/portal/session` and the payment callback are the only anonymous routes, each named in
   the owning service's guard exemptions with its reason.
 
+---
+
+# Workflow approvals for RetailErp documents (TK-33)
+
+## Where things stand
+
+Checked against the code on 24 September 2026:
+
+- **Approval today is one step.** `DocumentLifecycle.CanApprove` moves a document from `Draft` to
+  `ReadyToPost`, and whoever holds `{module}.approve` may do it. Posting is `Draft` or `ReadyToPost`
+  → `Posted`, on the same permission. There is no chain, no threshold, no record of who approved.
+- **The HRMS design already has an approval engine** ("HRMS & Payroll" → Approvals, built by
+  TK-49): configurable levels, approver kinds, a snapshot at submission, skip rules, send-back,
+  delegation, escalation, and steps stored by the service that owns the request, all over one shared
+  shape in `Shared.Kernel.Approvals`. Its configuration and approver resolution live in **`Hrm`**,
+  and every approver it can find is an **employee**.
+
+## The problem with reusing it as written
+
+RetailErp is sold without HRMS (the four-apps decision). A shop that buys only RetailErp has users
+and roles, **no employees and no `Hrm` service**. An engine whose configuration and resolution are in
+`Hrm` cannot serve it. Building a second engine for RetailErp is what the card forbids.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **One engine, three parts, split by who owns what.** The state machine and step shape stay in `Shared.Kernel.Approvals` (as TK-49 plans). **Workflow configuration and chain resolution move from `Hrm` to Master**, in a new tenant schema `apr`. **`Hrm` becomes a resolver** for the approver kinds only it can answer (reporting chain, relationship, department head) | Master is the one service every app has, and it owns the users and roles a RetailErp chain resolves to. Hrm keeps what is genuinely its own: the employee graph. **This amends TK-49's plan, so it is raised as D-26 and nothing is built until the owner answers** |
+| 2 | **A step's approver is a user or an employee**: the shared step carries `ApproverUserId Guid?` beside `ApproverEmployeeId long?` | A RetailErp approver is a user; an HRMS approver is an employee who has a user. One shape covers both |
+| 3 | **RetailErp adds two approver kinds**: `RoleHolder` (exists) and `NamedUser`. The employee kinds are offered only when HRMS is licensed and the requester is linked to an employee | A shop with no HRMS must be able to say "the Accountant role, then the Owner" and nothing else |
+| 4 | **A chain governs the `Draft → ReadyToPost` transition**, which is already "approve". With no workflow matching the document, the single approve action works exactly as today | No new document status, and no change for a branch that never configures a workflow |
+| 5 | **A workflow matches by document kind and amount.** Each level's `AboveAmount` decides whether it applies, so "PO over ₹1 lakh needs the Owner too" is one workflow with a conditional level | The RetailErp need is value-based; department and grade matching (HRMS) are left unused here |
+| 6 | **Editing a document in approval sends it back to `Draft` and cancels its steps.** The steps stay as history | An approval approves what was seen. Changing a price after the manager approved it would carry the approval over to something they never saw |
+| 7 | **Approving a step needs being that step's approver, not a permission.** Posting keeps needing `{module}.approve` | The chain decides who may approve each level. The permission still decides who may post, which is a separate act |
+| 8 | **Steps are stored by the owning service** (`pur.ApprovalSteps`, `acc.ApprovalSteps`, `sal.ApprovalSteps`, `inv.ApprovalSteps`), as TK-49 already does for HRMS | Rule 8: no service reads another's steps. The inbox asks each service |
+
+## The document kinds
+
+| Kind | Service | What the amount is | Typical chain |
+|---|---|---|---|
+| `PurchaseOrder` | Purchase | Total, base currency | Accountant; Owner above ₹1,00,000 |
+| `PurchaseBill` | Purchase | Total | Accountant |
+| `DebitNote` | Purchase | Total | Accountant |
+| `SpendMoney` | Accounting | Total | Owner above a limit |
+| `ManualJournal` | Accounting | Sum of debits | Accountant, then Owner |
+| `CreditNote` | Sales | Total | Manager |
+| `SalesDiscountOverride` | Sales | Discount given beyond the branch limit | Manager |
+| `CreditLimitOverride` | Sales | Amount beyond the customer's limit | Owner |
+| `StockAdjustment` | Inventory | Value of the adjustment | Manager |
+
+The two **override** kinds are not documents: they are raised when a save would otherwise be
+refused (a discount above the branch's limit, a sale past a credit limit) and, once approved, let
+that one document through. Today the credit check refuses outright.
+
+## Tables
+
+**Configuration, in Master's tenant database (`apr`, RLS)** — the same columns as the HRMS design's
+`ApprovalWorkflow` and `ApprovalWorkflowLevel`, moved, with:
+
+- `ApprovalWorkflow.App` (`App` flags) and `RequestKind` extended with the kinds above;
+- `ApprovalWorkflowLevel.UserId Guid?` for `NamedUser`;
+- the department, grade and location match columns kept for HRMS and ignored for RetailErp kinds.
+
+**Resolution**: `POST internal/approval-chains/resolve` moves to Master. It resolves `RoleHolder`
+and `NamedUser` itself, asks `Hrm`'s `POST internal/approval-chains/resolve-employees` for the
+employee kinds when HRMS is licensed, applies the skip rules (requester, repeat approver,
+optional-and-unresolvable) and returns the snapshot.
+
+**Steps**, per owning service: the shared `ApprovalStepBase` from `Shared.Kernel.Approvals`
+(`RequestKind`, `RequestId`, `Sequence`, `Label`, `ApproverUserId`, `ApproverEmployeeId`, `RoleId`,
+`StepStatus`, `ActedByUserId`, `ActedAt`, `Comments`, `DueDate`), plus the document's summary columns
+`ApprovalStatus`, `CurrentStepLabel` and `CurrentApproverUserId` on `DocumentHeaderBase` (Sales,
+Purchase) and on Accounting's money documents and journal.
+
+## Flow
+
+1. **Submit** (`POST …/{id}/submit`): the owning service asks Master to resolve the chain for the
+   kind and amount. No matching workflow: the response says so and the ordinary approve action
+   applies. A match: the steps are stored, `ApprovalStatus = InApproval`, the first step `Pending`,
+   and the approver is notified (Notification, TK-19).
+2. **Approve / reject / send back** (`POST …/{id}/approval`, with a comment where the level requires
+   one): only the step's approver, a delegate, or for `RoleHolder` any holder of the role. The last
+   approval moves the document to `ReadyToPost`.
+3. **Edit** while `InApproval` returns it to `Draft`, marks open steps `Cancelled` and says so.
+4. **Escalation** and **delegation** as in the HRMS design, run by each owning service's hosted
+   service.
+5. **Post** as today.
+
+## Screens
+
+- **Settings › Approval workflows** (`libs/settings/approval-workflows`, shared by every app per the
+  shared master pages rule): workflows per kind, levels added and reordered, each with its label,
+  approver kind, amount and flags.
+- **Approvals** inbox in `apps/web` (and every app): "waiting on me", from each service's
+  `GET api/approvals/mine`, with approve, reject and send back inline.
+- Each document shows its chain: who approved, when, with what comment, and who it waits on.
+
+## What this does not cover
+
+- Parallel levels ("any two of three") are not designed; levels are sequential, as in the HRMS
+  engine.
+- Approval of master data changes (a new vendor, a price list) is not designed.
+
