@@ -815,7 +815,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-12 · Fixed assets: capitalisation and disposal postings
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-ACC, L-PUR · **Depends on:** TK-11 · **Decision:** D-19, D-20
 - **Where:**
   - `FixedAssetsController.cs:95-170`: the doc comments record both open questions.
