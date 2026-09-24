@@ -7,6 +7,7 @@ export * from './lib/organization-settings/organization-settings.page';
 export * from './lib/org-currencies/org-currencies.page';
 export * from './lib/configurations/configurations.page';
 export * from './lib/smtp-settings/smtp-settings.page';
+export * from './lib/print-templates/print-templates.page';
 
 // Users and roles — what was the identity lib.
 export * from './lib/roles/roles.page';

@@ -1,0 +1,205 @@
+<div class="pt-page">
+  <header class="pt-head">
+    <div>
+      <h1 class="pt-title">Print templates</h1>
+      <p class="hint m-0">How each document looks on paper, for this branch.</p>
+    </div>
+
+    <label class="field pt-type">
+      <span class="field-label">Document type</span>
+      <select class="input" (change)="onTypeChange($any($event.target).value)">
+        @for (type of documentTypes(); track type.code) {
+          <option [value]="type.code" [selected]="type.code === documentType()">{{ type.name }}</option>
+        }
+      </select>
+    </label>
+  </header>
+
+  <bb-message-box [messages]="messages()" />
+
+  <div class="pt-body" [class.pt-previewing]="previewOpen()">
+    <aside class="pt-list" aria-label="Templates">
+      <h2 class="pt-section">{{ documentTypeName() }}</h2>
+
+      @if (templates().length === 0) {
+        <p class="hint">
+          This branch has no template for this document type yet, so it prints with the standard
+          layout.
+        </p>
+      }
+
+      <ul class="pt-templates">
+        @for (template of templates(); track template.printTemplateId) {
+          <li>
+            <button
+              type="button"
+              class="pt-template"
+              [class.picked]="detail()?.printTemplateId === template.printTemplateId"
+              (click)="select(template.printTemplateId)"
+            >
+              <span class="truncate">{{ template.templateName }}</span>
+              @if (template.isDefault) {
+                <span class="tag tag-accent">Default</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+
+      @if (canEdit()) {
+        <div class="pt-new">
+          <label class="field">
+            <span class="field-label">New template</span>
+            <input
+              class="input"
+              maxlength="100"
+              placeholder="Name"
+              [value]="newName()"
+              (input)="newName.set($any($event.target).value)"
+            />
+          </label>
+          <button
+            type="button"
+            class="btn btn-secondary"
+            [disabled]="busy() || newName().trim() === ''"
+            (click)="create()"
+          >
+            Create from the standard layout
+          </button>
+        </div>
+      }
+
+      @if (canEdit() && detail()) {
+        <section class="pt-fields" aria-label="Insert field">
+          <h2 class="pt-section mt-3">Insert field</h2>
+          <p class="hint">Goes into the band you last clicked in, at the cursor.</p>
+
+          @for (group of placeholders(); track group.group) {
+            <details class="pt-group" [open]="$first">
+              <summary>
+                {{ group.group }}
+                @if (group.isList) {
+                  <span class="tag tag-neutral" title="Repeats once per row">Repeats</span>
+                }
+              </summary>
+              <ul>
+                @for (field of group.placeholders; track field.tag) {
+                  <li>
+                    <button
+                      type="button"
+                      class="pt-field"
+                      [title]="field.tag"
+                      (click)="insert(field.tag)"
+                    >
+                      {{ field.description }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            </details>
+          }
+        </section>
+      }
+    </aside>
+
+    @if (detail(); as template) {
+      @if (draftContent(); as draft) {
+        <section class="pt-editor" aria-label="Editor">
+          <div class="pt-editor-head">
+            <label class="field flex-1">
+              <span class="field-label">Name</span>
+              <input
+                class="input"
+                maxlength="100"
+                [readOnly]="!canEdit()"
+                [value]="draftName()"
+                (input)="draftName.set($any($event.target).value)"
+              />
+            </label>
+
+            <div class="pt-actions">
+              @if (canEdit()) {
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  [disabled]="busy() || !dirty() || draftName().trim() === ''"
+                  (click)="saveAndPreview()"
+                >
+                  Save and preview
+                </button>
+                @if (!template.isDefault) {
+                  <button
+                    type="button"
+                    class="btn btn-secondary"
+                    [disabled]="busy()"
+                    (click)="makeDefault()"
+                  >
+                    Make default
+                  </button>
+                }
+                <button
+                  type="button"
+                  class="btn btn-ghost"
+                  [disabled]="busy()"
+                  (click)="resetLayout()"
+                >
+                  Reset to the standard layout
+                </button>
+              }
+              <button type="button" class="btn btn-ghost pt-show-preview" (click)="openPreview()">
+                Preview
+              </button>
+            </div>
+          </div>
+
+          @if (template.canResetToLatest) {
+            <p class="note">A newer standard layout is available. Reset to use it.</p>
+          }
+
+          <div class="pt-bands">
+            @for (band of bands; track band.key) {
+              <label class="field">
+                <span class="field-label">{{ band.label }}</span>
+                <span class="field-hint">{{ band.hint }}</span>
+                <textarea
+                  #bandInput
+                  class="input pt-band"
+                  spellcheck="false"
+                  rows="6"
+                  [attr.data-band]="band.key"
+                  [class.pt-band-active]="activeBand() === band.key"
+                  [readOnly]="!canEdit()"
+                  [value]="draft[band.key]"
+                  (focus)="activeBand.set(band.key)"
+                  (input)="onBandInput(band.key, $any($event.target).value)"
+                ></textarea>
+              </label>
+            }
+          </div>
+        </section>
+
+        <section #previewSection class="pt-preview" aria-label="Preview">
+          <div class="pt-preview-head">
+            <h2 class="pt-section m-0">
+              Preview
+              @if (previewPages() > 0) {
+                <span class="hint">· {{ previewPages() }} {{ previewPages() === 1 ? 'page' : 'pages' }}, sample data</span>
+              }
+            </h2>
+            <button type="button" class="btn btn-ghost pt-close-preview" (click)="previewOpen.set(false)">
+              Close
+            </button>
+          </div>
+
+          @if (dirty()) {
+            <p class="note">The preview shows the saved template. Save to see your changes.</p>
+          }
+
+          @if (previewHtml(); as html) {
+            <iframe class="pt-frame" title="Print preview" sandbox="" [srcdoc]="html"></iframe>
+          }
+        </section>
+      }
+    }
+  </div>
+</div>

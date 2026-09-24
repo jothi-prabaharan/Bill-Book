@@ -1257,9 +1257,15 @@ If the code has moved on since a card was written, correct the card in your clai
     `MergeTags`) stays.
   - Printing's `PrintTemplateService` is a port of Master's. Until Master's is deleted, a fix to
     one belongs in both.
+  - D-13 is answered: nothing is deployed, so the drop can go in the same change as the copy.
+    On 2026-09-24 this card was still unclaimable only because TK-13 held L-SAL.
+  - From TK-25: the editor reads `prt` through the gateway, so it lists nothing until this card
+    seeds `prt` and copies `con`'s rows. When that lands, remove the "ready-made templates" and
+    "printing a real document" bullets from `masters.md` "What is not here yet". Then write the
+    release note that templates appear in the editor and documents print through them.
 
 ### TK-25 · Print-template editor screen
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MASTER-UI, L-MST (switch on the print-template menu rows in `MenuSeed`, and the admin migration), L-WEB (the route in `apps/web`), L-UI (the fallback entry in `libs/app-shell/src/lib/shell-screens.ts`) · **Depends on:** TK-23 · **Decision:** —
 - **Where:**
   - `libs/master/master-ui`, a new `print-templates/` page; the shared master pages table in
@@ -1267,16 +1273,50 @@ If the code has moved on since a card was written, correct the card in your clai
   - The API: `GET api/print-templates`, `GET document-types`, `GET {docType}/placeholders`,
     `PUT {id}`, `POST {id}/reset` and `POST {id}/preview`.
 - **Sub-tasks:**
-  - [ ] A list of templates per document type.
-  - [ ] An editor over the five bands, with a placeholder picker fed by `{docType}/placeholders`.
-  - [ ] A live preview through `{id}/preview`.
-  - [ ] Reset to the default.
-  - [ ] At 360px, the editor stacks and the preview becomes a sheet.
-  - [ ] Add the route with `data.access: { permission: 'settings.edit' }` and a menu row.
-  - [ ] Update the docs page and the release notes.
-  - [ ] Lint, typecheck and build are clean.
+  - [x] A list of templates per document type. `libs/master/master-ui/src/lib/print-templates/`,
+        over `PrintTemplateService` in `libs/master/master-core`.
+  - [x] An editor over the five bands, with a placeholder picker fed by `{docType}/placeholders`.
+        The picker inserts `{{Tag}}` at the cursor of the band last focused (`insertTag`, pure).
+  - [x] A live preview through `{id}/preview`. One button, **Save and preview**, because the
+        endpoint renders the *saved* template; a preview of unsaved edits would be a second
+        rendering path.
+  - [x] Reset to the default. Also **Make default**, and **Create from the standard layout**,
+        because `prt` has no rows until TK-24 and without it there is nothing to edit.
+  - [x] At 360px, the editor stacks and the preview becomes a sheet. It replaces the list and
+        editor inside the content area; a fixed overlay can't rise above the shell's top bar,
+        because the content cell is its own stacking context.
+  - [x] ~~Add the route with `data.access: { permission: 'settings.edit' }`~~. The route takes
+        `data: { permission: 'settings.view' }`: `data.access` is stage H0 and not built, and the
+        menu offers these rows to `settings.view`, which `MenuSeed` says the router must never
+        then refuse. The page is read-only without `settings.edit`, and the API refuses a write
+        regardless. There are two routes, `settings/print-templates` and
+        `settings/print-templates/:docType`.
+  - [x] A menu row. The twelve `pt-*` rows under group 117 already existed, inactive and without
+        routes. They are switched on in `MenuSeed`, with the migration
+        `EnablePrintTemplateMenus` (12 `UpdateData` calls; `has-pending-model-changes` is clean).
+        There is also a fallback entry in `shell-screens.ts`.
+  - [x] Update the docs page and the release notes (`masters.md` "The editor" and "What is not
+        here yet"; two release notes).
+  - [x] Lint, typecheck and build are clean (`web`, `docs`, and the backend with `-warnaserror`).
+  - [x] Test: `print-template.service.spec.ts` (URLs and verbs, `insertTag`, band order) and
+        `Master.Api.Tests.PrintTemplateMenuTests` (the rows are active and name exactly the
+        printable document types).
+  - [ ] Owner: `npm run test`, and `Master.Api.Tests` from dropped databases (the admin
+        migration is new).
 - **Done when:** a user changes a template and sees the change in the preview.
 - **Notes:**
+  - Checked in Chromium against a mocked API at 1400px and 360px: type into a band, insert a
+    field, save, and the preview shows it.
+  - **The shell made every page wider than a phone.** At ≤860px the shell's single grid column
+    was a bare `1fr`, which can't shrink below the top bar's 565px of buttons. Every page's
+    content area was 565px wide on a 360px screen, the dashboard included. It is now
+    `minmax(0, 1fr)` in `shell.component.scss` (L-UI). The top bar's own buttons past the edge
+    are still clipped, as they were before. That needs its own card: the phone design moves
+    them into a sheet.
+  - `prt` is empty until TK-24, so the editor lists nothing for any branch and a user starts
+    from **Create from the standard layout**. The docs say so under "What is not here yet".
+  - `CLAUDE.md`'s Master `con` row still says "No editor screen". That's L-DOC; it's stale as of
+    this card.
 
 ### TK-26 · Document archive: PDF/A, every document, a download link
 - [ ] open

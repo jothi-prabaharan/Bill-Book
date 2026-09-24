@@ -70,6 +70,22 @@ export const appRoutes: Routes = [
           import('@bill-book/master-ui').then((m) => m.SmtpSettingsPage),
         data: { permission: 'settings.view' },
       },
+      // One menu row per document type, each landing on its own type. Opening
+      // takes settings.view, as every settings screen does, because the menu
+      // offers these rows to settings.view; the page is read-only without
+      // settings.edit, and the API refuses a write without it regardless.
+      {
+        path: 'settings/print-templates',
+        loadComponent: () =>
+          import('@bill-book/master-ui').then((m) => m.PrintTemplatesPage),
+        data: { permission: 'settings.view' },
+      },
+      {
+        path: 'settings/print-templates/:docType',
+        loadComponent: () =>
+          import('@bill-book/master-ui').then((m) => m.PrintTemplatesPage),
+        data: { permission: 'settings.view' },
+      },
       // The nav rail points at /accounting, so it needs somewhere to land. The
       // ledger is the right default: it is the screen every other posting in the
       // product is checked on.

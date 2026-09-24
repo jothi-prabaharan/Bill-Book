@@ -1,0 +1,266 @@
+.pt-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  min-width: 0;
+}
+
+.pt-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.pt-title {
+  margin: 0;
+}
+
+.pt-type {
+  min-width: 14rem;
+}
+
+.pt-section {
+  margin: 0 0 var(--space-2);
+  font-size: 1em;
+  font-weight: 600;
+}
+
+/*
+ * The templates and the field panel on the left, where a person reaches for
+ * them; the bands and the preview side by side, each given the width it needs.
+ */
+.pt-body {
+  display: grid;
+  grid-template-columns: 15rem minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+}
+
+.pt-list {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pt-templates {
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+.pt-template {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface);
+  }
+
+  &.picked {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    font-weight: 600;
+  }
+}
+
+.pt-new {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  .btn {
+    white-space: normal;
+  }
+}
+
+.pt-fields ul {
+  margin: var(--space-1) 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.pt-group summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.pt-field {
+  width: 100%;
+  padding: var(--space-1) var(--space-2);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-size: 0.9em;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface);
+  }
+}
+
+.pt-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.pt-editor-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+
+  .field {
+    min-width: 12rem;
+  }
+}
+
+.pt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pt-bands {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.pt-band {
+  width: 100%;
+  min-height: 7rem;
+  resize: vertical;
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  text-align: left;
+  letter-spacing: normal;
+  white-space: pre-wrap;
+}
+
+.pt-band-active {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+.pt-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  position: sticky;
+  top: var(--space-3);
+}
+
+.pt-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Paper is white whatever the theme: this is a picture of the printed page. */
+.pt-frame {
+  width: 100%;
+  height: 75vh;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+/* The toggles only matter where the preview takes over the screen. */
+.pt-show-preview,
+.pt-close-preview {
+  display: none;
+}
+
+/* A medium screen puts the preview under the bands. */
+@media (max-width: 1200px) {
+  .pt-body {
+    grid-template-columns: 15rem minmax(0, 1fr);
+  }
+
+  .pt-preview {
+    grid-column: 2;
+    position: static;
+  }
+}
+
+/*
+ * ~360px. Everything stacks, and the preview is a full-screen view of its own,
+ * opened from its button and closed from the top of it. It replaces the list and
+ * the editor inside the content area rather than floating over the shell: the
+ * content area is its own stacking context, so a fixed sheet could not rise
+ * above the top bar and would hide its own Close button behind it.
+ */
+@media (max-width: 720px) {
+  .pt-page {
+    padding: var(--space-2);
+  }
+
+  .pt-title {
+    font-size: 28px;
+  }
+
+  .pt-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pt-type,
+  .pt-editor-head .field {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pt-actions .btn {
+    white-space: normal;
+  }
+
+  .pt-show-preview,
+  .pt-close-preview {
+    display: inline-flex;
+  }
+
+  .pt-preview {
+    display: none;
+    grid-column: auto;
+    position: static;
+  }
+
+  .pt-previewing {
+    .pt-list,
+    .pt-editor {
+      display: none;
+    }
+
+    .pt-preview {
+      display: flex;
+    }
+
+    .pt-frame {
+      height: 80vh;
+    }
+  }
+}

@@ -14,9 +14,9 @@ namespace Master.Repository.SeedData;
 /// Three things are worth knowing before editing this file.
 ///
 /// <para><b>An item with no route is seeded inactive.</b> The design covers screens
-/// that are not built yet — account types, units of measure, licences, the print
-/// templates. They are here with <c>RoutePath = null</c> and <c>IsActive = false</c>
-/// so the tree stays complete and switching one on later is a data change rather
+/// that are not built yet — account types, units of measure, licences. They are
+/// here with <c>RoutePath = null</c> and <c>IsActive = false</c> so the tree stays
+/// complete and switching one on later is a data change rather
 /// than a code change. <c>MenuService</c> filters on <c>IsActive</c>, so nothing
 /// unbuilt reaches a user today.</para>
 ///
@@ -163,18 +163,18 @@ public static class MenuSeed
         new Menu { MenuId = 1092, ParentId = 116, Type = MenuType.Item, Code = "ptm", Name = "Payment terms", Icon = "calendar-clock", Module = "settings", RoutePath = "/settings/payment-terms", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1093, ParentId = 116, Type = MenuType.Item, Code = "lck", Name = "Period locks", Icon = "lock", Module = "settings", RoutePath = "/settings/closing-dates", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 117, ParentId = 9, Type = MenuType.Group, Code = "settings-g4", Name = "Print templates", Icon = "printer", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
-        new Menu { MenuId = 1094, ParentId = 117, Type = MenuType.Item, Code = "pt-qot", Name = "Quote", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = false },
-        new Menu { MenuId = 1095, ParentId = 117, Type = MenuType.Item, Code = "pt-sor", Name = "Sales order", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = false },
-        new Menu { MenuId = 1096, ParentId = 117, Type = MenuType.Item, Code = "pt-dlc", Name = "Delivery challan", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = false },
-        new Menu { MenuId = 1097, ParentId = 117, Type = MenuType.Item, Code = "pt-inv", Name = "Sales invoice", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = false },
-        new Menu { MenuId = 1098, ParentId = 117, Type = MenuType.Item, Code = "pt-crn", Name = "Credit note", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = false },
-        new Menu { MenuId = 1099, ParentId = 117, Type = MenuType.Item, Code = "pt-por", Name = "Purchase order", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = false },
-        new Menu { MenuId = 1100, ParentId = 117, Type = MenuType.Item, Code = "pt-grn", Name = "Goods receipt", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = false },
-        new Menu { MenuId = 1101, ParentId = 117, Type = MenuType.Item, Code = "pt-bil", Name = "Bill", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = false },
-        new Menu { MenuId = 1102, ParentId = 117, Type = MenuType.Item, Code = "pt-dbn", Name = "Debit note", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 9, IsActive = false },
-        new Menu { MenuId = 1103, ParentId = 117, Type = MenuType.Item, Code = "pt-rec", Name = "Receipt voucher", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = false },
-        new Menu { MenuId = 1104, ParentId = 117, Type = MenuType.Item, Code = "pt-pay", Name = "Payment voucher", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 11, IsActive = false },
-        new Menu { MenuId = 1105, ParentId = 117, Type = MenuType.Item, Code = "pt-jrn", Name = "Journal voucher", Icon = "printer", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 12, IsActive = false },
+        new Menu { MenuId = 1094, ParentId = 117, Type = MenuType.Item, Code = "pt-qot", Name = "Quote", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/QTE", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1095, ParentId = 117, Type = MenuType.Item, Code = "pt-sor", Name = "Sales order", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/SOR", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
+        new Menu { MenuId = 1096, ParentId = 117, Type = MenuType.Item, Code = "pt-dlc", Name = "Delivery challan", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/DLC", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
+        new Menu { MenuId = 1097, ParentId = 117, Type = MenuType.Item, Code = "pt-inv", Name = "Sales invoice", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/INV", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = true },
+        new Menu { MenuId = 1098, ParentId = 117, Type = MenuType.Item, Code = "pt-crn", Name = "Credit note", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/CRN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = true },
+        new Menu { MenuId = 1099, ParentId = 117, Type = MenuType.Item, Code = "pt-por", Name = "Purchase order", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/POR", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
+        new Menu { MenuId = 1100, ParentId = 117, Type = MenuType.Item, Code = "pt-grn", Name = "Goods receipt", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/GRN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
+        new Menu { MenuId = 1101, ParentId = 117, Type = MenuType.Item, Code = "pt-bil", Name = "Bill", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/BIL", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
+        new Menu { MenuId = 1102, ParentId = 117, Type = MenuType.Item, Code = "pt-dbn", Name = "Debit note", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/DBN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 9, IsActive = true },
+        new Menu { MenuId = 1103, ParentId = 117, Type = MenuType.Item, Code = "pt-rec", Name = "Receipt voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/RCM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = true },
+        new Menu { MenuId = 1104, ParentId = 117, Type = MenuType.Item, Code = "pt-pay", Name = "Payment voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/SPM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 11, IsActive = true },
+        new Menu { MenuId = 1105, ParentId = 117, Type = MenuType.Item, Code = "pt-jrn", Name = "Journal voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/JRN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 12, IsActive = true },
     ];
 
     /// <summary>

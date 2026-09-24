@@ -88,6 +88,7 @@ export const SHELL_SCREENS: readonly ShellScreen[] = [
   { label: 'Roles', path: '/settings/roles', group: 'Settings', module: 'settings' },
   { label: 'Currencies', path: '/settings/currencies', group: 'Settings', module: 'settings' },
   { label: 'Email', path: '/settings/email', group: 'Settings', module: 'settings' },
+  { label: 'Print templates', path: '/settings/print-templates', group: 'Settings', module: 'settings' },
   { label: 'Tax master', path: '/settings/tax', group: 'Settings', module: 'settings' },
   { label: 'Number series', path: '/settings/numbering', group: 'Settings', module: 'settings' },
   { label: 'Payment terms', path: '/settings/payment-terms', group: 'Settings', module: 'settings' },

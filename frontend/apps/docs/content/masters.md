@@ -1085,8 +1085,8 @@ Nothing you can set will reorder them.
 ## Merge fields
 
 A merge field is a placeholder that fills itself in when the document prints — `{{Document.No}}`,
-`{{Party.Name}}`, `{{Totals.GrandTotal}}`. Insert them from the panel on the right of the editor,
-which shows each one as a tidy chip rather than as braces.
+`{{Party.Name}}`, `{{Totals.GrandTotal}}`. Insert them from the **Insert field** panel in the
+editor rather than typing them, so the spelling is always one the document type knows.
 
 Fields marked with a repeat mark come from a list rather than a single value: put
 `{{Item.ItemName}}` in a table row and that row prints once per item on the document. A field
@@ -1094,6 +1094,32 @@ with no repeat mark prints once wherever you put it.
 
 **A field that cannot be filled in prints as nothing** — never as its own name. The template
 list tells you if a template has any, so you can find them before a customer does.
+
+## The editor
+
+**Settings › Print templates**, or one entry per document type under the Print templates group of
+the Settings menu. Pick the document type at the top; its templates are listed on the left, with
+the default marked.
+
+- Each of the five bands is a box of HTML. Click in the one you want, put the cursor where the
+  field should go, and pick the field from **Insert field** — it goes in at the cursor, replacing
+  anything you had selected. Fields marked **Repeats** come from a list.
+- **Save and preview** saves the template and shows it printed against sample data, exactly as the
+  printing service lays it out, including how many pages it runs to. The preview always shows the
+  saved template; while you have unsaved changes it says so.
+- Markup that cannot be printed is refused when you save, with the band named. Nothing is saved
+  until every band is acceptable.
+- **Make default** switches which template a document type prints with.
+- **Reset to the standard layout** puts the product's own layout back into the bands. The name and
+  the page settings are kept.
+- **Create from the standard layout** starts a new template for the document type. The first
+  template for a type becomes its default.
+
+Opening the screen needs permission to view settings; changing anything needs permission to edit
+them. Without it the bands are read-only and the buttons that save are not shown.
+
+On a phone the panels stack, and **Preview** opens the preview full screen, with **Close** at its
+top.
 
 ## Paper
 
@@ -1131,8 +1157,17 @@ overwriting theirs, and nothing is written. Reload and apply your changes again.
 
 ## What is not here yet
 
-- **The editor itself.** The templates, the fields and the printing all exist on the server; the
-  screen to design them in has not been built
+- **Paper, margins and footer position on screen.** Everything above under Paper and Where the
+  footer sits is stored and printed, but the editor only edits the bands and the name; the page
+  settings a template already has are kept as they are
+- **Deleting a template from the screen.** The rules under Defaults apply; the button is not there
+  yet
+- **The ready-made templates in the editor.** Printing is moving into a service of its own, and the
+  templates each branch was given have not moved with it yet. Until they do, the editor lists
+  none, and a document type prints with the standard layout — create one from it to start
+  designing
+- **Printing a real document through its template.** The sales invoice still prints with its own
+  fixed layout; documents start using their templates when the move above finishes
 - **A saved PDF of every document.** Printing goes through your browser. Archiving a copy needs a
   PDF library that has not been chosen yet
 
