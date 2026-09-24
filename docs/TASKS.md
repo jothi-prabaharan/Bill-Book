@@ -1507,10 +1507,16 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Raised **D-24**: which IRP access to use (a GSP, or NIC direct).
 
 ### TK-32 · Design: `apps/portal`, the next screens
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **State:** `apps/portal` has a dashboard and a statement list over real endpoints.
 - **Notes:**
   - D-16 answered (2026-09-24): design these screens: overall outstanding and overall trade value on the dashboard; invoice list with PDF download (TK-22); online payment; quotes to accept or reject; support tickets (Customer module). Every portal route takes `[RequirePortalAccess]`.
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Client portal — the next screens": seven decisions, `con.PortalGrants`, the screens and their owning endpoints, `acc.OnlinePayments`, quote responses, internal ticket notes.
+  - **Found while designing:** portal access is a 30-day JWT (`JwtTokenService.CreatePortalToken`) that nothing records and nothing can revoke. The design makes access revocable (a hashed link code exchanged for one-hour sessions) before any money action is added, and that is the first card.
+  - Also found: the statement prints `{code}-{id}` although the ledger has `DocumentNo`; ticket messages have no internal flag, so staff notes would leak to the portal.
+  - Cards: TK-94 (access), TK-95 (dashboard, invoices, PDF), TK-96 (quotes), TK-97 (tickets), TK-98 (pay online).
+  - Raised **D-25**: which payment gateway.
 
 ### TK-33 · Design: workflow approvals
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
@@ -1581,6 +1587,67 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
   - [ ] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
 - **Done when:** a delivery challan over the limit gets an e-way bill number from the sandbox and prints it.
+
+### TK-94 · Portal: revocable access and one-hour sessions
+- [ ] open
+- **Lanes:** L-CON, L-MST, L-PTL, L-KERNEL · **Depends on:** TK-32 · **Decision:** —
+- **Where:** `ContactService.GeneratePortalLinkAsync`, `JwtTokenService.CreatePortalToken`, `ContactsController` (`portal-link`), `apps/portal`; design "Client portal" → Access.
+- **Tables:** `con.PortalGrants`
+- **Sub-tasks:**
+  - [ ] `con.PortalGrants` with the RLS block; the link carries a random code whose SHA-256 is stored.
+  - [ ] `POST api/portal/session` exchanges the code for a one-hour portal JWT with `portal_grant`; rate-limited; exempted in Master's guard test with its reason.
+  - [ ] Revoke portal access on the contact screen; the 30-day token path is removed.
+  - [ ] `apps/portal` gains `/access/:code`, keeps the code, and re-exchanges it before the hour runs out.
+  - [ ] Test: a revoked or expired grant is refused; a code is never stored in clear; a portal token carries no permission claims.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** revoking a contact's access stops a fresh session from being issued, and existing sessions expire within an hour.
+
+### TK-95 · Portal: dashboard figures and invoices with PDF
+- [ ] open
+- **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —
+- **Where:** `PortalStatementsController`; `SalesDocumentArchive.OpenAsync` (TK-22); `apps/portal/src/app/portal-dashboard`.
+- **Sub-tasks:**
+  - [ ] `GET api/portal/summary` (Reporting): outstanding net of advances, overdue, trade value this year and all time.
+  - [ ] `GET api/portal/invoices`, `/{id}`, `/{id}/pdf` (Sales), posted and voided only, filtered by the token's contact.
+  - [ ] Fix the statement: `DocumentNo` instead of `{code}-{id}`; both sides for a contact who is customer and vendor.
+  - [ ] Dashboard and invoice pages in `apps/portal`, at 360px.
+  - [ ] Test: another contact's invoice id is 404; a draft never appears; the summary matches the ledger for a seeded contact.
+- **Done when:** a contact signs in by link and downloads their own invoice PDF, and cannot reach another contact's.
+
+### TK-96 · Portal: accept or reject a quote
+- [ ] open
+- **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
+- **Where:** `sal.Quotes`, `QuoteService`; design "Client portal" → Quotes.
+- **Sub-tasks:**
+  - [ ] `CustomerResponse`, `RespondedAt`, `RespondedByName`, `ResponseNote` on `sal.Quotes` (migration).
+  - [ ] `GET api/portal/quotes`, `POST …/{id}/accept`, `…/{id}/reject`: posted, unexpired, answered once.
+  - [ ] The staff quote list shows the answer; the portal page lists quotes with the two actions.
+  - [ ] Test: an expired or already-answered quote is refused; another contact's quote is 404.
+- **Done when:** a contact accepts a posted quote from the portal and staff see it accepted.
+
+### TK-97 · Portal: support tickets
+- [ ] open
+- **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
+- **Where:** `TicketsController`, `cus.TicketMessages`; design "Client portal" → Tickets.
+- **Sub-tasks:**
+  - [ ] `IsInternal` on `cus.TicketMessages`; the staff reply box can mark a note internal.
+  - [ ] `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages`, never returning internal messages.
+  - [ ] Portal ticket list, detail and new-ticket pages.
+  - [ ] Test: an internal message never reaches the portal; another contact's ticket is 404; a portal ticket gets its SLA from `cus.SlaPolicies`.
+- **Done when:** a contact raises a ticket in the portal, staff reply, and the contact sees the reply but not an internal note.
+
+### TK-98 · Portal: pay online
+- [ ] open
+- **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25
+- **Where:** `ReceiveMoneyService`; design "Client portal" → Online payment.
+- **Tables:** `acc.OnlinePayments`
+- **Sub-tasks:**
+  - [ ] `acc.OnlinePayments` with RLS; the branch's settlement bank account setting.
+  - [ ] `IPaymentGateway` for the gateway D-25 names: create order, verify callback signature.
+  - [ ] `POST api/portal/payments`; `POST api/payments/{gateway}/callback` (anonymous, signature-verified) creates the `RCM` with its allocations once per `GatewayPaymentId`.
+  - [ ] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
+  - [ ] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
+- **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
 
 ### F · Phase 3: POS
 
@@ -3036,6 +3103,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
+| D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
 
 ---
 

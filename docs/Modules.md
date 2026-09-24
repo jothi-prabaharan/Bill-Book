@@ -3111,3 +3111,133 @@ words:
   customer needs it.
 - **Bulk upload** of historical invoices is not designed.
 
+---
+
+# Client portal — the next screens (TK-32, D-16)
+
+## Where things stand
+
+Checked against the code on 24 September 2026:
+
+- `apps/portal` has two routed pages, a **dashboard** and a **statement list**, both over one
+  endpoint, Reporting's `GET api/portal/statements` (`PortalStatementsController`, guarded by
+  `[RequirePortalAccess]`). The dashboard's "billed" and "paid" figures are sums over the
+  statement's rows for the chosen period, not balances.
+- **Access is a link.** Staff press "portal link" on a contact (`POST api/contacts/{id}/portal-link`,
+  `ContactService.GeneratePortalLinkAsync`), which mints a **30-day JWT** carrying `customer_id`,
+  `org_id`, `contact_id` and `portal_access = true`. **It cannot be revoked**: nothing records that
+  it was issued, and every service validates it locally until it expires. A link forwarded to the
+  wrong person is valid for a month.
+- The statement shows `{code}-{id}` for a document number although the ledger carries `DocumentNo`
+  now, and it reads only receivable-side sub-accounts through `ReferenceType == 1`.
+- Quotes have no customer-response columns. Ticket messages have an `AuthorType` but no internal-note
+  flag, so a staff note meant for colleagues would show to the customer the moment tickets reach
+  the portal.
+
+## What D-16 asks for
+
+The owner's answer (24 September 2026): on the dashboard, **overall outstanding** and **overall
+trade value** (sales to date); **view and download invoices**; **pay online**; **accept or reject
+quotes**; **raise and follow support tickets**.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **Access becomes revocable before anything else is added to the portal.** The link carries an opaque code, not a token; the portal exchanges it for a **one-hour** portal JWT at Master; staff can revoke the grant | Adding invoices, payments and quote acceptance behind an unrevocable month-long bearer token would put money actions behind a credential nobody can take back |
+| 2 | **Every portal endpoint lives in the service that owns the data**, under `api/portal/…`, with `[RequirePortalAccess]` and the contact taken **only** from the token's `contact_id` | The portal is a thin client like `apps/web`. A portal service reading five services' tables would break hard rule 8 |
+| 3 | **A row that is not the contact's is 404**, never 403 | The same reasoning as TK-71 for branches: a 403 would confirm that another customer's invoice number exists |
+| 4 | **Money moves only on the payment gateway's verified callback**, never on the browser's return | A browser can be closed, replayed or forged. The server-to-server notification, with its signature checked, is the only thing that records a receipt |
+| 5 | **An online payment is an ordinary Receive Money** (`RCM`) in Accounting, allocated to the invoice | It then reconciles, reports and reverses exactly like a receipt keyed by staff. No second kind of receipt exists |
+| 6 | **Accepting a quote records the answer; it does not create a sales order** | Converting a quote is a staff decision (stock, price, delivery). The acceptance notifies the branch, and the quote list shows it |
+| 7 | **Ticket messages gain `IsInternal`**, and the portal never returns an internal one | Staff already discuss tickets among themselves; without the flag the first portal release would publish those notes |
+
+## Access (Master, `con`)
+
+**`con.PortalGrants`** (tenant-scoped, RLS)
+
+| Column | Type | Notes |
+|---|---|---|
+| `PortalGrantId` | long | PK |
+| `ContactId` | long | FK to `con.Contacts` |
+| `CodeHash` | string(64) | SHA-256 of the link's random code. The code itself is shown once |
+| `ExpiresAt` | timestamptz | Default 90 days; a branch setting |
+| `RevokedAt` | timestamptz? | |
+| `LastUsedAt` | timestamptz? | |
+
+- `POST api/contacts/{id}/portal-link` creates a grant and returns `{Portal:BaseUrl}/access/{code}`.
+  Creating a new one does not revoke older ones; a **Revoke portal access** action revokes all of a
+  contact's grants.
+- `POST api/portal/session` (anonymous, rate-limited per IP) takes the code, finds the live grant by
+  hash **past the query filter but only by that hash** (the way `InternalApiKeysController` matches a
+  key before its branch is known), and returns a portal JWT valid for **one hour**, with the same
+  claims as today plus `portal_grant`. The portal refreshes it by exchanging the code again while
+  the grant lives.
+- A revoked grant stops working within the hour. That is the price of services validating the
+  JWT locally, and it is written on the revoke button.
+- `CreatePortalToken`'s 30-day lifetime goes; old links stop working at release, and the release
+  note says so.
+
+## Screens and endpoints
+
+| Screen | Endpoint (owner) | What it shows |
+|---|---|---|
+| **Dashboard** | `GET api/portal/summary` (Reporting) | **Outstanding**: the contact's receivable balance net of unallocated advances, and the overdue part of it. **Trade value**: posted invoices less credit notes, this financial year and all time. The last five documents |
+| **Invoices** | `GET api/portal/invoices`, `GET api/portal/invoices/{id}` (Sales) | Posted and voided invoices only, never drafts; number, date, due date, total, what is still owed, status (open, part-paid, paid, overdue, void) |
+| Invoice PDF | `GET api/portal/invoices/{id}/pdf` (Sales) | The archived PDF (TK-22), the same file staff download |
+| **Pay** | `POST api/portal/payments` (Accounting) | One or more open invoices, or an amount; opens the gateway's checkout |
+| **Quotes** | `GET api/portal/quotes`, `POST api/portal/quotes/{id}/accept`, `…/reject` (Sales) | Posted quotes, with validity; accept or reject with a name and an optional note |
+| **Tickets** | `GET/POST api/portal/tickets`, `POST api/portal/tickets/{id}/messages` (Customer) | The contact's tickets and their non-internal messages; raise a ticket; reply |
+| Statement | existing, fixed | Uses `DocumentNo`; shows both receivable and payable sides for a contact who is both |
+
+Every page works at 360px: lists become cards, the pay screen is one column.
+
+## Online payment (Accounting)
+
+**`acc.OnlinePayments`** (tenant-scoped, RLS)
+
+| Column | Type | Notes |
+|---|---|---|
+| `OnlinePaymentId` | long | PK |
+| `ContactId` | long | From the token |
+| `Amount`, `CurrencyCode` | decimal, string(3) | INR only in the first build |
+| `Allocations` | jsonb | Invoice ids and amounts the payer chose; applied when the receipt is created |
+| `Gateway` | `PaymentGateway` enum | The one D-25 names |
+| `GatewayOrderId` | string(64) | Unique |
+| `GatewayPaymentId` | string(64)? | Unique where not null; the idempotency key for the callback |
+| `Status` | enum | `Created`, `Paid`, `Failed`, `Refunded` |
+| `ReceiveMoneyId` | long? | The receipt this became |
+
+- **Settlement account**: a branch setting names the bank account (`acc.BankAccounts`) gateway
+  money lands in, usually a clearing account the bank statement later matches.
+- The **callback** (`POST api/payments/{gateway}/callback`, anonymous, signature-verified, then the
+  tenant set from the payment row found by `GatewayOrderId`) marks the row `Paid` and creates the
+  `RCM` with its allocations in one transaction. A second callback for the same `GatewayPaymentId`
+  does nothing.
+- Gateway fees are **not** netted into the receipt. The receipt is the full amount; the fee is an
+  expense line when the settlement arrives on the bank statement.
+- The gateway credentials are the branch's, through `ISecretStore`.
+
+## Quotes (Sales)
+
+`sal.Quotes` gains `CustomerResponse` (`None`, `Accepted`, `Rejected`), `RespondedAt`,
+`RespondedByName` (string(100)) and `ResponseNote` (string(500)). Only a **posted** quote inside its
+`ValidUntil` can be answered, once. The answer raises a staff notification and shows on the quote
+list; a rejected quote can still be edited into a new version by staff.
+
+## Tickets (Customer)
+
+`cus.TicketMessages` gains `IsInternal bool`. `TicketAuthorType` already distinguishes the contact
+from a user. A ticket raised in the portal gets its SLA from the branch's `cus.SlaPolicies` like any
+other (TK-18), at `Medium` priority unless staff change it.
+
+## Security
+
+- `[RequirePortalAccess]` on every portal controller, and `EndpointGuardAudit` already treats it as
+  a guard. A portal token carries no `permission` claims, so it can never reach a staff route.
+- Every portal query filters by the token's `contact_id` **and** runs under the branch's query
+  filter and RLS; the contact filter is in the service, and a test per endpoint asks for another
+  contact's row and expects 404.
+- `POST api/portal/session` and the payment callback are the only anonymous routes, each named in
+  the owning service's guard exemptions with its reason.
+
