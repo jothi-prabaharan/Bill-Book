@@ -407,7 +407,7 @@ If the code has moved on since a card was written, correct the card in your clai
     7. Copy `RowLevelSecurityTests.cs` for the schema, changing the role name, schema and seed.
        (Lifting its helpers into `tests/Shared` needs `L-KERNEL`.)
     8. Check `has-pending-model-changes`, and that `dotnet build backend/Bill-Book.sln` has 0 warnings.
-  - Two problems found outside this card, now cards of their own: **TK-78**, the journal-balance
+  - Two problems found outside this card, now cards of their own: **TK-80**, the journal-balance
     and allocation triggers, which the same squash dropped; and **TK-79**, internal endpoints that
     never set a tenant.
 
@@ -634,8 +634,9 @@ If the code has moved on since a card was written, correct the card in your clai
         failures. Then drop one policy by hand and watch it go red.
 - **Done when:** a non-superuser connection can't read another branch's rows in any tenant schema.
 - **Notes:**
+  - **Decided by the owner (2026-09-24): transaction-local.** Change `RlsConnectionInterceptor` to `set_config(…, true)` inside each transaction (the reliability filter's scope), and keep `CLAUDE.md`'s rule as written. Reads outside an explicit transaction need one opened for them, or the setting won't hold — check every read path.
 
-### TK-78 · Restore the ledger's deferred balance and allocation triggers
+### TK-80 · Restore the ledger's deferred balance and allocation triggers
 - [ ] open
 - **Lanes:** L-ACC · **Depends on:** TK-02 · **Decision:** —
 - **Where:**
@@ -659,6 +660,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - From TK-13 (2026-09-24): **this number is also held by "Sale challans post to Goods Delivered
     Not Invoiced, once"**, which was added first (with TK-12, commit `cb7da6c`). One of the two
     needs the next unused number; `CLAUDE.md` cites this one.
+  - Renumbered from TK-78 on 2026-09-24: two cards had taken that number, and the GDNI card came first. `CLAUDE.md` is updated to cite TK-80.
 
 ### TK-79 · Internal endpoints that set no tenant
 - [ ] open
@@ -743,6 +745,17 @@ If the code has moved on since a card was written, correct the card in your clai
     built both, but the owner has not confirmed it, so it now points at D-08.
   - Not fixed, out of this card's list: `CLAUDE.md` still cites `docs/modules/Sales.md`,
     `docs/Master.md` and `TRANSACTIONS-ACCOUNTING-BANKING.md`, none of which exist.
+
+### TK-88 · Record the owner's answers of 24 September in `CLAUDE.md`
+- [~] working (Claude Opus 5.5) — since 2026-09-24
+- **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-01 … D-20
+- **Where:** `CLAUDE.md` sections "Undecided — ask, don't assume", "Printing", "Journal Entry is the only posting mechanism" (cites the trigger card) and "Roadmap".
+- **Sub-tasks:**
+  - [ ] Move every answered item out of "Undecided" and state the decision where it belongs.
+  - [ ] Printing: PDFsharp replaces Syncfusion as the standard-document library (D-11).
+  - [ ] The trigger card is TK-80, not TK-78.
+- **Done when:** "Undecided" holds only questions nobody has answered, and no line cites a decision the owner reversed.
+- **Notes:**
 
 ### B · Phase 1: finish what's in flight
 
@@ -964,6 +977,8 @@ If the code has moved on since a card was written, correct the card in your clai
     names this card; seed GDNI and take it off that list. The credit note no longer posts its own
     COGS legs (the worker posts the sales return), which is the arrangement this card is deciding
     for the invoice.
+  - **Duplicate number resolved (2026-09-24):** this card keeps TK-78; the trigger card is now TK-80.
+  - **Who posts cost of sale — decided by the owner, 2026-09-24:** the document posts a **provisional** cost-of-sale entry when it is posted (at the request path's cost), and flags the item for the worker. `CostingEngine.Worker` recalculates, then **corrects the ledger to the settled value**. So: keep the document's COGS legs as provisional, remove the worker's *duplicate* first posting, and make the worker post only the difference (or replace the provisional rows) after recalculation. A sale challan's provisional entry is Dr GDNI / Cr Inventory; the invoice against it moves GDNI to COGS.
 
 ### TK-15 · Item search: barcode and paging
 - [ ] open
@@ -1031,7 +1046,7 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:**
 
 ### TK-19 · Customer module seed data (stage C4)
-- [!] blocked — D-18
+- [ ] open
 - **Lanes:** L-CUS · **Depends on:** — · **Decision:** D-18
 - **Where:**
   - `backend/shared/Shared.Kernel/Customer/Enums.cs`: `LeadSource`, `LeadStatus`, `TicketStatus`, `TicketPriority`.
@@ -1049,6 +1064,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: seeding twice adds nothing, and a ticket's `SlaDueAt` follows its branch's policy.
 - **Done when:** decided by D-18.
 - **Notes:**
+  - D-18 answered (2026-09-24): build the per-branch `cus.SlaPolicies` table exactly as the sub-tasks above say.
 
 ### TK-20 · Notification.Worker takes over email from Master
 - [ ] open
@@ -1106,6 +1122,31 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: branch A's profile never reminds branch B's invoice.
 - **Done when:** an overdue, unpaid invoice produces exactly one email per reminder window.
 - **Notes:**
+
+### TK-82 · Platform operators: `IsPlatformOperator` on the user (D-01)
+- [ ] open
+- **Lanes:** L-MST · **Depends on:** TK-01 · **Decision:** D-01 (answered)
+- **Where:** `backend/Api/Master/Master.Entity/TableEntities/User.cs`, `Master.Api/Services/JwtTokenService.cs`, `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `frontend/apps/admin`.
+- **State:** `platform.*` is seeded into the permission catalogue and `apps/admin` checks for it, but nothing grants it, so nobody can sign in to `apps/admin`.
+- **Sub-tasks:**
+  - [ ] Add `IsPlatformOperator bool` (default false) to `User`, with an admin migration; run `has-pending-model-changes`.
+  - [ ] `JwtTokenService` adds every `platform.*` permission to the token when the flag is true — never through a role.
+  - [ ] Set the flag only from bootstrap configuration (`Bootstrap:OperatorEmails`) or from an existing operator through a `[RequirePermission("platform.edit")]` endpoint. No tenant screen can set it.
+  - [ ] Test: an Owner of a customer never gets `platform.*`; an operator does; a non-operator calling the grant endpoint gets 403.
+- **Done when:** an operator signs in to `apps/admin` and sees the customer list; no tenant user can.
+- **Notes:**
+
+### TK-83 · A blank optional phone is NULL everywhere (D-04)
+- [ ] open
+- **Lanes:** L-CON, L-MST, L-INV, L-CUS · **Depends on:** — · **Decision:** D-04 (answered)
+- **Where:** the phone columns: `con.ContactAddresses` and `con.ContactPersons` (`PhoneNumber`, `MobileNumber`), `mst.Users.MobileNumber`, `mst.Organizations` (`PhoneNumber`, `MobileNumber`), `inv.Warehouses` (`PhoneNumber`, `MobileNumber`), `cus.Leads.Phone`. No shared normaliser exists.
+- **Sub-tasks:**
+  - [ ] Add one `PhoneNumbers.NormalizeOptional(string?)` in `Shared.Kernel` (trim; blank → null; keep the leading `+` rule from `CLAUDE.md`). Takes `L-KERNEL` for that commit.
+  - [ ] Call it in every service that saves those columns.
+  - [ ] One data migration per schema turning `''` into NULL in those columns.
+  - [ ] Test: the normaliser (blank, spaces, `+91…`, local); one save per service stores NULL for blank.
+- **Done when:** no phone column in any schema holds an empty string.
+- **Notes:** the lanes are many but each edit is small; release each lane as soon as its commit lands.
 
 ### TK-21 · `apps/desktop`: a real cart
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
@@ -1415,6 +1456,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: another branch's PDF gets `Forbid()`.
 - **Done when:** a posted invoice's PDF/A file downloads from the invoice screen.
 - **Notes:**
+  - D-11 answered (2026-09-24): PDFsharp. Replace every mention of Syncfusion as the intended library (CLAUDE.md is done by TK-88).
 
 ### TK-27 · Date input that follows the branch's format
 - [ ] open
@@ -1460,7 +1502,7 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Notes:** this would be recreated inside the TK-01 squash if both are done together. Do TK-01 first.
 
 ### TK-28 · RateSync.Worker: metals (IBJA)
-- [!] blocked — D-14
+- [ ] open
 - **Lanes:** L-RATE · **Depends on:** TK-73 · **Decision:** D-14
 - **Where:** copy `backend/worker/CostingEngine.Worker/Program.cs`, as the note in
   `RateSync.Worker/Program.cs` asks.
@@ -1472,15 +1514,17 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Test: a second run on the same day writes nothing.
 - **Done when:** the day's metal rates appear in `rat` with their date.
 - **Notes:**
+  - D-14 answered (2026-09-24): both manual entry (TK-73) and the IBJA API. **Ask the owner for the IBJA credentials before starting**; store them through `ISecretStore`, never in `appsettings`.
 
 ### TK-29 · RateSync.Worker: currency (RBI)
-- [!] blocked — D-03
+- [ ] open
 - **Lanes:** L-RATE · **Depends on:** TK-73 · **Decision:** D-03
 - **Sub-tasks:** follow D-03's answer (scraping, a paid wrapper, or manual entry through TK-73's page).
   - [ ] Upsert `rat.ExchangeRates` against INR.
   - [ ] Make it idempotent per day.
 - **Done when:** the day's exchange rates appear in `rat` with their date.
 - **Notes:**
+  - D-03 answered (2026-09-24): manual entry (TK-73's page) plus a daily scrape of RBI's reference-rate page. Keep the parser isolated and tested against a saved copy of the page, and let a failed scrape log to `ErrorLogs` with `FollowUpStatus = Open` rather than write a rate.
 
 ### TK-30 · Fixed assets: a service layer, guards and tests
 - [ ] open
@@ -1521,7 +1565,7 @@ If the code has moved on since a card was written, correct the card in your clai
     the lib's `index.ts` nor routed anywhere in `apps/web`, so no user can reach them.
 
 ### TK-74 · Fixed assets: capitalisation and disposal postings
-- [!] blocked — D-19, D-20
+- [ ] open
 - **Lanes:** L-ACC, L-PUR · **Depends on:** TK-30 · **Decision:** D-19, D-20
 - **Where:**
   - `FixedAssetsController.cs:95-170`: the doc comments record both open questions.
@@ -1547,6 +1591,9 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Done when:** an asset bought on a bill depreciates, is disposed of, and each step posts a
   balanced journal.
 - **Notes:**
+  - D-19 answered (2026-09-24): reclassify to the category's account; a migrated asset debits against Opening Balance Equity.
+  - D-20 answered (2026-09-24): **support both** disposal paths — proceeds to a bank or cash account chosen on the disposal, **or** a sales invoice to the buyer (Dr the buyer's receivable). The disposal request carries one of `ProceedsBankAccountId` or `SalesInvoiceId`.
+  - D-09 answered: no new transaction codes; acquisition rides `BIL`/`OPB`, disposal `INV`/`JRN`.
 
 ### TK-31 · The four fixed-asset reports
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
@@ -1648,7 +1695,66 @@ If the code has moved on since a card was written, correct the card in your clai
     away from zero, and the in-memory tests use .NET's half-to-even. They agree everywhere except
     an exact `.xx5`, and none of the tests' figures lands on one.
 
+### TK-81 · Production databases are created by infrastructure (D-02)
+- [ ] open
+- **Lanes:** L-MST, L-DEPS · **Depends on:** TK-01 · **Decision:** D-02 (answered)
+- **Where:** `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs:50,140` (`EnsureDatabaseExistsAsync`, which issues `CREATE DATABASE` at 263), `deploy/azure/` (Bicep).
+- **Sub-tasks:**
+  - [ ] Call `EnsureDatabaseExistsAsync` only when the environment is Development; elsewhere, a missing database fails startup with a clear message.
+  - [ ] Declare the admin database and the first tenant shard (`IN000001`) as Bicep resources on the flexible server.
+  - [ ] Drop `CREATEDB` from the application role in deployment docs.
+  - [ ] Note for TK-40: provisioning a new shard in production must then go through infrastructure (or an operator action), not the app.
+- **Done when:** a Production start against an existing server needs no `CREATEDB`, and a Development start still creates its databases.
+- **Notes:**
+
+### TK-84 · Settings: one Nx lib per sub-screen (D-05)
+- [ ] open
+- **Lanes:** L-MASTER-UI, L-DEPS, L-WEB · **Depends on:** — · **Decision:** D-05 (answered)
+- **Where:** `frontend/libs/master/master-ui/src/lib/` — today one lib holding `api-clients`, `configurations`, `org-currencies`, `organization-settings`, `organizations`, `print-templates`, `roles`, `smtp-settings`, `users` beside contacts and HSN/SAC.
+- **Sub-tasks:**
+  - [ ] Agree the target layout before moving code (for example `libs/settings/{users,roles,organizations,organization-settings,currencies,configuration,smtp,api-clients,print-templates}`), and write it in `docs/Modules.md`'s shared-master-pages table, since H0 mounts these pages from every app.
+  - [ ] Generate the libs, move each folder, add a path alias per lib in `tsconfig.base.json`, update imports and routes.
+  - [ ] Lint, typecheck and every app build are clean.
+- **Done when:** each settings screen is its own lib and every app still builds and routes to it.
+- **Notes:** do this before TK-38 (H0.3), which mounts the shared pages in several apps.
+
+### TK-86 · API clients get per-action permissions through their role (D-07)
+- [ ] open
+- **Lanes:** L-MST, L-KERNEL · **Depends on:** — · **Decision:** D-07 (answered)
+- **Where:** `backend/Api/Master/Master.Entity/TableEntities/ApiClient.cs` (`RoleId`, stored but unused), `Master.Api/Controllers/InternalApiKeysController.cs` (validation), `backend/shared/Shared.Kernel/Security/ApiKeyAuthenticationHandler.cs:43-47`.
+- **State:** a validated API key produces `customer_id`, `org_id`, `sub`, `name` and `role = ApiClient` — **no `permission` claims**, so every `[RequireModulePermission]` endpoint refuses it.
+- **Sub-tasks:**
+  - [ ] Validation returns the permission codes of the client's `RoleId`; the handler adds one `permission` claim per code.
+  - [ ] The API-clients page lets the owner pick the role, and a role holding `platform.*` can never be chosen.
+  - [ ] Test: a key whose role has `sales.view` can list invoices and gets 403 on posting one.
+- **Done when:** an API client can do exactly what its role's `{module}.{action}` permissions allow.
+- **Notes:**
+
+### TK-87 · Seeds and menus follow the branch's trade (D-10)
+- [ ] open
+- **Lanes:** L-MST, L-INV, L-MASTER-UI · **Depends on:** — · **Decision:** D-10 (answered)
+- **Where:** `backend/Api/Master/Master.Entity/TableEntities/Organization.cs:34` (`Vertical`), `Master.Entity/Enums/Vertical.cs`, `Master.Api/Services/TenantSeeder.cs` (`ReadVerticalAsync`), `backend/Api/Inventory/Inventory.Api/Controllers/InternalSeedController.cs:58`, `Master.Api/Services/MenuService.cs`, `docs/Modules.md` §5.14.
+- **State:** the trade exists and seeding already receives it. `OrganizationModels.cs:81,208` carries it as a **string** (hard rule 7 wants the enum). Menus ignore it.
+- **Sub-tasks:**
+  - [ ] Change the request and response models to the `Vertical` enum.
+  - [ ] List which seeds and menus belong to Pharma and Jewellery only (drug schedules, metal purities, making charges…), write the list in §5.14, then filter seeding and `MenuService` by it.
+  - [ ] Changing a branch's trade later seeds what the new trade needs (idempotently) and hides the other's menus; it never deletes data.
+  - [ ] Test: a General branch gets no metal purities; switching it to Jewellery seeds them once.
+- **Done when:** a new branch shows only its trade's menus and master data.
+- **Notes:**
+
 ### D · Phase 3: POS
+
+### TK-89 · Seed a `WALKIN` contact per branch
+- [ ] open
+- **Lanes:** L-CON · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-34)
+- **Where:** `backend/Api/Master/Master.Api/Controllers/InternalSeedController.cs` (Master's own branch seed), the contact service's create path.
+- **Sub-tasks:**
+  - [ ] Seed one contact per branch: code `WALKIN`, name "Walk-in Customer", role customer, no GSTIN (so B2C place of supply is the branch's state).
+  - [ ] Idempotent: seeding twice leaves one; the code can't be reused by a user-created contact.
+  - [ ] Test: a new branch has exactly one `WALKIN`, and `pos-lookup.service`'s exact-code lookup finds it.
+- **Done when:** the till's default customer resolves on a new branch with no setup.
+- **Notes:**
 
 ### TK-33 · POS till API (T7.1)
 - [ ] open
@@ -1683,6 +1789,7 @@ If the code has moved on since a card was written, correct the card in your clai
     `checkout()` still posts the scaffold's plain draft invoice; replace it with TK-33's endpoint.
     Two open questions to settle here: a `WALKIN` contact is not seeded anywhere, and a
     tax-inclusive price can total a paisa under its MRP (see TK-21's Notes).
+  - **Decided by the owner (2026-09-24):** a `WALKIN` contact is seeded per branch (TK-89) and the till defaults to it; POS invoices carry a **round-off line** to the rupee, posted to the seeded Round Off account; the till **refuses sales while offline** (no local queue).
 
 ### TK-35 · POS receipt, ESC/POS (T7.3)
 - [ ] open
@@ -1787,6 +1894,7 @@ None of it is built.
 - **Done when:** signing up for Payroll and then starting HRMS gives one customer, one branch, two
   licences and one set of employees.
 - **Notes:**
+  - D-12 answered (2026-09-24): RetailErp and School licences count users with a branch cap; HRMS and Payroll count active employees per month.
 
 ### TK-40 · H0.5: sharding in the multi-app model
 - [ ] open
@@ -2156,62 +2264,73 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under F.
 
 ### H · Phase 3: not designed yet
 
-Each of these needs the owner's approval before its design is written. The card is done when the
+All six have the owner's go-ahead (D-17, 2026-09-24). The card is done when the
 design section exists under `docs/` and new cards for it are added to this queue.
 
 ### TK-64 · Design: `apps/portal`, the next screens
-- [!] blocked — D-16 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-16 (answered)
 - **State:** `apps/portal` has a dashboard and a statement list over real endpoints.
+- **Notes:**
+  - D-16 answered (2026-09-24): design these screens: overall outstanding and overall trade value on the dashboard; invoice list with PDF download (TK-26); online payment; quotes to accept or reject; support tickets (Customer module). Every portal route takes `[RequirePortalAccess]`.
+
+### TK-85 · Design: CRM campaigns and marketing automation (D-06)
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-06 (answered: in v1)
+- **Sub-tasks:**
+  - [ ] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-20), unsubscribe handling, and what a campaign reports.
+  - [ ] Add build cards for it to this queue.
+- **Done when:** the design is in `docs/Modules.md` and its cards are queued.
 
 ### TK-65 · Design: project accounting
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 
 ### TK-66 · Design: budgeting
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 
 ### TK-67 · Design: workflow approvals
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 - **Notes:** TK-43 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
 
 ### TK-68 · Design: custom fields and custom reports
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 
 ### TK-69 · Design: e-invoicing and e-way bill
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 - **Notes:** delivery challans already carry `EwayBillNo` and `EwayBillDate`.
 
 ### TK-70 · Design: compliance bundle
-- [!] blocked — D-17 · **Lanes:** L-DOC
+- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
 
 ---
 
-## 3. Decisions waiting on the owner
+## 3. Decisions from the owner
 
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
 answer and the date here, then change the blocked cards to `- [ ] open`.
 
+**Every decision here was answered by 24 September 2026.** A new question gets the next number (D-21).
+
 | ID | Question | Blocks | Answer |
 |---|---|---|---|
-| D-01 | How does a platform operator's account get `platform.*`? | `apps/admin` sign-in | |
-| D-02 | Who holds `CREATEDB` in production? Should the database be auto-created at startup, or provisioned by infra? | deployment, TK-40 | |
-| D-03 | RBI rate ingestion: scraping, a paid wrapper, or manual entry? | TK-29 | |
-| D-04 | Optional phone fields: normalise to an empty string or to null? | — | |
-| D-05 | Does `settings` split into a lib per sub-screen? | — | |
-| D-06 | CRM: is campaign and marketing automation in v1? | — | |
-| D-07 | API client scopes: per module or per action? | — | |
-| D-08 | Fixed assets: book **and** tax depreciation? *The code already has both schedule types, and straight-line and WDV methods. Confirm or change.* | TK-30 (confirms) | |
-| D-09 | Fixed assets: do acquisition and disposal get their own transaction codes, or ride `BIL` and `JRN`? | TK-74 | |
-| D-10 | Does a branch declare its trade (Pharma, Jewellery or General)? | — | |
-| D-11 | PDF library: *PDFsharp 6.1.1 is already in use for invoice PDFs.* Confirm it, or go to Syncfusion. | TK-26 | |
-| D-12 | Pricing per app: per user, per branch, or per employee? | TK-39 | |
+| D-01 | How does a platform operator's account get `platform.*`? | `apps/admin` sign-in | **A flag on the user** (owner, 2026-09-24): `mst.Users.IsPlatformOperator`, set only by bootstrap configuration or by another operator; a token carries `platform.*` when it is true. Never a role. TK-82 |
+| D-02 | Who holds `CREATEDB` in production? Should the database be auto-created at startup, or provisioned by infra? | deployment, TK-40 | **Infrastructure creates the databases** (owner, 2026-09-24). The app runs without `CREATEDB` in production; auto-create stays for Development only. TK-81 |
+| D-03 | RBI rate ingestion: scraping, a paid wrapper, or manual entry? | TK-29 | **Manual entry, plus a daily scrape of RBI's reference-rate page** (owner, 2026-09-24). Manual entry is TK-73's page; the scrape is TK-29 |
+| D-04 | Optional phone fields: normalise to an empty string or to null? | — | **NULL** (owner, 2026-09-24). Trim input; a blank optional phone is stored as NULL everywhere. TK-83 |
+| D-05 | Does `settings` split into a lib per sub-screen? | — | **Yes, split** (owner, 2026-09-24): one Nx lib per settings sub-screen. TK-84 |
+| D-06 | CRM: is campaign and marketing automation in v1? | — | **Yes, in v1** (owner, 2026-09-24): campaigns and marketing automation. Not designed yet, so TK-85 writes the design first |
+| D-07 | API client scopes: per module or per action? | — | **Per action** (owner, 2026-09-24): an API client is granted `{module}.{action}` permissions through its role, like a user. TK-86 |
+| D-08 | Fixed assets: book **and** tax depreciation? *The code already has both schedule types, and straight-line and WDV methods. Confirm or change.* | TK-30 (confirms) | **Keep Books + Tax** (owner, 2026-09-24), with straight-line and WDV, as built |
+| D-09 | Fixed assets: do acquisition and disposal get their own transaction codes, or ride `BIL` and `JRN`? | TK-74 | **Ride existing codes** (owner, 2026-09-24): acquisition under `BIL` or `OPB`, disposal under `INV` or `JRN`; only depreciation has its own (`DEP`) |
+| D-10 | Does a branch declare its trade (Pharma, Jewellery or General)? | — | **Yes, a branch declares its trade** (owner, 2026-09-24). `Organization.Vertical` (General, Pharma, Jewellery) already exists and reaches seeding; menus and seeds narrow to it in TK-87 |
+| D-11 | PDF library: *PDFsharp 6.1.1 is already in use for invoice PDFs.* Confirm it, or go to Syncfusion. | TK-26 | **PDFsharp** (owner, 2026-09-24). Syncfusion is dropped; archive copies become PDF/A. TK-26 |
+| D-12 | Pricing per app: per user, per branch, or per employee? | TK-39 | **Per user with a branch cap** for RetailErp and School (today's `MaxUsers` and `MaxOrganizations`); **per active employee per month** for HRMS and Payroll (owner, 2026-09-24) |
 | D-13 | Has anything been deployed with real data? Dropping `con.PrintTemplates` loses templates unless they're migrated. | TK-24 | **Nothing is deployed** (owner, 2026-09-24). TK-24 may drop `con.PrintTemplates` in the same change that copies its rows to `prt`. |
-| D-14 | Subscribe to IBJA's paid metals API? | TK-28 | |
+| D-14 | Subscribe to IBJA's paid metals API? | TK-28 | **Both** (owner, 2026-09-24): manual entry now (TK-73's page) **and** IBJA's paid API (TK-28). The owner supplies the IBJA credentials, stored through `ISecretStore` |
 | D-15 | What is the *Business Performance* report? | TK-32 | **Xero-style KPI ratios over a period** (owner, 2026-09-24): gross profit margin, net profit margin, return on investment, average days customers take to pay, average days to pay suppliers, current assets to current liabilities, term assets to liabilities, and total cash balance. |
-| D-16 | What should the client portal do next? | TK-64 | |
-| D-17 | Go-ahead, and the order, for each Phase 3 design | TK-65 … TK-70 | |
-| D-18 | What is Customer stage C4? The proposal is per-branch SLA hours per priority, replacing the hard-coded ones in `TicketsController.cs:101`. | TK-19 | |
-| D-19 | Capitalising a fixed asset: does it reclassify the bill's shared Fixed Asset account to the category's account? Does a migrated asset debit against Opening Balance Equity? | TK-74 | |
-| D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-74 | |
+| D-16 | What should the client portal do next? | TK-64 | **All of these** (owner, 2026-09-24): overall outstanding and overall trade value (sales to date) on the dashboard; view and download invoices; pay online; accept or reject quotes; raise and follow support tickets. TK-64 |
+| D-17 | Go-ahead, and the order, for each Phase 3 design | TK-65 … TK-70 | **Go-ahead for all six** (owner, 2026-09-24): e-invoicing and e-way bill, workflow approvals, budgeting, project accounting, custom fields and reports, and the compliance bundle. Order: as listed in section H |
+| D-18 | What is Customer stage C4? The proposal is per-branch SLA hours per priority, replacing the hard-coded ones in `TicketsController.cs:101`. | TK-19 | **A per-branch SLA table** (owner, 2026-09-24): `cus.SlaPolicies`, seeded with Urgent 2 h, High 8 h, Medium 2 days, Low 7 days, editable per branch. TK-19 |
+| D-19 | Capitalising a fixed asset: does it reclassify the bill's shared Fixed Asset account to the category's account? Does a migrated asset debit against Opening Balance Equity? | TK-74 | **Reclassify to the category** (owner, 2026-09-24): capitalising posts Dr the category's Fixed Asset account / Cr the shared Fixed Asset account the bill used; a migrated asset (no bill) debits the category account against Opening Balance Equity. TK-74 |
+| D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-74 | **Both ways** (owner, 2026-09-24): the disposal either names the bank or cash account the proceeds landed in, or is raised as a sales invoice to the buyer (Dr the buyer's receivable); either way the accumulated depreciation is written back, the asset removed at cost and the gain or loss booked. TK-74 |
 
 ---
 
