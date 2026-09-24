@@ -629,6 +629,9 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Owner: run `Accounting.Api.Tests` from a dropped `ACCOUNTING_TEST_DB`.
 - **Done when:** a posted, unbalanced journal cannot be committed, and a draft can.
 - **Notes:** found while doing TK-02.
+  - From TK-13 (2026-09-24): **this number is also held by "Sale challans post to Goods Delivered
+    Not Invoiced, once"**, which was added first (with TK-12, commit `cb7da6c`). One of the two
+    needs the next unused number; `CLAUDE.md` cites this one.
 
 ### TK-79 · Internal endpoints that set no tenant
 - [ ] open
@@ -778,37 +781,79 @@ If the code has moved on since a card was written, correct the card in your clai
     challan half of `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-13 · Sales credit note: guards, void reason and stock return
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-SAL, L-SAL-UI, L-INV (one controller line: a return must be recorded as a return), L-ACC (seed Sales Returns and Round Off; owner's decision 2026-09-23) · **Depends on:** — · **Decision:** —
 - **Where:**
-  - `backend/Api/Sales/Sales.Api/Controllers/CreditNotesController.cs`: lines 22-61.
-  - `backend/Api/Sales/Sales.Api/Services/CreditNoteService.cs`: `PostAsync` at 317, `VoidAsync` at
-    583, `ReturnsStockMovementId` at 383.
-  - `backend/tests/Sales.Api.Tests/CreditNoteServiceTests.cs`: 2 save tests.
-  - `frontend/libs/sales/sales-ui/src/lib/credit-note-form/`
-- **State:** saving works and is tested. The controller doesn't follow the conventions
-  `DeliveryChallansController` does:
-  - `Post` has no `[PermissionAction("approve")]`;
-  - `Void` has no `[PermissionAction("void")]`, and takes no reason (`VoidAsync(long, ct)`), yet
-    every void must carry one;
-  - the routes use `{id}` instead of `{id:long}`.
-  - `docs/Modules.md` §10 also lists T5.2's `ReturnsStockMovementId` as defective, without saying how.
+  - `backend/Api/Sales/Sales.Api/Services/CreditNoteService.cs`, `Controllers/CreditNotesController.cs`
+  - `backend/Api/Inventory/Inventory.Api/Controllers/InternalStockController.cs` (`Receipt`)
+  - `backend/Api/Accounting/Accounting.Entity/Enums/SystemAccount.cs`, `Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`
+  - `frontend/libs/sales/sales-ui/src/lib/credit-note-form/`, `frontend/libs/sales/sales-core/src/lib/credit-note.service.ts`
+- **State (as left, 2026-09-24):**
+  - Save, post and void return `CreditNoteResult`; the controller maps 404 / 409 / 422 / 503. Post
+    needs `sales.approve`, void `sales.void`; every id route is `{id:long}`.
+  - A note must correct a posted invoice, for the same customer, line by line and item by item. A
+    sales return cannot exceed the invoice line's `Quantity − ReturnedQuantity`.
+  - Posting claims the note against its invoice, returns goods (sales returns only), posts AR /
+    Sales Returns / Output GST / Round Off, and writes the GST register. A refused stock or ledger
+    step releases the claim.
+  - Void takes a reason. A posted non-return withdraws its ledger rows, register rows and claim; a
+    posted sales return is refused.
 - **Sub-tasks:**
-  - [ ] Add `[PermissionAction("approve")]` to `Post` and `[PermissionAction("void")]` to `Void`,
+  - [x] Add `[PermissionAction("approve")]` to `Post` and `[PermissionAction("void")]` to `Void`,
         and change the routes to `{id:long}`.
-  - [ ] Add `VoidCreditNoteRequest { [Required(ErrorMessage=…)] string Reason }`, and pass the
+  - [x] Add `VoidCreditNoteRequest { [Required(ErrorMessage=…)] string Reason }`, and pass the
         reason through to `VoidAsync` and the stored row.
-  - [ ] Read `CreditNoteService.cs:370-400` against Inventory's return API to find the
-        `ReturnsStockMovementId` defect, then fix it. The returned stock must reference the issue it
-        reverses.
-  - [ ] Add a void-reason field to the form.
-  - [ ] Test: posting reverses the revenue and GST legs, and returns stock at the original cost.
-  - [ ] Test: a void without a reason gets 400.
-  - [ ] Test: `EndpointGuardAudit` still passes.
-  - [ ] Owner: run `Sales.Api.Tests`.
+  - [x] Find and fix the `ReturnsStockMovementId` defect. It was on Inventory's side:
+        `InternalStockController.Receipt` recorded every line as `Receipt`, and the costing engine
+        only walks a `SalesReturn` back to its layers, so the id was stored and never read. Now a
+        line naming `ReturnsStockMovementId` is a `SalesReturn` and reports no value. The credit
+        note also sent `UnitPrice` as the cost; it now sends the invoice line's `UnitCost`.
+  - [x] Add a void-reason field to the form. The form was rebuilt (below), because its reason codes
+        did not match the server's and it could not produce a valid note.
+  - [x] Test: posting reverses the revenue and GST legs, and returns stock at the original cost.
+  - [x] Test: a void without a reason gets 400 (model validation on `VoidCreditNoteRequest`, and
+        the service refuses a blank one).
+  - [x] Test: `EndpointGuardAudit` still passes — covered by the existing `EndpointGuardTests`; the
+        two new attributes are the documented `PermissionAction` form.
+  - [ ] Owner: run `Sales.Api.Tests`, `Inventory.Api.Tests` and `Accounting.Api.Tests`.
 - **Done when:** a credit note against a posted invoice posts, returns its stock, and can be voided
   only with a reason.
 - **Notes:**
+  - **Sales posted to account names the chart does not have.** The ledger resolves
+    `AccountSystemName` exactly. The invoice used "Sales", "Tax Payable" and "Round Off"; the
+    credit note "Sales Returns" and "Tax Payable". By the owner's decision of 2026-09-23 both now
+    use the chart's names (Sales Revenue, Output GST), and the seed gains **Sales Returns** (4200,
+    contra Income) and **Round Off** (5900, Expense). Existing branches get them through
+    `AccountService`'s idempotent seed, which is what the admin retry runs.
+    `Sales.Api.Tests.SalesAccountNameTests` reads every `const string …Account` in
+    `Sales.Api.Services` and holds it to `ChartOfAccountsSeed`. Two names are allowed to fail, each
+    with a card: "Goods Delivered Not Invoiced" and "Cash" (the POS till).
+  - The credit note no longer posts Inventory / COGS legs. The costing worker posts a sourced
+    `SalesReturn` as Dr Inventory / Cr COGS (`StockLedgerMapping`), so posting both double-counted.
+    The same question for the invoice and the challan is on the GDNI card.
+  - The form: reason codes were 1–7 against a server enum of 0–4, so "Sales Return" saved as a price
+    correction and no stock ever came back. Lines sent the grid's own row id as `invoiceDetailId`
+    and no tax group. An edit always created a new note. Now: *Load invoice*, or pick from the
+    customer's open invoices in the allocation grid; lines carry their invoice line; Post and Void.
+  - Found, not fixed (`L-PUR`): Purchase posts Input GST with `SubAccountReferenceId =
+    line.TaxMasterId`, but `TaxMasterService` provisions tax sub-accounts keyed on `TaxGroupId`.
+    Where the two ids differ, the ledger refuses a bill with *SubAccountMissing*.
+  - Not atomic, and said so in `PostAsync`'s summary: the claim, the stock return and the ledger
+    post are three calls to two services. A refusal after the claim releases it; a retry is safe
+    because Inventory treats a repeated receipt as already recorded and the ledger replaces a
+    document's rows.
+  - **Two cards are numbered TK-78.** The GDNI card was added with TK-12 (commit `cb7da6c`); the
+    trigger-restoring card took the same number later, and `CLAUDE.md` now cites it. The comments in
+    `SalesAccountNameTests` and `DeliveryChallanService` mean the GDNI card.
+  - Docs: `frontend/apps/docs/content/credit-notes.md` (new), the manifest, release notes.
+  - **Left for `L-DOC`:** `CLAUDE.md` "Still not built" still calls the credit note a scaffold
+    with no verified path.
+  - Tests written, not run: `backend/tests/Sales.Api.Tests/CreditNoteServiceTests.cs` (rewritten,
+    21 tests), `SalesAccountNameTests.cs` (new), `InvoicePostingTests.cs` and
+    `InvoicesControllerTests.cs` (renamed accounts), `Stubs.cs` (receipts and claims recorded,
+    refusable); `backend/tests/Inventory.Api.Tests/InternalStockControllerTests.cs` (a return is a
+    `SalesReturn`); section 3 of `frontend/libs/sales/sales-ui/src/lib/sales-forms.spec.ts` (14
+    tests) and `CHAL-SALES-05` in `challenger-m4-m5-verification.spec.ts`.
 
 ### TK-14 · Partial fulfilment (T3.6): what's left
 - [ ] open
@@ -886,6 +931,12 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once,
   GDNI at zero, and one cost-of-sales debit.
 - **Notes:** raised from TK-12 by the owner's decision of 2026-09-23.
+  - From TK-13 (2026-09-24): **another card is also numbered TK-78** (restoring the ledger's
+    triggers, cited in `CLAUDE.md`). This one came first. Other facts for this card:
+    `SalesAccountNameTests` allows "Goods Delivered Not Invoiced" and "Cash" to be unseeded and
+    names this card; seed GDNI and take it off that list. The credit note no longer posts its own
+    COGS legs (the worker posts the sales return), which is the arrangement this card is deciding
+    for the invoice.
 
 ### TK-15 · Item search: barcode and paging
 - [ ] open

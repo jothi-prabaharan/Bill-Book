@@ -1,6 +1,21 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
+import { ApiDocumentLine } from './document-line-scale';
+
+/**
+ * Why the note is raised. Mirrors `CreditNoteReason` on the server, value for
+ * value — the screen used to offer seven reasons numbered 1 to 7 against a
+ * server enum of five numbered from 0, so "Sales Return" was saved as a price
+ * correction and no stock ever came back.
+ */
+export enum CreditNoteReason {
+  SalesReturn = 0,
+  PriceCorrection = 1,
+  PostSaleDiscount = 2,
+  Deficiency = 3,
+  Cancellation = 4,
+}
 
 export interface CreditNoteListItem {
   creditNoteId: number;
@@ -9,7 +24,8 @@ export interface CreditNoteListItem {
   documentNo: string;
   contactId: number;
   contactName: string;
-  status: number;
+  /** Draft / ReadyToPost / Posted / Void, by name. */
+  status: string;
   totalAmount: number;
 }
 
@@ -20,13 +36,15 @@ export interface CreditNoteView {
   documentNo: string;
   contactId: number;
   contactName: string;
-  status: number;
-  reasonCode: number;
+  contactGstin?: string | null;
+  status: string;
+  reasonCode: CreditNoteReason;
   currencyCode: string;
   exchangeRate: number;
-  notes?: string;
-  billingAddress?: string;
-  shippingAddress?: string;
+  notes?: string | null;
+  billingAddress?: string | null;
+  shippingAddress?: string | null;
+  voidReason?: string | null;
   placeOfSupplyStateId: number;
   isInterState: boolean;
   subTotal: number;
@@ -42,33 +60,21 @@ export interface CreditNoteView {
   lines: CreditNoteLineView[];
 }
 
-export interface CreditNoteLineView {
+export interface CreditNoteLineView extends ApiDocumentLine {
   creditNoteDetailId: number;
   invoiceDetailId: number;
-  itemId?: number;
-  itemLabel?: string;
-  description?: string;
-  quantity: number;
-  unitPrice: number;
-  discountPercent: number;
-  discountAmount: number;
+  itemLabel?: string | null;
   lineTotal: number;
   taxAmount: number;
-  taxes: CreditNoteLineTaxView[];
-}
-
-export interface CreditNoteLineTaxView {
-  taxComponent: number;
-  subAccountId: number;
-  amount: number;
 }
 
 export interface SaveCreditNoteRequest {
-  creditNoteId?: number;
   invoiceId: number;
   documentDate: string;
   contactId: number;
-  reasonCode: number;
+  contactGstin?: string;
+  placeOfSupplyStateCode?: string;
+  reasonCode: CreditNoteReason;
   currencyCode?: string;
   exchangeRate: number;
   notes?: string;
@@ -77,49 +83,70 @@ export interface SaveCreditNoteRequest {
   lines: SaveCreditNoteLineRequest[];
 }
 
+/**
+ * One line to save. Every line names the invoice line it corrects, and carries
+ * that line's item — the server refuses anything else.
+ */
 export interface SaveCreditNoteLineRequest {
   invoiceDetailId: number;
-  itemId: number;
+  itemId?: number;
   quantity: number;
   unitPrice: number;
   discountPercent: number;
-  taxGroupIds: number[];
+  taxGroupId?: number;
 }
 
+export interface VoidCreditNoteRequest {
+  reason: string;
+}
+
+/** What the server answers a save, post or void with. */
+export interface CreditNoteResult {
+  creditNoteId: number;
+}
+
+/**
+ * Sales › Credit notes. Promises rather than streams, like the invoice and
+ * challan services, so a refusal can be caught and shown in its own words.
+ */
 @Injectable({
   providedIn: 'root'
 })
 export class CreditNoteService {
-  private http = inject(HttpClient);
-  private baseUrl = '/api/sales/credit-notes';
+  private readonly http = inject(HttpClient);
+  private readonly baseUrl = '/api/sales/credit-notes';
 
-  list(from?: string, to?: string): Observable<CreditNoteListItem[]> {
-    let url = this.baseUrl;
-    const params = new URLSearchParams();
-    if (from) params.append('from', from);
-    if (to) params.append('to', to);
-    if (params.toString()) url += `?${params.toString()}`;
-    
-    return this.http.get<CreditNoteListItem[]>(url);
+  async list(from?: string, to?: string): Promise<CreditNoteListItem[]> {
+    const params: Record<string, string> = {};
+    if (from) {
+      params['from'] = from;
+    }
+    if (to) {
+      params['to'] = to;
+    }
+
+    return firstValueFrom(this.http.get<CreditNoteListItem[]>(this.baseUrl, { params }));
   }
 
-  get(id: number): Observable<CreditNoteView> {
-    return this.http.get<CreditNoteView>(`${this.baseUrl}/${id}`);
+  async get(id: number): Promise<CreditNoteView> {
+    return firstValueFrom(this.http.get<CreditNoteView>(`${this.baseUrl}/${id}`));
   }
 
-  save(request: SaveCreditNoteRequest): Observable<{ creditNoteId: number }> {
-    return this.http.post<{ creditNoteId: number }>(this.baseUrl, request);
+  async create(request: SaveCreditNoteRequest): Promise<CreditNoteResult> {
+    return firstValueFrom(this.http.post<CreditNoteResult>(this.baseUrl, request));
   }
 
-  update(id: number, request: SaveCreditNoteRequest): Observable<void> {
-    return this.http.put<void>(`${this.baseUrl}/${id}`, request);
+  async update(id: number, request: SaveCreditNoteRequest): Promise<CreditNoteResult> {
+    return firstValueFrom(this.http.put<CreditNoteResult>(`${this.baseUrl}/${id}`, request));
   }
 
-  post(id: number): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/${id}/post`, {});
+  /** Claims the note against its invoice, returns any goods, and reverses the revenue and tax. */
+  async post(id: number): Promise<CreditNoteResult> {
+    return firstValueFrom(this.http.post<CreditNoteResult>(`${this.baseUrl}/${id}/post`, {}));
   }
 
-  void(id: number): Observable<void> {
-    return this.http.post<void>(`${this.baseUrl}/${id}/void`, {});
+  /** Withdraws a note, with a reason. A posted sales return cannot be voided. */
+  async voidCreditNote(id: number, request: VoidCreditNoteRequest): Promise<CreditNoteResult> {
+    return firstValueFrom(this.http.post<CreditNoteResult>(`${this.baseUrl}/${id}/void`, request));
   }
 }

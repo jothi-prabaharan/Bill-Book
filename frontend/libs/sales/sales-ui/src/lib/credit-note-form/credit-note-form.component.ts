@@ -1,8 +1,22 @@
 import { ChangeDetectionStrategy } from '@angular/core';
-import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, computed, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CreditNoteService, LedgerService, OutstandingBalance, SaveCreditNoteRequest } from '@bill-book/sales-core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { readApiFailure } from '@bill-book/api-client';
+import {
+  CreditNoteReason,
+  CreditNoteService,
+  CreditNoteView,
+  InvoiceService,
+  LedgerService,
+  OutstandingBalance,
+  SaveCreditNoteRequest,
+  toApiLine,
+  toGridLine,
+} from '@bill-book/sales-core';
 import {
   AllocationGridComponent,
   AllocationRow,
@@ -17,19 +31,29 @@ import {
   SelectComponent,
   TextareaComponent,
   TextInputComponent,
-  UiMessage,
   totalsOf,
+  UiMessage,
 } from '@bill-book/ui-components';
-import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 
 /**
- * The grid holds paise and six-decimal quantities; the API speaks decimals.
- * The two scales are crossed exactly here and nowhere else — the server
- * recomputes every figure from what is sent, totals included.
+ * A grid line that remembers which invoice line it corrects. The grid spreads a
+ * line into every copy it makes, so the field rides along through edits.
  */
-const QTY_SCALE = 1_000_000;
-const PAISE = 100;
+type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
 
+/**
+ * The credit note form — the correction of a posted invoice.
+ *
+ * **The lines come from the invoice.** *Load invoice* fills the customer and one
+ * line per invoice line — for a sales return, at what is still left to come
+ * back; for anything else, at the quantity invoiced, for the price to be
+ * corrected. Each line carries the invoice line it corrects, which is what the
+ * server checks it against and what a returned item's cost is taken from.
+ *
+ * **Posting is irreversible for a return.** The goods go back into stock, so a
+ * posted sales return cannot be voided; a posted price correction, discount or
+ * deficiency can, and its entry is withdrawn.
+ */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-credit-note-form',
@@ -37,235 +61,442 @@ const PAISE = 100;
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    RouterModule,
     DocumentLineGridComponent,
     AllocationGridComponent,
-    RouterModule,
+    MessageBoxComponent,
     DateInputComponent,
     TextInputComponent,
     TextareaComponent,
     NumberInputComponent,
     SelectComponent,
     ExchangeRateInputComponent,
-    MessageBoxComponent,
   ],
   templateUrl: './credit-note-form.component.html',
-  styleUrl: './credit-note-form.component.scss'
+  styleUrl: './credit-note-form.component.scss',
 })
 export class CreditNoteFormComponent implements OnInit {
-  private fb = inject(FormBuilder);
-  private creditNoteService = inject(CreditNoteService);
-  private ledgerService = inject(LedgerService);
-  private route = inject(ActivatedRoute);
-  private router = inject(Router);
+  private readonly fb = inject(FormBuilder);
+  private readonly creditNotes = inject(CreditNoteService);
+  private readonly invoices = inject(InvoiceService);
+  private readonly ledger = inject(LedgerService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  isEdit = false;
-  creditNoteId: number | null = null;
+  protected readonly isEdit = signal(false);
+  protected readonly creditNoteId = signal<number | null>(null);
+  protected readonly saving = signal(false);
+  protected readonly loadingInvoice = signal(false);
+  protected readonly messages = signal<UiMessage[]>([]);
 
-  form = this.fb.group({
-    documentDate: [new Date().toISOString().split('T')[0], Validators.required],
-    invoiceId: ['', Validators.required],
-    contactId: [1, Validators.required],
-    reasonCode: [1, Validators.required],
-    currencyCode: ['INR', Validators.required],
-    exchangeRate: [1, [Validators.required, Validators.min(0.0001)]],
-    billingAddress: [''],
-    shippingAddress: [''],
-    notes: ['']
+  protected readonly status = signal('Draft');
+  protected readonly documentNo = signal('');
+
+  protected readonly form = this.fb.nonNullable.group({
+    documentDate: [today(), Validators.required],
+    invoiceId: [null as number | null, [Validators.required, Validators.min(1)]],
+    contactId: [0, [Validators.required, Validators.min(1)]],
+    contactGstin: ['', [Validators.maxLength(15)]],
+    placeOfSupplyStateCode: ['', [Validators.maxLength(2), Validators.pattern(/^\d{0,2}$/)]],
+    reasonCode: [CreditNoteReason.SalesReturn, Validators.required],
+    currencyCode: ['INR', [Validators.required, Validators.maxLength(3)]],
+    exchangeRate: [1, [Validators.required, Validators.min(0.00000001)]],
+    billingAddress: ['', [Validators.maxLength(100)]],
+    shippingAddress: ['', [Validators.maxLength(100)]],
+    notes: ['', [Validators.maxLength(500)]],
   });
 
-  /**
-   * The GST credit-note reasons, as the return expects them. Numbers, not the
-   * strings a native `<select>` publishes — `bb-select` gives back the value it
-   * was given rather than the element's string, which is why the `+` coercion
-   * on save is now belt and braces rather than load-bearing.
-   */
-  readonly reasonCodes: BbSelectOption<number>[] = [
-    { value: 1, label: 'Sales Return' },
-    { value: 2, label: 'Post Sale Discount' },
-    { value: 3, label: 'Deficiency in Services' },
-    { value: 4, label: 'Correction in Invoice' },
-    { value: 5, label: 'Change in POS' },
-    { value: 6, label: 'Finalization of Provisional Assessment' },
-    { value: 7, label: 'Others' },
+  /** Why the note is being withdrawn. Its own group, so it stays usable on a posted note. */
+  protected readonly voidForm = this.fb.nonNullable.group({
+    reason: ['', [Validators.required, Validators.maxLength(300)]],
+  });
+
+  /** The server's reasons, value for value. Only a sales return brings goods back. */
+  protected readonly reasonCodes: BbSelectOption<CreditNoteReason>[] = [
+    { value: CreditNoteReason.SalesReturn, label: 'Sales return' },
+    { value: CreditNoteReason.PriceCorrection, label: 'Price correction' },
+    { value: CreditNoteReason.PostSaleDiscount, label: 'Discount after sale' },
+    { value: CreditNoteReason.Deficiency, label: 'Deficiency or damage' },
+    { value: CreditNoteReason.Cancellation, label: 'Cancellation of the invoice' },
   ];
 
-  lines: DocumentLine[] = [];
-  context: DocumentLineContext = {
-    isInterState: false,
+  protected readonly lines = signal<CreditNoteGridLine[]>([]);
+  protected readonly allocationRows = signal<AllocationRow[]>([]);
+
+  private readonly formValue = toSignal(this.form.valueChanges, {
+    initialValue: this.form.getRawValue(),
+  });
+
+  protected readonly context = computed<DocumentLineContext>(() => ({
+    isInterState: this.looksInterState(),
     currencyDecimals: 2,
-    allowFreeTextLines: true,
+    allowFreeTextLines: false,
     discountBeforeTax: true,
     discountLevel: 'Line',
-    readonly: false
-  };
+    readonly: !this.editable(),
+  }));
 
-  allocationRows: AllocationRow[] = [];
-  allocationMessage = '';
+  protected readonly totals = computed(() => totalsOf(this.lines()));
 
-  /**
-   * What the note will claim, in rupees — the same unit the ledger and the
-   * outstanding balances speak. The server recomputes the total on save; this
-   * is the grid's best preview of it.
-   */
-  get amountToAllocate(): number {
-    return this.totals.totalAmount / PAISE;
-  }
+  /** What the note will claim, in rupees — the unit the outstanding balances speak. */
+  protected readonly amountToAllocate = computed(() => this.totals().totalAmount / 100);
 
-  get totals() {
-    return totalsOf(this.lines);
-  }
+  protected readonly editable = computed(
+    () => this.status() === 'Draft' || this.status() === 'ReadyToPost',
+  );
 
-  ngOnInit() {
+  protected readonly canPost = computed(
+    () => this.isEdit() && this.editable() && this.lines().length > 0,
+  );
+
+  /** A draft, or a posted note that brought no goods back. */
+  protected readonly canVoid = computed(() => {
+    if (!this.isEdit() || this.status() === 'Void') {
+      return false;
+    }
+
+    const isReturn = Number(this.formValue().reasonCode) === CreditNoteReason.SalesReturn;
+    return this.editable() || !isReturn;
+  });
+
+  ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
+
     if (id && id !== 'new') {
-      this.isEdit = true;
-      this.creditNoteId = +id;
-      this.loadCreditNote();
+      this.isEdit.set(true);
+      this.creditNoteId.set(Number(id));
+      void this.load();
     }
   }
 
-  loadCreditNote() {
-    if (!this.creditNoteId) return;
-    this.creditNoteService.get(this.creditNoteId).subscribe(cn => {
-      this.form.patchValue({
-        documentDate: cn.documentDate,
-        invoiceId: cn.invoiceId.toString(),
-        contactId: cn.contactId,
-        reasonCode: cn.reasonCode,
-        currencyCode: cn.currencyCode,
-        exchangeRate: cn.exchangeRate,
-        billingAddress: cn.billingAddress,
-        shippingAddress: cn.shippingAddress,
-        notes: cn.notes
-      });
-      this.lines = (cn.lines || []).map(l => ({
-        detailId: l.creditNoteDetailId,
-        lineNumber: l.creditNoteDetailId,
-        itemId: l.itemId,
-        description: l.description,
-        quantity: Math.round(l.quantity * QTY_SCALE),
-        unitPrice: Math.round(l.unitPrice * PAISE),
-        discountPercent: l.discountPercent || 0
-      } as any));
-      this.loadOutstanding();
-    });
-  }
-
-  /**
-   * The invoices the note can settle: the contact's outstanding CONTROL
-   * balances, kept to invoices with something actually left to claim. A
-   * payment's negative balance is not an invoice and an invoice that is fully
-   * settled owes nothing.
-   */
-  loadOutstanding() {
-    const contactId = this.form.get('contactId')?.value;
-    if (!contactId || contactId <= 0) {
-      this.allocationRows = [];
+  protected async load(): Promise<void> {
+    const id = this.creditNoteId();
+    if (id === null) {
       return;
     }
 
-    this.ledgerService.outstandingBalances(contactId).subscribe(balances => {
-      this.allocationRows = balances
-        .filter(b => b.transactionTypeCode === 'INV' && b.outstandingAmount > 0)
-        .map(b => this.toAllocationRow(b));
+    try {
+      this.apply(await this.creditNotes.get(id));
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    }
+  }
+
+  private apply(note: CreditNoteView): void {
+    this.status.set(note.status);
+    this.documentNo.set(note.documentNo);
+
+    this.form.patchValue({
+      documentDate: note.documentDate,
+      invoiceId: note.invoiceId,
+      contactId: note.contactId,
+      contactGstin: note.contactGstin ?? '',
+      reasonCode: note.reasonCode,
+      currencyCode: note.currencyCode,
+      exchangeRate: note.exchangeRate,
+      billingAddress: note.billingAddress ?? '',
+      shippingAddress: note.shippingAddress ?? '',
+      notes: note.notes ?? '',
     });
-  }
 
-  private toAllocationRow(b: OutstandingBalance): AllocationRow {
-    return {
-      transactionTypeCode: b.transactionTypeCode,
-      transactionId: b.transactionId,
-      documentNo: b.documentNo,
-      documentDate: b.documentDate,
-      dueDate: b.dueDate,
-      totalAmount: b.totalAmount,
-      outstandingAmount: b.outstandingAmount,
-      allocatedAmount: 0
-    };
-  }
+    this.lines.set(
+      note.lines.map((line, index) => ({
+        ...toGridLine({ ...line, itemName: line.itemLabel }, index + 1),
+        invoiceDetailId: line.invoiceDetailId,
+      })),
+    );
 
-  onContactChange() {
-    this.form.get('invoiceId')?.setValue('');
-    this.allocationMessage = '';
-    this.loadOutstanding();
-  }
-
-  /**
-   * The grid is the invoice picker. A credit note names exactly one invoice —
-   * GST requires it — so the allocated rows decide the invoice, and two of
-   * them is a refusal, shown here rather than discovered at the ledger.
-   */
-  onAllocationRowsChange(rows: AllocationRow[]) {
-    this.allocationRows = rows;
-
-    const allocated = rows.filter(r => (r.allocatedAmount || 0) > 0);
-
-    if (allocated.length === 1) {
-      this.form.get('invoiceId')?.setValue(allocated[0].transactionId.toString());
-      this.allocationMessage = '';
-    } else if (allocated.length > 1) {
-      this.form.get('invoiceId')?.setValue('');
-      this.allocationMessage =
-        'A credit note corrects exactly one invoice. Reduce the allocation to a single invoice.';
+    if (this.editable()) {
+      this.form.enable({ emitEvent: false });
     } else {
-      this.form.get('invoiceId')?.setValue('');
-      this.allocationMessage = '';
+      this.form.disable({ emitEvent: false });
+    }
+
+    if (note.status === 'Void' && note.voidReason) {
+      this.messages.set([{ tone: 'warning', text: `This credit note was voided: ${note.voidReason}` }]);
     }
   }
 
-  onLinesChange(newLines: readonly DocumentLine[]) {
-    this.lines = [...newLines];
-  }
+  /**
+   * Fills the note from a posted invoice: its customer, addresses and currency,
+   * and one line per invoice line. The server checks every line against the
+   * invoice again on save and on post.
+   */
+  protected async loadInvoice(): Promise<void> {
+    const invoiceId = this.form.controls.invoiceId.value;
+    this.messages.set([]);
 
-  messages: UiMessage[] = [];
-  saving = false;
-
-  onPickItem(_index: number) {
-    // open item picker dialog, update lines
-  }
-
-  save() {
-    this.form.markAllAsTouched();
-    if (this.form.invalid) return;
-
-    if (!this.form.get('invoiceId')?.value) {
-      this.messages = [{ tone: 'error', text: 'Select exactly one invoice to allocate against.' }];
+    if (!invoiceId || invoiceId < 1) {
+      this.form.controls.invoiceId.markAsTouched();
+      this.messages.set([{ tone: 'error', text: 'Enter the number of a posted invoice.' }]);
       return;
     }
 
-    const val = this.form.value;
-    const request: SaveCreditNoteRequest = {
-      documentDate: val.documentDate!,
-      invoiceId: +val.invoiceId!,
-      contactId: val.contactId!,
-      reasonCode: +val.reasonCode!,
-      currencyCode: val.currencyCode!,
-      exchangeRate: val.exchangeRate!,
-      billingAddress: val.billingAddress || undefined,
-      shippingAddress: val.shippingAddress || undefined,
-      notes: val.notes || undefined,
-      lines: this.lines.map(l => ({
-        invoiceDetailId: l.detailId ?? undefined,
-        itemId: l.itemId ?? undefined,
-        description: l.description ?? undefined,
-        quantity: l.quantity / QTY_SCALE,
-        unitPrice: l.unitPrice / PAISE,
-        discountPercent: l.discountPercent ?? 0,
-        taxGroupIds: []
-      } as any))
-    } as any;
+    this.loadingInvoice.set(true);
 
-    this.saving = true;
-    this.messages = [];
-    this.creditNoteService.save(request).subscribe({
-      next: () => {
-        this.saving = false;
-        void this.router.navigate(['../'], { relativeTo: this.route });
-      },
-      error: () => {
-        this.saving = false;
-        this.messages = [{ tone: 'error', text: 'Failed to save the credit note.' }];
+    try {
+      const invoice = await this.invoices.get(invoiceId);
+
+      if (invoice.status !== 'Posted') {
+        this.messages.set([{ tone: 'error', text: 'A credit note can only correct a posted invoice.' }]);
+        return;
       }
-    });
+
+      const isReturn = Number(this.form.controls.reasonCode.value) === CreditNoteReason.SalesReturn;
+
+      const available = invoice.lines
+        .map((line) => ({
+          line,
+          quantity: isReturn ? (line.quantity ?? 0) - line.returnedQuantity : (line.quantity ?? 0),
+        }))
+        .filter(({ quantity }) => quantity > 0);
+
+      if (available.length === 0) {
+        this.messages.set([
+          { tone: 'warning', text: 'Everything on this invoice has already been returned.' },
+        ]);
+        return;
+      }
+
+      this.form.patchValue({
+        contactId: invoice.contactId,
+        contactGstin: invoice.contactGstin ?? '',
+        currencyCode: invoice.currencyCode,
+        exchangeRate: invoice.exchangeRate,
+        billingAddress: invoice.billingAddress ?? '',
+        shippingAddress: invoice.shippingAddress ?? '',
+      });
+
+      this.lines.set(
+        available.map(({ line, quantity }, index) => ({
+          ...toGridLine({ ...line, itemName: line.itemLabel, quantity, discountAmount: 0 }, index + 1),
+          invoiceDetailId: line.invoiceDetailId,
+        })),
+      );
+
+      await this.loadOutstanding();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.loadingInvoice.set(false);
+    }
   }
+
+  /**
+   * The customer's invoices with something left to claim, shown so the note's
+   * invoice can be picked from them. A payment's negative balance is not an
+   * invoice, and a settled invoice owes nothing.
+   */
+  protected async loadOutstanding(): Promise<void> {
+    const contactId = this.form.controls.contactId.value;
+    if (!contactId || contactId <= 0) {
+      this.allocationRows.set([]);
+      return;
+    }
+
+    try {
+      const balances = await firstValueFrom(this.ledger.outstandingBalances(contactId));
+      this.allocationRows.set(
+        balances
+          .filter((b) => b.transactionTypeCode === 'INV' && b.outstandingAmount > 0)
+          .map((b) => toAllocationRow(b)),
+      );
+    } catch {
+      // An advisory list: the note can still be keyed by invoice number.
+      this.allocationRows.set([]);
+    }
+  }
+
+  /**
+   * The grid picks the invoice. A credit note corrects exactly one — GST
+   * requires it — so a single allocated row loads that invoice, and two of them
+   * are refused here rather than at the ledger.
+   */
+  protected async onAllocationRowsChange(rows: AllocationRow[]): Promise<void> {
+    this.allocationRows.set(rows);
+
+    const allocated = rows.filter((r) => (r.allocatedAmount || 0) > 0);
+
+    if (allocated.length > 1) {
+      this.messages.set([
+        { tone: 'error', text: 'A credit note corrects exactly one invoice. Pick a single invoice.' },
+      ]);
+      return;
+    }
+
+    if (allocated.length === 1 && allocated[0].transactionId !== this.form.controls.invoiceId.value) {
+      this.form.patchValue({ invoiceId: allocated[0].transactionId });
+      await this.loadInvoice();
+    }
+  }
+
+  protected onLinesChange(lines: readonly DocumentLine[]): void {
+    this.lines.set([...lines]);
+  }
+
+  protected onPickItem(_index: number): void {
+    // Lines come from the invoice; there is nothing to pick.
+  }
+
+  protected async save(): Promise<void> {
+    this.form.markAllAsTouched();
+    this.messages.set([]);
+
+    if (this.form.invalid) {
+      return;
+    }
+
+    const priced = this.lines().filter((line) => line.quantity > 0);
+
+    if (priced.length === 0) {
+      this.messages.set([
+        { tone: 'error', text: 'Load the invoice first — a credit note needs at least one of its lines.' },
+      ]);
+      return;
+    }
+
+    if (priced.some((line) => !line.invoiceDetailId)) {
+      this.messages.set([
+        {
+          tone: 'error',
+          text: 'Every line must be one of the invoice’s lines. Load the invoice again rather than adding lines by hand.',
+        },
+      ]);
+      return;
+    }
+
+    this.saving.set(true);
+
+    const value = this.form.getRawValue();
+
+    const request: SaveCreditNoteRequest = {
+      invoiceId: value.invoiceId!,
+      documentDate: value.documentDate,
+      contactId: value.contactId,
+      contactGstin: value.contactGstin || undefined,
+      placeOfSupplyStateCode: value.placeOfSupplyStateCode || undefined,
+      reasonCode: Number(value.reasonCode) as CreditNoteReason,
+      currencyCode: value.currencyCode || undefined,
+      exchangeRate: value.exchangeRate,
+      billingAddress: value.billingAddress || undefined,
+      shippingAddress: value.shippingAddress || undefined,
+      notes: value.notes || undefined,
+      lines: priced.map((line) => {
+        const api = toApiLine(line);
+        return {
+          invoiceDetailId: line.invoiceDetailId!,
+          itemId: api.itemId ?? undefined,
+          quantity: api.quantity ?? 0,
+          unitPrice: api.unitPrice ?? 0,
+          discountPercent: api.discountPercent ?? 0,
+          taxGroupId: api.taxGroupId ?? undefined,
+        };
+      }),
+    };
+
+    try {
+      const id = this.creditNoteId();
+
+      if (this.isEdit() && id !== null) {
+        await this.creditNotes.update(id, request);
+        await this.load();
+        this.messages.set([{ tone: 'success', text: 'Credit note saved.' }]);
+      } else {
+        const created = await this.creditNotes.create(request);
+        await this.router.navigate(['/sales/credit-notes', created.creditNoteId]);
+      }
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Claims the note against its invoice, returns any goods, and reverses the revenue and tax. */
+  protected async post(): Promise<void> {
+    const id = this.creditNoteId();
+    if (id === null) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      await this.creditNotes.post(id);
+      await this.load();
+      this.messages.set([{ tone: 'success', text: 'Credit note posted.' }]);
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  protected async voidCreditNote(): Promise<void> {
+    const id = this.creditNoteId();
+    if (id === null) {
+      return;
+    }
+
+    this.voidForm.markAllAsTouched();
+
+    if (this.voidForm.invalid) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      await this.creditNotes.voidCreditNote(id, { reason: this.voidForm.controls.reason.value.trim() });
+      this.voidForm.reset();
+      await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Whether a field should show its error yet — touched, and actually wrong. */
+  protected showError(control: keyof typeof this.form.controls): boolean {
+    const field = this.form.controls[control];
+    return field.invalid && (field.touched || field.dirty);
+  }
+
+  /** Which tax columns to draw. The note's own `IsInterState` is decided on the server. */
+  private looksInterState(): boolean {
+    const value = this.formValue();
+    const stated = value.placeOfSupplyStateCode ?? '';
+    const gstin = value.contactGstin ?? '';
+    const supply = stated || gstin.slice(0, 2);
+
+    return supply.length === 2 && supply !== BRANCH_STATE_FALLBACK;
+  }
+}
+
+/** The branch's own state, until the settings endpoint is wired into this page — as on the invoice. */
+const BRANCH_STATE_FALLBACK = '33';
+
+function toAllocationRow(b: OutstandingBalance): AllocationRow {
+  return {
+    transactionTypeCode: b.transactionTypeCode,
+    transactionId: b.transactionId,
+    documentNo: b.documentNo,
+    documentDate: b.documentDate,
+    dueDate: b.dueDate,
+    totalAmount: b.totalAmount,
+    outstandingAmount: b.outstandingAmount,
+    allocatedAmount: 0,
+  };
+}
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
 }

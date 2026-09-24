@@ -73,7 +73,7 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
   };
   let mockCreditNoteService: {
     get: ReturnType<typeof vi.fn>;
-    save: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
   };
   let mockDeliveryChallanService: {
     get: ReturnType<typeof vi.fn>;
@@ -173,9 +173,10 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       update: vi.fn().mockResolvedValue(undefined),
     };
 
+    // Promises: CreditNoteService is awaited since TK-13.
     mockCreditNoteService = {
-      get: vi.fn().mockReturnValue(of({ creditNoteId: 1, lines: [] })),
-      save: vi.fn().mockReturnValue(of({ creditNoteId: 1 })),
+      get: vi.fn().mockResolvedValue({ creditNoteId: 1, status: 'Draft', lines: [] }),
+      create: vi.fn().mockResolvedValue({ creditNoteId: 1 }),
     };
 
     // Promises: DeliveryChallanService is awaited since TK-12.
@@ -527,7 +528,12 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
         totals(): { subTotal: number; totalAmount: number };
       };
       order.onLinesChange([sampleLine]);
-      creditNote.onLinesChange([sampleLine]);
+      // Protected and signal-backed since TK-13, like the sales order.
+      const note = creditNote as unknown as {
+        onLinesChange(lines: readonly DocumentLine[]): void;
+        totals(): { subTotal: number; totalAmount: number };
+      };
+      note.onLinesChange([sampleLine]);
 
       // Protected and signal-backed since TK-12, like the sales order.
       const challan = deliveryChallan as unknown as {
@@ -542,8 +548,8 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       expect(order.totals().subTotal).toBe(5000000);
       expect(order.totals().totalAmount).toBe(4635000);
 
-      expect(creditNote.totals.subTotal).toBe(5000000);
-      expect(creditNote.totals.totalAmount).toBe(4635000);
+      expect(note.totals().subTotal).toBe(5000000);
+      expect(note.totals().totalAmount).toBe(4635000);
 
       expect(challan.totals().subTotal).toBe(5000000);
       expect(challan.totals().totalAmount).toBe(4635000);

@@ -1,110 +1,250 @@
-<div class="page-container">
-  <header class="page-header">
-    <h1>{{ isEdit ? 'Edit Credit Note' : 'New Credit Note' }}</h1>
-    <button class="primary" [disabled]="saving" (click)="save()">{{ saving ? 'Saving...' : 'Save' }}</button>
+<section class="crn-form">
+  <header class="crn-form__head">
+    <div class="crn-form__identity">
+      <h1 class="crn-form__title">
+        {{ isEdit() ? (documentNo() || 'Credit note') : 'New credit note' }}
+      </h1>
+
+      @if (isEdit()) {
+        <span class="tag tag-neutral">{{ status() }}</span>
+
+        @if (form.controls.invoiceId.value; as invoiceId) {
+          <a class="chip" [routerLink]="['/sales/invoices', invoiceId]">the invoice</a>
+        }
+      }
+    </div>
+
+    <div class="crn-form__actions">
+      @if (canPost()) {
+        <!-- A sales return puts goods back into stock; after that it can only be
+             answered with a new invoice, not withdrawn. -->
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="post()">
+          Post
+        </button>
+      }
+
+      @if (canVoid()) {
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="voidCreditNote()">
+          Void
+        </button>
+      }
+
+      @if (editable()) {
+        <button type="button" class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? 'Saving…' : 'Save' }}
+        </button>
+      }
+    </div>
   </header>
 
-  <bb-message-box [messages]="messages"></bb-message-box>
+  <bb-message-box [messages]="messages()" />
 
-  <form [formGroup]="form" class="form-grid">
+  @if (canVoid()) {
+    <form class="field crn-form__void" [formGroup]="voidForm">
+      <bb-text-input
+        id="crn-void-reason"
+        label="Reason, if voiding"
+        maxlength="300"
+        placeholder="Raised against the wrong invoice"
+        formControlName="reason"
+        [required]="true"
+        [error]="
+          voidForm.controls.reason.invalid && voidForm.controls.reason.touched
+            ? 'Say why this credit note is being voided. Its number stays on record, and the reason is what makes the gap in the sequence answerable.'
+            : ''
+        "
+      />
+    </form>
+  }
+
+  <form class="crn-form__fields" [formGroup]="form">
     <div class="field">
-      <bb-date-input id="docDate" label="Document Date" formControlName="documentDate" [required]="true" />
-    </div>
-    <div class="field">
-      <bb-number-input
-        id="contactId"
-        label="Contact (ID)"
-        min="1"
-        step="1"
-        inputmode="numeric"
-        formControlName="contactId"
-        (valueChange)="onContactChange()"
+      <bb-date-input
+        id="crn-date"
+        label="Credit note date"
+        formControlName="documentDate"
+        [required]="true"
+        [error]="showError('documentDate') ? 'Give the credit note a date.' : ''"
       />
     </div>
+
     <div class="field">
       <bb-select
-        id="reasonCode"
-        label="Reason Code"
+        id="crn-reason"
+        label="Reason"
+        hint="Only a sales return brings goods back into stock."
         placeholder=""
         [options]="reasonCodes"
         formControlName="reasonCode"
       />
     </div>
+
+    <div class="field crn-form__invoice">
+      <!-- An invoice id until the invoice picker lands with the other lookups. -->
+      <bb-number-input
+        id="crn-invoice"
+        label="Invoice"
+        hint="The posted invoice this corrects."
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="invoiceId"
+        [required]="true"
+        [error]="showError('invoiceId') ? 'Choose the invoice this corrects.' : ''"
+      />
+
+      @if (editable()) {
+        <button
+          type="button"
+          class="btn btn-secondary crn-form__load"
+          [disabled]="loadingInvoice()"
+          (click)="loadInvoice()"
+        >
+          {{ loadingInvoice() ? 'Loading…' : 'Load invoice' }}
+        </button>
+      }
+    </div>
+
+    <div class="field">
+      <bb-number-input
+        id="crn-contact"
+        label="Customer"
+        min="1"
+        step="1"
+        inputmode="numeric"
+        formControlName="contactId"
+        [required]="true"
+        [error]="showError('contactId') ? 'Choose the customer.' : ''"
+        (valueChange)="loadOutstanding()"
+      />
+    </div>
+
     <div class="field">
       <bb-text-input
-        id="currencyCode"
+        id="crn-gstin"
+        label="Customer GSTIN"
+        maxlength="15"
+        [uppercase]="true"
+        formControlName="contactGstin"
+        [error]="showError('contactGstin') ? 'A GSTIN is 15 characters.' : ''"
+      />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="crn-pos"
+        label="Place of supply"
+        inputmode="numeric"
+        maxlength="2"
+        placeholder="33"
+        hint="Leave blank to take it from the GSTIN."
+        formControlName="placeOfSupplyStateCode"
+        [error]="
+          showError('placeOfSupplyStateCode') ? 'Place of supply is a two-digit state code.' : ''
+        "
+      />
+    </div>
+
+    <div class="field">
+      <bb-text-input
+        id="crn-currency"
         label="Currency"
         maxlength="3"
         [uppercase]="true"
         formControlName="currencyCode"
+        [error]="showError('currencyCode') ? 'Currency is a three-letter code.' : ''"
       />
     </div>
+
     <div class="field">
-      <!-- Eight places, matching decimal(18,8). It was a text box stepping by
-           a hundredth. -->
       <bb-exchange-rate-input
-        id="exchangeRate"
-        label="Exchange Rate"
+        id="crn-rate"
+        label="Exchange rate"
+        [fromCurrency]="form.controls.currencyCode.value"
         formControlName="exchangeRate"
+        [required]="true"
+        [error]="showError('exchangeRate') ? 'Exchange rate must be greater than zero.' : ''"
       />
     </div>
+
     <div class="field">
-      <bb-textarea id="billingAddress" label="Billing Address" rows="2" formControlName="billingAddress" />
+      <bb-textarea id="crn-billing" label="Billing address" rows="2" formControlName="billingAddress" />
     </div>
+
     <div class="field">
-      <bb-textarea id="shippingAddress" label="Shipping Address" rows="2" formControlName="shippingAddress" />
+      <bb-textarea id="crn-shipping" label="Shipping address" rows="2" formControlName="shippingAddress" />
     </div>
-    <div class="field full-width">
-      <bb-textarea id="notes" label="Notes" rows="2" formControlName="notes" />
+
+    <div class="field crn-form__wide">
+      <bb-textarea id="crn-notes" label="Notes" rows="2" formControlName="notes" />
     </div>
   </form>
 
-  <div class="line-grid-container">
+  @if (editable() && allocationRows().length > 0) {
+    <!-- The customer's open invoices. Allocating to one of them loads it. -->
+    <div class="crn-form__allocation">
+      <bb-allocation-grid
+        [rows]="allocationRows()"
+        [amountToAllocate]="amountToAllocate()"
+        (rowsChange)="onAllocationRowsChange($event)"
+      />
+    </div>
+  }
+
+  <div class="crn-form__lines">
     <bb-document-line-grid
-      [lines]="lines"
-      [context]="context"
+      [lines]="lines()"
+      [context]="context()"
       (linesChange)="onLinesChange($event)"
       (pickItem)="onPickItem($event)"
-    ></bb-document-line-grid>
+    />
   </div>
 
-  <div class="allocation-container" *ngIf="allocationRows.length > 0">
-    <bb-allocation-grid
-      [rows]="allocationRows"
-      [amountToAllocate]="amountToAllocate"
-      (rowsChange)="onAllocationRowsChange($event)"
-    ></bb-allocation-grid>
-    <div class="allocation-message" *ngIf="allocationMessage">{{ allocationMessage }}</div>
-  </div>
+  <!-- Paise throughout, divided only to display. -->
+  <div class="crn-form__totals">
+    <div class="crn-form__total">
+      <span>Sub total</span>
+      <span>{{ totals().subTotal / 100 | number: '1.2-2' }}</span>
+    </div>
 
-  <div class="totals-panel">
-    <div class="total-row">
-      <span>Sub Total</span>
-      <span>{{ (totals.subTotal / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row" *ngIf="totals.discountAmount > 0">
-      <span>Discount</span>
-      <span>-{{ (totals.discountAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cgstAmount > 0">
-      <span>CGST</span>
-      <span>{{ (totals.cgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.sgstAmount > 0">
-      <span>SGST</span>
-      <span>{{ (totals.sgstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.igstAmount > 0">
-      <span>IGST</span>
-      <span>{{ (totals.igstAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row tax" *ngIf="totals.cessAmount > 0">
-      <span>CESS</span>
-      <span>{{ (totals.cessAmount / 100) | number:'1.2-2' }}</span>
-    </div>
-    <div class="total-row grand-total">
-      <span>Total Amount</span>
-      <span>{{ (totals.totalAmount / 100) | number:'1.2-2' }}</span>
+    @if (totals().discountAmount > 0) {
+      <div class="crn-form__total">
+        <span>Discount</span>
+        <span>-{{ totals().discountAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cgstAmount > 0) {
+      <div class="crn-form__total crn-form__total--tax">
+        <span>CGST</span>
+        <span>{{ totals().cgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().sgstAmount > 0) {
+      <div class="crn-form__total crn-form__total--tax">
+        <span>SGST</span>
+        <span>{{ totals().sgstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().igstAmount > 0) {
+      <div class="crn-form__total crn-form__total--tax">
+        <span>IGST</span>
+        <span>{{ totals().igstAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    @if (totals().cessAmount > 0) {
+      <div class="crn-form__total crn-form__total--tax">
+        <span>Cess</span>
+        <span>{{ totals().cessAmount / 100 | number: '1.2-2' }}</span>
+      </div>
+    }
+
+    <div class="crn-form__total crn-form__total--grand">
+      <span>Total</span>
+      <span>{{ totals().totalAmount / 100 | number: '1.2-2' }}</span>
     </div>
   </div>
-</div>
+</section>

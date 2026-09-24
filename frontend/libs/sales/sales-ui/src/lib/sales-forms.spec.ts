@@ -14,6 +14,8 @@ import {
   QuoteService,
   SalesOrderService,
   CreditNoteService,
+  CreditNoteReason,
+  InvoiceService,
   DeliveryChallanService,
   LedgerService,
   OutstandingBalance,
@@ -67,6 +69,33 @@ interface DeliveryChallanFormHarness {
   voidChallan(): Promise<void>;
 }
 
+/** The credit note form, by the same declared shape — protected members and signals since TK-13. */
+interface CreditNoteFormHarness {
+  ngOnInit(): void;
+  isEdit(): boolean;
+  creditNoteId(): number | null;
+  status(): string;
+  form: FormGroup;
+  voidForm: FormGroup;
+  messages(): UiMessage[];
+  lines(): (DocumentLine & { invoiceDetailId?: number | null })[];
+  allocationRows(): AllocationRow[];
+  totals(): { subTotal: number; totalAmount: number };
+  amountToAllocate(): number;
+  editable(): boolean;
+  canPost(): boolean;
+  canVoid(): boolean;
+  reasonCodes: { value: number; label: string }[];
+  onLinesChange(lines: readonly DocumentLine[]): void;
+  onAllocationRowsChange(rows: AllocationRow[]): Promise<void>;
+  load(): Promise<void>;
+  loadInvoice(): Promise<void>;
+  loadOutstanding(): Promise<void>;
+  save(): Promise<void>;
+  post(): Promise<void>;
+  voidCreditNote(): Promise<void>;
+}
+
 describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, DeliveryChallan)', () => {
   let mockRouter: Partial<Router>;
   let mockActivatedRoute: {
@@ -93,7 +122,14 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
 
   let mockCreditNoteService: {
     get: ReturnType<typeof vi.fn>;
-    save: ReturnType<typeof vi.fn>;
+    create: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
+    voidCreditNote: ReturnType<typeof vi.fn>;
+  };
+
+  let mockInvoiceService: {
+    get: ReturnType<typeof vi.fn>;
   };
 
   let mockLedgerService: {
@@ -205,18 +241,54 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       voidOrder: vi.fn().mockResolvedValue(undefined)
     };
 
+    // Promises since TK-13, like the invoice's.
     mockCreditNoteService = {
-      get: vi.fn().mockReturnValue(of({
+      get: vi.fn().mockResolvedValue({
         creditNoteId: 51,
+        documentNo: 'CN/2026/0051',
         documentDate: '2026-08-18',
         invoiceId: 42,
         contactId: 5,
-        reasonCode: 1,
+        status: 'Draft',
+        reasonCode: 0,
         currencyCode: 'INR',
         exchangeRate: 1,
         lines: []
-      })),
-      save: vi.fn().mockReturnValue(of({ creditNoteId: 51 }))
+      }),
+      create: vi.fn().mockResolvedValue({ creditNoteId: 51 }),
+      update: vi.fn().mockResolvedValue({ creditNoteId: 51 }),
+      post: vi.fn().mockResolvedValue({ creditNoteId: 51 }),
+      voidCreditNote: vi.fn().mockResolvedValue({ creditNoteId: 51 })
+    };
+
+    /** A posted invoice of 10 at 750, 4 already returned, on invoice line 701. */
+    mockInvoiceService = {
+      get: vi.fn().mockResolvedValue({
+        invoiceId: 42,
+        documentNo: 'INV-2026-001',
+        status: 'Posted',
+        contactId: 5,
+        contactGstin: '33AAAAA0000A1Z5',
+        currencyCode: 'INR',
+        exchangeRate: 1,
+        billingAddress: 'Chennai',
+        lines: [
+          {
+            invoiceDetailId: 701,
+            lineNumber: 1,
+            itemId: 10,
+            itemLabel: 'Gold Bar 24K',
+            quantity: 10,
+            conversionFactor: 1,
+            returnedQuantity: 4,
+            unitPrice: 750,
+            discountPercent: 0,
+            taxGroupId: 3,
+            lineType: 'Stock',
+            taxes: []
+          }
+        ]
+      })
     };
 
     mockLedgerService = {
@@ -274,6 +346,7 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
         { provide: QuoteService, useValue: mockQuoteService },
         { provide: SalesOrderService, useValue: mockSalesOrderService },
         { provide: CreditNoteService, useValue: mockCreditNoteService },
+        { provide: InvoiceService, useValue: mockInvoiceService },
         { provide: LedgerService, useValue: mockLedgerService },
         { provide: DeliveryChallanService, useValue: mockDeliveryChallanService }
       ]
@@ -477,107 +550,208 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
   // SECTION 3: CREDIT NOTE FORM
   // =========================================================================
   describe('3. CreditNoteFormComponent (R4 Specification)', () => {
-    it('CRN-T1-01: Form initializes with invoiceId and reasonCode controls', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+    const newNote = () =>
+      TestBed.runInInjectionContext(() => new CreditNoteFormComponent()) as unknown as CreditNoteFormHarness;
+
+    it('CRN-T1-01: Form initializes as a sales return in the branch currency', () => {
+      const comp = newNote();
       comp.ngOnInit();
 
-      expect(comp.isEdit).toBe(false);
-      expect(comp.creditNoteId).toBeNull();
-      expect(comp.form.get('reasonCode')?.value).toBe(1);
+      expect(comp.isEdit()).toBe(false);
+      expect(comp.creditNoteId()).toBeNull();
+      expect(comp.form.get('reasonCode')?.value).toBe(CreditNoteReason.SalesReturn);
       expect(comp.form.get('currencyCode')?.value).toBe('INR');
     });
 
-    it('CRN-T1-02: Create credit note saves SaveCreditNoteRequest DTO and navigates back', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+    it('CRN-T1-02: The reasons are the server enum, value for value', () => {
+      const comp = newNote();
+
+      // They were 1 to 7 against a server enum of 0 to 4, so "Sales Return"
+      // saved as a price correction and no stock ever came back.
+      expect(comp.reasonCodes.map((r) => r.value)).toEqual([0, 1, 2, 3, 4]);
+      expect(comp.reasonCodes[0].label).toBe('Sales return');
+    });
+
+    it('CRN-T1-03: Load invoice fills the customer and what is still left to return', async () => {
+      const comp = newNote();
       comp.ngOnInit();
-      comp.form.patchValue({
-        documentDate: '2026-08-18',
-        invoiceId: '42',
-        contactId: 5,
-        reasonCode: 2,
-        currencyCode: 'INR',
-        exchangeRate: 1,
-        notes: 'Damaged item return'
-      });
-      comp.onLinesChange([sampleLine]);
-      expect(comp.totals.subTotal).toBe(75000);
-      expect(comp.totals.totalAmount).toBe(77250);
+      comp.form.patchValue({ invoiceId: 42 });
 
-      comp.save();
+      await comp.loadInvoice();
 
-      expect(mockCreditNoteService.save).toHaveBeenCalledTimes(1);
-      const req: SaveCreditNoteRequest = mockCreditNoteService.save.mock.calls[0][0];
-      expect(req.documentDate).toBe('2026-08-18');
+      expect(mockInvoiceService.get).toHaveBeenCalledWith(42);
+      expect(comp.form.get('contactId')?.value).toBe(5);
+      expect(comp.form.get('contactGstin')?.value).toBe('33AAAAA0000A1Z5');
+
+      const lines = comp.lines();
+      expect(lines).toHaveLength(1);
+      expect(lines[0].invoiceDetailId).toBe(701);
+      expect(lines[0].itemId).toBe(10);
+    });
+
+    it('CRN-T1-04: A saved note names each invoice line, its item and its tax group', async () => {
+      const comp = newNote();
+      comp.ngOnInit();
+      comp.form.patchValue({ invoiceId: 42, documentDate: '2026-08-18', notes: 'Damaged on arrival' });
+      await comp.loadInvoice();
+
+      await comp.save();
+
+      expect(mockCreditNoteService.create).toHaveBeenCalledTimes(1);
+      const req: SaveCreditNoteRequest = mockCreditNoteService.create.mock.calls[0][0];
       expect(req.invoiceId).toBe(42);
       expect(req.contactId).toBe(5);
-      expect(req.reasonCode).toBe(2);
-      expect(req.notes).toBe('Damaged item return');
-      expect(mockRouter.navigate).toHaveBeenCalledWith(['../'], { relativeTo: mockActivatedRoute as any });
+      expect(req.reasonCode).toBe(CreditNoteReason.SalesReturn);
+      expect(req.notes).toBe('Damaged on arrival');
+      expect(req.lines).toHaveLength(1);
+      expect(req.lines[0].invoiceDetailId).toBe(701);
+      expect(req.lines[0].itemId).toBe(10);
+      expect(req.lines[0].quantity).toBe(6); // 10 sold, 4 already back
+      expect(req.lines[0].taxGroupId).toBe(3);
+      expect(mockRouter.navigate).toHaveBeenCalledWith(['/sales/credit-notes', 51]);
     });
 
-    it('CRN-T1-03: Edit credit note loads existing credit note by ID', () => {
+    it('CRN-T1-05: A price correction loads the full quantity invoiced', async () => {
+      const comp = newNote();
+      comp.form.patchValue({ invoiceId: 42, reasonCode: CreditNoteReason.PriceCorrection });
+
+      await comp.loadInvoice();
+      await comp.save();
+
+      const req: SaveCreditNoteRequest = mockCreditNoteService.create.mock.calls[0][0];
+      expect(req.lines[0].quantity).toBe(10);
+    });
+
+    it('CRN-T1-06: Load invoice refuses one that is not posted', async () => {
+      mockInvoiceService.get.mockResolvedValueOnce({ invoiceId: 42, status: 'Draft', lines: [] });
+      const comp = newNote();
+      comp.form.patchValue({ invoiceId: 42 });
+
+      await comp.loadInvoice();
+
+      expect(comp.messages()[0]?.tone).toBe('error');
+      expect(comp.lines()).toHaveLength(0);
+    });
+
+    it('CRN-T1-07: A line typed by hand, with no invoice line, is refused before the server', async () => {
+      const comp = newNote();
+      comp.form.patchValue({ invoiceId: 42, contactId: 5 });
+      comp.onLinesChange([sampleLine]);
+
+      await comp.save();
+
+      expect(mockCreditNoteService.create).not.toHaveBeenCalled();
+      expect(comp.messages()[0]?.tone).toBe('error');
+    });
+
+    it('CRN-T1-08: Edit loads the note by id and updates it', async () => {
       mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('51');
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      const comp = newNote();
       comp.ngOnInit();
+      await comp.load();
 
-      expect(comp.isEdit).toBe(true);
-      expect(comp.creditNoteId).toBe(51);
+      expect(comp.isEdit()).toBe(true);
+      expect(comp.creditNoteId()).toBe(51);
       expect(mockCreditNoteService.get).toHaveBeenCalledWith(51);
+
+      await comp.loadInvoice();
+      await comp.save();
+
+      expect(mockCreditNoteService.update).toHaveBeenCalledWith(51, expect.any(Object));
     });
 
-    it('CRN-T1-04: choosing a contact loads its outstanding invoices into the grid', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
-      comp.ngOnInit();
+    it('CRN-T1-09: Choosing a contact loads its outstanding invoices into the grid', async () => {
+      const comp = newNote();
       comp.form.patchValue({ contactId: 5 });
 
-      comp.onContactChange();
+      await comp.loadOutstanding();
 
-      // Ledger type defaults to 3 (CONTROL) when the caller does not say.
       expect(mockLedgerService.outstandingBalances).toHaveBeenCalledWith(5);
-      // Only the invoice is allocated against; a payment's negative balance
-      // is not an invoice.
-      expect(comp.allocationRows.length).toBe(1);
-      expect(comp.allocationRows[0].transactionId).toBe(42);
+      // A payment's negative balance is not an invoice.
+      expect(comp.allocationRows()).toHaveLength(1);
+      expect(comp.allocationRows()[0].transactionId).toBe(42);
     });
 
-    it('CRN-T1-05: allocating one invoice sets it as the note invoice', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
-      comp.ngOnInit();
+    it('CRN-T1-10: Allocating to one invoice picks it and loads it; two are refused', async () => {
+      const comp = newNote();
 
-      comp.onAllocationRowsChange([
-        allocationRow(42, 77250, 500),
-        allocationRow(43, 100000, 0)
-      ]);
+      await comp.onAllocationRowsChange([allocationRow(42, 77250, 500), allocationRow(43, 100000, 0)]);
+      expect(comp.form.get('invoiceId')?.value).toBe(42);
+      expect(mockInvoiceService.get).toHaveBeenCalledWith(42);
 
-      expect(comp.form.get('invoiceId')?.value).toBe('42');
-      expect(comp.allocationMessage).toBe('');
+      await comp.onAllocationRowsChange([allocationRow(42, 77250, 500), allocationRow(43, 100000, 500)]);
+      expect(comp.messages()[0]?.text).toContain('exactly one invoice');
     });
 
-    it('CRN-T1-06: allocating two invoices refuses the note and blocks save', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+    it('CRN-T1-11: A void needs a reason before it reaches the server', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('51');
+      const comp = newNote();
       comp.ngOnInit();
+      await comp.load();
+
+      expect(comp.canVoid()).toBe(true);
+
+      await comp.voidCreditNote();
+      expect(mockCreditNoteService.voidCreditNote).not.toHaveBeenCalled();
+
+      comp.voidForm.patchValue({ reason: '  Raised twice  ' });
+      await comp.voidCreditNote();
+
+      expect(mockCreditNoteService.voidCreditNote).toHaveBeenCalledWith(51, { reason: 'Raised twice' });
+    });
+
+    it('CRN-T1-12: A posted sales return cannot be voided; a posted price correction can', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('51');
+      const posted = {
+        creditNoteId: 51,
+        documentNo: 'CN/2026/0051',
+        documentDate: '2026-08-18',
+        invoiceId: 42,
+        contactId: 5,
+        status: 'Posted',
+        currencyCode: 'INR',
+        exchangeRate: 1,
+        lines: []
+      };
+
+      mockCreditNoteService.get.mockResolvedValueOnce({ ...posted, reasonCode: CreditNoteReason.SalesReturn });
+      const ret = newNote();
+      ret.ngOnInit();
+      await ret.load();
+      expect(ret.canPost()).toBe(false);
+      expect(ret.canVoid()).toBe(false);
+
+      mockCreditNoteService.get.mockResolvedValueOnce({ ...posted, reasonCode: CreditNoteReason.PriceCorrection });
+      const correction = newNote();
+      correction.ngOnInit();
+      await correction.load();
+      expect(correction.canVoid()).toBe(true);
+    });
+
+    it('CRN-T1-13: A refused post shows the server\'s own words', async () => {
+      mockActivatedRoute.snapshot.paramMap.get.mockReturnValue('51');
+      mockCreditNoteService.post.mockRejectedValueOnce(
+        new HttpErrorResponse({
+          status: 409,
+          error: { message: 'Invoice line 1 has 2 left that can come back, and this credit note returns 3.' }
+        })
+      );
+      const comp = newNote();
+      comp.ngOnInit();
+      await comp.load();
+
+      await comp.post();
+
+      expect(comp.messages()[0]?.tone).toBe('error');
+      expect(comp.messages()[0]?.text).toContain('left that can come back');
+    });
+
+    it('CRN-T1-14: The note total is what the grid gets to allocate, in rupees', () => {
+      const comp = newNote();
       comp.onLinesChange([sampleLine]);
-      comp.form.patchValue({ contactId: 5 });
 
-      comp.onAllocationRowsChange([
-        allocationRow(42, 77250, 500),
-        allocationRow(43, 100000, 500)
-      ]);
-
-      expect(comp.form.get('invoiceId')?.value).toBe('');
-      expect(comp.allocationMessage).toContain('exactly one invoice');
-
-      comp.save();
-      expect(mockCreditNoteService.save).not.toHaveBeenCalled();
-    });
-
-    it('CRN-T1-07: the note total is what the grid gets to allocate, in rupees', () => {
-      const comp = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
-      comp.ngOnInit();
-      comp.onLinesChange([sampleLine]);
-
-      expect(comp.totals.totalAmount).toBe(77250);
-      expect(comp.amountToAllocate).toBe(772.5);
+      expect(comp.totals().totalAmount).toBe(77250);
+      expect(comp.amountToAllocate()).toBe(772.5);
     });
   });
 
@@ -835,24 +1009,26 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       const sor = TestBed.runInInjectionContext(
         () => new SalesOrderFormComponent(),
       ) as unknown as SalesOrderFormHarness;
-      const crn = TestBed.runInInjectionContext(() => new CreditNoteFormComponent());
+      const crn = TestBed.runInInjectionContext(
+        () => new CreditNoteFormComponent(),
+      ) as unknown as CreditNoteFormHarness;
       const dlc = TestBed.runInInjectionContext(
         () => new DeliveryChallanFormComponent(),
       ) as unknown as DeliveryChallanFormHarness;
 
       qot.form.patchValue({ documentDate: '', validUntil: '' });
       sor.form.patchValue({ documentDate: '', contactId: 0 });
-      crn.form.patchValue({ documentDate: '', invoiceId: '' });
+      crn.form.patchValue({ documentDate: '', invoiceId: null });
       dlc.form.patchValue({ documentDate: '', dispatchDate: '' });
 
       qot.save();
       await sor.save();
-      crn.save();
+      await crn.save();
       await dlc.save();
 
       expect(mockQuoteService.create).not.toHaveBeenCalled();
       expect(mockSalesOrderService.create).not.toHaveBeenCalled();
-      expect(mockCreditNoteService.save).not.toHaveBeenCalled();
+      expect(mockCreditNoteService.create).not.toHaveBeenCalled();
       expect(mockDeliveryChallanService.create).not.toHaveBeenCalled();
     });
   });
