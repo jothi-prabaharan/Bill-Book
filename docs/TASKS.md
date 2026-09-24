@@ -1564,7 +1564,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-115 (purchase register, 3B, GSTR-1 export), TK-116 (2B reconciliation), TK-117 (TDS), TK-118 (audit trail), TK-119 (MSME and calendar). No decision needed.
 
 ### TK-38 · Design: CRM campaigns and marketing automation (D-06)
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-06 (answered: in v1)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Sub-tasks:**
   - [ ] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
   - [ ] Add build cards for it to this queue.
