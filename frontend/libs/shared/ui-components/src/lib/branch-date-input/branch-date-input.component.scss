@@ -1,0 +1,165 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.bb-bdate {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1, 4px);
+}
+
+.bb-bdate__field {
+  flex: 1 1 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  font-family: var(--font-body, system-ui, sans-serif);
+}
+
+.bb-bdate__toggle,
+.bb-bdate__nav,
+.bb-bdate__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  border: 1px solid var(--color-border, #d0d5dd);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-surface, #fff);
+  color: var(--color-text, #1d2939);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus, #2e90fa);
+    outline-offset: 1px;
+  }
+}
+
+.bb-bdate__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.bb-bdate__dialog {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1001;
+  width: 18rem;
+  padding: var(--space-2, 8px);
+  border: 1px solid var(--color-border, #d0d5dd);
+  border-radius: var(--radius-md, 6px);
+  background: var(--color-surface, #fff);
+  box-shadow: 0 8px 24px rgb(16 24 40 / 16%);
+}
+
+.bb-bdate__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1, 4px);
+  margin-bottom: var(--space-2, 8px);
+}
+
+.bb-bdate__month {
+  flex: 1 1 auto;
+  text-align: center;
+  font-weight: 600;
+}
+
+.bb-bdate__close {
+  display: none;
+}
+
+.bb-bdate__grid {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+
+  th {
+    padding: 2px 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-text-muted, #667085);
+    text-align: center;
+  }
+
+  td {
+    padding: 1px;
+    text-align: center;
+  }
+}
+
+.bb-bdate__day {
+  width: 100%;
+  aspect-ratio: 1;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm, 4px);
+  background: transparent;
+  color: var(--color-text, #1d2939);
+  font: inherit;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-hover, #f2f4f7);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus, #2e90fa);
+    outline-offset: -2px;
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.35;
+  }
+}
+
+.bb-bdate__day--outside {
+  color: var(--color-text-muted, #98a2b3);
+}
+
+.bb-bdate__day--today {
+  border-color: var(--color-primary, #1570ef);
+}
+
+.bb-bdate__day--selected {
+  background: var(--color-primary, #1570ef);
+  color: var(--color-on-primary, #fff);
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary, #1570ef);
+  }
+}
+
+// At phone width the calendar is a full-screen sheet, as every modal is (CLAUDE.md).
+@media (max-width: 480px) {
+  .bb-bdate__backdrop {
+    background: rgb(16 24 40 / 45%);
+  }
+
+  .bb-bdate__dialog {
+    position: fixed;
+    inset: 0;
+    width: auto;
+    border-radius: 0;
+    padding: var(--space-4, 16px);
+    overflow-y: auto;
+  }
+
+  .bb-bdate__close {
+    display: inline-flex;
+  }
+
+  .bb-bdate__day {
+    min-height: 2.75rem;
+    font-size: 1rem;
+  }
+}

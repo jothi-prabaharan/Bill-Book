@@ -1296,23 +1296,37 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - A voided invoice's archived copy is the one filed at post, with no VOID stamp. Re-filing on void is left for when PDF/A lands.
 
 ### TK-23 · Date input that follows the branch's format
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [!] blocked — the owner tries `bb-branch-date-input` before it replaces `bb-date-input` (built by Claude Opus 5.5, 2026-09-24 · tests written, not run)
 - **Lanes:** L-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: a native `<input type="date">`.
   - `frontend/libs/shared/currency-format/src/lib/format-settings.service.ts:55` (`formatDate`).
   - 26 templates use `bb-date-input`.
 - **Sub-tasks:**
-  - [ ] Build a text input with a calendar popover that displays
+  - [x] Build a text input with a calendar popover that displays
         `FormatSettingsService.settings().datePattern`, parses typed input in that pattern, and
         keeps the value ISO (`yyyy-MM-dd`) so all 26 callers stay unchanged.
-  - [ ] Make it keyboard- and screen-reader-accessible, and turn the popover into a full-screen
+  - [x] Make it keyboard- and screen-reader-accessible, and turn the popover into a full-screen
         sheet at 360px.
   - [ ] Show the proposal to the owner before swapping it in, since it changes every date field.
-  - [ ] Test: parse and format round trips for `dd/MM/yyyy`, `MM/dd/yyyy` and `yyyy-MM-dd`.
+  - [x] Test: parse and format round trips for `dd/MM/yyyy`, `MM/dd/yyyy` and `yyyy-MM-dd`.
   - [ ] Owner: check it with Playwright on a `dd/MM/yyyy` branch.
 - **Done when:** a branch on `dd/MM/yyyy` sees that format in every date field.
 - **Notes:**
+  - **Built beside the old one, not swapped (owner's instruction, 2026-09-24): "Build it, don't swap".**
+    - `bb-branch-date-input` is in `libs/shared/ui-components/src/lib/branch-date-input/`, exported beside `bb-date-input`.
+    - `parseDate` and `daysInMonth` are in `libs/shared/currency-format`, beside `formatDate`. Separators are lenient, single-digit parts are accepted, `yy` is read as 20yy, and the order of the parts is never guessed.
+    - The value is ISO in and out, so the swap is one selector change in each of the 26 templates.
+    - Accessibility:
+      - the field carries `aria-invalid` and `aria-describedby`;
+      - the toggle carries `aria-haspopup="dialog"` and `aria-expanded`;
+      - the calendar is a `role="dialog"` holding a `role="grid"` with a roving `tabindex`;
+      - each day is labelled with its weekday and full date, and today has `aria-current="date"`;
+      - Alt+Down opens the calendar from the field, and Escape closes it and returns focus.
+    - At 480px and below the calendar is a full-screen sheet.
+    - The template compiled under `strictTemplates`: it was mounted briefly in a page, `nx build web` was run, and the mount was reverted. No screen uses it yet.
+    - Specs: `format-settings.spec.ts` (`parseDate`: round trips for five patterns, including `dd/MM/yyyy`, `MM/dd/yyyy` and `yyyy-MM-dd`, plus refusals) and `branch-date-input/calendar.spec.ts`. The component itself has no spec, because this workspace's Vitest cannot compile a `templateUrl` component (CLAUDE.md).
+  - **To unblock:** the owner tries it (the Playwright sub-task above). If it is right, swap the selector in the 26 templates, delete `bb-date-input`'s "known limitation" note, and add the release note. No release note is written yet, because nothing a user sees has changed.
 
 ### TK-24 · `rat` schema: exchange and metal rate history
 - [ ] open

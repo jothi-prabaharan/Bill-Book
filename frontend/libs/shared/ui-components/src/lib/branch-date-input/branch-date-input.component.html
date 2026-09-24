@@ -1,0 +1,102 @@
+<bb-form-field
+  [label]="label()"
+  [controlId]="controlId()"
+  [required]="required()"
+  [hint]="hint()"
+  [error]="shownError()"
+  [hintId]="hintId()"
+  [errorId]="errorId()"
+>
+  <div class="bb-bdate">
+    <input
+      class="input bb-bdate__field"
+      type="text"
+      inputmode="numeric"
+      [id]="controlId()"
+      [name]="name() || null"
+      [placeholder]="shownPlaceholder()"
+      [attr.autocomplete]="autocomplete() || 'off'"
+      [disabled]="effectiveDisabled()"
+      [readonly]="readonly()"
+      [required]="required()"
+      [attr.aria-label]="effectiveAriaLabel()"
+      [attr.aria-invalid]="isInvalid() ? 'true' : null"
+      [attr.aria-describedby]="describedByIds()"
+      [value]="text()"
+      (input)="onInput($event)"
+      (keydown)="onKeydown($event)"
+      (blur)="onBlur($event)"
+      (focus)="onFocus($event)"
+    />
+    <button
+      type="button"
+      class="bb-bdate__toggle"
+      aria-haspopup="dialog"
+      [attr.aria-expanded]="open()"
+      [attr.aria-controls]="open() ? dialogId() : null"
+      [attr.aria-label]="'Choose date' + (label() ? ' for ' + label() : '')"
+      [disabled]="effectiveDisabled() || readonly()"
+      (click)="toggleCalendar()"
+    >
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
+        <rect x="3" y="5" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2" />
+        <path d="M3 10h18M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="2" />
+      </svg>
+    </button>
+
+    @if (open()) {
+      <div class="bb-bdate__backdrop" tabindex="-1" (click)="closeCalendar(false)" (keydown)="onDialogKeydown($event)"></div>
+      <div
+        class="bb-bdate__dialog"
+        role="dialog"
+        aria-modal="true"
+        tabindex="-1"
+        [id]="dialogId()"
+        [attr.aria-label]="'Choose a date' + (label() ? ' for ' + label() : '')"
+        (keydown)="onDialogKeydown($event)"
+      >
+        <div class="bb-bdate__head">
+          <button type="button" class="bb-bdate__nav" aria-label="Previous month" (click)="moveMonth(-1)">‹</button>
+          <span class="bb-bdate__month" aria-live="polite">{{ monthLabel() }}</span>
+          <button type="button" class="bb-bdate__nav" aria-label="Next month" (click)="moveMonth(1)">›</button>
+          <button type="button" class="bb-bdate__close" aria-label="Close calendar" (click)="closeCalendar(true)">×</button>
+        </div>
+
+        <table class="bb-bdate__grid" role="grid" [attr.aria-label]="monthLabel()">
+          <thead>
+            <tr>
+              @for (weekday of weekdays; track weekday) {
+                <th scope="col" [attr.abbr]="weekday">{{ weekday }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (week of weeks(); track week[0].iso) {
+              <tr>
+                @for (day of week; track day.iso) {
+                  <td role="gridcell" [attr.aria-selected]="day.iso === value()">
+                    <button
+                      type="button"
+                      class="bb-bdate__day"
+                      [class.bb-bdate__day--outside]="!day.inMonth"
+                      [class.bb-bdate__day--selected]="day.iso === value()"
+                      [class.bb-bdate__day--today]="day.iso === today"
+                      [attr.data-iso]="day.iso"
+                      [attr.tabindex]="day.iso === cursor() ? 0 : -1"
+                      [attr.aria-label]="dayLabel(day.iso)"
+                      [attr.aria-current]="day.iso === today ? 'date' : null"
+                      [disabled]="isDisabledDay(day.iso)"
+                      (click)="pick(day)"
+                    >
+                      {{ day.day }}
+                    </button>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</bb-form-field>

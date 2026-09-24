@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_FORMAT_SETTINGS,
   FormatSettings,
+  daysInMonth,
   formatDate,
   formatMoney,
   formatNumber,
   groupSizesFromMask,
+  parseDate,
 } from './format-settings';
 
 describe('groupSizesFromMask', () => {
@@ -116,5 +118,56 @@ describe('formatDate', () => {
   it('renders nothing for null', () => {
     expect(formatDate(null)).toBe('');
     expect(formatDate(undefined)).toBe('');
+  });
+});
+
+/**
+ * `parseDate` is `formatDate` run backwards (TK-23): what a branch types in its
+ * own pattern comes back as ISO, and the order of the parts is never guessed.
+ */
+describe('parseDate', () => {
+  const patterns = ['dd/MM/yyyy', 'MM/dd/yyyy', 'yyyy-MM-dd', 'dd-MMM-yyyy', 'dd.MM.yy'];
+  const dates = ['2026-09-24', '2024-02-29', '2026-01-01', '2026-12-31'];
+
+  for (const pattern of patterns) {
+    for (const iso of dates) {
+      it(`round-trips ${iso} through ${pattern}`, () => {
+        expect(parseDate(formatDate(iso, pattern), pattern)).toBe(iso);
+      });
+    }
+  }
+
+  it('reads the same text as different days on differently formatted branches', () => {
+    expect(parseDate('03/04/2026', 'dd/MM/yyyy')).toBe('2026-04-03');
+    expect(parseDate('03/04/2026', 'MM/dd/yyyy')).toBe('2026-03-04');
+  });
+
+  it('accepts any separator and single-digit parts', () => {
+    expect(parseDate('24-09-2026', 'dd/MM/yyyy')).toBe('2026-09-24');
+    expect(parseDate('24.9.2026', 'dd/MM/yyyy')).toBe('2026-09-24');
+    expect(parseDate(' 4/9/2026 ', 'dd/MM/yyyy')).toBe('2026-09-04');
+    expect(parseDate('24-sep-2026', 'dd-MMM-yyyy')).toBe('2026-09-24');
+  });
+
+  it('refuses what is not a real date', () => {
+    expect(parseDate('31/02/2026', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('29/02/2025', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('13/13/2026', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('2026-09-24', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('24/09', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('tomorrow', 'dd/MM/yyyy')).toBeNull();
+  });
+
+  it('treats blank as no date', () => {
+    expect(parseDate('', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate('   ', 'dd/MM/yyyy')).toBeNull();
+    expect(parseDate(null, 'dd/MM/yyyy')).toBeNull();
+  });
+
+  it('knows the leap years', () => {
+    expect(daysInMonth(2024, 2)).toBe(29);
+    expect(daysInMonth(2100, 2)).toBe(28);
+    expect(daysInMonth(2000, 2)).toBe(29);
+    expect(daysInMonth(2026, 9)).toBe(30);
   });
 });

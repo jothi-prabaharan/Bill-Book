@@ -61,6 +61,7 @@ export * from './lib/forms/rich-text/sanitize-html';
 export * from './lib/forms/rich-text/rich-text-input.component';
 
 export * from './lib/date-input/date-input.component';
+export * from './lib/branch-date-input/branch-date-input.component';
 export * from './lib/currency-input/currency-input.component';
 export * from './lib/number-input/number-input.component';
 export * from './lib/search-input/search-input.component';

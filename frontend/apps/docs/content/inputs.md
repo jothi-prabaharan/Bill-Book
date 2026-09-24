@@ -322,6 +322,18 @@ what happened rather than dropping them silently.
   `FormatSettingsService`. Fixing it needs a written-from-scratch date
   component, which affects every date field in the product and is a larger
   decision than one screen.
+
+  **That component now exists and is waiting for the owner to try it (TK-23).**
+  `bb-branch-date-input` is a text field with a calendar button. It shows and
+  reads dates in the branch's own pattern: a `dd/MM/yyyy` branch sees and types
+  `24/09/2026`, with any separator accepted. Its value is ISO `yyyy-MM-dd` in and
+  out, the same as `bb-date-input`, so replacing one with the other is a change of
+  selector only. Text that is not a real date in the pattern stays on screen with
+  a message, and the form receives no date. The calendar works from the keyboard:
+  the arrow keys move a day or a week, Page Up and Page Down move a month, Home
+  and End go to the ends of the week, Enter picks a day and Escape closes. At
+  phone width the calendar fills the screen. **No screen uses it yet.** It
+  replaces `bb-date-input` only after the owner has tried it.
 - **`bb-select` is a native `<select>`**, so a list too long to scroll needs
   `bb-search-input` beside a `bb-lookup-dialog` instead, which is what the sales
   and purchase screens already do.

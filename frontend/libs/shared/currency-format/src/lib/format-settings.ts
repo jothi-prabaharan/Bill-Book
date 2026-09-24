@@ -190,3 +190,99 @@ export function formatDate(
     .replace(/MM/g, mm)
     .replace(/dd/g, dd);
 }
+
+/**
+ * A date typed in the branch's pattern, as ISO `yyyy-MM-dd` — the inverse of
+ * {@link formatDate} (TK-23). Null when the text is not a real date in that
+ * pattern.
+ *
+ * **The separators are not held to the pattern.** A `dd/MM/yyyy` branch typing
+ * `24-09-2026` or `24.09.2026` means the same day, so any run of characters
+ * that are not letters or digits stands for any separator. A day or month may
+ * be typed with one digit. The order of the parts is what the pattern decides,
+ * and that is the thing that must never be guessed: `03/04/2026` is the third
+ * of April on one branch and the fourth of March on another.
+ *
+ * A two-digit year is read as 20yy. No `Date` is built from a string, so no
+ * timezone can move the day (see `BbDateControlBase`).
+ */
+export function parseDate(
+  text: string | null | undefined,
+  pattern: string = DEFAULT_FORMAT_SETTINGS.datePattern,
+): string | null {
+  const value = (text ?? '').trim();
+  if (value === '') {
+    return null;
+  }
+
+  const order: ('d' | 'M' | 'MMM' | 'y' | 'yy')[] = [];
+  let source = '^';
+
+  for (const part of pattern.match(/yyyy|yy|MMM|MM|dd|[^A-Za-z0-9]+|./g) ?? []) {
+    if (part === 'yyyy') {
+      order.push('y');
+      source += '(\\d{4})';
+    } else if (part === 'yy') {
+      order.push('yy');
+      source += '(\\d{2})';
+    } else if (part === 'MMM') {
+      order.push('MMM');
+      source += '([A-Za-z]{3})';
+    } else if (part === 'MM') {
+      order.push('M');
+      source += '(\\d{1,2})';
+    } else if (part === 'dd') {
+      order.push('d');
+      source += '(\\d{1,2})';
+    } else if (/^[^A-Za-z0-9]+$/.test(part)) {
+      source += '[^A-Za-z0-9]+';
+    } else {
+      return null;
+    }
+  }
+
+  const match = new RegExp(`${source}$`).exec(value);
+  if (!match) {
+    return null;
+  }
+
+  let year = 0;
+  let month = 0;
+  let day = 0;
+
+  order.forEach((token, index) => {
+    const raw = match[index + 1];
+    switch (token) {
+      case 'y':
+        year = Number(raw);
+        break;
+      case 'yy':
+        year = 2000 + Number(raw);
+        break;
+      case 'MMM':
+        month = MONTHS_SHORT.findIndex((m) => m.toLowerCase() === raw.toLowerCase()) + 1;
+        break;
+      case 'M':
+        month = Number(raw);
+        break;
+      case 'd':
+        day = Number(raw);
+        break;
+    }
+  });
+
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > daysInMonth(year, month)) {
+    return null;
+  }
+
+  return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+}
+
+/** Days in a month, 1-based, with the Gregorian leap rule. */
+export function daysInMonth(year: number, month: number): number {
+  if (month === 2) {
+    const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    return leap ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
