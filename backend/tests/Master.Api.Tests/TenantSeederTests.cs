@@ -26,7 +26,7 @@ namespace Master.Api.Tests;
 public sealed class TenantSeederTests
 {
     private static readonly string[] Seeded =
-        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing"];
+        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     private sealed class RecordingHandler : HttpMessageHandler
     {
@@ -87,6 +87,7 @@ public sealed class TenantSeederTests
     [Theory]
     [InlineData("Purchase")]
     [InlineData("Reporting")]
+    [InlineData("Customer")]
     public async Task A_service_with_no_url_is_reported_as_failed_and_the_rest_still_run(string missing)
     {
         var handler = new RecordingHandler();

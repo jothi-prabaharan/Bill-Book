@@ -1066,8 +1066,8 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - The till's exact-code lookup is already covered by `pos-lookup.service.spec.ts`.
 
 ### TK-18 · Customer module seed data (stage C4)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-CUS · **Depends on:** — · **Decision:** D-18
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-CUS, L-MST (the seeder list) · **Depends on:** — · **Decision:** D-18
 - **Where:**
   - `backend/shared/Shared.Kernel/Customer/Enums.cs`: `LeadSource`, `LeadStatus`, `TicketStatus`, `TicketPriority`.
   - `backend/Api/Customer/Customer.Api/Controllers/TicketsController.cs:101`: SLA hours hard-coded
@@ -1076,15 +1076,38 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   only hard-coded business data is the SLA table (Urgent 2 h, High 8 h, Medium 2 days, Low 7
   days). No section in `docs/Modules.md` defines C4.
 - **Sub-tasks** (if D-18 answers "per-branch SLA policy"):
-  - [ ] `cus.SlaPolicies` (`Priority`, `ResponseHours`, `ResolutionHours`), with its migration and
+  - [x] `cus.SlaPolicies` (`Priority`, `ResponseHours`, `ResolutionHours`), with its migration and
         TK-71's RLS block.
-  - [ ] Seed four rows per branch through a new `POST internal/seed/organization` on Customer, and
+  - [x] Seed four rows per branch through a new `POST internal/seed/organization` on Customer, and
         add `"Customer"` to `TenantSeeder.Services`. That needs `L-MST` too.
-  - [ ] Replace the `switch` at `TicketsController.cs:101` with a lookup.
-  - [ ] Test: seeding twice adds nothing, and a ticket's `SlaDueAt` follows its branch's policy.
+  - [x] Replace the `switch` at `TicketsController.cs:101` with a lookup.
+  - [x] Test: seeding twice adds nothing, and a ticket's `SlaDueAt` follows its branch's policy.
 - **Done when:** decided by D-18.
 - **Notes:**
   - D-18 answered (2026-09-24): build the per-branch `cus.SlaPolicies` table exactly as the sub-tasks above say.
+  - Done (2026-09-24):
+    - Entity `SlaPolicy` (`Priority`, `ResponseHours`, `ResolutionHours`), unique `(OrgId, Priority)`.
+    - Migration `AddSlaPolicies`, which carries its own RLS block (ENABLE, FORCE,
+      `slapolicies_tenant_isolation`). `has-pending-model-changes` is clean.
+    - `SlaPolicySeed.Defaults` holds the hours that were hard-coded: resolution 2/8/48/168, with
+      response 1/4/8/24 added.
+    - `SlaPolicyService.SeedAsync` adds only the missing priorities and keeps a branch's edits.
+    - `DueAtAsync` uses the branch's `ResolutionHours`, and falls back to the default when a branch
+      isn't seeded yet.
+    - `TicketsController.Create` now uses `DueAtAsync` and `TimeProvider`.
+    - New `Customer.Api/Controllers/InternalSeedController`; `"Customer"` added to
+      `TenantSeeder.Services`.
+    - Wiring for `Seeding:Customer`:
+      - `appsettings*.json` (dev `http://localhost:4502/`);
+      - `deploy/local` compose;
+      - `seed/first-branch.sh`;
+      - `deploy/azure/modules/settings.bicep`.
+  - Not done: a Settings screen to edit the hours. The table is edited only through the database
+    for now. A ticket's due date is also not recalculated when its priority changes (unchanged
+    behaviour).
+  - Tests: `Customer.Api.Tests/SlaPolicyTests.cs`. `Master.Api.Tests/TenantSeederTests.cs` now
+    includes Customer.
+
 
 ### TK-19 · Notification.Worker takes over email from Master
 - [ ] open

@@ -22,13 +22,21 @@ public sealed class TicketsController : ControllerBase
     private readonly CustomerDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly IContactsClient _contacts;
+    private readonly SlaPolicyService _sla;
+    private readonly TimeProvider _clock;
 
     public TicketsController(
-        CustomerDbContext db, ITenantContext tenant, IContactsClient contacts)
+        CustomerDbContext db,
+        ITenantContext tenant,
+        IContactsClient contacts,
+        SlaPolicyService sla,
+        TimeProvider clock)
     {
         _db = db;
         _tenant = tenant;
         _contacts = contacts;
+        _sla = sla;
+        _clock = clock;
     }
 
     [HttpGet]
@@ -98,14 +106,10 @@ public sealed class TicketsController : ControllerBase
             Description = request.Description,
             Priority = request.Priority,
             Status = TicketStatus.Open,
-            SlaDueAt = request.Priority switch
-            {
-                TicketPriority.Urgent => DateTimeOffset.UtcNow.AddHours(2),
-                TicketPriority.High => DateTimeOffset.UtcNow.AddHours(8),
-                TicketPriority.Medium => DateTimeOffset.UtcNow.AddDays(2),
-                TicketPriority.Low => DateTimeOffset.UtcNow.AddDays(7),
-                _ => DateTimeOffset.UtcNow.AddDays(2)
-            }
+
+            // The branch's own SLA for the priority (D-18, TK-18), not a table
+            // hard-coded here for every branch alike.
+            SlaDueAt = await _sla.DueAtAsync(request.Priority, _clock.GetUtcNow(), ct),
         };
 
         _db.Tickets.Add(ticket);

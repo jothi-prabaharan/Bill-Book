@@ -24,7 +24,7 @@ body="{\"customerId\":\"$id\",\"orgId\":\"$id\",\"vertical\":\"General\"}"
 # The order Master's own seeder uses. Each service is given two minutes to come
 # up and finish its start-up migration check.
 # Each service's own port, as docker-compose.yml assigns them.
-for target in accounting:7502 inventory:7503 sales:7504 purchase:7505 reporting:7507 printing:7508 master:7501; do
+for target in accounting:7502 inventory:7503 sales:7504 purchase:7505 reporting:7507 printing:7508 customer:7506 master:7501; do
   svc="${target%%:*}"
   curl --fail --silent --show-error --output /dev/null \
     --retry 60 --retry-delay 2 --retry-all-errors \

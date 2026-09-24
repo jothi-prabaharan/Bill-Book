@@ -53,10 +53,13 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     ///
     /// Printing seeds each branch's print templates, one default per printable
     /// document type. It reads nothing the others write, so its place in the
-    /// order does not matter; it is last because it was added last (TK-81).
+    /// order does not matter (TK-81).
+    ///
+    /// Customer seeds each branch's SLA policies, one per ticket priority. It
+    /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing"];
+        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
     /// The branch's current vertical, or General when the row cannot be read.

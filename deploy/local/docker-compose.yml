@@ -82,6 +82,7 @@ x-master-env: &master-env
   Seeding__Purchase: http://purchase:7505
   Seeding__Reporting: http://reporting:7507
   Seeding__Printing: http://printing:7508
+  Seeding__Customer: http://customer:7506
   # Where links in invitation and password-reset emails point.
   App__BaseUrl: ${APP_URL:-http://localhost:8081}
   Portal__BaseUrl: ${PORTAL_URL:-http://localhost:8082}

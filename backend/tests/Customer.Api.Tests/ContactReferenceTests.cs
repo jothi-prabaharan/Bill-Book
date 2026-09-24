@@ -106,7 +106,8 @@ public sealed class ContactReferenceTests
 
     private static TicketsController Tickets(
         CustomerDbContext db, Guid orgId, IContactsClient contacts) =>
-        new(db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId }, contacts);
+        new(db, new TenantContext { CustomerId = Guid.NewGuid(), OrgId = orgId }, contacts,
+            new SlaPolicyService(db), TimeProvider.System);
 
     private async Task<(CustomerDbContext Db, Guid CustomerId, Guid OrgId, Lead Lead)> SeedLeadAsync()
     {

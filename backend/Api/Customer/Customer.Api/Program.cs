@@ -35,6 +35,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<TenantContext>();
 builder.Services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<SlaPolicyService>();
 builder.Services.AddScoped<AuditSaveChangesInterceptor>();
 builder.Services.AddScoped<RlsConnectionInterceptor>();
 // Key Vault when KeyVault:Uri is set, configuration otherwise — and a

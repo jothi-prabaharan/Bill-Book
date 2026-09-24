@@ -17,6 +17,8 @@ public class CustomerDbContext : TenantDbContext
 
     public DbSet<TicketMessage> TicketMessages => Set<TicketMessage>();
 
+    public DbSet<SlaPolicy> SlaPolicies => Set<SlaPolicy>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("cus");
@@ -54,6 +56,16 @@ public class CustomerDbContext : TenantDbContext
                 .WithMany(t => t.Messages)
                 .HasForeignKey(e => e.TicketId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SlaPolicy>(b =>
+        {
+            b.HasKey(e => e.SlaPolicyId);
+
+            b.Property(e => e.Priority).HasConversion<string>().HasMaxLength(20);
+
+            // One policy per priority per branch.
+            b.HasIndex(e => new { e.OrgId, e.Priority }).IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);
