@@ -578,5 +578,6 @@ Written-down-value depreciation charged nothing until TK-11. The two pages under
 - **PDF library**: PDFsharp (D-11)
 - **Pricing**: per user with a branch cap for RetailErp and School; per active employee for HRMS and Payroll (D-12)
 - **Tenant setting**: transaction-local, as the Tenancy section says (TK-08)
+- **Approvals**: one engine. Its state machine is in `Shared.Kernel.Approvals`, workflow configuration and chain resolution are in Master (tenant schema `apr`), and `Hrm` resolves only the employee approver kinds (D-26, TK-99, TK-49)
 
 A new question goes into `docs/TASKS.md` section 3 as the next D-number, and is asked rather than assumed.

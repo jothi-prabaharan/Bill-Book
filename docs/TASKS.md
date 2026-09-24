@@ -1682,8 +1682,8 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
 
 ### TK-99 · Approvals: the shared engine in Master, with user and role approvers
-- [!] blocked — D-26
-- **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26
+- [ ] open
+- **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)
 - **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
 - **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
 - **Sub-tasks:**
@@ -2210,7 +2210,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
 - [ ] open
-- **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48 · **Decision:** —
+- **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
   - The engine: `ApprovalWorkflow`, `ApprovalWorkflowLevel`, `ApprovalStep`, with `ApproverKind`.
@@ -2229,6 +2229,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   their old chain.
 - **Notes:**
   - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Hrm`, with `Hrm` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
+  - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Hrm`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
 
 ### TK-50 · H3: Time and attendance (`tla`)
 - [ ] open
@@ -3445,7 +3446,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
 | D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
-| D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | *Open.* Raised 2026-09-24 by TK-33 |
+| D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | **Master, `apr`** (owner, 2026-09-24). The state machine and step shape are in `Shared.Kernel.Approvals`; workflow configuration and chain resolution are Master's, in tenant schema `apr`; `Hrm` answers only the employee-based approver kinds. TK-99 is unblocked, and TK-49 builds on it |
 | D-27 | CRM campaigns: send bulk email through a transactional email provider (Amazon SES, SendGrid, Postmark or another — which, and on whose account), or through each branch's own SMTP with a low daily cap? A branch mailbox would be rate-limited and risks blacklisting (TK-38). | TK-121 | *Open.* Raised 2026-09-24 by TK-38 |
 
 ---
