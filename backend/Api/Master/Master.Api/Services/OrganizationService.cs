@@ -274,11 +274,13 @@ public sealed class OrganizationService
                 SaveOrganizationOutcome.InvalidDiscountLevel, null, []);
         }
 
-        if (!Enum.TryParse(request.Vertical, ignoreCase: true, out Vertical vertical))
+        if (!Enum.IsDefined(request.Vertical))
         {
             return new SaveOrganizationResult(
                 SaveOrganizationOutcome.InvalidValue, null, []);
         }
+
+        Vertical vertical = request.Vertical;
 
         // The same freeze the base currency gets, for the same kind of reason:
         // these three decide how a document's tax and discount are computed, so
@@ -414,7 +416,7 @@ public sealed class OrganizationService
         organization.FinancialYearStartMonth = request.FinancialYearStartMonth;
         organization.AllowFreeTextLines = request.AllowFreeTextLines;
         organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
-        organization.Vertical = Enum.Parse<Vertical>(request.Vertical, ignoreCase: true);
+        organization.Vertical = request.Vertical;
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
@@ -493,7 +495,7 @@ public sealed class OrganizationService
         Currency = currency,
         AllowFreeTextLines = o.AllowFreeTextLines,
         DiscountLevel = o.DiscountLevel.ToString(),
-        Vertical = o.Vertical.ToString(),
+        Vertical = o.Vertical,
         DiscountBeforeTax = o.DiscountBeforeTax,
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,

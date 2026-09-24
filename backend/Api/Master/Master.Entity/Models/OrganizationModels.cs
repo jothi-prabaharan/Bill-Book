@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+using Master.Entity.Enums;
 using Shared.Kernel.Validation;
 
 namespace Master.Entity.Models;
@@ -77,8 +79,12 @@ public class OrganizationListItem
 
     public string DiscountLevel { get; set; } = "Line";
 
-    /// <summary>General, Pharma or Jewellery — the trade this branch is in.</summary>
-    public string Vertical { get; set; } = "General";
+    /// <summary>
+    /// General, Pharma or Jewellery — the trade this branch is in. The enum
+    /// (hard rule 7), written as its name so the wire format is unchanged (TK-30).
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
+    public Vertical Vertical { get; set; } = Vertical.General;
 
     public bool DiscountBeforeTax { get; set; } = true;
 
@@ -204,10 +210,15 @@ public class SaveOrganizationRequest
     [MaxLength(10, ErrorMessage = "Discount level must be Line, Header or Both.")]
     public string DiscountLevel { get; set; } = "Line";
 
-    /// <summary>General, Pharma or Jewellery. Changeable any time.</summary>
+    /// <summary>
+    /// General, Pharma or Jewellery. Changeable any time: a change seeds what the
+    /// new trade needs and hides the other trade's screens, and deletes nothing
+    /// (TK-30). Sent and read as the name.
+    /// </summary>
     [Required(ErrorMessage = "Vertical is required.")]
-    [MaxLength(20, ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
-    public string Vertical { get; set; } = "General";
+    [EnumDataType(typeof(Vertical), ErrorMessage = "Vertical must be General, Pharma or Jewellery.")]
+    [JsonConverter(typeof(JsonStringEnumConverter<Vertical>))]
+    public Vertical Vertical { get; set; } = Vertical.General;
 
     /// <summary>Frozen once the branch has traded.</summary>
     public bool DiscountBeforeTax { get; set; } = true;

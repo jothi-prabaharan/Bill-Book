@@ -1469,17 +1469,25 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     - `api-clients.list.spec.ts`.
 
 ### TK-30 · Seeds and menus follow the branch's trade (D-10)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · one question raised (D-23)
 - **Lanes:** L-MST, L-INV, L-MASTER-UI · **Depends on:** — · **Decision:** D-10 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/Organization.cs:34` (`Vertical`), `Master.Entity/Enums/Vertical.cs`, `Master.Api/Services/TenantSeeder.cs` (`ReadVerticalAsync`), `backend/Api/Inventory/Inventory.Api/Controllers/InternalSeedController.cs:58`, `Master.Api/Services/MenuService.cs`, `docs/Modules.md` §5.14.
 - **State:** the trade exists and seeding already receives it. `OrganizationModels.cs:81,208` carries it as a **string** (hard rule 7 wants the enum). Menus ignore it.
 - **Sub-tasks:**
-  - [ ] Change the request and response models to the `Vertical` enum.
-  - [ ] List which seeds and menus belong to Pharma and Jewellery only (drug schedules, metal purities, making charges…), write the list in §5.14, then filter seeding and `MenuService` by it.
-  - [ ] Changing a branch's trade later seeds what the new trade needs (idempotently) and hides the other's menus; it never deletes data.
-  - [ ] Test: a General branch gets no metal purities; switching it to Jewellery seeds them once.
+  - [x] Change the request and response models to the `Vertical` enum.
+  - [x] List which seeds and menus belong to Pharma and Jewellery only (drug schedules, metal purities, making charges…), write the list in §5.14, then filter seeding and `MenuService` by it.
+  - [x] Changing a branch's trade later seeds what the new trade needs (idempotently) and hides the other's menus; it never deletes data.
+  - [x] Test: a ~~General~~ **Pharma** branch gets no metal purities; switching it to Jewellery seeds them once (see D-23).
 - **Done when:** a new branch shows only its trade's menus and master data.
 - **Notes:**
+- **Outcome (2026-09-24):**
+  - **Models:** `OrganizationListItem.Vertical` and `SaveOrganizationRequest.Vertical` are the `Vertical` enum, written by name (`JsonStringEnumConverter<Vertical>`), so the frontend is unchanged. The request carries `[EnumDataType]`, and `OrganizationService` no longer parses a string. The wire contracts read by other services stay strings, with the reason written in `docs/Modules.md`: `SeedOrganizationRequest`, the org context and the JWT claim.
+  - **The list** is a new section of `docs/Modules.md`, "A branch's trade" (the old §5.14 no longer exists in that file). Today it has metal purities as a seed (Inventory) and as the `mtp` menu. Nothing is Pharma-only yet.
+  - **Seeding** already followed the trade (`MetalPurityService`: none for Pharma) and a trade change already re-seeded idempotently (`OrganizationService.SaveAsync`), so no code change was needed there.
+  - **Menus:** `TradeScope.MenuTrades` maps a menu code to its trades, and anything unlisted is every trade's. `MenuService` reads the branch's trade (General when unknown) and drops the other trade's items. There is no new column: a `Verticals` column on `mst.Menus` would rewrite every seeded row, which is the UpdateData cascade TK-70 had to squash away.
+  - **Hides, never deletes:** switching back to Pharma only hides the menu, and the purities stay.
+  - **D-23 raised:** the card's test asked that a General branch get no purities, but the enum's recorded decision (5.14) is that General gets everything. The recorded decision was kept, and the test uses a Pharma branch instead.
+  - Tests: `Inventory.Api.Tests.TradeSeedTests` (Pharma none, then Jewellery once, then back to Pharma deletes nothing; General seeded) and `Master.Api.Tests.TradeScopeTests` (menu scope by trade, unlisted codes shown, every scoped code exists in `MenuSeed`, the trade read and written by name, an undefined value refused).
 
 ### E · Approved designs (documents only)
 
@@ -2975,6 +2983,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-12 | **Both ways** (owner, 2026-09-24): the disposal either names the bank or cash account the proceeds landed in, or is raised as a sales invoice to the buyer (Dr the buyer's receivable); either way the accumulated depreciation is written back, the asset removed at cost and the gain or loss booked. TK-12 |
 | D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | *Open.* Raised 2026-09-24 by TK-10; the owner fixed the duplicate first and deferred this |
 | D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
+| D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 
 ---
 

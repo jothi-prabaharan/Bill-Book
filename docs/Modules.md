@@ -1163,6 +1163,21 @@ The two-step login stays. The second step says which app it is for.
 - **Switching app** is the same move as switching branch today: mint a new token. The refresh-token
   family is per app.
 
+## A branch's trade — what it is seeded with and shown (D-10, TK-30)
+
+`Organization.Vertical` is General, Pharma or Jewellery. **This table is the list; `Master.Api/Services/TradeScope.cs` (menus) and each service's seed (seeds) implement it, and the three change together.** Anything not in the table belongs to every trade.
+
+| What | Where | General | Pharma | Jewellery |
+|---|---|---|---|---|
+| Metal purities (seed) | Inventory, `MetalPurityService.SeedForOrganizationAsync` | yes | no | yes |
+| Settings › Metal purity (menu `mtp`) | Master, `TradeScope.MenuTrades` | yes | no | yes |
+
+- **General is the everything branch.** It is seeded with and shown everything, because the asymmetry is one-sided: a jeweller without purities cannot price an ornament, while a chemist with them only has an unused screen. This was the owner's decision in master.md 5.14, restated on `Vertical`. TK-30's card asked for a General branch to get no purities, which contradicts it; the recorded decision was kept, and the question is raised as D-23.
+- **A trade hides and never deletes.** A change of trade runs the idempotent seed, which adds what the new trade needs, and the menu drops the other trade's screens. Every existing row stays.
+- **Nothing is Pharma-only yet.** Drug schedule, composition and storage are fields on `inv.ItemPharmaDetails`, per item, not seeded masters, and batch and serial tracking serve every trade. A Pharma-only seed or screen is added to this table when one exists.
+- **Not filtered here:** the item form's Pharma and Jewellery profile tabs, and a route typed by hand. The menu hides a screen; it does not lock it.
+- **Wire format:** the organization request and response carry the `Vertical` enum, serialised by name. `SeedOrganizationRequest.Vertical`, the org context and the JWT `vertical` claim stay strings. They are contracts read by services that do not reference `Master.Entity`, and changing them is a cross-service change of its own.
+
 ## Shared master pages — one page, every app
 
 **Every master page that is not about one app's trade is shared by all apps** (owner's decision,

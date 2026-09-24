@@ -83,6 +83,19 @@ What is yours stays yours. Rows are matched on their internal name rather than t
 
 No new database is created. Branches share the account's.
 
+## The branch's trade
+
+Each branch declares its trade: **General**, **Pharma** or **Jewellery**. The trade decides what the branch is set up with and which screens its menu offers.
+
+| | General | Pharma | Jewellery |
+|---|---|---|---|
+| Metal purities seeded | yes | no | yes |
+| **Settings › Metal purity** in the menu | yes | no | yes |
+
+Everything else is the same for every trade. General is the branch that has everything: a shop selling a little of everything should not be missing the one screen it needs.
+
+**The trade can be changed at any time, and changing it deletes nothing.** Switching a Pharma branch to Jewellery adds the metal purities it did not have, once. Switching back only hides the Metal purity screen; the purities stay, because stock may still be priced in them.
+
 ## Branch code
 
 Short, up to ten characters: `HO`, `CHN`, `BLR2`. It is read aloud and typed.

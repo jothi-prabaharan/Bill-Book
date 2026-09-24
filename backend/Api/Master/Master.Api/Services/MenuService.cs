@@ -1,3 +1,4 @@
+using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
@@ -19,6 +20,9 @@ namespace Master.Api.Services;
 /// turn — so the rail never draws an entry that leads nowhere. Rows with no route
 /// are inactive in the seed and filtered here, which is how screens that are designed
 /// but not yet built stay out of a user's way while remaining in the table.
+///
+/// A screen that belongs to another trade than the branch's is dropped too
+/// (<see cref="TradeScope"/>, TK-30).
 /// </summary>
 public sealed class MenuService
 {
@@ -36,6 +40,17 @@ public sealed class MenuService
         var permissions = _tenant.Permissions is { Count: > 0 }
             ? _tenant.Permissions
             : new HashSet<string>();
+
+        // The branch's trade narrows the menu (D-10, TK-30): a screen that
+        // belongs to another trade is not offered. General when unknown, which
+        // shows everything — the same default the branch itself has.
+        Guid? orgId = _tenant.OrgId;
+        Vertical trade = orgId is null
+            ? Vertical.General
+            : await _db.Organizations.AsNoTracking()
+                .Where(o => o.OrgId == orgId.Value)
+                .Select(o => (Vertical?)o.Vertical)
+                .FirstOrDefaultAsync(ct) ?? Vertical.General;
 
         var rows = await _db.Menus
             .AsNoTracking()
@@ -75,7 +90,8 @@ public sealed class MenuService
             foreach (var group in Children(childrenOf, rail.MenuId).Where(r => r.Type == MenuType.Group))
             {
                 var items = Children(childrenOf, group.MenuId)
-                    .Where(r => r.Type == MenuType.Item && r.AllowedActions.Count > 0)
+                    .Where(r => r.Type == MenuType.Item && r.AllowedActions.Count > 0
+                        && TradeScope.ShowsMenu(r.Code, trade))
                     .Select(r => new SubMenuView
                     {
                         SubMenuId = r.MenuId,
