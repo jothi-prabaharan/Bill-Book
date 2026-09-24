@@ -752,7 +752,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 - **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
 
 ### TK-11 · Fixed assets: a service layer, guards and tests
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/FixedAssetsController.cs`
