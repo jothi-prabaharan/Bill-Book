@@ -93,6 +93,9 @@ public class AdminDbContext : DbContext
     /// <summary>Metal rate history, schema <c>rat</c> (TK-24).</summary>
     public DbSet<MetalRate> MetalRates => Set<MetalRate>();
 
+    /// <summary>Each fetch of a rate source, schema <c>rat</c> (TK-26).</summary>
+    public DbSet<RateFetchRun> RateFetchRuns => Set<RateFetchRun>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("mst");
@@ -122,6 +125,17 @@ public class AdminDbContext : DbContext
             b.Property(e => e.Rate).HasPrecision(18, 8);
             b.Property(e => e.Source).HasConversion<string>().HasMaxLength(10);
             b.HasIndex(e => new { e.FromCurrencyCode, e.ToCurrencyCode, e.RateDate, e.Source }).IsUnique();
+        });
+
+        modelBuilder.Entity<RateFetchRun>(b =>
+        {
+            b.ToTable("RateFetchRuns", "rat");
+            b.HasKey(e => e.RateFetchRunId);
+            b.Property(e => e.Source).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.FollowUpStatus).HasConversion<string>().HasMaxLength(20);
+            b.HasIndex(e => new { e.Source, e.RunDate, e.Status });
+            b.HasIndex(e => e.FollowUpStatus);
         });
 
         modelBuilder.Entity<MetalRate>(b =>

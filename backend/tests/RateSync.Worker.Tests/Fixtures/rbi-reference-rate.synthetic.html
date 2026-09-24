@@ -1,0 +1,28 @@
+<!--
+  SYNTHETIC. Not a saved copy of RBI's page (TK-26).
+
+  The session that wrote the parser could not reach www.rbi.org.in: the
+  environment's network policy refused the connection. This file imitates the
+  shape the reference rates are published in, a heading naming the date and one
+  row per currency written "INR / 1 USD". Replace it with a real saved copy, and
+  adjust RbiReferenceRateParser if the real page differs, before trusting the
+  scrape in production.
+-->
+<html>
+<head><title>Reserve Bank of India</title><script>var rate = "INR / 1 USD 1.00";</script></head>
+<body>
+  <div class="panel">
+    <h3>Reference Rate as on 24 September, 2026</h3>
+    <table class="refrate">
+      <tr><td>INR / 1 USD</td><td>83.1245</td></tr>
+      <tr><td>INR / 1 GBP</td><td>110.8820</td></tr>
+      <tr><td>INR / 1 EUR</td><td>92.4501</td></tr>
+      <tr><td>INR / 100 JPY</td><td>57.6100</td></tr>
+    </table>
+  </div>
+  <div class="history">
+    <h4>Previous day</h4>
+    <table><tr><td>INR / 1 USD</td><td>83.0000</td></tr></table>
+  </div>
+</body>
+</html>

@@ -1378,14 +1378,31 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - D-14 answered (2026-09-24): both manual entry (TK-24) and the IBJA API. **Ask the owner for the IBJA credentials before starting**; store them through `ISecretStore`, never in `appsettings`.
 
 ### TK-26 · RateSync.Worker: currency (RBI)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [!] blocked — the parser needs checking against a real saved copy of RBI's page, which this environment cannot fetch (built by Claude Opus 5.5, 2026-09-24 · tests written, not run)
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-03
 - **Sub-tasks:** follow D-03's answer (scraping, a paid wrapper, or manual entry through TK-24's page).
-  - [ ] Upsert `rat.ExchangeRates` against INR.
-  - [ ] Make it idempotent per day.
+  - [x] Upsert `rat.ExchangeRates` against INR.
+  - [x] Make it idempotent per day.
 - **Done when:** the day's exchange rates appear in `rat` with their date.
 - **Notes:**
   - D-03 answered (2026-09-24): manual entry (TK-24's page) plus a daily scrape of RBI's reference-rate page. Keep the parser isolated and tested against a saved copy of the page, and let a failed scrape log to `ErrorLogs` with `FollowUpStatus = Open` rather than write a rate.
+- **Outcome (2026-09-24):**
+  - `RateSync.Worker` is built. `Program.cs` is modelled on the costing worker's. It references `Master.Repository`, because `rat` is Master's, the same way the costing worker references Inventory. It writes through `AdminDbContext` with the audit interceptor and `SystemUser`.
+  - **The parser is isolated:** `Rbi/RbiReferenceRateParser.cs`, which takes a string and returns the page date and `{code, rate per 1 unit in INR}`.
+    - It reads `INR / 1 USD` rows on the tag-stripped text, and a per-100 quote such as `INR / 100 JPY` is divided back down.
+    - It reads a day-first date after the words "reference rate".
+    - It refuses (`RbiPageFormatException`) when there is no date, no rate, or a non-positive figure.
+  - **Idempotent per day, twice over:**
+    - a `Succeeded` run in `rat.RateFetchRuns` for the India-local day stops the fetch;
+    - a rate already on file for the page's date, pair and source `Rbi` is never rewritten.
+    - A holiday page that repeats Friday's rates therefore writes nothing.
+  - **Failures go to `rat.RateFetchRuns`, not `ErrorLogs`: a deviation from the card.** `ErrorLog` is an `OrgScopedEntity` with RLS, so a fetch that belongs to no customer and no branch has nowhere to go there. That is the same reason `AdminDbContext` registers with `writesErrorLog: false`. A failed run is written with `FollowUpStatus = Open`, the error text, and no rate. The open rows are the task list, and the next wake retries.
+  - Schedule: the worker wakes every `RateSync:CheckIntervalMinutes` (60) and runs after `RateSync:RbiAfter` (13:45 India time). The migration is `AddRateFetchRuns`.
+  - Tests: new project `tests/RateSync.Worker.Tests`, added to the sln. It has its own database, `ratesync_tests` (`RATESYNC_TEST_DB`), so it cannot race Master's `admin_tests`.
+    - `RbiReferenceRateParserTests` (date forms, per-100 units, first figure wins, refusals).
+    - `ExchangeRateSyncTests` (rates land with their date, a second run fetches nothing, a holiday rewrites nothing, a failure leaves an open run and no rate then retries, the due time and the India day).
+  - **Why blocked:** the environment's network policy refused `www.rbi.org.in` and `www.fbil.org.in`. The test page, `Fixtures/rbi-reference-rate.synthetic.html`, is an imitation and says so at its top. Since 2018 the INR reference rates are published by FBIL, so the configured URL (`Rbi:ReferenceRateUrl`) may need to point there.
+  - **To unblock:** save the live page into `Fixtures/`, point a test at it, and adjust the parser's two regular expressions if they miss. Then deploy the worker; it is in neither `deploy/azure` nor `deploy/local` yet.
 
 ### TK-27 · Production databases are created by infrastructure (D-02)
 - [ ] open

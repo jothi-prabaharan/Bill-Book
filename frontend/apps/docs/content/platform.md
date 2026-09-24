@@ -286,7 +286,9 @@ The **Rates** screen in the admin app keeps the history of exchange rates and me
 - **A pair has a direction.** `USD → INR` is one US dollar in rupees. Nothing is inverted automatically.
 - **A document keeps the rate it used.** It does not look the rate up again later, so correcting a rate never reprices a document already raised.
 
-The daily fetches that fill these tables, RBI for currencies (TK-26) and IBJA for metals (TK-25), are not built yet. Until they are, rates are entered here by hand.
+**The daily RBI fetch is written but not yet trusted (TK-26).** `RateSync.Worker` reads RBI's reference-rate page each afternoon, after 13:45 India time. It adds each rate against INR, dated as the page dates it, with the source `Rbi`. A rate already on file for that pair, date and source is left alone, so a second run that day writes nothing. Every attempt is recorded in `rat.RateFetchRuns`. A failed attempt writes no rate and is left with follow-up status **Open**, and the next hourly check tries again. **The parser has only been tested against an imitation of the page**, because the page could not be fetched when it was written. It is not deployed anywhere until it has been checked against a real copy.
+
+IBJA's metal rates (TK-25) are not built. Until they are, metal rates are entered here by hand.
 
 ## Concurrency
 

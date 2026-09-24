@@ -145,3 +145,16 @@ To have `Notification.Worker` deliver email instead, so nothing queued is lost o
 
 Neither deployment in this repository runs the worker yet, so both keep the in-process path.
 
+## Rate sync worker
+
+`RateSync.Worker` fills the `rat` schema in the master database. For now that means only the RBI reference rates (TK-26). It needs:
+
+| Setting | Meaning |
+|---|---|
+| `ConnectionStrings:AdminDatabase` | The master database, the same one Master uses |
+| `Rbi:ReferenceRateUrl` | The page the reference rates are read from. Defaults to `https://www.rbi.org.in/` |
+| `RateSync:RbiAfter` | The time in India after which the day's rates are fetched. Defaults to `13:45` |
+| `RateSync:CheckIntervalMinutes` | How often it wakes to check. A failed day is retried at the next wake. Defaults to 60 |
+
+The worker needs outbound HTTPS to the RBI host. It is not in the Azure or single-PC deployment yet. Its parser is checked against an imitation of the page, and it will be deployed after it has been checked against a real one.
+

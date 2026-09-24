@@ -2,12 +2,20 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\shared\Shared.Kernel\Shared.Kernel.csproj" />
+    <!--
+      The repository, not the API: the rat tables are Master's, in the master
+      database, and this worker is the part of Master that fills them — the same
+      relationship CostingEngine.Worker has with Inventory. Referencing the
+      repository alone brings no second appsettings.json into publish.
+    -->
+    <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
   </ItemGroup>
 
 </Project>
-
-

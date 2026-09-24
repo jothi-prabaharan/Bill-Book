@@ -1,11 +1,54 @@
-using Microsoft.Extensions.Hosting;
+using Master.Repository;
+using Microsoft.EntityFrameworkCore;
+using RateSync.Worker;
+using RateSync.Worker.Consumers;
+using RateSync.Worker.Rbi;
+using Shared.Kernel.Interfaces;
+using Shared.Kernel.Persistence;
 
-// RateSync.Worker is scaffolded, not built: the Consumers folder is empty.
-//
-// This file exists so the project compiles and the solution builds. It starts a
-// host that does nothing, rather than a stub consumer that would look like a
-// starting point without anyone having decided the shape.
-//
-// CostingEngine.Worker is the one that is built; copy its Program.cs when this
-// service is written.
-await Host.CreateApplicationBuilder(args).Build().RunAsync();
+// Fills the rat schema in the master database (TK-24): the RBI reference rates
+// daily (TK-26). IBJA's metal rates are TK-25.
+HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
+
+builder.Services.AddSingleton(TimeProvider.System);
+
+// The worker acts as no user, so audit columns are stamped with no id — what
+// CLAUDE.md reserves a null CreatedBy for: written by no person.
+builder.Services.AddScoped<ICurrentUser, SystemUser>();
+builder.Services.AddScoped<AuditSaveChangesInterceptor>();
+
+// The master database, which holds no tenant rows: no tenant context, no RLS
+// interceptor, the same as Master's own AdminDbContext registration.
+builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
+{
+    options.UseNpgsql(RequiredConnectionString("AdminDatabase"));
+    options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
+});
+
+builder.Services.AddHttpClient<IReferenceRatePageSource, HttpReferenceRatePageSource>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Rbi:ReferenceRateUrl"));
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RetailErp-RateSync/1.0)");
+});
+
+builder.Services.AddScoped<ExchangeRateSync>();
+builder.Services.AddHostedService<RateSyncWorker>();
+
+IHost host = builder.Build();
+host.Run();
+
+string RequiredSetting(string key) =>
+    builder.Configuration[key] is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"{key} is not configured. Set it in appsettings.{{Environment}}.json or via the " +
+            $"{key.Replace(":", "__")} environment variable.");
+
+string RequiredConnectionString(string name) =>
+    builder.Configuration.GetConnectionString(name) is { Length: > 0 } value
+        ? value
+        : throw new InvalidOperationException(
+            $"ConnectionStrings:{name} is not configured. Set it in " +
+            $"appsettings.{{Environment}}.json or via the ConnectionStrings__{name} " +
+            "environment variable.");
