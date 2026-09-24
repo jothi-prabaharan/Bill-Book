@@ -594,7 +594,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       rows and gets zero" in all eight schemas.
 
 ### TK-09 · `ReportLayerCertificationTests`: likely already fixed
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/tests/Reporting.Api.Tests/ReportLayerCertificationTests.cs:97`, which expects 48.
@@ -604,14 +604,30 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 - **State:** commit `3dad51f` (19 September, "complete all 48 unblocked reports") came after the
   18 September count of 4 failures. A static count now agrees across three of the four layers.
 - **Sub-tasks:**
-  - [ ] Check the fourth layer: every `ReportKey` in `ReportCatalogSeeder.Catalog` has a source,
+  - [x] Check the fourth layer: every `ReportKey` in `ReportCatalogSeeder.Catalog` has a source,
         and every source has a catalog entry with matching column keys.
-  - [ ] If they all agree, hand the card to the owner to run.
-  - [ ] Otherwise, fix whichever side is stale. Don't just change the expected number.
+  - [x] If they all agree, hand the card to the owner to run.
+  - [x] ~~Otherwise, fix whichever side is stale.~~ Nothing was stale. Don't just change the expected number.
   - [ ] Owner: run `Reporting.Api.Tests` from a dropped `REPORTING_TEST_DB`.
 - **Done when:** `ReportLayerCertificationTests` has 0 failures.
 - **Notes:**
   - TK-83 moved the expected count at `ReportLayerCertificationTests.cs:97` from 48 to 52, and added four sources to the `Sources` list, `Program.cs` and the seeder. There are 52 of each now.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - **All four layers agree at 53**, one more than the note above says; a source was added
+      after TK-83. `ReportLayerCertificationTests.cs` already expects 53. I checked with a
+      throwaway program over the built assemblies, using the same reflection and the same
+      `Program.cs` regex as the tests, not a test run:
+      - 53 concrete `IReportSource` types;
+      - 53 `AddScoped<IReportSource, …>` lines, each naming a type that exists;
+      - 53 entries in `ReportSourceTests.Sources`;
+      - 53 keys in `ReportCatalogSeeder.SeededColumnKeys`.
+      No report is missing a layer, no key is duplicated, and no source has an empty column list.
+    - **Column keys match on every report**: each source's `Columns` keys equal its catalog entry's
+      keys, in both directions.
+    - The `ReportingDbContextModelSnapshot` drift TK-04 flagged was fixed in TK-04's migration, and
+      `has-pending-model-changes` is clean for `ReportingDbContext`.
+    - No code or test change was needed. The owner's run of `Reporting.Api.Tests` from a dropped
+      `REPORTING_TEST_DB` is what closes this card.
 
 ### B · Money posted right: cost of sales and fixed assets
 
