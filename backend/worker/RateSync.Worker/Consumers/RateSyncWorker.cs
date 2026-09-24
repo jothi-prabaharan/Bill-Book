@@ -42,12 +42,20 @@ public sealed class RateSyncWorker : BackgroundService
                 try
                 {
                     await using AsyncServiceScope scope = _scopes.CreateAsyncScope();
-                    ExchangeRateSyncOutcome outcome =
+                    ExchangeRateSyncOutcome rbiOutcome =
                         await scope.ServiceProvider.GetRequiredService<ExchangeRateSync>().RunAsync(stoppingToken);
 
-                    if (outcome != ExchangeRateSyncOutcome.AlreadyDone)
+                    if (rbiOutcome != ExchangeRateSyncOutcome.AlreadyDone)
                     {
-                        _logger.LogInformation("RBI reference-rate sync: {Outcome}.", outcome);
+                        _logger.LogInformation("RBI reference-rate sync: {Outcome}.", rbiOutcome);
+                    }
+
+                    ExchangeRateSyncOutcome ibjaOutcome =
+                        await scope.ServiceProvider.GetRequiredService<IbjaMetalRateSync>().RunAsync(stoppingToken);
+
+                    if (ibjaOutcome != ExchangeRateSyncOutcome.AlreadyDone)
+                    {
+                        _logger.LogInformation("IBJA metal-rate sync: {Outcome}.", ibjaOutcome);
                     }
                 }
                 catch (Exception ex) when (ex is not OperationCanceledException)

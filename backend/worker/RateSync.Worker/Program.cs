@@ -3,8 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using RateSync.Worker;
 using RateSync.Worker.Consumers;
 using RateSync.Worker.Rbi;
+using RateSync.Worker.Ibja;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Persistence;
+using Shared.Kernel.Secrets;
 
 // Fills the rat schema in the master database (TK-24): the RBI reference rates
 // daily (TK-26). IBJA's metal rates are TK-25.
@@ -25,6 +27,8 @@ builder.Services.AddDbContext<AdminDbContext>((sp, options) =>
     options.AddInterceptors(sp.GetRequiredService<AuditSaveChangesInterceptor>());
 });
 
+builder.Services.AddSecretStore(builder.Configuration, builder.Environment);
+
 builder.Services.AddHttpClient<IReferenceRatePageSource, HttpReferenceRatePageSource>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Rbi:ReferenceRateUrl"));
@@ -32,7 +36,15 @@ builder.Services.AddHttpClient<IReferenceRatePageSource, HttpReferenceRatePageSo
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RetailErp-RateSync/1.0)");
 });
 
+builder.Services.AddHttpClient<IIbjaClient, HttpIbjaClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Ibja:ApiUrl"] ?? "https://ibjarates.com/API/GoldRates/");
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (compatible; RetailErp-RateSync/1.0)");
+});
+
 builder.Services.AddScoped<ExchangeRateSync>();
+builder.Services.AddScoped<IbjaMetalRateSync>();
 builder.Services.AddHostedService<RateSyncWorker>();
 
 IHost host = builder.Build();
