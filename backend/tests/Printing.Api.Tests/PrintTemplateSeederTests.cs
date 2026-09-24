@@ -10,7 +10,7 @@ namespace Printing.Api.Tests;
 
 /// <summary>
 /// A branch's starting templates, now that Printing seeds them rather than
-/// Master (TK-24). Existing branches are re-seeded through the same path rather
+/// Master (TK-81). Existing branches are re-seeded through the same path rather
 /// than copied, so idempotence is the property everything rests on.
 /// </summary>
 [Collection(nameof(PostgresCollection))]

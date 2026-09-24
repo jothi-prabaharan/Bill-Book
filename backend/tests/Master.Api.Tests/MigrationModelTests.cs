@@ -20,7 +20,7 @@ namespace Master.Api.Tests;
 /// model with the snapshot in the migrations assembly and never opens the
 /// connection, so these tests cannot skip. Run them after touching any
 /// <c>HasData</c>; the fix for a failure is to regenerate the migration, not to
-/// add one on top — see TK-01 in <c>docs/TASKS.md</c>.
+/// add one on top — see TK-70 in <c>docs/TASKS.md</c>.
 /// </summary>
 public sealed class MigrationModelTests
 {

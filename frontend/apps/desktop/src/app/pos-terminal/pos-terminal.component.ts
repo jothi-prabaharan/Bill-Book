@@ -46,7 +46,7 @@ type Picker = 'none' | 'customer' | 'item';
  * customer can move the sale across a state line, which rebuilds every line's
  * tax rows rather than just recalculating them.
  *
- * Posting the sale — tender, till, change, the POS transaction type — is TK-33.
+ * Posting the sale — tender, till, change, the POS transaction type — is TK-39.
  */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -292,7 +292,7 @@ export class PosTerminalComponent implements OnInit {
    * Sends the cart as an invoice and prints its receipt.
    *
    * Still the scaffold's path: tender, till and the POS transaction type are
-   * TK-33, and until then the server may refuse what this sends. The refusal
+   * TK-39, and until then the server may refuse what this sends. The refusal
    * is shown in the server's own words rather than swallowed.
    */
   async checkout(): Promise<void> {

@@ -17,8 +17,8 @@ namespace Printing.Api.Tests;
 /// none of those can be shown against an in-memory provider.
 ///
 /// <para>
-/// Carried over from <c>Master.Api.Tests</c> (TK-23), against <c>prt</c>. Master's
-/// service and its tests were deleted in TK-24; the seeding test is in
+/// Carried over from <c>Master.Api.Tests</c> (TK-80), against <c>prt</c>. Master's
+/// service and its tests were deleted in TK-81; the seeding test is in
 /// <c>PrintTemplateSeederTests</c>.
 /// </para>
 /// </summary>

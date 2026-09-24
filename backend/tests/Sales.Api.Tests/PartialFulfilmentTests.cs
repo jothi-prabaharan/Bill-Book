@@ -17,7 +17,7 @@ namespace Sales.Api.Tests;
 /// the invoice services over one database and one inventory stub, so what one
 /// document does to the order is what the next one sees.
 ///
-/// <b>What TK-14 found.</b> Nothing recorded what had been billed, so an order
+/// <b>What TK-78 found.</b> Nothing recorded what had been billed, so an order
 /// could not say it was delivered and not invoiced. An invoice raised after a
 /// challan issued the challan's goods a second time unless it named the
 /// challan, and fulfilling an order counted only what was invoiced, so it did

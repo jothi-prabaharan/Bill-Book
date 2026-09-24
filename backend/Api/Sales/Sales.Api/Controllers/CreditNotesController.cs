@@ -16,7 +16,7 @@ namespace Sales.Api.Controllers;
 /// post it or void a posted one.
 ///
 /// <b>Every refusal is an outcome.</b> A credit note outside the caller's branch
-/// is <c>NotFound</c>, like an id that is nobody's (TK-02); a rule about the
+/// is <c>NotFound</c>, like an id that is nobody's (TK-71); a rule about the
 /// document comes back with the service's own sentence.
 /// </summary>
 [ApiController]

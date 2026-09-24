@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Master.Repository.Migrations.Tenant
 {
     /// <summary>
-    /// Print templates moved to Printing's own <c>prt.PrintTemplates</c> (TK-24).
+    /// Print templates moved to Printing's own <c>prt.PrintTemplates</c> (TK-81).
     ///
     /// <b>Dropped, not copied.</b> Nothing was deployed (D-13), and the copy
     /// could only have been a raw INSERT … SELECT across two services' schemas,

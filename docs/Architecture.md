@@ -1225,7 +1225,7 @@ The following rules have been established for all AI coding assistants (includin
 - Request/response models in `{Module}.Entity/Models/` (Data Annotations with error messages)
 - Controller action in `{Module}.Api/Controllers/`
 - Validate the caller's `OrgId` matches the target resource's — always
-- Return `Forbid()` when the token's org does not match an org id the route names; a row outside the caller's branch is `NotFound()`, because row-level security hides it from the service itself (TK-02, 23 September 2026)
+- Return `Forbid()` when the token's org does not match an org id the route names; a row outside the caller's branch is `NotFound()`, because row-level security hides it from the service itself (TK-71, 23 September 2026)
 
 ## Project Layout
 

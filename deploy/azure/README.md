@@ -41,10 +41,10 @@ you.
 `.csproj` and an empty `Consumers/` folder, so a deployed one would run a host
 that does nothing.
 
-**Printing is behind the gateway** (TK-23): `api/print-templates` for the template editor,
+**Printing is behind the gateway** (TK-80): `api/print-templates` for the template editor,
 and `api/print/render` for a document's own service to push its payload under the user's
 token — the design in stage P of `docs/Modules.md`. Its routes are in the gateway's
-`appsettings.json` and its cluster in `gatewayClusters` in `main.bicep`. Until TK-24 it
+`appsettings.json` and its cluster in `gatewayClusters` in `main.bicep`. Until TK-81 it
 serves `prt`, which nothing seeds yet; Master's `con.PrintTemplates` is still the copy with rows.
 
 ---

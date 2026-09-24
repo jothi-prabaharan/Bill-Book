@@ -24,7 +24,7 @@ namespace Accounting.Api.Tests;
 /// in the way. <c>RlsAudit</c> checks the catalog: RLS on, FORCEd, a policy
 /// present. This checks what the policy expression does.
 ///
-/// Written for TK-02 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-71 and not run by the AI that wrote it (docs/TASKS.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class RowLevelSecurityTests

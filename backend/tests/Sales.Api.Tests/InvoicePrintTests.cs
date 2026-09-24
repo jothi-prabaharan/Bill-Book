@@ -12,7 +12,7 @@ using Xunit;
 namespace Sales.Api.Tests;
 
 /// <summary>
-/// An invoice printed through its template (TK-24): what Sales puts in the
+/// An invoice printed through its template (TK-81): what Sales puts in the
 /// payload, and what it sends Printing.
 ///
 /// The payload is keyed by <see cref="PlaceholderCatalog"/>'s tags, so every tag

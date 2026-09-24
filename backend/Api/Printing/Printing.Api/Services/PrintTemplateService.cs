@@ -16,8 +16,8 @@ namespace Printing.Api.Services;
 /// them and none can forget to.
 ///
 /// <para>
-/// Ported from Master's <c>PrintTemplateService</c> (TK-23); Master's was
-/// deleted with <c>con.PrintTemplates</c> in TK-24, so this is the only one.
+/// Ported from Master's <c>PrintTemplateService</c> (TK-80); Master's was
+/// deleted with <c>con.PrintTemplates</c> in TK-81, so this is the only one.
 /// </para>
 /// </summary>
 public sealed class PrintTemplateService

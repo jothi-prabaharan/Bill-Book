@@ -23,7 +23,7 @@ namespace Sales.Api.Controllers;
 /// the caller's branch is <c>NotFound</c>, the same as an id that is nobody's:
 /// row-level security hides other branches' rows from this service, so there is
 /// nothing to tell the two apart, and a 403 would confirm the id exists in
-/// someone else's books (decided 23 September 2026, TK-02). A rule about the
+/// someone else's books (decided 23 September 2026, TK-71). A rule about the
 /// document comes back with the service's own sentence.
 /// </summary>
 [ApiController]

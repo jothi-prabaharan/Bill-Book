@@ -65,7 +65,7 @@ export interface TillBranch {
 /**
  * The masters the till looks things up in.
  *
- * **Local to `apps/desktop` for now.** TK-21 was meant to reuse TK-17's
+ * **Local to `apps/desktop` for now.** TK-79 was meant to reuse TK-15's
  * `SalesLookupService`, which does not exist yet; when it does, `customers` and
  * `items` move there and this keeps only what is the till's own. Each call goes
  * to the service that owns the data — contacts and the branch to Master, items
@@ -103,7 +103,7 @@ export class PosLookupService {
     );
   }
 
-  /** Active items matching a name or code. Barcode search is TK-15. */
+  /** Active items matching a name or code. Barcode search is TK-14. */
   items(search: string): Promise<ItemOption[]> {
     const query = new URLSearchParams();
     if (search.trim()) {

@@ -16,7 +16,7 @@ public sealed class CreditNoteService
     // The chart's own names — SystemAccountNames in Accounting. The ledger finds
     // an account by exact name. "Sales Returns" and "Round Off" were not seeded
     // and "Tax Payable" exists in no chart, so every credit note was refused
-    // (TK-13). SalesAccountNameTests holds every name here to Accounting's seed.
+    // (TK-77). SalesAccountNameTests holds every name here to Accounting's seed.
     private const string AccountsReceivableAccount = "Accounts Receivable";
     private const string SalesReturnsAccount = "Sales Returns";
     private const string OutputGstAccount = "Output GST";

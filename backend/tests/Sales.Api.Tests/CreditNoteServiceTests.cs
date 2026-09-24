@@ -25,7 +25,7 @@ namespace Sales.Api.Tests;
 /// covers: no <c>BaseQuantity</c> or <c>LineNumber</c>, and a tax split that
 /// never branched on <c>IsInterState</c>.
 ///
-/// <b>What TK-13 found in post and void.</b> Returned goods went back at the
+/// <b>What TK-77 found in post and void.</b> Returned goods went back at the
 /// <i>selling</i> price and as a plain receipt, so the id naming the issue they
 /// came from was stored and never read. The ledger legs named "Sales Returns"
 /// and "Tax Payable" — one unseeded, one in no chart — so every post was
@@ -496,7 +496,7 @@ public sealed class CreditNoteServiceTests
 
         var controller = new CreditNotesController(mine.Service);
 
-        // 404, not 403: row-level security hides it from this service (TK-02).
+        // 404, not 403: row-level security hides it from this service (TK-71).
         Assert.IsType<NotFoundResult>(await controller.Get(id, default));
         Assert.IsType<NotFoundResult>(await controller.Post(id, default));
         Assert.IsType<NotFoundResult>(

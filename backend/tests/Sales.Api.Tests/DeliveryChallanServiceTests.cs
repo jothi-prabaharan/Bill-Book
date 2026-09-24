@@ -439,7 +439,7 @@ public sealed class DeliveryChallanServiceTests
 
         // Not 403: under row-level security the service cannot see another
         // branch's row at all, and a 403 would confirm the id exists in someone
-        // else's books. Decided by the owner on 23 September 2026 (TK-02).
+        // else's books. Decided by the owner on 23 September 2026 (TK-71).
         Assert.IsType<NotFoundResult>(await controller.Get(id, default));
         Assert.IsType<NotFoundResult>(await controller.Update(id, request, default));
         Assert.IsType<NotFoundResult>(await controller.Post(id, default));

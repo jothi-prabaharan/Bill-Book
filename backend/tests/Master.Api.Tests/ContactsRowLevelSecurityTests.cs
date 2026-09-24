@@ -28,7 +28,7 @@ namespace Master.Api.Tests;
 /// that customer, because an API key names its customer but not its branch.
 /// These tests pin that exception to exactly that shape.
 ///
-/// Written for TK-03 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-72 and not run by the AI that wrote it (docs/TASKS.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class ContactsRowLevelSecurityTests

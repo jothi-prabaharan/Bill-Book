@@ -3,7 +3,7 @@
   <ItemGroup>
     <!-- The template sanitiser and the renderer's DOM. They lived on
          Shared.Kernel while the renderer did, which put an HTML parser in seven
-         services that never parse HTML (TK-24). -->
+         services that never parse HTML (TK-81). -->
     <PackageReference Include="AngleSharp" />
     <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />

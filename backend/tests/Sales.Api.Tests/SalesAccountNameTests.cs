@@ -13,7 +13,7 @@ namespace Sales.Api.Tests;
 /// "Sales Returns" — names that were in no chart — so in a real deployment
 /// every invoice and every credit note was refused. Nothing noticed, because
 /// every Sales test posts to a stub ledger that accepts any name at all
-/// (TK-13).
+/// (TK-77).
 ///
 /// The names are read off the services themselves — every <c>const string</c>
 /// whose name ends in <c>Account</c> — so a new posting site is covered the
@@ -28,8 +28,8 @@ public sealed class SalesAccountNameTests
     /// </summary>
     private static readonly Dictionary<string, string> NotSeededYet = new()
     {
-        ["Goods Delivered Not Invoiced"] = "TK-78: the invoice against a challan clears it",
-        ["Cash"] = "TK-78 / POS: a till sale's cash account is a child of Cash in Hand, which is locked",
+        ["Goods Delivered Not Invoiced"] = "TK-10: the invoice against a challan clears it",
+        ["Cash"] = "TK-10 / POS: a till sale's cash account is a child of Cash in Hand, which is locked",
     };
 
     public static TheoryData<string, string> PostedAccounts()
@@ -80,7 +80,7 @@ public sealed class SalesAccountNameTests
     [Fact]
     public void The_exceptions_are_still_unseeded()
     {
-        // When TK-78 seeds one of these, this fails and the exception comes off
+        // When TK-10 seeds one of these, this fails and the exception comes off
         // the list rather than lingering as a hole nobody remembers.
         HashSet<string?> seeded = ChartOfAccountsSeed.Build(Guid.NewGuid())
             .Select(a => a.AccountSystemName)

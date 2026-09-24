@@ -173,13 +173,13 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
       update: vi.fn().mockResolvedValue(undefined),
     };
 
-    // Promises: CreditNoteService is awaited since TK-13.
+    // Promises: CreditNoteService is awaited since TK-77.
     mockCreditNoteService = {
       get: vi.fn().mockResolvedValue({ creditNoteId: 1, status: 'Draft', lines: [] }),
       create: vi.fn().mockResolvedValue({ creditNoteId: 1 }),
     };
 
-    // Promises: DeliveryChallanService is awaited since TK-12.
+    // Promises: DeliveryChallanService is awaited since TK-76.
     mockDeliveryChallanService = {
       get: vi.fn().mockResolvedValue({ deliveryChallanId: 1, status: 'Draft', lines: [] }),
       create: vi.fn().mockResolvedValue({ deliveryChallanId: 1 }),
@@ -528,14 +528,14 @@ describe('Empirical Challenger Suite: Milestone 4, 5 & Final Verification', () =
         totals(): { subTotal: number; totalAmount: number };
       };
       order.onLinesChange([sampleLine]);
-      // Protected and signal-backed since TK-13, like the sales order.
+      // Protected and signal-backed since TK-77, like the sales order.
       const note = creditNote as unknown as {
         onLinesChange(lines: readonly DocumentLine[]): void;
         totals(): { subTotal: number; totalAmount: number };
       };
       note.onLinesChange([sampleLine]);
 
-      // Protected and signal-backed since TK-12, like the sales order.
+      // Protected and signal-backed since TK-76, like the sales order.
       const challan = deliveryChallan as unknown as {
         onLinesChange(lines: readonly DocumentLine[]): void;
         totals(): { subTotal: number; totalAmount: number };

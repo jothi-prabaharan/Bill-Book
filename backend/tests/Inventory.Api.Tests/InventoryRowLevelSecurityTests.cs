@@ -14,13 +14,13 @@ namespace Inventory.Api.Tests;
 /// policy work or fail. These tests seed as the superuser, then read and write
 /// inside one uncommitted transaction under <c>SET LOCAL ROLE</c> to a role with
 /// no bypass. The shape is <c>Accounting.Api.Tests.RowLevelSecurityTests</c>,
-/// which TK-02 wrote as the template.
+/// which TK-71 wrote as the template.
 ///
 /// <b>What this does not cover:</b> CostingEngine.Worker's run under RLS. It
 /// sets each branch's tenant on its own scope, which is the property these tests
-/// check; a costing run as a non-bypass role is the owner's check on TK-05.
+/// check; a costing run as a non-bypass role is the owner's check on TK-74.
 ///
-/// Written for TK-05 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-74 and not run by the AI that wrote it (docs/TASKS.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class InventoryRowLevelSecurityTests

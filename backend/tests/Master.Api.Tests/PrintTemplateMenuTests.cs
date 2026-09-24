@@ -11,7 +11,7 @@ namespace Master.Api.Tests;
 ///
 /// <b>Pure — no database.</b> The menu is <c>HasData</c>, so what the seed says is
 /// what every database gets; asserting the seed is asserting the menu. Switched
-/// on in TK-25, when the editor was built; before that the rows were seeded
+/// on in TK-82, when the editor was built; before that the rows were seeded
 /// inactive with no route, as every unbuilt screen is.
 /// </summary>
 public sealed class PrintTemplateMenuTests

@@ -14,9 +14,9 @@ namespace Customer.Api.Tests;
 /// policy work or fail. These tests seed as the superuser, then read and write
 /// inside one uncommitted transaction under <c>SET LOCAL ROLE</c> to a role with
 /// no bypass. The shape is <c>Accounting.Api.Tests.RowLevelSecurityTests</c>,
-/// which TK-02 wrote as the template.
+/// which TK-71 wrote as the template.
 ///
-/// Written for TK-04 and not run by the AI that wrote it (docs/TASKS.md 0.5).
+/// Written for TK-73 and not run by the AI that wrote it (docs/TASKS.md 0.5).
 /// </summary>
 [Collection(nameof(PostgresCollection))]
 public sealed class CustomerRowLevelSecurityTests

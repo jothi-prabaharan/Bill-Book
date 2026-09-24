@@ -115,7 +115,7 @@ public class InternalStockControllerTests
     /// Every line used to be recorded as a receipt, so the id naming the issue
     /// was stored and never read: the costing engine only walks a return back to
     /// its layers, and a receipt opens a fresh layer at whatever cost it was sent
-    /// — which from a credit note was the selling price (TK-13).
+    /// — which from a credit note was the selling price (TK-77).
     /// </summary>
     [SkippableFact]
     public async Task A_receipt_naming_the_issue_it_reverses_is_recorded_as_a_sales_return()

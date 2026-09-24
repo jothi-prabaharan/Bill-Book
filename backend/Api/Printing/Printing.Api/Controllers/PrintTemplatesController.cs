@@ -22,7 +22,7 @@ namespace Printing.Api.Controllers;
 ///
 /// <para>
 /// The ten routes Master used to serve, on the same path, against <c>prt</c>
-/// (TK-23). Master's copy was deleted in TK-24.
+/// (TK-80). Master's copy was deleted in TK-81.
 /// </para>
 /// </summary>
 [ApiController]

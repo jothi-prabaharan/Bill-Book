@@ -28,7 +28,7 @@ public sealed class InvoiceService : IInvoiceService
     private const string CogsAccount = "Cost of Goods Sold";
     // The chart's own names — SystemAccountNames in Accounting. The ledger finds
     // an account by exact name, and "Sales" and "Tax Payable", which these were,
-    // exist in no chart, so every invoice post was refused (TK-13).
+    // exist in no chart, so every invoice post was refused (TK-77).
     // SalesAccountNameTests holds every name here to Accounting's seed.
     private const string SalesRevenueAccount = "Sales Revenue";
     private const string TaxPayableAccount = "Output GST";

@@ -12,7 +12,7 @@ namespace Printing.Api.Services;
 /// branch is missing, so running it against a branch created months ago
 /// backfills whatever has been added to the catalogue since — and is how a
 /// branch that existed before Printing took templates over from Master gets
-/// its set (TK-24: re-seeded rather than copied).
+/// its set (TK-81: re-seeded rather than copied).
 /// </summary>
 public sealed class PrintTemplateSeeder
 {

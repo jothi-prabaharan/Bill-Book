@@ -349,7 +349,7 @@ public sealed class InternalStockController : ControllerBase
     /// receipt</b> — goods coming back on a credit note against the issue that
     /// sent them out. It is recorded as <see cref="Entity.Enums.StockMovementType.SalesReturn"/>,
     /// which is what makes the costing engine put it back onto the layers that
-    /// issue drew from. Recorded as a receipt, as every line was until TK-13, the
+    /// issue drew from. Recorded as a receipt, as every line was until TK-77, the
     /// id was stored and never read: the goods opened a fresh layer at whatever
     /// cost the caller sent, which from a credit note was the selling price.
     /// A return's value is settled by the worker from those layers and posted by

@@ -9,7 +9,7 @@ import { InvoiceService } from './invoice.service';
 
 /**
  * Printing an invoice asks Sales, not Printing: Sales holds the invoice and
- * builds its data, then has Printing lay it out (TK-24).
+ * builds its data, then has Printing lay it out (TK-81).
  */
 describe('InvoiceService.print', () => {
   let service: InvoiceService;

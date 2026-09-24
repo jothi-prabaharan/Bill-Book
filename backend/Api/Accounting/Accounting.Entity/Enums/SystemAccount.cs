@@ -82,7 +82,7 @@ public enum SystemAccount
     /// what was sold and what came back as two figures, and <c>IsContra</c> tells
     /// it to subtract the second. Sales posted a credit note here by name from the
     /// start; the account was simply never seeded, so every credit note was
-    /// refused by the ledger (TK-13).
+    /// refused by the ledger (TK-77).
     /// </summary>
     SalesReturns = 17,
 
@@ -92,7 +92,7 @@ public enum SystemAccount
     ///
     /// Sales posted an invoice's rounding here by name and the account did not
     /// exist, so any invoice whose total was not already whole was refused
-    /// (TK-13).
+    /// (TK-77).
     /// </summary>
     RoundOff = 18,
 }

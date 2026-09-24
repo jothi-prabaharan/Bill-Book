@@ -13,8 +13,8 @@ namespace Accounting.Repository.Migrations.Tenant
             // Row-level security, written by hand because EF Core generates none
             // of it. The chain squashed on 14 September 2026 dropped the blocks
             // that used to do this, and nothing noticed: the developer databases
-            // still carried the old policies. TK-02 in docs/TASKS.md restores it,
-            // and this migration is the template TK-03 to TK-08 copy.
+            // still carried the old policies. TK-71 in docs/TASKS.md restores it,
+            // and this migration is the template TK-72, TK-73, TK-74, TK-02, TK-03, TK-04 copy.
             //
             // The EF query filter on TenantDbContext and this policy say the same
             // thing on purpose. Neither is trusted alone: a query that escapes the

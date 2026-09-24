@@ -70,7 +70,7 @@
     /* minmax(0, …), not a bare 1fr. A bare 1fr cannot shrink below its widest
        item's min-content, and the top bar's row of buttons is 565px of it — so
        the one column grew past a 360px screen and every page scrolled sideways
-       inside it, whatever the page did to fit (found in TK-25). */
+       inside it, whatever the page did to fit (found in TK-82). */
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 46px auto 1fr auto;
   }

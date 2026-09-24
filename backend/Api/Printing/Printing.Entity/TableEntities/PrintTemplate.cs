@@ -16,7 +16,7 @@ namespace Printing.Entity.TableEntities;
 /// be invisible to the very branches meant to read it.
 ///
 /// <para>
-/// The only copy since TK-24. Master held one in <c>con.PrintTemplates</c> until
+/// The only copy since TK-81. Master held one in <c>con.PrintTemplates</c> until
 /// then; it was dropped rather than copied, and branches re-seeded here.
 /// </para>
 ///

@@ -11,7 +11,7 @@ namespace Inventory.Repository.Migrations.Tenant
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             // Row-level security for inv, copied from acc's
-            // EnableRowLevelSecurity (TK-05; the template is TK-02), which explains
+            // EnableRowLevelSecurity (TK-74; the template is TK-71), which explains
             // every clause. In short: FORCE because the application owns these
             // tables; FOR ALL with USING only, so the same test guards writes;
             // NULLIF so a request with no tenant sees nothing rather than

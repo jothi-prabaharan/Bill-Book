@@ -298,7 +298,7 @@ export class DeliveryChallanFormComponent implements OnInit {
   }
 
   protected onPickItem(_index: number): void {
-    // The item picker waits on the item lookup endpoint (TK-17). Until then a
+    // The item picker waits on the item lookup endpoint (TK-15). Until then a
     // line is keyed by item id, which the grid already supports.
   }
 

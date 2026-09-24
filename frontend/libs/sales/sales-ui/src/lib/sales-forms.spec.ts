@@ -48,7 +48,7 @@ interface SalesOrderFormHarness {
 
 /**
  * The delivery challan form, by the same declared shape — protected members,
- * signals and awaited calls since TK-12.
+ * signals and awaited calls since TK-76.
  */
 interface DeliveryChallanFormHarness {
   ngOnInit(): void;
@@ -72,7 +72,7 @@ interface DeliveryChallanFormHarness {
   voidChallan(): Promise<void>;
 }
 
-/** The credit note form, by the same declared shape — protected members and signals since TK-13. */
+/** The credit note form, by the same declared shape — protected members and signals since TK-77. */
 interface CreditNoteFormHarness {
   ngOnInit(): void;
   isEdit(): boolean;
@@ -244,7 +244,7 @@ describe('Sales Secondary Form Components (Quote, SalesOrder, CreditNote, Delive
       voidOrder: vi.fn().mockResolvedValue(undefined)
     };
 
-    // Promises since TK-13, like the invoice's.
+    // Promises since TK-77, like the invoice's.
     mockCreditNoteService = {
       get: vi.fn().mockResolvedValue({
         creditNoteId: 51,
