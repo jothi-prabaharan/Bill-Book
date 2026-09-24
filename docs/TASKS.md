@@ -1546,7 +1546,12 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-108 (tables, grid, import, approval), TK-109 (report and warnings). No decision needed.
 
 ### TK-36 · Design: custom fields and custom reports
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Custom fields and custom reports".
+  - **Custom fields**: values in a `jsonb` column on each entity (mapped as `JsonDocument`, so LINQ still queries them). Definitions are central in Master (new tenant schema `cfd`), and each owning service validates against them through a cached client in `Shared.Kernel`. Keys are permanent; removing a field keeps its values. Fields carry forward through document conversions and print as `{{custom.<key>}}`.
+  - **Custom reports**: saved views over six wide **datasets** that include custom fields, running on the existing engine and inheriting the dataset's permission. There is deliberately no user SQL. Scheduled email delivery goes through Notification.
+  - Cards: TK-110 (definitions and validator), TK-111 (contacts and items), TK-112 (documents, carry-forward, print), TK-113 (datasets and builder), TK-114 (scheduled email). No decision needed.
 
 ### TK-37 · Design: compliance bundle
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
@@ -1782,6 +1787,59 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting).
   - [ ] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
 - **Done when:** the budget-against-actual report's actual column matches the P&L for the same period.
+
+### TK-110 · Custom fields: definitions and the shared validator
+- [ ] open
+- **Lanes:** L-CON, L-KERNEL, L-UI, L-DEPS · **Depends on:** TK-36 · **Decision:** —
+- **Where:** design "Custom fields and custom reports" → Custom fields.
+- **Tables:** `cfd.CustomFieldDefinitions`
+- **Sub-tasks:**
+  - [ ] The definitions table on Master's tenant context, with RLS; `api/custom-fields` and `internal/custom-fields`.
+  - [ ] `Shared.Kernel.CustomFields`: the cached `ICustomFieldDefinitions` client and the pure `CustomFieldValidator`.
+  - [ ] Settings › Custom fields (`libs/settings/custom-fields`) and the shared `bb-custom-fields` form component.
+  - [ ] Test: the validator per data type; an unknown key refused; a required field enforced on new saves only; a key cannot be changed; 50-per-kind limit.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** a branch defines a dropdown field for contacts and the validator refuses a value not in its options.
+
+### TK-111 · Custom fields on contacts and items
+- [ ] open
+- **Lanes:** L-CON, L-INV, L-MASTER-UI, L-INVENTORY-UI · **Depends on:** TK-110 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `CustomFields jsonb` (mapped as `JsonDocument`) on `con.Contacts` and `inv.Items`, with a GIN index; validated on save.
+  - [ ] Rendered on the forms, `ShowInList` columns and `IsSearchable` search on the lists.
+  - [ ] Test: a search by a custom value finds the contact; a deactivated field keeps its stored value.
+- **Done when:** a contact saved with a custom field can be found by searching that value.
+
+### TK-112 · Custom fields on sales and purchase documents, carried forward and printed
+- [ ] open
+- **Lanes:** L-SAL, L-PUR, L-KERNEL, L-SAL-UI, L-PUR-UI · **Depends on:** TK-110 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] `CustomFields jsonb` on the header of every `sal` and `pur` document (via `DocumentHeaderBase`); validated on save.
+  - [ ] Carry-forward on every conversion (quote → order → challan → invoice; PO → receipt → bill) for keys marked `CarryForward`.
+  - [ ] `custom.` placeholders in `PlaceholderCatalog`; values in the print payload.
+  - [ ] Test: a quote's carried field arrives on the invoice made from it; an invoice prints `{{custom.site_ref}}`.
+- **Done when:** a custom field typed on a quote prints on the invoice converted from it.
+
+### TK-113 · Custom reports: datasets and the report builder
+- [ ] open
+- **Lanes:** L-RPT, L-REPORTING-UI · **Depends on:** TK-111, TK-112 · **Decision:** —
+- **Tables:** `rpt.CustomReports`
+- **Sub-tasks:**
+  - [ ] Six dataset sources (`IsDataset`), with custom-field columns built from the branch's definitions at run time.
+  - [ ] `rpt.CustomReports` with RLS; create from a dataset, save private or shared (`reports.edit`), list under **Custom** by the dataset's permission.
+  - [ ] The builder page: pick a dataset, choose columns, filters, grouping and pivot on `bb-report-grid`, save.
+  - [ ] Test: a user without `purchase.view` does not see a purchase-lines custom report; a deactivated field's column is dropped with a notice.
+- **Done when:** a user builds "sales by salesperson and site reference" from the sales-lines dataset, saves it, and reopens it from the catalog.
+
+### TK-114 · Scheduled report email
+- [ ] open
+- **Lanes:** L-RPT, L-NTF · **Depends on:** TK-113, TK-19 · **Decision:** —
+- **Tables:** `rpt.ReportSchedules`
+- **Sub-tasks:**
+  - [ ] Schedules (daily, weekly, monthly) with recipients among the branch's users; a hosted service claims due rows with a guarded update.
+  - [ ] Each run re-checks the owner's permission and sends the Excel export through Notification.
+  - [ ] Test: a due schedule runs once under concurrency; a schedule whose owner lost the permission sends nothing and records why.
+- **Done when:** a weekly schedule emails its report once per week.
 
 ### F · Phase 3: POS
 

@@ -3535,3 +3535,112 @@ budget." A branch setting chooses **month** or **year to date** as the compariso
 `accounting.view` to see budgets and the report; `accounting.edit` to enter a draft;
 `accounting.approve` to approve or revise.
 
+---
+
+# Custom fields and custom reports (TK-36)
+
+## Where things stand
+
+Checked against the code on 24 September 2026:
+
+- **No entity has custom fields.** Every column is in C#.
+- **Reports are code.** Each is an `IReportSource` (a column list and a LINQ projection); the engine
+  filters, sorts, groups, pivots, pages and exports every one alike. **Saved views**
+  (`SavedViewService`, `rpt` views) already store a user's or branch's choice of columns, filters,
+  sorting, grouping and freezing for one report. That is most of a "custom report" already; what is
+  missing is a way to start from something wider than one fixed report, and to give it a name in the
+  catalog.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **Custom field values are a `jsonb` column on the entity**, `CustomFields`, mapped as `JsonDocument` | One column per entity instead of an attribute table: no join per field, and Npgsql translates LINQ over `JsonDocument` (hard rule 1 holds; hard rule 5 already allows JSONB). A GIN index serves search |
+| 2 | **Definitions are central, in Master's tenant database**, one list for every entity, and each service validates against them through a cached client in `Shared.Kernel`, the way tax rates are read | Settings › Custom fields is one screen, like numbering series. A definition per service would split it across eight APIs |
+| 3 | **A field's key is permanent**; its label, options, order and flags can change; removing it deactivates it and keeps every stored value | Documents are records. Deleting a field must not rewrite history, and a renamed key would orphan every stored value |
+| 4 | **Values are validated on save by the owning service**: type, required, option list, length. An unknown key is refused | A jsonb column with no validation becomes a junk drawer that reports cannot trust |
+| 5 | **A field with the same key carries downstream**: quote → order → challan → invoice, PO → receipt → bill | The benchmark does this, and re-typing a site reference on each document is exactly the work custom fields exist to save |
+| 6 | **Custom reports are saved views over datasets**, not a query language | A dataset is a wide, curated `IReportSource` (sales lines, purchase lines, ledger rows, stock movements, items, contacts) with custom fields as columns. Users choose columns, filters, grouping and pivots with the engine that already exists. No user-written SQL, ever: it would break rule 1, tenancy and the permission model at once |
+| 7 | **A custom report inherits its dataset's permission**, and appears in the catalog under **Custom** only to those who hold it | The existing rule that a report you cannot run is absent, not refused |
+
+## Custom fields
+
+**Definitions (`cfd`, Master's tenant database, RLS)**
+
+**`cfd.CustomFieldDefinitions`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `CustomFieldDefinitionId` | long | PK |
+| `EntityKind` | enum | `Contact`, `Item`, `Quote`, `SalesOrder`, `DeliveryChallan`, `Invoice`, `CreditNote`, `PurchaseOrder`, `GoodsReceipt`, `Bill`, `DebitNote`, `Lead`, `Ticket`, `Project`, `Warehouse`. Line-level kinds (`InvoiceLine`, …) are a later extension |
+| `Key` | string(40) | `[a-z][a-z0-9_]*`, unique per branch and kind, immutable |
+| `Label` | string(80) | |
+| `DataType` | enum | `Text`, `LongText`, `Integer`, `Decimal`, `Date`, `Boolean`, `Dropdown`, `MultiSelect`, `Email`, `Url`, `Phone` |
+| `Options` | jsonb? | For `Dropdown` and `MultiSelect`: `[{value, label, active}]`. An option in use is deactivated, never removed |
+| `IsRequired` | bool | Enforced on new saves only; existing rows are not invalidated |
+| `DefaultValue` | string? | |
+| `MaxLength` | int? | For text |
+| `ShowInList` | bool | A column on the entity's list |
+| `ShowOnPrint` | bool | Offered as a print placeholder `{{custom.<key>}}` |
+| `IsSearchable` | bool | Included in the list's search |
+| `CarryForward` | bool | Copied to downstream documents that have a field with the same key |
+| `DisplayOrder` | int | |
+| `IsActive` | bool | |
+
+A branch may hold at most 50 active fields per kind; more is a sign the entity needs a real column.
+
+**Values**: `CustomFields jsonb` on each listed entity's table, `{ "<key>": value }`, with dates as
+ISO strings and decimals as numbers. A GIN index on the column where any field of that kind is
+searchable.
+
+**Services**:
+- Master: `GET/POST/PUT api/custom-fields` (`settings.*`), `GET internal/custom-fields?kind=`.
+- `Shared.Kernel.CustomFields`: `ICustomFieldDefinitions` (HTTP to Master, cached per branch for five
+  minutes, invalidated on a definition change by a short cache and a version number in the response),
+  and `CustomFieldValidator` (pure), used by every owning service's save path.
+- Print: `PlaceholderCatalog` gains the `custom.` namespace; a document's service puts its custom
+  values into the `PrintPayload`.
+
+**Screens**: Settings › Custom fields (a lib per the settings rule): pick the entity, add, reorder,
+edit, deactivate. Every entity form renders its active fields after the built-in ones through one
+shared `bb-custom-fields` component.
+
+## Custom reports
+
+**Datasets** are new report sources marked `IsDataset`, each wide enough to answer most questions in
+its area, and each exposing the custom fields of its entities as extra columns built from the
+branch's definitions at run time:
+
+| Dataset | Grain | Permission |
+|---|---|---|
+| Sales lines | One invoice or credit note line | `sales.view` |
+| Purchase lines | One bill or debit note line | `purchase.view` |
+| Ledger rows | One `acc.JournalLedger` row | `accounting.view` |
+| Stock movements | One `inv.StockMovements` row | `inventory.view` |
+| Items | One item with stock | `inventory.view` |
+| Contacts | One contact with balances | `contacts.view` |
+
+**`rpt.CustomReports`** (tenant-scoped, RLS)
+
+| Column | Type | Notes |
+|---|---|---|
+| `CustomReportId` | long | PK |
+| `DatasetKey` | string(60) | The dataset it is built on |
+| `Title` | string(100) | |
+| `Description` | string(500)? | |
+| `Definition` | jsonb | The saved-view shape the engine already understands: columns, filters, sort, grouping, pivot, parameters' defaults |
+| `OwnerUserId` | Guid? | Null means shared with the branch; sharing needs `reports.edit` |
+| `IsActive` | bool | |
+
+- The catalog lists custom reports under **Custom**, filtered by the dataset's permission.
+- Running one is running the dataset with the definition applied: the same engine, the same totals,
+  the same Excel and CSV export.
+- A definition naming a column that no longer exists (a deactivated custom field) drops it and says
+  so on the report, rather than failing.
+
+**Scheduled delivery**: a custom report (or any report) can be emailed as Excel on a schedule (daily,
+weekly on a weekday, monthly on a day) to users of the branch, through Notification (TK-19).
+`rpt.ReportSchedules` holds `ReportKey` or `CustomReportId`, the parameters, the cadence, the
+recipients (user ids) and `NextRunAt`; a hosted service in Reporting claims due rows with a guarded
+update and runs each under the schedule owner's permissions, re-checked at run time.
+
