@@ -70,6 +70,26 @@ public class DatabaseMigrationService : IHostedService
         // 3. Ensure IN000001 Database Exists and seed it
         await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", cancellationToken);
 
+        // 3b. Every other registered shard gets the same migrations (TK-46),
+        // so a schema change reaches every customer, not only IN000001's.
+        List<string> otherShards = await adminDb.TenantDatabases
+            .Where(d => d.DatabaseName != "IN000001")
+            .Select(d => d.DatabaseName)
+            .ToListAsync(cancellationToken);
+        foreach (string shard in otherShards)
+        {
+            string shardConnection = TenantConnectionString(adminDbString, shard);
+            await EnsureOrRequireDatabaseAsync(shardConnection, cancellationToken);
+            _logger.LogInformation("Migrating tenant schemas for {Database}...", shard);
+            await MigrateTenantSchemasAsync(shardConnection, cancellationToken);
+        }
+
+        // 3c. Each shard's count of customers, recounted from mst.Customers
+        // (TK-46). It replaced a count of branches, and a recount at every
+        // start also corrects any drift from a signup that failed after its
+        // claim.
+        await RecountShardCustomersAsync(adminDb, cancellationToken);
+
         // Blank optional phones are NULL, never '' (D-04, TK-21).
         await BlankPhoneBackfill.RunAdminAsync(adminDb, cancellationToken);
 
@@ -118,8 +138,8 @@ public class DatabaseMigrationService : IHostedService
             {
                 DatabaseName = tenantDbName,
                 PlanType = Master.Entity.Enums.PlanTier.Elite,
-                MaxOrganizations = 1,
-                CurrentOrganizations = 1
+                MaxCustomers = 1,
+                CurrentCustomers = 1
             };
             adminDb.TenantDatabases.Add(tenantDbEntry);
             
@@ -159,15 +179,8 @@ public class DatabaseMigrationService : IHostedService
         _logger.LogInformation("Migrating tenant schemas for {Database}...", tenantDbName);
         var dummyTenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
 
-        await MigrateContextAsync<ContactsDbContext>(tenantConnectionString, dummyTenant, "con", ct);
-                        await MigrateContextAsync<AccountingDbContext>(tenantConnectionString, dummyTenant, "acc", ct);
-        await MigrateContextAsync<CustomerDbContext>(tenantConnectionString, dummyTenant, "cus", ct);
-        await MigrateContextAsync<InventoryDbContext>(tenantConnectionString, dummyTenant, "inv", ct);
-        await MigrateContextAsync<PurchaseDbContext>(tenantConnectionString, dummyTenant, "pur", ct);
-        await MigrateContextAsync<PrintingDbContext>(tenantConnectionString, dummyTenant, "prt", ct);
-        await MigrateContextAsync<ReportingDbContext>(tenantConnectionString, dummyTenant, "rpt", ct);
-        await MigrateContextAsync<SalesDbContext>(tenantConnectionString, dummyTenant, "sal", ct);
-        
+        await MigrateTenantSchemasAsync(tenantConnectionString, ct);
+
         // Blank optional phones in con, inv and cus are NULL, never '' (TK-21).
         await using (var contacts = new ContactsDbContext(new DbContextOptionsBuilder<ContactsDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
         await using (var inventory = new InventoryDbContext(new DbContextOptionsBuilder<InventoryDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
@@ -265,7 +278,51 @@ public class DatabaseMigrationService : IHostedService
         _logger.LogInformation("Completed tenant schema migrations for {Database}.", tenantDbName);
     }
 
-    private async Task MigrateContextAsync<TContext>(string connectionString, ITenantContext tenant, string schema, CancellationToken ct) 
+    /// <summary>
+    /// Every tenant schema, migrated into one physical database. The same steps
+    /// for the first shard at startup, for every other registered shard at
+    /// startup, and for a shard provisioned when the pool fills (TK-46).
+    /// </summary>
+    public static async Task MigrateTenantSchemasAsync(string connectionString, CancellationToken ct)
+    {
+        var tenant = new TenantContext { CustomerId = Guid.Empty, OrgId = Guid.Empty };
+
+        await MigrateContextAsync<ContactsDbContext>(connectionString, tenant, "con", ct);
+        await MigrateContextAsync<AccountingDbContext>(connectionString, tenant, "acc", ct);
+        await MigrateContextAsync<CustomerDbContext>(connectionString, tenant, "cus", ct);
+        await MigrateContextAsync<InventoryDbContext>(connectionString, tenant, "inv", ct);
+        await MigrateContextAsync<PurchaseDbContext>(connectionString, tenant, "pur", ct);
+        await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", ct);
+        await MigrateContextAsync<ReportingDbContext>(connectionString, tenant, "rpt", ct);
+        await MigrateContextAsync<SalesDbContext>(connectionString, tenant, "sal", ct);
+    }
+
+    /// <summary>
+    /// Sets each shard's <c>CurrentCustomers</c> to the number of customers
+    /// whose <c>DatabaseName</c> names it. LINQ, one guarded update per shard.
+    /// </summary>
+    public static async Task RecountShardCustomersAsync(AdminDbContext adminDb, CancellationToken ct)
+    {
+        Dictionary<string, int> counts = await adminDb.Customers
+            .GroupBy(c => c.DatabaseName)
+            .Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(g => g.Key, g => g.Count, ct);
+
+        List<string> shards = await adminDb.TenantDatabases.Select(d => d.DatabaseName).ToListAsync(ct);
+        foreach (string shard in shards)
+        {
+            int count = counts.GetValueOrDefault(shard);
+            await adminDb.TenantDatabases
+                .Where(d => d.DatabaseName == shard && d.CurrentCustomers != count)
+                .ExecuteUpdateAsync(set => set.SetProperty(d => d.CurrentCustomers, count), ct);
+        }
+    }
+
+    /// <summary>The connection string of one tenant database on the admin database's server.</summary>
+    public static string TenantConnectionString(string adminConnectionString, string databaseName) =>
+        new NpgsqlConnectionStringBuilder(adminConnectionString) { Database = databaseName }.ConnectionString;
+
+    private static async Task MigrateContextAsync<TContext>(string connectionString, ITenantContext tenant, string schema, CancellationToken ct) 
         where TContext : TenantDbContext
     {
         var optionsBuilder = new DbContextOptionsBuilder<TContext>();
@@ -291,11 +348,20 @@ public class DatabaseMigrationService : IHostedService
     /// only checks that it is there, and stops startup with the fix in the
     /// message when it is not.
     /// </summary>
-    private async Task EnsureOrRequireDatabaseAsync(string connectionString, CancellationToken ct)
+    private Task EnsureOrRequireDatabaseAsync(string connectionString, CancellationToken ct) =>
+        EnsureOrRequireDatabaseAsync(connectionString, _environment, _logger, ct);
+
+    /// <summary>
+    /// Creates the database in Development; anywhere else, requires that it
+    /// exists and stops with <see cref="MissingDatabaseMessage"/> when it does
+    /// not (D-02, TK-27). Used for a new shard too (TK-46).
+    /// </summary>
+    public static async Task EnsureOrRequireDatabaseAsync(
+        string connectionString, IHostEnvironment environment, ILogger logger, CancellationToken ct)
     {
-        if (MayCreateDatabases(_environment))
+        if (MayCreateDatabases(environment))
         {
-            await EnsureDatabaseExistsAsync(connectionString, ct);
+            await EnsureDatabaseExistsAsync(connectionString, logger, ct);
             return;
         }
 
@@ -306,7 +372,7 @@ public class DatabaseMigrationService : IHostedService
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.InvalidCatalogName)
         {
-            throw new InvalidOperationException(MissingDatabaseMessage(connectionString, _environment.EnvironmentName), ex);
+            throw new InvalidOperationException(MissingDatabaseMessage(connectionString, environment.EnvironmentName), ex);
         }
     }
 
@@ -321,7 +387,7 @@ public class DatabaseMigrationService : IHostedService
             + "Create it as the server administrator, then start again.";
     }
 
-    private async Task EnsureDatabaseExistsAsync(string connectionString, CancellationToken ct)
+    private static async Task EnsureDatabaseExistsAsync(string connectionString, ILogger logger, CancellationToken ct)
     {
         var builder = new NpgsqlConnectionStringBuilder(connectionString);
         string targetDatabase = builder.Database!;
@@ -341,7 +407,7 @@ public class DatabaseMigrationService : IHostedService
 
         if (!exists)
         {
-            _logger.LogInformation("Creating database {Database}...", targetDatabase);
+            logger.LogInformation("Creating database {Database}...", targetDatabase);
             string sql = $"CREATE DATABASE \"{targetDatabase}\" ENCODING 'UTF8' TEMPLATE template0";
             await using var createCmd = new NpgsqlCommand(sql, connection);
             await createCmd.ExecuteNonQueryAsync(ct);

@@ -100,8 +100,8 @@ public sealed class SignupTests
         {
             DatabaseName = name,
             PlanType = PlanTier.Trial,
-            MaxOrganizations = capacity,
-            CurrentOrganizations = 0,
+            MaxCustomers = capacity,
+            CurrentCustomers = 0,
         });
 
         await db.SaveChangesAsync();
@@ -118,7 +118,7 @@ public sealed class SignupTests
     /// </summary>
     private static Task<int> FillEveryShardAsync(AdminDbContext db) =>
         db.TenantDatabases.ExecuteUpdateAsync(
-            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+            set => set.SetProperty(d => d.CurrentCustomers, d => d.MaxCustomers));
 
     private (SignupService Service, AdminDbContext Db, RecordingQueue Queue) Create()
     {
@@ -339,7 +339,7 @@ public sealed class SignupTests
             1,
             await db.TenantDatabases.AsNoTracking()
                 .Where(d => d.DatabaseName == shard)
-                .Select(d => d.CurrentOrganizations).FirstAsync());
+                .Select(d => d.CurrentCustomers).FirstAsync());
     }
 
     [SkippableFact]
@@ -354,7 +354,7 @@ public sealed class SignupTests
 
         string full = await SeedShardAsync(db, capacity: 1);
         await db.TenantDatabases.Where(d => d.DatabaseName == full)
-            .ExecuteUpdateAsync(set => set.SetProperty(d => d.CurrentOrganizations, 1));
+            .ExecuteUpdateAsync(set => set.SetProperty(d => d.CurrentCustomers, 1));
 
         string spare = await SeedShardAsync(db, capacity: 5);
 
@@ -386,7 +386,7 @@ public sealed class SignupTests
         // Every shard in the database at its limit, including any left by
         // another test in this collection.
         await db.TenantDatabases.ExecuteUpdateAsync(
-            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+            set => set.SetProperty(d => d.CurrentCustomers, d => d.MaxCustomers));
 
         await Assert.ThrowsAsync<NoTenantCapacityException>(
             () => signup.SignupAsync(Request(Guid.NewGuid().ToString("N")[..8]), default));
@@ -407,7 +407,7 @@ public sealed class SignupTests
 
         await using AdminDbContext seed = _admin.CreateContext();
         await seed.TenantDatabases.ExecuteUpdateAsync(
-            set => set.SetProperty(d => d.CurrentOrganizations, d => d.MaxOrganizations));
+            set => set.SetProperty(d => d.CurrentCustomers, d => d.MaxCustomers));
 
         string shard = await SeedShardAsync(seed, capacity: 1);
 
@@ -427,6 +427,6 @@ public sealed class SignupTests
             1,
             await seed.TenantDatabases.AsNoTracking()
                 .Where(d => d.DatabaseName == shard)
-                .Select(d => d.CurrentOrganizations).FirstAsync());
+                .Select(d => d.CurrentCustomers).FirstAsync());
     }
 }

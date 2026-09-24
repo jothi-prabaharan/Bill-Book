@@ -251,7 +251,7 @@ Platform and Identity schemas were folded into `mst`, and `bnk` into `acc`; `crm
 
 The 25 August reversal to a single shared tenant database was itself superseded by the sharded-tenancy work (commit `7cccf1f`, "implement sharded tenant databases and dynamic connection resolution"). What is on `main` as of 4 September 2026:
 
-- **`mst.TenantDatabases` is a shard registry** — a row per physical database, with a `PlanType` and a `MaxOrganizations` / `CurrentOrganizations` capacity.
+- **`mst.TenantDatabases` is a shard registry** — a row per physical database, with a `PlanType` and a `MaxCustomers` / `CurrentCustomers` capacity (counted in customers since TK-46: 100 per pool, 1 for Elite). A full pool takes the next `Sharding:StandbyDatabases` entry, migrates it and registers it.
 - **`mst.Customers.DatabaseName` names the shard a customer's books live in.** It is not vestigial; see the signup caveat above for how nearly it was deleted, and why nothing would have caught that.
 - **`ITenantDatabaseResolver` maps a request's `CustomerId` to a connection string**, cached ten minutes, reading that column in raw SQL.
 - `DatabaseMigrationService` provisions the first shard (`IN000001`) on startup and migrates all eight schemas into it.

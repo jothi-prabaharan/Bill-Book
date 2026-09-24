@@ -165,8 +165,12 @@ it at startup with a message saying where to declare it. The login the services
 connect with therefore needs no `CREATEDB`. It still connects as the server's admin
 login today, which has it through `azure_pg_admin`. A dedicated login with DML rights
 only, and without `CREATEDB`, is the tighter setup, and that is the owner's call
-(TK-08). A second shard is another database resource in `main.bicep`, added before
-it is registered in `mst.TenantDatabases` (TK-46).
+(TK-08). A second shard is another database resource in `main.bicep` (TK-46). Declare it
+ahead of need and list it in `Sharding__StandbyDatabases__0` (then `__1`, …) on
+Master. When every pool's 100 customers are taken, or an Elite customer signs up,
+Master takes the first listed database not yet registered, migrates every tenant
+schema into it and registers it. With no standby left, signup answers 503 and
+logs that one is needed.
 
 **Every service gets every inter-service URL.** Each has a different set of
 required ones, and several ship `localhost` defaults in `appsettings.json`. In

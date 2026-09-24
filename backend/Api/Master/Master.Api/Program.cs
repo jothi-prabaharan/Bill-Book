@@ -106,7 +106,12 @@ builder.Services.AddScoped<SignupService>();
 // capacity for it with a guarded update. The sharded-tenancy work built the
 // registry and the resolver and left this step out, which is why every signup
 // died on the not-null DatabaseName column.
-builder.Services.AddScoped<ITenantDatabaseAllocator, TenantDatabaseAllocator>();
+builder.Services.AddScoped<ITenantShardProvisioner, TenantShardProvisioner>();
+builder.Services.AddScoped<ITenantDatabaseAllocator>(sp => new TenantDatabaseAllocator(
+    sp.GetRequiredService<Master.Repository.AdminDbContext>(),
+    sp.GetRequiredService<ILogger<TenantDatabaseAllocator>>(),
+    sp.GetRequiredService<ITenantShardProvisioner>(),
+    sp.GetRequiredService<IConfiguration>()));
 builder.Services.AddScoped<OrgContextService>();
 builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<OrgCurrencyService>();

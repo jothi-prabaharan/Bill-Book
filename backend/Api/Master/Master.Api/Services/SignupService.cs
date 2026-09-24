@@ -61,8 +61,9 @@ public sealed class SignupService
         // Before anything is written. A customer row cannot exist without a
         // database to point at, and finding out after the insert would mean a
         // half-created customer to clean up.
+        // A trial shares a pooled shard, and a full pool provisions the next
+        // one (TK-46), so this refuses only when no shard can be made at all.
         string databaseName = await _databases.AllocateAsync(PlanTier.Trial, ct)
-            ?? await _databases.AllocateAsync(PlanTier.Pro, ct)
             ?? throw new NoTenantCapacityException(PlanTier.Trial);
 
         CustomerEntity customer = null!;

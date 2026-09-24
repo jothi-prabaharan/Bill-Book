@@ -1172,7 +1172,7 @@ and each is sold on its own. A customer may buy one app, several, or all four (o
 This section is the platform all four share. It is **stage H0**, built before any HRMS table,
 because nothing in a second app works without per-app licences, tokens and menus.
 
-**Nothing in this section is built.**
+**H0.1 to H0.5 are built (TK-42 to TK-46, 24 September 2026); H0.6 is TK-47.**
 
 ## Where things stand
 
@@ -1478,11 +1478,11 @@ Carried over from the earlier design and unchanged in substance. The owner's mod
 - **100 customers per pooled database.** The 101st causes a new pool to be provisioned.
 - **An Elite customer gets a physical database of their own.**
 
-`main` has the shard registry and allocator but not that model:
+**Built (TK-46, 24 September 2026).** Before it, `main` had the shard registry and allocator but not that model:
 
-- `mst.TenantDatabases` counts `MaxOrganizations`, not customers.
-- `PlanType` is a free string.
-- When every shard is full, signup answers 503 rather than provisioning another.
+- `mst.TenantDatabases` counted `MaxOrganizations`, not customers. It is now `MaxCustomers` / `CurrentCustomers`, recounted at every start.
+- `PlanType` was a free string. It is now the `PlanTier` enum (TK-42).
+- When every shard was full, signup answered 503. It now takes the next standby database infrastructure has created (`Sharding:StandbyDatabases`, per D-02), migrates it and registers it. In Development it creates the next one.
 
 H0 fixes all three:
 
@@ -1493,7 +1493,7 @@ H0 fixes all three:
 
 ## Stage H0
 
-- [ ] **H0.1 — `App` in `mst`.** The flags enum; `App` on roles, licences and refresh tokens; `Apps`
+- [x] **H0.1 — `App` in `mst`.** The flags enum; `App` on roles, licences and refresh tokens; `Apps`
   on permissions and menus; the enums for plan tier and plan type; seeds marked; the grant rule.
 
   **It starts by fixing the admin migration drift** recorded in `CLAUDE.md` — Master cannot start on
@@ -1503,13 +1503,13 @@ H0 fixes all three:
 
   *Done when*: granting a Payroll-only permission to a RetailErp role is refused; a Payroll role can
   be granted `users.view`; and `apps/web` is unchanged for every existing user.
-- [ ] **H0.2 — Per-app sign-in and licences.** Per-app login filtering, the `app` claim,
+- [x] **H0.2 — Per-app sign-in and licences.** Per-app login filtering, the `app` claim,
   licence claims per app, per-app refresh families, the service-side `app` check, and the
   current-context endpoint.
 
   *Done when*: an HRMS token calling a RetailErp endpoint gets 403; a Payroll token reads employees
   but not recruitment; an expired RetailErp licence leaves Payroll working.
-- [ ] **H0.3 — Shell and shared master pages.** `APP_ID`, `GET /api/menu?app=`, the app switcher,
+- [x] **H0.3 — Shell and shared master pages.** `APP_ID`, `GET /api/menu?app=`, the app switcher,
   the Applications page, and every page in the shared master pages table flagged, guarded and
   mounted per its row — including moving the numbering series page to `libs/master/master-ui`.
 
@@ -1521,11 +1521,11 @@ H0 fixes all three:
   in its Apps column; no app's source tree contains a copy of a shared page; a typed URL to a page the
   user lacks the permission for shows the no-access page; and removing `data.access` from any shell
   route fails that app's route spec.
-- [ ] **H0.4 — Signup and seeding per app**, and starting another app's trial.
+- [x] **H0.4 — Signup and seeding per app**, and starting another app's trial.
 
   *Done when*: signing up for Payroll then starting HRMS gives one customer, one branch, two
   licences and one set of employees, with HRMS's master data seeded into the existing branch.
-- [ ] **H0.5 — Sharding.** Per the section above.
+- [x] **H0.5 — Sharding.** Per the section above.
 - [ ] **H0.6 — `apps/hrms` and `apps/payroll`.** Two empty apps that sign in, select a branch, draw
   their own menus, and switch to each other and to `apps/web`.
 

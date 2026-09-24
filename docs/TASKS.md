@@ -2154,22 +2154,25 @@ None of it is built.
   - `internal/users/owner` (the older internal endpoint) still assigns RetailErp's Owner only.
 
 ### TK-46 · H0.5: sharding in the multi-app model
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-MST · **Depends on:** TK-42, TK-27 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-MST (+ L-DEPS for the Azure README) · **Depends on:** TK-42, TK-27 · **Decision:** —
 - **Where:**
-  - `Master.Api/Services/TenantDatabaseAllocator.cs`
-  - `mst.TenantDatabases`
+  - `Master.Api/Services/{TenantDatabaseAllocator,TenantShardProvisioner,DatabaseMigrationService,SignupService}.cs`, `Program.cs`, `appsettings.json` (`Sharding`)
+  - `mst.TenantDatabases` (migration `ShardCapacityInCustomers`: a column rename)
   - `docs/Modules.md` Platform § Sharding.
 - **Sub-tasks:**
-  - [ ] Count capacity in customers, not organizations: `MaxCustomers` (default 100) and `CurrentCustomers`.
-  - [ ] When the last pool fills, provision a new one. Create the database, migrate every tenant
-        schema into it (reusing the `DatabaseMigrationService` steps), register it, then allocate.
-  - [ ] The Elite plan gets a shard with capacity 1.
-  - [ ] Test: the 101st customer lands in a new shard.
-  - [ ] Test: two concurrent signups can't both take the last slot.
+  - [x] Count capacity in customers, not organizations: `MaxCustomers` (default 100) and `CurrentCustomers`. The columns are renamed, and every start recounts `CurrentCustomers` from `mst.Customers` (`RecountShardCustomersAsync`, LINQ), so values that were counted in branches are corrected.
+  - [x] When the last pool fills, provision a new one. Create the database, migrate every tenant
+        schema into it (reusing the `DatabaseMigrationService` steps, now the static `MigrateTenantSchemasAsync`), register it, then allocate. **Per D-02, "create" means Development only.** Elsewhere the provisioner takes the first `Sharding:StandbyDatabases` entry not yet registered, which infrastructure created. It registers in a scope of its own, committed at once.
+  - [x] The Elite plan gets a shard with capacity 1.
+  - [x] Test: the 101st customer lands in a new shard (`ShardingTests`).
+  - [x] Test: two concurrent signups can't both take the last slot (`ShardingTests`, plus the existing `SignupTests` race).
 - **Done when:** a full pool no longer makes signup answer 503.
 - **Notes:** shares `L-MST` with TK-45, so the two run one after the other.
   - Dependency on TK-27 added 2026-09-24: production shard provisioning goes through infrastructure (D-02), so decide that path first.
+  - **Pools are every plan but Elite.** Signup allocates `Trial`, and a new pool is registered as `Pro`. The old "Trial, then Pro" fallback is gone.
+  - **Startup now migrates every registered shard**, not only `IN000001`. Before this, a second shard would never have received a schema change.
+  - "Signup no longer answers 503" holds while a standby is listed. With none left outside Development it still answers 503, and it logs what to add. Keeping one or two spare is an operator task, written in `deployment.md` and `deploy/azure/README.md`.
 
 ### TK-47 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
 - [ ] open

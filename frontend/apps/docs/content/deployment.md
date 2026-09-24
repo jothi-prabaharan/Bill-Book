@@ -64,7 +64,11 @@ Master creates a missing database only on a developer's machine, in the `Develop
 - **On Azure**, `EP_Admin` and `IN000001` are declared in `deploy/azure/main.bicep` and created by the deployment.
 - **On your own PCs**, the database container creates both the first time it starts with an empty data volume, from `deploy/local/db/init`.
 
-If one is missing, Master stops at startup and names the database, the server and where it should have been created. The application's database login therefore never needs the right to create databases. A further database for more customers is added the same way, by the installation.
+If one is missing, Master stops at startup and names the database, the server and where it should have been created. The application's database login therefore never needs the right to create databases.
+
+### More customers: standby databases
+
+A tenant database holds up to 100 customers (`Sharding:CustomersPerPool`). An Elite customer gets a database of its own. When every database is full, or an Elite customer signs up, Master takes the next **standby database**. It migrates every tenant schema into it, registers it, and places the customer there. Standby databases are made by the installation, like the first one, and listed in `Sharding:StandbyDatabases` (on Azure, `Sharding__StandbyDatabases__0`, `__1`, …). Keep one or two spare. With none left, signup answers *service unavailable* and Master logs that a database is needed. On a developer's machine Master creates the next one itself (`IN000002`, …). At every start, Master migrates every registered database and recounts the customers in each.
 
 ## Stock costing runs on its own
 

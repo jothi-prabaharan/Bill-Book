@@ -29,67 +29,125 @@ namespace Master.Api.Services;
 public interface ITenantDatabaseAllocator
 {
     /// <summary>
-    /// Claims one organization's worth of capacity and returns the database
-    /// name, or null when every shard for the plan is full.
+    /// Claims one customer's place in a database and returns its name, or null
+    /// when there is no room and no new shard could be provisioned.
     ///
     /// Null is not an error to swallow: it means the platform is out of
-    /// provisioned capacity and an operator has to add a shard. A caller that
-    /// invented a database name would put a customer's books somewhere no
-    /// migration has run.
+    /// capacity and an operator has to add a shard. A caller that invented a
+    /// database name would put a customer's books somewhere no migration has run.
     /// </summary>
-    Task<string?> AllocateAsync(PlanTier planType, CancellationToken ct);
+    Task<string?> AllocateAsync(PlanTier plan, CancellationToken ct);
 }
 
+/// <summary>
+/// The allocation rules (H0.5, TK-46):
+/// <list type="bullet">
+/// <item><b>Capacity is counted in customers</b>, 100 to a pooled shard by
+/// default (<c>Sharding:CustomersPerPool</c>).</item>
+/// <item><b>Every plan but Elite shares the pools</b>, fullest first, so
+/// customers pack into a database rather than spreading one per shard.</item>
+/// <item><b>When the last pool fills, a new one is provisioned</b>, migrated,
+/// registered, and then claimed, so a full pool no longer makes signup
+/// answer 503.</item>
+/// <item><b>Elite gets a shard of its own</b>, capacity one, provisioned for it.</item>
+/// </list>
+/// </summary>
 public sealed class TenantDatabaseAllocator : ITenantDatabaseAllocator
 {
+    public const int DefaultCustomersPerPool = 100;
+
     private readonly AdminDbContext _db;
     private readonly ILogger<TenantDatabaseAllocator> _log;
+    private readonly ITenantShardProvisioner? _provisioner;
+    private readonly int _customersPerPool;
 
-    public TenantDatabaseAllocator(AdminDbContext db, ILogger<TenantDatabaseAllocator> log)
+    public TenantDatabaseAllocator(
+        AdminDbContext db,
+        ILogger<TenantDatabaseAllocator> log,
+        ITenantShardProvisioner? provisioner = null,
+        IConfiguration? config = null)
     {
         _db = db;
         _log = log;
+        _provisioner = provisioner;
+        _customersPerPool = config?.GetValue<int?>("Sharding:CustomersPerPool") is int configured && configured > 0
+            ? configured
+            : DefaultCustomersPerPool;
     }
 
-    public async Task<string?> AllocateAsync(PlanTier planType, CancellationToken ct)
+    public async Task<string?> AllocateAsync(PlanTier plan, CancellationToken ct)
     {
-        // Fullest-first among the shards that still have room, so customers pack
-        // into a database rather than spreading one per shard — a half-empty
-        // shard per customer is the cost this registry exists to avoid.
+        if (plan == PlanTier.Elite)
+        {
+            // A database of its own: a new shard, holding this customer only.
+            string? own = _provisioner is null ? null : await _provisioner.ProvisionAsync(PlanTier.Elite, 1, ct);
+            return own is not null && await ClaimAsync(own, ct) ? own : NoCapacity(plan);
+        }
+
+        if (await ClaimInPoolsAsync(ct) is string pooled)
+        {
+            return pooled;
+        }
+
+        if (_provisioner is null)
+        {
+            return NoCapacity(plan);
+        }
+
+        // Every pool is full. Provision one and claim in it; a racing signup
+        // may have provisioned one too, so the claim goes back through the
+        // pools rather than straight at the new name.
+        if (await _provisioner.ProvisionAsync(PlanTier.Pro, _customersPerPool, ct) is null)
+        {
+            return NoCapacity(plan);
+        }
+
+        return await ClaimInPoolsAsync(ct) ?? NoCapacity(plan);
+    }
+
+    /// <summary>A place in the fullest pooled shard with room, or null.</summary>
+    private async Task<string?> ClaimInPoolsAsync(CancellationToken ct)
+    {
         List<string> candidates = await _db.TenantDatabases
-            .Where(d => d.PlanType == planType && d.CurrentOrganizations < d.MaxOrganizations)
-            .OrderByDescending(d => d.CurrentOrganizations)
+            .Where(d => d.PlanType != PlanTier.Elite && d.CurrentCustomers < d.MaxCustomers)
+            .OrderByDescending(d => d.CurrentCustomers)
             .Select(d => d.DatabaseName)
             .ToListAsync(ct);
 
         foreach (string name in candidates)
         {
-            // The guard: only claims a slot on a shard that still has one when
-            // the update runs, which is not necessarily when the read above ran.
-            int claimed = await _db.TenantDatabases
-                .Where(d => d.DatabaseName == name
-                    && d.CurrentOrganizations < d.MaxOrganizations)
-                .ExecuteUpdateAsync(
-                    set => set.SetProperty(
-                        d => d.CurrentOrganizations, d => d.CurrentOrganizations + 1),
-                    ct);
-
-            if (claimed == 1)
+            if (await ClaimAsync(name, ct))
             {
                 return name;
             }
 
-            // Somebody else took the last slot between the read and here. Try
-            // the next shard rather than failing the signup.
+            // Somebody else took the last place between the read and here.
+            // Try the next shard rather than failing the signup.
             _log.LogInformation(
                 "Tenant database {Database} filled while allocating; trying the next.", name);
         }
 
-        _log.LogError(
-            "No tenant database with capacity for plan {PlanType}. A shard must be provisioned "
-            + "before further customers on this plan can be created.",
-            planType);
+        return null;
+    }
 
+    /// <summary>
+    /// The guard: claims a place only in a shard that still has one when the
+    /// update runs, which is not necessarily when anything was read. The row
+    /// count is the answer, so two signups cannot both take the last place.
+    /// </summary>
+    private async Task<bool> ClaimAsync(string name, CancellationToken ct) =>
+        await _db.TenantDatabases
+            .Where(d => d.DatabaseName == name && d.CurrentCustomers < d.MaxCustomers)
+            .ExecuteUpdateAsync(
+                set => set.SetProperty(d => d.CurrentCustomers, d => d.CurrentCustomers + 1),
+                ct) == 1;
+
+    private string? NoCapacity(PlanTier plan)
+    {
+        _log.LogError(
+            "No tenant database with room for a {Plan} customer, and none could be provisioned. "
+            + "Add a standby database (Sharding:StandbyDatabases) created by infrastructure.",
+            plan);
         return null;
     }
 }
@@ -104,7 +162,7 @@ public sealed class TenantDatabaseAllocator : ITenantDatabaseAllocator
 public sealed class NoTenantCapacityException : Exception
 {
     public NoTenantCapacityException(PlanTier planType)
-        : base($"No database is provisioned with capacity for the {planType} plan.")
+        : base($"No database has room for a {planType} customer, and none could be provisioned.")
     {
     }
 }

@@ -74,8 +74,8 @@ public sealed class PerAppSignupTests
         {
             DatabaseName = $"TEST{suffix.ToUpperInvariant()}",
             PlanType = PlanTier.Trial,
-            MaxOrganizations = 1000,
-            CurrentOrganizations = 0,
+            MaxCustomers = 1000,
+            CurrentCustomers = 0,
         });
         await db.SaveChangesAsync();
 
