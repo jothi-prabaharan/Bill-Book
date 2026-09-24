@@ -289,7 +289,7 @@ public sealed class PartialFulfilmentTests
 
             DeliveryChallanService challans = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
-                names, names, new StubCurrentUser(), TimeProvider.System, inventory);
+                names, names, new StubCurrentUser(), TimeProvider.System, inventory, TestArchive.For(db, tenant));
 
             InvoiceService invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),

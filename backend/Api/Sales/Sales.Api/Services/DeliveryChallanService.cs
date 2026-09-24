@@ -1,3 +1,4 @@
+using Shared.Kernel.Storage;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -25,6 +26,7 @@ public sealed class DeliveryChallanService
     private readonly TimeProvider _clock;
 
     private readonly IInventoryClient _inventoryClient;
+    private readonly Sales.Api.Services.Pdf.SalesDocumentArchive _archive;
 
     public DeliveryChallanService(
         SalesDbContext db,
@@ -37,7 +39,8 @@ public sealed class DeliveryChallanService
         IItemNameLookup itemNames,
         ICurrentUser user,
         TimeProvider clock,
-        IInventoryClient inventoryClient)
+        IInventoryClient inventoryClient,
+        Sales.Api.Services.Pdf.SalesDocumentArchive archive)
     {
         _db = db;
         _tenant = tenant;
@@ -50,6 +53,7 @@ public sealed class DeliveryChallanService
         _user = user;
         _clock = clock;
         _inventoryClient = inventoryClient;
+        _archive = archive;
     }
 
     public async Task<IReadOnlyList<DeliveryChallanListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
@@ -400,6 +404,10 @@ public sealed class DeliveryChallanService
     {
         var (customerId, _) = _tenant.Require();
 
+        // Resolved before Inventory is called, which is over HTTP and outside
+        // this transaction (TK-22).
+        StorageScope archiveScope = _archive.Scope();
+
         DeliveryChallan? deliveryChallan = await _db.DeliveryChallans
             .Include(x => x.Lines)
             .FirstOrDefaultAsync(x => x.DeliveryChallanId == deliveryChallanId, ct);
@@ -515,6 +523,17 @@ public sealed class DeliveryChallanService
         deliveryChallan.Status = DocumentStatus.Posted;
         deliveryChallan.PostedAt = _clock.GetUtcNow();
         deliveryChallan.PostedBy = _user.UserId;
+
+        await _archive.ArchiveAsync(
+            archiveScope,
+            Sales.Api.Services.Pdf.ArchivedSalesDocument.DeliveryChallan,
+            deliveryChallan.DeliveryChallanId,
+            "DELIVERY CHALLAN",
+            "Challan No",
+            deliveryChallan,
+            deliveryChallan.Lines,
+            salesOrder is null ? null : $"Against sales order {salesOrder.DocumentNo}",
+            ct);
 
         await _db.SaveChangesAsync(ct);
         return new DeliveryChallanResult(DeliveryChallanOutcome.Ok, deliveryChallanId);

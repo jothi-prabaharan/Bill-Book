@@ -1,6 +1,11 @@
 <div class="print-bar">
   <button type="button" class="btn btn-secondary" (click)="back()">Back</button>
   <button type="button" class="btn btn-primary" [disabled]="!html()" (click)="print()">Print</button>
+  @if (hasArchive()) {
+    <button type="button" class="btn btn-secondary" [disabled]="downloading()" (click)="downloadPdf()">
+      Download PDF
+    </button>
+  }
   @if (pageCount() > 0) {
     <span class="print-note">{{ pageCount() }} {{ pageCount() === 1 ? 'page' : 'pages' }}</span>
   }

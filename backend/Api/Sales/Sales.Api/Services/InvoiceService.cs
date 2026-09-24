@@ -1732,7 +1732,8 @@ public sealed class InvoiceService : IInvoiceService
         };
         
         byte[] pdfBytes = _pdfRenderer.Render(pdfModel);
-        string objectKey = StorageKey.DocumentKey(archiveScope, "invoices", $"{invoice.InvoiceId}.pdf");
+        string objectKey = Sales.Api.Services.Pdf.SalesDocumentArchive.Key(
+            archiveScope, Sales.Api.Services.Pdf.ArchivedSalesDocument.Invoice, invoice.InvoiceId);
         // Replace, deliberately. The archive is written before the commit below,
         // so a post whose commit fails leaves its PDF behind; a strict
         // create-only save would then find that leftover on the retry and stop

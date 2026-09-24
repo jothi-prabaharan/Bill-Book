@@ -251,6 +251,21 @@ export class InvoiceService {
     );
   }
 
+  /**
+   * The PDF archived when the invoice was posted (TK-22). A draft has none, and
+   * the server answers 404 for it; needs `sales.print`.
+   */
+  async downloadPdf(invoiceId: number): Promise<Blob> {
+    return firstValueFrom(
+      this.http.get(`${this.apiUrl}/${invoiceId}/pdf`, { responseType: 'blob' }),
+    );
+  }
+
+  /** The file name a downloaded PDF is saved under: the number, slashes as hyphens. */
+  static pdfFileName(documentNo: string): string {
+    return `${documentNo.replace(/[\\/:*?"<>|]/g, '-')}.pdf`;
+  }
+
   async previewGl(invoiceId: number): Promise<GlPreviewResult> {
     return firstValueFrom(
       this.http.get<GlPreviewResult>(`${this.apiUrl}/${invoiceId}/gl-preview`),

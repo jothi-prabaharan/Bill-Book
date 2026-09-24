@@ -1,3 +1,4 @@
+using Shared.Kernel.Storage;
 using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
@@ -43,6 +44,7 @@ public sealed class CreditNoteService
 
     private readonly IInventoryClient _inventoryClient;
     private readonly ILedgerClient _ledgerClient;
+    private readonly Sales.Api.Services.Pdf.SalesDocumentArchive _archive;
 
     public CreditNoteService(
         SalesDbContext db,
@@ -56,7 +58,8 @@ public sealed class CreditNoteService
         ICurrentUser user,
         TimeProvider clock,
         IInventoryClient inventoryClient,
-        ILedgerClient ledgerClient)
+        ILedgerClient ledgerClient,
+        Sales.Api.Services.Pdf.SalesDocumentArchive archive)
     {
         _db = db;
         _tenant = tenant;
@@ -70,6 +73,7 @@ public sealed class CreditNoteService
         _clock = clock;
         _inventoryClient = inventoryClient;
         _ledgerClient = ledgerClient;
+        _archive = archive;
     }
 
     public async Task<IReadOnlyList<CreditNoteListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
@@ -417,6 +421,11 @@ public sealed class CreditNoteService
     {
         var (customerId, _) = _tenant.Require();
 
+        // Where the PDF is filed, resolved before Inventory or Accounting is
+        // called: both are over HTTP and outside this transaction, so a token
+        // that cannot name a folder is refused before anything is posted (TK-22).
+        StorageScope archiveScope = _archive.Scope();
+
         CreditNote? creditNote = await _db.CreditNotes
             .Include(x => x.Lines)
                 .ThenInclude(l => l.Taxes)
@@ -591,6 +600,17 @@ public sealed class CreditNoteService
         creditNote.Status = DocumentStatus.Posted;
         creditNote.PostedAt = _clock.GetUtcNow();
         creditNote.PostedBy = _user.UserId;
+
+        await _archive.ArchiveAsync(
+            archiveScope,
+            Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote,
+            creditNote.CreditNoteId,
+            "CREDIT NOTE",
+            "Credit Note No",
+            creditNote,
+            creditNote.Lines,
+            invoice is null ? null : $"Against invoice {invoice.DocumentNo} dated {invoice.DocumentDate:dd-MMM-yyyy}",
+            ct);
 
         await _db.SaveChangesAsync(ct);
         return new CreditNoteResult(CreditNoteOutcome.Ok, creditNoteId);

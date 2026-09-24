@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
 using Sales.Api.Services.Printing;
 using Sales.Entity.Models;
@@ -87,6 +88,21 @@ public sealed class InvoicesController : ControllerBase
     {
         PrintedDocument? printed = await printing.PrintAsync(id, ct);
         return printed is null ? NotFound() : Ok(printed);
+    }
+
+    /// <summary>
+    /// The PDF archived when this invoice was posted (TK-22). Not found for a
+    /// draft, for a invoice in another branch, or when the file is missing — the
+    /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
+    /// hand the document to someone outside the business.
+    /// </summary>
+    [HttpGet("{id:long}/pdf")]
+    [PermissionAction("print")]
+    public async Task<IActionResult> DownloadPdf(
+        long id, [FromServices] SalesDocumentArchive archive, CancellationToken ct)
+    {
+        ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.Invoice, id, ct);
+        return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
 
     [HttpGet("{id:long}/gl-preview")]

@@ -351,3 +351,65 @@ public sealed class StubInvoicePdf : Sales.Api.Services.Pdf.IInvoicePdfRenderer
 {
     public byte[] Render(Sales.Api.Services.Pdf.PdfInvoiceModel model) => [0x25];
 }
+
+/// <summary>
+/// Keeps every file it is given, in memory, and honours the write mode the way
+/// the real stores do: a create-only save over an existing key is refused. So a
+/// test can post, read the file back, and see a retry write over its leftover.
+/// </summary>
+public sealed class RecordingDocumentStorage : Shared.Kernel.Storage.IFileStorage
+{
+    public Dictionary<string, byte[]> Files { get; } = [];
+
+    public List<(string Key, Shared.Kernel.Storage.FileWriteMode Mode)> Saves { get; } = [];
+
+    public async Task<string> SaveAsync(string key, Stream content, string contentType, Shared.Kernel.Storage.FileWriteMode mode = Shared.Kernel.Storage.FileWriteMode.CreateNew, CancellationToken ct = default)
+    {
+        if (mode == Shared.Kernel.Storage.FileWriteMode.CreateNew && Files.ContainsKey(key))
+        {
+            throw new Shared.Kernel.Storage.StorageKeyExistsException(key);
+        }
+
+        using var copy = new MemoryStream();
+        await content.CopyToAsync(copy, ct);
+        Files[key] = copy.ToArray();
+        Saves.Add((key, mode));
+        return key;
+    }
+
+    public Task<Stream?> OpenReadAsync(string key, CancellationToken ct = default) =>
+        Task.FromResult<Stream?>(Files.TryGetValue(key, out byte[]? bytes) ? new MemoryStream(bytes) : null);
+
+    public Task DeleteAsync(string key, CancellationToken ct = default)
+    {
+        Files.Remove(key);
+        return Task.CompletedTask;
+    }
+
+    public Task<Uri?> GetDownloadUrlAsync(string key, TimeSpan lifetime, CancellationToken ct = default) =>
+        Task.FromResult<Uri?>(null);
+}
+
+/// <summary>Keeps each model it draws, so a test can read what would have printed.</summary>
+public sealed class RecordingSalesPdf : Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer
+{
+    public List<Sales.Api.Services.Pdf.SalesPdfModel> Rendered { get; } = [];
+
+    public byte[] Render(Sales.Api.Services.Pdf.SalesPdfModel model)
+    {
+        Rendered.Add(model);
+        return "%PDF"u8.ToArray();
+    }
+}
+
+/// <summary>The archive a credit note or challan service is built with in tests.</summary>
+public static class TestArchive
+{
+    public static Sales.Api.Services.Pdf.SalesDocumentArchive For(
+        Sales.Repository.SalesDbContext db,
+        ITenantContext tenant,
+        Shared.Kernel.Storage.IFileStorage? storage = null,
+        Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer? pdf = null) =>
+        new(db, tenant, storage ?? new StubDocumentStorage(), new StubOrgIdentity(),
+            new StubNameLookup(), new StubNameLookup(), pdf ?? new RecordingSalesPdf());
+}

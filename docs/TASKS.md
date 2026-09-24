@@ -1259,7 +1259,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### D · Phase 2
 
 ### TK-22 · Document archive: PDF/A, every document, a download link
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · **PDF/A and template rendering not done, see Outcome**
 - **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs:1440-1460`
@@ -1272,18 +1272,28 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - It is **not PDF/A**, and it uses its own layout rather than the print template.
   - It covers invoices only, and no endpoint returns the file.
 - **Sub-tasks:**
-  - [ ] Once D-11 confirms PDFsharp, emit PDF/A-2b. Check PDFsharp 6.1.1's PDF/A support, and if
+  - [ ] ~~Once D-11 confirms PDFsharp, emit PDF/A-2b.~~ **Not possible on 6.1.1** — see Outcome. Check PDFsharp 6.1.1's PDF/A support, and if
         it has none, record that under Notes.
-  - [ ] Add `GET api/sales/invoices/{id:long}/pdf`, which streams the stored file through
+  - [x] Add `GET api/sales/invoices/{id:long}/pdf`, which streams the stored file through
         `IFileStorage` (or returns a signed link).
-  - [ ] Archive credit notes and delivery challans the same way.
-  - [ ] Once TK-81 lands, render from the template instead of the fixed layout.
-  - [ ] Test: posting archives exactly one file.
-  - [ ] Test: a re-post doesn't fail on the leftover file.
-  - [ ] Test: another branch's PDF gets `Forbid()`.
+  - [x] Archive credit notes and delivery challans the same way.
+  - [ ] ~~Once TK-81 lands, render from the template~~ **Not done** — see Outcome. Render from the template instead of the fixed layout.
+  - [x] Test: posting archives exactly one file.
+  - [x] Test: a re-post doesn't fail on the leftover file.
+  - [x] Test: another branch's PDF gets ~~`Forbid()`~~ `NotFound()` (CLAUDE.md, TK-71: a row outside the caller's branch is not found).
 - **Done when:** a posted invoice's PDF/A file downloads from the invoice screen.
 - **Notes:**
   - D-11 answered (2026-09-24): PDFsharp. Replace every mention of Syncfusion as the intended library (CLAUDE.md is done by TK-86).
+- **Outcome (2026-09-24):**
+  - **PDF/A: PDFsharp 6.1.1 has no PDF/A API.** Its assembly and XML documentation have no PDF/A conformance setting, no XMP metadata writer and no output-intent helper. Every "pdfa" match is `PdfAcroField`. Producing PDF/A-2b needs one of two things: a later PDFsharp than the pinned 6.1.1, or hand-building the XMP metadata, the sRGB output intent and the font embedding on the 6.1.1 object model. Either is a change to the owner's D-11 pin, so it is raised as **D-22** in section 3 rather than done here. The archived files are plain PDF.
+  - **Template rendering: not done.** A print template is HTML, laid out by Printing's `PrintRenderer`. PDFsharp draws primitives and cannot lay out HTML, so rendering the archive from the template needs an HTML-to-PDF engine. That is part of D-22. The archive keeps one fixed layout, now shared: `Services/Pdf/SalesPdfLayout.cs`.
+  - **Built:**
+    - `SalesPdfLayout` is the one layout every archived sales PDF uses. It also fixes the VOID stamp: the old renderer compared the status with `"Voided"`, which the enum never produces.
+    - `SalesDocumentArchive` owns the key (`{customer}/{branch}/retail-erp/sales/{invoices|credit-notes|delivery-challans}/{id}.pdf`), the credit note and challan write (`FileWriteMode.Replace`, with the scope resolved before any HTTP call), and the read-back. A document the branch cannot see, a draft and a missing file all return null.
+    - `GET api/sales/{invoices|credit-notes|delivery-challans}/{id:long}/pdf` requires `sales.print`, as printing does.
+    - The invoice print page has a **Download PDF** button for posted and voided invoices.
+  - Tests: `SalesPdfLayoutTests`; in `CreditNoteServiceTests`, archive-once and download, retry over leftover, and another branch and draft not found; in `DeliveryChallanServiceTests`, archive-once and a refused post archiving nothing; in `invoice-print.spec.ts`, `downloadPdf`.
+  - A voided invoice's archived copy is the one filed at post, with no VOID stamp. Re-filing on void is left for when PDF/A lands.
 
 ### TK-23 · Date input that follows the branch's format
 - [ ] open
@@ -2894,6 +2904,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-19 | Capitalising a fixed asset: does it reclassify the bill's shared Fixed Asset account to the category's account? Does a migrated asset debit against Opening Balance Equity? | TK-12 | **Reclassify to the category** (owner, 2026-09-24): capitalising posts Dr the category's Fixed Asset account / Cr the shared Fixed Asset account the bill used; a migrated asset (no bill) debits the category account against Opening Balance Equity. TK-12 |
 | D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-12 | **Both ways** (owner, 2026-09-24): the disposal either names the bank or cash account the proceeds landed in, or is raised as a sales invoice to the buyer (Dr the buyer's receivable); either way the accumulated depreciation is written back, the asset removed at cost and the gain or loss booked. TK-12 |
 | D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | *Open.* Raised 2026-09-24 by TK-10; the owner fixed the duplicate first and deferred this |
+| D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
 
 ---
 

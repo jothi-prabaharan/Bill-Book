@@ -61,6 +61,8 @@ The checks run again when the challan is posted, not only when it is saved: anot
 
 **Post** dispatches the challan. If Inventory cannot issue the goods — usually because there is not enough on hand — the challan stays a draft and nothing on the order moves.
 
+Posting also files a PDF of the challan, naming its sales order if it has one. `GET api/sales/delivery-challans/{id}/pdf` downloads it. A refused post files nothing.
+
 A posted challan cannot be withdrawn. The goods have physically left, and taking the paperwork back would leave the stock gone with nothing to explain it. **Raise a return instead.**
 
 ## Voiding one

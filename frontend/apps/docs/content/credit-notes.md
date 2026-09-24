@@ -42,6 +42,7 @@ Lower a quantity or a price to credit part of a line; remove a line to leave it 
 | The invoice | The note is **claimed against it**, so the invoice shows less outstanding |
 | Stock | For a sales return, the goods **come back at their original cost**. The cost of sales is reversed by stock costing, at that same cost |
 | GST return | The note is recorded for GSTR-1 against its original invoice |
+| PDF | A PDF of the note, naming the invoice it is against, is filed for the record. `GET api/sales/credit-notes/{id}/pdf` downloads it |
 
 Posting is refused, with the reason, when:
 

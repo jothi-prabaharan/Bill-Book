@@ -544,12 +544,86 @@ public sealed class CreditNoteServiceTests
     /// cref="CreditNoteDetail.InvoiceDetailId"/> is a real foreign key — and the
     /// service wired to stubs that record what it asked for.
     /// </summary>
+    // ── Archive (TK-22) ─────────────────────────────────────────────────
+
+    private static string CreditNoteKey(SalesDbContext db, long id) =>
+        $"0000000042/{db.CurrentOrgId}/retail-erp/sales/credit-notes/{id}.pdf";
+
+    [SkippableFact]
+    public async Task Posting_archives_exactly_one_pdf_that_downloads_again()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
+        long id = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(4m, 100m)]));
+
+        Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+
+        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
+        Assert.Equal(CreditNoteKey(h.Db, id), key);
+        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
+
+        var tenant = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
+        Sales.Api.Services.Pdf.ArchivedPdf? pdf = await TestArchive.For(h.Db, tenant, h.Storage)
+            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, id, default);
+
+        Assert.NotNull(pdf);
+        Assert.EndsWith(".pdf", pdf!.FileName);
+        Assert.DoesNotContain("/", pdf.FileName);
+    }
+
+    [SkippableFact]
+    public async Task A_retried_post_writes_over_its_own_leftover_pdf()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
+        long id = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(4m, 100m)]));
+
+        // What a post whose commit failed leaves behind.
+        h.Storage.Files[CreditNoteKey(h.Db, id)] = [1, 2, 3];
+
+        Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+        Assert.NotEqual(new byte[] { 1, 2, 3 }, h.Storage.Files[CreditNoteKey(h.Db, id)]);
+    }
+
+    [SkippableFact]
+    public async Task Another_branchs_pdf_is_not_found_and_neither_is_a_drafts()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        InvoiceDetail invoiceLine = await h.SeedInvoiceLineAsync();
+        long posted = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        long draft = await h.SaveOkAsync(
+            Request(h.InvoiceId, invoiceLine.InvoiceDetailId, "33AAAAA0000A1Z5", [Line(1m, 100m)]));
+        Assert.Equal(CreditNoteOutcome.Ok, (await h.Service.PostAsync(posted, default)).Outcome);
+
+        var mine = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = h.Db.CurrentOrgId, CustomerCode = "0000000042" };
+        Assert.Null(await TestArchive.For(h.Db, mine, h.Storage)
+            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, draft, default));
+
+        // Another branch of the same customer asks for the posted note by id.
+        Guid otherOrg = Guid.NewGuid();
+        await using SalesDbContext other = _pg.CreateContext(h.Db.CurrentCustomerId, otherOrg);
+        var theirs = new TenantContext { CustomerId = h.Db.CurrentCustomerId, OrgId = otherOrg, CustomerCode = "0000000042" };
+
+        Assert.Null(await TestArchive.For(other, theirs, h.Storage)
+            .OpenAsync(Sales.Api.Services.Pdf.ArchivedSalesDocument.CreditNote, posted, default));
+    }
+
     private sealed record Harness(
         SalesDbContext Db,
         CreditNoteService Service,
         long InvoiceId,
         RecordingInventory Inventory,
-        RecordingLedger Ledger)
+        RecordingLedger Ledger,
+        RecordingDocumentStorage Storage)
     {
         public static async Task<Harness> CreateAsync(
             PostgresFixture pg, DocumentStatus invoiceStatus = DocumentStatus.Posted)
@@ -582,9 +656,12 @@ public sealed class CreditNoteServiceTests
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
 
+            TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
+            RecordingDocumentStorage storage = new();
+
             CreditNoteService service = new(
                 db,
-                new TenantContext { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" },
+                tenant,
                 numbering,
                 new StubBaseCurrency(),
                 new StubBranchSettings(),
@@ -594,9 +671,10 @@ public sealed class CreditNoteServiceTests
                 new StubCurrentUser(),
                 TimeProvider.System,
                 inventory,
-                ledger);
+                ledger,
+                TestArchive.For(db, tenant, storage));
 
-            return new Harness(db, service, invoice.InvoiceId, inventory, ledger);
+            return new Harness(db, service, invoice.InvoiceId, inventory, ledger, storage);
         }
 
         public async Task<long> SaveOkAsync(SaveCreditNoteRequest request)

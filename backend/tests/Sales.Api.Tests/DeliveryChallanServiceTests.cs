@@ -512,11 +512,44 @@ public sealed class DeliveryChallanServiceTests
     /// One branch, its numbering series seeded, a challan service and an order
     /// service over the same context, and the inventory stub both of them call.
     /// </summary>
+    // ── Archive (TK-22) ─────────────────────────────────────────────────
+
+    [SkippableFact]
+    public async Task Posting_a_challan_archives_exactly_one_pdf_naming_its_order()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        ConfirmedOrder order = await h.ConfirmOrderAsync(quantity: 10m);
+        long id = await h.SaveOkAsync(AgainstOrder(order, quantity: 4m));
+
+        Assert.Equal(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+
+        (string key, Shared.Kernel.Storage.FileWriteMode mode) = Assert.Single(h.Storage.Saves);
+        Assert.Equal($"0000000042/{h.Db.CurrentOrgId}/retail-erp/sales/delivery-challans/{id}.pdf", key);
+        Assert.Equal(Shared.Kernel.Storage.FileWriteMode.Replace, mode);
+    }
+
+    [SkippableFact]
+    public async Task A_refused_challan_archives_nothing()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        ConfirmedOrder order = await h.ConfirmOrderAsync(quantity: 10m);
+        long id = await h.SaveOkAsync(AgainstOrder(order, quantity: 4m));
+        h.Inventory.RefuseIssues = true;
+
+        Assert.NotEqual(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+        Assert.Empty(h.Storage.Saves);
+    }
+
     private sealed record Harness(
         SalesDbContext Db,
         DeliveryChallanService Service,
         SalesOrderService Orders,
-        RecordingInventory Inventory)
+        RecordingInventory Inventory,
+        RecordingDocumentStorage Storage)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -533,6 +566,7 @@ public sealed class DeliveryChallanServiceTests
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
+            RecordingDocumentStorage storage = new();
 
             DeliveryChallanService service = new(
                 db,
@@ -545,7 +579,8 @@ public sealed class DeliveryChallanServiceTests
                 names,
                 new StubCurrentUser(),
                 TimeProvider.System,
-                inventory);
+                inventory,
+                TestArchive.For(db, tenant, storage));
 
             SalesOrderService orders = new(
                 db,
@@ -561,7 +596,7 @@ public sealed class DeliveryChallanServiceTests
                 inventory,
                 new StubCreditCheck());
 
-            return new Harness(db, service, orders, inventory);
+            return new Harness(db, service, orders, inventory, storage);
         }
 
         public async Task<long> SaveOkAsync(SaveDeliveryChallanRequest request)

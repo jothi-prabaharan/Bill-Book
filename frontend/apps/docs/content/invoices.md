@@ -69,6 +69,12 @@ added whatever the template holds, so a template cannot leave it off.
 Printing needs the permission to print sales documents, which Owner, Administrator and Sales
 have and Viewer does not.
 
+**Download PDF** on a posted or voided invoice saves the PDF that was filed when it was posted.
+That copy is kept for the record and is not redrawn later, so it has its own fixed layout rather than
+the print template, and a voided invoice's copy is not stamped VOID. It is a plain PDF, not the
+PDF/A archive format yet. A draft has no filed copy. The download needs the same permission as
+printing.
+
 Two things do not print yet: the amount in words, and the place of supply's state name — it prints
 as the two-digit state code for now.
 

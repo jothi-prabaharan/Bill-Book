@@ -46,6 +46,14 @@ export class InvoicePrintPage implements OnInit {
   protected readonly loading = signal(true);
   protected readonly messages = signal<UiMessage[]>([]);
 
+  protected readonly downloading = signal(false);
+
+  /** A posted invoice has a PDF on file from the moment it posted; a draft has none. */
+  protected readonly hasArchive = computed(() => {
+    const status = this.invoice()?.status;
+    return status === 'Posted' || status === 'Void';
+  });
+
   protected readonly isProforma = computed(() => {
     const status = this.invoice()?.status;
     return status !== undefined && status !== 'Posted';
@@ -91,6 +99,30 @@ export class InvoicePrintPage implements OnInit {
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
     } finally {
       this.loading.set(false);
+    }
+  }
+
+  /** Saves the PDF archived when the invoice posted (TK-22). */
+  protected async downloadPdf(): Promise<void> {
+    const invoice = this.invoice();
+    if (!invoice) {
+      return;
+    }
+
+    this.downloading.set(true);
+    try {
+      const blob = await this.invoices.downloadPdf(invoice.invoiceId);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = InvoiceService.pdfFileName(invoice.documentNo);
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.downloading.set(false);
     }
   }
 

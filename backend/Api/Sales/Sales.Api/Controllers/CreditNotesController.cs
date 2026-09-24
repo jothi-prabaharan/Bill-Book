@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
@@ -98,4 +99,19 @@ public sealed class CreditNotesController : ControllerBase
 
     private static MessageResponse Message(CreditNoteResult result) =>
         new() { Message = result.Detail ?? "This credit note was refused." };
+
+    /// <summary>
+    /// The PDF archived when this credit note was posted (TK-22). Not found for a
+    /// draft, for a credit note in another branch, or when the file is missing — the
+    /// three are not told apart. Needs <c>sales.print</c>, as printing does: both
+    /// hand the document to someone outside the business.
+    /// </summary>
+    [HttpGet("{id:long}/pdf")]
+    [PermissionAction("print")]
+    public async Task<IActionResult> DownloadPdf(
+        long id, [FromServices] SalesDocumentArchive archive, CancellationToken ct)
+    {
+        ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.CreditNote, id, ct);
+        return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
+    }
 }
