@@ -2328,7 +2328,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `backend/tests/Payroll.Api.Tests` (`PayrollSchemaTests.cs`, `EndpointGuardTests.cs`, `PayrollServiceTests.cs`). Full backend solution builds with 0 errors and 0 warnings.
 
 ### TK-52 · H5: Statutory (`pay`)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `PfSetting`, `EsiSetting`, `ProfessionalTaxSlab`, `LwfSetting`, `GratuitySetting`,
   `BonusSetting`, `StatutoryReturn`. All are effective-dated.
