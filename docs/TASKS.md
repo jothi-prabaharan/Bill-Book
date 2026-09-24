@@ -2251,7 +2251,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Documents and policies take a file key. There is no upload endpoint yet.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
