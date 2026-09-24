@@ -2134,7 +2134,7 @@ None of it is built.
   - Not verified in a browser. Nothing here was run.
 
 ### TK-45 · H0.4: signup and seeding per app
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST · **Depends on:** TK-43, TK-01 · **Decision:** D-12
 - **Where:** `Master.Api/Services/{SignupService,TenantSeeder}.cs`
 - **Sub-tasks:**
