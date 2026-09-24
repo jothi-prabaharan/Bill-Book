@@ -634,7 +634,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), which reuses the invoice's posting.
 
 ### TK-10 · Sale challans post to Goods Delivered Not Invoiced, once
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`: GRNI is 2150; GDNI is missing.
