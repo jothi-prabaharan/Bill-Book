@@ -29,9 +29,7 @@ public class Customer : AuditableEntity
 
     public TenantStatus Status { get; set; } = TenantStatus.Provisioning;
 
-    [Required(ErrorMessage = "Plan tier is required.")]
-    [MaxLength(30, ErrorMessage = "Plan tier cannot exceed 30 characters.")]
-    public string PlanTier { get; set; } = "Standard";
+    public PlanTier PlanTier { get; set; } = PlanTier.Standard;
 
     /// <summary>
     /// The physical database this customer's books live in.

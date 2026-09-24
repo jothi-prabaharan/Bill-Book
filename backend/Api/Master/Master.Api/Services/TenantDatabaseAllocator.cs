@@ -1,3 +1,4 @@
+using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -36,7 +37,7 @@ public interface ITenantDatabaseAllocator
     /// invented a database name would put a customer's books somewhere no
     /// migration has run.
     /// </summary>
-    Task<string?> AllocateAsync(string planType, CancellationToken ct);
+    Task<string?> AllocateAsync(PlanTier planType, CancellationToken ct);
 }
 
 public sealed class TenantDatabaseAllocator : ITenantDatabaseAllocator
@@ -50,7 +51,7 @@ public sealed class TenantDatabaseAllocator : ITenantDatabaseAllocator
         _log = log;
     }
 
-    public async Task<string?> AllocateAsync(string planType, CancellationToken ct)
+    public async Task<string?> AllocateAsync(PlanTier planType, CancellationToken ct)
     {
         // Fullest-first among the shards that still have room, so customers pack
         // into a database rather than spreading one per shard — a half-empty
@@ -102,7 +103,7 @@ public sealed class TenantDatabaseAllocator : ITenantDatabaseAllocator
 /// </summary>
 public sealed class NoTenantCapacityException : Exception
 {
-    public NoTenantCapacityException(string planType)
+    public NoTenantCapacityException(PlanTier planType)
         : base($"No database is provisioned with capacity for the {planType} plan.")
     {
     }

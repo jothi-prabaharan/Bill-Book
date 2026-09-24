@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -15,6 +16,12 @@ public class Permission : AuditableEntity
     [Required(ErrorMessage = "Module is required.")]
     [MaxLength(50, ErrorMessage = "Module cannot exceed 50 characters.")]
     public string Module { get; set; } = null!;
+
+    /// <summary>
+    /// Every app whose roles may hold this permission (TK-42). The shared
+    /// screens (<c>settings.*</c>) are every app's; <c>sales.*</c> is RetailErp's.
+    /// </summary>
+    public App Apps { get; set; } = App.RetailErp;
 
     [MaxLength(200, ErrorMessage = "Description cannot exceed 200 characters.")]
     public string? Description { get; set; }

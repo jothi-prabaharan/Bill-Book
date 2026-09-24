@@ -313,9 +313,20 @@ IBJA's metal rates (TK-25) are not built. Until they are, metal rates are entere
 
 **Status: built.**
 
+## Apps
+
+A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll**. Each is licensed on its own. The branches, users and settings are shared by every app.
+
+- **A role belongs to one app.** Owner of RetailErp and Owner of Payroll are different roles. Every role that existed before apps were added is a RetailErp role.
+- **A permission can belong to several apps.** The settings permissions (users, roles, branches, organization settings, currencies, configuration, email, API keys and numbering) belong to every app. Every other permission belongs to RetailErp for now.
+- **A role can be given only permissions that belong to its app.** Saving a role with another app's permission is refused, and nothing is changed.
+- **The menu marks each screen with the apps that show it.** The Home and Settings screens are in every app. Everything else is RetailErp's.
+
+Signing in to one app at a time, per-app licences and the other apps' screens come next.
+
 ## The licence
 
-One row per customer, created automatically at signup:
+One row per customer per app, created automatically at signup:
 
 | Field | Trial default |
 |---|---|

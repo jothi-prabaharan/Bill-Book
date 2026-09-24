@@ -1,4 +1,5 @@
 using Master.Entity.TableEntities;
+using Shared.Kernel.Apps;
 
 namespace Master.Repository.SeedData;
 
@@ -33,7 +34,32 @@ namespace Master.Repository.SeedData;
 /// </summary>
 public static class MenuSeed
 {
-    public static IReadOnlyList<Menu> Build() =>
+    /// <summary>
+    /// The rows every app's menu shows (TK-42): Home, the Settings rail, and its
+    /// Organisation and Users-and-access sections with their screens. Every other
+    /// row is RetailErp's. Print templates stay RetailErp's for now because each
+    /// row is a RetailErp document type.
+    /// </summary>
+    public static readonly IReadOnlySet<int> SharedMenuIds = new HashSet<int>
+    {
+        1,                                              // Home
+        9,                                              // Settings rail
+        114, 1079, 1080, 1081, 1082, 1083, 1084, 1085,  // Organisation
+        115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
+    };
+
+    public static IReadOnlyList<Menu> Build()
+    {
+        IReadOnlyList<Menu> rows = Rows();
+        foreach (Menu row in rows)
+        {
+            row.Apps = SharedMenuIds.Contains(row.MenuId) ? App.All : App.RetailErp;
+        }
+
+        return rows;
+    }
+
+    private static IReadOnlyList<Menu> Rows() =>
     [
         // ---- Home ----
         new Menu { MenuId = 1, ParentId = null, Type = MenuType.Rail, Code = "home", Name = "Home", Icon = "house", Module = "dashboard", RoutePath = "/dashboard", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },

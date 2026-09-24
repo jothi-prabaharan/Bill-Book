@@ -61,9 +61,9 @@ public sealed class SignupService
         // Before anything is written. A customer row cannot exist without a
         // database to point at, and finding out after the insert would mean a
         // half-created customer to clean up.
-        string databaseName = await _databases.AllocateAsync("Trial", ct)
-            ?? await _databases.AllocateAsync("Pro", ct)
-            ?? throw new NoTenantCapacityException("Trial");
+        string databaseName = await _databases.AllocateAsync(PlanTier.Trial, ct)
+            ?? await _databases.AllocateAsync(PlanTier.Pro, ct)
+            ?? throw new NoTenantCapacityException(PlanTier.Trial);
 
         CustomerEntity customer = null!;
 
@@ -81,7 +81,7 @@ public sealed class SignupService
                 Name = request.CompanyName,
                 BillingEmail = request.Email,
                 Status = TenantStatus.Provisioning,
-                PlanTier = "Trial",
+                PlanTier = PlanTier.Trial,
                 DatabaseName = databaseName,
             };
             _db.Customers.Add(customer);
@@ -225,7 +225,7 @@ public sealed class SignupService
                 CustomerCode = c.CustomerCode,
                 Name = c.Name,
                 BillingEmail = c.BillingEmail,
-                PlanTier = c.PlanTier,
+                PlanTier = c.PlanTier.ToString(),
                 Status = c.Status.ToString(),
                 CreatedAt = c.CreatedAt,
             })

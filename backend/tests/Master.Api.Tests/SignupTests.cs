@@ -95,7 +95,7 @@ public sealed class SignupTests
         db.TenantDatabases.Add(new TenantDatabase
         {
             DatabaseName = name,
-            PlanType = "Trial",
+            PlanType = PlanTier.Trial,
             MaxOrganizations = capacity,
             CurrentOrganizations = 0,
         });
@@ -412,9 +412,9 @@ public sealed class SignupTests
 
         string?[] results = await Task.WhenAll(
             new TenantDatabaseAllocator(one, NullLogger<TenantDatabaseAllocator>.Instance)
-                .AllocateAsync("Trial", default),
+                .AllocateAsync(PlanTier.Trial, default),
             new TenantDatabaseAllocator(two, NullLogger<TenantDatabaseAllocator>.Instance)
-                .AllocateAsync("Trial", default));
+                .AllocateAsync(PlanTier.Trial, default));
 
         Assert.Equal(1, results.Count(r => r == shard));
         Assert.Equal(1, results.Count(r => r is null));

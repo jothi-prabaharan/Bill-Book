@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -103,6 +104,9 @@ public class Menu : AuditableEntity
 
     /// <summary>Order among siblings.</summary>
     public int DisplayOrder { get; set; }
+
+    /// <summary>Every app whose menu shows this row (TK-42).</summary>
+    public App Apps { get; set; } = App.RetailErp;
 
     public bool IsActive { get; set; } = true;
 

@@ -117,7 +117,7 @@ public class DatabaseMigrationService : IHostedService
             tenantDbEntry = new TenantDatabase
             {
                 DatabaseName = tenantDbName,
-                PlanType = "Elite",
+                PlanType = Master.Entity.Enums.PlanTier.Elite,
                 MaxOrganizations = 1,
                 CurrentOrganizations = 1
             };
@@ -405,7 +405,7 @@ public class DatabaseMigrationService : IHostedService
             Name = _config["Bootstrap:CompanyName"] ?? "First Customer",
             BillingEmail = email,
             DatabaseName = tenantDbName,
-            PlanTier = "Elite",
+            PlanTier = Master.Entity.Enums.PlanTier.Elite,
             Status = Master.Entity.Enums.TenantStatus.Active,
         });
 

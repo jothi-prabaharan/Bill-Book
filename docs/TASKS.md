@@ -2046,27 +2046,33 @@ The design is in `docs/Modules.md`, section "One customer, many applications" (f
 None of it is built.
 
 ### TK-42 · H0.1: `App` in `mst`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-MST (+ L-KERNEL for the enum) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
-  - `backend/Api/Master/Master.Entity/TableEntities/{Role,Permission,Menu,License,RefreshToken}.cs`
-  - `AdminDbContext.cs`: the `HasData` for roles (617), permissions (641) and grants (708).
-  - `SeedData/MenuSeed.cs`
+  - `backend/shared/Shared.Kernel/Apps/App.cs` (`App`, `AppRules`)
+  - `backend/Api/Master/Master.Entity/TableEntities/{Role,Permission,Menu,License,RefreshToken,Customer,TenantDatabase}.cs`, `Enums/PlanTier.cs`
+  - `AdminDbContext.cs` (`AppsOfModule`, the role and licence indexes), `SeedData/MenuSeed.cs` (`SharedMenuIds`)
+  - `Master.Api/Services/RoleService.cs`, `Controllers/RolesController.cs`
+  - Migration `AppOnRolesLicencesAndMenus`.
 - **Sub-tasks:**
-  - [ ] Add `Master.Entity/Enums/App.cs`: `[Flags] RetailErp = 1, School = 2, Hrms = 4, Payroll = 8`.
-  - [ ] Add `App App` to `Role`, `License` and `RefreshToken`, and `App Apps` to `Permission` and
-        `Menu`. Give `License` a unique index on (`CustomerId`, `App`).
-  - [ ] Seed every existing row as `RetailErp`, except that users, roles, organizations, settings,
-        currencies, configuration and SMTP permissions and menus get all four apps.
-  - [ ] Turn `Customer.PlanTier` and `TenantDatabase.PlanType` from strings into enums.
-  - [ ] Add the grant rule in `RoleService`: a permission may be granted only if
-        `permission.Apps.HasFlag(role.App)`.
-  - [ ] Test: the grant rule asserted over the seeded grants.
-  - [ ] Test: granting a Payroll-only permission to a RetailErp role is refused.
-  - [ ] Confirm `has-pending-model-changes` is clean.
+  - [x] Add `App`: `[Flags] RetailErp = 1, School = 2, Hrms = 4, Payroll = 8` (plus `None` and `All`). **In `Shared.Kernel.Apps`, not `Master.Entity/Enums`**, because TK-43's `[RequireApp]` sits in `Shared.Kernel.Internal` and every service reads it.
+  - [x] Add `App App` to `Role`, `License` and `RefreshToken`, and `App Apps` to `Permission` and
+        `Menu`. Give `License` a unique index on (`CustomerId`, `App`). Stored as integers; the migration's default for existing rows is 1 (RetailErp), written by hand.
+  - [x] Seed every existing row as `RetailErp`, except that users, roles, organizations, settings,
+        currencies, configuration and SMTP permissions and menus get all four apps. Permissions: `settings.*` (every shared screen is under the `settings` module) and `platform.*` (operator-only, no one app's) are `All`. Menus: Home, the Settings rail, and its Organisation and Users-and-access sections are `All`.
+  - [x] Turn `Customer.PlanTier` and `TenantDatabase.PlanType` from strings into enums: one `PlanTier` enum (Trial, Standard, Pro, Elite), stored by name, so the column values are unchanged.
+  - [x] Add the grant rule in `RoleService`: a permission may be granted only if
+        `permission.Apps.HasFlag(role.App)` (`AppRules.MayGrant`). A refused create or edit writes nothing and answers 422. A new role takes `App` by name, defaulting to RetailErp until TK-43 takes it from the token. System role names are unique per app.
+  - [x] Test: the grant rule asserted over the seeded grants (`AppGrantRuleTests`).
+  - [x] Test: granting a Payroll-only permission to a RetailErp role is refused (`RoleServiceAppTests`).
+  - [x] Confirm `has-pending-model-changes` is clean.
 - **Done when:** granting a Payroll-only permission to a RetailErp role is refused; a Payroll role
   can be granted `users.view`; and `apps/web` is unchanged for every existing user.
 - **Notes:**
+  - There is no `users.view`: the users screen is under the `settings` module, so the Done-when clause is `settings.view` (tested).
+  - No Payroll-only permission is seeded yet, so the refusal test inserts one.
+  - `GET api/roles/permissions?app=` filters the matrix to an app. Without `app`, it returns everything, as before.
+  - The migration re-applies the seed as 257 `UpdateData` calls. These are plain column updates, so none of them can collide the way TK-70's did.
 
 ### TK-43 · H0.2: per-app sign-in and licences
 - [ ] open

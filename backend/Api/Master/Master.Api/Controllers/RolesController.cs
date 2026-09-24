@@ -2,6 +2,7 @@ using Master.Api.Services;
 using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 
@@ -33,12 +34,17 @@ public sealed class RolesController : ControllerBase
         return Ok(await _roles.ListAsync(customerId, ct));
     }
 
-    /// <summary>The permission matrix for the checkbox grid, grouped by module.</summary>
+    /// <summary>
+    /// The permission matrix for the checkbox grid, grouped by module. With
+    /// <c>?app=</c>, only what a role of that app may be granted (TK-42).
+    /// </summary>
     [HttpGet("permissions")]
-    public async Task<IActionResult> Permissions(CancellationToken ct)
+    public async Task<IActionResult> Permissions([FromQuery] string? app, CancellationToken ct)
     {
+        App? forApp = AppRules.TryParseSingle(app, out App parsed) ? parsed : null;
+
         // platform.* is operator-only, so it never reaches a tenant's matrix.
-        return Ok(await _roles.PermissionMatrixAsync(includePlatform: false, ct));
+        return Ok(await _roles.PermissionMatrixAsync(includePlatform: false, ct, forApp));
     }
 
     [HttpGet("{roleId:int}")]
@@ -61,8 +67,10 @@ public sealed class RolesController : ControllerBase
             return Forbid();
         }
 
-        int roleId = await _roles.CreateAsync(customerId, request, ct);
-        return CreatedAtAction(nameof(Get), new { roleId }, new { roleId });
+        (SaveRoleResult result, int roleId) = await _roles.CreateAsync(customerId, request, ct);
+        return result == SaveRoleResult.Ok
+            ? CreatedAtAction(nameof(Get), new { roleId }, new { roleId })
+            : Refused(result);
     }
 
     [HttpPut("{roleId:int}")]
@@ -75,8 +83,22 @@ public sealed class RolesController : ControllerBase
         }
 
         SaveRoleResult result = await _roles.UpdateAsync(customerId, roleId, request, ct);
-        return result == SaveRoleResult.Ok ? NoContent() : NotFound();
+        return result == SaveRoleResult.Ok ? NoContent() : Refused(result);
     }
+
+    private IActionResult Refused(SaveRoleResult result) => result switch
+    {
+        SaveRoleResult.NotFound => NotFound(),
+        SaveRoleResult.PermissionNotInApp => UnprocessableEntity(new MessageResponse
+        {
+            Message = "A role can be given only permissions that belong to its app.",
+        }),
+        SaveRoleResult.InvalidApp => BadRequest(new MessageResponse
+        {
+            Message = "Choose one app for the role: RetailErp, School, Hrms or Payroll.",
+        }),
+        _ => StatusCode(StatusCodes.Status500InternalServerError),
+    };
 
     [HttpDelete("{roleId:int}")]
     public async Task<IActionResult> Delete(int roleId, CancellationToken ct)

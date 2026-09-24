@@ -14,6 +14,9 @@ public class RoleListItem
 
     public bool IsActive { get; set; }
 
+    /// <summary>The app the role belongs to (TK-42): RetailErp, School, Hrms or Payroll.</summary>
+    public string App { get; set; } = null!;
+
     /// <summary>Active user assignments — a role in use cannot be deleted.</summary>
     public int UserCount { get; set; }
 
@@ -53,6 +56,13 @@ public class SaveRoleRequest
 
     [MaxLength(300, ErrorMessage = "Description cannot exceed 300 characters.")]
     public string? Description { get; set; }
+
+    /// <summary>
+    /// The app a new role belongs to, by name (TK-42). Null means RetailErp.
+    /// Ignored on update: a role never changes app.
+    /// </summary>
+    [MaxLength(20, ErrorMessage = "App cannot exceed 20 characters.")]
+    public string? App { get; set; }
 
     /// <summary>Ignored when updating a system role — their permissions are fixed.</summary>
     public IReadOnlyList<int> PermissionIds { get; set; } = new List<int>();

@@ -1,3 +1,4 @@
+using Shared.Kernel.Apps;
 using Master.Entity.Enums;
 using Master.Entity.TableEntities;
 using Master.Repository.SeedData;
@@ -203,6 +204,13 @@ public class AdminDbContext : DbContext
             b.HasKey(e => e.CustomerId);
             b.HasIndex(e => e.CustomerCode).IsUnique();
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            // By name, so the values already in the column still read (TK-42).
+            b.Property(e => e.PlanTier).HasConversion<string>().HasMaxLength(30);
+        });
+
+        modelBuilder.Entity<TenantDatabase>(b =>
+        {
+            b.Property(e => e.PlanType).HasConversion<string>().HasMaxLength(20);
         });
 
         modelBuilder.Entity<Organization>(b =>
@@ -228,7 +236,8 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<License>(b =>
         {
             b.HasKey(e => e.LicenseId);
-            b.HasIndex(e => e.CustomerId).IsUnique();
+            // One licence per app per customer (TK-42).
+            b.HasIndex(e => new { e.CustomerId, e.App }).IsUnique();
             b.Property(e => e.LicenseType).HasConversion<string>().HasMaxLength(20);
         });
 
@@ -265,9 +274,11 @@ public class AdminDbContext : DbContext
         modelBuilder.Entity<Role>(b =>
         {
             b.HasKey(e => e.RoleId);
-            b.HasIndex(e => new { e.CustomerId, e.SystemName }).IsUnique();
+            // A name is unique within an app: Owner of RetailErp and Owner of
+            // Payroll are two rows (TK-42).
+            b.HasIndex(e => new { e.CustomerId, e.App, e.SystemName }).IsUnique();
             // Postgres treats nulls as distinct, so system-role names need a partial guard.
-            b.HasIndex(e => e.SystemName)
+            b.HasIndex(e => new { e.App, e.SystemName })
                 .IsUnique()
                 .HasFilter("\"CustomerId\" IS NULL");
         });
@@ -639,6 +650,21 @@ public class AdminDbContext : DbContext
         "accounting", "banking", "reports", "settings", "support", "platform",
     };
 
+    /// <summary>
+    /// Which apps' roles may hold a module's permissions (TK-42).
+    ///
+    /// <c>settings</c> covers users, roles, branches, organization settings,
+    /// currencies, configuration, SMTP, API keys and numbering, which every app
+    /// shares. <c>platform</c> is operator-only and granted by a flag on the user,
+    /// never by a role, so it belongs to no one app. Everything else is RetailErp's
+    /// until another app's module is seeded.
+    /// </summary>
+    public static App AppsOfModule(string module) => module switch
+    {
+        "settings" or "platform" => App.All,
+        _ => App.RetailErp,
+    };
+
     private static void SeedRolesAndPermissions(ModelBuilder modelBuilder)
     {
         string[] systemRoles = { "Owner", "Administrator", "Accountant", "Sales", "Viewer" };
@@ -651,6 +677,7 @@ public class AdminDbContext : DbContext
                 CustomerId = null,
                 SystemName = systemRoles[i],
                 DisplayName = systemRoles[i],
+                App = App.RetailErp,
                 IsSystemRole = true,
                 IsActive = true,
             });
@@ -676,6 +703,7 @@ public class AdminDbContext : DbContext
                     PermissionId = permissionId++,
                     Code = $"{module}.{action}",
                     Module = module,
+                    Apps = AppsOfModule(module),
                 });
             }
         }

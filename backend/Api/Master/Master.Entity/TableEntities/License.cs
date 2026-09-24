@@ -1,4 +1,5 @@
 using Master.Entity.Enums;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -9,6 +10,12 @@ public class License : AuditableEntity
     public Guid LicenseId { get; set; }
 
     public Guid CustomerId { get; set; }
+
+    /// <summary>
+    /// The app this licence is for (TK-42). One licence per app per customer, so
+    /// a lapsed RetailErp trial leaves Payroll running.
+    /// </summary>
+    public App App { get; set; } = App.RetailErp;
 
     public LicenseType LicenseType { get; set; } = LicenseType.Trial;
 

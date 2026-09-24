@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -22,6 +23,13 @@ public class Role : AuditableEntity
 
     [MaxLength(300, ErrorMessage = "Description cannot exceed 300 characters.")]
     public string? Description { get; set; }
+
+    /// <summary>
+    /// The one app this role belongs to (TK-42). Owner of RetailErp and Owner of
+    /// Payroll are different rows. A role may hold only permissions whose
+    /// <c>Permission.Apps</c> include this app.
+    /// </summary>
+    public App App { get; set; } = App.RetailErp;
 
     public bool IsSystemRole { get; set; }
 

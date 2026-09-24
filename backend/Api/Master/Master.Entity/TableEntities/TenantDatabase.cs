@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Master.Entity.Enums;
 using Shared.Kernel.Entities;
 
 namespace Master.Entity.TableEntities;
@@ -12,9 +13,7 @@ public class TenantDatabase : AuditableEntity
     [MaxLength(50, ErrorMessage = "Database name cannot exceed 50 characters.")]
     public string DatabaseName { get; set; } = null!;
 
-    [Required(ErrorMessage = "Plan type is required.")]
-    [MaxLength(20, ErrorMessage = "Plan type cannot exceed 20 characters.")]
-    public string PlanType { get; set; } = "Pro";
+    public PlanTier PlanType { get; set; } = PlanTier.Pro;
 
     public int MaxOrganizations { get; set; }
 

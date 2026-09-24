@@ -76,7 +76,7 @@ public sealed class PlatformOperatorTests
             Name = "Test Customer",
             BillingEmail = $"billing-{suffix}@example.com",
             Status = TenantStatus.Active,
-            PlanTier = "Standard",
+            PlanTier = PlanTier.Standard,
             DatabaseName = "IN000001",
         });
 
