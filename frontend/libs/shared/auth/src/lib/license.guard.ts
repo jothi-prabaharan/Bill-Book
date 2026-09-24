@@ -1,6 +1,9 @@
 import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
+import { APP_ID } from './app-id';
 import { AuthService } from './auth.service';
+import { accessOf, decideAccess } from './page-access';
+import { SessionContextService, isLicenceOpen } from './session-context.service';
 
 /** Blocks unauthenticated users out to /login. */
 export const authGuard: CanActivateFn = async () => {
@@ -35,38 +38,49 @@ export const authGuard: CanActivateFn = async () => {
 };
 
 /**
- * The trial-expiry gate. Sits above every feature route: an expired licence
- * cancels navigation and lands on the empty expired page instead — so a
- * hand-typed URL like /accounting/journal shows nothing. The server enforces
- * the same rule with 403 LicenseExpired; this guard is only the UX half.
+ * The licence gate, over the session context (TK-44): the current app's
+ * licence must be Active or Trial, or the user lands on /expired. The shell's
+ * `pageGuard` makes the same check as its second step; this remains for routes
+ * outside the shell.
  */
-export const licenseActiveGuard: CanActivateFn = () => {
-  const auth = inject(AuthService);
+export const licenseActiveGuard: CanActivateFn = async () => {
+  const session = inject(SessionContextService);
   const router = inject(Router);
-  return auth.isLicenseExpired() ? router.parseUrl('/expired') : true;
+
+  try {
+    const context = await session.ensure();
+    return isLicenceOpen(context.licenseStatus) ? true : router.parseUrl('/expired');
+  } catch {
+    return router.parseUrl('/login');
+  }
 };
 
 /**
- * Refuses a route the user holds no permission for, sending them Home instead of
- * to a screen that will answer 403 on its first request.
- *
- * The permission comes from the route's own `data.permission`, so a route
- * declares what it needs beside where it goes. A route that declares nothing is
- * allowed — the same default the shell uses for Home.
- *
- * **The UX half only**, exactly like licenseActiveGuard. The token is in the
- * browser and a determined user can edit what the browser reads out of it; the
- * server checks the same claims against a signature on every request, and that
- * is the check that decides anything.
+ * Refuses a route the user holds no permission for, over the session context
+ * (TK-44). **Deny by default**: a route that declares no `data.access` is
+ * refused. Pages under the shell get this from `pageGuard`, which `shellRoutes`
+ * attaches; this is the same rule for a route outside it.
  */
-export const permissionGuard: CanActivateFn = (route) => {
-  const required = route.data?.['permission'] as string | undefined;
-  if (!required) {
-    return true;
+export const permissionGuard: CanActivateFn = async (route) => {
+  const auth = inject(AuthService);
+  const session = inject(SessionContextService);
+  const router = inject(Router);
+  const app = inject(APP_ID);
+
+  let context = null;
+  try {
+    context = auth.isAuthenticated() ? await session.ensure() : null;
+  } catch {
+    context = null;
   }
 
-  const auth = inject(AuthService);
-  const router = inject(Router);
-
-  return auth.has(required) ? true : router.parseUrl('/dashboard');
+  const refusal = decideAccess(auth.isAuthenticated(), context, app, accessOf(route));
+  if (refusal === null) {
+    return true;
+  }
+  return refusal.kind === 'signIn'
+    ? router.parseUrl('/login')
+    : router.createUrlTree(['/no-access'], {
+        queryParams: refusal.kind === 'permission' ? { need: refusal.permission } : { reason: refusal.kind },
+      });
 };

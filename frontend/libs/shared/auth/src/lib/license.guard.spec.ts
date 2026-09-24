@@ -5,6 +5,7 @@ import {
   ActivatedRouteSnapshot,
   CanActivateFn,
   Router,
+  Route,
   RouterStateSnapshot,
   UrlTree,
   provideRouter,
@@ -12,6 +13,8 @@ import {
 import { describe, beforeEach, expect, it } from 'vitest';
 import { AuthService } from './auth.service';
 import { authGuard, licenseActiveGuard, permissionGuard } from './license.guard';
+import { PageAccess } from './page-access';
+import { SessionContext, SessionContextService } from './session-context.service';
 
 /**
  * These three guards decide whether a page is reachable, so a mistake in any of
@@ -32,26 +35,8 @@ describe('route guards', () => {
   const route = new ActivatedRouteSnapshot();
   const state = { url: '/somewhere' } as RouterStateSnapshot;
 
-  const run = (guard: CanActivateFn): boolean | UrlTree =>
-    TestBed.runInInjectionContext(() => guard(route, state)) as boolean | UrlTree;
-
-  /** An access token whose payload carries the given permissions. */
-  const tokenWith = (permissions: string[]): string => {
-    const json = JSON.stringify({ permission: permissions });
-    const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(json)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-    return `header.${b64}.signature`;
-  };
-
-  const runWithData = (data: Record<string, unknown>): boolean | UrlTree => {
-    const withData = new ActivatedRouteSnapshot();
-    withData.data = data;
-    return TestBed.runInInjectionContext(() =>
-      permissionGuard(withData, state),
-    ) as boolean | UrlTree;
-  };
+  const run = (guard: CanActivateFn): Promise<boolean | UrlTree> =>
+    Promise.resolve(TestBed.runInInjectionContext(() => guard(route, state)) as boolean | UrlTree | Promise<boolean | UrlTree>);
 
   beforeEach(() => {
     localStorage.clear();
@@ -90,81 +75,77 @@ describe('route guards', () => {
   });
 
   describe('licenseActiveGuard', () => {
-    it('lets an active licence through', () => {
-      auth.licenseStatus.set('Active');
+    const withLicence = (licenseStatus: string) => {
+      TestBed.overrideProvider(SessionContextService, { useValue: stubSession({ licenseStatus }) });
+    };
 
-      expect(run(licenseActiveGuard)).toBe(true);
+    it.each(['Active', 'Trial'])('lets a %s licence through', async (status) => {
+      withLicence(status);
+
+      expect(await run(licenseActiveGuard)).toBe(true);
     });
 
-    it('lets a trial through — a trial is not an expired licence', () => {
-      auth.licenseStatus.set('Trial');
+    it.each(['Expired', 'Suspended', 'NotLicensed'])('sends a %s licence to the expired page', async (status) => {
+      withLicence(status);
 
-      expect(run(licenseActiveGuard)).toBe(true);
-    });
-
-    it('redirects an expired licence to the expired page', () => {
-      auth.licenseStatus.set('Expired');
-
-      const result = run(licenseActiveGuard);
+      const result = await run(licenseActiveGuard);
 
       expect(result).toBeInstanceOf(UrlTree);
       expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/expired');
     });
-
-    it('lets an unknown status through rather than locking the user out', () => {
-      // Only the exact string 'Expired' blocks. A status this build has not
-      // heard of — a tier added server-side after the app shipped — must not
-      // strand a paying customer on the expired page; the server refuses what
-      // it should refuse.
-      auth.licenseStatus.set('SomeFutureTier');
-
-      expect(run(licenseActiveGuard)).toBe(true);
-    });
-
-    it('lets a user with no licence status through', () => {
-      // Nothing stored yet, which is the state before the first sign-in
-      // completes. authGuard is what stops that user, not this one.
-      auth.licenseStatus.set(null);
-
-      expect(run(licenseActiveGuard)).toBe(true);
-    });
   });
 
   describe('permissionGuard', () => {
-    it('lets a route through when the user holds its permission', () => {
-      auth.accessToken.set(tokenWith(['inventory.view', 'inventory.edit']));
+    const routeWith = (access: PageAccess | undefined): ActivatedRouteSnapshot => {
+      const snapshot = new ActivatedRouteSnapshot();
+      (snapshot as { routeConfig: Route | null }).routeConfig = access === undefined ? {} : { data: { access } };
+      return snapshot;
+    };
 
-      expect(runWithData({ permission: 'inventory.view' })).toBe(true);
+    const guard = async (access: PageAccess | undefined, permissions: string[]): Promise<boolean | UrlTree> => {
+      auth.accessToken.set('a-token');
+      TestBed.overrideProvider(SessionContextService, { useValue: stubSession({ permissions }) });
+      return (await TestBed.runInInjectionContext(() => permissionGuard(routeWith(access), state))) as boolean | UrlTree;
+    };
+
+    const url = (result: boolean | UrlTree) => TestBed.inject(Router).serializeUrl(result as UrlTree);
+
+    it('lets a route through when the user holds its permission', async () => {
+      expect(await guard({ permission: 'inventory.view' }, ['inventory.view', 'inventory.edit'])).toBe(true);
     });
 
-    it('sends a user without the permission Home rather than to a broken screen', () => {
-      auth.accessToken.set(tokenWith(['contacts.view']));
-
-      const result = runWithData({ permission: 'settings.view' });
-
-      expect(result).toBeInstanceOf(UrlTree);
-      expect(TestBed.inject(Router).serializeUrl(result as UrlTree)).toBe('/dashboard');
+    it('shows the no-access page, naming the permission, rather than bouncing to Home', async () => {
+      expect(url(await guard({ permission: 'settings.view' }, ['contacts.view']))).toBe('/no-access?need=settings.view');
     });
 
-    it('allows a route that declares no permission', () => {
-      // Home declares none, and every role has to be able to land somewhere.
-      auth.accessToken.set(tokenWith([]));
-
-      expect(runWithData({})).toBe(true);
+    it('refuses a route that declares nothing: deny by default', async () => {
+      expect(url(await guard(undefined, ['settings.view']))).toBe('/no-access?reason=undeclared');
     });
 
-    it('does not treat a permission in another module as a match', () => {
-      // inventory.view must not open a settings screen. Obvious, and exactly
-      // the kind of thing a prefix comparison would get wrong.
-      auth.accessToken.set(tokenWith(['inventory.view']));
-
-      expect(runWithData({ permission: 'settings.view' })).toBeInstanceOf(UrlTree);
+    it('lets any signed-in user open a signed-in page', async () => {
+      expect(await guard({ signedIn: true }, [])).toBe(true);
     });
 
-    it('does not let .view stand in for .edit', () => {
-      auth.accessToken.set(tokenWith(['accounting.view']));
-
-      expect(runWithData({ permission: 'accounting.edit' })).toBeInstanceOf(UrlTree);
+    it('does not let .view stand in for .edit', async () => {
+      expect(await guard({ permission: 'accounting.edit' }, ['accounting.view'])).toBeInstanceOf(UrlTree);
     });
   });
 });
+
+/** A session context that answers at once, for the guards. */
+function stubSession(overrides: Partial<SessionContext>): Pick<SessionContextService, 'ensure'> {
+  const context: SessionContext = {
+    displayName: 'Priya',
+    email: 'priya@example.com',
+    branchName: 'Chennai',
+    branchCode: 'CHN',
+    app: 'RetailErp',
+    licenseStatus: 'Active',
+    licenseExpiry: null,
+    expiryIsBranchLevel: false,
+    permissions: [],
+    apps: [],
+    ...overrides,
+  };
+  return { ensure: () => Promise.resolve(context) };
+}

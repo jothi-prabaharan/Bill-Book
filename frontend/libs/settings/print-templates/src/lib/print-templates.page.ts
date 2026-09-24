@@ -14,7 +14,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
-import { AuthService } from '@bill-book/auth';
+import { SessionContextService } from '@bill-book/auth';
 import {
   DocumentTypeOption,
   PRINT_BANDS,
@@ -55,7 +55,7 @@ import { MessageBoxComponent, UiMessage } from '@bill-book/ui-components';
 })
 export class PrintTemplatesPage implements OnInit {
   private readonly api = inject(PrintTemplateService);
-  private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionContextService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
@@ -65,7 +65,7 @@ export class PrintTemplatesPage implements OnInit {
   private readonly previewSection = viewChild<ElementRef<HTMLElement>>('previewSection');
 
   protected readonly bands = PRINT_BANDS;
-  protected readonly canEdit = computed(() => this.auth.has('settings.edit'));
+  protected readonly canEdit = computed(() => this.session.has('settings.edit'));
 
   protected readonly documentTypes = signal<DocumentTypeOption[]>([]);
   protected readonly documentType = signal<string | null>(null);

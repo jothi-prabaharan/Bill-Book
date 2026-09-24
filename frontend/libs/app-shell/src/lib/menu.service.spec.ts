@@ -81,7 +81,7 @@ describe('MenuService (libs/app-shell)', () => {
 
     await service.load();
 
-    expect(http.get).toHaveBeenCalledWith('/api/menu');
+    expect(http.get).toHaveBeenCalledWith('/api/menu', { params: { app: 'RetailErp' } });
     expect(service.loaded()).toBe(true);
     expect(service.usingFallback()).toBe(false);
     expect(service.tree().length).toBe(2);

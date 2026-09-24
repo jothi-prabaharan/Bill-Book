@@ -12,24 +12,24 @@ export const reportingRoutes: Routes = [
     path: '',
     loadComponent: () =>
       import('./report-list/report-list.page').then((m) => m.ReportListPage),
-    data: { permission: 'reports.view' },
+    data: { access: { permission: 'reports.view' } },
   },
   {
     path: 'profit-and-loss',
     loadComponent: () =>
       import('./statements/profit-and-loss.page').then((m) => m.ProfitAndLossPage),
-    data: { permission: 'reports.view' },
+    data: { access: { permission: 'reports.view' } },
   },
   {
     path: 'balance-sheet',
     loadComponent: () =>
       import('./statements/balance-sheet.page').then((m) => m.BalanceSheetPage),
-    data: { permission: 'reports.view' },
+    data: { access: { permission: 'reports.view' } },
   },
   {
     path: ':reportKey',
     loadComponent: () =>
       import('./report-host/report-host.page').then((m) => m.ReportHostPage),
-    data: { permission: 'reports.view' },
+    data: { access: { permission: 'reports.view' } },
   },
 ];

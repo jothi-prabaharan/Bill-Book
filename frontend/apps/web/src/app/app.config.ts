@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { authInterceptor } from '@bill-book/auth';
+import { authInterceptor, APP_ID } from '@bill-book/auth';
 import {
   API_BASE_URL,
   apiBaseUrlInterceptor,
@@ -14,6 +14,10 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
+
+    // Which app this is (TK-44): sign-in sends it, the menu and the shell's
+    // page guard check the session against it.
+    { provide: APP_ID, useValue: 'RetailErp' },
 
     // The app owns environment config; libs receive it through this token.
     // The deployment's value when it set one, the build's otherwise. One

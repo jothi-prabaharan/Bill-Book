@@ -11,7 +11,7 @@ export const purchaseRoutes: Routes = [
   {
     path: 'transactions',
     loadComponent: () => import('./purchase-list/purchase-list.page').then(m => m.PurchaseListPage),
-    data: { permission: 'purchase.view' }
+    data: { access: { permission: 'purchase.view' } }
   },
   {
     path: '',
@@ -25,7 +25,7 @@ export const purchaseRoutes: Routes = [
       import('./purchase-order-form/purchase-order-form.page').then(
         (m) => m.PurchaseOrderFormPage,
       ),
-    data: { permission: 'purchase.edit' },
+    data: { access: { permission: 'purchase.edit' } },
   },
   {
     path: 'purchase-orders/:id',
@@ -33,19 +33,19 @@ export const purchaseRoutes: Routes = [
       import('./purchase-order-form/purchase-order-form.page').then(
         (m) => m.PurchaseOrderFormPage,
       ),
-    data: { permission: 'purchase.view' },
+    data: { access: { permission: 'purchase.view' } },
   },
   {
     path: 'bills/new',
     loadComponent: () =>
       import('./bill-form/bill-form.page').then((m) => m.BillFormPage),
-    data: { permission: 'purchase.edit' },
+    data: { access: { permission: 'purchase.edit' } },
   },
   {
     path: 'bills/:id',
     loadComponent: () =>
       import('./bill-form/bill-form.page').then((m) => m.BillFormPage),
-    data: { permission: 'purchase.view' },
+    data: { access: { permission: 'purchase.view' } },
   },
   {
     path: 'debit-notes/new',
@@ -53,7 +53,7 @@ export const purchaseRoutes: Routes = [
       import('./debit-note-form/debit-note-form.page').then(
         (m) => m.DebitNoteFormPage,
       ),
-    data: { permission: 'purchase.edit' },
+    data: { access: { permission: 'purchase.edit' } },
   },
   {
     path: 'debit-notes/:id',
@@ -61,7 +61,7 @@ export const purchaseRoutes: Routes = [
       import('./debit-note-form/debit-note-form.page').then(
         (m) => m.DebitNoteFormPage,
       ),
-    data: { permission: 'purchase.view' },
+    data: { access: { permission: 'purchase.view' } },
   },
   {
     path: 'goods-receipts/new',
@@ -69,7 +69,7 @@ export const purchaseRoutes: Routes = [
       import('./goods-receipt-form/goods-receipt-form.page').then(
         (m) => m.GoodsReceiptFormPage,
       ),
-    data: { permission: 'purchase.edit' },
+    data: { access: { permission: 'purchase.edit' } },
   },
   {
     path: 'goods-receipts/:id',
@@ -77,6 +77,6 @@ export const purchaseRoutes: Routes = [
       import('./goods-receipt-form/goods-receipt-form.page').then(
         (m) => m.GoodsReceiptFormPage,
       ),
-    data: { permission: 'purchase.view' },
+    data: { access: { permission: 'purchase.view' } },
   },
 ];

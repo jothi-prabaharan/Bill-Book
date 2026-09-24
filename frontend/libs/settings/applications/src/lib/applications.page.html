@@ -1,0 +1,33 @@
+<section class="applications" aria-labelledby="applications-title">
+  <h1 id="applications-title">Applications</h1>
+  <p class="applications-intro">
+    Each app is licensed on its own. Branches, users and settings are shared by all of them.
+  </p>
+
+  <bb-message-box [messages]="messages()" />
+
+  <ul class="applications-list">
+    @for (row of rows(); track row.app) {
+      <li class="applications-row">
+        <div class="applications-name">
+          <strong>{{ labels[row.app] }}</strong>
+          <span class="applications-status" [attr.data-status]="status(row)">{{ status(row) }}</span>
+        </div>
+        @if (row.expiryDate) {
+          <span class="applications-expiry">Until {{ row.expiryDate }}</span>
+        }
+        @if (!row.licensed) {
+          <button
+            *bbIfCan="'settings.edit'"
+            type="button"
+            class="btn btn-primary"
+            [disabled]="busy() !== null"
+            (click)="startTrial(row.app)"
+          >
+            {{ busy() === row.app ? 'Starting…' : 'Start trial' }}
+          </button>
+        }
+      </li>
+    }
+  </ul>
+</section>

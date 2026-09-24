@@ -1,0 +1,13 @@
+.no-access {
+  max-width: 36rem;
+  margin: var(--space-6, 32px) auto;
+  padding: 0 var(--space-4, 16px);
+
+  h1 {
+    margin-top: 0;
+  }
+}
+
+.no-access-permission {
+  font-size: 1.1rem;
+}

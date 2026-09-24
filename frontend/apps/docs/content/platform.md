@@ -332,6 +332,15 @@ A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll*
 - **`GET /api/me/context`** returns the signed-in session for pages that don't read the token: your name and email, the branch, the app, that app's licence, your permissions, and the apps you can switch to in this branch. It returns no internal ids.
 - **Inside an app, the roles screen shows only that app's roles**, and a role created there belongs to that app. Inviting a user counts against the user limit of the invited role's app.
 
+### Pages check what you may open
+
+- **Each app's menu shows only that app's screens**, and only those you hold a permission for.
+- **A page you cannot open says why.** A typed URL or an old bookmark to a page you lack the permission for opens a *No access* page, which names the permission to ask your administrator for. It no longer sends you silently to the dashboard. An expired, suspended or unlicensed app goes to the expired page, as before.
+- **Settings › Applications** lists the four apps and your licence for each: *Active*, *Trial*, *Expired*, *Suspended* or *Not started*. Someone who can edit settings can press **Start trial** on an app you don't have yet.
+- **Switching app** is under the branch switcher at the top: it lists the other apps you hold a role in, in this branch.
+- **Settings › Number series is now a settings screen for every app.** Opening or changing it takes the settings permissions instead of the accounting ones, matching the menu, which already listed it under settings. An accountant without settings permissions no longer reaches it by a typed URL.
+- For developers: every page under the shell must declare `data.access`, either `{ permission: 'x.view' }` or `{ signedIn: true }`. A page that declares nothing is refused, and each app's route spec (`auditShellRoutes`) fails the build. Apps mount the shell with `shellRoutes({ app, children })`, which attaches the guards. `*bbIfCan="'x.edit'"` hides a button the same way.
+
 ## The licence
 
 One row per customer per app (`GET /api/customers/{id}/licenses/apps` lists them), created automatically at signup:

@@ -1,0 +1,45 @@
+.applications {
+  max-width: 48rem;
+  padding: var(--space-4, 16px);
+}
+
+.applications-intro {
+  color: var(--color-text-muted, #475467);
+}
+
+.applications-list {
+  list-style: none;
+  padding: 0;
+  margin: var(--space-4, 16px) 0 0;
+}
+
+.applications-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  padding: var(--space-3, 12px) 0;
+  border-bottom: 1px solid var(--color-border, #eceef3);
+}
+
+.applications-name {
+  display: flex;
+  gap: var(--space-2, 8px);
+  align-items: baseline;
+}
+
+.applications-status {
+  font-size: 0.85rem;
+  color: var(--color-text-muted, #475467);
+}
+
+.applications-expiry {
+  font-size: 0.85rem;
+}
+
+/* At phone width each app is a card: name, then expiry, then the action. */
+@media (max-width: 480px) {
+  .applications-row {
+    grid-template-columns: 1fr;
+  }
+}

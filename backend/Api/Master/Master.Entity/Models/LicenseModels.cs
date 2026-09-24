@@ -27,3 +27,17 @@ public class RenewLicenseRequest
     [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
     public string? App { get; set; }
 }
+
+/// <summary>One app on the Applications page (TK-44): whether the customer holds its licence, and which.</summary>
+public class ApplicationRow
+{
+    public string App { get; set; } = string.Empty;
+
+    public bool Licensed { get; set; }
+
+    public string? LicenseType { get; set; }
+
+    public DateOnly? ExpiryDate { get; set; }
+
+    public bool IsActive { get; set; }
+}

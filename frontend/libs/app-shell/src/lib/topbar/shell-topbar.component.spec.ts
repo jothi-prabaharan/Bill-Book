@@ -3,7 +3,9 @@ import { NavigationEnd, Router, Event as RouterEvent } from '@angular/router';
 import { Subject } from 'rxjs';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ShellTopbarComponent } from './shell-topbar.component';
-import { AuthService, AccessibleOrg } from '@bill-book/auth';
+import { AuthService, AccessibleOrg, SessionContext, SessionContextService } from '@bill-book/auth';
+import { signal } from '@angular/core';
+import { APP_URLS } from '../app-urls';
 import { ElementRef } from '@angular/core';
 import { FavouritesService } from '../favourites.service';
 import { ShellNotificationsService } from '../notifications.service';
@@ -11,6 +13,23 @@ import { ShellNotificationsService } from '../notifications.service';
 describe('ShellTopbarComponent (libs/app-shell)', () => {
   let routerEvents$: Subject<RouterEvent>;
   let mockRouter: Partial<Router>;
+  const sessionContext = signal<SessionContext | null>({
+    displayName: 'Priya',
+    email: 'priya@example.com',
+    branchName: 'Chennai',
+    branchCode: 'CHN',
+    app: 'RetailErp',
+    licenseStatus: 'Active',
+    licenseExpiry: null,
+    expiryIsBranchLevel: false,
+    permissions: [],
+    apps: [
+      { app: 'RetailErp', licenseStatus: 'Active' },
+      { app: 'Payroll', licenseStatus: 'Trial' },
+      { app: 'Hrms', licenseStatus: 'NotLicensed' },
+    ],
+  });
+
   let mockAuthService: {
     canView: ReturnType<typeof vi.fn>;
     accessibleOrganizations: ReturnType<typeof vi.fn>;
@@ -56,6 +75,8 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
         { provide: Router, useValue: mockRouter },
         { provide: AuthService, useValue: mockAuthService },
         { provide: ElementRef, useValue: mockElementRef },
+        { provide: SessionContextService, useValue: { context: sessionContext } },
+        { provide: APP_URLS, useValue: { Payroll: 'https://payroll.example.com' } },
       ],
     });
 
@@ -275,5 +296,13 @@ describe('ShellTopbarComponent (libs/app-shell)', () => {
 
     comp.setNewQuery('@@@');
     expect(comp.newEmpty()).toBe(true);
+  });
+  it('TOPBAR-APPS: the app switcher lists the other apps, with a URL only where one is configured (TK-44)', () => {
+    const component = createComponent();
+
+    expect(component.otherApps()).toEqual([
+      { app: 'Payroll', label: 'Payroll', url: 'https://payroll.example.com', open: true },
+      { app: 'Hrms', label: 'HRMS', url: null, open: false },
+    ]);
   });
 });

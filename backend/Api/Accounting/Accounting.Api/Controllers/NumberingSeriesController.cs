@@ -12,10 +12,16 @@ namespace Accounting.Api.Controllers;
 /// Settings › Numbering series. Owned by Accounting for the same reason Tax
 /// Master is: it is configuration several services read, and it needs one home
 /// rather than a copy per service.
+///
+/// <b>Guarded by <c>settings</c>, not <c>accounting</c></b> (TK-44). Every app
+/// numbers its documents from this table (<c>EMP</c>, <c>PAY</c>, <c>ADM</c>…),
+/// so the page is a shared settings page. The menu already offered it on
+/// <c>settings.view</c> while the route and this controller asked for
+/// <c>accounting.*</c>, so the two disagreed; they now agree on settings.
 /// </summary>
 [ApiController]
 [Authorize]
-[RequireModulePermission("accounting")]
+[RequireModulePermission("settings")]
 [Route("api/numbering-series")]
 [RequireApp(App.All)]
 public sealed class NumberingSeriesController : ControllerBase

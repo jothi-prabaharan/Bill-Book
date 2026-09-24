@@ -5,6 +5,11 @@ export * from './lib/topbar/shell-topbar.component';
 export * from './lib/breadcrumb/shell-breadcrumb.component';
 export * from './lib/subpanel/shell-subpanel.component';
 
+// Routes: the shell with its page validation, and the audit every app's spec runs
+export * from './lib/shell-routes';
+export * from './lib/app-urls';
+export * from './lib/no-access/no-access.page';
+
 // Services
 export * from './lib/menu.service';
 export * from './lib/panel-state.service';

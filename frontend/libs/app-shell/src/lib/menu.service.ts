@@ -1,3 +1,4 @@
+import { APP_ID } from '@bill-book/auth';
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -30,6 +31,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class MenuService {
   private readonly http = inject(HttpClient);
+  private readonly app = inject(APP_ID);
 
   private readonly menus = signal<readonly MenuView[]>([]);
 
@@ -106,7 +108,11 @@ export class MenuService {
    */
   async load(): Promise<void> {
     try {
-      const menus = await firstValueFrom(this.http.get<MenuView[]>('/api/menu'));
+      // The app is named for the logs and any cache between here and Master;
+      // the token decides which app's rows come back (TK-44).
+      const menus = await firstValueFrom(
+        this.http.get<MenuView[]>('/api/menu', { params: { app: this.app } }),
+      );
       if (!Array.isArray(menus) || menus.length === 0) {
         this.fallback();
         return;

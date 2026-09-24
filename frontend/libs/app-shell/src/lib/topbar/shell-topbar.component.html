@@ -57,6 +57,28 @@
           }
         </div>
 
+        @if (otherApps().length > 0) {
+          <div class="popover-head app-switch-head">
+            <span class="popover-title">Apps</span>
+          </div>
+          <div class="org-list-container app-switch-list">
+            @for (other of otherApps(); track other.app) {
+              <button
+                type="button"
+                class="org-list-btn"
+                [disabled]="other.url === null"
+                (click)="openApp(other.url)"
+              >
+                <span class="avatar" aria-hidden="true">{{ initials(other.label) }}</span>
+                <span class="org-list-text">
+                  <span class="org-item-name">{{ other.label }}</span>
+                  <span class="org-item-role">{{ other.open ? 'Open in this branch' : 'Licence not active' }}</span>
+                </span>
+              </button>
+            }
+          </div>
+        }
+
         <div class="popover-foot">
           <button class="btn btn-ghost popover-foot-main" type="button" (click)="manageOrganizations()">Manage organizations</button>
         </div>

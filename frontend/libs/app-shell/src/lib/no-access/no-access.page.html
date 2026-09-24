@@ -1,0 +1,8 @@
+<section class="no-access" aria-labelledby="no-access-title">
+  <h1 id="no-access-title">No access</h1>
+  <p>{{ message() }}</p>
+  @if (permission(); as label) {
+    <p class="no-access-permission"><strong>{{ label }}</strong></p>
+  }
+  <a class="btn btn-secondary" routerLink="/dashboard">Go to the dashboard</a>
+</section>

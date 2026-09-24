@@ -3,6 +3,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Tenancy;
 
 namespace Master.Api.Services;
@@ -35,7 +36,11 @@ public sealed class MenuService
         _tenant = tenant;
     }
 
-    public async Task<IReadOnlyList<MenuView>> GetUserMenuAsync(CancellationToken ct)
+    /// <summary>
+    /// The caller's menu in one app (H0.3, TK-44): only rows whose
+    /// <c>Menu.Apps</c> include it. A token that predates apps is RetailErp's.
+    /// </summary>
+    public async Task<IReadOnlyList<MenuView>> GetUserMenuAsync(CancellationToken ct, App app = App.RetailErp)
     {
         var permissions = _tenant.Permissions is { Count: > 0 }
             ? _tenant.Permissions
@@ -54,7 +59,7 @@ public sealed class MenuService
 
         var rows = await _db.Menus
             .AsNoTracking()
-            .Where(m => m.IsActive)
+            .Where(m => m.IsActive && m.Apps.HasFlag(app))
             .OrderBy(m => m.DisplayOrder)
             .Select(m => new Row
             {

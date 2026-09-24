@@ -2101,32 +2101,37 @@ None of it is built.
   - Nothing sends `app` from the frontend yet. `apps/web` signs in as RetailErp by default, which is correct.
 
 ### TK-44 · H0.3: shell, page validation and shared master pages
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-UI, L-MASTER-UI, L-WEB · **Depends on:** TK-43, TK-28 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-UI, L-MASTER-UI, L-WEB (+ L-MST for the menu filter and `api/applications`, L-ACC for the numbering-series guard) · **Depends on:** TK-43, TK-28 · **Decision:** —
 - **Where:**
-  - `frontend/libs/app-shell/src/lib/{menu.service.ts,shell-screens.ts}`
-  - `frontend/libs/shared/auth/src/lib/{license.guard.ts,token-claims.ts}`
-  - `frontend/apps/web/src/app/app.routes.ts`
-  - Master's `MenuService.cs`
+  - `frontend/libs/shared/auth/src/lib/{app-id,session-context.service,page-access,if-can.directive,license.guard,auth.service}.ts`
+  - `frontend/libs/app-shell/src/lib/{shell-routes,app-urls,menu.service}.ts`, `no-access/`, `topbar/`
+  - `frontend/libs/settings/{numbering-series,applications}`
+  - `frontend/apps/web/src/app/{app.routes,app.config}.ts`
+  - Master's `MenuService.cs`, `MenuController.cs`, `ApplicationsController.cs`. Accounting's `NumberingSeriesController.cs`.
 - **Sub-tasks:**
-  - [ ] Add an `APP_ID` injection token. `menu.service.ts` calls `GET /api/menu?app=`, and
-        `MenuService` filters by `Menus.Apps`.
-  - [ ] Add a `SessionContextService` in `libs/shared/auth` over `GET api/me/context`, and rewrite
-        `permissionGuard` and `licenseActiveGuard` on it. Retire `token-claims.ts`.
-  - [ ] Add `shellRoutes({ app, children })` to `libs/app-shell`, which attaches the five-step
-        page guard.
-  - [ ] Add `data.access` to every route, with deny-by-default, plus a no-access page and a
-        `*bbIfCan` directive.
-  - [ ] Add `auditShellRoutes(routes)`, called from each app's route spec.
-  - [ ] Move `apps/web` onto `shellRoutes`: `data.permission` becomes `data.access`, and the
+  - [x] Add an `APP_ID` injection token (in `libs/shared/auth`, defaulting to RetailErp, since `AuthService` sends it on sign-in and switch). `menu.service.ts` calls `GET /api/menu?app=`, and
+        `MenuService` filters by `Menus.Apps` (the token's app decides).
+  - [x] Add a `SessionContextService` in `libs/shared/auth` over `GET api/me/context`, and rewrite
+        `permissionGuard` and `licenseActiveGuard` on it. `token-claims.ts` is kept only for `AuthService.has`, which `apps/admin` (not a shell app) uses. Every page under the shell reads the session context instead.
+  - [x] Add `shellRoutes({ app, children })` to `libs/app-shell`, which attaches the five-step
+        page guard (`pageGuard`, with the pure `decideAccess`).
+  - [x] Add `data.access` to every route, with deny-by-default, plus a no-access page and a
+        `*bbIfCan` directive. A lazy module's parent declares access for its children, and inheritance stops at the shell.
+  - [x] Add `auditShellRoutes(routes)`, called from each app's route spec (`apps/web/src/app/app.routes.spec.ts`) and from the purchase and reporting libs' route specs.
+  - [x] Move `apps/web` onto `shellRoutes`: `data.permission` becomes `data.access`, and the
         dashboard becomes `{ signedIn: true }`.
-  - [ ] Add an app switcher to the topbar, and an Applications page (licences, **Start trial**).
-  - [ ] Move the numbering-series page to `libs/master/master-ui`.
-  - [ ] Test: route specs, including removing one `data.access` so the audit fails.
+  - [x] Add an app switcher to the topbar (in the branch popover, from `context.apps`, opening the URL in `APP_URLS`), and an Applications page (`libs/settings/applications`, over the new `GET api/applications`, with **Start trial** calling TK-45's endpoint). The unused "Licences" menu row (1085) became "Applications", in every app.
+  - [x] Move the numbering-series page to `libs/settings/numbering-series` (as the design's table says, not `master-ui`).
+  - [x] Test: route specs, including removing one `data.access` so the audit fails (`shell-routes.spec.ts`).
 - **Done when:** as H0.3 in `docs/Modules.md`: a typed URL to a forbidden page shows the no-access
   page, and removing `data.access` fails the route spec.
 - **Notes:**
-  - Dependency on TK-28 added 2026-09-24: the shared settings pages should move into their own libs before H0.3 mounts them in several apps.
+  - **Numbering series is guarded by `settings` now, not `accounting`** (controller and route). The menu already offered it on `settings.*`, so the two disagreed. As a shared page, every app's roles need it. An Accountant without `settings.*` loses a typed-URL route it had.
+  - **Switching app on one origin:** if the shell finds a session minted for another app (another app's token in the same storage), `pageGuard` first switches it to this app on the same branch (`AuthService.switchApp`). A user with no role in this app lands on `/no-access?reason=app`. Apps on different origins do not share storage, so the switcher opens the other app, which asks the user to sign in. `APP_URLS` is empty until a deployment provides it.
+  - `shell-screens.ts` (the rail drawn before the menu answers) is still the retail list. TK-47's apps need their own; provide it the way `APP_URLS` is provided when they do.
+  - Fixed on the way: `isLicenseExpired` blocked only `Expired`, so a `Suspended` licence passed the guard. The session-context guard allows only `Active` and `Trial`.
+  - Not verified in a browser. Nothing here was run.
 
 ### TK-45 · H0.4: signup and seeding per app
 - [ ] open

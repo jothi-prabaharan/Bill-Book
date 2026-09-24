@@ -10,7 +10,15 @@ import {
   signal,
 } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
-import { AccessibleOrg, AuthService } from '@bill-book/auth';
+import {
+  APP_ID,
+  APP_LABELS,
+  AccessibleOrg,
+  AuthService,
+  SessionContextService,
+  isLicenceOpen,
+} from '@bill-book/auth';
+import { APP_URLS } from '../app-urls';
 import { FavouritesService } from '../favourites.service';
 import { MenuService } from '../menu.service';
 import { ShellNotificationsService } from '../notifications.service';
@@ -59,6 +67,9 @@ type Panel = 'org' | 'new' | 'search' | 'fav' | 'notif' | null;
 })
 export class ShellTopbarComponent {
   protected readonly auth = inject(AuthService);
+  private readonly session = inject(SessionContextService);
+  private readonly appId = inject(APP_ID);
+  private readonly appUrls = inject(APP_URLS);
   protected readonly favourites = inject(FavouritesService);
   private readonly menuService = inject(MenuService);
   protected readonly notifications = inject(ShellNotificationsService);
@@ -124,6 +135,34 @@ export class ShellTopbarComponent {
   ];
 
   readonly currentOrgId = computed(() => readOrgId());
+
+  /**
+   * The app switcher (TK-44): the other apps this user holds a role in, in this
+   * branch, from the session context. An app with no URL configured for this
+   * deployment is listed but cannot be opened.
+   */
+  readonly otherApps = computed(() =>
+    (this.session.context()?.apps ?? [])
+      .filter((a) => a.app !== this.appId)
+      .map((a) => ({
+        app: a.app,
+        label: APP_LABELS[a.app] ?? a.app,
+        url: this.appUrls[a.app] ?? null,
+        open: isLicenceOpen(a.licenseStatus),
+      })),
+  );
+
+  /**
+   * Opens another app on the same branch. That app's shell mints its own token
+   * for the branch when it finds this one (`pageGuard`), so nothing is minted
+   * here.
+   */
+  openApp(url: string | null): void {
+    this.closeAll();
+    if (url !== null && typeof window !== 'undefined') {
+      window.location.assign(url);
+    }
+  }
 
   /**
    * The API returns one name per accessible org and it is the branch name —
