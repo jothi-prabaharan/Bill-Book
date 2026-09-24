@@ -3644,3 +3644,96 @@ weekly on a weekday, monthly on a day) to users of the branch, through Notificat
 recipients (user ids) and `NextRunAt`; a hosted service in Reporting claims due rows with a guarded
 update and runs each under the schedule owner's permissions, re-checked at run time.
 
+---
+
+# Compliance bundle (TK-37)
+
+"Compliance bundle" is the roadmap's name (Phase 3) for the statutory work an Indian SMB's accountant
+does every month, quarter and year, beyond e-invoicing (which has its own design above). This
+section defines it as **five parts**, each buildable on its own.
+
+## Where things stand
+
+Checked against the code on 24 September 2026:
+
+- **GST returns** are reports in Reporting's `GstController`: GSTR-1 (from `sal.SalesRegister`),
+  **GSTR-2 answers 501** ("Purchase Register pending"), and GSTR-3B aggregates **outward supplies
+  only**, so it shows no input tax credit. There is **no purchase register**: `pur` has no table like
+  `sal.SalesRegister`. Nothing exports a return in the GST portal's format.
+- **TDS**: a contact has `Pan`, `IsTdsApplicable` and `TdsSection` (a free string of up to 10
+  characters). **Nothing deducts TDS** on a bill or a payment, nothing tracks thresholds, and there is
+  no TDS-receivable handling when a customer deducts on a receipt. The chart has a TDS Payable account.
+- **Audit trail**: every table has `CreatedBy/At` and `ModifiedBy/At` (`AuditableEntity`). That says
+  who last changed a row, not what changed or what it was before. **There is no edit log.**
+- **MSME**: a contact has `IsMsme` and `UdyamNumber`, enforced by a check constraint. Nothing uses
+  them.
+- **Due dates**: nothing reminds anyone of a filing date.
+
+## The five parts
+
+### 1. GST returns, complete
+
+| Piece | Decision |
+|---|---|
+| **`pur.PurchaseRegister`** | The mirror of `sal.SalesRegister`, one row per bill or debit note line and rate, written by the posters in the posting transaction, carrying the supplier's GSTIN, invoice number and date as the supplier issued them, place of supply, reverse-charge flag, ITC eligibility (`Eligible`, `Ineligible`, `Blocked` under section 17(5)) and the tax per component. Without it neither ITC nor reconciliation can be computed |
+| **GSTR-1** | Keeps its report and gains an **export in the GST offline tool's JSON** (sections B2B, B2CL, B2CS, CDNR, CDNUR, EXP, HSN summary, documents issued), validated before download: every B2B row has a valid GSTIN, every row an HSN, and the HSN summary equals the sections |
+| **GSTR-3B** | Completed: outward, **eligible ITC from the purchase register**, reverse-charge liability, ineligible ITC shown apart; with an export of the figures in the portal's layout |
+| **GSTR-2B reconciliation** | Replaces the 501. The accountant **imports the month's GSTR-2B JSON** downloaded from the portal; each supplier invoice is matched to the purchase register by supplier GSTIN + invoice number + date, then compared on taxable value and tax. Results: matched, mismatched (with the difference), in 2B but not in the books, in the books but not in 2B. The last group is the ITC at risk. Matching tolerates the usual formatting differences in invoice numbers (case, leading zeros, separators) and says when it used them |
+| Storage | `pur.Gstr2bImports` (the file, its period, who imported it) and `pur.Gstr2bLines` (one per supplier invoice, with its match state and the purchase register rows it matched) |
+
+### 2. TDS
+
+| Piece | Decision |
+|---|---|
+| **`acc.TdsSections`** | Section, nature of payment, rates (with PAN, without PAN, per deductee type), single and aggregate thresholds, effective-dated like the Tax Master, **seeded and editable**, because sections and rates change by Finance Act. The contact's free-text `TdsSection` becomes a reference to it |
+| **Deduction** | On a bill or spend-money line to a TDS-applicable vendor, the deduction is computed when the single-payment or year-to-date aggregate threshold is crossed (the aggregate read from the ledger for that vendor and section), shown on the document, and posted `Cr TDS Payable` against the payable, so the vendor is owed the net. A lower-deduction certificate on the contact (number, rate, validity, limit) overrides the rate |
+| **Deposit** | Paying the government is a spend-money document marked as a TDS challan (challan number, BSR code, date), clearing TDS Payable per section and month |
+| **Quarterly return** | A **26Q data export** (deductee rows, challan rows) in the layout the return preparation utility imports, and the same for 27Q if a non-resident vendor is ever paid. Filing and the Form 16A certificates stay on the government's tools |
+| **TDS on receipts** | When a customer deducts TDS, the receipt records it (`Dr TDS Receivable`), and a **Form 26AS / AIS reconciliation** imports the statement and matches by deductor TAN and amount, like 2B |
+| Payroll TDS | Salary TDS (section 192) belongs to Payroll's design, not here |
+
+### 3. Audit trail (edit log)
+
+Companies using accounting software must keep an audit trail recording every change, with the date,
+that cannot be switched off. The design:
+
+| Piece | Decision |
+|---|---|
+| **`{schema}.EditLog`** in every tenant schema | One row per insert, update or delete of an audited table: entity, key, operation, the changed columns with old and new values (jsonb), user, time, request id |
+| **Written by one interceptor** in `Shared.Kernel` beside `AuditSaveChangesInterceptor`, in the same `SaveChanges`, so the log commits or rolls back with the change | A log written afterwards could miss a change that committed |
+| **Append-only in the database**: a trigger refuses `UPDATE` and `DELETE` on the log (triggers are allowed by hard rule 1), and RLS scopes it like every tenant table | "Cannot be disabled" has to hold against the application itself |
+| **Bulk statements** (`ExecuteUpdate`, `ExecuteDelete`) bypass the change tracker, so each one on an audited table writes its own log rows, or is replaced by tracked changes. Every existing bulk update on an audited table is listed and handled in the card | Otherwise the log silently misses exactly the guarded updates the ledger and stock rely on |
+| Scope | Documents, their lines, ledger rows, masters (contacts, items, accounts, tax master), settings. Not the error log, the log itself, or queue status flips (costing status), which are recorded differently |
+| Retention | Kept at least eight years; never purged by the application |
+| Screen | A **History** tab on every document and master, and an audit-log report filterable by user, entity and date |
+
+### 4. MSME payments
+
+Payments to micro and small enterprises must be made within the agreed period, capped at 45 days,
+or the expense is disallowed for income tax until paid:
+
+- A bill from an `IsMsme` vendor takes a due date no later than 45 days from acceptance; a later
+  payment term is refused with the reason.
+- An **MSME ageing report**: unpaid MSME bills past their due date and past 45 days, by vendor, at any
+  date, and at the financial year end (the disallowance figure).
+- A half-yearly **MSME outstanding export** for the MCA return, for company customers.
+
+### 5. Compliance calendar
+
+- `mst.ComplianceDueDates`, seeded with the recurring filings (GSTR-1, GSTR-3B, TDS deposit, 26Q/27Q,
+  advance tax, MSME return) as rules ("11th of the following month", "31st of the month after the
+  quarter"), **global and editable by operators**, because the government extends dates often.
+- Per branch, which filings apply (a composition dealer files differently; a non-company files no
+  MSME return), and a reminder N days before, emailed through Notification to the users who hold
+  `accounting.view`.
+- The Home page shows the next three filings and whether their data is ready (for example, GSTR-1
+  "ready" when every B2B invoice of the month is posted and, where it applies, registered).
+
+## What this does not cover
+
+- Filing on anyone's behalf. Every return is **prepared and exported**; the user files on the
+  government's portal or through their tax professional. Direct filing through a GSP is a later
+  decision.
+- Composition scheme returns (CMP-08, GSTR-4) and the annual returns (GSTR-9, 9C) are not designed.
+- Income-tax computation and advance tax amounts are not designed; only their due dates are.
+

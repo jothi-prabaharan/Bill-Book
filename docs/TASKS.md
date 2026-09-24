@@ -1554,9 +1554,14 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-110 (definitions and validator), TK-111 (contacts and items), TK-112 (documents, carry-forward, print), TK-113 (datasets and builder), TK-114 (scheduled email). No decision needed.
 
 ### TK-37 · Design: compliance bundle
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 
 ---
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Compliance bundle". It defines the bundle as five parts: complete GST returns (a new purchase register, GSTR-3B with ITC, a GSTR-1 JSON export, GSTR-2B reconciliation), TDS, an append-only audit trail, MSME 45-day payments, and a compliance calendar.
+  - **Found while designing:** GSTR-2 answers 501 and GSTR-3B has no input tax credit, because there is no purchase register; TDS is only a free-text section on the contact and nothing deducts it; there is no edit log, only last-modified columns.
+  - Key calls: the edit log is written in the same `SaveChanges` and made append-only by a database trigger, and every bulk `ExecuteUpdate` on an audited table is made to log too; tax rates, thresholds and due dates are seeded, effective-dated, editable tables; returns are prepared and exported, not filed.
+  - Cards: TK-115 (purchase register, 3B, GSTR-1 export), TK-116 (2B reconciliation), TK-117 (TDS), TK-118 (audit trail), TK-119 (MSME and calendar). No decision needed.
 
 ### TK-38 · Design: CRM campaigns and marketing automation (D-06)
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-06 (answered: in v1)
@@ -1840,6 +1845,62 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Each run re-checks the owner's permission and sends the Excel export through Notification.
   - [ ] Test: a due schedule runs once under concurrency; a schedule whose owner lost the permission sends nothing and records why.
 - **Done when:** a weekly schedule emails its report once per week.
+
+### TK-115 · Compliance: the purchase register, complete GSTR-3B and the GSTR-1 export
+- [ ] open
+- **Lanes:** L-PUR, L-RPT, L-REPORTING-UI · **Depends on:** TK-37 · **Decision:** —
+- **Where:** design "Compliance bundle" → part 1; `sal.SalesRegister` and its writers; `GstController` (GSTR-2 501, GSTR-3B outward only).
+- **Tables:** `pur.PurchaseRegister`
+- **Sub-tasks:**
+  - [ ] `pur.PurchaseRegister` with RLS, written by the bill and debit note posters in the posting transaction, with ITC eligibility.
+  - [ ] GSTR-3B completed with eligible ITC, reverse charge and ineligible ITC.
+  - [ ] GSTR-1 offline-tool JSON export with pre-download validation.
+  - [ ] Test: a posted bill writes its register rows; 3B's ITC equals the register's eligible tax; the export's HSN summary equals its sections.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** GSTR-3B for a month with sales and purchases shows both output tax and eligible ITC.
+
+### TK-116 · Compliance: GSTR-2B reconciliation
+- [ ] open
+- **Lanes:** L-PUR, L-PURCHASE-UI · **Depends on:** TK-115 · **Decision:** —
+- **Tables:** `pur.Gstr2bImports`, `pur.Gstr2bLines`
+- **Sub-tasks:**
+  - [ ] Import a GSTR-2B JSON; match by supplier GSTIN, invoice number and date with normalised numbers; compare values.
+  - [ ] The four result groups on a screen, with the ITC at risk totalled.
+  - [ ] Test: a recorded 2B sample against seeded bills gives the expected matched, mismatched and missing rows.
+- **Done when:** importing a month's 2B lists every supplier invoice missing from the books and every bill missing from 2B.
+
+### TK-117 · Compliance: TDS on purchases and receipts
+- [ ] open
+- **Lanes:** L-ACC, L-PUR, L-CON, L-ACC-UI · **Depends on:** TK-115 · **Decision:** —
+- **Tables:** `acc.TdsSections`; lower-deduction certificate columns on `con.Contacts`
+- **Sub-tasks:**
+  - [ ] Effective-dated `acc.TdsSections`, seeded; the contact's `TdsSection` becomes a reference.
+  - [ ] Deduction on bill and spend-money lines at the single or aggregate threshold; `Cr TDS Payable`; lower-deduction certificates.
+  - [ ] TDS challan on spend money; the 26Q data export; TDS receivable on receipts and a 26AS/AIS import-and-match.
+  - [ ] Test: the aggregate threshold deducts on the bill that crosses it and not before; a certificate's rate applies within its limit; the vendor is owed the net.
+- **Done when:** a bill that takes a vendor past the year's threshold posts TDS Payable and a net payable.
+
+### TK-118 · Compliance: the audit trail (edit log)
+- [ ] open
+- **Lanes:** L-KERNEL, every service lane for its migration · **Depends on:** TK-37 · **Decision:** —
+- **Tables:** `{schema}.EditLog` in every tenant schema
+- **Sub-tasks:**
+  - [ ] `EditLogInterceptor` in `Shared.Kernel`, writing changed columns old and new in the same `SaveChanges`.
+  - [ ] Per schema: the table, RLS, and a trigger refusing `UPDATE`/`DELETE` on it.
+  - [ ] List every `ExecuteUpdate`/`ExecuteDelete` on an audited table and make each write its log rows.
+  - [ ] A History tab component and an audit-log report.
+  - [ ] Test: an edited invoice logs old and new values; an `UPDATE` on the log is refused by the database; a rolled-back save leaves no log row.
+- **Done when:** changing an invoice's price leaves a log row with the old and new price that nobody can alter.
+
+### TK-119 · Compliance: MSME payments and the compliance calendar
+- [ ] open
+- **Lanes:** L-PUR, L-RPT, L-MST, L-NTF · **Depends on:** TK-115 · **Decision:** —
+- **Tables:** `mst.ComplianceDueDates`; per-branch applicability
+- **Sub-tasks:**
+  - [ ] An MSME vendor's bill refuses a due date past 45 days; the MSME ageing report and year-end disallowance figure; the half-yearly export.
+  - [ ] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
+  - [ ] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
+- **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
 
 ### F · Phase 3: POS
 
