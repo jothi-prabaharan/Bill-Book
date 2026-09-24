@@ -487,7 +487,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - For TK-09: `CLAUDE.md`'s RLS bullet should now list `acc`, `con` and `cus`.
 
 ### TK-05 · RLS for `inv`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-INV · **Depends on:** TK-02 · **Decision:** —
 - **Where:** `backend/Api/Inventory/Inventory.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Inventory.Api.Tests/InventoryQueryFilterTests.cs:133`.
