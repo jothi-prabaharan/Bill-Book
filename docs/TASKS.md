@@ -1378,7 +1378,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - D-14 answered (2026-09-24): both manual entry (TK-24) and the IBJA API. **Ask the owner for the IBJA credentials before starting**; store them through `ISecretStore`, never in `appsettings`.
 
 ### TK-26 · RateSync.Worker: currency (RBI)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-03
 - **Sub-tasks:** follow D-03's answer (scraping, a paid wrapper, or manual entry through TK-24's page).
   - [ ] Upsert `rat.ExchangeRates` against INR.
