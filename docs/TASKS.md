@@ -1228,7 +1228,7 @@ If the code has moved on since a card was written, correct the card in your clai
 
 ### TK-24 · Printing cutover: serve from `prt`, drop `con.PrintTemplates`
 - [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-PRT, L-CON, L-SAL · **Depends on:** TK-23 · **Decision:** D-13
+- **Lanes:** L-PRT, L-CON, L-SAL, L-SAL-UI (the invoice print page), L-MST (`TenantSeeder`), L-KERNEL (the machinery move), L-DEPS (package references, per commit), L-DOC (the service count in `CLAUDE.md`, last commit) · **Depends on:** TK-23 · **Decision:** D-13 (answered)
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/PrintTemplateSeeder.cs`
   - `con.PrintTemplates`
@@ -1236,8 +1236,13 @@ If the code has moved on since a card was written, correct the card in your clai
 - **Sub-tasks:**
   - [ ] Move branch seeding of templates to Printing, with its own `internal/seed/organization`,
         and add it to `TenantSeeder.Services`. That needs `L-MST`.
-  - [ ] Copy existing `con.PrintTemplates` rows to `prt.PrintTemplates`, keeping ids so every
-        `PrintTemplateId` on the 14 document headers still resolves.
+  - [ ] ~~Copy existing `con.PrintTemplates` rows to `prt.PrintTemplates`, keeping ids so every
+        `PrintTemplateId` on the 14 document headers still resolves.~~ **Re-seed instead, with no
+        copy** (owner, 2026-09-24). The copy could only be a raw `INSERT … SELECT` across two
+        services' schemas, which is outside hard rule 1's exceptions, and nothing is deployed
+        (D-13). Existing branches are re-seeded through the same idempotent path as new ones. An
+        old `PrintTemplateId` that no longer resolves falls back to the branch default, then to
+        the standard layout, so no document stops printing.
   - [ ] Add a per-document print route. Sales builds a `PrintPayload` from its own data and posts
         it to `api/print/render` with the user's token.
   - [ ] Point the frontend's template calls at Printing (the Gateway route).
