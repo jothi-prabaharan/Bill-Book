@@ -50,6 +50,7 @@ var master = concat(common, [
   { name: 'Seeding__Accounting', value: serviceUrl.accounting }
   { name: 'Seeding__Inventory', value: serviceUrl.inventory }
   { name: 'Seeding__Sales', value: serviceUrl.sales }
+  { name: 'Seeding__Printing', value: serviceUrl.printing }
   { name: 'App__BaseUrl', value: webOrigin }
   { name: 'Portal__BaseUrl', value: portalOrigin }
   { name: 'Bootstrap__OwnerEmail', value: bootstrapOwnerEmail }
