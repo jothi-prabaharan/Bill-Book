@@ -2348,7 +2348,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `Ecr_file_matches_the_posted_payslips_to_the_rupee()` in `PayrollServiceTests.cs` verifying the ECR matches posted figures to the rupee. Both backend and frontend builds pass cleanly.
 
 ### TK-53 · H6: Income tax on salary (`pay`)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `TaxSlab`, `TaxRule`, `TaxDeclaration`, `TaxDeclarationLine`, `RentDetail`,
   `PreviousEmployerIncome`.
