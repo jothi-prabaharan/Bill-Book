@@ -130,6 +130,11 @@ public sealed class InventoryQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "inv")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "inv",
+                    // EF's own bookkeeping, no tenant column. Inventory keeps it in
+                    // inv in a deployed database; this fixture leaves it in public.
+                    "__EFMigrationsHistory")));
     }
 }

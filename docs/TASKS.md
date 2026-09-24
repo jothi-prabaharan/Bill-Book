@@ -487,7 +487,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - For TK-09: `CLAUDE.md`'s RLS bullet should now list `acc`, `con` and `cus`.
 
 ### TK-05 · RLS for `inv`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-INV · **Depends on:** TK-02 · **Decision:** —
 - **Where:** `backend/Api/Inventory/Inventory.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Inventory.Api.Tests/InventoryQueryFilterTests.cs:133`.
@@ -499,14 +499,41 @@ If the code has moved on since a card was written, correct the card in your clai
   - `CostingEngine.Worker` sets a tenant per branch (`Consumers/CostingWorker.cs:144-146`), so
     it keeps working under RLS.
 - **Sub-tasks:**
-  - [ ] Write the migration using TK-02's template.
-  - [ ] Confirm that `InventorySeeder`, `UomService.cs:336,369` and `MetalPurityService` (all
+  - [x] Write the migration using TK-02's template.
+  - [x] Confirm that `InventorySeeder`, `UomService.cs:336,369` and `MetalPurityService` (all
         using `IgnoreQueryFilters`) always run with the tenant they filter by.
-  - [ ] Confirm the worker reads its list of branches from somewhere RLS doesn't hide.
+  - [x] Confirm the worker reads its list of branches from somewhere RLS doesn't hide.
   - [ ] Owner: run the suite from a dropped `INVENTORY_TEST_DB`.
 - **Done when:** `inv`'s RLS assertion passes from a dropped database, and a costing run still
   costs movements.
-- **Notes:**
+- **Notes (Claude Opus 5.5, 2026-09-24):**
+  - Migration: `Inventory.Repository/Migrations/Tenant/20260924052802_EnableRowLevelSecurity.cs`,
+    TK-02's template over all 21 tables. All carry both tenant columns and none is exempt. No
+    migration inserts rows.
+  - The `IgnoreQueryFilters()` reads in `InventorySeeder`, `UomService` (all three) and
+    `MetalPurityService` are all inside `SeedForOrganizationAsync` / `SeedNumberingSeriesAsync`.
+    Only `InternalSeedController` calls them, after setting the tenant to the branch it seeds.
+  - All seven `InternalStockController` actions set `CustomerId`/`OrgId` from the request. The
+    context reads the same scoped `TenantContext` when it opens a connection, so the stock calls
+    from Sales and Purchase keep working.
+  - **The costing worker:** `HttpTenantEnumerator` gets its branches from Master's
+    `internal/customers/active-organizations`. That endpoint reads `AdminDbContext` (`mst`, no
+    RLS), so RLS cannot hide the list. `ProcessOrganizationAsync` opens one scope per branch and
+    sets its tenant first, which is the only place the worker touches `inv`.
+  - Verified by starting Master as a `NOSUPERUSER NOBYPASSRLS` owner against empty databases. It
+    exited 0 with 21 of 21 `inv` tables enabled, FORCEd and policied. The bootstrap branch was
+    seeded through the policies (6 unit types, 39 units, 11 purities), which exercises the
+    interceptor TK-02 added to Master's hand-built `InventoryDbContext`. By hand as the owner: no
+    tenant 0 unit types, own branch 6, another branch 0.
+  - **Tests written:** `backend/tests/Inventory.Api.Tests/InventoryRowLevelSecurityTests.cs` (four
+    tests, `SET LOCAL ROLE inv_rls_probe`). `InventoryQueryFilterTests` now exempts
+    `__EFMigrationsHistory` in its audit.
+  - **Owner:** the *Done when* clause "a costing run still costs movements" needs a run under a
+    non-bypass role. Every suite connects as `postgres`, which ignores RLS, so no existing costing
+    test proves it.
+  - `InternalItemNamesController` sets no tenant, so item names on document lists come back empty.
+    Confirmed and added to TK-79.
+  - For TK-09: `CLAUDE.md`'s RLS bullet should list `acc`, `con`, `cus` and `inv`.
 
 ### TK-06 · RLS for `pur`
 - [ ] open
@@ -658,8 +685,8 @@ If the code has moved on since a card was written, correct the card in your clai
   - From TK-03: the same gap in Master. `InternalContactNamesController` (`internal/contacts/names`)
     reads `con.Contacts` with no tenant set, and `HttpContactNameLookup` in
     `Shared.Kernel/Documents/INameLookup.cs` sends only the internal key. So every document list's
-    contact names come back empty, and the item names from Inventory's matching endpoint probably do
-    too. The fix is the same one: carry the org and set the tenant. That touches `L-CON` / `L-INV`
+    contact names come back empty. So do the item names: `InternalItemNamesController` in Inventory
+    sets no tenant either (confirmed in TK-05). The fix is the same one: carry the org and set the tenant. That touches `L-CON` / `L-INV`
     and `L-KERNEL`.
 
 ### TK-10 · `ReportLayerCertificationTests`: likely already fixed
