@@ -14,6 +14,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Api\Printing\Printing.Api\Printing.Api.csproj" />
+    <!-- The permission catalogue lives in Master, and the guard test asserts
+         every module this service demands is one the catalogue seeds. A
+         compile-time reference for the test only: Printing itself does not read
+         Master's DbContext at run time and must not. -->
+    <ProjectReference Include="..\..\Api\Master\Master.Repository\Master.Repository.csproj" />
   </ItemGroup>
 
   <ItemGroup>

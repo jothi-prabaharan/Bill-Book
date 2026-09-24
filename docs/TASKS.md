@@ -1092,7 +1092,7 @@ If the code has moved on since a card was written, correct the card in your clai
 ### C · Phase 2
 
 ### TK-23 · Printing.Api: move the template API and renderer into the service
-- [~] working (Claude Opus 5.5) — since 2026-09-23
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-PRT, L-KERNEL · **Depends on:** — · **Decision:** —
 - **Where:**
   - `docs/Modules.md` "Printing" (from about line 974): the design, and the list of what moves.
@@ -1110,21 +1110,47 @@ If the code has moved on since a card was written, correct the card in your clai
     - the machinery moves to `Printing.Api`: `PrintRenderer`, `PrintSubstitution`,
       `PrintSettingsValidator`, `SegmentSanitizer`, `PrintGeometry`, `PrintMetrics`,
       `DefaultLayoutGenerator` and `SamplePayload`.
+  - **Checked 2026-09-24: none of it can move yet.** Master's `PrintTemplateService`, seeder,
+    `PrintTemplate` entity and `ContactsDbContext` use nearly every one of those types, so moving
+    them breaks Master, and this card keeps Master working until TK-24.
 - **Sub-tasks:**
-  - [ ] Move the stored shape to `Printing.Entity`: `PrintTemplate`, `PrintSettings`,
-        `PrintContent`, the segment types, `PrintJson`, and the request and response models.
-  - [ ] Move the machinery listed above to `Printing.Api`, and move the `HtmlSanitizer` and
-        `AngleSharp` package references off `Shared.Kernel`. That needs `L-DEPS` for the
-        `.csproj` commit.
-  - [ ] Recreate the 10 routes as `api/print-templates` on Printing, with the same guard, and add
+  - [x] ~~Move the stored shape to `Printing.Entity`~~ and ~~move the machinery to `Printing.Api`~~.
+        By the owner's decision (2026-09-24), Printing uses them **in place** from
+        `Shared.Kernel.Printing`, and the physical move, with the `HtmlSanitizer` and `AngleSharp`
+        references, goes to TK-24, once Master's copy (the last other user) is deleted. No code
+        is duplicated in the meantime. The request and response models are Printing's own:
+        `Printing.Entity/Models/PrintTemplateModels.cs` and `PrintRenderModels.cs`.
+  - [x] Recreate the 10 routes as `api/print-templates` on Printing, with the same guard, and add
         `POST api/print/render`, which takes a `PrintPayload` plus a document type.
-  - [ ] Add a Gateway route for `/api/print-templates` and `/api/print`, pointing at 4508.
-  - [ ] Test: carry over Master's print-template tests.
-  - [ ] Test: render a sample payload.
-  - [ ] Test: `EndpointGuardAudit` passes.
+        `PrintTemplatesController` and `PrintTemplateService` are ported from Master onto
+        `PrintingDbContext`. `PrintController.Render` resolves the layout (the named template,
+        then the branch default, then the platform layout) and renders.
+  - [x] Add a Gateway route for `/api/print-templates` and `/api/print`, pointing at 4508. Routes
+        and cluster are in every `appsettings*.json`, and `printing` is added to
+        `gatewayClusters` in `deploy/azure/main.bicep` (L-DEPS, its own commit).
+  - [x] Test: carry over Master's print-template tests (`PrintTemplateServiceTests`, all but the
+        seeding test, which moves with the seeder in TK-24).
+  - [x] Test: render a sample payload (`PrintRenderTests`, sent through JSON as a caller would;
+        `PrintPayloadReaderTests`).
+  - [x] Test: `EndpointGuardAudit` passes (`Printing.Api.Tests.EndpointGuardTests`).
+  - [ ] Owner: run `Printing.Api.Tests` from a dropped `PRINTING_TEST_DB`.
 - **Done when:** Printing serves the template API and renders a payload. Master's copy still exists
   until TK-24.
 - **Notes:** TK-22 is retired (section 4).
+  - **The render payload arrives as JSON, and the formatter can't read that.** `MaskFormatter`
+    matches on CLR types, so a `JsonElement` amount would print as bare digits and an image URL
+    as nothing. `PrintPayloadReader` turns numbers into decimals and strings into strings, and
+    matches keys case-insensitively. A render test sends an amount through JSON and asserts the
+    Indian grouping.
+  - **`api/print/render` is signed-in only, with no module guard**, and is named as an exemption
+    in the guard test. Printing is handed the document's data rather than reading it, and the
+    service that built the payload already checked the permission. One route prints twelve
+    document types across three modules, so no single module fits. The only thing it reads is
+    the branch's own template.
+  - `prt` has no rows until TK-24 seeds it. Until then a render uses the platform layout and the
+    template routes list nothing. Master's `api/print-templates` never had a gateway route, so no
+    traffic moved.
+  - No release note: no screen calls either service's template API yet.
 
 ### TK-24 · Printing cutover: serve from `prt`, drop `con.PrintTemplates`
 - [ ] open
@@ -1146,6 +1172,17 @@ If the code has moved on since a card was written, correct the card in your clai
   - [ ] Change the service count in `CLAUDE.md` from 7 to 8.
 - **Done when:** a sales invoice prints through Printing, and `con.PrintTemplates` no longer exists.
 - **Notes:**
+  - From TK-23 (owner's decision, 2026-09-24): the physical move out of `Shared.Kernel.Printing`
+    happens here, once Master's copy is gone. Move the stored shape (`PrintSettings`,
+    `PrintContent`, segment types, `PrintJson`) to `Printing.Entity`, and the machinery
+    (`PrintRenderer`, `PrintSubstitution`, `PrintSettingsValidator`, `SegmentSanitizer`,
+    `PrintGeometry`, `PrintMetrics`, `DefaultLayoutGenerator`, `SamplePayload`, `MaskFormatter`)
+    to `Printing.Api`. Move the `HtmlSanitizer` and `AngleSharp` references off `Shared.Kernel`
+    (L-DEPS). Move `Shared.Kernel.Tests`' renderer, sanitiser, settings and layout tests to
+    `Printing.Api.Tests`. The contract (`PrintPayload`, `PrintFormatContext`, the two catalogues,
+    `MergeTags`) stays.
+  - Printing's `PrintTemplateService` is a port of Master's. Until Master's is deleted, a fix to
+    one belongs in both.
 
 ### TK-25 · Print-template editor screen
 - [ ] open
