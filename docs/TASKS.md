@@ -1227,7 +1227,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - No release note: no screen calls either service's template API yet.
 
 ### TK-24 · Printing cutover: serve from `prt`, drop `con.PrintTemplates`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-PRT, L-CON, L-SAL · **Depends on:** TK-23 · **Decision:** D-13
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/PrintTemplateSeeder.cs`
