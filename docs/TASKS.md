@@ -1507,7 +1507,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Raised **D-24**: which IRP access to use (a GSP, or NIC direct).
 
 ### TK-32 · Design: `apps/portal`, the next screens
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-16 (answered)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **State:** `apps/portal` has a dashboard and a statement list over real endpoints.
 - **Notes:**
   - D-16 answered (2026-09-24): design these screens: overall outstanding and overall trade value on the dashboard; invoice list with PDF download (TK-22); online payment; quotes to accept or reject; support tickets (Customer module). Every portal route takes `[RequirePortalAccess]`.
