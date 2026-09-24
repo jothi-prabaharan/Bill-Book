@@ -1,35 +1,81 @@
-<div class="api-clients-container">
-  <h2>API Integrations</h2>
-  <p>Generate secure API keys to integrate external systems with this branch.</p>
+<div class="api-clients">
+  <h2>API keys</h2>
+  <p class="hint">
+    An API key lets another system work with this branch. Each key acts as a role and can do exactly
+    what that role's permissions allow. A change of role reaches a key within five minutes.
+  </p>
 
-  <div class="create-form">
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <form class="create" (ngSubmit)="createClient()">
     <bb-text-input
-      ariaLabel="Integration name"
+      label="Integration name"
       placeholder="E.g. Shopify POS Integration"
       name="newClientName"
       [ngModel]="newClientName()"
       (ngModelChange)="newClientName.set($event)"
     />
-    <button (click)="createClient()">Generate API Key</button>
-  </div>
+    <bb-select
+      label="Acts as role"
+      name="newRoleId"
+      [options]="roleOptions()"
+      [ngModel]="newRoleId()"
+      (ngModelChange)="newRoleId.set($event)"
+    />
+    <div class="actions">
+      <button type="submit" [disabled]="busy()">Generate API key</button>
+    </div>
+  </form>
 
-  <div *ngIf="generatedKey() as key" class="success-alert">
-    <strong>Success!</strong> Your new API key is <code>{{ key }}</code>. 
-    <br>Please copy this now. It will not be shown again.
-  </div>
+  @if (generatedKey(); as key) {
+    <div class="success" role="status">
+      <strong>Your new API key:</strong> <code>{{ key }}</code>
+      <br />Copy it now. It will not be shown again.
+    </div>
+  }
 
-  <table class="data-grid">
+  <table class="keys">
     <thead>
       <tr>
-        <th>Integration Name</th>
-        <th>Status</th>
+        <th scope="col">Integration</th>
+        <th scope="col">Role</th>
+        <th scope="col">Last used</th>
+        <th scope="col">Status</th>
+        <th scope="col"><span class="sr-only">Actions</span></th>
       </tr>
     </thead>
     <tbody>
-      <tr *ngFor="let client of clients()">
-        <td>{{ client.name }}</td>
-        <td>{{ client.isActive ? 'Active' : 'Inactive' }}</td>
-      </tr>
+      @for (client of clients(); track client.id) {
+        <tr>
+          <td data-label="Integration">{{ client.name }}</td>
+          <td data-label="Role">
+            @if (client.isActive) {
+              <bb-select
+                [ariaLabel]="'Role for ' + client.name"
+                [name]="'role-' + client.id"
+                [options]="roleOptions()"
+                [clearable]="false"
+                [placeholder]="client.roleName ?? 'No role — the key can do nothing'"
+                [ngModel]="client.roleId || null"
+                (ngModelChange)="changeRole(client, $event)"
+              />
+            } @else {
+              {{ client.roleName ?? '—' }}
+            }
+          </td>
+          <td data-label="Last used">{{ client.lastUsedAt ? client.lastUsedAt.slice(0, 10) : 'Never' }}</td>
+          <td data-label="Status">{{ client.isActive ? 'Active' : 'Revoked' }}</td>
+          <td>
+            @if (client.isActive) {
+              <button type="button" class="link" [disabled]="busy()" (click)="revoke(client)">Revoke</button>
+            }
+          </td>
+        </tr>
+      } @empty {
+        <tr><td colspan="5" class="empty">No API keys yet.</td></tr>
+      }
     </tbody>
   </table>
 </div>

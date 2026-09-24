@@ -158,6 +158,8 @@ public static class MenuSeed
         new Menu { MenuId = 1088, ParentId = 115, Type = MenuType.Item, Code = "prm", Name = "Permissions", Icon = "key-round", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = false },
         new Menu { MenuId = 1089, ParentId = 115, Type = MenuType.Item, Code = "uor", Name = "User organisation roles", Icon = "user-check", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 4, IsActive = false },
         new Menu { MenuId = 1090, ParentId = 115, Type = MenuType.Item, Code = "log", Name = "Login history", Icon = "history", Module = "settings", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = false },
+        // API keys an integration signs in with, each acting as a role (D-07, TK-29).
+        new Menu { MenuId = 1106, ParentId = 115, Type = MenuType.Item, Code = "api", Name = "API keys", Icon = "key-round", Module = "settings", RoutePath = "/settings/api-clients", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
         new Menu { MenuId = 116, ParentId = 9, Type = MenuType.Group, Code = "settings-g3", Name = "Accounting", Icon = "book-open", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1091, ParentId = 116, Type = MenuType.Item, Code = "tax", Name = "Tax master", Icon = "percent", Module = "settings", RoutePath = "/settings/tax", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1092, ParentId = 116, Type = MenuType.Item, Code = "ptm", Name = "Payment terms", Icon = "calendar-clock", Module = "settings", RoutePath = "/settings/payment-terms", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
@@ -563,5 +565,9 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 376, MenuId = 1105, PermissionCode = "settings.create", Action = "create", Module = "settings" },
         new MenuPermission { MenuPermissionId = 377, MenuId = 1105, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
         new MenuPermission { MenuPermissionId = 378, MenuId = 1105, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 379, MenuId = 1106, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 380, MenuId = 1106, PermissionCode = "settings.create", Action = "create", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 381, MenuId = 1106, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 382, MenuId = 1106, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
     ];
 }

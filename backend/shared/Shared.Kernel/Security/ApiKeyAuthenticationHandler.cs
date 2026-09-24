@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Threading.Tasks;
@@ -47,6 +48,8 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
             new Claim("role", "ApiClient") // Special role for API clients
         };
 
+        claims.AddRange(PermissionClaims(validationResult.Permissions));
+
         var identity = new ClaimsIdentity(claims, ApiKeyAuthenticationOptions.DefaultScheme);
         var identities = new List<ClaimsIdentity> { identity };
         var principal = new ClaimsPrincipal(identities);
@@ -54,4 +57,18 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthentic
 
         return AuthenticateResult.Success(ticket);
     }
+
+    /// <summary>
+    /// One <c>permission</c> claim per code of the client's role, the same claim
+    /// a user's token carries, so <c>[RequireModulePermission]</c> judges a key
+    /// exactly as it judges a person (D-07, TK-29). A <c>platform.*</c> code is
+    /// dropped even if Master sent one: an API key is a customer's credential,
+    /// and platform access is never a customer's to hand out.
+    /// </summary>
+    public static IEnumerable<Claim> PermissionClaims(IEnumerable<string>? codes) =>
+        (codes ?? [])
+            .Where(code => !string.IsNullOrWhiteSpace(code)
+                && !code.StartsWith("platform.", StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(code => new Claim("permission", code));
 }

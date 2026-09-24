@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,13 +85,22 @@ public class InternalApiKeysController : ControllerBase
         apiClient.LastUsedAt = DateTime.UtcNow;
         await context.SaveChangesAsync(cancellationToken);
 
+        // What the key may do is its role's {module}.{action} permissions, read
+        // from the master database like a user's (D-07, TK-29). The calling
+        // service caches this answer for five minutes, so a role change reaches
+        // a key within that.
+        var admin = _serviceProvider.GetRequiredService<AdminDbContext>();
+        List<string> permissions = await Master.Api.Services.ApiClientRoles.PermissionsAsync(
+            admin, customerId, apiClient.RoleId, cancellationToken);
+
         return new ApiKeyValidationResult
         {
             IsValid = true,
             CustomerId = customerId,
             OrgId = apiClient.OrgId,
             ApiClientId = apiClient.Id,
-            ClientName = apiClient.Name
+            ClientName = apiClient.Name,
+            Permissions = permissions,
         };
     }
 }

@@ -288,6 +288,23 @@ PUT    /api/roles/{id}            update
 DELETE /api/roles/{id}            soft delete, 409 when in use
 ```
 
+## API keys act as a role
+
+**Settings › API keys** issues a key another system signs in with, sent as the `X-Api-Key` header. **Each key acts as one role.** Its requests carry that role's `{module}.{action}` permissions, exactly as a person's sign-in does. A key whose role has `sales.view` can list invoices but gets **403** when it tries to post one, because posting needs `sales.approve`.
+
+- The role is chosen when the key is made, and can be changed later. A service that has seen the key keeps its answer for up to five minutes, so a change takes up to five minutes to reach it.
+- Only this business's own roles and the standard ones are offered. **A role with platform access can never be given to a key**, and a `platform.*` permission is removed from a key's sign-in even if a role somehow carried one.
+- A key made before keys had roles acts as no role, and every request it makes is refused until a role is chosen for it.
+- The key is shown once, when it is made. **Revoke** stops it working at once for any service that has not already seen it, and within five minutes for one that has. The key's row is kept.
+
+```
+GET    /api/master/api-clients               this branch's keys, with their roles
+GET    /api/master/api-clients/roles         the roles a key may be given
+POST   /api/master/api-clients               { name, roleId } -> the key, once
+PUT    /api/master/api-clients/{id}/role     { roleId }
+DELETE /api/master/api-clients/{id}          revoke
+```
+
 
 
 # Numbering series

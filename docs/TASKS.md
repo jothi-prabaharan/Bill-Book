@@ -1441,16 +1441,32 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Checks: `npm run typecheck` clean; `nx run-many -t lint` 32 projects clean (an `nx reset` was needed first, because the project graph cache hid the ninth lib); `nx run-many -t build` all 5 apps clean. There are no specs in the moved folders.
 
 ### TK-29 · API clients get per-action permissions through their role (D-07)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** — · **Decision:** D-07 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/ApiClient.cs` (`RoleId`, stored but unused), `Master.Api/Controllers/InternalApiKeysController.cs` (validation), `backend/shared/Shared.Kernel/Security/ApiKeyAuthenticationHandler.cs:43-47`.
 - **State:** a validated API key produces `customer_id`, `org_id`, `sub`, `name` and `role = ApiClient` — **no `permission` claims**, so every `[RequireModulePermission]` endpoint refuses it.
 - **Sub-tasks:**
-  - [ ] Validation returns the permission codes of the client's `RoleId`; the handler adds one `permission` claim per code.
-  - [ ] The API-clients page lets the owner pick the role, and a role holding `platform.*` can never be chosen.
-  - [ ] Test: a key whose role has `sales.view` can list invoices and gets 403 on posting one.
+  - [x] Validation returns the permission codes of the client's `RoleId`; the handler adds one `permission` claim per code.
+  - [x] The API-clients page lets the owner pick the role, and a role holding `platform.*` can never be chosen.
+  - [x] Test: a key whose role has `sales.view` can list invoices and gets 403 on posting one.
 - **Done when:** an API client can do exactly what its role's `{module}.{action}` permissions allow.
 - **Notes:**
+- **Outcome (2026-09-24):**
+  - `ApiKeyValidationResult.Permissions`: `InternalApiKeysController` fills it from `ApiClientRoles.PermissionsAsync`, which returns the role's codes less any in `platform.*`. It returns nothing for an inactive role, another customer's role, or role 0, which is what every key minted before this change holds.
+  - `ApiKeyAuthenticationHandler.PermissionClaims` adds one `permission` claim per code, the claim type users' tokens use, so `[RequireModulePermission]` treats a key the same way it treats a user. It drops `platform.*` again, as a second line of defence.
+  - `ApiClientsController`:
+    - `GET` lists keys with their role names;
+    - `GET roles` returns the assignable roles: active, system or own-customer, holding no `platform.*` permission;
+    - `POST` needs a `roleId` it can assign;
+    - `PUT {id:guid}/role` changes the role;
+    - `DELETE {id:guid}` revokes the key (`IsActive = false`, and the row is kept).
+    - Request and response models moved to `Master.Entity/Models/ApiClientModels.cs`, with annotations.
+  - The page (`libs/settings/api-clients`, TK-28's lib) has a role picker on create, a role select on each row and **Revoke**. It is routed at `/settings/api-clients` (`settings.view`), and the menu row "API keys" under Users and access is migration `AddApiKeysMenu`, which only inserts rows.
+  - Caveat: `HttpApiKeyValidator` caches a valid answer for five minutes, so a role change or a revocation reaches a service that has already seen the key within five minutes. This is documented; it was not changed.
+  - Tests:
+    - `Shared.Kernel.Tests.ApiKeyPermissionTests`: through the real handler and `RequireModulePermissionAttribute`, a `sales.view` key may GET invoices and is refused both `approve` (post) and `edit` (create); platform codes are dropped and duplicates removed; a key with no role is refused.
+    - `Master.Api.Tests.ApiClientRoleTests`: role codes without platform; another customer's, inactive or zero role grants nothing; which roles are assignable.
+    - `api-clients.list.spec.ts`.
 
 ### TK-30 · Seeds and menus follow the branch's trade (D-10)
 - [ ] open

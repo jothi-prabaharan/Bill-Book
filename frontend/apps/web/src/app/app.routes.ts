@@ -65,6 +65,12 @@ export const appRoutes: Routes = [
         data: { permission: 'settings.view' },
       },
       {
+        path: 'settings/api-clients',
+        loadComponent: () =>
+          import('@bill-book/settings-api-clients').then((m) => m.ApiClientsListComponent),
+        data: { permission: 'settings.view' },
+      },
+      {
         path: 'settings/email',
         loadComponent: () =>
           import('@bill-book/settings-smtp').then((m) => m.SmtpSettingsPage),
