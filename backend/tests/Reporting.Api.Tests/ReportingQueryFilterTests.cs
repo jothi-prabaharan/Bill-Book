@@ -112,6 +112,14 @@ public sealed class ReportingQueryFilterTests
             string.Join(
                 "; ",
                 await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
-                    db, "rpt", "ReportMasters", "ReportColumns")));
+                    db,
+                    "rpt",
+                    // The imported reports.json specification, shared by every
+                    // customer: no tenant column to compare (TK-04).
+                    "ReportMasters",
+                    "ReportColumns",
+                    // EF's own bookkeeping, no tenant column. Reporting keeps it in
+                    // rpt in a deployed database; a fixture may leave it in public.
+                    "__EFMigrationsHistory")));
     }
 }

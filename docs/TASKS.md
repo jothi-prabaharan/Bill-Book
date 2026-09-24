@@ -340,7 +340,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       role `sal_rls_probe`); `InvoicesControllerTests.cs` updated.
 
 ### TK-04 · RLS for `rpt`: replace the broken policies
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-RPT · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - `backend/Api/Reporting/Reporting.Repository/Migrations/Tenant/20260918204348_InitialReportingDbContextSchema.cs:1151-1165`
@@ -353,14 +353,30 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   - `ReportMasters` and `ReportColumns` are a documented exemption: they hold the imported
     `reports.json` specification and have no tenant columns.
 - **Sub-tasks:**
-  - [ ] Add a new migration that runs `DROP POLICY "TenantPolicy"` on the four tables, then creates
+  - [x] Add a new migration that runs `DROP POLICY "TenantPolicy"` on the four tables, then creates
         TK-71's policy on them.
-  - [ ] Leave `ReportMasters` and `ReportColumns` without a policy, and keep them passed as the
+  - [x] Leave `ReportMasters` and `ReportColumns` without a policy, and keep them passed as the
         exemption argument to `RlsAudit.UnprotectedAsync`.
   - [ ] Owner: run the suite from a dropped `REPORTING_TEST_DB`.
 - **Done when:** `rpt`'s RLS assertion passes from a dropped database, and a signed-in user sees
   their branch's reports.
 - **Notes:** shares `L-RPT` with TK-09, so the two run one after the other.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - `Reporting.Repository/Migrations/Tenant/20260924061423_EnableRowLevelSecurity.cs` drops
+      `"TenantPolicy"` on the four tables and creates `{table}_tenant_isolation` with TK-71's
+      expression. `Down()` restores the old policy as it was.
+    - **The snapshot changed with an empty migration.** `ReportingDbContextModelSnapshot` had fallen
+      behind the model: `AccountRead.IsSales` and four fixed-asset read models (`acc` tables mapped
+      with `ExcludeFromMigrations`) were never snapshotted. None of it is Reporting's schema, so the
+      migration's `Up()` is only the RLS block. Worth knowing for TK-09, which shares `L-RPT`.
+    - No `IgnoreQueryFilters()` and no hand-built `ReportingDbContext` in Reporting.
+    - Applied by hand, as a `NOSUPERUSER NOBYPASSRLS` owner, to a scratch database built from the
+      scripted chain: every tenant table ENABLEd, FORCEd and on the NULLIF policy, and a query with
+      the tenant set to `''` returned 0 rows without throwing. `has-pending-model-changes` is clean
+      and `dotnet build backend/Bill-Book.sln` has 0 warnings.
+    - **Test written:** `backend/tests/Reporting.Api.Tests/ReportingRowLevelSecurityTests.cs` (five
+      tests, role `rpt_rls_probe`, one asserting no `tenant.orgid` policy survives and the
+      specification tables stay unpoliced). The audit call now also exempts `__EFMigrationsHistory`.
 
 ### TK-05 · RLS for `prt`: align it with the template
 - [~] working (Claude Opus 5.5) — since 2026-09-24
