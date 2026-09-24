@@ -1209,7 +1209,7 @@ If the code has moved on since a card was written, correct the card in your clai
 
 ### TK-25 · Print-template editor screen
 - [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-MASTER-UI · **Depends on:** TK-23 · **Decision:** —
+- **Lanes:** L-MASTER-UI, L-MST (switch on the print-template menu rows in `MenuSeed`, and the admin migration), L-WEB (the route in `apps/web`), L-UI (the fallback entry in `libs/app-shell/src/lib/shell-screens.ts`) · **Depends on:** TK-23 · **Decision:** —
 - **Where:**
   - `libs/master/master-ui`, a new `print-templates/` page; the shared master pages table in
     `docs/Modules.md` Platform says this is where it goes.
