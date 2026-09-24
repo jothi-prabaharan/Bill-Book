@@ -80,9 +80,6 @@ public sealed class MasterCurrencies : IMasterCurrencies
 /// </summary>
 public sealed class InProcessIdentityAdmin : IIdentityAdmin
 {
-    /// <summary>Seeded system-role id for Owner (see AdminDbContext seed).</summary>
-    private const int OwnerRoleId = 1;
-
     private readonly AdminDbContext _db;
     private readonly IPasswordHasher _hasher;
 
@@ -112,8 +109,11 @@ public sealed class InProcessIdentityAdmin : IIdentityAdmin
             _db.Users.Add(user);
         }
 
+        // The Owner role of the app signed up for (TK-45).
+        int ownerRoleId = AdminDbContext.OwnerRoleOf(request.App);
+
         bool assigned = await _db.UserOrganizationRoles.AnyAsync(
-            a => a.UserId == user.UserId && a.OrgId == request.OrgId && a.RoleId == OwnerRoleId, ct);
+            a => a.UserId == user.UserId && a.OrgId == request.OrgId && a.RoleId == ownerRoleId, ct);
 
         if (!assigned)
         {
@@ -121,7 +121,7 @@ public sealed class InProcessIdentityAdmin : IIdentityAdmin
             {
                 UserId = user.UserId,
                 OrgId = request.OrgId,
-                RoleId = OwnerRoleId,
+                RoleId = ownerRoleId,
                 IsActive = true,
             });
         }

@@ -332,6 +332,12 @@ A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll*
 - **`GET /api/me/context`** returns the signed-in session for pages that don't read the token: your name and email, the branch, the app, that app's licence, your permissions, and the apps you can switch to in this branch. It returns no internal ids.
 - **Inside an app, the roles screen shows only that app's roles**, and a role created there belongs to that app. Inviting a user counts against the user limit of the invited role's app.
 
+### Signing up, and starting another app
+
+- **Each app has its own signup.** Signing up creates the customer, the first branch, the owner, and a 14-day trial of the app you signed up from. The owner gets that app's **Owner** role. Each app has a seeded Owner role, and it holds every permission the app allows.
+- **Start another app from Settings › Applications.** **Start trial** adds that app's 14-day trial and makes you its Owner in every branch. It also sets up what the app needs in every existing branch. Nothing is created twice: it is the same customer, branches and users. If a branch cannot be set up, nothing is started and you can try again.
+- **What a branch is set up with follows the apps you hold.** Accounting and print templates are set up for every app, because payroll and fees post to the books and every app prints. Items, sales, purchases, reports, support and contacts are set up for RetailErp. HRMS, Payroll and School add their own as they are built.
+
 ### Pages check what you may open
 
 - **Each app's menu shows only that app's screens**, and only those you hold a permission for.

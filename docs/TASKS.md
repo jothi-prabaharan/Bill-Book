@@ -2134,19 +2134,24 @@ None of it is built.
   - Not verified in a browser. Nothing here was run.
 
 ### TK-45 · H0.4: signup and seeding per app
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-MST · **Depends on:** TK-43, TK-01 · **Decision:** D-12
-- **Where:** `Master.Api/Services/{SignupService,TenantSeeder}.cs`
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-MST (+ L-UI for `AuthService.signup`) · **Depends on:** TK-43, TK-01 · **Decision:** D-12
+- **Where:** `Master.Api/Services/{SignupService,TenantSeeder,ApplicationService,InProcessSeams,ProvisioningQueue,ProvisioningWorker,IIdentityAdmin}.cs`, `Controllers/ApplicationsController.cs`, `AdminDbContext.cs` (`AppOwnerRoles`, `OwnerRoleOf`), migration `AppOwnerRoles`.
 - **Sub-tasks:**
-  - [ ] Add `App` to `SignupRequest`. Signup creates that app's Owner role and a 14-day trial licence.
-  - [ ] Add `POST api/applications/{app}/trial`, which creates the licence, grants the owner that
-        app's Owner role in every branch, and seeds the app into every branch.
-  - [ ] `TenantSeeder` seeds Accounting always, plus the services of every licensed app.
-  - [ ] Test: Payroll signup, then starting HRMS, gives one customer, one branch and two licences.
+  - [x] Add `App` to `SignupRequest`. Signup creates that app's Owner role and a 14-day trial licence. **Each app's Owner is a seeded system role** (School, Hrms, Payroll; RetailErp's is role 1) holding every non-platform permission its app allows. The provisioning job carries the app, and the owner gets that app's Owner role.
+  - [x] Add `POST api/applications/{app}/trial` (`settings.edit`), which creates the licence, grants the caller that
+        app's Owner role in every branch, and seeds the app into every branch. A seed failure answers 503, so the reliability filter rolls the licence and roles back. Every seed is idempotent, so a retry finishes the job. A customer marked Expired goes back to Trial.
+  - [x] `TenantSeeder` seeds Accounting always, plus the services of every licensed app (`ServicesFor`): Accounting and Printing always, and the trading services, Reporting, Customer and Contacts for RetailErp. Contacts are also seeded for School. The start-trial path passes the apps explicitly, because the new licence is not committed yet.
+  - [x] Test: Payroll signup, then starting HRMS, gives one customer, one branch and two licences (`PerAppSignupTests`).
 - **Done when:** signing up for Payroll and then starting HRMS gives one customer, one branch, two
   licences and one set of employees.
 - **Notes:**
   - D-12 answered (2026-09-24): RetailErp and School licences count users with a branch cap; HRMS and Payroll count active employees per month.
+  - **The new Owner roles sit at ids 1,000,000 plus the app's flag, not at 6 to 8.** Npgsql moves the identity sequence past seeded ids, so on a database already in use, 6 and up belong to customer-made roles. Their grants' ids are `1,000,000,000 × flag + PermissionId`, so a module added to one app later adds rows without moving any other id.
+  - The five RetailErp system roles now take only permissions that include RetailErp. That changes no grant today, and it keeps the grant rule when TK-48 adds HRMS/Payroll modules.
+  - "One set of employees" needs Hrm (TK-48). `ServicesFor` has a line where Hrm joins for `Hrms | Payroll`.
+  - A trial licence's `MaxOrganizations` is the customer's current branch count.
+  - `internal/users/owner` (the older internal endpoint) still assigns RetailErp's Owner only.
 
 ### TK-46 · H0.5: sharding in the multi-app model
 - [ ] open

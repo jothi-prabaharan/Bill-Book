@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 
@@ -21,8 +22,18 @@ namespace Master.Api.Services;
 /// </summary>
 public interface ITenantSeeder
 {
-    /// <summary>Seeds every service. Returns the services that could not be reached.</summary>
+    /// <summary>
+    /// Seeds every service the customer's licensed apps need (TK-45), reading
+    /// the licences. Returns the services that could not be reached.
+    /// </summary>
     Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, CancellationToken ct);
+
+    /// <summary>
+    /// Seeds the services <paramref name="apps"/> need. For a caller whose new
+    /// licence is not committed yet, and so cannot be read by the seeder's own
+    /// scope: starting a trial passes the apps it is about to hold.
+    /// </summary>
+    Task<IReadOnlyList<string>> SeedAsync(Guid customerId, Guid orgId, App apps, CancellationToken ct);
 }
 
 public sealed class HttpTenantSeeder : ITenantSeeder
@@ -60,6 +71,47 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// </summary>
     private static readonly string[] Services =
         ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+
+    /// <summary>
+    /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
+    ///
+    /// <b>Accounting always</b>, because payroll and school fees post to the
+    /// ledger and every app numbers its documents from Accounting's table.
+    /// <b>Printing always</b>, because payslips and fee receipts are templates
+    /// like invoices. The trading services are RetailErp's. HRMS, Payroll and
+    /// School add their own services here as they are built (TK-48 adds Hrm).
+    /// </summary>
+    public static IReadOnlyList<string> ServicesFor(App apps)
+    {
+        HashSet<string> wanted = ["Accounting", "Printing"];
+        if (apps.HasFlag(App.RetailErp))
+        {
+            wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
+        }
+
+        return Services.Where(wanted.Contains).ToList();
+    }
+
+    /// <summary>Contacts (in process) are RetailErp's and School's: customers, vendors, guardians.</summary>
+    public static bool SeedsContacts(App apps) => (apps & (App.RetailErp | App.School)) != 0;
+
+    /// <summary>
+    /// The apps the customer holds a licence for, read in a scope of its own.
+    /// None found reads as RetailErp, which is what every customer was before
+    /// apps existed.
+    /// </summary>
+    private async Task<App> ReadLicensedAppsAsync(Guid customerId, CancellationToken ct)
+    {
+        using IServiceScope scope = _services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<Repository.AdminDbContext>();
+        List<App> held = await db.Licenses
+            .Where(l => l.CustomerId == customerId)
+            .Select(l => l.App)
+            .ToListAsync(ct);
+
+        App apps = held.Aggregate(App.None, (all, one) => all | one);
+        return apps == App.None ? App.RetailErp : apps;
+    }
 
     /// <summary>
     /// The branch's current vertical, or General when the row cannot be read.
@@ -101,7 +153,11 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     }
 
     public async Task<IReadOnlyList<string>> SeedAsync(
-        Guid customerId, Guid orgId, CancellationToken ct)
+        Guid customerId, Guid orgId, CancellationToken ct) =>
+        await SeedAsync(customerId, orgId, await ReadLicensedAppsAsync(customerId, ct), ct);
+
+    public async Task<IReadOnlyList<string>> SeedAsync(
+        Guid customerId, Guid orgId, App apps, CancellationToken ct)
     {
         var failed = new List<string>();
 
@@ -117,7 +173,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             Vertical = vertical,
         };
 
-        foreach (string service in Services)
+        foreach (string service in ServicesFor(apps))
         {
             string? baseUrl = _config[$"Seeding:{service}"];
             if (string.IsNullOrWhiteSpace(baseUrl))
@@ -136,7 +192,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
             }
         }
 
-        if (!await SeedContactRolesAsync(customerId, orgId, ct))
+        if (SeedsContacts(apps) && !await SeedContactRolesAsync(customerId, orgId, ct))
         {
             failed.Add("Contacts");
         }

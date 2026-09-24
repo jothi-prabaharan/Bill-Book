@@ -98,10 +98,15 @@ public sealed class SignupService
             }
         }
 
+        // The app signed up for gets the 14-day trial (TK-45). Other apps are
+        // started later, from Settings › Applications.
+        Shared.Kernel.Apps.App app = AuthService.AppOrDefault(request.App);
+
         var license = new License
         {
             LicenseId = Guid.NewGuid(),
             CustomerId = customer.CustomerId,
+            App = app,
             LicenseType = LicenseType.Trial,
             StartDate = today,
             ExpiryDate = today.AddDays(TrialDays),
@@ -175,7 +180,8 @@ public sealed class SignupService
             request.Email,
             request.DisplayName,
             request.MobileNumber,
-            request.Password), ct);
+            request.Password,
+            app), ct);
 
         return new SignupResponse
         {

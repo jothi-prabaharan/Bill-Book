@@ -5,6 +5,14 @@ namespace Master.Entity.Models;
 /// <summary>Public trial signup — one form that provisions a whole tenant.</summary>
 public class SignupRequest
 {
+    /// <summary>
+    /// The app being signed up for, by name (H0.4, TK-45): RetailErp, School,
+    /// Hrms or Payroll. Each app's public signup page sends its own. Omitted
+    /// means RetailErp.
+    /// </summary>
+    [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
+    public string? App { get; set; }
+
     // ---- Account -----------------------------------------------------------
 
     [Required(ErrorMessage = "Display name is required.")]

@@ -69,11 +69,18 @@ public sealed class AppGrantRuleTests
     }
 
     [Fact]
-    public void Every_seeded_role_is_one_retail_role_and_settings_belong_to_every_app()
+    public void Every_seeded_role_names_one_app_and_settings_belong_to_every_app()
     {
         using AdminDbContext db = Model();
 
-        Assert.All(Seed<Role>(db), r => Assert.Equal(App.RetailErp, (App)r["App"]!));
+        // The five original system roles are RetailErp's; each other app has
+        // one seeded Owner (TK-45). Every role names exactly one app.
+        List<IDictionary<string, object?>> roles = Seed<Role>(db);
+        Assert.All(roles, r => Assert.True(AppRules.IsSingle((App)r["App"]!)));
+        Assert.All(roles.Where(r => (int)r["RoleId"]! <= 5), r => Assert.Equal(App.RetailErp, (App)r["App"]!));
+        Assert.Equal(
+            [App.School, App.Hrms, App.Payroll],
+            roles.Where(r => (int)r["RoleId"]! > 5).Select(r => (App)r["App"]!).OrderBy(a => a));
 
         List<IDictionary<string, object?>> permissions = Seed<Permission>(db);
         Assert.All(permissions.Where(p => (string)p["Module"]! == "settings"), p => Assert.Equal(App.All, (App)p["Apps"]!));

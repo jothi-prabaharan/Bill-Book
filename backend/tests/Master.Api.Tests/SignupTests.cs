@@ -70,6 +70,10 @@ public sealed class SignupTests
         public Task<IReadOnlyList<string>> SeedAsync(
             Guid customerId, Guid orgId, CancellationToken ct) =>
             Task.FromResult<IReadOnlyList<string>>([]);
+
+        public Task<IReadOnlyList<string>> SeedAsync(
+            Guid customerId, Guid orgId, Shared.Kernel.Apps.App apps, CancellationToken ct) =>
+            Task.FromResult<IReadOnlyList<string>>([]);
     }
 
     private static SignupRequest Request(string suffix) => new()

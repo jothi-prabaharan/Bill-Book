@@ -659,6 +659,27 @@ public class AdminDbContext : DbContext
     /// never by a role, so it belongs to no one app. Everything else is RetailErp's
     /// until another app's module is seeded.
     /// </summary>
+    /// <summary>
+    /// The seeded Owner role of each app (TK-45). RetailErp's is the original
+    /// Owner, role 1.
+    ///
+    /// <b>The others sit in a reserved range, 1,000,000 plus the app's flag</b>,
+    /// not at 6, 7 and 8. Customer-made roles take ids from the same identity
+    /// column, which the seed moves past the highest seeded id, so on a
+    /// database already in use 6 to 8 belong to somebody's roles.
+    /// </summary>
+    public static readonly IReadOnlyList<(App App, int RoleId)> AppOwnerRoles =
+    [
+        (App.RetailErp, 1),
+        (App.School, 1_000_000 + (int)App.School),
+        (App.Hrms, 1_000_000 + (int)App.Hrms),
+        (App.Payroll, 1_000_000 + (int)App.Payroll),
+    ];
+
+    /// <summary>The seeded Owner role of <paramref name="app"/>.</summary>
+    public static int OwnerRoleOf(App app) =>
+        AppOwnerRoles.First(o => o.App == app).RoleId;
+
     public static App AppsOfModule(string module) => module switch
     {
         "settings" or "platform" => App.All,
@@ -678,6 +699,23 @@ public class AdminDbContext : DbContext
                 SystemName = systemRoles[i],
                 DisplayName = systemRoles[i],
                 App = App.RetailErp,
+                IsSystemRole = true,
+                IsActive = true,
+            });
+        }
+
+        // One Owner per other app (TK-45): signing up for an app, or starting
+        // its trial, makes the signer that app's Owner. Appended with fixed
+        // ids so the RetailErp roles keep theirs.
+        foreach ((App app, int roleId) in AppOwnerRoles.Where(o => o.App != App.RetailErp))
+        {
+            roles.Add(new Role
+            {
+                RoleId = roleId,
+                CustomerId = null,
+                SystemName = "Owner",
+                DisplayName = "Owner",
+                App = app,
                 IsSystemRole = true,
                 IsActive = true,
             });
@@ -747,13 +785,18 @@ public class AdminDbContext : DbContext
         // platform.* is operator-only and never granted to a tenant role.
         List<Permission> nonPlatform = permissions.Where(p => p.Module != "platform").ToList();
 
-        Grant(owner, nonPlatform);
-        Grant(administrator, nonPlatform);
-        Grant(accountant, nonPlatform.Where(p => accountantModules.Contains(p.Module)));
-        Grant(sales, nonPlatform.Where(p => salesModules.Contains(p.Module)));
+        // The five system roles are RetailErp's, so they hold RetailErp's
+        // permissions only (the grant rule, TK-42). Today that is every one; a
+        // module another app adds later is not RetailErp's and stays out.
+        List<Permission> retail = nonPlatform.Where(p => p.Apps.HasFlag(App.RetailErp)).ToList();
+
+        Grant(owner, retail);
+        Grant(administrator, retail);
+        Grant(accountant, retail.Where(p => accountantModules.Contains(p.Module)));
+        Grant(sales, retail.Where(p => salesModules.Contains(p.Module)));
 
         // Viewer sees everything and changes nothing. "dashboard.view" style only.
-        Grant(viewer, nonPlatform.Where(p => p.Code.EndsWith(".view", StringComparison.Ordinal)));
+        Grant(viewer, retail.Where(p => p.Code.EndsWith(".view", StringComparison.Ordinal)));
 
         // Read-only grants outside a role's own modules, for things the role has
         // to look at to do its own job. These were invisible until permissions
@@ -767,13 +810,31 @@ public class AdminDbContext : DbContext
         string[] accountantAlsoReads = { "contacts", "inventory" };
         string[] salesAlsoReads = { "inventory" };
 
-        Grant(accountant, nonPlatform.Where(p =>
+        Grant(accountant, retail.Where(p =>
             accountantAlsoReads.Contains(p.Module)
             && p.Code.EndsWith(".view", StringComparison.Ordinal)));
 
-        Grant(sales, nonPlatform.Where(p =>
+        Grant(sales, retail.Where(p =>
             salesAlsoReads.Contains(p.Module)
             && p.Code.EndsWith(".view", StringComparison.Ordinal)));
+
+        // Each other app's Owner holds every permission its app may hold
+        // (TK-45). Each grant's id is fixed by its app and its permission,
+        // 1,000,000,000 × the app's flag plus the permission id, so a module
+        // added to one app later adds rows without moving any other id, and no
+        // id meets a customer role's grants from the identity column.
+        foreach ((App app, int roleId) in AppOwnerRoles.Where(o => o.App != App.RetailErp))
+        {
+            foreach (Permission permission in nonPlatform.Where(p => p.Apps.HasFlag(app)))
+            {
+                grants.Add(new RolePermission
+                {
+                    RolePermissionId = 1_000_000_000L * (int)app + permission.PermissionId,
+                    RoleId = roleId,
+                    PermissionId = permission.PermissionId,
+                });
+            }
+        }
 
         modelBuilder.Entity<RolePermission>().HasData(grants);
     }

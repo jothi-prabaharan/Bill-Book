@@ -20,11 +20,13 @@ namespace Master.Api.Controllers;
 public sealed class ApplicationsController : ControllerBase
 {
     private readonly LicenseService _licences;
+    private readonly ApplicationService _applications;
     private readonly ICurrentUser _currentUser;
 
-    public ApplicationsController(LicenseService licences, ICurrentUser currentUser)
+    public ApplicationsController(LicenseService licences, ApplicationService applications, ICurrentUser currentUser)
     {
         _licences = licences;
+        _applications = applications;
         _currentUser = currentUser;
     }
 
@@ -54,5 +56,41 @@ public sealed class ApplicationsController : ControllerBase
                 };
             })
             .ToList());
+    }
+
+    /// <summary>
+    /// Starts a 14-day trial of another app (TK-45): its licence, its Owner role
+    /// for the caller in every branch, and its master data in every branch.
+    /// </summary>
+    [HttpPost("{app}/trial")]
+    [RequirePermission("settings.edit")]
+    public async Task<IActionResult> StartTrial(string app, CancellationToken ct)
+    {
+        if (_currentUser.CustomerId is not Guid customerId || _currentUser.UserId is not Guid userId)
+        {
+            return Forbid();
+        }
+
+        if (!AppRules.TryParseSingle(app, out App parsed))
+        {
+            return BadRequest(new MessageResponse { Message = "Choose one app: RetailErp, School, Hrms or Payroll." });
+        }
+
+        StartTrialResult result = await _applications.StartTrialAsync(customerId, userId, parsed, ct);
+
+        return result.Outcome switch
+        {
+            StartTrialOutcome.Ok => Ok(new MessageResponse { Message = "Trial started." }),
+            StartTrialOutcome.AlreadyLicensed => Conflict(new MessageResponse
+            {
+                Message = "This app is already licensed for your account.",
+            }),
+            StartTrialOutcome.NotFound => NotFound(),
+            StartTrialOutcome.SeedFailed => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse
+            {
+                Message = "The app could not be set up in every branch yet. Nothing was started; try again shortly.",
+            }),
+            _ => BadRequest(new MessageResponse { Message = "Choose one app: RetailErp, School, Hrms or Payroll." }),
+        };
     }
 }

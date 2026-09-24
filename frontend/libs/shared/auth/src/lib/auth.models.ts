@@ -40,6 +40,8 @@ export interface TokenResponse {
 }
 
 export interface SignupRequest {
+  /** The app signed up for; defaults to this build's APP_ID (TK-45). */
+  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
   displayName: string;
   email: string;
   password: string;

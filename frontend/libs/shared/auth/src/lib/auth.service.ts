@@ -283,7 +283,10 @@ export class AuthService {
   // ---- Signup -------------------------------------------------------------
 
   signup(request: SignupRequest): Promise<SignupResponse> {
-    return firstValueFrom(this.http.post<SignupResponse>('/api/customers/signup', request));
+    // Each app's signup page signs up for its own app (TK-45).
+    return firstValueFrom(
+      this.http.post<SignupResponse>('/api/customers/signup', { ...request, app: request.app ?? this.app }),
+    );
   }
 
   customerStatus(customerId: string): Promise<CustomerStatus> {

@@ -108,6 +108,7 @@ builder.Services.AddScoped<SignupService>();
 // died on the not-null DatabaseName column.
 builder.Services.AddScoped<ITenantDatabaseAllocator, TenantDatabaseAllocator>();
 builder.Services.AddScoped<OrgContextService>();
+builder.Services.AddScoped<ApplicationService>();
 builder.Services.AddScoped<OrgCurrencyService>();
 builder.Services.AddScoped<ConfigurationService>();
 builder.Services.AddScoped<FormatSettingsService>();

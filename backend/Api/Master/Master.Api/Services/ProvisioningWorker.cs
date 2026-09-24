@@ -65,7 +65,7 @@ public sealed class ProvisioningWorker : BackgroundService
         // 1. Owner user + Owner role assignment, via Identity's internal API.
         await identity.CreateOwnerUserAsync(new CreateOwnerUser(
             job.OrgId, job.OwnerEmail, job.OwnerDisplayName,
-            job.OwnerMobileNumber, job.OwnerPassword), ct);
+            job.OwnerMobileNumber, job.OwnerPassword, job.App), ct);
 
         // 2. Seed the organization's master data directly — chart of accounts,
         //    tax master, numbering series, units. The tenant database itself
