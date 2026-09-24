@@ -3,6 +3,7 @@ using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Services;
 
@@ -428,8 +429,8 @@ public sealed class OrganizationService
         organization.StateId = request.StateId;
         organization.PostalCode = Trimmed(request.PostalCode);
         organization.CountryId = request.CountryId;
-        organization.PhoneNumber = Trimmed(request.PhoneNumber);
-        organization.MobileNumber = Trimmed(request.MobileNumber);
+        organization.PhoneNumber = PhoneNumbers.NormalizeOptional(request.PhoneNumber);
+        organization.MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber);
         organization.Email = Trimmed(request.Email);
         organization.Website = Trimmed(request.Website);
     }

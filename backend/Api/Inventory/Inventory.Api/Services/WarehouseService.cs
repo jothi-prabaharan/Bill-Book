@@ -5,6 +5,7 @@ using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Validation;
 
 namespace Inventory.Api.Services;
 
@@ -201,8 +202,8 @@ public sealed class WarehouseService
             ? null
             : request.Gstin.Trim().ToUpperInvariant();
         warehouse.ContactPersonName = request.ContactPersonName;
-        warehouse.PhoneNumber = request.PhoneNumber;
-        warehouse.MobileNumber = request.MobileNumber;
+        warehouse.PhoneNumber = PhoneNumbers.NormalizeOptional(request.PhoneNumber);
+        warehouse.MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber);
         warehouse.IsActive = request.IsActive;
     }
 

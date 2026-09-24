@@ -9,6 +9,7 @@ using Shared.Kernel.Customer;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Validation;
 
 namespace Customer.Api.Controllers;
 
@@ -75,7 +76,7 @@ public sealed class LeadsController : ControllerBase
         {
             Name = request.Name,
             CompanyName = request.CompanyName,
-            Phone = request.Phone,
+            Phone = PhoneNumbers.NormalizeOptional(request.Phone),
             Email = request.Email,
             Source = request.Source,
             Status = LeadStatus.New
@@ -97,7 +98,7 @@ public sealed class LeadsController : ControllerBase
 
         lead.Name = request.Name;
         lead.CompanyName = request.CompanyName;
-        lead.Phone = request.Phone;
+        lead.Phone = PhoneNumbers.NormalizeOptional(request.Phone);
         lead.Email = request.Email;
         lead.Source = request.Source;
 

@@ -223,6 +223,12 @@ and a **mobile number carries no pattern at all** — lengths vary too much by
 country for one to be anything but a source of false rejections, and the leading
 `+` is what marks a foreign number.
 
+**A blank optional phone is stored as nothing, never as an empty value.** Every
+server-side save runs the number through `PhoneNumbers.NormalizeOptional`, which
+trims it and turns a blank into NULL, and keeps the leading `+` of a foreign
+number. It applies to contact addresses and people, users, branches, warehouses
+and leads. Empty values saved before this change are cleared when Master starts.
+
 ---
 
 ## Accessibility

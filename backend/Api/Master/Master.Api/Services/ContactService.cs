@@ -5,6 +5,7 @@ using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Services;
 
@@ -285,9 +286,7 @@ public sealed class ContactService
                         FirstName = names.Length > 0 ? names[0] : request.DisplayName,
                         LastName = names.Length > 1 ? names[1] : null,
                         Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email,
-                        MobileNumber = string.IsNullOrWhiteSpace(request.MobileNumber)
-                            ? null
-                            : request.MobileNumber,
+                        MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
                         IsDefault = true,
                         IsActive = true,
                     },
@@ -724,8 +723,8 @@ public sealed class ContactService
             row.PostalCode = model.PostalCode;
             row.Gstin = model.Gstin;
             row.ContactPersonName = model.ContactPersonName;
-            row.PhoneNumber = model.PhoneNumber;
-            row.MobileNumber = model.MobileNumber;
+            row.PhoneNumber = PhoneNumbers.NormalizeOptional(model.PhoneNumber);
+            row.MobileNumber = PhoneNumbers.NormalizeOptional(model.MobileNumber);
             row.IsActive = model.IsActive;
         }
 
@@ -847,8 +846,8 @@ public sealed class ContactService
             row.LastName = model.LastName;
             row.Designation = model.Designation;
             row.Email = model.Email;
-            row.PhoneNumber = model.PhoneNumber;
-            row.MobileNumber = model.MobileNumber;
+            row.PhoneNumber = PhoneNumbers.NormalizeOptional(model.PhoneNumber);
+            row.MobileNumber = PhoneNumbers.NormalizeOptional(model.MobileNumber);
             row.Website = model.Website;
             row.IsDefault = model.IsDefault;
             row.IsActive = model.IsActive;

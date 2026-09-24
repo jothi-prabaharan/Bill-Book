@@ -1240,16 +1240,21 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     `sal`).
 
 ### TK-21 · A blank optional phone is NULL everywhere (D-04)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-CON, L-MST, L-INV, L-CUS · **Depends on:** — · **Decision:** D-04 (answered)
 - **Where:** the phone columns: `con.ContactAddresses` and `con.ContactPersons` (`PhoneNumber`, `MobileNumber`), `mst.Users.MobileNumber`, `mst.Organizations` (`PhoneNumber`, `MobileNumber`), `inv.Warehouses` (`PhoneNumber`, `MobileNumber`), `cus.Leads.Phone`. No shared normaliser exists.
 - **Sub-tasks:**
-  - [ ] Add one `PhoneNumbers.NormalizeOptional(string?)` in `Shared.Kernel` (trim; blank → null; keep the leading `+` rule from `CLAUDE.md`). Takes `L-KERNEL` for that commit.
-  - [ ] Call it in every service that saves those columns.
-  - [ ] One data migration per schema turning `''` into NULL in those columns.
-  - [ ] Test: the normaliser (blank, spaces, `+91…`, local); one save per service stores NULL for blank.
+  - [x] Add one `PhoneNumbers.NormalizeOptional(string?)` in `Shared.Kernel` (trim; blank → null; keep the leading `+` rule from `CLAUDE.md`). Takes `L-KERNEL` for that commit.
+  - [x] Call it in every service that saves those columns.
+  - [x] ~~One data migration per schema~~ A LINQ backfill at Master startup (see Notes) turning `''` into NULL in those columns.
+  - [x] Test: the normaliser (blank, spaces, `+91…`, local); one save per service stores NULL for blank.
 - **Done when:** no phone column in any schema holds an empty string.
 - **Notes:** the lanes are many but each edit is small; release each lane as soon as its commit lands.
+- **Outcome (2026-09-24):**
+  - `Shared.Kernel.Validation.PhoneNumbers.NormalizeOptional` trims and turns blank into NULL. It keeps the `+` and adds no prefix.
+  - It is called at every write of the listed columns: `ContactService` (addresses, people, the quick-create person), `UserService`, `SignupService`, `InProcessSeams`, `InternalUsersController`, `OrganizationService`, `WarehouseService` and `LeadsController`.
+  - **No data migration was written.** A migration can only update rows in raw SQL, which hard rule 1 forbids. Instead, `Master.Api/Services/BlankPhoneBackfill.cs` runs `ExecuteUpdate` from `DatabaseMigrationService` on every start: the `mst` columns after the admin migration, and the `con`, `inv` and `cus` columns after each tenant schema migrates. It is idempotent, because only rows still holding `''` match. It reads past the query filter, as the seeding beside it does. Row-level security still applies, so a deployment login that does not bypass RLS would only clear what it can see. Nothing is deployed (D-13), so this matters only for developer databases.
+  - Tests: `Shared.Kernel.Tests.PhoneNumbersTests`, `Inventory.Api.Tests.WarehousePhoneTests`, `Customer.Api.Tests.LeadPhoneTests`, `Master.Api.Tests.BlankPhoneBackfillTests`. Master's contact save needs the admin database, numbering and accounting, so it has no round-trip test of its own. The backfill test covers `mst`.
 
 ### D · Phase 2
 

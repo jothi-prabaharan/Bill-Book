@@ -3,6 +3,7 @@ using Master.Entity.Enums;
 using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Services;
 
@@ -140,7 +141,7 @@ public sealed class SignupService
             AddressLine2 = request.AddressLine2,
             City = request.City,
             PostalCode = request.PostalCode,
-            MobileNumber = request.MobileNumber,
+            MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
             Email = request.Email,
         };
         _db.Organizations.Add(org);

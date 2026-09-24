@@ -4,6 +4,7 @@ using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Services;
 
@@ -90,7 +91,7 @@ public sealed class UserService
                 Email = request.Email,
                 PasswordHash = null,
                 DisplayName = request.DisplayName,
-                MobileNumber = request.MobileNumber,
+                MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
                 EmailConfirmed = false,
                 IsActive = true,
             };

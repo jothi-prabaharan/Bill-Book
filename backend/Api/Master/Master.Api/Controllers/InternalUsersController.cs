@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Controllers;
 
@@ -44,7 +45,7 @@ public sealed class InternalUsersController : ControllerBase
                 Email = request.Email,
                 PasswordHash = _hasher.Hash(request.Password),
                 DisplayName = request.DisplayName,
-                MobileNumber = request.MobileNumber,
+                MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
                 EmailConfirmed = false,
                 IsActive = true,
             };

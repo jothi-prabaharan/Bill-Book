@@ -67,6 +67,9 @@ public class DatabaseMigrationService : IHostedService
         // 3. Ensure IN000001 Database Exists and seed it
         await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", cancellationToken);
 
+        // Blank optional phones are NULL, never '' (D-04, TK-21).
+        await BlankPhoneBackfill.RunAdminAsync(adminDb, cancellationToken);
+
         // 4. Platform operators named by configuration (D-01). Every start, not
         // only the first, so an operator added to the setting later is granted
         // at the next deploy. Grant-only; revoking is an operator's action.
@@ -162,6 +165,18 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<ReportingDbContext>(tenantConnectionString, dummyTenant, "rpt", ct);
         await MigrateContextAsync<SalesDbContext>(tenantConnectionString, dummyTenant, "sal", ct);
         
+        // Blank optional phones in con, inv and cus are NULL, never '' (TK-21).
+        await using (var contacts = new ContactsDbContext(new DbContextOptionsBuilder<ContactsDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
+        await using (var inventory = new InventoryDbContext(new DbContextOptionsBuilder<InventoryDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
+        await using (var customer = new CustomerDbContext(new DbContextOptionsBuilder<CustomerDbContext>().UseNpgsql(tenantConnectionString).Options, dummyTenant))
+        {
+            int cleared = await BlankPhoneBackfill.RunTenantAsync(contacts, inventory, customer, ct);
+            if (cleared > 0)
+            {
+                _logger.LogInformation("Cleared {Count} blank phone numbers to NULL in {Database}.", cleared, tenantDbName);
+            }
+        }
+
         var targetOrgId = Guid.Parse("00000000-0000-0000-0000-000000000001");
         var seedTenant = new Shared.Kernel.Tenancy.TenantContext { CustomerId = Guid.Parse("00000000-0000-0000-0000-000000000001"), OrgId = targetOrgId };
 

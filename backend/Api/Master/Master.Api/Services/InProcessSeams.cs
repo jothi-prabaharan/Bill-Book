@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Validation;
 
 namespace Master.Api.Services;
 
@@ -103,7 +104,7 @@ public sealed class InProcessIdentityAdmin : IIdentityAdmin
                 Email = request.Email,
                 PasswordHash = _hasher.Hash(request.Password),
                 DisplayName = request.DisplayName,
-                MobileNumber = request.MobileNumber,
+                MobileNumber = PhoneNumbers.NormalizeOptional(request.MobileNumber),
                 EmailConfirmed = false,
                 IsActive = true,
             };
