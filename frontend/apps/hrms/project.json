@@ -1,0 +1,81 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "hrms",
+  "projectType": "application",
+  "sourceRoot": "apps/hrms/src",
+  "tags": [
+    "type:app",
+    "platform:browser"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/hrms",
+        "index": "apps/hrms/src/index.html",
+        "browser": "apps/hrms/src/main.ts",
+        "tsConfig": "apps/hrms/tsconfig.json",
+        "polyfills": [
+          "zone.js"
+        ],
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/hrms/public"
+          }
+        ],
+        "styles": [
+          "apps/web/src/styles.scss"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/hrms/src/environments/environment.ts",
+              "with": "apps/hrms/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/hrms/proxy.conf.json",
+        "port": 4203
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "hrms:build:development"
+        },
+        "production": {
+          "buildTarget": "hrms:build:production"
+        }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}

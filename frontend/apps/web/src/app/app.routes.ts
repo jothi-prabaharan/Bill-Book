@@ -8,6 +8,7 @@ import {
   authGuard,
 } from '@bill-book/auth';
 import { shellRoutes } from '@bill-book/app-shell';
+import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { DashboardPage } from './dashboard/dashboard.page';
 
 export const appRoutes: Routes = [
@@ -24,71 +25,10 @@ export const appRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: DashboardPage, data: { access: { signedIn: true } } },
-      {
-        path: 'settings/currencies',
-        loadComponent: () =>
-          import('@bill-book/settings-currencies').then((m) => m.OrgCurrenciesPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/organization',
-        loadComponent: () =>
-          import('@bill-book/settings-organization-settings').then((m) => m.OrganizationSettingsPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/branches',
-        loadComponent: () =>
-          import('@bill-book/settings-organizations').then((m) => m.OrganizationsPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/configuration',
-        loadComponent: () =>
-          import('@bill-book/settings-configuration').then((m) => m.ConfigurationsPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/roles',
-        loadComponent: () => import('@bill-book/settings-roles').then((m) => m.RolesPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/users',
-        loadComponent: () => import('@bill-book/settings-users').then((m) => m.UsersPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/api-clients',
-        loadComponent: () =>
-          import('@bill-book/settings-api-clients').then((m) => m.ApiClientsListComponent),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/email',
-        loadComponent: () =>
-          import('@bill-book/settings-smtp').then((m) => m.SmtpSettingsPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      // One menu row per document type, each landing on its own type. Opening
-      // takes settings.view, as every settings screen does, because the menu
-      // offers these rows to settings.view; the page is read-only without
-      // settings.edit, and the API refuses a write without it regardless.
-      {
-        path: 'settings/print-templates',
-        loadComponent: () =>
-          import('@bill-book/settings-print-templates').then((m) => m.PrintTemplatesPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      {
-        path: 'settings/print-templates/:docType',
-        loadComponent: () =>
-          import('@bill-book/settings-print-templates').then((m) => m.PrintTemplatesPage),
-        data: { access: { permission: 'settings.view' } },
-      },
-      // The nav rail points at /accounting, so it needs somewhere to land. The
-      // ledger is the right default: it is the screen every other posting in the
-      // product is checked on.
+      // Users, roles, branches, organization settings, currencies,
+      // configuration, email, API keys, print templates, numbering and
+      // applications: the pages every app shares, from one lib (TK-47).
+      ...sharedSettingsRoutes,
       { path: 'accounting', pathMatch: 'full', redirectTo: 'accounting/trial-balance' },
       {
         path: 'accounting/chart-of-accounts',
@@ -152,12 +92,6 @@ export const appRoutes: Routes = [
         path: 'settings/tax',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.TaxMasterPage),
         data: { access: { permission: 'accounting.view' } },
-      },
-      {
-        path: 'settings/numbering',
-        loadComponent: () =>
-          import('@bill-book/settings-numbering-series').then((m) => m.NumberingSeriesPage),
-        data: { access: { permission: 'settings.view' } },
       },
       {
         path: 'settings/contact-person-roles',
@@ -305,12 +239,6 @@ export const appRoutes: Routes = [
         loadChildren: () =>
           import('@bill-book/reporting-ui').then((m) => m.reportingRoutes),
         data: { access: { permission: 'reports.view' } },
-      },
-      {
-        path: 'settings/applications',
-        loadComponent: () =>
-          import('@bill-book/settings-applications').then((m) => m.ApplicationsPage),
-        data: { access: { permission: 'settings.view' } },
       },
       { path: '**', component: DashboardPage, data: { access: { signedIn: true } } },
     ],

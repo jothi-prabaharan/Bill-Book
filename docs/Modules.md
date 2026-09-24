@@ -1172,7 +1172,7 @@ and each is sold on its own. A customer may buy one app, several, or all four (o
 This section is the platform all four share. It is **stage H0**, built before any HRMS table,
 because nothing in a second app works without per-app licences, tokens and menus.
 
-**H0.1 to H0.5 are built (TK-42 to TK-46, 24 September 2026); H0.6 is TK-47.**
+**Stage H0 is built (TK-42 to TK-47, 24 September 2026).** Tests written, not yet run by the owner.
 
 ## Where things stand
 
@@ -1526,7 +1526,7 @@ H0 fixes all three:
   *Done when*: signing up for Payroll then starting HRMS gives one customer, one branch, two
   licences and one set of employees, with HRMS's master data seeded into the existing branch.
 - [x] **H0.5 — Sharding.** Per the section above.
-- [ ] **H0.6 — `apps/hrms` and `apps/payroll`.** Two empty apps that sign in, select a branch, draw
+- [x] **H0.6 — `apps/hrms` and `apps/payroll`.** Two empty apps that sign in, select a branch, draw
   their own menus, and switch to each other and to `apps/web`.
 
 # --- Hrms.md ---

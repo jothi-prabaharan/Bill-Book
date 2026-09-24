@@ -1,8 +1,8 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { authInterceptor, APP_ID } from '@bill-book/auth';
 import { APP_URLS } from '@bill-book/app-shell';
+import { APP_ID, authInterceptor } from '@bill-book/auth';
 import {
   API_BASE_URL,
   apiBaseUrlInterceptor,
@@ -13,27 +13,22 @@ import {
 import { environment } from '../environments/environment';
 import { appRoutes } from './app.routes';
 
+/**
+ * `apps/hrms` (H0.6, TK-47): the HRMS app. It shares every lib with
+ * `apps/web`; what makes it HRMS is `APP_ID`, which sign-in sends, the menu
+ * filters by, and the shell's page guard checks the session against.
+ */
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(appRoutes),
+    { provide: APP_ID, useValue: 'Hrms' },
 
-    // Which app this is (TK-44): sign-in sends it, the menu and the shell's
-    // page guard check the session against it.
-    { provide: APP_ID, useValue: 'RetailErp' },
-
-    // The app switcher's destinations (TK-47): the deployment's config.js, or
-    // the development servers when served from localhost.
+    // The app switcher's destinations: the deployment's config.js, or the
+    // development servers when served from localhost.
     { provide: APP_URLS, useValue: resolveAppUrls(defaultAppUrls()) },
 
-    // The app owns environment config; libs receive it through this token.
-    // The deployment's value when it set one, the build's otherwise. One
-    // artifact can then be promoted from UAT to production without a rebuild,
-    // and no hostname has to live in the repository. See resolveApiBaseUrl.
     { provide: API_BASE_URL, useValue: resolveApiBaseUrl(environment.apiBaseUrl) },
-
-    // Order matters: rewrite the URL onto the configured origin first, then
-    // attach the bearer token.
     provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor])),
   ],
 };

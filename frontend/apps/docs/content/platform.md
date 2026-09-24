@@ -338,6 +338,12 @@ A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll*
 - **Start another app from Settings › Applications.** **Start trial** adds that app's 14-day trial and makes you its Owner in every branch. It also sets up what the app needs in every existing branch. Nothing is created twice: it is the same customer, branches and users. If a branch cannot be set up, nothing is started and you can try again.
 - **What a branch is set up with follows the apps you hold.** Accounting and print templates are set up for every app, because payroll and fees post to the books and every app prints. Items, sales, purchases, reports, support and contacts are set up for RetailErp. HRMS, Payroll and School add their own as they are built.
 
+### The HRMS and Payroll apps
+
+`apps/hrms` and `apps/payroll` are their own web apps. Each signs in to its own app, draws its own menu, and mounts the same shared settings pages as RetailErp: users, roles, branches, organization settings, currencies, configuration, email, API keys, print templates, number series and applications. Their own screens arrive with each HRMS and Payroll stage. For now each opens on a home page that says so.
+
+- **Switching between apps** is under the branch switcher. The addresses come from the deployment's `config.js` (`appUrls: { RetailErp: '…', Hrms: '…', Payroll: '…' }`). On a developer's machine they default to the dev servers: web on 4200, HRMS on 4203 and Payroll on 4204. An app served from the same address as another shares its sign-in, and the shell switches the token to its own app on the same branch. An app at a different address asks you to sign in.
+
 ### Pages check what you may open
 
 - **Each app's menu shows only that app's screens**, and only those you hold a permission for.

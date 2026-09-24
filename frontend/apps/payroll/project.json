@@ -1,0 +1,81 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "payroll",
+  "projectType": "application",
+  "sourceRoot": "apps/payroll/src",
+  "tags": [
+    "type:app",
+    "platform:browser"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/payroll",
+        "index": "apps/payroll/src/index.html",
+        "browser": "apps/payroll/src/main.ts",
+        "tsConfig": "apps/payroll/tsconfig.json",
+        "polyfills": [
+          "zone.js"
+        ],
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/payroll/public"
+          }
+        ],
+        "styles": [
+          "apps/web/src/styles.scss"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/payroll/src/environments/environment.ts",
+              "with": "apps/payroll/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/payroll/proxy.conf.json",
+        "port": 4204
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "payroll:build:development"
+        },
+        "production": {
+          "buildTarget": "payroll:build:production"
+        }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}

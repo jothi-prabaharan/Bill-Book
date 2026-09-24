@@ -189,7 +189,7 @@ There were twelve. Three merges took them to seven, and the reason each time was
 
 **Master is the only service with two DbContexts, and that is the tenancy model rather than an accident.** `AdminDbContext` is the shared master database; `ContactsDbContext` is the customer's own. See Tenancy below.
 
-**Frontend** (Nx, Angular v20): `apps/{web, portal, admin, desktop, docs}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
+**Frontend** (Nx, Angular v20): `apps/{web, portal, admin, desktop, docs, hrms, payroll}` · `libs/{module}/{module}-core` (view-models + models, no templates) + `libs/{module}/{module}-ui` (pages) · `libs/shared/{auth, api-client, ui-components, currency-format, theming}`
 
 ### Angular Component Structure
 - **Standalone Only**: Use `standalone: true`. No `NgModules` are allowed.

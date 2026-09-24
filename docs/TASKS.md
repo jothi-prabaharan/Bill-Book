@@ -2175,17 +2175,27 @@ None of it is built.
   - "Signup no longer answers 503" holds while a standby is listed. With none left outside Development it still answers 503, and it logs what to add. Keeping one or two spare is an operator task, written in `deployment.md` and `deploy/azure/README.md`.
 
 ### TK-47 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-DEPS, plus new lanes `L-HRMS-APP` and `L-PAY-APP` · **Depends on:** TK-44 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-DEPS, plus new lanes `L-HRMS-APP` and `L-PAY-APP` (+ L-WEB for the shared route list, L-UI for `appUrls`) · **Depends on:** TK-44 · **Decision:** —
+- **Where:** `frontend/apps/{hrms,payroll}`, `frontend/libs/settings/shared-routes`, `frontend/libs/shared/api-client/src/lib/runtime-config.ts` (`appUrls`).
 - **Sub-tasks:**
-  - [ ] Generate two Nx apps modelled on `apps/web`: `app.config.ts`, `APP_ID`, and
-        `shellRoutes({ app: 'Hrms' | 'Payroll' })`.
-  - [ ] Add each app to `nx.json` and CI's build matrix (`.github/workflows/ci.yml`).
-  - [ ] Add dev-server ports and a proxy to the Gateway.
-  - [ ] Test: each app's route spec calls `auditShellRoutes`.
+  - [x] Generate two Nx apps modelled on `apps/web`: `app.config.ts`, `APP_ID`, and
+        `shellRoutes({ app: 'Hrms' | 'Payroll' })`. Each has a home page and the shared settings pages.
+  - [x] Add each app to `nx.json` and CI's build matrix (`.github/workflows/ci.yml`). **Nothing to add:** Nx finds a project by its `project.json`, and CI's build step is `npm run build`, which is `nx run-many -t build`, so it builds all seven apps now.
+  - [x] Add dev-server ports and a proxy to the Gateway: HRMS on 4203, Payroll on 4204, both proxying `/api` to 4500.
+  - [x] Test: each app's route spec calls `auditShellRoutes`.
+  - [ ] Owner: sign in to each app on a running stack, and switch between them (the Done-when line).
 - **Done when:** both apps sign in, select a branch, draw their own menus, and switch to each other
   and to `apps/web`.
 - **Notes:**
+  - **The shared settings routes are one list**, `@bill-book/settings-shared-routes` (`sharedSettingsRoutes`), mounted by `apps/web`, `apps/hrms` and `apps/payroll`. `apps/web` lost its own copies of those routes. The retail-only settings stay in `apps/web`.
+  - **App switcher addresses:** `window.__BB_CONFIG__.appUrls` from the deployment's `config.js`. On `localhost` they default to the dev servers (`DEV_APP_URLS`). No deployment serves `apps/hrms` or `apps/payroll` yet. `deploy/azure` and `deploy/local` need a site each when HRMS or Payroll ships.
+  - **Shortcuts to replace before either app is sold:**
+    - The two apps use `apps/web/src/styles.scss` (the auth pages' styles live there), as `apps/desktop` uses web's assets. Moving the auth styles into `libs/shared/theming` would end that.
+    - The topbar's **New** menu (`newGroups`) is a hard-coded RetailErp list (invoice, bill, …) and shows in every app.
+    - `shell-screens.ts`, the rail drawn before the menu answers, is still the retail list.
+    - Neither app has an icon or a manifest.
+  - Not run in a browser.
 
 ### H · HRMS and Payroll (H1–H12)
 

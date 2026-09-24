@@ -31,6 +31,46 @@
 export interface RuntimeConfig {
   /** Origin the API is served from, without a trailing slash. Empty = same origin. */
   readonly apiBaseUrl?: string;
+
+  /**
+   * Where each app lives, for the app switcher (TK-47): keys are
+   * `RetailErp`, `School`, `Hrms`, `Payroll`.
+   */
+  readonly appUrls?: Readonly<Record<string, string>>;
+}
+
+/**
+ * The deployment's app URLs, or `fallback` when it set none (TK-47). Same
+ * rules as `resolveApiBaseUrl`: a missing or unreadable setting is the default.
+ */
+export function resolveAppUrls(fallback: Readonly<Record<string, string>>): Readonly<Record<string, string>> {
+  try {
+    if (typeof window === 'undefined') {
+      return fallback;
+    }
+
+    const configured = window.__BB_CONFIG__?.appUrls;
+
+    return configured !== null && typeof configured === 'object' ? configured : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+/** The development servers' addresses, used when the page itself is served from localhost. */
+export const DEV_APP_URLS: Readonly<Record<string, string>> = {
+  RetailErp: 'http://localhost:4200',
+  Hrms: 'http://localhost:4203',
+  Payroll: 'http://localhost:4204',
+};
+
+/** `DEV_APP_URLS` on a localhost page, nothing anywhere else. */
+export function defaultAppUrls(): Readonly<Record<string, string>> {
+  try {
+    return typeof window !== 'undefined' && window.location?.hostname === 'localhost' ? DEV_APP_URLS : {};
+  } catch {
+    return {};
+  }
 }
 
 declare global {

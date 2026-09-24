@@ -553,5 +553,6 @@ Three files per page or component, sharing a base name: `.ts`, `.html`, `.scss`.
 
 **Update this site in the same commit as the feature.** See [Release notes](#/release-notes) for how that flows into a version entry.
 
+## The HRMS and Payroll apps
 
-
+`npx nx serve hrms` (port 4203) and `npx nx serve payroll` (port 4204) run beside `npx nx serve web` (4200). All three proxy `/api` to the Gateway. Each app's `app.config.ts` provides its `APP_ID`, and each app's `app.routes.spec.ts` runs `auditShellRoutes`, so a page without `data.access` fails the tests. The shared settings routes come from `@bill-book/settings-shared-routes`; never copy one into an app.
