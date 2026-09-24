@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 
 namespace Inventory.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/inventory/price-lists")]
+[RequireApp(App.RetailErp)]
 public class PriceListsController : ControllerBase
 {
     private readonly InventoryDbContext _context;

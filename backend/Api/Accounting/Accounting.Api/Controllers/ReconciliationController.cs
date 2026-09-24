@@ -4,6 +4,7 @@ using Accounting.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -11,6 +12,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/reconciliation")]
+[RequireApp(App.RetailErp)]
 public class ReconciliationController : ControllerBase
 {
     private readonly ReconciliationService _reconciliation;

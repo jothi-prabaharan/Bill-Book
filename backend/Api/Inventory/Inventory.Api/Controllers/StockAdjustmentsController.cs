@@ -3,6 +3,7 @@ using Inventory.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Inventory.Api.Controllers;
 
@@ -18,6 +19,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/stock-adjustments")]
+[RequireApp(App.RetailErp)]
 public sealed class StockAdjustmentsController : ControllerBase
 {
     private readonly StockAdjustmentService _adjustments;

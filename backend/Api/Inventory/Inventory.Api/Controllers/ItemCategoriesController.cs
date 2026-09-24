@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Apps;
 
 namespace Inventory.Api.Controllers;
 
@@ -11,6 +12,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/item-categories")]
+[RequireApp(App.RetailErp)]
 public sealed class ItemCategoriesController : ControllerBase
 {
     private readonly ItemCategoryService _categories;

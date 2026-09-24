@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -19,6 +20,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/transfer-money")]
+[RequireApp(App.RetailErp)]
 public sealed class TransferMoneyController : ControllerBase
 {
     private readonly TransferMoneyService _documents;

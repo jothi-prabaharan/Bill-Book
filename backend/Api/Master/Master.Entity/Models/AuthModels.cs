@@ -13,6 +13,14 @@ public class LoginRequest
 
     [Required(ErrorMessage = "Password is required.")]
     public string Password { get; set; } = null!;
+
+    /// <summary>
+    /// The app being signed in to, by name: RetailErp, School, Hrms or Payroll
+    /// (H0.2, TK-43). Omitted means RetailErp, so a client that predates apps
+    /// signs in exactly as before.
+    /// </summary>
+    [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
+    public string? App { get; set; }
 }
 
 public class AccessibleOrgDto
@@ -43,6 +51,14 @@ public class SelectOrganizationRequest
 {
     [Required(ErrorMessage = "Organization id is required.")]
     public Guid OrgId { get; set; }
+
+    /// <summary>
+    /// The app the new token is for (H0.2, TK-43). On a sign-in, omitted means
+    /// RetailErp. On a switch, omitted means the app the caller is already in, so
+    /// the app switcher is a switch to the same branch in another app.
+    /// </summary>
+    [RegularExpression("(?i)^(RetailErp|School|Hrms|Payroll)$", ErrorMessage = "App must be RetailErp, School, Hrms or Payroll.")]
+    public string? App { get; set; }
 }
 
 /// <summary>

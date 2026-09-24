@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -22,6 +23,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/opening-balance")]
+[RequireApp(App.RetailErp)]
 public sealed class OpeningBalancesController : ControllerBase
 {
     private readonly OpeningBalanceService _openings;

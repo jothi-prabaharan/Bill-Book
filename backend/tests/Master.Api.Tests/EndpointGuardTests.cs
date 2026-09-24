@@ -50,6 +50,9 @@ public sealed class EndpointGuardTests
         //                         nearest permission, settings.view, is not held
         //                         by Accountant or Sales. Shell data, not a
         //                         module's. See the note on FormatsController.
+        //   MeController        — the caller's own session context (TK-43):
+        //                         signed in only, like the menu, and it only
+        //                         ever describes the caller.
         //   RatesController     — the rate lookups are global reference data,
         //                         like MasterController's, and every role that
         //                         raises a foreign-currency or jewellery document
@@ -67,7 +70,19 @@ public sealed class EndpointGuardTests
                 "MasterController",
                 "FormatsController",
                 "MenuController",
+                "MeController",
                 "RatesController")));
+    }
+
+    /// <summary>
+    /// Every controller a user token can reach names the apps it serves
+    /// (H0.2, TK-43), so a Payroll token cannot reach a RetailErp screen through
+    /// a permission both apps share.
+    /// </summary>
+    [Fact]
+    public void Every_controller_names_its_apps()
+    {
+        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.WithoutApp(Service)));
     }
 
     [Fact]

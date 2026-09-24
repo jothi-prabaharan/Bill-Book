@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -19,6 +20,7 @@ namespace Master.Api.Controllers;
 [RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/currencies")]
+[RequireApp(App.All)]
 public sealed class OrgCurrenciesController : ControllerBase
 {
     private readonly OrgCurrencyService _service;

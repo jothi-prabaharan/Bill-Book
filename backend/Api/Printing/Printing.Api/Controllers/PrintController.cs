@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Printing.Api.Services;
 using Printing.Entity.Models;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Printing.Api.Controllers;
 
@@ -28,6 +30,7 @@ namespace Printing.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/print")]
+[RequireApp(App.All)]
 public sealed class PrintController : ControllerBase
 {
     private readonly PrintTemplateService _templates;

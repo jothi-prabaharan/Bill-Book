@@ -1,6 +1,8 @@
 using Master.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Controllers;
 
@@ -22,6 +24,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Route("api/formats")]
 [Authorize]
+[RequireApp(App.All)]
 public sealed class FormatsController : ControllerBase
 {
     private readonly FormatSettingsService _formats;

@@ -3,11 +3,14 @@ using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Repository;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Controllers;
 
 [ApiController]
 [Route("api/auth")]
+[RequireApp(App.All)]
 public sealed class AuthController : ControllerBase
 {
     private const string PreAuthHeader = "X-PreAuth-Token";
@@ -71,7 +74,7 @@ public sealed class AuthController : ControllerBase
             return Unauthorized();
         }
 
-        var orgs = await _auth.AccessibleOrgsAsync(userId, ct);
+        var orgs = await _auth.AccessibleOrgsAsync(userId, ct, CallerApp());
 
         return Ok(new SessionStateResponse
         {
@@ -100,7 +103,7 @@ public sealed class AuthController : ControllerBase
         try
         {
             TokenResponse response = await _auth.SelectOrganizationAsync(
-                userId.Value, request.OrgId, Ip(), UserAgent(), ct);
+                userId.Value, request.OrgId, Ip(), UserAgent(), ct, AuthService.AppOrDefault(request.App));
             return Ok(response);
         }
         catch (NoOrganizationAccessException)
@@ -125,9 +128,10 @@ public sealed class AuthController : ControllerBase
     /// </summary>
     [Authorize]
     [HttpGet("organizations")]
-    public async Task<IActionResult> Organizations(CancellationToken ct) =>
+    public async Task<IActionResult> Organizations([FromQuery] string? app, CancellationToken ct) =>
         CallerUserId() is Guid userId
-            ? Ok(await _auth.AccessibleOrgsAsync(userId, ct))
+            ? Ok(await _auth.AccessibleOrgsAsync(
+                userId, ct, app is null ? CallerApp() : AuthService.AppOrDefault(app)))
             : Unauthorized();
 
     /// <summary>
@@ -151,8 +155,12 @@ public sealed class AuthController : ControllerBase
 
         try
         {
+            // No app named: stay in the caller's app. Naming one is the app
+            // switcher: the same branch, another app's token (TK-43).
+            App app = request.App is null ? CallerApp() : AuthService.AppOrDefault(request.App);
+
             TokenResponse response = await _auth.SelectOrganizationAsync(
-                userId, request.OrgId, Ip(), UserAgent(), ct);
+                userId, request.OrgId, Ip(), UserAgent(), ct, app);
 
             return Ok(response);
         }
@@ -216,6 +224,13 @@ public sealed class AuthController : ControllerBase
     /// difference anyway.
     /// </summary>
     [AllowAnonymous]
+    /// <summary>The app the caller's token was minted for; RetailErp for a token that predates apps.</summary>
+    private App CallerApp()
+    {
+        App app = RequireAppAttribute.AppOf(User);
+        return app == App.None ? App.RetailErp : app;
+    }
+
     [HttpPost("logout")]
     public async Task<IActionResult> Logout([FromBody] RefreshRequest request, CancellationToken ct)
     {

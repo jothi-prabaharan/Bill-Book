@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
 using Master.Entity.Models;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Controllers;
 
 [ApiController]
 [AllowAnonymous]
 [Route("api/customers")]
+[RequireApp(App.All)]
 public sealed class CustomersController : ControllerBase
 {
     private readonly SignupService _signup;

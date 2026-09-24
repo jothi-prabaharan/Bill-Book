@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Reporting.Api.Services;
 using Reporting.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Reporting.Api.Controllers;
 
@@ -18,6 +19,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/{reportKey}/views")]
+[RequireApp(App.RetailErp)]
 public sealed class ReportViewsController : ControllerBase
 {
     private readonly SavedViewService _views;

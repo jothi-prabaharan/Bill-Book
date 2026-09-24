@@ -13,10 +13,18 @@ public sealed class RoleService
     public RoleService(AdminDbContext db) => _db = db;
 
     /// <summary>System roles plus this customer's own.</summary>
-    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct)
+    public async Task<IReadOnlyList<RoleListItem>> ListAsync(Guid customerId, CancellationToken ct, App? app = null)
     {
-        return await _db.Roles
-            .Where(r => r.CustomerId == null || r.CustomerId == customerId)
+        IQueryable<Role> roles = _db.Roles.Where(r => r.CustomerId == null || r.CustomerId == customerId);
+
+        // Inside an app, only that app's roles (TK-43): a RetailErp Owner and a
+        // Payroll Owner are different rows, and each app edits its own.
+        if (app is App only)
+        {
+            roles = roles.Where(r => r.App == only);
+        }
+
+        return await roles
             .OrderBy(r => r.CustomerId == null ? 0 : 1)
             .ThenBy(r => r.RoleId)
             .Select(r => new RoleListItem

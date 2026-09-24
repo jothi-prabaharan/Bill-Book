@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -20,6 +21,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/organizations")]
+[RequireApp(App.All)]
 public sealed class OrganizationsController : ControllerBase
 {
     private readonly OrganizationService _organizations;

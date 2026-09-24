@@ -4,6 +4,7 @@ using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -23,6 +24,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/rates")]
+[RequireApp(App.All)]
 public sealed class RatesController : ControllerBase
 {
     private readonly RateService _rates;

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
 using Shared.Kernel.Internal;
 using System.Security.Claims;
+using Shared.Kernel.Apps;
 
 namespace Reporting.Api.Controllers;
 
@@ -11,6 +12,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequirePortalAccess]
 [Route("api/portal/statements")]
+[RequireApp(App.RetailErp)]
 public sealed class PortalStatementsController : ControllerBase
 {
     private readonly ReportingDbContext _db;

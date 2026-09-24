@@ -12,6 +12,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/roles")]
+[RequireApp(App.All)]
 public sealed class RolesController : ControllerBase
 {
     private readonly RoleService _roles;
@@ -31,7 +32,7 @@ public sealed class RolesController : ControllerBase
             return Forbid();
         }
 
-        return Ok(await _roles.ListAsync(customerId, ct));
+        return Ok(await _roles.ListAsync(customerId, ct, CallerApp()));
     }
 
     /// <summary>
@@ -41,7 +42,7 @@ public sealed class RolesController : ControllerBase
     [HttpGet("permissions")]
     public async Task<IActionResult> Permissions([FromQuery] string? app, CancellationToken ct)
     {
-        App? forApp = AppRules.TryParseSingle(app, out App parsed) ? parsed : null;
+        App forApp = AppRules.TryParseSingle(app, out App parsed) ? parsed : CallerApp();
 
         // platform.* is operator-only, so it never reaches a tenant's matrix.
         return Ok(await _roles.PermissionMatrixAsync(includePlatform: false, ct, forApp));
@@ -67,6 +68,8 @@ public sealed class RolesController : ControllerBase
             return Forbid();
         }
 
+        // A role made inside an app is that app's, unless the request names one (TK-43).
+        request.App ??= CallerApp().ToString();
         (SaveRoleResult result, int roleId) = await _roles.CreateAsync(customerId, request, ct);
         return result == SaveRoleResult.Ok
             ? CreatedAtAction(nameof(Get), new { roleId }, new { roleId })
@@ -84,6 +87,12 @@ public sealed class RolesController : ControllerBase
 
         SaveRoleResult result = await _roles.UpdateAsync(customerId, roleId, request, ct);
         return result == SaveRoleResult.Ok ? NoContent() : Refused(result);
+    }
+
+    private App CallerApp()
+    {
+        App app = RequireAppAttribute.AppOf(User);
+        return app == App.None ? App.RetailErp : app;
     }
 
     private IActionResult Refused(SaveRoleResult result) => result switch

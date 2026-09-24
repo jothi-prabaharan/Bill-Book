@@ -7,6 +7,7 @@ using Master.Api.Services;
 using Master.Entity.Models;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -19,6 +20,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/smtp-settings")]
+[RequireApp(App.All)]
 public sealed class SmtpSettingsController : ControllerBase
 {
     private readonly SmtpSettingsService _service;

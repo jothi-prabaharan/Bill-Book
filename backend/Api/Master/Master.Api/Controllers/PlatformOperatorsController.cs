@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/admin/platform-operators")]
+[RequireApp(App.All)]
 public sealed class PlatformOperatorsController : ControllerBase
 {
     private readonly PlatformOperatorService _operators;

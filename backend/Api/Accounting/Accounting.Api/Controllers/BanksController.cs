@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -12,6 +13,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("banking")]
 [Route("api/banks")]
+[RequireApp(App.RetailErp)]
 public sealed class BanksController : ControllerBase
 {
     private readonly BankService _banks;

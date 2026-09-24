@@ -2,6 +2,7 @@ using Accounting.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -19,6 +20,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/bank-accounts/tender-options")]
+[RequireApp(App.RetailErp)]
 public sealed class TenderAccountsController : ControllerBase
 {
     private readonly BankService _banks;

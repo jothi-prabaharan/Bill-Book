@@ -18,4 +18,10 @@ public enum LicenseStatus
 
     /// <summary>Deactivated by an operator, independent of dates.</summary>
     Suspended = 4,
+
+    /// <summary>
+    /// The customer holds no licence for the app being signed in to (TK-43).
+    /// Treated like Expired: the sign-in works, the app does not.
+    /// </summary>
+    NotLicensed = 5,
 }

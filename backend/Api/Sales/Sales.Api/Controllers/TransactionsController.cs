@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Sales.Api.Controllers;
 
@@ -10,6 +11,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/transactions")]
+[RequireApp(App.RetailErp)]
 public sealed class TransactionsController : ControllerBase
 {
     private readonly QuoteService _quotes;

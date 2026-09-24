@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Apps;
 
 namespace Inventory.Api.Controllers;
 
@@ -15,6 +16,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("api/uom-types")]
+[RequireApp(App.RetailErp)]
 public sealed class UomController : ControllerBase
 {
     private readonly UomService _uom;

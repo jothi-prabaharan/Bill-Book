@@ -30,6 +30,17 @@ public sealed class EndpointGuardTests
             string.Join(", ", EndpointGuardAudit.Unguarded(Service, "PrintController")));
     }
 
+    /// <summary>
+    /// Every controller a user token can reach names the apps it serves
+    /// (H0.2, TK-43), so a Payroll token cannot reach a RetailErp screen through
+    /// a permission both apps share.
+    /// </summary>
+    [Fact]
+    public void Every_controller_names_its_apps()
+    {
+        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.WithoutApp(Service)));
+    }
+
     [Fact]
     public void Every_demanded_module_is_one_the_catalogue_seeds()
     {

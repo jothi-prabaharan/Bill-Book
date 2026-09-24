@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Inventory.Api.Controllers;
 
@@ -11,6 +12,7 @@ namespace Inventory.Api.Controllers;
 [Authorize]
 [RequireModulePermission("inventory")]
 [Route("internal/item-serials")]
+[RequireApp(App.RetailErp)]
 public class ItemSerialsController : ControllerBase
 {
     private readonly InventoryDbContext _db;

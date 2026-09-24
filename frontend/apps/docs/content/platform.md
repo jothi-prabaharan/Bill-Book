@@ -322,11 +322,19 @@ A customer can buy four apps: **RetailErp**, **School**, **HRMS** and **Payroll*
 - **A role can be given only permissions that belong to its app.** Saving a role with another app's permission is refused, and nothing is changed.
 - **The menu marks each screen with the apps that show it.** The Home and Settings screens are in every app. Everything else is RetailErp's.
 
-Signing in to one app at a time, per-app licences and the other apps' screens come next.
+### Signing in is per app
+
+- **A sign-in is for one app.** The login and branch-selection requests name the app, and a request that names none is for RetailErp. Only branches where you hold a role in that app are offered.
+- **The token names its app** in an `app` claim. It carries only the permissions of your roles in that app, and the status and expiry of that app's licence.
+- **Each app has its own licence.** If the RetailErp trial lapses, Payroll keeps working, and the account is marked expired only when every app's licence has lapsed. Signing in to an app the customer has no licence for works, but the licence status is *NotLicensed*, so the app is closed, like an expired one.
+- **Switching app is switching branch.** `POST /api/auth/switch-organization` with an `app` mints a token for the same branch in the other app. Without an `app`, it stays in the current one. Each app's refresh tokens are a family of their own.
+- **Every service checks the app.** Each controller names the apps it serves, and a token from any other app gets **403**, even when it holds a permission with the same name. This matters because permissions are shared: `settings.view` is every app's. The settings, users, roles, branches, numbering and print-template services are open to every app. Contacts are open to RetailErp and School. Everything else is RetailErp's.
+- **`GET /api/me/context`** returns the signed-in session for pages that don't read the token: your name and email, the branch, the app, that app's licence, your permissions, and the apps you can switch to in this branch. It returns no internal ids.
+- **Inside an app, the roles screen shows only that app's roles**, and a role created there belongs to that app. Inviting a user counts against the user limit of the invited role's app.
 
 ## The licence
 
-One row per customer per app, created automatically at signup:
+One row per customer per app (`GET /api/customers/{id}/licenses/apps` lists them), created automatically at signup:
 
 | Field | Trial default |
 |---|---|

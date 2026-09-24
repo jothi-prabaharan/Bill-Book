@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -20,6 +21,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/journals")]
+[RequireApp(App.RetailErp)]
 public sealed class JournalsController : ControllerBase
 {
     private readonly JournalService _journals;

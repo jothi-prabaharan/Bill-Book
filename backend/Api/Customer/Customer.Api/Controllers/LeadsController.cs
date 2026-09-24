@@ -10,6 +10,7 @@ using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Validation;
+using Shared.Kernel.Apps;
 
 namespace Customer.Api.Controllers;
 
@@ -21,6 +22,7 @@ namespace Customer.Api.Controllers;
 // role held. The schema merged; the permissions did not.
 [RequireModulePermission("crm")]
 [Route("api/leads")]
+[RequireApp(App.RetailErp)]
 public sealed class LeadsController : ControllerBase
 {
     private readonly CustomerDbContext _db;

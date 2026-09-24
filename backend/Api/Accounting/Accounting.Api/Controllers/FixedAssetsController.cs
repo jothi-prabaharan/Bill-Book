@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -14,6 +15,7 @@ namespace Accounting.Api.Controllers;
 [Route("api/accounting/fixed-assets")]
 [Authorize]
 [RequireModulePermission("accounting")]
+[RequireApp(App.RetailErp)]
 public sealed class FixedAssetsController : ControllerBase
 {
     private readonly FixedAssetService _assets;

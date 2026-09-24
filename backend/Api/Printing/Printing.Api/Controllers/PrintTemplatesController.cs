@@ -4,6 +4,7 @@ using Printing.Api.Services;
 using Printing.Entity.Models;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Printing;
+using Shared.Kernel.Apps;
 
 namespace Printing.Api.Controllers;
 
@@ -29,6 +30,7 @@ namespace Printing.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/print-templates")]
+[RequireApp(App.All)]
 public sealed class PrintTemplatesController : ControllerBase
 {
     private readonly PrintTemplateService _templates;

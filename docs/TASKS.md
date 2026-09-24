@@ -2075,27 +2075,30 @@ None of it is built.
   - The migration re-applies the seed as 257 `UpdateData` calls. These are plain column updates, so none of them can collide the way TK-70's did.
 
 ### TK-43 · H0.2: per-app sign-in and licences
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-42 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-MST, L-KERNEL (+ one attribute line on every service's controllers) · **Depends on:** TK-42 · **Decision:** —
 - **Where:**
-  - `backend/Api/Master/Master.Entity/Models/AuthModels.cs` (`SelectOrganizationRequest`)
-  - `Master.Api/Services/{AuthService,JwtTokenService,LicenseService}.cs`
-  - `backend/shared/Shared.Kernel/Internal/{RequireModulePermissionAttribute,EndpointGuardAudit}.cs`
+  - `backend/Api/Master/Master.Entity/Models/{AuthModels,LicenseModels,SessionContextModels}.cs`
+  - `Master.Api/Services/{AuthService,JwtTokenService,OrgContextService,LicenseService,UserService,RoleService,OrganizationService}.cs`
+  - `Master.Api/Controllers/{AuthController,MeController,LicensesController,RolesController}.cs`
+  - `backend/shared/Shared.Kernel/Internal/{RequireAppAttribute,EndpointGuardAudit}.cs`
 - **Sub-tasks:**
-  - [ ] Add `App` to the login request and to `SelectOrganizationRequest`, and filter the branch
-        list to branches where the user holds a role in that app.
-  - [ ] `JwtTokenService` adds an `app` claim, the licence claims for that app, and permissions
-        from that app's roles only. The refresh-token family is per app.
-  - [ ] Add a `[RequireApp(App …)]` attribute in `Shared.Kernel.Internal`, and add an
-        `EndpointGuardAudit` question that every controller names its apps. Mark all existing
-        controllers `RetailErp`, and Master's shared ones with all four.
-  - [ ] Add `GET api/me/context`: name, branch, app, licence status and expiry, and permissions,
-        with no internal ids.
-  - [ ] Test: an HRMS token calling a RetailErp route gets 403.
-  - [ ] Test: an expired RetailErp licence leaves a Payroll token working.
+  - [x] Add `App` to the login request and to `SelectOrganizationRequest` (by name, optional: none means RetailErp at sign-in and the caller's app on a switch). Filter the branch list to branches where the user holds a role in that app.
+  - [x] `JwtTokenService` adds an `app` claim, the licence claims for that app, and permissions
+        from that app's roles only (the union of every role the user holds there). The refresh-token family is per app: `RefreshToken.App` is minted and carried through rotation.
+  - [x] Add a `[RequireApp(App …)]` attribute in `Shared.Kernel.Internal`, and add an
+        `EndpointGuardAudit` question (`WithoutApp`) that every controller names its apps. Mark all existing controllers `RetailErp`, and Master's shared ones with all four. `All` also covers Accounting's numbering series and Printing's templates and render. Contacts are `RetailErp | School`. Internal-only controllers need none. **A token with no `app` claim is RetailErp** (old tokens, API keys, portal tokens).
+  - [x] Add `GET api/me/context`: name, email, branch name and code, app, licence status and expiry, permissions, and the apps the user can switch to in this branch, with no internal ids. It is an exemption in Master's guard audit, beside the menu.
+  - [x] Test: an HRMS token calling a RetailErp route gets 403 (`Shared.Kernel.Tests.RequireAppTests`).
+  - [x] Test: an expired RetailErp licence leaves a Payroll token working (`Master.Api.Tests.PerAppSignInTests`).
 - **Done when:** an HRMS token calling a RetailErp endpoint gets 403; a Payroll token reads
   employees but not recruitment; and an expired RetailErp licence leaves Payroll working.
 - **Notes:**
+  - "A Payroll token reads employees but not recruitment" is tested on the attribute (`Hrms | Payroll` against `Hrms`). The Hrm controllers come with TK-48.
+  - **Licences per app:** `OrgContextService.ResolveAsync(orgId, ct, app)` reads that app's licence with a left join. No licence gives the new `LicenseStatus.NotLicensed`, and the branch still resolves, because services read its GSTIN and address from here. The customer row is stamped Expired only when every licence has lapsed. `LicenseService` and `LicensesController` are per app (`?app=`, and `GET …/licenses/apps` lists them all). An invitation counts against the user limit of the invited role's app. The branch cap uses the most generous licence.
+  - The roles list, the permission matrix and a new role default to the caller's app.
+  - **Left for TK-44:** `libs/shared/auth`'s `isLicenseExpired` checks only `'Expired'`, so a `Suspended` or `NotLicensed` token passes the web guard. TK-44 rewrites the guard over `api/me/context`.
+  - Nothing sends `app` from the frontend yet. `apps/web` signs in as RetailErp by default, which is correct.
 
 ### TK-44 · H0.3: shell, page validation and shared master pages
 - [ ] open

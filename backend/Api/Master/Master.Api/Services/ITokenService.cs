@@ -33,6 +33,9 @@ public sealed class AccessTokenRequest
 
     public required Guid OrgId { get; init; }
 
+    /// <summary>The app the token is for; written as the <c>app</c> claim (TK-43).</summary>
+    public Shared.Kernel.Apps.App App { get; init; } = Shared.Kernel.Apps.App.RetailErp;
+
     /// <summary>
     /// The single role this user holds in this organization. A user has exactly
     /// one per branch, which is what makes a per-role period lock resolve to one

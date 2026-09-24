@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -30,6 +31,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("settings")]
 [Route("api/master/api-clients")]
+[RequireApp(App.All)]
 public class ApiClientsController : ControllerBase
 {
     private readonly ContactsDbContext _context;

@@ -5,6 +5,7 @@ using Sales.Api.Services;
 using Sales.Api.Services.Printing;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Sales.Api.Controllers;
 
@@ -12,6 +13,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/invoices")]
+[RequireApp(App.RetailErp)]
 public sealed class InvoicesController : ControllerBase
 {
     private readonly IInvoiceService _service;

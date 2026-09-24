@@ -40,6 +40,11 @@ public sealed class JwtTokenService : ITokenService
             new("customer_id", request.CustomerId.ToString()),
             new("customer_code", request.CustomerCode),
             new("org_id", request.OrgId.ToString()),
+
+            // The one app this token is for (TK-43). Every service's
+            // [RequireApp] reads it; its permissions and licence claims are
+            // that app's only.
+            new(Shared.Kernel.Internal.RequireAppAttribute.ClaimType, request.App.ToString()),
             new("display_name", request.DisplayName),
             new("license_status", request.LicenseStatus),
 

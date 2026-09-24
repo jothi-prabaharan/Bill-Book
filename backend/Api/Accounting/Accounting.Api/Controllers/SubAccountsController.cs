@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/sub-accounts")]
+[RequireApp(App.RetailErp)]
 public sealed class SubAccountsController : ControllerBase
 {
     private readonly SubAccountService _subAccounts;

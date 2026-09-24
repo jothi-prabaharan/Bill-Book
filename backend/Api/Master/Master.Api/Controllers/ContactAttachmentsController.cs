@@ -4,6 +4,7 @@ using Master.Entity.TableEntities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -17,6 +18,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/contacts")]
+[RequireApp(App.RetailErp | App.School)]
 public sealed class ContactAttachmentsController : ControllerBase
 {
     private readonly ContactAttachmentService _attachments;

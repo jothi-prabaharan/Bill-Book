@@ -8,6 +8,7 @@ using Shared.Kernel.Customer;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using System.ComponentModel.DataAnnotations;
+using Shared.Kernel.Apps;
 
 namespace Customer.Api.Controllers;
 
@@ -17,6 +18,7 @@ namespace Customer.Api.Controllers;
 // half of this service, and support.* is what the catalogue actually seeds.
 [RequireModulePermission("support")]
 [Route("api/tickets")]
+[RequireApp(App.RetailErp)]
 public sealed class TicketsController : ControllerBase
 {
     private readonly CustomerDbContext _db;

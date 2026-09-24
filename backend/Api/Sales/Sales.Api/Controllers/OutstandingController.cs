@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Sales.Api.Controllers;
 
@@ -9,6 +10,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/outstanding")]
+[RequireApp(App.RetailErp)]
 public class OutstandingController : ControllerBase
 {
     private readonly OutstandingService _outstanding;

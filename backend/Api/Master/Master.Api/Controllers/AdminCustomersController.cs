@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Master.Api.Services;
 using Master.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/admin/customers")]
+[RequireApp(App.All)]
 public sealed class AdminCustomersController : ControllerBase
 {
     private readonly SignupService _signup;

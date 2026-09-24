@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Purchase.Api.Services;
 using Purchase.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Purchase.Api.Controllers;
 
@@ -14,6 +15,7 @@ namespace Purchase.Api.Controllers;
 [Authorize]
 [RequireModulePermission("purchase")]
 [Route("api/purchase/bills")]
+[RequireApp(App.RetailErp)]
 public sealed class BillsController : ControllerBase
 {
     private readonly BillService _bills;

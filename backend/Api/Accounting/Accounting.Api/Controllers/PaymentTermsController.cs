@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/payment-terms")]
+[RequireApp(App.RetailErp)]
 public sealed class PaymentTermsController : ControllerBase
 {
     private readonly PaymentTermService _terms;

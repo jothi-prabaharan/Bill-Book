@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Ordering;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Master.Api.Controllers;
 [Authorize]
 [RequireModulePermission("contacts")]
 [Route("api/contact-person-roles")]
+[RequireApp(App.RetailErp | App.School)]
 public sealed class ContactPersonRolesController : ControllerBase
 {
     private readonly ContactPersonRoleService _roles;

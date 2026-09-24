@@ -67,14 +67,28 @@ public sealed class UserService
     public async Task<InviteUserResult> InviteAsync(
         Guid orgId, Guid? customerId, InviteUserRequest request, CancellationToken ct)
     {
-        OrgContextResponse? org = await _orgs.ResolveAsync(orgId, ct);
+        // The role decides the app, and the app decides which licence's user
+        // limit applies (TK-43): a user counts once per app they hold a role in.
+        Shared.Kernel.Apps.App app = await _db.Roles
+            .Where(r => r.RoleId == request.RoleId)
+            .Select(r => r.App)
+            .FirstOrDefaultAsync(ct);
+        if (app == Shared.Kernel.Apps.App.None)
+        {
+            app = Shared.Kernel.Apps.App.RetailErp;
+        }
+
+        OrgContextResponse? org = await _orgs.ResolveAsync(orgId, ct, app);
         if (org is null)
         {
             return new InviteUserResult(InviteOutcome.OrgNotFound, null);
         }
 
-        int activeUsers = await _db.UserOrganizationRoles
-            .CountAsync(a => a.OrgId == orgId && a.IsActive, ct);
+        int activeUsers = await (
+            from a in _db.UserOrganizationRoles
+            join r in _db.Roles on a.RoleId equals r.RoleId
+            where a.OrgId == orgId && a.IsActive && r.App == app
+            select a.UserId).Distinct().CountAsync(ct);
         if (activeUsers >= org.MaxUsers)
         {
             return new InviteUserResult(InviteOutcome.UserLimitReached, null);
@@ -98,8 +112,13 @@ public sealed class UserService
             _db.Users.Add(user);
         }
 
-        bool alreadyInOrg = await _db.UserOrganizationRoles
-            .AnyAsync(a => a.UserId == user.UserId && a.OrgId == orgId, ct);
+        // Already in this branch in this app. A RetailErp user of the branch can
+        // still be invited to its Payroll.
+        bool alreadyInOrg = await (
+            from a in _db.UserOrganizationRoles
+            join r in _db.Roles on a.RoleId equals r.RoleId
+            where a.UserId == user.UserId && a.OrgId == orgId && r.App == app
+            select a).AnyAsync(ct);
         if (alreadyInOrg && !isNewUser)
         {
             return new InviteUserResult(InviteOutcome.AlreadyMember, user.UserId);

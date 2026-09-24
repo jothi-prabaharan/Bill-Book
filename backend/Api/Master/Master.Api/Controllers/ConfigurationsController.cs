@@ -3,6 +3,7 @@ using Master.Entity.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Master.Api.Controllers;
 
@@ -15,6 +16,7 @@ namespace Master.Api.Controllers;
 [RequireModulePermission("settings")]
 [OrgRouteMustMatchToken]
 [Route("api/organizations/{orgId:guid}/configurations")]
+[RequireApp(App.All)]
 public sealed class ConfigurationsController : ControllerBase
 {
     private readonly ConfigurationService _config;

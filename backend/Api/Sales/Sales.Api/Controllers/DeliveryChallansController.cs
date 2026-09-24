@@ -4,6 +4,7 @@ using Sales.Api.Services.Pdf;
 using Sales.Api.Services;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Sales.Api.Controllers;
 
@@ -31,6 +32,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/delivery-challans")]
+[RequireApp(App.RetailErp)]
 public sealed class DeliveryChallansController : ControllerBase
 {
     private readonly DeliveryChallanService _service;

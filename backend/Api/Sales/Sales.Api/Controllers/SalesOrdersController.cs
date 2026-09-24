@@ -10,6 +10,7 @@ using Sales.Repository;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
+using Shared.Kernel.Apps;
 
 namespace Sales.Api.Controllers;
 
@@ -20,6 +21,7 @@ namespace Sales.Api.Controllers;
 [Authorize]
 [RequireModulePermission("sales")]
 [Route("api/sales/sales-orders")]
+[RequireApp(App.RetailErp)]
 public sealed class SalesOrdersController : ControllerBase
 {
     private const int DefaultPageSize = 50;

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Reporting.Repository;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 using Reporting.Api.Services.Sources; // To reuse SalesRegisterRow if desired
 
 namespace Reporting.Api.Controllers;
@@ -24,6 +25,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports/gst")]
+[RequireApp(App.RetailErp)]
 public class GstController : ControllerBase
 {
     private readonly ReportingDbContext _db;

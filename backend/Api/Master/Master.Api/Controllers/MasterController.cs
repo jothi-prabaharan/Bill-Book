@@ -2,6 +2,8 @@ using Master.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Controllers;
 
@@ -17,6 +19,7 @@ namespace Master.Api.Controllers;
 [ApiController]
 [Authorize]
 [Route("api/master")]
+[RequireApp(App.All)]
 public sealed class MasterController : ControllerBase
 {
     private readonly AdminDbContext _db;

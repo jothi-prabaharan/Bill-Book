@@ -5,6 +5,7 @@ using Reporting.Api.Services;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Apps;
 
 namespace Reporting.Api.Controllers;
 
@@ -24,6 +25,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports")]
+[RequireApp(App.RetailErp)]
 public sealed class ReportsController : ControllerBase
 {
     private readonly ReportCatalogService _catalog;

@@ -100,6 +100,39 @@ public static class EndpointGuardAudit
     }
 
     /// <summary>
+    /// Controllers that do not name the apps they serve (H0.2, TK-43).
+    ///
+    /// Every controller a user token can reach carries
+    /// <see cref="RequireAppAttribute"/>, because a permission shared by several
+    /// apps (<c>settings.view</c>) would otherwise let one app's token into
+    /// another app's screens. A controller marked
+    /// <see cref="InternalOnlyAttribute"/> is called by services with the shared
+    /// key, not by a user, and needs none. An action that carries its own
+    /// declaration counts as named.
+    /// </summary>
+    public static IReadOnlyList<string> WithoutApp(Assembly assembly, params string[] exempt)
+    {
+        var exemptions = exempt.ToHashSet(StringComparer.Ordinal);
+        List<string> open = [];
+
+        foreach (Type controller in Controllers(assembly))
+        {
+            if (exemptions.Contains(controller.Name)
+                || Has<InternalOnlyAttribute>(controller)
+                || Has<RequireAppAttribute>(controller))
+            {
+                continue;
+            }
+
+            open.AddRange(Actions(controller)
+                .Where(a => !Has<RequireAppAttribute>(a) && !Has<InternalOnlyAttribute>(a))
+                .Select(a => $"{controller.Name}.{a.Name}"));
+        }
+
+        return open;
+    }
+
+    /// <summary>
     /// Every module named by a <see cref="RequireModulePermissionAttribute"/> in
     /// the assembly.
     ///

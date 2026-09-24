@@ -109,8 +109,13 @@ public sealed class OrganizationService
 
         int existing = await _db.Organizations.CountAsync(o => o.CustomerId == customerId, ct);
 
+        // The branch cap is RetailErp's and School's (D-12); HRMS and Payroll
+        // count employees instead. With several licences, the most generous
+        // branch cap applies, since a branch is shared by every app (TK-43).
         var licence = await _db.Licenses
             .Where(l => l.CustomerId == customerId)
+            .OrderByDescending(l => l.MaxOrganizations)
+            .ThenByDescending(l => l.ExpiryDate)
             .Select(l => new { l.MaxOrganizations, l.ExpiryDate })
             .FirstOrDefaultAsync(ct);
 

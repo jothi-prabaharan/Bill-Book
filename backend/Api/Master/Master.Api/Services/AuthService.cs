@@ -3,6 +3,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Interfaces;
 
 namespace Master.Api.Services;
@@ -83,7 +84,8 @@ public sealed class AuthService
         });
         await _db.SaveChangesAsync(ct);
 
-        IReadOnlyList<AccessibleOrgDto> orgs = await AccessibleOrgsAsync(user.UserId, ct);
+        App app = AppOrDefault(request.App);
+        IReadOnlyList<AccessibleOrgDto> orgs = await AccessibleOrgsAsync(user.UserId, ct, app);
 
         if (orgs.Count == 0)
         {
@@ -94,7 +96,7 @@ public sealed class AuthService
             ? user.LastAccessedOrgId.Value
             : orgs[0].OrgId;
 
-        TokenResponse tokens = await SelectOrganizationAsync(user.UserId, targetOrgId, ip, userAgent, ct);
+        TokenResponse tokens = await SelectOrganizationAsync(user.UserId, targetOrgId, ip, userAgent, ct, app);
 
         return new LoginResponse
         {
@@ -112,18 +114,25 @@ public sealed class AuthService
     // ---- Step two: pick an org -> access + refresh token ------------------
 
     /// <summary>
-    /// The branches this user may work in. Read at login to offer a choice, and
-    /// again by the switcher — the same list either way, so the two can never
-    /// disagree about what someone has access to.
+    /// The branches this user may work in, in one app. Read at login to offer a
+    /// choice, and again by the switcher — the same list either way, so the two
+    /// can never disagree about what someone has access to.
+    ///
+    /// <b>Only branches where the user holds a role in that app</b> (TK-43). A
+    /// branch where they hold roles in several apps is listed once.
     /// </summary>
     public async Task<IReadOnlyList<AccessibleOrgDto>> AccessibleOrgsAsync(
-        Guid userId, CancellationToken ct)
+        Guid userId, CancellationToken ct, App app = App.RetailErp)
     {
-        var assignments = await (
+        var assignments = (await (
             from uor in _db.UserOrganizationRoles
             join role in _db.Roles on uor.RoleId equals role.RoleId
-            where uor.UserId == userId && uor.IsActive
-            select new { uor.OrgId, RoleName = role.DisplayName }).ToListAsync(ct);
+            where uor.UserId == userId && uor.IsActive && role.App == app && role.IsActive
+            orderby uor.OrgId, role.RoleId
+            select new { uor.OrgId, RoleName = role.DisplayName }).ToListAsync(ct))
+            .GroupBy(a => a.OrgId)
+            .Select(g => g.First())
+            .ToList();
 
         var orgs = new List<AccessibleOrgDto>();
 
@@ -132,7 +141,7 @@ public sealed class AuthService
             // Names live in Platform, so a branch that cannot be resolved is
             // still listed rather than silently dropped — a missing branch is
             // something to see, not to hide.
-            OrgContextResponse? ctx = await _orgs.ResolveAsync(assignment.OrgId, ct);
+            OrgContextResponse? ctx = await _orgs.ResolveAsync(assignment.OrgId, ct, app);
 
             orgs.Add(new AccessibleOrgDto
             {
@@ -146,13 +155,19 @@ public sealed class AuthService
     }
 
     public async Task<TokenResponse> SelectOrganizationAsync(
-        Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct)
+        Guid userId, Guid orgId, string? ip, string? userAgent, CancellationToken ct, App app = App.RetailErp)
     {
         // A fresh sign-in into a branch starts a new family. Nothing links it to
         // whatever chain the previous session was on, which is what makes a
-        // reuse of an old chain detectable rather than merely confusing.
-        return await IssueAsync(userId, orgId, Guid.NewGuid(), ip, userAgent, ct);
+        // reuse of an old chain detectable rather than merely confusing. The
+        // family is per app as well as per branch (TK-43): switching app is a
+        // new sign-in.
+        return await IssueAsync(userId, orgId, app, Guid.NewGuid(), ip, userAgent, ct);
     }
+
+    /// <summary>An app named in a request, or RetailErp when none is named.</summary>
+    public static App AppOrDefault(string? name) =>
+        AppRules.TryParseSingle(name, out App app) ? app : App.RetailErp;
 
     // ---- Refresh: rotation, with reuse detection --------------------------
 
@@ -243,7 +258,7 @@ public sealed class AuthService
 
         try
         {
-            return await IssueAsync(token.UserId, token.OrgId, token.FamilyId, ip, userAgent, ct);
+            return await IssueAsync(token.UserId, token.OrgId, token.App, token.FamilyId, ip, userAgent, ct);
         }
         catch (NoOrganizationAccessException)
         {
@@ -300,19 +315,26 @@ public sealed class AuthService
     private async Task<TokenResponse> IssueAsync(
         Guid userId,
         Guid orgId,
+        App app,
         Guid familyId,
         string? ip,
         string? userAgent,
         CancellationToken ct)
     {
-        UserOrganizationRole? assignment = await _db.UserOrganizationRoles
-            .FirstOrDefaultAsync(u => u.UserId == userId && u.OrgId == orgId && u.IsActive, ct);
-        if (assignment is null)
+        // The roles the user holds in this branch in this app, and only those
+        // (TK-43). A RetailErp role grants nothing to a Payroll token.
+        List<int> roleIds = await (
+            from u in _db.UserOrganizationRoles
+            join r in _db.Roles on u.RoleId equals r.RoleId
+            where u.UserId == userId && u.OrgId == orgId && u.IsActive && r.App == app && r.IsActive
+            orderby r.RoleId
+            select r.RoleId).ToListAsync(ct);
+        if (roleIds.Count == 0)
         {
             throw new NoOrganizationAccessException();
         }
 
-        OrgContextResponse ctx = await _orgs.ResolveAsync(orgId, ct)
+        OrgContextResponse ctx = await _orgs.ResolveAsync(orgId, ct, app)
             ?? throw new NoOrganizationAccessException();
         if (!ctx.DatabaseReady)
         {
@@ -334,8 +356,8 @@ public sealed class AuthService
         List<string> permissions = await (
             from rp in _db.RolePermissions
             join p in _db.Permissions on rp.PermissionId equals p.PermissionId
-            where rp.RoleId == assignment.RoleId && p.Module != PlatformOperatorService.PlatformModule
-            select p.Code).ToListAsync(ct);
+            where roleIds.Contains(rp.RoleId) && p.Module != PlatformOperatorService.PlatformModule
+            select p.Code).Distinct().ToListAsync(ct);
 
         // It comes from the user instead, and only for an operator. Read here,
         // at every issue, so a revoked operator loses it at their next refresh.
@@ -351,7 +373,10 @@ public sealed class AuthService
             CustomerId = ctx.CustomerId,
             CustomerCode = ctx.CustomerCode,
             OrgId = orgId,
-            RoleId = assignment.RoleId,
+            App = app,
+            // The first of the app's roles: the claim names one role, for the
+            // period-lock rule that keys on it.
+            RoleId = roleIds[0],
             DisplayName = user.DisplayName,
             Permissions = permissions,
             LicenseStatus = ctx.LicenseStatus,
@@ -365,6 +390,7 @@ public sealed class AuthService
         {
             UserId = user.UserId,
             OrgId = orgId,
+            App = app,
             FamilyId = familyId,
             TokenHash = hash,
             ExpiresAt = expiresAt,

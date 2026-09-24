@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Apps;
 
 namespace Accounting.Api.Controllers;
 
@@ -16,6 +17,7 @@ namespace Accounting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("accounting")]
 [Route("api/allocations")]
+[RequireApp(App.RetailErp)]
 public sealed class AllocationsController : ControllerBase
 {
     private readonly TenantContext _tenant;
