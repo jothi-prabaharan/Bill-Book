@@ -1980,7 +1980,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - Tests: `Sales.Api.Tests.PosSaleTests` (tender rules, debits after change, a cash sale posting to the drawer with no receivable, short tenders posting nothing, **two concurrent sales of the last unit leaving exactly one**) and two `LedgerPostingServiceTests` for the bank-account leg.
 
 ### TK-40 · POS till screen (T7.2)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-DSK · **Depends on:** TK-79, TK-39, TK-17 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Keyboard-driven: F-keys for tender, quantity, void line and hold.
