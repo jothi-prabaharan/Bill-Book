@@ -133,3 +133,6 @@ public enum SaveBankOutcome
     LedgerUnavailable = 9,
     InvalidValue = 10,
 }
+
+/// <summary>A bank or cash account a till may take money into (TK-39).</summary>
+public sealed record TenderAccountOption(long BankAccountId, string AccountName, string AccountType, bool IsDefault);

@@ -123,12 +123,40 @@ public sealed class LedgerPostingService
             // Named either way: an id from Accounting's own documents, a system
             // name from every other service. Both resolve through the query
             // filter, so neither can reach another branch's chart.
-            Account? account = leg.AccountId is long accountId
-                ? await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId, ct)
-                : leg.AccountSystemName is { Length: > 0 } systemName
-                    ? await _db.Accounts.FirstOrDefaultAsync(
-                        a => a.AccountSystemName == systemName, ct)
-                    : null;
+            // A bank or cash account, named by its own id (TK-39): resolved to
+            // its ledger account through the same query filter, so another
+            // branch's drawer cannot be named.
+            long? bankLedgerAccountId = null;
+            if (leg.BankAccountId is long bankAccountId)
+            {
+                if (leg.AccountId is not null || leg.AccountSystemName is { Length: > 0 })
+                {
+                    return new PostLedgerResult(
+                        PostLedgerOutcome.AccountMissing, 0, 0,
+                        "A leg names its account once: by bank account, by id or by system name.");
+                }
+
+                bankLedgerAccountId = await _db.BankAccounts
+                    .Where(b => b.BankAccountId == bankAccountId && b.IsActive)
+                    .Select(b => b.LedgerAccountId)
+                    .FirstOrDefaultAsync(ct);
+
+                if (bankLedgerAccountId is null)
+                {
+                    return new PostLedgerResult(
+                        PostLedgerOutcome.AccountMissing, 0, 0,
+                        $"Bank or cash account {bankAccountId} is not an active account of this branch.");
+                }
+            }
+
+            Account? account = bankLedgerAccountId is long bankLedger
+                ? await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == bankLedger, ct)
+                : leg.AccountId is long accountId
+                    ? await _db.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId, ct)
+                    : leg.AccountSystemName is { Length: > 0 } systemName
+                        ? await _db.Accounts.FirstOrDefaultAsync(
+                            a => a.AccountSystemName == systemName, ct)
+                        : null;
 
             if (account is null)
             {

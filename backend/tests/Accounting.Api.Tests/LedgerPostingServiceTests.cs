@@ -551,6 +551,84 @@ public class LedgerPostingServiceTests
         Assert.Equal(0, await harness.Db.JournalLedger.CountAsync(l => l.TransactionId == 7005));
     }
 
+    // ── A leg named by bank account (TK-39) ─────────────────────────────
+
+    private static async Task<long> BankAccountAsync(Harness harness, bool active = true)
+    {
+        var bank = new BankAccount
+        {
+            OrgId = harness.Db.CurrentOrgId,
+            AccountName = active ? "Counter cash" : "Old drawer",
+            AccountNumber = "CASH-1",
+            AccountType = Accounting.Entity.Enums.BankAccountType.Cash,
+            LedgerAccountId = harness.BankId,
+            IsActive = active,
+        };
+        harness.Db.BankAccounts.Add(bank);
+        await harness.Db.SaveChangesAsync();
+        return bank.BankAccountId;
+    }
+
+    [SkippableFact]
+    public async Task A_till_tender_named_by_bank_account_posts_to_that_accounts_ledger_account()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        long drawer = await BankAccountAsync(harness);
+
+        PostLedgerResult result = await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "POS",
+            TransactionId = 7101,
+            LedgerDate = new DateOnly(2026, 9, 24),
+            Legs =
+            [
+                Leg(Item, 1, harness.RevenueId, credit: 118m),
+                new LedgerLegRequest
+                {
+                    LedgerTypeId = Control,
+                    LedgerSourceId = DocumentPosting,
+                    BankAccountId = drawer,
+                    DebitAmount = 118m,
+                },
+            ],
+        }, CancellationToken.None);
+
+        Assert.Equal(PostLedgerOutcome.Ok, result.Outcome);
+        Assert.Equal(118m, await harness.Db.JournalLedger
+            .Where(l => l.TransactionTypeCode == "POS" && l.TransactionId == 7101 && l.AccountId == harness.BankId)
+            .SumAsync(l => l.DebitAmount));
+    }
+
+    [SkippableFact]
+    public async Task An_inactive_or_doubly_named_bank_account_leg_is_refused()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        long retired = await BankAccountAsync(harness, active: false);
+        long drawer = await BankAccountAsync(harness);
+
+        PostLedgerRequest Sale(LedgerLegRequest control) => new()
+        {
+            TransactionTypeCode = "POS",
+            TransactionId = 7102,
+            LedgerDate = new DateOnly(2026, 9, 24),
+            Legs = [Leg(Item, 1, harness.RevenueId, credit: 50m), control],
+        };
+
+        PostLedgerResult inactive = await harness.Postings.PostAsync(Sale(new LedgerLegRequest
+        {
+            LedgerTypeId = Control, LedgerSourceId = DocumentPosting, BankAccountId = retired, DebitAmount = 50m,
+        }), CancellationToken.None);
+
+        PostLedgerResult twice = await harness.Postings.PostAsync(Sale(new LedgerLegRequest
+        {
+            LedgerTypeId = Control, LedgerSourceId = DocumentPosting, BankAccountId = drawer,
+            AccountId = harness.ReceivableId, DebitAmount = 50m,
+        }), CancellationToken.None);
+
+        Assert.Equal(PostLedgerOutcome.AccountMissing, inactive.Outcome);
+        Assert.Equal(PostLedgerOutcome.AccountMissing, twice.Outcome);
+    }
+
     private static LedgerLegRequest Leg(
         int ledgerTypeId,
         long detailId,

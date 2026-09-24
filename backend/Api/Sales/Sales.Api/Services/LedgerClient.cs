@@ -292,6 +292,14 @@ public sealed class LedgerLegRequest
     public string? AccountSystemName { get; set; }
 
     /// <summary>
+    /// A bank or cash account of the branch (<c>acc.BankAccounts</c>), in place
+    /// of a system name: where a till tender's money landed (TK-39). Accounting
+    /// resolves it to that account's ledger account and refuses one that is
+    /// not the branch's or not active.
+    /// </summary>
+    public long? BankAccountId { get; set; }
+
+    /// <summary>
     /// Which sub-account under the control account this leg is really about.
     /// 1 = Contact, 2 = Item, 3 = Tax. Sent as a number because Sales does not
     /// reference Accounting's assemblies.

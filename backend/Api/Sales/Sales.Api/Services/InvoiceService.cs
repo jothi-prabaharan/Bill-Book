@@ -33,7 +33,6 @@ public sealed class InvoiceService : IInvoiceService
     private const string SalesRevenueAccount = "Sales Revenue";
     private const string TaxPayableAccount = "Output GST";
     private const string AccountsReceivableAccount = "Accounts Receivable";
-    private const string CashAccount = "Cash";
     private const string RoundOffAccount = "Round Off";
 
     private const int ItemLedgerType = 1;
@@ -1262,18 +1261,40 @@ public sealed class InvoiceService : IInvoiceService
         invoice.Lines = lines;
 
         var legs = new List<GlEntryLegView>();
-        bool isTill = invoice.TillId.HasValue;
 
-        // Debit Accounts Receivable or Cash (CONTROL leg)
-        legs.Add(new GlEntryLegView
+        // The same control side PostAsync writes: each tender's account for a
+        // paid till sale, the customer's receivable otherwise.
+        List<InvoiceTender> tenders = invoice.TillId.HasValue
+            ? await _db.InvoiceTenders.AsNoTracking().Where(t => t.InvoiceId == invoice.InvoiceId)
+                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
+            : [];
+
+        if (tenders.Count > 0)
         {
-            LedgerTypeId = ControlLedgerType,
-            AccountName = isTill ? CashAccount : AccountsReceivableAccount,
-            SubAccountName = isTill ? null : $"Contact {invoice.ContactId}",
-            DebitAmount = invoice.TotalAmount,
-            CreditAmount = 0m,
-            Description = isTill ? "Cash sale" : "Receivable from customer",
-        });
+            foreach ((InvoiceTender tender, decimal debit) in TenderDebits(invoice.TotalAmount, invoice.ChangeAmount ?? 0m, tenders))
+            {
+                legs.Add(new GlEntryLegView
+                {
+                    LedgerTypeId = ControlLedgerType,
+                    AccountName = $"Bank or cash account {tender.BankAccountId}",
+                    DebitAmount = debit,
+                    CreditAmount = 0m,
+                    Description = $"Till sale, {tender.Mode}",
+                });
+            }
+        }
+        else
+        {
+            legs.Add(new GlEntryLegView
+            {
+                LedgerTypeId = ControlLedgerType,
+                AccountName = AccountsReceivableAccount,
+                SubAccountName = $"Contact {invoice.ContactId}",
+                DebitAmount = invoice.TotalAmount,
+                CreditAmount = 0m,
+                Description = "Receivable from customer",
+            });
+        }
 
         // Credit Sales Revenue (ITEM leg)
         decimal netSales = invoice.SubTotal - invoice.DiscountAmount;
@@ -1455,6 +1476,25 @@ public sealed class InvoiceService : IInvoiceService
                 var issueResult = await _inventoryClient.IssueAsync(issueRequest, ct);
                 if (!issueResult.Success)
                 {
+                    // The last unit sold at another till a moment ago is the
+                    // common case, and a cashier needs to know which item (TK-39).
+                    long[] outOfStock = issueResult.Lines
+                        .Where(l => !l.Success && l.Outcome == "InsufficientStock")
+                        .Select(l => l.ItemId)
+                        .Distinct()
+                        .ToArray();
+
+                    if (outOfStock.Length > 0)
+                    {
+                        var names = await _itemNames.ResolveAsync(outOfStock, ct);
+                        string items = string.Join(", ", outOfStock.Select(id =>
+                            names.TryGetValue(id, out var named) ? named.Name : $"item {id}"));
+
+                        return new InvoiceResult(
+                            InvoiceOutcome.InsufficientStock,
+                            Detail: $"Not enough stock of {items} to complete this sale. Nothing was sold.");
+                    }
+
                     return new InvoiceResult(InvoiceOutcome.StockRefused, Detail: "Stock issue failed.");
                 }
 
@@ -1499,19 +1539,46 @@ public sealed class InvoiceService : IInvoiceService
         decimal totalAmount = invoice.TotalAmount;
         decimal totalRevenue = invoice.SubTotal - invoice.DiscountAmount;
 
-        // Debit Accounts Receivable / Cash (CONTROL leg, type 3)
-        postRequest.Legs.Add(new LedgerLegRequest
+        // The CONTROL side (type 3). A paid till sale debits the bank or cash
+        // account each tender landed in (TK-39); anything else, a till sale
+        // with no tenders included, is owed and goes to the customer's
+        // receivable. It used to debit an account named "Cash", which no chart
+        // has, so every till sale was refused at posting.
+        List<InvoiceTender> tenders = invoice.TillId.HasValue
+            ? await _db.InvoiceTenders.Where(t => t.InvoiceId == invoice.InvoiceId)
+                .OrderBy(t => t.InvoiceTenderId).ToListAsync(ct)
+            : [];
+
+        if (tenders.Count > 0)
         {
-            LedgerTypeId = ControlLedgerType,
-            LedgerSourceId = TransactionLedgerSource,
-            TransactionDetailId = 0,
-            AccountSystemName = invoice.TillId.HasValue ? CashAccount : AccountsReceivableAccount,
-            SubAccountReferenceType = invoice.TillId.HasValue ? null : ContactReference,
-            SubAccountReferenceId = invoice.TillId.HasValue ? null : invoice.ContactId,
-            SubAccountPurpose = 0,
-            DebitAmount = totalAmount,
-            TransactionDesc = invoice.TillId.HasValue ? "Cash sale" : "Receivable from customer",
-        });
+            foreach ((InvoiceTender tender, decimal debit) in TenderDebits(totalAmount, invoice.ChangeAmount ?? 0m, tenders))
+            {
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ControlLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = 0,
+                    BankAccountId = tender.BankAccountId,
+                    DebitAmount = debit,
+                    TransactionDesc = $"Till sale, {tender.Mode}",
+                });
+            }
+        }
+        else
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = ControlLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = AccountsReceivableAccount,
+                SubAccountReferenceType = ContactReference,
+                SubAccountReferenceId = invoice.ContactId,
+                SubAccountPurpose = 0,
+                DebitAmount = totalAmount,
+                TransactionDesc = "Receivable from customer",
+            });
+        }
 
         // Credit Sales Revenue (ITEM leg, type 1)
         if (totalRevenue > 0)
@@ -1743,6 +1810,44 @@ public sealed class InvoiceService : IInvoiceService
 
         await _db.SaveChangesAsync(ct);
         return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    /// <summary>
+    /// What each tender debits (TK-39): its amount, except that change handed
+    /// back comes off the cash tenders, in order. The debits add up to the
+    /// invoice total; a set that cannot — change larger than the cash, or
+    /// tenders short of the total — is a bug upstream, refused here rather than
+    /// posted unbalanced.
+    /// </summary>
+    public static IReadOnlyList<(InvoiceTender Tender, decimal Debit)> TenderDebits(
+        decimal total, decimal change, IReadOnlyList<InvoiceTender> tenders)
+    {
+        decimal changeLeft = change;
+        var debits = new List<(InvoiceTender, decimal)>(tenders.Count);
+
+        foreach (InvoiceTender tender in tenders)
+        {
+            decimal debit = tender.Amount;
+            if (tender.Mode == PosTenderMode.Cash && changeLeft > 0m)
+            {
+                decimal taken = Math.Min(debit, changeLeft);
+                debit -= taken;
+                changeLeft -= taken;
+            }
+
+            if (debit > 0m)
+            {
+                debits.Add((tender, debit));
+            }
+        }
+
+        if (changeLeft != 0m || debits.Sum(d => d.Item2) != total)
+        {
+            throw new InvalidOperationException(
+                "The till tenders do not add up to the invoice total after change. The sale was not posted.");
+        }
+
+        return debits;
     }
 
     public Task<InvoiceResult> VoidAsync(long invoiceId, CancellationToken ct) =>

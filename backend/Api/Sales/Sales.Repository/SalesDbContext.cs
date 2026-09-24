@@ -73,6 +73,9 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<InvoiceDetailTax> InvoiceDetailTaxes => Set<InvoiceDetailTax>();
 
+    /// <summary>How a till sale was paid, one row per tender (TK-39).</summary>
+    public DbSet<InvoiceTender> InvoiceTenders => Set<InvoiceTender>();
+
     public DbSet<CreditNote> CreditNotes => Set<CreditNote>();
 
     public DbSet<CreditNoteDetail> CreditNoteDetails => Set<CreditNoteDetail>();
@@ -335,6 +338,18 @@ public class SalesDbContext : TenantDbContext
             });
 
             b.HasIndex(e => new { e.TransactionTypeCode, e.SourceId }).IsUnique();
+        });
+
+        // ---- Till tenders (TK-39) -------------------------------------------
+
+        modelBuilder.Entity<InvoiceTender>(b =>
+        {
+            b.ToTable("InvoiceTenders", t => t.HasCheckConstraint("chk_invoicetender_amount", "\"Amount\" > 0"));
+            b.HasKey(e => e.InvoiceTenderId);
+            b.Property(e => e.Mode).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.Amount).HasPrecision(18, 2);
+            b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
+            b.HasIndex(e => e.InvoiceId);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

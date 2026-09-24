@@ -72,3 +72,11 @@ public enum CreditNoteReason
     /// <summary>The invoice should not have existed and is being cancelled in full.</summary>
     Cancellation = 4,
 }
+
+/// <summary>How a till sale was paid, one per tender line (TK-39).</summary>
+public enum PosTenderMode
+{
+    Cash = 1,
+    Card = 2,
+    Upi = 3,
+}

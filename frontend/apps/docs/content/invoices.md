@@ -95,7 +95,18 @@ The till opens on an empty cart for the branch's **walk-in customer** — the co
 
 A taxable item with no current sales rate in the tax master shows a warning on its line and carries no GST until the rate is fixed.
 
-**Tender, change and the till itself are not built yet**, so checkout does not finish a POS sale. Barcode scanning is not built either.
+### Paying and posting a till sale
+
+`POST api/sales/pos/sales` makes, pays and posts a till sale in one call. It needs the permission that posts an invoice, which the Sales role has. The request holds the lines and one or more **tenders**: cash, card or UPI. Each tender names the bank or cash account the money went into. `GET api/bank-accounts/tender-options` lists those accounts for the till, by name and kind only. It leaves out loan, overdraft and credit card accounts.
+
+- **The tenders must pay the total.** Card and UPI together may pay at most the total. Cash pays the rest, and anything over it is handed back as **change**. A sale whose tenders fall short is refused, and nothing is saved.
+- **A paid till sale owes nothing.** Posting debits each tender's bank or cash account, less the change from cash, rather than the customer's receivable. A till sale saved without tenders is posted as owed, like any invoice.
+- **Stock is taken at once.** If another till sold the last unit a moment earlier, the sale is refused with the item named (409), and the whole sale is undone.
+- The sale takes its number from the branch's `POS` series.
+
+Until this change a till sale could not be posted at all. It debited an account called "Cash", which no chart of accounts has.
+
+The till screen itself (TK-40) and barcode scanning are not built yet.
 
 ## Picking the customer and items
 

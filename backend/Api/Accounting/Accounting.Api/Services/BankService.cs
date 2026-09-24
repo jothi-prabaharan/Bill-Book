@@ -148,6 +148,23 @@ public sealed class BankService
         return SaveBankOutcome.Ok;
     }
 
+    /// <summary>
+    /// The accounts a till may take money into (TK-39): active, linked to a
+    /// ledger account, and not a loan or overdraft. Name and kind only — a
+    /// cashier needs to pick "Counter cash" or "Card terminal", not to see an
+    /// account number or a balance.
+    /// </summary>
+    public async Task<IReadOnlyList<TenderAccountOption>> ListTenderAccountsAsync(CancellationToken ct) =>
+        await _db.BankAccounts.AsNoTracking()
+            .Where(b => b.IsActive && b.LedgerAccountId != null
+                && b.AccountType != BankAccountType.OverDraft
+                && b.AccountType != BankAccountType.CashCredit
+                && b.AccountType != BankAccountType.CreditCard)
+            .OrderBy(b => b.DisplayOrder)
+            .ThenBy(b => b.AccountName)
+            .Select(b => new TenderAccountOption(b.BankAccountId, b.AccountName, b.AccountType.ToString(), b.IsDefault))
+            .ToListAsync(ct);
+
     public async Task<IReadOnlyList<BankAccountListItem>> ListAccountsAsync(
         bool includeInactive, CancellationToken ct)
     {

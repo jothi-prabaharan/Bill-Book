@@ -171,6 +171,17 @@ public class LedgerLegRequest
     public long? AccountId { get; set; }
 
     /// <summary>
+    /// The account as one of the branch's bank or cash accounts
+    /// (<c>acc.BankAccounts</c>), for a caller outside Accounting that knows
+    /// which till drawer or card terminal the money went into but not its
+    /// ledger account (TK-39). Resolved here to the bank account's own ledger
+    /// account; an inactive or unknown one, or one with no ledger account, is
+    /// refused. Never set together with <see cref="AccountSystemName"/> or
+    /// <see cref="AccountId"/>.
+    /// </summary>
+    public long? BankAccountId { get; set; }
+
+    /// <summary>
     /// Set together with <see cref="SubAccountReferenceId"/> to post against the
     /// sub-account under this control account — the item, contact or tax rate the
     /// leg is really about. Left null for legs with no sub-dimension.

@@ -80,6 +80,7 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<PosSaleService>();
 builder.Services.AddScoped<OutstandingService>();
 
 // Resolved from the concrete registration rather than registered separately, so

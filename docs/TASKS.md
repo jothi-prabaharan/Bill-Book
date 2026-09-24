@@ -1953,22 +1953,31 @@ The build cards each design in section E produced. Each design section in `docs/
 ### F · Phase 3: POS
 
 ### TK-39 · POS till API (T7.1)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-SAL · **Depends on:** TK-78, TK-14, TK-10 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-SAL, L-ACC (added 2026-09-24: the tender leg is resolved in Accounting) · **Depends on:** TK-78, TK-14, TK-10 · **Decision:** —
 - **Where:** `InvoiceService.cs` (create and post) and `InventoryClient.IssueAsync`.
 - **State:** a POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'`, and the invoice
   already has the five POS columns, so no new table is needed.
 - **Sub-tasks:**
-  - [ ] Add `POST api/sales/pos/sales`, which creates and posts an invoice in one call, with
+  - [x] Add `POST api/sales/pos/sales`, which creates and posts an invoice in one call, with
         tender lines (cash, card or UPI) that are received against the invoice.
-  - [ ] Decrement stock **synchronously** with the guarded conditional update, and turn "last unit
+  - [x] Decrement stock **synchronously** with the guarded conditional update, and turn "last unit
         gone" into a 409 that names the item.
-  - [ ] Seed a `POS` numbering series in `Sales.Repository.SeedData.NumberingSeriesSeed`.
-  - [ ] Test: two concurrent sales of the last unit: exactly one succeeds.
-  - [ ] Test: tender that doesn't cover the total is refused.
+  - [x] Seed a `POS` numbering series in `Sales.Repository.SeedData.NumberingSeriesSeed`.
+  - [x] Test: two concurrent sales of the last unit: exactly one succeeds.
+  - [x] Test: tender that doesn't cover the total is refused.
 - **Done when:** two concurrent sales of the last unit leave exactly one sale.
 - **Notes:**
   - Dependency on TK-10 added 2026-09-24: the invoice posting POS reuses changes with the provisional-COGS decision; build POS on the corrected posting.
+- **Outcome (2026-09-24):**
+  - **Found: no till sale could ever be posted.** `InvoiceService.PostAsync` debited `AccountSystemName = "Cash"` for a till sale. No seeded account has that system name, because the cash group is "Cash in Hand" and it is locked, so Accounting refused every POS posting with "The chart of accounts has no 'Cash'".
+  - `POST api/sales/pos/sales` (`PosSalesController`, `sales.approve`) → `PosSaleService.SellAsync`: it creates the invoice through `IInvoiceService` (`TillId` set, so the `POS` series), checks the tenders against the computed total, stores them, and posts. The reliability filter's single transaction rolls the whole sale back on any refusal.
+  - **Tenders** are `sal.InvoiceTenders` (migration `AddInvoiceTenders`, with the RLS block): mode (Cash, Card, Upi), amount, `BankAccountId`, reference. Card and UPI may pay at most the total; change is taken from cash (`CheckTenders`, `TenderDebits`, both pure). The invoice's `PaymentMode` is set to the single mode or `Split`, with `TenderedAmount` and `ChangeAmount`.
+  - **Posting:** each tender is a control leg with `BankAccountId`. Accounting's `LedgerLegRequest` gains `BankAccountId`, and `LedgerPostingService` resolves it to the bank account's `LedgerAccountId` through the query filter. It refuses an inactive or unknown account, or a leg that also names an id or a system name. A till sale with no tenders now goes to the receivable instead of the nonexistent "Cash". The GL preview matches.
+  - **Last unit:** Inventory's guarded issue is already synchronous inside the post. A failed issue whose lines say `InsufficientStock` now returns `InvoiceOutcome.InsufficientStock` (409), naming the items, instead of a 400 reading "Stock issue failed" (this applies to ordinary invoices too).
+  - **The POS numbering series was already seeded** (`NumberingSeriesSeed`, id 340), so that sub-task needed no change.
+  - Added `GET api/bank-accounts/tender-options` (Accounting, `sales.view`), so the till can list its tender accounts without banking rights. It returns names and kinds only.
+  - Tests: `Sales.Api.Tests.PosSaleTests` (tender rules, debits after change, a cash sale posting to the drawer with no receivable, short tenders posting nothing, **two concurrent sales of the last unit leaving exactly one**) and two `LedgerPostingServiceTests` for the bank-account leg.
 
 ### TK-40 · POS till screen (T7.2)
 - [ ] open
@@ -1982,6 +1991,7 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Lint and build are clean.
 - **Done when:** a barcode-scanned sale posts from `apps/desktop`.
 - **Notes:**
+  - From TK-39 (2026-09-24): post through `POST api/sales/pos/sales` with `Tenders` (`Mode`, `Amount`, `BankAccountId`, `Reference`); list tender accounts with `GET api/bank-accounts/tender-options`. A 409 names the item that ran out; a 422 means the tenders do not pay the total.
   - From TK-79: the cart is `pos-cart.ts` (pure) plus signals in `pos-terminal.component.ts`.
     `checkout()` still posts the scaffold's plain draft invoice; replace it with TK-39's endpoint.
     Two open questions to settle here: a `WALKIN` contact is not seeded anywhere, and a
