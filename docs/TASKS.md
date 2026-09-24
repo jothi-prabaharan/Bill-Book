@@ -1441,7 +1441,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Checks: `npm run typecheck` clean; `nx run-many -t lint` 32 projects clean (an `nx reset` was needed first, because the project graph cache hid the ninth lib); `nx run-many -t build` all 5 apps clean. There are no specs in the moved folders.
 
 ### TK-29 · API clients get per-action permissions through their role (D-07)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** — · **Decision:** D-07 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/ApiClient.cs` (`RoleId`, stored but unused), `Master.Api/Controllers/InternalApiKeysController.cs` (validation), `backend/shared/Shared.Kernel/Security/ApiKeyAuthenticationHandler.cs:43-47`.
 - **State:** a validated API key produces `customer_id`, `org_id`, `sub`, `name` and `role = ApiClient` — **no `permission` claims**, so every `[RequireModulePermission]` endpoint refuses it.
