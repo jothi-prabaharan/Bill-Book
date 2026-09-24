@@ -1,7 +1,7 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/*.{js,css,ico,png,svg,woff,woff2,json,md}", "/content/*"]
+    "exclude": ["/assets/*", "/*.{js,css,ico,png,svg,woff,woff2,json,md,webmanifest}", "/content/*"]
   },
   "routes": [
     {
@@ -23,6 +23,7 @@
     "x-frame-options": "DENY"
   },
   "mimeTypes": {
-    ".md": "text/markdown"
+    ".md": "text/markdown",
+    ".webmanifest": "application/manifest+json"
   }
 }

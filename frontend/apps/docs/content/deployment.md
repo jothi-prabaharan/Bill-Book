@@ -108,6 +108,15 @@ What the PC takes on that Azure would have done:
 - **Secrets live in one file**, written by the setup script. Losing it means a
   backup cannot be restored.
 
+## Installing the web app on a PC
+
+Chrome and Edge offer to install the web app — an **Install** button at the right
+of the address bar — wherever it is served over HTTPS, or from `localhost` on the
+PC running it. The installed app opens in its own window with its own taskbar
+icon, and is the same site underneath: nothing is stored on the PC, and every
+deployment reaches it on its next start. It has no offline mode, by design —
+every screen reads live books.
+
 ## What is not set up yet
 
 - Monitoring and alerts

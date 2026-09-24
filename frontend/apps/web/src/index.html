@@ -7,6 +7,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/png" href="assets/bill-book-mark.png" />
     <!--
+      Makes the app installable: Chrome and Edge show an "Install" button in the
+      address bar, and the installed app opens in its own window with its own
+      taskbar icon. Deliberately no service worker — the app is useless offline
+      (every screen reads live books), and a cached copy of an old build is a
+      worse failure than a page that says it cannot connect.
+    -->
+    <link rel="manifest" href="manifest.webmanifest" />
+    <meta name="theme-color" content="#f3f2f2" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <!--
       Deployment settings, read before the application starts. The file shipped
       with the build sets nothing, so the app uses its built-in defaults; a
       deployment replaces it with one naming the API origin. A classic script in
