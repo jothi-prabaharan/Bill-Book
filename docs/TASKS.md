@@ -1110,7 +1110,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-19 · Notification.Worker takes over email from Master
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-NTF, L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/EmailQueue.cs`: `IEmailQueue`, `InProcessEmailQueue`,
