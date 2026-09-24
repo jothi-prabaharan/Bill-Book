@@ -271,7 +271,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       database).
 
 ### TK-02 · RLS for `pur`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-PUR · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Purchase/Purchase.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Purchase.Api.Tests/PurchaseQueryFilterTests.cs:140`.
@@ -279,11 +279,24 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   DebitNoteDetails, DebitNotes, ErrorLogs, GoodsReceiptDetailTaxes, GoodsReceiptDetails,
   GoodsReceipts, PurchaseOrderDetailTaxes, PurchaseOrderDetails, PurchaseOrders`.
 - **Sub-tasks:**
-  - [ ] Write the migration using TK-71's template.
-  - [ ] Check `PurchaseSeeder`, which uses `IgnoreQueryFilters`.
+  - [x] Write the migration using TK-71's template.
+  - [x] Check `PurchaseSeeder`, which uses `IgnoreQueryFilters`.
   - [ ] Owner: run the suite from a dropped `PURCHASE_TEST_DB`.
 - **Done when:** `pur`'s RLS assertion passes from a dropped database.
 - **Notes:**
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - `Purchase.Repository/Migrations/Tenant/20260924061415_EnableRowLevelSecurity.cs`, TK-71's
+      template over the 13 tables listed above; every one carries `CustomerId` and `OrgId`.
+    - `PurchaseSeeder`'s `IgnoreQueryFilters()` read filters on the org its endpoint sets as the
+      tenant, and the table it reads (`acc.NumberingSeries`) is already under TK-71's policy, so RLS
+      leaves it working. No other `IgnoreQueryFilters` and no hand-built `PurchaseDbContext`.
+    - Applied by hand, as a `NOSUPERUSER NOBYPASSRLS` owner, to a scratch database built from the
+      scripted chain: every tenant table ENABLEd, FORCEd and on the NULLIF policy, and a query with
+      the tenant set to `''` returned 0 rows without throwing. `has-pending-model-changes` is clean
+      and `dotnet build backend/Bill-Book.sln` has 0 warnings.
+    - The audit call now exempts `__EFMigrationsHistory`, as `acc` and `inv` do.
+    - **Test written:** `backend/tests/Purchase.Api.Tests/PurchaseRowLevelSecurityTests.cs` (four
+      tests, role `pur_rls_probe`).
 
 ### TK-03 · RLS for `sal`
 - [~] working (Claude Opus 5.5) — since 2026-09-24

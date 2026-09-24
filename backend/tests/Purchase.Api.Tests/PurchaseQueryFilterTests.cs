@@ -137,6 +137,11 @@ public sealed class PurchaseQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "pur")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "pur",
+                    // EF's own bookkeeping, no tenant column. Purchase keeps it in
+                    // pur in a deployed database; a fixture may leave it in public.
+                    "__EFMigrationsHistory")));
     }
 }
