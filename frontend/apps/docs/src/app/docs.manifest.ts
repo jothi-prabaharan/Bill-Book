@@ -57,7 +57,10 @@ export const DOCS: DocSection[] = [
     title: 'People',
     // HRMS and Payroll share the employee master; leave, attendance and pay
     // join this section as each stage is built.
-    pages: [{ slug: 'people', title: 'Employees', status: 'partial' }],
+    pages: [
+      { slug: 'people', title: 'Employees', status: 'partial' },
+      { slug: 'payroll', title: 'Payroll', status: 'built' },
+    ],
   },
   {
     title: 'Releases',

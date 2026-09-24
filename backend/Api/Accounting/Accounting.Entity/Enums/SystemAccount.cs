@@ -100,6 +100,12 @@ public enum SystemAccount
     /// asset sale is not trading, and folding it in would flatter the margin.
     /// </summary>
     AssetDisposalGainLoss = 19,
+
+    /// <summary>Salaries, wages, allowances and payroll expenses (Expense).</summary>
+    PayrollExpense = 20,
+
+    /// <summary>Unpaid net salaries and payroll payable (Liability).</summary>
+    SalaryPayable = 21,
 }
 
 /// <summary>
@@ -130,6 +136,8 @@ public static class SystemAccountNames
         SystemAccount.SalesReturns => "Sales Returns",
         SystemAccount.RoundOff => "Round Off",
         SystemAccount.AssetDisposalGainLoss => "Gain/Loss on Asset Disposal",
+        SystemAccount.PayrollExpense => "Payroll Expense",
+        SystemAccount.SalaryPayable => "Salary Payable",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "payroll-core",
+  "projectType": "library",
+  "sourceRoot": "libs/payroll/payroll-core/src",
+  "tags": [
+    "scope:payroll",
+    "type:core"
+  ],
+  "targets": {}
+}

@@ -2294,27 +2294,38 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:**
 
 ### TK-51 · H4: Payroll core (`Payroll`, `pay`, port 4511)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-PAY (new) · **Depends on:** TK-48 · **Decision:** —
 - **Tables:**
   - Setup: `PayGroup`, `SalaryComponent`, `SalaryStructure`, `EmployeeSalary`, `SalaryRevision`,
     `OneTimePayment`, `SalaryHold`, `EmployeeLoan`, `LoanRepayment`, `MonthlyAttendanceInput`.
   - The run: `PayrollRun`, `Payslip`, `PayslipLine`.
 - **Sub-tasks:**
-  - [ ] Scaffold `Payroll`.
-  - [ ] Components and structures, with formulas over earnings and deductions.
-  - [ ] Revisions with arrears paid in the next run.
-  - [ ] Paid days come from `tla` when HRMS is licensed, and from `MonthlyAttendanceInput` when
+  - [x] Scaffold `Payroll`.
+  - [x] Components and structures, with formulas over earnings and deductions.
+  - [x] Revisions with arrears paid in the next run.
+  - [x] Paid days come from `tla` when HRMS is licensed, and from `MonthlyAttendanceInput` when
         not. Record the source on the run.
-  - [ ] A run moves through `process` → `approve` → `post` → `markpaid`, or `reverse`. Posting
+  - [x] A run moves through `process` → `approve` → `post` → `markpaid`, or `reverse`. Posting
         sends one balanced journal through Accounting's internal API: Dr Payroll Expense, Cr
         Salary Payable and the deductions.
-  - [ ] Bank file export and journal export (Tally XML and CSV).
-  - [ ] Payslips come from a print template.
+  - [x] Bank file export and journal export (Tally XML and CSV).
+  - [x] Payslips come from a print template.
 - **Done when:** a run posts one balanced journal; Salary Payable ties to the unpaid net; a
   back-dated revision pays arrears in the next run; a reversal restores both; and the run reads
   monthly input without an HRMS licence and `tla` with one.
 - **Notes:**
+  - Done (Antigravity, 2026-09-25):
+    - Scaffolded `Payroll.Api`, `Payroll.Entity`, `Payroll.Repository` on port 4511, mapped to schema `pay` with 14 entities and EF Core migration containing RLS policies.
+    - Added `PayrollCalculationEngine` handling component evaluation (flat, percentage, formula expressions), attendance pro-rating, one-time payments, loan deductions, and back-dated salary revision arrears.
+    - Added `SalarySetupService`, `PayrollAdjustmentService`, `PayrollRunService`, and controllers for salary components, structures, employee salaries, adjustments, and run lifecycles.
+    - Integrated with Accounting `internal/ledger/postings`: posting writes balanced journal (Dr Payroll Expense / Cr Salary Payable & deductions), and reversal clears postings.
+    - Added `InternalSeedController` to idempotently seed default pay group and basic components.
+    - Seeded `SystemAccount.PayrollExpense` and `SystemAccount.SalaryPayable` in `Accounting.Entity` and `ChartOfAccountsSeed`.
+    - Added `payroll` module permissions in `AdminDbContext.cs`.
+    - Created frontend `libs/payroll/payroll-core` and `libs/payroll/payroll-ui`, with components page, runs list, and run detail view. Registered in `apps/payroll` and verified `nx build payroll`.
+    - Updated documentation in `docs.manifest.ts`, `content/payroll.md`, and `content/releases.md`.
+    - **Tests written**: `backend/tests/Payroll.Api.Tests` (`PayrollSchemaTests.cs`, `EndpointGuardTests.cs`, `PayrollServiceTests.cs`). Full backend solution builds with 0 errors and 0 warnings.
 
 ### TK-52 · H5: Statutory (`pay`)
 - [ ] open

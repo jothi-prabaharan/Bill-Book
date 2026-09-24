@@ -71,6 +71,10 @@ public static class ChartOfAccountsSeed
         // A disposal's gain or loss — what the asset fetched against what it
         // still stood at. Either side, like the FX accounts beside it.
         Account(orgId, "4920", SystemAccount.AssetDisposalGainLoss, Income, isJe: true),
+
+        // Payroll accounts (TK-51): Dr Payroll Expense / Cr Salary Payable
+        Account(orgId, "2120", SystemAccount.SalaryPayable, Liability),
+        Account(orgId, "5300", SystemAccount.PayrollExpense, Expense, isPurchase: true),
     ];
 
     // There are deliberately no separate advance control accounts. A contact's

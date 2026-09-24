@@ -58,6 +58,8 @@
       "@bill-book/reporting-ui": ["libs/reporting/reporting-ui/src/index.ts"],
       "@bill-book/sales-core": ["libs/sales/sales-core/src/index.ts"],
       "@bill-book/sales-ui": ["libs/sales/sales-ui/src/index.ts"],
+      "@bill-book/payroll-core": ["libs/payroll/payroll-core/src/index.ts"],
+      "@bill-book/payroll-ui": ["libs/payroll/payroll-ui/src/index.ts"],
       "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
       "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"]
     }

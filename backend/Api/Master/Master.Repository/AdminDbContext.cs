@@ -651,6 +651,9 @@ public class AdminDbContext : DbContext
 
         // H1 (TK-48). Appended, so every existing permission keeps its id.
         "employee", "hrm",
+
+        // H4 (TK-51).
+        "payroll",
     };
 
     /// <summary>
@@ -693,6 +696,9 @@ public class AdminDbContext : DbContext
 
         // Lifecycle, letters, assets and announcements are HRMS's own.
         "hrm" => App.Hrms,
+
+        // Payroll core, statutory, tax, runs (TK-51).
+        "payroll" => App.Payroll,
         _ => App.RetailErp,
     };
 

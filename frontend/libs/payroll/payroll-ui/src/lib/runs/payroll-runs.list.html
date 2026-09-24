@@ -1,0 +1,48 @@
+<div class="page-head">
+  <h1>Payroll Runs</h1>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <input type="month" [(ngModel)]="selectedMonth" class="form-control" />
+    <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="processRun()">Process Pay Run</button>
+  </div>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Month</th>
+        <th>Status</th>
+        <th>Employees</th>
+        <th>Gross Earnings</th>
+        <th>Deductions</th>
+        <th>Net Pay</th>
+        <th>Source</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (run of runs(); track run.payrollRunId) {
+        <tr>
+          <td><strong>{{ run.month | slice:0:7 }}</strong></td>
+          <td>
+            <span class="badge status-{{ run.status.toLowerCase() }}">{{ run.status }}</span>
+          </td>
+          <td>{{ run.employeeCount }}</td>
+          <td>₹{{ run.totalGrossEarnings | number:'1.2-2' }}</td>
+          <td>₹{{ run.totalGrossDeductions | number:'1.2-2' }}</td>
+          <td><strong>₹{{ run.totalNetPay | number:'1.2-2' }}</strong></td>
+          <td>{{ run.daysSource }}</td>
+          <td>
+            <a [routerLink]="['/payroll/runs', run.payrollRunId]" class="btn btn-link">View Details</a>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="8" class="text-center">No payroll runs processed yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,59 @@
+<div class="page-head">
+  <h1>Salary Components</h1>
+  <button type="button" class="btn btn-primary" (click)="startAdd()">+ New Component</button>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Kind</th>
+        <th>Value Type</th>
+        <th>Taxable</th>
+        <th>Formula</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.salaryComponentId) {
+        <tr>
+          <td><strong>{{ row.name }}</strong></td>
+          <td>{{ row.kind }}</td>
+          <td>{{ row.valueType }}</td>
+          <td>{{ row.isTaxable ? 'Yes' : 'No' }}</td>
+          <td>{{ row.formula || '-' }}</td>
+          <td>
+            <button type="button" class="btn btn-link" (click)="startEdit(row)">Edit</button>
+            <button type="button" class="btn btn-link text-danger" (click)="deleteRow(row.salaryComponentId)">Delete</button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td colspan="6" class="text-center">No salary components created yet.</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editingId() !== undefined) {
+  <div class="sheet">
+    <h3>{{ editingId() === null ? 'New Salary Component' : 'Edit Salary Component' }}</h3>
+    <div class="fields">
+      <bb-text-input label="Name" [(ngModel)]="form.name" required />
+      <bb-select label="Kind" [options]="kinds" [(ngModel)]="form.kind" />
+      <bb-select label="Value Type" [options]="valueTypes" [(ngModel)]="form.valueType" />
+      <bb-checkbox label="Is Taxable" [(ngModel)]="form.isTaxable" />
+      @if (form.valueType === 'Formula') {
+        <bb-text-input label="Formula (e.g. 0.5 * BASIC)" [(ngModel)]="form.formula" />
+      }
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-secondary" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="save()">Save</button>
+    </div>
+  </div>
+}

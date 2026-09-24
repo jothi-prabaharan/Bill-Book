@@ -76,6 +76,15 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
+builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Accounting:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4502");
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+builder.Services.AddScoped<SalarySetupService>();
+builder.Services.AddScoped<PayrollAdjustmentService>();
+builder.Services.AddScoped<PayrollRunService>();
 builder.Services.AddScoped<PayrollSeeder>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

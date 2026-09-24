@@ -1,0 +1,73 @@
+<div class="page-head">
+  <div>
+    <a routerLink="/payroll/runs" class="btn btn-link">← Back to Runs</a>
+    <h1>Payroll Run: {{ run()?.month | slice:0:7 }}</h1>
+  </div>
+  <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+    @if (run()?.status === 'Processed') {
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="approve()">Approve Run</button>
+    }
+    @if (run()?.status === 'Approved') {
+      <button type="button" class="btn btn-success" [disabled]="busy()" (click)="post()">Post to Accounting</button>
+    }
+    @if (run()?.status === 'Posted') {
+      <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="markPaid()">Mark as Paid</button>
+      <button type="button" class="btn btn-danger" [disabled]="busy()" (click)="reverse()">Reverse Posting</button>
+      <a [href]="'/api/payroll/runs/' + runId + '/export/bank'" download class="btn btn-secondary">Bank File</a>
+      <a [href]="'/api/payroll/runs/' + runId + '/export/tally'" download class="btn btn-secondary">Tally XML</a>
+    }
+  </div>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (run(); as r) {
+  <div class="sheet" style="margin-bottom: 16px;">
+    <div class="fields">
+      <div><strong>Status:</strong> <span class="badge status-{{ r.status.toLowerCase() }}">{{ r.status }}</span></div>
+      <div><strong>Employees:</strong> {{ r.employeeCount }}</div>
+      <div><strong>Total Gross:</strong> ₹{{ r.totalGrossEarnings | number:'1.2-2' }}</div>
+      <div><strong>Total Deductions:</strong> ₹{{ r.totalGrossDeductions | number:'1.2-2' }}</div>
+      <div><strong>Total Net Pay:</strong> ₹{{ r.totalNetPay | number:'1.2-2' }}</div>
+      <div><strong>Days Source:</strong> {{ r.daysSource }}</div>
+    </div>
+  </div>
+
+  <h3>Employee Payslips</h3>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee ID</th>
+          <th>Paid Days</th>
+          <th>Gross Earnings</th>
+          <th>Gross Deductions</th>
+          <th>Net Pay</th>
+          <th>Lines</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (slip of payslips(); track slip.payslipId) {
+          <tr>
+            <td><strong>#{{ slip.employeeId }}</strong></td>
+            <td>{{ slip.paidDays }}</td>
+            <td>₹{{ slip.grossEarnings | number:'1.2-2' }}</td>
+            <td>₹{{ slip.grossDeductions | number:'1.2-2' }}</td>
+            <td><strong>₹{{ slip.netPay | number:'1.2-2' }}</strong></td>
+            <td>
+              <small>
+                @for (line of slip.lines; track line.payslipLineId) {
+                  <div>{{ line.componentName }}: ₹{{ line.amount | number:'1.2-2' }} ({{ line.kind }})</div>
+                }
+              </small>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" class="text-center">No payslips found for this run.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
