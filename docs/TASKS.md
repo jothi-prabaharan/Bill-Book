@@ -2294,7 +2294,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:**
 
 ### TK-51 · H4: Payroll core (`Payroll`, `pay`, port 4511)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-PAY (new) · **Depends on:** TK-48 · **Decision:** —
 - **Tables:**
   - Setup: `PayGroup`, `SalaryComponent`, `SalaryStructure`, `EmployeeSalary`, `SalaryRevision`,
