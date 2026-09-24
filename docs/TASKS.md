@@ -1554,7 +1554,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-110 (definitions and validator), TK-111 (contacts and items), TK-112 (documents, carry-forward, print), TK-113 (datasets and builder), TK-114 (scheduled email). No decision needed.
 
 ### TK-37 · Design: compliance bundle
-- [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 
 ---
 
