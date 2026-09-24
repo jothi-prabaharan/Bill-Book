@@ -2075,7 +2075,7 @@ None of it is built.
   - The migration re-applies the seed as 257 `UpdateData` calls. These are plain column updates, so none of them can collide the way TK-70's did.
 
 ### TK-43 · H0.2: per-app sign-in and licences
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** TK-42 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Entity/Models/AuthModels.cs` (`SelectOrganizationRequest`)
