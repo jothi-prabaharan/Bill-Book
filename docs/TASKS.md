@@ -1246,8 +1246,12 @@ If the code has moved on since a card was written, correct the card in your clai
         (D-13). Existing branches are re-seeded through the same idempotent path as new ones. An
         old `PrintTemplateId` that no longer resolves falls back to the branch default, then to
         the standard layout, so no document stops printing.
-  - [ ] Add a per-document print route. Sales builds a `PrintPayload` from its own data and posts
-        it to `api/print/render` with the user's token.
+  - [x] Add a per-document print route. Sales builds a `PrintPayload` from its own data and posts
+        it to `api/print/render` with the user's token. `GET api/sales/invoices/{id}/print`
+        (`sales.print`) → `InvoicePrintService` → `InvoicePrintPayload` (pure) → `PrintingClient`,
+        which forwards the caller's `Authorization` header. Not filled yet: the place of supply
+        prints as its two-digit state code (Sales stores `PlaceOfSupplyStateId = 0`), and the
+        amount in words is blank (there is no C# speller yet).
   - [ ] Point the frontend's template calls at Printing (the Gateway route).
   - [ ] Drop `con.PrintTemplates` in a `con` migration. **Only after D-13** confirms nothing is
         deployed, or migrate the data in the same step.

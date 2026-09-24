@@ -2,6 +2,7 @@ using Shared.Kernel.Security;
 using Shared.Kernel.Storage;
 using System.Text;
 using Sales.Api.Services;
+using Sales.Api.Services.Printing;
 using Sales.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -158,6 +159,15 @@ builder.Services.AddHttpClient<ICreditCheckClient, CreditCheckClient>(client =>
     client.BaseAddress = new Uri(RequiredSetting("Reporting:BaseUrl"));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
+
+// Printing lays a document out from its template. No internal key: the call
+// carries the signed-in user's own token, so Printing resolves that user's
+// branch the way every user-facing request does (stage P of the design).
+builder.Services.AddHttpClient<IPrintingClient, PrintingClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
+});
+builder.Services.AddScoped<InvoicePrintService>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a document number is allocated inside the

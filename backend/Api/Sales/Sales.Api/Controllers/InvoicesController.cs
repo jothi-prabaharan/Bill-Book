@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sales.Api.Services;
+using Sales.Api.Services.Printing;
 using Sales.Entity.Models;
 using Shared.Kernel.Internal;
 
@@ -74,6 +75,24 @@ public sealed class InvoicesController : ControllerBase
         }
 
         return Ok(invoice);
+    }
+
+    /// <summary>
+    /// The invoice laid out by its print template, as HTML for the browser to
+    /// print. Sales builds the invoice's data and Printing lays it out under the
+    /// caller's own token, so the branch's template is the one used.
+    ///
+    /// <c>sales.print</c> rather than <c>sales.view</c>: printing hands a
+    /// document to somebody outside the business, which is the separation the
+    /// print permission was seeded for.
+    /// </summary>
+    [HttpGet("{id:long}/print")]
+    [PermissionAction("print")]
+    public async Task<IActionResult> Print(
+        long id, [FromServices] InvoicePrintService printing, CancellationToken ct)
+    {
+        PrintedDocument? printed = await printing.PrintAsync(id, ct);
+        return printed is null ? NotFound() : Ok(printed);
     }
 
     [HttpGet("{id:long}/gl-preview")]
