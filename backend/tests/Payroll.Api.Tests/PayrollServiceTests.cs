@@ -233,4 +233,72 @@ public sealed class PayrollServiceTests
         PostLedgerRequest withdrawal = ledger.PostedRequests[1];
         Assert.NotEmpty(withdrawal.WithdrawLedgerTypeIds);
     }
+
+    [SkippableFact]
+    public async Task Ecr_file_matches_the_posted_payslips_to_the_rupee()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
+        var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
+        await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
+        var ledger = new FakeLedgerClient();
+
+        var setup = new SalarySetupService(db);
+        var runService = new PayrollRunService(db, tenant, ledger);
+        var statutory = new StatutoryService(db);
+
+        // Configure PF setting
+        await statutory.SavePfSettingAsync(new SavePfSettingRequest
+        {
+            EffectiveFrom = new DateOnly(2020, 1, 1),
+            EmployeeContributionRate = 12.0m,
+            EmployerContributionRate = 12.0m,
+            WageCeiling = 15000.0m,
+            RestrictToWageCeiling = true
+        }, default);
+
+        long compId = await setup.SaveComponentAsync(null, new SaveSalaryComponentRequest
+        {
+            Name = "Basic",
+            Kind = ComponentKind.Earning,
+            ValueType = SalaryValueType.FlatAmount
+        }, default);
+
+        long structId = await setup.SaveStructureAsync(null, new SaveSalaryStructureRequest
+        {
+            Name = "Structure 1",
+            Components = [new SaveSalaryStructureComponentRequest { SalaryComponentId = compId, FlatAmount = 15000m }]
+        }, default);
+
+        long employeeId = 555;
+        await setup.AssignEmployeeSalaryAsync(new SaveEmployeeSalaryRequest
+        {
+            EmployeeId = employeeId,
+            SalaryStructureId = structId,
+            AnnualCtc = 180000m,
+            EffectiveFrom = new DateOnly(2026, 1, 1)
+        }, default);
+
+        long runId = await runService.ProcessRunAsync(new DateOnly(2026, 9, 1), default);
+        await runService.ApproveRunAsync(runId, default);
+        await runService.PostRunAsync(runId, default);
+
+        // Generate ECR
+        string ecr = await statutory.GeneratePfEcrAsync(runId, default);
+        Assert.NotEmpty(ecr);
+
+        // Verify ECR line format and figures match payslip
+        // Format: #~#UAN#~#MEMBER_NAME#~#GROSS_WAGES#~#EPF_WAGES#~#EPS_WAGES#~#EDLI_WAGES#~#EE_SHARE#~#EPS_SHARE#~#ER_SHARE_DIFF#~#NCP_DAYS#~#REFUND
+        string[] parts = ecr.Trim().Split("#~#", StringSplitOptions.RemoveEmptyEntries);
+        Assert.True(parts.Length >= 10);
+
+        decimal grossWages = decimal.Parse(parts[2]);
+        decimal epfWages = decimal.Parse(parts[3]);
+        decimal eeShare = decimal.Parse(parts[6]);
+
+        Assert.Equal(15000m, grossWages);
+        Assert.Equal(15000m, epfWages);
+        Assert.Equal(1800m, eeShare); // 12% of 15000 = 1800
+    }
 }

@@ -1,0 +1,27 @@
+<div class="page-head">
+  <h1>Statutory Settings</h1>
+  <button type="button" class="btn btn-primary" [disabled]="busy()" (click)="saveAll()">Save Settings</button>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<div class="sheet" style="margin-bottom: 16px;">
+  <h3>Provident Fund (PF)</h3>
+  <div class="fields">
+    <bb-number-input label="Employee Contribution (%)" [(ngModel)]="pf.employeeContributionRate" />
+    <bb-number-input label="Employer Contribution (%)" [(ngModel)]="pf.employerContributionRate" />
+    <bb-number-input label="Wage Ceiling (₹)" [(ngModel)]="pf.wageCeiling" />
+    <bb-checkbox label="Restrict to Wage Ceiling" [(ngModel)]="pf.restrictToWageCeiling" />
+    <bb-number-input label="Admin Charges (%)" [(ngModel)]="pf.adminChargesRate" />
+    <bb-number-input label="EDLI Rate (%)" [(ngModel)]="pf.edliRate" />
+  </div>
+</div>
+
+<div class="sheet">
+  <h3>Employee State Insurance (ESI)</h3>
+  <div class="fields">
+    <bb-number-input label="Employee Contribution (%)" [(ngModel)]="esi.employeeContributionRate" />
+    <bb-number-input label="Employer Contribution (%)" [(ngModel)]="esi.employerContributionRate" />
+    <bb-number-input label="Wage Ceiling (₹)" [(ngModel)]="esi.wageCeiling" />
+  </div>
+</div>

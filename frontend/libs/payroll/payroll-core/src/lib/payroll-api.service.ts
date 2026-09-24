@@ -76,4 +76,33 @@ export class PayrollApiService {
   reverseRun(id: number): Promise<void> {
     return firstValueFrom(this.http.post<void>(`/api/payroll/runs/${id}/reverse`, {}));
   }
+
+  // Statutory
+  pfSetting(): Promise<any> {
+    return firstValueFrom(this.http.get<any>('/api/payroll/statutory/pf'));
+  }
+
+  savePfSetting(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/statutory/pf', body));
+  }
+
+  esiSetting(): Promise<any> {
+    return firstValueFrom(this.http.get<any>('/api/payroll/statutory/esi'));
+  }
+
+  saveEsiSetting(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/statutory/esi', body));
+  }
+
+  ptSlabs(stateId?: number): Promise<any[]> {
+    const params: Record<string, string> = {};
+    if (stateId !== undefined && stateId !== null) {
+      params['stateId'] = String(stateId);
+    }
+    return firstValueFrom(this.http.get<any[]>('/api/payroll/statutory/pt-slabs', { params }));
+  }
+
+  savePtSlab(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/statutory/pt-slabs', body));
+  }
 }

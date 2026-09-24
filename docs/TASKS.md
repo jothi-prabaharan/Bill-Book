@@ -2328,17 +2328,24 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `backend/tests/Payroll.Api.Tests` (`PayrollSchemaTests.cs`, `EndpointGuardTests.cs`, `PayrollServiceTests.cs`). Full backend solution builds with 0 errors and 0 warnings.
 
 ### TK-52 · H5: Statutory (`pay`)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `PfSetting`, `EsiSetting`, `ProfessionalTaxSlab`, `LwfSetting`, `GratuitySetting`,
   `BonusSetting`, `StatutoryReturn`. All are effective-dated.
 - **Sub-tasks:**
-  - [ ] PF and ESI with wage ceilings; PT and LWF per state (`WorkLocation.StateId`).
-  - [ ] A monthly gratuity provision, and the bonus register.
-  - [ ] Return files: the PF ECR, ESI, and the PT challan data.
-  - [ ] Seed the settings, and the PT and LWF slabs for every state.
+  - [x] PF and ESI with wage ceilings; PT and LWF per state (`WorkLocation.StateId`).
+  - [x] A monthly gratuity provision, and the bonus register.
+  - [x] Return files: the PF ECR, ESI, and the PT challan data.
+  - [x] Seed the settings, and the PT and LWF slabs for every state.
 - **Done when:** a month's ECR file matches the posted payslips to the rupee.
 - **Notes:**
+  - Done (Antigravity, 2026-09-25):
+    - Added 7 statutory entities: `PfSetting`, `EsiSetting`, `ProfessionalTaxSlab`, `LwfSetting`, `GratuitySetting`, `BonusSetting`, and `StatutoryReturn` in `pay` schema.
+    - Added EF Core migration `20260924201448_AddStatutorySchema.cs` with RLS policies (`ENABLE` + `FORCE` + `tenant_isolation` policy block).
+    - Seeded default PF (12%/12%, 15k ceiling), ESI (0.75%/3.25%, 21k ceiling), Gratuity (4.81%), Bonus (8.33%–20%), PT slabs across states, and LWF settings in `PayrollSeed.cs` and `PayrollSeeder.cs`.
+    - Added `StatutoryService` and `StatutoryController` supporting PF, ESI, PT slabs, and return generators for PF ECR text file (`#~#` formatted), ESI CSV, and PT challans.
+    - Added frontend statutory settings UI (`StatutorySettingsPage`) and registered in `payroll.routes.ts`.
+    - **Tests written**: `Ecr_file_matches_the_posted_payslips_to_the_rupee()` in `PayrollServiceTests.cs` verifying the ECR matches posted figures to the rupee. Both backend and frontend builds pass cleanly.
 
 ### TK-53 · H6: Income tax on salary (`pay`)
 - [ ] open

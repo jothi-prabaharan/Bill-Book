@@ -16,4 +16,9 @@ export const payrollRoutes: Routes = [
     loadComponent: () => import('./runs/payroll-run.page').then((m) => m.PayrollRunPage),
     data: { access: { permission: 'payroll.view' } },
   },
+  {
+    path: 'payroll/statutory',
+    loadComponent: () => import('./statutory/statutory-settings.page').then((m) => m.StatutorySettingsPage),
+    data: { access: { permission: 'payroll.view' } },
+  },
 ];
