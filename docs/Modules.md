@@ -3450,3 +3450,88 @@ spend-money lines gain `IsBillable` and `MarkupPercent` for re-billing, and `Bil
 New module `projects` (`view`, `create`, `edit`, `delete`, `approve` for write-offs), seeded to
 Owner, Administrator and Accountant; Sales gets `view` and time logging.
 
+---
+
+# Budgeting (TK-35)
+
+## Where things stand
+
+Checked against the code on 24 September 2026: **there are no budgets.** The pieces a budget needs
+already exist: the branch's financial year (`mst.Organizations.FinancialYearStartMonth`, default
+April), the chart of accounts with its type and contra flag, the ledger with base-currency amounts,
+and the report engine (`IReportSource`, `bb-report-grid`, Excel and CSV export). Project accounting
+(TK-34) adds a project dimension a budget can use.
+
+## Decisions this design takes
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **A budget is a set of monthly amounts per account for one financial year of one branch**, optionally split by project | Month by account is what an owner plans in and what the ledger can be compared to without allocation rules |
+| 2 | **Amounts are in the branch's base currency and signed by the account's normal balance**: income and expense are both entered as positive figures | Owners think "rent budget 30,000", not "debit 30,000". The report applies the sign, exactly as the P&L already does with `NormalBalance` and `IsContra` |
+| 3 | **Several budgets per year are allowed; one is the branch's approved budget** | "Base" and "stretch" scenarios are normal. Reports and warnings use the approved one unless another is chosen |
+| 4 | **An approved budget is locked**; changing it is a revision (a copy) with a reason | A budget moved after the fact to match the actuals is not a budget. The history of revisions is kept |
+| 5 | **Budgets warn, they do not block, in the first build** | Blocking a purchase because a budget ran out is an approval decision. When approvals (TK-33) exist, "over budget" becomes an approvable override; until then a warning on the document is the honest control |
+| 6 | **Profit-and-loss accounts are budgeted by default; balance-sheet accounts are allowed** | Capex and cash planning need balance-sheet lines, but most users only want the P&L, so the entry grid shows P&L first |
+
+## Tables (`acc`, tenant-scoped, RLS)
+
+**`acc.Budgets`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `BudgetId` | long | PK |
+| `Name` | string(100) | "FY 2026-27 base" |
+| `FinancialYearStart` | DateOnly | First day of the year, from the branch's start month |
+| `Status` | enum | `Draft`, `Approved`, `Superseded` |
+| `IsBranchDefault` | bool | At most one approved default per branch and year (filtered unique index) |
+| `RevisionOf` | long? | The budget this revised |
+| `RevisionReason` | string(500)? | Required on a revision |
+| `ByProject` | bool | Whether lines carry a project |
+| `ApprovedAt`, `ApprovedBy` | | |
+
+**`acc.BudgetLines`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `BudgetLineId` | long | PK |
+| `BudgetId` | long | FK |
+| `AccountId` | long | A leaf account of the branch |
+| `ProjectId` | long? | Only when `ByProject` |
+| `Period` | smallint | 1 to 12, counted from the financial year's first month |
+| `Amount` | money | Base currency, positive in the account's normal direction |
+
+Unique on (`BudgetId`, `AccountId`, `ProjectId`, `Period`).
+
+## Entering a budget
+
+- **Grid**: accounts down, twelve months across, with a year total. Typing a year total spreads it
+  evenly, or by last year's monthly shape (a choice on the grid).
+- **Start from**: blank; **last year's actuals** from the ledger, adjusted by a percentage per account
+  group; or **another budget**.
+- **Import and export** as CSV/XLSX in the same account-code × month layout, so an accountant can plan
+  in a spreadsheet and load it back. The import refuses unknown account codes and lists them.
+- **Approve** (`accounting.approve`) locks it. **Revise** copies an approved budget into a draft with a
+  reason; approving the revision supersedes the old one.
+
+## Reports (Reporting)
+
+- **Budget against actual**: per account (grouped like the P&L), for a month, a quarter or
+  year-to-date — budget, actual, variance and variance %, with favourable or adverse decided by the
+  account's type (income over budget is favourable, expense over budget adverse).
+- **Budget against actual by project**, when the budget is by project.
+- **Monthly trend**: twelve columns of budget and actual side by side.
+- Actuals come from `acc.JournalLedger` in base currency, the same figures as the P&L, so the two
+  reports never disagree.
+
+## Warnings on documents
+
+When a posted bill, spend money or manual journal line would take an expense account (and project,
+where budgeted by project) past its approved budget for the month or the year to date, the save
+succeeds and the response carries a warning the form shows: "Rent is ₹4,000 over this month's
+budget." A branch setting chooses **month** or **year to date** as the comparison.
+
+## Permissions
+
+`accounting.view` to see budgets and the report; `accounting.edit` to enter a draft;
+`accounting.approve` to approve or revise.
+

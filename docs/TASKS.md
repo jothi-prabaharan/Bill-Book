@@ -1538,7 +1538,12 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-104 (masters and dimension), TK-105 (document lines), TK-106 (timesheets and billing), TK-107 (reports). No decision needed.
 
 ### TK-35 · Design: budgeting
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Outcome (2026-09-24):**
+  - The design is `docs/Modules.md`, "Approved designs" → "Budgeting".
+  - A budget is monthly amounts per account for one financial year of one branch, optionally by project (TK-34), entered positive in the account's normal direction. Several budgets per year are allowed; one approved default is used by reports; an approved budget is locked, and changing it is a revision with a reason.
+  - Budgets **warn and do not block** in the first build. Blocking becomes an approvable override once workflow approvals (TK-33) exist.
+  - Cards: TK-108 (tables, grid, import, approval), TK-109 (report and warnings). No decision needed.
 
 ### TK-36 · Design: custom fields and custom reports
 - [ ] open · **Lanes:** L-DOC · **Decision:** D-17 (answered: go-ahead)
@@ -1752,6 +1757,31 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Project profitability, budget against actual, unbilled work, time by user, as report sources on `bb-report-grid`.
   - [ ] Test: profitability for a seeded project equals its ledger rows' net by type.
 - **Done when:** the four reports run for a branch with a billed project.
+
+### TK-108 · Budgets: tables, entry grid, import and approval
+- [ ] open
+- **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-35 · **Decision:** —
+- **Where:** design "Budgeting"; `mst.Organizations.FinancialYearStartMonth` via the org context; `acc.Accounts`.
+- **Tables:** `acc.Budgets`, `acc.BudgetLines`
+- **Sub-tasks:**
+  - [ ] Both tables with RLS; a filtered unique index for one approved default per branch and year.
+  - [ ] Create blank, from last year's actuals (± % per account group) or from another budget; spread a year total evenly or by last year's shape.
+  - [ ] CSV/XLSX import and export in the account-code × month layout; unknown codes listed and refused.
+  - [ ] Approve locks; revise copies with a reason and supersedes on approval.
+  - [ ] The budget grid page (accounts × 12 months), usable at 360px as one month at a time.
+  - [ ] Test: an approved budget refuses edits; a revision supersedes; last year's actuals seed the right months for an April-start branch.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** an accountant imports a year's budget from a spreadsheet, approves it, and cannot edit it afterwards.
+
+### TK-109 · Budgets: budget against actual, and over-budget warnings
+- [ ] open
+- **Lanes:** L-RPT, L-ACC, L-ACC-UI · **Depends on:** TK-108 · **Decision:** —
+- **Where:** `Reporting.Api/Services/Sources`, the P&L source's sign rules.
+- **Sub-tasks:**
+  - [ ] Report sources: budget against actual (month, quarter, YTD), by project, monthly trend; favourable or adverse by account type.
+  - [ ] A warning on bill, spend-money and journal saves that pass the approved budget (month or YTD, a branch setting).
+  - [ ] Test: actuals equal the P&L's for the same period; an expense over budget warns and still saves.
+- **Done when:** the budget-against-actual report's actual column matches the P&L for the same period.
 
 ### F · Phase 3: POS
 
