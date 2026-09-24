@@ -44,5 +44,4 @@ public interface IInvoiceService
     Task<InvoiceResult> VoidAsync(long invoiceId, VoidInvoiceRequest request, CancellationToken ct);
     Task<InvoiceResult> VoidAsync(long invoiceId, CancellationToken ct);
     Task<GlPreviewResult?> PreviewGlAsync(long invoiceId, CancellationToken ct);
-    Task<bool> ExistsInOtherOrgAsync(long invoiceId, CancellationToken ct);
 }

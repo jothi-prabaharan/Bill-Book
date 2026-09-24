@@ -299,7 +299,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       tests, role `pur_rls_probe`).
 
 ### TK-03 · RLS for `sal`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-SAL · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Sales/Sales.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Sales.Api.Tests/SalesQueryFilterTests.cs:218`.
@@ -308,12 +308,12 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   - `Notification.Worker`'s `PaymentReminderWorker` reads `sal` with **no tenant** and
     `IgnoreQueryFilters()`. Once RLS is on it sees nothing; TK-20 fixes the worker.
 - **Sub-tasks:**
-  - [ ] Write the migration using TK-71's template. The tables: `CreditNoteDetailTaxes,
+  - [x] Write the migration using TK-71's template. The tables: `CreditNoteDetailTaxes,
         CreditNoteDetails, CreditNotes, DeliveryChallanDetailTaxes, DeliveryChallanDetails,
         DeliveryChallans, ErrorLogs, InvoiceDetailTaxes, InvoiceDetails, Invoices, QuoteDetailTaxes,
         QuoteDetails, Quotes, ReminderLogs, ReminderProfiles, SalesOrderDetailTaxes,
         SalesOrderDetails, SalesOrders, SalesRegister`.
-  - [ ] Apply TK-71's decision to the Forbid probe at `InvoiceService.cs:1562`.
+  - [x] Apply TK-71's decision to the Forbid probe at `InvoiceService.cs:1562`.
   - [ ] Owner: run the suite from a dropped `SALES_TEST_DB`.
 - **Done when:** `sal`'s RLS assertion passes from a dropped database.
 - **Notes:**
@@ -322,6 +322,22 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     branch's row anyway. `AllocationsController` in `acc` is the worked example.
   - From TK-76 (2026-09-23): the delivery challan follows the 404 decision already and has no probe.
     `InvoiceService.ExistsInOtherOrgAsync` is the only one left in `sal`.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - `Sales.Repository/Migrations/Tenant/20260924061419_EnableRowLevelSecurity.cs` over all 19
+      tables, `SalesRegister` included.
+    - `InvoiceService.ExistsInOtherOrgAsync` is gone, with its interface member and all five call
+      sites in `InvoicesController` (get, GL preview, update, post, void). Each now answers 404.
+      `InvoicesControllerTests` lost its five 403 tests; the 404 tests stand for both cases.
+      `sal` has no other probe.
+    - `SalesSeeder`'s `IgnoreQueryFilters()` read is scoped to the tenant its endpoint sets, like
+      Purchase's. No hand-built `SalesDbContext` anywhere.
+    - Applied by hand, as a `NOSUPERUSER NOBYPASSRLS` owner, to a scratch database built from the
+      scripted chain: every tenant table ENABLEd, FORCEd and on the NULLIF policy, and a query with
+      the tenant set to `''` returned 0 rows without throwing. `has-pending-model-changes` is clean
+      and `dotnet build backend/Bill-Book.sln` has 0 warnings.
+    - Notification.Worker still reads `sal` with no tenant, so it now sees nothing; TK-20.
+    - **Tests written:** `backend/tests/Sales.Api.Tests/SalesRowLevelSecurityTests.cs` (four tests,
+      role `sal_rls_probe`); `InvoicesControllerTests.cs` updated.
 
 ### TK-04 · RLS for `rpt`: replace the broken policies
 - [~] working (Claude Opus 5.5) — since 2026-09-24

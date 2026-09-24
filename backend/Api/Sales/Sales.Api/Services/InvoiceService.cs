@@ -1915,19 +1915,6 @@ public sealed class InvoiceService : IInvoiceService
 
         return issued;
     }
-
-    public async Task<bool> ExistsInOtherOrgAsync(long invoiceId, CancellationToken ct)
-    {
-        Guid? currentOrgId = _tenant.OrgId;
-        if (!currentOrgId.HasValue)
-        {
-            return false;
-        }
-
-        return await _db.Invoices
-            .IgnoreQueryFilters()
-            .AnyAsync(x => x.InvoiceId == invoiceId && x.OrgId != currentOrgId.Value, ct);
-    }
 }
 
 

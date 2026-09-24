@@ -65,86 +65,13 @@ public sealed class InvoicesControllerTests
     }
 
     // =========================================================================
-    // 2. Strict Cross-Org 403 Forbidden Access Tests
-    // =========================================================================
-
-    [Fact]
-    public async Task Get_returns_403_forbid_when_invoice_belongs_to_another_org()
-    {
-        var stub = new StubInvoiceService
-        {
-            GetResult = null,
-            OtherOrgExists = true,
-        };
-
-        var controller = new InvoicesController(stub);
-        var result = await controller.Get(99, CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result);
-    }
-
-    [Fact]
-    public async Task PreviewGl_returns_403_forbid_when_invoice_belongs_to_another_org()
-    {
-        var stub = new StubInvoiceService
-        {
-            PreviewResult = null,
-            OtherOrgExists = true,
-        };
-
-        var controller = new InvoicesController(stub);
-        var result = await controller.PreviewGl(99, CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result);
-    }
-
-    [Fact]
-    public async Task Update_returns_403_forbid_when_invoice_belongs_to_another_org()
-    {
-        var stub = new StubInvoiceService
-        {
-            UpdateResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = true,
-        };
-
-        var controller = new InvoicesController(stub);
-        var result = await controller.Update(99, new SaveInvoiceRequest(), CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result);
-    }
-
-    [Fact]
-    public async Task Post_returns_403_forbid_when_invoice_belongs_to_another_org()
-    {
-        var stub = new StubInvoiceService
-        {
-            PostResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = true,
-        };
-
-        var controller = new InvoicesController(stub);
-        var result = await controller.Post(99, CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result);
-    }
-
-    [Fact]
-    public async Task Void_returns_403_forbid_when_invoice_belongs_to_another_org()
-    {
-        var stub = new StubInvoiceService
-        {
-            VoidResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = true,
-        };
-
-        var controller = new InvoicesController(stub);
-        var result = await controller.Void(99, new VoidInvoiceRequest { Reason = "Mistake" }, CancellationToken.None);
-
-        Assert.IsType<ForbidResult>(result);
-    }
-
-    // =========================================================================
-    // 3. 404 Not Found Tests (Non-existent across all orgs)
+    // 2. 404 Not Found Tests
+    //
+    // One answer for "no such invoice" and "another branch's invoice". Under
+    // row-level security the service cannot see another branch's row either,
+    // so the IgnoreQueryFilters probe that told the two apart — and returned
+    // 403 — is gone (TK-71's decision, applied by TK-03). A 403 would confirm
+    // the id exists in someone else's books.
     // =========================================================================
 
     [Fact]
@@ -153,7 +80,6 @@ public sealed class InvoicesControllerTests
         var stub = new StubInvoiceService
         {
             GetResult = null,
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -168,7 +94,6 @@ public sealed class InvoicesControllerTests
         var stub = new StubInvoiceService
         {
             PreviewResult = null,
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -183,7 +108,6 @@ public sealed class InvoicesControllerTests
         var stub = new StubInvoiceService
         {
             UpdateResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -198,7 +122,6 @@ public sealed class InvoicesControllerTests
         var stub = new StubInvoiceService
         {
             PostResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -213,7 +136,6 @@ public sealed class InvoicesControllerTests
         var stub = new StubInvoiceService
         {
             VoidResult = new InvoiceResult(InvoiceOutcome.NotFound),
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -223,7 +145,7 @@ public sealed class InvoicesControllerTests
     }
 
     // =========================================================================
-    // 4. Success Endpoints
+    // 3. Success Endpoints
     // =========================================================================
 
     [Fact]
@@ -356,7 +278,7 @@ public sealed class InvoicesControllerTests
     }
 
     // =========================================================================
-    // 5. Outcome Error Mappings
+    // 4. Outcome Error Mappings
     // =========================================================================
 
     [Fact]
@@ -367,7 +289,6 @@ public sealed class InvoicesControllerTests
             UpdateResult = new InvoiceResult(
                 InvoiceOutcome.LifecycleRefused,
                 Detail: "Only draft invoices can be updated."),
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -402,7 +323,6 @@ public sealed class InvoicesControllerTests
         {
             VoidResult = new InvoiceResult(
                 InvoiceOutcome.AlreadyCredited, Detail: "Downstream credit note prevents voiding."),
-            OtherOrgExists = false,
         };
 
         var controller = new InvoicesController(stub);
@@ -454,7 +374,6 @@ public sealed class InvoicesControllerTests
 
     private sealed class StubInvoiceService : IInvoiceService
     {
-        public bool OtherOrgExists { get; set; }
         public InvoiceView? GetResult { get; set; }
         public GlPreviewResult? PreviewResult { get; set; }
         public List<InvoiceListItem> ListResult { get; set; } = [];
@@ -462,9 +381,6 @@ public sealed class InvoicesControllerTests
         public InvoiceResult UpdateResult { get; set; } = new(InvoiceOutcome.Ok);
         public InvoiceResult PostResult { get; set; } = new(InvoiceOutcome.Ok);
         public InvoiceResult VoidResult { get; set; } = new(InvoiceOutcome.Ok);
-
-        public Task<bool> ExistsInOtherOrgAsync(long invoiceId, CancellationToken ct) =>
-            Task.FromResult(OtherOrgExists);
 
         public Task<InvoiceView?> GetAsync(long invoiceId, CancellationToken ct) =>
             Task.FromResult(GetResult);

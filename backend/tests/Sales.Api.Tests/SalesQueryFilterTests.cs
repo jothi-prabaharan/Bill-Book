@@ -215,6 +215,11 @@ public sealed class SalesQueryFilterTests
             string.Empty,
             string.Join(
                 "; ",
-                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(db, "sal")));
+                await BillBook.Tests.Shared.RlsAudit.UnprotectedAsync(
+                    db,
+                    "sal",
+                    // EF's own bookkeeping, no tenant column. Sales keeps it in
+                    // sal in a deployed database; a fixture may leave it in public.
+                    "__EFMigrationsHistory")));
     }
 }

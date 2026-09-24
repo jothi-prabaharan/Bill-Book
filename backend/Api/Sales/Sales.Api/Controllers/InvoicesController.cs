@@ -65,16 +65,10 @@ public sealed class InvoicesController : ControllerBase
     public async Task<IActionResult> Get(long id, CancellationToken ct)
     {
         InvoiceView? invoice = await _service.GetAsync(id, ct);
-        if (invoice is null)
-        {
-            if (await _service.ExistsInOtherOrgAsync(id, ct))
-            {
-                return Forbid();
-            }
-            return NotFound();
-        }
-
-        return Ok(invoice);
+        // Another branch's invoice is 404, not 403: RLS hides it from this
+        // service too, so "not yours" and "no such invoice" are one answer
+        // (decided 23 September 2026, TK-71; applied here by TK-03).
+        return invoice is null ? NotFound() : Ok(invoice);
     }
 
     /// <summary>
@@ -100,16 +94,7 @@ public sealed class InvoicesController : ControllerBase
     public async Task<IActionResult> PreviewGl(long id, CancellationToken ct)
     {
         GlPreviewResult? preview = await _service.PreviewGlAsync(id, ct);
-        if (preview is null)
-        {
-            if (await _service.ExistsInOtherOrgAsync(id, ct))
-            {
-                return Forbid();
-            }
-            return NotFound();
-        }
-
-        return Ok(preview);
+        return preview is null ? NotFound() : Ok(preview);
     }
 
     [HttpPost]
@@ -146,11 +131,6 @@ public sealed class InvoicesController : ControllerBase
         long id, [FromBody] SaveInvoiceRequest request, CancellationToken ct)
     {
         InvoiceResult result = await _service.UpdateAsync(id, request, ct);
-        if (result.Outcome == InvoiceOutcome.NotFound && await _service.ExistsInOtherOrgAsync(id, ct))
-        {
-            return Forbid();
-        }
-
         return result.Outcome == InvoiceOutcome.Ok
             ? Ok(result)
             : Respond(result);
@@ -161,11 +141,6 @@ public sealed class InvoicesController : ControllerBase
     public async Task<IActionResult> Post(long id, CancellationToken ct)
     {
         InvoiceResult result = await _service.PostAsync(id, ct);
-        if (result.Outcome == InvoiceOutcome.NotFound && await _service.ExistsInOtherOrgAsync(id, ct))
-        {
-            return Forbid();
-        }
-
         return result.Outcome == InvoiceOutcome.Ok
             ? Ok(result)
             : Respond(result);
@@ -177,11 +152,6 @@ public sealed class InvoicesController : ControllerBase
         long id, [FromBody] VoidInvoiceRequest request, CancellationToken ct)
     {
         InvoiceResult result = await _service.VoidAsync(id, request, ct);
-        if (result.Outcome == InvoiceOutcome.NotFound && await _service.ExistsInOtherOrgAsync(id, ct))
-        {
-            return Forbid();
-        }
-
         return result.Outcome == InvoiceOutcome.Ok
             ? Ok(result)
             : Respond(result);
