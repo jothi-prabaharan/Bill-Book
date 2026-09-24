@@ -1234,8 +1234,11 @@ If the code has moved on since a card was written, correct the card in your clai
   - `con.PrintTemplates`
   - `frontend/libs/sales/sales-ui/src/lib/invoice-print/invoice-print.page.ts`
 - **Sub-tasks:**
-  - [ ] Move branch seeding of templates to Printing, with its own `internal/seed/organization`,
-        and add it to `TenantSeeder.Services`. That needs `L-MST`.
+  - [x] Move branch seeding of templates to Printing, with its own `internal/seed/organization`,
+        and add it to `TenantSeeder.Services`. That needs `L-MST`. `PrintTemplateSeed`
+        (`Printing.Repository/SeedData`) builds the rows, `PrintTemplateSeeder` writes them
+        idempotently, Master's startup bootstrap seeds `prt` for its branch, and
+        `Seeding:Printing` is in Master's settings and `settings.bicep`.
   - [ ] ~~Copy existing `con.PrintTemplates` rows to `prt.PrintTemplates`, keeping ids so every
         `PrintTemplateId` on the 14 document headers still resolves.~~ **Re-seed instead, with no
         copy** (owner, 2026-09-24). The copy could only be a raw `INSERT … SELECT` across two

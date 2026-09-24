@@ -203,6 +203,25 @@ public class DatabaseMigrationService : IHostedService
             }
         }
 
+        // Seed Printing: one default template per printable document type.
+        // Idempotent per document type, so a branch bootstrapped before
+        // Printing took templates over from Master gets its set on the next
+        // start rather than never (TK-24: re-seeded, not copied).
+        await using (var prtDb = new PrintingDbContext(new DbContextOptionsBuilder<PrintingDbContext>().UseNpgsql(tenantConnectionString).AddInterceptors(seedRls).Options, seedTenant))
+        {
+            List<string> present = await prtDb.PrintTemplates.IgnoreQueryFilters()
+                .Where(t => t.OrgId == targetOrgId)
+                .Select(t => t.DocumentTypeCode)
+                .ToListAsync(ct);
+
+            var missing = Printing.Repository.SeedData.PrintTemplateSeed.Build(targetOrgId, present);
+            if (missing.Count > 0)
+            {
+                prtDb.PrintTemplates.AddRange(missing);
+                await prtDb.SaveChangesAsync(ct);
+            }
+        }
+
         _logger.LogInformation("Completed tenant schema migrations for {Database}.", tenantDbName);
     }
 

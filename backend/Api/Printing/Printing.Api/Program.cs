@@ -71,6 +71,7 @@ builder.Services.AddAuthorization(options =>
 // its sanitiser is thread-safe, so one instance serves every request — as it
 // does in Master, whose copy stays until TK-24.
 builder.Services.AddScoped<PrintTemplateService>();
+builder.Services.AddScoped<PrintTemplateSeeder>();
 builder.Services.AddSingleton<PrintRenderer>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

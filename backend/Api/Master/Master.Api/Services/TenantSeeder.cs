@@ -44,8 +44,12 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// Contacts is this service, and calling ourselves over HTTP to seed a table
     /// we hold would be a round trip to localhost; it is seeded in process, at
     /// the end, by <see cref="SeedContactRolesAsync"/>.
+    ///
+    /// Printing seeds each branch's print templates, one default per printable
+    /// document type. It reads nothing the others write, so its place in the
+    /// order does not matter; it is last because it was added last (TK-24).
     /// </summary>
-    private static readonly string[] Services = ["Accounting", "Inventory", "Sales"];
+    private static readonly string[] Services = ["Accounting", "Inventory", "Sales", "Printing"];
 
     /// <summary>
     /// The branch's current vertical, or General when the row cannot be read.
