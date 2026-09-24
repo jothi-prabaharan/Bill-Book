@@ -1953,7 +1953,7 @@ The build cards each design in section E produced. Each design section in `docs/
 ### F · Phase 3: POS
 
 ### TK-39 · POS till API (T7.1)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-SAL · **Depends on:** TK-78, TK-14, TK-10 · **Decision:** —
 - **Where:** `InvoiceService.cs` (create and post) and `InventoryClient.IssueAsync`.
 - **State:** a POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'`, and the invoice
