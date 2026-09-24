@@ -2175,7 +2175,7 @@ None of it is built.
   - "Signup no longer answers 503" holds while a standby is listed. With none left outside Development it still answers 503, and it logs what to add. Keeping one or two spare is an operator task, written in `deployment.md` and `deploy/azure/README.md`.
 
 ### TK-47 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-DEPS, plus new lanes `L-HRMS-APP` and `L-PAY-APP` · **Depends on:** TK-44 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Generate two Nx apps modelled on `apps/web`: `app.config.ts`, `APP_ID`, and
