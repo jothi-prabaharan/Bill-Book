@@ -1329,7 +1329,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - **To unblock:** the owner tries it (the Playwright sub-task above). If it is right, swap the selector in the 26 templates, delete `bb-date-input`'s "known limitation" note, and add the release note. No release note is written yet, because nothing a user sees has changed.
 
 ### TK-24 · `rat` schema: exchange and metal rate history
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `CLAUDE.md` Schemas: "Master database: `mst`, `rat`".
