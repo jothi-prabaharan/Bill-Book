@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Fixed**: **A new branch can raise purchase documents and see its reports straight away.** Setting up a branch never created its purchase order, goods receipt, bill and debit note numbering, or its list of reports, so neither could be used until they were added by hand. Both are now set up with the branch. An existing branch missing them is repaired by re-running its setup from the admin screen.
 - **Added**: **A sales order can be billed in parts.** Each line now keeps what has been invoiced beside what has been delivered, and a confirmed order shows **Fully invoiced** or **Invoice owed** next to its delivery status — so an order whose goods all went out on challans, and which has not yet been billed, says so. *From an order* on a new invoice now lists orders billed in part, and bills what is left. See [Sales orders](sales-orders).
 - **Fixed**: **Goods delivered on a challan left stock a second time when they were invoiced.** An invoice that did not name the challan — including one raised by fulfilling the order — issued the same goods again. An invoice against an order now bills delivered goods first and issues only what has not gone out.
 - **Fixed**: **An order could be billed for more than was ordered.** Nothing stopped a second invoice billing a line that was already billed in full. Now it is refused, saying how much is left.

@@ -202,6 +202,17 @@ public class DatabaseMigrationService : IHostedService
                 accDb2.NumberingSeries.AddRange(Sales.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
                 await accDb2.SaveChangesAsync(ct);
             }
+
+            // Purchase's series have their own check rather than riding on the
+            // STA one above: a database bootstrapped before Purchase was added
+            // here already has STA, so folding POR into that block would leave
+            // it without purchase numbering for ever (TK-01).
+            bool hasPurSeries = await accDb2.NumberingSeries.IgnoreQueryFilters().AnyAsync(n => n.OrgId == targetOrgId && n.SeriesCode == "POR", ct);
+            if (!hasPurSeries)
+            {
+                accDb2.NumberingSeries.AddRange(Purchase.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId));
+                await accDb2.SaveChangesAsync(ct);
+            }
         }
 
         // Seed Printing: one default template per printable document type.

@@ -45,11 +45,18 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// we hold would be a round trip to localhost; it is seeded in process, at
     /// the end, by <see cref="SeedContactRolesAsync"/>.
     ///
+    /// Purchase seeds its document series — order, goods receipt, bill and
+    /// debit note — into the same table as Sales, so it too comes after
+    /// Accounting. Reporting seeds the branch's report catalog. Both endpoints
+    /// existed long before anything called them, so a branch came up unable to
+    /// number a purchase document or list a report (TK-01).
+    ///
     /// Printing seeds each branch's print templates, one default per printable
     /// document type. It reads nothing the others write, so its place in the
     /// order does not matter; it is last because it was added last (TK-81).
     /// </summary>
-    private static readonly string[] Services = ["Accounting", "Inventory", "Sales", "Printing"];
+    private static readonly string[] Services =
+        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing"];
 
     /// <summary>
     /// The branch's current vertical, or General when the row cannot be read.

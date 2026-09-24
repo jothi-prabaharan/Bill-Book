@@ -210,7 +210,7 @@ there until the owner has run their tests. If a test fails, the owner moves the 
 Nothing else is trustworthy until these land: the rest of RLS, the seeding gap that leaves new branches without purchase numbering or reports, internal endpoints that lose their tenant, and the ledger triggers the squash dropped.
 
 ### TK-01 · New branches are never seeded for Purchase or the report catalog
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
@@ -228,16 +228,16 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
   - The startup bootstrap for org `…0001` seeds the Inventory and Sales numbering series, but not
     Purchase's.
 - **Sub-tasks:**
-  - [ ] Confirm both endpoints take `SeedOrganizationRequest` on the route that
+  - [x] Confirm both endpoints take `SeedOrganizationRequest` on the route that
         `TenantSeeder.SeedOneAsync` posts to (`internal/seed/organization`). Align them if not.
-  - [ ] Add `"Purchase"` and `"Reporting"` to `TenantSeeder.Services`.
-  - [ ] Add `Seeding:Purchase` and `Seeding:Reporting`:
+  - [x] Add `"Purchase"` and `"Reporting"` to `TenantSeeder.Services`.
+  - [x] Add `Seeding:Purchase` and `Seeding:Reporting`:
     - to `appsettings.json` (empty);
     - to `appsettings.Development.json`, with the local ports from each service's `launchSettings.json`;
     - to `settings.bicep`, as `Seeding__Purchase` and `Seeding__Reporting` (hold `L-DEPS` for that commit).
-  - [ ] Add `Purchase.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId)` next to the
+  - [x] Add `Purchase.Repository.SeedData.NumberingSeriesSeed.Build(targetOrgId)` next to the
         Inventory and Sales lines in `DatabaseMigrationService`.
-  - [ ] Test: a `TenantSeeder` test with a stubbed `IHttpClientFactory`. It asserts that all five
+  - [x] Test: a `TenantSeeder` test with a stubbed `IHttpClientFactory`. It asserts that all five
         services are called, and that a missing URL is reported as failed.
   - [ ] Owner: create a branch, then check that `NumberingSeries` holds the Purchase codes and
         `rpt.ReportDetails` has rows for the branch.
@@ -256,6 +256,19 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
     - `DatabaseMigrationService`: don't just add Purchase's series to the `accDb2` block. That
       block runs only when `STA` is missing, so a database bootstrapped before this change would
       never get `POR`/`GRN`/`BIL`/`DBN`. Give Purchase its own existence check on `POR`.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - `TenantSeeder.Services` is `Accounting, Inventory, Sales, Purchase, Reporting, Printing`.
+      Printing had been added by TK-81 since the card was written, so the test asserts six.
+    - `Seeding:Purchase` / `Seeding:Reporting` in both appsettings files (4505, 4506) and in the
+      `master` block of `settings.bicep`.
+    - `DatabaseMigrationService` seeds Purchase's series behind its own check on `POR`, inside the
+      `accDb2` block, so a database bootstrapped before this change is backfilled on next start.
+      The bootstrap still does not seed the report catalog for org `…0001`; the card did not ask
+      for it, and a retry from `apps/admin` reaches it through `TenantSeeder`.
+    - `CLAUDE.md`'s "Purchase's numbering series never reach a new branch" bullet is now stale; it
+      is `L-DOC`, which this card does not hold.
+    - **Test written:** `backend/tests/Master.Api.Tests/TenantSeederTests.cs` (three tests, no
+      database).
 
 ### TK-02 · RLS for `pur`
 - [~] working (Claude Opus 5.5) — since 2026-09-24
