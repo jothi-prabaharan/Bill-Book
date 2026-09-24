@@ -67,6 +67,16 @@ public class DatabaseMigrationService : IHostedService
         // 3. Ensure IN000001 Database Exists and seed it
         await EnsureTenantDatabaseSetupAsync(adminDb, adminDbString, "IN000001", cancellationToken);
 
+        // 4. Platform operators named by configuration (D-01). Every start, not
+        // only the first, so an operator added to the setting later is granted
+        // at the next deploy. Grant-only; revoking is an operator's action.
+        IReadOnlyList<string> operatorEmails = PlatformOperatorService.BootstrapEmails(_config);
+        int granted = await PlatformOperatorService.ApplyBootstrapAsync(adminDb, operatorEmails, cancellationToken);
+        if (granted > 0)
+        {
+            _logger.LogInformation("Granted platform operator access to {Count} user(s) from Bootstrap:OperatorEmails.", granted);
+        }
+
         // Migrate-and-exit, for a deployment that runs migrations as a job ahead
         // of rolling out new revisions. Without it a job running this image
         // would migrate and then serve HTTP forever, and the job would time out
@@ -298,10 +308,9 @@ public class DatabaseMigrationService : IHostedService
     /// have to be printed somewhere, and wherever that is becomes the new
     /// weakest link.
     ///
-    /// <b>It grants a tenant Owner role, not <c>platform.*</c>.</b> How a
-    /// platform operator acquires <c>platform.*</c> is still undecided — see
-    /// CLAUDE.md's Undecided section — and this deliberately does not settle it
-    /// by seeding one: <c>Role</c> rows are shared system rows, so granting
+    /// <b>It grants a tenant Owner role, not <c>platform.*</c>.</b> An operator
+    /// is a flag on the user, set by <c>Bootstrap:OperatorEmails</c> (D-01) —
+    /// never a role: <c>Role</c> rows are shared system rows, so granting
     /// <c>platform.*</c> to a tenant role would grant it to that role's holders
     /// across every customer.
     /// </summary>

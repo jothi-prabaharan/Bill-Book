@@ -88,6 +88,9 @@ x-master-env: &master-env
   # The first owner, their business and its first branch, created once while
   # the database has no users at all. setup.ps1 fills these in.
   Bootstrap__OwnerEmail: ${BOOTSTRAP_OWNER_EMAIL:-}
+  # Who may sign in to apps/admin (D-01). On one PC the owner runs the platform
+  # too, so it defaults to the owner's address.
+  Bootstrap__OperatorEmails: ${BOOTSTRAP_OPERATOR_EMAILS:-${BOOTSTRAP_OWNER_EMAIL:-}}
   Bootstrap__OwnerPassword: ${BOOTSTRAP_OWNER_PASSWORD:-}
   Bootstrap__OwnerName: ${BOOTSTRAP_OWNER_NAME:-Owner}
   Bootstrap__CompanyName: ${BOOTSTRAP_COMPANY_NAME:-My Business}

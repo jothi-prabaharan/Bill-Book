@@ -270,7 +270,11 @@ A public signup that lands at `Failed` has no second visit of its own — there 
 
 The same screen can also create a customer directly — the same `SignupAsync` the public form calls, so the two can never seed a customer differently, minus the public form's own statutory and address fields, which are the customer's to fill in once they can sign in.
 
-**platform.view and platform.edit gate this API**, and today nothing seeds those permissions onto any account — deliberately, since `platform.*` must never reach a tenant role (roles are shared system rows, not per-customer copies, so granting it to one would grant it to that role's holders everywhere). How a platform operator's account is meant to get one is still undecided; see Known gaps in [Overview](overview).
+**platform.view and platform.edit gate this API**, and only a **platform operator** holds them. Being an operator is a flag on the user, never a role. Roles are shared system rows rather than per-customer copies, so a role carrying `platform.*` would grant it to that role's holders in every customer. An operator's token carries every `platform.*` permission beside their role's own. Nobody else's does, a customer's Owner included, even if a role row somehow names one.
+
+There are two ways to become an operator:
+- **At startup.** Every existing user whose address is in `Bootstrap:OperatorEmails` (comma- or semicolon-separated) becomes one at each Master start. This is how the first operator exists. On a single PC (`deploy/local`) it defaults to the owner's address. The setting only grants: removing an address revokes nobody, so a typo cannot lock every operator out.
+- **From another operator**, through `GET` and `PUT api/admin/platform-operators/{userId}`. An operator cannot revoke themselves. A change takes effect at the user's next sign-in or token refresh.
 
 ## Concurrency
 

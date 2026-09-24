@@ -18,6 +18,7 @@ param webOrigin string
 param portalOrigin string
 param allowedOrigins array
 param bootstrapOwnerEmail string
+param bootstrapOperatorEmails string
 
 var serviceUrl = toObject(apiKeys, k => k, k => 'https://${k}.internal.${defaultDomain}')
 
@@ -56,6 +57,7 @@ var master = concat(common, [
   { name: 'App__BaseUrl', value: webOrigin }
   { name: 'Portal__BaseUrl', value: portalOrigin }
   { name: 'Bootstrap__OwnerEmail', value: bootstrapOwnerEmail }
+  { name: 'Bootstrap__OperatorEmails', value: bootstrapOperatorEmails }
 ])
 
 // Overrides the committed localhost destinations. A Container Apps host name is

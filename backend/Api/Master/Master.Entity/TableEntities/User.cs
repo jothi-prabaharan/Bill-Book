@@ -41,4 +41,14 @@ public class User : AuditableEntity
     public Guid? LastAccessedOrgId { get; set; }
 
     public DateTimeOffset? LastLoginAt { get; set; }
+
+    /// <summary>
+    /// Runs the platform itself, across every customer (D-01). When set, sign-in
+    /// puts every <c>platform.*</c> permission in the token — the only way any
+    /// token carries one, because <c>Role</c> rows are shared across customers
+    /// and a role granting <c>platform.*</c> would grant it to that role's
+    /// holders everywhere. Set only by <c>Bootstrap:OperatorEmails</c> at startup
+    /// or by an existing operator; no tenant screen can reach it.
+    /// </summary>
+    public bool IsPlatformOperator { get; set; }
 }

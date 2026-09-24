@@ -131,7 +131,6 @@ The full solution builds, including the three services that are still empty shel
 
 ## Known gaps
 
-- **Nothing grants `platform.*` to any account.** The permission exists in the seeded catalogue and `apps/admin` checks for it, but no role's seed includes it — deliberately, since roles are shared system rows rather than per-customer copies, so granting it to a tenant role would grant platform access to that role's holders across every customer. How an operator is meant to get one is undecided
 - `ISecretStore` and `IEventPublisher` have development stand-ins only. The secret store keeps what it was given in memory and reads through to configuration for anything else; the event publisher logs and delivers nothing, so nothing that reads an event works yet. Key Vault and Service Bus are still to write
 - `JournalDetails` is the only per-customer table without `OrgId` (it scopes via its parent journal)
 - No SMS provider, so mobile OTP cannot deliver

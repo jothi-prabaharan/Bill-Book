@@ -894,17 +894,36 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 ### C · Phase 1: finish what's in flight
 
 ### TK-13 · Platform operators: `IsPlatformOperator` on the user (D-01)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** D-01 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/User.cs`, `Master.Api/Services/JwtTokenService.cs`, `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `frontend/apps/admin`.
 - **State:** `platform.*` is seeded into the permission catalogue and `apps/admin` checks for it, but nothing grants it, so nobody can sign in to `apps/admin`.
 - **Sub-tasks:**
-  - [ ] Add `IsPlatformOperator bool` (default false) to `User`, with an admin migration; run `has-pending-model-changes`.
-  - [ ] `JwtTokenService` adds every `platform.*` permission to the token when the flag is true — never through a role.
-  - [ ] Set the flag only from bootstrap configuration (`Bootstrap:OperatorEmails`) or from an existing operator through a `[RequirePermission("platform.edit")]` endpoint. No tenant screen can set it.
-  - [ ] Test: an Owner of a customer never gets `platform.*`; an operator does; a non-operator calling the grant endpoint gets 403.
+  - [x] Add `IsPlatformOperator bool` (default false) to `User`, with an admin migration; run `has-pending-model-changes`.
+  - [x] `JwtTokenService` adds every `platform.*` permission to the token when the flag is true — never through a role.
+  - [x] Set the flag only from bootstrap configuration (`Bootstrap:OperatorEmails`) or from an existing operator through a `[RequirePermission("platform.edit")]` endpoint. No tenant screen can set it.
+  - [x] Test: an Owner of a customer never gets `platform.*`; an operator does; a non-operator calling the grant endpoint gets 403.
 - **Done when:** an operator signs in to `apps/admin` and sees the customer list; no tenant user can.
 - **Notes:**
+  - Done (2026-09-24):
+    - `User.IsPlatformOperator`, with the admin migration `UserIsPlatformOperator` (one column, no
+      `HasData` churn). `has-pending-model-changes` is clean for both Master contexts.
+    - The permissions are added in `AuthService.IssueAsync`, not `JwtTokenService`. That is where
+      sign-in, branch switch and refresh all get their permission list; the token service only
+      writes claims. The role query now also excludes `Module == "platform"`, so a `platform.*`
+      row on a role grants nothing. The flag is read at every issue, so a revoke bites at the next
+      refresh.
+    - `PlatformOperatorService.ApplyBootstrapAsync` runs at every Master start from
+      `Bootstrap:OperatorEmails`:
+      - it accepts a comma/semicolon string or an array, case-insensitive;
+      - it is **grant-only**, so a typo can't lock every operator out.
+      It is wired into `appsettings.json`, `appsettings.Development.json`, `deploy/local` (defaults
+      to the owner's address) and `deploy/azure` (`bootstrapOperatorEmails`).
+    - `PlatformOperatorsController`: `GET` (`platform.view`) and `PUT {userId:guid}`
+      (`platform.edit`). An operator can't revoke themselves.
+  - Tests: `Master.Api.Tests/PlatformOperatorTests.cs`.
+  - Owner: set `Bootstrap:OperatorEmails` on each deployment, then sign in to `apps/admin`.
+    The operator still needs a branch assignment to get through the two-step login.
 
 ### TK-14 · Item search: barcode and paging
 - [ ] open

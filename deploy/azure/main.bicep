@@ -58,6 +58,9 @@ param encryptionKey string
 @description('Address the first account is created for, once, while mst.Users is empty. It gets no password; the only way in is the reset flow to that mailbox. Empty creates nothing.')
 param bootstrapOwnerEmail string = ''
 
+@description('Platform operators, comma-separated: every existing user with one of these addresses may sign in to apps/admin (D-01). Grant-only, applied at each Master start. Empty grants nobody.')
+param bootstrapOperatorEmails string = ''
+
 @description('Extra browser origins allowed to call the gateway, beyond the three Static Web Apps — custom domains, once they exist.')
 param extraAllowedOrigins array = []
 
@@ -569,6 +572,7 @@ module settings 'modules/settings.bicep' = {
     portalOrigin: siteOrigin.portal
     allowedOrigins: concat([siteOrigin.web, siteOrigin.portal, siteOrigin.admin], extraAllowedOrigins)
     bootstrapOwnerEmail: bootstrapOwnerEmail
+    bootstrapOperatorEmails: bootstrapOperatorEmails
   }
 }
 

@@ -329,11 +329,21 @@ public sealed class AuthService
             throw new NoOrganizationAccessException();
         }
 
+        // platform.* never comes from a role, even one somebody managed to give
+        // it to: Role rows are shared across customers (D-01).
         List<string> permissions = await (
             from rp in _db.RolePermissions
             join p in _db.Permissions on rp.PermissionId equals p.PermissionId
-            where rp.RoleId == assignment.RoleId
+            where rp.RoleId == assignment.RoleId && p.Module != PlatformOperatorService.PlatformModule
             select p.Code).ToListAsync(ct);
+
+        // It comes from the user instead, and only for an operator. Read here,
+        // at every issue, so a revoked operator loses it at their next refresh.
+        if (user.IsPlatformOperator)
+        {
+            permissions.AddRange(
+                await PlatformOperatorService.PlatformPermissionCodes(_db).ToListAsync(ct));
+        }
 
         string accessToken = _tokens.CreateAccessToken(new AccessTokenRequest
         {
