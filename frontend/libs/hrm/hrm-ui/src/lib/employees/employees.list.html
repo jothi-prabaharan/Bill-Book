@@ -1,0 +1,20 @@
+<header class="page-head">
+  <h1>Employees</h1>
+  <button *bbIfCan="'employee.edit'" type="button" class="btn btn-primary" (click)="add()">+ New employee</button>
+</header>
+
+<div class="fields">
+  <bb-text-input label="Search" placeholder="Code, name or phone" [(ngModel)]="search" (keyup.enter)="load()" />
+  <bb-select label="Status" [options]="statusOptions" [(ngModel)]="status" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<p class="muted">{{ total() }} {{ total() === 1 ? 'employee' : 'employees' }}</p>
+
+<bb-data-grid [gridCode]="'HRM_EMPLOYEES'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="employeeCode" let-row>
+    <button type="button" class="link" (click)="open(row)"><code>{{ row.employeeCode }}</code></button>
+  </ng-template>
+  <ng-template bbCellTemplate="maskedPan" let-row>{{ row.maskedPan ?? '—' }}</ng-template>
+</bb-data-grid>

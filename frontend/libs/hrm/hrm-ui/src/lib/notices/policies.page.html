@@ -1,0 +1,36 @@
+<header class="page-head">
+  <h1>Policies</h1>
+  <button *bbIfCan="'hrm.edit'" type="button" class="btn btn-primary" (click)="startAdd()">+ New policy</button>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+<ul class="rows">
+  @for (p of rows(); track p.policyDocumentId) {
+    <li class="row">
+      <strong>{{ p.title }}</strong>
+      <span>From {{ p.effectiveDate }}</span>
+      <span class="muted">{{ p.isActive ? 'Active' : 'Withdrawn' }}@if (p.isAcknowledgementRequired) { · {{ p.acknowledgements ?? 0 }} read }</span>
+      <button *bbIfCan="'hrm.edit'" type="button" class="link" (click)="startEdit(p)">Edit</button>
+    </li>
+  } @empty {
+    <li class="muted">No policies yet.</li>
+  }
+</ul>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="policy-title">
+    <h2 id="policy-title">{{ editingId() === null ? 'New' : 'Edit' }} policy</h2>
+    <div class="fields">
+      <bb-text-input label="Title" [(ngModel)]="form.title" maxlength="200" />
+      <bb-text-input label="File" hint="The stored file's key." [(ngModel)]="form.attachmentKey" maxlength="500" />
+      <bb-date-input label="Effective from" [(ngModel)]="form.effectiveDate" />
+      <bb-checkbox text="Employees must acknowledge it" [(ngModel)]="form.isAcknowledgementRequired" />
+      <bb-checkbox text="Active" [(ngModel)]="form.isActive" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

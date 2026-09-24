@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "hrm-core",
+  "projectType": "library",
+  "sourceRoot": "libs/hrm/hrm-core/src",
+  "tags": [
+    "scope:hrm",
+    "type:core"
+  ],
+  "targets": {}
+}

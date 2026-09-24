@@ -48,6 +48,8 @@
       "@bill-book/settings-numbering-series": ["libs/settings/numbering-series/src/index.ts"],
       "@bill-book/settings-applications": ["libs/settings/applications/src/index.ts"],
       "@bill-book/settings-shared-routes": ["libs/settings/shared-routes/src/index.ts"],
+      "@bill-book/hrm-core": ["libs/hrm/hrm-core/src/index.ts"],
+      "@bill-book/hrm-ui": ["libs/hrm/hrm-ui/src/index.ts"],
       "@bill-book/purchase-core": ["libs/purchase/purchase-core/src/index.ts"],
       "@bill-book/purchase-ui": ["libs/purchase/purchase-ui/src/index.ts"],
       "@bill-book/reporting-core": [

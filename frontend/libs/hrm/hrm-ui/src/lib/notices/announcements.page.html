@@ -1,0 +1,40 @@
+<header class="page-head">
+  <h1>Announcements</h1>
+  <button *bbIfCan="'hrm.edit'" type="button" class="btn btn-primary" (click)="startAdd()">+ New announcement</button>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+<ul class="rows">
+  @for (a of rows(); track a.announcementId) {
+    <li class="row">
+      <strong>@if (a.isPinned) { 📌 }{{ a.title }}</strong>
+      <span>{{ a.publishDate }}@if (a.expiryDate) { – {{ a.expiryDate }} }</span>
+      <span class="muted">{{ a.audience }}</span>
+      <button *bbIfCan="'hrm.edit'" type="button" class="link" (click)="startEdit(a)">Edit</button>
+    </li>
+  } @empty {
+    <li class="muted">No announcements yet.</li>
+  }
+</ul>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="ann-title">
+    <h2 id="ann-title">{{ editingId() === null ? 'New' : 'Edit' }} announcement</h2>
+    <div class="fields">
+      <bb-text-input label="Title" [(ngModel)]="form.title" maxlength="200" />
+      <bb-date-input label="Publish on" [(ngModel)]="form.publishDate" />
+      <bb-date-input label="Expires on" [(ngModel)]="form.expiryDate" />
+      <bb-select label="For" [options]="audiences" [(ngModel)]="form.audience" [clearable]="false" />
+      @if (form.audience !== 'Everyone') {
+        <bb-number-input label="Which one (id)" [(ngModel)]="form.audienceRefId" />
+      }
+      <bb-checkbox text="Pinned" [(ngModel)]="form.isPinned" />
+    </div>
+    <bb-textarea label="Announcement" [(ngModel)]="form.body" maxlength="4000" />
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

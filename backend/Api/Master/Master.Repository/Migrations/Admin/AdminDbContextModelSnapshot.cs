@@ -9054,6 +9054,105 @@ namespace Master.Repository.Migrations.Admin
                             RoutePath = "/settings/print-templates/JRN",
                             Type = "Item",
                             Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 10,
+                            Apps = 14,
+                            CanCreate = false,
+                            Code = "people",
+                            DisplayOrder = 10,
+                            Icon = "users",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "employee",
+                            Name = "People",
+                            Type = "Rail",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 118,
+                            Apps = 14,
+                            CanCreate = false,
+                            Code = "people-g1",
+                            DisplayOrder = 1,
+                            IsActive = true,
+                            IsSearchable = false,
+                            ParentId = 10,
+                            Type = "Group",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1107,
+                            Apps = 14,
+                            CanCreate = true,
+                            Code = "emp",
+                            DisplayOrder = 1,
+                            Icon = "id-card",
+                            IsActive = true,
+                            IsSearchable = true,
+                            Module = "employee",
+                            Name = "Employees",
+                            ParentId = 118,
+                            RoutePath = "/hrm/employees",
+                            SingularName = "Employee",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1108,
+                            Apps = 14,
+                            CanCreate = false,
+                            Code = "hrorg",
+                            DisplayOrder = 2,
+                            Icon = "network",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "employee",
+                            Name = "Organisation setup",
+                            ParentId = 118,
+                            RoutePath = "/hrm/organisation",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1109,
+                            Apps = 4,
+                            CanCreate = true,
+                            Code = "ann",
+                            DisplayOrder = 3,
+                            Icon = "megaphone",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "hrm",
+                            Name = "Announcements",
+                            ParentId = 118,
+                            RoutePath = "/hrm/announcements",
+                            SingularName = "Announcement",
+                            Type = "Item",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuId = 1110,
+                            Apps = 4,
+                            CanCreate = true,
+                            Code = "pol",
+                            DisplayOrder = 4,
+                            Icon = "file-text",
+                            IsActive = true,
+                            IsSearchable = false,
+                            Module = "hrm",
+                            Name = "Policies",
+                            ParentId = 118,
+                            RoutePath = "/hrm/policies",
+                            SingularName = "Policy",
+                            Type = "Item",
+                            Version = 0u
                         });
                 });
 
@@ -12546,6 +12645,114 @@ namespace Master.Repository.Migrations.Admin
                             Module = "settings",
                             PermissionCode = "settings.delete",
                             Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 383,
+                            Action = "view",
+                            MenuId = 1107,
+                            Module = "employee",
+                            PermissionCode = "employee.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 384,
+                            Action = "create",
+                            MenuId = 1107,
+                            Module = "employee",
+                            PermissionCode = "employee.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 385,
+                            Action = "edit",
+                            MenuId = 1107,
+                            Module = "employee",
+                            PermissionCode = "employee.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 386,
+                            Action = "export",
+                            MenuId = 1107,
+                            Module = "employee",
+                            PermissionCode = "employee.export",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 387,
+                            Action = "view",
+                            MenuId = 1108,
+                            Module = "employee",
+                            PermissionCode = "employee.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 388,
+                            Action = "edit",
+                            MenuId = 1108,
+                            Module = "employee",
+                            PermissionCode = "employee.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 389,
+                            Action = "view",
+                            MenuId = 1109,
+                            Module = "hrm",
+                            PermissionCode = "hrm.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 390,
+                            Action = "create",
+                            MenuId = 1109,
+                            Module = "hrm",
+                            PermissionCode = "hrm.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 391,
+                            Action = "edit",
+                            MenuId = 1109,
+                            Module = "hrm",
+                            PermissionCode = "hrm.edit",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 392,
+                            Action = "view",
+                            MenuId = 1110,
+                            Module = "hrm",
+                            PermissionCode = "hrm.view",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 393,
+                            Action = "create",
+                            MenuId = 1110,
+                            Module = "hrm",
+                            PermissionCode = "hrm.create",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            MenuPermissionId = 394,
+                            Action = "edit",
+                            MenuId = 1110,
+                            Module = "hrm",
+                            PermissionCode = "hrm.edit",
+                            Version = 0u
                         });
                 });
 
@@ -13933,6 +14140,166 @@ namespace Master.Repository.Migrations.Admin
                             Apps = 15,
                             Code = "platform.AllUserData",
                             Module = "platform",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 121,
+                            Apps = 14,
+                            Code = "employee.view",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 122,
+                            Apps = 14,
+                            Code = "employee.create",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 123,
+                            Apps = 14,
+                            Code = "employee.edit",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 124,
+                            Apps = 14,
+                            Code = "employee.approve",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 125,
+                            Apps = 14,
+                            Code = "employee.void",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 126,
+                            Apps = 14,
+                            Code = "employee.delete",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 127,
+                            Apps = 14,
+                            Code = "employee.print",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 128,
+                            Apps = 14,
+                            Code = "employee.export",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 129,
+                            Apps = 14,
+                            Code = "employee.import",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 130,
+                            Apps = 14,
+                            Code = "employee.AllUserData",
+                            Module = "employee",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 131,
+                            Apps = 4,
+                            Code = "hrm.view",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 132,
+                            Apps = 4,
+                            Code = "hrm.create",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 133,
+                            Apps = 4,
+                            Code = "hrm.edit",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 134,
+                            Apps = 4,
+                            Code = "hrm.approve",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 135,
+                            Apps = 4,
+                            Code = "hrm.void",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 136,
+                            Apps = 4,
+                            Code = "hrm.delete",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 137,
+                            Apps = 4,
+                            Code = "hrm.print",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 138,
+                            Apps = 4,
+                            Code = "hrm.export",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 139,
+                            Apps = 4,
+                            Code = "hrm.import",
+                            Module = "hrm",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            PermissionId = 140,
+                            Apps = 4,
+                            Code = "hrm.AllUserData",
+                            Module = "hrm",
                             Version = 0u
                         });
                 });
@@ -16460,6 +16827,76 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            RolePermissionId = 2000000121L,
+                            PermissionId = 121,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000122L,
+                            PermissionId = 122,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000123L,
+                            PermissionId = 123,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000124L,
+                            PermissionId = 124,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000125L,
+                            PermissionId = 125,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000126L,
+                            PermissionId = 126,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000127L,
+                            PermissionId = 127,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000128L,
+                            PermissionId = 128,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000129L,
+                            PermissionId = 129,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 2000000130L,
+                            PermissionId = 130,
+                            RoleId = 1000002,
+                            Version = 0u
+                        },
+                        new
+                        {
                             RolePermissionId = 4000000091L,
                             PermissionId = 91,
                             RoleId = 1000004,
@@ -16530,6 +16967,146 @@ namespace Master.Repository.Migrations.Admin
                         },
                         new
                         {
+                            RolePermissionId = 4000000121L,
+                            PermissionId = 121,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000122L,
+                            PermissionId = 122,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000123L,
+                            PermissionId = 123,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000124L,
+                            PermissionId = 124,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000125L,
+                            PermissionId = 125,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000126L,
+                            PermissionId = 126,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000127L,
+                            PermissionId = 127,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000128L,
+                            PermissionId = 128,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000129L,
+                            PermissionId = 129,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000130L,
+                            PermissionId = 130,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000131L,
+                            PermissionId = 131,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000132L,
+                            PermissionId = 132,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000133L,
+                            PermissionId = 133,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000134L,
+                            PermissionId = 134,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000135L,
+                            PermissionId = 135,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000136L,
+                            PermissionId = 136,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000137L,
+                            PermissionId = 137,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000138L,
+                            PermissionId = 138,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000139L,
+                            PermissionId = 139,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 4000000140L,
+                            PermissionId = 140,
+                            RoleId = 1000004,
+                            Version = 0u
+                        },
+                        new
+                        {
                             RolePermissionId = 8000000091L,
                             PermissionId = 91,
                             RoleId = 1000008,
@@ -16595,6 +17172,76 @@ namespace Master.Repository.Migrations.Admin
                         {
                             RolePermissionId = 8000000100L,
                             PermissionId = 100,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000121L,
+                            PermissionId = 121,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000122L,
+                            PermissionId = 122,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000123L,
+                            PermissionId = 123,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000124L,
+                            PermissionId = 124,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000125L,
+                            PermissionId = 125,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000126L,
+                            PermissionId = 126,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000127L,
+                            PermissionId = 127,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000128L,
+                            PermissionId = 128,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000129L,
+                            PermissionId = 129,
+                            RoleId = 1000008,
+                            Version = 0u
+                        },
+                        new
+                        {
+                            RolePermissionId = 8000000130L,
+                            PermissionId = 130,
                             RoleId = 1000008,
                             Version = 0u
                         });

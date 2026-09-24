@@ -70,7 +70,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+        ["Accounting", "Hrm", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
     /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
@@ -84,6 +84,14 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     public static IReadOnlyList<string> ServicesFor(App apps)
     {
         HashSet<string> wanted = ["Accounting", "Printing"];
+
+        // The employee master (TK-48), after Accounting because its EMP
+        // series goes into Accounting's numbering table.
+        if ((apps & (App.Hrms | App.Payroll | App.School)) != 0)
+        {
+            wanted.Add("Hrm");
+        }
+
         if (apps.HasFlag(App.RetailErp))
         {
             wanted.UnionWith(["Inventory", "Sales", "Purchase", "Reporting", "Customer"]);
@@ -102,15 +110,25 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// </summary>
     private async Task<App> ReadLicensedAppsAsync(Guid customerId, CancellationToken ct)
     {
-        using IServiceScope scope = _services.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<Repository.AdminDbContext>();
-        List<App> held = await db.Licenses
-            .Where(l => l.CustomerId == customerId)
-            .Select(l => l.App)
-            .ToListAsync(ct);
+        try
+        {
+            using IServiceScope scope = _services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<Repository.AdminDbContext>();
+            List<App> held = await db.Licenses
+                .Where(l => l.CustomerId == customerId)
+                .Select(l => l.App)
+                .ToListAsync(ct);
 
-        App apps = held.Aggregate(App.None, (all, one) => all | one);
-        return apps == App.None ? App.RetailErp : apps;
+            App apps = held.Aggregate(App.None, (all, one) => all | one);
+            return apps == App.None ? App.RetailErp : apps;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            // The same fallback as the vertical's: RetailErp, which is what every
+            // customer was before apps existed, rather than seeding nothing.
+            _log.LogError(ex, "Reading licences for customer {CustomerId} failed; seeding as RetailErp.", customerId);
+            return App.RetailErp;
+        }
     }
 
     /// <summary>

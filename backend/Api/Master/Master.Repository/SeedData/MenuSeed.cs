@@ -48,12 +48,28 @@ public static class MenuSeed
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
     };
 
+    /// <summary>
+    /// Rows that belong to a set of apps other than RetailErp or all four (TK-48):
+    /// the People rail, shown by HRMS, Payroll and School, and its HRMS-only screens.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<int, App> AppsByMenuId = new Dictionary<int, App>
+    {
+        [10] = App.Hrms | App.Payroll | App.School,
+        [118] = App.Hrms | App.Payroll | App.School,
+        [1107] = App.Hrms | App.Payroll | App.School,
+        [1108] = App.Hrms | App.Payroll | App.School,
+        [1109] = App.Hrms,
+        [1110] = App.Hrms,
+    };
+
     public static IReadOnlyList<Menu> Build()
     {
         IReadOnlyList<Menu> rows = Rows();
         foreach (Menu row in rows)
         {
-            row.Apps = SharedMenuIds.Contains(row.MenuId) ? App.All : App.RetailErp;
+            row.Apps = AppsByMenuId.TryGetValue(row.MenuId, out App apps)
+                ? apps
+                : SharedMenuIds.Contains(row.MenuId) ? App.All : App.RetailErp;
         }
 
         return rows;
@@ -203,6 +219,13 @@ public static class MenuSeed
         new Menu { MenuId = 1103, ParentId = 117, Type = MenuType.Item, Code = "pt-rec", Name = "Receipt voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/RCM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = true },
         new Menu { MenuId = 1104, ParentId = 117, Type = MenuType.Item, Code = "pt-pay", Name = "Payment voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/SPM", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 11, IsActive = true },
         new Menu { MenuId = 1105, ParentId = 117, Type = MenuType.Item, Code = "pt-jrn", Name = "Journal voucher", Icon = "printer", Module = "settings", RoutePath = "/settings/print-templates/JRN", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 12, IsActive = true },
+        // ---- People (H1, TK-48): HRMS, Payroll and School ----
+        new Menu { MenuId = 10, ParentId = null, Type = MenuType.Rail, Code = "people", Name = "People", Icon = "users", Module = "employee", RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 10, IsActive = true },
+        new Menu { MenuId = 118, ParentId = 10, Type = MenuType.Group, Code = "people-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1107, ParentId = 118, Type = MenuType.Item, Code = "emp", Name = "Employees", Icon = "id-card", Module = "employee", RoutePath = "/hrm/employees", IsSearchable = true, CanCreate = true, SingularName = "Employee", DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1108, ParentId = 118, Type = MenuType.Item, Code = "hrorg", Name = "Organisation setup", Icon = "network", Module = "employee", RoutePath = "/hrm/organisation", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
+        new Menu { MenuId = 1109, ParentId = 118, Type = MenuType.Item, Code = "ann", Name = "Announcements", Icon = "megaphone", Module = "hrm", RoutePath = "/hrm/announcements", IsSearchable = false, CanCreate = true, SingularName = "Announcement", DisplayOrder = 3, IsActive = true },
+        new Menu { MenuId = 1110, ParentId = 118, Type = MenuType.Item, Code = "pol", Name = "Policies", Icon = "file-text", Module = "hrm", RoutePath = "/hrm/policies", IsSearchable = false, CanCreate = true, SingularName = "Policy", DisplayOrder = 4, IsActive = true },
     ];
 
     /// <summary>
@@ -595,5 +618,18 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 380, MenuId = 1106, PermissionCode = "settings.create", Action = "create", Module = "settings" },
         new MenuPermission { MenuPermissionId = 381, MenuId = 1106, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
         new MenuPermission { MenuPermissionId = 382, MenuId = 1106, PermissionCode = "settings.delete", Action = "delete", Module = "settings" },
+        // ---- People (TK-48) ----
+        new MenuPermission { MenuPermissionId = 383, MenuId = 1107, PermissionCode = "employee.view", Action = "view", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 384, MenuId = 1107, PermissionCode = "employee.create", Action = "create", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 385, MenuId = 1107, PermissionCode = "employee.edit", Action = "edit", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 386, MenuId = 1107, PermissionCode = "employee.export", Action = "export", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 387, MenuId = 1108, PermissionCode = "employee.view", Action = "view", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 388, MenuId = 1108, PermissionCode = "employee.edit", Action = "edit", Module = "employee" },
+        new MenuPermission { MenuPermissionId = 389, MenuId = 1109, PermissionCode = "hrm.view", Action = "view", Module = "hrm" },
+        new MenuPermission { MenuPermissionId = 390, MenuId = 1109, PermissionCode = "hrm.create", Action = "create", Module = "hrm" },
+        new MenuPermission { MenuPermissionId = 391, MenuId = 1109, PermissionCode = "hrm.edit", Action = "edit", Module = "hrm" },
+        new MenuPermission { MenuPermissionId = 392, MenuId = 1110, PermissionCode = "hrm.view", Action = "view", Module = "hrm" },
+        new MenuPermission { MenuPermissionId = 393, MenuId = 1110, PermissionCode = "hrm.create", Action = "create", Module = "hrm" },
+        new MenuPermission { MenuPermissionId = 394, MenuId = 1110, PermissionCode = "hrm.edit", Action = "edit", Module = "hrm" },
     ];
 }

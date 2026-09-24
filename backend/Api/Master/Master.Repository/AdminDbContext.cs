@@ -648,6 +648,9 @@ public class AdminDbContext : DbContext
     {
         "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
         "accounting", "banking", "reports", "settings", "support", "platform",
+
+        // H1 (TK-48). Appended, so every existing permission keeps its id.
+        "employee", "hrm",
     };
 
     /// <summary>
@@ -683,6 +686,13 @@ public class AdminDbContext : DbContext
     public static App AppsOfModule(string module) => module switch
     {
         "settings" or "platform" => App.All,
+
+        // The employee master and organisation setup are shared by the apps
+        // that employ people on the books: HRMS, Payroll and School (TK-48).
+        "employee" => App.Hrms | App.Payroll | App.School,
+
+        // Lifecycle, letters, assets and announcements are HRMS's own.
+        "hrm" => App.Hrms,
         _ => App.RetailErp,
     };
 

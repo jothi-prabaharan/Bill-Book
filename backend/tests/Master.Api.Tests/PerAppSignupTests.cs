@@ -199,9 +199,14 @@ public sealed class SeedingPerAppTests
     [Fact]
     public void The_trading_services_and_contacts_are_retail_only()
     {
-        Assert.Equal(["Accounting", "Printing"], HttpTenantSeeder.ServicesFor(App.Payroll));
+        // Hrm (TK-48) for any app that employs people, right after Accounting.
+        Assert.Equal(["Accounting", "Hrm", "Printing"], HttpTenantSeeder.ServicesFor(App.Payroll));
+        Assert.Equal(["Accounting", "Printing"], HttpTenantSeeder.ServicesFor(App.None));
         Assert.Equal(
             ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"],
+            HttpTenantSeeder.ServicesFor(App.RetailErp));
+        Assert.Equal(
+            ["Accounting", "Hrm", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"],
             HttpTenantSeeder.ServicesFor(App.RetailErp | App.Payroll));
         Assert.False(HttpTenantSeeder.SeedsContacts(App.Hrms | App.Payroll));
         Assert.True(HttpTenantSeeder.SeedsContacts(App.School));

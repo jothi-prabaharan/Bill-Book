@@ -2218,27 +2218,37 @@ needs these scaffold steps:
 sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-48 · H1: Core HR, the shared employee master (`Hrm`, `hrm`, port 4509)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-HRM (new) · **Depends on:** TK-47 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-HRM (new) (+ L-MST for the catalogue, menus, migration and seeder; L-DEPS for the Gateway) · **Depends on:** TK-47 · **Decision:** —
 - **Tables:**
   - Organisation: `Department`, `Designation`, `Grade`, `CostCentre`, `WorkLocation`.
   - Employee: `Employee`, `EmployeeAddress`, `EmployeeContact`, `EmployeeFamilyMember`,
     `EmployeeNominee`, `EmployeeEducation`, `PreviousEmployment`, `EmployeeBankDetail`,
     `EmploymentHistory`, `EmployeeDocument`, `AssetIssue`.
-  - Other: `Announcement`, `PolicyDocument`.
+  - Other: `Announcement`, `PolicyDocument` (and `PolicyAcknowledgement`, from the design).
+- **Where:** `backend/Api/Hrm/{Hrm.Entity,Hrm.Repository,Hrm.Api}`, `backend/tests/Hrm.Api.Tests`, `frontend/libs/hrm/{hrm-core,hrm-ui}`.
 - **Sub-tasks:**
-  - [ ] Scaffold the service (above).
-  - [ ] Build the entities from the Columns section, then the migration with RLS.
-  - [ ] Seed per branch: one department, designation, grade and location, and an `EMP` numbering series.
-  - [ ] Add CRUD for the organisation tables. Add the employee master with its children, guarded
-        by `[RequireApp(Hrms | Payroll | School)]` and module `employee`.
-  - [ ] Mask PAN, Aadhaar and bank numbers on lists.
-  - [ ] Add `UserId Guid?` to link an employee to a login.
-  - [ ] Build pages in `libs/hrm/hrm-ui`: organisation setup, employee list and employee detail
-        with tabs.
+  - [x] Scaffold the service: three projects copied from Printing, the `.sln`, port 4509, the Gateway route `/api/hrm/**` (every environment), Master's `MigrateTenantSchemasAsync` line, `TenantSeeder` (`Hrm`, after Accounting, for HRMS, Payroll or School), `Seeding:Hrm`, and `libs/hrm/{hrm-core,hrm-ui}`. Enums are read by name from the first day (the TK-124 lesson).
+  - [x] Build the entities from the Columns section, then the migration with RLS: `InitialHrmSchema` holds all 20 tables, and every one is ENABLEd, FORCEd and policied in TK-71's NULLIF form.
+  - [x] Seed per branch: one department, designation, grade and location, and an `EMP` numbering series (`HrmSeeder`, idempotent, through `internal/seed/organization`).
+  - [x] Add CRUD for the organisation tables. Add the employee master with its children, guarded
+        by `[RequireApp(Hrms | Payroll | School)]` and module `employee`. Master's catalogue gains `employee` (HRMS, Payroll, School) and `hrm` (HRMS). The People menu rail follows it (rows 10, 118 and 1107–1110). The apps' seeded Owners get the new permissions and RetailErp's roles do not.
+  - [x] Mask PAN, Aadhaar and bank numbers on lists. On the detail they are masked too, unless the caller holds `payroll.view` or is the employee. A masked value sent back on save keeps the stored one (`SensitiveMask.Resolve`).
+  - [x] Add `UserId Guid?` to link an employee to a login. It is unique per branch.
+  - [x] Build pages in `libs/hrm/hrm-ui`: organisation setup, employee list and employee detail
+        with tabs (nine tabs), plus announcements and policies. `hrmRoutes` is mounted by `apps/hrms` and `apps/payroll`.
+  - [x] Test: `Hrm.Api.Tests`: guards and apps, schema (filter, xmin, no shadow keys), RLS over every table, the seeder, the employee service (the Done-when case, masking, masked round trip, nominee shares, manager cycle, history, one login per employee, branch isolation), and the pure rules. `hrm-core`'s rules spec and `hrm.routes.spec.ts`.
+  - [ ] Owner: run `Hrm.Api.Tests` from a dropped database, and drop one `hrm` policy by hand to see the RLS test go red.
 - **Done when:** an employee is created with family, nominees and bank details, linked to a user
   and listed; RLS and the guard audit pass from a dropped database.
 - **Notes:**
+  - **`WorkLocation.StateId` is nullable** (the design has `int`). A seeded location does not know its branch's state, and the seed request carries none. Payroll (TK-51) must require it before computing professional tax.
+  - **Grades carry `NoticePeriodDays`**, which the design implies ("defaults from the grade") but did not list.
+  - **Nominees name a family member by position** in the request's family list (`FamilyMemberIndex`), because on a create neither has an id yet.
+  - **Children are replaced on update**, not merged. Bank rows carry their id so that a masked account number resolves.
+  - **Not deployed:** `deploy/azure` and `deploy/local` have no Hrm service yet. The Gateway points at `localhost:7500/hrm/` (Production), `5500` (Staging) and `6500` (UAT) on the pattern of the others, and nothing listens there yet.
+  - Linking a login takes the user's id as typed. Nothing yet checks it against `mst.Users` (it is an unenforced cross-database id) or offers a picker.
+  - Documents and policies take a file key. There is no upload endpoint yet.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
 - [ ] open

@@ -1,0 +1,230 @@
+<header class="page-head">
+  <h1>{{ title() }}@if (displayName()) { <span class="muted"> · {{ displayName() }}</span> }</h1>
+  @if (canEdit()) {
+    <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">{{ busy() ? 'Saving…' : 'Save' }}</button>
+  }
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+@if (!sensitiveShown()) {
+  <p class="muted">PAN, Aadhaar and account numbers are hidden. Saving keeps them as they are.</p>
+}
+
+<nav class="tabs" role="tablist" aria-label="Employee record">
+  @for (t of tabs; track t.tab) {
+    <button type="button" role="tab" [attr.aria-selected]="t.tab === tab()" (click)="choose(t.tab)">{{ t.label }}</button>
+  }
+</nav>
+
+@switch (tab()) {
+  @case ('personal') {
+    <div class="fields">
+      <bb-text-input label="First name" [(ngModel)]="form.firstName" maxlength="100" [required]="true" />
+      <bb-text-input label="Middle name" [(ngModel)]="form.middleName" maxlength="100" />
+      <bb-text-input label="Last name" [(ngModel)]="form.lastName" maxlength="100" />
+      <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
+      <bb-select label="Gender" [options]="genders" [(ngModel)]="form.gender" [clearable]="false" />
+      <bb-select label="Marital status" [options]="maritalStatuses" [(ngModel)]="form.maritalStatus" [clearable]="false" />
+      <bb-text-input label="Blood group" [(ngModel)]="form.bloodGroup" maxlength="5" />
+      <bb-text-input label="Phone" [(ngModel)]="form.phone" maxlength="20" [required]="true" />
+      <bb-text-input label="Work email" [(ngModel)]="form.workEmail" maxlength="255" />
+      <bb-text-input label="Personal email" [(ngModel)]="form.personalEmail" maxlength="255" />
+    </div>
+  }
+  @case ('job') {
+    <div class="fields">
+      <bb-select label="Department" [options]="departments()" [(ngModel)]="form.departmentId" [clearable]="false" />
+      <bb-select label="Designation" [options]="designations()" [(ngModel)]="form.designationId" [clearable]="false" />
+      <bb-select label="Grade" [options]="grades()" [(ngModel)]="form.gradeId" [clearable]="false" />
+      <bb-select label="Work location" [options]="locations()" [(ngModel)]="form.workLocationId" [clearable]="false" />
+      <bb-select label="Cost centre" [options]="costCentres()" [(ngModel)]="form.costCentreId" />
+      <bb-number-input label="Reports to (employee id)" hint="The manager's employee id." [(ngModel)]="form.reportsToEmployeeId" />
+      <bb-date-input label="Joining date" [(ngModel)]="form.joiningDate" [required]="true" />
+      <bb-date-input label="Probation ends" [(ngModel)]="form.probationEndDate" />
+      <bb-date-input label="Confirmed on" [(ngModel)]="form.confirmationDate" />
+      <bb-number-input label="Notice period (days)" hint="Blank takes the grade's." [(ngModel)]="form.noticePeriodDays" />
+      <bb-select label="Employment type" [options]="employmentTypes" [(ngModel)]="form.employmentType" [clearable]="false" />
+      <bb-select label="Status" [options]="statuses" [(ngModel)]="form.employeeStatus" [clearable]="false" />
+      @if (form.employeeStatus === 'Exited') {
+        <bb-date-input label="Exit date" [(ngModel)]="form.exitDate" [required]="true" />
+      }
+      <bb-text-input label="Login (user id)" hint="Links this employee to a sign-in, for self-service." [(ngModel)]="form.userId" />
+      @if (employeeId() !== null) {
+        <bb-date-input label="Change takes effect" hint="For a transfer, promotion or new manager." [(ngModel)]="form.effectiveDate" />
+        <bb-text-input label="Remarks" [(ngModel)]="form.remarks" maxlength="500" />
+      }
+    </div>
+  }
+  @case ('statutory') {
+    <div class="fields">
+      <bb-text-input label="PAN" [(ngModel)]="form.pan" maxlength="10" [uppercase]="true" />
+      <bb-text-input label="Aadhaar" [(ngModel)]="form.aadhaar" maxlength="12" />
+      <bb-text-input label="UAN" [(ngModel)]="form.uan" maxlength="12" />
+      <bb-text-input label="PF number" [(ngModel)]="form.pfNumber" maxlength="30" />
+      <bb-text-input label="ESI number" [(ngModel)]="form.esiNumber" maxlength="30" />
+      <bb-checkbox text="PF applies" [(ngModel)]="form.isPfApplicable" />
+      <bb-checkbox text="ESI applies" [(ngModel)]="form.isEsiApplicable" />
+      <bb-checkbox text="Professional tax applies" [(ngModel)]="form.isPtApplicable" />
+      <bb-checkbox text="LWF applies" [(ngModel)]="form.isLwfApplicable" />
+    </div>
+  }
+  @case ('contact') {
+    <h2>Addresses</h2>
+    <div class="rows">
+      @for (a of form.addresses; track $index; let i = $index) {
+        <div class="row">
+          <bb-select label="Kind" [options]="addressKinds" [(ngModel)]="a.addressKind" [clearable]="false" />
+          <bb-text-input label="Line 1" [(ngModel)]="a.addressLine1" maxlength="200" />
+          <bb-text-input label="Line 2" [(ngModel)]="a.addressLine2" maxlength="200" />
+          <bb-text-input label="City" [(ngModel)]="a.city" maxlength="100" />
+          <bb-text-input label="Postal code" [(ngModel)]="a.postalCode" maxlength="10" />
+          <button type="button" class="link danger" (click)="removeAt('addresses', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addAddress()" [disabled]="form.addresses.length >= 2">+ Address</button>
+
+    <h2>Emergency contacts</h2>
+    <div class="rows">
+      @for (c of form.contacts; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Name" [(ngModel)]="c.name" maxlength="200" />
+          <bb-select label="Relationship" [options]="relationships" [(ngModel)]="c.relationship" [clearable]="false" />
+          <bb-text-input label="Phone" [(ngModel)]="c.phone" maxlength="20" />
+          <bb-checkbox text="Primary" [(ngModel)]="c.isPrimary" />
+          <button type="button" class="link danger" (click)="removeAt('contacts', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addContact()">+ Contact</button>
+  }
+  @case ('family') {
+    <h2>Family</h2>
+    <div class="rows">
+      @for (f of form.familyMembers; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Name" [(ngModel)]="f.name" maxlength="200" />
+          <bb-select label="Relationship" [options]="relationships" [(ngModel)]="f.relationship" [clearable]="false" />
+          <bb-date-input label="Date of birth" [(ngModel)]="f.dateOfBirth" />
+          <bb-checkbox text="Dependent" [(ngModel)]="f.isDependent" />
+          <bb-checkbox text="ESI covered" [(ngModel)]="f.isEsiCovered" />
+          <button type="button" class="link danger" (click)="removeAt('familyMembers', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addFamilyMember()">+ Family member</button>
+
+    <h2>Nominees</h2>
+    <p class="muted">The shares for each kind of nomination add up to 100 percent.</p>
+    <div class="rows">
+      @for (n of form.nominees; track $index; let i = $index) {
+        <div class="row">
+          <bb-select label="Family member" [options]="familyOptions()" [(ngModel)]="n.familyMemberIndex" [clearable]="false" />
+          <bb-select label="For" [options]="nominationKinds" [(ngModel)]="n.nominationKind" [clearable]="false" />
+          <bb-number-input label="Share (%)" [(ngModel)]="n.sharePercent" />
+          <button type="button" class="link danger" (click)="removeAt('nominees', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addNominee()" [disabled]="form.familyMembers.length === 0">+ Nominee</button>
+  }
+  @case ('bank') {
+    <div class="rows">
+      @for (b of form.bankDetails; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Account holder" [(ngModel)]="b.accountHolder" maxlength="200" />
+          <bb-text-input label="Account number" [(ngModel)]="b.accountNo" maxlength="30" />
+          <bb-text-input label="IFSC" [(ngModel)]="b.ifsc" maxlength="11" [uppercase]="true" />
+          <bb-text-input label="Bank" [(ngModel)]="b.bankName" maxlength="100" />
+          @if (b.isPrimary) {
+            <span class="muted">Salary goes here</span>
+          } @else {
+            <button type="button" class="link" (click)="makePrimaryAccount(i)">Pay salary here</button>
+          }
+          <button type="button" class="link danger" (click)="removeAt('bankDetails', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addBankDetail()">+ Bank account</button>
+  }
+  @case ('background') {
+    <h2>Education</h2>
+    <div class="rows">
+      @for (x of form.education; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Qualification" [(ngModel)]="x.qualification" maxlength="100" />
+          <bb-text-input label="Institution" [(ngModel)]="x.institution" maxlength="200" />
+          <bb-number-input label="Year" [(ngModel)]="x.yearOfPassing" />
+          <bb-text-input label="Grade" [(ngModel)]="x.grade" maxlength="20" />
+          <button type="button" class="link danger" (click)="removeAt('education', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addEducation()">+ Qualification</button>
+
+    <h2>Previous employment</h2>
+    <div class="rows">
+      @for (x of form.previousEmployments; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Employer" [(ngModel)]="x.employer" maxlength="200" />
+          <bb-date-input label="From" [(ngModel)]="x.fromDate" />
+          <bb-date-input label="To" [(ngModel)]="x.toDate" />
+          <bb-text-input label="Last designation" [(ngModel)]="x.lastDesignation" maxlength="100" />
+          <button type="button" class="link danger" (click)="removeAt('previousEmployments', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addPreviousEmployment()">+ Previous job</button>
+  }
+  @case ('records') {
+    <h2>Documents</h2>
+    <div class="rows">
+      @for (d of form.documents; track $index; let i = $index) {
+        <div class="row">
+          <bb-select label="Document" [options]="documentKinds" [(ngModel)]="d.documentKind" [clearable]="false" />
+          <bb-text-input label="File" hint="The stored file's key." [(ngModel)]="d.attachmentKey" maxlength="500" />
+          <bb-date-input label="Valid until" [(ngModel)]="d.validUntil" />
+          <button type="button" class="link danger" (click)="removeAt('documents', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addDocument()">+ Document</button>
+
+    <h2>Assets issued</h2>
+    <div class="rows">
+      @for (a of form.assetIssues; track $index; let i = $index) {
+        <div class="row">
+          <bb-text-input label="Asset" [(ngModel)]="a.assetName" maxlength="200" />
+          <bb-text-input label="Tag" [(ngModel)]="a.assetTag" maxlength="30" />
+          <bb-date-input label="Issued" [(ngModel)]="a.issuedDate" />
+          <bb-date-input label="Returned" [(ngModel)]="a.returnedDate" />
+          <bb-number-input label="Recovery" [(ngModel)]="a.recoveryAmount" />
+          <button type="button" class="link danger" (click)="removeAt('assetIssues', i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-secondary" (click)="addAsset()">+ Asset</button>
+  }
+  @case ('history') {
+    @if (history().length === 0) {
+      <p class="muted">The history starts when the employee is saved.</p>
+    } @else {
+      <ul class="rows">
+        @for (h of history(); track $index) {
+          <li class="row">
+            <strong>{{ h.effectiveDate }}</strong>
+            <span>{{ h.changeKind }}</span>
+            <span>{{ nameOf('department', h.departmentId) }}</span>
+            <span>{{ nameOf('designation', h.designationId) }}</span>
+            <span>{{ nameOf('grade', h.gradeId) }}</span>
+            <span>{{ nameOf('location', h.workLocationId) }}</span>
+            @if (h.remarks) {
+              <span class="muted">{{ h.remarks }}</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+}

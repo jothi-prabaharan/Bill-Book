@@ -1566,7 +1566,7 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 
 | | |
 |---|---|
-| **Built** | Nothing |
+| **Built** | Stage H0 (TK-42 to TK-47) and H1, the `Hrm` service with the employee master (TK-48). Not deployed yet |
 | **Planned here** | Six services, one per schema — `hrm`, `tla`, `pay`, `rec`, `prf`, `clm` — HR and payroll report sources in Reporting, and two apps, `apps/hrms` and `apps/payroll`, on the shared shell |
 | **Depends on** | The Platform section (H0); Accounting's internal posting API (built); the print templates, for letters, payslips and Form 16 |
 | **Decided** | HRMS and Payroll are two apps, each sold on its own, Payroll fully standalone; one shared employee master; built before School; one service per schema; employees are not contacts; payroll posts through Accounting and never writes GL rows; a customer without RetailErp has its journals posted to a hidden ledger and exported for their accountant |
@@ -2458,7 +2458,7 @@ H0 is the Platform section above. Each stage says which app it belongs to. **The
 Payroll** is H0, H1, H4, H5, H6 and the settlement half of H7, plus Payroll's self-service in H8.
 **The first sellable HRMS** is H0–H3, H7 and H8.
 
-- [ ] **H1 — Core HR** *(both apps: the shared employee master)*. Organisation setup, employee master with every child table, history,
+- [x] **H1 — Core HR** *(both apps: the shared employee master)*. **Built 24 September 2026 (TK-48)**: the `Hrm` service, schema `hrm`, port 4509; tests written, not yet run. Organisation setup, employee master with every child table, history,
   documents, assets, announcements, policy documents.
 
   *Done when*: an employee is created with family, nominees and bank details, linked to a user and

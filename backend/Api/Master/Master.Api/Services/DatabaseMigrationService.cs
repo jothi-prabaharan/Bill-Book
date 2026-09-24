@@ -290,6 +290,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<ContactsDbContext>(connectionString, tenant, "con", ct);
         await MigrateContextAsync<AccountingDbContext>(connectionString, tenant, "acc", ct);
         await MigrateContextAsync<CustomerDbContext>(connectionString, tenant, "cus", ct);
+        await MigrateContextAsync<Hrm.Repository.HrmDbContext>(connectionString, tenant, "hrm", ct);
         await MigrateContextAsync<InventoryDbContext>(connectionString, tenant, "inv", ct);
         await MigrateContextAsync<PurchaseDbContext>(connectionString, tenant, "pur", ct);
         await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", ct);

@@ -1,0 +1,46 @@
+<header class="page-head">
+  <h1>Organisation setup</h1>
+  <button *bbIfCan="'employee.edit'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">
+    + Add {{ current().singular }}
+  </button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Organisation masters">
+  @for (k of kinds; track k.kind) {
+    <button type="button" role="tab" [attr.aria-selected]="k.kind === kind()" (click)="choose(k.kind)">{{ k.label }}</button>
+  }
+</nav>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'HRM_ORG_' + kind()" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="code" let-row><code>{{ row.code }}</code></ng-template>
+  <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button *bbIfCan="'employee.edit'" type="button" class="link" (click)="startEdit(row)" [disabled]="busy()">Edit</button>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="org-sheet-title">
+    <h2 id="org-sheet-title">{{ editingId() === null ? 'New' : 'Edit' }} {{ current().singular }}</h2>
+    <div class="fields">
+      <bb-text-input label="Code" [(ngModel)]="form.code" maxlength="20" [uppercase]="true" />
+      <bb-text-input label="Name" [(ngModel)]="form.name" maxlength="100" />
+      @if (kind() === 'grades') {
+        <bb-number-input label="Order" hint="Higher is more senior; a move up is a promotion." [(ngModel)]="form.sortOrder" />
+        <bb-number-input label="Notice period (days)" [(ngModel)]="form.noticePeriodDays" />
+      }
+      @if (kind() === 'work-locations') {
+        <bb-text-input label="Address" [(ngModel)]="form.addressLine1" maxlength="200" />
+        <bb-text-input label="City" [(ngModel)]="form.city" maxlength="100" />
+        <bb-number-input label="Check-in fence (metres)" hint="Blank means no fence." [(ngModel)]="form.geoFenceMetres" />
+      }
+      <bb-checkbox text="Active" [(ngModel)]="form.isActive" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

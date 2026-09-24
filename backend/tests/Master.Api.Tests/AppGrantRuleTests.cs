@@ -96,8 +96,34 @@ public sealed class AppGrantRuleTests
     {
         using AdminDbContext db = Model();
 
-        Assert.All(Seed<Menu>(db), m => Assert.True(((App)m["Apps"]!).HasFlag(App.RetailErp), $"Menu {m["Code"]}"));
-        Assert.All(Seed<Permission>(db), p => Assert.True(((App)p["Apps"]!).HasFlag(App.RetailErp), $"Permission {p["Code"]}"));
+        // Rows seeded before other apps' modules arrived (menus to 1106, the
+        // first twelve modules). Later rows belong to HRMS, Payroll and School.
+        string[] original =
+        [
+            "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
+            "accounting", "banking", "reports", "settings", "support", "platform",
+        ];
+        Assert.All(Seed<Menu>(db).Where(m => (int)m["MenuId"]! is <= 1106 and not (10 or 118)),
+            m => Assert.True(((App)m["Apps"]!).HasFlag(App.RetailErp), $"Menu {m["Code"]}"));
+        Assert.All(Seed<Permission>(db).Where(p => original.Contains((string)p["Module"]!)),
+            p => Assert.True(((App)p["Apps"]!).HasFlag(App.RetailErp), $"Permission {p["Code"]}"));
+    }
+
+    /// <summary>The employee master is HRMS's, Payroll's and School's; lifecycle is HRMS's (TK-48).</summary>
+    [Fact]
+    public void The_employee_master_belongs_to_the_apps_that_employ_people()
+    {
+        using AdminDbContext db = Model();
+        List<IDictionary<string, object?>> permissions = Seed<Permission>(db);
+
+        Assert.All(permissions.Where(p => (string)p["Module"]! == "employee"),
+            p => Assert.Equal(App.Hrms | App.Payroll | App.School, (App)p["Apps"]!));
+        Assert.All(permissions.Where(p => (string)p["Module"]! == "hrm"),
+            p => Assert.Equal(App.Hrms, (App)p["Apps"]!));
+
+        IReadOnlyList<Menu> menus = MenuSeed.Build();
+        Assert.Equal(App.Hrms | App.Payroll | App.School, menus.Single(m => m.Code == "emp").Apps);
+        Assert.Equal(App.Hrms, menus.Single(m => m.Code == "ann").Apps);
     }
 
     [Fact]

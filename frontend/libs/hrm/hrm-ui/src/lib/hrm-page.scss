@@ -1,0 +1,84 @@
+// Shared layout for the Hrm pages: a header, a grid or list, and an edit
+// sheet that becomes full-screen on a phone.
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3, 12px);
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1, 4px);
+  margin-bottom: var(--space-3, 12px);
+  border-bottom: 1px solid var(--color-border);
+
+  button {
+    border: 0;
+    background: none;
+    padding: var(--space-2, 8px) var(--space-3, 12px);
+    color: var(--color-text-muted);
+    cursor: pointer;
+
+    &[aria-selected='true'] {
+      color: var(--color-text);
+      border-bottom: 2px solid var(--color-accent);
+    }
+  }
+}
+
+.sheet {
+  margin-top: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3, 12px);
+}
+
+.sheet-actions {
+  display: flex;
+  gap: var(--space-2, 8px);
+  justify-content: flex-end;
+  margin-top: var(--space-3, 12px);
+}
+
+.rows {
+  display: grid;
+  gap: var(--space-3, 12px);
+
+  .row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: var(--space-2, 8px);
+    align-items: end;
+    padding-bottom: var(--space-3, 12px);
+    border-bottom: 1px solid var(--color-border);
+  }
+}
+
+.muted {
+  color: var(--color-text-muted);
+}
+
+@media (max-width: 480px) {
+  .sheet {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    overflow-y: auto;
+    border-radius: 0;
+  }
+}
