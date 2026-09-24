@@ -105,4 +105,58 @@ export class PayrollApiService {
   savePtSlab(body: any): Promise<{ id: number }> {
     return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/statutory/pt-slabs', body));
   }
+
+  // Tax
+  taxDeclaration(employeeId: number, financialYear = '2026-2027'): Promise<any> {
+    return firstValueFrom(
+      this.http.get<any>(`/api/payroll/tax/declarations/${employeeId}`, {
+        params: { financialYear },
+      }),
+    );
+  }
+
+  saveTaxDeclaration(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/tax/declarations', body));
+  }
+
+  lockTaxDeclaration(id: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/payroll/tax/declarations/${id}/lock`, {}));
+  }
+
+  unlockTaxDeclaration(id: number): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/payroll/tax/declarations/${id}/unlock`, {}));
+  }
+
+  previousEmployerIncome(employeeId: number, financialYear = '2026-2027'): Promise<any> {
+    return firstValueFrom(
+      this.http.get<any>(`/api/payroll/tax/previous-employer/${employeeId}`, {
+        params: { financialYear },
+      }),
+    );
+  }
+
+  savePreviousEmployerIncome(body: any): Promise<{ id: number }> {
+    return firstValueFrom(this.http.post<{ id: number }>('/api/payroll/tax/previous-employer', body));
+  }
+
+  taxSlabs(financialYear = '2026-2027', regime = 'New'): Promise<any[]> {
+    return firstValueFrom(
+      this.http.get<any[]>('/api/payroll/tax/slabs', {
+        params: { financialYear, regime },
+      }),
+    );
+  }
+
+  computeTax(employeeId: number, financialYear: string, annualGross: number, remainingMonths = 12): Promise<any> {
+    return firstValueFrom(
+      this.http.post<any>('/api/payroll/tax/compute', null, {
+        params: {
+          employeeId: String(employeeId),
+          financialYear,
+          annualGross: String(annualGross),
+          remainingMonths: String(remainingMonths),
+        },
+      }),
+    );
+  }
 }

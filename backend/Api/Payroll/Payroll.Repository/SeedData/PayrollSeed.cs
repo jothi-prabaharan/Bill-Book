@@ -84,4 +84,31 @@ public static class PayrollSeed
         new() { OrgId = orgId, StateId = 14, EffectiveFrom = new DateOnly(2020, 1, 1), EmployeeContribution = 12m, EmployerContribution = 36m, DeductionFrequency = "HalfYearly" },
         new() { OrgId = orgId, StateId = 10, EffectiveFrom = new DateOnly(2020, 1, 1), EmployeeContribution = 20m, EmployerContribution = 40m, DeductionFrequency = "Yearly" }
     ];
+
+    public static IReadOnlyList<TaxSlab> DefaultTaxSlabs(Guid orgId) =>
+    [
+        // New Regime FY 2026-27
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 0, MaxIncome = 300000, TaxRate = 0, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 300001, MaxIncome = 700000, TaxRate = 5, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 700001, MaxIncome = 1000000, TaxRate = 10, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 1000001, MaxIncome = 1200000, TaxRate = 15, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 1200001, MaxIncome = 1500000, TaxRate = 20, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", MinIncome = 1500001, MaxIncome = 999999999, TaxRate = 30, CessRate = 4 },
+
+        // Old Regime FY 2026-27
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", MinIncome = 0, MaxIncome = 250000, TaxRate = 0, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", MinIncome = 250001, MaxIncome = 500000, TaxRate = 5, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", MinIncome = 500001, MaxIncome = 1000000, TaxRate = 20, CessRate = 4 },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", MinIncome = 1000001, MaxIncome = 999999999, TaxRate = 30, CessRate = 4 }
+    ];
+
+    public static IReadOnlyList<TaxRule> DefaultTaxRules(Guid orgId) =>
+    [
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "New", Section = "StandardDeduction", MaxLimit = 75000, Description = "Standard deduction under new regime" },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", Section = "StandardDeduction", MaxLimit = 50000, Description = "Standard deduction under old regime" },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", Section = "80C", MaxLimit = 150000, Description = "Deduction for investments (PF, PPF, ELSS, Life Insurance)" },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", Section = "80D", MaxLimit = 25000, Description = "Health Insurance Premium" },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", Section = "80CCD_1B", MaxLimit = 50000, Description = "National Pension Scheme" },
+        new() { OrgId = orgId, FinancialYear = "2026-2027", Regime = "Old", Section = "24B", MaxLimit = 200000, Description = "Interest on Home Loan" }
+    ];
 }

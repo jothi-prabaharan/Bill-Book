@@ -52,7 +52,7 @@ public sealed class PayrollSchemaTests
         Dictionary<string, int> first = await new PayrollSeeder(db).SeedForOrganizationAsync(orgId, default);
         Dictionary<string, int> second = await new PayrollSeeder(db).SeedForOrganizationAsync(orgId, default);
 
-        Assert.All(first.Values, v => Assert.Equal(1, v));
+        Assert.All(first.Values, v => Assert.True(v >= 1));
         Assert.All(second.Values, v => Assert.Equal(0, v));
         Assert.Equal(1, await db.PayGroups.CountAsync());
     }

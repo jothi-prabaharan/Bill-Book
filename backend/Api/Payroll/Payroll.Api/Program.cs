@@ -86,6 +86,7 @@ builder.Services.AddScoped<SalarySetupService>();
 builder.Services.AddScoped<PayrollAdjustmentService>();
 builder.Services.AddScoped<PayrollRunService>();
 builder.Services.AddScoped<StatutoryService>();
+builder.Services.AddScoped<TaxCalculationService>();
 builder.Services.AddScoped<PayrollSeeder>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

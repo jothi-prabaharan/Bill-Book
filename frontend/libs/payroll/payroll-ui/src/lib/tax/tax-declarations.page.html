@@ -1,0 +1,85 @@
+<div class="payroll-page">
+  <div class="payroll-page__header">
+    <div>
+      <h1 class="payroll-page__title">Income Tax Declarations</h1>
+      <p class="payroll-page__subtitle">Manage IT declarations, regime selection, and previous employer income.</p>
+    </div>
+    <div class="payroll-page__actions">
+      @if (declarationId) {
+        <button type="button" class="btn btn--outline" (click)="toggleLock()" [disabled]="busy()">
+          {{ isLocked ? 'Unlock Declaration' : 'Lock Declaration' }}
+        </button>
+      }
+      <button type="button" class="btn btn--primary" (click)="save()" [disabled]="busy() || isLocked">
+        Save Declaration
+      </button>
+    </div>
+  </div>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()"></bb-message-box>
+  }
+
+  <div class="payroll-card">
+    <div class="payroll-card__header">
+      <h2 class="payroll-card__title">Employee & Regime Selection</h2>
+    </div>
+    <div class="payroll-form-grid">
+      <div class="payroll-form-field">
+        <bb-number-input label="Employee ID" [(ngModel)]="employeeId" (ngModelChange)="load()"></bb-number-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-text-input label="Financial Year" [(ngModel)]="financialYear" (ngModelChange)="load()"></bb-text-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <label>Tax Regime</label>
+        <select class="payroll-select" [(ngModel)]="regime" [disabled]="isLocked">
+          <option value="New">New Tax Regime (Default u/s 115BAC)</option>
+          <option value="Old">Old Tax Regime</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  @if (regime === 'Old') {
+    <div class="payroll-card">
+      <div class="payroll-card__header">
+        <h2 class="payroll-card__title">Chapter VI-A Deductions (Old Regime)</h2>
+      </div>
+      <div class="payroll-form-grid">
+        <div class="payroll-form-field">
+          <bb-number-input label="Section 80C (Max ₹1,50,000)" [(ngModel)]="sec80C" [disabled]="isLocked"></bb-number-input>
+        </div>
+
+        <div class="payroll-form-field">
+          <bb-number-input label="Section 80D (Health Insurance)" [(ngModel)]="sec80D" [disabled]="isLocked"></bb-number-input>
+        </div>
+
+        <div class="payroll-form-field">
+          <bb-number-input label="HRA Exemption / Annual Rent" [(ngModel)]="hra" [disabled]="isLocked"></bb-number-input>
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="payroll-card">
+    <div class="payroll-card__header">
+      <h2 class="payroll-card__title">Previous Employer Income (Mid-Year Joiner)</h2>
+    </div>
+    <div class="payroll-form-grid">
+      <div class="payroll-form-field">
+        <bb-text-input label="Employer Name" [(ngModel)]="prevEmployerName" [disabled]="isLocked"></bb-text-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-number-input label="Gross Salary" [(ngModel)]="prevGross" [disabled]="isLocked"></bb-number-input>
+      </div>
+
+      <div class="payroll-form-field">
+        <bb-number-input label="TDS Deducted" [(ngModel)]="prevTds" [disabled]="isLocked"></bb-number-input>
+      </div>
+    </div>
+  </div>
+</div>

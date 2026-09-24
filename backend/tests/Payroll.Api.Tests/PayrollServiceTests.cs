@@ -301,4 +301,48 @@ public sealed class PayrollServiceTests
         Assert.Equal(15000m, epfWages);
         Assert.Equal(1800m, eeShare); // 12% of 15000 = 1800
     }
+
+    [SkippableFact]
+    public async Task A_mid_year_joiner_with_income_from_a_previous_employer_is_taxed_the_same_by_a_monthly_run_and_by_the_year_end_recomputation()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+
+        Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
+        var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
+        await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
+
+        var taxService = new TaxCalculationService(db);
+        var seeder = new PayrollSeeder(db);
+        await seeder.SeedForOrganizationAsync(orgId, default);
+
+        long employeeId = 999;
+        string fy = "2026-2027";
+
+        // Previous employer income
+        await taxService.SavePreviousEmployerIncomeAsync(new SavePreviousEmployerIncomeRequest
+        {
+            EmployeeId = employeeId,
+            FinancialYear = fy,
+            GrossIncome = 500000m,
+            TotalTdsDeducted = 15000m,
+            EmployerName = "Prior Tech Corp"
+        }, default);
+
+        // Current employer: 5,00,000 over 6 remaining months
+        decimal currentGross = 500000m;
+        int remainingMonths = 6;
+
+        // 1. Monthly projection
+        var monthlyProjection = await taxService.ComputeTaxAsync(employeeId, fy, currentGross, remainingMonths, default);
+        decimal monthlyTds = monthlyProjection.MonthlyTds;
+        decimal totalMonthlyTdsOverRemainingPeriod = monthlyTds * remainingMonths;
+
+        // 2. Year-end recomputation (remainingMonths = 0, full year actuals)
+        var yearEndRecomputation = await taxService.ComputeTaxAsync(employeeId, fy, currentGross, remainingMonths: 0, default);
+
+        // Both must arrive at the exact same net tax payable
+        Assert.Equal(yearEndRecomputation.NetTaxPayable, totalMonthlyTdsOverRemainingPeriod);
+        Assert.Equal(yearEndRecomputation.TotalAnnualTax, monthlyProjection.TotalAnnualTax);
+        Assert.Equal(15000m, yearEndRecomputation.PreviousEmployerTds);
+    }
 }

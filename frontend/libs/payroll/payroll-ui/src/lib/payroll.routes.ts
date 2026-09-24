@@ -21,4 +21,9 @@ export const payrollRoutes: Routes = [
     loadComponent: () => import('./statutory/statutory-settings.page').then((m) => m.StatutorySettingsPage),
     data: { access: { permission: 'payroll.view' } },
   },
+  {
+    path: 'payroll/tax',
+    loadComponent: () => import('./tax/tax-declarations.page').then((m) => m.TaxDeclarationsPage),
+    data: { access: { permission: 'payroll.view' } },
+  },
 ];

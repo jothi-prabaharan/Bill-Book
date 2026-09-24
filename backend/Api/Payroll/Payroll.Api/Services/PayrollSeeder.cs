@@ -23,6 +23,8 @@ public sealed class PayrollSeeder
 
         seeded["ptSlabs"] = await AddWhenEmptyAsync(_db.ProfessionalTaxSlabs.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.ProfessionalTaxSlabs.AddRange(PayrollSeed.DefaultPtSlabs(orgId)));
         seeded["lwf"] = await AddWhenEmptyAsync(_db.LwfSettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.LwfSettings.AddRange(PayrollSeed.DefaultLwf(orgId)));
+        seeded["taxSlabs"] = await AddWhenEmptyAsync(_db.TaxSlabs.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.TaxSlabs.AddRange(PayrollSeed.DefaultTaxSlabs(orgId)));
+        seeded["taxRules"] = await AddWhenEmptyAsync(_db.TaxRules.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.TaxRules.AddRange(PayrollSeed.DefaultTaxRules(orgId)));
 
         await _db.SaveChangesAsync(ct);
         return seeded;

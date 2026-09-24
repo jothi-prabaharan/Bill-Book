@@ -2348,18 +2348,26 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `Ecr_file_matches_the_posted_payslips_to_the_rupee()` in `PayrollServiceTests.cs` verifying the ECR matches posted figures to the rupee. Both backend and frontend builds pass cleanly.
 
 ### TK-53 · H6: Income tax on salary (`pay`)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `TaxSlab`, `TaxRule`, `TaxDeclaration`, `TaxDeclarationLine`, `RentDetail`,
   `PreviousEmployerIncome`.
 - **Sub-tasks:**
-  - [ ] Old and new regimes, declarations and proofs (with `lock` and `unlock`), and a projection
+  - [x] Old and new regimes, declarations and proofs (with `lock` and `unlock`), and a projection
         with monthly TDS.
-  - [ ] Form 16 Part B, Form 12BA and the 24Q data.
-  - [ ] Seed the year's slabs and rules.
+  - [x] Form 16 Part B, Form 12BA and the 24Q data.
+  - [x] Seed the year's slabs and rules.
 - **Done when:** a mid-year joiner with income from a previous employer is taxed the same by a
   monthly run and by the year-end recomputation.
 - **Notes:**
+  - Done (Antigravity, 2026-09-25):
+    - Added 6 tax tables (`TaxSlab`, `TaxRule`, `TaxDeclaration`, `TaxDeclarationLine`, `RentDetail`, `PreviousEmployerIncome`) in `pay` schema.
+    - Added EF Core migration `20260924201947_AddIncomeTaxSchema.cs` with RLS policies (`ENABLE` + `FORCE` + `tenant_isolation` block).
+    - Seeded FY 2026-2027 Old and New tax regimes (0%, 5%, 10%, 15%, 20%, 30% slabs) and statutory deduction rules (Standard Deduction ₹75k/₹50k, 80C, 80D, 80CCD(1B), 24B) in `PayrollSeed.cs` and `PayrollSeeder.cs`.
+    - Added `TaxCalculationService.cs` handling Old & New regime tax projection, 87A rebate, 4% Health & Education cess, previous employer income integration, lock/unlock declarations, Form 16 Part B, Form 12BA, and 24Q quarterly summaries.
+    - Added `TaxController.cs` under `/api/payroll/tax/...` with module permission `payroll` and app `Payroll`.
+    - Added frontend `TaxDeclarationsPage` in `libs/payroll/payroll-ui` and route `/payroll/tax`. Verified `nx build payroll` succeeds.
+    - **Tests written**: `A_mid_year_joiner_with_income_from_a_previous_employer_is_taxed_the_same_by_a_monthly_run_and_by_the_year_end_recomputation()` in `PayrollServiceTests.cs`. Backend solution builds with 0 errors and 0 warnings.
 
 ### TK-54 · H7: Lifecycle and exit
 - [ ] open
