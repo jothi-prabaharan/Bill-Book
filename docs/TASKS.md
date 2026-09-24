@@ -1036,7 +1036,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: three added to `ticket-form.component.spec.ts`.
 
 ### TK-17 · Seed a `WALKIN` contact per branch
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-CON · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-40)
 - **Where:** `backend/Api/Master/Master.Api/Controllers/InternalSeedController.cs` (Master's own branch seed), the contact service's create path.
 - **Sub-tasks:**
