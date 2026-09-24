@@ -1296,7 +1296,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - A voided invoice's archived copy is the one filed at post, with no VOID stamp. Re-filing on void is left for when PDF/A lands.
 
 ### TK-23 · Date input that follows the branch's format
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/ui-components/src/lib/date-input/date-input.component.ts`: a native `<input type="date">`.
