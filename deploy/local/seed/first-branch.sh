@@ -23,10 +23,12 @@ body="{\"customerId\":\"$id\",\"orgId\":\"$id\",\"vertical\":\"General\"}"
 
 # The order Master's own seeder uses. Each service is given two minutes to come
 # up and finish its start-up migration check.
-for svc in accounting inventory sales purchase reporting printing master; do
+# Each service's own port, as docker-compose.yml assigns them.
+for target in accounting:7502 inventory:7503 sales:7504 purchase:7505 reporting:7507 printing:7508 master:7501; do
+  svc="${target%%:*}"
   curl --fail --silent --show-error --output /dev/null \
     --retry 60 --retry-delay 2 --retry-all-errors \
-    -X POST "http://$svc:8080/internal/seed/organization" \
+    -X POST "http://$target/internal/seed/organization" \
     -H "Content-Type: application/json" \
     -H "X-Internal-Key: $INTERNAL_API_KEY" \
     -d "$body"

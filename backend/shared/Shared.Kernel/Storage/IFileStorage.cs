@@ -23,8 +23,8 @@ public interface IFileStorage
     ///
     /// Folders need no check and no creation. In Blob Storage a folder is only
     /// the shared start of its files' names, so writing a file brings every
-    /// folder in its path into being; on local disk the directories are created
-    /// with the file.
+    /// folder in its path into being; on local disk and over SFTP each missing
+    /// folder is created before the file.
     /// </summary>
     Task<string> SaveAsync(
         string key,

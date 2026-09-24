@@ -33,6 +33,13 @@ COPY --from=build /src/dist/apps/docs/browser   /usr/share/nginx/docs
 
 # Replaces the image's default site rather than sitting beside it.
 COPY --from=config nginx.conf /etc/nginx/conf.d/default.conf
-COPY --from=config app.conf   /etc/nginx/app.conf
+# A template, so the gateway's address can be set when the container starts
+# rather than built in. The image's entrypoint writes it out as
+# /etc/nginx/app.conf, substituting only GATEWAY_UPSTREAM — nginx's own $host
+# and $uri must pass through untouched.
+COPY --from=config app.conf   /etc/nginx/templates/app.conf.template
+ENV NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx \
+    NGINX_ENVSUBST_FILTER=^GATEWAY_UPSTREAM$ \
+    GATEWAY_UPSTREAM=http://gateway:8080
 
 EXPOSE 8081 8082 8083 8084

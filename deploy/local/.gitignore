@@ -1,3 +1,5 @@
-# Secrets written by setup.ps1, and the backups that contain every customer's books.
+# Secrets written by setup.ps1 (.env, or pcs\ with one file per PC), and the
+# backups that contain every customer's books.
 .env
 backups/
+pcs/

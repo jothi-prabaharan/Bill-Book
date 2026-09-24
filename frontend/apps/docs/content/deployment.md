@@ -84,9 +84,17 @@ cloud subscription. The steps are in `deploy/local/README.md`.
 |---|---|
 | The services, the gateway and stock costing | Containers, built from the same images as Azure |
 | The database | PostgreSQL in a container, on the PC's own disk |
-| Uploads and archived documents | A folder on the PC's disk, with the same layout |
+| Uploads and archived documents | A folder on the PC's disk, or an SFTP file server — the same layout either way |
 | The web, portal, admin and docs apps | One web server, one port each |
 | The public address | Your domain name, through a Cloudflare Tunnel |
+
+It also runs **split across PCs**, one part each: the web apps, the gateway, the
+services, the stock costing worker and the database, with uploaded files on a
+sixth PC running the SFTP server built into Windows. The setup script then writes
+one settings file per PC, holding only what that PC needs — the web PC, the one
+facing the internet, is never given the database password or the signing keys.
+Traffic between the PCs is not encrypted, so they belong on the office's own
+wired network; the public side is always HTTPS.
 
 **No static IP is needed.** The PC opens an outgoing connection to Cloudflare, and
 visitors reach the site through it — so nothing on the PC is exposed to the

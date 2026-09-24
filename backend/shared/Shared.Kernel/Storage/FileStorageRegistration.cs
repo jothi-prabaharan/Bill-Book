@@ -2,6 +2,7 @@ using Azure.Identity;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Shared.Kernel.Storage;
 
@@ -25,7 +26,9 @@ public static class FileStorageRegistration
     /// <summary>
     /// Blob Storage by connection string when <c>Storage:ConnectionString</c>
     /// is set, Blob Storage by managed identity when <c>Storage:AccountUrl</c>
-    /// is, local disk otherwise.
+    /// is, an SFTP server when <c>Storage:Sftp:Host</c> is, local disk
+    /// otherwise. SFTP is for a self-hosted deployment keeping its files on
+    /// another machine (deploy/local).
     ///
     /// <b>The connection string is for development</b> — Azurite, or pointing
     /// a local run at a real account. It carries the account key, and the
@@ -82,8 +85,46 @@ public static class FileStorageRegistration
             return services;
         }
 
+        if (configuration["Storage:Sftp:Host"] is { Length: > 0 } host)
+        {
+            SftpStorageOptions options = SftpOptions(configuration, host);
+
+            services.AddSingleton<IFileStorage>(provider => new SftpFileStorage(
+                options, provider.GetRequiredService<ILogger<SftpFileStorage>>()));
+
+            return services;
+        }
+
         services.AddSingleton<IFileStorage, LocalDiskFileStorage>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Read once at startup, and refused at startup when incomplete: a store
+    /// that could not sign in would otherwise fail on the first upload, hours
+    /// later, in front of someone trying to attach a document.
+    /// </summary>
+    private static SftpStorageOptions SftpOptions(IConfiguration configuration, string host)
+    {
+        string Required(string key) =>
+            configuration[key] is { Length: > 0 } value
+                ? value
+                : throw new InvalidOperationException(
+                    $"Storage:Sftp:Host is set, so file storage is SFTP, but {key} is not configured.");
+
+        int port = configuration["Storage:Sftp:Port"] is { Length: > 0 } text
+            ? int.TryParse(text, out int parsed) && parsed is > 0 and <= 65535
+                ? parsed
+                : throw new InvalidOperationException($"Storage:Sftp:Port '{text}' is not a port number.")
+            : 22;
+
+        return new SftpStorageOptions(
+            host,
+            port,
+            Required("Storage:Sftp:Username"),
+            Required("Storage:Sftp:Password"),
+            configuration["Storage:Sftp:Root"] is { Length: > 0 } root ? root : "billbook-files",
+            configuration["Storage:Sftp:HostKeySha256"]);
     }
 }

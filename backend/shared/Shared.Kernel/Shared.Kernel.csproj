@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Azure.Storage.Blobs" />
+    <PackageReference Include="SSH.NET" />
     <!-- Both already pinned in Directory.Packages.props; the vault-backed
          ISecretStore is what was missing, not the dependency. -->
     <PackageReference Include="Azure.Identity" />

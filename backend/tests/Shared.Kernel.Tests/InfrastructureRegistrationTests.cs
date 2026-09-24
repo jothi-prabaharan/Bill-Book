@@ -141,6 +141,80 @@ public class InfrastructureRegistrationTests
         Assert.IsType<LocalDiskFileStorage>(provider.GetRequiredService<IFileStorage>());
     }
 
+    // SFTP connects per operation, so resolving it opens no connection and
+    // these need no server. What they pin is which settings choose it and that
+    // an incomplete configuration fails at startup rather than at first upload.
+    [Fact]
+    public void An_sftp_host_selects_the_sftp_store()
+    {
+        IConfiguration config = Config(
+            ("Storage:Sftp:Host", "files-pc"),
+            ("Storage:Sftp:Username", "billbook"),
+            ("Storage:Sftp:Password", "secret"));
+
+        using ServiceProvider provider = Services(config).AddFileStorage(config).BuildServiceProvider();
+
+        Assert.IsType<SftpFileStorage>(provider.GetRequiredService<IFileStorage>());
+    }
+
+    [Theory]
+    [InlineData("Storage:Sftp:Username")]
+    [InlineData("Storage:Sftp:Password")]
+    public void An_sftp_host_without_credentials_is_refused_at_startup(string missing)
+    {
+        var settings = new List<(string, string)>
+        {
+            ("Storage:Sftp:Host", "files-pc"),
+            ("Storage:Sftp:Username", "billbook"),
+            ("Storage:Sftp:Password", "secret"),
+        };
+        settings.RemoveAll(s => s.Item1 == missing);
+        IConfiguration config = Config([.. settings]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => Services(config).AddFileStorage(config));
+
+        Assert.Contains(missing, ex.Message);
+    }
+
+    [Fact]
+    public void Blob_storage_wins_over_sftp_when_both_are_set()
+    {
+        IConfiguration config = Config(
+            ("Storage:AccountUrl", "https://example.blob.core.windows.net"),
+            ("Storage:Sftp:Host", "files-pc"));
+
+        using ServiceProvider provider = Services(config).AddFileStorage(config).BuildServiceProvider();
+
+        Assert.IsType<AzureBlobFileStorage>(provider.GetRequiredService<IFileStorage>());
+    }
+
+    [Theory]
+    [InlineData("billbook-files", "0000000042/a/b.pdf", "billbook-files/0000000042/a/b.pdf")]
+    [InlineData("/srv/files/", "0000000042/a/b.pdf", "/srv/files/0000000042/a/b.pdf")]
+    [InlineData("", "0000000042/a/b.pdf", "0000000042/a/b.pdf")]
+    public void A_key_lands_under_the_sftp_root(string root, string key, string expected) =>
+        Assert.Equal(expected, SftpFileStorage.RemotePath(root, key));
+
+    // The server may hold more than this product's files, so a key that could
+    // climb out of the root is refused even though StorageKey never makes one.
+    [Theory]
+    [InlineData("../other/x.pdf")]
+    [InlineData("a/../../x.pdf")]
+    [InlineData("/etc/passwd")]
+    [InlineData("a\\..\\x.pdf")]
+    [InlineData("a//x.pdf")]
+    [InlineData("")]
+    public void A_key_that_could_leave_the_sftp_root_is_refused(string key) =>
+        Assert.Throws<InvalidOperationException>(() => SftpFileStorage.RemotePath("billbook-files", key));
+
+    [Theory]
+    [InlineData("ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og", "SHA256:ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og", true)]
+    [InlineData("ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og", "ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og=", true)]
+    [InlineData("ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og", "SHA256:ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Oh", false)]
+    [InlineData("ohD8VZEXGWo6Ez8GSEJQ9WpafgLFsOfLOtGGQCQo6Og", "", false)]
+    public void A_pinned_host_key_must_match(string presented, string configured, bool matches) =>
+        Assert.Equal(matches, SftpFileStorage.FingerprintMatches(presented, configured));
+
     [Fact]
     public async Task A_key_signed_download_url_is_read_only_and_expires()
     {
