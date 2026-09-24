@@ -1424,7 +1424,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Tests: `Master.Api.Tests.DatabaseCreationPolicyTests` (only Development may create; the message names database and host and hides the password; the compose file mounts the init script and the script creates both; the Bicep declares both).
 
 ### TK-28 · Settings: one Nx lib per sub-screen (D-05)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MASTER-UI, L-DEPS, L-WEB · **Depends on:** — · **Decision:** D-05 (answered)
 - **Where:** `frontend/libs/master/master-ui/src/lib/` — today one lib holding `api-clients`, `configurations`, `org-currencies`, `organization-settings`, `organizations`, `print-templates`, `roles`, `smtp-settings`, `users` beside contacts and HSN/SAC.
 - **Sub-tasks:**
