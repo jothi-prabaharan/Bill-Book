@@ -512,7 +512,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
       deleting one leg refused, two postings in one transaction checked together, and the catalogue.
 
 ### TK-08 · Review of the RLS work
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-DOC · **Depends on:** TK-71, TK-72, TK-73, TK-74, TK-02, TK-03, TK-04, TK-05, TK-06 · **Decision:** —
 - **State:** two facts decide whether RLS protects anything at all:
   - **A superuser, or any role with `BYPASSRLS`, ignores RLS even when FORCE is set.** The
