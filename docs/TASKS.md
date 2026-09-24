@@ -1446,8 +1446,8 @@ If the code has moved on since a card was written, correct the card in your clai
     diff, and `dotnet ef migrations has-pending-model-changes` reports none.
 
 ### TK-32 · *Business Performance* report
-- [ ] open
-- **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15
+- [~] working (Claude Opus 5.5) — since 2026-09-24
+- **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15 (answered 2026-09-24)
 - **Sub-tasks:** build whatever D-15 specifies, wired through the same four layers as TK-31.
 - **Done when:** `ReportLayerCertificationTests` counts it.
 - **Notes:**
