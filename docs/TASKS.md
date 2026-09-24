@@ -1682,7 +1682,7 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
 
 ### TK-99 · Approvals: the shared engine in Master, with user and role approvers
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)
 - **Where:** design "Workflow approvals for RetailErp documents"; the HRMS design's Approvals section; `Shared.Kernel/Documents/DocumentLifecycle.cs`.
 - **Tables:** `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates`
