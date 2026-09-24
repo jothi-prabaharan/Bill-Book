@@ -22,14 +22,24 @@ public sealed class ItemsController : ControllerBase
 
     public ItemsController(ItemService items) => _items = items;
 
+    /// <summary>
+    /// The item list. <c>search</c> matches name and code anywhere and a barcode
+    /// exactly, with a scanned barcode's item first. Passing <c>skip</c> or
+    /// <c>take</c> returns one page with its total; passing neither returns the
+    /// old bare array of up to 500, so existing callers are unchanged.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> List(
         [FromQuery] string? search,
         [FromQuery] string? profile,
         [FromQuery] long? categoryId,
         [FromQuery] bool includeInactive,
+        [FromQuery] int? skip,
+        [FromQuery] int? take,
         CancellationToken ct) =>
-        Ok(await _items.ListAsync(search, profile, categoryId, includeInactive, ct));
+        skip is null && take is null
+            ? Ok(await _items.ListAsync(search, profile, categoryId, includeInactive, ct))
+            : Ok(await _items.PageAsync(search, profile, categoryId, includeInactive, skip ?? 0, take ?? 50, ct));
 
     [HttpGet("{itemId:long}")]
     public async Task<IActionResult> Get(long itemId, CancellationToken ct)

@@ -610,6 +610,8 @@ Gold, silver and platinum purities with their **factor** — the fraction of pur
 
 An item can carry several: the manufacturer's EAN, a shop-printed label, a pack-level code. Each is unique across the organization, because one scan has to resolve to one item. A pharma pack's **GS1 DataMatrix** carries GTIN, batch and expiry in one symbol, so the scanner parses it rather than matching it whole.
 
+**Searching finds an item by its barcode.** `GET /api/items?search=` matches a name or item code anywhere in it, and a barcode only when it is typed whole. An item whose barcode was scanned comes first, then an exact item code, then everything else. A scanner types the whole code, and part of one would find the wrong item as often as the right one. An inactive barcode finds nothing. Add `skip` and `take` to get one page (up to 200 rows) with the total that matched. Without them the list returns up to 500 items, as it always has.
+
 
 
 # Stock

@@ -313,3 +313,20 @@ public enum SaveItemOutcome
 }
 
 public sealed record SaveItemResult(SaveItemOutcome Outcome, long? ItemId, string? ItemCode);
+
+/// <summary>
+/// One page of items, and how many matched in all (TK-14). Returned only when
+/// the caller passes <c>skip</c> or <c>take</c>; without either the list keeps
+/// its old shape, a bare array.
+/// </summary>
+public class ItemListPage
+{
+    public int Total { get; set; }
+
+    /// <summary>Echoed back already clamped, so the screen and the server agree on where it is.</summary>
+    public int Skip { get; set; }
+
+    public int Take { get; set; }
+
+    public List<ItemListItem> Rows { get; set; } = [];
+}

@@ -32,8 +32,67 @@ public sealed class ItemService
         _clock = clock;
     }
 
+    /// <summary>How many rows one page may ask for, however large a number it sends.</summary>
+    private const int MaxPageSize = 200;
+
+    /// <summary>The unpaged list's cap — what the list returned before paging existed.</summary>
+    private const int UnpagedLimit = 500;
+
+    /// <summary>
+    /// The item list as it always was: at most 500 rows, no total. Kept for every
+    /// caller that passes neither <c>skip</c> nor <c>take</c>.
+    /// </summary>
     public async Task<IReadOnlyList<ItemListItem>> ListAsync(
         string? search, string? profile, long? categoryId, bool includeInactive, CancellationToken ct)
+    {
+        List<Item> items = await Filtered(search, profile, categoryId, includeInactive)
+            .Take(UnpagedLimit)
+            .ToListAsync(ct);
+
+        return await MapSummariesAsync(items, ct);
+    }
+
+    /// <summary>
+    /// One page of items and how many matched (TK-14). Both bounds are clamped
+    /// rather than trusted, as <c>SalesOrderService.ListAsync</c> does: a
+    /// negative <c>skip</c> throws on some providers, and an unbounded
+    /// <c>take</c> is a way to ask for the whole item master in one response.
+    /// </summary>
+    public async Task<ItemListPage> PageAsync(
+        string? search, string? profile, long? categoryId, bool includeInactive,
+        int skip, int take, CancellationToken ct)
+    {
+        int safeSkip = Math.Max(skip, 0);
+        int safeTake = Math.Clamp(take, 1, MaxPageSize);
+
+        IQueryable<Item> query = Filtered(search, profile, categoryId, includeInactive);
+
+        // Counted before paging: the pager needs how many matched, not how many
+        // fitted on the page.
+        int total = await query.CountAsync(ct);
+
+        List<Item> items = await query.Skip(safeSkip).Take(safeTake).ToListAsync(ct);
+
+        return new ItemListPage
+        {
+            Total = total,
+            Skip = safeSkip,
+            Take = safeTake,
+            Rows = [.. await MapSummariesAsync(items, ct)],
+        };
+    }
+
+    /// <summary>
+    /// The filtered, ordered query both lists share.
+    ///
+    /// <b>A search term matches a barcode exactly, and a barcode match ranks
+    /// first.</b> A scanner types the whole code and then Enter, so a till takes
+    /// the first row: a partial match on a barcode would find the wrong item as
+    /// often as the right one, and a name that happens to contain the digits must
+    /// not outrank the item the code is printed on. Name and code still match
+    /// anywhere, case-insensitively, as before; an exact item code ranks next.
+    /// </summary>
+    private IQueryable<Item> Filtered(string? search, string? profile, long? categoryId, bool includeInactive)
     {
         IQueryable<Item> query = _db.Items;
 
@@ -52,20 +111,29 @@ public sealed class ItemService
             query = query.Where(i => i.ItemCategoryId == category);
         }
 
-        if (!string.IsNullOrWhiteSpace(search))
+        if (string.IsNullOrWhiteSpace(search))
         {
-            string term = search.Trim();
-            query = query.Where(i =>
-                EF.Functions.ILike(i.ItemName, $"%{term}%")
-                || EF.Functions.ILike(i.ItemCode, $"%{term}%"));
+            return query.OrderBy(i => i.DisplayOrder).ThenBy(i => i.ItemName);
         }
 
-        List<Item> items = await query
-            .OrderBy(i => i.DisplayOrder)
-            .ThenBy(i => i.ItemName)
-            .Take(500)
-            .ToListAsync(ct);
+        string term = search.Trim();
 
+        IQueryable<long> scanned = _db.ItemBarcodes
+            .Where(b => b.IsActive && b.Barcode == term)
+            .Select(b => b.ItemId);
+
+        return query
+            .Where(i =>
+                scanned.Contains(i.ItemId)
+                || EF.Functions.ILike(i.ItemName, $"%{term}%")
+                || EF.Functions.ILike(i.ItemCode, $"%{term}%"))
+            .OrderBy(i => scanned.Contains(i.ItemId) ? 0 : i.ItemCode == term ? 1 : 2)
+            .ThenBy(i => i.DisplayOrder)
+            .ThenBy(i => i.ItemName);
+    }
+
+    private async Task<IReadOnlyList<ItemListItem>> MapSummariesAsync(List<Item> items, CancellationToken ct)
+    {
         // Two dictionaries rather than a join per row — this is the screen where
         // N+1 shows up first.
         Dictionary<long, string> unitCodes = await _db.UnitOfMeasures

@@ -926,7 +926,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     The operator still needs a branch assignment to get through the two-step login.
 
 ### TK-14 · Item search: barcode and paging
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Inventory/Inventory.Api/Services/ItemService.cs:36-78` (`ListAsync`).
@@ -934,15 +934,24 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 - **State:** `GET /api/items?search=` matches name and code with `ILike` and returns at most 500
   rows. It doesn't match barcodes (`inv.ItemBarcodes`) and can't page, and the POS till needs both.
 - **Sub-tasks:**
-  - [ ] Also match `ItemBarcodes.Barcode`, exactly. A scanned code should rank first.
-  - [ ] Add `skip` and `take`, clamped the way `SalesOrderService`'s list does, and return a total.
+  - [x] Also match `ItemBarcodes.Barcode`, exactly. A scanned code should rank first.
+  - [x] Add `skip` and `take`, clamped the way `SalesOrderService`'s list does, and return a total.
         Keep the old response shape when neither is passed, so existing callers don't change.
-  - [ ] Test: an exact barcode returns that one item.
-  - [ ] Test: paging returns the right total.
-  - [ ] Test: another branch's item never appears.
+  - [x] Test: an exact barcode returns that one item.
+  - [x] Test: paging returns the right total.
+  - [x] Test: another branch's item never appears.
   - [ ] Owner: run `Inventory.Api.Tests`.
 - **Done when:** a scanned barcode finds its item through `GET /api/items`.
 - **Notes:**
+  - Done (2026-09-24):
+    - `ItemService.Filtered` is shared by `ListAsync` (the old bare array, capped at 500) and the new
+      `PageAsync` (`ItemListPage` with `Total`, `Skip`, `Take` and `Rows`; skip ≥ 0, take clamped to 1–200).
+    - The controller returns a page only when `skip` or `take` is passed, so existing callers see no
+      change.
+    - A barcode matches only exactly, and only an active one. The order is: scanned barcode, then
+      exact item code, then `DisplayOrder`, then name.
+  - Tests: `Inventory.Api.Tests/ItemSearchTests.cs`.
+  - For TK-15 and the till: to page, pass `take`; the response is then `{ total, skip, take, rows }`.
 
 ### TK-15 · Item and customer pickers on the sales forms
 - [ ] open
