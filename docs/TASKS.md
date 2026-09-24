@@ -2154,7 +2154,7 @@ None of it is built.
   - `internal/users/owner` (the older internal endpoint) still assigns RetailErp's Owner only.
 
 ### TK-46 · H0.5: sharding in the multi-app model
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST · **Depends on:** TK-42, TK-27 · **Decision:** —
 - **Where:**
   - `Master.Api/Services/TenantDatabaseAllocator.cs`
