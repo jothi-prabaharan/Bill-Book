@@ -247,10 +247,62 @@ public sealed class LedgerPostingService
                 $"Debits total {debits} and credits total {credits}.");
         }
 
+        // Provisional legs are dropped per (line, type) when that key is already
+        // written, so each group has to balance on its own or dropping it would
+        // unbalance what is left.
+        HashSet<int> provisional = [.. request.ProvisionalLedgerTypeIds];
+
+        foreach (var group in rows
+            .Where(r => provisional.Contains(r.LedgerTypeId))
+            .GroupBy(r => (r.LedgerTypeId, r.TransactionDetailId)))
+        {
+            decimal groupDebits = group.Sum(r => r.DebitAmountBase);
+            decimal groupCredits = group.Sum(r => r.CreditAmountBase);
+
+            if (groupDebits != groupCredits)
+            {
+                return new PostLedgerResult(
+                    PostLedgerOutcome.Unbalanced, 0, 0,
+                    $"The provisional legs on line {group.Key.TransactionDetailId} total "
+                        + $"{groupDebits} in debits and {groupCredits} in credits; each "
+                        + "provisional line has to balance on its own.");
+            }
+        }
+
         // Join the caller's transaction when there is one — a manual journal
         // allocates its number, flips its status and posts its legs, and those
         // three are one act. Only open a transaction when nothing else has.
         await using ITransactionScope own = await _db.Database.BeginScopeAsync(ct);
+
+        if (provisional.Count > 0)
+        {
+            // A provisional figure never overwrites one already written: the
+            // key's current rows are the settled cost, posted by the writer that
+            // owns it (TK-10). Checked inside the transaction, so a settled
+            // posting committed before this read is seen.
+            List<int> provisionalTypes = [.. provisional];
+
+            var written = (await _db.JournalLedger
+                .Where(l => l.TransactionTypeCode == typeCode
+                    && l.TransactionId == request.TransactionId
+                    && provisionalTypes.Contains(l.LedgerTypeId))
+                .Select(l => new { l.LedgerTypeId, l.TransactionDetailId })
+                .Distinct()
+                .ToListAsync(ct))
+                .Select(k => (k.LedgerTypeId, k.TransactionDetailId))
+                .ToHashSet();
+
+            rows.RemoveAll(r => provisional.Contains(r.LedgerTypeId)
+                && written.Contains((r.LedgerTypeId, r.TransactionDetailId)));
+
+            if (rows.Count == 0)
+            {
+                // Everything was provisional and everything was already settled.
+                // Not a withdrawal: nothing is deleted.
+                await own.CommitAsync(ct);
+                return new PostLedgerResult(PostLedgerOutcome.Ok, 0, 0);
+            }
+        }
 
         int replaced = await ReplaceAsync(request, typeCode, rows, ct);
 

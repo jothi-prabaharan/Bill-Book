@@ -81,6 +81,65 @@ public sealed class InvoicePostingTests
         Assert.Equal(500m, h.Ledger.CreditOf(InventoryAccount));
     }
 
+    /// <summary>
+    /// A direct sale's cost is posted once (TK-10). The invoice writes it per
+    /// line, provisionally, on the key the costing worker settles it on: this
+    /// invoice, the line, the COGS leg type, with the item's sub-accounts. The
+    /// worker's settled posting then replaces these rows. Before TK-10 the
+    /// invoice posted one aggregate pair at line 0, the worker a pair per line,
+    /// and both stood.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        InvoiceResult created = await h.Invoices.CreateAsync(
+            Request(lines: [Line(quantity: 10m, unitPrice: 100m), Line(quantity: 4m, unitPrice: 100m)]),
+            CancellationToken.None);
+        Assert.Equal(InvoiceOutcome.Ok, (await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None)).Outcome);
+
+        PostLedgerRequest post = Assert.Single(h.Ledger.Posts);
+        List<long> lineIds = await h.Db.InvoiceDetails
+            .Where(d => d.InvoiceId == created.InvoiceId)
+            .OrderBy(d => d.LineNumber)
+            .Select(d => d.InvoiceDetailId)
+            .ToListAsync();
+
+        Assert.Equal([4], post.ProvisionalLedgerTypeIds);
+
+        List<LedgerLegRequest> cogs = [.. post.Legs.Where(l => l.LedgerTypeId == 4)];
+
+        // Nothing at line 0 any more, and nothing crediting Inventory off the
+        // CONTROL leg: those were the duplicate.
+        Assert.DoesNotContain(cogs, l => l.TransactionDetailId == 0);
+        Assert.DoesNotContain(post.Legs, l => l.LedgerTypeId == 3 && l.AccountSystemName == InventoryAccount);
+
+        // One balanced pair per issued line, at the line's issued value (the
+        // stub values every unit at 50), on the item's sub-accounts, filed as a
+        // document posting (source 1) like the worker's.
+        Assert.Equal(lineIds.Order(), cogs.Select(l => l.TransactionDetailId).Distinct().Order());
+        foreach ((long lineId, decimal value) in lineIds.Zip([500m, 200m]))
+        {
+            List<LedgerLegRequest> pair = [.. cogs.Where(l => l.TransactionDetailId == lineId)];
+            Assert.Equal(2, pair.Count);
+            Assert.Equal(value, Assert.Single(pair, l => l.AccountSystemName == CogsAccount).DebitAmount);
+            Assert.Equal(value, Assert.Single(pair, l => l.AccountSystemName == InventoryAccount).CreditAmount);
+            Assert.All(pair, l =>
+            {
+                Assert.Equal(2, l.SubAccountReferenceType);
+                Assert.Equal(ItemId, l.SubAccountReferenceId);
+                Assert.Equal(1, l.LedgerSourceId);
+            });
+        }
+
+        Assert.Equal(700m, h.Ledger.DebitOf(CogsAccount));
+        Assert.Equal(700m, h.Ledger.CreditOf(InventoryAccount));
+        Assert.Equal(post.Legs.Sum(l => l.DebitAmount), post.Legs.Sum(l => l.CreditAmount));
+    }
+
     [SkippableFact]
     public async Task POS_sale_debits_cash_instead_of_accounts_receivable()
     {

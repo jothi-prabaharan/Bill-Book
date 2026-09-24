@@ -263,6 +263,13 @@ public sealed class PostLedgerRequest
     /// <summary>Which leg types to clear when <see cref="Legs"/> is empty — a withdrawal.</summary>
     public List<int> WithdrawLedgerTypeIds { get; set; } = [];
 
+    /// <summary>
+    /// Leg types written only where their (line, type) key is empty, so a
+    /// settled figure already there is never overwritten. The invoice's cost of
+    /// sales is provisional: the costing worker settles it on the same key (TK-10).
+    /// </summary>
+    public List<int> ProvisionalLedgerTypeIds { get; set; } = [];
+
     public List<LedgerLegRequest> Legs { get; set; } = [];
 }
 

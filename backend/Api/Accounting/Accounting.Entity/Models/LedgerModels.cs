@@ -104,6 +104,21 @@ public class PostLedgerRequest
     /// </summary>
     public List<int> WithdrawLedgerTypeIds { get; set; } = [];
 
+    /// <summary>
+    /// Leg types this posting writes <b>provisionally</b>: a (line, type) key
+    /// that already holds rows is left as it is, and only an empty key is
+    /// written. Every other leg type replaces, as usual.
+    ///
+    /// For a figure a later writer will settle. A sale posts its cost of sales
+    /// at the request path's cost, on the same key the costing worker posts the
+    /// settled cost to (TK-10). The worker's posting replaces the provisional
+    /// rows; if the worker got there first, the provisional legs are dropped
+    /// rather than overwriting the settled figure. Either order ends with the
+    /// settled cost, posted once. Each provisional (line, type) group must
+    /// balance on its own, so dropping one cannot unbalance the rest.
+    /// </summary>
+    public List<int> ProvisionalLedgerTypeIds { get; set; } = [];
+
     public List<LedgerLegRequest> Legs { get; set; } = [];
 }
 

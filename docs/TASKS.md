@@ -633,9 +633,9 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), which reuses the invoice's posting.
 
-### TK-10 · Sale challans post to Goods Delivered Not Invoiced, once
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-76 · **Decision:** —
+### TK-10 · A direct sale's cost of goods posts once (GDNI moved to TK-90)
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-ACC, L-SAL · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`: GRNI is 2150; GDNI is missing.
   - `backend/Api/Inventory/Inventory.Api/Services/StockLedgerMapping.cs:86-87`: every sourced `Issue`
@@ -653,19 +653,19 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     (COGS leg at detail 0, CONTROL leg), and the worker writes the COGS legs per line for the same
     issue. Both stand.
 - **Sub-tasks:**
-  - [ ] Seed `Goods Delivered Not Invoiced` (Asset, off the manual-journal picker like GRNI), with a
+  - [ ] ~~Seed `Goods Delivered Not Invoiced`~~ → TK-90 (Asset, off the manual-journal picker like GRNI), with a
         `SystemAccount` value, and backfill existing branches through the seeder's idempotent path.
-  - [ ] Decide who posts cost of sale — the worker (at recosted value) or the document. `docs/Modules.md`
+  - [x] Decide who posts cost of sale — the worker (at recosted value) or the document. `docs/Modules.md`
         §7 says Inventory, asynchronously. Write the answer under Notes before changing either side.
-  - [ ] If the worker: map an `Issue` sourced from a `Sale` challan to Dr GDNI / Cr Inventory, and
+  - [ ] ~~If the worker: map an `Issue`~~ → TK-90 sourced from a `Sale` challan to Dr GDNI / Cr Inventory, and
         post nothing for job work, approval, branch transfer or sample. The worker can't see
         `ChallanType`; carry it on the movement (for example, a distinct `SourceType` or a flag on
         `IssueStockRequest`) rather than reading `sal`.
-  - [ ] The invoice against a challan then clears GDNI: Dr COGS / Cr GDNI at the challan movements'
+  - [ ] ~~The invoice against a challan then clears GDNI~~ → TK-90: Dr COGS / Cr GDNI at the challan movements'
         settled cost, never the provisional one.
-  - [ ] Remove whichever of the invoice's own COGS legs and the worker's is the duplicate.
-  - [ ] Test: challan then invoice leaves GDNI at zero, Inventory credited once, COGS debited once.
-  - [ ] Test: a job-work challan posts nothing.
+  - [x] Remove whichever of the invoice's own COGS legs and the worker's is the duplicate.
+  - [ ] ~~Test: challan then invoice leaves GDNI~~ → TK-90 at zero, Inventory credited once, COGS debited once.
+  - [ ] ~~Test: a job-work challan posts nothing.~~ → TK-90
 - **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once,
   GDNI at zero, and one cost-of-sales debit.
 - **Notes:** raised from TK-76 by the owner's decision of 2026-09-23.
@@ -677,6 +677,79 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
     for the invoice.
   - **Duplicate number resolved (2026-09-24):** this card keeps TK-10; the trigger card is now TK-07.
   - **Who posts cost of sale — decided by the owner, 2026-09-24:** the document posts a **provisional** cost-of-sale entry when it is posted (at the request path's cost), and flags the item for the worker. `CostingEngine.Worker` recalculates, then **corrects the ledger to the settled value**. So: keep the document's COGS legs as provisional, remove the worker's *duplicate* first posting, and make the worker post only the difference (or replace the provisional rows) after recalculation. A sale challan's provisional entry is Dr GDNI / Cr Inventory; the invoice against it moves GDNI to COGS.
+  - **Rescoped by the owner (2026-09-24): the duplicate fix only.** Asked how an invoice should
+    clear GDNI, the owner chose to fix the double posting now and move the challan/GDNI switch to a
+    follow-up card (TK-90, blocked on D-21). GDNI stays unseeded, and an invoice naming a challan
+    is refused as before whenever its cost is non-zero. The **Done when** above belongs to TK-90.
+    This card is done when a direct sale's cost of goods is in the ledger once, at the settled figure.
+  - Done (Claude Opus 5.5, 2026-09-24):
+    - **The duplicate.** A direct invoice posted one Dr COGS / Cr Inventory pair at line 0 (the Cr
+      on the CONTROL leg type). The costing worker posted a pair per line on
+      `(INV, invoiceId, lineId, COGS)`. Those keys differ, so both stood.
+    - **Now the invoice posts its cost per line, provisionally, on the worker's key.** The key is
+      the document, `TransactionDetailId` = the invoice line (the movement's `SourceLineId`), and
+      leg type 4. The legs are Dr COGS / Cr Inventory with the item's sub-accounts and ledger
+      source 1, exactly the rows the worker writes, at the issue's `LineValue`. The worker's
+      settled posting replaces them (the owner's "replace the provisional rows"). The worker is
+      unchanged.
+    - **Order-independent.** `PostLedgerRequest.ProvisionalLedgerTypeIds` (Accounting and Sales)
+      names leg types written only where their (line, type) key is empty. So if the worker settles
+      the movement before the invoice's own posting lands, the provisional legs are dropped instead
+      of overwriting the settled cost. Each provisional (line, type) group must balance on its own,
+      or the posting is refused as Unbalanced. The check runs inside the posting's transaction; a
+      worker committing in the milliseconds between that read and the insert could still double a
+      line, and closing that fully would need a lock.
+    - Unchanged: an invoice naming a challan still posts its aggregate Dr COGS / Cr GDNI at line 0
+      (TK-90); the credit note already left cost to the worker (TK-77); POS invoices take the same
+      path as direct ones.
+    - **Found, not fixed:**
+      - **Void leaves stock issued with no Inventory credit.** A void withdraws every COGS row on the
+        invoice, settled ones included, but the goods stay issued. That is delivered-not-invoiced,
+        which TK-90's GDNI is for.
+      - **The worker can post after a void.** If the movement is still pending when the invoice is
+        voided, the worker writes COGS onto the voided invoice.
+      - **Ledger source.** Sales files the invoice's other legs under ledger source 3 (Invoice
+        payment), where 1 (Document posting) is what the worker uses. The new legs use 1.
+    - **Tests written:** `backend/tests/Accounting.Api.Tests/LedgerPostingServiceTests.cs` (five
+      provisional-leg tests: written when empty; replaced by the settled cost; never overwrites a
+      settled cost; only settled lines skipped; an unbalanced provisional line refused) and
+      `backend/tests/Sales.Api.Tests/InvoicePostingTests.cs`
+      (`A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key`).
+
+### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
+- [!] blocked — D-21
+- **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
+- **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
+  `InvoiceService.cs` (the challan branch and the aggregate Dr COGS / Cr GDNI at line 0),
+  `DeliveryChallanService` (posts nothing today), `IssueQuantities` in `InvoiceService.cs` (an
+  order-billed invoice bills delivered goods without naming the challan).
+- **State (2026-09-24):** after TK-10, a direct sale posts its cost once. A sale challan's cost
+  still reaches the ledger through the worker as Dr COGS / Cr Inventory **at dispatch**. An invoice
+  naming a challan posts Dr COGS / Cr GDNI, which is refused while GDNI is unseeded. An invoice
+  billing delivered goods through an order posts no cost for them, which is consistent only
+  because the challan already booked COGS at dispatch.
+- **What the owner has decided:** GDNI is seeded, and each document posts a provisional cost the
+  worker replaces with the settled one (TK-10's `ProvisionalLedgerTypeIds`). A sale challan's
+  provisional entry is Dr GDNI / Cr Inventory. Job-work, approval, transfer and sample challans post
+  nothing: issue them with a flag that creates their movements `LedgerStatus.NotApplicable`, and
+  check that recosting never requeues a `NotApplicable` movement.
+- **What D-21 decides:** how the invoice takes goods out of GDNI, given two gaps. First, an
+  order-billed invoice records no link to the challan lines it bills, so a void can't reverse
+  exactly. Second, the challan movement's cost can settle or be restated after the invoice posts.
+- **Sub-tasks:** (after D-21)
+  - [ ] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
+        backfill existing branches through the seeder's idempotent path; take it off
+        `SalesAccountNameTests`' allow-list.
+  - [ ] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
+        for `ChallanType.Sale`; the worker maps a `DLC`-sourced `Issue` to Dr GDNI / Cr Inventory.
+  - [ ] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods,
+        in the form D-21 picks.
+  - [ ] Test: challan then invoice leaves GDNI at zero, Inventory credited once, COGS debited once.
+  - [ ] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
+  - [ ] Test: a job-work challan posts nothing.
+- **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once, GDNI
+  at zero, and one cost-of-sales debit.
+- **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
 
 ### TK-11 · Fixed assets: a service layer, guards and tests
 - [ ] open
@@ -2541,7 +2614,7 @@ into the queue with the failure under its Notes.
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
 answer and the date here, then change the blocked cards to `- [ ] open`.
 
-**Every decision here was answered by 24 September 2026.** A new question gets the next number (D-21).
+**D-01 to D-20 were answered by 24 September 2026; D-21 is open.** A new question gets the next number (D-22).
 
 | ID | Question | Blocks | Answer |
 |---|---|---|---|
@@ -2565,6 +2638,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-18 | What is Customer stage C4? The proposal is per-branch SLA hours per priority, replacing the hard-coded ones in `TicketsController.cs:101`. | TK-18 | **A per-branch SLA table** (owner, 2026-09-24): `cus.SlaPolicies`, seeded with Urgent 2 h, High 8 h, Medium 2 days, Low 7 days, editable per branch. TK-18 |
 | D-19 | Capitalising a fixed asset: does it reclassify the bill's shared Fixed Asset account to the category's account? Does a migrated asset debit against Opening Balance Equity? | TK-12 | **Reclassify to the category** (owner, 2026-09-24): capitalising posts Dr the category's Fixed Asset account / Cr the shared Fixed Asset account the bill used; a migrated asset (no bill) debits the category account against Opening Balance Equity. TK-12 |
 | D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-12 | **Both ways** (owner, 2026-09-24): the disposal either names the bank or cash account the proceeds landed in, or is raised as a sales invoice to the buyer (Dr the buyer's receivable); either way the accumulated depreciation is written back, the asset removed at cost and the gain or loss booked. TK-12 |
+| D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | *Open.* Raised 2026-09-24 by TK-10; the owner fixed the duplicate first and deferred this |
 
 ---
 

@@ -44,7 +44,15 @@ public sealed class InvoiceService : IInvoiceService
     private const int TransactionLedgerSource = 3;
 
     private const int ContactReference = 1;
+    private const int ItemReference = 2;
     private const int TaxReference = 3;
+
+    /// <summary>
+    /// "Document posting" in <c>mst.LedgerSources</c> — what the costing worker
+    /// files a sale's cost under. The provisional cost of sales uses it too, so
+    /// the rows it writes and the settled rows that replace them read the same.
+    /// </summary>
+    private const int DocumentLedgerSource = 1;
 
     private readonly SalesDbContext _db;
     private readonly ITenantContext _tenant;
@@ -1385,6 +1393,10 @@ public sealed class InvoiceService : IInvoiceService
 
         decimal totalCogs = 0;
 
+        // Each issued line's cost as the request path valued it: provisional,
+        // until the costing worker settles the movement behind it (TK-10).
+        List<(long LineId, long ItemId, decimal Value)> provisionalCogs = [];
+
         if (invoice.DeliveryChallanId.HasValue)
         {
             var challan = await _db.DeliveryChallans
@@ -1453,6 +1465,11 @@ public sealed class InvoiceService : IInvoiceService
                     {
                         line.StockMovementId = issueLine.StockMovementId;
                         line.UnitCost = issueLine.UnitCost;
+                    }
+
+                    if (issueLine.LineValue > 0m)
+                    {
+                        provisionalCogs.Add((issueLine.SourceLineId, issueLine.ItemId, issueLine.LineValue));
                     }
                 }
 
@@ -1560,8 +1577,11 @@ public sealed class InvoiceService : IInvoiceService
             });
         }
 
-        if (totalCogs > 0)
+        if (invoice.DeliveryChallanId.HasValue && totalCogs > 0)
         {
+            // Against a challan, unchanged by TK-10 and left to TK-90: the owner kept the challan's
+            // postings out of that card, and GDNI is still not seeded, so this is
+            // refused whenever it is non-zero, as it was before.
             postRequest.Legs.Add(new LedgerLegRequest
             {
                 LedgerTypeId = CogsLedgerType,
@@ -1577,10 +1597,53 @@ public sealed class InvoiceService : IInvoiceService
                 LedgerTypeId = ControlLedgerType,
                 LedgerSourceId = TransactionLedgerSource,
                 TransactionDetailId = 0,
-                AccountSystemName = invoice.DeliveryChallanId.HasValue ? GdniAccount : InventoryAccount,
+                AccountSystemName = GdniAccount,
                 CreditAmount = totalCogs,
                 TransactionDesc = "Inventory relief",
             });
+        }
+
+        // The cost of what this invoice issued, provisionally, on the key the
+        // costing worker settles it on: this document, the line, the COGS leg
+        // type — the same pair of accounts and item sub-accounts the worker
+        // writes. The worker's posting replaces these rows with the settled
+        // cost; if it got there first, Accounting keeps its rows and drops these
+        // (ProvisionalLedgerTypeIds). Either way the sale's cost is in the
+        // ledger once, at the settled figure (TK-10).
+        //
+        // Before TK-10 the invoice posted one aggregate pair at line 0 and the
+        // worker posted a pair per line, on different keys, so both stood and
+        // every direct sale's cost of goods was booked twice.
+        foreach ((long lineId, long itemId, decimal value) in provisionalCogs)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = lineId,
+                AccountSystemName = CogsAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = itemId,
+                DebitAmount = value,
+                TransactionDesc = "Cost of goods sold (provisional)",
+            });
+
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = lineId,
+                AccountSystemName = InventoryAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = itemId,
+                CreditAmount = value,
+                TransactionDesc = "Inventory relief (provisional)",
+            });
+        }
+
+        if (provisionalCogs.Count > 0)
+        {
+            postRequest.ProvisionalLedgerTypeIds = [CogsLedgerType];
         }
 
         var result = await _ledgerClient.PostAsync(postRequest, ct);

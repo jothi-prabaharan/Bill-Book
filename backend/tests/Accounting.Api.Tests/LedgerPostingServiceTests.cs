@@ -404,6 +404,153 @@ public class LedgerPostingServiceTests
         Assert.Null(await reports.GetSettlementRateAsync("INV", 7201, ct));
     }
 
+    // --- Provisional legs (TK-10) ---
+    //
+    // A sale's cost of goods is posted twice by design: provisionally by the
+    // invoice, at the request path's cost, and settled by the costing worker, on
+    // the same key. These pin that the two meet as one figure in either order.
+
+    private static PostLedgerRequest ProvisionalCogs(long invoiceId, long line, long cogsId, long inventoryId, decimal value) => new()
+    {
+        TransactionTypeCode = "INV",
+        TransactionId = invoiceId,
+        LedgerDate = new DateOnly(2026, 8, 1),
+        ProvisionalLedgerTypeIds = [Cogs],
+        Legs =
+        [
+            Leg(Cogs, line, cogsId, debit: value),
+            Leg(Cogs, line, inventoryId, credit: value),
+        ],
+    };
+
+    private static PostLedgerRequest SettledCogs(long invoiceId, long line, long cogsId, long inventoryId, decimal value) => new()
+    {
+        TransactionTypeCode = "INV",
+        TransactionId = invoiceId,
+        LedgerDate = new DateOnly(2026, 8, 1),
+        Legs =
+        [
+            Leg(Cogs, line, cogsId, debit: value),
+            Leg(Cogs, line, inventoryId, credit: value),
+        ],
+    };
+
+    private static async Task<decimal> CogsDebitedAsync(Harness harness, long invoiceId) =>
+        await harness.Db.JournalLedger
+            .Where(l => l.TransactionTypeCode == "INV"
+                && l.TransactionId == invoiceId
+                && l.AccountId == harness.CogsId)
+            .SumAsync(l => l.DebitAmount);
+
+    [SkippableFact]
+    public async Task A_provisional_cost_is_written_when_nothing_is_there_yet()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+
+        PostLedgerResult result = await harness.Postings.PostAsync(
+            ProvisionalCogs(7001, 1, harness.CogsId, harness.InventoryId, 600m), CancellationToken.None);
+
+        Assert.Equal(PostLedgerOutcome.Ok, result.Outcome);
+        Assert.Equal(2, result.Posted);
+        Assert.Equal(600m, await CogsDebitedAsync(harness, 7001));
+    }
+
+    /// <summary>The usual order: the worker settles after the invoice, and replaces it.</summary>
+    [SkippableFact]
+    public async Task The_settled_cost_replaces_the_provisional_one()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.Postings.PostAsync(ProvisionalCogs(7002, 1, harness.CogsId, harness.InventoryId, 600m), ct);
+        await harness.Postings.PostAsync(SettledCogs(7002, 1, harness.CogsId, harness.InventoryId, 612.50m), ct);
+
+        Assert.Equal(612.50m, await CogsDebitedAsync(harness, 7002));
+        Assert.Equal(2, await harness.Db.JournalLedger.CountAsync(l => l.TransactionId == 7002));
+    }
+
+    /// <summary>
+    /// The race: the worker settled the movement before the invoice's own
+    /// posting landed. The provisional figure must not overwrite the settled one.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_provisional_cost_never_overwrites_a_settled_one()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.Postings.PostAsync(SettledCogs(7003, 1, harness.CogsId, harness.InventoryId, 612.50m), ct);
+
+        PostLedgerResult late = await harness.Postings.PostAsync(
+            ProvisionalCogs(7003, 1, harness.CogsId, harness.InventoryId, 600m), ct);
+
+        Assert.Equal(PostLedgerOutcome.Ok, late.Outcome);
+        Assert.Equal(0, late.Posted);
+        Assert.Equal(612.50m, await CogsDebitedAsync(harness, 7003));
+    }
+
+    /// <summary>
+    /// Only the keys already written are skipped. The invoice's other legs, and
+    /// a provisional line the worker has not reached yet, still go in.
+    /// </summary>
+    [SkippableFact]
+    public async Task Only_the_settled_lines_are_skipped_and_the_rest_of_the_invoice_posts()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        await harness.Postings.PostAsync(SettledCogs(7004, 1, harness.CogsId, harness.InventoryId, 612.50m), ct);
+
+        PostLedgerResult invoice = await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "INV",
+            TransactionId = 7004,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            ProvisionalLedgerTypeIds = [Cogs],
+            Legs =
+            [
+                Leg(Item, 1, harness.RevenueId, credit: 1000m),
+                Leg(Item, 2, harness.RevenueId, credit: 500m),
+                Leg(Control, 0, harness.ReceivableId, debit: 1500m),
+                Leg(Cogs, 1, harness.CogsId, debit: 600m),
+                Leg(Cogs, 1, harness.InventoryId, credit: 600m),
+                Leg(Cogs, 2, harness.CogsId, debit: 300m),
+                Leg(Cogs, 2, harness.InventoryId, credit: 300m),
+            ],
+        }, ct);
+
+        Assert.Equal(PostLedgerOutcome.Ok, invoice.Outcome);
+        Assert.Equal(5, invoice.Posted);
+
+        // Line 1 at the settled figure, line 2 provisional, once each.
+        Assert.Equal(912.50m, await CogsDebitedAsync(harness, 7004));
+    }
+
+    [SkippableFact]
+    public async Task A_provisional_line_that_does_not_balance_on_its_own_is_refused()
+    {
+        await using Harness harness = await Harness.CreateAsync(_postgres);
+
+        // Balanced overall, but line 1's provisional pair is not, so dropping it
+        // alone would unbalance what was left.
+        PostLedgerResult result = await harness.Postings.PostAsync(new PostLedgerRequest
+        {
+            TransactionTypeCode = "INV",
+            TransactionId = 7005,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            ProvisionalLedgerTypeIds = [Cogs],
+            Legs =
+            [
+                Leg(Cogs, 1, harness.CogsId, debit: 900m),
+                Leg(Cogs, 1, harness.InventoryId, credit: 600m),
+                Leg(Cogs, 2, harness.InventoryId, credit: 300m),
+            ],
+        }, CancellationToken.None);
+
+        Assert.Equal(PostLedgerOutcome.Unbalanced, result.Outcome);
+        Assert.Equal(0, await harness.Db.JournalLedger.CountAsync(l => l.TransactionId == 7005));
+    }
+
     private static LedgerLegRequest Leg(
         int ledgerTypeId,
         long detailId,
