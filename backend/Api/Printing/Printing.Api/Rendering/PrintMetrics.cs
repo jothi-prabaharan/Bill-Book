@@ -1,4 +1,4 @@
-namespace Shared.Kernel.Printing;
+namespace Printing.Api.Rendering;
 
 /// <summary>
 /// How tall a block is taken to be.

@@ -1,6 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Printing.Api.Rendering;
+using Printing.Entity.Enums;
 using Printing.Entity.TableEntities;
 using Printing.Repository;
+using Printing.Repository.SeedData;
 using Shared.Kernel.Printing;
 using Shared.Kernel.Tenancy;
 using Xunit;

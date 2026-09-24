@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Printing.Api.Rendering;
 using Printing.Api.Services;
 using Printing.Repository;
 using Shared.Kernel.Interfaces;

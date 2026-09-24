@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Printing.Entity.Models;
 using Printing.Entity.TableEntities;
 using Shared.Kernel.Printing;
 using Shared.Kernel.Tenancy;

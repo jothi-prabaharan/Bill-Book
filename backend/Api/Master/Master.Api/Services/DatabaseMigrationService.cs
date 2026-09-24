@@ -8,6 +8,7 @@ using Master.Repository.SeedData;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Printing.Repository;
+using Printing.Repository.SeedData;
 using Purchase.Repository;
 using Reporting.Repository;
 using Sales.Repository;

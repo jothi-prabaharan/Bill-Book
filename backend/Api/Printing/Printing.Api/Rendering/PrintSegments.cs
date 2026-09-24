@@ -1,21 +1,7 @@
-namespace Shared.Kernel.Printing;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
 
-/// <summary>
-/// The five segments' HTML, stored as jsonb. Sanitised on write — nothing here
-/// is ever trusted on the way out, because it reached the column through an API.
-/// </summary>
-public class PrintContent
-{
-    public string FixedHeaderHtml { get; set; } = string.Empty;
-
-    public string HeaderHtml { get; set; } = string.Empty;
-
-    public string DetailsHtml { get; set; } = string.Empty;
-
-    public string FooterHtml { get; set; } = string.Empty;
-
-    public string FixedFooterHtml { get; set; } = string.Empty;
-}
+namespace Printing.Api.Rendering;
 
 /// <summary>
 /// Reading and writing <see cref="PrintContent"/> by segment, so no caller has

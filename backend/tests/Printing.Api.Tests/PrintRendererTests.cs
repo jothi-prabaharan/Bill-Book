@@ -1,9 +1,13 @@
 using AngleSharp.Dom;
 using AngleSharp.Html.Parser;
+using Printing.Api.Rendering;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
+using Printing.Repository.SeedData;
 using Shared.Kernel.Printing;
 using Xunit;
 
-namespace Shared.Kernel.Tests;
+namespace Printing.Api.Tests;
 
 /// <summary>
 /// Acceptance tests 6, 7, 8 and 11 — the renderer's guarantees.

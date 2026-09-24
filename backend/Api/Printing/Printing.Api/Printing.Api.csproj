@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <!-- The template sanitiser and the renderer's DOM. They lived on
+         Shared.Kernel while the renderer did, which put an HTML parser in seven
+         services that never parse HTML (TK-24). -->
+    <PackageReference Include="AngleSharp" />
+    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">

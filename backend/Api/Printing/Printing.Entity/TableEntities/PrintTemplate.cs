@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 using Shared.Kernel.Tenancy;
 

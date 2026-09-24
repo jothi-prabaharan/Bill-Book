@@ -1,4 +1,7 @@
-namespace Shared.Kernel.Printing;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
+
+namespace Printing.Api.Rendering;
 
 /// <summary>One rejected rule, ready to be returned as INVALID_GEOMETRY.</summary>
 public sealed class GeometryFailure

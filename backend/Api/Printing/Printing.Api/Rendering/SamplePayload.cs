@@ -1,4 +1,6 @@
-namespace Shared.Kernel.Printing;
+using Shared.Kernel.Printing;
+
+namespace Printing.Api.Rendering;
 
 /// <summary>
 /// Plausible data for previewing a template with no document behind it.

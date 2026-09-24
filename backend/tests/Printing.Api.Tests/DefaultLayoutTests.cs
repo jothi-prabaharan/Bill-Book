@@ -1,7 +1,11 @@
+using Printing.Api.Rendering;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
+using Printing.Repository.SeedData;
 using Shared.Kernel.Printing;
 using Xunit;
 
-namespace Shared.Kernel.Tests;
+namespace Printing.Api.Tests;
 
 /// <summary>
 /// The generated layouts have to satisfy the two rules that everything else
@@ -38,7 +42,7 @@ public class DefaultLayoutTests
 
         // A generated template that shipped with an unresolvable tag would print
         // a blank space on a real document and refuse its own activation.
-        Assert.Empty(MergeTags.Unknown(content, code));
+        Assert.Empty(TemplateTags.Unknown(content, code));
     }
 
     [Theory]

@@ -1,6 +1,8 @@
 using System.Text;
+using Printing.Entity.Models;
+using Shared.Kernel.Printing;
 
-namespace Shared.Kernel.Printing;
+namespace Printing.Repository.SeedData;
 
 /// <summary>
 /// Builds a document type's starting layout from its

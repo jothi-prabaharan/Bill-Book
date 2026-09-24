@@ -5,7 +5,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngleSharp" />
     <PackageReference Include="Azure.Storage.Blobs" />
     <!-- Both already pinned in Directory.Packages.props; the vault-backed
          ISecretStore is what was missing, not the dependency. -->
@@ -15,7 +14,6 @@
          long before anything used it; ServiceBusEventPublisher is what was
          missing, not the dependency. -->
     <PackageReference Include="Azure.Messaging.ServiceBus" />
-    <PackageReference Include="HtmlSanitizer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />

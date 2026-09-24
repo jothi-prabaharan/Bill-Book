@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Shared.Kernel.Printing;
+namespace Printing.Repository;
 
 /// <summary>
 /// One serialiser configuration for everything that reads or writes a

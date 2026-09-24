@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using Printing.Api.Rendering;
 using Printing.Entity.Models;
 using Printing.Entity.TableEntities;
 using Printing.Repository;
+using Printing.Repository.SeedData;
 using Shared.Kernel.Persistence;
 using Shared.Kernel.Printing;
 
@@ -450,7 +452,7 @@ public sealed class PrintTemplateService
         TemplateVersion = template.TemplateVersion,
         SeedVersion = template.SeedVersion,
         CanResetToLatest = template.SeedVersion > 0 && template.SeedVersion < DefaultLayoutGenerator.SeedVersion,
-        UnknownTags = MergeTags.Unknown(template.Content, template.DocumentTypeCode.Trim()),
+        UnknownTags = TemplateTags.Unknown(template.Content, template.DocumentTypeCode.Trim()),
         UpdatedAt = template.ModifiedAt ?? template.CreatedAt,
     };
 }

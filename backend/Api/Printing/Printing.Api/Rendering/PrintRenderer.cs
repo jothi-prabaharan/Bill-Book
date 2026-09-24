@@ -4,8 +4,11 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
 using Microsoft.Extensions.Logging;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
+using Shared.Kernel.Printing;
 
-namespace Shared.Kernel.Printing;
+namespace Printing.Api.Rendering;
 
 /// <summary>Everything one render needs. Nothing here touches a database.</summary>
 public sealed class PrintRenderRequest

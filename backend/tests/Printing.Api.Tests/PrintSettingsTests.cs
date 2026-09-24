@@ -1,7 +1,10 @@
+using Printing.Api.Rendering;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
 using Shared.Kernel.Printing;
 using Xunit;
 
-namespace Shared.Kernel.Tests;
+namespace Printing.Api.Tests;
 
 /// <summary>
 /// Acceptance test 4, and the geometry rules around it.

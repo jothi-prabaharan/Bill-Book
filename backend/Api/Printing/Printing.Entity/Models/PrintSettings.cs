@@ -1,4 +1,6 @@
-namespace Shared.Kernel.Printing;
+using Printing.Entity.Enums;
+
+namespace Printing.Entity.Models;
 
 /// <summary>Space above and below one segment, in millimetres.</summary>
 public class SegmentMargin
@@ -58,7 +60,7 @@ public class PrintSettings
     /// <summary>
     /// Effective position. Coerced to <see cref="SegmentPosition.Bottom"/>
     /// whenever <see cref="FooterPos"/> is Bottom — see
-    /// <see cref="PrintSettingsValidator"/> for why that is not a preference
+    /// <c>PrintSettingsValidator</c> for why that is not a preference
     /// but a correctness rule.
     /// </summary>
     public SegmentPosition FixedFooterPos { get; set; } = SegmentPosition.Inline;

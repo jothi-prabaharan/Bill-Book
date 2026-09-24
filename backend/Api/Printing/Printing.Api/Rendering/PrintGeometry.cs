@@ -1,4 +1,7 @@
-namespace Shared.Kernel.Printing;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
+
+namespace Printing.Api.Rendering;
 
 /// <summary>
 /// Paper dimensions and the one millimetre-to-pixel constant.

@@ -1,6 +1,8 @@
 using Ganss.Xss;
+using Printing.Entity.Enums;
+using Printing.Entity.Models;
 
-namespace Shared.Kernel.Printing;
+namespace Printing.Api.Rendering;
 
 /// <summary>What the sanitiser took out of one segment, and why it counts as a refusal.</summary>
 public sealed class SegmentViolation

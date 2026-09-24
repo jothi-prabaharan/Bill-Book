@@ -1291,6 +1291,15 @@ If the code has moved on since a card was written, correct the card in your clai
         `PrintTemplateSeeder`, entity, models and `PrintTemplateServiceTests` are deleted, and its
         seed endpoint no longer seeds templates. `has-pending-model-changes` is clean for both
         Master contexts.
+  - [x] The physical move out of `Shared.Kernel.Printing` (from TK-23's handover). The stored shape
+        is in `Printing.Entity` (`Models/PrintSettings`, `Models/PrintContent`, `Enums/PrintEnums`).
+        `PrintJson` and `DefaultLayoutGenerator` are in `Printing.Repository`, because the seed
+        builder and Master's bootstrap need the generator and the Repository can't reach Api. The
+        machinery is in `Printing.Api/Rendering`, with `MaskFormatter` and `PrintSegments` split
+        out and `TemplateTags` holding `MergeTags`' two `PrintContent` overloads. The contract
+        stays: `PrintPayload`, `PrintFormatContext`, both catalogues, `PlaceholderType`/`Kind`, and
+        `MergeTags`' text-level half. `AngleSharp` and `HtmlSanitizer` moved to `Printing.Api`
+        (L-DEPS). The renderer, settings, sanitiser and layout tests moved to `Printing.Api.Tests`.
   - [ ] Change the service count in `CLAUDE.md` from 7 to 8.
 - **Done when:** a sales invoice prints through Printing, and `con.PrintTemplates` no longer exists.
 - **Notes:**

@@ -2,8 +2,9 @@ using System.Text;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using Shared.Kernel.Printing;
 
-namespace Shared.Kernel.Printing;
+namespace Printing.Api.Rendering;
 
 /// <summary>Resolved segment markup, plus the tags nothing could answer.</summary>
 public sealed class SubstitutionResult
