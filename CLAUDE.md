@@ -266,7 +266,7 @@ The trigger was **new-customer provisioning becoming an operator-driven admin sc
 
 **What this did not change**: the branch-level model. `OrgId` was already globally unique, so nothing about Organization ↔ Organization isolation moved — `CustomerId` is an added layer under it, not a replacement for it. What moved is Customer ↔ Customer, from a physical wall to the same kind of filter-and-policy boundary the branch level already trusted.
 
-**Left over from the previous model, worth knowing about rather than reinventing**: nothing currently grants `platform.*` to any account — it is seeded into the permission catalogue and `apps/admin` checks for it, but no role's seed includes it, deliberately, because `Role` rows are shared system rows rather than per-customer copies, and granting `platform.*` to a tenant role (Owner, say) would grant platform access to that role's holders across every customer, not just one. How an operator's own account is meant to acquire the permission is undecided — see Undecided below.
+**Left over from the previous model, worth knowing about rather than reinventing**: nothing currently grants `platform.*` to any account — it is seeded into the permission catalogue and `apps/admin` checks for it, but no role's seed includes it, deliberately, because `Role` rows are shared system rows rather than per-customer copies, and granting `platform.*` to a tenant role (Owner, say) would grant platform access to that role's holders across every customer, not just one. **Decided 24 September 2026 (D-01): a flag on the user, never a role.** `mst.Users.IsPlatformOperator`, set only by bootstrap configuration or by another operator, puts `platform.*` in the token (TK-82).
 
 ---
 
@@ -308,7 +308,7 @@ Everything — invoices, bills, payments, depreciation, opening balances — pro
 
 - Lines are debit **xor** credit. Never both. Never negative.
 - Lifecycle: Draft → Posted → Reversed. **Never edit a posted entry.** Reverse it with an offsetting entry.
-- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built only the domain guard exists.** The interceptor was never written, and the triggers — two on the journal, because posting a draft changes the header and never touches the lines, plus the one on `acc.JournalLedger` and the allocation triggers on the money documents — were in the migration chains squashed in `2c5ed6f` and did not survive it; no migration creates a trigger today. TK-78 in `docs/TASKS.md` restores them
+- Balance is checked three times: domain guard on Post, `SaveChangesInterceptor`, and a Postgres **deferred** constraint trigger (deferred so multi-line inserts don't trip on intermediate state; only enforced when Posted, so Drafts may be unbalanced). **As built only the domain guard exists.** The interceptor was never written, and the triggers — two on the journal, because posting a draft changes the header and never touches the lines, plus the one on `acc.JournalLedger` and the allocation triggers on the money documents — were in the migration chains squashed in `2c5ed6f` and did not survive it; no migration creates a trigger today. TK-80 in `docs/TASKS.md` restores them
 - Sales and Purchase **publish events**. Accounting consumes them and writes the JE. Never let another service write GL rows. The money documents are Accounting's own now, so they post through `LedgerPostingService` directly — in the same transaction, which is what the merge was for.
 
 ### Fixed Assets
@@ -401,7 +401,7 @@ JWT claims: `sub`, `customer_id`, `customer_code`, `org_id`, `display_name`, `li
 **Multi-language** (Tamil, Chinese) works natively — Postgres `varchar` is UTF-8 and counts characters not bytes. Create databases with UTF8 encoding.
 
 **Printing — two separate paths, don't conflate:**
-- Standard documents → Syncfusion .NET PDF library, server-side, PDF/A for archiving
+- Standard documents → **PDFsharp** (6.1.1, MIT), server-side, PDF/A for archiving. Syncfusion was the earlier plan and is dropped (D-11, 24 September 2026)
 - POS receipts → ESC/POS commands (not PDF), fixed-width text, only from `apps/desktop` (browsers can't reach USB/serial printers)
 - Archive every generated document to blob storage, linked by `SourceType` + `SourceId`
 
@@ -428,12 +428,12 @@ the other eleven printable types have no print route yet.
   `con.PrintTemplates` was dropped rather than copied (D-13: nothing deployed); an old
   `PrintTemplateId` that no longer resolves falls back to the branch default, then to the
   standard layout.
-- **PDFsharp 6.1.1 is already pinned and is not licence-blocked**, which may reopen the Syncfusion
-  choice above (D-11).
+- **PDFsharp is the PDF library** (D-11, 24 September 2026); PDF/A output and the archive for every
+  document are TK-26.
 
 **SignalR needs Azure SignalR Service as a backplane** — with multiple replicas a message otherwise lands on the wrong pod.
 
-**Rate sync**: RBI has **no official public API** (scrape, paid wrapper, or manual entry). IBJA has a paid API for metals. Store **dated history**, not just today's rate.
+**Rate sync**: RBI has **no official public API**, so exchange rates come from **manual entry plus a daily scrape** of RBI's reference-rate page (D-03). Metal rates come from **manual entry and IBJA's paid API** (D-14). Both land in `rat` (TK-73), with **dated history**, not just today's rate.
 
 ---
 
@@ -572,13 +572,13 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 *FIFO/FEFO/LIFO batch allocation was Phase 3 and landed early, with cost layers — it is built. Do not defer work that depends on it.*
 
-*Fixed assets moved Phase 1 → Phase 2 on 4 August 2026, by decision, and **the register has since been built**. `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules` (a `Books` and a `Tax` schedule per asset, `StraightLine` or `WrittenDownValue`) and `acc.AssetTransactions` exist; `FixedAssetsController` lists, registers, capitalises and disposes, and `DepreciationService` runs depreciation from the `Books` schedule. The two schema questions that once blocked it have answers in code: acquisition and disposal ride on existing transaction codes (`docs/Modules.md`, the transaction-type table), and both books and tax schedules are kept — the second still awaiting the owner's confirmation as D-08.*
+*Fixed assets moved Phase 1 → Phase 2 on 4 August 2026, by decision, and **the register has since been built**. `acc.FixedAssetCategories`, `acc.FixedAssets`, `acc.DepreciationSchedules` (a `Books` and a `Tax` schedule per asset, `StraightLine` or `WrittenDownValue`) and `acc.AssetTransactions` exist; `FixedAssetsController` lists, registers, capitalises and disposes, and `DepreciationService` runs depreciation from the `Books` schedule. The two schema questions that once blocked it have answers in code: acquisition and disposal ride on existing transaction codes (`docs/Modules.md`, the transaction-type table), and both books and tax schedules are kept — confirmed by the owner on 24 September 2026 (D-08).*
 
-*What is still missing: **capitalising and disposing post nothing.** A bill's capital line posts to one shared Fixed Asset account and creates no register row; capitalise is a hand-called endpoint that moves nothing in the ledger; dispose records the proceeds and posts nothing. Both postings wait on owner decisions D-19 and D-20 (TK-74 in `docs/TASKS.md`). The controller also writes through `_db` directly and breaks several house rules (TK-30), and the two pages under `accounting-ui/src/lib/fixed-assets/` are routed from nowhere. The old T10 stage file, `TRANSACTIONS-ACCOUNTING-BANKING.md`, no longer exists.*
+*What is still missing: **capitalising and disposing post nothing.** A bill's capital line posts to one shared Fixed Asset account and creates no register row; capitalise is a hand-called endpoint that moves nothing in the ledger; dispose records the proceeds and posts nothing. Both postings are decided (24 September 2026) and are TK-74 in `docs/TASKS.md`: capitalising reclassifies the bill's shared Fixed Asset account to the category's account (D-19), and a disposal either names the bank or cash account the proceeds landed in or is raised as a sales invoice to the buyer (D-20). The controller also writes through `_db` directly and breaks several house rules (TK-30), and the two pages under `accounting-ui/src/lib/fixed-assets/` are routed from nowhere. The old T10 stage file, `TRANSACTIONS-ACCOUNTING-BANKING.md`, no longer exists.*
 
-*The consequence to carry: **the opening balance still cannot migrate a fixed asset.** The register exists, but a migrated asset's posting against Opening Balance Equity is part of D-19, so one still comes across as a plain account balance, and "migrated assets skip historical depreciation" waits on that decision.*
+*The consequence to carry: **the opening balance still cannot migrate a fixed asset.** The register exists, and D-19 decides the posting — a migrated asset debits its category's account against Opening Balance Equity — but until TK-74 builds it one still comes across as a plain account balance.*
 
-*Document print & archive (T3.4) moved Phase 1 → Phase 2 on 24 August 2026, by decision. The print half already works — `/sales/invoices/{id}/print` renders a full tax-invoice layout, watermarks drafts and voided documents, and splits GST per component and per rate. **The archive half is no longer blocked on Syncfusion.** Posting an invoice renders a PDF with PDFsharp 6.1.1 (`Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs`, MIT, already pinned) and saves it to storage under `StorageKey.DocumentKey(scope, "invoices", "{id}.pdf")`. What stays undone: the file is **plain PDF, not PDF/A**; it has a fixed layout of its own rather than the print template; it covers invoices only; and no endpoint returns it. Whether PDFsharp replaces Syncfusion for good is D-11, and the rest is TK-26 in [`docs/TASKS.md`](./docs/TASKS.md). See T3.4 in [`docs/Modules.md`](./docs/Modules.md).*
+*Document print & archive (T3.4) moved Phase 1 → Phase 2 on 24 August 2026, by decision. The print half already works — `/sales/invoices/{id}/print` renders a full tax-invoice layout, watermarks drafts and voided documents, and splits GST per component and per rate. **The archive half is no longer blocked on Syncfusion.** Posting an invoice renders a PDF with PDFsharp 6.1.1 (`Sales.Api/Services/Pdf/PdfSharpInvoiceRenderer.cs`, MIT, already pinned) and saves it to storage under `StorageKey.DocumentKey(scope, "invoices", "{id}.pdf")`. What stays undone: the file is **plain PDF, not PDF/A**; it has a fixed layout of its own rather than the print template; it covers invoices only; and no endpoint returns it. PDFsharp replaces Syncfusion for good (D-11, 24 September 2026), and the rest is TK-26 in [`docs/TASKS.md`](./docs/TASKS.md). See T3.4 in [`docs/Modules.md`](./docs/Modules.md).*
 
 *Report Excel/CSV export moved Phase 1 → Phase 2 on 24 August 2026, by decision, as a roadmap label only — the Excel half is built and shipped — `ExcelReportWriter` lives in `Reporting.Api` today, proven by `ExcelReportWriterTests`. **CSV export is now built** (4 September 2026): `ExportFormat` carries `Csv`, `CsvReportWriter` produces RFC 4180 output as UTF-8 with a BOM — Excel on Windows reads a BOM-less file in the machine's ANSI code page and renders every Tamil or Chinese name as mojibake — and money goes out invariant with no grouping, so an Indian-format branch does not export `12,34,567.89` into a comma-separated file. Both writers take the same `ReportResultView` with paging off, so the two formats cannot disagree with each other or with the screen.*
 
@@ -588,12 +588,19 @@ The Accounting/Banking merge is what that argument predicted: Banking mapped thi
 
 ## Undecided — ask, don't assume
 
-- **How a platform operator's account acquires `platform.*`.** Nothing seeds it today, deliberately — see the provisioning-model note above for why a tenant role can't carry it. A dedicated operator-only role, a flag on `User`, something else: not decided
-- Who holds `CREATEDB` in production, now a much smaller question than it was: `DatabaseMigrationService` still creates `EP_Admin` and `EP_Tenant` on Master's own startup if either is missing, so the app's credentials still need the privilege for that idempotent check — but it is two databases, created once, not one per signup. Whether that auto-create-on-missing belongs in a production startup path at all, versus being infra-provisioned ahead of time, is the sharper form of the same question
-- RBI rate ingestion: scrape / paid wrapper / manual
-- Empty-string vs null normalization for optional phone fields
-- Whether `settings` splits into per-sub-screen libs
-- CRM: campaign/marketing automation in v1?
-- API client scope granularity: per-module or per-action
-- Fixed assets: how capitalisation and disposal post — D-19 and D-20 in `docs/TASKS.md`. (The older question here, straight-line only or books and tax, the code has answered with both schedules and both methods; the owner has yet to confirm it — D-08.)
-- Whether a branch should declare its trade (Pharma / Jewellery / General), so seeding and the settings menu can narrow themselves — today every branch gets everything (Modules.md 5.14)
+**Nothing is undecided as of 24 September 2026.** The owner answered every open question that day. The full record, with the card that carries each answer, is section 3 of [`docs/TASKS.md`](./docs/TASKS.md). In short:
+
+- **Platform operators** get `platform.*` from `mst.Users.IsPlatformOperator`, never a role (D-01, TK-82)
+- **`CREATEDB`**: infrastructure creates the databases in production; the app auto-creates them in Development only (D-02, TK-81)
+- **Exchange rates**: manual entry plus a daily RBI scrape (D-03). **Metal rates**: manual entry plus IBJA's paid API (D-14)
+- **Blank optional phones** are stored as NULL (D-04, TK-83)
+- **Settings** splits into one lib per sub-screen (D-05, TK-84)
+- **CRM campaigns and marketing automation** are in v1 (D-06; TK-85 designs them)
+- **API clients** get per-action `{module}.{action}` permissions through their role (D-07, TK-86)
+- **Fixed assets**: books **and** tax schedules (D-08); no new transaction codes (D-09); capitalising reclassifies to the category account (D-19); a disposal pays into a chosen bank account or is invoiced to the buyer (D-20)
+- **A branch declares its trade**, and seeds and menus follow it (D-10, TK-87)
+- **PDF library**: PDFsharp (D-11)
+- **Pricing**: per user with a branch cap for RetailErp and School; per active employee for HRMS and Payroll (D-12)
+- **Tenant setting**: transaction-local, as the Tenancy section says (TK-09)
+
+A new question goes into `docs/TASKS.md` section 3 as the next D-number, and is asked rather than assumed.

@@ -747,15 +747,16 @@ If the code has moved on since a card was written, correct the card in your clai
     `docs/Master.md` and `TRANSACTIONS-ACCOUNTING-BANKING.md`, none of which exist.
 
 ### TK-88 · Record the owner's answers of 24 September in `CLAUDE.md`
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · documentation only, no tests
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** D-01 … D-20
 - **Where:** `CLAUDE.md` sections "Undecided — ask, don't assume", "Printing", "Journal Entry is the only posting mechanism" (cites the trigger card) and "Roadmap".
 - **Sub-tasks:**
-  - [ ] Move every answered item out of "Undecided" and state the decision where it belongs.
-  - [ ] Printing: PDFsharp replaces Syncfusion as the standard-document library (D-11).
-  - [ ] The trigger card is TK-80, not TK-78.
+  - [x] Move every answered item out of "Undecided" and state the decision where it belongs.
+  - [x] Printing: PDFsharp replaces Syncfusion as the standard-document library (D-11).
+  - [x] The trigger card is TK-80, not TK-78.
 - **Done when:** "Undecided" holds only questions nobody has answered, and no line cites a decision the owner reversed.
 - **Notes:**
+  - "Undecided" now says nothing is open and summarises each answer with its card; the Printing, Rate sync, fixed-asset and PDF notes state the decisions; the operator-permission paragraph points at TK-82.
 
 ### B · Phase 1: finish what's in flight
 
