@@ -756,7 +756,7 @@ If the code has moved on since a card was written, correct the card in your clai
 
 ### TK-13 · Sales credit note: guards, void reason and stock return
 - [~] working (Claude Opus 5.5) — since 2026-09-23
-- **Lanes:** L-SAL, L-SAL-UI, L-INV (one controller line: a return must be recorded as a return) · **Depends on:** — · **Decision:** —
+- **Lanes:** L-SAL, L-SAL-UI, L-INV (one controller line: a return must be recorded as a return), L-ACC (seed Sales Returns and Round Off; owner's decision 2026-09-23) · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Controllers/CreditNotesController.cs`: lines 22-61.
   - `backend/Api/Sales/Sales.Api/Services/CreditNoteService.cs`: `PostAsync` at 317, `VoidAsync` at
