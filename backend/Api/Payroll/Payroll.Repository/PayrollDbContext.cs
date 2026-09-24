@@ -25,6 +25,13 @@ public class PayrollDbContext : TenantDbContext
     public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
     public DbSet<Payslip> Payslips => Set<Payslip>();
     public DbSet<PayslipLine> PayslipLines => Set<PayslipLine>();
+    public DbSet<PfSetting> PfSettings => Set<PfSetting>();
+    public DbSet<EsiSetting> EsiSettings => Set<EsiSetting>();
+    public DbSet<ProfessionalTaxSlab> ProfessionalTaxSlabs => Set<ProfessionalTaxSlab>();
+    public DbSet<LwfSetting> LwfSettings => Set<LwfSetting>();
+    public DbSet<GratuitySetting> GratuitySettings => Set<GratuitySetting>();
+    public DbSet<BonusSetting> BonusSettings => Set<BonusSetting>();
+    public DbSet<StatutoryReturn> StatutoryReturns => Set<StatutoryReturn>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -16,6 +16,13 @@ public sealed class PayrollSeeder
 
         seeded["payGroups"] = await AddWhenEmptyAsync(_db.PayGroups.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.PayGroups.Add(PayrollSeed.DefaultPayGroup(orgId)));
         seeded["components"] = await AddWhenEmptyAsync(_db.SalaryComponents.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.SalaryComponents.Add(PayrollSeed.BasicSalary(orgId)));
+        seeded["pf"] = await AddWhenEmptyAsync(_db.PfSettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.PfSettings.Add(PayrollSeed.DefaultPf(orgId)));
+        seeded["esi"] = await AddWhenEmptyAsync(_db.EsiSettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.EsiSettings.Add(PayrollSeed.DefaultEsi(orgId)));
+        seeded["gratuity"] = await AddWhenEmptyAsync(_db.GratuitySettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.GratuitySettings.Add(PayrollSeed.DefaultGratuity(orgId)));
+        seeded["bonus"] = await AddWhenEmptyAsync(_db.BonusSettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.BonusSettings.Add(PayrollSeed.DefaultBonus(orgId)));
+
+        seeded["ptSlabs"] = await AddWhenEmptyAsync(_db.ProfessionalTaxSlabs.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.ProfessionalTaxSlabs.AddRange(PayrollSeed.DefaultPtSlabs(orgId)));
+        seeded["lwf"] = await AddWhenEmptyAsync(_db.LwfSettings.IgnoreQueryFilters().AnyAsync(x => x.OrgId == orgId, ct), () => _db.LwfSettings.AddRange(PayrollSeed.DefaultLwf(orgId)));
 
         await _db.SaveChangesAsync(ct);
         return seeded;
