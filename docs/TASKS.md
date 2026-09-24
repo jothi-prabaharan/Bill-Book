@@ -2370,7 +2370,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `A_mid_year_joiner_with_income_from_a_previous_employer_is_taxed_the_same_by_a_monthly_run_and_by_the_year_end_recomputation()` in `PayrollServiceTests.cs`. Backend solution builds with 0 errors and 0 warnings.
 
 ### TK-54 · H7: Lifecycle and exit
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-HRM, L-PAY · **Depends on:** TK-48, TK-51 · **Decision:** —
 - **Tables:** `ChecklistTemplate`, `EmployeeChecklist`, `Separation`, `Letters` (in `hrm`), and
   `FullAndFinalSettlement` (in `pay`).
