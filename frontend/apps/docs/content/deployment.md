@@ -74,9 +74,43 @@ The same build of each web app runs in every environment. What differs is one
 small settings file, written at deployment, that names the gateway's address — so
 moving the API, or adding a staging environment, needs no rebuild.
 
+## Running on your own PC instead
+
+The same product runs on a single Windows 11 PC under Docker Desktop, for a
+business that would rather keep its books on its own machine than pay for a
+cloud subscription. The steps are in `deploy/local/README.md`.
+
+| What | Where it runs on the PC |
+|---|---|
+| The services, the gateway and stock costing | Containers, built from the same images as Azure |
+| The database | PostgreSQL in a container, on the PC's own disk |
+| Uploads and archived documents | A folder on the PC's disk, with the same layout |
+| The web, portal, admin and docs apps | One web server, one port each |
+| The public address | Your domain name, through a Cloudflare Tunnel |
+
+**No static IP is needed.** The PC opens an outgoing connection to Cloudflare, and
+visitors reach the site through it — so nothing on the PC is exposed to the
+internet, the home address is never published, and it works behind the shared
+addresses most Indian home broadband uses, where a static-IP setup cannot.
+Cloudflare provides the HTTPS certificate.
+
+The setup script creates the business, its first branch and the owner's
+account, with the branch's chart of accounts, GST rates and numbering loaded on
+first start. The public free-trial sign-up does not work on a new installation
+yet, on a PC or on Azure: making room for trial businesses is still to be built.
+
+What the PC takes on that Azure would have done:
+
+- **It must stay on.** The site is down whenever the PC is off, asleep or
+  offline.
+- **Backups are yours.** A nightly script dumps every database and every
+  uploaded file, but onto the same disk until you copy them somewhere else.
+- **Secrets live in one file**, written by the setup script. Losing it means a
+  backup cannot be restored.
+
 ## What is not set up yet
 
 - Monitoring and alerts
-- Custom domain names — everything serves on its default address
+- Custom domain names on Azure — everything there serves on its default address
 - A staging environment separate from production
 - A web application firewall in front of the gateway

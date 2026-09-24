@@ -1,0 +1,3 @@
+# Secrets written by setup.ps1, and the backups that contain every customer's books.
+.env
+backups/

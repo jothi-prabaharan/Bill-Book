@@ -13,6 +13,8 @@
 Dockerfile  text eol=lf
 *.yml       text eol=lf
 *.yaml      text eol=lf
+*.conf      text eol=lf
+*.dockerignore text eol=lf
 
 # Files that must stay CRLF.
 *.bat       text eol=crlf

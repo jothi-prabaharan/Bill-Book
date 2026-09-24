@@ -1,0 +1,9 @@
+# Keeps the frontend build context to source. Read by Docker because it sits
+# beside the Dockerfile and shares its name; the frontend tree itself has no
+# .dockerignore and does not need one for anything else.
+**/node_modules
+dist
+.nx
+.angular
+coverage
+**/*.log

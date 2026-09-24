@@ -1,0 +1,300 @@
+# The whole product on one machine — built for a Windows 11 PC running Docker
+# Desktop, and runs the same on Linux or a Mac.
+#
+#   cd deploy/local
+#   powershell -ExecutionPolicy Bypass -File setup.ps1     (once: writes .env)
+#   docker compose up -d --build
+#
+# Then http://localhost:8081. README.md beside this file covers putting it on a
+# domain name through Cloudflare Tunnel, starting it with Windows, and backups.
+#
+# The same images as deploy/azure, from the same backend/Dockerfile. What differs
+# is only what Azure would have supplied: Postgres runs in a container, files go
+# to a volume instead of Blob Storage, secrets come from .env instead of Key
+# Vault, and events are logged rather than sent, because nothing consumes one yet.
+
+name: billbook
+
+# ---------------------------------------------------------------------------
+# Shared settings
+# ---------------------------------------------------------------------------
+
+x-backend-env: &backend-env
+  # Not "Production", deliberately. A Production service refuses to start
+  # without Key Vault, which is right on Azure and has no equivalent here — the
+  # secrets arrive from .env through configuration instead. Not "Development"
+  # either: that returns raw database errors to callers, and this machine is
+  # meant to be reachable from the internet.
+  ASPNETCORE_ENVIRONMENT: SelfHosted
+  # The costing worker is a plain .NET host, which reads this name and ignores
+  # the ASP.NET one — without it, it would think it was Production.
+  DOTNET_ENVIRONMENT: SelfHosted
+  ConnectionStrings__AdminDatabase: Host=db;Port=5432;Database=EP_Admin;Username=postgres;Password=${POSTGRES_PASSWORD:?run setup.ps1 first}
+  ConnectionStrings__TenantDatabase: Host=db;Port=5432;Database=IN000001;Username=postgres;Password=${POSTGRES_PASSWORD}
+  Jwt__SigningKey: ${JWT_SIGNING_KEY:?run setup.ps1 first}
+  Internal__ApiKey: ${INTERNAL_API_KEY:?run setup.ps1 first}
+  Encryption__Key: ${ENCRYPTION_KEY:?run setup.ps1 first}
+  FileStorage__LocalRoot: /data/files
+  # Every inter-service URL on every service, for the reason deploy/azure gives:
+  # several appsettings.json files carry localhost defaults, and inside a
+  # container localhost is the container itself — a call that quietly reaches
+  # nothing.
+  Master__BaseUrl: http://master:8080
+  Accounting__BaseUrl: http://accounting:8080
+  Inventory__BaseUrl: http://inventory:8080
+  Sales__BaseUrl: http://sales:8080
+  Purchase__BaseUrl: http://purchase:8080
+  Customer__BaseUrl: http://customer:8080
+  Reporting__BaseUrl: http://reporting:8080
+  Printing__BaseUrl: http://printing:8080
+
+x-master-env: &master-env
+  <<: *backend-env
+  Seeding__Accounting: http://accounting:8080
+  Seeding__Inventory: http://inventory:8080
+  Seeding__Sales: http://sales:8080
+  Seeding__Purchase: http://purchase:8080
+  Seeding__Reporting: http://reporting:8080
+  Seeding__Printing: http://printing:8080
+  # Where links in invitation and password-reset emails point.
+  App__BaseUrl: ${APP_URL:-http://localhost:8081}
+  Portal__BaseUrl: ${PORTAL_URL:-http://localhost:8082}
+  # The first owner, their business and its first branch, created once while
+  # the database has no users at all. setup.ps1 fills these in.
+  Bootstrap__OwnerEmail: ${BOOTSTRAP_OWNER_EMAIL:-}
+  Bootstrap__OwnerPassword: ${BOOTSTRAP_OWNER_PASSWORD:-}
+  Bootstrap__OwnerName: ${BOOTSTRAP_OWNER_NAME:-Owner}
+  Bootstrap__CompanyName: ${BOOTSTRAP_COMPANY_NAME:-My Business}
+
+# A service that runs after the migration has finished, and comes back after a
+# crash or a reboot.
+x-service: &service
+  restart: unless-stopped
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+  environment: *backend-env
+  volumes:
+    - files:/data/files
+
+# One definition per image. backend/Dockerfile builds any backend project; the
+# two build arguments are the only difference between them.
+x-build: &build
+  context: ../../backend
+  dockerfile: Dockerfile
+
+services:
+
+  # -------------------------------------------------------------------------
+  # Database
+  # -------------------------------------------------------------------------
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      # UTF8 so Tamil and Chinese names store as characters. Master creates
+      # EP_Admin and IN000001 itself on first start.
+      POSTGRES_INITDB_ARGS: --encoding=UTF8
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backups:/backups
+      - ./db:/scripts:ro
+      # Read-only, so the nightly backup can take the uploaded files with it.
+      - files:/data/files:ro
+    # Loopback only: reachable from pgAdmin on this PC, never from the network.
+    # 5433 rather than 5432 so a Postgres already installed on Windows does not
+    # collide with it.
+    ports:
+      - 127.0.0.1:${DB_PORT:-5433}:5432
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U postgres]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  # The upload volume is created owned by root, and the services run as the
+  # image's unprivileged `app` user (uid 1654). This hands the folder over once,
+  # before anything writes to it, rather than running the services as root.
+  files-init:
+    image: billbook/master:local
+    user: "0"
+    entrypoint: [chown, "1654:1654", /data/files]
+    volumes:
+      - files:/data/files
+      # Only for putting uploaded files back from a backup (README.md).
+      - ./backups:/backups:ro
+    restart: "no"
+
+  # Applies every schema's migrations once, then exits. The services also
+  # migrate on start; left to that alone, eight of them would race to migrate
+  # the same database. After this they find nothing to do.
+  migrate:
+    image: billbook/master:local
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+      files-init:
+        condition: service_completed_successfully
+    environment:
+      <<: *master-env
+      Migrations__ExitWhenDone: "true"
+
+  # -------------------------------------------------------------------------
+  # Services
+  # -------------------------------------------------------------------------
+
+  master:
+    <<: *service
+    image: billbook/master:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Master/Master.Api, ASSEMBLY: Master.Api }
+    environment: *master-env
+
+  accounting:
+    <<: *service
+    image: billbook/accounting:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Accounting/Accounting.Api, ASSEMBLY: Accounting.Api }
+
+  inventory:
+    <<: *service
+    image: billbook/inventory:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Inventory/Inventory.Api, ASSEMBLY: Inventory.Api }
+
+  sales:
+    <<: *service
+    image: billbook/sales:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Sales/Sales.Api, ASSEMBLY: Sales.Api }
+
+  purchase:
+    <<: *service
+    image: billbook/purchase:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Purchase/Purchase.Api, ASSEMBLY: Purchase.Api }
+
+  customer:
+    <<: *service
+    image: billbook/customer:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Customer/Customer.Api, ASSEMBLY: Customer.Api }
+
+  reporting:
+    <<: *service
+    image: billbook/reporting:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Reporting/Reporting.Api, ASSEMBLY: Reporting.Api }
+
+  printing:
+    <<: *service
+    image: billbook/printing:local
+    build:
+      <<: *build
+      args: { PROJECT: Api/Printing/Printing.Api, ASSEMBLY: Printing.Api }
+
+  costing-worker:
+    <<: *service
+    image: billbook/costing-worker:local
+    build:
+      <<: *build
+      args: { PROJECT: worker/CostingEngine.Worker, ASSEMBLY: CostingEngine.Worker }
+
+  gateway:
+    <<: *service
+    image: billbook/gateway:local
+    build:
+      <<: *build
+      args: { PROJECT: Gateway/Gateway.Api, ASSEMBLY: Gateway.Api }
+    environment:
+      <<: *backend-env
+      ReverseProxy__Clusters__master__Destinations__d1__Address: http://master:8080/
+      ReverseProxy__Clusters__accounting__Destinations__d1__Address: http://accounting:8080/
+      ReverseProxy__Clusters__inventory__Destinations__d1__Address: http://inventory:8080/
+      ReverseProxy__Clusters__sales__Destinations__d1__Address: http://sales:8080/
+      ReverseProxy__Clusters__purchase__Destinations__d1__Address: http://purchase:8080/
+      ReverseProxy__Clusters__customer__Destinations__d1__Address: http://customer:8080/
+      ReverseProxy__Clusters__reporting__Destinations__d1__Address: http://reporting:8080/
+      ReverseProxy__Clusters__printing__Destinations__d1__Address: http://printing:8080/
+    # No port on the host. The web container forwards /api to it, so the
+    # browser only ever talks to one origin per app and CORS never comes into it.
+    volumes: []
+
+  # Seeds the first branch's master data once every service is up. See
+  # seed/first-branch.sh. Borrows the web image only because it has curl.
+  first-branch:
+    image: billbook/web:local
+    restart: "no"
+    entrypoint: [sh, /seed/first-branch.sh]
+    environment:
+      BOOTSTRAP_OWNER_EMAIL: ${BOOTSTRAP_OWNER_EMAIL:-}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY}
+    volumes:
+      - ./seed:/seed:ro
+    depends_on:
+      - master
+      - accounting
+      - inventory
+      - sales
+      - purchase
+      - reporting
+      - printing
+
+  # -------------------------------------------------------------------------
+  # Web apps
+  # -------------------------------------------------------------------------
+
+  # All four Angular apps in one nginx, one port each, each forwarding /api to
+  # the gateway. Built from the frontend source inside the image, so the PC
+  # needs no Node.js.
+  web:
+    image: billbook/web:local
+    build:
+      context: ../../frontend
+      dockerfile: ../deploy/local/web/Dockerfile
+      additional_contexts:
+        config: ./web
+    restart: unless-stopped
+    depends_on:
+      - gateway
+    # Loopback by default: the internet reaches these through the tunnel, not
+    # through the PC's own address. BIND_ADDRESS=0.0.0.0 in .env opens them to
+    # other PCs on the local network as well.
+    ports:
+      - ${BIND_ADDRESS:-127.0.0.1}:8081:8081   # web
+      - ${BIND_ADDRESS:-127.0.0.1}:8082:8082   # portal
+      - ${BIND_ADDRESS:-127.0.0.1}:8083:8083   # admin
+      - ${BIND_ADDRESS:-127.0.0.1}:8084:8084   # docs
+
+  # -------------------------------------------------------------------------
+  # Public access
+  # -------------------------------------------------------------------------
+
+  # An outbound connection to Cloudflare, which is how the site is reached from
+  # the internet with no static IP, no port opened on the router, and HTTPS
+  # handled at Cloudflare. Off until .env sets COMPOSE_PROFILES=tunnel and a
+  # token; which host name goes to which port is set in the Cloudflare
+  # dashboard (see README.md).
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    profiles: [tunnel]
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on:
+      - web
+
+volumes:
+  pgdata:
+  files:
