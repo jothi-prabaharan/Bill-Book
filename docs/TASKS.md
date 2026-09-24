@@ -2218,7 +2218,7 @@ needs these scaffold steps:
 sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-48 · H1: Core HR, the shared employee master (`Hrm`, `hrm`, port 4509)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-HRM (new) · **Depends on:** TK-47 · **Decision:** —
 - **Tables:**
   - Organisation: `Department`, `Designation`, `Grade`, `CostCentre`, `WorkLocation`.
