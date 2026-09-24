@@ -451,7 +451,7 @@ If the code has moved on since a card was written, correct the card in your clai
   - `InternalContactNamesController` also reads `con` with no tenant set. Noted on TK-79.
 
 ### TK-04 · RLS for `cus`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-CUS · **Depends on:** TK-02 · **Decision:** —
 - **Where:** `backend/Api/Customer/Customer.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Customer.Api.Tests/CustomerQueryFilterTests.cs:193`.
