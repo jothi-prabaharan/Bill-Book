@@ -8,10 +8,12 @@ using Notification.Worker;
 using Notification.Worker.Consumers;
 using Notification.Worker.Email;
 using Notification.Worker.Persistence;
+using Notification.Worker.Reminders;
 using Sales.Repository;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
+using Shared.Kernel.Persistence;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
@@ -23,7 +25,18 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<TenantContext>();
         services.AddScoped<ITenantContext>(sp => sp.GetRequiredService<TenantContext>());
         services.AddScoped<ICurrentUser, WorkerCurrentUser>();
-        services.AddDbContext<SalesDbContext>(options => options.UseNpgsql(tenantDatabase));
+        services.AddScoped<AuditSaveChangesInterceptor>();
+        services.AddScoped<RlsConnectionInterceptor>();
+
+        // Read per branch, with the tenant set on the scope (TK-20): the query
+        // filter and row-level security keep each branch's reminders its own.
+        services.AddDbContext<SalesDbContext>((sp, options) =>
+        {
+            options.UseNpgsql(tenantDatabase);
+            options.AddInterceptors(
+                sp.GetRequiredService<AuditSaveChangesInterceptor>(),
+                sp.GetRequiredService<RlsConnectionInterceptor>());
+        });
 
         // The worker's own schema: which email message ids have been sent, so a
         // redelivery sends nothing (TK-19). Migrated first, before any consumer.
@@ -53,6 +66,25 @@ IHost host = Host.CreateDefaultBuilder(args)
             services.AddHostedService<EmailRequestedConsumer>();
         }
 
+        // Payment reminders (TK-20): branches from Master, what is owed from
+        // Accounting, addresses from Master's contacts — none of it read from
+        // another service's tables.
+        services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
+        {
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+        })
+            .AddHttpMessageHandler<InternalKeyHandler>();
+        services.AddHttpClient<IContactEmails, HttpContactEmails>(client =>
+        {
+            client.BaseAddress = new Uri(config["Master:BaseUrl"] ?? "http://localhost:4504/");
+        })
+            .AddHttpMessageHandler<InternalKeyHandler>();
+        services.AddHttpClient<IInvoiceSettlements, HttpInvoiceSettlements>(client =>
+        {
+            client.BaseAddress = new Uri(config["Accounting:BaseUrl"] ?? "http://localhost:4501/");
+        })
+            .AddHttpMessageHandler<InternalKeyHandler>();
+        services.AddScoped<PaymentReminderRun>();
         services.AddHostedService<PaymentReminderWorker>();
     })
     .Build();

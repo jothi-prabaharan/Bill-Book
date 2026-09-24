@@ -87,4 +87,51 @@ public sealed class InternalContactNamesController : ControllerBase
         // one that no longer exists.
         return Ok(names);
     }
+    /// <summary>
+    /// The address each contact is written to at: its default person's email,
+    /// or else the first active person's that has one (TK-20, payment
+    /// reminders). A contact with no email anywhere is absent, and the caller
+    /// sends it nothing. The branch comes from the body, as for names.
+    /// </summary>
+    [HttpPost("emails")]
+    public async Task<IActionResult> Emails(
+        [FromBody] NameLookupRequest request, CancellationToken ct)
+    {
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse
+                {
+                    Message = "A customer and an organization are required to resolve addresses.",
+                });
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        List<long> ids = [.. request.Ids.Distinct().Take(MaxIds)];
+
+        if (ids.Count == 0)
+        {
+            return Ok(Array.Empty<ContactEmail>());
+        }
+
+        var db = _services.GetRequiredService<ContactsDbContext>();
+
+        Dictionary<long, string> names = await db.Contacts
+            .Where(c => ids.Contains(c.ContactId) && c.IsActive)
+            .ToDictionaryAsync(c => c.ContactId, c => c.DisplayName, ct);
+
+        var people = await db.ContactPersons
+            .Where(p => names.Keys.Contains(p.ContactId) && p.IsActive && p.Email != null && p.Email != "")
+            .OrderByDescending(p => p.IsDefault)
+            .ThenBy(p => p.ContactPersonId)
+            .Select(p => new { p.ContactId, p.Email })
+            .ToListAsync(ct);
+
+        List<ContactEmail> emails = [.. people
+            .GroupBy(p => p.ContactId)
+            .Select(g => new ContactEmail(g.Key, g.First().Email!, names[g.Key]))];
+
+        return Ok(emails);
+    }
 }

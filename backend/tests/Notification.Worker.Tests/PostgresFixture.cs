@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Notification.Worker.Persistence;
+using Sales.Repository;
+using Shared.Kernel.Tenancy;
 using Xunit;
 
 namespace Notification.Worker.Tests;
@@ -28,6 +30,12 @@ public sealed class PostgresFixture : IAsyncLifetime
         {
             await using NotificationDbContext db = CreateContext();
             await db.Database.MigrateAsync();
+
+            // The payment reminders read sal, which lives in the same tenant
+            // database as ntf in production (TK-20).
+            await using SalesDbContext sales = CreateSalesContext(
+                new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() });
+            await sales.Database.MigrateAsync();
         }
         catch (Exception ex) when (IsUnreachable(ex))
         {
@@ -59,6 +67,12 @@ public sealed class PostgresFixture : IAsyncLifetime
     }
 
     public Task DisposeAsync() => Task.CompletedTask;
+
+    /// <summary>A Sales context bound to whatever <paramref name="tenant"/> holds.</summary>
+    public SalesDbContext CreateSalesContext(TenantContext tenant) =>
+        new(new DbContextOptionsBuilder<SalesDbContext>()
+            .UseNpgsql(ConnectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sal"))
+            .Options, tenant);
 
     public NotificationDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<NotificationDbContext>()

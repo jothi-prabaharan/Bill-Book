@@ -1189,8 +1189,8 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-20 · `PaymentReminderWorker` sends nothing, and reads across tenants
-- [~] working (Claude Opus 5.5) — since 2026-09-24
-- **Lanes:** L-NTF · **Depends on:** TK-19 · **Decision:** —
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Lanes:** L-NTF, L-KERNEL, L-CON, L-INV (the enumerator move) · **Depends on:** TK-19 · **Decision:** —
 - **Where:** `backend/worker/Notification.Worker/PaymentReminderWorker.cs:39-100` and `Program.cs`.
 - **State:**
   - It loads `ReminderProfiles` and overdue `Invoices` with `IgnoreQueryFilters()` and no tenant,
@@ -1198,19 +1198,46 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - Once RLS is on (TK-03), it will see no rows at all.
   - It runs once every 24 hours, from whenever the process started.
 - **Sub-tasks:**
-  - [ ] Iterate branches the way `CostingEngine.Worker/Consumers/CostingWorker.cs:140-150` does:
+  - [x] Iterate branches the way `CostingEngine.Worker/Consumers/CostingWorker.cs:140-150` does:
         list them, then set `TenantContext.CustomerId` and `OrgId` per branch in a new scope.
-  - [ ] Drop `IgnoreQueryFilters()`.
-  - [ ] Settle the invoice through Accounting's settlement API, so a paid invoice gets no reminder.
-  - [ ] Send the reminder through the email path from TK-19, and write `ReminderLog` in the same
+  - [x] Drop `IgnoreQueryFilters()`.
+  - [x] Settle the invoice through Accounting's settlement API, so a paid invoice gets no reminder.
+  - [x] Send the reminder through the email path from TK-19, and write `ReminderLog` in the same
         unit of work.
-  - [ ] Replace the 7-day constant with a field on the profile, if the entity has one. Otherwise
+  - [x] Replace the 7-day constant with a field on the profile, if the entity has one. Otherwise
         record the gap under Notes.
-  - [ ] Test: a paid invoice gets no reminder.
-  - [ ] Test: a second run on the same day sends nothing.
-  - [ ] Test: branch A's profile never reminds branch B's invoice.
+  - [x] Test: a paid invoice gets no reminder.
+  - [x] Test: a second run on the same day sends nothing.
+  - [x] Test: branch A's profile never reminds branch B's invoice.
 - **Done when:** an overdue, unpaid invoice produces exactly one email per reminder window.
 - **Notes:**
+  - Done (2026-09-24):
+    - **Branches:** `ITenantEnumerator`/`HttpTenantEnumerator`/`ActiveOrganization` moved from
+      `CostingEngine.Worker/Consumers` to `Shared.Kernel.Tenancy`, and the costing engine uses them
+      from there. `PaymentReminderWorker` runs each branch in its own scope with its tenant set.
+    - The worker's `SalesDbContext` now carries the audit and RLS interceptors, as every service's
+      does.
+    - **`PaymentReminderRun`**, per branch:
+      1. Active profiles pick posted invoices at least the profile's trigger days past due.
+      2. Invoices with a `ReminderLog` for that profile inside the interval are excluded in the
+         query.
+      3. Accounting's `internal/ledger/settlements` (INV, CONTROL leg) keeps only invoices with
+         something outstanding. If Accounting can't be read, the whole branch is skipped rather
+         than risk reminding someone who has paid.
+      4. Master's new `internal/contacts/emails` (the default person's email, else the first active
+         person with one) gives the address.
+      5. `EmailRequestHandler` (TK-19) sends it, under a message id hashed from branch, invoice,
+         profile and day. The `ReminderLog` rows are saved in one `SaveChanges` at the end.
+    - **No interval field on `sal.ReminderProfiles`:** the 7 days is now
+      `PaymentReminderRun.ReminderInterval`, one value for every profile. A per-profile interval
+      needs a Sales migration, which is left for a card that edits profiles.
+    - Reminders go through the handler directly, not through Service Bus. They're produced inside
+      the worker that consumes them, so publishing would be a round trip to itself; the dedupe and
+      the Master mailbox are the same either way.
+  - Not built: there is still no screen for reminder profiles, so a branch has none until one is
+    inserted.
+  - Tests: `Notification.Worker.Tests/PaymentReminderRunTests.cs` (the fixture now also migrates
+    `sal`).
 
 ### TK-21 · A blank optional phone is NULL everywhere (D-04)
 - [ ] open

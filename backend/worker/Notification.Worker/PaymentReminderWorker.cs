@@ -1,24 +1,37 @@
-using System;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Sales.Repository;
+using Notification.Worker.Reminders;
 using Shared.Kernel.Tenancy;
 
 namespace Notification.Worker;
 
+/// <summary>
+/// Sends payment reminders once a day, branch by branch (TK-20).
+///
+/// <b>Each branch runs in a scope of its own with its tenant set</b>, the way
+/// the costing engine walks branches: the list comes from Master, and every
+/// read below goes through the query filter and row-level security. Before
+/// TK-20 this read every branch at once with <c>IgnoreQueryFilters</c> and no
+/// tenant — which saw nothing at all once RLS was restored — wrote a log row
+/// per overdue invoice, and sent no email.
+///
+/// One branch failing does not stop the others; the next day retries it, and
+/// the reminders' fixed message ids keep a retry from sending twice.
+/// </summary>
 public class PaymentReminderWorker : BackgroundService
 {
-    private readonly IServiceProvider _serviceProvider;
+    private static readonly TimeSpan Interval = TimeSpan.FromHours(24);
+
+    private readonly IServiceScopeFactory _scopes;
+    private readonly ITenantEnumerator _branches;
     private readonly ILogger<PaymentReminderWorker> _logger;
 
-    public PaymentReminderWorker(IServiceProvider serviceProvider, ILogger<PaymentReminderWorker> logger)
+    public PaymentReminderWorker(
+        IServiceScopeFactory scopes, ITenantEnumerator branches, ILogger<PaymentReminderWorker> logger)
     {
-        _serviceProvider = serviceProvider;
+        _scopes = scopes;
+        _branches = branches;
         _logger = logger;
     }
 
@@ -26,78 +39,50 @@ public class PaymentReminderWorker : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("PaymentReminderWorker running at: {time}", DateTimeOffset.Now);
+            await RunOnceAsync(stoppingToken);
 
             try
             {
-                await ProcessRemindersAsync(stoppingToken);
+                await Task.Delay(Interval, stoppingToken);
             }
-            catch (Exception ex)
+            catch (OperationCanceledException)
             {
-                _logger.LogError(ex, "Error occurred processing payment reminders.");
+                break;
             }
-
-            // Run on a daily schedule. Delaying for 24 hours.
-            await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
         }
     }
 
-    private async Task ProcessRemindersAsync(CancellationToken ct)
+    /// <summary>Every branch, once. Public so a run can be driven without the schedule.</summary>
+    public async Task RunOnceAsync(CancellationToken ct)
     {
-        // Background workers need their own scope because DbContext is scoped.
-        using var scope = _serviceProvider.CreateScope();
-        var salesDb = scope.ServiceProvider.GetRequiredService<SalesDbContext>();
-        
-        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        IReadOnlyList<ActiveOrganization> branches = await _branches.ListAsync(ct);
 
-        // A full multi-tenant worker would typically iterate all tenants.
-        // For demonstration within single execution context, we simulate fetching overdue invoices.
-        // In a real system, we must ensure OrgId context is set or bypass it securely.
-        
-        // This is a naive implementation assuming the worker has a way to bypass RLS or iterate orgs.
-        // In this specific task, we'll query assuming DbContext can see everything (or we iterate).
-        // Since TenantDbContext restricts by OrgId, we'd normally need to iterate Orgs.
-        // Let's assume we use IgnoreQueryFilters for the background worker finding candidates.
-
-        var profiles = await salesDb.ReminderProfiles.IgnoreQueryFilters().Where(p => p.IsActive).ToListAsync(ct);
-        
-        foreach (var profile in profiles)
+        foreach (ActiveOrganization branch in branches)
         {
-            var triggerDate = today.AddDays(-profile.DaysOverdueTrigger);
-            
-            var overdueInvoices = await salesDb.Invoices
-                .IgnoreQueryFilters()
-                .Where(i => i.OrgId == profile.OrgId &&
-                            i.DueDate <= triggerDate && 
-                            i.Status == Shared.Kernel.Documents.DocumentStatus.Posted)
-                .ToListAsync(ct);
-
-            foreach (var invoice in overdueInvoices)
+            try
             {
-                var recentLog = await salesDb.ReminderLogs
-                    .IgnoreQueryFilters()
-                    .Where(l => l.InvoiceId == invoice.InvoiceId && l.ReminderProfileId == profile.ReminderProfileId)
-                    .OrderByDescending(l => l.SentAt)
-                    .FirstOrDefaultAsync(ct);
+                using IServiceScope scope = _scopes.CreateScope();
 
-                // If no reminder was sent, or it was sent more than X days ago (prevent spamming every day)
-                if (recentLog == null || (DateTimeOffset.UtcNow - recentLog.SentAt).TotalDays > 7)
+                var tenant = scope.ServiceProvider.GetRequiredService<TenantContext>();
+                tenant.CustomerId = branch.CustomerId;
+                tenant.OrgId = branch.OrgId;
+
+                ReminderRunResult result = await scope.ServiceProvider
+                    .GetRequiredService<PaymentReminderRun>()
+                    .RunAsync(ct);
+
+                if (result.Sent > 0 || result.Stopped)
                 {
-                    _logger.LogInformation("Triggering reminder for Invoice {InvoiceId} in Org {OrgId}", invoice.InvoiceId, invoice.OrgId);
-
-                    salesDb.ReminderLogs.Add(new Sales.Entity.TableEntities.ReminderLog
-                    {
-                        OrgId = invoice.OrgId,
-                        CustomerId = invoice.CustomerId,
-                        InvoiceId = invoice.InvoiceId,
-                        ReminderProfileId = profile.ReminderProfileId,
-                        SentAt = DateTimeOffset.UtcNow,
-                        NotificationType = "Email"
-                    });
+                    _logger.LogInformation(
+                        "Payment reminders for {OrgId}: {Sent} sent, {Paid} already paid, {NoEmail} without an email{Stopped}.",
+                        branch.OrgId, result.Sent, result.AlreadyPaid, result.NoEmail,
+                        result.Stopped ? "; stopped early" : "");
                 }
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                _logger.LogError(ex, "Payment reminders for {OrgId} failed; tomorrow's run retries.", branch.OrgId);
+            }
         }
-
-        await salesDb.SaveChangesAsync(ct);
     }
 }

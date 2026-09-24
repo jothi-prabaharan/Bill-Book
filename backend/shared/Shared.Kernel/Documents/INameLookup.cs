@@ -187,3 +187,10 @@ public sealed class HttpItemNameLookup : HttpNameLookup, IItemNameLookup
 
     protected override string CachePrefix => "item-name";
 }
+
+/// <summary>
+/// A contact's address for mail sent on the branch's behalf — a payment
+/// reminder (TK-20). The contact's default person's email, or the first active
+/// person with one; a contact with no email anywhere is absent from the answer.
+/// </summary>
+public sealed record ContactEmail(long ContactId, string Email, string DisplayName);

@@ -1,14 +1,18 @@
 using System.Net.Http.Json;
+using Microsoft.Extensions.Logging;
 
-namespace CostingEngine.Worker.Consumers;
+namespace Shared.Kernel.Tenancy;
 
 /// <summary>One branch to process.</summary>
 public sealed record ActiveOrganization(Guid CustomerId, Guid OrgId);
 
 /// <summary>
-/// The branches this worker should walk. A background worker has no request to
-/// take a tenant from, so it asks Platform for the list — the same directory the
+/// The branches a background worker should walk. A worker has no request to
+/// take a tenant from, so it asks Master for the list — the same directory the
 /// request path uses, rather than a second copy that could disagree with it.
+///
+/// In Shared.Kernel since TK-20, when the payment reminders became the second
+/// worker to need it; it was the costing engine's own before.
 /// </summary>
 public interface ITenantEnumerator
 {
@@ -38,9 +42,9 @@ public sealed class HttpTenantEnumerator : ITenantEnumerator
         }
         catch (Exception ex)
         {
-            // Platform being briefly unreachable is not a costing failure. The
-            // next tick asks again; nothing is lost, because the queue is a
-            // column in the database rather than a message that expires.
+            // Master being briefly unreachable is not a failure of the work. The
+            // next tick asks again; nothing is lost, because the work is in the
+            // database rather than in a message that expires.
             _log.LogWarning(ex, "Could not read the list of active organizations");
             return [];
         }
