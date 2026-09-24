@@ -2046,7 +2046,7 @@ The design is in `docs/Modules.md`, section "One customer, many applications" (f
 None of it is built.
 
 ### TK-42 · H0.1: `App` in `mst`
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-24
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Entity/TableEntities/{Role,Permission,Menu,License,RefreshToken}.cs`
