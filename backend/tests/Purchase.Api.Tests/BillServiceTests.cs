@@ -128,6 +128,151 @@ public sealed class BillServiceTests
     }
 
     [SkippableFact]
+    public async Task A_posted_capital_line_goes_onto_the_fixed_asset_register()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        SaveBillLineRequest laptop = Line(quantity: 1m, unitPrice: 60000m);
+        laptop.LineType = DocumentLineType.Capital;
+        laptop.FixedAssetCategoryId = 3;
+        laptop.Description = "Developer laptop";
+
+        BillResult created = await h.Bills.CreateAsync(
+            Request(receiptId: null, lines: [Line(quantity: 2m, unitPrice: 100m), laptop]), default);
+
+        BillResult posted = await h.Bills.PostAsync(created.BillId, default);
+        Assert.Equal(BillOutcome.Ok, posted.Outcome);
+
+        // Only the capital line, at its taxable value — what the bill debited to
+        // Fixed Asset, and so what the register reclassifies out of it (D-19).
+        CapitaliseBillRequest sent = Assert.Single(h.FixedAssets.Requests);
+        Bill bill = await h.Db.Bills.Include(b => b.Lines).SingleAsync(b => b.BillId == created.BillId);
+        BillDetail capital = bill.Lines.Single(l => l.LineType == DocumentLineType.Capital);
+
+        Assert.Equal(created.BillId, sent.PurchaseBillId);
+        Assert.Equal(bill.DocumentNo, sent.DocumentNo);
+        Assert.Equal(bill.DocumentDate, sent.DocumentDate);
+
+        CapitaliseBillLine line = Assert.Single(sent.Lines);
+        Assert.Equal(capital.BillDetailId, line.BillDetailId);
+        Assert.Equal(3, line.FixedAssetCategoryId);
+        Assert.Equal("Developer laptop", line.Description);
+        Assert.Equal(60000m, line.Amount);
+        Assert.Equal(h.Ledger.DebitOf(FixedAssetAccount), line.Amount);
+    }
+
+    [SkippableFact]
+    public async Task A_bill_with_no_capital_line_never_calls_the_register()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        BillResult created = await h.Bills.CreateAsync(
+            Request(receiptId: null, lines: [Line(quantity: 1m, unitPrice: 100m)]), default);
+        await h.Bills.PostAsync(created.BillId, default);
+
+        Assert.Empty(h.FixedAssets.Requests);
+    }
+
+    [SkippableFact]
+    public async Task A_register_refusal_leaves_the_bill_a_draft_and_a_retry_posts_it()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        SaveBillLineRequest press = Line(quantity: 1m, unitPrice: 25000m);
+        press.LineType = DocumentLineType.Capital;
+        press.FixedAssetCategoryId = 3;
+
+        BillResult created = await h.Bills.CreateAsync(Request(receiptId: null, lines: [press]), default);
+
+        h.FixedAssets.RefuseWith = "no such category";
+        BillResult refused = await h.Bills.PostAsync(created.BillId, default);
+
+        Assert.Equal(BillOutcome.PostingRefused, refused.Outcome);
+        Assert.Contains("no such category", refused.Detail);
+        Assert.Equal(DocumentStatus.Draft, (await h.Db.Bills.SingleAsync(b => b.BillId == created.BillId)).Status);
+
+        // The retry sends the same line again; the register adds only what it
+        // does not already hold, and the ledger legs replace themselves.
+        h.FixedAssets.RefuseWith = null;
+        Assert.Equal(BillOutcome.Ok, (await h.Bills.PostAsync(created.BillId, default)).Outcome);
+        Assert.Equal(2, h.FixedAssets.Requests.Count);
+        Assert.Equal(h.FixedAssets.Requests[0].Lines.Single().BillDetailId, h.FixedAssets.Requests[1].Lines.Single().BillDetailId);
+    }
+
+    [SkippableFact]
+    public async Task A_capital_line_on_a_bill_against_a_receipt_lands_on_fixed_asset_not_the_clearing_account()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        GoodsReceipt receipt = await h.PostedReceiptAsync(quantity: 10m, unitPrice: 100m);
+        decimal creditedByReceipt = h.Ledger.CreditOf(GrniAccount);
+
+        SaveBillLineRequest racking = Line(quantity: 1m, unitPrice: 5000m);
+        racking.LineType = DocumentLineType.Capital;
+        racking.FixedAssetCategoryId = 3;
+
+        BillResult created = await h.Bills.CreateAsync(
+            Request(
+                receiptId: receipt.GoodsReceiptId,
+                lines:
+                [
+                    Line(quantity: 10m, unitPrice: 100m,
+                        receiptDetailId: receipt.Lines.Single().GoodsReceiptDetailId),
+                    racking,
+                ]),
+            default);
+
+        Assert.Equal(BillOutcome.Ok, (await h.Bills.PostAsync(created.BillId, default)).Outcome);
+
+        // The receipt credited GRNI for the goods only. The racking never came
+        // through it, so clearing GRNI with it would leave the account short.
+        Assert.Equal(creditedByReceipt, h.Ledger.DebitOf(GrniAccount));
+        Assert.Equal(5000m, h.Ledger.DebitOf(FixedAssetAccount));
+    }
+
+    [SkippableFact]
+    public async Task A_posted_bill_that_registered_assets_cannot_be_voided()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+
+        // Against a receipt, because that is the only posted bill a void would
+        // otherwise let through.
+        GoodsReceipt receipt = await h.PostedReceiptAsync(quantity: 1m, unitPrice: 100m);
+
+        SaveBillLineRequest racking = Line(quantity: 1m, unitPrice: 5000m);
+        racking.LineType = DocumentLineType.Capital;
+        racking.FixedAssetCategoryId = 3;
+
+        BillResult created = await h.Bills.CreateAsync(
+            Request(
+                receiptId: receipt.GoodsReceiptId,
+                lines:
+                [
+                    Line(quantity: 1m, unitPrice: 100m,
+                        receiptDetailId: receipt.Lines.Single().GoodsReceiptDetailId),
+                    racking,
+                ]),
+            default);
+        await h.Bills.PostAsync(created.BillId, default);
+
+        BillResult voided = await h.Bills.VoidAsync(
+            created.BillId, new VoidBillRequest { Reason = "Entered twice" }, default);
+
+        Assert.Equal(BillOutcome.LifecycleRefused, voided.Outcome);
+        Assert.Equal(DocumentStatus.Posted, (await h.Db.Bills.SingleAsync(b => b.BillId == created.BillId)).Status);
+    }
+
+    [SkippableFact]
     public async Task Payables_carry_the_vendor_so_aging_can_be_grouped()
     {
         Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
@@ -389,7 +534,8 @@ public sealed class BillServiceTests
         GoodsReceiptService Receipts,
         RecordingInventory Inventory,
         RecordingLedger Ledger,
-        StubPaymentTerms PaymentTerms)
+        StubPaymentTerms PaymentTerms,
+        RecordingFixedAssets FixedAssets)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -406,6 +552,7 @@ public sealed class BillServiceTests
             RecordingInventory inventory = new();
             RecordingLedger ledger = new();
             StubPaymentTerms terms = new();
+            RecordingFixedAssets fixedAssets = new();
 
             var numbering = new NumberGenerator(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
@@ -417,10 +564,10 @@ public sealed class BillServiceTests
 
             BillService bills = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
-                new StubTaxRates(), names, names, inventory, ledger, terms,
+                new StubTaxRates(), names, names, inventory, ledger, terms, fixedAssets,
                 new StubCurrentUser(), TimeProvider.System);
 
-            return new Harness(db, bills, receipts, inventory, ledger, terms);
+            return new Harness(db, bills, receipts, inventory, ledger, terms, fixedAssets);
         }
 
         /// <summary>A posted receipt to bill against.</summary>

@@ -82,6 +82,47 @@ public sealed class FixedAssetRulesTests
             [Books(DepreciationMethod.StraightLine, life: 5), Books(DepreciationMethod.WrittenDownValue, rate: 15)], 1000m));
     }
 
+    [Theory]
+    [InlineData(1200, 200, 1100, 100, 0)]    // sold for 100 over book value: a gain
+    [InlineData(1200, 200, 900, 0, 100)]     // 100 under: a loss
+    [InlineData(1200, 200, 1000, 0, 0)]      // exactly book value: no gain/loss leg
+    [InlineData(1200, 0, 0, 0, 1200)]        // scrapped undepreciated: all of it lost
+    public void A_disposal_balances_and_puts_the_difference_to_gain_or_loss(
+        decimal cost, decimal accumulated, decimal proceeds, decimal gain, decimal loss)
+    {
+        var lines = DisposalLinesFor(cost, accumulated, proceeds);
+
+        decimal debits = proceeds + lines.Sum(l => l.DebitAmount);
+        Assert.Equal(debits, lines.Sum(l => l.CreditAmount));
+
+        Assert.Equal(cost, lines.Where(l => l.AccountId == AssetAccount).Sum(l => l.CreditAmount));
+        Assert.Equal(accumulated, lines.Where(l => l.AccountId == AccumulatedAccount).Sum(l => l.DebitAmount));
+        Assert.Equal(gain, lines.Where(l => l.AccountId == GainLossAccount).Sum(l => l.CreditAmount));
+        Assert.Equal(loss, lines.Where(l => l.AccountId == GainLossAccount).Sum(l => l.DebitAmount));
+        Assert.All(lines, l => Assert.True((l.DebitAmount == 0) != (l.CreditAmount == 0)));
+    }
+
+    [Fact]
+    public void An_undepreciated_asset_writes_back_no_accumulated_depreciation()
+    {
+        Assert.DoesNotContain(DisposalLinesFor(1200m, 0m, 1200m), l => l.AccountId == AccumulatedAccount);
+    }
+
+    [Fact]
+    public void A_bill_assets_code_is_the_bill_number_and_line()
+    {
+        Assert.Equal("BIL/26-27/0042-3", FixedAssetService.BillAssetCode("BIL/26-27/0042", 3));
+        Assert.Equal(50, FixedAssetService.BillAssetCode(new string('X', 60), 1).Length);
+    }
+
+    private const long AssetAccount = 1;
+    private const long AccumulatedAccount = 2;
+    private const long GainLossAccount = 3;
+
+    private static SaveJournalLineRequest[] DisposalLinesFor(decimal cost, decimal accumulated, decimal proceeds) =>
+        FixedAssetService.DisposalLines(
+            cost, accumulated, proceeds, AssetAccount, AccumulatedAccount, GainLossAccount, "Disposal").ToArray();
+
     [Fact]
     public void Every_action_takes_a_cancellation_token()
     {
@@ -96,6 +137,9 @@ public sealed class FixedAssetRulesTests
     public void Dispose_takes_a_long_id_and_both_sign_offs_need_approve()
     {
         MethodInfo dispose = typeof(FixedAssetsController).GetMethod(nameof(FixedAssetsController.DisposeAsset))!;
+        MethodInfo schedules = typeof(FixedAssetsController).GetMethod(nameof(FixedAssetsController.SetSchedules))!;
+
+        Assert.Equal("{id:long}/schedules", schedules.GetCustomAttribute<HttpPutAttribute>()!.Template);
         MethodInfo run = typeof(FixedAssetsController).GetMethod(nameof(FixedAssetsController.RunDepreciation))!;
 
         Assert.Equal("{id:long}/dispose", dispose.GetCustomAttribute<HttpPostAttribute>()!.Template);

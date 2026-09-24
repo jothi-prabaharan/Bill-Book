@@ -48,17 +48,13 @@ public enum SystemAccount
     GoodsReceivedNotInvoiced = 14,
 
     /// <summary>
-    /// Capitalised purchases — an Asset.
+    /// Capitalised purchases — an Asset, and a holding account.
     ///
-    /// <b>A holding account until the fixed asset register exists.</b> The design
-    /// is that a fixed asset <i>category</i> owns the GL mapping and a capital
-    /// line creates the register row (Purchase.md §4), but the register is Phase
-    /// 2 and the category table does not exist. A capital line has to land
-    /// somewhere real in the meantime, and an asset sitting in an expense or a
-    /// control account is worse than one sitting here.
-    ///
-    /// When the register lands, the category's own mapping supersedes this and
-    /// the balance is split out across the real asset accounts.
+    /// A bill's capital line debits it, and the bill's posting puts the line on
+    /// the fixed asset register, which reclassifies the cost to the category's
+    /// own asset account in the same breath (D-19, TK-12). So it should net to
+    /// nothing; a balance left here is a capital purchase posted before the
+    /// register did this, waiting to be capitalised by hand.
     /// </summary>
     FixedAsset = 15,
 
@@ -95,6 +91,15 @@ public enum SystemAccount
     /// (TK-77).
     /// </summary>
     RoundOff = 18,
+
+    /// <summary>
+    /// What a fixed asset sold for, less what it still stood at in the books — an
+    /// Income that carries a balance either way, because a disposal can make a
+    /// gain or a loss. Credited on a gain and debited on a loss by the register's
+    /// disposal entry (D-20, TK-12). Kept out of Sales Revenue deliberately: an
+    /// asset sale is not trading, and folding it in would flatter the margin.
+    /// </summary>
+    AssetDisposalGainLoss = 19,
 }
 
 /// <summary>
@@ -124,6 +129,7 @@ public static class SystemAccountNames
         SystemAccount.PurchaseReturns => "Purchase Returns",
         SystemAccount.SalesReturns => "Sales Returns",
         SystemAccount.RoundOff => "Round Off",
+        SystemAccount.AssetDisposalGainLoss => "Gain/Loss on Asset Disposal",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

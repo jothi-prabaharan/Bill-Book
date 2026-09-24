@@ -162,8 +162,50 @@ public sealed class JournalService
         };
     }
 
-    public async Task<SaveJournalResult> CreateAsync(
-        SaveJournalRequest request, CancellationToken ct)
+    public Task<SaveJournalResult> CreateAsync(
+        SaveJournalRequest request, CancellationToken ct) =>
+        CreateCoreAsync(request, allowControlAccounts: false, ct);
+
+    /// <summary>
+    /// A journal a module raises for itself — the fixed asset register's
+    /// reclassification, disposal and opening entries — created and posted in
+    /// one scope, so a refusal anywhere leaves neither a draft nor a number spent.
+    ///
+    /// <b>It may post to seeded control accounts</b>, which a hand entry may not.
+    /// The refusal exists because a control account is driven by its subledger
+    /// and a hand posting puts the two out of step; here the caller <i>is</i> the
+    /// subledger — the register is what keeps <c>Fixed Asset</c> honest — so the
+    /// reason does not apply. Every other check a hand entry gets still runs:
+    /// active and unlocked accounts, sub-accounts under their account, balance,
+    /// and the period lock.
+    ///
+    /// <paramref name="ledgerSourceId"/> is the <c>mst.LedgerSources</c> id the
+    /// rows are filed under, so a report can tell a disposal from a hand entry.
+    /// A later reversal of the entry files under Journal, as every reversal does.
+    /// </summary>
+    public async Task<SaveJournalResult> PostSystemAsync(
+        SaveJournalRequest request, int ledgerSourceId, CancellationToken ct)
+    {
+        await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
+
+        SaveJournalResult created = await CreateCoreAsync(request, allowControlAccounts: true, ct);
+        if (created.Outcome != SaveJournalOutcome.Ok)
+        {
+            return created;
+        }
+
+        SaveJournalResult posted = await PostCoreAsync(created.JournalId, ledgerSourceId, ct);
+        if (posted.Outcome != SaveJournalOutcome.Ok)
+        {
+            return posted;
+        }
+
+        await tx.CommitAsync(ct);
+        return posted;
+    }
+
+    private async Task<SaveJournalResult> CreateCoreAsync(
+        SaveJournalRequest request, bool allowControlAccounts, CancellationToken ct)
     {
         (string? currency, decimal rate) = await ResolveCurrencyAsync(request, ct);
 
@@ -172,7 +214,7 @@ public sealed class JournalService
             return new SaveJournalResult(SaveJournalOutcome.BaseCurrencyUnavailable);
         }
 
-        SaveJournalResult? invalid = await ValidateLinesAsync(request.Lines, ct);
+        SaveJournalResult? invalid = await ValidateLinesAsync(request.Lines, allowControlAccounts, ct);
         if (invalid is not null)
         {
             return invalid;
@@ -228,7 +270,7 @@ public sealed class JournalService
             return new SaveJournalResult(SaveJournalOutcome.BaseCurrencyUnavailable);
         }
 
-        SaveJournalResult? invalid = await ValidateLinesAsync(request.Lines, ct);
+        SaveJournalResult? invalid = await ValidateLinesAsync(request.Lines, allowControlAccounts: false, ct);
         if (invalid is not null)
         {
             return invalid;
@@ -288,7 +330,11 @@ public sealed class JournalService
     /// fails anywhere gives the number back rather than leaving a hole in a
     /// series an auditor will ask about.
     /// </summary>
-    public async Task<SaveJournalResult> PostAsync(long journalId, CancellationToken ct)
+    public Task<SaveJournalResult> PostAsync(long journalId, CancellationToken ct) =>
+        PostCoreAsync(journalId, JournalLedgerSource, ct);
+
+    private async Task<SaveJournalResult> PostCoreAsync(
+        long journalId, int ledgerSourceId, CancellationToken ct)
     {
         Journal? journal = await _db.Journals
             .FirstOrDefaultAsync(j => j.JournalId == journalId, ct);
@@ -355,7 +401,7 @@ public sealed class JournalService
         await _db.SaveChangesAsync(ct);
 
         PostLedgerResult posted = await _postings.PostAsync(
-            BuildPosting(journal, lines), ct);
+            BuildPosting(journal, lines, ledgerSourceId), ct);
 
         if (posted.Outcome != PostLedgerOutcome.Ok)
         {
@@ -486,7 +532,7 @@ public sealed class JournalService
         await _db.SaveChangesAsync(ct);
 
         PostLedgerResult posted = await _postings.PostAsync(
-            BuildPosting(reversal, reversalLines), ct);
+            BuildPosting(reversal, reversalLines, JournalLedgerSource), ct);
 
         if (posted.Outcome != PostLedgerOutcome.Ok)
         {
@@ -507,7 +553,8 @@ public sealed class JournalService
     /// own document key, with the journal id carried through so a ledger row
     /// drills back to the entry rather than only to a type and a number.
     /// </summary>
-    private PostLedgerRequest BuildPosting(Journal journal, List<JournalDetail> lines) =>
+    private PostLedgerRequest BuildPosting(
+        Journal journal, List<JournalDetail> lines, int ledgerSourceId) =>
         new()
         {
             CustomerId = _tenant.CustomerId ?? Guid.Empty,
@@ -526,7 +573,7 @@ public sealed class JournalService
                 // Every line of a hand-written entry is a manual journal. A
                 // document that can be two things at once — an overpayment, say —
                 // varies this per leg; this one cannot.
-                LedgerSourceId = JournalLedgerSource,
+                LedgerSourceId = ledgerSourceId,
 
                 // The line number, not the detail id — a reader looking at the
                 // ledger sees the line they typed rather than a surrogate key.
@@ -608,7 +655,7 @@ public sealed class JournalService
     /// Returns null when every line is acceptable.
     /// </summary>
     private async Task<SaveJournalResult?> ValidateLinesAsync(
-        List<SaveJournalLineRequest> lines, CancellationToken ct)
+        List<SaveJournalLineRequest> lines, bool allowControlAccounts, CancellationToken ct)
     {
         foreach (SaveJournalLineRequest line in lines)
         {
@@ -657,7 +704,7 @@ public sealed class JournalService
             // nothing to reconcile them. IsJE is the deliberate exception, set on
             // the seeded accounts that are meant to be journalled and openable on
             // the others by someone who knows what it costs.
-            if (account.IsSystemDefault && !account.IsJE)
+            if (account.IsSystemDefault && !account.IsJE && !allowControlAccounts)
             {
                 return new SaveJournalResult(
                     SaveJournalOutcome.AccountNotPostable, 0,

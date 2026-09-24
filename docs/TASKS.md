@@ -815,7 +815,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-12 · Fixed assets: capitalisation and disposal postings
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-ACC, L-PUR · **Depends on:** TK-11 · **Decision:** D-19, D-20
 - **Where:**
   - `FixedAssetsController.cs:95-170`: the doc comments record both open questions.
@@ -826,17 +826,17 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - `capitalize` is called by hand, and moves nothing in the ledger.
   - `dispose` records the sale amount and posts nothing.
 - **Sub-tasks:**
-  - [ ] Once D-19 is answered: when a bill posts, its capital line creates the register row. Purchase
+  - [x] Once D-19 is answered: when a bill posts, its capital line creates the register row. Purchase
         calls a new Accounting internal endpoint; it never touches `acc` directly (hard rule 8).
         The posting reclassifies the shared Fixed Asset account to the category's account. A
         migrated asset (no `PurchaseBillId`) debits against Opening Balance Equity.
-  - [ ] Once D-20 is answered: add `ProceedsBankAccountId` to `DisposeAssetRequest`, then post four
+  - [x] Once D-20 is answered: add `ProceedsBankAccountId` to `DisposeAssetRequest`, then post four
         legs:
     - the accumulated depreciation written back;
     - the asset removed at cost;
     - the proceeds received;
     - the gain or loss.
-  - [ ] Test: bill → register row → one month's depreciation → disposal, with each step's journal
+  - [x] Test: bill → register row → one month's depreciation → disposal, with each step's journal
         balanced, and the asset and accumulated-depreciation accounts back at zero afterwards.
 - **Done when:** an asset bought on a bill depreciates, is disposed of, and each step posts a
   balanced journal.
@@ -844,6 +844,52 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   - D-19 answered (2026-09-24): reclassify to the category's account; a migrated asset debits against Opening Balance Equity.
   - D-20 answered (2026-09-24): **support both** disposal paths — proceeds to a bank or cash account chosen on the disposal, **or** a sales invoice to the buyer (Dr the buyer's receivable). The disposal request carries one of `ProceedsBankAccountId` or `SalesInvoiceId`.
   - D-09 answered: no new transaction codes; acquisition rides `BIL`/`OPB`, disposal `INV`/`JRN`.
+  - Done (2026-09-24). How each part landed:
+    - **Postings go through `JournalService.PostSystemAsync`** (new), not a `BIL` key. It is a JRN
+      journal created and posted in one scope, allowed onto control accounts because the register
+      is their subledger. Every other hand-entry check still runs. Two keys were ruled out:
+      - posting under the bill's own key would replace the bill's ITEM leg (same document, line
+        and leg type);
+      - there is no free `mst.LedgerTypes` id without an `L-MST` migration.
+
+      Depreciation now uses the same path, filed under ledger source 14 (Depreciation).
+    - **Bill → register**:
+      - `BillService.PostAsync` calls `IFixedAssetClient` → `POST internal/fixed-assets/capitalise-bill`
+        after the ledger post. A refusal leaves the bill Draft, and a retry is safe.
+      - A new column `acc.FixedAssets.PurchaseBillDetailId` has a unique filtered index
+        (migration `FixedAssetBillLine`), so each line registers once.
+      - Asset code `{DocumentNo}-{LineNumber}`, status Active, no schedule. A new
+        `PUT api/accounting/fixed-assets/{id:long}/schedules` sets the schedule, and is refused once
+        depreciation has been charged.
+      - A manual `capitalize` for a bill that registered itself → `AlreadyCapitalised`.
+    - **Migrated** (register with no `PurchaseBillId`): Dr category asset / Cr Opening Balance Equity.
+    - **Disposal**: `DisposeAssetRequest` carries `ProceedsBankAccountId` **or** `SalesInvoiceId`.
+      Neither is allowed only when `SaleAmount` is 0 (scrapped).
+      - The invoice path reads the invoice's ITEM credit legs (`INV`/`POS`) from `acc.JournalLedger`
+        as the proceeds, and debits them back off those accounts. The invoice already debited the
+        buyer's receivable, and an asset sale is not trading income. **Owner: confirm this reading of
+        D-20.**
+      - The gain or loss goes to a new system account `Gain/Loss on Asset Disposal` (4920, Income,
+        `SystemAccount.AssetDisposalGainLoss`). Existing branches get it from the idempotent seed.
+      - An asset registered before TK-12 (no Acquisition transaction) is taken off the shared Fixed
+        Asset account, where its cost still sits.
+  - **Also fixed in `BillService.BuildLegs`**: a capital line on a bill *against a receipt* debited
+    GRNI, which the receipt never credited for it, because receipts refuse capital lines. It now
+    debits Fixed Asset.
+  - **Void**: a posted bill with a capital line is refused. Withdrawing its legs would leave the
+    register and the reclassification standing on nothing.
+  - **Found, not fixed (needs a card):** Purchase's `LedgerLegRequest` has no `AccountId`, and an
+    expense line sends neither a system name nor an id. Accounting refuses it with "A leg has to
+    name its account", so **every bill with an expense line fails to post**. A receipt-backed bill
+    sends its expense lines to GRNI instead, which is wrong in a different way.
+  - Tests:
+    - `Accounting.Api.Tests/FixedAssetPostingTests.cs`: eight added, including the full bill →
+      register → depreciation → disposal cycle with every journal balanced and the asset,
+      accumulated-depreciation and Fixed Asset accounts at zero;
+    - `FixedAssetRulesTests.cs`: disposal arithmetic, the asset code, the schedules route;
+    - `Purchase.Api.Tests/BillServiceTests.cs`: five added, including the new `RecordingFixedAssets`
+      stub.
+
 
 ### C · Phase 1: finish what's in flight
 

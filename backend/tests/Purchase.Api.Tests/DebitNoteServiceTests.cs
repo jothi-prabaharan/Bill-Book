@@ -377,7 +377,7 @@ public sealed class DebitNoteServiceTests
             BillService bills = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),
                 new StubTaxRates(), names, names, inventory, ledger, new StubPaymentTerms(),
-                new StubCurrentUser(), TimeProvider.System);
+                new RecordingFixedAssets(), new StubCurrentUser(), TimeProvider.System);
 
             DebitNoteService notes = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(),

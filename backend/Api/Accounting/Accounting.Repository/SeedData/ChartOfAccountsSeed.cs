@@ -67,6 +67,10 @@ public static class ChartOfAccountsSeed
         // round up or down.
         Account(orgId, "5900", SystemAccount.RoundOff, Expense),
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
+
+        // A disposal's gain or loss — what the asset fetched against what it
+        // still stood at. Either side, like the FX accounts beside it.
+        Account(orgId, "4920", SystemAccount.AssetDisposalGainLoss, Income, isJe: true),
     ];
 
     // There are deliberately no separate advance control accounts. A contact's

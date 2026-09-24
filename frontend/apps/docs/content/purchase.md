@@ -268,11 +268,13 @@ jobs: it **moves the stock** and debits Inventory directly.
 
 - **Stock** — goes to inventory, or clears the receipt that already put it there.
 - **Expense** — goes to the account you name. Freight, a subscription, a service.
-- **Capital** — goes to **Fixed Asset** and moves no stock.
-
-> Capital lines currently all land on a single Fixed Asset account. When the
-> fixed asset register is built, each asset category will carry its own accounts
-> and the bill will create the register row as well.
+- **Capital** — goes to **Fixed Asset** and moves no stock. Posting the bill
+  also puts each capital line on the fixed asset register, as an asset named
+  after the line and coded with the bill number and line (`BIL-0042-3`), and
+  moves its cost out of Fixed Asset into its category's own asset account. This
+  is true on a bill against a receipt too: a receipt takes no capital lines, so
+  a capital line never clears Goods Received Not Invoiced. A new asset has no
+  depreciation schedule until you give it one on the register.
 
 ## Due dates and aging
 
@@ -292,7 +294,8 @@ goods go back.
 Voiding a posted bill withdraws its ledger entries rather than leaving them
 behind under a cancelled document — but a bill that **brought the goods in
 itself** cannot be voided, because voiding cannot un-receive stock. Send it back
-with a debit note instead.
+with a debit note instead. Neither can a posted bill with a capital line, whose
+assets are already on the register: dispose of the asset, or raise a debit note.
 
 ## Not built yet
 

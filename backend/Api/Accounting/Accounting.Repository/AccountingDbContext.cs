@@ -290,6 +290,9 @@ public class AccountingDbContext : TenantDbContext
         {
             b.HasKey(e => e.FixedAssetId);
             b.HasIndex(e => new { e.OrgId, e.AssetCode }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.PurchaseBillDetailId })
+                .IsUnique()
+                .HasFilter("\"PurchaseBillDetailId\" IS NOT NULL");
 
             b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
             b.Property(e => e.PurchasePrice).HasColumnType("decimal(18,2)");

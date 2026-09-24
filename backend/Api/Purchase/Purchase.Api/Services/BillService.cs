@@ -59,6 +59,7 @@ public sealed class BillService
     private readonly IInventoryClient _inventory;
     private readonly ILedgerClient _ledger;
     private readonly IPaymentTermClient _paymentTerms;
+    private readonly IFixedAssetClient _fixedAssets;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
@@ -74,6 +75,7 @@ public sealed class BillService
         IInventoryClient inventory,
         ILedgerClient ledger,
         IPaymentTermClient paymentTerms,
+        IFixedAssetClient fixedAssets,
         ICurrentUser user,
         TimeProvider clock)
     {
@@ -88,6 +90,7 @@ public sealed class BillService
         _inventory = inventory;
         _ledger = ledger;
         _paymentTerms = paymentTerms;
+        _fixedAssets = fixedAssets;
         _user = user;
         _clock = clock;
     }
@@ -619,6 +622,50 @@ public sealed class BillService
             return new BillResult(BillOutcome.PostingRefused, Detail: posted.Detail);
         }
 
+        // Each capital line goes onto the fixed asset register, and Accounting
+        // reclassifies its cost out of the shared Fixed Asset account into its
+        // category's (D-19). After the ledger, because the reclassification
+        // moves what the bill's own leg put there. A refusal leaves the bill a
+        // draft: posting again replaces the ledger legs, and the register adds
+        // only the lines it does not already hold.
+        List<BillDetail> capitalLines = bill.Lines
+            .Where(l => l.LineType == DocumentLineType.Capital
+                && l.FixedAssetCategoryId.HasValue
+                && l.TaxableAmount > 0)
+            .OrderBy(l => l.LineNumber)
+            .ToList();
+
+        if (capitalLines.Count > 0)
+        {
+            CapitaliseBillOutcome registered = await _fixedAssets.CapitaliseBillAsync(
+                new CapitaliseBillRequest
+                {
+                    CustomerId = customerId,
+                    OrgId = orgId,
+                    PurchaseBillId = bill.BillId,
+                    DocumentNo = bill.DocumentNo ?? $"BIL-{bill.BillId}",
+                    DocumentDate = bill.DocumentDate,
+                    Lines = capitalLines
+                        .Select(l => new CapitaliseBillLine
+                        {
+                            BillDetailId = l.BillDetailId,
+                            LineNumber = l.LineNumber,
+                            FixedAssetCategoryId = l.FixedAssetCategoryId!.Value,
+                            Description = string.IsNullOrWhiteSpace(l.Description)
+                                ? $"Line {l.LineNumber}"
+                                : l.Description.Trim(),
+                            Amount = l.TaxableAmount,
+                        })
+                        .ToList(),
+                },
+                ct);
+
+            if (!registered.Registered)
+            {
+                return new BillResult(BillOutcome.PostingRefused, Detail: registered.Detail);
+            }
+        }
+
         bill.Status = DocumentStatus.Posted;
         bill.PostedAt = _clock.GetUtcNow();
         bill.PostedBy = _user.UserId;
@@ -646,9 +693,15 @@ public sealed class BillService
                 continue;
             }
 
-            // Against a receipt every line clears the clearing account, whatever
-            // kind of line it is — that is what the receipt credited.
-            string account = againstReceipt
+            // Against a receipt a line clears the clearing account — that is
+            // what the receipt credited. Except a capital line: a receipt takes
+            // no capital lines, so one on the same bill was never credited to
+            // the clearing account. It lands on Fixed Asset as it would with no
+            // receipt, which is also the balance the register reclassifies from;
+            // clearing GRNI with it would leave the clearing account short.
+            bool clearsReceipt = againstReceipt && line.LineType != DocumentLineType.Capital;
+
+            string account = clearsReceipt
                 ? GrniAccount
                 : line.LineType switch
                 {
@@ -671,7 +724,7 @@ public sealed class BillService
                 TransactionDetailId = line.BillDetailId,
                 AccountSystemName = account.Length == 0 ? null : account,
                 DebitAmount = value,
-                TransactionDesc = againstReceipt ? "Billed against receipt" : "Purchased",
+                TransactionDesc = clearsReceipt ? "Billed against receipt" : "Purchased",
             });
         }
 
@@ -760,6 +813,21 @@ public sealed class BillService
             return transition.Outcome == DocumentTransitionOutcome.HasDownstream
                 ? new BillResult(BillOutcome.AlreadyCredited, Detail: transition.Detail)
                 : new BillResult(BillOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // A posted bill's capital lines are on the fixed asset register, with
+        // their cost reclassified to each category's account. Withdrawing the
+        // bill's legs would leave the register and that reclassification
+        // standing on nothing, so the asset is disposed of instead.
+        if (bill.Status == DocumentStatus.Posted
+            && await _db.BillDetails.AnyAsync(
+                d => d.BillId == billId && d.LineType == DocumentLineType.Capital, ct))
+        {
+            return new BillResult(
+                BillOutcome.LifecycleRefused,
+                Detail: "This bill put fixed assets on the register. Voiding it would leave "
+                    + "them there with nothing behind them — dispose of the assets, or raise a "
+                    + "debit note to send them back.");
         }
 
         // A posted bill that moved stock cannot be unwound here, for the same

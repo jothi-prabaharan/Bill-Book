@@ -52,16 +52,32 @@ Accounts Receivable · Inventory · Input GST · Fixed Asset · Accounts Payable
 bought, so a report subtracts it rather than adding a negative number. Sales
 Returns and Discount Given work the same way on the income side.
 
-**Fixed Asset** is where a capital line on a bill lands. It is a holding account
-for now: each fixed asset category carries its own asset, accumulated
-depreciation and depreciation expense accounts, and the asset register records
-each asset with a books and a tax schedule — straight line or written-down
-value. Running depreciation charges each asset in service one month, once: a
-second run for the same month charges nothing, and no charge takes an asset
-below its salvage value. Putting an asset on the register does not yet move its
-cost out of this account into its category's, and disposing of one records the
-sale without posting it; both are coming. The register's screens are not in the
-menu yet.
+**Fixed Asset** is where a capital line on a bill lands, and it empties again
+straight away. Each fixed asset category carries its own asset, accumulated
+depreciation and depreciation expense accounts. When the bill posts, each
+capital line goes onto the asset register and its cost moves out of Fixed Asset
+into the category's asset account. An asset entered by hand with no bill behind
+it is one brought across from your old books, so its value is debited to its
+category's account against **Opening Balance Equity**.
+
+Each asset has a books schedule and a tax schedule, straight line or
+written-down value. One that arrived on a bill gets its schedule on the register.
+A depreciation run charges each asset in service for one month, and only once:
+a second run for the same month charges nothing. No charge takes an asset below
+its salvage value, and a schedule can't be changed once depreciation has been
+charged on it.
+
+**Disposing of an asset** posts one entry. It writes back the accumulated
+depreciation, takes the asset off at cost, receives the proceeds, and puts the
+difference to **Gain/Loss on Asset Disposal**. The proceeds land in one of two
+places:
+- the bank or cash account they were paid into;
+- a sales invoice raised to the buyer. The invoice already made the buyer owe
+  the money, so the disposal moves the sale, before GST, off the sales account
+  and into the gain or loss. Selling an asset is not trading income.
+
+An asset scrapped for nothing needs neither. The register's screens aren't in
+the menu yet.
 
 **Goods Received Not Invoiced** is a clearing account, not a resting place. When goods arrive before the vendor's bill does, the receipt debits Inventory and credits this; the bill then clears it and credits Accounts Payable. What is left sitting in it is stock on the shelf that nobody has invoiced yet — which is a figure worth looking at, and the reason the alternative was rejected: posting nothing until the bill arrives understates the inventory asset for however long the paperwork takes. It is off the manual-journal picker for the same reason Accounts Receivable and Accounts Payable are — a hand posting to it leaves a residue that no document can ever clear.
 

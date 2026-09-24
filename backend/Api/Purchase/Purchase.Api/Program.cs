@@ -97,6 +97,14 @@ builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// The fixed asset register. A posted bill's capital lines become register rows
+// there, and Accounting reclassifies their cost to each category's account.
+builder.Services.AddHttpClient<IFixedAssetClient, FixedAssetClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 // The branch's base currency, stamped onto every document's base-currency total.
 // Cached per organization: it changes about never, and the alternative is an
 // HTTP call on every save.

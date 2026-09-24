@@ -162,3 +162,26 @@ public sealed class RecordingLedger : ILedgerClient
                 .Where(l => l.AccountSystemName == accountSystemName)
                 .Sum(l => l.CreditAmount);
 }
+
+/// <summary>
+/// The fixed asset register, recorded rather than called. Accounting's suite
+/// proves what the register does with the lines; these tests need to know which
+/// lines a bill sends, and that a refusal keeps the bill a draft.
+/// </summary>
+public sealed class RecordingFixedAssets : IFixedAssetClient
+{
+    public List<CapitaliseBillRequest> Requests { get; } = [];
+
+    /// <summary>Set to make the register refuse.</summary>
+    public string? RefuseWith { get; set; }
+
+    public Task<CapitaliseBillOutcome> CapitaliseBillAsync(CapitaliseBillRequest request, CancellationToken ct)
+    {
+        Requests.Add(request);
+
+        return Task.FromResult(
+            RefuseWith is null
+                ? new CapitaliseBillOutcome(true, null)
+                : new CapitaliseBillOutcome(false, RefuseWith));
+    }
+}

@@ -14,6 +14,9 @@ namespace Accounting.Api.Services;
 
 public class DepreciationService
 {
+    /// <summary><c>mst.LedgerSources</c> 14 — Depreciation.</summary>
+    private const int DepreciationLedgerSource = 14;
+
     private readonly AccountingDbContext _db;
     private readonly JournalService _journals;
 
@@ -146,13 +149,11 @@ public class DepreciationService
 
         await using ITransactionScope tx = await _db.Database.BeginScopeAsync(ct);
 
-        var saveResult = await _journals.CreateAsync(journalRequest, ct);
+        // Filed under Depreciation rather than Journal, so a report can tell the
+        // run from a hand entry.
+        var saveResult = await _journals.PostSystemAsync(journalRequest, DepreciationLedgerSource, ct);
         if (saveResult.Outcome != SaveJournalOutcome.Ok)
             return Refused(saveResult);
-
-        var postResult = await _journals.PostAsync(saveResult.JournalId, ct);
-        if (postResult.Outcome != SaveJournalOutcome.Ok)
-            return Refused(postResult);
 
         foreach (var txn in transactions)
         {

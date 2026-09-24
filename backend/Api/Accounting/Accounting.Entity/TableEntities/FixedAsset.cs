@@ -31,5 +31,12 @@ public class FixedAsset : OrgScopedEntity
 
     public long? PurchaseBillId { get; set; }
 
+    /// <summary>
+    /// The bill line that bought it, when the register row was created by the
+    /// bill posting (TK-12). Unique within a branch, which is what lets a retried
+    /// bill post create each asset once. Null for an asset entered by hand.
+    /// </summary>
+    public long? PurchaseBillDetailId { get; set; }
+
     public FixedAssetStatus Status { get; set; }
 }

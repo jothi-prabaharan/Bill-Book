@@ -33,19 +33,29 @@ public sealed class FixedAssetsController : ControllerBase
     public async Task<IActionResult> RegisterAsset([FromBody] CreateFixedAssetRequest request, CancellationToken ct)
     {
         FixedAssetResult result = await _assets.RegisterAsync(request, ct);
-        return Respond(result.Outcome, () => Ok(new { fixedAssetId = result.FixedAssetId }));
+        return Respond(result, () => Ok(new { fixedAssetId = result.FixedAssetId, journalId = result.JournalId }));
     }
 
     /// <summary>
-    /// Puts an asset bought on a bill on the register. It posts nothing — the
-    /// bill already did; see <see cref="FixedAssetService.CapitalizeAsync"/>.
+    /// Puts an asset bought on a bill on the register by hand, for a bill posted
+    /// before bills did it themselves, and reclassifies its cost out of the
+    /// shared Fixed Asset account; see <see cref="FixedAssetService.CapitalizeAsync"/>.
     /// </summary>
     [HttpPost("capitalize")]
     public async Task<IActionResult> CapitalizeAsset([FromBody] CapitalizeAssetRequest request, CancellationToken ct)
     {
         FixedAssetResult result = await _assets.CapitalizeAsync(request, ct);
-        return Respond(result.Outcome, () => Ok(new { fixedAssetId = result.FixedAssetId }));
+        return Respond(result, () => Ok(new { fixedAssetId = result.FixedAssetId, journalId = result.JournalId }));
     }
+
+    /// <summary>
+    /// Replaces an asset's depreciation schedules — how an asset a bill put on
+    /// the register gets its life. Refused once depreciation has been charged.
+    /// </summary>
+    [HttpPut("{id:long}/schedules")]
+    public async Task<IActionResult> SetSchedules(
+        long id, [FromBody] SetDepreciationSchedulesRequest request, CancellationToken ct) =>
+        Respond(await _assets.SetSchedulesAsync(id, request, ct), NoContent);
 
     /// <summary>
     /// Retires an asset. <c>approve</c>, not <c>create</c>: taking an asset off
@@ -56,7 +66,7 @@ public sealed class FixedAssetsController : ControllerBase
     [HttpPost("{id:long}/dispose")]
     [PermissionAction("approve")]
     public async Task<IActionResult> DisposeAsset(long id, [FromBody] DisposeAssetRequest request, CancellationToken ct) =>
-        Respond((await _assets.DisposeAsync(id, request, ct)).Outcome, NoContent);
+        Respond(await _assets.DisposeAsync(id, request, ct), NoContent);
 
     /// <summary>
     /// Charges the month <paramref name="runDate"/> falls in. Safe to repeat: a
@@ -91,33 +101,51 @@ public sealed class FixedAssetsController : ControllerBase
         });
     }
 
-    private IActionResult Respond(FixedAssetOutcome outcome, Func<IActionResult> onOk) =>
-        outcome switch
+    /// <summary>The outcome as a response. Public and static so the mapping is tested without a request.</summary>
+    public static IActionResult Map(FixedAssetResult result, Func<IActionResult> onOk) =>
+        result.Outcome switch
         {
             FixedAssetOutcome.Ok => onOk(),
-            FixedAssetOutcome.NotFound => NotFound(),
-            FixedAssetOutcome.CategoryMissing => BadRequest(new MessageResponse
-            {
-                Message = "Choose one of this branch's asset categories.",
-            }),
-            FixedAssetOutcome.DuplicateCode => BadRequest(new MessageResponse
-            {
-                Message = "Another asset in this branch already uses that code.",
-            }),
-            FixedAssetOutcome.InvalidSchedule => BadRequest(new MessageResponse
-            {
-                Message = "Each schedule needs a way to charge: straight line takes a useful life "
+            FixedAssetOutcome.NotFound => new NotFoundResult(),
+            FixedAssetOutcome.CategoryMissing => Bad("Choose one of this branch's asset categories."),
+            FixedAssetOutcome.DuplicateCode => Bad("Another asset in this branch already uses that code."),
+            FixedAssetOutcome.InvalidSchedule => Bad(
+                "Each schedule needs a way to charge: straight line takes a useful life "
                     + "or a rate, written-down value a rate below 100, salvage cannot exceed cost, "
-                    + "and an asset has at most one books and one tax schedule.",
-            }),
-            FixedAssetOutcome.NotActive => BadRequest(new MessageResponse
+                    + "and an asset has at most one books and one tax schedule."),
+            FixedAssetOutcome.NotActive => Bad("Only an asset in service can be disposed of."),
+            FixedAssetOutcome.DisposalBeforePurchase => Bad(
+                "An asset cannot be disposed of before the date it was bought."),
+            FixedAssetOutcome.AlreadyCapitalised => Bad(
+                "That bill already put its assets on the register. Capitalising again would "
+                    + "count their cost twice."),
+            FixedAssetOutcome.ProceedsDestinationRequired => Bad(
+                "Say where the sale proceeds went: the bank or cash account they were paid into, "
+                    + "or the sales invoice raised to the buyer — one of the two."),
+            FixedAssetOutcome.ProceedsAccountMissing => Bad(
+                "Choose one of this branch's bank or cash accounts for the proceeds."),
+            FixedAssetOutcome.InvoiceNotPosted => Bad(
+                "That sales invoice has no posted sale in this branch's books. Post it first."),
+            FixedAssetOutcome.SchedulesInUse => Bad(
+                "Depreciation has already been charged on this asset's schedules, so they "
+                    + "can no longer be changed."),
+
+            // 409, as the journal screen answers: the entry may be perfectly
+            // good, and a later date will post it.
+            FixedAssetOutcome.PeriodClosed => new ConflictObjectResult(new MessageResponse
             {
-                Message = "Only an asset in service can be disposed of.",
+                Message = result.Detail ?? "The books are closed for that date.",
             }),
-            FixedAssetOutcome.DisposalBeforePurchase => BadRequest(new MessageResponse
-            {
-                Message = "An asset cannot be disposed of before the date it was bought.",
-            }),
-            _ => StatusCode(StatusCodes.Status500InternalServerError),
+            FixedAssetOutcome.SystemAccountMissing or FixedAssetOutcome.PostingRefused =>
+                new ConflictObjectResult(new MessageResponse
+                {
+                    Message = result.Detail ?? "The ledger refused the entry, so nothing was saved.",
+                }),
+            _ => new StatusCodeResult(StatusCodes.Status500InternalServerError),
         };
+
+    private IActionResult Respond(FixedAssetResult result, Func<IActionResult> onOk) => Map(result, onOk);
+
+    private static BadRequestObjectResult Bad(string message) =>
+        new(new MessageResponse { Message = message });
 }
