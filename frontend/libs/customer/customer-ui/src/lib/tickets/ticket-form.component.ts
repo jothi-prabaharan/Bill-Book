@@ -3,7 +3,9 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { CustomerService, TicketPriority } from '@bill-book/customer-core';
 import {
   BbSelectOption,
-  MasterSelectComponent,
+  FormFieldComponent,
+  LookupDialogComponent,
+  LookupRow,
   MessageBoxComponent,
   SelectComponent,
   TextareaComponent,
@@ -16,7 +18,8 @@ import {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    MasterSelectComponent,
+    FormFieldComponent,
+    LookupDialogComponent,
     TextInputComponent,
     TextareaComponent,
     SelectComponent,
@@ -47,6 +50,68 @@ export class TicketFormComponent {
     priority: new FormControl<TicketPriority>(TicketPriority.Medium, { nonNullable: true, validators: Validators.required }),
     contactId: new FormControl<number | null>(null, { validators: Validators.required })
   });
+
+  /** The chosen contact as it reads on the form; the id itself is the `contactId` control. */
+  readonly contactLabel = signal('');
+
+  readonly pickerOpen = signal(false);
+  readonly pickerRows = signal<LookupRow[]>([]);
+  readonly pickerLoading = signal(false);
+
+  /** Only the latest search may write the rows, so a slow old answer never replaces a newer one. */
+  private searchToken = 0;
+
+  /**
+   * Opens the contact picker (TK-16). A search over Master's contact list,
+   * already scoped to the caller's branch — in place of a dropdown that loaded
+   * every contact in the branch before it could show one.
+   */
+  openContactPicker(): void {
+    this.pickerOpen.set(true);
+    void this.searchContacts('');
+  }
+
+  async searchContacts(term: string): Promise<void> {
+    const token = ++this.searchToken;
+    this.pickerLoading.set(true);
+
+    try {
+      const contacts = await this.customerService.searchContacts(term.trim());
+
+      if (token === this.searchToken) {
+        this.pickerRows.set(
+          contacts.map((contact) => ({
+            id: contact.contactId,
+            code: contact.contactCode,
+            name: contact.displayName,
+            meta: contact.gstin,
+          })),
+        );
+      }
+    } catch {
+      if (token === this.searchToken) {
+        this.pickerRows.set([]);
+      }
+    } finally {
+      if (token === this.searchToken) {
+        this.pickerLoading.set(false);
+      }
+    }
+  }
+
+  chooseContact(row: LookupRow): void {
+    this.contactLabel.set(`${row.code} ${row.name}`.trim());
+    this.form.controls.contactId.setValue(row.id);
+    this.form.controls.contactId.markAsTouched();
+    this.closePicker();
+  }
+
+  closePicker(): void {
+    this.searchToken++;
+    this.pickerOpen.set(false);
+    this.pickerRows.set([]);
+    this.pickerLoading.set(false);
+  }
 
   /** Whether a field should show its error yet — touched, and actually wrong. */
   protected showError(control: keyof typeof this.form.controls): boolean {

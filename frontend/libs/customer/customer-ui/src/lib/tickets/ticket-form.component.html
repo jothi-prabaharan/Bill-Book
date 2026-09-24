@@ -45,14 +45,16 @@
       </div>
 
       <div class="form-group">
-        <label class="field-label" for="ticketContact">Contact</label>
-        <!-- `bb-master-select` fetches its own options and is not part of the
-             common input set; it keeps its own label until it is folded into
-             `bb-select` with a lookup behind it. -->
-        <bb-master-select id="ticketContact" [masterType]="'contact'" formControlName="contactId" />
-        @if (showError('contactId')) {
-          <span class="field-error" role="alert">Contact is required</span>
-        }
+        <bb-form-field
+          label="Contact"
+          controlId="ticketContact"
+          [required]="true"
+          [error]="showError('contactId') ? 'Contact is required' : ''"
+        >
+          <button id="ticketContact" type="button" class="input picker" (click)="openContactPicker()">
+            {{ contactLabel() || 'Choose a contact' }}
+          </button>
+        </bb-form-field>
       </div>
 
       <div class="actions">
@@ -64,3 +66,23 @@
     </form>
   </div>
 </div>
+
+<!--
+  Its own layer above the ticket's overlay: the dialog stacks at 100 and the
+  overlay at 1000, so without this the picker would open behind the form.
+-->
+@if (pickerOpen()) {
+  <div class="picker-layer">
+    <bb-lookup-dialog
+      [open]="true"
+      title="Choose a contact"
+      placeholder="Search contacts by code, name or GSTIN"
+      emptyText="No contacts match."
+      [rows]="pickerRows()"
+      [loading]="pickerLoading()"
+      (searchChange)="searchContacts($event)"
+      (choose)="chooseContact($event)"
+      (dismiss)="closePicker()"
+    />
+  </div>
+}

@@ -43,3 +43,16 @@
   gap: 0.5rem;
   margin-top: 1.5rem;
 }
+
+/* The contact picker: a button that reads like the inputs beside it (TK-16). */
+.picker {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* A stacking context above the ticket overlay (z-index 1000) for the lookup dialog. */
+.picker-layer {
+  position: relative;
+  z-index: 1001;
+}

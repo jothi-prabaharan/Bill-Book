@@ -1013,16 +1013,27 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 
 ### TK-16 · Contact picker on the support ticket form
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-CUSTOMER-UI · **Depends on:** — · **Decision:** —
 - **Where:** `frontend/libs/customer/customer-ui/src/lib/tickets/ticket-form.component.html`
-  (a numeric `contactId`).
+  (was a `bb-master-select`, not a numeric `contactId` as first written. It loaded every contact
+  in the branch into one dropdown).
 - **Sub-tasks:**
-  - [ ] Replace the numeric field with `bb-lookup-dialog` over `/api/contacts?search=`, the way TK-15 does.
-  - [ ] Update the docs page.
-  - [ ] Lint, typecheck and build are clean.
+  - [x] Replace the numeric field with `bb-lookup-dialog` over `/api/contacts?search=`, the way TK-15 does.
+  - [x] Update the docs page.
+  - [x] Lint, typecheck and build are clean.
 - **Done when:** a ticket is raised by picking the contact by name.
 - **Notes:**
+  - Done (2026-09-24):
+    - The ticket form opens `bb-lookup-dialog` over `CustomerService.searchContacts`, the same call
+      the lead conversion picker already used.
+    - It keeps a search token, so a late answer can't overwrite a newer one.
+    - The dialog sits in a `.picker-layer` stacking context (z-index 1001), because the ticket
+      form's overlay is at 1000 and the dialog's own is 100, so it would otherwise open behind
+      the form.
+  - **Docs:** there is no Support page under `frontend/apps/docs/content/`, so only the release note
+    carries this. A Customer/Support page is its own piece of work.
+  - Tests: three added to `ticket-form.component.spec.ts`.
 
 ### TK-17 · Seed a `WALKIN` contact per branch
 - [ ] open
