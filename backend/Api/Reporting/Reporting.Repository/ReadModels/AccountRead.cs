@@ -41,6 +41,13 @@ public class AccountRead : OrgScopedEntity
 
     public bool IsBank { get; set; }
 
+    /// <summary>
+    /// Offered on sales documents — Sales Revenue, Sales Returns and any income
+    /// account an org adds for selling. What Business Performance counts as
+    /// revenue, so trading income is told apart from FX gains and other income.
+    /// </summary>
+    public bool IsSales { get; set; }
+
     public bool IsActive { get; set; }
 }
 

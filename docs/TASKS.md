@@ -1497,11 +1497,44 @@ If the code has moved on since a card was written, correct the card in your clai
     diff, and `dotnet ef migrations has-pending-model-changes` reports none.
 
 ### TK-32 · *Business Performance* report
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** D-15 (answered 2026-09-24)
-- **Sub-tasks:** build whatever D-15 specifies, wired through the same four layers as TK-31.
+- **Sub-tasks:**
+  - [x] Build what D-15 specifies (Xero-style KPI ratios), wired through the same four layers as
+        TK-31: `BusinessPerformanceSource`, its `Program.cs` line, a catalog seed entry and the
+        `ReportSourceTests.Sources` list. The count in `ReportLayerCertificationTests` is now 53.
+  - [x] Test: `BusinessPerformanceTests` — all eight ratios over one hand-worked set of books,
+        the annualising of a short period, empty denominators, order, and empty books.
+  - [ ] Owner: run `Reporting.Api.Tests`.
+  - [ ] Owner: open the report on a branch that has traded, and check two ratios against the
+        Profit & Loss and the Balance Sheet using the Numerator and Denominator columns.
 - **Done when:** `ReportLayerCertificationTests` counts it.
 - **Notes:**
+  - **One row per ratio**, with Unit, Numerator, Denominator and a Calculation text, because one
+    Value column holds percentages, days, times and an amount. That's also why nothing totals
+    and the order is fixed (`ForcesSortOrder`).
+  - **Classification choices, all in the source's doc comment:**
+    - Revenue is Income accounts with `IsSales`, so FX gains are left out. `AccountRead` gained
+      `IsSales` for this.
+    - Cost of sales is COGS less Purchase Returns.
+    - Term assets are the Fixed Asset account plus every account a fixed-asset category names.
+    - Credit sales are debits to AR in the period, and credit purchases credits to AP. Both
+      include GST, so they are consistent with the balances they are divided into.
+  - **Term assets to liabilities divides by total liabilities.** Xero divides by term
+    liabilities, but no account can be marked long-term here, so every liability is current.
+    An `IsCurrent`/term flag on `acc.Accounts` (L-ACC) would make both balance-sheet ratios
+    exact. That needs its own card and an owner decision.
+  - Default period: the twelve months to `to`, and `to` defaults to today.
+    `ReportParameter.IsRequired` isn't enforced server-side, so the source defaults the dates
+    instead of refusing.
+  - **Translation checked, not behaviour.** The report ran through `ExecuteAsync` against an
+    empty `acc` schema on PostgreSQL 16: paged with a count, grouped, filtered, with and without
+    dates. One ledger pass is grouped by `OrgId` into a single row of conditional sums, then
+    eight single-row projections are unioned. Every branch assigns every member, which EF needs
+    to union them.
+  - **Rounding differs at an exact midpoint.** Values round to 2 places. Postgres rounds half
+    away from zero, and the in-memory tests use .NET's half-to-even. They agree everywhere except
+    an exact `.xx5`, and none of the tests' figures lands on one.
 
 ### D · Phase 3: POS
 

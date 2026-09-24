@@ -140,6 +140,7 @@ builder.Services.AddScoped<IReportSource, DepreciationScheduleSource>();
 builder.Services.AddScoped<IReportSource, DisposalScheduleSource>();
 builder.Services.AddScoped<IReportSource, FixedAssetReconciliationSource>();
 builder.Services.AddScoped<IReportSource, FixedAssetsScheduleSource>();
+builder.Services.AddScoped<IReportSource, BusinessPerformanceSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();

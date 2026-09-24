@@ -46,6 +46,35 @@ The address bar carries your columns, filters, sorting and grouping. Copy the li
 
 Below tablet width each row becomes a card, with the report's key columns as its title. Pivot is not offered at that width — a matrix has no card form.
 
+## Business Performance
+
+**Business Performance**, under **Accounting**, shows eight ratios for a period, one per row:
+
+| Ratio | How it is worked out |
+|---|---|
+| Gross profit margin | Revenue less cost of sales, as a percentage of revenue |
+| Net profit margin | Net profit as a percentage of revenue |
+| Return on investment (p.a.) | Net profit, scaled to a full year, as a percentage of net assets at the end of the period |
+| Average time customers take to pay | Average receivables ÷ credit sales × the days in the period |
+| Average time to pay suppliers | Average payables ÷ credit purchases × the days in the period |
+| Current assets to liabilities | Current assets ÷ current liabilities, at the end of the period |
+| Term assets to liabilities | Fixed assets, net of depreciation, ÷ total liabilities, at the end of the period |
+| Total cash balance | Your bank and cash accounts, less overdrafts and credit cards, at the end of the period |
+
+Each row shows its **Unit** — percent, days, times or an amount. Add the **Numerator** and **Denominator** columns to see the two figures behind a ratio, so you can check it against the Profit & Loss and the Balance Sheet.
+
+With no dates, the report covers the twelve months to today. The ratios always appear in the order above and the report cannot be re-sorted.
+
+What each term means here:
+
+- **Revenue** is your sales accounts — sales less sales returns. Foreign exchange gains and other income are not revenue, though they count towards net profit.
+- **Cost of sales** is Cost of Goods Sold less Purchase Returns.
+- **Credit sales** and **credit purchases** are everything invoiced to customers and billed by suppliers in the period, including GST, because the receivable and payable balances they are compared with include it too. **Average** receivables or payables is the balance at the start and the end, added and halved.
+- **Fixed assets** are the Fixed Asset account and the accounts your fixed asset categories use. Every other asset is current.
+- **Every liability counts as current**, because accounts cannot yet be marked as long-term. That is why *Term assets to liabilities* divides by all your liabilities.
+
+A ratio shows no value when there is nothing to divide by — no revenue, no credit sales, no liabilities — rather than a misleading number. Return on investment also shows no value when your net assets are nil or negative.
+
 ## Fixed asset reports
 
 Four reports read the fixed asset register, under **Fixed Assets** in the list. Each takes a **From** and **To** date; both are optional.

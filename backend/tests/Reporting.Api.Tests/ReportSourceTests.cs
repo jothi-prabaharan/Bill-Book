@@ -70,6 +70,9 @@ public class ReportSourceTests
     private static readonly FixedAssetReconciliationSource FixedAssetReconciliation = new();
     private static readonly FixedAssetsScheduleSource FixedAssetsSchedule = new();
 
+    // D-15: Xero-style KPI ratios.
+    private static readonly BusinessPerformanceSource BusinessPerformance = new();
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -135,6 +138,7 @@ public class ReportSourceTests
         DisposalSchedule,
         FixedAssetReconciliation,
         FixedAssetsSchedule,
+        BusinessPerformance,
     ];
 
     [Theory]

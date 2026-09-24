@@ -626,6 +626,26 @@ public sealed class ReportCatalogSeeder
         },
         new()
         {
+            ReportKey = "business-performance",
+            Title = "Business Performance",
+            Module = ReportModule.Accounting,
+            RequiredPermission = "accounting.view",
+            Description = "Margins, return on investment, payment days, liquidity and cash for a period.",
+            SortOrder = 125,
+            Columns =
+            [
+                new("metric", "Metric", ColumnDataType.Text, IsDefault: true, IsPrimary: true),
+                new("value", "Value", ColumnDataType.Number, IsDefault: true, IsPrimary: true,
+                    Alignment: ColumnAlignment.Right),
+                new("unit", "Unit", ColumnDataType.Enum, IsDefault: true, IsGroupable: true),
+                new("numerator", "Numerator", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("denominator", "Denominator", ColumnDataType.Money, Alignment: ColumnAlignment.Right),
+                new("calculation", "Calculation", ColumnDataType.Text, IsDefault: true),
+                new("metricOrder", "Order", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
             ReportKey = "fx-gain-loss",
             Title = "Foreign Currency Gain or Loss",
             Module = ReportModule.Accounting,
