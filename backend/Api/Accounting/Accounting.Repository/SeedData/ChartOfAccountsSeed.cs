@@ -42,6 +42,12 @@ public static class ChartOfAccountsSeed
         Account(orgId, "2200", SystemAccount.OutputGst, Liability),
         Account(orgId, "3100", SystemAccount.OpeningBalanceEquity, Equity, isJe: true),
         Account(orgId, "4100", SystemAccount.SalesRevenue, Income, isSales: true),
+
+        // Goods a customer sent back. A contra Income: it reduces what was sold,
+        // and a report has to subtract it rather than add a negative — the mirror
+        // of Purchase Returns below.
+        Account(orgId, "4200", SystemAccount.SalesReturns, Income,
+            isSales: true, isContra: true),
         Account(orgId, "5100", SystemAccount.CostOfGoodsSold, Expense, isPurchase: true),
 
         // Goods sent back. A contra Expense: it reduces what was bought, and a
@@ -56,6 +62,10 @@ public static class ChartOfAccountsSeed
         Account(orgId, "1500", SystemAccount.BankAccounts, Asset, isLock: true),
         Account(orgId, "2300", SystemAccount.BankOverdraftAndCards, Liability, isLock: true),
         Account(orgId, "4900", SystemAccount.RealizedFxGainLoss, Income, isJe: true),
+
+        // The rounding on a document's total. Either side, because a document can
+        // round up or down.
+        Account(orgId, "5900", SystemAccount.RoundOff, Expense),
         Account(orgId, "4910", SystemAccount.UnrealizedFxGainLoss, Income, isJe: true),
     ];
 

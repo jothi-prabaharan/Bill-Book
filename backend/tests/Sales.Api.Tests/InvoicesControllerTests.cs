@@ -275,8 +275,8 @@ public sealed class InvoicesControllerTests
                 Legs =
                 [
                     new GlEntryLegView { AccountName = "Accounts Receivable", DebitAmount = 1180m },
-                    new GlEntryLegView { AccountName = "Sales", CreditAmount = 1000m },
-                    new GlEntryLegView { AccountName = "Tax Payable", CreditAmount = 180m },
+                    new GlEntryLegView { AccountName = "Sales Revenue", CreditAmount = 1000m },
+                    new GlEntryLegView { AccountName = "Output GST", CreditAmount = 180m },
                 ],
             },
         };

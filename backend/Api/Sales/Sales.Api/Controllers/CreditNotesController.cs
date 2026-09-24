@@ -6,6 +6,19 @@ using Shared.Kernel.Internal;
 
 namespace Sales.Api.Controllers;
 
+/// <summary>
+/// Sales › Credit notes. <c>CRN</c> — the correction of a posted invoice.
+///
+/// <b>Posting is an approval and voiding is its own permission</b>, the same
+/// separation every other sales document has: <c>sales.approve</c> to post,
+/// <c>sales.void</c> to withdraw. Both routes used to fall back to the
+/// action the HTTP method implies, so anyone who could edit a draft could
+/// post it or void a posted one.
+///
+/// <b>Every refusal is an outcome.</b> A credit note outside the caller's branch
+/// is <c>NotFound</c>, like an id that is nobody's (TK-02); a rule about the
+/// document comes back with the service's own sentence.
+/// </summary>
 [ApiController]
 [Authorize]
 [RequireModulePermission("sales")]
@@ -26,41 +39,63 @@ public sealed class CreditNotesController : ControllerBase
         return Ok(list);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("{id:long}")]
     public async Task<IActionResult> Get(long id, CancellationToken ct)
     {
         var view = await _service.GetAsync(id, ct);
-        if (view is null)
-            return NotFound();
-
-        return Ok(view);
+        return view is null ? NotFound() : Ok(view);
     }
 
     [HttpPost]
     public async Task<IActionResult> Save([FromBody] SaveCreditNoteRequest request, CancellationToken ct)
     {
-        var id = await _service.SaveAsync(null, request, ct);
-        return Ok(new { CreditNoteId = id });
+        CreditNoteResult result = await _service.SaveAsync(null, request, ct);
+
+        return result.Outcome == CreditNoteOutcome.Ok
+            ? CreatedAtAction(nameof(Get), new { id = result.CreditNoteId }, result)
+            : Respond(result);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut("{id:long}")]
     public async Task<IActionResult> Update(long id, [FromBody] SaveCreditNoteRequest request, CancellationToken ct)
     {
-        await _service.SaveAsync(id, request, ct);
-        return Ok();
+        CreditNoteResult result = await _service.SaveAsync(id, request, ct);
+        return result.Outcome == CreditNoteOutcome.Ok ? Ok(result) : Respond(result);
     }
 
-    [HttpPost("{id}/post")]
+    /// <summary>Claims the note against its invoice, returns any goods, and reverses the revenue and tax.</summary>
+    [HttpPost("{id:long}/post")]
+    [PermissionAction("approve")]
     public async Task<IActionResult> Post(long id, CancellationToken ct)
     {
-        await _service.PostAsync(id, ct);
-        return Ok();
+        CreditNoteResult result = await _service.PostAsync(id, ct);
+        return result.Outcome == CreditNoteOutcome.Ok ? Ok(result) : Respond(result);
     }
 
-    [HttpPost("{id}/void")]
-    public async Task<IActionResult> Void(long id, CancellationToken ct)
+    /// <summary>
+    /// Withdraws a credit note. The reason is required by the database, not just
+    /// by convention — see <see cref="VoidCreditNoteRequest"/>.
+    /// </summary>
+    [HttpPost("{id:long}/void")]
+    [PermissionAction("void")]
+    public async Task<IActionResult> Void(long id, [FromBody] VoidCreditNoteRequest request, CancellationToken ct)
     {
-        await _service.VoidAsync(id, ct);
-        return Ok();
+        CreditNoteResult result = await _service.VoidAsync(id, request.Reason, ct);
+        return result.Outcome == CreditNoteOutcome.Ok ? Ok(result) : Respond(result);
     }
+
+    private IActionResult Respond(CreditNoteResult result) =>
+        result.Outcome switch
+        {
+            CreditNoteOutcome.NotFound => NotFound(),
+            CreditNoteOutcome.LifecycleRefused or CreditNoteOutcome.OverReturned
+                or CreditNoteOutcome.AllocationRefused or CreditNoteOutcome.StockRefused
+                or CreditNoteOutcome.PostingRefused => Conflict(Message(result)),
+            CreditNoteOutcome.RatesUnavailable => StatusCode(
+                StatusCodes.Status503ServiceUnavailable, Message(result)),
+            _ => UnprocessableEntity(Message(result)),
+        };
+
+    private static MessageResponse Message(CreditNoteResult result) =>
+        new() { Message = result.Detail ?? "This credit note was refused." };
 }

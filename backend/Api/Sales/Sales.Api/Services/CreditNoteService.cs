@@ -13,6 +13,23 @@ namespace Sales.Api.Services;
 
 public sealed class CreditNoteService
 {
+    // The chart's own names — SystemAccountNames in Accounting. The ledger finds
+    // an account by exact name. "Sales Returns" and "Round Off" were not seeded
+    // and "Tax Payable" exists in no chart, so every credit note was refused
+    // (TK-13). SalesAccountNameTests holds every name here to Accounting's seed.
+    private const string AccountsReceivableAccount = "Accounts Receivable";
+    private const string SalesReturnsAccount = "Sales Returns";
+    private const string OutputGstAccount = "Output GST";
+    private const string RoundOffAccount = "Round Off";
+
+    private const int ItemLedgerType = 1;
+    private const int TaxLedgerType = 2;
+    private const int ControlLedgerType = 3;
+    private const int RoundOffLedgerType = 6;
+    private const int TransactionLedgerSource = 3;
+    private const int ContactReference = 1;
+    private const int TaxReference = 3;
+
     private readonly SalesDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly INumberGenerator _numbering;
@@ -88,7 +105,7 @@ public sealed class CreditNoteService
             DocumentNo = x.DocumentNo,
             ContactId = x.ContactId,
             ContactName = contacts.TryGetValue(x.ContactId, out var c) ? c.Name : "Unknown",
-            Status = x.Status,
+            Status = x.Status.ToString(),
             TotalAmount = x.TotalAmount
         }).ToList();
     }
@@ -96,7 +113,7 @@ public sealed class CreditNoteService
     public async Task<CreditNoteView?> GetAsync(long id, CancellationToken ct)
     {
         var creditNote = await _db.CreditNotes
-            .Include(x => x.Lines)
+            .Include(x => x.Lines.OrderBy(l => l.LineNumber))
                 .ThenInclude(l => l.Taxes)
             .FirstOrDefaultAsync(x => x.CreditNoteId == id, ct);
 
@@ -116,8 +133,10 @@ public sealed class CreditNoteService
             DocumentNo = creditNote.DocumentNo,
             ContactId = creditNote.ContactId,
             ContactName = contactName,
-            Status = creditNote.Status,
+            Status = creditNote.Status.ToString(),
             ReasonCode = creditNote.ReasonCode,
+            ContactGstin = creditNote.ContactGstin,
+            VoidReason = creditNote.VoidReason,
             CurrencyCode = creditNote.CurrencyCode,
             ExchangeRate = creditNote.ExchangeRate,
             Notes = creditNote.Notes,
@@ -141,7 +160,9 @@ public sealed class CreditNoteService
                 InvoiceDetailId = l.InvoiceDetailId,
                 ItemId = l.ItemId,
                 ItemLabel = l.ItemId.HasValue && itemNames.TryGetValue(l.ItemId.Value, out var itemName) ? itemName.Name : null,
+                HsnSacCode = l.HsnSacCode,
                 Description = l.Description,
+                TaxGroupId = l.TaxGroupId,
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 DiscountPercent = l.DiscountPercent ?? 0m,
@@ -158,43 +179,58 @@ public sealed class CreditNoteService
         };
     }
 
-    public async Task<long> SaveAsync(long? creditNoteId, SaveCreditNoteRequest request, CancellationToken ct)
+    public async Task<CreditNoteResult> SaveAsync(
+        long? creditNoteId, SaveCreditNoteRequest request, CancellationToken ct)
     {
-        var (customerId, orgId) = _tenant.Require();
+        var (_, orgId) = _tenant.Require();
 
         CreditNote creditNote;
         if (creditNoteId.HasValue)
         {
-            creditNote = await _db.CreditNotes
+            CreditNote? existing = await _db.CreditNotes
                 .Include(x => x.Lines)
                     .ThenInclude(l => l.Taxes)
-                .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId.Value, ct)
-                ?? throw new InvalidOperationException("CreditNote not found.");
-                
-            if (creditNote.Status != DocumentStatus.Draft)
-                throw new InvalidOperationException("Only draft CreditNotes can be edited.");
+                .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId.Value, ct);
 
-            _db.CreditNoteDetailTaxes.RemoveRange(creditNote.Lines.SelectMany(l => l.Taxes));
-            _db.CreditNoteDetails.RemoveRange(creditNote.Lines);
+            if (existing is null)
+            {
+                return new CreditNoteResult(CreditNoteOutcome.NotFound);
+            }
+
+            DocumentTransition edit = DocumentLifecycle.CanEdit(existing.Status);
+            if (!edit.IsAllowed)
+            {
+                return new CreditNoteResult(
+                    CreditNoteOutcome.LifecycleRefused, existing.CreditNoteId, edit.Detail);
+            }
+
+            creditNote = existing;
         }
         else
         {
-            var alloc = await _numbering.NextAsync("CRN", request.DocumentDate, ct);
-            creditNote = new CreditNote
-            {
-                OrgId = orgId,
-                DocumentNo = alloc.Code,
-                TransactionTypeCode = "CRN",
-                PrintTemplateId = request.PrintTemplateId,
-                Status = DocumentStatus.Draft
-            };
-            _db.CreditNotes.Add(creditNote);
+            creditNote = new CreditNote();
+        }
+
+        // Everything that can refuse is checked before anything changes, so a
+        // refused edit leaves the draft as it was.
+        Invoice? invoice = await _db.Invoices
+            .AsNoTracking()
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.InvoiceId == request.InvoiceId, ct);
+
+        CreditNoteResult? linkRefusal = CheckInvoiceLink(
+            invoice, request.ContactId, request.Lines.Select(l => (l.InvoiceDetailId, l.ItemId)));
+        if (linkRefusal is not null)
+        {
+            return linkRefusal with { CreditNoteId = creditNoteId ?? 0 };
         }
 
         BranchSettings? settings = await _branchSettings.GetSettingsAsync(ct);
         if (settings is null)
         {
-            throw new InvalidOperationException("Branch settings could not be read.");
+            return new CreditNoteResult(
+                CreditNoteOutcome.RatesUnavailable,
+                Detail: "The branch's settings could not be read. Try again in a moment.");
         }
 
         // Resolved once, the same way Invoice and SalesOrder resolve it — a
@@ -206,7 +242,52 @@ public sealed class CreditNoteService
             settings.StateCode, request.PlaceOfSupplyStateCode, request.ContactGstin);
         if (!pos.IsOk)
         {
-            throw new InvalidOperationException(pos.Detail);
+            return new CreditNoteResult(CreditNoteOutcome.PlaceOfSupplyRefused, Detail: pos.Detail);
+        }
+
+        var rates = new List<TaxRate?>(request.Lines.Count);
+        foreach (SaveCreditNoteLineRequest reqLine in request.Lines)
+        {
+            long? taxGroupId = TaxGroupOf(reqLine);
+            TaxRate? rate = null;
+
+            if (taxGroupId.HasValue)
+            {
+                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
+                if (rate is null)
+                {
+                    return new CreditNoteResult(
+                        CreditNoteOutcome.RatesUnavailable,
+                        Detail: "A tax rate on this credit note could not be read for its date. "
+                            + "Try again in a moment.");
+                }
+            }
+
+            rates.Add(rate);
+        }
+
+        string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        if (baseCurrency is null)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.RatesUnavailable,
+                Detail: "The branch's base currency could not be read. Try again in a moment.");
+        }
+
+        if (creditNoteId.HasValue)
+        {
+            _db.CreditNoteDetailTaxes.RemoveRange(creditNote.Lines.SelectMany(l => l.Taxes));
+            _db.CreditNoteDetails.RemoveRange(creditNote.Lines);
+            creditNote.Lines.Clear();
+        }
+        else
+        {
+            var alloc = await _numbering.NextAsync("CRN", request.DocumentDate, ct);
+            creditNote.OrgId = orgId;
+            creditNote.DocumentNo = alloc.Code;
+            creditNote.TransactionTypeCode = "CRN";
+            creditNote.Status = DocumentStatus.Draft;
+            _db.CreditNotes.Add(creditNote);
         }
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
@@ -220,7 +301,11 @@ public sealed class CreditNoteService
         creditNote.DocumentDate = request.DocumentDate;
         creditNote.PrintTemplateId = request.PrintTemplateId;
         creditNote.Notes = request.Notes;
-        creditNote.CurrencyCode = request.CurrencyCode ?? "USD";
+
+        // The branch's own currency when none is given. This defaulted to "USD".
+        creditNote.CurrencyCode = string.IsNullOrWhiteSpace(request.CurrencyCode)
+            ? baseCurrency
+            : request.CurrencyCode;
         creditNote.ExchangeRate = request.ExchangeRate;
         creditNote.BillingAddress = request.BillingAddress;
         creditNote.ShippingAddress = request.ShippingAddress;
@@ -230,20 +315,9 @@ public sealed class CreditNoteService
         for (int i = 0; i < request.Lines.Count; i++)
         {
             SaveCreditNoteLineRequest reqLine = request.Lines[i];
-            int lineNumber = i + 1;
-
-            long? taxGroupId = reqLine.TaxGroupIds.Count > 0 ? reqLine.TaxGroupIds[0] : null;
-
-            TaxRate? rate = null;
-            if (taxGroupId.HasValue)
-            {
-                rate = await _rates.GetRateAsync(taxGroupId.Value, request.DocumentDate, ct);
-                if (rate is null)
-                {
-                    throw new InvalidOperationException(
-                        $"Tax rate for group {taxGroupId.Value} could not be read for date {request.DocumentDate}.");
-                }
-            }
+            TaxRate? rate = rates[i];
+            long? taxGroupId = TaxGroupOf(reqLine);
+            InvoiceDetail invoiceLine = invoice!.Lines.First(l => l.InvoiceDetailId == reqLine.InvoiceDetailId);
 
             TaxLineInput taxInput = new()
             {
@@ -262,9 +336,11 @@ public sealed class CreditNoteService
             var line = new CreditNoteDetail
             {
                 OrgId = creditNote.OrgId,
-                LineNumber = lineNumber,
+                LineNumber = i + 1,
                 InvoiceDetailId = reqLine.InvoiceDetailId,
                 ItemId = reqLine.ItemId,
+                HsnSacCode = invoiceLine.HsnSacCode,
+                Description = invoiceLine.Description,
                 Quantity = reqLine.Quantity,
                 ConversionFactor = 1m,
                 BaseQuantity = computed.BaseQuantity,
@@ -311,233 +387,172 @@ public sealed class CreditNoteService
         creditNote.TotalAmountBase = creditNote.TotalAmount * creditNote.ExchangeRate;
 
         await _db.SaveChangesAsync(ct);
-        return creditNote.CreditNoteId;
+        return new CreditNoteResult(CreditNoteOutcome.Ok, creditNote.CreditNoteId);
     }
 
-    public async Task PostAsync(long creditNoteId, CancellationToken ct)
+    /// <summary>
+    /// Posts the note: claims it against its invoice, takes returned goods back
+    /// into stock, and reverses the revenue and the tax.
+    ///
+    /// <b>The goods come back at what they cost, onto the layers they left.</b>
+    /// Each returned line names the invoice line's own issue movement and its
+    /// unit cost, and Inventory records the movement as a sales return, which is
+    /// what makes the costing engine walk it back to those layers. It used to
+    /// send the <i>selling</i> price, and Inventory recorded every line as a
+    /// plain receipt, so a return opened a fresh layer at the selling price and
+    /// the id naming the original issue was never read.
+    ///
+    /// <b>It posts no Inventory or cost-of-sales legs.</b> Inventory's costing
+    /// worker posts a sourced sales return as Dr Inventory / Cr Cost of Goods Sold
+    /// at the returned layers' cost; the note posting its own pair as well would
+    /// count the stock back twice.
+    ///
+    /// Accounting, Inventory and the ledger are three calls to two services, and
+    /// none of them is in this transaction. The claim is taken first because it
+    /// is the check most likely to refuse; if a later step refuses, the claim is
+    /// released again, and a retry is safe — Inventory treats a second receipt for
+    /// the same line as already done, and the ledger replaces a document's rows.
+    /// </summary>
+    public async Task<CreditNoteResult> PostAsync(long creditNoteId, CancellationToken ct)
     {
-        var (customerId, orgId) = _tenant.Require();
+        var (customerId, _) = _tenant.Require();
 
-        var creditNote = await _db.CreditNotes
+        CreditNote? creditNote = await _db.CreditNotes
             .Include(x => x.Lines)
                 .ThenInclude(l => l.Taxes)
-            .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId, ct)
-            ?? throw new InvalidOperationException("CreditNote not found.");
+            .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId, ct);
 
-        if (creditNote.Status != DocumentStatus.Draft)
-            throw new InvalidOperationException("CreditNote is not in draft status.");
+        if (creditNote is null)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.NotFound);
+        }
 
-        if (creditNote.Lines.Count == 0)
-            throw new InvalidOperationException("CreditNote has no lines.");
+        DocumentTransition post = DocumentLifecycle.CanPost(creditNote.Status, creditNote.Lines.Count);
+        if (!post.IsAllowed)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.LifecycleRefused, creditNoteId, post.Detail);
+        }
 
-        // The guard comes first: a refusal must leave the note draft with no
-        // stock moved and nothing posted. Allocating after the ledger post
-        // would leave a posted note the invoices it names do not recognise.
-        string invoiceTypeCode = await _db.Invoices
-            .Where(x => x.InvoiceId == creditNote.InvoiceId)
-            .Select(x => x.TransactionTypeCode)
-            .FirstOrDefaultAsync(ct)
-            ?? throw new InvalidOperationException("The invoice this credit note corrects no longer exists.");
+        // Read again rather than trusted from the save: the invoice may have been
+        // voided, or other notes may have returned its goods, since this was drafted.
+        Invoice? invoice = await _db.Invoices
+            .Include(x => x.Lines)
+            .FirstOrDefaultAsync(x => x.InvoiceId == creditNote.InvoiceId, ct);
+
+        CreditNoteResult? linkRefusal = CheckInvoiceLink(
+            invoice, creditNote.ContactId, creditNote.Lines.Select(l => (l.InvoiceDetailId, l.ItemId)));
+        if (linkRefusal is not null)
+        {
+            return linkRefusal with { CreditNoteId = creditNoteId };
+        }
+
+        bool returnsGoods = creditNote.ReasonCode == CreditNoteReason.SalesReturn;
+        Dictionary<long, InvoiceDetail> invoiceLines = invoice!.Lines.ToDictionary(l => l.InvoiceDetailId);
+
+        if (returnsGoods)
+        {
+            foreach (var byInvoiceLine in creditNote.Lines.GroupBy(l => l.InvoiceDetailId))
+            {
+                InvoiceDetail invoiceLine = invoiceLines[byInvoiceLine.Key];
+                decimal left = invoiceLine.Quantity - invoiceLine.ReturnedQuantity;
+                decimal returning = byInvoiceLine.Sum(l => l.Quantity);
+
+                if (returning > left)
+                {
+                    return new CreditNoteResult(
+                        CreditNoteOutcome.OverReturned, creditNoteId,
+                        $"Invoice line {invoiceLine.LineNumber} has {left:0.####} left that can come back, "
+                            + $"and this credit note returns {returning:0.####}.");
+                }
+            }
+        }
+
+        string? baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
+        if (baseCurrency is null)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.RatesUnavailable, creditNoteId,
+                "The branch's base currency could not be read. Try again in a moment.");
+        }
 
         // Accounting's own guard re-checks the claim against the invoice's
-        // CONTROL net and what has already been allocated to it. The refusal
-        // message is the note's rejection reason.
+        // CONTROL net and what has already been allocated to it.
         var allocation = await _ledgerClient.AllocateAsync(new AllocateTransactionRequest
         {
             CustomerId = customerId,
             OrgId = creditNote.OrgId,
             SourceTransactionTypeCode = creditNote.TransactionTypeCode,
             SourceTransactionId = creditNote.CreditNoteId,
-            TargetTransactionTypeCode = invoiceTypeCode,
+            TargetTransactionTypeCode = invoice.TransactionTypeCode,
             TargetTransactionId = creditNote.InvoiceId,
             Amount = creditNote.TotalAmount,
         }, ct);
 
         if (!allocation.Allocated)
-            throw new InvalidOperationException($"The credit note was refused: {allocation.Detail}");
-
-        var invoiceDetailIds = creditNote.Lines.Select(l => l.InvoiceDetailId).ToList();
-        var invoiceDetails = await _db.InvoiceDetails
-            .Where(x => invoiceDetailIds.Contains(x.InvoiceDetailId))
-            .ToDictionaryAsync(x => x.InvoiceDetailId, ct);
-
-        decimal totalCogs = 0;
-        // 1. Receive Stock
-        
-        if (creditNote.ReasonCode == CreditNoteReason.SalesReturn)
         {
-            var receiveRequest = new ReceiveStockRequest
-            {
-                OrgId = creditNote.OrgId,
-                CustomerId = customerId,
-                MovementDate = creditNote.DocumentDate,
-                SourceType = creditNote.TransactionTypeCode,
-                SourceId = creditNote.CreditNoteId,
-                Lines = creditNote.Lines.Select(l => new ReceiveStockLine
-                {
-                    SourceLineId = l.CreditNoteDetailId,
-                    ItemId = l.ItemId ?? 0,
-                    Quantity = l.Quantity,
-                    WarehouseId = null,
-                    UnitCost = l.UnitPrice, // Approximate if the backend derives actual
-                    ReturnsStockMovementId = invoiceDetails.TryGetValue(l.InvoiceDetailId, out var invLine) ? invLine.StockMovementId : null
-                }).ToList()
-            };
-
-            var response = await _inventoryClient.ReceiveAsync(receiveRequest, ct);
-            if (!response.Success)
-                throw new InvalidOperationException("Failed to return stock to inventory.");
-            
-            totalCogs = response.TotalValue;
+            return new CreditNoteResult(
+                CreditNoteOutcome.AllocationRefused, creditNoteId,
+                $"The credit note was refused: {allocation.Detail}");
         }
 
-        // 2. Post Ledger (Reverse of Invoice)
-        var baseCurrency = await _baseCurrency.GetBaseCurrencyAsync(ct);
-        var postRequest = new PostLedgerRequest
+        if (returnsGoods)
         {
-            CustomerId = customerId,
-            OrgId = creditNote.OrgId,
-            TransactionTypeCode = creditNote.TransactionTypeCode,
-            TransactionId = creditNote.CreditNoteId,
-            // The number on the document's face, so the ledger can report it
-            // without reaching into this service's schema to look it up.
-            DocumentNo = creditNote.DocumentNo,
-            LedgerDate = creditNote.DocumentDate,
-            CurrencyCode = creditNote.CurrencyCode == baseCurrency ? null : creditNote.CurrencyCode,
-            ExchangeRate = creditNote.CurrencyCode == baseCurrency ? null : creditNote.ExchangeRate,
-            ContactId = creditNote.ContactId,
-            SourceDocumentId = creditNote.CreditNoteId,
-            Legs = new List<LedgerLegRequest>()
-        };
-
-        decimal totalAmount = creditNote.TotalAmount;
-        decimal totalRevenue = creditNote.SubTotal - creditNote.DiscountAmount;
-
-        // Credit Accounts Receivable (CONTROL leg, type 3) - decrease AR
-        postRequest.Legs.Add(new LedgerLegRequest
-        {
-            LedgerTypeId = 3, // CONTROL
-            LedgerSourceId = 3, // Transaction posting
-            TransactionDetailId = 0,
-            AccountSystemName = "Accounts Receivable",
-            SubAccountReferenceType = 1, // Contact
-            SubAccountReferenceId = creditNote.ContactId,
-            SubAccountPurpose = 0, // Primary (trade balance)
-            CreditAmount = totalAmount
-        });
-
-        // Debit Sales Returns (ITEM leg, type 1) - contra revenue
-        postRequest.Legs.Add(new LedgerLegRequest
-        {
-            LedgerTypeId = 1, // ITEM
-            LedgerSourceId = 3,
-            TransactionDetailId = 0,
-            AccountSystemName = "Sales Returns",
-            DebitAmount = totalRevenue
-        });
-
-        // Debit Tax Payable (TAX legs, type 2) - decrease tax liability, split by component
-        var taxes = creditNote.Lines.SelectMany(l => l.Taxes)
-            .GroupBy(t => t.SubAccountId)
-            .Select(g => new { TaxRateId = g.Key, Amount = g.Sum(t => t.Amount) });
-            
-        foreach (var tax in taxes)
-        {
-            // Shared.Kernel.Documents.TaxComponent is 0-based: Cgst=0, Sgst=1, Igst=2
-            // Accounting.Entity.Enums.TaxComponent is 1-based: None=0, Cgst=1, Sgst=2, Igst=3
-            var cgst = creditNote.Lines.SelectMany(l => l.Taxes)
-                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Cgst)
-                .Sum(t => t.Amount);
-            var sgst = creditNote.Lines.SelectMany(l => l.Taxes)
-                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Sgst)
-                .Sum(t => t.Amount);
-            var igst = creditNote.Lines.SelectMany(l => l.Taxes)
-                .Where(t => t.SubAccountId == tax.TaxRateId && t.TaxComponent == TaxComponent.Igst)
-                .Sum(t => t.Amount);
-
-            if (cgst > 0)
-            {
-                postRequest.Legs.Add(new LedgerLegRequest
+            List<ReceiveStockLine> stockLines = creditNote.Lines
+                .Where(l => l.ItemId.HasValue
+                    && invoiceLines[l.InvoiceDetailId].LineType == DocumentLineType.Stock)
+                .Select(l =>
                 {
-                    LedgerTypeId = 2, // TAX
-                    LedgerSourceId = 3,
-                    TransactionDetailId = 0,
-                    SubAccountReferenceType = 3, // Tax
-                    SubAccountReferenceId = tax.TaxRateId,
-                    SubAccountTaxComponent = 1, // CGST
-                    AccountSystemName = "Tax Payable",
-                    DebitAmount = cgst
-                });
-            }
+                    InvoiceDetail invoiceLine = invoiceLines[l.InvoiceDetailId];
+                    return new ReceiveStockLine
+                    {
+                        SourceLineId = l.CreditNoteDetailId,
+                        ItemId = l.ItemId!.Value,
+                        Quantity = l.Quantity,
+                        WarehouseId = invoiceLine.WarehouseId,
+                        UnitCost = invoiceLine.UnitCost,
+                        ReturnsStockMovementId = invoiceLine.StockMovementId,
+                    };
+                })
+                .ToList();
 
-            if (sgst > 0)
+            if (stockLines.Count > 0)
             {
-                postRequest.Legs.Add(new LedgerLegRequest
+                var received = await _inventoryClient.ReceiveAsync(new ReceiveStockRequest
                 {
-                    LedgerTypeId = 2, // TAX
-                    LedgerSourceId = 3,
-                    TransactionDetailId = 0,
-                    SubAccountReferenceType = 3, // Tax
-                    SubAccountReferenceId = tax.TaxRateId,
-                    SubAccountTaxComponent = 2, // SGST
-                    AccountSystemName = "Tax Payable",
-                    DebitAmount = sgst
-                });
-            }
+                    OrgId = creditNote.OrgId,
+                    CustomerId = customerId,
+                    MovementDate = creditNote.DocumentDate,
+                    SourceType = creditNote.TransactionTypeCode,
+                    SourceId = creditNote.CreditNoteId,
+                    Lines = stockLines,
+                }, ct);
 
-            if (igst > 0)
-            {
-                postRequest.Legs.Add(new LedgerLegRequest
+                if (!received.Success)
                 {
-                    LedgerTypeId = 2, // TAX
-                    LedgerSourceId = 3,
-                    TransactionDetailId = 0,
-                    SubAccountReferenceType = 3, // Tax
-                    SubAccountReferenceId = tax.TaxRateId,
-                    SubAccountTaxComponent = 3, // IGST
-                    AccountSystemName = "Tax Payable",
-                    DebitAmount = igst
-                });
+                    await ReleaseClaimAsync(creditNote, customerId, ct);
+                    return new CreditNoteResult(
+                        CreditNoteOutcome.StockRefused, creditNoteId,
+                        "Inventory refused to take the goods on this credit note back. Nothing was posted.");
+                }
             }
         }
 
-        if (totalCogs > 0)
+        var postResult = await _ledgerClient.PostAsync(
+            BuildPosting(creditNote, customerId, baseCurrency), ct);
+        if (!postResult.Posted)
         {
-            
-            // Debit Inventory (CONTROL leg, type 3) - stock returned
-            postRequest.Legs.Add(new LedgerLegRequest
-            {
-                LedgerTypeId = 3, // CONTROL (stock movement)
-                LedgerSourceId = 3,
-                TransactionDetailId = 0,
-                AccountSystemName = "Inventory",
-                DebitAmount = totalCogs
-            });
-
-            // Credit COGS (COGS leg, type 4) - reverse the cost
-            postRequest.Legs.Add(new LedgerLegRequest
-            {
-                LedgerTypeId = 4, // COGS
-                LedgerSourceId = 3,
-                TransactionDetailId = 0,
-                AccountSystemName = "Cost of Goods Sold",
-                CreditAmount = totalCogs
-            });
-
+            await ReleaseClaimAsync(creditNote, customerId, ct);
+            return new CreditNoteResult(
+                CreditNoteOutcome.PostingRefused, creditNoteId, $"Ledger post failed: {postResult.Detail}");
         }
 
-
-        foreach (var l in creditNote.Lines)
+        if (returnsGoods)
         {
-            if (invoiceDetails.TryGetValue(l.InvoiceDetailId, out var invLine))
+            foreach (CreditNoteDetail l in creditNote.Lines)
             {
-                invLine.ReturnedQuantity += l.Quantity;
+                invoiceLines[l.InvoiceDetailId].ReturnedQuantity += l.Quantity;
             }
         }
-
-        var result = await _ledgerClient.PostAsync(postRequest, ct);
-        if (!result.Posted)
-            throw new InvalidOperationException($"Ledger post failed: {result.Detail}");
 
         foreach (var l in creditNote.Lines)
         {
@@ -561,10 +576,10 @@ public sealed class CreditNoteService
                 Quantity = -l.Quantity,
                 UqcCode = null,
                 TaxableAmount = -l.TaxableAmount,
-                CgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Cgst")?.Amount ?? 0),
-                SgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Sgst")?.Amount ?? 0),
-                IgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Igst")?.Amount ?? 0),
-                CessAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent.ToString() == "Cess")?.Amount ?? 0),
+                CgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cgst)?.Amount ?? 0),
+                SgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Sgst)?.Amount ?? 0),
+                IgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Igst)?.Amount ?? 0),
+                CessAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cess)?.Amount ?? 0),
                 TotalAmount = -(l.LineTotal + l.TaxAmount),
                 CurrencyCode = creditNote.CurrencyCode,
                 ExchangeRate = creditNote.ExchangeRate,
@@ -578,41 +593,249 @@ public sealed class CreditNoteService
         creditNote.PostedBy = _user.UserId;
 
         await _db.SaveChangesAsync(ct);
+        return new CreditNoteResult(CreditNoteOutcome.Ok, creditNoteId);
     }
 
-    public async Task VoidAsync(long creditNoteId, CancellationToken ct)
+    /// <summary>
+    /// Withdraws a credit note, with a reason.
+    ///
+    /// A draft is simply stamped. A posted note that corrected a price, a
+    /// discount or a deficiency withdraws its ledger rows, releases its claim on
+    /// the invoice and leaves the GST register — it moved nothing physical.
+    ///
+    /// <b>A posted sales return is refused.</b> Its goods are back on the shelf;
+    /// voiding the paperwork would leave them there with nothing to explain them.
+    /// Sell them again on an invoice instead — the same rule a dispatched delivery
+    /// challan follows.
+    /// </summary>
+    public async Task<CreditNoteResult> VoidAsync(
+        long creditNoteId, string reason, CancellationToken ct)
     {
         var (customerId, orgId) = _tenant.Require();
 
-        var creditNote = await _db.CreditNotes
-            .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId, ct)
-            ?? throw new InvalidOperationException("CreditNote not found.");
+        CreditNote? creditNote = await _db.CreditNotes
+            .FirstOrDefaultAsync(x => x.CreditNoteId == creditNoteId, ct);
 
-        if (creditNote.Status == DocumentStatus.Void)
-            return;
+        if (creditNote is null)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.NotFound);
+        }
+
+        bool posted = creditNote.Status == DocumentStatus.Posted;
+
+        if (posted && creditNote.ReasonCode == CreditNoteReason.SalesReturn)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.LifecycleRefused, creditNoteId,
+                "The goods on this credit note are back in stock. Voiding it would leave them "
+                    + "there with nothing to explain them. Sell them again on an invoice instead.");
+        }
+
+        DocumentTransition transition = DocumentLifecycle.CanVoid(creditNote.Status, false, reason);
+        if (!transition.IsAllowed)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.LifecycleRefused, creditNoteId, transition.Detail);
+        }
+
+        if (posted)
+        {
+            var withdraw = await _ledgerClient.PostAsync(new PostLedgerRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                TransactionTypeCode = creditNote.TransactionTypeCode,
+                TransactionId = creditNote.CreditNoteId,
+                DocumentNo = creditNote.DocumentNo,
+                LedgerDate = creditNote.DocumentDate,
+                ContactId = creditNote.ContactId,
+                SourceDocumentId = creditNote.CreditNoteId,
+                WithdrawLedgerTypeIds = [ItemLedgerType, TaxLedgerType, ControlLedgerType, RoundOffLedgerType],
+                Legs = [],
+            }, ct);
+
+            if (!withdraw.Posted)
+            {
+                return new CreditNoteResult(
+                    CreditNoteOutcome.PostingRefused, creditNoteId, withdraw.Detail);
+            }
+
+            var registers = await _db.SalesRegister
+                .Where(r => r.SourceId == creditNoteId && r.TransactionTypeCode == creditNote.TransactionTypeCode)
+                .ToListAsync(ct);
+            _db.SalesRegister.RemoveRange(registers);
+
+            // A voided note takes its claims with it, or the invoice it named stays
+            // partly settled by a document that no longer counts.
+            await ReleaseClaimAsync(creditNote, customerId, ct);
+        }
 
         creditNote.Status = DocumentStatus.Void;
         creditNote.VoidedAt = _clock.GetUtcNow();
 
-        var registers = await _db.SalesRegister
-            .Where(r => r.SourceId == creditNoteId && r.TransactionTypeCode == creditNote.TransactionTypeCode)
-            .ToListAsync(ct);
-        _db.SalesRegister.RemoveRange(registers);
-
-        // A voided note takes its claims with it, or the invoices it named stay
-        // partially allocated to a document that no longer exists. A failure
-        // here aborts the void: the note must not vanish while its claims remain.
-        await _ledgerClient.RemoveAllocationsAsync(new RemoveAllocationsRequest
-        {
-            CustomerId = customerId,
-            OrgId = orgId,
-            SourceTransactionTypeCode = creditNote.TransactionTypeCode,
-            SourceTransactionId = creditNoteId,
-        }, ct);
+        // Set together with the timestamp: chk_creditnotes_void_stamp requires
+        // both or neither, and the void used to write only the stamp.
+        creditNote.VoidReason = reason.Trim();
+        creditNote.VoidedBy = _user.UserId;
 
         await _db.SaveChangesAsync(ct);
+        return new CreditNoteResult(CreditNoteOutcome.Ok, creditNoteId);
     }
+
+    /// <summary>
+    /// The note's link to its invoice: the invoice is posted and for this
+    /// customer, and every line is one of its lines, for the same item. Null
+    /// when it holds.
+    /// </summary>
+    private static CreditNoteResult? CheckInvoiceLink(
+        Invoice? invoice, long contactId, IEnumerable<(long InvoiceDetailId, long? ItemId)> lines)
+    {
+        if (invoice is null)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.SourceInvalid,
+                Detail: "The invoice this credit note corrects could not be found in this branch.");
+        }
+
+        if (invoice.Status != DocumentStatus.Posted)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.SourceInvalid,
+                Detail: "A credit note can only correct a posted invoice.");
+        }
+
+        if (invoice.ContactId != contactId)
+        {
+            return new CreditNoteResult(
+                CreditNoteOutcome.SourceInvalid,
+                Detail: "The credit note's customer is not the invoice's customer.");
+        }
+
+        foreach ((long invoiceDetailId, long? itemId) in lines)
+        {
+            InvoiceDetail? invoiceLine = invoice.Lines.FirstOrDefault(l => l.InvoiceDetailId == invoiceDetailId);
+            if (invoiceLine is null)
+            {
+                return new CreditNoteResult(
+                    CreditNoteOutcome.LineInvalid,
+                    Detail: "Every line on a credit note must be one of its invoice's lines.");
+            }
+
+            if (invoiceLine.ItemId != itemId)
+            {
+                return new CreditNoteResult(
+                    CreditNoteOutcome.LineInvalid,
+                    Detail: $"A line's item is not the item on invoice line {invoiceLine.LineNumber}.");
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// The reversal of the invoice: Accounts Receivable credited, Sales Returns
+    /// and Output GST debited, and the rounding on whichever side balances it.
+    /// </summary>
+    private static PostLedgerRequest BuildPosting(CreditNote creditNote, Guid customerId, string baseCurrency)
+    {
+        var postRequest = new PostLedgerRequest
+        {
+            CustomerId = customerId,
+            OrgId = creditNote.OrgId,
+            TransactionTypeCode = creditNote.TransactionTypeCode,
+            TransactionId = creditNote.CreditNoteId,
+            // The number on the document's face, so the ledger can report it
+            // without reaching into this service's schema to look it up.
+            DocumentNo = creditNote.DocumentNo,
+            LedgerDate = creditNote.DocumentDate,
+            CurrencyCode = creditNote.CurrencyCode == baseCurrency ? null : creditNote.CurrencyCode,
+            ExchangeRate = creditNote.CurrencyCode == baseCurrency ? null : creditNote.ExchangeRate,
+            ContactId = creditNote.ContactId,
+            SourceDocumentId = creditNote.CreditNoteId,
+            Legs = [],
+        };
+
+        postRequest.Legs.Add(new LedgerLegRequest
+        {
+            LedgerTypeId = ControlLedgerType,
+            LedgerSourceId = TransactionLedgerSource,
+            TransactionDetailId = 0,
+            AccountSystemName = AccountsReceivableAccount,
+            SubAccountReferenceType = ContactReference,
+            SubAccountReferenceId = creditNote.ContactId,
+            SubAccountPurpose = 0, // the trade balance
+            CreditAmount = creditNote.TotalAmount,
+            TransactionDesc = "Credited to customer",
+        });
+
+        decimal returned = creditNote.SubTotal - creditNote.DiscountAmount;
+        if (returned > 0)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = ItemLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = SalesReturnsAccount,
+                DebitAmount = returned,
+                TransactionDesc = "Sales returned or reduced",
+            });
+        }
+
+        // Grouped the way the invoice groups its own, so each reverses the
+        // sub-account the invoice credited: the tax group and the component.
+        var taxGroups = creditNote.Lines.SelectMany(l => l.Taxes)
+            .GroupBy(t => new { t.SubAccountId, t.TaxComponent })
+            .Select(g => new { g.Key.SubAccountId, g.Key.TaxComponent, Amount = g.Sum(t => t.Amount) });
+
+        foreach (var tax in taxGroups.Where(t => t.Amount > 0))
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = TaxLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                SubAccountReferenceType = TaxReference,
+                SubAccountReferenceId = tax.SubAccountId,
+
+                // Shared.Kernel's TaxComponent is 0-based; Accounting's is 1-based
+                // with None at 0. Cgst → 1, Sgst → 2, Igst → 3, Cess → 4.
+                SubAccountTaxComponent = (int)tax.TaxComponent + 1,
+                AccountSystemName = OutputGstAccount,
+                DebitAmount = tax.Amount,
+                TransactionDesc = $"Output {tax.TaxComponent} reversed",
+            });
+        }
+
+        // Receivable was credited with the rounded total, so rounding up is
+        // debited here and rounding down credited — the mirror of the invoice.
+        if (creditNote.RoundOffAmount != 0)
+        {
+            postRequest.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = RoundOffLedgerType,
+                LedgerSourceId = TransactionLedgerSource,
+                TransactionDetailId = 0,
+                AccountSystemName = RoundOffAccount,
+                DebitAmount = creditNote.RoundOffAmount > 0 ? creditNote.RoundOffAmount : 0m,
+                CreditAmount = creditNote.RoundOffAmount < 0 ? -creditNote.RoundOffAmount : 0m,
+                TransactionDesc = "Rounding",
+            });
+        }
+
+        return postRequest;
+    }
+
+    /// <summary>Releases the note's claim on its invoice. Safe when there is none.</summary>
+    private Task ReleaseClaimAsync(CreditNote creditNote, Guid customerId, CancellationToken ct) =>
+        _ledgerClient.RemoveAllocationsAsync(new RemoveAllocationsRequest
+        {
+            CustomerId = customerId,
+            OrgId = creditNote.OrgId,
+            SourceTransactionTypeCode = creditNote.TransactionTypeCode,
+            SourceTransactionId = creditNote.CreditNoteId,
+        }, ct);
+
+    private static long? TaxGroupOf(SaveCreditNoteLineRequest line) =>
+        line.TaxGroupId ?? (line.TaxGroupIds.Count > 0 ? line.TaxGroupIds[0] : null);
 }
-
-
-

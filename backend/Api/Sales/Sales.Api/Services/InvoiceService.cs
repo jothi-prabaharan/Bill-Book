@@ -25,8 +25,12 @@ public sealed class InvoiceService : IInvoiceService
     private const string InventoryAccount = "Inventory";
     private const string GdniAccount = "Goods Delivered Not Invoiced";
     private const string CogsAccount = "Cost of Goods Sold";
-    private const string SalesRevenueAccount = "Sales";
-    private const string TaxPayableAccount = "Tax Payable";
+    // The chart's own names — SystemAccountNames in Accounting. The ledger finds
+    // an account by exact name, and "Sales" and "Tax Payable", which these were,
+    // exist in no chart, so every invoice post was refused (TK-13).
+    // SalesAccountNameTests holds every name here to Accounting's seed.
+    private const string SalesRevenueAccount = "Sales Revenue";
+    private const string TaxPayableAccount = "Output GST";
     private const string AccountsReceivableAccount = "Accounts Receivable";
     private const string CashAccount = "Cash";
     private const string RoundOffAccount = "Round Off";

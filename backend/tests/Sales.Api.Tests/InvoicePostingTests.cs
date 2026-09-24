@@ -23,8 +23,8 @@ public sealed class InvoicePostingTests
     private const string InventoryAccount = "Inventory";
     private const string GdniAccount = "Goods Delivered Not Invoiced";
     private const string CogsAccount = "Cost of Goods Sold";
-    private const string SalesRevenueAccount = "Sales";
-    private const string TaxPayableAccount = "Tax Payable";
+    private const string SalesRevenueAccount = "Sales Revenue";
+    private const string TaxPayableAccount = "Output GST";
     private const string AccountsReceivableAccount = "Accounts Receivable";
     private const string CashAccount = "Cash";
     private const string RoundOffAccount = "Round Off";

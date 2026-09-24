@@ -344,6 +344,16 @@ public sealed class InternalStockController : ControllerBase
     /// The response carries what each line was worth, because Purchase debits
     /// Inventory by exactly that and would otherwise have to recompute a figure
     /// Inventory has already decided.
+    ///
+    /// <b>A line naming <c>ReturnsStockMovementId</c> is a sales return, not a
+    /// receipt</b> — goods coming back on a credit note against the issue that
+    /// sent them out. It is recorded as <see cref="Entity.Enums.StockMovementType.SalesReturn"/>,
+    /// which is what makes the costing engine put it back onto the layers that
+    /// issue drew from. Recorded as a receipt, as every line was until TK-13, the
+    /// id was stored and never read: the goods opened a fresh layer at whatever
+    /// cost the caller sent, which from a credit note was the selling price.
+    /// A return's value is settled by the worker from those layers and posted by
+    /// it, so its line reports no value here for the caller to post again.
     /// </summary>
     [HttpPost("receipt")]
     public async Task<IActionResult> Receipt(
@@ -371,7 +381,9 @@ public sealed class InternalStockController : ControllerBase
                 new RecordStockMovementRequest
                 {
                     ItemId = line.ItemId,
-                    MovementType = nameof(Entity.Enums.StockMovementType.Receipt),
+                    MovementType = line.ReturnsStockMovementId is null
+                        ? nameof(Entity.Enums.StockMovementType.Receipt)
+                        : nameof(Entity.Enums.StockMovementType.SalesReturn),
                     MovementDate = request.MovementDate,
                     Quantity = line.Quantity,
                     UnitCost = line.UnitCost,
@@ -394,7 +406,8 @@ public sealed class InternalStockController : ControllerBase
             // need one.
             bool already = result.Outcome == StockOutcome.DuplicateSource;
             bool ok = result.Outcome is StockOutcome.Ok or StockOutcome.DuplicateSource;
-            decimal lineValue = ok && !already ? line.Quantity * line.UnitCost : 0m;
+            bool isReturn = line.ReturnsStockMovementId is not null;
+            decimal lineValue = ok && !already && !isReturn ? line.Quantity * line.UnitCost : 0m;
 
             response.Lines.Add(new ReceiveStockLineResult
             {

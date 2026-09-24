@@ -145,14 +145,28 @@ public sealed class RecordingLedger : ILedgerClient
         return Task.FromResult(new PostLedgerOutcomeResult(true, null));
     }
 
+    /// <summary>Set to make the next allocation refused, the way Accounting's guard refuses an overclaim.</summary>
+    public string? RefuseAllocationWith { get; set; }
+
+    /// <summary>Every claim released, in order.</summary>
+    public List<RemoveAllocationsRequest> RemovedAllocations { get; } = [];
+
     public Task<AllocateOutcomeResult> AllocateAsync(AllocateTransactionRequest request, CancellationToken ct)
     {
+        if (RefuseAllocationWith is not null)
+        {
+            return Task.FromResult(new AllocateOutcomeResult(false, RefuseAllocationWith));
+        }
+
         Allocations.Add(request);
         return Task.FromResult(new AllocateOutcomeResult(true, null));
     }
 
-    public Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct) =>
-        Task.CompletedTask;
+    public Task RemoveAllocationsAsync(RemoveAllocationsRequest request, CancellationToken ct)
+    {
+        RemovedAllocations.Add(request);
+        return Task.CompletedTask;
+    }
 
     public Task<List<OutstandingBalanceView>> GetAllOutstandingBalancesAsync(
         int ledgerTypeId, CancellationToken ct) =>
@@ -277,8 +291,17 @@ public sealed class RecordingInventory : IInventoryClient
         });
     }
 
-    public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct) =>
-        Task.FromResult(new ReceiveStockResponse { Success = true });
+    /// <summary>Every receipt asked for, in order — a credit note's returns among them.</summary>
+    public List<ReceiveStockRequest> Receipts { get; } = [];
+
+    /// <summary>Set to make every receipt refused.</summary>
+    public bool RefuseReceipts { get; set; }
+
+    public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct)
+    {
+        Receipts.Add(request);
+        return Task.FromResult(new ReceiveStockResponse { Success = !RefuseReceipts });
+    }
 
     /// <summary>
     /// What the stub says is available. Empty by default, which is how the real

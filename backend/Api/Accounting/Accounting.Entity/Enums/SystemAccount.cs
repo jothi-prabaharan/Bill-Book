@@ -1,7 +1,7 @@
 namespace Accounting.Entity.Enums;
 
 /// <summary>
-/// The ten control accounts seeded into every organization's chart of accounts.
+/// The control accounts seeded into every organization's chart of accounts.
 /// The seed writes <see cref="SystemAccountNames"/> into Account.AccountSystemName
 /// and sub-account provisioning looks the parent up by the same name, so the two
 /// must never drift — hence one enum rather than a string literal at each site.
@@ -73,6 +73,28 @@ public enum SystemAccount
     /// Given for the same reason.
     /// </summary>
     PurchaseReturns = 16,
+
+    /// <summary>
+    /// Goods a customer sent back, and other credit notes against a sale — a
+    /// <b>contra Income</b>, the mirror of <see cref="PurchaseReturns"/>.
+    ///
+    /// A credit note debits this rather than Sales Revenue, so the report shows
+    /// what was sold and what came back as two figures, and <c>IsContra</c> tells
+    /// it to subtract the second. Sales posted a credit note here by name from the
+    /// start; the account was simply never seeded, so every credit note was
+    /// refused by the ledger (TK-13).
+    /// </summary>
+    SalesReturns = 17,
+
+    /// <summary>
+    /// The paise a document rounds its total by — an Expense that can carry a
+    /// balance either way, because a document can round up or down.
+    ///
+    /// Sales posted an invoice's rounding here by name and the account did not
+    /// exist, so any invoice whose total was not already whole was refused
+    /// (TK-13).
+    /// </summary>
+    RoundOff = 18,
 }
 
 /// <summary>
@@ -100,6 +122,8 @@ public static class SystemAccountNames
         SystemAccount.GoodsReceivedNotInvoiced => "Goods Received Not Invoiced",
         SystemAccount.FixedAsset => "Fixed Asset",
         SystemAccount.PurchaseReturns => "Purchase Returns",
+        SystemAccount.SalesReturns => "Sales Returns",
+        SystemAccount.RoundOff => "Round Off",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }
