@@ -1564,11 +1564,16 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
   - Cards: TK-115 (purchase register, 3B, GSTR-1 export), TK-116 (2B reconciliation), TK-117 (TDS), TK-118 (audit trail), TK-119 (MSME and calendar). No decision needed.
 
 ### TK-38 · Design: CRM campaigns and marketing automation (D-06)
-- [~] working (Claude Opus 5.5) — since 2026-09-24
+- [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
 - **Sub-tasks:**
-  - [ ] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
-  - [ ] Add build cards for it to this queue.
+  - [x] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
+  - [x] Add build cards for it to this queue.
 - **Done when:** the design is in `docs/Modules.md` and its cards are queued.
+- **Outcome (2026-09-24):**
+  - The design is in `docs/Modules.md` under a new **"Customer service (`cus`) — CRM and support"** section beside the Contacts section. The Contacts section's note pointed to a `cus` section that did not exist, so it now does. A pointer is left at the end of the file with the other designs.
+  - Email first; sends go through Notification with a message id per campaign and recipient, so a retried send sends nothing twice; consent is per address per branch, and an unsubscribed address is never sent to whatever the audience says; one-click unsubscribe; audiences are saved rules frozen at send; purchase-history rules are answered by Reporting, not Customer; automation is waits and sends with exit conditions.
+  - Cards: TK-120 (templates, audiences, consent), TK-121 (sending and tracking), TK-122 (automation), TK-123 (reports).
+  - Raised **D-27**: how bulk email is sent, since a branch's own mailbox would be rate-limited and blacklisted.
 
 ### E2 · Builds from the approved designs
 
@@ -1901,6 +1906,49 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Seeded, operator-editable due-date rules; per-branch applicability; reminders through Notification; the next three filings on Home.
   - [ ] Test: a 60-day term on an MSME bill is refused; the calendar computes the right date for a rule across a month end.
 - **Done when:** the Home page shows the next GSTR-1 due date, and an MSME bill past 45 days appears on the ageing report.
+
+### TK-120 · Campaigns: templates, audiences, consent and unsubscribe
+- [ ] open
+- **Lanes:** L-CUS, L-CUS-UI, L-RPT · **Depends on:** TK-38 · **Decision:** —
+- **Where:** `docs/Modules.md`, "Customer service (`cus`)" → "Campaigns and marketing automation".
+- **Tables:** `cus.EmailTemplates`, `cus.Audiences`, `cus.EmailConsents`
+- **Sub-tasks:**
+  - [ ] The three tables with RLS; template bodies sanitised on save.
+  - [ ] Audience rules over leads, contacts (through Master) and purchase history (Reporting's new `POST internal/contacts/segment`); a live count.
+  - [ ] `GET/POST /api/public/unsubscribe/{token}` (anonymous, signed token, exempted in the guard test with its reason); staff can mark an address unsubscribed.
+  - [ ] Test: an unsubscribed address never resolves into an audience; a tampered token is refused; a segment by last invoice date returns the right contacts.
+  - Standard delivery sub-tasks (section 5).
+- **Done when:** an address that clicked unsubscribe is excluded from every audience that would otherwise include it.
+
+### TK-121 · Campaigns: scheduled sending and tracking
+- [ ] open
+- **Lanes:** L-CUS, L-CUS-UI, L-NTF, L-KERNEL · **Depends on:** TK-120, TK-19 · **Decision:** D-27
+- **Tables:** `cus.Campaigns`, `cus.CampaignRecipients`, `cus.CampaignLinks`
+- **Sub-tasks:**
+  - [ ] Schedule, claim (`Scheduled → Sending`), resolve and freeze recipients, suppress, send in batches through the sending path D-27 names, message id `cmp-{campaignId}-{recipientId}`.
+  - [ ] `EmailDelivered`/`EmailFailed` from Notification; hard bounces mark consent `Bounced`.
+  - [ ] Click redirects and an open pixel; `List-Unsubscribe` and `List-Unsubscribe-Post` headers.
+  - [ ] `crm.approve` above the branch's audience-size limit.
+  - [ ] Test: a campaign sent twice (a crashed worker) sends each recipient once; an address appearing as lead and contact gets one copy; a click is recorded and redirected.
+- **Done when:** a scheduled campaign reaches every subscribed recipient exactly once and none of the unsubscribed.
+
+### TK-122 · Campaigns: marketing automation sequences
+- [ ] open
+- **Lanes:** L-CUS, L-CUS-UI · **Depends on:** TK-121 · **Decision:** —
+- **Tables:** `cus.Automations`, `cus.AutomationSteps`, `cus.AutomationEnrolments`
+- **Sub-tasks:**
+  - [ ] Triggers (lead created by source, lead status changed, contact became a customer); wait and send steps; exits (unsubscribed, converted, lost).
+  - [ ] The hosted service advances due enrolments with a guarded claim; message id `aut-{enrolmentId}-{step}`.
+  - [ ] Test: a lead converted during a wait exits before the next send; a restarted worker does not send a step twice.
+- **Done when:** a new lead from the website source receives the welcome email and, three days later, the follow-up, unless converted first.
+
+### TK-123 · Campaigns: reports
+- [ ] open
+- **Lanes:** L-CUS, L-RPT · **Depends on:** TK-121 · **Decision:** —
+- **Sub-tasks:**
+  - [ ] Per campaign and across campaigns: recipients, suppressed, sent, failed, opened (marked approximate), clicked, unsubscribed, conversions within 30 days and their first invoice total.
+  - [ ] Test: conversions count only leads converted within the window after the send.
+- **Done when:** a sent campaign shows its clicks and conversions.
 
 ### F · Phase 3: POS
 
@@ -3359,6 +3407,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
 | D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
 | D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | *Open.* Raised 2026-09-24 by TK-33 |
+| D-27 | CRM campaigns: send bulk email through a transactional email provider (Amazon SES, SendGrid, Postmark or another — which, and on whose account), or through each branch's own SMTP with a low daily cap? A branch mailbox would be rate-limited and risks blacklisting (TK-38). | TK-121 | *Open.* Raised 2026-09-24 by TK-38 |
 
 ---
 

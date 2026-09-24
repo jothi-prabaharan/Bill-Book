@@ -135,6 +135,104 @@ Manages customer and vendor profiles, contact roles, prepayments, and outstandin
 
 ## Task Checklist
 
+## Customer service (`cus`) — CRM and support
+
+**This is the section the note above points to.** It did not exist until 24 September 2026 (TK-38).
+
+**Built** (checked 24 September 2026): `cus.Leads` (name, company, phone, email, source, status,
+conversion to a contact through Master), `cus.Tickets` and `cus.TicketMessages` with per-branch SLA
+due times from `cus.SlaPolicies` (TK-18), two controllers and five UI components wired into
+`apps/web`. The portal's ticket screens are designed in "Client portal" (TK-32).
+
+### Campaigns and marketing automation (TK-38, D-06)
+
+The owner put campaigns and marketing automation in v1 (D-06, 24 September 2026). Nothing of it is
+built.
+
+#### Decisions
+
+| # | Decision | Why |
+|---|---|---|
+| 1 | **Email only in the first build**; SMS and WhatsApp are later channels behind the same campaign model | Email already has a delivery path (TK-19) and an unsubscribe standard; the others need a provider and a template approval process each |
+| 2 | **Campaigns send through Notification**, one `EmailRequested` per recipient with a message id fixed by campaign and recipient, so a retried send sends nothing twice | The idempotency Notification already gives (`ntf.ProcessedMessages`) is exactly what a bulk send needs |
+| 3 | **Consent is recorded per email address per branch**, and **an unsubscribed address is never sent a campaign**, whatever the audience says | India's Digital Personal Data Protection Act and ordinary deliverability both require it, and "whatever the audience says" is the only rule that cannot be got wrong by a badly built segment |
+| 4 | **Every campaign email carries a one-click unsubscribe** (a link and the `List-Unsubscribe` header) to a signed, anonymous endpoint | Receiving mail providers now expect it for bulk mail and route mail without it to spam |
+| 5 | **An audience is a saved rule, resolved when the campaign sends**, and the resolved list is frozen on the campaign | The rule is what a marketer means; the frozen list is what a report must count against |
+| 6 | **Rules over purchase history are asked of Reporting**, not computed in Customer | Customer cannot read `sal` or the ledger (rule 8). Reporting already reads both and serves contacts' figures |
+| 7 | **Bulk sending does not go through the branch's own mailbox by default**; how it does is **D-27** | A shop's Gmail or office mailbox has daily limits in the hundreds and gets blacklisted by a bulk send, taking its ordinary mail down with it. The design sends through an interface that either answer fills |
+| 8 | **Automation is a sequence of waits and sends with exit conditions**, not a flowchart editor | "Welcome, then a follow-up in three days unless they became a customer" covers what SMBs use; branching journeys are a later extension |
+
+#### Tables (`cus`, tenant-scoped, RLS)
+
+- **`cus.EmailTemplates`** — `Name`, `Subject`, `HtmlBody`, `TextBody`, merge fields
+  (`{{first_name}}`, `{{company}}`, `{{branch_name}}`, custom fields per TK-36), `IsActive`. Bodies are
+  sanitised on save with the same sanitiser Printing uses for templates.
+- **`cus.Audiences`** — `Name`, `Rules jsonb`: a list of conditions joined by AND, each one of
+  - leads: status, source, created between;
+  - contacts: is customer, is vendor, state, city, contact category;
+  - purchase history (from Reporting): last invoice before or after a date, total sales in a period
+    above or below an amount, bought an item category;
+  - custom-field values (TK-36);
+  - plus a manual include/exclude list.
+- **`cus.Campaigns`**
+
+| Column | Type | Notes |
+|---|---|---|
+| `CampaignId` | long | PK |
+| `Name` | string(150) | |
+| `Channel` | enum | `Email` |
+| `EmailTemplateId` | long | Copied into `SubjectSnapshot`/`BodySnapshot` when it sends, so editing the template later does not change what was sent |
+| `AudienceId` | long | |
+| `FromName`, `ReplyTo` | string | |
+| `Status` | enum | `Draft`, `Scheduled`, `Sending`, `Sent`, `Cancelled` |
+| `ScheduledAt` | timestamptz? | |
+| `SentAt` | timestamptz? | |
+
+- **`cus.CampaignRecipients`** — `CampaignId`, `LeadId?`, `ContactId?`, `ContactPersonId?`, `Email`,
+  `Status` (`Queued`, `Sent`, `Failed`, `Suppressed` — unsubscribed or invalid), `SentAt`,
+  `OpenedAt?`, `ClickedAt?`, `UnsubscribedAt?`, `FailureReason?`. Unique on (`CampaignId`, `Email`),
+  so one address gets one copy even when it appears as a lead and as a contact.
+- **`cus.EmailConsents`** — `Email` (lower-cased), `Status` (`Subscribed`, `Unsubscribed`, `Bounced`),
+  `Source` (`Unsubscribe link`, `Staff`, `Import`, `Bounce`), `ChangedAt`. Unique per branch and email.
+- **`cus.CampaignLinks`** — each link in a sent body, rewritten to a tracking redirect
+  (`/api/public/c/{token}`) that records the click and forwards.
+- **`cus.Automations`**, **`cus.AutomationSteps`** (`Sequence`, `Kind` = `Wait` (days) or `Send`
+  (template)), **`cus.AutomationEnrolments`** (`LeadId?`/`ContactId?`, `CurrentStep`, `NextRunAt`,
+  `Status` — `Active`, `Completed`, `Exited`). Triggers: lead created (optionally by source), lead
+  status changed to a value, contact became a customer. Exit conditions: unsubscribed, lead converted,
+  lead lost.
+
+#### Flow
+
+1. **Schedule** a campaign (`crm.edit`), or send now. It is refused if its template has no
+   unsubscribe placeholder or the audience resolves to nobody.
+2. At `ScheduledAt`, a hosted service in Customer claims the campaign (`Scheduled → Sending`, guarded
+   update), resolves the audience (asking Reporting's `POST internal/contacts/segment` for
+   purchase-history rules), removes unsubscribed and bounced addresses (`Suppressed`), freezes
+   `cus.CampaignRecipients`, and sends in batches at the rate the sending path allows, each with
+   message id `cmp-{campaignId}-{recipientId}`.
+3. **Delivery results** come back as an `EmailDelivered`/`EmailFailed` event from Notification (a
+   small addition to TK-19) and update the recipient; a hard bounce marks the consent `Bounced`.
+4. **Unsubscribe**: `GET/POST /api/public/unsubscribe/{token}` (anonymous; the token is signed and
+   names the branch and address) records `Unsubscribed` at once and shows a confirmation. The
+   `List-Unsubscribe-Post` one-click form hits the same endpoint.
+5. **Opens** are recorded by a tracking pixel and reported as approximate, because mail clients block
+   or pre-fetch pixels; **clicks** by the redirect, which is reliable.
+6. **Automations** run in the same hosted service: due enrolments advance one step, sending through
+   the same path with message id `aut-{enrolmentId}-{step}`.
+
+#### What a campaign reports
+
+Recipients, suppressed, sent, failed, opened (approximate), clicked, unsubscribed, and **conversions**:
+leads in the campaign converted to contacts within 30 days of the send, and those contacts' first
+posted invoice total (asked of Reporting). Shown on the campaign and as a report across campaigns.
+
+#### Permissions
+
+The existing `crm` module: `crm.view` to see campaigns and reports, `crm.edit` to build and schedule,
+`crm.approve` to send to an audience over a size the branch sets (so a draft cannot go to ten
+thousand addresses by one click).
+
 # --- Sales.md ---
 # SALES.md — the `sal` module, end to end
 
@@ -3737,3 +3835,8 @@ or the expense is disallowed for income tax until paid:
 - Composition scheme returns (CMP-08, GSTR-4) and the annual returns (GSTR-9, 9C) are not designed.
 - Income-tax computation and advance tax amounts are not designed; only their due dates are.
 
+---
+
+# CRM campaigns and marketing automation (TK-38)
+
+Written under the Customer service section near the top of this file ("Customer service (`cus`) — CRM and support" → "Campaigns and marketing automation"), as the card asked.
