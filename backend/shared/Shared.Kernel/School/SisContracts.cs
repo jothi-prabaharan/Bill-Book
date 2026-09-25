@@ -78,11 +78,49 @@ public sealed class AdmitStudentResponse
     public string AdmissionNo { get; set; } = null!;
 }
 
+/// <summary>Who is on a section's roll, and the school year it belongs to (S3, TK-63).</summary>
+public sealed class SectionRollRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long SectionId { get; set; }
+}
+
+public sealed class SectionRollResponse
+{
+    public bool SectionExists { get; set; }
+
+    public DateOnly YearStart { get; set; }
+
+    public DateOnly YearEnd { get; set; }
+
+    public bool YearIsClosed { get; set; }
+
+    public List<RollMember> Roll { get; set; } = [];
+}
+
+public sealed class RollMember
+{
+    public long EnrolmentId { get; set; }
+
+    public long StudentId { get; set; }
+
+    public string AdmissionNo { get; set; } = null!;
+
+    public string FullName { get; set; } = null!;
+
+    public int? RollNo { get; set; }
+}
+
 /// <summary>Sis refused the admit; <see cref="Message"/> is its sentence, safe to show.</summary>
 public sealed class SisRefusedException(string message) : Exception(message);
 
 public interface ISisClient
 {
+    Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct);
+
     Task<AcademicCheckResponse> CheckAsync(long? academicYearId, long? schoolClassId, long? sectionId, CancellationToken ct);
 
     /// <summary>Throws <see cref="SisRefusedException"/> for a refusal and <see cref="HttpRequestException"/> when Sis cannot be asked.</summary>
@@ -112,6 +150,18 @@ public sealed class HttpSisClient : ISisClient
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<AcademicCheckResponse>(ct) ?? new AcademicCheckResponse();
+    }
+
+    public async Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct)
+    {
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/sections/roll", new SectionRollRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+            SectionId = sectionId,
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<SectionRollResponse>(ct) ?? new SectionRollResponse();
     }
 
     public async Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct)

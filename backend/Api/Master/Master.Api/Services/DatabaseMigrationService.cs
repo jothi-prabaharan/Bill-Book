@@ -300,6 +300,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<TimeLeave.Repository.TimeLeaveDbContext>(connectionString, tenant, "tla", ct);
         await MigrateContextAsync<Sis.Repository.SisDbContext>(connectionString, tenant, "sis", ct);
         await MigrateContextAsync<Admission.Repository.AdmissionDbContext>(connectionString, tenant, "adm", ct);
+        await MigrateContextAsync<Attendance.Repository.AttendanceDbContext>(connectionString, tenant, "att", ct);
     }
 
     /// <summary>

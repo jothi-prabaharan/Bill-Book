@@ -2562,11 +2562,12 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
-  - [ ] A daily register per section, taking the roll from Sis.
-  - [ ] `lock` and `unlock`, where unlocking needs `attendance.unlock`.
+  - [x] A daily register per section, taking the roll from Sis.
+  - [x] `lock` and `unlock`, where unlocking needs `attendance.unlock`.
   - [ ] The register component: ask before building it if `ui-components` lacks one.
 - **Done when:** a locked day refuses an edit from a teacher and accepts one from `attendance.unlock`.
 - **Notes:**
+  - **Backend built (2026-09-25):** `backend/Api/Attendance` (schema `att`, port 4517, gateway `/api/student-attendance/**`, kept apart from HRMS's `/api/tla/attendance`): `StudentAttendance` (one mark per enrolment per day) and `AttendanceLock`; migration `InitialAttendanceSchema` with RLS on all three tables. The roll comes from Sis's new `internal/sis/sections/roll`, read at the moment of use; a day must be inside the section's open school year and not in the future. Saving a locked day, or locking it, needs `attendance.unlock` (423 otherwise); unlocking demands it on the route. Tests: `Attendance.Api.Tests.RegisterTests` (the *Done when*), `RegisterRuleTests`, schema, RLS and guard audits. The register screen waits on the question the card says to ask.
 
 ### TK-64 · S4: Fee (`fee`, port 4518)
 - [ ] open

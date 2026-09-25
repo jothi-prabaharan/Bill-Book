@@ -30,6 +30,9 @@ internal sealed class FakeSis : ISisClient
             YearExists = academicYearId is > 0, ClassExists = schoolClassId is > 0, SectionExists = sectionId is > 0, SectionMatches = SectionMatches,
         });
 
+    public Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct) =>
+        Task.FromResult(new SectionRollResponse());
+
     public Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct)
     {
         if (FailNextAdmits > 0)

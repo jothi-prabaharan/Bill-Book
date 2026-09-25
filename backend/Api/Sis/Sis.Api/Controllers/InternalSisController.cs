@@ -98,6 +98,40 @@ public sealed class InternalSisController : ControllerBase
         return Ok(new AdmitStudentResponse { StudentId = result.Id!.Value, AdmissionNo = number });
     }
 
+    /// <summary>A section's roll and its school year's dates, for the attendance register (S3, TK-63).</summary>
+    [HttpPost("sections/roll")]
+    public async Task<IActionResult> Roll([FromBody] SectionRollRequest request, CancellationToken ct)
+    {
+        if (!Apply(request.CustomerId, request.OrgId))
+        {
+            return BadRequest(new SisMessage("A customer and an organization are required."));
+        }
+
+        var db = _services.GetRequiredService<SisDbContext>();
+        var year = await (
+            from s in db.Sections.AsNoTracking()
+            join y in db.AcademicYears on s.AcademicYearId equals y.AcademicYearId
+            where s.SectionId == request.SectionId
+            select new { y.StartDate, y.EndDate, y.IsClosed }).FirstOrDefaultAsync(ct);
+        if (year is null)
+        {
+            return Ok(new SectionRollResponse { SectionExists = false });
+        }
+
+        List<RollEntry> roll = await _services.GetRequiredService<StudentService>().RollAsync(request.SectionId, ct);
+        return Ok(new SectionRollResponse
+        {
+            SectionExists = true,
+            YearStart = year.StartDate,
+            YearEnd = year.EndDate,
+            YearIsClosed = year.IsClosed,
+            Roll = [.. roll.Select(r => new RollMember
+            {
+                EnrolmentId = r.EnrolmentId, StudentId = r.StudentId, AdmissionNo = r.AdmissionNo, FullName = r.FullName, RollNo = r.RollNo,
+            })],
+        });
+    }
+
     private bool Apply(Guid customerId, Guid orgId) =>
         InternalTenant.Apply(_tenant, customerId, orgId) == InternalTenantOutcome.Applied;
 }
