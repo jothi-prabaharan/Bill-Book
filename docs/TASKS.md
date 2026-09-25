@@ -2629,7 +2629,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `WorkOrder.Api.Tests` with `WORKORDER_TEST_DB` from a dropped database.
 
 ### TK-67 · S7: Preventive (`ppm`, port 4521)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-PPM (new) · **Depends on:** TK-66 · **Decision:** —
 - **Tables:** `PreventivePlan`, `PreventiveOccurrence`.
 - **Sub-tasks:**
