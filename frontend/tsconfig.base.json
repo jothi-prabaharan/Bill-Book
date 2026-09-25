@@ -60,6 +60,8 @@
       "@bill-book/sales-ui": ["libs/sales/sales-ui/src/index.ts"],
       "@bill-book/payroll-core": ["libs/payroll/payroll-core/src/index.ts"],
       "@bill-book/payroll-ui": ["libs/payroll/payroll-ui/src/index.ts"],
+      "@bill-book/time-leave-core": ["libs/time-leave/time-leave-core/src/index.ts"],
+      "@bill-book/time-leave-ui": ["libs/time-leave/time-leave-ui/src/index.ts"],
       "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
       "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"]
     }

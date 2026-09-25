@@ -9,6 +9,7 @@ import {
 } from '@bill-book/auth';
 import { shellRoutes } from '@bill-book/app-shell';
 import { hrmRoutes } from '@bill-book/hrm-ui';
+import { timeLeaveRoutes } from '@bill-book/time-leave-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { HomePage } from './home/home.page';
 
@@ -32,6 +33,7 @@ export const appRoutes: Routes = [
       // The employee master and organisation setup (TK-48); the HRMS-only
       // pages among them name their app, and the shell refuses them elsewhere.
       ...hrmRoutes,
+      ...timeLeaveRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

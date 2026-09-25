@@ -70,7 +70,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Hrm", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+        ["Accounting", "Hrm", "TimeLeave", "Payroll", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
     /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
@@ -90,6 +90,16 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         if ((apps & (App.Hrms | App.Payroll | App.School)) != 0)
         {
             wanted.Add("Hrm");
+        }
+
+        if (apps.HasFlag(App.Hrms))
+        {
+            wanted.Add("TimeLeave");
+        }
+
+        if (apps.HasFlag(App.Payroll))
+        {
+            wanted.Add("Payroll");
         }
 
         if (apps.HasFlag(App.RetailErp))

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "time-leave-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/time-leave/time-leave-ui/src",
+  "tags": [
+    "scope:time-leave",
+    "type:ui"
+  ],
+  "targets": {}
+}

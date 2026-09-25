@@ -654,6 +654,9 @@ public class AdminDbContext : DbContext
 
         // H4 (TK-51).
         "payroll",
+
+        // H2, H3 (TK-49, TK-50).
+        "leave", "attendance",
     };
 
     /// <summary>
@@ -694,8 +697,8 @@ public class AdminDbContext : DbContext
         // that employ people on the books: HRMS, Payroll and School (TK-48).
         "employee" => App.Hrms | App.Payroll | App.School,
 
-        // Lifecycle, letters, assets and announcements are HRMS's own.
-        "hrm" => App.Hrms,
+        // Lifecycle, letters, assets, announcements, leave and attendance are HRMS's own.
+        "hrm" or "leave" or "attendance" => App.Hrms,
 
         // Payroll core, statutory, tax, runs (TK-51).
         "payroll" => App.Payroll,

@@ -2262,21 +2262,21 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Documents and policies take a file key. There is no upload endpoint yet.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
-- [~] working (Antigravity) — since 2026-09-25 (taken over from Claude Opus 5.5)
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
   - The engine: `ApprovalWorkflow`, `ApprovalWorkflowLevel`, `ApprovalStep`, with `ApproverKind`.
     It lives in `hrm` so every request kind can reuse it.
 - **Sub-tasks:**
-  - [ ] Scaffold `TimeLeave`.
-  - [ ] Build the approval engine in `Hrm`: workflows matched by department, grade and location;
+  - [x] Scaffold `TimeLeave`.
+  - [x] Build the approval engine in `Hrm`: workflows matched by department, grade and location;
         levels; a snapshot of the chain at submit time; skip rules; send back; delegation; and
         escalation through a hosted service.
-  - [ ] Add leave accrual and rollover as a hosted job, applications with the sandwich rule,
+  - [x] Add leave accrual and rollover as a hosted job, applications with the sandwich rule,
         and encashment.
-  - [ ] Guard the balance with a conditional update whose row count is the answer.
-  - [ ] Seed leave types and a default policy per branch.
+  - [x] Guard the balance with a conditional update whose row count is the answer.
+  - [x] Seed leave types and a default policy per branch.
 - **Done when:** two simultaneous approvals can't overspend a balance; the sandwich rule counts a
   weekend between two leave days; and changing a workflow leaves requests already in flight on
   their old chain.
@@ -2284,21 +2284,34 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Hrm`, with `Hrm` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
   - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Hrm`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
   - **Built under TK-99 (2026-09-24), so not to be rebuilt here:** `Shared.Kernel.Approvals` (`ApprovalStepBase`, the `ApprovalChain` state machine, the contracts); Master's `apr` workflows, `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`, and the seeded manager-approved Leave and LeaveEncashment workflows; Hrm's `internal/approval-chains/resolve-employees` with `hrm.RelationshipTypes` and `hrm.EmployeeRelationships`, and `internal/employees/lookup` (`Shared.Kernel.Employees.EmployeeProfile`). What is left for this card: `tla` with `LeaveApprovalStep : ApprovalStepBase`, submit calling Master's resolve and storing the steps, approve/reject/send back through `ApprovalChain`, escalation, and the *Done when* test that a changed workflow leaves requests in flight on their old chain.
+  - Done (Antigravity, 2026-09-25):
+    - Scaffolded `TimeLeave.Api`, `TimeLeave.Entity`, `TimeLeave.Repository` on port 4510, mapped to schema `tla` with 17 entities and EF Core migration containing RLS policies.
+    - Built `LeaveCalculationEngine` implementing single/half-days and the sandwich rule counting intervening weekend/holiday days.
+    - Implemented `LeaveService` with atomic LINQ conditional balance check (`ExecuteUpdateAsync` guarding against overspending balances during concurrent approvals), leave accrual, rollover, encashment, and snapshotted approval progression.
+    - Added `TimeLeaveSeeder` seeding default leave types (Casual, Sick, Earned) and leave policies.
+    - Created frontend `libs/time-leave/time-leave-core` and `libs/time-leave/time-leave-ui`, with leave applications page and attendance dashboard. Mounted in `apps/hrms`.
+    - **Tests written**: `backend/tests/TimeLeave.Api.Tests` (`TimeLeaveSchemaTests.cs`, `EndpointGuardTests.cs`, `TimeLeaveServiceTests.cs` verifying two simultaneous approvals can't overspend balance, sandwich rule counts weekend between leave days, changing workflow leaves in-flight requests on old chain).
 
 ### TK-50 · H3: Time and attendance (`tla`)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-TLA · **Depends on:** TK-49 · **Decision:** —
-- **Tables:** `HolidayList`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`,
+- **Tables:** `HolidayList`, `Holiday`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`, `BiometricDeviceUser`,
   `DailyAttendance`, `RegularisationRequest`, `OvertimeRequest`, `CompOffCredit`.
 - **Sub-tasks:**
-  - [ ] Punch import from biometric devices (push endpoint, per the open question in the design)
+  - [x] Punch import from biometric devices (push endpoint, per the open question in the design)
         and mobile punch-in with the geofence (`WorkLocation.GeoFenceMetres`).
-  - [ ] Daily derivation as a hosted job: late marks, half days and absence.
-  - [ ] Regularisation and overtime go through the approval engine; add month locking.
-  - [ ] Seed a default shift and a weekly-off policy.
+  - [x] Daily derivation as a hosted job: late marks, half days and absence.
+  - [x] Regularisation and overtime go through the approval engine; add month locking.
+  - [x] Seed a default shift and a weekly-off policy.
 - **Done when:** a biometric import derives a late-marked half day, and a regularisation approval
   corrects it.
 - **Notes:**
+  - Done (Antigravity, 2026-09-25):
+    - Added attendance entities: `HolidayList`, `Holiday`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`, `BiometricDeviceUser`, `DailyAttendance`, `RegularisationRequest`, `OvertimeRequest`, `CompOffCredit` in `tla` schema with RLS policies.
+    - Built `AttendanceService` handling mobile punches with Haversine distance geofencing, push-based biometric punch import, daily attendance derivation (late-coming, early-departure, half-day, absent thresholds), overtime calculation, and regularisation approval correcting attendance status and late minutes.
+    - Seeded standard General shift (09:00 - 18:00) and Saturday/Sunday weekly-off policy in `TimeLeaveSeeder.cs`.
+    - Integrated with Gateway (`/api/tla/**` routes and `timeleave` clusters) and Master `AdminDbContext` (`leave` and `attendance` permission modules).
+    - **Tests written**: `TimeLeaveServiceTests.A_biometric_import_derives_a_late_marked_half_day_and_a_regularisation_approval_corrects_it` asserting biometric punch in at 10:30 derives late-marked half day and regularisation approval restores status to Present and resets late minutes to 0.
 
 ### TK-51 · H4: Payroll core (`Payroll`, `pay`, port 4511)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run

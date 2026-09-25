@@ -296,6 +296,8 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", ct);
         await MigrateContextAsync<ReportingDbContext>(connectionString, tenant, "rpt", ct);
         await MigrateContextAsync<SalesDbContext>(connectionString, tenant, "sal", ct);
+        await MigrateContextAsync<Payroll.Repository.PayrollDbContext>(connectionString, tenant, "pay", ct);
+        await MigrateContextAsync<TimeLeave.Repository.TimeLeaveDbContext>(connectionString, tenant, "tla", ct);
     }
 
     /// <summary>

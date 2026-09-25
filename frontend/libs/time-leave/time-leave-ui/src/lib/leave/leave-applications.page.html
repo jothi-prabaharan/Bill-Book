@@ -1,0 +1,111 @@
+<div class="page-head">
+  <h1>Leave Applications & Balances</h1>
+  <button class="btn btn-primary" (click)="openApplyModal()">Apply Leave</button>
+</div>
+
+@if (loading()) {
+  <p>Loading leave information...</p>
+} @else {
+  <!-- Leave Balances Cards -->
+  <div class="fields">
+    @for (b of balances(); track b.leaveBalanceId) {
+      <div class="sheet" style="margin-top: 0">
+        <h3>{{ b.leaveTypeName }} ({{ b.leaveTypeCode }})</h3>
+        <p><strong>Available:</strong> {{ b.available }} days</p>
+        <p><small>Opening: {{ b.opening }} | Accrued: {{ b.accrued }} | Taken: {{ b.taken }}</small></p>
+      </div>
+    }
+  </div>
+
+  @if (showForm()) {
+    <div class="sheet">
+      <h3>Apply for Leave</h3>
+      <div class="fields">
+        <label>
+          Leave Type
+          <select [(ngModel)]="form.leaveTypeId">
+            @for (t of leaveTypes(); track t.leaveTypeId) {
+              <option [value]="t.leaveTypeId">{{ t.name }} ({{ t.code }})</option>
+            }
+          </select>
+        </label>
+        <label>
+          From Date
+          <input type="date" [(ngModel)]="form.fromDate" />
+        </label>
+        <label>
+          From Half
+          <select [(ngModel)]="form.fromHalf">
+            <option value="Full">Full Day</option>
+            <option value="FirstHalf">First Half</option>
+            <option value="SecondHalf">Second Half</option>
+          </select>
+        </label>
+        <label>
+          To Date
+          <input type="date" [(ngModel)]="form.toDate" />
+        </label>
+        <label>
+          To Half
+          <select [(ngModel)]="form.toHalf">
+            <option value="Full">Full Day</option>
+            <option value="FirstHalf">First Half</option>
+            <option value="SecondHalf">Second Half</option>
+          </select>
+        </label>
+        <label style="grid-column: 1 / -1">
+          Reason
+          <input type="text" [(ngModel)]="form.reason" placeholder="Reason for leave" />
+        </label>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn" (click)="closeModal()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitApplication()" [disabled]="!form.reason">Submit Application</button>
+      </div>
+    </div>
+  }
+
+  <!-- Applications Table -->
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Leave Type</th>
+          <th>From</th>
+          <th>To</th>
+          <th>Days</th>
+          <th>Reason</th>
+          <th>Status</th>
+          <th>Approval Step</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (app of applications(); track app.leaveApplicationId) {
+          <tr>
+            <td>{{ app.leaveTypeName }}</td>
+            <td>{{ app.fromDate }}</td>
+            <td>{{ app.toDate }}</td>
+            <td>{{ app.days }}</td>
+            <td>{{ app.reason }}</td>
+            <td>
+              <span class="badge" [ngClass]="'status-' + app.leaveStatus.toLowerCase()">
+                {{ app.leaveStatus }}
+              </span>
+            </td>
+            <td>{{ app.currentStepLabel || '-' }}</td>
+            <td>
+              @if (app.leaveStatus === 'Submitted') {
+                <button class="btn btn-sm btn-primary" (click)="approve(app)">Approve</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8">No leave applications found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "time-leave-core",
+  "projectType": "library",
+  "sourceRoot": "libs/time-leave/time-leave-core/src",
+  "tags": [
+    "scope:time-leave",
+    "type:core"
+  ],
+  "targets": {}
+}

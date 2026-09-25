@@ -1,0 +1,86 @@
+<div class="page-head">
+  <h1>Attendance Dashboard</h1>
+</div>
+
+@if (loading()) {
+  <p>Loading attendance data...</p>
+} @else {
+  @if (showRegularise()) {
+    <div class="sheet">
+      <h3>Regularise Attendance - {{ regForm.attendanceDate }}</h3>
+      <div class="fields">
+        <label>
+          Status
+          <select [(ngModel)]="regForm.requestedStatus">
+            <option value="Present">Present</option>
+            <option value="HalfDay">Half Day</option>
+            <option value="OnDuty">On Duty</option>
+          </select>
+        </label>
+        <label>
+          In Time
+          <input type="datetime-local" [(ngModel)]="regForm.requestedIn" />
+        </label>
+        <label>
+          Out Time
+          <input type="datetime-local" [(ngModel)]="regForm.requestedOut" />
+        </label>
+        <label style="grid-column: 1 / -1">
+          Reason
+          <input type="text" [(ngModel)]="regForm.reason" placeholder="Reason for regularisation" />
+        </label>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn" (click)="closeRegularise()">Cancel</button>
+        <button class="btn btn-primary" (click)="submitRegularisation()" [disabled]="!regForm.reason">Submit</button>
+      </div>
+    </div>
+  }
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Shift</th>
+          <th>First In</th>
+          <th>Last Out</th>
+          <th>Worked</th>
+          <th>Late</th>
+          <th>Early Out</th>
+          <th>Status</th>
+          <th>Source</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (att of attendances(); track att.dailyAttendanceId) {
+          <tr>
+            <td>{{ att.attendanceDate }}</td>
+            <td>{{ att.shiftName || 'General' }}</td>
+            <td>{{ att.firstIn ? (att.firstIn | date:'shortTime') : '-' }}</td>
+            <td>{{ att.lastOut ? (att.lastOut | date:'shortTime') : '-' }}</td>
+            <td>{{ att.workedMinutes }}m</td>
+            <td [style.color]="att.lateMinutes > 0 ? 'red' : 'inherit'">{{ att.lateMinutes }}m</td>
+            <td>{{ att.earlyOutMinutes }}m</td>
+            <td>
+              <span class="badge" [ngClass]="'status-' + att.attendanceStatus.toLowerCase()">
+                {{ att.attendanceStatus }}
+              </span>
+            </td>
+            <td>{{ att.attendanceSource }}</td>
+            <td>
+              @if (!att.isLocked) {
+                <button class="btn btn-sm" (click)="openRegularise(att)">Regularise</button>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="10">No attendance records found for this period.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
