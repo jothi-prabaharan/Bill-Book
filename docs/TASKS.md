@@ -1695,7 +1695,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
+- **Issue:** [#80](https://github.com/jothi-prabaharan/Bill-Book/issues/80)
 - **Lanes:** L-SAL, L-PRT, L-SAL-UI · **Depends on:** TK-91 · **Decision:** —
 - **Where:** `InvoiceService.PostAsync` / `VoidAsync`, `CreditNoteService`, `InvoicePrintService`, `Shared.Kernel.Printing.PlaceholderCatalog`.
 - **Sub-tasks:**
