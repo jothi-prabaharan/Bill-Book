@@ -2514,18 +2514,28 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: none beyond the tests. `apps/school` is in neither `deploy/azure` nor `deploy/local`, like `apps/hrms`.
 
 ### TK-61 · S1: Sis (`sis`, port 4515)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-SIS (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`,
   `Enrolment`, `Exam`.
 - **Sub-tasks:**
-  - [ ] Scaffold the service; seed `SchoolClass` LKG–XII per branch.
-  - [ ] CRUD for years, classes, sections and subjects.
-  - [ ] Students with guardians, where each guardian is a `con` contact validated through Master's API.
-  - [ ] Enrolment.
+  - [x] Scaffold the service; seed `SchoolClass` LKG–XII per branch.
+  - [x] CRUD for years, classes, sections and subjects.
+  - [x] Students with guardians, where each guardian is a `con` contact validated through Master's API.
+  - [x] Enrolment.
 - **Done when:** a student is admitted directly, enrolled in a section and listed; RLS and the
   guard audit pass from a dropped database.
 - **Notes:**
+  - **As built (2026-09-25):**
+    - `backend/Api/Sis` (schema `sis`, port 4515, gateway `/api/sis/**`): `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`, `Enrolment`, `Exam`, `ExamSubject`, `ExamMark`. Migration `InitialSisSchema` with RLS on all eleven tables (ErrorLogs included). Master migrates `sis` into every shard and seeds it for School branches (`HttpTenantSeeder.SchoolServices`).
+    - Seed per branch: classes LKG–XII and the `ADM` series (TK-60's numbering sub-task, for Sis).
+    - Guardians are checked through Master's new `internal/contacts/lookup` (`Shared.Kernel.Contacts.IContactDirectory`, reused by Fee and Amc): an active contact of the branch with `IsGuardian`, one or two per student, exactly one primary (a filtered unique index too).
+    - `Student.SourceApplicationId` is unique per branch and `StudentService.CreateAsync(…, sourceApplicationId)` returns the existing student, ready for TK-62's idempotent admit.
+    - Exams: Planned → MarksOpen → Published (→ MarksOpen for a correction) → Locked; marks only while MarksOpen and only for the class's students in the exam's year. Moving an exam takes `sis.approve`; marks take `sis.edit`.
+    - `libs/sis/{sis-core, sis-ui}`: students list, student record (guardians, enrolment), academic setup, exams and marks; mounted in `apps/school`. Menu rows 11, 119, 1111–1113 switched on (migration `SisMenus`).
+    - Tests: `Sis.Api.Tests` (schema and RLS audit, guard audit, `StudentServiceTests` including the *Done when*, `StudentRuleTests`, `ExamRuleTests`, `ExamServiceTests`); `sis-rules.spec.ts`; `sis.routes.spec.ts`. `Master.Api.Tests.SeedingPerAppTests` gains the School case and is corrected for Payroll, which TK-51 added to the seeder without updating it.
+    - Also: Master's `Seeding` config gains `TimeLeave` and `Payroll`, which TK-49/TK-51 left out, so every HRMS or Payroll branch was reported as failing to seed.
+    - Owner step: run `Sis.Api.Tests` with `SIS_TEST_DB` from a dropped database. `Sis` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)
 - [ ] open

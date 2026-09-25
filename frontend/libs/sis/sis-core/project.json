@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "sis-core",
+  "projectType": "library",
+  "sourceRoot": "libs/sis/sis-core/src",
+  "tags": [
+    "scope:sis",
+    "type:core"
+  ],
+  "targets": {}
+}

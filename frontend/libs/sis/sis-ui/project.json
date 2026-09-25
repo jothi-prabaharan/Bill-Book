@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "sis-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/sis/sis-ui/src",
+  "tags": [
+    "scope:sis",
+    "type:ui"
+  ],
+  "targets": {}
+}

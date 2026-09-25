@@ -43,6 +43,11 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     private readonly IServiceProvider _services;
     private readonly ILogger<HttpTenantSeeder> _log;
 
+    /// <summary>School's own services (S1 onward), in seeding order: each is added as its stage is built.</summary>
+    public static readonly string[] SchoolServices = ["Sis"];
+
+    // After SchoolServices, which it spreads: static fields initialise in order.
+
     /// <summary>
     /// Accounting first: its control accounts are what the others' sub-accounts
     /// hang beneath, and it owns the numbering-series table the rest write into.
@@ -70,7 +75,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Hrm", "TimeLeave", "Payroll", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+        ["Accounting", "Hrm", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
     /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
@@ -100,6 +105,11 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         if (apps.HasFlag(App.Payroll))
         {
             wanted.Add("Payroll");
+        }
+
+        if (apps.HasFlag(App.School))
+        {
+            wanted.UnionWith(SchoolServices);
         }
 
         if (apps.HasFlag(App.RetailErp))

@@ -1,0 +1,80 @@
+<header class="page-head">
+  <h1>{{ admissionNo() ?? 'New student' }}</h1>
+  <a routerLink="/sis/students" class="btn btn-ghost">Back to students</a>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+<section class="sheet" aria-labelledby="student-details">
+  <h2 id="student-details">Details</h2>
+  <div class="fields">
+    <bb-text-input label="First name" [(ngModel)]="form.firstName" maxlength="100" [required]="true" />
+    <bb-text-input label="Last name" [(ngModel)]="form.lastName" maxlength="100" />
+    <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" />
+    <bb-select label="Gender" [options]="genders" [(ngModel)]="form.gender" [clearable]="false" />
+    <bb-date-input label="Admission date" [(ngModel)]="form.admissionDate" [required]="true" />
+    <bb-select label="Status" [options]="statuses" [(ngModel)]="form.studentStatus" [clearable]="false" />
+    @if (form.studentStatus !== 'Active') {
+      <bb-date-input label="Leaving date" [(ngModel)]="form.leavingDate" [required]="true" />
+    }
+    <bb-text-input label="Blood group" [(ngModel)]="form.bloodGroup" maxlength="5" />
+    <bb-text-input label="APAAR or Aadhaar" hint="Hidden on every list except its last four characters." [(ngModel)]="form.nationalId" maxlength="20" />
+  </div>
+</section>
+
+<section class="sheet" aria-labelledby="student-guardians">
+  <h2 id="student-guardians">Guardians</h2>
+  <p class="muted">One or two guardian contacts. The primary guardian receives the fee demands. Add a guardian first under Contacts, with Guardian ticked.</p>
+  <div class="rows">
+    @for (g of form.guardians; track $index; let i = $index) {
+      <div class="row">
+        <bb-select label="Guardian" [options]="guardianOptions()" [(ngModel)]="g.contactId" [clearable]="false" />
+        <bb-select label="Relationship" [options]="relationships" [(ngModel)]="g.relationship" [clearable]="false" />
+        <bb-checkbox text="Primary" [ngModel]="g.isPrimary" (ngModelChange)="makePrimary(g)" />
+        <bb-checkbox text="Parent portal" [(ngModel)]="g.hasPortalAccess" />
+        <button type="button" class="link" (click)="removeGuardian(i)">Remove</button>
+      </div>
+    }
+  </div>
+  @if (form.guardians.length < 2) {
+    <button type="button" class="btn btn-ghost" (click)="addGuardian()">+ Add guardian</button>
+  }
+</section>
+
+@if (studentId() === null) {
+  <section class="sheet" aria-labelledby="student-enrol">
+    <h2 id="student-enrol">Enrolment</h2>
+    <bb-checkbox text="Enrol in a section now" [(ngModel)]="enrolNow" />
+    @if (enrolNow) {
+      <div class="fields">
+        <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="enrol.academicYearId" (ngModelChange)="yearChosen($event)" />
+        <bb-select label="Section" [options]="sectionOptions()" [(ngModel)]="enrol.sectionId" />
+        <bb-number-input label="Roll number" [(ngModel)]="enrol.rollNo" />
+      </div>
+    }
+  </section>
+} @else {
+  <section class="sheet" aria-labelledby="student-enrolments">
+    <h2 id="student-enrolments">Enrolments</h2>
+    @if (enrolments().length === 0) {
+      <p class="muted">Not enrolled yet.</p>
+    }
+    <ul>
+      @for (e of enrolments(); track e.enrolmentId) {
+        <li>{{ e.academicYearCode }}: {{ e.className }} {{ e.sectionName }}@if (e.rollNo) {, roll {{ e.rollNo }}} ({{ e.enrolmentStatus }})</li>
+      }
+    </ul>
+    <div *bbIfCan="'sis.create'" class="fields">
+      <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="enrol.academicYearId" (ngModelChange)="yearChosen($event)" />
+      <bb-select label="Section" [options]="sectionOptions()" [(ngModel)]="enrol.sectionId" />
+      <bb-number-input label="Roll number" [(ngModel)]="enrol.rollNo" />
+      <button type="button" class="btn btn-ghost" (click)="enrolExisting()" [disabled]="busy()">Enrol</button>
+    </div>
+  </section>
+}
+
+<div class="sheet-actions">
+  <button *bbIfCan="studentId() === null ? 'sis.create' : 'sis.edit'" type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">
+    Save
+  </button>
+</div>

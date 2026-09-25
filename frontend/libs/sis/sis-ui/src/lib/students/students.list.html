@@ -1,0 +1,23 @@
+<header class="page-head">
+  <h1>Students</h1>
+  <button *bbIfCan="'sis.create'" type="button" class="btn btn-primary" (click)="add()">+ New student</button>
+</header>
+
+<div class="fields">
+  <bb-text-input label="Search" placeholder="Name or admission number" [(ngModel)]="search" (keyup.enter)="load()" />
+  <bb-select label="Status" [options]="statusOptions" [(ngModel)]="status" (ngModelChange)="load()" />
+  <bb-select label="Section" placeholder="Every section this year" [options]="sections()" [(ngModel)]="sectionId" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<p class="muted">{{ rows().length }} {{ rows().length === 1 ? 'student' : 'students' }}</p>
+
+<bb-data-grid [gridCode]="'SIS_STUDENTS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="admissionNo" let-row>
+    <button type="button" class="link" (click)="open(row)"><code>{{ row.admissionNo }}</code></button>
+  </ng-template>
+  <ng-template bbCellTemplate="className" let-row>{{ row.className ?? '—' }}</ng-template>
+  <ng-template bbCellTemplate="sectionName" let-row>{{ row.sectionName ?? '—' }}</ng-template>
+  <ng-template bbCellTemplate="rollNo" let-row>{{ row.rollNo ?? '—' }}</ng-template>
+</bb-data-grid>

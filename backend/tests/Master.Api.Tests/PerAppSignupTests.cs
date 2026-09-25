@@ -200,15 +200,27 @@ public sealed class SeedingPerAppTests
     public void The_trading_services_and_contacts_are_retail_only()
     {
         // Hrm (TK-48) for any app that employs people, right after Accounting.
-        Assert.Equal(["Accounting", "Hrm", "Printing"], HttpTenantSeeder.ServicesFor(App.Payroll));
+        Assert.Equal(["Accounting", "Hrm", "Payroll", "Printing"], HttpTenantSeeder.ServicesFor(App.Payroll));
         Assert.Equal(["Accounting", "Printing"], HttpTenantSeeder.ServicesFor(App.None));
         Assert.Equal(
             ["Accounting", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"],
             HttpTenantSeeder.ServicesFor(App.RetailErp));
         Assert.Equal(
-            ["Accounting", "Hrm", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"],
+            ["Accounting", "Hrm", "Payroll", "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"],
             HttpTenantSeeder.ServicesFor(App.RetailErp | App.Payroll));
         Assert.False(HttpTenantSeeder.SeedsContacts(App.Hrms | App.Payroll));
         Assert.True(HttpTenantSeeder.SeedsContacts(App.School));
+    }
+
+    /// <summary>School seeds the employee master and its own services, never the trading ones (TK-61).</summary>
+    [Fact]
+    public void School_seeds_its_own_services_and_not_the_trading_ones()
+    {
+        IReadOnlyList<string> services = HttpTenantSeeder.ServicesFor(App.School);
+
+        Assert.Contains("Hrm", services);
+        Assert.All(HttpTenantSeeder.SchoolServices, s => Assert.Contains(s, services));
+        Assert.DoesNotContain("Sales", services);
+        Assert.DoesNotContain("Sis", HttpTenantSeeder.ServicesFor(App.RetailErp | App.Hrms | App.Payroll));
     }
 }

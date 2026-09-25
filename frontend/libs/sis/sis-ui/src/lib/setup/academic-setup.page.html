@@ -1,0 +1,86 @@
+<header class="page-head">
+  <h1>Academic setup</h1>
+  <button *bbIfCan="'sis.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ Add</button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Academic setup">
+  @for (t of tabs; track t.tab) {
+    <button type="button" role="tab" [attr.aria-selected]="t.tab === tab()" (click)="choose(t.tab)">{{ t.label }}</button>
+  }
+</nav>
+
+<bb-message-box [messages]="messages()" />
+
+@switch (tab()) {
+  @case ('years') {
+    <bb-data-grid [gridCode]="'SIS_YEARS'" [columns]="yearColumns" [data]="years()">
+      <ng-template bbCellTemplate="isCurrent" let-row>{{ row.isCurrent ? 'Current' : row.isClosed ? 'Closed' : 'Open' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editYear(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+  @case ('classes') {
+    <bb-data-grid [gridCode]="'SIS_CLASSES'" [columns]="classColumns" [data]="classes()">
+      <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editClass(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+  @case ('sections') {
+    <bb-data-grid [gridCode]="'SIS_SECTIONS'" [columns]="sectionColumns" [data]="sections()">
+      <ng-template bbCellTemplate="capacity" let-row>{{ row.capacity ?? '—' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editSection(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+  @default {
+    <bb-data-grid [gridCode]="'SIS_SUBJECTS'" [columns]="subjectColumns" [data]="subjects()">
+      <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="editSubject(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+}
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="setup-sheet-title">
+    <h2 id="setup-sheet-title">{{ editingId() === null ? 'New' : 'Edit' }}</h2>
+    <div class="fields">
+      @switch (tab()) {
+        @case ('years') {
+          <bb-text-input label="Year" placeholder="2026-27" [(ngModel)]="yearForm.code" maxlength="20" />
+          <bb-date-input label="Starts" [(ngModel)]="yearForm.startDate" />
+          <bb-date-input label="Ends" [(ngModel)]="yearForm.endDate" />
+          <bb-checkbox text="Current year" [(ngModel)]="yearForm.isCurrent" />
+          <bb-checkbox text="Closed" hint="A closed year takes no new enrolments, attendance or marks." [(ngModel)]="yearForm.isClosed" />
+        }
+        @case ('classes') {
+          <bb-text-input label="Code" [(ngModel)]="classForm.code" maxlength="20" [uppercase]="true" />
+          <bb-text-input label="Name" [(ngModel)]="classForm.name" maxlength="100" />
+          <bb-number-input label="Order" hint="Promotion goes to the next class in order." [(ngModel)]="classForm.sortOrder" />
+          <bb-checkbox text="Active" [(ngModel)]="classForm.isActive" />
+        }
+        @case ('sections') {
+          <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="sectionForm.academicYearId" [clearable]="false" />
+          <bb-select label="Class" [options]="classOptions()" [(ngModel)]="sectionForm.schoolClassId" [clearable]="false" />
+          <bb-text-input label="Section" placeholder="A" [(ngModel)]="sectionForm.name" maxlength="20" [uppercase]="true" />
+          <bb-number-input label="Capacity" hint="Blank means no limit. A full section refuses the next enrolment." [(ngModel)]="sectionForm.capacity" />
+        }
+        @default {
+          <bb-text-input label="Code" [(ngModel)]="subjectForm.code" maxlength="20" [uppercase]="true" />
+          <bb-text-input label="Name" [(ngModel)]="subjectForm.name" maxlength="100" />
+          <bb-select label="Kind" [options]="subjectKinds" [(ngModel)]="subjectForm.subjectKind" [clearable]="false" />
+          <bb-checkbox text="Active" [(ngModel)]="subjectForm.isActive" />
+        }
+      }
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

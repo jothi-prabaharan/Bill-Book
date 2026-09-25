@@ -10,6 +10,7 @@ import {
 import { shellRoutes } from '@bill-book/app-shell';
 import { hrmRoutes } from '@bill-book/hrm-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
+import { sisRoutes } from '@bill-book/sis-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -39,6 +40,8 @@ export const appRoutes: Routes = [
         data: { access: { permission: 'contacts.view' } },
       },
       ...hrmRoutes,
+      // Students, academic setup, exams and marks (S1, TK-61).
+      ...sisRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

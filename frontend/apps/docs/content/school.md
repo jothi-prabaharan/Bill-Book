@@ -1,6 +1,6 @@
 # School
 
-**Status: partial.** The School app, its roles and guardian contacts are built. Students, admissions, attendance, fees and maintenance are added as each stage is built.
+**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams and marks are built. Admissions, attendance, fees and maintenance are added as each stage is built.
 
 School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
 
@@ -28,6 +28,41 @@ A student's parent or guardian is a **contact**. It is the same contact master R
 
 The Guardian checkbox and filter appear only in the School app. A student is not a contact; students are recorded under Students.
 
+## Academic setup
+
+**Students › Academic setup** holds four lists:
+
+| List | What it is |
+|---|---|
+| **School years** | `2026-27`, with start and end dates. Years in a branch never overlap. One year is **current**: making another current takes it off the old one. A **closed** year takes no new sections, enrolments or exams. |
+| **Classes** | LKG to XII, set up when the branch is created. **Order** decides promotion. Deactivate the classes you don't teach. |
+| **Sections** | A class in one year, such as VI-A in 2026-27. A **capacity** is a hard limit: a full section refuses the next enrolment. A section with students cannot move to another year or class. |
+| **Subjects** | Core, language, elective or co-curricular. |
+
+## Students
+
+**Students › Students › New student** records a student admitted directly. The admission number comes from the **ADM** series (ADM-00001, ADM-00002, …), set under **Settings › Number series**, and is never reused.
+
+- A student needs **one or two guardians**, chosen from the guardian contacts, with exactly one marked **primary**. The primary guardian receives the fee demands. Add a guardian first under **Contacts**, with **Guardian** ticked.
+- A new student can be **enrolled** in a section in the same save. An existing student is enrolled from their record. A student is enrolled once per school year, in a section of that year, and a roll number is used once per section.
+- A student who leaves (alumni, withdrawn or transferred) needs a leaving date.
+- The APAAR or Aadhaar number is hidden on the list except its last four characters.
+
+The list shows the current year's class, section and roll number. Choose a section to see its roll.
+
+## Exams and marks
+
+**Students › Exams and marks** plans an exam with its subjects for each class, with maximum and pass marks. An exam moves through four states:
+
+| State | What it means |
+|---|---|
+| **Planned** | The exam and its subjects can still be changed. |
+| **Open for marks** | Teachers enter marks, by subject and section. A student can be marked absent. |
+| **Published** | The marks are final and can be shown to parents. A published exam can be reopened for a correction. |
+| **Locked** | Final. Nothing changes. |
+
+Entering marks needs *Students: edit*, which teachers hold. Opening, publishing and locking an exam need *Students: approve*.
+
 ## The School app
 
-The School app has the shared settings screens, the employee master (**People**) and **Contacts**. Its Students, Fees and Maintenance sections appear as each is built. HRMS-only screens, such as announcements and policies, are not shown in School.
+The School app has the shared settings screens, the employee master (**People**) and **Contacts**. Its **Students** section is built. Fees and Maintenance appear as each is built. HRMS-only screens, such as announcements and policies, are not shown in School.

@@ -1,0 +1,80 @@
+<header class="page-head">
+  <h1>Exams and marks</h1>
+  <button *bbIfCan="'sis.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ New exam</button>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'SIS_EXAMS'" [columns]="columns" [data]="exams()">
+  <ng-template bbCellTemplate="examStatus" let-row>{{ label(row.examStatus) }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.examStatus === 'Planned') {
+      <button *bbIfCan="'sis.edit'" type="button" class="link" (click)="startEdit(row)">Edit</button>
+    }
+    @if (row.examStatus !== 'Planned') {
+      <button type="button" class="link" (click)="openMarks(row)">Marks</button>
+    }
+    @for (to of next(row); track to) {
+      <button *bbIfCan="'sis.approve'" type="button" class="link" (click)="move(row, to)" [disabled]="busy()">{{ statusLabels[to] }}</button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="exam-sheet-title">
+    <h2 id="exam-sheet-title">{{ editingId() === null ? 'New exam' : 'Edit exam' }}</h2>
+    <div class="fields">
+      <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="form.academicYearId" [clearable]="false" />
+      <bb-text-input label="Name" placeholder="Term 1" [(ngModel)]="form.name" maxlength="100" />
+      <bb-date-input label="Starts" [(ngModel)]="form.startDate" />
+      <bb-date-input label="Ends" [(ngModel)]="form.endDate" />
+    </div>
+    <h3>Subjects</h3>
+    <div class="rows">
+      @for (s of form.subjects; track $index; let i = $index) {
+        <div class="row">
+          <bb-select label="Class" [options]="classOptions()" [(ngModel)]="s.schoolClassId" [clearable]="false" />
+          <bb-select label="Subject" [options]="subjectOptions()" [(ngModel)]="s.subjectId" [clearable]="false" />
+          <bb-number-input label="Maximum marks" [(ngModel)]="s.maxMarks" />
+          <bb-number-input label="Pass marks" [(ngModel)]="s.passMarks" />
+          <button type="button" class="link" (click)="removeSubject(i)">Remove</button>
+        </div>
+      }
+    </div>
+    <button type="button" class="btn btn-ghost" (click)="addSubject()">+ Add subject</button>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}
+
+@if (marksExam(); as exam) {
+  <section class="sheet" aria-labelledby="marks-sheet-title">
+    <h2 id="marks-sheet-title">Marks: {{ exam.name }} ({{ statusLabels[exam.examStatus] }})</h2>
+    <div class="fields">
+      <bb-select label="Subject" [options]="examSubjectOptions()" [(ngModel)]="marksSubjectId" (ngModelChange)="marksSectionId = null; markRows.set([])" />
+      <bb-select label="Section" [options]="marksSections()" [(ngModel)]="marksSectionId" (ngModelChange)="loadMarks()" />
+    </div>
+    @if (markRows().length > 0) {
+      <p class="muted">Out of {{ maxMarks() }}.</p>
+      <div class="rows">
+        @for (r of markRows(); track r.enrolmentId) {
+          <div class="row">
+            <span>{{ r.rollNo ?? '—' }}. {{ r.studentName }}</span>
+            <bb-number-input label="Marks" [(ngModel)]="r.marks" [disabled]="r.isAbsent || exam.examStatus !== 'MarksOpen'" />
+            <bb-checkbox text="Absent" [(ngModel)]="r.isAbsent" [disabled]="exam.examStatus !== 'MarksOpen'" />
+          </div>
+        }
+      </div>
+      @if (exam.examStatus === 'MarksOpen') {
+        <div class="sheet-actions">
+          <button *bbIfCan="'sis.edit'" type="button" class="btn btn-primary" (click)="saveMarks()" [disabled]="busy()">Save marks</button>
+        </div>
+      }
+    }
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="marksExam.set(null)">Close</button>
+    </div>
+  </section>
+}
