@@ -1747,7 +1747,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-93 · E-way bill: by IRN and standalone for challans
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
+- **Issue:** [#81](https://github.com/jothi-prabaharan/Bill-Book/issues/81)
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** TK-92 · **Decision:** —
 - **Where:** `DeliveryChallanService`, `sal.DeliveryChallans.EwayBillNo`/`EwayBillDate`, the design's Flow steps 6 and 7.
 - **Sub-tasks:**
