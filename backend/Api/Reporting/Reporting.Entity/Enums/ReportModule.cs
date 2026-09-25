@@ -14,4 +14,11 @@ public enum ReportModule
     Sales = 4,
     Purchase = 5,
     FixedAssets = 6,
+    People = 7,
+    Time = 8,
+    Leave = 9,
+    Pay = 10,
+    Statutory = 11,
+    Recruitment = 12,
+    Claims = 13,
 }

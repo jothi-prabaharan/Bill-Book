@@ -55,6 +55,7 @@ public sealed class ReportCatalogService
                     ReportKey = r.ReportKey,
                     Title = r.Title,
                     Module = r.Module,
+                    App = _sources[r.ReportKey].App,
                     Description = r.Description,
                     SortOrder = r.SortOrder,
                 }),
@@ -87,6 +88,7 @@ public sealed class ReportCatalogService
             ReportKey = source.ReportKey,
             Title = source.Title,
             Module = source.Module,
+            App = source.App,
             Parameters =
             [
                 .. source.Parameters.Select(p => new ReportParameterView

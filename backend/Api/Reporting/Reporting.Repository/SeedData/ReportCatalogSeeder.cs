@@ -1431,6 +1431,742 @@ public sealed class ReportCatalogSeeder
                 new("fixedAssetId", "Asset", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
             ],
         },
+
+        // ---- HRMS & Payroll Reports (TK-59) ----
+        new()
+        {
+            ReportKey = "headcount-summary",
+            Title = "Headcount Summary",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Headcount breakdown by department, designation, grade, location, employment type, gender and status.",
+            SortOrder = 701,
+            Columns =
+            [
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("designation", "Designation", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("grade", "Grade", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("workLocation", "Work Location", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("employmentType", "Employment Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("gender", "Gender", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("headcount", "Headcount", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "joiners-leavers",
+            Title = "Joiners and Leavers",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Employees joining or leaving the organization with dates and designations.",
+            SortOrder = 702,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("designation", "Designation", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("eventType", "Event Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("eventDate", "Event Date", ColumnDataType.Date, IsDefault: true),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "attrition-rate",
+            Title = "Attrition Rate",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Attrition analysis by department and location.",
+            SortOrder = 703,
+            Columns =
+            [
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("workLocation", "Work Location", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("totalHeadcount", "Total Headcount", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("activeCount", "Active Count", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("exitedCount", "Exited Count", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "probation-due",
+            Title = "Probation Due",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Employees currently on probation or due for confirmation.",
+            SortOrder = 704,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("designation", "Designation", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("joiningDate", "Joining Date", ColumnDataType.Date, IsDefault: true),
+                new("probationEndDate", "Probation End Date", ColumnDataType.Date, IsDefault: true),
+                new("confirmationDate", "Confirmation Date", ColumnDataType.Date, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "birthdays-anniversaries",
+            Title = "Birthdays and Work Anniversaries",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Employee birthdays and work anniversaries.",
+            SortOrder = 705,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("designation", "Designation", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("dateOfBirth", "Date of Birth", ColumnDataType.Date, IsDefault: true),
+                new("joiningDate", "Joining Date", ColumnDataType.Date, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "document-expiry",
+            Title = "Document Expiry",
+            Module = ReportModule.People,
+            RequiredPermission = "employee.view",
+            Description = "Employee documents and their expiration status.",
+            SortOrder = 706,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("documentKind", "Document Kind", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("expiryDate", "Expiry Date", ColumnDataType.Date, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "daily-attendance",
+            Title = "Daily Attendance",
+            Module = ReportModule.Time,
+            RequiredPermission = "attendance.view",
+            Description = "Daily attendance records with worked hours, late arrival and early departure.",
+            SortOrder = 801,
+            Columns =
+            [
+                new("attendanceDate", "Attendance Date", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("shiftName", "Shift Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("workedMinutes", "Worked Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("lateMinutes", "Late Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("earlyOutMinutes", "Early Out Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("overtimeMinutes", "Overtime Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "monthly-muster-roll",
+            Title = "Monthly Muster Roll",
+            Module = ReportModule.Time,
+            RequiredPermission = "attendance.view",
+            Description = "Monthly muster roll summary of present, absent and half days per employee.",
+            SortOrder = 802,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("presentDays", "Present Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("absentDays", "Absent Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("halfDays", "Half Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalRecorded", "Total Recorded", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "late-early-out",
+            Title = "Late and Early-Out",
+            Module = ReportModule.Time,
+            RequiredPermission = "attendance.view",
+            Description = "Employees with late check-in or early checkout exceptions.",
+            SortOrder = 803,
+            Columns =
+            [
+                new("attendanceDate", "Attendance Date", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("lateMinutes", "Late Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("earlyOutMinutes", "Early Out Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "overtime-summary",
+            Title = "Overtime Summary",
+            Module = ReportModule.Time,
+            RequiredPermission = "attendance.view",
+            Description = "Overtime requests and approved minutes across employees.",
+            SortOrder = 804,
+            Columns =
+            [
+                new("attendanceDate", "Attendance Date", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("minutes", "Minutes", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("overtimeRate", "Overtime Rate", ColumnDataType.Quantity, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "attendance-regularisations",
+            Title = "Attendance Regularisations",
+            Module = ReportModule.Time,
+            RequiredPermission = "attendance.view",
+            Description = "Attendance regularisation requests and approval decisions.",
+            SortOrder = 805,
+            Columns =
+            [
+                new("attendanceDate", "Attendance Date", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("requestedStatus", "Requested Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "leave-register",
+            Title = "Leave Register",
+            Module = ReportModule.Leave,
+            RequiredPermission = "leave.view",
+            Description = "Detailed register of all employee leave applications.",
+            SortOrder = 901,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveType", "Leave Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("fromDate", "From Date", ColumnDataType.Date, IsDefault: true),
+                new("toDate", "To Date", ColumnDataType.Date, IsDefault: true),
+                new("days", "Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true),
+                new("leaveStatus", "Leave Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "leave-balances",
+            Title = "Leave Balances",
+            Module = ReportModule.Leave,
+            RequiredPermission = "leave.view",
+            Description = "Leave balances by employee and leave type.",
+            SortOrder = 902,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveType", "Leave Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveYear", "Leave Year", ColumnDataType.Number, IsDefault: true),
+                new("opening", "Opening", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("accrued", "Accrued", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("taken", "Taken", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("encashed", "Encashed", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("closing", "Closing", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "leave-encashment",
+            Title = "Leave Encashment",
+            Module = ReportModule.Leave,
+            RequiredPermission = "leave.view",
+            Description = "Employee leave encashment requests and payment status.",
+            SortOrder = 903,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveType", "Leave Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveYear", "Leave Year", ColumnDataType.Number, IsDefault: true),
+                new("days", "Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("encashmentStatus", "Encashment Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "team-availability",
+            Title = "Team Availability",
+            Module = ReportModule.Leave,
+            RequiredPermission = "leave.view",
+            Description = "Upcoming employee leaves and team availability.",
+            SortOrder = 904,
+            Columns =
+            [
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("leaveType", "Leave Type", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("fromDate", "From Date", ColumnDataType.Date, IsDefault: true),
+                new("toDate", "To Date", ColumnDataType.Date, IsDefault: true),
+                new("days", "Days", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "salary-register",
+            Title = "Salary Register",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Comprehensive payroll register with earnings, deductions and net pay.",
+            SortOrder = 1001,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("paidDays", "Paid Days", ColumnDataType.Quantity, IsDefault: true, Alignment: ColumnAlignment.Right),
+                new("grossEarnings", "Gross Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("grossDeductions", "Gross Deductions", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netPay", "Net Pay", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "payslip-summary",
+            Title = "Payslip Summary",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Monthly payroll summary aggregated by department.",
+            SortOrder = 1002,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("employeeCount", "Employee Count", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalEarnings", "Total Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalDeductions", "Total Deductions", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalNetPay", "Total Net Pay", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "ctc-report",
+            Title = "CTC Report",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Employee salary structures and annual CTC summary.",
+            SortOrder = 1003,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("designation", "Designation", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("salaryStructure", "Salary Structure", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("annualCtc", "Annual CTC", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("effectiveFrom", "Effective From", ColumnDataType.Date, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "salary-variance",
+            Title = "Salary Variance",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Month-on-month payroll variance comparison.",
+            SortOrder = 1004,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("grossEarnings", "Gross Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("grossDeductions", "Gross Deductions", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("netPay", "Net Pay", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "bank-advice",
+            Title = "Bank Advice",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Bank advice file for salary direct credit payments.",
+            SortOrder = 1005,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("bankName", "Bank Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("accountNo", "Account No", ColumnDataType.Text, IsDefault: true),
+                new("ifsc", "IFSC", ColumnDataType.Text, IsDefault: true),
+                new("netPay", "Net Pay", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "held-salaries",
+            Title = "Held Salaries",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Employees whose salary payments are marked on hold.",
+            SortOrder = 1006,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("reason", "Reason", ColumnDataType.Text, IsDefault: true),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("releasedDate", "Released Date", ColumnDataType.Date, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "salary-arrears",
+            Title = "Salary Arrears",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Arrears and one-time payments processed for employees.",
+            SortOrder = 1007,
+            Columns =
+            [
+                new("paymentMonth", "Payment Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("componentName", "Component Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("amount", "Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("remarks", "Remarks", ColumnDataType.Text, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "loans-outstanding",
+            Title = "Loans Outstanding",
+            Module = ReportModule.Pay,
+            RequiredPermission = "payroll.view",
+            Description = "Employee loan balances, repayments and outstanding principal.",
+            SortOrder = 1008,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("principalAmount", "Principal Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("disbursedDate", "Disbursed Date", ColumnDataType.Date, IsDefault: true),
+                new("monthlyInstallment", "Monthly Installment", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalRecovered", "Total Recovered", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("outstandingBalance", "Outstanding Balance", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("status", "Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "pf-statement",
+            Title = "PF Statement",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Provident fund contributions statement including EPF, EPS and admin charges.",
+            SortOrder = 1101,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("uan", "UAN", ColumnDataType.Text, IsDefault: true),
+                new("grossEarnings", "Gross Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employeePf", "Employee PF", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employerEpf", "Employer EPF", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employerEps", "Employer EPS", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "esi-statement",
+            Title = "ESI Statement",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Employee State Insurance (ESI) monthly contribution statement.",
+            SortOrder = 1102,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("grossEarnings", "Gross Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employeeEsi", "Employee ESI", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employerEsi", "Employer ESI", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalEsi", "Total ESI", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "pt-statement",
+            Title = "Professional Tax Statement",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "State-wise Professional Tax (PT) deduction statement.",
+            SortOrder = 1103,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("workLocation", "Work Location", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("grossEarnings", "Gross Earnings", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("ptAmount", "PT Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "lwf-statement",
+            Title = "LWF Statement",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Labour Welfare Fund (LWF) employee and employer contributions.",
+            SortOrder = 1104,
+            Columns =
+            [
+                new("month", "Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("workLocation", "Work Location", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("employeeContribution", "Employee Contribution", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("employerContribution", "Employer Contribution", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalLwf", "Total LWF", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "gratuity-provision",
+            Title = "Gratuity Provision",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Statutory gratuity liability and provision calculations.",
+            SortOrder = 1105,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("joiningDate", "Joining Date", ColumnDataType.Date, IsDefault: true),
+                new("monthlySalary", "Monthly Salary", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("gratuityProvision", "Gratuity Provision", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "bonus-register",
+            Title = "Bonus Register",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Statutory bonus calculation register.",
+            SortOrder = 1106,
+            Columns =
+            [
+                new("paymentMonth", "Payment Month", ColumnDataType.Date, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("bonusAmount", "Bonus Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("remarks", "Remarks", ColumnDataType.Text, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "tds-summary",
+            Title = "TDS Summary and Projection",
+            Module = ReportModule.Statutory,
+            RequiredPermission = "payroll.view",
+            Description = "Income tax deduction at source summary and regime selections.",
+            SortOrder = 1107,
+            Columns =
+            [
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("pan", "PAN", ColumnDataType.Text, IsDefault: true),
+                new("financialYear", "Financial Year", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("regime", "Regime", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("isLocked", "Is Locked", ColumnDataType.Boolean, IsDefault: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "recruitment-pipeline",
+            Title = "Recruitment Pipeline by Stage",
+            Module = ReportModule.Recruitment,
+            RequiredPermission = "recruitment.view",
+            Description = "Recruitment candidates by job opening and hiring pipeline stage.",
+            SortOrder = 1201,
+            Columns =
+            [
+                new("requisitionCode", "Requisition Code", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("openingTitle", "Opening Title", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateName", "Candidate Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateEmail", "Candidate Email", ColumnDataType.Text, IsDefault: true),
+                new("stage", "Stage", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateSource", "Candidate Source", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "time-to-hire",
+            Title = "Time to Hire",
+            Module = ReportModule.Recruitment,
+            RequiredPermission = "recruitment.view",
+            Description = "Time to fill open positions from requisition to offer.",
+            SortOrder = 1202,
+            Columns =
+            [
+                new("requisitionCode", "Requisition Code", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("openingTitle", "Opening Title", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateName", "Candidate Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("offeredCtc", "Offered CTC", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("joiningDate", "Joining Date", ColumnDataType.Date, IsDefault: true),
+                new("offerStatus", "Offer Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "source-effectiveness",
+            Title = "Source Effectiveness",
+            Module = ReportModule.Recruitment,
+            RequiredPermission = "recruitment.view",
+            Description = "Effectiveness analysis of candidate sourcing channels.",
+            SortOrder = 1203,
+            Columns =
+            [
+                new("candidateSource", "Candidate Source", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateCount", "Candidate Count", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "offer-acceptance",
+            Title = "Offer Acceptance",
+            Module = ReportModule.Recruitment,
+            RequiredPermission = "recruitment.view",
+            Description = "Job offers extended, accepted, rejected and joining ratio.",
+            SortOrder = 1204,
+            Columns =
+            [
+                new("candidateName", "Candidate Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("candidateEmail", "Candidate Email", ColumnDataType.Text, IsDefault: true),
+                new("offeredCtc", "Offered CTC", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("joiningDate", "Joining Date", ColumnDataType.Date, IsDefault: true),
+                new("offerStatus", "Offer Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "claims-by-category",
+            Title = "Claims by Category",
+            Module = ReportModule.Claims,
+            RequiredPermission = "claims.view",
+            Description = "Expense claims grouped by expense category.",
+            SortOrder = 1301,
+            Columns =
+            [
+                new("categoryCode", "Category Code", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("categoryName", "Category Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("claimCount", "Claim Count", ColumnDataType.Quantity, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+            ],
+        },
+        new()
+        {
+            ReportKey = "claims-by-employee",
+            Title = "Claims by Employee",
+            Module = ReportModule.Claims,
+            RequiredPermission = "claims.view",
+            Description = "Expense claims summary by employee and payout mode.",
+            SortOrder = 1302,
+            Columns =
+            [
+                new("claimNo", "Claim No", ColumnDataType.Text, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("claimDate", "Claim Date", ColumnDataType.Date, IsDefault: true),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("approvedAmount", "Approved Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("claimStatus", "Claim Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("payoutMode", "Payout Mode", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
+        new()
+        {
+            ReportKey = "claims-pending-approval",
+            Title = "Claims Pending Approval",
+            Module = ReportModule.Claims,
+            RequiredPermission = "claims.view",
+            Description = "Expense claims waiting for approval decision.",
+            SortOrder = 1303,
+            Columns =
+            [
+                new("claimNo", "Claim No", ColumnDataType.Text, IsDefault: true),
+                new("employeeCode", "Employee Code", ColumnDataType.Text, IsDefault: true),
+                new("employeeName", "Employee Name", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("department", "Department", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("claimDate", "Claim Date", ColumnDataType.Date, IsDefault: true),
+                new("totalAmount", "Total Amount", ColumnDataType.Money, IsDefault: true, Aggregate: AggregateFunction.Sum, Alignment: ColumnAlignment.Right),
+                new("currentStepLabel", "Current Step Label", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("approvalStatus", "Approval Status", ColumnDataType.Text, IsDefault: true, IsGroupable: true),
+                new("id", "Id", ColumnDataType.Number, IsFilterable: false, IsHidden: true),
+            ],
+        },
     ];
     private sealed class ReportSeed
     {

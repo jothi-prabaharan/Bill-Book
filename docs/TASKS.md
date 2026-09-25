@@ -2664,16 +2664,22 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Tests written, not run (as per protocol §0.5): `PerformanceSchemaTests.cs`, `EndpointGuardTests.cs`, `PerformanceApprovalRoutingTests.cs` (covers all 4 "Done when" requirements).
 
 ### TK-59 · H12: HRMS and Payroll reports
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-RPT · **Depends on:** TK-51 · **Decision:** —
 - **Where:** `docs/Modules.md` HRMS § Reports (line 2217) lists the groups: People, Time, Leave,
   Pay, Statutory, Recruitment and Claims.
 - **Sub-tasks:**
-  - [ ] Build each report as an `IReportSource` flagged with `App.Hrms` or `App.Payroll`.
-  - [ ] Map the tables it reads read-only on `ReportingDbContext`.
-  - [ ] Wire all four layers checked by `ReportLayerCertificationTests`, and update its count.
+  - [x] Build each report as an `IReportSource` flagged with `App.Hrms` or `App.Payroll`.
+  - [x] Map the tables it reads read-only on `ReportingDbContext`.
+  - [x] Wire all four layers checked by `ReportLayerCertificationTests`, and update its count.
 - **Done when:** each report is flagged with its app, and the certification suite counts them.
 - **Notes:**
+  - Created 37 read model entities in `Reporting.Repository/ReadModels/HrmsReadModels.cs` across schemas `hrm`, `tla`, `pay`, `rec`, and `clm`, mapped read-only with `ExcludeFromMigrations()` in `ReportingDbContext`.
+  - Built 37 report sources in `Reporting.Api/Services/Sources/Hrms/`: People (6), Time (5), Leave (4), Pay (8), Statutory (7), Recruitment (4), Claims (3).
+  - Seeded all 37 report definitions and column metadata in `ReportCatalogSeeder`.
+  - Registered all 37 sources in `Reporting.Api/Program.cs` and added to `ReportSourceTests.Sources`.
+  - Updated `ReportLayerCertificationTests` total count to 90 (53 existing + 37 new HRMS/Payroll reports).
+  - Extended frontend contracts in `@bill-book/reporting-core` with new report modules and optional `App` flag.
 
 ### I · School (S0–S9)
 

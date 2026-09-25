@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Reporting.Api.Services;
 using Reporting.Api.Services.Sources;
+using Reporting.Api.Services.Sources.Hrms;
 using Xunit;
 
 namespace Reporting.Api.Tests;
@@ -73,6 +74,51 @@ public class ReportSourceTests
     // D-15: Xero-style KPI ratios.
     private static readonly BusinessPerformanceSource BusinessPerformance = new();
 
+    // HRMS & Payroll reports (TK-59)
+    private static readonly HeadcountSummarySource HeadcountSummary = new();
+    private static readonly JoinersLeaversSource JoinersLeavers = new();
+    private static readonly AttritionRateSource AttritionRate = new();
+    private static readonly ProbationDueSource ProbationDue = new();
+    private static readonly BirthdaysAnniversariesSource BirthdaysAnniversaries = new();
+    private static readonly DocumentExpirySource DocumentExpiry = new();
+
+    private static readonly DailyAttendanceSource DailyAttendance = new();
+    private static readonly MonthlyMusterRollSource MonthlyMusterRoll = new();
+    private static readonly LateEarlyOutSource LateEarlyOut = new();
+    private static readonly OvertimeSummarySource OvertimeSummary = new();
+    private static readonly AttendanceRegularisationsSource AttendanceRegularisations = new();
+
+    private static readonly LeaveRegisterSource LeaveRegister = new();
+    private static readonly LeaveBalancesSource LeaveBalances = new();
+    private static readonly LeaveEncashmentSource LeaveEncashment = new();
+    private static readonly TeamAvailabilitySource TeamAvailability = new();
+
+    private static readonly SalaryRegisterSource SalaryRegister = new();
+    private static readonly PayslipSummarySource PayslipSummary = new();
+    private static readonly CtcReportSource CtcReport = new();
+    private static readonly SalaryVarianceSource SalaryVariance = new();
+    private static readonly BankAdviceSource BankAdvice = new();
+    private static readonly HeldSalariesSource HeldSalaries = new();
+    private static readonly SalaryArrearsSource SalaryArrears = new();
+    private static readonly LoansOutstandingSource LoansOutstanding = new();
+
+    private static readonly PfStatementSource PfStatement = new();
+    private static readonly EsiStatementSource EsiStatement = new();
+    private static readonly PtStatementSource PtStatement = new();
+    private static readonly LwfStatementSource LwfStatement = new();
+    private static readonly GratuityProvisionSource GratuityProvision = new();
+    private static readonly BonusRegisterSource BonusRegister = new();
+    private static readonly TdsSummarySource TdsSummary = new();
+
+    private static readonly RecruitmentPipelineSource RecruitmentPipeline = new();
+    private static readonly TimeToHireSource TimeToHire = new();
+    private static readonly SourceEffectivenessSource SourceEffectiveness = new();
+    private static readonly OfferAcceptanceSource OfferAcceptance = new();
+
+    private static readonly ClaimsByCategorySource ClaimsByCategory = new();
+    private static readonly ClaimsByEmployeeSource ClaimsByEmployee = new();
+    private static readonly ClaimsPendingApprovalSource ClaimsPendingApproval = new();
+
     /// <summary>
     /// A resolver these tests never call. They read <c>Columns</c> only, which is
     /// declared without touching Master — so the client is here to satisfy the
@@ -139,6 +185,43 @@ public class ReportSourceTests
         FixedAssetReconciliation,
         FixedAssetsSchedule,
         BusinessPerformance,
+        HeadcountSummary,
+        JoinersLeavers,
+        AttritionRate,
+        ProbationDue,
+        BirthdaysAnniversaries,
+        DocumentExpiry,
+        DailyAttendance,
+        MonthlyMusterRoll,
+        LateEarlyOut,
+        OvertimeSummary,
+        AttendanceRegularisations,
+        LeaveRegister,
+        LeaveBalances,
+        LeaveEncashment,
+        TeamAvailability,
+        SalaryRegister,
+        PayslipSummary,
+        CtcReport,
+        SalaryVariance,
+        BankAdvice,
+        HeldSalaries,
+        SalaryArrears,
+        LoansOutstanding,
+        PfStatement,
+        EsiStatement,
+        PtStatement,
+        LwfStatement,
+        GratuityProvision,
+        BonusRegister,
+        TdsSummary,
+        RecruitmentPipeline,
+        TimeToHire,
+        SourceEffectiveness,
+        OfferAcceptance,
+        ClaimsByCategory,
+        ClaimsByEmployee,
+        ClaimsPendingApproval,
     ];
 
     [Theory]

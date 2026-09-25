@@ -57,7 +57,14 @@ export type ReportModule =
   | 'Inventory'
   | 'Sales'
   | 'Purchase'
-  | 'FixedAssets';
+  | 'FixedAssets'
+  | 'People'
+  | 'Time'
+  | 'Leave'
+  | 'Pay'
+  | 'Statutory'
+  | 'Recruitment'
+  | 'Claims';
 
 /**
  * `Xlsx` and `Csv` are the supported export formats. `Pdf` is declared so the
@@ -195,6 +202,7 @@ export interface ReportCatalogItem {
   module: ReportModule;
   description: string | null;
   sortOrder: number;
+  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
 }
 
 export interface ReportParameter {
@@ -210,6 +218,7 @@ export interface ReportMetadata {
   title: string;
   module: ReportModule;
   description: string | null;
+  app?: 'RetailErp' | 'School' | 'Hrms' | 'Payroll';
   parameters: ReportParameter[];
   columns: ReportColumn[];
   defaultColumns: string[];

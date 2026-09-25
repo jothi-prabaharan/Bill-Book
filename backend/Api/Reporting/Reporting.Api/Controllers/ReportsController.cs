@@ -25,7 +25,7 @@ namespace Reporting.Api.Controllers;
 [Authorize]
 [RequireModulePermission("reports")]
 [Route("api/reports")]
-[RequireApp(App.RetailErp)]
+[RequireApp(App.RetailErp | App.Hrms | App.Payroll)]
 public sealed class ReportsController : ControllerBase
 {
     private readonly ReportCatalogService _catalog;

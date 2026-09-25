@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Reporting.Entity.Enums;
 using Reporting.Entity.Models;
 using Reporting.Repository;
+using Shared.Kernel.Apps;
 
 namespace Reporting.Api.Services;
 
@@ -23,6 +24,8 @@ public interface IReportSource
     string Title { get; }
 
     ReportModule Module { get; }
+
+    App App => App.RetailErp;
 
     /// <summary>
     /// The module permission a caller needs beyond <c>reports.view</c>. A report
@@ -67,6 +70,8 @@ public abstract class ReportSource<TRow> : IReportSource
     public abstract string Title { get; }
 
     public abstract ReportModule Module { get; }
+
+    public virtual App App => App.RetailErp;
 
     public abstract string RequiredPermission { get; }
 

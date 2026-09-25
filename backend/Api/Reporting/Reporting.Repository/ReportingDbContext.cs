@@ -108,6 +108,49 @@ public class ReportingDbContext : TenantDbContext
 
     public DbSet<AssetTransactionRead> AssetTransactions => Set<AssetTransactionRead>();
 
+    // HRMS and Payroll read models (TK-59)
+    public DbSet<EmployeeRecordRead> Employees => Set<EmployeeRecordRead>();
+    public DbSet<DepartmentRead> Departments => Set<DepartmentRead>();
+    public DbSet<DesignationRead> Designations => Set<DesignationRead>();
+    public DbSet<GradeRead> Grades => Set<GradeRead>();
+    public DbSet<WorkLocationRead> WorkLocations => Set<WorkLocationRead>();
+    public DbSet<CostCentreRead> CostCentres => Set<CostCentreRead>();
+    public DbSet<EmployeeDocumentRead> EmployeeDocuments => Set<EmployeeDocumentRead>();
+    public DbSet<EmployeeBankDetailRead> EmployeeBankDetails => Set<EmployeeBankDetailRead>();
+    public DbSet<SeparationRead> Separations => Set<SeparationRead>();
+
+    public DbSet<DailyAttendanceRead> DailyAttendances => Set<DailyAttendanceRead>();
+    public DbSet<ShiftRead> Shifts => Set<ShiftRead>();
+    public DbSet<OvertimeRequestRead> OvertimeRequests => Set<OvertimeRequestRead>();
+    public DbSet<RegularisationRequestRead> RegularisationRequests => Set<RegularisationRequestRead>();
+    public DbSet<LeaveTypeRead> LeaveTypes => Set<LeaveTypeRead>();
+    public DbSet<LeaveBalanceRead> LeaveBalances => Set<LeaveBalanceRead>();
+    public DbSet<LeaveApplicationRead> LeaveApplications => Set<LeaveApplicationRead>();
+    public DbSet<LeaveEncashmentRead> LeaveEncashments => Set<LeaveEncashmentRead>();
+
+    public DbSet<PayrollRunRead> PayrollRuns => Set<PayrollRunRead>();
+    public DbSet<PayslipRead> Payslips => Set<PayslipRead>();
+    public DbSet<PayslipLineRead> PayslipLines => Set<PayslipLineRead>();
+    public DbSet<PayGroupRead> PayGroups => Set<PayGroupRead>();
+    public DbSet<SalaryComponentRead> SalaryComponents => Set<SalaryComponentRead>();
+    public DbSet<SalaryStructureRead> SalaryStructures => Set<SalaryStructureRead>();
+    public DbSet<EmployeeSalaryRead> EmployeeSalaries => Set<EmployeeSalaryRead>();
+    public DbSet<SalaryHoldRead> SalaryHolds => Set<SalaryHoldRead>();
+    public DbSet<OneTimePaymentRead> OneTimePayments => Set<OneTimePaymentRead>();
+    public DbSet<EmployeeLoanRead> EmployeeLoans => Set<EmployeeLoanRead>();
+    public DbSet<TaxDeclarationRead> TaxDeclarations => Set<TaxDeclarationRead>();
+
+    public DbSet<JobRequisitionRead> JobRequisitions => Set<JobRequisitionRead>();
+    public DbSet<JobOpeningRead> JobOpenings => Set<JobOpeningRead>();
+    public DbSet<CandidateRead> Candidates => Set<CandidateRead>();
+    public DbSet<ApplicationRead> Applications => Set<ApplicationRead>();
+    public DbSet<OfferRead> Offers => Set<OfferRead>();
+
+    public DbSet<ClaimCategoryRead> ClaimCategories => Set<ClaimCategoryRead>();
+    public DbSet<ExpenseClaimRead> ExpenseClaims => Set<ExpenseClaimRead>();
+    public DbSet<ExpenseClaimLineRead> ExpenseClaimLines => Set<ExpenseClaimLineRead>();
+    public DbSet<ApprovalStepRead> ApprovalSteps => Set<ApprovalStepRead>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.HasDefaultSchema("rpt");
@@ -260,6 +303,53 @@ public class ReportingDbContext : TenantDbContext
             .Property(e => e.DepreciationMethod).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<AssetTransactionRead>()
             .Property(e => e.TransactionType).HasConversion<string>().HasMaxLength(20);
+
+        // HRMS (hrm)
+        MapRead<EmployeeRecordRead>(modelBuilder, "Employees", "hrm", e => e.EmployeeId);
+        MapRead<DepartmentRead>(modelBuilder, "Departments", "hrm", e => e.DepartmentId);
+        MapRead<DesignationRead>(modelBuilder, "Designations", "hrm", e => e.DesignationId);
+        MapRead<GradeRead>(modelBuilder, "Grades", "hrm", e => e.GradeId);
+        MapRead<WorkLocationRead>(modelBuilder, "WorkLocations", "hrm", e => e.WorkLocationId);
+        MapRead<CostCentreRead>(modelBuilder, "CostCentres", "hrm", e => e.CostCentreId);
+        MapRead<EmployeeDocumentRead>(modelBuilder, "EmployeeDocuments", "hrm", e => e.EmployeeDocumentId);
+        MapRead<EmployeeBankDetailRead>(modelBuilder, "EmployeeBankDetails", "hrm", e => e.EmployeeBankDetailId);
+        MapRead<SeparationRead>(modelBuilder, "Separations", "hrm", e => e.SeparationId);
+
+        // Time and Leave (tla)
+        MapRead<DailyAttendanceRead>(modelBuilder, "DailyAttendances", "tla", e => e.DailyAttendanceId);
+        MapRead<ShiftRead>(modelBuilder, "Shifts", "tla", e => e.ShiftId);
+        MapRead<OvertimeRequestRead>(modelBuilder, "OvertimeRequests", "tla", e => e.OvertimeRequestId);
+        MapRead<RegularisationRequestRead>(modelBuilder, "RegularisationRequests", "tla", e => e.RegularisationRequestId);
+        MapRead<LeaveTypeRead>(modelBuilder, "LeaveTypes", "tla", e => e.LeaveTypeId);
+        MapRead<LeaveBalanceRead>(modelBuilder, "LeaveBalances", "tla", e => e.LeaveBalanceId);
+        MapRead<LeaveApplicationRead>(modelBuilder, "LeaveApplications", "tla", e => e.LeaveApplicationId);
+        MapRead<LeaveEncashmentRead>(modelBuilder, "LeaveEncashments", "tla", e => e.LeaveEncashmentId);
+
+        // Payroll (pay)
+        MapRead<PayrollRunRead>(modelBuilder, "PayrollRuns", "pay", e => e.PayrollRunId);
+        MapRead<PayslipRead>(modelBuilder, "Payslips", "pay", e => e.PayslipId);
+        MapRead<PayslipLineRead>(modelBuilder, "PayslipLines", "pay", e => e.PayslipLineId);
+        MapRead<PayGroupRead>(modelBuilder, "PayGroups", "pay", e => e.PayGroupId);
+        MapRead<SalaryComponentRead>(modelBuilder, "SalaryComponents", "pay", e => e.SalaryComponentId);
+        MapRead<SalaryStructureRead>(modelBuilder, "SalaryStructures", "pay", e => e.SalaryStructureId);
+        MapRead<EmployeeSalaryRead>(modelBuilder, "EmployeeSalaries", "pay", e => e.EmployeeSalaryId);
+        MapRead<SalaryHoldRead>(modelBuilder, "SalaryHolds", "pay", e => e.SalaryHoldId);
+        MapRead<OneTimePaymentRead>(modelBuilder, "OneTimePayments", "pay", e => e.OneTimePaymentId);
+        MapRead<EmployeeLoanRead>(modelBuilder, "EmployeeLoans", "pay", e => e.EmployeeLoanId);
+        MapRead<TaxDeclarationRead>(modelBuilder, "TaxDeclarations", "pay", e => e.TaxDeclarationId);
+
+        // Recruitment (rec)
+        MapRead<JobRequisitionRead>(modelBuilder, "JobRequisitions", "rec", e => e.JobRequisitionId);
+        MapRead<JobOpeningRead>(modelBuilder, "JobOpenings", "rec", e => e.JobOpeningId);
+        MapRead<CandidateRead>(modelBuilder, "Candidates", "rec", e => e.CandidateId);
+        MapRead<ApplicationRead>(modelBuilder, "Applications", "rec", e => e.ApplicationId);
+        MapRead<OfferRead>(modelBuilder, "Offers", "rec", e => e.OfferId);
+
+        // Claims (clm)
+        MapRead<ClaimCategoryRead>(modelBuilder, "ClaimCategories", "clm", e => e.ClaimCategoryId);
+        MapRead<ExpenseClaimRead>(modelBuilder, "ExpenseClaims", "clm", e => e.ExpenseClaimId);
+        MapRead<ExpenseClaimLineRead>(modelBuilder, "ExpenseClaimLines", "clm", e => e.ExpenseClaimLineId);
+        MapRead<ApprovalStepRead>(modelBuilder, "ApprovalSteps", "clm", e => e.ApprovalStepId);
     }
 
     private static void MapRead<TEntity>(

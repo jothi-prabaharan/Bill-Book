@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Reporting.Api.Services;
 using Reporting.Api.Services.Sources;
+using Reporting.Api.Services.Sources.Hrms;
 using Reporting.Repository;
 using Reporting.Repository.SeedData;
 using Shared.Kernel.Interfaces;
@@ -142,6 +143,51 @@ builder.Services.AddScoped<IReportSource, DisposalScheduleSource>();
 builder.Services.AddScoped<IReportSource, FixedAssetReconciliationSource>();
 builder.Services.AddScoped<IReportSource, FixedAssetsScheduleSource>();
 builder.Services.AddScoped<IReportSource, BusinessPerformanceSource>();
+
+// HRMS and Payroll reports (TK-59)
+builder.Services.AddScoped<IReportSource, HeadcountSummarySource>();
+builder.Services.AddScoped<IReportSource, JoinersLeaversSource>();
+builder.Services.AddScoped<IReportSource, AttritionRateSource>();
+builder.Services.AddScoped<IReportSource, ProbationDueSource>();
+builder.Services.AddScoped<IReportSource, BirthdaysAnniversariesSource>();
+builder.Services.AddScoped<IReportSource, DocumentExpirySource>();
+
+builder.Services.AddScoped<IReportSource, DailyAttendanceSource>();
+builder.Services.AddScoped<IReportSource, MonthlyMusterRollSource>();
+builder.Services.AddScoped<IReportSource, LateEarlyOutSource>();
+builder.Services.AddScoped<IReportSource, OvertimeSummarySource>();
+builder.Services.AddScoped<IReportSource, AttendanceRegularisationsSource>();
+
+builder.Services.AddScoped<IReportSource, LeaveRegisterSource>();
+builder.Services.AddScoped<IReportSource, LeaveBalancesSource>();
+builder.Services.AddScoped<IReportSource, LeaveEncashmentSource>();
+builder.Services.AddScoped<IReportSource, TeamAvailabilitySource>();
+
+builder.Services.AddScoped<IReportSource, SalaryRegisterSource>();
+builder.Services.AddScoped<IReportSource, PayslipSummarySource>();
+builder.Services.AddScoped<IReportSource, CtcReportSource>();
+builder.Services.AddScoped<IReportSource, SalaryVarianceSource>();
+builder.Services.AddScoped<IReportSource, BankAdviceSource>();
+builder.Services.AddScoped<IReportSource, HeldSalariesSource>();
+builder.Services.AddScoped<IReportSource, SalaryArrearsSource>();
+builder.Services.AddScoped<IReportSource, LoansOutstandingSource>();
+
+builder.Services.AddScoped<IReportSource, PfStatementSource>();
+builder.Services.AddScoped<IReportSource, EsiStatementSource>();
+builder.Services.AddScoped<IReportSource, PtStatementSource>();
+builder.Services.AddScoped<IReportSource, LwfStatementSource>();
+builder.Services.AddScoped<IReportSource, GratuityProvisionSource>();
+builder.Services.AddScoped<IReportSource, BonusRegisterSource>();
+builder.Services.AddScoped<IReportSource, TdsSummarySource>();
+
+builder.Services.AddScoped<IReportSource, RecruitmentPipelineSource>();
+builder.Services.AddScoped<IReportSource, TimeToHireSource>();
+builder.Services.AddScoped<IReportSource, SourceEffectivenessSource>();
+builder.Services.AddScoped<IReportSource, OfferAcceptanceSource>();
+
+builder.Services.AddScoped<IReportSource, ClaimsByCategorySource>();
+builder.Services.AddScoped<IReportSource, ClaimsByEmployeeSource>();
+builder.Services.AddScoped<IReportSource, ClaimsPendingApprovalSource>();
 
 builder.Services.AddScoped<ReportCatalogService>();
 builder.Services.AddScoped<ReportRunner>();
