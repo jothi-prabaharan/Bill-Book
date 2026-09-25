@@ -453,6 +453,7 @@ public class AttendanceService
             RequestId = regularisation.RegularisationRequestId,
             Sequence = 1,
             Label = "Manager Approval",
+            ApproverEmployeeId = req.ReportsToEmployeeId,
             StepStatus = ApprovalStepStatus.Pending
         };
         _db.ApprovalSteps.Add(step);
@@ -539,6 +540,18 @@ public class AttendanceService
         };
 
         _db.OvertimeRequests.Add(overtime);
+        await _db.SaveChangesAsync(ct);
+
+        var otStep = new ApprovalStep
+        {
+            RequestKind = RequestKind.Overtime,
+            RequestId = overtime.OvertimeRequestId,
+            Sequence = 1,
+            Label = "Manager Approval",
+            ApproverEmployeeId = req.ReportsToEmployeeId,
+            StepStatus = ApprovalStepStatus.Pending
+        };
+        _db.ApprovalSteps.Add(otStep);
         await _db.SaveChangesAsync(ct);
 
         return new OvertimeRequestDto(
@@ -643,4 +656,36 @@ public class AttendanceService
             a.AttendanceSource,
             a.IsLocked);
     }
+
+    public async Task<List<PunchDto>> GetPunchesForDateAsync(long employeeId, DateOnly date, CancellationToken ct = default)
+    {
+        var start = new DateTimeOffset(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);
+        var end = new DateTimeOffset(date.ToDateTime(TimeOnly.MaxValue), TimeSpan.Zero);
+
+        return await _db.Punches
+            .AsNoTracking()
+            .Where(p => p.EmployeeId == employeeId && p.PunchedAt >= start && p.PunchedAt <= end)
+            .OrderBy(p => p.PunchedAt)
+            .Select(p => new PunchDto(p.PunchId, p.EmployeeId, p.PunchedAt, p.PunchSource, p.DeviceCode, p.Latitude, p.Longitude, p.IsInsideFence))
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<RegularisationRequest>> GetRegularisationRequestsAsync(long employeeId, CancellationToken ct = default)
+    {
+        return await _db.RegularisationRequests
+            .AsNoTracking()
+            .Where(r => r.EmployeeId == employeeId)
+            .OrderByDescending(r => r.AttendanceDate)
+            .ToListAsync(ct);
+    }
+
+    public async Task<List<OvertimeRequest>> GetOvertimeRequestsAsync(long employeeId, CancellationToken ct = default)
+    {
+        return await _db.OvertimeRequests
+            .AsNoTracking()
+            .Where(o => o.EmployeeId == employeeId)
+            .OrderByDescending(o => o.AttendanceDate)
+            .ToListAsync(ct);
+    }
 }
+

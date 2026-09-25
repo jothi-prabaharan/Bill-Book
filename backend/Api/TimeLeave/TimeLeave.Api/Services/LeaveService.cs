@@ -246,7 +246,8 @@ public class LeaveService
             AttachmentKey = req.AttachmentKey,
             LeaveStatus = LeaveStatus.Submitted,
             ApprovalStatus = ApprovalStatus.InApproval,
-            CurrentStepLabel = "Manager Approval"
+            CurrentStepLabel = "Manager Approval",
+            CurrentApproverEmployeeId = req.ReportsToEmployeeId
         };
 
         _db.LeaveApplications.Add(app);
@@ -259,6 +260,7 @@ public class LeaveService
             RequestId = app.LeaveApplicationId,
             Sequence = 1,
             Label = "Manager Approval",
+            ApproverEmployeeId = req.ReportsToEmployeeId,
             StepStatus = ApprovalStepStatus.Pending,
             DueDate = req.FromDate
         };

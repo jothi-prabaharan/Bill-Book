@@ -182,4 +182,31 @@ export class PayrollApiService {
     if (linkedUserId) params['linkedUserId'] = linkedUserId;
     return firstValueFrom(this.http.post<{ runId: number }>(`/api/payroll/fnf/${id}/post`, null, { params }));
   }
+
+  // Self-Service (H8, TK-55)
+  myPayslips(): Promise<import('./payroll.models').MyPayslipSummary[]> {
+    return firstValueFrom(this.http.get<import('./payroll.models').MyPayslipSummary[]>('/api/payroll/me/payslips'));
+  }
+
+  myPayslip(id: number): Promise<import('./payroll.models').PayslipView> {
+    return firstValueFrom(this.http.get<import('./payroll.models').PayslipView>(`/api/payroll/me/payslips/${id}`));
+  }
+
+  downloadPayslip(id: number): Promise<string> {
+    return firstValueFrom(this.http.get(`/api/payroll/me/payslips/${id}/download`, { responseType: 'text' }));
+  }
+
+  myForm16(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>('/api/payroll/me/form16'));
+  }
+
+  myTaxDeclaration(financialYear?: string): Promise<any> {
+    const params: Record<string, string> = {};
+    if (financialYear) params['financialYear'] = financialYear;
+    return firstValueFrom(this.http.get<any>('/api/payroll/me/tax-declarations', { params }));
+  }
+
+  submitMyTaxDeclaration(body: any): Promise<any> {
+    return firstValueFrom(this.http.post<any>('/api/payroll/me/tax-declarations', body));
+  }
 }

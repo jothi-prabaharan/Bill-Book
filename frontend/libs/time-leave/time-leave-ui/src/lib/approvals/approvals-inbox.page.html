@@ -1,0 +1,205 @@
+<section class="page-head">
+  <div>
+    <h1>Approvals Inbox</h1>
+    <p style="margin: 0.25rem 0 0; color: var(--color-text-muted, #666);">
+      Review and act on leave, regularisation, and overtime requests from your team.
+    </p>
+  </div>
+  <button type="button" class="button" (click)="load()" [disabled]="busy()">
+    ↻ Refresh
+  </button>
+</section>
+
+@if (messages().length) {
+  <bb-message-box [messages]="messages()" />
+}
+
+<div style="display: flex; gap: 0.5rem; margin-top: 1rem; border-bottom: 1px solid var(--color-border, #ddd);">
+  <button
+    type="button"
+    class="button"
+    [style.font-weight]="activeTab() === 'pending' ? 'bold' : 'normal'"
+    [style.border-bottom]="activeTab() === 'pending' ? '2px solid var(--color-primary, #0070f3)' : 'none'"
+    (click)="setTab('pending')"
+  >
+    Pending Approvals ({{ pendingItems().length }})
+  </button>
+  <button
+    type="button"
+    class="button"
+    [style.font-weight]="activeTab() === 'history' ? 'bold' : 'normal'"
+    [style.border-bottom]="activeTab() === 'history' ? '2px solid var(--color-primary, #0070f3)' : 'none'"
+    (click)="setTab('history')"
+  >
+    Approval History
+  </button>
+</div>
+
+@if (activeTab() === 'pending') {
+  @if (busy()) {
+    <p style="padding: 2rem; text-align: center; color: var(--color-text-muted, #888);">Loading pending approvals…</p>
+  } @else if (pendingItems().length === 0) {
+    <div class="sheet" style="text-align: center; padding: 2rem;">
+      <p style="margin: 0; color: var(--color-text-muted, #888);">No pending approval requests in your queue.</p>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Employee</th>
+            <th>Details</th>
+            <th>Reason</th>
+            <th>Requested Date</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of pendingItems(); track item.approvalStepId) {
+            <tr>
+              <td>
+                <span class="badge" [style.background]="item.requestKind === 'Leave' ? '#e0f2fe' : item.requestKind === 'Overtime' ? '#fef3c7' : '#f3e8ff'">
+                  {{ item.requestKind }}
+                </span>
+                <div style="font-size: 0.75rem; color: var(--color-text-muted, #666);">{{ item.label }}</div>
+              </td>
+              <td>
+                <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
+              </td>
+              <td>
+                @if (item.requestKind === 'Leave') {
+                  <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
+                } @else if (item.requestKind === 'Overtime') {
+                  <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
+                } @else if (item.requestKind === 'Regularisation') {
+                  <span>{{ item.attendanceDate }}</span>
+                }
+              </td>
+              <td>{{ item.reason || '—' }}</td>
+              <td>{{ item.createdAt ? (item.createdAt | slice:0:10) : '—' }}</td>
+              <td style="text-align: right; white-space: nowrap;">
+                <button
+                  type="button"
+                  class="button is-primary"
+                  style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+                  (click)="openActionModal(item, 'Approve')"
+                >
+                  Approve
+                </button>
+                <button
+                  type="button"
+                  class="button"
+                  style="margin-right: 0.25rem; font-size: 0.8rem; padding: 0.25rem 0.5rem; color: #b91c1c;"
+                  (click)="openActionModal(item, 'Reject')"
+                >
+                  Reject
+                </button>
+                <button
+                  type="button"
+                  class="button"
+                  style="font-size: 0.8rem; padding: 0.25rem 0.5rem;"
+                  (click)="openActionModal(item, 'SendBack')"
+                >
+                  Send Back
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+@if (activeTab() === 'history') {
+  @if (historyItems().length === 0) {
+    <div class="sheet" style="text-align: center; padding: 2rem;">
+      <p style="margin: 0; color: var(--color-text-muted, #888);">No approval history records found.</p>
+    </div>
+  } @else {
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Employee</th>
+            <th>Details</th>
+            <th>Reason</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of historyItems(); track item.approvalStepId) {
+            <tr>
+              <td>
+                <span class="badge">{{ item.requestKind }}</span>
+              </td>
+              <td>
+                <strong>{{ item.employeeName || 'Employee #' + item.employeeId }}</strong>
+              </td>
+              <td>
+                @if (item.requestKind === 'Leave') {
+                  <span>{{ item.fromDate }} to {{ item.toDate }} ({{ item.days }} days)</span>
+                } @else if (item.requestKind === 'Overtime') {
+                  <span>{{ item.attendanceDate }} — {{ item.overtimeMinutes }} mins</span>
+                } @else {
+                  <span>{{ item.attendanceDate }}</span>
+                }
+              </td>
+              <td>{{ item.reason || '—' }}</td>
+              <td>
+                <span class="badge">{{ item.label }}</span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}
+
+<!-- Action Modal / Dialog -->
+@if (selectedStepId) {
+  <div style="position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000;">
+    <div class="sheet" style="background: white; max-width: 480px; width: 90%; margin: 0; box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+      <h3 style="margin-top: 0;">{{ actionType }} Request</h3>
+      <p style="color: var(--color-text-muted, #666); font-size: 0.9rem;">
+        Add an optional comment explaining your decision.
+      </p>
+
+      <div style="margin-top: 1rem;">
+        <label for="action-comments" style="display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">
+          Comments
+        </label>
+        <textarea
+          id="action-comments"
+          rows="3"
+          style="width: 100%; border: 1px solid var(--color-border, #ddd); border-radius: 4px; padding: 0.5rem; font-family: inherit; font-size: 0.9rem;"
+          placeholder="Reason or feedback..."
+          [(ngModel)]="actionComments"
+        ></textarea>
+      </div>
+
+      <div class="sheet-actions" style="margin-top: 1.5rem;">
+        <button
+          type="button"
+          class="button"
+          (click)="closeActionModal()"
+          [disabled]="actingStepId() !== null"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="button is-primary"
+          [style.background]="actionType === 'Reject' ? '#b91c1c' : ''"
+          (click)="submitAction()"
+          [disabled]="actingStepId() !== null"
+        >
+          {{ actingStepId() !== null ? 'Processing…' : 'Confirm ' + actionType }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

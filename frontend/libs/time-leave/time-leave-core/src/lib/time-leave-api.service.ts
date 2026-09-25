@@ -72,4 +72,66 @@ export class TimeLeaveApiService {
       this.http.post<RegularisationRequestView>('/api/tla/attendance/regularisations', body),
     );
   }
+
+  // Self-Service & Approvals (H8, TK-55)
+  myLeaveBalances(): Promise<LeaveBalanceView[]> {
+    return firstValueFrom(this.http.get<LeaveBalanceView[]>('/api/tla/me/leave/balances'));
+  }
+
+  myLeaveApplications(): Promise<LeaveApplicationView[]> {
+    return firstValueFrom(this.http.get<LeaveApplicationView[]>('/api/tla/me/leave/applications'));
+  }
+
+  applyMyLeave(body: import('./time-leave.models').ApplyLeaveSelfRequest): Promise<LeaveApplicationView> {
+    return firstValueFrom(this.http.post<LeaveApplicationView>('/api/tla/me/leave/apply', body));
+  }
+
+  cancelMyLeave(id: number): Promise<{ message: string }> {
+    return firstValueFrom(this.http.post<{ message: string }>(`/api/tla/me/leave/${id}/cancel`, {}));
+  }
+
+  myAttendance(month?: number, year?: number): Promise<any> {
+    const params: Record<string, string> = {};
+    if (month) params['month'] = String(month);
+    if (year) params['year'] = String(year);
+    return firstValueFrom(this.http.get<any>('/api/tla/me/attendance', { params }));
+  }
+
+  myPunches(date?: string): Promise<any[]> {
+    const params: Record<string, string> = {};
+    if (date) params['date'] = date;
+    return firstValueFrom(this.http.get<any[]>('/api/tla/me/punches', { params }));
+  }
+
+  mobilePunch(body: import('./time-leave.models').MobilePunchSelfRequest): Promise<any> {
+    return firstValueFrom(this.http.post<any>('/api/tla/me/punches/mobile', body));
+  }
+
+  myRegularisations(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>('/api/tla/me/regularisation'));
+  }
+
+  submitMyRegularisation(body: import('./time-leave.models').SubmitRegularisationSelfRequest): Promise<any> {
+    return firstValueFrom(this.http.post<any>('/api/tla/me/regularisation', body));
+  }
+
+  myOvertime(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>('/api/tla/me/overtime'));
+  }
+
+  submitMyOvertime(body: import('./time-leave.models').SubmitOvertimeSelfRequest): Promise<any> {
+    return firstValueFrom(this.http.post<any>('/api/tla/me/overtime', body));
+  }
+
+  pendingApprovals(): Promise<import('./time-leave.models').PendingApprovalItem[]> {
+    return firstValueFrom(this.http.get<import('./time-leave.models').PendingApprovalItem[]>('/api/tla/approvals/pending'));
+  }
+
+  approvalHistory(): Promise<import('./time-leave.models').PendingApprovalItem[]> {
+    return firstValueFrom(this.http.get<import('./time-leave.models').PendingApprovalItem[]>('/api/tla/approvals/history'));
+  }
+
+  actOnApproval(stepId: number, body: import('./time-leave.models').ActApprovalRequest): Promise<{ message: string }> {
+    return firstValueFrom(this.http.post<{ message: string }>(`/api/tla/approvals/${stepId}/act`, body));
+  }
 }

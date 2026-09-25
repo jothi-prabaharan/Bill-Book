@@ -58,6 +58,11 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddTransient<InternalKeyHandler>();
 
+builder.Services.AddHttpClient<IHrmClient, HrmClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+}).AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddScoped<LeaveCalculationEngine>();
 builder.Services.AddScoped<LeaveService>();
 builder.Services.AddScoped<AttendanceService>();

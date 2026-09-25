@@ -31,4 +31,9 @@ export const payrollRoutes: Routes = [
     loadComponent: () => import('./fnf/fnf-settlement.page').then((m) => m.FnfSettlementPage),
     data: { access: { permission: 'payroll.view' } },
   },
+  {
+    path: 'me/payslips',
+    loadComponent: () => import('./self-service/my-payslips.page').then((m) => m.MyPayslipsPage),
+    data: { access: { signedIn: true } },
+  },
 ];

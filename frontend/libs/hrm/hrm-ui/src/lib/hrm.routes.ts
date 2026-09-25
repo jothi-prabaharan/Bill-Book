@@ -36,4 +36,14 @@ export const hrmRoutes: Routes = [
     loadComponent: () => import('./notices/policies.page').then((m) => m.PoliciesPage),
     data: { access: { permission: 'hrm.view', apps: ['Hrms'] } },
   },
+  {
+    path: 'me/profile',
+    loadComponent: () => import('./self-service/my-profile.page').then((m) => m.MyProfilePage),
+    data: { access: { signedIn: true } },
+  },
+  {
+    path: 'team',
+    loadComponent: () => import('./self-service/team.page').then((m) => m.TeamPage),
+    data: { access: { signedIn: true } },
+  },
 ];

@@ -1,0 +1,214 @@
+<section class="bb-page" aria-labelledby="profile-title">
+  <header class="bb-page-header">
+    <div class="bb-page-header-titles">
+      <h1 id="profile-title" class="bb-page-title">My Profile</h1>
+      <p class="bb-page-subtitle">Your personal, job and contact information.</p>
+    </div>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (busy()) {
+    <p class="bb-empty-state">Loading profile…</p>
+  } @else if (profile(); as p) {
+    <nav class="bb-tabs" aria-label="Profile sections">
+      <button
+        type="button"
+        class="bb-tab"
+        [class.is-active]="activeTab() === 'overview'"
+        (click)="setTab('overview')"
+      >
+        Overview
+      </button>
+      <button
+        type="button"
+        class="bb-tab"
+        [class.is-active]="activeTab() === 'contact'"
+        (click)="setTab('contact')"
+      >
+        Contact & Emergency
+      </button>
+      <button
+        type="button"
+        class="bb-tab"
+        [class.is-active]="activeTab() === 'documents'"
+        (click)="setTab('documents')"
+      >
+        Documents ({{ documents().length }})
+      </button>
+      <button
+        type="button"
+        class="bb-tab"
+        [class.is-active]="activeTab() === 'announcements'"
+        (click)="setTab('announcements')"
+      >
+        Announcements ({{ announcements().length }})
+      </button>
+    </nav>
+
+    @if (activeTab() === 'overview') {
+      <div class="bb-card" style="margin-top: 1rem;">
+        <h2 class="bb-card-title">Employee Details</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <div>
+            <strong>Full Name:</strong> <span>{{ p.fullName }}</span>
+          </div>
+          <div>
+            <strong>Employee Code:</strong> <span>{{ p.employeeCode }}</span>
+          </div>
+          <div>
+            <strong>Work Email:</strong> <span>{{ p.workEmail || '—' }}</span>
+          </div>
+          <div>
+            <strong>Phone:</strong> <span>{{ p.phone || '—' }}</span>
+          </div>
+          <div>
+            <strong>Department:</strong> <span>{{ p.departmentName || '—' }}</span>
+          </div>
+          <div>
+            <strong>Designation:</strong> <span>{{ p.designationName || '—' }}</span>
+          </div>
+          <div>
+            <strong>Grade:</strong> <span>{{ p.gradeName || '—' }}</span>
+          </div>
+          <div>
+            <strong>Work Location:</strong> <span>{{ p.workLocationName || '—' }}</span>
+          </div>
+          <div>
+            <strong>Reports To:</strong> <span>{{ p.reportsToName || '—' }}</span>
+          </div>
+          <div>
+            <strong>Joining Date:</strong> <span>{{ p.joiningDate }}</span>
+          </div>
+          <div>
+            <strong>Employment Type:</strong> <span>{{ p.employmentType }}</span>
+          </div>
+          <div>
+            <strong>Status:</strong> <span class="bb-badge">{{ p.employeeStatus }}</span>
+          </div>
+          <div>
+            <strong>Gender:</strong> <span>{{ p.gender }}</span>
+          </div>
+          <div>
+            <strong>Date of Birth:</strong> <span>{{ p.dateOfBirth }}</span>
+          </div>
+          <div>
+            <strong>Marital Status:</strong> <span>{{ p.maritalStatus }}</span>
+          </div>
+          <div>
+            <strong>Blood Group:</strong> <span>{{ p.bloodGroup || '—' }}</span>
+          </div>
+          <div>
+            <strong>PAN:</strong> <span>{{ p.pan || '—' }}</span>
+          </div>
+          <div>
+            <strong>Aadhaar:</strong> <span>{{ p.aadhaar || '—' }}</span>
+          </div>
+          <div>
+            <strong>UAN:</strong> <span>{{ p.uan || '—' }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activeTab() === 'contact') {
+      <div class="bb-card" style="margin-top: 1rem;">
+        <h2 class="bb-card-title">Update Contact Details</h2>
+        <p class="bb-page-subtitle">You can update your personal contact and emergency contact details here.</p>
+
+        <form (ngSubmit)="saveContactInfo()" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1rem;">
+          <bb-text-input
+            label="Phone Number"
+            name="phone"
+            [(ngModel)]="editForm.phone"
+          />
+          <bb-text-input
+            label="Personal Email"
+            name="personalEmail"
+            [(ngModel)]="editForm.personalEmail"
+          />
+          <bb-text-input
+            label="Blood Group"
+            name="bloodGroup"
+            [(ngModel)]="editForm.bloodGroup"
+          />
+          <bb-select
+            label="Marital Status"
+            name="maritalStatus"
+            [options]="maritalStatusOptions"
+            [(ngModel)]="editForm.maritalStatus"
+          />
+          <bb-text-input
+            label="Emergency Contact Name"
+            name="emergencyContactName"
+            [(ngModel)]="editForm.emergencyContactName"
+          />
+          <bb-text-input
+            label="Emergency Contact Phone"
+            name="emergencyContactPhone"
+            [(ngModel)]="editForm.emergencyContactPhone"
+          />
+
+          <div style="grid-column: 1 / -1; display: flex; justify-content: flex-end; margin-top: 1rem;">
+            <button type="submit" class="bb-button is-primary" [disabled]="saving()">
+              {{ saving() ? 'Saving…' : 'Save Contact Info' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    @if (activeTab() === 'documents') {
+      <div class="bb-card" style="margin-top: 1rem;">
+        <h2 class="bb-card-title">My Documents</h2>
+        @if (documents().length === 0) {
+          <p class="bb-empty-state">No documents uploaded.</p>
+        } @else {
+          <table class="bb-table" style="width: 100%; margin-top: 1rem;">
+            <thead>
+              <tr>
+                <th>Document Type</th>
+                <th>Attachment Key</th>
+                <th>Valid Until</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (doc of documents(); track $index) {
+                <tr>
+                  <td>{{ doc.documentKind }}</td>
+                  <td><code>{{ doc.attachmentKey }}</code></td>
+                  <td>{{ doc.validUntil || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+    }
+
+    @if (activeTab() === 'announcements') {
+      <div class="bb-card" style="margin-top: 1rem;">
+        <h2 class="bb-card-title">Company Announcements</h2>
+        @if (announcements().length === 0) {
+          <p class="bb-empty-state">No announcements published.</p>
+        } @else {
+          <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            @for (item of announcements(); track item.announcementId) {
+              <div class="bb-card" style="border-left: 4px solid var(--bb-primary, #0070f3);">
+                <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                  <h3 style="margin: 0; font-size: 1.1rem; font-weight: 600;">
+                    @if (item.isPinned) { 📌 } {{ item.title }}
+                  </h3>
+                  <small style="color: var(--bb-text-muted);">{{ item.publishDate }}</small>
+                </div>
+                <p style="margin-top: 0.5rem; white-space: pre-wrap;">{{ item.body }}</p>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

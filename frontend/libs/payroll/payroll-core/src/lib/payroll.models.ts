@@ -77,3 +77,16 @@ export interface PayslipView {
   netPay: number;
   lines: PayslipLineView[];
 }
+
+export interface MyPayslipSummary {
+  payslipId: number;
+  payrollRunId: number;
+  month: string;
+  monthName: string;
+  paidDays: number;
+  grossEarnings: number;
+  grossDeductions: number;
+  netPay: number;
+  status: string;
+}
+

@@ -34,8 +34,8 @@
       </div>
 
       <div class="payroll-form-field">
-        <label>Tax Regime</label>
-        <select class="payroll-select" [(ngModel)]="regime" [disabled]="isLocked">
+        <label for="tax-regime-select">Tax Regime</label>
+        <select id="tax-regime-select" class="payroll-select" [(ngModel)]="regime" [disabled]="isLocked">
           <option value="New">New Tax Regime (Default u/s 115BAC)</option>
           <option value="Old">Old Tax Regime</option>
         </select>

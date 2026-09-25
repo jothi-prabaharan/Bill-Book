@@ -84,7 +84,8 @@ public record ApplyLeaveRequest(
     LeaveHalf FromHalf,
     LeaveHalf ToHalf,
     string Reason,
-    string? AttachmentKey
+    string? AttachmentKey,
+    long? ReportsToEmployeeId = null
 );
 
 public record LeaveApplicationDto(
@@ -283,7 +284,8 @@ public record CreateRegularisationRequest(
     DateTimeOffset? RequestedIn,
     DateTimeOffset? RequestedOut,
     AttendanceStatus RequestedStatus,
-    string Reason
+    string Reason,
+    long? ReportsToEmployeeId = null
 );
 
 public record RegularisationRequestDto(
@@ -302,7 +304,8 @@ public record CreateOvertimeRequest(
     long EmployeeId,
     DateOnly AttendanceDate,
     int Minutes,
-    decimal OvertimeRate
+    decimal OvertimeRate,
+    long? ReportsToEmployeeId = null
 );
 
 public record OvertimeRequestDto(
@@ -344,3 +347,63 @@ public record MonthlyPaidDaysDto(
     decimal WeeklyOffDays,
     decimal TotalPaidDays
 );
+
+public class ApplyLeaveSelfRequest
+{
+    public long LeaveTypeId { get; set; }
+    public DateOnly FromDate { get; set; }
+    public DateOnly ToDate { get; set; }
+    public bool FromHalf { get; set; }
+    public bool ToHalf { get; set; }
+    public string? Reason { get; set; }
+    public string? AttachmentKey { get; set; }
+}
+
+public class MobilePunchSelfRequest
+{
+    public decimal Latitude { get; set; }
+    public decimal Longitude { get; set; }
+    public string? DeviceInfo { get; set; }
+    public string? Notes { get; set; }
+}
+
+public class SubmitRegularisationSelfRequest
+{
+    public DateOnly AttendanceDate { get; set; }
+    public DateTimeOffset? RequestedIn { get; set; }
+    public DateTimeOffset? RequestedOut { get; set; }
+    public AttendanceStatus RequestedStatus { get; set; } = AttendanceStatus.Present;
+    public string Reason { get; set; } = string.Empty;
+}
+
+public class SubmitOvertimeSelfRequest
+{
+    public DateOnly AttendanceDate { get; set; }
+    public int Minutes { get; set; }
+    public decimal OvertimeRate { get; set; } = 1.5m;
+}
+
+public class ActApprovalRequest
+{
+    public string Action { get; set; } = "Approve"; // Approve, Reject, SendBack
+    public string? Comments { get; set; }
+}
+
+public class PendingApprovalItemDto
+{
+    public long ApprovalStepId { get; set; }
+    public int Sequence { get; set; }
+    public string Label { get; set; } = null!;
+    public string RequestKind { get; set; } = null!;
+    public long RequestId { get; set; }
+    public long EmployeeId { get; set; }
+    public string? EmployeeName { get; set; }
+    public string? Reason { get; set; }
+    public DateOnly? FromDate { get; set; }
+    public DateOnly? ToDate { get; set; }
+    public decimal? Days { get; set; }
+    public DateOnly? AttendanceDate { get; set; }
+    public int? OvertimeMinutes { get; set; }
+    public DateTimeOffset? CreatedAt { get; set; }
+}
+

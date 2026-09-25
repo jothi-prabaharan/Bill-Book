@@ -145,3 +145,57 @@ export interface RegularisationRequestView {
   approvalStatus: string;
   currentStepLabel?: string | null;
 }
+
+export interface PendingApprovalItem {
+  approvalStepId: number;
+  sequence: number;
+  label: string;
+  requestKind: string;
+  requestId: number;
+  employeeId: number;
+  employeeName?: string | null;
+  reason?: string | null;
+  fromDate?: string | null;
+  toDate?: string | null;
+  days?: number | null;
+  attendanceDate?: string | null;
+  overtimeMinutes?: number | null;
+  createdAt?: string | null;
+}
+
+export interface ActApprovalRequest {
+  action: 'Approve' | 'Reject' | 'SendBack';
+  comments?: string | null;
+}
+
+export interface ApplyLeaveSelfRequest {
+  leaveTypeId: number;
+  fromDate: string;
+  toDate: string;
+  fromHalf: boolean;
+  toHalf: boolean;
+  reason?: string | null;
+  attachmentKey?: string | null;
+}
+
+export interface MobilePunchSelfRequest {
+  latitude: number;
+  longitude: number;
+  deviceInfo?: string | null;
+  notes?: string | null;
+}
+
+export interface SubmitRegularisationSelfRequest {
+  attendanceDate: string;
+  requestedIn?: string | null;
+  requestedOut?: string | null;
+  requestedStatus?: string;
+  reason: string;
+}
+
+export interface SubmitOvertimeSelfRequest {
+  attendanceDate: string;
+  minutes: number;
+  overtimeRate?: number;
+}
+

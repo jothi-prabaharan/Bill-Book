@@ -210,3 +210,77 @@ export interface PolicyDocument {
   isActive: boolean;
   acknowledgements?: number;
 }
+
+export interface MyProfile {
+  employeeId: number;
+  employeeCode: string;
+  firstName: string;
+  middleName?: string | null;
+  lastName?: string | null;
+  fullName: string;
+  dateOfBirth: string;
+  gender: Gender | string;
+  maritalStatus: MaritalStatus | string;
+  bloodGroup?: string | null;
+  phone?: string | null;
+  workEmail?: string | null;
+  personalEmail?: string | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+  pan?: string | null;
+  aadhaar?: string | null;
+  uan?: string | null;
+  departmentId: number;
+  departmentName?: string | null;
+  designationId: number;
+  designationName?: string | null;
+  gradeId: number;
+  gradeName?: string | null;
+  workLocationId: number;
+  workLocationName?: string | null;
+  reportsToEmployeeId?: number | null;
+  reportsToName?: string | null;
+  joiningDate: string;
+  confirmationDate?: string | null;
+  employmentType: EmploymentType | string;
+  employeeStatus: EmployeeStatus | string;
+  addresses: EmployeeAddress[];
+  contacts: EmployeeContact[];
+  familyMembers: EmployeeFamilyMember[];
+  education: EmployeeEducation[];
+  previousEmployments: PreviousEmployment[];
+  bankDetails: EmployeeBankDetail[];
+  documents: EmployeeDocument[];
+}
+
+export interface UpdateMyProfile {
+  phone?: string | null;
+  personalEmail?: string | null;
+  bloodGroup?: string | null;
+  maritalStatus?: MaritalStatus | null;
+  emergencyContactName?: string | null;
+  emergencyContactPhone?: string | null;
+}
+
+export interface TeamMember {
+  employeeId: number;
+  employeeCode: string;
+  fullName: string;
+  departmentName?: string | null;
+  designationName?: string | null;
+  workLocationName?: string | null;
+  phone?: string | null;
+  workEmail?: string | null;
+  joiningDate: string;
+  level: number;
+  reportsToEmployeeId?: number | null;
+  reportsToName?: string | null;
+  status: string;
+}
+
+export interface TeamSummary {
+  totalMembers: number;
+  directReports: number;
+  indirectReports: number;
+}
+

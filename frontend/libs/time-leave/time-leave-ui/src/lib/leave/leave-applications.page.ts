@@ -35,8 +35,8 @@ export class LeaveApplicationsPage implements OnInit {
     reason: '',
   };
 
-  async ngOnInit(): Promise<void> {
-    await this.load();
+  ngOnInit(): void {
+    void this.load();
   }
 
   async load(): Promise<void> {

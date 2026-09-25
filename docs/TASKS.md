@@ -2414,18 +2414,18 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `backend/tests/Hrm.Api.Tests/LifecycleServiceTests.cs` (checklist template copy and item update, separation shortfall and exit settlement) and `Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working` in `PayrollServiceTests.cs`. Backend solution and Nx apps (`payroll`, `hrms`) build cleanly.
 
 ### TK-55 · H8: Self-service and approvals
-- [~] working (Antigravity) — since 2026-09-25
+- [x] done (Antigravity) — 2026-09-25
 - **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-49, TK-51 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `/api/me/...` routes: profile, leave, attendance, punches, claims, documents and
+  - [x] `/api/me/...` routes: profile, leave, attendance, punches, claims, documents and
         announcements (HRMS), plus payslips, Form 16 and tax declarations (Payroll). Each resolves
         the employee through `sub` → `Employee.UserId`, **never** an id in the URL.
-  - [ ] `/api/team/...` routes for a manager's direct and indirect reports.
-  - [ ] An approvals inbox.
-  - [ ] Mobile-first pages.
+  - [x] `/api/team/...` routes for a manager's direct and indirect reports.
+  - [x] An approvals inbox.
+  - [x] Mobile-first pages.
 - **Done when:** an employee applies for leave and a manager approves it, each from their own
   screens, and the employee downloads a payslip.
-- **Notes:**
+- **Notes:** Completed self-service endpoints across Hrm, TimeLeave, and Payroll services, unified approvals inbox, team hierarchy viewer, my-profile, and my-payslips pages. Verified with unit tests and clean builds.
 
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
 - [ ] open

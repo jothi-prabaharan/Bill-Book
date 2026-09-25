@@ -1,11 +1,10 @@
 using System.Net.Http.Json;
 using Shared.Kernel.Employees;
 
-namespace Payroll.Api.Services;
+namespace TimeLeave.Api.Services;
 
 public interface IHrmClient
 {
-    Task SettleEmployeeAsync(long employeeId, DateOnly lastWorkingDate, CancellationToken ct);
     Task<EmployeeProfile?> FindByUserIdAsync(Guid customerId, Guid orgId, Guid userId, CancellationToken ct);
     Task<EmployeeProfile?> FindByIdAsync(Guid customerId, Guid orgId, long employeeId, CancellationToken ct);
 }
@@ -15,18 +14,6 @@ public sealed class HrmClient : IHrmClient
     private readonly HttpClient _http;
 
     public HrmClient(HttpClient http) => _http = http;
-
-    public async Task SettleEmployeeAsync(long employeeId, DateOnly lastWorkingDate, CancellationToken ct)
-    {
-        try
-        {
-            await _http.PostAsync($"internal/hrm/employees/{employeeId}/settle?lastWorkingDate={lastWorkingDate:yyyy-MM-dd}", null, ct);
-        }
-        catch
-        {
-            // Best-effort if HRMS is not licensed
-        }
-    }
 
     public async Task<EmployeeProfile?> FindByUserIdAsync(Guid customerId, Guid orgId, Guid userId, CancellationToken ct)
     {
@@ -70,4 +57,3 @@ public sealed class HrmClient : IHrmClient
         }
     }
 }
-

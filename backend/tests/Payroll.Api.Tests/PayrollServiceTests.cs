@@ -355,6 +355,10 @@ public sealed class PayrollServiceTests
             SettledEmployees.Add((employeeId, lastWorkingDate));
             return Task.CompletedTask;
         }
+
+        public Task<Shared.Kernel.Employees.EmployeeProfile?> FindByUserIdAsync(Guid customerId, Guid orgId, Guid userId, CancellationToken ct) => Task.FromResult<Shared.Kernel.Employees.EmployeeProfile?>(null);
+
+        public Task<Shared.Kernel.Employees.EmployeeProfile?> FindByIdAsync(Guid customerId, Guid orgId, long employeeId, CancellationToken ct) => Task.FromResult<Shared.Kernel.Employees.EmployeeProfile?>(null);
     }
 
     private sealed class FakeMasterUserClient : IMasterUserClient

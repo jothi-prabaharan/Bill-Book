@@ -1,0 +1,80 @@
+<section class="bb-page" aria-labelledby="team-title">
+  <header class="bb-page-header">
+    <div class="bb-page-header-titles">
+      <h1 id="team-title" class="bb-page-title">My Team</h1>
+      <p class="bb-page-subtitle">Your direct and indirect reporting hierarchy.</p>
+    </div>
+  </header>
+
+  @if (messages().length) {
+    <bb-message-box [messages]="messages()" />
+  }
+
+  @if (busy()) {
+    <p class="bb-empty-state">Loading team…</p>
+  } @else {
+    @if (summary(); as sum) {
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="bb-card" style="text-align: center;">
+          <div style="font-size: 2rem; font-weight: bold; color: var(--bb-primary, #0070f3);">{{ sum.totalMembers }}</div>
+          <div style="color: var(--bb-text-muted); font-size: 0.875rem;">Total Team Members</div>
+        </div>
+        <div class="bb-card" style="text-align: center;">
+          <div style="font-size: 2rem; font-weight: bold; color: #10b981;">{{ sum.directReports }}</div>
+          <div style="color: var(--bb-text-muted); font-size: 0.875rem;">Direct Reports</div>
+        </div>
+        <div class="bb-card" style="text-align: center;">
+          <div style="font-size: 2rem; font-weight: bold; color: #6366f1;">{{ sum.indirectReports }}</div>
+          <div style="color: var(--bb-text-muted); font-size: 0.875rem;">Indirect Reports</div>
+        </div>
+      </div>
+    }
+
+    <div class="bb-card">
+      <h2 class="bb-card-title">Team Members</h2>
+      @if (members().length === 0) {
+        <p class="bb-empty-state">No reporting team members found.</p>
+      } @else {
+        <table class="bb-table" style="width: 100%; margin-top: 1rem;">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Department & Role</th>
+              <th>Location</th>
+              <th>Level</th>
+              <th>Contact</th>
+              <th>Reports To</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of members(); track m.employeeId) {
+              <tr>
+                <td>
+                  <strong>{{ m.fullName }}</strong>
+                  <div style="font-size: 0.8rem; color: var(--bb-text-muted);">{{ m.employeeCode }}</div>
+                </td>
+                <td>
+                  <div>{{ m.designationName || '—' }}</div>
+                  <small style="color: var(--bb-text-muted);">{{ m.departmentName || '—' }}</small>
+                </td>
+                <td>{{ m.workLocationName || '—' }}</td>
+                <td>
+                  <span class="bb-badge" [class.is-primary]="m.level === 1">
+                    {{ m.level === 1 ? 'Direct' : 'Level ' + m.level }}
+                  </span>
+                </td>
+                <td>
+                  <div>{{ m.workEmail || '—' }}</div>
+                  <small style="color: var(--bb-text-muted);">{{ m.phone || '—' }}</small>
+                </td>
+                <td>{{ m.reportsToName || 'You' }}</td>
+                <td><span class="bb-badge">{{ m.status }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+  }
+</section>

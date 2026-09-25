@@ -229,3 +229,17 @@ public sealed class PayslipView
     public decimal NetPay { get; set; }
     public List<PayslipLineView> Lines { get; set; } = [];
 }
+
+public sealed class MyPayslipSummaryDto
+{
+    public long PayslipId { get; set; }
+    public long PayrollRunId { get; set; }
+    public DateOnly Month { get; set; }
+    public string MonthName { get; set; } = null!;
+    public decimal PaidDays { get; set; }
+    public decimal GrossEarnings { get; set; }
+    public decimal GrossDeductions { get; set; }
+    public decimal NetPay { get; set; }
+    public string Status { get; set; } = null!;
+}
+

@@ -127,4 +127,29 @@ export class HrmApiService {
       this.http.post<void>(`/api/hrm/lifecycle/separations/${employeeId}/settle`, null, { params }),
     );
   }
+
+  // Self-Service & Team (H8, TK-55)
+  myProfile(): Promise<import('./hrm.models').MyProfile> {
+    return firstValueFrom(this.http.get<import('./hrm.models').MyProfile>('/api/hrm/me/profile'));
+  }
+
+  updateMyProfile(body: import('./hrm.models').UpdateMyProfile): Promise<{ message: string }> {
+    return firstValueFrom(this.http.put<{ message: string }>('/api/hrm/me/profile', body));
+  }
+
+  myDocuments(): Promise<import('./hrm.models').EmployeeDocument[]> {
+    return firstValueFrom(this.http.get<import('./hrm.models').EmployeeDocument[]>('/api/hrm/me/documents'));
+  }
+
+  myAnnouncements(): Promise<import('./hrm.models').Announcement[]> {
+    return firstValueFrom(this.http.get<import('./hrm.models').Announcement[]>('/api/hrm/me/announcements'));
+  }
+
+  teamMembers(): Promise<import('./hrm.models').TeamMember[]> {
+    return firstValueFrom(this.http.get<import('./hrm.models').TeamMember[]>('/api/hrm/team/members'));
+  }
+
+  teamSummary(): Promise<import('./hrm.models').TeamSummary> {
+    return firstValueFrom(this.http.get<import('./hrm.models').TeamSummary>('/api/hrm/team/summary'));
+  }
 }
