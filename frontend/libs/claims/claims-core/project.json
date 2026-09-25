@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "claims-core",
+  "projectType": "library",
+  "sourceRoot": "libs/claims/claims-core/src",
+  "tags": [
+    "scope:claims",
+    "type:core"
+  ],
+  "targets": {}
+}

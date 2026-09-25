@@ -1,0 +1,154 @@
+<div class="page-head">
+  <div>
+    <h1>Expense Categories & Limits</h1>
+    <p>Manage expense claim categories, receipt requirements, and amount limits.</p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <button class="btn-primary" (click)="openCreateCategory()">+ Add Category</button>
+    <button class="btn-secondary" (click)="openCreateLimit()">+ Set Limit</button>
+  </div>
+</div>
+
+@if (loading()) {
+  <div style="padding: 16px;">Loading categories...</div>
+}
+
+<div class="sheet" style="margin-bottom: 24px;">
+  <h2>Categories</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Receipt Required?</th>
+          <th>Taxable?</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of categories(); track c.claimCategoryId) {
+          <tr>
+            <td><strong>{{ c.code }}</strong></td>
+            <td>{{ c.name }}</td>
+            <td>{{ c.isReceiptRequired ? 'Yes' : 'No' }}</td>
+            <td>{{ c.isTaxable ? 'Yes' : 'No' }}</td>
+            <td>
+              <span class="badge" [class.status-approved]="c.isActive" [class.status-draft]="!c.isActive">
+                {{ c.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="openCreateLimit(c.claimCategoryId)">
+                Add Limit
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--color-text-muted);">No categories defined.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="sheet">
+  <h2>Spending Limits</h2>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Category</th>
+          <th>Grade</th>
+          <th>Period</th>
+          <th>Limit Amount</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of limits(); track l.claimLimitId) {
+          <tr>
+            <td><strong>{{ l.categoryName }}</strong></td>
+            <td>{{ l.gradeId ? 'Grade ' + l.gradeId : 'All Grades' }}</td>
+            <td>{{ l.limitPeriod }}</td>
+            <td>{{ l.amount | currency:'INR' }}</td>
+            <td>
+              <button class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; color: #dc2626;" (click)="deleteLimit(l.claimLimitId)">
+                Delete
+              </button>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--color-text-muted);">No limits defined.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Category Modal -->
+@if (showCategoryForm()) {
+  <div class="sheet" style="position: fixed; inset: 20% 30% auto 30%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3>New Claim Category</h3>
+    <div class="fields" style="margin-top: 12px;">
+      <div>
+        <label>Code</label>
+        <input type="text" [(ngModel)]="categoryForm.code" placeholder="e.g. TRAV" style="width: 100%; padding: 6px; margin-top: 4px;" />
+      </div>
+      <div>
+        <label>Name</label>
+        <input type="text" [(ngModel)]="categoryForm.name" placeholder="e.g. Travel & Conveyance" style="width: 100%; padding: 6px; margin-top: 4px;" />
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 16px;">
+        <input type="checkbox" id="catReceipt" [(ngModel)]="categoryForm.isReceiptRequired" />
+        <label for="catReceipt">Receipt Required</label>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center; margin-top: 16px;">
+        <input type="checkbox" id="catActive" [(ngModel)]="categoryForm.isActive" />
+        <label for="catActive">Active</label>
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-secondary" (click)="closeCategoryForm()">Cancel</button>
+      <button class="btn-primary" (click)="saveCategory()">Save</button>
+    </div>
+  </div>
+}
+
+<!-- Limit Modal -->
+@if (showLimitForm()) {
+  <div class="sheet" style="position: fixed; inset: 20% 30% auto 30%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+    <h3>Set Claim Limit</h3>
+    <div class="fields" style="margin-top: 12px;">
+      <div>
+        <label>Category</label>
+        <select [(ngModel)]="limitForm.claimCategoryId" style="width: 100%; padding: 6px; margin-top: 4px;">
+          @for (c of categories(); track c.claimCategoryId) {
+            <option [value]="c.claimCategoryId">{{ c.name }} ({{ c.code }})</option>
+          }
+        </select>
+      </div>
+      <div>
+        <label>Period</label>
+        <select [(ngModel)]="limitForm.limitPeriod" style="width: 100%; padding: 6px; margin-top: 4px;">
+          <option value="PerClaim">Per Claim</option>
+          <option value="Monthly">Monthly</option>
+          <option value="Yearly">Yearly</option>
+        </select>
+      </div>
+      <div>
+        <label>Max Amount</label>
+        <input type="number" [(ngModel)]="limitForm.amount" style="width: 100%; padding: 6px; margin-top: 4px;" />
+      </div>
+    </div>
+    <div class="sheet-actions">
+      <button class="btn-secondary" (click)="closeLimitForm()">Cancel</button>
+      <button class="btn-primary" (click)="saveLimit()">Save</button>
+    </div>
+  </div>
+}

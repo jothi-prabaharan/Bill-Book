@@ -1,0 +1,141 @@
+@if (claim(); as c) {
+  <div class="page-head">
+    <div>
+      <a routerLink="/claims" style="text-decoration: none; color: var(--color-primary); font-size: 0.875rem;">← Back to Claims</a>
+      <h1 style="margin-top: 4px;">{{ c.claimNo }}</h1>
+      <p>Submitted by {{ c.employeeName || 'Emp #' + c.employeeId }} on {{ c.claimDate }}</p>
+    </div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <span class="badge" [class.status-draft]="c.claimStatus === 'Draft'"
+            [class.status-submitted]="c.claimStatus === 'Submitted'"
+            [class.status-approved]="c.claimStatus === 'Approved'"
+            [class.status-rejected]="c.claimStatus === 'Rejected'"
+            [class.status-paid]="c.claimStatus === 'Paid'">
+        {{ c.claimStatus }}
+      </span>
+
+      @if (c.claimStatus === 'Draft') {
+        <button class="btn-primary" (click)="submitClaim()">Submit for Approval</button>
+      }
+
+      @if (c.claimStatus === 'Submitted') {
+        <button class="btn-primary" (click)="openApprovalModal('Approve')">Approve</button>
+        <button class="btn-secondary" style="color: #ea580c;" (click)="openApprovalModal('SendBack')">Send Back</button>
+        <button class="btn-secondary" style="color: #dc2626;" (click)="openApprovalModal('Reject')">Reject</button>
+      }
+
+      @if (c.claimStatus === 'Approved') {
+        <button class="btn-primary" (click)="openPayoutModal()">Process Payout</button>
+      }
+    </div>
+  </div>
+
+  <div class="sheet" style="margin-bottom: 24px;">
+    <div class="fields">
+      <div>
+        <label style="color: var(--color-text-muted); font-size: 0.75rem;">TOTAL AMOUNT</label>
+        <div style="font-size: 1.25rem; font-weight: 700;">{{ c.totalAmount | currency:'INR' }}</div>
+      </div>
+      <div>
+        <label style="color: var(--color-text-muted); font-size: 0.75rem;">APPROVED AMOUNT</label>
+        <div style="font-size: 1.25rem; font-weight: 700; color: #16a34a;">{{ c.approvedAmount | currency:'INR' }}</div>
+      </div>
+      <div>
+        <label style="color: var(--color-text-muted); font-size: 0.75rem;">PAYOUT MODE</label>
+        <div style="font-weight: 600;">{{ c.payoutMode }}</div>
+      </div>
+      <div>
+        <label style="color: var(--color-text-muted); font-size: 0.75rem;">CURRENT STEP</label>
+        <div>{{ c.currentStepLabel || '—' }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet">
+    <h3>Expense Lines</h3>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Amount</th>
+            <th>Receipt</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of c.lines; track line.expenseClaimLineId) {
+            <tr>
+              <td>{{ line.expenseDate }}</td>
+              <td><strong>{{ line.categoryName }} ({{ line.categoryCode }})</strong></td>
+              <td>{{ line.description }}</td>
+              <td>{{ line.amount | currency:'INR' }}</td>
+              <td>
+                @if (line.receiptAttachmentKey) {
+                  <span style="color: var(--color-primary); font-size: 0.75rem;">Attachment: {{ line.receiptAttachmentKey }}</span>
+                } @else {
+                  <span style="color: var(--color-text-muted); font-size: 0.75rem;">No Receipt</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Approval Modal -->
+  @if (showApprovalModal()) {
+    <div class="sheet" style="position: fixed; inset: 25% 35% auto 35%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <h3>{{ approvalForm.action }} Claim</h3>
+      <div style="margin-top: 12px;">
+        <label>Comments / Reason</label>
+        <textarea [(ngModel)]="approvalForm.comments" rows="3" style="width: 100%; padding: 6px; margin-top: 4px;" placeholder="Optional notes"></textarea>
+      </div>
+      <div class="sheet-actions">
+        <button class="btn-secondary" (click)="closeApprovalModal()">Cancel</button>
+        <button class="btn-primary" (click)="submitApproval()">Confirm {{ approvalForm.action }}</button>
+      </div>
+    </div>
+  }
+
+  <!-- Payout Modal -->
+  @if (showPayoutModal()) {
+    <div class="sheet" style="position: fixed; inset: 25% 35% auto 35%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <h3>Process Payout</h3>
+      <div class="fields" style="margin-top: 12px;">
+        <div>
+          <label>Payout Mode</label>
+          <select [(ngModel)]="payoutForm.payoutMode" style="width: 100%; padding: 6px; margin-top: 4px;">
+            <option value="Direct">Direct Spend Money</option>
+            <option value="Payroll">Attach to Payroll Run</option>
+          </select>
+        </div>
+        @if (payoutForm.payoutMode === 'Direct') {
+          <div>
+            <label>Bank Account ID</label>
+            <input type="number" [(ngModel)]="payoutForm.bankAccountId" style="width: 100%; padding: 6px; margin-top: 4px;" />
+          </div>
+          <div>
+            <label>Reference</label>
+            <input type="text" [(ngModel)]="payoutForm.paymentReference" placeholder="e.g. UTR / Cheque No" style="width: 100%; padding: 6px; margin-top: 4px;" />
+          </div>
+        } @else {
+          <div>
+            <label>Payroll Run ID</label>
+            <input type="number" [(ngModel)]="payoutForm.payrollRunId" placeholder="Payroll run ID" style="width: 100%; padding: 6px; margin-top: 4px;" />
+          </div>
+        }
+      </div>
+      <div class="sheet-actions">
+        <button class="btn-secondary" (click)="closePayoutModal()">Cancel</button>
+        <button class="btn-primary" (click)="submitPayout()">Post Payout</button>
+      </div>
+    </div>
+  }
+} @else if (loading()) {
+  <div style="padding: 16px;">Loading claim details...</div>
+} @else {
+  <div style="padding: 16px;">Claim not found.</div>
+}

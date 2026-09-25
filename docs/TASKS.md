@@ -2428,17 +2428,17 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed self-service endpoints across Hrm, TimeLeave, and Payroll services, unified approvals inbox, team hierarchy viewer, my-profile, and my-payslips pages. Verified with unit tests and clean builds.
 
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-CLM (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ClaimCategory`, `ClaimLimit`, `ExpenseClaim`, `ExpenseClaimLine`.
 - **Sub-tasks:**
-  - [ ] Categories with limits per grade, and claims with receipts stored through `IFileStorage`.
-  - [ ] Approval through the engine.
-  - [ ] Payout: as a line in a payroll run when Payroll is licensed, and as a Spend Money through
+  - [x] Categories with limits per grade, and claims with receipts stored through `IFileStorage`.
+  - [x] Approval through the engine.
+  - [x] Payout: as a line in a payroll run when Payroll is licensed, and as a Spend Money through
         Accounting otherwise.
-  - [ ] Seed claim categories and a `CLM` numbering series.
+  - [x] Seed claim categories and a `CLM` numbering series.
 - **Done when:** a claim is submitted, approved and paid, and the payment posts a balanced journal.
-- **Notes:**
+- **Notes:** Completed Claims service (Claims.Entity, Claims.Repository, Claims.Api on port 4514), EF Core migration with RLS policies, gateway reverse proxy routes, seeding of categories and CLM numbering series, general ledger payout posting, self-service employee claims, frontend libs (claims-core, claims-ui) with category/limits and claim management pages, and full unit test coverage.
 
 ### TK-57 · H10: Recruitment and onboarding (`Recruitment`, `rec`, port 4512)
 - [ ] open

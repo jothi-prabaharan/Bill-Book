@@ -1,0 +1,148 @@
+<div class="page-head">
+  <div>
+    <h1>Expense Claims</h1>
+    <p>Manage and process employee expense reimbursement claims.</p>
+  </div>
+  <div style="display: flex; gap: 8px;">
+    <button class="btn-primary" (click)="openCreate()">+ New Claim</button>
+  </div>
+</div>
+
+<div class="sheet" style="display: flex; gap: 8px; align-items: center; margin-bottom: 16px;">
+  <span style="font-weight: 600;">Status:</span>
+  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === ''" (click)="onFilterStatus('')">All</button>
+  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Draft'" (click)="onFilterStatus('Draft')">Draft</button>
+  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Submitted'" (click)="onFilterStatus('Submitted')">Submitted</button>
+  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Approved'" (click)="onFilterStatus('Approved')">Approved</button>
+  <button class="btn-secondary" [class.btn-primary]="selectedStatus() === 'Paid'" (click)="onFilterStatus('Paid')">Paid</button>
+</div>
+
+@if (loading()) {
+  <div style="padding: 16px;">Loading claims...</div>
+}
+
+<div class="sheet">
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>Claim No</th>
+          <th>Employee</th>
+          <th>Date</th>
+          <th>Total Amount</th>
+          <th>Payout Mode</th>
+          <th>Status</th>
+          <th>Step / Approver</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of claims(); track c.expenseClaimId) {
+          <tr>
+            <td>
+              <a [routerLink]="['/claims', c.expenseClaimId]"><strong>{{ c.claimNo }}</strong></a>
+            </td>
+            <td>{{ c.employeeName || 'Emp #' + c.employeeId }}</td>
+            <td>{{ c.claimDate }}</td>
+            <td><strong>{{ c.totalAmount | currency:'INR' }}</strong></td>
+            <td>{{ c.payoutMode }}</td>
+            <td>
+              <span class="badge" [class.status-draft]="c.claimStatus === 'Draft'"
+                    [class.status-submitted]="c.claimStatus === 'Submitted'"
+                    [class.status-approved]="c.claimStatus === 'Approved'"
+                    [class.status-rejected]="c.claimStatus === 'Rejected'"
+                    [class.status-paid]="c.claimStatus === 'Paid'">
+                {{ c.claimStatus }}
+              </span>
+            </td>
+            <td>{{ c.currentStepLabel || '—' }}</td>
+            <td>
+              <div style="display: flex; gap: 4px;">
+                <a [routerLink]="['/claims', c.expenseClaimId]" class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem; text-decoration: none;">
+                  View
+                </a>
+                @if (c.claimStatus === 'Draft') {
+                  <button class="btn-primary" style="padding: 2px 8px; font-size: 0.75rem;" (click)="submitClaim(c.expenseClaimId)">
+                    Submit
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" style="text-align: center; color: var(--color-text-muted);">No expense claims found.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Create Modal -->
+@if (showCreateModal()) {
+  <div class="sheet" style="position: fixed; inset: 10% 20% auto 20%; z-index: 1000; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 80vh; overflow-y: auto;">
+    <h3>Create Expense Claim</h3>
+    <div class="fields" style="margin-top: 12px;">
+      <div>
+        <label>Employee ID</label>
+        <input type="number" [(ngModel)]="newClaim.employeeId" style="width: 100%; padding: 6px; margin-top: 4px;" />
+      </div>
+      <div>
+        <label>Claim Date</label>
+        <input type="date" [(ngModel)]="newClaim.claimDate" style="width: 100%; padding: 6px; margin-top: 4px;" />
+      </div>
+      <div>
+        <label>Payout Mode</label>
+        <select [(ngModel)]="newClaim.payoutMode" style="width: 100%; padding: 6px; margin-top: 4px;">
+          <option value="Direct">Direct (Accounting Spend Money)</option>
+          <option value="Payroll">Payroll (Next Payroll Run)</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h4>Expense Lines</h4>
+        <button class="btn-secondary" (click)="addLine()">+ Add Line</button>
+      </div>
+
+      @for (line of newClaim.lines; track $index) {
+        <div style="display: grid; grid-template-columns: 2fr 1.5fr 3fr 1.5fr 2fr auto; gap: 8px; align-items: end; margin-top: 8px;">
+          <div>
+            <label style="font-size: 0.75rem;">Category</label>
+            <select [(ngModel)]="line.claimCategoryId" style="width: 100%; padding: 4px;">
+              @for (cat of categories(); track cat.claimCategoryId) {
+                <option [value]="cat.claimCategoryId">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.75rem;">Date</label>
+            <input type="date" [(ngModel)]="line.expenseDate" style="width: 100%; padding: 4px;" />
+          </div>
+          <div>
+            <label style="font-size: 0.75rem;">Description</label>
+            <input type="text" [(ngModel)]="line.description" placeholder="Description" style="width: 100%; padding: 4px;" />
+          </div>
+          <div>
+            <label style="font-size: 0.75rem;">Amount</label>
+            <input type="number" [(ngModel)]="line.amount" style="width: 100%; padding: 4px;" />
+          </div>
+          <div>
+            <label style="font-size: 0.75rem;">Receipt Key</label>
+            <input type="text" [(ngModel)]="line.receiptAttachmentKey" placeholder="e.g. rec-123.jpg" style="width: 100%; padding: 4px;" />
+          </div>
+          <div>
+            <button class="btn-secondary" style="color: #dc2626; padding: 4px 8px;" (click)="removeLine($index)">X</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="sheet-actions">
+      <button class="btn-secondary" (click)="closeCreate()">Cancel</button>
+      <button class="btn-primary" (click)="saveClaim()">Save Draft</button>
+    </div>
+  </div>
+}

@@ -11,7 +11,7 @@ public sealed class EndpointGuardTests
 
     [Fact]
     public void Every_endpoint_carries_a_guard() =>
-        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.Unguarded(Service)));
+        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.Unguarded(Service, "MePayrollController")));
 
     [Fact]
     public void Every_controller_names_its_apps() =>

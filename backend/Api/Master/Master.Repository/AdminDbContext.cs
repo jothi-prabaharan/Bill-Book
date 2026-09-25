@@ -658,6 +658,9 @@ public class AdminDbContext : DbContext
         // H2, H3 (TK-49, TK-50).
         "leave", "attendance",
 
+        // H9 (TK-56).
+        "claims",
+
         // School (S0, TK-60). attendance is already above and is shared: HRMS
         // uses it for staff attendance, School for student attendance.
         "sis", "admission", "fee", "facility", "workorder", "preventive", "amc",
@@ -731,8 +734,8 @@ public class AdminDbContext : DbContext
         // that employ people on the books: HRMS, Payroll and School (TK-48).
         "employee" => App.Hrms | App.Payroll | App.School,
 
-        // Lifecycle, letters, assets, announcements and leave are HRMS's own.
-        "hrm" or "leave" => App.Hrms,
+        // Lifecycle, letters, assets, announcements, leave and claims are HRMS's own.
+        "hrm" or "leave" or "claims" => App.Hrms,
 
         // Staff attendance in HRMS, student attendance in School (TK-60). A
         // role belongs to one app and a token carries one app, so the shared

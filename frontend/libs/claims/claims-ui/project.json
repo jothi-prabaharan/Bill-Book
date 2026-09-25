@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "claims-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/claims/claims-ui/src",
+  "tags": [
+    "scope:claims",
+    "type:ui"
+  ],
+  "targets": {}
+}

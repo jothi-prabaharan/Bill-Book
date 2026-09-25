@@ -1,17 +1,17 @@
 using Shared.Kernel.Internal;
 using Xunit;
 
-namespace TimeLeave.Api.Tests;
+namespace Claims.Api.Tests;
 
-/// <summary>Every TimeLeave endpoint carries a guard, names its apps, and demands only seeded modules (TK-49, TK-50).</summary>
+/// <summary>Every Claims endpoint carries a guard, names its apps, and demands only seeded modules (H9, TK-56).</summary>
 public sealed class EndpointGuardTests
 {
     private static System.Reflection.Assembly Service =>
-        typeof(TimeLeave.Api.Controllers.LeaveController).Assembly;
+        typeof(Claims.Api.Controllers.ClaimsController).Assembly;
 
     [Fact]
     public void Every_endpoint_carries_a_guard() =>
-        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.Unguarded(Service, "MeTimeLeaveController", "ApprovalsController")));
+        Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.Unguarded(Service, "MeClaimsController")));
 
     [Fact]
     public void Every_controller_names_its_apps() =>
@@ -23,8 +23,7 @@ public sealed class EndpointGuardTests
         IReadOnlySet<string> seeded =
             Master.Repository.AdminDbContext.PermissionModules.ToHashSet(StringComparer.Ordinal);
 
-        Assert.Contains("leave", seeded);
-        Assert.Contains("attendance", seeded);
+        Assert.Contains("claims", seeded);
         Assert.Equal(string.Empty, string.Join(", ", EndpointGuardAudit.DemandedModules(Service).Where(m => !seeded.Contains(m))));
     }
 

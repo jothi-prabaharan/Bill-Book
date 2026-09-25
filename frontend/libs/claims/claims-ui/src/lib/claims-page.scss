@@ -1,0 +1,88 @@
+.page-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3, 12px);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-3, 12px);
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.sheet {
+  margin-top: var(--space-4, 16px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--space-3, 12px);
+}
+
+.sheet-actions {
+  display: flex;
+  gap: var(--space-2, 8px);
+  justify-content: flex-end;
+  margin-top: var(--space-3, 12px);
+}
+
+.table-container {
+  overflow-x: auto;
+  margin-top: var(--space-3, 12px);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+
+    th, td {
+      padding: var(--space-2, 8px) var(--space-3, 12px);
+      text-align: left;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    th {
+      background: var(--color-surface-hover, #f8f9fa);
+      font-weight: 600;
+    }
+  }
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+
+  &.status-draft { background: var(--color-muted-bg, #eee); color: var(--color-text-muted); }
+  &.status-submitted { background: #e0f2fe; color: #0284c7; }
+  &.status-approved { background: #dcfce7; color: #16a34a; }
+  &.status-rejected { background: #fee2e2; color: #dc2626; }
+  &.status-paid { background: #fef08a; color: #854d0e; }
+}
+
+.btn-primary {
+  background: var(--color-primary, #2563eb);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
