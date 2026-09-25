@@ -1,0 +1,105 @@
+<header class="page-head">
+  <h1>Fee setup</h1>
+  <button *bbIfCan="'fee.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ Add</button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Fee setup">
+  @for (t of tabs; track t.tab) {
+    <button type="button" role="tab" [attr.aria-selected]="t.tab === tab()" (click)="choose(t.tab)">{{ t.label }}</button>
+  }
+</nav>
+
+<bb-message-box [messages]="messages()" />
+
+@switch (tab()) {
+  @case ('heads') {
+    <bb-data-grid [gridCode]="'FEE_HEADS'" [columns]="headColumns" [data]="heads()">
+      <ng-template bbCellTemplate="incomeAccountId" let-row>{{ postsTo(row) }}</ng-template>
+      <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'fee.edit'" type="button" class="link" (click)="editHead(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+  @case ('structures') {
+    <bb-data-grid [gridCode]="'FEE_STRUCTURES'" [columns]="structureColumns" [data]="structures()">
+      <ng-template bbCellTemplate="schoolClassId" let-row>{{ className(row.schoolClassId) }}</ng-template>
+      <ng-template bbCellTemplate="lines" let-row>{{ feesOf(row) }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'fee.edit'" type="button" class="link" (click)="editStructure(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+  @default {
+    <bb-data-grid [gridCode]="'FEE_CONCESSIONS'" [columns]="concessionColumns" [data]="concessions()">
+      <ng-template bbCellTemplate="studentId" let-row>{{ studentName(row.studentId) }}</ng-template>
+      <ng-template bbCellTemplate="feeHeadId" let-row>{{ headName(row.feeHeadId) }}</ng-template>
+      <ng-template bbCellTemplate="value" let-row>{{ row.concessionKind === 'Percent' ? row.value + '%' : row.value }}</ng-template>
+      <ng-template bbCellTemplate="isApproved" let-row>{{ row.isApproved ? 'Approved' : 'Awaiting approval' }}</ng-template>
+      <ng-template bbCellTemplate="actions" let-row>
+        <button *bbIfCan="'fee.edit'" type="button" class="link" (click)="editConcession(row)">Edit</button>
+      </ng-template>
+    </bb-data-grid>
+  }
+}
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="fee-sheet-title">
+    <h2 id="fee-sheet-title">{{ editingId() === null ? 'New' : 'Edit' }}</h2>
+    @switch (tab()) {
+      @case ('heads') {
+        <div class="fields">
+          <bb-text-input label="Code" [(ngModel)]="headForm.code" maxlength="20" [uppercase]="true" />
+          <bb-text-input label="Name" [(ngModel)]="headForm.name" maxlength="100" />
+          <bb-checkbox text="Refundable (a deposit)" [(ngModel)]="headForm.isRefundable" />
+          <bb-select
+            label="Posts to"
+            [placeholder]="headForm.isRefundable ? 'Refundable Deposits' : 'Fee Income'"
+            [options]="accountOptions()"
+            [(ngModel)]="headForm.incomeAccountId"
+          />
+          <bb-text-input label="SAC" hint="Only for a taxable head. School education is exempt." [(ngModel)]="headForm.hsnSacCode" maxlength="8" />
+          <bb-checkbox text="Active" [(ngModel)]="headForm.isActive" />
+        </div>
+      }
+      @case ('structures') {
+        <div class="fields">
+          <bb-select label="School year" [options]="yearOptions()" [(ngModel)]="structureForm.academicYearId" [clearable]="false" />
+          <bb-select label="Class" [options]="classOptions()" [(ngModel)]="structureForm.schoolClassId" [clearable]="false" />
+          <bb-text-input label="Name" [(ngModel)]="structureForm.name" maxlength="100" />
+          <bb-select label="Year starts in" [options]="months" [(ngModel)]="structureForm.firstMonth" [clearable]="false" />
+          <bb-checkbox text="Active" [(ngModel)]="structureForm.isActive" />
+        </div>
+        <div class="rows">
+          @for (l of structureForm.lines; track $index; let i = $index) {
+            <div class="row">
+              <bb-select label="Fee" [options]="headOptions()" [(ngModel)]="l.feeHeadId" [clearable]="false" />
+              <bb-money-input label="Amount" [(ngModel)]="l.amount" />
+              <bb-select label="How often" [options]="frequencies" [(ngModel)]="l.frequency" [clearable]="false" />
+              <bb-number-input label="Due on day" [(ngModel)]="l.dueDay" />
+              <button type="button" class="link" (click)="removeLine(i)">Remove</button>
+            </div>
+          }
+        </div>
+        <button type="button" class="btn btn-ghost" (click)="addLine()">+ Add fee</button>
+      }
+      @default {
+        <div class="fields">
+          <bb-select label="Student" [options]="studentOptions()" [(ngModel)]="concessionForm.studentId" [clearable]="false" />
+          <bb-select label="Fee" [options]="headOptions()" [(ngModel)]="concessionForm.feeHeadId" [clearable]="false" />
+          <bb-select label="Kind" [options]="kinds" [(ngModel)]="concessionForm.concessionKind" [clearable]="false" />
+          <bb-number-input label="Value" [(ngModel)]="concessionForm.value" />
+          <bb-text-input label="Reason" [(ngModel)]="concessionForm.reason" maxlength="200" />
+          <bb-date-input label="From" [(ngModel)]="concessionForm.validFrom" />
+          <bb-date-input label="Until" [(ngModel)]="concessionForm.validTo" />
+          <bb-checkbox *bbIfCan="'fee.approve'" text="Approved" [(ngModel)]="concessionForm.isApproved" />
+        </div>
+        <p class="muted">A concession applies to demands raised after it is approved. Demands already raised keep their amounts.</p>
+      }
+    }
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

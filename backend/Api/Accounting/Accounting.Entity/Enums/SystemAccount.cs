@@ -106,6 +106,26 @@ public enum SystemAccount
 
     /// <summary>Unpaid net salaries and payroll payable (Liability).</summary>
     SalaryPayable = 21,
+
+    /// <summary>
+    /// School fees earned (Income, TK-64): where a fee head posts when it names
+    /// no income account of its own. Kept apart from Sales Revenue, because a
+    /// school's fees are not trading.
+    /// </summary>
+    FeeIncome = 22,
+
+    /// <summary>
+    /// Discounts and concessions allowed (contra Income, TK-64). A fee
+    /// concession is posted here rather than netted off the fee, so income shows
+    /// the full fee and what was given up, and a report subtracts it.
+    /// </summary>
+    DiscountGiven = 23,
+
+    /// <summary>
+    /// Deposits held to be repaid (Liability, TK-64): a school's caution
+    /// deposit. A refundable fee head credits it instead of income.
+    /// </summary>
+    RefundableDeposits = 24,
 }
 
 /// <summary>
@@ -138,6 +158,9 @@ public static class SystemAccountNames
         SystemAccount.AssetDisposalGainLoss => "Gain/Loss on Asset Disposal",
         SystemAccount.PayrollExpense => "Payroll Expense",
         SystemAccount.SalaryPayable => "Salary Payable",
+        SystemAccount.FeeIncome => "Fee Income",
+        SystemAccount.DiscountGiven => "Discount Given",
+        SystemAccount.RefundableDeposits => "Refundable Deposits",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

@@ -1,0 +1,66 @@
+<header class="page-head">
+  <h1>Fee receipts</h1>
+  <button *bbIfCan="'fee.create'" type="button" class="btn btn-primary" (click)="startTake()" [disabled]="busy()">+ Take a payment</button>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+@if (taking()) {
+  <section class="sheet" aria-labelledby="receipt-title">
+    <h2 id="receipt-title">Take a payment</h2>
+    <div class="fields">
+      <bb-select label="Guardian" [options]="guardians()" [(ngModel)]="form.contactId" (ngModelChange)="guardianChosen($event)" />
+      <bb-date-input label="Date" [(ngModel)]="form.receiptDate" />
+      <bb-money-input label="Amount" [(ngModel)]="form.amount" />
+      <bb-select label="Paid by" [options]="modes" [(ngModel)]="form.paymentMode" [clearable]="false" />
+      <bb-select label="Into" [options]="bankAccounts()" [(ngModel)]="form.bankAccountId" [clearable]="false" />
+      <bb-text-input label="Cheque or UTR number" [(ngModel)]="form.reference" maxlength="50" />
+    </div>
+
+    @if (open().length > 0) {
+      <h3>Open demands</h3>
+      <div class="rows">
+        @for (d of open(); track d.feeDemandId) {
+          <div class="row">
+            <span>{{ d.demandNo }} · due {{ d.dueDate }} · owes {{ d.openAmount }}</span>
+            <bb-money-input label="Settle" [ngModel]="allocationFor(d.feeDemandId)" (ngModelChange)="setAllocation(d.feeDemandId, $event)" />
+          </div>
+        }
+      </div>
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="oldestFirst()">Settle the oldest first</button>
+      </div>
+    } @else if (form.contactId) {
+      <p class="muted">This guardian has no open demands. The whole payment is kept as their advance.</p>
+    }
+
+    <p class="muted">Kept as advance: {{ advance() }}</p>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="taking.set(false)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="take()" [disabled]="busy()">Save receipt</button>
+    </div>
+  </section>
+}
+
+<bb-data-grid [gridCode]="'FEE_RECEIPTS'" [columns]="columns" [data]="receipts()">
+  <ng-template bbCellTemplate="contactId" let-row>{{ guardianName(row.contactId) }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.documentStatus !== 'Void') {
+      <button *bbIfCan="'fee.void'" type="button" class="link" (click)="startVoid(row)">Void</button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (voiding(); as row) {
+  <section class="sheet" aria-labelledby="void-receipt-title">
+    <h2 id="void-receipt-title">Void {{ row.receiptNo }}</h2>
+    <p class="muted">The demands it settled become open again.</p>
+    <div class="fields">
+      <bb-text-input label="Reason" [(ngModel)]="voidReason" maxlength="500" [required]="true" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="voiding.set(null)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="confirmVoid()" [disabled]="busy()">Void</button>
+    </div>
+  </section>
+}

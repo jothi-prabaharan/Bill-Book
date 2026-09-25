@@ -33,6 +33,9 @@ internal sealed class FakeSis : ISisClient
     public Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct) =>
         Task.FromResult(new SectionRollResponse());
 
+    public Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct) =>
+        throw new NotSupportedException();
+
     public Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct)
     {
         if (FailNextAdmits > 0)

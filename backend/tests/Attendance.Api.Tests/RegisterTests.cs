@@ -43,6 +43,9 @@ internal sealed class FakeRoll : ISisClient
     public Task<AcademicCheckResponse> CheckAsync(long? academicYearId, long? schoolClassId, long? sectionId, CancellationToken ct) =>
         throw new NotSupportedException();
 
+    public Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct) =>
+        throw new NotSupportedException();
+
     public Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct) =>
         throw new NotSupportedException();
 }

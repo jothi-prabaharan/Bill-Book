@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "fee-core",
+  "projectType": "library",
+  "sourceRoot": "libs/fee/fee-core/src",
+  "tags": [
+    "scope:fee",
+    "type:core"
+  ],
+  "targets": {}
+}

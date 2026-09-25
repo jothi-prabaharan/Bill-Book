@@ -13,6 +13,7 @@ import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { sisRoutes } from '@bill-book/sis-ui';
 import { admissionRoutes } from '@bill-book/admission-ui';
 import { studentAttendanceRoutes } from '@bill-book/student-attendance-ui';
+import { feeRoutes } from '@bill-book/fee-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -48,6 +49,8 @@ export const appRoutes: Routes = [
       ...admissionRoutes,
       // The student attendance register (S3, TK-63).
       ...studentAttendanceRoutes,
+      // Fee setup, demands and receipts (S4, TK-64).
+      ...feeRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

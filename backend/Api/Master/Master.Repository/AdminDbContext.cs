@@ -442,6 +442,10 @@ public class AdminDbContext : DbContext
             ("DEP", "Depreciation", true),
             ("STA", "Stock Adjustment", true),
             ("POS", "POS Sale", true),
+
+            // School fees (TK-64).
+            ("FDM", "Fee Demand", true),
+            ("FRC", "Fee Receipt", true),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

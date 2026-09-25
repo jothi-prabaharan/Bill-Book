@@ -2574,18 +2574,28 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   - Owner step: run `Attendance.Api.Tests` with `ATTENDANCE_TEST_DB` from a dropped database, and take one register at 360px.
 
 ### TK-64 · S4: Fee (`fee`, port 4518)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-FEE (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `FeeHead`, `FeeStructure`, `FeeConcession`, `FeeDemand`, `FeeReceipt`.
 - **Sub-tasks:**
-  - [ ] Seed fee heads.
-  - [ ] Structures per class, concessions, and demand generation per enrolment (idempotent).
-  - [ ] Receipts and allocation.
-  - [ ] Post the demand (Dr the guardian's AR sub-account, Cr fee income) and the receipt through
+  - [x] Seed fee heads.
+  - [x] Structures per class, concessions, and demand generation per enrolment (idempotent).
+  - [x] Receipts and allocation.
+  - [x] Post the demand (Dr the guardian's AR sub-account, Cr fee income) and the receipt through
         Accounting's internal API.
 - **Done when:** a demand and its receipt post balanced journals, and the guardian's AR
   sub-account ties to the open demands.
 - **Notes:**
+  - **As built (2026-09-25):**
+    - `backend/Api/Fee` (schema `fee`, port 4518, gateway `/api/fee/**`): `FeeHead`, `FeeStructure`, `FeeStructureLine`, `FeeConcession`, `FeeDemand`, `FeeDemandLine`, `FeeReceipt`, `FeeReceiptAllocation`; migration `InitialFeeSchema` with RLS on all nine tables. Seeds five heads and the `FDM` and `FRC` series (yearly, gapless: a demand is numbered when posted, so a draft takes no number).
+    - Differences from the design: `FeeHead.IncomeAccountId` is **nullable**, meaning "Fee Income" (or "Refundable Deposits" for a refundable head), so a new branch's heads post without anyone choosing an account; `FeeStructure.FirstMonth` says which month frequencies count from; `FeeDemand` carries `FeeStructureId`, `PeriodKey` (the idempotency key with the enrolment) and `PaidAmount`; there is no `JournalId`, because the ledger is keyed on the document (`FDM`/`FRC` + id).
+    - **Accounting (outside this card's lane, needed for posting):** `SystemAccount.FeeIncome` (4300), `DiscountGiven` (4250, contra Income) and `RefundableDeposits` (2400) in every branch's chart; `internal/accounts/lookup` and `internal/accounts/bank-accounts` (`Shared.Kernel.Ledgers.IAccountDirectory`). Master: transaction types `FDM` and `FRC` (migration `FeeTransactionTypes`).
+    - Sis: `internal/sis/enrolments` (by year and class, by id, or by guardian for TK-69), with each enrolment's primary guardian.
+    - Postings go through `internal/ledger/postings`, which replaces by document, so posting again after a rollback lands once. Demand: Dr Accounts Receivable (guardian, trade) net / Cr each head's income in full / Dr Discount Given per concession. Receipt: Dr the bank / Cr Accounts Receivable (trade) for what it settles / Cr the overpayment advance for the rest. A demand's `PaidAmount` moves only by a guarded `ExecuteUpdate`. Voids withdraw the document's rows.
+    - Not done: GST on a taxable head (SAC stored only), applying an advance to a later demand, and checking a concession's `StudentId` through Sis.
+    - `libs/fee/{fee-core, fee-ui}`: setup, demands and receipts; mounted in `apps/school`; menus 12, 120, 1117–1119 on (migration `FeeMenus`).
+    - Tests: `Fee.Api.Tests.FeeServiceTests` (the *Done when*: balanced postings and the receivable tying to open demands; the advance; idempotent generation; concessions; voids; a refused posting under the request transaction) and `FeeRuleTests`; `Accounting.Api.Tests.FeeAccountsSeedTests`; `fee-rules.spec.ts`, `fee.routes.spec.ts`.
+    - Owner step: run `Fee.Api.Tests` with `FEE_TEST_DB` from a dropped database, and post one demand and one receipt with Accounting running, then check the guardian's ledger.
 
 ### TK-65 · S5: Facility (`fac`, port 4519)
 - [ ] open

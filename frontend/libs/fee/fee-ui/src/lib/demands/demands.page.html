@@ -1,0 +1,40 @@
+<header class="page-head">
+  <h1>Fee demands</h1>
+</header>
+
+<div class="fields">
+  <bb-select label="Fee structure" [options]="structureOptions()" [(ngModel)]="structureId" (ngModelChange)="load()" />
+  <bb-text-input label="Period" placeholder="2026-06" hint="The month billed." [(ngModel)]="period" (keyup.enter)="load()" maxlength="7" />
+  <bb-date-input label="Demand date" [(ngModel)]="demandDate" />
+</div>
+
+<div class="sheet-actions">
+  <button *bbIfCan="'fee.create'" type="button" class="btn btn-ghost" (click)="generate()" [disabled]="busy() || !structureId">Raise demands</button>
+  @if (drafts() > 0) {
+    <button *bbIfCan="'fee.approve'" type="button" class="btn btn-primary" (click)="postAll()" [disabled]="busy()">Post {{ drafts() }} drafts</button>
+  }
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'FEE_DEMANDS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="demandNo" let-row>{{ row.demandNo ?? 'Draft' }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    @if (row.documentStatus !== 'Void' && row.paidAmount === 0) {
+      <button *bbIfCan="'fee.void'" type="button" class="link" (click)="startVoid(row)">Void</button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (voiding(); as row) {
+  <section class="sheet" aria-labelledby="void-title">
+    <h2 id="void-title">Void {{ row.demandNo ?? 'draft' }}</h2>
+    <div class="fields">
+      <bb-text-input label="Reason" [(ngModel)]="voidReason" maxlength="500" [required]="true" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="voiding.set(null)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="confirmVoid()" [disabled]="busy()">Void</button>
+    </div>
+  </section>
+}

@@ -114,12 +114,61 @@ public sealed class RollMember
     public int? RollNo { get; set; }
 }
 
+/// <summary>
+/// Enrolments with the guardian each is invoiced to (S4, TK-64): a fee run
+/// asks for a year and class, a demand screen for particular enrolments.
+/// </summary>
+public sealed class EnrolmentQueryRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long? AcademicYearId { get; set; }
+
+    public long? SchoolClassId { get; set; }
+
+    public List<long> EnrolmentIds { get; set; } = [];
+
+    /// <summary>A guardian's children, for the parent portal (S9).</summary>
+    public long? GuardianContactId { get; set; }
+}
+
+public sealed class EnrolmentInfo
+{
+    public long EnrolmentId { get; set; }
+
+    public long StudentId { get; set; }
+
+    public string StudentName { get; set; } = null!;
+
+    public string AdmissionNo { get; set; } = null!;
+
+    public long AcademicYearId { get; set; }
+
+    public long SectionId { get; set; }
+
+    public long SchoolClassId { get; set; }
+
+    public string ClassName { get; set; } = null!;
+
+    public string SectionName { get; set; } = null!;
+
+    /// <summary>The guardian fees are invoiced to; null for a student with none marked primary.</summary>
+    public long? PrimaryGuardianContactId { get; set; }
+
+    /// <summary>The enrolment and the student are both active.</summary>
+    public bool IsActive { get; set; }
+}
+
 /// <summary>Sis refused the admit; <see cref="Message"/> is its sentence, safe to show.</summary>
 public sealed class SisRefusedException(string message) : Exception(message);
 
 public interface ISisClient
 {
     Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct);
+
+    Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct);
 
     Task<AcademicCheckResponse> CheckAsync(long? academicYearId, long? schoolClassId, long? sectionId, CancellationToken ct);
 
@@ -162,6 +211,16 @@ public sealed class HttpSisClient : ISisClient
         }, ct);
         response.EnsureSuccessStatusCode();
         return await response.Content.ReadFromJsonAsync<SectionRollResponse>(ct) ?? new SectionRollResponse();
+    }
+
+    public async Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct)
+    {
+        query.CustomerId = _tenant.CustomerId ?? Guid.Empty;
+        query.OrgId = _tenant.OrgId ?? Guid.Empty;
+
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/enrolments", query, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<EnrolmentInfo>>(ct) ?? [];
     }
 
     public async Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct)

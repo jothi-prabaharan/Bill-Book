@@ -75,6 +75,14 @@ public static class ChartOfAccountsSeed
         // Payroll accounts (TK-51): Dr Payroll Expense / Cr Salary Payable
         Account(orgId, "2120", SystemAccount.SalaryPayable, Liability),
         Account(orgId, "5300", SystemAccount.PayrollExpense, Expense, isPurchase: true),
+
+        // School fees (TK-64). Fee Income is where a fee head posts unless it
+        // names its own income account; Discount Given carries concessions, a
+        // contra Income like Sales Returns; Refundable Deposits holds caution
+        // deposits, which are owed back rather than earned.
+        Account(orgId, "4300", SystemAccount.FeeIncome, Income, isSales: true),
+        Account(orgId, "4250", SystemAccount.DiscountGiven, Income, isSales: true, isContra: true),
+        Account(orgId, "2400", SystemAccount.RefundableDeposits, Liability),
     ];
 
     // There are deliberately no separate advance control accounts. A contact's

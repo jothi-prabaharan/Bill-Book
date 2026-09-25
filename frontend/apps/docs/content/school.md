@@ -1,6 +1,6 @@
 # School
 
-**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions and student attendance are built. Fees and maintenance are added as each stage is built.
+**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions, student attendance and fees are built. Maintenance is added as each stage is built.
 
 School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
 
@@ -88,6 +88,20 @@ Admit can safely be pressed again, for example after a network error: it never m
 **Lock day** closes a saved day, and teachers can lock their own register. A locked day cannot be changed except by someone who can unlock attendance (*Attendance: unlock*, held by the Principal and the Office Admin). They can change a locked day directly, or **Unlock day** so the teacher can correct it.
 
 Student attendance is separate from staff attendance, which is HRMS's.
+
+## Fees
+
+**Fees › Fee setup** has three lists.
+
+- **Fee heads**: what a fee is for (tuition, admission, exam, transport and a caution deposit to start with). A head posts to **Fee Income** unless you choose another income account. A **refundable** head, such as a caution deposit, posts to **Refundable Deposits**, because it is owed back. A SAC can be recorded for the rare taxable head. School education is exempt, so no GST is charged.
+- **Structures**: what a class pays in a school year, such as *Day scholar* for Class VI. Each fee has an amount, how often it falls due (one time, monthly, quarterly, termly or annual) and the day it is due. Frequencies count from the month the school year starts: quarterly falls in months 1, 4, 7 and 10 of the year, and termly in months 1, 5 and 9.
+- **Concessions**: a percentage or a fixed amount off one fee for one student, for a period, with a reason. A concession applies only once it is approved (*Fee: approve*), and only to demands raised after that.
+
+**Fees › Fee demands** raises a period's demands. Choose the structure and the month, then **Raise demands**. Every active student of that class and year is billed for what falls due that month, to their primary guardian, less any approved concession. Raising the same month again raises nothing twice. A student with no primary guardian is skipped and named.
+
+Raised demands are drafts. **Post** numbers them from the **FDM** series and posts them to the accounts. The guardian's receivable is debited with the net amount, each fee's income account is credited with the full fee, and any concession is debited to **Discount Given**. A posted demand is never changed. It can be voided, with a reason, only while nothing has been received against it.
+
+**Fees › Fee receipts** takes a payment from a guardian: the amount, how it was paid, and the bank or cash account it went into. It settles the guardian's open demands, the oldest first unless you choose. Anything left over is kept as the guardian's advance. The receipt is numbered from the **FRC** series and posted: the bank is debited, and the guardian's receivable is credited with what it settled, with the rest going to their advance. So the guardian's receivable always equals their open demands. Voiding a receipt reopens the demands it settled.
 
 ## Exams and marks
 

@@ -9177,7 +9177,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "fees",
                             DisplayOrder = 12,
                             Icon = "wallet",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "fee",
                             Name = "Fees",
@@ -9219,7 +9219,7 @@ namespace Master.Repository.Migrations.Admin
                             CanCreate = false,
                             Code = "fees-g1",
                             DisplayOrder = 1,
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             ParentId = 12,
                             Type = "Group",
@@ -9352,7 +9352,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "fst",
                             DisplayOrder = 1,
                             Icon = "settings",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "fee",
                             Name = "Fee setup",
@@ -9369,7 +9369,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "fdm",
                             DisplayOrder = 2,
                             Icon = "file-text",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "fee",
                             Name = "Fee demands",
@@ -9387,7 +9387,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "frc",
                             DisplayOrder = 3,
                             Icon = "receipt",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "fee",
                             Name = "Fee receipts",
@@ -21869,6 +21869,22 @@ namespace Master.Repository.Migrations.Admin
                             IsActive = true,
                             IsLedgerPosting = true,
                             Name = "POS Sale",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            Code = "FDM",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Fee Demand",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            Code = "FRC",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Fee Receipt",
                             Version = 0u
                         });
                 });

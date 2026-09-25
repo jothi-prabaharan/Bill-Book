@@ -730,5 +730,6 @@ Deactivating a rate deactivates its sub-accounts. Nothing is deleted — posting
 
 `CessRate` is a percentage. Cess on some goods, notably tobacco, is levied as a **fixed amount per unit**, which this column cannot express. It only matters if you trade those categories; supporting it would need an amount-per-unit column and a compounding rule.
 
+## Accounts for School fees
 
-
+Every branch's chart of accounts now includes three accounts that School fees post to (TK-64): **Fee Income** (4300, income), **Discount Given** (4250, a contra income account, so reports subtract it) and **Refundable Deposits** (2400, a liability for caution deposits). A branch set up earlier gets them the next time its setup is retried. Fee demands and receipts post as the transaction types **FDM** and **FRC**.

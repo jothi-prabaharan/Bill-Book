@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "fee-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/fee/fee-ui/src",
+  "tags": [
+    "scope:fee",
+    "type:ui"
+  ],
+  "targets": {}
+}

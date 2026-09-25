@@ -132,6 +132,58 @@ public sealed class InternalSisController : ControllerBase
         });
     }
 
+    /// <summary>Enrolments with their primary guardian (S4, TK-64; S9 by guardian).</summary>
+    [HttpPost("enrolments")]
+    public async Task<IActionResult> Enrolments([FromBody] EnrolmentQueryRequest request, CancellationToken ct)
+    {
+        if (!Apply(request.CustomerId, request.OrgId))
+        {
+            return BadRequest(new SisMessage("A customer and an organization are required."));
+        }
+
+        if (request.AcademicYearId is null && request.EnrolmentIds.Count == 0 && request.GuardianContactId is null)
+        {
+            return BadRequest(new SisMessage("Name a school year, enrolments or a guardian."));
+        }
+
+        var db = _services.GetRequiredService<SisDbContext>();
+        List<long> ids = [.. request.EnrolmentIds.Distinct().Take(2000)];
+
+        var rows = await (
+            from en in db.Enrolments.AsNoTracking()
+            join st in db.Students on en.StudentId equals st.StudentId
+            join se in db.Sections on en.SectionId equals se.SectionId
+            join cl in db.SchoolClasses on se.SchoolClassId equals cl.SchoolClassId
+            where (request.AcademicYearId == null || en.AcademicYearId == request.AcademicYearId)
+                && (request.SchoolClassId == null || se.SchoolClassId == request.SchoolClassId)
+                && (ids.Count == 0 || ids.Contains(en.EnrolmentId))
+                && (request.GuardianContactId == null
+                    || db.StudentGuardians.Any(g => g.StudentId == st.StudentId && g.ContactId == request.GuardianContactId))
+            orderby cl.SortOrder, se.Name, en.RollNo, st.FirstName
+            select new
+            {
+                en.EnrolmentId, st.StudentId, st.FirstName, st.LastName, st.AdmissionNo, en.AcademicYearId, en.SectionId,
+                se.SchoolClassId, ClassName = cl.Name, SectionName = se.Name,
+                Primary = db.StudentGuardians.Where(g => g.StudentId == st.StudentId && g.IsPrimary).Select(g => (long?)g.ContactId).FirstOrDefault(),
+                Active = en.EnrolmentStatus == EnrolmentStatus.Active && st.StudentStatus == StudentStatus.Active,
+            }).ToListAsync(ct);
+
+        return Ok(rows.Select(r => new EnrolmentInfo
+        {
+            EnrolmentId = r.EnrolmentId,
+            StudentId = r.StudentId,
+            StudentName = StudentService.FullName(r.FirstName, r.LastName),
+            AdmissionNo = r.AdmissionNo,
+            AcademicYearId = r.AcademicYearId,
+            SectionId = r.SectionId,
+            SchoolClassId = r.SchoolClassId,
+            ClassName = r.ClassName,
+            SectionName = r.SectionName,
+            PrimaryGuardianContactId = r.Primary,
+            IsActive = r.Active,
+        }));
+    }
+
     private bool Apply(Guid customerId, Guid orgId) =>
         InternalTenant.Apply(_tenant, customerId, orgId) == InternalTenantOutcome.Applied;
 }
