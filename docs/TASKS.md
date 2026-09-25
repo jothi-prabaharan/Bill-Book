@@ -2558,7 +2558,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Admission.Api.Tests` with `ADMISSION_TEST_DB` from a dropped database, and admit one application end to end with Master and Sis running.
 
 ### TK-63 · S3: Student attendance (`att`, port 4517)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
