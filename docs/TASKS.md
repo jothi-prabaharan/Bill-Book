@@ -2489,7 +2489,7 @@ Columns (2472), Endpoints (2793) and Stages (2884). Every card also carries sect
 delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-60 · S0: School prerequisites
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-CON, L-MST, L-DEPS, `L-SCH-APP` (new) · **Depends on:** TK-47, TK-48 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Add `IsGuardian` to `con.Contact`, with a migration and a role filter on `/api/contacts`.
