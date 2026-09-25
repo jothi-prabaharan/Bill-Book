@@ -144,6 +144,23 @@
       <div class="field">
         <bb-text-input label="Udyam number" hint="MSME registration."  name="udyamNumber" [(ngModel)]="org.udyamNumber" maxlength="20" />
       </div>
+
+      <div class="field">
+        <bb-date-input
+          label="E-invoicing from"
+          hint="The date this branch starts registering B2B, export and SEZ invoices and credit notes at the IRP. Leave empty if it does not e-invoice."
+          name="eInvoiceFrom"
+          [(ngModel)]="org.eInvoiceFrom"
+        />
+      </div>
+
+      <div class="field">
+        <bb-select label="E-way bills" name="ewayBills" [options]="ewayBillOptions" [(ngModel)]="ewayBills" />
+      </div>
+
+      @if (eInvoiceNeedsGstin) {
+        <small class="warn">E-invoicing and e-way bills need the branch's GSTIN. Saving will be refused until it is entered.</small>
+      }
     </div>
   }
 

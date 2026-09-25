@@ -294,7 +294,7 @@ public sealed class PartialFulfilmentTests
             InvoiceService invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, inventory, ledger,
-                new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity());
+                new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup());
 
             return new Harness(db, orders, challans, invoices, inventory);
         }

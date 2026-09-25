@@ -45,6 +45,7 @@ public sealed class CreditNoteService
     private readonly IInventoryClient _inventoryClient;
     private readonly ILedgerClient _ledgerClient;
     private readonly Sales.Api.Services.Pdf.SalesDocumentArchive _archive;
+    private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
 
     public CreditNoteService(
         SalesDbContext db,
@@ -59,7 +60,8 @@ public sealed class CreditNoteService
         TimeProvider clock,
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
-        Sales.Api.Services.Pdf.SalesDocumentArchive archive)
+        Sales.Api.Services.Pdf.SalesDocumentArchive archive,
+        Shared.Kernel.Stock.IUqcLookup uqc)
     {
         _db = db;
         _tenant = tenant;
@@ -74,6 +76,7 @@ public sealed class CreditNoteService
         _inventoryClient = inventoryClient;
         _ledgerClient = ledgerClient;
         _archive = archive;
+        _uqc = uqc;
     }
 
     public async Task<IReadOnlyList<CreditNoteListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
@@ -563,6 +566,10 @@ public sealed class CreditNoteService
             }
         }
 
+        // Each line's GST unit, copied onto it before the register reads it (TK-91).
+        await EInvoicing.LineUqc.StampAsync(
+            _uqc, creditNote.Lines, l => l.UomId, l => l.UqcCode, (l, code) => l.UqcCode = code, ct);
+
         foreach (var l in creditNote.Lines)
         {
             var rate = l.Taxes.FirstOrDefault()?.Rate ?? 0;
@@ -583,7 +590,7 @@ public sealed class CreditNoteService
                 GstRate = rate,
                 // Negative amounts for Credit Notes in SalesRegister
                 Quantity = -l.Quantity,
-                UqcCode = null,
+                UqcCode = l.UqcCode,
                 TaxableAmount = -l.TaxableAmount,
                 CgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cgst)?.Amount ?? 0),
                 SgstAmount = -(l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Sgst)?.Amount ?? 0),

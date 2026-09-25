@@ -152,7 +152,7 @@ public sealed class PosSaleTests
             new NumberGenerator(db, Options.Create(new NumberingOptions()), new StubFinancialYear()),
             new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
             names, names, cashier, TimeProvider.System, inventory, ledger,
-            new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity());
+            new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup());
 
         return new Till(db, new PosSaleService(invoices, db, cashier, TimeProvider.System), ledger, invoices);
     }

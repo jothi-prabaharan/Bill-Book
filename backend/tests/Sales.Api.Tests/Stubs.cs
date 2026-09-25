@@ -413,3 +413,27 @@ public static class TestArchive
         new(db, tenant, storage ?? new StubDocumentStorage(), new StubOrgIdentity(),
             new StubNameLookup(), new StubNameLookup(), pdf ?? new RecordingSalesPdf());
 }
+
+/// <summary>
+/// Inventory's UQC answer (TK-91): unit 1 is <c>NOS</c>, unit 2 <c>KGS</c>, and
+/// every other unit is unknown. <see cref="Fail"/> makes it throw as an
+/// unreachable Inventory does.
+/// </summary>
+internal sealed class StubUqcLookup : Shared.Kernel.Stock.IUqcLookup
+{
+    public bool Fail { get; set; }
+
+    public Task<IReadOnlyDictionary<long, string>> FindAsync(IEnumerable<long> uomIds, CancellationToken ct)
+    {
+        if (Fail)
+        {
+            throw new HttpRequestException("Inventory is down.");
+        }
+
+        var known = new Dictionary<long, string> { [1] = "NOS", [2] = "KGS" };
+        IReadOnlyDictionary<long, string> found = uomIds.Distinct()
+            .Where(known.ContainsKey)
+            .ToDictionary(id => id, id => known[id]);
+        return Task.FromResult(found);
+    }
+}

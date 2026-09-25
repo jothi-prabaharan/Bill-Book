@@ -239,6 +239,10 @@ public sealed class OrganizationsController : ControllerBase
                 Message = "This account already has its two trial branches. Add a licence to "
                     + "open another.",
             }),
+            SaveOrganizationOutcome.EInvoiceNeedsGstin => BadRequest(new MessageResponse
+            {
+                Message = "E-invoicing and e-way bills need the branch's GSTIN. Enter it first.",
+            }),
             SaveOrganizationOutcome.InvalidValue => BadRequest(new MessageResponse
             {
                 Message = "One of the selected options is not a recognised value.",

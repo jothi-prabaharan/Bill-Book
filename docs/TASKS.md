@@ -1658,20 +1658,41 @@ The build cards each design in section E produced. Each design section in `docs/
 ("Approved designs") is the specification; a card here names the part it builds.
 
 ### TK-91 · E-invoice: tables, branch settings and the IRP gateway
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run · the real provider waits on D-24
 - **Issue:** [#79](https://github.com/jothi-prabaharan/Bill-Book/issues/79)
 - **Lanes:** L-SAL, L-MST, L-KERNEL · **Depends on:** TK-31 · **Decision:** D-24
 - **Where:** `docs/Modules.md`, "E-invoicing and e-way bill" (Tables, Decisions 3, 7, 8); `Sales.Repository/SalesDbContext.cs`; `Master.Entity/TableEntities/Organization.cs`; `Shared.Kernel/Secrets`.
 - **Tables:** `sal.EInvoices`, `sal.EwayBills`; `mst.Organizations.EInvoiceFrom`, `EwayBillEnabled`
 - **Sub-tasks:**
-  - [ ] The two tables and their enums, with the TK-71 RLS block in the migration.
-  - [ ] `EInvoiceFrom` and `EwayBillEnabled` on the branch, edited in Settings › Organization, and carried on the org context Sales caches.
-  - [ ] `IEInvoiceGateway` (authenticate, generate IRN, get IRN by document, cancel IRN, generate/update/cancel e-way bill) with a **sandbox** implementation first, and the provider D-24 names second. Credentials through `ISecretStore`, keyed by GSTIN.
-  - [ ] The INV-01 mapper from an invoice or credit note, and the local validation list in the design.
-  - [ ] Carry the line's UQC onto the document line so `SalesRegister.UqcCode` stops being null.
-  - [ ] Test: the mapper against a recorded INV-01 sample; each validation refusal; RlsAudit for both tables.
+  - [x] The two tables and their enums, with the TK-71 RLS block in the migration.
+  - [x] `EInvoiceFrom` and `EwayBillEnabled` on the branch, edited in Settings › Organization, and carried on the org context Sales caches.
+  - [x] `IEInvoiceGateway` (authenticate, generate IRN, get IRN by document, cancel IRN, generate/update/cancel e-way bill) with a **sandbox** implementation first, and the provider D-24 names second. Credentials through `ISecretStore`, keyed by GSTIN.
+  - [x] The INV-01 mapper from an invoice or credit note, and the local validation list in the design.
+  - [x] Carry the line's UQC onto the document line so `SalesRegister.UqcCode` stops being null.
+  - [x] Test: the mapper against a recorded INV-01 sample; each validation refusal; RlsAudit for both tables.
   - Standard delivery sub-tasks (section 5).
 - **Done when:** a B2B invoice maps to a schema-valid INV-01 document and a sandbox call returns an IRN.
+- **As built:**
+  - `sal.EInvoices` and `sal.EwayBills` as the design lists them, enums stored by name, in migration `AddEInvoicing` with the TK-71 block for both. The e-way bill's cancel reason has its own enum, `EwayBillCancelReason`, because the two portals number the same reasons differently. Unique: one e-invoice per `(OrgId, SourceType, SourceId)`, and the IRN and the e-way bill number where set.
+  - `UqcCode` is a column on invoice, credit note and challan lines. `LineUqc.StampAsync` fills it at posting from Inventory's new `POST internal/items/uqc` (`IUqcLookup`), and the sales register copies it, so `SalesRegister.UqcCode` is no longer null. A line with no unit gets `OTH`. When Inventory can't be reached, the line stays empty rather than guessed, and an e-invoice for it is refused for the missing unit. Challans are stamped in TK-93.
+  - Master: `mst.Organizations.EInvoiceFrom` and `EwayBillEnabled` (migration `OrganizationEInvoicing`), refused without a GSTIN (`EInvoiceNeedsGstin`). They are carried on `internal/orgs/{id}/context` with the branch's phone and email, and reach `BranchSettings` and `OrgIdentity`. The six-hour cache means a change reaches Sales within six hours. Edited in Settings › Organization › Statutory.
+  - Master: `POST internal/contacts/addresses` (`IContactAddressBook`) gives the buyer's legal name, GSTIN, billing address fields, state code and registration type. A document keeps its address only as printable text, and the IRP needs the PIN and state separately.
+  - `Sales.Api/Services/EInvoicing/`:
+    - `Inv01Document` is the schema's own names, serialised with no naming policy and nulls left out.
+    - `Inv01Mapper` is pure and sends the document's figures rather than recomputing them. A discount below the lines lands in `ValDtls.Discount`, and UTGST goes in the SGST column. An export is `URP`, state 96 and PIN 999999.
+    - `EInvoiceApplicability` names the supply type: B2B, SEZWP or SEZWOP, EXPWP or EXPWOP, or none for B2C.
+    - `EInvoiceValidator` runs the design's local checks, with a ₹1 tolerance on totals.
+    - `EInvoiceDocumentBuilder` gathers the inputs and reports whether the document applies. A problem reaching Master comes back as a transient problem.
+  - `Shared.Kernel.Tax.Gstin` checks the GSTIN's shape and its base-36 check character.
+  - `IEInvoiceGateway`:
+    - `SandboxEInvoiceGateway` issues the notified IRN hash, answers `2150` on a duplicate, supports get-by-document, cancels within 24 hours only, and gives e-way bills one day per 200 km.
+    - `UnconfiguredEInvoiceGateway` refuses every call.
+    - `EInvoicing:Gateway` chooses between them. Unset, it is the sandbox in Development and the refusing gateway everywhere else, and the sandbox is refused in Production. Credential names come from `EInvoiceCredentials` (`einvoice-{GSTIN}-username`, and so on).
+  - **Not built here:**
+    - a screen to enter the IRP credentials, which is needed with the real provider (D-24);
+    - storing the document's place-of-supply state. Invoices store `PlaceOfSupplyStateId = 0` and keep only `IsInterState`, so the mapper derives the place of supply: the seller's state intra-state, otherwise the buyer's GSTIN state, then their address state.
+  - Specs: `EInvoiceMapperTests` (the recorded INV-01 sample), `EInvoiceValidatorTests`, `SandboxEInvoiceGatewayTests`, `EInvoiceDocumentBuilderTests`, `LineUqcTests`, `Shared.Kernel.Tests.GstinTests`, `Master.Api.Tests.BranchEInvoicingTests` and `InternalContactAddressesTests`. RLS for both tables is covered by the suite's `RlsAudit`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
 - [ ] open

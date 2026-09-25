@@ -78,6 +78,39 @@ printing.
 Two things do not print yet: the amount in words, and the place of supply's state name — it prints
 as the two-digit state code for now.
 
+## E-invoicing
+
+A branch whose turnover puts it under e-invoicing registers its **B2B, export and SEZ** invoices
+and credit notes at the government's Invoice Registration Portal (IRP), which answers with an
+**IRN** and a signed QR code for the printed invoice. Sales to consumers are never registered.
+
+It is switched on per branch, on **Settings › Organization › Statutory**:
+
+- **E-invoicing from** is the date the branch starts. Documents dated before it are not
+  registered. Leave it empty if the branch does not e-invoice. The threshold is on the turnover of
+  the whole business across all its GSTINs, which this product may not see all of, so the branch
+  says whether it is in rather than the product guessing.
+- **E-way bills** says whether the branch generates e-way bills from the product.
+
+Both need the branch's GSTIN, and saving is refused without one. A change reaches invoicing within
+six hours.
+
+Before anything is sent, the invoice is checked for everything the IRP would refuse:
+
+- both GSTINs are valid and match their states
+- every line has a 6- or 8-digit HSN or SAC code and, for goods, a GST unit (UQC)
+- both PIN codes are six digits and the place of supply is set
+- the total matches the lines to the rupee
+
+A problem is named in plain words, such as "Line 3 has no GST unit (UQC)", so it can be fixed.
+
+Each line's GST unit is copied from its unit of measure when the invoice or credit note posts. This
+is also the unit the sales register and GSTR-1's HSN summary report.
+
+**Not live yet.** Registering at posting, the IRN and QR on the printed invoice, and cancelling
+within 24 hours come next. The portal provider is still to be chosen, so an installation has no
+live connection to the IRP yet.
+
 ## POS sales
 
 A till sale is an invoice with `POS` on it rather than `INV` — same table, same tax determination, same posting. It carries a till, a payment mode and the cash tendered, and it needs no due date.

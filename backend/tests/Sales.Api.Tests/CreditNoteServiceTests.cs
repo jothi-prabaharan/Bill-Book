@@ -672,7 +672,8 @@ public sealed class CreditNoteServiceTests
                 TimeProvider.System,
                 inventory,
                 ledger,
-                TestArchive.For(db, tenant, storage));
+                TestArchive.For(db, tenant, storage),
+                new StubUqcLookup());
 
             return new Harness(db, service, invoice.InvoiceId, inventory, ledger, storage);
         }

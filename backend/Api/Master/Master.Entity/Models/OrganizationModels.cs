@@ -88,6 +88,11 @@ public class OrganizationListItem
 
     public bool DiscountBeforeTax { get; set; } = true;
 
+    /// <summary>When the branch starts e-invoicing; null when it does not (TK-91).</summary>
+    public DateOnly? EInvoiceFrom { get; set; }
+
+    public bool EwayBillEnabled { get; set; }
+
     /// <summary>Provisioning, Active, Suspended — a branch is only usable once Active.</summary>
     public string Status { get; set; } = null!;
 
@@ -222,6 +227,15 @@ public class SaveOrganizationRequest
 
     /// <summary>Frozen once the branch has traded.</summary>
     public bool DiscountBeforeTax { get; set; } = true;
+
+    /// <summary>
+    /// When the branch starts registering invoices at the IRP. Null means it does
+    /// not e-invoice. Needs the branch's GSTIN (TK-91).
+    /// </summary>
+    public DateOnly? EInvoiceFrom { get; set; }
+
+    /// <summary>Whether the branch generates e-way bills from the product. Needs the branch's GSTIN.</summary>
+    public bool EwayBillEnabled { get; set; }
 }
 
 public enum SaveOrganizationOutcome
@@ -263,6 +277,9 @@ public enum SaveOrganizationOutcome
     /// <summary>Discount level was not Line, Header or Both.</summary>
     InvalidDiscountLevel = 13,
     InvalidValue = 10,
+
+    /// <summary>E-invoicing or e-way bills were switched on for a branch with no GSTIN (TK-91).</summary>
+    EInvoiceNeedsGstin = 15,
 
     /// <summary>
     /// The account already runs the maximum number of trial branches. A branch

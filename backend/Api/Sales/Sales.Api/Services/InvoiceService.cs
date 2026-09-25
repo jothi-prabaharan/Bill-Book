@@ -75,6 +75,7 @@ public sealed class InvoiceService : IInvoiceService
     /// and a hard-coded GSTIN, printed on every customer's tax invoices alike.
     /// </summary>
     private readonly IOrgIdentityProvider _orgIdentity;
+    private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
 
     public InvoiceService(
         SalesDbContext db,
@@ -92,7 +93,8 @@ public sealed class InvoiceService : IInvoiceService
         ICreditCheckClient creditCheckClient,
         Shared.Kernel.Storage.IFileStorage storage,
         Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer,
-        IOrgIdentityProvider orgIdentity)
+        IOrgIdentityProvider orgIdentity,
+        Shared.Kernel.Stock.IUqcLookup uqc)
     {
         _db = db;
         _tenant = tenant;
@@ -110,6 +112,7 @@ public sealed class InvoiceService : IInvoiceService
         _storage = storage;
         _pdfRenderer = pdfRenderer;
         _orgIdentity = orgIdentity;
+        _uqc = uqc;
     }
 
     /// <summary>
@@ -1735,7 +1738,11 @@ public sealed class InvoiceService : IInvoiceService
             return new InvoiceResult(InvoiceOutcome.PostingRefused, Detail: result.Detail);
         }
 
-        // 3. Sales Register Synchronous Insertion
+        // 3. Sales Register Synchronous Insertion. Each line's GST unit is
+        // copied onto it first (TK-91), so the register and the IRP read one answer.
+        await EInvoicing.LineUqc.StampAsync(
+            _uqc, invoice.Lines, l => l.UomId, l => l.UqcCode, (l, code) => l.UqcCode = code, ct);
+
         foreach (var l in invoice.Lines)
         {
             var rate = l.Taxes.FirstOrDefault()?.Rate ?? 0;
@@ -1755,7 +1762,7 @@ public sealed class InvoiceService : IInvoiceService
                 HsnSacCode = l.HsnSacCode,
                 GstRate = rate,
                 Quantity = l.Quantity,
-                UqcCode = null,
+                UqcCode = l.UqcCode,
                 TaxableAmount = l.TaxableAmount,
                 CgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Cgst)?.Amount ?? 0,
                 SgstAmount = l.Taxes.FirstOrDefault(t => t.TaxComponent == TaxComponent.Sgst)?.Amount ?? 0,

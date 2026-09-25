@@ -2,6 +2,7 @@ using Shared.Kernel.Security;
 using Shared.Kernel.Storage;
 using System.Text;
 using Sales.Api.Services;
+using Sales.Api.Services.EInvoicing;
 using Sales.Api.Services.Printing;
 using Sales.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -157,6 +158,20 @@ builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
+// Each line's GST unit, copied onto it when a document posts (TK-91).
+builder.Services.AddHttpClient<Shared.Kernel.Stock.IUqcLookup, Shared.Kernel.Stock.HttpUqcLookup>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
+// The buyer's legal name and billing address as fields, for the IRP (TK-91).
+builder.Services.AddHttpClient<Shared.Kernel.Contacts.IContactAddressBook, Shared.Kernel.Contacts.HttpContactAddressBook>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 builder.Services.AddHttpClient<IInventoryClient, InventoryClient>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Inventory:BaseUrl"));
@@ -177,6 +192,11 @@ builder.Services.AddHttpClient<IPrintingClient, PrintingClient>(client =>
     client.BaseAddress = new Uri(RequiredSetting("Printing:BaseUrl"));
 });
 builder.Services.AddScoped<InvoicePrintService>();
+
+// E-invoicing (TK-91): the IRP gateway, chosen by EInvoicing:Gateway, and the
+// builder that turns a posted document into INV-01. Sandbox in Development,
+// refusing everywhere else until the provider is chosen (D-24).
+builder.Services.AddEInvoiceGateway(builder.Configuration, builder.Environment);
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a document number is allocated inside the

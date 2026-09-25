@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy } from '@angular/core';
 import {
   BbSelectOption,
+  DateInputComponent,
   EmailInputComponent,
   SelectComponent,
   TextInputComponent,
@@ -30,6 +31,9 @@ interface OrganizationSettings {
   allowFreeTextLines: boolean;
   discountLevel: 'Line' | 'Header' | 'Both';
   discountBeforeTax: boolean;
+  /** When the branch starts e-invoicing (ISO date), or null when it does not (TK-91). */
+  eInvoiceFrom: string | null;
+  ewayBillEnabled: boolean;
   gstin: string | null;
   pan: string | null;
   tan: string | null;
@@ -85,6 +89,7 @@ const MONTHS = [
     TextInputComponent,
     SelectComponent,
     EmailInputComponent,
+    DateInputComponent,
   ],
   templateUrl: './organization-settings.page.html',
   styleUrl: './organization-settings.page.scss',
@@ -119,6 +124,26 @@ export class OrganizationSettingsPage implements OnInit {
     { value: 'yes', label: 'Yes — taken off before GST' },
     { value: 'no', label: 'No — GST on the full value' },
   ];
+
+  protected readonly ewayBillOptions: BbSelectOption<string>[] = [
+    { value: 'no', label: 'Not from this product' },
+    { value: 'yes', label: 'Generate e-way bills here' },
+  ];
+
+  protected get ewayBills(): string {
+    return this.form?.ewayBillEnabled ? 'yes' : 'no';
+  }
+
+  protected set ewayBills(value: string) {
+    if (this.form) {
+      this.form.ewayBillEnabled = value === 'yes';
+    }
+  }
+
+  /** E-invoicing and e-way bills are keyed on the branch's GSTIN, so the server refuses either without one. */
+  protected get eInvoiceNeedsGstin(): boolean {
+    return (!!this.form?.eInvoiceFrom || !!this.form?.ewayBillEnabled) && !this.hasText(this.form?.gstin ?? '');
+  }
 
   protected readonly stateOptions = computed<BbSelectOption<number>[]>(() =>
     this.states().map((state) => ({
@@ -214,6 +239,7 @@ export class OrganizationSettingsPage implements OnInit {
 
     const body: OrganizationSettings = {
       ...this.form,
+      eInvoiceFrom: this.form.eInvoiceFrom || null,
       orgCode: this.form.orgCode.trim(),
       name: this.form.name.trim(),
       baseCurrency: this.form.baseCurrency.trim().toUpperCase(),

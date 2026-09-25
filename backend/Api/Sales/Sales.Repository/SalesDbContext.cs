@@ -84,6 +84,12 @@ public class SalesDbContext : TenantDbContext
 
     public DbSet<SalesRegister> SalesRegister => Set<SalesRegister>();
 
+    /// <summary>One registration at the IRP per document (TK-91).</summary>
+    public DbSet<EInvoice> EInvoices => Set<EInvoice>();
+
+    /// <summary>E-way bills for goods leaving on a sales document (TK-91).</summary>
+    public DbSet<EwayBill> EwayBills => Set<EwayBill>();
+
     public DbSet<ReminderProfile> ReminderProfiles => Set<ReminderProfile>();
 
     public DbSet<ReminderLog> ReminderLogs => Set<ReminderLog>();
@@ -350,6 +356,39 @@ public class SalesDbContext : TenantDbContext
             b.Property(e => e.Amount).HasPrecision(18, 2);
             b.HasOne<Invoice>().WithMany().HasForeignKey(e => e.InvoiceId).OnDelete(DeleteBehavior.Restrict);
             b.HasIndex(e => e.InvoiceId);
+        });
+
+        // ---- E-invoices and e-way bills (TK-91) ---------------------------
+
+        modelBuilder.Entity<EInvoice>(b =>
+        {
+            b.ToTable("EInvoices", t => t.HasCheckConstraint("chk_einvoices_attempts", "\"Attempts\" >= 0"));
+            b.HasKey(e => e.EInvoiceId);
+            b.Property(e => e.SourceType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.CancelReason).HasConversion<string>().HasMaxLength(20);
+
+            // One e-invoice per document, ever: the IRP never registers a number twice.
+            b.HasIndex(e => new { e.OrgId, e.SourceType, e.SourceId }).IsUnique();
+            b.HasIndex(e => e.Irn).IsUnique().HasFilter("\"Irn\" IS NOT NULL");
+
+            // What the retry worker and the "needs attention" filter read.
+            b.HasIndex(e => new { e.OrgId, e.Status, e.NextAttemptAt });
+        });
+
+        modelBuilder.Entity<EwayBill>(b =>
+        {
+            b.ToTable("EwayBills", t => t.HasCheckConstraint("chk_ewaybills_attempts", "\"Attempts\" >= 0"));
+            b.HasKey(e => e.EwayBillId);
+            b.Property(e => e.SourceType).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Origin).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.TransportMode).HasConversion<string>().HasMaxLength(10);
+            b.Property(e => e.CancelReason).HasConversion<string>().HasMaxLength(20);
+
+            // A document may have had an earlier bill cancelled, so this is not unique.
+            b.HasIndex(e => new { e.OrgId, e.SourceType, e.SourceId });
+            b.HasIndex(e => e.EwbNo).IsUnique().HasFilter("\"EwbNo\" IS NOT NULL");
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

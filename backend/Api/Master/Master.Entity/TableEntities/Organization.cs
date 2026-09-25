@@ -173,4 +173,17 @@ public class Organization : AuditableEntity
     /// still appear on the invoice. Frozen once the branch has traded.
     /// </summary>
     public bool DiscountBeforeTax { get; set; } = true;
+
+    /// <summary>
+    /// The date this branch starts registering its B2B, export and SEZ invoices
+    /// and credit notes at the IRP (TK-91). Null means it does not e-invoice.
+    ///
+    /// A setting rather than something worked out from turnover, because the
+    /// threshold is on aggregate turnover across the whole PAN, which this product
+    /// may not hold all of. The owner knows whether they are in.
+    /// </summary>
+    public DateOnly? EInvoiceFrom { get; set; }
+
+    /// <summary>Whether this branch generates e-way bills from the product (TK-91).</summary>
+    public bool EwayBillEnabled { get; set; }
 }

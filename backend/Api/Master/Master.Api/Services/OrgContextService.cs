@@ -52,6 +52,10 @@ public sealed class OrgContextService
                 o.AddressLine2,
                 o.City,
                 o.PostalCode,
+                o.EInvoiceFrom,
+                o.EwayBillEnabled,
+                o.PhoneNumber,
+                o.Email,
                 StateCode = s != null ? s.StateCode : null,
                 OrgExpiryDate = o.ExpiryDate,
                 CustomerStatus = c.Status,
@@ -156,6 +160,10 @@ public sealed class OrgContextService
             AddressLine2 = row.AddressLine2,
             City = row.City,
             PostalCode = row.PostalCode,
+            EInvoiceFrom = row.EInvoiceFrom,
+            EwayBillEnabled = row.EwayBillEnabled,
+            PhoneNumber = row.PhoneNumber,
+            Email = row.Email,
         };
     }
 }

@@ -246,4 +246,18 @@ public class OrgContextResponse
     public string? City { get; set; }
 
     public string? PostalCode { get; set; }
+
+    /// <summary>
+    /// When the branch starts e-invoicing, or null (TK-91). Here because Sales
+    /// decides at posting whether a document needs an IRN and cannot read
+    /// <c>mst.Organizations</c>.
+    /// </summary>
+    public DateOnly? EInvoiceFrom { get; set; }
+
+    public bool EwayBillEnabled { get; set; }
+
+    /// <summary>The branch's phone and email, for the seller block the IRP asks for.</summary>
+    public string? PhoneNumber { get; set; }
+
+    public string? Email { get; set; }
 }

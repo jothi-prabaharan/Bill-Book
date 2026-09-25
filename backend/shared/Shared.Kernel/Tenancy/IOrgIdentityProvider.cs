@@ -41,7 +41,12 @@ public sealed record OrgIdentity(
     string? AddressLine2,
     string? City,
     string? StateCode,
-    string? PostalCode);
+    string? PostalCode,
+
+    /// <summary>For the seller block the IRP asks for (TK-91). Optional there, as here.</summary>
+    string? PhoneNumber = null,
+
+    string? Email = null);
 
 /// <summary>
 /// Reads the identity from Master's org context, cached per organization
@@ -105,7 +110,9 @@ public sealed class HttpOrgIdentityProvider : IOrgIdentityProvider
                 context.AddressLine2,
                 context.City,
                 context.StateCode,
-                context.PostalCode);
+                context.PostalCode,
+                context.PhoneNumber,
+                context.Email);
 
             _cache.Set(key, identity, TimeSpan.FromHours(6));
 
@@ -127,5 +134,7 @@ public sealed class HttpOrgIdentityProvider : IOrgIdentityProvider
         string? AddressLine2,
         string? City,
         string? StateCode,
-        string? PostalCode);
+        string? PostalCode,
+        string? PhoneNumber,
+        string? Email);
 }

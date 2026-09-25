@@ -397,6 +397,14 @@ public sealed class OrganizationService
             }
         }
 
+        // The IRP and the e-way bill portal both key everything on the seller's
+        // GSTIN, so neither can be switched on for an unregistered branch.
+        if ((request.EInvoiceFrom is not null || request.EwayBillEnabled)
+            && string.IsNullOrWhiteSpace(request.Gstin))
+        {
+            return SaveOrganizationOutcome.EInvoiceNeedsGstin;
+        }
+
         return SaveOrganizationOutcome.Ok;
     }
 
@@ -423,6 +431,8 @@ public sealed class OrganizationService
         organization.DiscountLevel = Enum.Parse<DiscountLevel>(request.DiscountLevel, ignoreCase: true);
         organization.Vertical = request.Vertical;
         organization.DiscountBeforeTax = request.DiscountBeforeTax;
+        organization.EInvoiceFrom = request.EInvoiceFrom;
+        organization.EwayBillEnabled = request.EwayBillEnabled;
         organization.Gstin = Trimmed(request.Gstin)?.ToUpperInvariant();
         organization.Pan = Trimmed(request.Pan)?.ToUpperInvariant();
         organization.Tan = Trimmed(request.Tan)?.ToUpperInvariant();
@@ -502,6 +512,8 @@ public sealed class OrganizationService
         DiscountLevel = o.DiscountLevel.ToString(),
         Vertical = o.Vertical,
         DiscountBeforeTax = o.DiscountBeforeTax,
+        EInvoiceFrom = o.EInvoiceFrom,
+        EwayBillEnabled = o.EwayBillEnabled,
         FinancialYearStartMonth = o.FinancialYearStartMonth,
         Gstin = o.Gstin,
         Pan = o.Pan,

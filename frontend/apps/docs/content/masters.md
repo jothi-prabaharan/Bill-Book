@@ -1084,6 +1084,8 @@ Whether a line may stand without an item, where a discount is keyed, and whether
 
 They are frozen the same way the base currency is: editable until the branch posts its first sales or purchase document, fixed after that.
 
+The same screen's **Statutory** tab holds the branch's **E-invoicing from** date and whether it generates **E-way bills**. Both need the branch's GSTIN. See [Invoices](invoices).
+
 # Print templates
 
 How your printed documents look — the letterhead, the columns, the terms at the foot — is a

@@ -128,4 +128,33 @@ public sealed class InternalItemNamesController : ControllerBase
             .Select(w => new StockWarehouse { WarehouseId = w.WarehouseId, WarehouseCode = w.WarehouseCode, WarehouseName = w.WarehouseName })
             .ToListAsync(ct));
     }
+
+    /// <summary>
+    /// The GST unit (UQC) of each unit of measure, by id (TK-91). Sales copies it
+    /// onto a document line when the document posts, because the IRP and GSTR-1
+    /// need it per line and Sales cannot read <c>inv.UnitsOfMeasure</c>.
+    /// </summary>
+    [HttpPost("uqc")]
+    public async Task<IActionResult> Uqc([FromBody] NameLookupRequest request, CancellationToken ct)
+    {
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse { Message = "A customer and an organization are required to resolve units." });
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        List<long> ids = [.. request.Ids.Distinct().Take(MaxIds)];
+        if (ids.Count == 0)
+        {
+            return Ok(Array.Empty<UqcRef>());
+        }
+
+        var db = _services.GetRequiredService<InventoryDbContext>();
+        return Ok(await db.UnitOfMeasures.AsNoTracking()
+            .Where(u => ids.Contains(u.UomId))
+            .Select(u => new UqcRef(u.UomId, u.UqcCode))
+            .ToListAsync(ct));
+    }
 }

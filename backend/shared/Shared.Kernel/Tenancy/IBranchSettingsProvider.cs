@@ -25,7 +25,17 @@ public sealed record BranchSettings(
     /// so its intra-state supplies carry UTGST in place of SGST. Defaulted false
     /// because almost every branch is in a state.
     /// </summary>
-    bool IsUnionTerritory = false);
+    bool IsUnionTerritory = false,
+
+    /// <summary>
+    /// When the branch starts registering documents at the IRP, or null when it
+    /// does not e-invoice (TK-91). Cached with the rest, so a change reaches a
+    /// service within the cache's six hours.
+    /// </summary>
+    DateOnly? EInvoiceFrom = null,
+
+    /// <summary>Whether the branch generates e-way bills from the product (TK-91).</summary>
+    bool EwayBillEnabled = false);
 
 /// <summary>
 /// Reads the settings from Platform's org context, cached per organization.
@@ -80,7 +90,11 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
                 return null;
             }
 
-            BranchSettings settings = new(stateCode, context.DiscountBeforeTax);
+            BranchSettings settings = new(
+                stateCode,
+                context.DiscountBeforeTax,
+                EInvoiceFrom: context.EInvoiceFrom,
+                EwayBillEnabled: context.EwayBillEnabled);
             _cache.Set(key, settings, TimeSpan.FromHours(6));
             return settings;
         }
@@ -92,5 +106,6 @@ public sealed class HttpBranchSettingsProvider : IBranchSettingsProvider
     }
 
     /// <summary>Only the required fields are read.</summary>
-    private sealed record OrgContextDto(string? StateCode, bool DiscountBeforeTax);
+    private sealed record OrgContextDto(
+        string? StateCode, bool DiscountBeforeTax, DateOnly? EInvoiceFrom, bool EwayBillEnabled);
 }

@@ -674,7 +674,8 @@ public sealed class InvoicePostingTests
                 creditCheck,
                 storage,
                 pdf,
-                orgIdentity);
+                orgIdentity,
+                new StubUqcLookup());
 
             return new Harness(db, invoices, inventory, ledger, tenant, pdf, storage);
         }
