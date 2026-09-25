@@ -2414,7 +2414,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - **Tests written**: `backend/tests/Hrm.Api.Tests/LifecycleServiceTests.cs` (checklist template copy and item update, separation shortfall and exit settlement) and `Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working` in `PayrollServiceTests.cs`. Backend solution and Nx apps (`payroll`, `hrms`) build cleanly.
 
 ### TK-55 · H8: Self-service and approvals
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-49, TK-51 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `/api/me/...` routes: profile, leave, attendance, punches, claims, documents and
