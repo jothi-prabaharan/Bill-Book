@@ -55,11 +55,15 @@ normal for agent 1 to be on TK-70 while agent 2 is on TK-74.
 1. `git pull --rebase origin main`
 2. Re-read the card. Check it still meets the four conditions above.
 3. Change its status to `- [~] working (AI name) — since <today>`. Change nothing else in the file.
-4. Commit only `docs/TASKS.md` with the message `claim TK-nn (AI name)`, then `git push origin main`.
-5. **If the push is rejected**, run `git rebase --abort` if a rebase is in progress, then
+4. **Open the card's GitHub issue** (section 0.6) if it has none, and add its `- **Issue:**` line
+   to the card under the status line.
+5. Commit only `docs/TASKS.md` with the message `claim TK-nn (AI name)` and `Refs #N` in the body,
+   then `git push origin main`.
+6. **If the push is rejected**, run `git rebase --abort` if a rebase is in progress, then
    `git reset --hard origin/main`. This throws away only your one-line claim commit. Re-read the
-   queue and start again from step 1. Never force-push a claim.
-6. Start work only after the claim is on `origin/main`.
+   queue and start again from step 1. The issue you opened stays; reuse it if you take the card
+   later, or leave it for whoever does. Never force-push a claim.
+7. Start work only after the claim is on `origin/main`.
 
 **While working**
 - Write only to paths in your card's lanes. Shared files (section 1.1) follow their own rules.
@@ -70,8 +74,8 @@ normal for agent 1 to be on TK-70 while agent 2 is on TK-74.
   Two suites dropping the same database will break each other's results.
 
 **Releasing a card**
-- **Done**: tick it in the same commit as the last piece of work, then push. An AI adds
-  `· tests written, not run` to the status line (section 0.5).
+- **Done**: tick it in the same commit as the last piece of work, with `Closes #N` in that commit's
+  body, then push. An AI adds `· tests written, not run` to the status line (section 0.5).
 - **Stopping unfinished**: don't leave a `[~]` behind. Set it back to `- [ ] open` and add a
   `Handover:` line to Notes: what's done, what's next, and anything surprising.
 - **Stale claims**: if a `[~]` card has had no commit to its lanes for **48 hours**, another agent
@@ -154,6 +158,32 @@ run.
 running tests. An AI doesn't wait on CI or react to its results unless the owner asks it to.
 
 ---
+
+### 0.6 GitHub issues: one per card, linked from every commit
+
+**Every card has a GitHub issue, and every commit for a card names it.** The issue is where the
+owner follows a card from GitHub, and the commits linked on it are the card's whole history.
+(Rule set 25 September 2026 by the repository owner; TK-60 to TK-71 were linked retrospectively
+as #2 to #13.)
+
+- **One issue per card**, in `jothi-prabaharan/Bill-Book`, titled exactly as the card's heading
+  without the `###`: `TK-nn · Title`. Search for one first; never open a second.
+- **When:** at the claim (section 0.2, step 4). A card worked before this rule gets its issue the
+  next time anyone touches it.
+- **Body:** the card's link (`docs/TASKS.md` › TK-nn), its dependencies by issue number where they
+  have one, its sub-tasks as a checklist, and its *Done when*. No credentials, hosts or customer
+  data. End with the Claude Code attribution footer when an AI writes it.
+- **The card names it**: `- **Issue:** [#N](https://github.com/jothi-prabaharan/Bill-Book/issues/N)`,
+  directly under the status line.
+- **Every commit for the card references it** in the message body: `Refs #N` on the claim and on
+  each piece of work, `Closes #N` on the commit that marks the card completed. GitHub lists each
+  referencing commit on the issue, so the mapping needs no upkeep.
+- **Close it as completed** when the card is done. `Closes #N` in a commit on `main` does that;
+  if it didn't (a merge, a typo), close it by hand. A card handed back open keeps its issue open,
+  with the `Handover:` line copied into a comment.
+- **A commit already pushed without the reference is never rewritten** to add one — `main` is
+  never force-pushed. Comment on the issue with the missing commit id instead.
+- A decision (section 3) doesn't get an issue; the card it blocks carries it.
 
 ## 1. Lanes
 

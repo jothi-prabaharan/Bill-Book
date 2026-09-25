@@ -24,6 +24,7 @@ These are non-negotiable. Violating them means the code gets rejected.
 12. **Never create a new branch. Not one.** Not for a feature, not for a session, not because a harness or tool assigns one by default. If something outside your control puts you on a branch anyway, do the work there only because you have no choice, then merge it into `main` and delete it before you stop — a branch that outlives the session that made it is the failure this rule exists to prevent.
 13. **Every write endpoint runs in a transaction, and no controller opens one.** `AddBillBookReliability<TContext>()` registers the filter; inside a service use `await _db.Database.BeginScopeAsync(ct)`, never `BeginTransactionAsync` — the raw call throws the moment anything above it has started a transaction. Commit is earned by the returned status, so a `Conflict()` after a partial write rolls back. Full rules in [`docs/Architecture.md`](./docs/Architecture.md).
 14. **No `catch` block writes its own message for a caller.** Every failure goes through `SqlErrorCatalog` → status, `ApiErrorCode`, curated sentence. **Development returns the exact database error; every other environment returns the sentence and an `errorReference`**, with the detail in the service's own `{schema}.ErrorLogs`. A curated message may never name a table, column, constraint or figure. Workers audit to the same table with `FollowUpStatus = Open` — that set is the task list.
+15. **Every task has a GitHub issue, and every commit names it.** Open the card's issue in `jothi-prabaharan/Bill-Book` at the claim, titled `TK-nn · Title`, and put its `- **Issue:** #N` line on the card. Every commit for the card carries `Refs #N`; the commit that completes it carries `Closes #N`. Never rewrite a pushed commit to add a reference — comment the commit id on the issue instead. Full rules in section 0.6 of [`docs/TASKS.md`](./docs/TASKS.md).
 
 ---
 
@@ -36,7 +37,8 @@ task:
   decision blocks it, and none of its lanes is held by another card;
 - **card numbers are the order of work**: TK-01 first, then TK-02, and so on (renumbered
   24 September 2026; section 4 of `docs/TASKS.md` maps the old numbers);
-- **claim it with a claim commit on `main` before doing any work**;
+- **open its GitHub issue** if it has none (hard rule 15);
+- **claim it with a claim commit on `main` before doing any work**, with `Refs #N` in the body;
 - mark it `working (AI name)`, and later `completed (AI name)`.
 
 **AI agents write unit tests and never run them.** An AI writes the tests for every change. It does
