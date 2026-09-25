@@ -2491,6 +2491,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-60 · S0: School prerequisites
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#2](https://github.com/jothi-prabaharan/Bill-Book/issues/2)
 - **Lanes:** L-CON, L-MST, L-DEPS, `L-SCH-APP` (new) · **Depends on:** TK-47, TK-48 · **Decision:** —
 - **Sub-tasks:**
   - [x] Add `IsGuardian` to `con.Contact`, with a migration and a role filter on `/api/contacts`.
@@ -2516,6 +2517,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-61 · S1: Sis (`sis`, port 4515)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#3](https://github.com/jothi-prabaharan/Bill-Book/issues/3)
 - **Lanes:** L-SIS (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`,
   `Enrolment`, `Exam`.
@@ -2541,6 +2543,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#4](https://github.com/jothi-prabaharan/Bill-Book/issues/4)
 - **Lanes:** L-ADMN (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `Enquiry`, `Application`, `ApplicationDocument`.
 - **Sub-tasks:**
@@ -2560,6 +2563,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-63 · S3: Student attendance (`att`, port 4517)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#5](https://github.com/jothi-prabaharan/Bill-Book/issues/5)
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
@@ -2575,6 +2579,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-64 · S4: Fee (`fee`, port 4518)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#6](https://github.com/jothi-prabaharan/Bill-Book/issues/6)
 - **Lanes:** L-FEE (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `FeeHead`, `FeeStructure`, `FeeConcession`, `FeeDemand`, `FeeReceipt`.
 - **Sub-tasks:**
@@ -2599,6 +2604,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-65 · S5: Facility (`fac`, port 4519)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#7](https://github.com/jothi-prabaharan/Bill-Book/issues/7)
 - **Lanes:** L-FAC (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `Building`, `Space`, `FacilityAsset`.
 - **Sub-tasks:**
@@ -2609,6 +2615,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-66 · S6: WorkOrder (`wrk`, port 4520)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#8](https://github.com/jothi-prabaharan/Bill-Book/issues/8)
 - **Lanes:** L-WRKO (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `WorkOrder`, `WorkOrderTask`, `WorkOrderPart`.
 - **Sub-tasks:**
@@ -2630,6 +2637,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-67 · S7: Preventive (`ppm`, port 4521)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
+- **Issue:** [#9](https://github.com/jothi-prabaharan/Bill-Book/issues/9)
 - **Lanes:** L-PPM (new) · **Depends on:** TK-66 · **Decision:** —
 - **Tables:** `PreventivePlan`, `PreventiveOccurrence`.
 - **Sub-tasks:**
@@ -2648,7 +2656,8 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Preventive.Api.Tests` with `PREVENTIVE_TEST_DB` from a dropped database.
 
 ### TK-68 · S8: AMC (`amc`, port 4522)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
+- **Issue:** [#10](https://github.com/jothi-prabaharan/Bill-Book/issues/10)
 - **Lanes:** L-AMC (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `AmcContract`, `AmcCoveredAsset`, `AmcVisit`.
 - **Sub-tasks:**
@@ -2662,6 +2671,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-69 · S9: Parent portal
 - [ ] open
+- **Issue:** [#11](https://github.com/jothi-prabaharan/Bill-Book/issues/11)
 - **Lanes:** L-PTL · **Depends on:** TK-63, TK-64, TK-32 · **Decision:** —
 - **Sub-tasks:**
   - [ ] Add routes in `apps/portal` for demands, receipts, attendance and published marks.
@@ -2679,6 +2689,7 @@ into the queue with the failure under its Notes.
 
 ### TK-70 · Master fails to start on a fresh database
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Issue:** [#12](https://github.com/jothi-prabaharan/Bill-Book/issues/12)
 - **Lanes:** L-MST · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Repository/AdminDbContext.cs:337-338`: the `Menu` and `MenuPermission` `HasData`.
@@ -2730,6 +2741,7 @@ into the queue with the failure under its Notes.
 
 ### TK-71 · RLS template: restore it in `acc`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Issue:** [#13](https://github.com/jothi-prabaharan/Bill-Book/issues/13)
 - **Lanes:** L-ACC, L-MST (Master's startup bootstrap writes `acc` rows) · **Depends on:** — · **Decision:** —
 - **Where:**
   - The template: `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:130-172`.
