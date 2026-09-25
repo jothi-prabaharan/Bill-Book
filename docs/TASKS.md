@@ -2453,7 +2453,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed Recruitment service (Recruitment.Entity, Recruitment.Repository, Recruitment.Api on port 4512), EF Core migration with RLS policies on rec schema, gateway reverse proxy routes, REQ numbering series, idempotent employee onboarding via Hrm.Api internal endpoint with onboarding checklist creation, salary assignment via Payroll.Api, frontend libs (recruitment-core, recruitment-ui) with requisitions, openings, candidates, interactive reactive pipeline board, interviews evaluation, offers generation and acceptance flow, and test suite in Recruitment.Api.Tests.
 
 ### TK-58 · H11: Performance (`Performance`, `prf`, port 4513)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-PRF (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ReviewCycle`, `Eligibility`, `RatingScale`, `Competency`, `Goal`,
   `PerformanceReview`, `SelfEvaluation`, `GoalSelfAssessment`, `CompetencySelfAssessment`,
