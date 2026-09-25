@@ -2441,7 +2441,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed Claims service (Claims.Entity, Claims.Repository, Claims.Api on port 4514), EF Core migration with RLS policies, gateway reverse proxy routes, seeding of categories and CLM numbering series, general ledger payout posting, self-service employee claims, frontend libs (claims-core, claims-ui) with category/limits and claim management pages, and full unit test coverage.
 
 ### TK-57 · H10: Recruitment and onboarding (`Recruitment`, `rec`, port 4512)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-REC (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `JobRequisition`, `JobOpening`, `Candidate`, `Application`, `InterviewRound`, `Offer`.
 - **Sub-tasks:**
