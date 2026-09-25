@@ -2598,7 +2598,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Fee.Api.Tests` with `FEE_TEST_DB` from a dropped database, and post one demand and one receipt with Accounting running, then check the guardian's ledger.
 
 ### TK-65 · S5: Facility (`fac`, port 4519)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-FAC (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `Building`, `Space`, `FacilityAsset`.
 - **Sub-tasks:**
