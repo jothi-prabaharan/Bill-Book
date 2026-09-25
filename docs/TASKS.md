@@ -2535,6 +2535,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - `libs/sis/{sis-core, sis-ui}`: students list, student record (guardians, enrolment), academic setup, exams and marks; mounted in `apps/school`. Menu rows 11, 119, 1111–1113 switched on (migration `SisMenus`).
     - Tests: `Sis.Api.Tests` (schema and RLS audit, guard audit, `StudentServiceTests` including the *Done when*, `StudentRuleTests`, `ExamRuleTests`, `ExamServiceTests`); `sis-rules.spec.ts`; `sis.routes.spec.ts`. `Master.Api.Tests.SeedingPerAppTests` gains the School case and is corrected for Payroll, which TK-51 added to the seeder without updating it.
     - Also: Master's `Seeding` config gains `TimeLeave` and `Payroll`, which TK-49/TK-51 left out, so every HRMS or Payroll branch was reported as failing to seed.
+    - **`claims` moved to the end of `PermissionModules`** (migration `ClaimsPermissions`). TK-56 inserted it before the School modules, which would have renumbered every School permission TK-60 had migrated: the row-by-row `UpdateData` against the unique `Code` index that stopped Master starting in TK-70. Appended, the School ids stand and `claims` gets the migration it lacked.
     - Owner step: run `Sis.Api.Tests` with `SIS_TEST_DB` from a dropped database. `Sis` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)

@@ -658,12 +658,13 @@ public class AdminDbContext : DbContext
         // H2, H3 (TK-49, TK-50).
         "leave", "attendance",
 
-        // H9 (TK-56).
-        "claims",
-
         // School (S0, TK-60). attendance is already above and is shared: HRMS
         // uses it for staff attendance, School for student attendance.
         "sis", "admission", "fee", "facility", "workorder", "preventive", "amc",
+
+        // H9 (TK-56). Appended after School rather than beside leave, so the
+        // School permissions TK-60 migrated keep their ids.
+        "claims",
     };
 
     /// <summary>
