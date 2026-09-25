@@ -2428,7 +2428,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed self-service endpoints across Hrm, TimeLeave, and Payroll services, unified approvals inbox, team hierarchy viewer, my-profile, and my-payslips pages. Verified with unit tests and clean builds.
 
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-CLM (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ClaimCategory`, `ClaimLimit`, `ExpenseClaim`, `ExpenseClaimLine`.
 - **Sub-tasks:**
