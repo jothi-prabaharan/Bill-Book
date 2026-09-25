@@ -657,7 +657,41 @@ public class AdminDbContext : DbContext
 
         // H2, H3 (TK-49, TK-50).
         "leave", "attendance",
+
+        // School (S0, TK-60). attendance is already above and is shared: HRMS
+        // uses it for staff attendance, School for student attendance.
+        "sis", "admission", "fee", "facility", "workorder", "preventive", "amc",
     };
+
+    /// <summary>
+    /// Permissions outside the module × action grid (TK-60): a verb only one
+    /// module has. Ids from 10,001, so a module appended to the grid later never
+    /// meets one.
+    /// </summary>
+    public static readonly IReadOnlyList<(int PermissionId, string Module, string Action, App Apps)> ExtraPermissions =
+    [
+        // Editing a locked day's register (S3). School's student register only,
+        // though the attendance module is shared with HRMS.
+        (10_001, "attendance", "unlock", App.School),
+
+        // Closing a work order, which is terminal (S6).
+        (10_002, "workorder", "close", App.School),
+    ];
+
+    /// <summary>
+    /// School's roles beside its Owner (TK-60), with fixed ids in the reserved
+    /// range, and the modules each holds. A module listed with actions grants
+    /// only those; one listed alone grants all of it.
+    /// </summary>
+    public static readonly IReadOnlyList<(int RoleId, string Name, string[] Grants)> SchoolRoles =
+    [
+        (1_000_101, "Principal", ["contacts", "sis", "admission", "attendance", "fee", "facility", "workorder", "preventive", "amc", "employee.view", "attendance.unlock", "workorder.close"]),
+        (1_000_102, "Office Admin", ["contacts", "sis", "admission", "attendance", "fee.view", "fee.create", "fee.print", "employee.view", "attendance.unlock"]),
+        (1_000_103, "Accountant", ["fee", "contacts.view", "sis.view", "admission.view"]),
+        (1_000_104, "Teacher", ["sis.view", "sis.edit", "attendance.view", "attendance.create", "attendance.edit"]),
+        (1_000_105, "Maintenance", ["facility", "contacts.view", "workorder.view", "workorder.create", "workorder.edit", "preventive", "amc.view", "employee.view"]),
+        (1_000_106, "Viewer", ["*.view"]),
+    ];
 
     /// <summary>
     /// Which apps' roles may hold a module's permissions (TK-42).
@@ -697,8 +731,20 @@ public class AdminDbContext : DbContext
         // that employ people on the books: HRMS, Payroll and School (TK-48).
         "employee" => App.Hrms | App.Payroll | App.School,
 
-        // Lifecycle, letters, assets, announcements, leave and attendance are HRMS's own.
-        "hrm" or "leave" or "attendance" => App.Hrms,
+        // Lifecycle, letters, assets, announcements and leave are HRMS's own.
+        "hrm" or "leave" => App.Hrms,
+
+        // Staff attendance in HRMS, student attendance in School (TK-60). A
+        // role belongs to one app and a token carries one app, so the shared
+        // module never lets one app's role into the other's screens.
+        "attendance" => App.Hrms | App.School,
+
+        // Guardians and maintenance vendors are contacts, so School shares the
+        // contact master with RetailErp (TK-60).
+        "contacts" => App.RetailErp | App.School,
+
+        // School's own (TK-60).
+        "sis" or "admission" or "fee" or "facility" or "workorder" or "preventive" or "amc" => App.School,
 
         // Payroll core, statutory, tax, runs (TK-51).
         "payroll" => App.Payroll,
@@ -740,6 +786,20 @@ public class AdminDbContext : DbContext
             });
         }
 
+        foreach ((int roleId, string name, _) in SchoolRoles)
+        {
+            roles.Add(new Role
+            {
+                RoleId = roleId,
+                CustomerId = null,
+                SystemName = name,
+                DisplayName = name,
+                App = App.School,
+                IsSystemRole = true,
+                IsActive = true,
+            });
+        }
+
         modelBuilder.Entity<Role>().HasData(roles);
 
         string[] modules = PermissionModules;
@@ -763,6 +823,17 @@ public class AdminDbContext : DbContext
                     Apps = AppsOfModule(module),
                 });
             }
+        }
+
+        foreach ((int extraId, string module, string action, App apps) in ExtraPermissions)
+        {
+            permissions.Add(new Permission
+            {
+                PermissionId = extraId,
+                Code = $"{module}.{action}",
+                Module = module,
+                Apps = apps,
+            });
         }
 
         modelBuilder.Entity<Permission>().HasData(permissions);
@@ -855,6 +926,34 @@ public class AdminDbContext : DbContext
             }
         }
 
+        // School's other roles (TK-60): 1,000,000,000 × School's flag, plus
+        // 10,000,000 × the role's place in the list, plus the permission id.
+        List<Permission> school = nonPlatform.Where(p => p.Apps.HasFlag(App.School)).ToList();
+        for (int k = 0; k < SchoolRoles.Count; k++)
+        {
+            (int roleId, _, string[] granted) = SchoolRoles[k];
+            foreach (Permission permission in school.Where(p => SchoolRoleHolds(granted, p)))
+            {
+                grants.Add(new RolePermission
+                {
+                    RolePermissionId = 1_000_000_000L * (int)App.School + 10_000_000L * (k + 1) + permission.PermissionId,
+                    RoleId = roleId,
+                    PermissionId = permission.PermissionId,
+                });
+            }
+        }
+
         modelBuilder.Entity<RolePermission>().HasData(grants);
     }
+
+    /// <summary>
+    /// Whether a School role's grant list covers a permission: a bare module
+    /// covers its whole grid (never the extra verbs, which are named alone),
+    /// <c>module.action</c> covers one, and <c>*.view</c> covers every view.
+    /// Public for tests.
+    /// </summary>
+    public static bool SchoolRoleHolds(IEnumerable<string> grants, Permission permission) =>
+        grants.Any(g => g == permission.Code
+            || (g == "*.view" && permission.Code.EndsWith(".view", StringComparison.Ordinal))
+            || (g == permission.Module && permission.PermissionId < ExtraPermissions[0].PermissionId));
 }

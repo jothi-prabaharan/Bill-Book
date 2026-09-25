@@ -62,6 +62,7 @@ export const DEV_APP_URLS: Readonly<Record<string, string>> = {
   RetailErp: 'http://localhost:4200',
   Hrms: 'http://localhost:4203',
   Payroll: 'http://localhost:4204',
+  School: 'http://localhost:4205',
 };
 
 /** `DEV_APP_URLS` on a localhost page, nothing anywhere else. */

@@ -21,6 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
+import { APP_ID } from '@bill-book/auth';
 import {
   ContactPersonRole,
   ContactPersonRolesDialog,
@@ -35,6 +36,8 @@ interface ContactListItem {
   isVendor: boolean;
   isJobWorker: boolean;
   isPrescriber: boolean;
+  /** A student's guardian (School, TK-60). */
+  isGuardian: boolean;
   gstin: string | null;
   gstRegistrationType: string;
   currencyCode: string;
@@ -331,6 +334,9 @@ export class ContactsPage implements OnInit {
   form: ContactDetail = this.blank();
 
   private readonly router = inject(Router);
+
+  /** Guardians are School's (TK-60): the filter and the checkbox show only there. */
+  protected readonly isSchool = inject(APP_ID) === 'School';
   private readonly route = inject(ActivatedRoute);
 
   ngOnInit(): void {
@@ -849,8 +855,8 @@ export class ContactsPage implements OnInit {
       return false;
     }
 
-    if (!this.form.isCustomer && !this.form.isVendor && !this.form.isJobWorker && !this.form.isPrescriber) {
-      this.fail('Select at least one role (Customer, Vendor, Job worker, or Prescriber).');
+    if (!this.form.isCustomer && !this.form.isVendor && !this.form.isJobWorker && !this.form.isPrescriber && !this.form.isGuardian) {
+      this.fail('Select at least one role (Customer, Vendor, Job worker, Prescriber or Guardian).');
       return false;
     }
 
@@ -972,6 +978,7 @@ export class ContactsPage implements OnInit {
       isVendor: false,
       isJobWorker: false,
       isPrescriber: false,
+      isGuardian: false,
       gstin: null,
       gstRegistrationType: 'Unregistered',
       currencyCode: 'INR',
@@ -1060,6 +1067,7 @@ export class ContactsPage implements OnInit {
     if (row.isVendor) roles.push('Vendor');
     if (row.isJobWorker) roles.push('Job worker');
     if (row.isPrescriber) roles.push('Prescriber');
+    if (row.isGuardian) roles.push('Guardian');
     return roles.join(' & ') || '—';
   }
 

@@ -33,6 +33,9 @@ public class Contact : OrgScopedEntity
     /// <summary>Doctors, for the Schedule H1 register.</summary>
     public bool IsPrescriber { get; set; }
 
+    /// <summary>A student's parent or guardian (School, TK-60): invoiced fees and given the parent portal.</summary>
+    public bool IsGuardian { get; set; }
+
     public ContactCategory ContactCategory { get; set; } = ContactCategory.Business;
 
     [Required(ErrorMessage = "Display name is required.")]

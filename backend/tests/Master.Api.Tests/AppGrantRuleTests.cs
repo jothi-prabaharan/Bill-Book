@@ -78,8 +78,10 @@ public sealed class AppGrantRuleTests
         List<IDictionary<string, object?>> roles = Seed<Role>(db);
         Assert.All(roles, r => Assert.True(AppRules.IsSingle((App)r["App"]!)));
         Assert.All(roles.Where(r => (int)r["RoleId"]! <= 5), r => Assert.Equal(App.RetailErp, (App)r["App"]!));
+        // School also has its Principal, Office Admin, Accountant, Teacher,
+        // Maintenance and Viewer (TK-60).
         Assert.Equal(
-            [App.School, App.Hrms, App.Payroll],
+            [.. Enumerable.Repeat(App.School, 7), App.Hrms, App.Payroll],
             roles.Where(r => (int)r["RoleId"]! > 5).Select(r => (App)r["App"]!).OrderBy(a => a));
 
         List<IDictionary<string, object?>> permissions = Seed<Permission>(db);
@@ -103,7 +105,7 @@ public sealed class AppGrantRuleTests
             "dashboard", "contacts", "crm", "inventory", "sales", "purchase",
             "accounting", "banking", "reports", "settings", "support", "platform",
         ];
-        Assert.All(Seed<Menu>(db).Where(m => (int)m["MenuId"]! is <= 1106 and not (10 or 118)),
+        Assert.All(Seed<Menu>(db).Where(m => (int)m["MenuId"]! <= 1106 && !MenuSeed.AppsByMenuId.ContainsKey((int)m["MenuId"]!)),
             m => Assert.True(((App)m["Apps"]!).HasFlag(App.RetailErp), $"Menu {m["Code"]}"));
         Assert.All(Seed<Permission>(db).Where(p => original.Contains((string)p["Module"]!)),
             p => Assert.True(((App)p["Apps"]!).HasFlag(App.RetailErp), $"Permission {p["Code"]}"));

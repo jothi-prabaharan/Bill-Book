@@ -79,6 +79,7 @@ public class ContactsDbContext : TenantDbContext
             b.HasIndex(["OrgId"], "IX_Contacts_Vendor").HasFilter("\"IsVendor\" = true");
             b.HasIndex(["OrgId"], "IX_Contacts_JobWorker").HasFilter("\"IsJobWorker\" = true");
             b.HasIndex(["OrgId"], "IX_Contacts_Prescriber").HasFilter("\"IsPrescriber\" = true");
+            b.HasIndex(["OrgId"], "IX_Contacts_Guardian").HasFilter("\"IsGuardian\" = true");
 
             b.Property(e => e.ContactCategory).HasConversion<string>().HasMaxLength(15);
             b.Property(e => e.GstRegistrationType).HasConversion<string>().HasMaxLength(20);
@@ -91,7 +92,7 @@ public class ContactsDbContext : TenantDbContext
                 table.HasCheckConstraint(
                     "chk_contact_role",
                     "\"IsCustomer\" = true OR \"IsVendor\" = true "
-                        + "OR \"IsJobWorker\" = true OR \"IsPrescriber\" = true");
+                        + "OR \"IsJobWorker\" = true OR \"IsPrescriber\" = true OR \"IsGuardian\" = true");
 
                 table.HasCheckConstraint(
                     "chk_contact_tds",

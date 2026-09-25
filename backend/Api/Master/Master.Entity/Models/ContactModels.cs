@@ -21,6 +21,8 @@ public class ContactListItem
 
     public bool IsPrescriber { get; set; }
 
+    public bool IsGuardian { get; set; }
+
     public string? Gstin { get; set; }
 
     public string GstRegistrationType { get; set; } = null!;
@@ -202,6 +204,8 @@ public class SaveContactRequest
 
     public bool IsPrescriber { get; set; }
 
+    public bool IsGuardian { get; set; }
+
     [Required(ErrorMessage = "Contact category is required.")]
     public string ContactCategory { get; set; } = "Business";
 
@@ -340,6 +344,9 @@ public class QuickContactRequest
     public bool IsCustomer { get; set; } = true;
 
     public bool IsVendor { get; set; }
+
+    /// <summary>A student's guardian (School, TK-60).</summary>
+    public bool IsGuardian { get; set; }
 }
 
 public class ContactBankDetailModel

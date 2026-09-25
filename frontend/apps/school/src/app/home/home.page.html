@@ -1,0 +1,15 @@
+<section class="home" aria-labelledby="home-title">
+  <h1 id="home-title">School</h1>
+  <p>School — students, admissions, attendance, fees and maintenance.</p>
+  @if (session.context(); as context) {
+    <p class="home-context">Signed in to {{ context.branchName }} as {{ context.displayName }}.</p>
+  }
+  <p>The School screens are being built. Until then, the shared settings and the employee master are ready:</p>
+  <ul class="home-links">
+    <li><a routerLink="/hrm/employees">Employees</a></li>
+    <li><a routerLink="/settings/users">Users</a></li>
+    <li><a routerLink="/settings/roles">Roles</a></li>
+    <li><a routerLink="/settings/branches">Branches</a></li>
+    <li><a routerLink="/settings/applications">Applications</a></li>
+  </ul>
+</section>

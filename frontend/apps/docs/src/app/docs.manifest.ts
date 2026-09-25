@@ -63,6 +63,12 @@ export const DOCS: DocSection[] = [
     ],
   },
   {
+    title: 'School',
+    // The School app (S0 onward): students, admissions, attendance, fees and
+    // maintenance, joining this page as each stage is built.
+    pages: [{ slug: 'school', title: 'School', status: 'partial' }],
+  },
+  {
     title: 'Releases',
     pages: [{ slug: 'releases', title: 'Release notes', status: 'built' }],
   },

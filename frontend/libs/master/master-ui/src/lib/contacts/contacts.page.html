@@ -21,6 +21,11 @@
   <span class="tabgrp">
     <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'prescriber' ? 'true' : null" (click)="roleFilter = 'prescriber'; load()">Prescribers</button>
   </span>
+  @if (isSchool) {
+    <span class="tabgrp">
+      <button class="btn btn-secondary" type="button" [attr.aria-pressed]="roleFilter === 'guardian' ? 'true' : null" (click)="roleFilter = 'guardian'; load()">Guardians</button>
+    </span>
+  }
 </nav>
 
 <div class="actbar">
@@ -133,6 +138,9 @@
           <bb-checkbox text="Vendor" name="isVendor" [(ngModel)]="form.isVendor" />
           <bb-checkbox text="Job worker" name="isJobWorker" [(ngModel)]="form.isJobWorker" />
           <bb-checkbox text="Prescriber" name="isPrescriber" [(ngModel)]="form.isPrescriber" />
+          @if (isSchool || form.isGuardian) {
+            <bb-checkbox text="Guardian" name="isGuardian" [(ngModel)]="form.isGuardian" />
+          }
           <small>Tick every role that applies — one contact, not one per role.</small>
         </fieldset>
 

@@ -2489,18 +2489,29 @@ Columns (2472), Endpoints (2793) and Stages (2884). Every card also carries sect
 delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 
 ### TK-60 · S0: School prerequisites
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-CON, L-MST, L-DEPS, `L-SCH-APP` (new) · **Depends on:** TK-47, TK-48 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] Add `IsGuardian` to `con.Contact`, with a migration and a role filter on `/api/contacts`.
-  - [ ] Seed School's permissions, menus and roles (Principal, Office Admin, Accountant, Teacher,
+  - [x] Add `IsGuardian` to `con.Contact`, with a migration and a role filter on `/api/contacts`.
+  - [x] Seed School's permissions, menus and roles (Principal, Office Admin, Accountant, Teacher,
         Maintenance, Viewer) with `App = School`.
-  - [ ] School signup and a trial licence, reusing TK-45.
-  - [ ] An empty `apps/school` on `shellRoutes`, mounting the shared master pages and the employee master.
-  - [ ] Add numbering series `ADM`, `APL`, `FDM`, `FRC` and `WRK`.
+  - [x] School signup and a trial licence, reusing TK-45.
+  - [x] An empty `apps/school` on `shellRoutes`, mounting the shared master pages and the employee master.
+  - [x] Add numbering series `ADM`, `APL`, `FDM`, `FRC` and `WRK`.
 - **Done when:** `apps/school` shows only School menus, and a guardian contact can be created and
   filtered.
 - **Notes:**
+  - **As built (2026-09-25):**
+    - `con.Contacts.IsGuardian` (migration `GuardianContacts`), in the role check constraint, a filtered index, `?role=guardian` on `/api/contacts` and quick create. Guardians take the `CUSTOMER` series. The checkbox and **Guardians** filter show only in the School app.
+    - Modules `sis`, `admission`, `fee`, `facility`, `workorder`, `preventive`, `amc` (School). **`attendance` is shared with HRMS** (`App.Hrms | App.School`): TK-50 had already seeded it for staff attendance, and since a role and a token each belong to one app, one module row serves both safely. `attendance.unlock` and `workorder.close` are extra permissions outside the grid (ids from 10,001, School only). **`contacts` is now RetailErp and School**, with its rail, section and screen, because guardians and AMC vendors are contacts; `apps/school` mounts the same contacts page.
+    - Roles Principal, Office Admin, Accountant, Teacher, Maintenance and Viewer (ids 1,000,101–1,000,106) with the grants in `AdminDbContext.SchoolRoles`.
+    - School menus: Students, Fees and Maintenance rails with fourteen items, **seeded inactive**; each stage switches its own rows on.
+    - Migration `SchoolRolesAndMenus`. It also carries the `payroll`, `leave` and `attendance` permission rows that TK-51 and TK-50 added to the model without a migration, which would have stopped Master starting on a new database (`PendingModelChangesWarning`, the TK-70 failure).
+    - Signup and a trial for School needed nothing new: TK-45 already accepts `School`.
+    - **Numbering series**: each is seeded by the service that allocates from it, as Purchase seeds `POR`: `ADM` by Sis (TK-61), `APL` by Admission (TK-62), `FDM` and `FRC` by Fee (TK-64), `WRK` by WorkOrder (TK-66).
+    - `apps/school` (port 4205), with the shared settings, the employee master and contacts.
+    - Tests: `Master.Api.Tests.SchoolSeedTests`, `GuardianContactTests`; `apps/school` routes spec; `AppGrantRuleTests` updated.
+    - Owner step: none beyond the tests. `apps/school` is in neither `deploy/azure` nor `deploy/local`, like `apps/hrms`.
 
 ### TK-61 · S1: Sis (`sis`, port 4515)
 - [ ] open

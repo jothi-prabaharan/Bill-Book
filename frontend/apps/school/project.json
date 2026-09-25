@@ -1,0 +1,81 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "school",
+  "projectType": "application",
+  "sourceRoot": "apps/school/src",
+  "tags": [
+    "type:app",
+    "platform:browser"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/school",
+        "index": "apps/school/src/index.html",
+        "browser": "apps/school/src/main.ts",
+        "tsConfig": "apps/school/tsconfig.json",
+        "polyfills": [
+          "zone.js"
+        ],
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/web/src/assets",
+            "output": "assets"
+          },
+          {
+            "glob": "**/*",
+            "input": "apps/school/public"
+          }
+        ],
+        "styles": [
+          "apps/web/src/styles.scss"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "2mb",
+              "maximumError": "3mb"
+            }
+          ],
+          "outputHashing": "all",
+          "fileReplacements": [
+            {
+              "replace": "apps/school/src/environments/environment.ts",
+              "with": "apps/school/src/environments/environment.production.ts"
+            }
+          ]
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "proxyConfig": "apps/school/proxy.conf.json",
+        "port": 4205
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "school:build:development"
+        },
+        "production": {
+          "buildTarget": "school:build:production"
+        }
+      },
+      "defaultConfiguration": "development"
+    }
+  }
+}

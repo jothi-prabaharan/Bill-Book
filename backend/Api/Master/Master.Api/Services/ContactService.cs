@@ -76,6 +76,7 @@ public sealed class ContactService
             "vendor" => query.Where(c => c.IsVendor),
             "jobworker" => query.Where(c => c.IsJobWorker),
             "prescriber" => query.Where(c => c.IsPrescriber),
+            "guardian" => query.Where(c => c.IsGuardian),
             _ => query,
         };
 
@@ -276,6 +277,7 @@ public sealed class ContactService
                 GstRegistrationType = nameof(GstRegistrationType.Unregistered),
                 IsCustomer = request.IsCustomer,
                 IsVendor = request.IsVendor,
+                IsGuardian = request.IsGuardian,
                 CurrencyCode = await BaseCurrencyCodeAsync(ct),
                 IsActive = true,
                 Persons =
@@ -548,7 +550,7 @@ public sealed class ContactService
         long? existingContactId,
         CancellationToken ct)
     {
-        if (!request.IsCustomer && !request.IsVendor && !request.IsJobWorker && !request.IsPrescriber)
+        if (!request.IsCustomer && !request.IsVendor && !request.IsJobWorker && !request.IsPrescriber && !request.IsGuardian)
         {
             return SaveContactOutcome.NoRole;
         }
@@ -670,7 +672,8 @@ public sealed class ContactService
 
         // A party that both buys and sells gets a customer code: it is the one
         // most often quoted back by the customer themselves.
-        string seriesCode = request.IsCustomer || request.IsPrescriber ? "CUSTOMER" : "VENDOR";
+        // A guardian is invoiced fees, so is numbered like a customer (TK-60).
+        string seriesCode = request.IsCustomer || request.IsPrescriber || request.IsGuardian ? "CUSTOMER" : "VENDOR";
         DateOnly today = DateOnly.FromDateTime(_clock.GetUtcNow().UtcDateTime);
 
         NumberAllocation allocation = await _numbers.NextAsync(seriesCode, today, ct);
@@ -864,6 +867,7 @@ public sealed class ContactService
         contact.IsVendor = request.IsVendor;
         contact.IsJobWorker = request.IsJobWorker;
         contact.IsPrescriber = request.IsPrescriber;
+        contact.IsGuardian = request.IsGuardian;
         contact.ContactCategory = category;
         contact.DisplayName = request.DisplayName.Trim();
         contact.LegalName = request.LegalName;
@@ -905,6 +909,7 @@ public sealed class ContactService
         IsVendor = c.IsVendor,
         IsJobWorker = c.IsJobWorker,
         IsPrescriber = c.IsPrescriber,
+        IsGuardian = c.IsGuardian,
         Gstin = c.Gstin,
         GstRegistrationType = c.GstRegistrationType.ToString(),
         CurrencyCode = c.CurrencyCode,
@@ -923,6 +928,7 @@ public sealed class ContactService
         IsVendor = c.IsVendor,
         IsJobWorker = c.IsJobWorker,
         IsPrescriber = c.IsPrescriber,
+        IsGuardian = c.IsGuardian,
         Gstin = c.Gstin,
         GstRegistrationType = c.GstRegistrationType.ToString(),
         CurrencyCode = c.CurrencyCode,
