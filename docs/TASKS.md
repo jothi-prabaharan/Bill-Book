@@ -2708,7 +2708,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Amc.Api.Tests` with `AMC_TEST_DB` and `Notification.Worker.Tests` from dropped databases.
 
 ### TK-69 · S9: Parent portal
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Issue:** [#11](https://github.com/jothi-prabaharan/Bill-Book/issues/11)
 - **Lanes:** L-PTL · **Depends on:** TK-63, TK-64, TK-32 · **Decision:** —
 - **Sub-tasks:**
