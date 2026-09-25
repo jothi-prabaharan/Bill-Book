@@ -763,7 +763,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
       (`A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key`).
 
 ### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
-- [!] blocked — D-21
+- [ ] open
 - **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
 - **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
   `InvoiceService.cs` (the challan branch and the aggregate Dr COGS / Cr GDNI at line 0),
@@ -779,20 +779,27 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   provisional entry is Dr GDNI / Cr Inventory. Job-work, approval, transfer and sample challans post
   nothing: issue them with a flag that creates their movements `LedgerStatus.NotApplicable`, and
   check that recosting never requeues a `NotApplicable` movement.
-- **What D-21 decides:** how the invoice takes goods out of GDNI, given two gaps. First, an
-  order-billed invoice records no link to the challan lines it bills, so a void can't reverse
-  exactly. Second, the challan movement's cost can settle or be restated after the invoice posts.
-- **Sub-tasks:** (after D-21)
+- **What D-21 decided (owner, 2026-09-25): (b), cost at invoice time.** The invoice clears GDNI at
+  whatever cost Inventory holds when it posts — only the `sal` table is touched. No
+  `sal.InvoiceChallanAllocations` or `inv.StockMovementBillings` link tables; a void reverses the
+  invoice's own GDNI-clearing entry rather than walking back to specific challan lines, and a later
+  WAC restatement of the challan's dispatch cost can leave a small residual balance in GDNI rather
+  than being chased down and zeroed.
+- **Sub-tasks:**
   - [ ] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
         backfill existing branches through the seeder's idempotent path; take it off
         `SalesAccountNameTests`' allow-list.
   - [ ] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
         for `ChallanType.Sale`; the worker maps a `DLC`-sourced `Issue` to Dr GDNI / Cr Inventory.
-  - [ ] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods,
-        in the form D-21 picks.
-  - [ ] Test: challan then invoice leaves GDNI at zero, Inventory credited once, COGS debited once.
+  - [ ] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods, at
+        Inventory's current cost when the invoice posts — no allocation record naming which challan
+        lines were cleared.
+  - [ ] Test: challan then invoice leaves GDNI at zero (absent a later restatement), Inventory
+        credited once, COGS debited once.
   - [ ] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
   - [ ] Test: a job-work challan posts nothing.
+  - [ ] Test: a challan cost restatement after its invoice has posted leaves a residual GDNI balance
+        rather than erroring — document this as the accepted cost of (b) rather than a bug.
 - **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once, GDNI
   at zero, and one cost-of-sales debit.
 - **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
@@ -3756,7 +3763,7 @@ into the queue with the failure under its Notes.
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
 answer and the date here, then change the blocked cards to `- [ ] open`.
 
-**D-01 to D-20 were answered by 24 September 2026; D-21 is open.** A new question gets the next number (D-22).
+**D-01 to D-21 were answered by 25 September 2026.** A new question gets the next number (D-22).
 
 | ID | Question | Blocks | Answer |
 |---|---|---|---|
@@ -3780,7 +3787,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-18 | What is Customer stage C4? The proposal is per-branch SLA hours per priority, replacing the hard-coded ones in `TicketsController.cs:101`. | TK-18 | **A per-branch SLA table** (owner, 2026-09-24): `cus.SlaPolicies`, seeded with Urgent 2 h, High 8 h, Medium 2 days, Low 7 days, editable per branch. TK-18 |
 | D-19 | Capitalising a fixed asset: does it reclassify the bill's shared Fixed Asset account to the category's account? Does a migrated asset debit against Opening Balance Equity? | TK-12 | **Reclassify to the category** (owner, 2026-09-24): capitalising posts Dr the category's Fixed Asset account / Cr the shared Fixed Asset account the bill used; a migrated asset (no bill) debits the category account against Opening Balance Equity. TK-12 |
 | D-20 | Disposing of a fixed asset: which account receives the proceeds? The proposal is a bank account chosen on the disposal. | TK-12 | **Both ways** (owner, 2026-09-24): the disposal either names the bank or cash account the proceeds landed in, or is raised as a sales invoice to the buyer (Dr the buyer's receivable); either way the accumulated depreciation is written back, the asset removed at cost and the gain or loss booked. TK-12 |
-| D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | *Open.* Raised 2026-09-24 by TK-10; the owner fixed the duplicate first and deferred this |
+| D-21 | How does an invoice move a challan's goods out of Goods Delivered Not Invoiced into cost of sales? **(a) Full link:** `sal.InvoiceChallanAllocations` records which challan lines each invoice line billed (oldest first for order-billed goods), so a void reverses exactly; `inv.StockMovementBillings` lets the worker re-post each invoice's Dr COGS / Cr GDNI at the settled cost and after any restatement, so GDNI stays at zero. **(b) Cost at invoice time:** only the `sal` table; the invoice clears GDNI at whatever cost Inventory holds when it posts, and a later restatement leaves a small GDNI balance. | TK-90 | **(b), cost at invoice time** (owner, 2026-09-25): the invoice clears GDNI at whatever cost Inventory holds when it posts. No allocation-link tables — a void reverses the invoice's own entry, and a later WAC restatement of the challan's cost can leave a small residual GDNI balance rather than being reconciled back to zero. TK-90 |
 | D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
