@@ -2686,18 +2686,26 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Preventive.Api.Tests` with `PREVENTIVE_TEST_DB` from a dropped database.
 
 ### TK-68 · S8: AMC (`amc`, port 4522)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#10](https://github.com/jothi-prabaharan/Bill-Book/issues/10)
 - **Lanes:** L-AMC (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `AmcContract`, `AmcCoveredAsset`, `AmcVisit`.
 - **Sub-tasks:**
-  - [ ] Contracts, where the vendor is a `con` contact validated through Master.
-  - [ ] Covered assets.
-  - [ ] Visits, which may raise a work order.
-  - [ ] Renewal reminders through Notification.
+  - [x] Contracts, where the vendor is a `con` contact validated through Master.
+  - [x] Covered assets.
+  - [x] Visits, which may raise a work order.
+  - [x] Renewal reminders through Notification.
 - **Done when:** a contract's covered assets and visits are recorded, and a renewal reminder fires
   before expiry.
 - **Notes:**
+  - **As built (2026-09-25):** `backend/Api/Amc` (schema `amc`, port 4522, gateway `/api/amc/**`): `AmcContracts`, `AmcCoveredAssets`, `AmcVisits`, migration `InitialAmcSchema` with RLS on all four tables. Checks: end after start, value not negative, a terminated contract carries its reason; contract number unique per vendor.
+    - Added to the design: `AmcContract.ReminderEmail` (who the reminder is written to, since the design named nobody), `TerminationReason`, `Remarks`, and `AmcVisit.FacilityAssetId` (a work order needs an asset, and it must be one the contract covers).
+    - Lifecycle: Draft → Active (needs at least one asset, none under another Active contract whose term overlaps) → Terminated with a reason; Expired shown once the end date passes and stored by the renewal read. An Active contract's terms are fixed; its assets, reminder and remarks may change.
+    - Vendor through Master's `internal/contacts/lookup` (active, `IsVendor`); assets through Facility. A visit is saved first and raises its work order through WorkOrder under `AMC:{visitId}`.
+    - Renewals: `internal/amc/renewals-due` returns Active contracts inside their reminder window. `Notification.Worker` gains `AmcRenewalReminderRun` and a daily `AmcRenewalReminderWorker` over every branch; each reminder goes through `EmailRequestHandler` under a message id fixed by branch, contract and end date, so a contract is reminded once per term (new `Shared.Kernel.School.IAmcRenewals`; `Amc:BaseUrl` in the worker's settings).
+    - `libs/amc/{amc-core, amc-ui}`: contracts list, edit sheet with covered assets, record view with activate, terminate and visits; menu 1124 on (migration `AmcMenu`).
+    - Tests: `Amc.Api.Tests.AmcServiceTests` (the *Done when*'s recording half, one active contract per asset, vendor and asset checks, fixed terms, visit rules, renewal window and expiry, termination), `AmcRulesTests`, schema, RLS and guard audits; `Notification.Worker.Tests.AmcRenewalReminderRunTests` (the reminder fires once before expiry); `amc.models.spec.ts`, `amc.routes.spec.ts`.
+    - Owner step: run `Amc.Api.Tests` with `AMC_TEST_DB` and `Notification.Worker.Tests` from dropped databases.
 
 ### TK-69 · S9: Parent portal
 - [ ] open

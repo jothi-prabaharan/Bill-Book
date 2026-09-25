@@ -14,6 +14,7 @@ using Shared.Kernel.Interfaces;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Persistence;
+using Shared.Kernel.School;
 
 IHost host = Host.CreateDefaultBuilder(args)
     .ConfigureServices((hostContext, services) =>
@@ -86,6 +87,15 @@ IHost host = Host.CreateDefaultBuilder(args)
             .AddHttpMessageHandler<InternalKeyHandler>();
         services.AddScoped<PaymentReminderRun>();
         services.AddHostedService<PaymentReminderWorker>();
+
+        // AMC renewal reminders (TK-68): which contracts are due, from Amc.
+        services.AddHttpClient<IAmcRenewals, HttpAmcRenewals>(client =>
+        {
+            client.BaseAddress = new Uri(config["Amc:BaseUrl"] ?? "http://localhost:4522/");
+        })
+            .AddHttpMessageHandler<InternalKeyHandler>();
+        services.AddScoped<AmcRenewalReminderRun>();
+        services.AddHostedService<AmcRenewalReminderWorker>();
     })
     .Build();
 

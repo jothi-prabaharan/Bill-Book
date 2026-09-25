@@ -64,6 +64,8 @@
       "@bill-book/work-order-ui": ["libs/work-order/work-order-ui/src/index.ts"],
       "@bill-book/preventive-core": ["libs/preventive/preventive-core/src/index.ts"],
       "@bill-book/preventive-ui": ["libs/preventive/preventive-ui/src/index.ts"],
+      "@bill-book/amc-core": ["libs/amc/amc-core/src/index.ts"],
+      "@bill-book/amc-ui": ["libs/amc/amc-ui/src/index.ts"],
       "@bill-book/purchase-core": ["libs/purchase/purchase-core/src/index.ts"],
       "@bill-book/purchase-ui": ["libs/purchase/purchase-ui/src/index.ts"],
       "@bill-book/reporting-core": [

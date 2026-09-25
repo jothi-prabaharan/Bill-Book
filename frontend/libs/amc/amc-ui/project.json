@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "amc-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/amc/amc-ui/src",
+  "tags": [
+    "scope:amc",
+    "type:ui"
+  ],
+  "targets": {}
+}

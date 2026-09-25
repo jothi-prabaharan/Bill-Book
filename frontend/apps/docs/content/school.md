@@ -134,6 +134,16 @@ Every hour, each plan's due dates become **occurrences**, and each occurrence ra
 
 The **Occurrences** tab lists every due date. One whose work order is not raised yet can be **skipped**, and one whose work order is raised can be **marked done**. Changing a plan's schedule carries on after the dates already generated.
 
+## AMC contracts
+
+**Maintenance › AMC contracts** records annual maintenance contracts: the vendor (a contact marked as a vendor), the vendor's contract number, the start and end dates, the value and how it is billed, how many visits a year it includes, and whether it is **comprehensive** (parts covered) or labour only. The value is billed through a purchase bill, never from here.
+
+A contract starts as a **draft**. List the assets it covers, then **Activate** it. An asset can be under only one active contract at a time, so a renewal is a new contract starting the day after the old one ends. Once active, a contract's vendor, number, dates, value and cover are fixed; its covered assets, reminder and remarks can still change. A contract can be **terminated** early, with a reason, and it shows as **expired** once its end date passes.
+
+**Record visit** logs each visit, scheduled or for a breakdown, on a day within the contract. A visit for a covered asset can **raise a work order** for the vendor to attend, which appears on the **Work orders** screen. Pressing it twice raises one.
+
+**Renewal reminders.** Set how many days before the end date to be reminded, and the email address to write to. Once a day, each active contract inside that window gets one reminder email, sent from the branch's mailbox. A contract with no reminder address gets none.
+
 ## Exams and marks
 
 **Students › Exams and marks** plans an exam with its subjects for each class, with maximum and pass marks. An exam moves through four states:

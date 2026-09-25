@@ -1,0 +1,114 @@
+<header class="page-head">
+  <h1>AMC contracts</h1>
+  <button *bbIfCan="'amc.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ New contract</button>
+</header>
+
+<div class="fields">
+  <bb-select label="Status" placeholder="Every status" [options]="statuses" [(ngModel)]="status" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'AMC_CONTRACTS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="contractNo" let-row><code>{{ row.contractNo }}</code></ng-template>
+  <ng-template bbCellTemplate="vendor" let-row>{{ vendor(row.vendorContactId) }}</ng-template>
+  <ng-template bbCellTemplate="endDate" let-row>{{ ends(row) }}</ng-template>
+  <ng-template bbCellTemplate="assets" let-row>{{ row.facilityAssetIds.length }}</ng-template>
+  <ng-template bbCellTemplate="contractStatus" let-row>{{ label(row.contractStatus) }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="view(row)">Open</button>
+    @if (canChange(row)) {
+      <button *bbIfCan="'amc.edit'" type="button" class="link" (click)="edit(row)">Edit</button>
+    }
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="amc-sheet-title">
+    <h2 id="amc-sheet-title">{{ editingId() === null ? 'New contract' : 'Edit contract' }}</h2>
+    @if (termsLocked()) {
+      <p class="muted">The contract is active: its vendor, number, dates, value and cover are fixed.</p>
+    }
+    <div class="fields">
+      <bb-select label="Vendor" [options]="vendorOptions()" [(ngModel)]="form.vendorContactId" [clearable]="false" [disabled]="termsLocked()" />
+      <bb-text-input label="Vendor's contract number" [(ngModel)]="form.contractNo" maxlength="30" [disabled]="termsLocked()" />
+      <bb-date-input label="Starts" [(ngModel)]="form.startDate" [disabled]="termsLocked()" />
+      <bb-date-input label="Ends" [(ngModel)]="form.endDate" [disabled]="termsLocked()" />
+      <bb-money-input label="Value" [(ngModel)]="form.contractValue" [disabled]="termsLocked()" />
+      <bb-select label="Billed" [options]="frequencies" [(ngModel)]="form.billingFrequency" [clearable]="false" [disabled]="termsLocked()" />
+      <bb-number-input label="Visits a year" [(ngModel)]="form.visitsPerYear" [disabled]="termsLocked()" />
+      <bb-select label="Cover" [options]="coverages" [(ngModel)]="form.amcCoverage" [clearable]="false" [disabled]="termsLocked()" />
+      <bb-number-input label="Remind days before end" [(ngModel)]="form.renewalReminderDays" />
+      <bb-text-input label="Remind by email" placeholder="office@school.in" [(ngModel)]="form.reminderEmail" maxlength="200" />
+    </div>
+
+    <h3>Covered assets</h3>
+    @for (id of form.facilityAssetIds; track id) {
+      <p>{{ asset(id) }} <button type="button" class="link" (click)="removeAsset(id)">Remove</button></p>
+    } @empty {
+      <p class="muted">No assets yet. A contract is activated once it covers at least one.</p>
+    }
+    <div class="fields">
+      <bb-select label="Add asset" [options]="assetOptions()" [(ngModel)]="assetToAdd" />
+      <button type="button" class="btn btn-ghost" (click)="addAsset()" [disabled]="assetToAdd === null">Add</button>
+    </div>
+
+    <label class="block">
+      <span>Remarks</span>
+      <textarea rows="2" maxlength="1000" [(ngModel)]="form.remarks"></textarea>
+    </label>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}
+
+@if (open(); as row) {
+  <section class="sheet" aria-labelledby="amc-view-title">
+    <header class="page-head">
+      <h2 id="amc-view-title"><code>{{ row.contractNo }}</code> · {{ vendor(row.vendorContactId) }}</h2>
+      <button type="button" class="btn btn-ghost" (click)="open.set(null)">Done</button>
+    </header>
+    <p class="muted">
+      {{ label(row.contractStatus) }} · {{ row.startDate }} to {{ row.endDate }} · {{ row.visitsMade }} of {{ row.visitsPerYear }} visits a year
+      @if (row.terminationReason) { · terminated: {{ row.terminationReason }} }
+    </p>
+
+    <div class="sheet-actions" *bbIfCan="'amc.edit'">
+      @if (row.contractStatus === 'Draft') {
+        <button type="button" class="btn btn-primary" (click)="activate()" [disabled]="busy()">Activate</button>
+      }
+      @if (canChange(row)) {
+        <button type="button" class="btn btn-ghost" (click)="terminating = true" [disabled]="busy()">Terminate</button>
+      }
+    </div>
+    @if (terminating) {
+      <div class="fields">
+        <bb-text-input label="Why terminate" [(ngModel)]="reason" maxlength="500" />
+        <button type="button" class="btn btn-primary" (click)="terminate()" [disabled]="busy() || !reason.trim()">Terminate</button>
+      </div>
+    }
+
+    <h3>Visits</h3>
+    @for (v of visits(); track v.amcVisitId) {
+      <p>{{ v.visitDate }} · {{ v.visitKind }} · {{ asset(v.facilityAssetId) }}
+        @if (v.workOrderNo) { · work order <code>{{ v.workOrderNo }}</code> }
+        @if (v.remarks) { · {{ v.remarks }} }
+      </p>
+    } @empty {
+      <p class="muted">No visits recorded.</p>
+    }
+
+    @if (row.contractStatus === 'Active') {
+      <div class="fields" *bbIfCan="'amc.edit'">
+        <bb-date-input label="Visited on" [(ngModel)]="visit.visitDate" />
+        <bb-select label="Kind" [options]="visitKinds" [(ngModel)]="visit.visitKind" [clearable]="false" />
+        <bb-select label="Asset" placeholder="The whole contract" [options]="coveredOptions()" [(ngModel)]="visit.facilityAssetId" />
+        <bb-text-input label="Remarks" [(ngModel)]="visit.remarks" maxlength="1000" />
+        <label class="check"><input type="checkbox" [(ngModel)]="visit.raiseWorkOrder" [disabled]="visit.facilityAssetId === null" /> Raise a work order</label>
+        <button type="button" class="btn btn-primary" (click)="recordVisit()" [disabled]="busy()">Record visit</button>
+      </div>
+    }
+  </section>
+}

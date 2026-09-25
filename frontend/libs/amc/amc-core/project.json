@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "amc-core",
+  "projectType": "library",
+  "sourceRoot": "libs/amc/amc-core/src",
+  "tags": [
+    "scope:amc",
+    "type:core"
+  ],
+  "targets": {}
+}

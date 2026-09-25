@@ -44,7 +44,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     private readonly ILogger<HttpTenantSeeder> _log;
 
     /// <summary>School's own services (S1 onward), in seeding order: each is added as its stage is built.</summary>
-    public static readonly string[] SchoolServices = ["Sis", "Admission", "Attendance", "Fee", "Facility", "WorkOrder", "Preventive"];
+    public static readonly string[] SchoolServices = ["Sis", "Admission", "Attendance", "Fee", "Facility", "WorkOrder", "Preventive", "Amc"];
 
     // After SchoolServices, which it spreads: static fields initialise in order.
 

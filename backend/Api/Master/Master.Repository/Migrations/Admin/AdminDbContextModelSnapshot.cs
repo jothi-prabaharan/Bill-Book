@@ -9477,7 +9477,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "amc",
                             DisplayOrder = 5,
                             Icon = "file-signature",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "amc",
                             Name = "AMC contracts",

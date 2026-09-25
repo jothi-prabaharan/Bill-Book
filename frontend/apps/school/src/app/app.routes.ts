@@ -17,6 +17,7 @@ import { feeRoutes } from '@bill-book/fee-ui';
 import { facilityRoutes } from '@bill-book/facility-ui';
 import { workOrderRoutes } from '@bill-book/work-order-ui';
 import { preventiveRoutes } from '@bill-book/preventive-ui';
+import { amcRoutes } from '@bill-book/amc-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -58,6 +59,7 @@ export const appRoutes: Routes = [
       ...facilityRoutes,
       ...workOrderRoutes,
       ...preventiveRoutes,
+      ...amcRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],
