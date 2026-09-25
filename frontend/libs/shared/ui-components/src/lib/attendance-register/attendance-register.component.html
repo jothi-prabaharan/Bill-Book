@@ -1,0 +1,34 @@
+<section class="register" [attr.aria-label]="caption()">
+  <p class="register__counts" aria-live="polite">
+    @for (c of counts(); track c.status.value) {
+      <span class="register__count" [class]="'register__count register__count--' + c.status.tone">
+        {{ c.status.label }} <strong>{{ c.count }}</strong>
+      </span>
+    }
+  </p>
+
+  @if (!readonly() && entries().length > 0) {
+    <p class="register__hint">Tap a name to change it, or use the keys: {{ keyHint() }}.</p>
+  }
+
+  <div class="register__tiles" role="group" [attr.aria-label]="caption()">
+    @for (entry of entries(); track entry.id; let i = $index) {
+      <button
+        #tile
+        type="button"
+        class="register__tile"
+        [class]="'register__tile register__tile--' + (statusOf(entry)?.tone ?? 'neutral')"
+        [attr.aria-label]="label(entry)"
+        [attr.aria-disabled]="readonly() ? 'true' : null"
+        (click)="tap(entry)"
+        (keydown)="key($event, entry, i)"
+      >
+        <span class="register__glyph" aria-hidden="true">{{ statusOf(entry)?.glyph ?? '?' }}</span>
+        <span class="register__name">{{ entry.label }}</span>
+        @if (entry.caption) {
+          <span class="register__caption">{{ entry.caption }}</span>
+        }
+      </button>
+    }
+  </div>
+</section>

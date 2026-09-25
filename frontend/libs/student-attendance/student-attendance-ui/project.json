@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "student-attendance-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/student-attendance/student-attendance-ui/src",
+  "tags": [
+    "scope:student-attendance",
+    "type:ui"
+  ],
+  "targets": {}
+}

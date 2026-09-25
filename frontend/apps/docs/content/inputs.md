@@ -401,3 +401,7 @@ a search of the repository finds no `<select multiple>` anywhere, and the
 searchable-picker pattern already exists as `bb-search-input` beside
 `bb-lookup-dialog`, which six screens use. Building either speculatively would
 add a component with no caller to keep it honest.
+
+## Attendance register
+
+`bb-attendance-register` (TK-63) marks a list of people with one of a few statuses: students present or absent today, and later employees. It is not a form control: it takes `entries` (id, label, optional caption, status) and `statuses` (value, label, key, glyph, tone), emits `statusChange` for each mark, and never saves. A tap cycles a tile to the next status in the caller's order; a status's key sets it and moves focus on; arrow keys, Home and End move between tiles; `readonly` shows a locked day. Tones are `good`, `bad`, `warn` and `neutral`, drawn from the theme's success, danger, warning and accent tokens. The tiles wrap, so it works at 360px.

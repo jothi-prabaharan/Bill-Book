@@ -1,0 +1,50 @@
+<header class="page-head">
+  <h1>Attendance register</h1>
+</header>
+
+<div class="fields">
+  <bb-select label="Section" [options]="sections()" [(ngModel)]="sectionId" (ngModelChange)="load()" />
+  <bb-date-input label="Day" [(ngModel)]="date" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (register(); as view) {
+  @if (view.isLocked) {
+    <p class="muted">
+      This day is locked.
+      @if (mayUnlock()) {
+        You can still change it, or unlock it.
+      } @else {
+        Ask someone who can unlock attendance to change it.
+      }
+    </p>
+  } @else if (!view.isTaken) {
+    <p class="muted">Not taken yet. Everyone starts as present.</p>
+  }
+
+  @if (view.rows.length === 0) {
+    <p class="muted">No students are enrolled in this section.</p>
+  } @else {
+    <bb-attendance-register
+      [entries]="entries()"
+      [statuses]="marks"
+      [readonly]="!editable()"
+      [caption]="caption()"
+      (statusChange)="mark($event)"
+    />
+  }
+
+  <div class="sheet-actions">
+    @if (editable()) {
+      <button type="button" class="btn btn-ghost" (click)="markAllPresent()" [disabled]="busy()">All present</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy() || (!dirty() && view.isTaken)">Save</button>
+    }
+    @if (!view.isLocked && view.isTaken && !dirty()) {
+      <button *bbIfCan="'attendance.edit'" type="button" class="btn btn-ghost" (click)="lock()" [disabled]="busy()">Lock day</button>
+    }
+    @if (view.isLocked && mayUnlock()) {
+      <button type="button" class="btn btn-ghost" (click)="unlock()" [disabled]="busy()">Unlock day</button>
+    }
+  </div>
+}

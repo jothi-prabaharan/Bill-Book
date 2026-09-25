@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "student-attendance-core",
+  "projectType": "library",
+  "sourceRoot": "libs/student-attendance/student-attendance-core/src",
+  "tags": [
+    "scope:student-attendance",
+    "type:core"
+  ],
+  "targets": {}
+}

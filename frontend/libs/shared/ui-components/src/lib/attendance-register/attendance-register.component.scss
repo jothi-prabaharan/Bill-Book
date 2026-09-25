@@ -1,0 +1,105 @@
+/* Every colour is a token. The four tones are the theme's success, danger,
+   warning and accent, so a palette change reaches the register untouched. */
+
+.register__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  margin: 0 0 var(--space-2, 8px);
+}
+
+.register__count {
+  padding: 2px var(--space-2, 8px);
+  border-radius: var(--radius-md, 6px);
+  background: var(--tile-ground);
+  color: var(--color-text);
+  font-size: 13px;
+}
+
+.register__hint {
+  margin: 0 0 var(--space-3, 12px);
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+.register__tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  gap: var(--space-2, 8px);
+}
+
+.register__tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: var(--space-2, 8px);
+  align-items: center;
+  min-height: 3.25rem;
+  padding: var(--space-2, 8px);
+  border: 1px solid var(--tile-edge);
+  border-left-width: 4px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--tile-ground);
+  color: var(--color-text);
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  &[aria-disabled='true'] {
+    cursor: default;
+  }
+}
+
+.register__glyph {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--tile-edge);
+  color: var(--color-surface, #fff);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.register__name {
+  overflow: hidden;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.register__caption {
+  color: var(--color-text-muted);
+  font-size: 12px;
+}
+
+/* The tones, as local custom properties the rules above read. */
+.register__tile,
+.register__count {
+  --tile-edge: var(--color-accent);
+  --tile-ground: var(--color-accent-100);
+}
+
+.register__tile--good,
+.register__count--good {
+  --tile-edge: var(--color-success);
+  --tile-ground: var(--color-success-bg);
+}
+
+.register__tile--bad,
+.register__count--bad {
+  --tile-edge: var(--color-danger);
+  --tile-ground: var(--color-danger-bg);
+}
+
+.register__tile--warn,
+.register__count--warn {
+  --tile-edge: var(--color-warning);
+  --tile-ground: var(--color-warning-bg);
+}

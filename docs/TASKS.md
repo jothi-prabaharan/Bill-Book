@@ -2558,16 +2558,19 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Admission.Api.Tests` with `ADMISSION_TEST_DB` from a dropped database, and admit one application end to end with Master and Sis running.
 
 ### TK-63 · S3: Student attendance (`att`, port 4517)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
   - [x] A daily register per section, taking the roll from Sis.
   - [x] `lock` and `unlock`, where unlocking needs `attendance.unlock`.
-  - [ ] The register component: ask before building it if `ui-components` lacks one.
+  - [x] The register component: ask before building it if `ui-components` lacks one.
 - **Done when:** a locked day refuses an edit from a teacher and accepts one from `attendance.unlock`.
 - **Notes:**
-  - **Backend built (2026-09-25):** `backend/Api/Attendance` (schema `att`, port 4517, gateway `/api/student-attendance/**`, kept apart from HRMS's `/api/tla/attendance`): `StudentAttendance` (one mark per enrolment per day) and `AttendanceLock`; migration `InitialAttendanceSchema` with RLS on all three tables. The roll comes from Sis's new `internal/sis/sections/roll`, read at the moment of use; a day must be inside the section's open school year and not in the future. Saving a locked day, or locking it, needs `attendance.unlock` (423 otherwise); unlocking demands it on the route. Tests: `Attendance.Api.Tests.RegisterTests` (the *Done when*), `RegisterRuleTests`, schema, RLS and guard audits. The register screen waits on the question the card says to ask.
+  - **Backend built (2026-09-25):** `backend/Api/Attendance` (schema `att`, port 4517, gateway `/api/student-attendance/**`, kept apart from HRMS's `/api/tla/attendance`): `StudentAttendance` (one mark per enrolment per day) and `AttendanceLock`; migration `InitialAttendanceSchema` with RLS on all three tables. The roll comes from Sis's new `internal/sis/sections/roll`, read at the moment of use; a day must be inside the section's open school year and not in the future. Saving a locked day, or locking it, needs `attendance.unlock` (423 otherwise); unlocking demands it on the route. Tests: `Attendance.Api.Tests.RegisterTests` (the *Done when*), `RegisterRuleTests`, schema, RLS and guard audits.
+  - **The register component, asked and answered 2026-09-25: a new shared component.** `bb-attendance-register` in `libs/shared/ui-components` takes entries and the statuses (with a key, glyph and tone each), cycles a tile on a tap, sets a status from its key and moves on, and moves focus with the arrow keys; its rules are pure (`attendance-register.model.ts`) and tested (`attendance-register.model.spec.ts`). It is generic, so HRMS can reuse it. Documented in `inputs.md`.
+  - `libs/student-attendance/{student-attendance-core, student-attendance-ui}`: the register page (section, day, All present, Save, Lock, Unlock) on the component; mounted in `apps/school`; menu 1116 switched on (migration `StudentAttendanceMenu`). `register-rules.spec.ts`, `student-attendance.routes.spec.ts`.
+  - Owner step: run `Attendance.Api.Tests` with `ATTENDANCE_TEST_DB` from a dropped database, and take one register at 360px.
 
 ### TK-64 · S4: Fee (`fee`, port 4518)
 - [ ] open

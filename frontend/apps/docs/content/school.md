@@ -1,6 +1,6 @@
 # School
 
-**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks and admissions are built. Attendance, fees and maintenance are added as each stage is built.
+**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions and student attendance are built. Fees and maintenance are added as each stage is built.
 
 School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
 
@@ -74,6 +74,20 @@ An admitted, rejected or withdrawn application can no longer be changed.
 3. enrols the student in a section of the class sought, if you choose one.
 
 Admit can safely be pressed again, for example after a network error: it never makes a second student or a second guardian.
+
+## Attendance
+
+**Students › Attendance register** takes a section's attendance for one day. Choose the section and the day. Every student on the section's roll is shown as a tile, starting as **Present** on a day not yet taken.
+
+- **Tap a tile** to move it to the next mark: present, absent, late, half day, leave, holiday.
+- **From the keyboard**, press a mark's key on a tile and focus moves to the next student: **P** present, **A** absent, **L** late, **H** half day, **V** leave, **O** holiday. Arrow keys move between tiles.
+- **All present** marks everyone present. The counts above the tiles show how many carry each mark.
+
+**Save** records the day. A day can be taken only within the section's school year, never for a day still to come, and never in a closed year.
+
+**Lock day** closes a saved day, and teachers can lock their own register. A locked day cannot be changed except by someone who can unlock attendance (*Attendance: unlock*, held by the Principal and the Office Admin). They can change a locked day directly, or **Unlock day** so the teacher can correct it.
+
+Student attendance is separate from staff attendance, which is HRMS's.
 
 ## Exams and marks
 

@@ -24,6 +24,7 @@ describe('apps/school routes', () => {
     expect(paths).toContain('contacts');
     expect(paths).toContain('sis/students');
     expect(paths).toContain('admission/applications');
+    expect(paths).toContain('attendance/register');
   });
 });
 

@@ -54,6 +54,8 @@
       "@bill-book/sis-ui": ["libs/sis/sis-ui/src/index.ts"],
       "@bill-book/admission-core": ["libs/admission/admission-core/src/index.ts"],
       "@bill-book/admission-ui": ["libs/admission/admission-ui/src/index.ts"],
+      "@bill-book/student-attendance-core": ["libs/student-attendance/student-attendance-core/src/index.ts"],
+      "@bill-book/student-attendance-ui": ["libs/student-attendance/student-attendance-ui/src/index.ts"],
       "@bill-book/purchase-core": ["libs/purchase/purchase-core/src/index.ts"],
       "@bill-book/purchase-ui": ["libs/purchase/purchase-ui/src/index.ts"],
       "@bill-book/reporting-core": [
