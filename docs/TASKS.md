@@ -2539,7 +2539,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Sis.Api.Tests` with `SIS_TEST_DB` from a dropped database. `Sis` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-ADMN (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `Enquiry`, `Application`, `ApplicationDocument`.
 - **Sub-tasks:**
