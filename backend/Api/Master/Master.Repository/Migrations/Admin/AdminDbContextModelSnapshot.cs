@@ -9441,7 +9441,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "wko",
                             DisplayOrder = 3,
                             Icon = "wrench",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "workorder",
                             Name = "Work orders",
@@ -21885,6 +21885,14 @@ namespace Master.Repository.Migrations.Admin
                             IsActive = true,
                             IsLedgerPosting = true,
                             Name = "Fee Receipt",
+                            Version = 0u
+                        },
+                        new
+                        {
+                            Code = "WRK",
+                            IsActive = true,
+                            IsLedgerPosting = true,
+                            Name = "Work Order",
                             Version = 0u
                         });
                 });

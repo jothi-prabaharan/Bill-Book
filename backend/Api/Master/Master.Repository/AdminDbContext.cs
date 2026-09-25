@@ -446,6 +446,9 @@ public class AdminDbContext : DbContext
             // School fees (TK-64).
             ("FDM", "Fee Demand", true),
             ("FRC", "Fee Receipt", true),
+
+            // School work orders: parts issued post Dr COGS / Cr Inventory under it (TK-66).
+            ("WRK", "Work Order", true),
         };
 
         modelBuilder.Entity<TransactionType>().HasData(

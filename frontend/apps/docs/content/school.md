@@ -111,6 +111,21 @@ Raised demands are drafts. **Post** numbers them from the **FDM** series and pos
 
 Nothing here is deleted, because work orders, preventive plans and AMC contracts refer to it. A space is **deactivated**, and a building only once its spaces are. An asset is **disposed**, and a disposed asset stays disposed.
 
+## Work orders
+
+**Maintenance › Work orders** records what needs fixing and where. Each work order has a title, the asset, the space or both, a priority, the day it was reported and when it is due, and a checklist of tasks. It is numbered from the **WRK** series. Preventive plans and AMC visits raise work orders too.
+
+| State | What it means |
+|---|---|
+| **Open** | Just raised. This is the only state in which it can be edited. |
+| **Assigned** | Someone is on it. The assignee is an employee from **People**, and can be changed. |
+| **In progress** | The work has started. It can be put **on hold** and resumed. |
+| **Completed** | Done, with the completion date and the labour cost. |
+| **Closed** | Signed off. Closing needs *Work orders: close*, which the Principal holds and maintenance staff do not. |
+| **Cancelled** | Dropped, with a reason. A work order that has had parts issued cannot be cancelled. |
+
+Tick the checklist as the work goes. **Issue part** takes an item from the store while the work order is assigned, in progress or on hold. It lowers stock and costs the part, so the work order shows its parts cost beside the labour. A part short of stock is refused. The parts come from Inventory's items and stores, so a School branch with no items has nothing to issue yet.
+
 ## Exams and marks
 
 **Students › Exams and marks** plans an exam with its subjects for each class, with maximum and pass marks. An exam moves through four states:
@@ -126,4 +141,4 @@ Entering marks needs *Students: edit*, which teachers hold. Opening, publishing 
 
 ## The School app
 
-The School app has the shared settings screens, the employee master (**People**) and **Contacts**. Its **Students** section is built. Fees and Maintenance appear as each is built. HRMS-only screens, such as announcements and policies, are not shown in School.
+The School app has the shared settings screens, the employee master (**People**) and **Contacts**. Its **Students**, **Fees** and **Maintenance** sections are built, and more maintenance screens appear as each is built. HRMS-only screens, such as announcements and policies, are not shown in School.

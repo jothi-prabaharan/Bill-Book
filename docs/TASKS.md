@@ -2608,15 +2608,25 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   - **As built (2026-09-25):** `backend/Api/Facility` (schema `fac`, port 4519, gateway `/api/facility/**`): `Building`, `Space`, `FacilityAsset`, migration `InitialFacilitySchema` with RLS on all four tables. Codes and tags unique per branch; a space needs an active building and a floor below its top; a building deactivates only after its spaces; a disposed asset stays disposed. `internal/facility/lookup` (`Shared.Kernel.School.IFacilityClient`) for TK-66–TK-68. Nothing to seed; the seed endpoint answers the fan-out. `libs/facility/{facility-core, facility-ui}`: buildings and spaces, and assets; menus 13, 121, 1120–1121 on (migration `FacilityMenus`). Tests: `Facility.Api.Tests.FacilityServiceTests` (the *Done when*), `FacilityRuleTests`, schema, RLS and guard audits; `facility.models.spec.ts`, `facility.routes.spec.ts`. Owner step: run `Facility.Api.Tests` with `FACILITY_TEST_DB` from a dropped database.
 
 ### TK-66 · S6: WorkOrder (`wrk`, port 4520)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-WRKO (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `WorkOrder`, `WorkOrderTask`, `WorkOrderPart`.
 - **Sub-tasks:**
-  - [ ] The lifecycle, through `assign`, `complete` and `close`. An Assigned work order can't be edited.
-  - [ ] The assignee is an employee, validated through `Hrm`.
-  - [ ] Parts are issued through Inventory's issue API.
+  - [x] The lifecycle, through `assign`, `complete` and `close`. An Assigned work order can't be edited.
+  - [x] The assignee is an employee, validated through `Hrm`.
+  - [x] Parts are issued through Inventory's issue API.
 - **Done when:** editing an Assigned work order is refused, and issuing a part moves stock.
 - **Notes:**
+  - **As built (2026-09-25):** `backend/Api/WorkOrder` (schema `wrk`, port 4520, gateway `/api/work-orders/**`): `WorkOrders` (entity `WorkOrderDocument`, because `WorkOrder` is the namespace), `WorkOrderTasks`, `WorkOrderParts`; migration `InitialWorkOrderSchema` with RLS on all four tables. Checks: an asset or a space, a completion date once Completed or Closed, labour cost not negative.
+    - Lifecycle in `WorkOrderLifecycle`: Open → Assigned (re-assignable) → InProgress ⇄ OnHold → Completed → Closed; Open or Assigned → Cancelled with a reason, and not once a part is issued. Only Open is editable. Close is its own route with `[PermissionAction("close")]`, so it takes `workorder.close` (seeded by TK-60 for the Principal).
+    - Where and who: the asset and space through Facility's `internal/facility/lookup`; the assignee through Hrm's `internal/employees/lookup` (new `Shared.Kernel.Employees.IEmployeeDirectory`), refusing an exited employee.
+    - Parts: the part row is saved first and its id is the `SourceLineId` of Inventory's `internal/stock/issue` under `SourceType = WRK`, so a retried issue moves stock once and posts Dr COGS / Cr Inventory under the new `WRK` transaction type. A refusal answers 409 and the request's transaction takes the part row back. New `Shared.Kernel.Stock.IStockClient`, and Inventory's `internal/items/search` and `internal/items/warehouses` for the pickers.
+    - `internal/work-orders/raise` for TK-67 and TK-68: idempotent on `SourceKey` (a filtered unique index).
+    - Seed: the `WRK` series per School branch (`HttpTenantSeeder.SchoolServices`).
+    - `libs/work-order/{work-order-core, work-order-ui}`: one page, list and record (checklist, actions, parts); menu 1122 on and `WRK` added (migration `WorkOrderTypeAndMenu`).
+    - Tests: `WorkOrder.Api.Tests.WorkOrderServiceTests` (the *Done when*, with Facility, Hrm and Inventory faked), `WorkOrderLifecycleTests`, schema, RLS and guard audits; `work-order.models.spec.ts`, `work-order.routes.spec.ts`; `apps/school` routes spec.
+    - Raised **D-28**: a School-only customer has no Inventory seeding or item screens, so it has nothing to issue as a part.
+    - Owner step: run `WorkOrder.Api.Tests` with `WORKORDER_TEST_DB` from a dropped database.
 
 ### TK-67 · S7: Preventive (`ppm`, port 4521)
 - [ ] open
@@ -3597,6 +3607,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
 | D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | **Master, `apr`** (owner, 2026-09-24). The state machine and step shape are in `Shared.Kernel.Approvals`; workflow configuration and chain resolution are Master's, in tenant schema `apr`; `Hrm` answers only the employee-based approver kinds. TK-99 is unblocked, and TK-49 builds on it |
 | D-27 | CRM campaigns: send bulk email through a transactional email provider (Amazon SES, SendGrid, Postmark or another — which, and on whose account), or through each branch's own SMTP with a low daily cap? A branch mailbox would be rate-limited and risks blacklisting (TK-38). | TK-121 | *Open.* Raised 2026-09-24 by TK-38 |
+| D-28 | School work-order parts: a School-only customer has no Inventory. Its branches are not seeded for Inventory and `apps/school` has no item or store screens, so the part picker is empty. Options: **(a)** seed Inventory for School branches and mount the item and warehouse screens in `apps/school` under Maintenance; **(b)** let a School work order record a part as free text with a cost, with no stock kept; **(c)** issue parts only for customers who also hold RetailErp. | work-order parts for School-only customers | *Open.* Raised 2026-09-25 by TK-66, which issues through Inventory as its card says |
 
 ---
 

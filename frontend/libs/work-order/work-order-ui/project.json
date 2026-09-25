@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "work-order-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/work-order/work-order-ui/src",
+  "tags": [
+    "scope:work-order",
+    "type:ui"
+  ],
+  "targets": {}
+}

@@ -1,0 +1,124 @@
+<header class="page-head">
+  <h1>Work orders</h1>
+  <button *bbIfCan="'workorder.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ New work order</button>
+</header>
+
+<div class="fields">
+  <bb-select label="Status" placeholder="Every status" [options]="statuses" [(ngModel)]="status" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'WRK_ORDERS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="workOrderNo" let-row><code>{{ row.workOrderNo }}</code></ng-template>
+  <ng-template bbCellTemplate="where" let-row>{{ where(row) }}</ng-template>
+  <ng-template bbCellTemplate="workOrderStatus" let-row>{{ label(row.workOrderStatus) }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button type="button" class="link" (click)="view(row)">Open</button>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="wo-sheet-title">
+    <h2 id="wo-sheet-title">{{ editingId() === null ? 'New work order' : 'Edit work order' }}</h2>
+    <div class="fields">
+      <bb-text-input label="What needs doing" placeholder="Ceiling fan not working" [(ngModel)]="form.title" maxlength="200" />
+      <bb-select label="Asset" placeholder="No particular asset" [options]="assetOptions()" [(ngModel)]="form.facilityAssetId" />
+      <bb-select label="Space" placeholder="No particular space" [options]="spaceOptions()" [(ngModel)]="form.spaceId" />
+      <bb-select label="Priority" [options]="priorities" [(ngModel)]="form.priority" [clearable]="false" />
+      <bb-select label="Raised from" [options]="sources" [(ngModel)]="form.workOrderSource" [clearable]="false" />
+      <bb-date-input label="Reported" [(ngModel)]="form.reportedDate" />
+      <bb-date-input label="Due" [(ngModel)]="form.dueDate" />
+    </div>
+    <label class="block">
+      <span>Details</span>
+      <textarea rows="3" maxlength="2000" [(ngModel)]="form.description"></textarea>
+    </label>
+    <label class="block">
+      <span>Checklist, one task per line</span>
+      <textarea rows="4" [(ngModel)]="tasksText"></textarea>
+    </label>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}
+
+@if (open(); as order) {
+  <section class="sheet" aria-labelledby="wo-view-title">
+    <header class="page-head">
+      <h2 id="wo-view-title"><code>{{ order.workOrderNo }}</code> {{ order.title }}</h2>
+      <button type="button" class="btn btn-ghost" (click)="open.set(null)">Done</button>
+    </header>
+    <p class="muted">
+      {{ label(order.workOrderStatus) }} · {{ where(order) }} · {{ employee(order.assignedEmployeeId) }} · reported {{ order.reportedDate }}
+      @if (order.completedDate) { · completed {{ order.completedDate }} }
+    </p>
+    @if (order.description) { <p>{{ order.description }}</p> }
+    @if (order.cancelReason) { <p class="muted">Cancelled: {{ order.cancelReason }}</p> }
+
+    <div class="sheet-actions" *bbIfCan="'workorder.edit'">
+      @if (editable()) {
+        <button type="button" class="btn btn-ghost" (click)="edit(order)" [disabled]="busy()">Edit</button>
+      }
+      @for (action of actions(); track action) {
+        <button type="button" class="btn btn-ghost" (click)="choose(action)" [disabled]="busy()">{{ actionLabel(action) }}</button>
+      }
+    </div>
+    @if (order.workOrderStatus === 'Completed') {
+      <div class="sheet-actions" *bbIfCan="'workorder.close'">
+        <button type="button" class="btn btn-primary" (click)="close()" [disabled]="busy()">Close work order</button>
+      </div>
+    }
+
+    @if (pending === 'Assign') {
+      <div class="fields">
+        <bb-select label="Who does it" [options]="employeeOptions()" [(ngModel)]="employeeId" />
+      </div>
+    } @else if (pending === 'Complete') {
+      <div class="fields">
+        <bb-date-input label="Completed on" [(ngModel)]="completedDate" />
+        <bb-money-input label="Labour cost" [(ngModel)]="labourCost" />
+      </div>
+    } @else if (pending === 'Cancel') {
+      <div class="fields">
+        <bb-text-input label="Why cancel" [(ngModel)]="reason" maxlength="500" />
+      </div>
+    }
+    @if (pending === 'Assign' || pending === 'Complete' || pending === 'Cancel') {
+      <div class="sheet-actions">
+        <button type="button" class="btn btn-ghost" (click)="pending = null">Back</button>
+        <button type="button" class="btn btn-primary" (click)="act()" [disabled]="busy()">{{ actionLabel(pending) }}</button>
+      </div>
+    }
+
+    <h3>Checklist</h3>
+    @for (task of order.tasks; track task.workOrderTaskId) {
+      <label class="check">
+        <input type="checkbox" [checked]="task.isDone" (change)="tick(task.workOrderTaskId, $any($event.target).checked)" [disabled]="busy()" />
+        {{ task.description }}
+      </label>
+    } @empty {
+      <p class="muted">No tasks listed.</p>
+    }
+
+    <h3>Parts</h3>
+    @for (p of order.parts; track p.workOrderPartId) {
+      <p>{{ p.itemName ?? 'Item ' + p.itemId }} · {{ p.quantity }} × {{ p.unitCost }}</p>
+    } @empty {
+      <p class="muted">No parts issued.</p>
+    }
+    <p class="muted">Parts {{ order.partsCost }} · labour {{ order.labourCost }}</p>
+
+    @if (partsOpen()) {
+      <div class="fields" *bbIfCan="'workorder.edit'">
+        <bb-select label="Item" [options]="itemOptions()" [(ngModel)]="part.itemId" />
+        <bb-select label="From store" placeholder="Default" [options]="warehouseOptions()" [(ngModel)]="part.warehouseId" />
+        <bb-number-input label="Quantity" [(ngModel)]="part.quantity" />
+        <bb-date-input label="Issued on" [(ngModel)]="part.issueDate" />
+        <button type="button" class="btn btn-primary" (click)="issue()" [disabled]="busy() || part.itemId === null">Issue part</button>
+      </div>
+    }
+  </section>
+}

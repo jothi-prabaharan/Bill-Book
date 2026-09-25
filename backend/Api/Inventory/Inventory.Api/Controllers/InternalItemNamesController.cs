@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Internal;
+using Shared.Kernel.Stock;
 using Shared.Kernel.Tenancy;
 
 namespace Inventory.Api.Controllers;
@@ -76,5 +77,55 @@ public sealed class InternalItemNamesController : ControllerBase
             .ToListAsync(ct);
 
         return Ok(names);
+    }
+
+    /// <summary>
+    /// Stock-tracked items by code or name, with what is on hand: School's work
+    /// orders pick the parts they issue from this (TK-66), since their users
+    /// hold no inventory permission.
+    /// </summary>
+    [HttpPost("search")]
+    public async Task<IActionResult> Search([FromBody] StockItemSearchRequest request, CancellationToken ct)
+    {
+        if (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId) != InternalTenantOutcome.Applied)
+        {
+            return BadRequest(new MessageResponse { Message = "A customer and an organization are required." });
+        }
+
+        var db = _services.GetRequiredService<InventoryDbContext>();
+        string? term = string.IsNullOrWhiteSpace(request.Search) ? null : $"%{request.Search.Trim()}%";
+
+        List<StockItem> items = await db.Items.AsNoTracking()
+            .Where(i => i.IsActive && i.TrackInventory
+                && (term == null || EF.Functions.ILike(i.ItemName, term) || EF.Functions.ILike(i.ItemCode, term)))
+            .OrderBy(i => i.ItemName)
+            .Take(50)
+            .Select(i => new StockItem
+            {
+                ItemId = i.ItemId,
+                ItemCode = i.ItemCode,
+                ItemName = i.ItemName,
+                QuantityOnHand = db.ItemStock.Where(s => s.ItemId == i.ItemId).Select(s => s.QuantityOnHand).FirstOrDefault(),
+            })
+            .ToListAsync(ct);
+
+        return Ok(items);
+    }
+
+    /// <summary>The branch's active warehouses, for the same pickers.</summary>
+    [HttpPost("warehouses")]
+    public async Task<IActionResult> Warehouses([FromBody] StockItemSearchRequest request, CancellationToken ct)
+    {
+        if (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId) != InternalTenantOutcome.Applied)
+        {
+            return BadRequest(new MessageResponse { Message = "A customer and an organization are required." });
+        }
+
+        var db = _services.GetRequiredService<InventoryDbContext>();
+        return Ok(await db.Warehouses.AsNoTracking()
+            .Where(w => w.IsActive)
+            .OrderBy(w => w.WarehouseCode)
+            .Select(w => new StockWarehouse { WarehouseId = w.WarehouseId, WarehouseCode = w.WarehouseCode, WarehouseName = w.WarehouseName })
+            .ToListAsync(ct));
     }
 }

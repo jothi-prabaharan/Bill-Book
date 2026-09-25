@@ -92,3 +92,45 @@ public sealed class OnboardEmployeeResult
     public bool AlreadyExisted { get; set; }
 }
 
+
+/// <summary>
+/// Who an employee id is (School work orders, TK-66): an assignee is checked
+/// through Hrm's <c>internal/employees/lookup</c> before it is stored.
+/// </summary>
+public interface IEmployeeDirectory
+{
+    /// <summary>The employees among <paramref name="ids"/> in the current branch. Throws when Hrm cannot be asked.</summary>
+    Task<IReadOnlyDictionary<long, EmployeeProfile>> FindAsync(IEnumerable<long> ids, CancellationToken ct);
+}
+
+public sealed class HttpEmployeeDirectory : IEmployeeDirectory
+{
+    private readonly HttpClient _http;
+    private readonly Shared.Kernel.Tenancy.ITenantContext _tenant;
+
+    public HttpEmployeeDirectory(HttpClient http, Shared.Kernel.Tenancy.ITenantContext tenant)
+    {
+        _http = http;
+        _tenant = tenant;
+    }
+
+    public async Task<IReadOnlyDictionary<long, EmployeeProfile>> FindAsync(IEnumerable<long> ids, CancellationToken ct)
+    {
+        List<long> wanted = [.. ids.Distinct()];
+        if (wanted.Count == 0)
+        {
+            return new Dictionary<long, EmployeeProfile>();
+        }
+
+        using HttpResponseMessage response = await System.Net.Http.Json.HttpClientJsonExtensions.PostAsJsonAsync(_http, "internal/employees/lookup", new EmployeeLookupRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+            EmployeeIds = wanted,
+        }, ct);
+        response.EnsureSuccessStatusCode();
+
+        List<EmployeeProfile> found = await System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync<List<EmployeeProfile>>(response.Content, ct) ?? [];
+        return found.ToDictionary(e => e.EmployeeId);
+    }
+}
