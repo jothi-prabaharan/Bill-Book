@@ -126,6 +126,14 @@ Nothing here is deleted, because work orders, preventive plans and AMC contracts
 
 Tick the checklist as the work goes. **Issue part** takes an item from the store while the work order is assigned, in progress or on hold. It lowers stock and costs the part, so the work order shows its parts cost beside the labour. A part short of stock is refused. The parts come from Inventory's items and stores, so a School branch with no items has nothing to issue yet.
 
+## Preventive plans
+
+**Maintenance › Preventive plans** records jobs that come round on a schedule, such as a quarterly AC service or a monthly fire-extinguisher check. Each plan names the asset, the space or both, how often it recurs (every *n* days, weeks, months, quarters, half-years or years), when it starts and ends, how many days early to raise the work order, and who does it by default.
+
+Every hour, each plan's due dates become **occurrences**, and each occurrence raises one work order on the **Work orders** screen. **Generate now** does the same on demand. Pressing it again, or the hourly run finding the same date, raises nothing twice. A plan starting on the 31st falls on the last day of shorter months and returns to the 31st after them.
+
+The **Occurrences** tab lists every due date. One whose work order is not raised yet can be **skipped**, and one whose work order is raised can be **marked done**. Changing a plan's schedule carries on after the dates already generated.
+
 ## Exams and marks
 
 **Students › Exams and marks** plans an exam with its subjects for each class, with maximum and pass marks. An exam moves through four states:

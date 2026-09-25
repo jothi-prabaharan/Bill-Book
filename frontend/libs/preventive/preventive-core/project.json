@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "preventive-core",
+  "projectType": "library",
+  "sourceRoot": "libs/preventive/preventive-core/src",
+  "tags": [
+    "scope:preventive",
+    "type:core"
+  ],
+  "targets": {}
+}

@@ -1,0 +1,62 @@
+<header class="page-head">
+  <h1>Preventive plans</h1>
+  <div class="sheet-actions">
+    <button *bbIfCan="'preventive.edit'" type="button" class="btn btn-ghost" (click)="generate()" [disabled]="busy()">Generate now</button>
+    <button *bbIfCan="'preventive.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ New plan</button>
+  </div>
+</header>
+
+<div class="tabs" role="tablist">
+  <button type="button" role="tab" [attr.aria-selected]="tab() === 'plans'" (click)="show('plans')">Plans</button>
+  <button type="button" role="tab" [attr.aria-selected]="tab() === 'occurrences'" (click)="show('occurrences')">Occurrences</button>
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+@if (tab() === 'plans') {
+  <bb-data-grid [gridCode]="'PPM_PLANS'" [columns]="planColumns" [data]="plans()">
+    <ng-template bbCellTemplate="where" let-row>{{ where(row) }}</ng-template>
+    <ng-template bbCellTemplate="frequency" let-row>{{ every(row) }}</ng-template>
+    <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Paused' }}</ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <button *bbIfCan="'preventive.edit'" type="button" class="link" (click)="edit(row)">Edit</button>
+    </ng-template>
+  </bb-data-grid>
+} @else {
+  <div class="fields">
+    <bb-select label="Status" placeholder="Every status" [options]="statuses" [(ngModel)]="occurrenceStatus" (ngModelChange)="loadOccurrences()" />
+  </div>
+  <bb-data-grid [gridCode]="'PPM_OCCURRENCES'" [columns]="occurrenceColumns" [data]="occurrences()">
+    <ng-template bbCellTemplate="workOrderNo" let-row>{{ row.workOrderNo ?? '—' }}</ng-template>
+    <ng-template bbCellTemplate="occurrenceStatus" let-row>{{ statusLabel(row.occurrenceStatus) }}</ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      @if (row.occurrenceStatus === 'Scheduled') {
+        <button *bbIfCan="'preventive.edit'" type="button" class="link" (click)="setOccurrence(row, 'Skipped')" [disabled]="busy()">Skip</button>
+      } @else if (row.occurrenceStatus === 'Raised') {
+        <button *bbIfCan="'preventive.edit'" type="button" class="link" (click)="setOccurrence(row, 'Done')" [disabled]="busy()">Mark done</button>
+      }
+    </ng-template>
+  </bb-data-grid>
+}
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="plan-sheet-title">
+    <h2 id="plan-sheet-title">{{ editingId() === null ? 'New plan' : 'Edit plan' }}</h2>
+    <div class="fields">
+      <bb-text-input label="Name" placeholder="Quarterly AC service" [(ngModel)]="form.name" maxlength="200" />
+      <bb-select label="Asset" placeholder="No particular asset" [options]="assetOptions()" [(ngModel)]="form.facilityAssetId" />
+      <bb-select label="Space" placeholder="No particular space" [options]="spaceOptions()" [(ngModel)]="form.spaceId" />
+      <bb-select label="Frequency" [options]="frequencies" [(ngModel)]="form.frequency" [clearable]="false" />
+      <bb-number-input label="Every" [(ngModel)]="form.interval" />
+      <bb-date-input label="Starts" [(ngModel)]="form.startDate" />
+      <bb-date-input label="Ends" [(ngModel)]="form.endDate" />
+      <bb-number-input label="Raise days early" [(ngModel)]="form.leadDays" />
+      <bb-select label="Assign to" placeholder="Nobody by default" [options]="employeeOptions()" [(ngModel)]="form.defaultAssigneeEmployeeId" />
+      <label class="check"><input type="checkbox" [(ngModel)]="form.isActive" /> Active</label>
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

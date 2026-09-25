@@ -16,6 +16,7 @@ import { studentAttendanceRoutes } from '@bill-book/student-attendance-ui';
 import { feeRoutes } from '@bill-book/fee-ui';
 import { facilityRoutes } from '@bill-book/facility-ui';
 import { workOrderRoutes } from '@bill-book/work-order-ui';
+import { preventiveRoutes } from '@bill-book/preventive-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -56,6 +57,7 @@ export const appRoutes: Routes = [
       // Buildings, spaces and assets (S5, TK-65).
       ...facilityRoutes,
       ...workOrderRoutes,
+      ...preventiveRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

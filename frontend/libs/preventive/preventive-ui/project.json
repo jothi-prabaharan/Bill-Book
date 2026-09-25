@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "preventive-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/preventive/preventive-ui/src",
+  "tags": [
+    "scope:preventive",
+    "type:ui"
+  ],
+  "targets": {}
+}

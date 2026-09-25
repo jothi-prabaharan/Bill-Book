@@ -304,6 +304,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<Fee.Repository.FeeDbContext>(connectionString, tenant, "fee", ct);
         await MigrateContextAsync<Facility.Repository.FacilityDbContext>(connectionString, tenant, "fac", ct);
         await MigrateContextAsync<WorkOrder.Repository.WorkOrderDbContext>(connectionString, tenant, "wrk", ct);
+        await MigrateContextAsync<Preventive.Repository.PreventiveDbContext>(connectionString, tenant, "ppm", ct);
     }
 
     /// <summary>

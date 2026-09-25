@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\Sales\Sales.Repository\Sales.Repository.csproj" />
     <ProjectReference Include="..\..\Payroll\Payroll.Repository\Payroll.Repository.csproj" />
     <ProjectReference Include="..\..\TimeLeave\TimeLeave.Repository\TimeLeave.Repository.csproj" />
+    <ProjectReference Include="..\..\Preventive\Preventive.Repository\Preventive.Repository.csproj" />
     <ProjectReference Include="..\..\WorkOrder\WorkOrder.Repository\WorkOrder.Repository.csproj" />
     <ProjectReference Include="..\..\Facility\Facility.Repository\Facility.Repository.csproj" />
     <ProjectReference Include="..\..\Fee\Fee.Repository\Fee.Repository.csproj" />

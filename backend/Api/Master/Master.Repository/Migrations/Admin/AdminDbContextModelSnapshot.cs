@@ -9459,7 +9459,7 @@ namespace Master.Repository.Migrations.Admin
                             Code = "ppm",
                             DisplayOrder = 4,
                             Icon = "calendar-clock",
-                            IsActive = false,
+                            IsActive = true,
                             IsSearchable = false,
                             Module = "preventive",
                             Name = "Preventive plans",

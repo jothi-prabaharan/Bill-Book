@@ -2629,15 +2629,23 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `WorkOrder.Api.Tests` with `WORKORDER_TEST_DB` from a dropped database.
 
 ### TK-67 · S7: Preventive (`ppm`, port 4521)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-PPM (new) · **Depends on:** TK-66 · **Decision:** —
 - **Tables:** `PreventivePlan`, `PreventiveOccurrence`.
 - **Sub-tasks:**
-  - [ ] Plans with a recurrence.
-  - [ ] A hosted service generates occurrences and raises work orders, with (plan, due date) as
+  - [x] Plans with a recurrence.
+  - [x] A hosted service generates occurrences and raises work orders, with (plan, due date) as
         the idempotency key.
 - **Done when:** running generation twice raises one work order per occurrence.
 - **Notes:**
+  - **As built (2026-09-25):** `backend/Api/Preventive` (schema `ppm`, port 4521, gateway `/api/preventive/**`): `PreventivePlans`, `PreventiveOccurrences`, migration `InitialPreventiveSchema` with RLS on all three tables. Checks: an asset or a space, end not before start, interval ≥ 1 and lead days ≥ 0.
+    - `Recurrence` (pure): month-based frequencies count from the start date, so the 31st stays the 31st after a short month.
+    - Generation (`PreventiveService.GenerateAsync`): each due date is claimed by advancing the plan's `NextDueDate` with a guarded `ExecuteUpdate` (row count is the answer) and the occurrence is inserted in the same transaction, unique on plan and due date. Work orders are then raised for Scheduled occurrences through WorkOrder's `internal/work-orders/raise` (new `Shared.Kernel.School.IWorkOrderClient`) under source key `PPM:{plan}:{yyyy-MM-dd}`, so a run that dies between the two raises nothing twice. At most 60 occurrences per plan per run.
+    - `PreventiveGenerator` walks every branch hourly (`ITenantEnumerator`, as the payment reminders do); `POST api/preventive/generate` runs the caller's branch now. Occurrences can be skipped (Scheduled) or marked done (Raised), by a guarded update.
+    - Changing a plan's start, frequency or interval restarts `NextDueDate` after the last generated date.
+    - `libs/preventive/{preventive-core, preventive-ui}`: plans and occurrences on one page; menu 1123 on (migration `PreventiveMenu`).
+    - Tests: `Preventive.Api.Tests.PreventiveServiceTests` (the *Done when*, a failed raise retried once, a raise already made not repeated, lead days and end date, skip, schedule change), `RecurrenceTests`, schema, RLS and guard audits; `preventive.models.spec.ts`, `preventive.routes.spec.ts`.
+    - Owner step: run `Preventive.Api.Tests` with `PREVENTIVE_TEST_DB` from a dropped database.
 
 ### TK-68 · S8: AMC (`amc`, port 4522)
 - [ ] open
