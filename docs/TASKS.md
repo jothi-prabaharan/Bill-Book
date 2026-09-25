@@ -2608,7 +2608,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   - **As built (2026-09-25):** `backend/Api/Facility` (schema `fac`, port 4519, gateway `/api/facility/**`): `Building`, `Space`, `FacilityAsset`, migration `InitialFacilitySchema` with RLS on all four tables. Codes and tags unique per branch; a space needs an active building and a floor below its top; a building deactivates only after its spaces; a disposed asset stays disposed. `internal/facility/lookup` (`Shared.Kernel.School.IFacilityClient`) for TK-66–TK-68. Nothing to seed; the seed endpoint answers the fan-out. `libs/facility/{facility-core, facility-ui}`: buildings and spaces, and assets; menus 13, 121, 1120–1121 on (migration `FacilityMenus`). Tests: `Facility.Api.Tests.FacilityServiceTests` (the *Done when*), `FacilityRuleTests`, schema, RLS and guard audits; `facility.models.spec.ts`, `facility.routes.spec.ts`. Owner step: run `Facility.Api.Tests` with `FACILITY_TEST_DB` from a dropped database.
 
 ### TK-66 · S6: WorkOrder (`wrk`, port 4520)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-WRKO (new) · **Depends on:** TK-65 · **Decision:** —
 - **Tables:** `WorkOrder`, `WorkOrderTask`, `WorkOrderPart`.
 - **Sub-tasks:**
