@@ -2574,7 +2574,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   - Owner step: run `Attendance.Api.Tests` with `ATTENDANCE_TEST_DB` from a dropped database, and take one register at 360px.
 
 ### TK-64 · S4: Fee (`fee`, port 4518)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-FEE (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `FeeHead`, `FeeStructure`, `FeeConcession`, `FeeDemand`, `FeeReceipt`.
 - **Sub-tasks:**
