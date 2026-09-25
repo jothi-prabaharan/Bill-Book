@@ -78,6 +78,10 @@ public sealed class InvoicePrintService
         EInvoice? eInvoice = await _db.EInvoices.AsNoTracking()
             .FirstOrDefaultAsync(e => e.SourceType == EInvoiceSource.Invoice && e.SourceId == invoiceId, ct);
         AddEInvoice(payload, eInvoice);
+        AddEwayBill(payload, await _db.EwayBills.AsNoTracking()
+            .Where(e => e.SourceType == EwayBillSource.Invoice && e.SourceId == invoiceId && e.Status == EwayBillStatus.Generated)
+            .OrderByDescending(e => e.EwayBillId)
+            .FirstOrDefaultAsync(ct));
 
         return await _printing.RenderAsync(
             invoice.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
@@ -103,6 +107,22 @@ public sealed class InvoicePrintService
             ? DateOnly.FromDateTime(ack.ToOffset(TimeSpan.FromHours(5.5)).DateTime)
             : null;
         payload.Singles["EInvoice.QrImage"] = eInvoice.SignedQrCode;
+    }
+
+    /// <summary>The live e-way bill's number and dates, when the invoice has one (TK-93).</summary>
+    public static void AddEwayBill(PrintPayload payload, EwayBill? eway)
+    {
+        if (eway?.EwbNo is not { Length: > 0 } number)
+        {
+            return;
+        }
+
+        static DateOnly? Day(DateTimeOffset? at) =>
+            at is DateTimeOffset value ? DateOnly.FromDateTime(value.ToOffset(TimeSpan.FromHours(5.5)).DateTime) : null;
+
+        payload.Singles["EInvoice.EwbNo"] = number;
+        payload.Singles["EInvoice.EwbDate"] = Day(eway.EwbDate);
+        payload.Singles["EInvoice.EwbValidUntil"] = Day(eway.ValidUntil);
     }
 
     /// <summary>

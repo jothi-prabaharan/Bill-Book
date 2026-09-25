@@ -45,6 +45,12 @@ export interface SaveInvoiceRequest {
   exchangeRate?: number;
   notes?: string;
   termsAndConditions?: string;
+  /** Transport, for the e-way bill asked for with the IRN (TK-93). All optional. */
+  transportMode?: 'Road' | 'Rail' | 'Air' | 'Ship';
+  vehicleNo?: string;
+  transporterId?: string;
+  transporterName?: string;
+  transportDistanceKm?: number;
   lines: InvoiceLineRequest[];
 }
 
@@ -169,6 +175,11 @@ export interface InvoiceListPage {
 }
 
 export interface InvoiceView extends InvoiceListItem {
+  transportMode?: 'Road' | 'Rail' | 'Air' | 'Ship' | null;
+  vehicleNo?: string | null;
+  transporterId?: string | null;
+  transporterName?: string | null;
+  transportDistanceKm?: number | null;
   paymentTermId?: number;
   tillId?: number;
   cashierUserId?: string;

@@ -1,0 +1,32 @@
+// The e-way bill panel (TK-93). Stacks at phone width; the form fields take the
+// full width so nothing sits side by side on a 360px screen.
+.eway {
+  padding: var(--space-3, 12px);
+  margin-bottom: var(--space-3, 12px);
+  display: grid;
+  gap: var(--space-2, 8px);
+
+  p {
+    margin: 0;
+  }
+}
+
+.eway__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.eway__form {
+  display: grid;
+  gap: var(--space-2, 8px);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.eway__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 8px);
+  grid-column: 1 / -1;
+}

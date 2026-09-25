@@ -34,8 +34,10 @@ import {
   TextInputComponent,
   totalsOf,
   UiMessage,
+  NumberInputComponent,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
+import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
 
 /**
  * The invoice form.
@@ -73,6 +75,8 @@ import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invo
     DocumentLineGridComponent,
     MessageBoxComponent,
     OrderToInvoiceDialogComponent,
+    EwayBillPanel,
+    NumberInputComponent,
     TextInputComponent,
     TextareaComponent,
     DateInputComponent,
@@ -111,6 +115,11 @@ export class InvoiceFormComponent implements OnInit {
     shippingAddress: [''],
     notes: [''],
     termsAndConditions: [''],
+    // Transport, for the e-way bill asked for with the IRN (TK-93).
+    vehicleNo: ['', [Validators.maxLength(20)]],
+    transporterId: ['', [Validators.maxLength(15)]],
+    transporterName: ['', [Validators.maxLength(100)]],
+    transportDistanceKm: [0, [Validators.min(0), Validators.max(4000)]],
   });
 
   /**
@@ -236,6 +245,10 @@ export class InvoiceFormComponent implements OnInit {
       shippingAddress: invoice.shippingAddress ?? '',
       notes: invoice.notes ?? '',
       termsAndConditions: invoice.termsAndConditions ?? '',
+      vehicleNo: invoice.vehicleNo ?? '',
+      transporterId: invoice.transporterId ?? '',
+      transporterName: invoice.transporterName ?? '',
+      transportDistanceKm: invoice.transportDistanceKm ?? 0,
     });
 
     // Through the scale boundary. Straight in, a ₹100 line reads as zero.
@@ -332,6 +345,11 @@ export class InvoiceFormComponent implements OnInit {
       shippingAddress: value.shippingAddress || undefined,
       notes: value.notes || undefined,
       termsAndConditions: value.termsAndConditions || undefined,
+      vehicleNo: value.vehicleNo || undefined,
+      transporterId: value.transporterId || undefined,
+      transporterName: value.transporterName || undefined,
+      transportDistanceKm: value.transportDistanceKm || undefined,
+      transportMode: value.vehicleNo || value.transporterId ? 'Road' : undefined,
       lines: priced.map(toApiLine),
     };
 

@@ -126,14 +126,14 @@ public sealed class EInvoiceRegistrar
         }
         else
         {
-            await SendAsync(row, build.Document!, now, ct);
+            await SendAsync(row, build.Document!, build.Transport, now, ct);
         }
 
         await _db.SaveChangesAsync(ct);
         return Fill(view, row);
     }
 
-    private async Task SendAsync(EInvoice row, Inv01Document document, DateTimeOffset now, CancellationToken ct)
+    private async Task SendAsync(EInvoice row, Inv01Document document, EwayTransport? transport, DateTimeOffset now, CancellationToken ct)
     {
         string gstin = document.SellerDtls.Gstin;
         row.Attempts++;
@@ -159,6 +159,16 @@ public sealed class EInvoiceRegistrar
             row.LastErrorCode = null;
             row.LastErrorMessage = null;
             row.NextAttemptAt = null;
+
+            // Asked for with the IRN, and issued with it (TK-93).
+            if (irn.EwayBill is EwayBillDetails ewb && transport is not null
+                && !await _db.EwayBills.AnyAsync(e => e.EwbNo == ewb.EwbNo, ct))
+            {
+                _db.EwayBills.Add(EwayBillMapper.Generated(
+                    new EwayBill { SourceType = EwayBillSource.Invoice, SourceId = row.SourceId, Origin = EwayBillOrigin.ByIrn },
+                    transport,
+                    ewb));
+            }
         }
         else if (result.Transient)
         {

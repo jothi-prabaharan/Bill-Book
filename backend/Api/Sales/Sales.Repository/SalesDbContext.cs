@@ -230,6 +230,7 @@ public class SalesDbContext : TenantDbContext
             b.ConfigureHeader("Invoices", "INV", "POS");
 
             b.Property(e => e.PaymentMode).HasMaxLength(20);
+            b.Property(e => e.TransportMode).HasConversion<string>().HasMaxLength(10);
             b.Property(e => e.TenderedAmount).HasColumnType("decimal(28,2)");
             b.Property(e => e.ChangeAmount).HasColumnType("decimal(28,2)");
 

@@ -1,0 +1,86 @@
+@if (posted() && (needed() || bill())) {
+  <section class="card eway" aria-label="E-way bill">
+    <p class="eway__title">
+      <strong>E-way bill</strong>
+      @if (bill(); as b) {
+        <span [class]="b.status === 'Failed' ? 'badge expired' : 'chip'">{{ b.status }}</span>
+        @if (b.origin === 'Manual') {
+          <span class="chip">made outside the product</span>
+        }
+      }
+    </p>
+
+    @if (bill(); as b) {
+      @if (b.ewbNo) {
+        <p>
+          <span class="tabular-nums">{{ b.ewbNo }}</span>
+          @if (b.ewbDate) { · {{ b.ewbDate | date: 'medium' }} }
+          @if (b.validUntil) { · valid until {{ b.validUntil | date: 'mediumDate' }} }
+        </p>
+      }
+      @if (b.vehicleNo || b.transporterName) {
+        <p>{{ b.transportMode }} · {{ b.vehicleNo || b.transporterName }} · {{ b.distanceKm }} km</p>
+      }
+      @if (b.message) {
+        <p class="field-error" role="alert">{{ b.message }}</p>
+      }
+    } @else {
+      <p>This consignment is over {{ threshold | number }}, so the goods need an e-way bill to move.</p>
+    }
+
+    @if (error()) {
+      <p class="field-error" role="alert">{{ error() }}</p>
+    }
+
+    @switch (mode()) {
+      @case ('generate') {
+        <form class="eway__form" (ngSubmit)="generate()">
+          <bb-select label="Mode" name="transportMode" [options]="modeOptions" [clearable]="false" [(ngModel)]="transportMode" />
+          <bb-number-input label="Distance (km)" hint="Leave at 0 for the portal to work it out from the PIN codes." name="distanceKm" [(ngModel)]="distanceKm" min="0" />
+          <bb-text-input label="Vehicle no." name="vehicleNo" [uppercase]="true" [(ngModel)]="vehicleNo" />
+          <bb-text-input label="Transporter id" hint="Their GSTIN or enrolment id, when they will enter the vehicle." name="transporterId" [uppercase]="true" [(ngModel)]="transporterId" />
+          <bb-text-input label="Transporter name" name="transporterName" [(ngModel)]="transporterName" />
+          <div class="eway__actions">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">Generate</button>
+            <button type="button" class="btn btn-ghost" (click)="mode.set('view')">Back</button>
+          </div>
+        </form>
+      }
+      @case ('part-b') {
+        <form class="eway__form" (ngSubmit)="updatePartB()">
+          <bb-text-input label="New vehicle no." name="vehicleNo" [uppercase]="true" [(ngModel)]="vehicleNo" [required]="true" />
+          <bb-text-input label="Where the goods are now" name="fromPlace" [(ngModel)]="fromPlace" [required]="true" />
+          <bb-text-input label="State code" hint="Two digits, such as 33." name="fromStateCode" maxlength="2" [(ngModel)]="fromStateCode" [required]="true" />
+          <bb-text-input label="Why the vehicle changed" name="changeReason" [(ngModel)]="changeReason" [required]="true" />
+          <div class="eway__actions">
+            <button type="submit" class="btn btn-primary" [disabled]="busy()">Change vehicle</button>
+            <button type="button" class="btn btn-ghost" (click)="mode.set('view')">Back</button>
+          </div>
+        </form>
+      }
+      @case ('cancel') {
+        <form class="eway__form" (ngSubmit)="cancel()">
+          <bb-select label="Reason" name="cancelReason" [options]="reasonOptions" [clearable]="false" [(ngModel)]="cancelReason" />
+          <bb-text-input label="Remark" name="cancelRemark" maxlength="100" [(ngModel)]="cancelRemark" [required]="true" />
+          <div class="eway__actions">
+            <button type="submit" class="btn btn-danger" [disabled]="busy()">Cancel e-way bill</button>
+            <button type="button" class="btn btn-ghost" (click)="mode.set('view')">Back</button>
+          </div>
+        </form>
+      }
+      @default {
+        <div class="eway__actions">
+          @if (canGenerate()) {
+            <button type="button" class="btn btn-secondary" (click)="mode.set('generate')">Generate e-way bill</button>
+          }
+          @if (live() && bill()?.origin !== 'Manual' && bill()?.ewbNo) {
+            <button type="button" class="btn btn-ghost" (click)="mode.set('part-b')">Change vehicle</button>
+          }
+          @if (cancellable()) {
+            <button type="button" class="btn btn-ghost" (click)="mode.set('cancel')">Cancel</button>
+          }
+        </div>
+      }
+    }
+  </section>
+}

@@ -69,8 +69,29 @@ A posted challan cannot be withdrawn. The goods have physically left, and taking
 
 Only a draft can be voided, and **the reason is required**. A draft moved nothing, so voiding one moves nothing back — the order is exactly as it was.
 
+## E-way bill
+
+Goods worth more than **50,000** need an e-way bill to move. On a branch that generates e-way bills
+(**Settings › Organization › Statutory**), a posted challan over that value has an **E-way bill**
+panel with **Generate e-way bill**:
+
+- Give how the goods travel: the mode, the distance, and either the **vehicle number** or the
+  **transporter's id** (their GSTIN or enrolment id, when they will enter the vehicle later).
+  Leave the distance at 0 for the portal to work it out from the two PIN codes.
+- The e-way bill number, its date and how long it is valid (a day for each 200 km by road) come back
+  from the portal and show in the panel.
+  The challan takes the number and date, and its filed PDF is written again with them on it.
+- **A bill made outside the product** can still be typed on the challan, with its date. It is
+  recorded as made outside, and it is not generated here, changed or checked with the portal.
+- **Change vehicle** updates Part B when the goods move to another vehicle on the way.
+- **Cancel** is allowed for **24 hours** after the bill is generated, and refused after that.
+
+A challan at or under the limit needs no e-way bill, and asking for one is refused rather than sent.
+Only one e-way bill is live at a time: cancel it before generating another. Generating, changing and
+cancelling need the **e-invoice** permission.
+
 ## What it does not do yet
 
 - **A sale challan does not yet post to *Goods Delivered Not Invoiced*.** The goods' cost reaches the accounts through stock costing, as it does for any other issue, and lands in cost of sales at dispatch. Holding it in a clearing account until the invoice is raised is designed and not yet built
 - **The order is chosen by its number**, not from a lookup. The customer and the items are picked by name
-- **The e-way bill is recorded, not generated.** Its number and date are stored on the challan
+- **Returns** (goods coming back on a credit note) do not generate e-way bills yet

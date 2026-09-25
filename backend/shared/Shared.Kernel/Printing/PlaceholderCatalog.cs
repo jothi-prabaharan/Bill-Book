@@ -232,6 +232,9 @@ public static class PlaceholderCatalog
         Single("EInvoice.AckNo", "EInvoice", "IRP acknowledgement number", PlaceholderType.Text, 20),
         Single("EInvoice.AckDate", "EInvoice", "IRP acknowledgement date", PlaceholderType.Date, 30, DateFormat),
         Single("EInvoice.QrImage", "EInvoice", "Signed QR code from the IRP", PlaceholderType.QrCode, 40),
+        Single("EInvoice.EwbNo", "EInvoice", "E-way bill number", PlaceholderType.Text, 50),
+        Single("EInvoice.EwbDate", "EInvoice", "E-way bill date", PlaceholderType.Date, 60, DateFormat),
+        Single("EInvoice.EwbValidUntil", "EInvoice", "E-way bill valid until", PlaceholderType.Date, 70, DateFormat),
     ];
 
     private static readonly PlaceholderDefinition[] Totals =

@@ -25,7 +25,12 @@
         </button>
       }
 
-      @if (canVoid()) {
+      @if (challanId(); as id) {
+    <!-- A generated or typed e-way bill, and generating one once posted (TK-93). -->
+    <bb-eway-bill-panel document="delivery-challans" [documentId]="id" [total]="totals().totalAmount / 100" [posted]="status() === 'Posted'" />
+  }
+
+  @if (canVoid()) {
         <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="voidChallan()">
           Void
         </button>

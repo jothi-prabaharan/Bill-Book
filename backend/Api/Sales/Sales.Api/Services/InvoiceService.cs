@@ -460,6 +460,11 @@ public sealed class InvoiceService : IInvoiceService
             CurrencyCode = request.CurrencyCode ?? baseCurrency,
             ExchangeRate = request.ExchangeRate ?? 1m,
             Notes = request.Notes,
+            TransportMode = request.TransportMode,
+            VehicleNo = Blank(request.VehicleNo),
+            TransporterId = Blank(request.TransporterId),
+            TransporterName = string.IsNullOrWhiteSpace(request.TransporterName) ? null : request.TransporterName.Trim(),
+            TransportDistanceKm = request.TransportDistanceKm,
             TermsAndConditions = request.TermsAndConditions,
             Status = DocumentStatus.Draft,
         };
@@ -682,6 +687,11 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         invoice.Notes = request.Notes;
+        invoice.TransportMode = request.TransportMode;
+        invoice.VehicleNo = Blank(request.VehicleNo);
+        invoice.TransporterId = Blank(request.TransporterId);
+        invoice.TransporterName = string.IsNullOrWhiteSpace(request.TransporterName) ? null : request.TransporterName.Trim();
+        invoice.TransportDistanceKm = request.TransportDistanceKm;
         invoice.TermsAndConditions = request.TermsAndConditions;
 
         var existingLines = await _db.InvoiceDetails
@@ -889,6 +899,11 @@ public sealed class InvoiceService : IInvoiceService
         var view = new InvoiceView
         {
             InvoiceId = invoice.InvoiceId,
+            TransportMode = invoice.TransportMode,
+            VehicleNo = invoice.VehicleNo,
+            TransporterId = invoice.TransporterId,
+            TransporterName = invoice.TransporterName,
+            TransportDistanceKm = invoice.TransportDistanceKm,
             QuoteId = invoice.QuoteId,
             SalesOrderId = invoice.SalesOrderId,
             DeliveryChallanId = invoice.DeliveryChallanId,
@@ -2140,7 +2155,7 @@ public sealed class InvoiceService : IInvoiceService
 
         return issued;
     }
+
+    /// <summary>A code (vehicle number, transporter id): trimmed and upper-cased, or null when empty.</summary>
+    private static string? Blank(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim().ToUpperInvariant();
 }
-
-
-

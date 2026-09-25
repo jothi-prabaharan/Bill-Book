@@ -143,6 +143,10 @@
     </section>
   }
 
+  @if (invoiceId(); as id) {
+    <bb-eway-bill-panel document="invoices" [documentId]="id" [total]="totals().totalAmount / 100" [posted]="status() === 'Posted'" />
+  }
+
   @if (canVoid()) {
     <form class="field inv-form__void" [formGroup]="voidForm">
       <bb-text-input
@@ -290,6 +294,24 @@
         rows="2"
         formControlName="termsAndConditions"
       />
+    </div>
+
+    <!--
+      Transport, for the e-way bill (TK-93). When the goods go by a vehicle or a
+      transporter and the invoice is over the limit, the e-way bill is asked for
+      with the IRN, so these are filled before posting.
+    -->
+    <div class="field">
+      <bb-text-input id="inv-vehicle" label="Vehicle no." hint="For the e-way bill. Optional." [uppercase]="true" formControlName="vehicleNo" />
+    </div>
+    <div class="field">
+      <bb-text-input id="inv-transporter-id" label="Transporter id" hint="Their GSTIN or enrolment id." [uppercase]="true" formControlName="transporterId" />
+    </div>
+    <div class="field">
+      <bb-text-input id="inv-transporter" label="Transporter name" formControlName="transporterName" />
+    </div>
+    <div class="field">
+      <bb-number-input id="inv-distance" label="Distance (km)" hint="0 lets the portal work it out." formControlName="transportDistanceKm" min="0" />
     </div>
   </form>
 

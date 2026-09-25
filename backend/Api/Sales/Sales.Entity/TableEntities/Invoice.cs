@@ -1,3 +1,4 @@
+using Sales.Entity.Enums;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Documents;
 
@@ -50,5 +51,24 @@ public class Invoice : DocumentHeaderBase
 
     /// <summary>What was given back. Kept because a till reconciles against it at close.</summary>
     public decimal? ChangeAmount { get; set; }
+    // ---- Transport, for the e-way bill (TK-93) ----------------------------
+    // Optional. When the vehicle or the transporter is given and the value is
+    // over the limit, the e-way bill is asked for with the IRN, in one call.
+
+    public TransportMode? TransportMode { get; set; }
+
+    [MaxLength(20, ErrorMessage = "Vehicle number cannot exceed 20 characters.")]
+    public string? VehicleNo { get; set; }
+
+    /// <summary>The transporter's GSTIN or enrolment id.</summary>
+    [MaxLength(15, ErrorMessage = "Transporter id cannot exceed 15 characters.")]
+    public string? TransporterId { get; set; }
+
+    [MaxLength(100, ErrorMessage = "Transporter name cannot exceed 100 characters.")]
+    public string? TransporterName { get; set; }
+
+    [Range(0, 4000, ErrorMessage = "Distance must be between 0 and 4000 km.")]
+    public int? TransportDistanceKm { get; set; }
+
     public List<InvoiceDetail> Lines { get; set; } = [];
 }

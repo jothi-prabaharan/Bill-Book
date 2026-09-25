@@ -19,7 +19,14 @@ public sealed record EInvoiceBuild(
     /// True when a problem was that Master could not be asked, which a later
     /// attempt may get past, as against a problem with the document itself.
     /// </summary>
-    bool Transient = false)
+    bool Transient = false,
+
+    /// <summary>
+    /// Set when the document asks for its e-way bill with the IRN (TK-93): the
+    /// branch generates e-way bills, the invoice carries a vehicle or a
+    /// transporter, and its value is over the limit.
+    /// </summary>
+    EwayTransport? Transport = null)
 {
     public bool Ready => Applies && Document is not null && Problems.Count == 0;
 
@@ -70,13 +77,15 @@ public sealed class EInvoiceDocumentBuilder
             return EInvoiceBuild.NotApplicable;
         }
 
-        return await BuildAsync(
+        EInvoiceBuild build = await BuildAsync(
             EInvoiceSource.Invoice,
             invoice,
             invoice.Lines.Select(l => (Line: (DocumentLineBase)l, l.UqcCode, Taxes: Taxes(l.Taxes))).ToList(),
             precedingNo: null,
             precedingDate: null,
             ct);
+
+        return await WithEwayBillAsync(build, invoice, ct);
     }
 
     public async Task<EInvoiceBuild> BuildForCreditNoteAsync(long creditNoteId, CancellationToken ct)
@@ -101,6 +110,34 @@ public sealed class EInvoiceDocumentBuilder
             original?.DocumentNo,
             original?.DocumentDate,
             ct);
+    }
+
+    /// <summary>
+    /// Asks for the e-way bill in the same call as the IRN when the invoice
+    /// carries transport details and is over the limit, on a branch that
+    /// generates e-way bills (design, flow step 6).
+    /// </summary>
+    private async Task<EInvoiceBuild> WithEwayBillAsync(EInvoiceBuild build, Invoice invoice, CancellationToken ct)
+    {
+        if (build.Document is null || invoice.TotalAmount <= EInvoiceRules.EwayBillThreshold
+            || (invoice.VehicleNo is null && invoice.TransporterId is null)
+            || (await _settings.GetSettingsAsync(ct)) is not { EwayBillEnabled: true })
+        {
+            return build;
+        }
+
+        var transport = new EwayTransport(
+            invoice.TransportMode ?? TransportMode.Road,
+            invoice.TransportDistanceKm ?? 0,
+            invoice.VehicleNo,
+            invoice.TransporterId,
+            invoice.TransporterName);
+
+        return build with
+        {
+            Document = build.Document with { EwbDtls = EwayBillMapper.Details(transport) },
+            Transport = transport,
+        };
     }
 
     private async Task<EInvoiceBuild> BuildAsync(

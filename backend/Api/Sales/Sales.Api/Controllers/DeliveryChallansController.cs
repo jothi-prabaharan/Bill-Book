@@ -126,4 +126,46 @@ public sealed class DeliveryChallansController : ControllerBase
         ArchivedPdf? pdf = await archive.OpenAsync(ArchivedSalesDocument.DeliveryChallan, id, ct);
         return pdf is null ? NotFound() : File(pdf.Content, "application/pdf", pdf.FileName);
     }
+
+    /// <summary>The challan's latest e-way bill (TK-93). Not found when it has none.</summary>
+    [HttpGet("{id:long}/eway-bill")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> EwayBill(
+        long id, [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct)
+    {
+        EwayBillView? view = await ewayBills.GetAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, ct);
+        return view is null ? NotFound() : Ok(view);
+    }
+
+    /// <summary>Generates the challan's e-way bill with its Part B (TK-93). Needs sales.einvoice.</summary>
+    [HttpPost("{id:long}/eway-bill")]
+    [PermissionAction("einvoice")]
+    public async Task<IActionResult> GenerateEwayBill(
+        long id, [FromBody] GenerateEwayBillRequest request,
+        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        EwayBillAnswer(await ewayBills.GenerateAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
+
+    /// <summary>Changes the vehicle on the challan's live e-way bill (TK-93).</summary>
+    [HttpPost("{id:long}/eway-bill/part-b")]
+    [PermissionAction("einvoice")]
+    public async Task<IActionResult> UpdateEwayBillPartB(
+        long id, [FromBody] UpdatePartBRequest request,
+        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        EwayBillAnswer(await ewayBills.UpdatePartBAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
+
+    /// <summary>Cancels the challan's live e-way bill, within 24 hours of generating it (TK-93).</summary>
+    [HttpPost("{id:long}/eway-bill/cancel")]
+    [PermissionAction("einvoice")]
+    public async Task<IActionResult> CancelEwayBill(
+        long id, [FromBody] CancelEwayBillRequest request,
+        [FromServices] Sales.Api.Services.EInvoicing.EwayBillService ewayBills, CancellationToken ct) =>
+        EwayBillAnswer(await ewayBills.CancelAsync(Sales.Entity.Enums.EwayBillSource.DeliveryChallan, id, request, ct));
+
+    private IActionResult EwayBillAnswer(EwayBillResult result) => result.Outcome switch
+    {
+        EwayBillOutcome.Ok => Ok(result.EwayBill),
+        EwayBillOutcome.NotFound => NotFound(),
+        EwayBillOutcome.Invalid => UnprocessableEntity(new MessageResponse { Message = result.Detail ?? "The e-way bill details are not valid." }),
+        _ => Conflict(new MessageResponse { Message = result.Detail ?? "The e-way bill was refused." }),
+    };
 }

@@ -200,6 +200,7 @@ builder.Services.AddEInvoiceGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<EInvoiceRegistrar>();
 builder.Services.AddScoped<IEInvoicePosting, EInvoicePosting>();
 builder.Services.AddScoped<EInvoiceActions>();
+builder.Services.AddScoped<EwayBillService>();
 
 // Refused e-invoices go to sal.ErrorLogs with FollowUpStatus Open (TK-92).
 builder.Services.AddBillBookWorkerErrorAudit<SalesDbContext>();

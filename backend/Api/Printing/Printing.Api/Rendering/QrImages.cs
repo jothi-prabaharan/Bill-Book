@@ -34,19 +34,30 @@ public static class QrImages
 }
 
 /// <summary>
-/// Puts the IRN, the acknowledgement and the QR code on a registered e-invoice
-/// whose template does not place them itself (TK-92). The QR is required on an
+/// Puts the IRN, the acknowledgement and the QR code on a registered e-invoice,
+/// and the e-way bill on one that has it, when the template does not place them
+/// itself (TK-92, TK-93). The QR is required on an
 /// e-invoice, so a template written before e-invoicing, or one that simply
 /// forgot, must not print a registered invoice without it. A template that
 /// places any <c>EInvoice.</c> tag is left exactly as it was written.
 /// </summary>
 public static class EInvoiceStrip
 {
-    public const string Html =
+    private const string IrnBlock =
+        "<td><b>IRN:</b> {{EInvoice.Irn}}<br><b>Ack No:</b> {{EInvoice.AckNo}}"
+        + "&nbsp;&nbsp;<b>Ack Date:</b> {{EInvoice.AckDate}}{EWB}</td>"
+        + "<td class=\"pt-einvoice-qr\">{{EInvoice.QrImage}}</td>";
+
+    private const string EwayBlock =
+        "<b>E-way bill:</b> {{EInvoice.EwbNo}}&nbsp;&nbsp;<b>Date:</b> {{EInvoice.EwbDate}}"
+        + "&nbsp;&nbsp;<b>Valid until:</b> {{EInvoice.EwbValidUntil}}";
+
+    /// <summary>The strip for what the document has: an IRN, an e-way bill, or both (TK-92, TK-93).</summary>
+    public static string Html(bool irn, bool eway) =>
         "<table class=\"pt-einvoice\"><tr>"
-        + "<td><b>IRN:</b> {{EInvoice.Irn}}<br><b>Ack No:</b> {{EInvoice.AckNo}}"
-        + "&nbsp;&nbsp;<b>Ack Date:</b> {{EInvoice.AckDate}}</td>"
-        + "<td class=\"pt-einvoice-qr\">{{EInvoice.QrImage}}</td>"
+        + (irn
+            ? IrnBlock.Replace("{EWB}", eway ? "<br>" + EwayBlock : string.Empty, StringComparison.Ordinal)
+            : "<td>" + EwayBlock + "</td>")
         + "</tr></table>";
 
     /// <summary>The content to render: unchanged, or with the strip at the top of the header.</summary>
@@ -55,7 +66,9 @@ public static class EInvoiceStrip
     {
         bool registered = payload.Singles.TryGetValue("EInvoice.Irn", out object? irn)
             && irn is string { Length: > 0 };
-        if (!registered)
+        bool eway = payload.Singles.TryGetValue("EInvoice.EwbNo", out object? ewb)
+            && ewb is string { Length: > 0 };
+        if (!registered && !eway)
         {
             return content;
         }
@@ -70,7 +83,7 @@ public static class EInvoiceStrip
         return new Printing.Entity.Models.PrintContent
         {
             FixedHeaderHtml = content.FixedHeaderHtml,
-            HeaderHtml = Html + content.HeaderHtml,
+            HeaderHtml = Html(registered, eway) + content.HeaderHtml,
             DetailsHtml = content.DetailsHtml,
             FooterHtml = content.FooterHtml,
             FixedFooterHtml = content.FixedFooterHtml,

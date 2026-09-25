@@ -378,6 +378,10 @@ public sealed class DeliveryChallanService
         deliveryChallan.TotalAmountBase = deliveryChallan.TotalAmount * deliveryChallan.ExchangeRate;
 
         await _db.SaveChangesAsync(ct);
+
+        // A typed e-way bill number is one made outside the product, recorded
+        // beside the ones generated here (TK-93).
+        await EInvoicing.EwayBillService.SyncManualAsync(_db, deliveryChallan, ct);
         return new DeliveryChallanResult(DeliveryChallanOutcome.Ok, deliveryChallan.DeliveryChallanId);
     }
 

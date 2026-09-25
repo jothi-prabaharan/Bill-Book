@@ -1747,16 +1747,34 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-93 · E-way bill: by IRN and standalone for challans
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#81](https://github.com/jothi-prabaharan/Bill-Book/issues/81)
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** TK-92 · **Decision:** —
 - **Where:** `DeliveryChallanService`, `sal.DeliveryChallans.EwayBillNo`/`EwayBillDate`, the design's Flow steps 6 and 7.
 - **Sub-tasks:**
-  - [ ] Ask for the e-way bill with the IRN when transport details are present and the value passes the branch limit.
-  - [ ] `POST api/sales/{invoices|delivery-challans}/{id}/eway-bill`, Part B update, cancel within 24 hours (`sales.einvoice`).
-  - [ ] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
-  - [ ] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
+  - [x] Ask for the e-way bill with the IRN when transport details are present and the value passes the branch limit.
+  - [x] `POST api/sales/{invoices|delivery-challans}/{id}/eway-bill`, Part B update, cancel within 24 hours (`sales.einvoice`).
+  - [x] The challan's typed number becomes a `Manual` e-way bill row; the form shows the table's state.
+  - [x] Test: a challan under the limit asks for nothing; one over it generates; a cancel after 24 hours is refused.
 - **Done when:** a delivery challan over the limit gets an e-way bill number from the sandbox and prints it.
+- **As built:**
+  - **With the IRN.** The invoice gains optional transport columns (`TransportMode`, `VehicleNo`, `TransporterId`, `TransporterName`, `TransportDistanceKm`; migration `InvoiceTransport`), because flow step 6 needs the invoice to carry them. `EInvoiceDocumentBuilder` adds `EwbDtls` when the branch has `EwayBillEnabled`, a vehicle or transporter is given, and `TotalAmount` is over `EInvoiceRules.EwayBillThreshold` (₹50,000, a constant rather than a branch setting). When the IRP returns the bill, the registrar writes a `ByIrn` `Generated` row.
+  - **`EwayBillService`** (`Sales.Api/Services/EInvoicing/`) generates for a posted invoice or challan.
+    - It is refused when the branch has e-way bills off, when the document is not posted, at or under the limit ("asks for nothing"), and while another bill is live.
+    - Part B is checked by `EwayBillMapper.ValidateTransport`: a vehicle or a transporter, the vehicle's shape, and the distance.
+    - It writes a Pending row and sends it after the commit (`IAfterCommit`), by IRN when the invoice has a registered IRN, otherwise standalone. The standalone request comes from the document's lines, stamping challan lines' UQC first. Sub-supply types: sale 1, job work 4, branch transfer 5, others 8.
+    - Once generated, the challan's `EwayBillNo` and `EwayBillDate` take the number and date, and its archived PDF is written again (Replace) with the bill in its reference line.
+  - **Part B update and cancel** run inline. Cancel works within 24 hours for a generated bill, and at any time for a Manual one, which the portal never had. Cancelling clears the challan's typed columns.
+  - **Manual bills.** `EwayBillService.SyncManualAsync` runs from `DeliveryChallanService.SaveAsync`: a typed number becomes a `Manual` `Generated` row, a changed number corrects it, and clearing it removes it. A bill generated here is never touched.
+  - **Endpoints**, on `api/sales/invoices` and `api/sales/delivery-challans`: `GET {id}/eway-bill` (view), and `POST {id}/eway-bill`, `…/part-b` and `…/cancel` (`sales.einvoice`). A refusal is 409, and a Part B that fails the checks is 422.
+  - **Print.** The `EInvoice.EwbNo`, `EwbDate` and `EwbValidUntil` tags exist. The strip shows the e-way bill beside the IRN, or alone when there is no IRN. The invoice payload carries the live bill.
+  - **UI.** `bb-eway-bill-panel`, one component on both the invoice and the challan screens: state, **Generate**, **Change vehicle** and **Cancel**. The invoice form gains vehicle, transporter id and name, and distance.
+  - **Not built:** e-way bills for returns (credit notes), and a per-branch threshold.
+  - **Specs:**
+    - `EwayBillTests`: a challan under the limit asks for nothing; one over it generates from the sandbox and its PDF is written again; the branch switch; one live bill at a time; cancel at 23 h and at 25 h; Part B; manual rows; an invoice with an IRN goes by IRN; the print payload.
+    - `EInvoiceRegistrationTests`: the bill with the IRN over the limit, and none under it.
+    - `sales-core/eway-bill.spec.ts`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and Master. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-94 · Portal: revocable access and one-hour sessions
 - [ ] open

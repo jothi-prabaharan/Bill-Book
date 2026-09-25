@@ -138,6 +138,30 @@ never issued is simply voided, and its pending registration is dropped.
 
 Credit notes against B2B, export and SEZ supplies are registered and cancelled the same way.
 
+## E-way bill
+
+Goods worth more than **50,000** need an e-way bill to move. On a branch that generates e-way bills
+(**Settings › Organization › Statutory**), a posted invoice over that value has an **E-way bill**
+panel with **Generate e-way bill**:
+
+- Give how the goods travel: the mode, the distance, and either the **vehicle number** or the
+  **transporter's id** (their GSTIN or enrolment id, when they will enter the vehicle later).
+  Leave the distance at 0 for the portal to work it out from the two PIN codes.
+- The e-way bill number, its date and how long it is valid (a day for each 200 km by road) come back
+  from the portal and show in the panel.
+  An invoice that already has its IRN gets its e-way bill by IRN. The printed invoice shows the
+  e-way bill number, its date and its validity beside the IRN.
+- **Change vehicle** updates Part B when the goods move to another vehicle on the way.
+- **Cancel** is allowed for **24 hours** after the bill is generated, and refused after that.
+
+A invoice at or under the limit needs no e-way bill, and asking for one is refused rather than sent.
+Only one e-way bill is live at a time: cancel it before generating another. Generating, changing and
+cancelling need the **e-invoice** permission.
+
+**With the IRN, in one step.** Fill the invoice's **Vehicle no.** or **Transporter id** (and the
+distance) before posting. When the invoice is over the limit, the e-way bill is asked for together
+with the IRN, and nothing more needs pressing.
+
 **The portal provider is still to be chosen.** Until it is, an installation cannot reach the real
 IRP, and a branch that switches e-invoicing on sees its invoices refused with "No e-invoicing
 provider is configured".

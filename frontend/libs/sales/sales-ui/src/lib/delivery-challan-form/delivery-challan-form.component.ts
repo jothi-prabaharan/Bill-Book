@@ -35,6 +35,7 @@ import {
   totalsOf,
   UiMessage,
 } from '@bill-book/ui-components';
+import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
 
 /**
  * A grid line that remembers which order line it delivers.
@@ -81,6 +82,7 @@ type ChallanGridLine = DocumentLine & { salesOrderDetailId?: number | null };
     NumberInputComponent,
     SelectComponent,
     ExchangeRateInputComponent,
+    EwayBillPanel,
   ],
   templateUrl: './delivery-challan-form.component.html',
   styleUrl: './delivery-challan-form.component.scss',

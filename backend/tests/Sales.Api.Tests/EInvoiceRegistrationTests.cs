@@ -220,6 +220,43 @@ public sealed class EInvoiceRegistrationTests
         Assert.Equal(EInvoiceStatus.Registered, state.Status);
     }
 
+    [SkippableFact]
+    public async Task An_invoice_with_transport_over_the_limit_gets_its_e_way_bill_with_the_irn()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+        await using Harness h = await Harness.StartAsync(_postgres);
+        h.Branch.EwayBills = true;
+        Invoice invoice = await h.AddInvoiceAsync(factor: 100m);
+        invoice.VehicleNo = "TN01AB1234";
+        invoice.TransportDistanceKm = 450;
+        await h.Db.SaveChangesAsync();
+        long id = await h.PendingAsync(invoice);
+
+        EInvoiceStateView state = (await h.Registrar.RegisterAsync(id, null, default))!;
+
+        Assert.Equal(EInvoiceStatus.Registered, state.Status);
+        EwayBill bill = await h.Db.EwayBills.AsNoTracking().SingleAsync();
+        Assert.Equal(EwayBillOrigin.ByIrn, bill.Origin);
+        Assert.Equal(EwayBillStatus.Generated, bill.Status);
+        Assert.Equal("TN01AB1234", bill.VehicleNo);
+    }
+
+    [SkippableFact]
+    public async Task An_invoice_under_the_limit_asks_for_no_e_way_bill_with_its_irn()
+    {
+        Skip.If(_postgres.SkipReason is not null, _postgres.SkipReason ?? string.Empty);
+        await using Harness h = await Harness.StartAsync(_postgres);
+        h.Branch.EwayBills = true;
+        Invoice invoice = await h.AddInvoiceAsync();
+        invoice.VehicleNo = "TN01AB1234";
+        await h.Db.SaveChangesAsync();
+
+        EInvoiceBuild build = await h.Builder.BuildForInvoiceAsync(invoice.InvoiceId, default);
+
+        Assert.Null(build.Document!.EwbDtls);
+        Assert.Null(build.Transport);
+    }
+
     // ---- Voiding -------------------------------------------------------------
 
     [SkippableFact]
@@ -370,7 +407,7 @@ public sealed class EInvoiceRegistrationTests
             });
         }
 
-        public async Task<Invoice> AddInvoiceAsync(string? gstin = EInvoiceMapperTests.IntraBuyerGstin)
+        public async Task<Invoice> AddInvoiceAsync(string? gstin = EInvoiceMapperTests.IntraBuyerGstin, decimal factor = 1m)
         {
             var invoice = new Invoice
             {
@@ -381,11 +418,11 @@ public sealed class EInvoiceRegistrationTests
                 ContactId = 42,
                 ContactGstin = gstin,
                 CurrencyCode = "INR",
-                SubTotal = 1000m,
-                TaxableAmount = 1000m,
-                CgstAmount = 90m,
-                SgstAmount = 90m,
-                TotalAmount = 1180m,
+                SubTotal = 1000m * factor,
+                TaxableAmount = 1000m * factor,
+                CgstAmount = 90m * factor,
+                SgstAmount = 90m * factor,
+                TotalAmount = 1180m * factor,
                 Status = DocumentStatus.Posted,
                 PostedAt = DateTimeOffset.UtcNow,
                 Lines =
@@ -399,15 +436,15 @@ public sealed class EInvoiceRegistrationTests
                         BaseQuantity = 10m,
                         UomId = 1,
                         UqcCode = "NOS",
-                        UnitPrice = 100m,
-                        GrossAmount = 1000m,
-                        TaxableAmount = 1000m,
-                        TaxAmount = 180m,
-                        LineTotal = 1180m,
+                        UnitPrice = 100m * factor,
+                        GrossAmount = 1000m * factor,
+                        TaxableAmount = 1000m * factor,
+                        TaxAmount = 180m * factor,
+                        LineTotal = 1180m * factor,
                         Taxes =
                         [
-                            new InvoiceDetailTax { TaxComponent = TaxComponent.Cgst, SubAccountId = 1, Rate = 9m, TaxableAmount = 1000m, Amount = 90m, AmountBase = 90m },
-                            new InvoiceDetailTax { TaxComponent = TaxComponent.Sgst, SubAccountId = 1, Rate = 9m, TaxableAmount = 1000m, Amount = 90m, AmountBase = 90m },
+                            new InvoiceDetailTax { TaxComponent = TaxComponent.Cgst, SubAccountId = 1, Rate = 9m, TaxableAmount = 1000m * factor, Amount = 90m * factor, AmountBase = 90m * factor },
+                            new InvoiceDetailTax { TaxComponent = TaxComponent.Sgst, SubAccountId = 1, Rate = 9m, TaxableAmount = 1000m * factor, Amount = 90m * factor, AmountBase = 90m * factor },
                         ],
                     },
                 ],
@@ -445,8 +482,10 @@ public sealed class EInvoiceRegistrationTests
     {
         public DateOnly? From { get; set; }
 
+        public bool EwayBills { get; set; }
+
         public Task<BranchSettings?> GetSettingsAsync(CancellationToken ct = default) =>
-            Task.FromResult<BranchSettings?>(new BranchSettings("33", true, EInvoiceFrom: From));
+            Task.FromResult<BranchSettings?>(new BranchSettings("33", true, EInvoiceFrom: From, EwayBillEnabled: EwayBills));
     }
 
     private sealed class Book : IContactAddressBook
