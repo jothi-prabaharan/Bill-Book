@@ -2514,7 +2514,7 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: none beyond the tests. `apps/school` is in neither `deploy/azure` nor `deploy/local`, like `apps/hrms`.
 
 ### TK-61 · S1: Sis (`sis`, port 4515)
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
 - **Lanes:** L-SIS (new) · **Depends on:** TK-60 · **Decision:** —
 - **Tables:** `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`,
   `Enrolment`, `Exam`.
