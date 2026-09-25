@@ -241,6 +241,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-01 · New branches are never seeded for Purchase or the report catalog
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#14](https://github.com/jothi-prabaharan/Bill-Book/issues/14)
 - **Lanes:** L-MST (plus L-DEPS for the Bicep commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/TenantSeeder.cs:41`: `Services = ["Accounting", "Inventory", "Sales"]`.
@@ -302,6 +303,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-02 · RLS for `pur`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#15](https://github.com/jothi-prabaharan/Bill-Book/issues/15)
 - **Lanes:** L-PUR · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Purchase/Purchase.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Purchase.Api.Tests/PurchaseQueryFilterTests.cs:140`.
@@ -330,6 +332,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-03 · RLS for `sal`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#16](https://github.com/jothi-prabaharan/Bill-Book/issues/16)
 - **Lanes:** L-SAL · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Sales/Sales.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Sales.Api.Tests/SalesQueryFilterTests.cs:218`.
@@ -371,6 +374,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-04 · RLS for `rpt`: replace the broken policies
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#17](https://github.com/jothi-prabaharan/Bill-Book/issues/17)
 - **Lanes:** L-RPT · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - `backend/Api/Reporting/Reporting.Repository/Migrations/Tenant/20260918204348_InitialReportingDbContextSchema.cs:1151-1165`
@@ -410,6 +414,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-05 · RLS for `prt`: align it with the template
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#18](https://github.com/jothi-prabaharan/Bill-Book/issues/18)
 - **Lanes:** L-PRT · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Printing/Printing.Repository/Migrations/20260918205343_InitialPrintingSchema.cs:160-171`.
 - **State:** `prt` casts `current_setting(…)::uuid` without `NULLIF`, so a request with no tenant
@@ -434,6 +439,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-06 · Internal endpoints that set no tenant
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#19](https://github.com/jothi-prabaharan/Bill-Book/issues/19)
 - **Lanes:** L-ACC, L-KERNEL, L-CON, L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/InternalTaxController.cs`: `GET internal/tax/rates`.
@@ -483,6 +489,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-07 · Restore the ledger's deferred balance and allocation triggers
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#20](https://github.com/jothi-prabaharan/Bill-Book/issues/20)
 - **Lanes:** L-ACC · **Depends on:** TK-71 · **Decision:** —
 - **Where:**
   - What was dropped: `git show 2c5ed6f^:backend/Api/Accounting/Accounting.Repository/Migrations/20260902151402_InitialAccountingSchema.cs`,
@@ -543,6 +550,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-08 · Review of the RLS work
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#21](https://github.com/jothi-prabaharan/Bill-Book/issues/21)
 - **Lanes:** L-DOC, L-KERNEL, L-ACC, L-RPT · **Depends on:** TK-71, TK-72, TK-73, TK-74, TK-02, TK-03, TK-04, TK-05, TK-06 · **Decision:** —
 - **State:** two facts decide whether RLS protects anything at all:
   - **A superuser, or any role with `BYPASSRLS`, ignores RLS even when FORCE is set.** The
@@ -625,6 +633,7 @@ Nothing else is trustworthy until these land: the rest of RLS, the seeding gap t
 
 ### TK-09 · `ReportLayerCertificationTests`: likely already fixed
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#22](https://github.com/jothi-prabaharan/Bill-Book/issues/22)
 - **Lanes:** L-RPT · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/tests/Reporting.Api.Tests/ReportLayerCertificationTests.cs:97`, which expects 48.
@@ -665,6 +674,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-10 · A direct sale's cost of goods posts once (GDNI moved to TK-90)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#23](https://github.com/jothi-prabaharan/Bill-Book/issues/23)
 - **Lanes:** L-ACC, L-SAL · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Repository/SeedData/ChartOfAccountsSeed.cs`: GRNI is 2150; GDNI is missing.
@@ -783,6 +793,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-11 · Fixed assets: a service layer, guards and tests
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#24](https://github.com/jothi-prabaharan/Bill-Book/issues/24)
 - **Lanes:** L-ACC · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Accounting/Accounting.Api/Controllers/FixedAssetsController.cs`
@@ -846,6 +857,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-12 · Fixed assets: capitalisation and disposal postings
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#25](https://github.com/jothi-prabaharan/Bill-Book/issues/25)
 - **Lanes:** L-ACC, L-PUR · **Depends on:** TK-11 · **Decision:** D-19, D-20
 - **Where:**
   - `FixedAssetsController.cs:95-170`: the doc comments record both open questions.
@@ -925,6 +937,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-13 · Platform operators: `IsPlatformOperator` on the user (D-01)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#26](https://github.com/jothi-prabaharan/Bill-Book/issues/26)
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** D-01 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/User.cs`, `Master.Api/Services/JwtTokenService.cs`, `Master.Api/Services/DatabaseMigrationService.cs` (`BootstrapFirstOperatorAsync`), `frontend/apps/admin`.
 - **State:** `platform.*` is seeded into the permission catalogue and `apps/admin` checks for it, but nothing grants it, so nobody can sign in to `apps/admin`.
@@ -957,6 +970,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-14 · Item search: barcode and paging
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#27](https://github.com/jothi-prabaharan/Bill-Book/issues/27)
 - **Lanes:** L-INV · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Inventory/Inventory.Api/Services/ItemService.cs:36-78` (`ListAsync`).
@@ -985,6 +999,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-15 · Item and customer pickers on the sales forms
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#28](https://github.com/jothi-prabaharan/Bill-Book/issues/28)
 - **Lanes:** L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - The pattern to copy: `frontend/libs/purchase/purchase-core/src/lib/purchase-lookup.service.ts`
@@ -1044,6 +1059,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-16 · Contact picker on the support ticket form
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#29](https://github.com/jothi-prabaharan/Bill-Book/issues/29)
 - **Lanes:** L-CUSTOMER-UI · **Depends on:** — · **Decision:** —
 - **Where:** `frontend/libs/customer/customer-ui/src/lib/tickets/ticket-form.component.html`
   (was a `bb-master-select`, not a numeric `contactId` as first written. It loaded every contact
@@ -1067,6 +1083,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-17 · Seed a `WALKIN` contact per branch
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#30](https://github.com/jothi-prabaharan/Bill-Book/issues/30)
 - **Lanes:** L-CON (+ L-ACC for the provisioning fix, see Notes) · **Depends on:** — · **Decision:** owner, 2026-09-24 (see TK-40)
 - **Where:** `backend/Api/Master/Master.Api/Controllers/InternalSeedController.cs` (Master's own branch seed), the contact service's create path.
 - **Sub-tasks:**
@@ -1097,6 +1114,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-18 · Customer module seed data (stage C4)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#31](https://github.com/jothi-prabaharan/Bill-Book/issues/31)
 - **Lanes:** L-CUS, L-MST (the seeder list) · **Depends on:** — · **Decision:** D-18
 - **Where:**
   - `backend/shared/Shared.Kernel/Customer/Enums.cs`: `LeadSource`, `LeadStatus`, `TicketStatus`, `TicketPriority`.
@@ -1141,6 +1159,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-19 · Notification.Worker takes over email from Master
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#32](https://github.com/jothi-prabaharan/Bill-Book/issues/32)
 - **Lanes:** L-NTF, L-MST, L-KERNEL, L-DEPS (one commit) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Api/Services/EmailQueue.cs`: `IEmailQueue`, `InProcessEmailQueue`,
@@ -1220,6 +1239,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-20 · `PaymentReminderWorker` sends nothing, and reads across tenants
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#33](https://github.com/jothi-prabaharan/Bill-Book/issues/33)
 - **Lanes:** L-NTF, L-KERNEL, L-CON, L-INV (the enumerator move) · **Depends on:** TK-19 · **Decision:** —
 - **Where:** `backend/worker/Notification.Worker/PaymentReminderWorker.cs:39-100` and `Program.cs`.
 - **State:**
@@ -1271,6 +1291,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-21 · A blank optional phone is NULL everywhere (D-04)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#34](https://github.com/jothi-prabaharan/Bill-Book/issues/34)
 - **Lanes:** L-CON, L-MST, L-INV, L-CUS · **Depends on:** — · **Decision:** D-04 (answered)
 - **Where:** the phone columns: `con.ContactAddresses` and `con.ContactPersons` (`PhoneNumber`, `MobileNumber`), `mst.Users.MobileNumber`, `mst.Organizations` (`PhoneNumber`, `MobileNumber`), `inv.Warehouses` (`PhoneNumber`, `MobileNumber`), `cus.Leads.Phone`. No shared normaliser exists.
 - **Sub-tasks:**
@@ -1290,6 +1311,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-22 · Document archive: PDF/A, every document, a download link
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · **PDF/A and template rendering not done, see Outcome**
+- **Issue:** [#35](https://github.com/jothi-prabaharan/Bill-Book/issues/35)
 - **Lanes:** L-SAL, L-KERNEL · **Depends on:** — · **Decision:** D-11
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs:1440-1460`
@@ -1360,6 +1382,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-24 · `rat` schema: exchange and metal rate history
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#36](https://github.com/jothi-prabaharan/Bill-Book/issues/36)
 - **Lanes:** L-MST · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `CLAUDE.md` Schemas: "Master database: `mst`, `rat`".
@@ -1394,6 +1417,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-25 · RateSync.Worker: metals (IBJA)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#37](https://github.com/jothi-prabaharan/Bill-Book/issues/37)
 - **Lanes:** L-RATE · **Depends on:** TK-24 · **Decision:** D-14
 - **Where:** copy `backend/worker/CostingEngine.Worker/Program.cs`, as the note in
   `RateSync.Worker/Program.cs` asks.
@@ -1441,6 +1465,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-27 · Production databases are created by infrastructure (D-02)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#38](https://github.com/jothi-prabaharan/Bill-Book/issues/38)
 - **Lanes:** L-MST, L-DEPS · **Depends on:** TK-70 · **Decision:** D-02 (answered)
 - **Where:** `backend/Api/Master/Master.Api/Services/DatabaseMigrationService.cs:50,140` (`EnsureDatabaseExistsAsync`, which issues `CREATE DATABASE` at 263), `deploy/azure/` (Bicep).
 - **Sub-tasks:**
@@ -1460,6 +1485,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-28 · Settings: one Nx lib per sub-screen (D-05)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · no tests needed (a move); lint, typecheck and all five app builds clean
+- **Issue:** [#39](https://github.com/jothi-prabaharan/Bill-Book/issues/39)
 - **Lanes:** L-MASTER-UI, L-DEPS, L-WEB · **Depends on:** — · **Decision:** D-05 (answered)
 - **Where:** `frontend/libs/master/master-ui/src/lib/` — today one lib holding `api-clients`, `configurations`, `org-currencies`, `organization-settings`, `organizations`, `print-templates`, `roles`, `smtp-settings`, `users` beside contacts and HSN/SAC.
 - **Sub-tasks:**
@@ -1477,6 +1503,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-29 · API clients get per-action permissions through their role (D-07)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#40](https://github.com/jothi-prabaharan/Bill-Book/issues/40)
 - **Lanes:** L-MST, L-KERNEL · **Depends on:** — · **Decision:** D-07 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/ApiClient.cs` (`RoleId`, stored but unused), `Master.Api/Controllers/InternalApiKeysController.cs` (validation), `backend/shared/Shared.Kernel/Security/ApiKeyAuthenticationHandler.cs:43-47`.
 - **State:** a validated API key produces `customer_id`, `org_id`, `sub`, `name` and `role = ApiClient` — **no `permission` claims**, so every `[RequireModulePermission]` endpoint refuses it.
@@ -1505,6 +1532,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
 
 ### TK-30 · Seeds and menus follow the branch's trade (D-10)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run · one question raised (D-23)
+- **Issue:** [#41](https://github.com/jothi-prabaharan/Bill-Book/issues/41)
 - **Lanes:** L-MST, L-INV, L-MASTER-UI · **Depends on:** — · **Decision:** D-10 (answered)
 - **Where:** `backend/Api/Master/Master.Entity/TableEntities/Organization.cs:34` (`Vertical`), `Master.Entity/Enums/Vertical.cs`, `Master.Api/Services/TenantSeeder.cs` (`ReadVerticalAsync`), `backend/Api/Inventory/Inventory.Api/Controllers/InternalSeedController.cs:58`, `Master.Api/Services/MenuService.cs`, `docs/Modules.md` §5.14.
 - **State:** the trade exists and seeding already receives it. `OrganizationModels.cs:81,208` carries it as a **string** (hard rule 7 wants the enum). Menus ignore it.
@@ -1533,6 +1561,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-31 · Design: e-invoicing and e-way bill
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#42](https://github.com/jothi-prabaharan/Bill-Book/issues/42)
 - **Notes:** delivery challans already carry `EwayBillNo` and `EwayBillDate`.
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "E-invoicing and e-way bill": what the law asks (thresholds as settings, not literals), nine decisions, `sal.EInvoices` and `sal.EwayBills`, the post-then-register flow, local validation, security.
@@ -1543,6 +1572,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-32 · Design: `apps/portal`, the next screens
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#43](https://github.com/jothi-prabaharan/Bill-Book/issues/43)
 - **State:** `apps/portal` has a dashboard and a statement list over real endpoints.
 - **Notes:**
   - D-16 answered (2026-09-24): design these screens: overall outstanding and overall trade value on the dashboard; invoice list with PDF download (TK-22); online payment; quotes to accept or reject; support tickets (Customer module). Every portal route takes `[RequirePortalAccess]`.
@@ -1555,6 +1585,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-33 · Design: workflow approvals
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#44](https://github.com/jothi-prabaharan/Bill-Book/issues/44)
 - **Notes:** TK-49 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Workflow approvals for RetailErp documents".
@@ -1565,6 +1596,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-34 · Design: project accounting
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#45](https://github.com/jothi-prabaharan/Bill-Book/issues/45)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Project accounting".
   - A project is a **ledger dimension** (`ProjectId` on `acc.JournalLedger` and journal and document lines), owned by Accounting, so profit by project is a query over the books rather than a second ledger.
@@ -1574,6 +1606,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-35 · Design: budgeting
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#46](https://github.com/jothi-prabaharan/Bill-Book/issues/46)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Budgeting".
   - A budget is monthly amounts per account for one financial year of one branch, optionally by project (TK-34), entered positive in the account's normal direction. Several budgets per year are allowed; one approved default is used by reports; an approved budget is locked, and changing it is a revision with a reason.
@@ -1582,6 +1615,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-36 · Design: custom fields and custom reports
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#47](https://github.com/jothi-prabaharan/Bill-Book/issues/47)
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Custom fields and custom reports".
   - **Custom fields**: values in a `jsonb` column on each entity (mapped as `JsonDocument`, so LINQ still queries them). Definitions are central in Master (new tenant schema `cfd`), and each owning service validates against them through a cached client in `Shared.Kernel`. Keys are permanent; removing a field keeps its values. Fields carry forward through document conversions and print as `{{custom.<key>}}`.
@@ -1590,6 +1624,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-37 · Design: compliance bundle
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#48](https://github.com/jothi-prabaharan/Bill-Book/issues/48)
 
 ---
 - **Outcome (2026-09-24):**
@@ -1600,6 +1635,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 
 ### TK-38 · Design: CRM campaigns and marketing automation (D-06)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · design only, no code
+- **Issue:** [#49](https://github.com/jothi-prabaharan/Bill-Book/issues/49)
 - **Sub-tasks:**
   - [x] Write the design under the Customer (`cus`) section of `docs/Modules.md`: campaigns, audiences built from leads and contacts, scheduled sends through Notification (TK-19), unsubscribe handling, and what a campaign reports.
   - [x] Add build cards for it to this queue.
@@ -1995,6 +2031,7 @@ The build cards each design in section E produced. Each design section in `docs/
 
 ### TK-39 · POS till API (T7.1)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#50](https://github.com/jothi-prabaharan/Bill-Book/issues/50)
 - **Lanes:** L-SAL, L-ACC (added 2026-09-24: the tender leg is resolved in Accounting) · **Depends on:** TK-78, TK-14, TK-10 · **Decision:** —
 - **Where:** `InvoiceService.cs` (create and post) and `InventoryClient.IssueAsync`.
 - **State:** a POS sale is an `sal.Invoices` row with `TransactionTypeCode = 'POS'`, and the invoice
@@ -2022,6 +2059,7 @@ The build cards each design in section E produced. Each design section in `docs/
 
 ### TK-40 · POS till screen (T7.2)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#51](https://github.com/jothi-prabaharan/Bill-Book/issues/51)
 - **Lanes:** L-DSK, L-SAL (added 2026-09-24: the JSON enum fix) · **Depends on:** TK-79, TK-39, TK-17 · **Decision:** —
 - **Sub-tasks:**
   - [x] Keyboard-driven: F-keys for tender, quantity, void line and hold.
@@ -2062,6 +2100,7 @@ The build cards each design in section E produced. Each design section in `docs/
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#52](https://github.com/jothi-prabaharan/Bill-Book/issues/52)
 - **Lanes:** L-DSK (+ L-SAL for the tenders on the invoice view) · **Depends on:** TK-40 · **Decision:** —
 - **Where:** `frontend/apps/desktop/src/app/pos-terminal/{receipt-layout.ts,esc-pos.service.ts,receipt-printer.service.ts}`, `frontend/apps/desktop/{main.js,preload.js,printer.js}`.
 - **Sub-tasks:**
@@ -2088,6 +2127,7 @@ None of it is built.
 
 ### TK-42 · H0.1: `App` in `mst`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#53](https://github.com/jothi-prabaharan/Bill-Book/issues/53)
 - **Lanes:** L-MST (+ L-KERNEL for the enum) · **Depends on:** TK-70 · **Decision:** —
 - **Where:**
   - `backend/shared/Shared.Kernel/Apps/App.cs` (`App`, `AppRules`)
@@ -2117,6 +2157,7 @@ None of it is built.
 
 ### TK-43 · H0.2: per-app sign-in and licences
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#54](https://github.com/jothi-prabaharan/Bill-Book/issues/54)
 - **Lanes:** L-MST, L-KERNEL (+ one attribute line on every service's controllers) · **Depends on:** TK-42 · **Decision:** —
 - **Where:**
   - `backend/Api/Master/Master.Entity/Models/{AuthModels,LicenseModels,SessionContextModels}.cs`
@@ -2143,6 +2184,7 @@ None of it is built.
 
 ### TK-44 · H0.3: shell, page validation and shared master pages
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#55](https://github.com/jothi-prabaharan/Bill-Book/issues/55)
 - **Lanes:** L-UI, L-MASTER-UI, L-WEB (+ L-MST for the menu filter and `api/applications`, L-ACC for the numbering-series guard) · **Depends on:** TK-43, TK-28 · **Decision:** —
 - **Where:**
   - `frontend/libs/shared/auth/src/lib/{app-id,session-context.service,page-access,if-can.directive,license.guard,auth.service}.ts`
@@ -2176,6 +2218,7 @@ None of it is built.
 
 ### TK-45 · H0.4: signup and seeding per app
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#56](https://github.com/jothi-prabaharan/Bill-Book/issues/56)
 - **Lanes:** L-MST (+ L-UI for `AuthService.signup`) · **Depends on:** TK-43, TK-01 · **Decision:** D-12
 - **Where:** `Master.Api/Services/{SignupService,TenantSeeder,ApplicationService,InProcessSeams,ProvisioningQueue,ProvisioningWorker,IIdentityAdmin}.cs`, `Controllers/ApplicationsController.cs`, `AdminDbContext.cs` (`AppOwnerRoles`, `OwnerRoleOf`), migration `AppOwnerRoles`.
 - **Sub-tasks:**
@@ -2196,6 +2239,7 @@ None of it is built.
 
 ### TK-46 · H0.5: sharding in the multi-app model
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#57](https://github.com/jothi-prabaharan/Bill-Book/issues/57)
 - **Lanes:** L-MST (+ L-DEPS for the Azure README) · **Depends on:** TK-42, TK-27 · **Decision:** —
 - **Where:**
   - `Master.Api/Services/{TenantDatabaseAllocator,TenantShardProvisioner,DatabaseMigrationService,SignupService}.cs`, `Program.cs`, `appsettings.json` (`Sharding`)
@@ -2217,6 +2261,7 @@ None of it is built.
 
 ### TK-47 · H0.6: `apps/hrms` and `apps/payroll` scaffolds
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#58](https://github.com/jothi-prabaharan/Bill-Book/issues/58)
 - **Lanes:** L-DEPS, plus new lanes `L-HRMS-APP` and `L-PAY-APP` (+ L-WEB for the shared route list, L-UI for `appUrls`) · **Depends on:** TK-44 · **Decision:** —
 - **Where:** `frontend/apps/{hrms,payroll}`, `frontend/libs/settings/shared-routes`, `frontend/libs/shared/api-client/src/lib/runtime-config.ts` (`appUrls`).
 - **Sub-tasks:**
@@ -2260,6 +2305,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-48 · H1: Core HR, the shared employee master (`Hrm`, `hrm`, port 4509)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#59](https://github.com/jothi-prabaharan/Bill-Book/issues/59)
 - **Lanes:** L-HRM (new) (+ L-MST for the catalogue, menus, migration and seeder; L-DEPS for the Gateway) · **Depends on:** TK-47 · **Decision:** —
 - **Tables:**
   - Organisation: `Department`, `Designation`, `Grade`, `CostCentre`, `WorkLocation`.
@@ -2293,6 +2339,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-49 · H2: Leave, and the approval engine (`TimeLeave`, `tla`, port 4510)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#60](https://github.com/jothi-prabaharan/Bill-Book/issues/60)
 - **Lanes:** L-TLA (new), L-HRM · **Depends on:** TK-48, TK-99 · **Decision:** D-26 (answered: Master, `apr`)
 - **Tables:**
   - Leave: `LeaveType`, `LeavePolicy`, `LeaveBalance`, `LeaveApplication`, `LeaveEncashment`.
@@ -2324,6 +2371,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-50 · H3: Time and attendance (`tla`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#61](https://github.com/jothi-prabaharan/Bill-Book/issues/61)
 - **Lanes:** L-TLA · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `HolidayList`, `Holiday`, `Shift`, `WeeklyOffPolicy`, `ShiftRoster`, `Punch`, `BiometricDeviceUser`,
   `DailyAttendance`, `RegularisationRequest`, `OvertimeRequest`, `CompOffCredit`.
@@ -2345,6 +2393,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-51 · H4: Payroll core (`Payroll`, `pay`, port 4511)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#62](https://github.com/jothi-prabaharan/Bill-Book/issues/62)
 - **Lanes:** L-PAY (new) · **Depends on:** TK-48 · **Decision:** —
 - **Tables:**
   - Setup: `PayGroup`, `SalaryComponent`, `SalaryStructure`, `EmployeeSalary`, `SalaryRevision`,
@@ -2379,6 +2428,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-52 · H5: Statutory (`pay`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#63](https://github.com/jothi-prabaharan/Bill-Book/issues/63)
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `PfSetting`, `EsiSetting`, `ProfessionalTaxSlab`, `LwfSetting`, `GratuitySetting`,
   `BonusSetting`, `StatutoryReturn`. All are effective-dated.
@@ -2399,6 +2449,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-53 · H6: Income tax on salary (`pay`)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#64](https://github.com/jothi-prabaharan/Bill-Book/issues/64)
 - **Lanes:** L-PAY · **Depends on:** TK-51 · **Decision:** —
 - **Tables:** `TaxSlab`, `TaxRule`, `TaxDeclaration`, `TaxDeclarationLine`, `RentDetail`,
   `PreviousEmployerIncome`.
@@ -2421,6 +2472,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-54 · H7: Lifecycle and exit
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#65](https://github.com/jothi-prabaharan/Bill-Book/issues/65)
 - **Lanes:** L-HRM, L-PAY · **Depends on:** TK-48, TK-51 · **Decision:** —
 - **Tables:** `ChecklistTemplate`, `EmployeeChecklist`, `Separation`, `Letters` (in `hrm`), and
   `FullAndFinalSettlement` (in `pay`).
@@ -2445,6 +2497,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-55 · H8: Self-service and approvals
 - [x] done (Antigravity) — 2026-09-25
+- **Issue:** [#66](https://github.com/jothi-prabaharan/Bill-Book/issues/66)
 - **Lanes:** L-HRMS-APP, L-PAY-APP · **Depends on:** TK-49, TK-51 · **Decision:** —
 - **Sub-tasks:**
   - [x] `/api/me/...` routes: profile, leave, attendance, punches, claims, documents and
@@ -2459,6 +2512,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#67](https://github.com/jothi-prabaharan/Bill-Book/issues/67)
 - **Lanes:** L-CLM (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ClaimCategory`, `ClaimLimit`, `ExpenseClaim`, `ExpenseClaimLine`.
 - **Sub-tasks:**
@@ -2472,6 +2526,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
 ### TK-57 · H10: Recruitment and onboarding (`Recruitment`, `rec`, port 4512)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
+- **Issue:** [#68](https://github.com/jothi-prabaharan/Bill-Book/issues/68)
 - **Lanes:** L-REC (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `JobRequisition`, `JobOpening`, `Candidate`, `Application`, `InterviewRound`, `Offer`.
 - **Sub-tasks:**
@@ -2904,6 +2959,7 @@ into the queue with the failure under its Notes.
 
 ### TK-72 · RLS for `con`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Issue:** [#69](https://github.com/jothi-prabaharan/Bill-Book/issues/69)
 - **Lanes:** L-CON · **Depends on:** TK-70, TK-71 · **Decision:** —
 - **Where:**
   - The migrations: `backend/Api/Master/Master.Repository/Migrations/Tenant/`, via `--context ContactsDbContext`.
@@ -2954,6 +3010,7 @@ into the queue with the failure under its Notes.
 
 ### TK-73 · RLS for `cus`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#70](https://github.com/jothi-prabaharan/Bill-Book/issues/70)
 - **Lanes:** L-CUS · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Customer/Customer.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Customer.Api.Tests/CustomerQueryFilterTests.cs:193`.
@@ -2979,6 +3036,7 @@ into the queue with the failure under its Notes.
 
 ### TK-74 · RLS for `inv`
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#71](https://github.com/jothi-prabaharan/Bill-Book/issues/71)
 - **Lanes:** L-INV · **Depends on:** TK-71 · **Decision:** —
 - **Where:** `backend/Api/Inventory/Inventory.Repository/Migrations/Tenant/`; the audit is at
   `backend/tests/Inventory.Api.Tests/InventoryQueryFilterTests.cs:133`.
@@ -3028,6 +3086,7 @@ into the queue with the failure under its Notes.
 
 ### TK-75 · Correct the stale facts in `CLAUDE.md`
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · documentation only, no tests
+- **Issue:** [#72](https://github.com/jothi-prabaharan/Bill-Book/issues/72)
 - **Lanes:** L-DOC · **Depends on:** — · **Decision:** —
 - **Where:** `CLAUDE.md` sections "Still not built", "Standing caveats" and "Roadmap"; `docs/Modules.md` §8.2.
 - **Sub-tasks:** fix each statement against the code:
@@ -3063,6 +3122,7 @@ into the queue with the failure under its Notes.
 
 ### TK-76 · Sales delivery challan: post, void and page
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Issue:** [#73](https://github.com/jothi-prabaharan/Bill-Book/issues/73)
 - **Lanes:** L-SAL, L-SAL-UI · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/DeliveryChallanService.cs`: `SaveAsync`, `PostAsync`, `VoidAsync`.
@@ -3124,6 +3184,7 @@ into the queue with the failure under its Notes.
 
 ### TK-77 · Sales credit note: guards, void reason and stock return
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#74](https://github.com/jothi-prabaharan/Bill-Book/issues/74)
 - **Lanes:** L-SAL, L-SAL-UI, L-INV (one controller line: a return must be recorded as a return), L-ACC (seed Sales Returns and Round Off; owner's decision 2026-09-23) · **Depends on:** — · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/CreditNoteService.cs`, `Controllers/CreditNotesController.cs`
@@ -3199,6 +3260,7 @@ into the queue with the failure under its Notes.
 
 ### TK-78 · Partial fulfilment (T3.6): what's left
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#75](https://github.com/jothi-prabaharan/Bill-Book/issues/75)
 - **Lanes:** L-SAL, L-SAL-UI (the billing tag and the From-an-order filter) · **Depends on:** TK-76 · **Decision:** —
 - **Where:**
   - `backend/Api/Sales/Sales.Api/Services/InvoiceService.cs`: `PostAsync` (`ReadBilledOrderAsync`,
@@ -3248,6 +3310,7 @@ into the queue with the failure under its Notes.
 
 ### TK-79 · `apps/desktop`: a real cart
 - [x] completed (Claude Opus 5.5) — 2026-09-23 · tests written, not run
+- **Issue:** [#76](https://github.com/jothi-prabaharan/Bill-Book/issues/76)
 - **Lanes:** L-DSK · **Depends on:** TK-15 · **Decision:** —
 - **Where:**
   - `frontend/apps/desktop/src/app/pos-terminal/pos-terminal.component.{ts,html,scss}`: the till.
@@ -3290,6 +3353,7 @@ into the queue with the failure under its Notes.
 
 ### TK-80 · Printing.Api: move the template API and renderer into the service
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
+- **Issue:** [#77](https://github.com/jothi-prabaharan/Bill-Book/issues/77)
 - **Lanes:** L-PRT, L-KERNEL · **Depends on:** — · **Decision:** —
 - **Where:**
   - `docs/Modules.md` "Printing" (from about line 974): the design, and the list of what moves.
