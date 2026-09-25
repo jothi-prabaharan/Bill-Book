@@ -287,3 +287,61 @@ public sealed class FeeReceiptView
 
     public List<AllocationModel> Allocations { get; set; } = [];
 }
+
+// ---- Parent portal (S9, TK-69) ------------------------------------------------
+
+/// <summary>A posted demand as the guardian it is addressed to sees it.</summary>
+public sealed class PortalDemandView
+{
+    public long FeeDemandId { get; set; }
+
+    public string DemandNo { get; set; } = null!;
+
+    public long StudentId { get; set; }
+
+    public string PeriodKey { get; set; } = null!;
+
+    public DateOnly DemandDate { get; set; }
+
+    public DateOnly DueDate { get; set; }
+
+    public decimal TotalAmount { get; set; }
+
+    public decimal ConcessionAmount { get; set; }
+
+    public decimal NetAmount { get; set; }
+
+    public decimal PaidAmount { get; set; }
+
+    public decimal Balance { get; set; }
+
+    public List<PortalDemandLineView> Lines { get; set; } = [];
+}
+
+public sealed class PortalDemandLineView
+{
+    public string FeeHeadName { get; set; } = null!;
+
+    public decimal Amount { get; set; }
+
+    public decimal ConcessionAmount { get; set; }
+}
+
+/// <summary>A posted receipt from the guardian, with the demands it settled.</summary>
+public sealed class PortalReceiptView
+{
+    public long FeeReceiptId { get; set; }
+
+    public string ReceiptNo { get; set; } = null!;
+
+    public DateOnly ReceiptDate { get; set; }
+
+    public PaymentMode PaymentMode { get; set; }
+
+    public decimal Amount { get; set; }
+
+    /// <summary>What is kept as the guardian's advance.</summary>
+    public decimal UnallocatedAmount { get; set; }
+
+    public List<string> DemandNos { get; set; } = [];
+}

@@ -103,7 +103,9 @@ public sealed class ContactsController : ControllerBase
     [HttpPost("{contactId:long}/portal-link")]
     public async Task<IActionResult> GeneratePortalLink(long contactId, CancellationToken ct)
     {
-        string? token = await _contacts.GeneratePortalLinkAsync(contactId, ct);
+        // The link opens the portal of the app it was made from: a School
+        // guardian's link is a School token (TK-69).
+        string? token = await _contacts.GeneratePortalLinkAsync(contactId, RequireAppAttribute.AppOf(User), ct);
         if (token is null)
         {
             return NotFound();

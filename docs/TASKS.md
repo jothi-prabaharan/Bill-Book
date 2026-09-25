@@ -2708,16 +2708,28 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Amc.Api.Tests` with `AMC_TEST_DB` and `Notification.Worker.Tests` from dropped databases.
 
 ### TK-69 · S9: Parent portal
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#11](https://github.com/jothi-prabaharan/Bill-Book/issues/11)
 - **Lanes:** L-PTL · **Depends on:** TK-63, TK-64, TK-32 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] Add routes in `apps/portal` for demands, receipts, attendance and published marks.
-  - [ ] Controllers take `[RequirePortalAccess]`, and the guardian's link comes from
+  - [x] Add routes in `apps/portal` for demands, receipts, attendance and published marks.
+  - [x] Controllers take `[RequirePortalAccess]`, and the guardian's link comes from
         `JwtTokenService.CreatePortalToken` against their `ContactId`.
 - **Done when:** a guardian sees their child's demands, receipts, attendance and published marks.
 - **Notes:**
   - Dependency on TK-32 added 2026-09-24: the parent portal adds to `apps/portal`, whose next screens TK-32 designs first.
+  - **As built (2026-09-25):**
+    - **The portal token names its app.** `CreatePortalToken` takes the app, and `POST api/contacts/{id}/portal-link` passes the caller's (`RequireAppAttribute.AppOf`), so a link made in the School app carries `app = School` and a RetailErp link keeps its old shape (no claim, read as RetailErp). Without it every guardian token read as RetailErp and School's `[RequireApp]` refused it.
+    - **Three portal controllers, each in the service that owns the data**, all `[Authorize][RequirePortalAccess][RequireApp(App.School)]`, the contact taken from the token and never from the route:
+      - Sis `api/portal/school/children` (children with their latest class and section) and `…/{studentId}/marks` (Published or Locked exams only) — `PortalService`. A child is the guardian's only through a `StudentGuardian` row with `HasPortalAccess`; anything else is not found.
+      - Fee `api/portal/school/fees/demands` and `…/receipts` — `PortalFeeService`: posted documents addressed to the contact (so the primary guardian), with balances, head names and the demands each receipt settled.
+      - Attendance `api/portal/school/attendance/{studentId}?month=` — `PortalAttendanceService` asks Sis for the guardian's enrolments (`EnrolmentQueryRequest.PortalAccessOnly`, new) and shows only those days, with counts.
+      - Gateway routes for the three paths.
+    - `apps/portal`: `/portal?token=` (the link's own path, which nothing handled before) keeps the token in `PortalSession` and opens `/school` for a School token, `/dashboard` otherwise; `portalTokenInterceptor` sends it on `/api/portal/` calls. `/school` (children, fees, payments) and `/school/children/:studentId` (attendance by month, published marks). The RetailErp statement pages benefit too: they were only reachable with a staff login.
+    - Contacts screen: **Portal link** on an open contact, showing the link or, with no `Portal:BaseUrl`, the token.
+    - Still the 30-day, unrevocable token: TK-94 replaces it with revocable grants and one-hour sessions, and these routes need no change for it.
+    - Tests: `Sis.Api.Tests.PortalServiceTests` (the *Done when* for children and marks, access flag, strangers), `Fee.Api.Tests.PortalFeeTests` (posted only, own only, balances, settlements), `Attendance.Api.Tests.PortalAttendanceTests` (own child's month and counts, another child not found, Sis down), `Master.Api.Tests.PortalTokenTests` (app claim, no permissions); `portal-session.spec.ts`, `school-portal.models.spec.ts`.
+    - Owner step: run `Sis.Api.Tests`, `Fee.Api.Tests`, `Attendance.Api.Tests` and `Master.Api.Tests` from dropped databases.
 
 ### Z · Done — waiting on the owner's test run
 

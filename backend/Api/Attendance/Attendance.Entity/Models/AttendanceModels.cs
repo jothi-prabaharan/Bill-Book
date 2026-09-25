@@ -72,3 +72,37 @@ public sealed class AttendanceSummary
 
     public int Holiday { get; set; }
 }
+
+// ---- Parent portal (S9, TK-69) ------------------------------------------------
+
+/// <summary>One child's attendance for a month, as the parent portal shows it.</summary>
+public sealed class PortalAttendanceView
+{
+    public long StudentId { get; set; }
+
+    /// <summary>The first day of the month shown.</summary>
+    public DateOnly Month { get; set; }
+
+    public List<PortalAttendanceDay> Days { get; set; } = [];
+
+    public int Present { get; set; }
+
+    public int Absent { get; set; }
+
+    public int Late { get; set; }
+
+    public int HalfDay { get; set; }
+
+    public int Leave { get; set; }
+
+    public int Holiday { get; set; }
+}
+
+public sealed class PortalAttendanceDay
+{
+    public DateOnly AttendanceDate { get; set; }
+
+    public AttendanceStatus AttendanceStatus { get; set; }
+
+    public string? Remarks { get; set; }
+}

@@ -75,6 +75,7 @@ builder.Services.AddHttpClient<ISisClient, HttpSisClient>(client =>
 builder.Services.AddScoped<AttendanceSeeder>();
 builder.Services.AddScoped<ICallerPermissions, HttpCallerPermissions>();
 builder.Services.AddScoped<RegisterService>();
+builder.Services.AddScoped<PortalAttendanceService>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 

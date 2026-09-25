@@ -602,8 +602,18 @@
       }
     }
 
+    @if (portalLink(); as link) {
+      <label class="portal-link">
+        <span>{{ link.url ? 'Portal link — send this to the contact' : 'Portal token (no portal address is configured, so add it to the portal\'s /portal?token= link)' }}</span>
+        <input type="text" readonly [value]="link.url ?? link.token" (focus)="$any($event.target).select()" />
+      </label>
+    }
+
     <div class="sheet-actions">
       <button type="button" (click)="save()" [disabled]="busy() || !form.displayName">Save contact</button>
+      @if (editingId() !== null) {
+        <button type="button" class="link" (click)="makePortalLink()" [disabled]="busy()">Portal link</button>
+      }
       <button type="button" class="link" (click)="editorOpen.set(false)">Cancel</button>
     </div>
   </div>

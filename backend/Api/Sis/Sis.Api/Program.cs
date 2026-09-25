@@ -88,6 +88,7 @@ builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client =
 builder.Services.AddScoped<SisSeeder>();
 builder.Services.AddScoped<AcademicService>();
 builder.Services.AddScoped<StudentService>();
+builder.Services.AddScoped<PortalService>();
 builder.Services.AddScoped<ExamService>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();

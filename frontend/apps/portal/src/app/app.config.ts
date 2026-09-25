@@ -11,6 +11,7 @@ import {
   resolveApiBaseUrl,
 } from '@bill-book/api-client';
 import { authInterceptor } from '@bill-book/auth';
+import { portalTokenInterceptor } from './portal-token.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -21,6 +22,7 @@ export const appConfig: ApplicationConfig = {
     // Portal had no base-url interceptor at all, so a split deployment would
     // have sent every call to the CDN serving the bundle.
     { provide: API_BASE_URL, useValue: resolveApiBaseUrl('') },
-    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor])),
+    // The portal token goes last, so on /api/portal/ it is the one sent (TK-69).
+    provideHttpClient(withInterceptors([apiBaseUrlInterceptor, authInterceptor, portalTokenInterceptor])),
   ],
 };

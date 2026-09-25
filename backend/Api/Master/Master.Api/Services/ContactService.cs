@@ -3,6 +3,7 @@ using Master.Entity.Models;
 using Master.Entity.TableEntities;
 using Master.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Apps;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Validation;
@@ -525,7 +526,7 @@ public sealed class ContactService
     /// Generates a long-lived secure statement URL for external contacts.
     /// Returns null if the contact does not exist.
     /// </summary>
-    public async Task<string?> GeneratePortalLinkAsync(long contactId, CancellationToken ct)
+    public async Task<string?> GeneratePortalLinkAsync(long contactId, App app, CancellationToken ct)
     {
         var exists = await _db.Contacts.AnyAsync(c => c.ContactId == contactId, ct);
         if (!exists)
@@ -537,7 +538,7 @@ public sealed class ContactService
         Guid customerId = _tenant.CustomerId ?? Guid.Empty;
         Guid orgId = _tenant.OrgId ?? Guid.Empty;
 
-        return _tokenService.CreatePortalToken(customerId, orgId, contactId);
+        return _tokenService.CreatePortalToken(customerId, orgId, contactId, app);
     }
 
     /// <summary>

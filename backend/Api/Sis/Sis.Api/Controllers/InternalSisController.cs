@@ -158,7 +158,8 @@ public sealed class InternalSisController : ControllerBase
                 && (request.SchoolClassId == null || se.SchoolClassId == request.SchoolClassId)
                 && (ids.Count == 0 || ids.Contains(en.EnrolmentId))
                 && (request.GuardianContactId == null
-                    || db.StudentGuardians.Any(g => g.StudentId == st.StudentId && g.ContactId == request.GuardianContactId))
+                    || db.StudentGuardians.Any(g => g.StudentId == st.StudentId && g.ContactId == request.GuardianContactId
+                        && (!request.PortalAccessOnly || g.HasPortalAccess)))
             orderby cl.SortOrder, se.Name, en.RollNo, st.FirstName
             select new
             {

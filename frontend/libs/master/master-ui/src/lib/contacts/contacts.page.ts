@@ -229,6 +229,9 @@ export class ContactsPage implements OnInit {
   protected readonly editorOpen = signal(false);
   protected readonly rolesOpen = signal(false);
   protected readonly editingId = signal<number | null>(null);
+
+  /** The last portal link made for the open contact: a customer's statement, or a guardian's parent portal from School (TK-69). */
+  protected readonly portalLink = signal<{ token: string; url: string | null } | null>(null);
   protected readonly tab = signal<Tab>('general');
   protected readonly uploading = signal(false);
 
@@ -394,6 +397,7 @@ export class ContactsPage implements OnInit {
 
   openAdd(): void {
     this.editingId.set(null);
+    this.portalLink.set(null);
     this.form = this.blank();
     this.addPerson();
     this.tab.set('general');
@@ -416,6 +420,7 @@ export class ContactsPage implements OnInit {
         attachments: detail.attachments ?? [],
       };
       this.editingId.set(row.contactId);
+      this.portalLink.set(null);
       this.tab.set('general');
       this.editorOpen.set(true);
     } catch {
@@ -801,6 +806,21 @@ export class ContactsPage implements OnInit {
       await this.load();
     } catch (err: unknown) {
       this.fail(this.messageOf(err, 'Could not create the sub-accounts.'));
+    } finally {
+      this.busy.set(false);
+    }
+  }
+
+  /** Makes a portal link for the open contact. From School it opens the parent portal (TK-69). */
+  async makePortalLink(): Promise<void> {
+    const id = this.editingId();
+    if (id === null) return;
+    this.busy.set(true);
+    try {
+      this.portalLink.set(await this.send<{ token: string; url: string | null }>('POST', `/api/contacts/${id}/portal-link`, {}));
+      this.succeed('Portal link made. It is valid for 30 days.');
+    } catch (err: unknown) {
+      this.fail(this.messageOf(err, 'Could not make a portal link.'));
     } finally {
       this.busy.set(false);
     }

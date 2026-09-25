@@ -4,6 +4,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Shared.Kernel.Apps;
+using Shared.Kernel.Internal;
 
 namespace Master.Api.Services;
 
@@ -122,7 +124,7 @@ public sealed class JwtTokenService : ITokenService
         return (token, HashUtil.Sha256(token), expires);
     }
 
-    public string CreatePortalToken(Guid customerId, Guid orgId, long contactId)
+    public string CreatePortalToken(Guid customerId, Guid orgId, long contactId, App app = App.RetailErp)
     {
         var claims = new List<Claim>
         {
@@ -131,6 +133,14 @@ public sealed class JwtTokenService : ITokenService
             new("contact_id", contactId.ToString()),
             new("portal_access", "true")
         };
+
+        // A RetailErp token keeps its old shape, with no app claim, which reads as
+        // RetailErp. Any other app is named, so its portal routes accept the token
+        // and RetailErp's statement route refuses it (TK-69).
+        if (app != App.RetailErp)
+        {
+            claims.Add(new Claim(RequireAppAttribute.ClaimType, app.ToString()));
+        }
 
         // Portal tokens can live longer (e.g. 30 days) to allow contacts to use the link.
         return Write(claims, _clock.GetUtcNow().AddDays(30));

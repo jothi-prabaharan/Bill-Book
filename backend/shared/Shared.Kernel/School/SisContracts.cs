@@ -132,6 +132,9 @@ public sealed class EnrolmentQueryRequest
 
     /// <summary>A guardian's children, for the parent portal (S9).</summary>
     public long? GuardianContactId { get; set; }
+
+    /// <summary>With <see cref="GuardianContactId"/>: only children whose link to that guardian grants portal access (TK-69).</summary>
+    public bool PortalAccessOnly { get; set; }
 }
 
 public sealed class EnrolmentInfo

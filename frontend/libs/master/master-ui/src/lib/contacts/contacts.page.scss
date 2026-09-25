@@ -4,3 +4,15 @@
 
 /* Contacts uses 3-column fields layout for the wider form. */
 .fields { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+// A portal link made for the open contact (TK-69): read-only, selected on focus to copy.
+.portal-link {
+  display: grid;
+  gap: var(--space-1, 4px);
+  margin-top: var(--space-3, 12px);
+
+  input {
+    width: 100%;
+    font: inherit;
+  }
+}

@@ -361,3 +361,56 @@ public sealed class RollEntry
 
     public int? RollNo { get; set; }
 }
+
+// ---- Parent portal (S9, TK-69) ------------------------------------------------
+
+/// <summary>One of a guardian's children, as the parent portal shows them.</summary>
+public sealed class PortalChildView
+{
+    public long StudentId { get; set; }
+
+    public string StudentName { get; set; } = null!;
+
+    public string AdmissionNo { get; set; } = null!;
+
+    /// <summary>The latest enrolment's class and section, e.g. <c>VI</c> and <c>A</c>; null when never enrolled.</summary>
+    public string? ClassName { get; set; }
+
+    public string? SectionName { get; set; }
+
+    public string? AcademicYearCode { get; set; }
+
+    public bool IsActive { get; set; }
+}
+
+/// <summary>A published exam's marks for one child.</summary>
+public sealed class PortalExamView
+{
+    public long ExamId { get; set; }
+
+    public string ExamName { get; set; } = null!;
+
+    public string AcademicYearCode { get; set; } = null!;
+
+    public DateOnly StartDate { get; set; }
+
+    public DateOnly EndDate { get; set; }
+
+    public List<PortalMarkView> Subjects { get; set; } = [];
+}
+
+public sealed class PortalMarkView
+{
+    public string SubjectName { get; set; } = null!;
+
+    public decimal MaxMarks { get; set; }
+
+    public decimal PassMarks { get; set; }
+
+    /// <summary>Null when not entered or absent.</summary>
+    public decimal? Marks { get; set; }
+
+    public bool IsAbsent { get; set; }
+
+    public bool Passed { get; set; }
+}

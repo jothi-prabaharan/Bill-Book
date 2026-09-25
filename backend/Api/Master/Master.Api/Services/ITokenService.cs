@@ -1,3 +1,5 @@
+using Shared.Kernel.Apps;
+
 namespace Master.Api.Services;
 
 public interface ITokenService
@@ -14,8 +16,12 @@ public interface ITokenService
     /// <summary>A new opaque refresh token plus its SHA-256 hash and expiry.</summary>
     (string Token, string Hash, DateTimeOffset ExpiresAt) CreateRefreshToken();
 
-    /// <summary>A long-lived secure token for external contacts to view their statements.</summary>
-    string CreatePortalToken(Guid customerId, Guid orgId, long contactId);
+    /// <summary>
+    /// A long-lived secure token for external contacts: a RetailErp customer's
+    /// statements, or a School guardian's parent portal (TK-69). The token names
+    /// <paramref name="app"/> so the School routes accept it and RetailErp's refuse it.
+    /// </summary>
+    string CreatePortalToken(Guid customerId, Guid orgId, long contactId, App app = App.RetailErp);
 }
 
 public sealed class AccessTokenRequest

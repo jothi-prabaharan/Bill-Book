@@ -24,7 +24,7 @@ School comes with these roles. As with every app, a role belongs to School alone
 
 ## Guardians
 
-A student's parent or guardian is a **contact**. It is the same contact master RetailErp uses, so a guardian can receive fee demands and pay them. Tick **Guardian** on the contact, and use the **Guardians** filter to list only guardians. Guardian contacts are numbered like customers.
+A student's parent or guardian is a **contact**, and can be given a link to the [parent portal](#parent-portal). It is the same contact master RetailErp uses, so a guardian can receive fee demands and pay them. Tick **Guardian** on the contact, and use the **Guardians** filter to list only guardians. Guardian contacts are numbered like customers.
 
 The Guardian checkbox and filter appear only in the School app. A student is not a contact; students are recorded under Students.
 
@@ -143,6 +143,21 @@ A contract starts as a **draft**. List the assets it covers, then **Activate** i
 **Record visit** logs each visit, scheduled or for a breakdown, on a day within the contract. A visit for a covered asset can **raise a work order** for the vendor to attend, which appears on the **Work orders** screen. Pressing it twice raises one.
 
 **Renewal reminders.** Set how many days before the end date to be reminded, and the email address to write to. Once a day, each active contract inside that window gets one reminder email, sent from the branch's mailbox. A contract with no reminder address gets none.
+
+## Parent portal
+
+Guardians can see their children's school record on the parent portal, without a staff login.
+
+**Giving a guardian access.** Open the guardian's contact in the School app and press **Portal link**. Send the link to the guardian; it is valid for 30 days. A link made in the School app opens the parent portal, and one made in RetailErp opens a customer's statement. On a student's record, a guardian sees the child only when **portal access** is ticked for them, so a second guardian can be kept off the portal.
+
+**What a guardian sees:**
+
+| Page | What is on it |
+|---|---|
+| **Home** | Each child with their class and section. The fees raised to the guardian, with what is still owed on each, and the payments they have made, with the demands each one settled and anything kept as an advance. |
+| **A child** | A month of attendance, day by day, with a count of each mark and the share of school days attended. The marks of every **published** or **locked** exam, subject by subject, with the pass mark. |
+
+Only posted demands and receipts appear. Drafts and voided documents do not. Fees are raised to a student's primary guardian, so only that guardian sees them. Marks appear once an exam is published, never while teachers are still entering them.
 
 ## Exams and marks
 

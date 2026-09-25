@@ -1,0 +1,64 @@
+<main class="portal">
+  <h1>Parent portal</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  } @else if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  } @else {
+    <section aria-labelledby="children-title">
+      <h2 id="children-title">Your children</h2>
+      <div class="cards">
+        @for (child of children(); track child.studentId) {
+          <a class="card" [routerLink]="['/school/children', child.studentId]">
+            <strong>{{ child.studentName }}</strong>
+            <span class="muted">{{ child.admissionNo }}</span>
+            @if (child.className) {
+              <span>Class {{ child.className }}{{ child.sectionName ? ' - ' + child.sectionName : '' }} · {{ child.academicYearCode }}</span>
+            }
+            <span class="link">Attendance and marks</span>
+          </a>
+        } @empty {
+          <p class="muted">No children are linked to you yet. Ask the school office.</p>
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="fees-title">
+      <h2 id="fees-title">Fees</h2>
+      <p class="total">Outstanding: <strong>{{ due() | number: '1.2-2' }}</strong></p>
+      @for (d of demands(); track d.feeDemandId) {
+        <article class="row" [class.settled]="d.balance === 0">
+          <div>
+            <strong>{{ d.demandNo }}</strong> · {{ childName(d.studentId) }} · {{ d.periodKey }}
+            <div class="muted">Due {{ d.dueDate }} · {{ d.lines.length }} item(s)@if (d.concessionAmount > 0) { · concession {{ d.concessionAmount | number: '1.2-2' }} }</div>
+          </div>
+          <div class="amount">
+            {{ d.netAmount | number: '1.2-2' }}
+            <div class="muted">{{ d.balance === 0 ? 'Paid' : 'Balance ' + (d.balance | number: '1.2-2') }}</div>
+          </div>
+        </article>
+      } @empty {
+        <p class="muted">No fees have been raised to you.</p>
+      }
+    </section>
+
+    <section aria-labelledby="receipts-title">
+      <h2 id="receipts-title">Payments</h2>
+      @for (r of receipts(); track r.feeReceiptId) {
+        <article class="row">
+          <div>
+            <strong>{{ r.receiptNo }}</strong> · {{ r.receiptDate }} · {{ r.paymentMode }}
+            <div class="muted">
+              {{ r.demandNos.length ? 'Settled ' + r.demandNos.join(', ') : 'Held as advance' }}
+              @if (r.unallocatedAmount > 0 && r.demandNos.length) { · {{ r.unallocatedAmount | number: '1.2-2' }} held as advance }
+            </div>
+          </div>
+          <div class="amount">{{ r.amount | number: '1.2-2' }}</div>
+        </article>
+      } @empty {
+        <p class="muted">No payments yet.</p>
+      }
+    </section>
+  }
+</main>

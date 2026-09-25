@@ -1,0 +1,57 @@
+<main class="portal">
+  <a routerLink="/school" class="link">← Back</a>
+  <h1>{{ child()?.studentName ?? 'Your child' }}</h1>
+  @if (child(); as c) {
+    <p class="muted">{{ c.admissionNo }}@if (c.className) { · Class {{ c.className }}{{ c.sectionName ? ' - ' + c.sectionName : '' }} }</p>
+  }
+
+  @if (error()) {
+    <p class="error" role="alert">{{ error() }}</p>
+  }
+
+  <section aria-labelledby="attendance-title">
+    <h2 id="attendance-title">Attendance</h2>
+    <label class="field">
+      <span>Month</span>
+      <input type="month" [(ngModel)]="month" (change)="loadMonth()" />
+    </label>
+    @if (attendance(); as a) {
+      <p>
+        @if (percent() !== null) { <strong>{{ percent() }}%</strong> · }
+        Present {{ a.present }} · Absent {{ a.absent }} · Late {{ a.late }} · Half day {{ a.halfDay }} · Leave {{ a.leave }} · Holiday {{ a.holiday }}
+      </p>
+      <ul class="days">
+        @for (d of a.days; track d.attendanceDate) {
+          <li [class]="'day ' + d.attendanceStatus.toLowerCase()">
+            {{ d.attendanceDate.slice(8) }} · {{ d.attendanceStatus }}@if (d.remarks) { · {{ d.remarks }} }
+          </li>
+        } @empty {
+          <li class="muted">No attendance taken this month.</li>
+        }
+      </ul>
+    }
+  </section>
+
+  <section aria-labelledby="marks-title">
+    <h2 id="marks-title">Marks</h2>
+    @for (exam of exams(); track exam.examId) {
+      <article class="exam">
+        <h3>{{ exam.examName }} <span class="muted">· {{ exam.academicYearCode }}</span></h3>
+        <table>
+          <thead><tr><th scope="col">Subject</th><th scope="col">Marks</th><th scope="col">Result</th></tr></thead>
+          <tbody>
+            @for (s of exam.subjects; track s.subjectName) {
+              <tr>
+                <td>{{ s.subjectName }}</td>
+                <td>{{ s.isAbsent ? 'Absent' : (s.marks ?? '—') }} / {{ s.maxMarks }}</td>
+                <td>{{ s.isAbsent ? '—' : (s.passed ? 'Pass' : 'Below pass (' + s.passMarks + ')') }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </article>
+    } @empty {
+      <p class="muted">No results published yet.</p>
+    }
+  </section>
+</main>

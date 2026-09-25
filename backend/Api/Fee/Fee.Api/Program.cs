@@ -102,6 +102,7 @@ builder.Services.AddScoped<ICallerPermissions, HttpCallerPermissions>();
 builder.Services.AddScoped<FeeSetupService>();
 builder.Services.AddScoped<DemandService>();
 builder.Services.AddScoped<ReceiptService>();
+builder.Services.AddScoped<PortalFeeService>();
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
