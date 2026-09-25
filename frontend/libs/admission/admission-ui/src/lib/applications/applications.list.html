@@ -1,0 +1,19 @@
+<header class="page-head">
+  <h1>Applications</h1>
+  <button *bbIfCan="'admission.create'" type="button" class="btn btn-primary" (click)="add()">+ New application</button>
+</header>
+
+<div class="fields">
+  <bb-select label="Stage" placeholder="Every stage" [options]="stageOptions" [(ngModel)]="stage" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'ADM_APPLICATIONS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="applicationNo" let-row>
+    <button type="button" class="link" (click)="open(row)"><code>{{ row.applicationNo }}</code></button>
+  </ng-template>
+  <ng-template bbCellTemplate="childFirstName" let-row>{{ row.childFirstName }} {{ row.childLastName ?? '' }}</ng-template>
+  <ng-template bbCellTemplate="applicationStage" let-row>{{ label(row.applicationStage) }}</ng-template>
+  <ng-template bbCellTemplate="admissionNo" let-row>{{ row.admissionNo ?? '—' }}</ng-template>
+</bb-data-grid>

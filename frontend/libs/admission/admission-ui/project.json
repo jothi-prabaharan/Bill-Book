@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "admission-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/admission/admission-ui/src",
+  "tags": [
+    "scope:admission",
+    "type:ui"
+  ],
+  "targets": {}
+}

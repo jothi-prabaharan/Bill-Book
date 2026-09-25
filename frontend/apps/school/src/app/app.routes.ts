@@ -11,6 +11,7 @@ import { shellRoutes } from '@bill-book/app-shell';
 import { hrmRoutes } from '@bill-book/hrm-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { sisRoutes } from '@bill-book/sis-ui';
+import { admissionRoutes } from '@bill-book/admission-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -42,6 +43,8 @@ export const appRoutes: Routes = [
       ...hrmRoutes,
       // Students, academic setup, exams and marks (S1, TK-61).
       ...sisRoutes,
+      // Enquiries, applications and admitting (S2, TK-62).
+      ...admissionRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

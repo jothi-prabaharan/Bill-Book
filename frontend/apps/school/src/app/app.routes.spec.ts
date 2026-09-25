@@ -23,6 +23,7 @@ describe('apps/school routes', () => {
     expect(paths.some((p) => p.startsWith('hrm'))).toBe(true);
     expect(paths).toContain('contacts');
     expect(paths).toContain('sis/students');
+    expect(paths).toContain('admission/applications');
   });
 });
 

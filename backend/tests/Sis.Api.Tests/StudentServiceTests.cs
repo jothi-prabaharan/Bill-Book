@@ -40,6 +40,9 @@ internal sealed class FakeContacts : IContactDirectory
         IReadOnlyDictionary<long, ContactSummary> found = ids.Where(Known.ContainsKey).Distinct().ToDictionary(id => id, id => Known[id]);
         return Task.FromResult(found);
     }
+
+    public Task<EnsureGuardianResponse> EnsureGuardianAsync(string displayName, string mobileNumber, string? email, CancellationToken ct) =>
+        throw new NotSupportedException("Sis never creates guardians.");
 }
 
 internal sealed class AprilYear : IFinancialYearProvider

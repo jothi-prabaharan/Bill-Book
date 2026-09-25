@@ -36,10 +36,39 @@ public sealed class ContactSummary
     public bool IsActive { get; set; }
 }
 
+/// <summary>
+/// A guardian to find or create (School admissions, TK-62): the same mobile
+/// number finds the same guardian, so a parent admitting a second child, or an
+/// admit retried after a lost reply, never makes a second contact.
+/// </summary>
+public sealed class EnsureGuardianRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public string DisplayName { get; set; } = null!;
+
+    public string MobileNumber { get; set; } = null!;
+
+    public string? Email { get; set; }
+}
+
+public sealed class EnsureGuardianResponse
+{
+    public long ContactId { get; set; }
+
+    /// <summary>False when an existing guardian with that mobile number was found.</summary>
+    public bool Created { get; set; }
+}
+
 public interface IContactDirectory
 {
     /// <summary>The contacts among <paramref name="ids"/> in the current branch. Throws when Master cannot be asked.</summary>
     Task<IReadOnlyDictionary<long, ContactSummary>> FindAsync(IEnumerable<long> ids, CancellationToken ct);
+
+    /// <summary>The guardian with this mobile number, created when there is none. Throws when Master cannot be asked or refuses.</summary>
+    Task<EnsureGuardianResponse> EnsureGuardianAsync(string displayName, string mobileNumber, string? email, CancellationToken ct);
 }
 
 /// <summary>Asks Master over the internal key, naming the branch in the body.</summary>
@@ -72,5 +101,21 @@ public sealed class HttpContactDirectory : IContactDirectory
 
         List<ContactSummary> found = await response.Content.ReadFromJsonAsync<List<ContactSummary>>(ct) ?? [];
         return found.ToDictionary(c => c.ContactId);
+    }
+
+    public async Task<EnsureGuardianResponse> EnsureGuardianAsync(string displayName, string mobileNumber, string? email, CancellationToken ct)
+    {
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/contacts/guardians/ensure", new EnsureGuardianRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+            DisplayName = displayName,
+            MobileNumber = mobileNumber,
+            Email = email,
+        }, ct);
+        response.EnsureSuccessStatusCode();
+
+        return await response.Content.ReadFromJsonAsync<EnsureGuardianResponse>(ct)
+            ?? throw new HttpRequestException("Master answered without a contact.");
     }
 }

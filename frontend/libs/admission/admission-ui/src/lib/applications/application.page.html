@@ -1,0 +1,95 @@
+<header class="page-head">
+  <h1>{{ application()?.applicationNo ?? 'New application' }}</h1>
+  <a routerLink="/admission/applications" class="btn btn-ghost">Back to applications</a>
+</header>
+
+<bb-message-box [messages]="messages()" />
+
+@if (application(); as a) {
+  <p class="muted">
+    Stage: <strong>{{ label(a.applicationStage) }}</strong>
+    @if (a.admissionNo) {
+      · Admitted as <strong>{{ a.admissionNo }}</strong>
+    }
+  </p>
+}
+
+<section class="sheet" aria-labelledby="app-child">
+  <h2 id="app-child">Child</h2>
+  <div class="fields">
+    <bb-date-input label="Application date" [(ngModel)]="form.applicationDate" [disabled]="isClosed()" />
+    <bb-text-input label="First name" [(ngModel)]="form.childFirstName" maxlength="100" [required]="true" [disabled]="isClosed()" />
+    <bb-text-input label="Last name" [(ngModel)]="form.childLastName" maxlength="100" [disabled]="isClosed()" />
+    <bb-date-input label="Date of birth" [(ngModel)]="form.dateOfBirth" [required]="true" [disabled]="isClosed()" />
+    <bb-select label="Gender" [options]="genders" [(ngModel)]="form.childGender" [clearable]="false" [disabled]="isClosed()" />
+    <bb-select label="School year" [options]="years()" [(ngModel)]="form.academicYearId" [clearable]="false" [disabled]="isClosed()" />
+    <bb-select label="Class sought" [options]="classes()" [(ngModel)]="form.seekingClassId" [clearable]="false" [disabled]="isClosed()" />
+    <bb-money-input label="Application fee" hint="Collected as a fee receipt." [(ngModel)]="form.applicationFee" [disabled]="isClosed()" />
+  </div>
+</section>
+
+<section class="sheet" aria-labelledby="app-guardian">
+  <h2 id="app-guardian">Guardian</h2>
+  <p class="muted">On admission the guardian becomes a contact. A guardian already on file with the same mobile number is reused.</p>
+  <div class="fields">
+    <bb-text-input label="Name" [(ngModel)]="form.guardianName" maxlength="200" [required]="true" [disabled]="isClosed()" />
+    <bb-phone-input label="Mobile" [(ngModel)]="form.guardianPhone" [required]="true" [disabled]="isClosed()" />
+    <bb-email-input label="Email" [(ngModel)]="form.guardianEmail" [disabled]="isClosed()" />
+    <bb-select label="Relationship" [options]="relationships" [(ngModel)]="form.guardianRelationship" [clearable]="false" [disabled]="isClosed()" />
+  </div>
+</section>
+
+<section class="sheet" aria-labelledby="app-documents">
+  <h2 id="app-documents">Documents</h2>
+  <div class="rows">
+    @for (d of form.documents; track $index; let i = $index) {
+      <div class="row">
+        <bb-select label="Document" [options]="documentKinds" [(ngModel)]="d.documentKind" [clearable]="false" [disabled]="isClosed()" />
+        <bb-text-input label="Remarks" [(ngModel)]="d.remarks" maxlength="200" [disabled]="isClosed()" />
+        <bb-checkbox text="Verified" [(ngModel)]="d.isVerified" [disabled]="isClosed()" />
+        @if (!isClosed()) {
+          <button type="button" class="link" (click)="removeDocument(i)">Remove</button>
+        }
+      </div>
+    }
+  </div>
+  @if (!isClosed()) {
+    <button type="button" class="btn btn-ghost" (click)="addDocument()">+ Add document</button>
+  }
+</section>
+
+@if (!isClosed()) {
+  <div class="sheet-actions">
+    <button *bbIfCan="application() ? 'admission.edit' : 'admission.create'" type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">
+      Save
+    </button>
+  </div>
+}
+
+@if (moves().length > 0) {
+  <section *bbIfCan="'admission.edit'" class="sheet" aria-labelledby="app-stage">
+    <h2 id="app-stage">Stage</h2>
+    <div class="fields">
+      <bb-number-input label="Assessment score" hint="Needed to mark the application assessed." [(ngModel)]="score" />
+    </div>
+    <div class="sheet-actions">
+      @for (to of moves(); track to) {
+        <button type="button" class="btn btn-ghost" (click)="move(to)" [disabled]="busy()">{{ label(to) }}</button>
+      }
+    </div>
+  </section>
+}
+
+@if (admittable()) {
+  <section *bbIfCan="'admission.approve'" class="sheet" aria-labelledby="app-admit">
+    <h2 id="app-admit">Admit</h2>
+    <div class="fields">
+      <bb-date-input label="Admission date" [(ngModel)]="admit.admissionDate" [required]="true" />
+      <bb-select label="Enrol in section" placeholder="Enrol later" [options]="sections()" [(ngModel)]="admit.sectionId" />
+      <bb-number-input label="Roll number" [(ngModel)]="admit.rollNo" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-primary" (click)="doAdmit()" [disabled]="busy()">Admit</button>
+    </div>
+  </section>
+}

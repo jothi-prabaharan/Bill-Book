@@ -1,6 +1,6 @@
 # School
 
-**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams and marks are built. Admissions, attendance, fees and maintenance are added as each stage is built.
+**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks and admissions are built. Attendance, fees and maintenance are added as each stage is built.
 
 School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
 
@@ -49,6 +49,31 @@ The Guardian checkbox and filter appear only in the School app. A student is not
 - The APAAR or Aadhaar number is hidden on the list except its last four characters.
 
 The list shows the current year's class, section and roll number. Choose a section to see its roll.
+
+## Admissions
+
+**Students › Enquiries** records a parent asking about a seat: the child, the class sought, the school year, the parent's name and phone, and where they heard of the school. An enquiry to follow up needs a follow-up date. **Make application** turns an enquiry into an application, filled in from it. An enquiry that goes no further is marked **Lost**.
+
+**Students › Applications** lists every application. An application is numbered from the **APL** series (APL/2627/00001), which restarts each financial year. It holds the child, the guardian (name, mobile, email and relationship) and the documents received. It moves through these stages:
+
+| Stage | How it is reached |
+|---|---|
+| **Submitted** | When the application is saved. |
+| **Documents verified** | Every document recorded is ticked **Verified**. |
+| **Assessed** | With the assessment score. A school that does not assess can skip this stage. |
+| **Offered** | A seat is offered. |
+| **Admitted** | Only by **Admit**, below. |
+| **Rejected** or **Withdrawn** | From any stage before Admitted. |
+
+An admitted, rejected or withdrawn application can no longer be changed.
+
+**Admit** is on an offered application, and needs *Admission: approve*. It:
+
+1. makes the guardian a guardian contact. If a guardian with the same mobile number is already on file, that contact is reused, so a parent of two children has one contact;
+2. makes the child a student, numbered from the ADM series, with that guardian as primary;
+3. enrols the student in a section of the class sought, if you choose one.
+
+Admit can safely be pressed again, for example after a network error: it never makes a second student or a second guardian.
 
 ## Exams and marks
 

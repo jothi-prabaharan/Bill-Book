@@ -2539,15 +2539,23 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - Owner step: run `Sis.Api.Tests` with `SIS_TEST_DB` from a dropped database. `Sis` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Lanes:** L-ADMN (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `Enquiry`, `Application`, `ApplicationDocument`.
 - **Sub-tasks:**
-  - [ ] Enquiry → application → `admit`.
-  - [ ] Admit creates the student through Sis's API and the guardian through Master's API, both
+  - [x] Enquiry → application → `admit`.
+  - [x] Admit creates the student through Sis's API and the guardian through Master's API, both
         idempotently.
 - **Done when:** admitting twice creates one student.
 - **Notes:**
+  - **As built (2026-09-25):**
+    - `backend/Api/Admission` (schema `adm`, port 4516, gateway `/api/admission/**`): `Enquiry`, `Application`, `ApplicationDocument`; migration `InitialAdmissionSchema` with RLS on all four tables; seeds the `APL` series (yearly). Seeded for School branches after Sis.
+    - **`Application` gains guardian columns** (name, mobile, email, relationship, `GuardianContactId`) plus `ChildGender` and `AdmissionNo`, which the design lacks: admit has to make a guardian, and an application need not come from an enquiry.
+    - Stages move forward to Offered (skipping allowed), to Rejected/Withdrawn from any open stage, and to Admitted only through admit. DocumentsVerified needs every recorded document verified; Assessed needs a score.
+    - **Admit** is idempotent end to end: the guardian through Master's new `internal/contacts/guardians/ensure` (matched on mobile number, created with `IsGuardian` and its sub-ledger otherwise), the student through Sis's new `internal/sis/students/admit` (keyed on `SourceApplicationId`, TK-61). An admitted application returns its student again. Sis's `internal/sis/academic-check` validates year, class and section ids for both services. Contracts in `Shared.Kernel.School` and `Shared.Kernel.Contacts`.
+    - `libs/admission/{admission-core, admission-ui}`: enquiries, applications list, application record with stage moves and Admit; mounted in `apps/school`; menus 1114–1115 switched on (migration `AdmissionMenus`).
+    - Tests: `Admission.Api.Tests` (`AdmitTests`, including *Done when* "admitting twice creates one student", a retry after a failure halfway, siblings sharing a guardian; `ApplicationStageTests`; schema, RLS and guard audits); `admission-rules.spec.ts`; `admission.routes.spec.ts`.
+    - Owner step: run `Admission.Api.Tests` with `ADMISSION_TEST_DB` from a dropped database, and admit one application end to end with Master and Sis running.
 
 ### TK-63 · S3: Student attendance (`att`, port 4517)
 - [ ] open
