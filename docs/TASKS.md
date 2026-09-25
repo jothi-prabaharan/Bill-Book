@@ -2469,6 +2469,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - the self-evaluation is unchanged after every level acts;
   - a manager who is also the lead is asked only once.
 - **Notes:**
+  - **Note from Claude Opus 5.5 (2026-09-25):** the `recruitment` and `performance` permission rows TK-57 appended had no admin migration, so Master would have refused to start on a new database (`PendingModelChangesWarning`, the TK-70 failure). Migration `RecruitmentPerformancePermissions` now inserts them. Do not add them again; run `dotnet ef migrations has-pending-model-changes` for `AdminDbContext` after any change to `PermissionModules` or `MenuSeed`.
 
 ### TK-59 · H12: HRMS and Payroll reports
 - [ ] open
