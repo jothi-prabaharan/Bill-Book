@@ -181,6 +181,12 @@ as #2 to #13.)
 - **Close it as completed** when the card is done. `Closes #N` in a commit on `main` does that;
   if it didn't (a merge, a typo), close it by hand. A card handed back open keeps its issue open,
   with the `Handover:` line copied into a comment.
+- **Opening an issue for a card that is already completed** — the retrospective case, done for
+  TK-01 to TK-80 on 25 September — never closes on its own. A `create` call's `state` argument is
+  ignored by GitHub: every new issue opens regardless of what's passed. Close it with a separate
+  `update` call (`state: closed`, `state_reason: completed`) right after creating it, in the same
+  batch of work. Check the issue actually reads closed before moving on — 64 were opened already
+  completed on 25 September and stayed open until this was caught and every one closed by hand.
 - **A commit already pushed without the reference is never rewritten** to add one — `main` is
   never force-pushed. Comment on the issue with the missing commit id instead.
 - A decision (section 3) doesn't get an issue; the card it blocks carries it.
