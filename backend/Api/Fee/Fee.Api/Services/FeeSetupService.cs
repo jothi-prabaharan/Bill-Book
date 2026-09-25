@@ -19,10 +19,10 @@ public sealed class FeeSetupService
 
     private readonly FeeDbContext _db;
     private readonly IAccountDirectory _accounts;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly ILogger<FeeSetupService> _log;
 
-    public FeeSetupService(FeeDbContext db, IAccountDirectory accounts, ISisClient sis, ILogger<FeeSetupService> log)
+    public FeeSetupService(FeeDbContext db, IAccountDirectory accounts, IStudentClient sis, ILogger<FeeSetupService> log)
     {
         _db = db;
         _accounts = accounts;

@@ -62,8 +62,8 @@ public sealed class SelfServicePayrollTests
         db.Payslips.Add(slip);
         await db.SaveChangesAsync();
 
-        var fakeHrm = new FakeHrmClient();
-        fakeHrm.AddEmployee(new EmployeeProfile
+        var fakeEmployee = new FakeEmployeeClient();
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = empId,
             UserId = empUserId,
@@ -75,7 +75,7 @@ public sealed class SelfServicePayrollTests
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
         var taxService = new TaxCalculationService(db);
 
-        var meController = new MePayrollController(db, currentUser, tenant, fakeHrm, taxService);
+        var meController = new MePayrollController(db, currentUser, tenant, fakeEmployee, taxService);
 
         var result = await meController.DownloadPayslip(slip.PayslipId, default);
         var contentResult = Assert.IsType<ContentResult>(result);
@@ -121,8 +121,8 @@ public sealed class SelfServicePayrollTests
         db.Payslips.Add(otherSlip);
         await db.SaveChangesAsync();
 
-        var fakeHrm = new FakeHrmClient();
-        fakeHrm.AddEmployee(new EmployeeProfile
+        var fakeEmployee = new FakeEmployeeClient();
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = empId,
             UserId = empUserId,
@@ -134,7 +134,7 @@ public sealed class SelfServicePayrollTests
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
         var taxService = new TaxCalculationService(db);
 
-        var meController = new MePayrollController(db, currentUser, tenant, fakeHrm, taxService);
+        var meController = new MePayrollController(db, currentUser, tenant, fakeEmployee, taxService);
 
         // Attempting to access other employee's payslip must yield 404 NotFound
         var result = await meController.GetPayslipDetail(otherSlip.PayslipId, default);
@@ -150,15 +150,15 @@ public sealed class SelfServicePayrollTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         var emptyUser = new FakeCurrentUser(null);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var fakeHrm = new FakeHrmClient();
+        var fakeEmployee = new FakeEmployeeClient();
 
-        var meController = new MePayrollController(null!, emptyUser, tenant, fakeHrm, null!);
+        var meController = new MePayrollController(null!, emptyUser, tenant, fakeEmployee, null!);
 
         var result = await meController.GetPayslips(default);
         Assert.IsType<NotFoundObjectResult>(result);
     }
 
-    private sealed class FakeHrmClient : IHrmClient
+    private sealed class FakeEmployeeClient : IEmployeeClient
     {
         private readonly List<EmployeeProfile> _employees = [];
 

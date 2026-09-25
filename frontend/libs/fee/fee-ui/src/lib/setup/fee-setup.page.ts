@@ -13,7 +13,7 @@ import {
   SaveConcession,
   SaveFeeStructure,
 } from '@bill-book/fee-core';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 import {
   BbSelectOption,
   CheckboxComponent,
@@ -57,7 +57,7 @@ type Tab = 'heads' | 'structures' | 'concessions';
 })
 export class FeeSetupPage implements OnInit {
   private readonly api = inject(FeeApiService);
-  private readonly sis = inject(SisApiService);
+  private readonly studentApi = inject(StudentApiService);
 
   protected readonly tabs: readonly { tab: Tab; label: string }[] = [
     { tab: 'heads', label: 'Fee heads' },
@@ -222,9 +222,9 @@ export class FeeSetupPage implements OnInit {
         this.api.structures(),
         this.api.concessions(),
         this.api.postableAccounts(),
-        this.sis.years(),
-        this.sis.classes(),
-        this.sis.students({ status: 'Active' }),
+        this.studentApi.years(),
+        this.studentApi.classes(),
+        this.studentApi.students({ status: 'Active' }),
       ]);
       this.heads.set(heads);
       this.structures.set(structures);

@@ -63,7 +63,7 @@ public class ApprovalWorkflowLevel : OrgScopedEntity
     [Range(1, 10, ErrorMessage = "Reporting depth must be between 1 and 10.")]
     public int? ReportingDepth { get; set; }
 
-    /// <summary>For Relationship: Hrm's relationship type ("Lead").</summary>
+    /// <summary>For Relationship: Employee's relationship type ("Lead").</summary>
     public long? RelationshipTypeId { get; set; }
 
     /// <summary>For RoleHolder: any holder of this role in the branch.</summary>

@@ -15,7 +15,7 @@ using Shared.Kernel.School;
 using Shared.Kernel.Stock;
 using Shared.Kernel.Tenancy;
 
-// WorkOrder (S6, TK-66): work orders, their tasks and the parts issued from Inventory. Schema wrk, port 4520. The scaffold is Hrm's.
+// WorkOrder (S6, TK-66): work orders, their tasks and the parts issued from Inventory. Schema wrk, port 4520. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -83,7 +83,7 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
 builder.Services.AddScoped<WorkOrderSeeder>();
 builder.Services.AddScoped<WorkOrderService>();
 
-// Where the work is (Facility), who does it (Hrm), and the parts it uses (Inventory).
+// Where the work is (Facility), who does it (Employee), and the parts it uses (Inventory).
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
 {
     client.BaseAddress = new Uri(builder.Configuration["Facility:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4519");
@@ -91,7 +91,7 @@ builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IEmployeeDirectory, HttpEmployeeDirectory>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IStockClient, HttpStockClient>(client =>

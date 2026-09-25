@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "student-core",
+  "projectType": "library",
+  "sourceRoot": "libs/student/student-core/src",
+  "tags": [
+    "scope:student",
+    "type:core"
+  ],
+  "targets": {}
+}

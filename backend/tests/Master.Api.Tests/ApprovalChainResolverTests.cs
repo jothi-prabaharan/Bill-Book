@@ -8,7 +8,7 @@ namespace Master.Api.Tests;
 /// <summary>
 /// How Master turns a workflow into a chain (D-26, TK-99): which workflow
 /// applies, which levels the amount calls for, and the skip rules. All pure,
-/// so none of it needs a database or Hrm.
+/// so none of it needs a database or Employee.
 /// </summary>
 public sealed class ApprovalChainResolverTests
 {

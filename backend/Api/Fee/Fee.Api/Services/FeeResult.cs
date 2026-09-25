@@ -10,7 +10,7 @@ public enum FeeOutcome
     /// <summary>The document is not in a state that allows it: posted, void, or already paid against.</summary>
     StateRule = 5,
 
-    /// <summary>Sis, Master or Accounting could not be reached, or the base currency could not be read.</summary>
+    /// <summary>Student, Master or Accounting could not be reached, or the base currency could not be read.</summary>
     Unavailable = 6,
 
     /// <summary>Accounting refused the posting. The detail goes to the log, not to the caller.</summary>

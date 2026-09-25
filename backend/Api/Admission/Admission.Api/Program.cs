@@ -14,7 +14,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Admission (S2, TK-62): enquiries, applications and their documents, and admitting a student. Schema adm, port 4516. The scaffold is Hrm's.
+// Admission (S2, TK-62): enquiries, applications and their documents, and admitting a student. Schema adm, port 4516. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -78,15 +78,15 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Admitting calls Master for the guardian contact and Sis for the student.
+// Admitting calls Master for the guardian contact and Student for the student.
 builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client =>
 {
     client.BaseAddress = new Uri(MasterUrl(builder.Configuration));
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
-builder.Services.AddHttpClient<ISisClient, HttpSisClient>(client =>
+builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Sis:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
+    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

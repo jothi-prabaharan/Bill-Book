@@ -346,7 +346,7 @@ public sealed class PayrollServiceTests
         Assert.Equal(15000m, yearEndRecomputation.PreviousEmployerTds);
     }
 
-    private sealed class FakeHrmClient : IHrmClient
+    private sealed class FakeEmployeeClient : IEmployeeClient
     {
         public List<(long EmployeeId, DateOnly Lwd)> SettledEmployees { get; } = [];
 
@@ -383,7 +383,7 @@ public sealed class PayrollServiceTests
         await using PayrollDbContext db = _postgres.CreateContext(customerId, orgId);
 
         var ledger = new FakeLedgerClient();
-        var hrm = new FakeHrmClient();
+        var hrm = new FakeEmployeeClient();
         var master = new FakeMasterUserClient();
         var setup = new SalarySetupService(db);
         var fnfService = new FnfSettlementService(db, tenant, ledger, hrm, master);

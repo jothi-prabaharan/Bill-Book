@@ -8,7 +8,7 @@ import {
   authGuard,
 } from '@bill-book/auth';
 import { shellRoutes } from '@bill-book/app-shell';
-import { hrmRoutes } from '@bill-book/hrm-ui';
+import { employeeRoutes } from '@bill-book/employee-ui';
 import { payrollRoutes } from '@bill-book/payroll-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { HomePage } from './home/home.page';
@@ -32,7 +32,7 @@ export const appRoutes: Routes = [
       { path: 'dashboard', component: HomePage, data: { access: { signedIn: true } } },
       // The employee master and organisation setup (TK-48); the HRMS-only
       // pages among them name their app, and the shell refuses them elsewhere.
-      ...hrmRoutes,
+      ...employeeRoutes,
       ...payrollRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },

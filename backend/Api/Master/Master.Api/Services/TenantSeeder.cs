@@ -44,7 +44,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     private readonly ILogger<HttpTenantSeeder> _log;
 
     /// <summary>School's own services (S1 onward), in seeding order: each is added as its stage is built.</summary>
-    public static readonly string[] SchoolServices = ["Sis", "Admission", "Attendance", "Fee", "Facility", "WorkOrder", "Preventive", "Amc"];
+    public static readonly string[] SchoolServices = ["Student", "Admission", "Attendance", "Fee", "Facility", "WorkOrder", "Preventive", "MaintenanceContract"];
 
     // After SchoolServices, which it spreads: static fields initialise in order.
 
@@ -75,7 +75,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// too reads nothing the others write (TK-18).
     /// </summary>
     private static readonly string[] Services =
-        ["Accounting", "Hrm", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
+        ["Accounting", "Employee", "TimeLeave", "Payroll", .. SchoolServices, "Inventory", "Sales", "Purchase", "Reporting", "Printing", "Customer"];
 
     /// <summary>
     /// Which services a set of apps needs, in seeding order (H0.4, TK-45).
@@ -84,7 +84,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
     /// ledger and every app numbers its documents from Accounting's table.
     /// <b>Printing always</b>, because payslips and fee receipts are templates
     /// like invoices. The trading services are RetailErp's. HRMS, Payroll and
-    /// School add their own services here as they are built (TK-48 adds Hrm).
+    /// School add their own services here as they are built (TK-48 adds Employee).
     /// </summary>
     public static IReadOnlyList<string> ServicesFor(App apps)
     {
@@ -94,7 +94,7 @@ public sealed class HttpTenantSeeder : ITenantSeeder
         // series goes into Accounting's numbering table.
         if ((apps & (App.Hrms | App.Payroll | App.School)) != 0)
         {
-            wanted.Add("Hrm");
+            wanted.Add("Employee");
         }
 
         if (apps.HasFlag(App.Hrms))

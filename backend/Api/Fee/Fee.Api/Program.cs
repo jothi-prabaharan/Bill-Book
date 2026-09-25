@@ -15,7 +15,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Fee (S4, TK-64): fee heads, structures, concessions, demands, receipts and their allocation, posted to the ledger. Schema fee, port 4518. The scaffold is Hrm's.
+// Fee (S4, TK-64): fee heads, structures, concessions, demands, receipts and their allocation, posted to the ledger. Schema fee, port 4518. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -79,12 +79,12 @@ builder.Services.AddScoped<INumberGenerator>(sp => new NumberGenerator(
     sp.GetRequiredService<IOptions<NumberingOptions>>(),
     sp.GetRequiredService<IFinancialYearProvider>()));
 
-// Students and enrolments from Sis, guardians from Master, accounts and the
+// Students and enrolments from Student, guardians from Master, accounts and the
 // ledger from Accounting, the base currency from Master's org context.
 string accountingUrl = builder.Configuration["Accounting:BaseUrl"] is { Length: > 0 } acc ? acc : "http://localhost:4501";
-builder.Services.AddHttpClient<ISisClient, HttpSisClient>(client =>
+builder.Services.AddHttpClient<IStudentClient, HttpStudentClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Sis:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
+    client.BaseAddress = new Uri(builder.Configuration["Student:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4515");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IContactDirectory, HttpContactDirectory>(client => client.BaseAddress = new Uri(MasterUrl(builder.Configuration)))

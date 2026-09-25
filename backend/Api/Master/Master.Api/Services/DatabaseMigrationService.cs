@@ -290,7 +290,7 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<ContactsDbContext>(connectionString, tenant, "con", ct);
         await MigrateContextAsync<AccountingDbContext>(connectionString, tenant, "acc", ct);
         await MigrateContextAsync<CustomerDbContext>(connectionString, tenant, "cus", ct);
-        await MigrateContextAsync<Hrm.Repository.HrmDbContext>(connectionString, tenant, "hrm", ct);
+        await MigrateContextAsync<Employee.Repository.EmployeeDbContext>(connectionString, tenant, "hrm", ct);
         await MigrateContextAsync<InventoryDbContext>(connectionString, tenant, "inv", ct);
         await MigrateContextAsync<PurchaseDbContext>(connectionString, tenant, "pur", ct);
         await MigrateContextAsync<PrintingDbContext>(connectionString, tenant, "prt", ct);
@@ -298,14 +298,14 @@ public class DatabaseMigrationService : IHostedService
         await MigrateContextAsync<SalesDbContext>(connectionString, tenant, "sal", ct);
         await MigrateContextAsync<Payroll.Repository.PayrollDbContext>(connectionString, tenant, "pay", ct);
         await MigrateContextAsync<TimeLeave.Repository.TimeLeaveDbContext>(connectionString, tenant, "tla", ct);
-        await MigrateContextAsync<Sis.Repository.SisDbContext>(connectionString, tenant, "sis", ct);
+        await MigrateContextAsync<Student.Repository.StudentDbContext>(connectionString, tenant, "sis", ct);
         await MigrateContextAsync<Admission.Repository.AdmissionDbContext>(connectionString, tenant, "adm", ct);
         await MigrateContextAsync<Attendance.Repository.AttendanceDbContext>(connectionString, tenant, "att", ct);
         await MigrateContextAsync<Fee.Repository.FeeDbContext>(connectionString, tenant, "fee", ct);
         await MigrateContextAsync<Facility.Repository.FacilityDbContext>(connectionString, tenant, "fac", ct);
         await MigrateContextAsync<WorkOrder.Repository.WorkOrderDbContext>(connectionString, tenant, "wrk", ct);
         await MigrateContextAsync<Preventive.Repository.PreventiveDbContext>(connectionString, tenant, "ppm", ct);
-        await MigrateContextAsync<Amc.Repository.AmcDbContext>(connectionString, tenant, "amc", ct);
+        await MigrateContextAsync<MaintenanceContract.Repository.MaintenanceContractDbContext>(connectionString, tenant, "amc", ct);
     }
 
     /// <summary>

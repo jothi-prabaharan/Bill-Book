@@ -16,7 +16,7 @@ import {
   canAdmit,
   nextStages,
 } from '@bill-book/admission-core';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 import {
   BbSelectOption,
   CheckboxComponent,
@@ -61,7 +61,7 @@ import { academicOptions } from '../academic-options';
 })
 export class ApplicationPage implements OnInit {
   private readonly api = inject(AdmissionApiService);
-  private readonly sis = inject(SisApiService);
+  private readonly studentApi = inject(StudentApiService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -180,7 +180,7 @@ export class ApplicationPage implements OnInit {
 
   private async start(): Promise<void> {
     try {
-      const options = await academicOptions(this.sis);
+      const options = await academicOptions(this.studentApi);
       this.years.set(options.years);
       this.classes.set(options.classes);
       this.form.academicYearId = options.currentYearId ?? 0;
@@ -233,7 +233,7 @@ export class ApplicationPage implements OnInit {
       this.score = application.assessmentScore;
       this.form = { ...application, documents: application.documents.map((d) => ({ ...d })) };
 
-      const sections = await this.sis.sections(application.academicYearId);
+      const sections = await this.studentApi.sections(application.academicYearId);
       this.sections.set(
         sections.filter((s) => s.schoolClassId === application.seekingClassId).map((s) => ({ value: s.sectionId, label: `${s.className} ${s.name}` })),
       );

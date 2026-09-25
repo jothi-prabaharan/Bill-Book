@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { AdmissionApiService, Enquiry, EnquirySource, EnquiryStatus, SaveEnquiry } from '@bill-book/admission-core';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 import {
   BbSelectOption,
   ColumnDef,
@@ -46,7 +46,7 @@ import { academicOptions } from '../academic-options';
 })
 export class EnquiriesPage implements OnInit {
   private readonly api = inject(AdmissionApiService);
-  private readonly sis = inject(SisApiService);
+  private readonly studentApi = inject(StudentApiService);
   private readonly router = inject(Router);
 
   protected readonly rows = signal<Enquiry[]>([]);
@@ -145,7 +145,7 @@ export class EnquiriesPage implements OnInit {
 
   private async start(): Promise<void> {
     try {
-      const options = await academicOptions(this.sis);
+      const options = await academicOptions(this.studentApi);
       this.years.set(options.years);
       this.classes.set(options.classes);
     } catch (error) {

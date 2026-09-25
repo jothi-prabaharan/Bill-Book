@@ -48,7 +48,7 @@ internal sealed class RecordingLedger : IFeeLedger
             .Sum(l => l.DebitAmount - l.CreditAmount);
 }
 
-internal sealed class FakeSchool : ISisClient
+internal sealed class FakeSchool : IStudentClient
 {
     public List<EnrolmentInfo> Enrolments { get; } =
     [
@@ -103,7 +103,7 @@ internal sealed class AprilYear : IFinancialYearProvider
 }
 
 /// <summary>
-/// Fees against a real database (S4, TK-64), with Sis, Master and Accounting
+/// Fees against a real database (S4, TK-64), with Student, Master and Accounting
 /// faked. The card's Done-when: a demand and its receipt post balanced
 /// journals, and the guardian's receivable ties to the open demands.
 /// </summary>

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "employee-core",
+  "projectType": "library",
+  "sourceRoot": "libs/employee/employee-core/src",
+  "tags": [
+    "scope:employee",
+    "type:core"
+  ],
+  "targets": {}
+}

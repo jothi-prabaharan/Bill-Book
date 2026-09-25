@@ -5,7 +5,7 @@ using Payroll.Repository;
 namespace Payroll.Api.Services;
 
 /// <summary>
-/// Runs EF Core database migrations on application startup for the Hrm context.
+/// Runs EF Core database migrations on application startup for the Employee context.
 /// </summary>
 public class DatabaseMigrationService : IHostedService
 {
@@ -20,7 +20,7 @@ public class DatabaseMigrationService : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting automated database setup and migrations for Hrm...");
+        _logger.LogInformation("Starting automated database setup and migrations for Employee...");
 
         using IServiceScope scope = _services.CreateScope();
 
@@ -31,9 +31,9 @@ public class DatabaseMigrationService : IHostedService
         {
             try
             {
-                _logger.LogInformation("Migrating Hrm database...");
+                _logger.LogInformation("Migrating Employee database...");
                 await db.Database.MigrateAsync(cancellationToken);
-                _logger.LogInformation("Hrm database migration complete.");
+                _logger.LogInformation("Employee database migration complete.");
                 break;
             }
             catch (PostgresException ex) when (ex.SqlState == "3D000") // invalid_catalog_name

@@ -14,7 +14,7 @@ namespace Notification.Worker.Reminders;
 public sealed record AmcRenewalRunResult(int Sent, int NoEmail, bool Stopped);
 
 /// <summary>
-/// One branch's AMC renewal reminders for one day (S8, TK-68). Amc says which
+/// One branch's AMC renewal reminders for one day (S8, TK-68). MaintenanceContract says which
 /// contracts are in their reminder window; each is written to the address on
 /// the contract through <see cref="EmailRequestHandler"/> under a message id
 /// fixed by branch, contract and end date, so a contract is reminded once per
@@ -48,7 +48,7 @@ public sealed class AmcRenewalReminderRun
         IReadOnlyList<AmcRenewalDue>? due = await _renewals.DueAsync(customerId, orgId, today, ct);
         if (due is null)
         {
-            _log.LogWarning("Amc could not say which contracts are due in {OrgId}; tomorrow's run retries.", orgId);
+            _log.LogWarning("MaintenanceContract could not say which contracts are due in {OrgId}; tomorrow's run retries.", orgId);
             return new AmcRenewalRunResult(0, 0, Stopped: true);
         }
 

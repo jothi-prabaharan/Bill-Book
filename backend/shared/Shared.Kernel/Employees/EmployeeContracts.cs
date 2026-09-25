@@ -1,7 +1,7 @@
 namespace Shared.Kernel.Employees;
 
 /// <summary>
-/// What another service may know about an employee (TK-49), from Hrm's
+/// What another service may know about an employee (TK-49), from Employee's
 /// internal routes. No salary, no PAN, no bank details: leave and attendance
 /// need where someone works and who they report to, nothing more.
 /// </summary>
@@ -95,11 +95,11 @@ public sealed class OnboardEmployeeResult
 
 /// <summary>
 /// Who an employee id is (School work orders, TK-66): an assignee is checked
-/// through Hrm's <c>internal/employees/lookup</c> before it is stored.
+/// through Employee's <c>internal/employees/lookup</c> before it is stored.
 /// </summary>
 public interface IEmployeeDirectory
 {
-    /// <summary>The employees among <paramref name="ids"/> in the current branch. Throws when Hrm cannot be asked.</summary>
+    /// <summary>The employees among <paramref name="ids"/> in the current branch. Throws when Employee cannot be asked.</summary>
     Task<IReadOnlyDictionary<long, EmployeeProfile>> FindAsync(IEnumerable<long> ids, CancellationToken ct);
 }
 

@@ -14,7 +14,7 @@ using Shared.Kernel.Employees;
 using Shared.Kernel.School;
 using Shared.Kernel.Tenancy;
 
-// Preventive (S7, TK-67): preventive maintenance plans and the occurrences that raise work orders. Schema ppm, port 4521. The scaffold is Hrm's.
+// Preventive (S7, TK-67): preventive maintenance plans and the occurrences that raise work orders. Schema ppm, port 4521. The scaffold is Employee's.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider(options =>
@@ -69,7 +69,7 @@ builder.Services.AddTransient<InternalKeyHandler>();
 builder.Services.AddScoped<PreventiveSeeder>();
 builder.Services.AddScoped<PreventiveService>();
 
-// What a plan maintains (Facility), its default assignee (Hrm), the work orders
+// What a plan maintains (Facility), its default assignee (Employee), the work orders
 // it raises (WorkOrder), and the branches the generator walks (Master).
 builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
 {
@@ -78,7 +78,7 @@ builder.Services.AddHttpClient<IFacilityClient, HttpFacilityClient>(client =>
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IEmployeeDirectory, HttpEmployeeDirectory>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddHttpClient<IWorkOrderClient, HttpWorkOrderClient>(client =>

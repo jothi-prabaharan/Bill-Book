@@ -16,7 +16,7 @@ public enum RegisterOutcome
     /// <summary>The day is locked and the caller does not hold <c>attendance.unlock</c>.</summary>
     Locked = 4,
 
-    /// <summary>Sis could not be asked for the roll.</summary>
+    /// <summary>Student could not be asked for the roll.</summary>
     Unavailable = 5,
 }
 
@@ -26,7 +26,7 @@ public sealed record RegisterResult(RegisterOutcome Outcome, string? Detail = nu
 /// The daily register per section (S3, TK-63).
 ///
 /// <list type="bullet">
-/// <item>The roll is Sis's, read at the moment of use: a student enrolled
+/// <item>The roll is Student's, read at the moment of use: a student enrolled
 /// today appears today, and a mark is accepted only for someone on the roll.</item>
 /// <item>A day is inside the section's school year, never in the future, and
 /// never in a closed year.</item>
@@ -40,12 +40,12 @@ public sealed class RegisterService
     public const string UnlockPermission = "attendance.unlock";
 
     private readonly AttendanceDbContext _db;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly ICallerPermissions _caller;
     private readonly TimeProvider _clock;
     private readonly ILogger<RegisterService> _log;
 
-    public RegisterService(AttendanceDbContext db, ISisClient sis, ICallerPermissions caller, TimeProvider clock, ILogger<RegisterService> log)
+    public RegisterService(AttendanceDbContext db, IStudentClient sis, ICallerPermissions caller, TimeProvider clock, ILogger<RegisterService> log)
     {
         _db = db;
         _sis = sis;

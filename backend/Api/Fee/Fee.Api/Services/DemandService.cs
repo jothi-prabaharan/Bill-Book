@@ -30,7 +30,7 @@ public sealed class DemandService
 
     private readonly FeeDbContext _db;
     private readonly INumberGenerator _numbers;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly IFeeLedger _ledger;
     private readonly IBaseCurrencyProvider _currency;
     private readonly ITenantContext _tenant;
@@ -39,7 +39,7 @@ public sealed class DemandService
     public DemandService(
         FeeDbContext db,
         INumberGenerator numbers,
-        ISisClient sis,
+        IStudentClient sis,
         IFeeLedger ledger,
         IBaseCurrencyProvider currency,
         ITenantContext tenant,

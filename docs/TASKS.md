@@ -1595,7 +1595,7 @@ All of these share `L-DOC`, so they run one at a time, alongside code work in ot
 - **Notes:** TK-49 builds an approval engine for HRMS. Design this on top of it rather than as a second engine.
 - **Outcome (2026-09-24):**
   - The design is `docs/Modules.md`, "Approved designs" → "Workflow approvals for RetailErp documents".
-  - **The engine is shared, not duplicated.** The HRMS engine's state machine and step shape stay in `Shared.Kernel.Approvals`. Its configuration and resolution move from `Hrm` to Master (new tenant schema `apr`), because RetailErp is sold without HRMS and has users and roles but no employees. `Hrm` becomes a resolver for the employee-based approver kinds. That amends TK-49's plan, so it is raised as **D-26**, and TK-99 is blocked on it.
+  - **The engine is shared, not duplicated.** The HRMS engine's state machine and step shape stay in `Shared.Kernel.Approvals`. Its configuration and resolution move from `Employee` to Master (new tenant schema `apr`), because RetailErp is sold without HRMS and has users and roles but no employees. `Employee` becomes a resolver for the employee-based approver kinds. That amends TK-49's plan, so it is raised as **D-26**, and TK-99 is blocked on it.
   - A chain governs the existing `Draft → ReadyToPost` "approve" transition; with no matching workflow, nothing changes. Editing mid-chain returns the document to Draft.
   - Nine document kinds, including two overrides (discount limit and credit limit), which turn today's outright refusals into approvable requests.
   - Cards: TK-99 (engine in Master; blocked on D-26), TK-100 (purchase), TK-101 (accounting), TK-102 (sales and overrides), TK-103 (inbox and settings). A note is added to TK-49.
@@ -1771,9 +1771,9 @@ The build cards each design in section E produced. Each design section in `docs/
   - Standard delivery sub-tasks (section 5).
 - **Done when:** a workflow "Accountant, then Owner above ₹1,00,000" resolves to one step for ₹50,000 and two for ₹2,00,000.
 - **As built (2026-09-24):**
-  - `Shared.Kernel.Approvals`: the enums, `ApprovalStepBase`, the pure `ApprovalChain` (start, approve, reject, send back, cancel, who may act) and the contracts for Master and Hrm. Tests: `Shared.Kernel.Tests.ApprovalChainTests`.
-  - Master: `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates` on `ContactsDbContext`, migration `ApprovalWorkflows` with the RLS block. `ApprovalChainResolver` picks the most specific workflow in force, keeps the levels the amount calls for, asks Hrm for employee approvers in one call and applies the skip rules. `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`; `api/approval-workflows` (settings). HRMS branches are seeded with a manager-approved Leave and LeaveEncashment workflow. Tests: `Master.Api.Tests.ApprovalChainResolverTests`, including this card's *Done when*.
-  - Hrm: `internal/approval-chains/resolve-employees` (reporting chain by depth, relationship, department head, named employee), with `hrm.RelationshipTypes` (seeded Lead and Project Lead) and `hrm.EmployeeRelationships`. Tests: `Hrm.Api.Tests.EmployeeApproverTests`.
+  - `Shared.Kernel.Approvals`: the enums, `ApprovalStepBase`, the pure `ApprovalChain` (start, approve, reject, send back, cancel, who may act) and the contracts for Master and Employee. Tests: `Shared.Kernel.Tests.ApprovalChainTests`.
+  - Master: `apr.ApprovalWorkflows`, `apr.ApprovalWorkflowLevels`, `apr.ApprovalDelegates` on `ContactsDbContext`, migration `ApprovalWorkflows` with the RLS block. `ApprovalChainResolver` picks the most specific workflow in force, keeps the levels the amount calls for, asks Employee for employee approvers in one call and applies the skip rules. `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`; `api/approval-workflows` (settings). HRMS branches are seeded with a manager-approved Leave and LeaveEncashment workflow. Tests: `Master.Api.Tests.ApprovalChainResolverTests`, including this card's *Done when*.
+  - Employee: `internal/approval-chains/resolve-employees` (reporting chain by depth, relationship, department head, named employee), with `hrm.RelationshipTypes` (seeded Lead and Project Lead) and `hrm.EmployeeRelationships`. Tests: `Employee.Api.Tests.EmployeeApproverTests`.
   - "A changed workflow leaves resolved snapshots alone" is a property of the owning service's stored steps, so it is tested with the first one, leave (TK-49).
   - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
 
@@ -2104,16 +2104,22 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
 - **Done when:** a purchase bill saved from its screen is accepted.
 
-### TK-125 · Name the Sis, Amc and Hrm services after what they own
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+### TK-125 · Name the Student, MaintenanceContract and Employee services after what they own
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · a rename, the existing tests were renamed with it, not run
 - **Issue:** [#78](https://github.com/jothi-prabaharan/Bill-Book/issues/78)
 - **Lanes:** L-SIS, L-AMC, L-HRM, L-MST, L-KERNEL, the school and HR libs · **Depends on:** — · **Decision:** —
-- **Why:** the owner's request of 25 September 2026: a service is named for what it is, not for its schema. `Sis` becomes `Student`, `Amc` becomes `MaintenanceContract`, `Hrm` becomes `Employee`.
+- **Why:** the owner's request of 25 September 2026: a service is named for what it is, not for its schema. `Student` becomes `Student`, `MaintenanceContract` becomes `MaintenanceContract`, `Employee` becomes `Employee`.
 - **Sub-tasks:**
-  - [ ] Folders, projects, namespaces, DbContexts, seeders, clients, configuration keys, test projects and their `*_TEST_DB` variables, the solution, and the docs.
-  - [ ] Frontend libs `libs/student`, `libs/maintenance-contract`, `libs/employee`, with their aliases and Nx project names.
-  - [ ] Kept as they are, because they are stored data or public contracts: the Postgres schemas, migration ids, URL routes, permission and menu codes, and the AMC domain entities.
+  - [x] Folders, projects, namespaces, DbContexts, seeders, clients, configuration keys, test projects and their `*_TEST_DB` variables, the solution, and the docs.
+  - [x] Frontend libs `libs/student`, `libs/maintenance-contract`, `libs/employee`, with their aliases and Nx project names.
+  - [x] Kept as they are, because they are stored data or public contracts: the Postgres schemas, migration ids, URL routes, permission and menu codes, and the AMC domain entities.
 - **Done when:** nothing in code or config names a service by its schema, and the backend and all app builds are clean.
+- **As built:**
+  - The entity classes `Student` and `Employee` became `StudentRecord` and `EmployeeRecord`. A class named like its root namespace (`Student.Entity.TableEntities.Student`) can't be named from inside that namespace, the same reason WorkOrder's header is `WorkOrderDocument`. Their DbSets and tables are unchanged.
+  - Renamed along with them: `IStudentClient`, `IEmployeeClient`, `IEmployeeApproverClient`, `StudentRefusedException`, the `Student:BaseUrl`, `Employee:BaseUrl` and `MaintenanceContract:BaseUrl` settings, Master's `Seeding:Student`, `Seeding:Employee` and `Seeding:MaintenanceContract`, and `STUDENT_TEST_DB`, `EMPLOYEE_TEST_DB` and `MAINTENANCE_CONTRACT_TEST_DB`. In the frontend, `StudentApiService`, `EmployeeApiService` and `MaintenanceContractApiService`, `studentRoutes`, `employeeRoutes` and `maintenanceContractRoutes`, and the `bb-student-*`, `bb-employee-*` and `bb-maintenance-contract-*` selectors.
+  - **Deliberately kept:** the schemas `sis`, `hrm` and `amc`; the migration ids (`InitialSisSchema`, `SisMenus`, `AmcMenu`, `EmployeeAndHrmModules`), so a migrated database doesn't reapply them; the URL routes `api/sis`, `api/hrm` and `api/amc`, and the gateway clusters; the `sis.*`, `hrm.*` and `amc.*` permission and menu codes, which are seeded data; `WorkOrderSource.Amc`; and the AMC domain names (`AmcContract`, `AmcVisit`, `AmcRules`, the renewal reminder).
+  - **Environment settings to rename by hand**, where a machine sets them: `Sis__BaseUrl`, `Hrm__BaseUrl`, `Amc__BaseUrl`, `Seeding__Sis`, `Seeding__Hrm` and `Seeding__Amc`. None is in `deploy/`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` reports no changes for Student, Employee, MaintenanceContract, WorkOrder and both Master contexts. Frontend typecheck and lint pass, and the school, hrms, payroll, portal and web builds are clean.
 
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
@@ -2193,7 +2199,7 @@ None of it is built.
 - **Done when:** an HRMS token calling a RetailErp endpoint gets 403; a Payroll token reads
   employees but not recruitment; and an expired RetailErp licence leaves Payroll working.
 - **Notes:**
-  - "A Payroll token reads employees but not recruitment" is tested on the attribute (`Hrms | Payroll` against `Hrms`). The Hrm controllers come with TK-48.
+  - "A Payroll token reads employees but not recruitment" is tested on the attribute (`Hrms | Payroll` against `Hrms`). The Employee controllers come with TK-48.
   - **Licences per app:** `OrgContextService.ResolveAsync(orgId, ct, app)` reads that app's licence with a left join. No licence gives the new `LicenseStatus.NotLicensed`, and the branch still resolves, because services read its GSTIN and address from here. The customer row is stamped Expired only when every licence has lapsed. `LicenseService` and `LicensesController` are per app (`?app=`, and `GET …/licenses/apps` lists them all). An invitation counts against the user limit of the invited role's app. The branch cap uses the most generous licence.
   - The roles list, the permission matrix and a new role default to the caller's app.
   - **Left for TK-44:** `libs/shared/auth`'s `isLicenseExpired` checks only `'Expired'`, so a `Suspended` or `NotLicensed` token passes the web guard. TK-44 rewrites the guard over `api/me/context`.
@@ -2250,7 +2256,7 @@ None of it is built.
   - D-12 answered (2026-09-24): RetailErp and School licences count users with a branch cap; HRMS and Payroll count active employees per month.
   - **The new Owner roles sit at ids 1,000,000 plus the app's flag, not at 6 to 8.** Npgsql moves the identity sequence past seeded ids, so on a database already in use, 6 and up belong to customer-made roles. Their grants' ids are `1,000,000,000 × flag + PermissionId`, so a module added to one app later adds rows without moving any other id.
   - The five RetailErp system roles now take only permissions that include RetailErp. That changes no grant today, and it keeps the grant rule when TK-48 adds HRMS/Payroll modules.
-  - "One set of employees" needs Hrm (TK-48). `ServicesFor` has a line where Hrm joins for `Hrms | Payroll`.
+  - "One set of employees" needs Employee (TK-48). `ServicesFor` has a line where Employee joins for `Hrms | Payroll`.
   - A trial licence's `MaxOrganizations` is the customer's current branch count.
   - `internal/users/owner` (the older internal endpoint) still assigns RetailErp's Owner only.
 
@@ -2320,7 +2326,7 @@ needs these scaffold steps:
 **Payroll without HRMS** needs TK-48, TK-51, TK-52, TK-53, the settlement half of TK-54, and TK-55. **The first
 sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 
-### TK-48 · H1: Core HR, the shared employee master (`Hrm`, `hrm`, port 4509)
+### TK-48 · H1: Core HR, the shared employee master (`Employee`, `hrm`, port 4509)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#59](https://github.com/jothi-prabaharan/Bill-Book/issues/59)
 - **Lanes:** L-HRM (new) (+ L-MST for the catalogue, menus, migration and seeder; L-DEPS for the Gateway) · **Depends on:** TK-47 · **Decision:** —
@@ -2330,19 +2336,19 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     `EmployeeNominee`, `EmployeeEducation`, `PreviousEmployment`, `EmployeeBankDetail`,
     `EmploymentHistory`, `EmployeeDocument`, `AssetIssue`.
   - Other: `Announcement`, `PolicyDocument` (and `PolicyAcknowledgement`, from the design).
-- **Where:** `backend/Api/Hrm/{Hrm.Entity,Hrm.Repository,Hrm.Api}`, `backend/tests/Hrm.Api.Tests`, `frontend/libs/hrm/{hrm-core,hrm-ui}`.
+- **Where:** `backend/Api/Employee/{Employee.Entity,Employee.Repository,Employee.Api}`, `backend/tests/Employee.Api.Tests`, `frontend/libs/employee/{employee-core,employee-ui}`.
 - **Sub-tasks:**
-  - [x] Scaffold the service: three projects copied from Printing, the `.sln`, port 4509, the Gateway route `/api/hrm/**` (every environment), Master's `MigrateTenantSchemasAsync` line, `TenantSeeder` (`Hrm`, after Accounting, for HRMS, Payroll or School), `Seeding:Hrm`, and `libs/hrm/{hrm-core,hrm-ui}`. Enums are read by name from the first day (the TK-124 lesson).
+  - [x] Scaffold the service: three projects copied from Printing, the `.sln`, port 4509, the Gateway route `/api/hrm/**` (every environment), Master's `MigrateTenantSchemasAsync` line, `TenantSeeder` (`Employee`, after Accounting, for HRMS, Payroll or School), `Seeding:Employee`, and `libs/employee/{employee-core,employee-ui}`. Enums are read by name from the first day (the TK-124 lesson).
   - [x] Build the entities from the Columns section, then the migration with RLS: `InitialHrmSchema` holds all 20 tables, and every one is ENABLEd, FORCEd and policied in TK-71's NULLIF form.
-  - [x] Seed per branch: one department, designation, grade and location, and an `EMP` numbering series (`HrmSeeder`, idempotent, through `internal/seed/organization`).
+  - [x] Seed per branch: one department, designation, grade and location, and an `EMP` numbering series (`EmployeeSeeder`, idempotent, through `internal/seed/organization`).
   - [x] Add CRUD for the organisation tables. Add the employee master with its children, guarded
         by `[RequireApp(Hrms | Payroll | School)]` and module `employee`. Master's catalogue gains `employee` (HRMS, Payroll, School) and `hrm` (HRMS). The People menu rail follows it (rows 10, 118 and 1107–1110). The apps' seeded Owners get the new permissions and RetailErp's roles do not.
   - [x] Mask PAN, Aadhaar and bank numbers on lists. On the detail they are masked too, unless the caller holds `payroll.view` or is the employee. A masked value sent back on save keeps the stored one (`SensitiveMask.Resolve`).
   - [x] Add `UserId Guid?` to link an employee to a login. It is unique per branch.
-  - [x] Build pages in `libs/hrm/hrm-ui`: organisation setup, employee list and employee detail
-        with tabs (nine tabs), plus announcements and policies. `hrmRoutes` is mounted by `apps/hrms` and `apps/payroll`.
-  - [x] Test: `Hrm.Api.Tests`: guards and apps, schema (filter, xmin, no shadow keys), RLS over every table, the seeder, the employee service (the Done-when case, masking, masked round trip, nominee shares, manager cycle, history, one login per employee, branch isolation), and the pure rules. `hrm-core`'s rules spec and `hrm.routes.spec.ts`.
-  - [ ] Owner: run `Hrm.Api.Tests` from a dropped database, and drop one `hrm` policy by hand to see the RLS test go red.
+  - [x] Build pages in `libs/employee/employee-ui`: organisation setup, employee list and employee detail
+        with tabs (nine tabs), plus announcements and policies. `employeeRoutes` is mounted by `apps/hrms` and `apps/payroll`.
+  - [x] Test: `Employee.Api.Tests`: guards and apps, schema (filter, xmin, no shadow keys), RLS over every table, the seeder, the employee service (the Done-when case, masking, masked round trip, nominee shares, manager cycle, history, one login per employee, branch isolation), and the pure rules. `employee-core`'s rules spec and `hrm.routes.spec.ts`.
+  - [ ] Owner: run `Employee.Api.Tests` from a dropped database, and drop one `hrm` policy by hand to see the RLS test go red.
 - **Done when:** an employee is created with family, nominees and bank details, linked to a user
   and listed; RLS and the guard audit pass from a dropped database.
 - **Notes:**
@@ -2350,7 +2356,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - **Grades carry `NoticePeriodDays`**, which the design implies ("defaults from the grade") but did not list.
   - **Nominees name a family member by position** in the request's family list (`FamilyMemberIndex`), because on a create neither has an id yet.
   - **Children are replaced on update**, not merged. Bank rows carry their id so that a masked account number resolves.
-  - **Not deployed:** `deploy/azure` and `deploy/local` have no Hrm service yet. The Gateway points at `localhost:7500/hrm/` (Production), `5500` (Staging) and `6500` (UAT) on the pattern of the others, and nothing listens there yet.
+  - **Not deployed:** `deploy/azure` and `deploy/local` have no Employee service yet. The Gateway points at `localhost:7500/hrm/` (Production), `5500` (Staging) and `6500` (UAT) on the pattern of the others, and nothing listens there yet.
   - Linking a login takes the user's id as typed. Nothing yet checks it against `mst.Users` (it is an unenforced cross-database id) or offers a picker.
   - Documents and policies take a file key. There is no upload endpoint yet.
 
@@ -2364,7 +2370,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     It lives in `hrm` so every request kind can reuse it.
 - **Sub-tasks:**
   - [x] Scaffold `TimeLeave`.
-  - [x] Build the approval engine in `Hrm`: workflows matched by department, grade and location;
+  - [x] Build the approval engine in `Employee`: workflows matched by department, grade and location;
         levels; a snapshot of the chain at submit time; skip rules; send back; delegation; and
         escalation through a hosted service.
   - [x] Add leave accrual and rollover as a hosted job, applications with the sandwich rule,
@@ -2375,9 +2381,9 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   weekend between two leave days; and changing a workflow leaves requests already in flight on
   their old chain.
 - **Notes:**
-  - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Hrm`, with `Hrm` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
-  - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Hrm`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
-  - **Built under TK-99 (2026-09-24), so not to be rebuilt here:** `Shared.Kernel.Approvals` (`ApprovalStepBase`, the `ApprovalChain` state machine, the contracts); Master's `apr` workflows, `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`, and the seeded manager-approved Leave and LeaveEncashment workflows; Hrm's `internal/approval-chains/resolve-employees` with `hrm.RelationshipTypes` and `hrm.EmployeeRelationships`, and `internal/employees/lookup` (`Shared.Kernel.Employees.EmployeeProfile`). What is left for this card: `tla` with `LeaveApprovalStep : ApprovalStepBase`, submit calling Master's resolve and storing the steps, approve/reject/send back through `ApprovalChain`, escalation, and the *Done when* test that a changed workflow leaves requests in flight on their old chain.
+  - From TK-33 (2026-09-24): RetailErp approvals reuse this engine. The TK-33 design proposes that the workflow configuration and chain resolution live in **Master** (tenant schema `apr`) rather than in `Employee`, with `Employee` resolving only the employee-based approver kinds, because RetailErp is sold without HRMS. That is **D-26**: build this card's engine where the answer says.
+  - **D-26 answered 2026-09-24: Master, `apr`.** The engine's configuration and resolution are TK-99's (Master). This card adds `Employee`'s `internal/approval-chains/resolve-employees`, the leave steps in `tla`, and escalation. The "It lives in `hrm`" line under Tables is superseded.
+  - **Built under TK-99 (2026-09-24), so not to be rebuilt here:** `Shared.Kernel.Approvals` (`ApprovalStepBase`, the `ApprovalChain` state machine, the contracts); Master's `apr` workflows, `internal/approval-chains/resolve` and `internal/approval-chains/delegate-check`, and the seeded manager-approved Leave and LeaveEncashment workflows; Employee's `internal/approval-chains/resolve-employees` with `hrm.RelationshipTypes` and `hrm.EmployeeRelationships`, and `internal/employees/lookup` (`Shared.Kernel.Employees.EmployeeProfile`). What is left for this card: `tla` with `LeaveApprovalStep : ApprovalStepBase`, submit calling Master's resolve and storing the steps, approve/reject/send back through `ApprovalChain`, escalation, and the *Done when* test that a changed workflow leaves requests in flight on their old chain.
   - Done (Antigravity, 2026-09-25):
     - Scaffolded `TimeLeave.Api`, `TimeLeave.Entity`, `TimeLeave.Repository` on port 4510, mapped to schema `tla` with 17 entities and EF Core migration containing RLS policies.
     - Built `LeaveCalculationEngine` implementing single/half-days and the sandwich rule counting intervening weekend/holiday days.
@@ -2507,10 +2513,10 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
     - Added F&F tables in `pay` schema: `FullAndFinalSettlement` and `FnfLine`, plus `PayrollRunKind.FullAndFinal` on `PayrollRun`.
     - Added EF Core migration `20260924202952_AddFnfSchema.cs` with RLS policies (`ENABLE` + `FORCE` + `tenant_isolation` block).
     - Added Master user deactivation endpoint `POST internal/users/{userId}/deactivate` in `InternalUsersController.cs`.
-    - Added `LifecycleService` and `LifecycleController` in `Hrm.Api` supporting checklist templates, employee checklists, separation workflows with notice shortfall calculation, and exit settlement deactivating the user.
+    - Added `LifecycleService` and `LifecycleController` in `Employee.Api` supporting checklist templates, employee checklists, separation workflows with notice shortfall calculation, and exit settlement deactivating the user.
     - Added `FnfSettlementService` and `FnfController` in `Payroll.Api` supporting F&F calculation (salary to LWD, gratuity, notice recovery, loan recovery), approval, and posting via a `FullAndFinal` run with balanced ledger posting and user deactivation.
     - Added frontend `FnfSettlementPage` in `libs/payroll/payroll-ui` mounted at `/payroll/fnf`.
-    - **Tests written**: `backend/tests/Hrm.Api.Tests/LifecycleServiceTests.cs` (checklist template copy and item update, separation shortfall and exit settlement) and `Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working` in `PayrollServiceTests.cs`. Backend solution and Nx apps (`payroll`, `hrms`) build cleanly.
+    - **Tests written**: `backend/tests/Employee.Api.Tests/LifecycleServiceTests.cs` (checklist template copy and item update, separation shortfall and exit settlement) and `Settling_an_exit_pays_through_a_full_and_final_run_and_the_employees_login_stops_working` in `PayrollServiceTests.cs`. Backend solution and Nx apps (`payroll`, `hrms`) build cleanly.
 
 ### TK-55 · H8: Self-service and approvals
 - [x] done (Antigravity) — 2026-09-25
@@ -2525,7 +2531,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - [x] Mobile-first pages.
 - **Done when:** an employee applies for leave and a manager approves it, each from their own
   screens, and the employee downloads a payslip.
-- **Notes:** Completed self-service endpoints across Hrm, TimeLeave, and Payroll services, unified approvals inbox, team hierarchy viewer, my-profile, and my-payslips pages. Verified with unit tests and clean builds.
+- **Notes:** Completed self-service endpoints across Employee, TimeLeave, and Payroll services, unified approvals inbox, team hierarchy viewer, my-profile, and my-payslips pages. Verified with unit tests and clean builds.
 
 ### TK-56 · H9: Expense claims (`Claims`, `clm`, port 4514)
 - [x] completed (Antigravity) — 2026-09-25 · tests written, not run
@@ -2549,10 +2555,10 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Sub-tasks:**
   - [x] Requisitions through the approval engine; openings; candidates and a pipeline board (ask
         before building a new board component); interviews.
-  - [x] Offer `accept` creates the employee through `Hrm`'s API, **idempotently**: the offer id
+  - [x] Offer `accept` creates the employee through `Employee`'s API, **idempotently**: the offer id
         becomes the idempotency key.
 - **Done when:** accepting an offer twice creates one employee.
-- **Notes:** Completed Recruitment service (Recruitment.Entity, Recruitment.Repository, Recruitment.Api on port 4512), EF Core migration with RLS policies on rec schema, gateway reverse proxy routes, REQ numbering series, idempotent employee onboarding via Hrm.Api internal endpoint with onboarding checklist creation, salary assignment via Payroll.Api, frontend libs (recruitment-core, recruitment-ui) with requisitions, openings, candidates, interactive reactive pipeline board, interviews evaluation, offers generation and acceptance flow, and test suite in Recruitment.Api.Tests.
+- **Notes:** Completed Recruitment service (Recruitment.Entity, Recruitment.Repository, Recruitment.Api on port 4512), EF Core migration with RLS policies on rec schema, gateway reverse proxy routes, REQ numbering series, idempotent employee onboarding via Employee.Api internal endpoint with onboarding checklist creation, salary assignment via Payroll.Api, frontend libs (recruitment-core, recruitment-ui) with requisitions, openings, candidates, interactive reactive pipeline board, interviews evaluation, offers generation and acceptance flow, and test suite in Recruitment.Api.Tests.
 
 ### TK-58 · H11: Performance (`Performance`, `prf`, port 4513)
 - [~] working (Antigravity) — since 2026-09-25
@@ -2612,12 +2618,12 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - School menus: Students, Fees and Maintenance rails with fourteen items, **seeded inactive**; each stage switches its own rows on.
     - Migration `SchoolRolesAndMenus`. It also carries the `payroll`, `leave` and `attendance` permission rows that TK-51 and TK-50 added to the model without a migration, which would have stopped Master starting on a new database (`PendingModelChangesWarning`, the TK-70 failure).
     - Signup and a trial for School needed nothing new: TK-45 already accepts `School`.
-    - **Numbering series**: each is seeded by the service that allocates from it, as Purchase seeds `POR`: `ADM` by Sis (TK-61), `APL` by Admission (TK-62), `FDM` and `FRC` by Fee (TK-64), `WRK` by WorkOrder (TK-66).
+    - **Numbering series**: each is seeded by the service that allocates from it, as Purchase seeds `POR`: `ADM` by Student (TK-61), `APL` by Admission (TK-62), `FDM` and `FRC` by Fee (TK-64), `WRK` by WorkOrder (TK-66).
     - `apps/school` (port 4205), with the shared settings, the employee master and contacts.
     - Tests: `Master.Api.Tests.SchoolSeedTests`, `GuardianContactTests`; `apps/school` routes spec; `AppGrantRuleTests` updated.
     - Owner step: none beyond the tests. `apps/school` is in neither `deploy/azure` nor `deploy/local`, like `apps/hrms`.
 
-### TK-61 · S1: Sis (`sis`, port 4515)
+### TK-61 · S1: Student (`sis`, port 4515)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#3](https://github.com/jothi-prabaharan/Bill-Book/issues/3)
 - **Lanes:** L-SIS (new) · **Depends on:** TK-60 · **Decision:** —
@@ -2632,16 +2638,16 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   guard audit pass from a dropped database.
 - **Notes:**
   - **As built (2026-09-25):**
-    - `backend/Api/Sis` (schema `sis`, port 4515, gateway `/api/sis/**`): `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`, `Enrolment`, `Exam`, `ExamSubject`, `ExamMark`. Migration `InitialSisSchema` with RLS on all eleven tables (ErrorLogs included). Master migrates `sis` into every shard and seeds it for School branches (`HttpTenantSeeder.SchoolServices`).
-    - Seed per branch: classes LKG–XII and the `ADM` series (TK-60's numbering sub-task, for Sis).
-    - Guardians are checked through Master's new `internal/contacts/lookup` (`Shared.Kernel.Contacts.IContactDirectory`, reused by Fee and Amc): an active contact of the branch with `IsGuardian`, one or two per student, exactly one primary (a filtered unique index too).
+    - `backend/Api/Student` (schema `sis`, port 4515, gateway `/api/sis/**`): `AcademicYear`, `SchoolClass`, `Section`, `Subject`, `Student`, `StudentGuardian`, `Enrolment`, `Exam`, `ExamSubject`, `ExamMark`. Migration `InitialSisSchema` with RLS on all eleven tables (ErrorLogs included). Master migrates `sis` into every shard and seeds it for School branches (`HttpTenantSeeder.SchoolServices`).
+    - Seed per branch: classes LKG–XII and the `ADM` series (TK-60's numbering sub-task, for Student).
+    - Guardians are checked through Master's new `internal/contacts/lookup` (`Shared.Kernel.Contacts.IContactDirectory`, reused by Fee and MaintenanceContract): an active contact of the branch with `IsGuardian`, one or two per student, exactly one primary (a filtered unique index too).
     - `Student.SourceApplicationId` is unique per branch and `StudentService.CreateAsync(…, sourceApplicationId)` returns the existing student, ready for TK-62's idempotent admit.
     - Exams: Planned → MarksOpen → Published (→ MarksOpen for a correction) → Locked; marks only while MarksOpen and only for the class's students in the exam's year. Moving an exam takes `sis.approve`; marks take `sis.edit`.
-    - `libs/sis/{sis-core, sis-ui}`: students list, student record (guardians, enrolment), academic setup, exams and marks; mounted in `apps/school`. Menu rows 11, 119, 1111–1113 switched on (migration `SisMenus`).
-    - Tests: `Sis.Api.Tests` (schema and RLS audit, guard audit, `StudentServiceTests` including the *Done when*, `StudentRuleTests`, `ExamRuleTests`, `ExamServiceTests`); `sis-rules.spec.ts`; `sis.routes.spec.ts`. `Master.Api.Tests.SeedingPerAppTests` gains the School case and is corrected for Payroll, which TK-51 added to the seeder without updating it.
+    - `libs/student/{student-core, student-ui}`: students list, student record (guardians, enrolment), academic setup, exams and marks; mounted in `apps/school`. Menu rows 11, 119, 1111–1113 switched on (migration `SisMenus`).
+    - Tests: `Student.Api.Tests` (schema and RLS audit, guard audit, `StudentServiceTests` including the *Done when*, `StudentRuleTests`, `ExamRuleTests`, `ExamServiceTests`); `sis-rules.spec.ts`; `sis.routes.spec.ts`. `Master.Api.Tests.SeedingPerAppTests` gains the School case and is corrected for Payroll, which TK-51 added to the seeder without updating it.
     - Also: Master's `Seeding` config gains `TimeLeave` and `Payroll`, which TK-49/TK-51 left out, so every HRMS or Payroll branch was reported as failing to seed.
     - **`claims` moved to the end of `PermissionModules`** (migration `ClaimsPermissions`). TK-56 inserted it before the School modules, which would have renumbered every School permission TK-60 had migrated: the row-by-row `UpdateData` against the unique `Code` index that stopped Master starting in TK-70. Appended, the School ids stand and `claims` gets the migration it lacked.
-    - Owner step: run `Sis.Api.Tests` with `SIS_TEST_DB` from a dropped database. `Sis` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
+    - Owner step: run `Student.Api.Tests` with `STUDENT_TEST_DB` from a dropped database. `Student` is in neither `deploy/azure` nor `deploy/local`, like the other new services.
 
 ### TK-62 · S2: Admission (`adm`, port 4516)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
@@ -2650,18 +2656,18 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **Tables:** `Enquiry`, `Application`, `ApplicationDocument`.
 - **Sub-tasks:**
   - [x] Enquiry → application → `admit`.
-  - [x] Admit creates the student through Sis's API and the guardian through Master's API, both
+  - [x] Admit creates the student through Student's API and the guardian through Master's API, both
         idempotently.
 - **Done when:** admitting twice creates one student.
 - **Notes:**
   - **As built (2026-09-25):**
-    - `backend/Api/Admission` (schema `adm`, port 4516, gateway `/api/admission/**`): `Enquiry`, `Application`, `ApplicationDocument`; migration `InitialAdmissionSchema` with RLS on all four tables; seeds the `APL` series (yearly). Seeded for School branches after Sis.
+    - `backend/Api/Admission` (schema `adm`, port 4516, gateway `/api/admission/**`): `Enquiry`, `Application`, `ApplicationDocument`; migration `InitialAdmissionSchema` with RLS on all four tables; seeds the `APL` series (yearly). Seeded for School branches after Student.
     - **`Application` gains guardian columns** (name, mobile, email, relationship, `GuardianContactId`) plus `ChildGender` and `AdmissionNo`, which the design lacks: admit has to make a guardian, and an application need not come from an enquiry.
     - Stages move forward to Offered (skipping allowed), to Rejected/Withdrawn from any open stage, and to Admitted only through admit. DocumentsVerified needs every recorded document verified; Assessed needs a score.
-    - **Admit** is idempotent end to end: the guardian through Master's new `internal/contacts/guardians/ensure` (matched on mobile number, created with `IsGuardian` and its sub-ledger otherwise), the student through Sis's new `internal/sis/students/admit` (keyed on `SourceApplicationId`, TK-61). An admitted application returns its student again. Sis's `internal/sis/academic-check` validates year, class and section ids for both services. Contracts in `Shared.Kernel.School` and `Shared.Kernel.Contacts`.
+    - **Admit** is idempotent end to end: the guardian through Master's new `internal/contacts/guardians/ensure` (matched on mobile number, created with `IsGuardian` and its sub-ledger otherwise), the student through Student's new `internal/sis/students/admit` (keyed on `SourceApplicationId`, TK-61). An admitted application returns its student again. Student's `internal/sis/academic-check` validates year, class and section ids for both services. Contracts in `Shared.Kernel.School` and `Shared.Kernel.Contacts`.
     - `libs/admission/{admission-core, admission-ui}`: enquiries, applications list, application record with stage moves and Admit; mounted in `apps/school`; menus 1114–1115 switched on (migration `AdmissionMenus`).
     - Tests: `Admission.Api.Tests` (`AdmitTests`, including *Done when* "admitting twice creates one student", a retry after a failure halfway, siblings sharing a guardian; `ApplicationStageTests`; schema, RLS and guard audits); `admission-rules.spec.ts`; `admission.routes.spec.ts`.
-    - Owner step: run `Admission.Api.Tests` with `ADMISSION_TEST_DB` from a dropped database, and admit one application end to end with Master and Sis running.
+    - Owner step: run `Admission.Api.Tests` with `ADMISSION_TEST_DB` from a dropped database, and admit one application end to end with Master and Student running.
 
 ### TK-63 · S3: Student attendance (`att`, port 4517)
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
@@ -2669,12 +2675,12 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **Lanes:** L-ATT (new) · **Depends on:** TK-61 · **Decision:** —
 - **Tables:** `StudentAttendance`, `AttendanceLock`.
 - **Sub-tasks:**
-  - [x] A daily register per section, taking the roll from Sis.
+  - [x] A daily register per section, taking the roll from Student.
   - [x] `lock` and `unlock`, where unlocking needs `attendance.unlock`.
   - [x] The register component: ask before building it if `ui-components` lacks one.
 - **Done when:** a locked day refuses an edit from a teacher and accepts one from `attendance.unlock`.
 - **Notes:**
-  - **Backend built (2026-09-25):** `backend/Api/Attendance` (schema `att`, port 4517, gateway `/api/student-attendance/**`, kept apart from HRMS's `/api/tla/attendance`): `StudentAttendance` (one mark per enrolment per day) and `AttendanceLock`; migration `InitialAttendanceSchema` with RLS on all three tables. The roll comes from Sis's new `internal/sis/sections/roll`, read at the moment of use; a day must be inside the section's open school year and not in the future. Saving a locked day, or locking it, needs `attendance.unlock` (423 otherwise); unlocking demands it on the route. Tests: `Attendance.Api.Tests.RegisterTests` (the *Done when*), `RegisterRuleTests`, schema, RLS and guard audits.
+  - **Backend built (2026-09-25):** `backend/Api/Attendance` (schema `att`, port 4517, gateway `/api/student-attendance/**`, kept apart from HRMS's `/api/tla/attendance`): `StudentAttendance` (one mark per enrolment per day) and `AttendanceLock`; migration `InitialAttendanceSchema` with RLS on all three tables. The roll comes from Student's new `internal/sis/sections/roll`, read at the moment of use; a day must be inside the section's open school year and not in the future. Saving a locked day, or locking it, needs `attendance.unlock` (423 otherwise); unlocking demands it on the route. Tests: `Attendance.Api.Tests.RegisterTests` (the *Done when*), `RegisterRuleTests`, schema, RLS and guard audits.
   - **The register component, asked and answered 2026-09-25: a new shared component.** `bb-attendance-register` in `libs/shared/ui-components` takes entries and the statuses (with a key, glyph and tone each), cycles a tile on a tap, sets a status from its key and moves on, and moves focus with the arrow keys; its rules are pure (`attendance-register.model.ts`) and tested (`attendance-register.model.spec.ts`). It is generic, so HRMS can reuse it. Documented in `inputs.md`.
   - `libs/student-attendance/{student-attendance-core, student-attendance-ui}`: the register page (section, day, All present, Save, Lock, Unlock) on the component; mounted in `apps/school`; menu 1116 switched on (migration `StudentAttendanceMenu`). `register-rules.spec.ts`, `student-attendance.routes.spec.ts`.
   - Owner step: run `Attendance.Api.Tests` with `ATTENDANCE_TEST_DB` from a dropped database, and take one register at 360px.
@@ -2697,9 +2703,9 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
     - `backend/Api/Fee` (schema `fee`, port 4518, gateway `/api/fee/**`): `FeeHead`, `FeeStructure`, `FeeStructureLine`, `FeeConcession`, `FeeDemand`, `FeeDemandLine`, `FeeReceipt`, `FeeReceiptAllocation`; migration `InitialFeeSchema` with RLS on all nine tables. Seeds five heads and the `FDM` and `FRC` series (yearly, gapless: a demand is numbered when posted, so a draft takes no number).
     - Differences from the design: `FeeHead.IncomeAccountId` is **nullable**, meaning "Fee Income" (or "Refundable Deposits" for a refundable head), so a new branch's heads post without anyone choosing an account; `FeeStructure.FirstMonth` says which month frequencies count from; `FeeDemand` carries `FeeStructureId`, `PeriodKey` (the idempotency key with the enrolment) and `PaidAmount`; there is no `JournalId`, because the ledger is keyed on the document (`FDM`/`FRC` + id).
     - **Accounting (outside this card's lane, needed for posting):** `SystemAccount.FeeIncome` (4300), `DiscountGiven` (4250, contra Income) and `RefundableDeposits` (2400) in every branch's chart; `internal/accounts/lookup` and `internal/accounts/bank-accounts` (`Shared.Kernel.Ledgers.IAccountDirectory`). Master: transaction types `FDM` and `FRC` (migration `FeeTransactionTypes`).
-    - Sis: `internal/sis/enrolments` (by year and class, by id, or by guardian for TK-69), with each enrolment's primary guardian.
+    - Student: `internal/sis/enrolments` (by year and class, by id, or by guardian for TK-69), with each enrolment's primary guardian.
     - Postings go through `internal/ledger/postings`, which replaces by document, so posting again after a rollback lands once. Demand: Dr Accounts Receivable (guardian, trade) net / Cr each head's income in full / Dr Discount Given per concession. Receipt: Dr the bank / Cr Accounts Receivable (trade) for what it settles / Cr the overpayment advance for the rest. A demand's `PaidAmount` moves only by a guarded `ExecuteUpdate`. Voids withdraw the document's rows.
-    - Not done: GST on a taxable head (SAC stored only), applying an advance to a later demand, and checking a concession's `StudentId` through Sis.
+    - Not done: GST on a taxable head (SAC stored only), applying an advance to a later demand, and checking a concession's `StudentId` through Student.
     - `libs/fee/{fee-core, fee-ui}`: setup, demands and receipts; mounted in `apps/school`; menus 12, 120, 1117–1119 on (migration `FeeMenus`).
     - Tests: `Fee.Api.Tests.FeeServiceTests` (the *Done when*: balanced postings and the receivable tying to open demands; the advance; idempotent generation; concessions; voids; a refused posting under the request transaction) and `FeeRuleTests`; `Accounting.Api.Tests.FeeAccountsSeedTests`; `fee-rules.spec.ts`, `fee.routes.spec.ts`.
     - Owner step: run `Fee.Api.Tests` with `FEE_TEST_DB` from a dropped database, and post one demand and one receipt with Accounting running, then check the guardian's ledger.
@@ -2722,18 +2728,18 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **Tables:** `WorkOrder`, `WorkOrderTask`, `WorkOrderPart`.
 - **Sub-tasks:**
   - [x] The lifecycle, through `assign`, `complete` and `close`. An Assigned work order can't be edited.
-  - [x] The assignee is an employee, validated through `Hrm`.
+  - [x] The assignee is an employee, validated through `Employee`.
   - [x] Parts are issued through Inventory's issue API.
 - **Done when:** editing an Assigned work order is refused, and issuing a part moves stock.
 - **Notes:**
   - **As built (2026-09-25):** `backend/Api/WorkOrder` (schema `wrk`, port 4520, gateway `/api/work-orders/**`): `WorkOrders` (entity `WorkOrderDocument`, because `WorkOrder` is the namespace), `WorkOrderTasks`, `WorkOrderParts`; migration `InitialWorkOrderSchema` with RLS on all four tables. Checks: an asset or a space, a completion date once Completed or Closed, labour cost not negative.
     - Lifecycle in `WorkOrderLifecycle`: Open → Assigned (re-assignable) → InProgress ⇄ OnHold → Completed → Closed; Open or Assigned → Cancelled with a reason, and not once a part is issued. Only Open is editable. Close is its own route with `[PermissionAction("close")]`, so it takes `workorder.close` (seeded by TK-60 for the Principal).
-    - Where and who: the asset and space through Facility's `internal/facility/lookup`; the assignee through Hrm's `internal/employees/lookup` (new `Shared.Kernel.Employees.IEmployeeDirectory`), refusing an exited employee.
+    - Where and who: the asset and space through Facility's `internal/facility/lookup`; the assignee through Employee's `internal/employees/lookup` (new `Shared.Kernel.Employees.IEmployeeDirectory`), refusing an exited employee.
     - Parts: the part row is saved first and its id is the `SourceLineId` of Inventory's `internal/stock/issue` under `SourceType = WRK`, so a retried issue moves stock once and posts Dr COGS / Cr Inventory under the new `WRK` transaction type. A refusal answers 409 and the request's transaction takes the part row back. New `Shared.Kernel.Stock.IStockClient`, and Inventory's `internal/items/search` and `internal/items/warehouses` for the pickers.
     - `internal/work-orders/raise` for TK-67 and TK-68: idempotent on `SourceKey` (a filtered unique index).
     - Seed: the `WRK` series per School branch (`HttpTenantSeeder.SchoolServices`).
     - `libs/work-order/{work-order-core, work-order-ui}`: one page, list and record (checklist, actions, parts); menu 1122 on and `WRK` added (migration `WorkOrderTypeAndMenu`).
-    - Tests: `WorkOrder.Api.Tests.WorkOrderServiceTests` (the *Done when*, with Facility, Hrm and Inventory faked), `WorkOrderLifecycleTests`, schema, RLS and guard audits; `work-order.models.spec.ts`, `work-order.routes.spec.ts`; `apps/school` routes spec.
+    - Tests: `WorkOrder.Api.Tests.WorkOrderServiceTests` (the *Done when*, with Facility, Employee and Inventory faked), `WorkOrderLifecycleTests`, schema, RLS and guard audits; `work-order.models.spec.ts`, `work-order.routes.spec.ts`; `apps/school` routes spec.
     - Raised **D-28**: a School-only customer has no Inventory seeding or item screens, so it has nothing to issue as a part.
     - Owner step: run `WorkOrder.Api.Tests` with `WORKORDER_TEST_DB` from a dropped database.
 
@@ -2770,14 +2776,14 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
 - **Done when:** a contract's covered assets and visits are recorded, and a renewal reminder fires
   before expiry.
 - **Notes:**
-  - **As built (2026-09-25):** `backend/Api/Amc` (schema `amc`, port 4522, gateway `/api/amc/**`): `AmcContracts`, `AmcCoveredAssets`, `AmcVisits`, migration `InitialAmcSchema` with RLS on all four tables. Checks: end after start, value not negative, a terminated contract carries its reason; contract number unique per vendor.
+  - **As built (2026-09-25):** `backend/Api/MaintenanceContract` (schema `amc`, port 4522, gateway `/api/amc/**`): `AmcContracts`, `AmcCoveredAssets`, `AmcVisits`, migration `InitialAmcSchema` with RLS on all four tables. Checks: end after start, value not negative, a terminated contract carries its reason; contract number unique per vendor.
     - Added to the design: `AmcContract.ReminderEmail` (who the reminder is written to, since the design named nobody), `TerminationReason`, `Remarks`, and `AmcVisit.FacilityAssetId` (a work order needs an asset, and it must be one the contract covers).
     - Lifecycle: Draft → Active (needs at least one asset, none under another Active contract whose term overlaps) → Terminated with a reason; Expired shown once the end date passes and stored by the renewal read. An Active contract's terms are fixed; its assets, reminder and remarks may change.
     - Vendor through Master's `internal/contacts/lookup` (active, `IsVendor`); assets through Facility. A visit is saved first and raises its work order through WorkOrder under `AMC:{visitId}`.
-    - Renewals: `internal/amc/renewals-due` returns Active contracts inside their reminder window. `Notification.Worker` gains `AmcRenewalReminderRun` and a daily `AmcRenewalReminderWorker` over every branch; each reminder goes through `EmailRequestHandler` under a message id fixed by branch, contract and end date, so a contract is reminded once per term (new `Shared.Kernel.School.IAmcRenewals`; `Amc:BaseUrl` in the worker's settings).
-    - `libs/amc/{amc-core, amc-ui}`: contracts list, edit sheet with covered assets, record view with activate, terminate and visits; menu 1124 on (migration `AmcMenu`).
-    - Tests: `Amc.Api.Tests.AmcServiceTests` (the *Done when*'s recording half, one active contract per asset, vendor and asset checks, fixed terms, visit rules, renewal window and expiry, termination), `AmcRulesTests`, schema, RLS and guard audits; `Notification.Worker.Tests.AmcRenewalReminderRunTests` (the reminder fires once before expiry); `amc.models.spec.ts`, `amc.routes.spec.ts`.
-    - Owner step: run `Amc.Api.Tests` with `AMC_TEST_DB` and `Notification.Worker.Tests` from dropped databases.
+    - Renewals: `internal/amc/renewals-due` returns Active contracts inside their reminder window. `Notification.Worker` gains `AmcRenewalReminderRun` and a daily `AmcRenewalReminderWorker` over every branch; each reminder goes through `EmailRequestHandler` under a message id fixed by branch, contract and end date, so a contract is reminded once per term (new `Shared.Kernel.School.IAmcRenewals`; `MaintenanceContract:BaseUrl` in the worker's settings).
+    - `libs/maintenance-contract/{maintenance-contract-core, maintenance-contract-ui}`: contracts list, edit sheet with covered assets, record view with activate, terminate and visits; menu 1124 on (migration `AmcMenu`).
+    - Tests: `MaintenanceContract.Api.Tests.MaintenanceContractServiceTests` (the *Done when*'s recording half, one active contract per asset, vendor and asset checks, fixed terms, visit rules, renewal window and expiry, termination), `AmcRulesTests`, schema, RLS and guard audits; `Notification.Worker.Tests.AmcRenewalReminderRunTests` (the reminder fires once before expiry); `amc.models.spec.ts`, `amc.routes.spec.ts`.
+    - Owner step: run `MaintenanceContract.Api.Tests` with `MAINTENANCE_CONTRACT_TEST_DB` and `Notification.Worker.Tests` from dropped databases.
 
 ### TK-69 · S9: Parent portal
 - [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
@@ -2793,15 +2799,15 @@ delivery sub-tasks, and a new service needs the scaffold steps listed under H.
   - **As built (2026-09-25):**
     - **The portal token names its app.** `CreatePortalToken` takes the app, and `POST api/contacts/{id}/portal-link` passes the caller's (`RequireAppAttribute.AppOf`), so a link made in the School app carries `app = School` and a RetailErp link keeps its old shape (no claim, read as RetailErp). Without it every guardian token read as RetailErp and School's `[RequireApp]` refused it.
     - **Three portal controllers, each in the service that owns the data**, all `[Authorize][RequirePortalAccess][RequireApp(App.School)]`, the contact taken from the token and never from the route:
-      - Sis `api/portal/school/children` (children with their latest class and section) and `…/{studentId}/marks` (Published or Locked exams only) — `PortalService`. A child is the guardian's only through a `StudentGuardian` row with `HasPortalAccess`; anything else is not found.
+      - Student `api/portal/school/children` (children with their latest class and section) and `…/{studentId}/marks` (Published or Locked exams only) — `PortalService`. A child is the guardian's only through a `StudentGuardian` row with `HasPortalAccess`; anything else is not found.
       - Fee `api/portal/school/fees/demands` and `…/receipts` — `PortalFeeService`: posted documents addressed to the contact (so the primary guardian), with balances, head names and the demands each receipt settled.
-      - Attendance `api/portal/school/attendance/{studentId}?month=` — `PortalAttendanceService` asks Sis for the guardian's enrolments (`EnrolmentQueryRequest.PortalAccessOnly`, new) and shows only those days, with counts.
+      - Attendance `api/portal/school/attendance/{studentId}?month=` — `PortalAttendanceService` asks Student for the guardian's enrolments (`EnrolmentQueryRequest.PortalAccessOnly`, new) and shows only those days, with counts.
       - Gateway routes for the three paths.
     - `apps/portal`: `/portal?token=` (the link's own path, which nothing handled before) keeps the token in `PortalSession` and opens `/school` for a School token, `/dashboard` otherwise; `portalTokenInterceptor` sends it on `/api/portal/` calls. `/school` (children, fees, payments) and `/school/children/:studentId` (attendance by month, published marks). The RetailErp statement pages benefit too: they were only reachable with a staff login.
     - Contacts screen: **Portal link** on an open contact, showing the link or, with no `Portal:BaseUrl`, the token.
     - Still the 30-day, unrevocable token: TK-94 replaces it with revocable grants and one-hour sessions, and these routes need no change for it.
-    - Tests: `Sis.Api.Tests.PortalServiceTests` (the *Done when* for children and marks, access flag, strangers), `Fee.Api.Tests.PortalFeeTests` (posted only, own only, balances, settlements), `Attendance.Api.Tests.PortalAttendanceTests` (own child's month and counts, another child not found, Sis down), `Master.Api.Tests.PortalTokenTests` (app claim, no permissions); `portal-session.spec.ts`, `school-portal.models.spec.ts`.
-    - Owner step: run `Sis.Api.Tests`, `Fee.Api.Tests`, `Attendance.Api.Tests` and `Master.Api.Tests` from dropped databases.
+    - Tests: `Student.Api.Tests.PortalServiceTests` (the *Done when* for children and marks, access flag, strangers), `Fee.Api.Tests.PortalFeeTests` (posted only, own only, balances, settlements), `Attendance.Api.Tests.PortalAttendanceTests` (own child's month and counts, another child not found, Student down), `Master.Api.Tests.PortalTokenTests` (app claim, no permissions); `portal-session.spec.ts`, `school-portal.models.spec.ts`.
+    - Owner step: run `Student.Api.Tests`, `Fee.Api.Tests`, `Attendance.Api.Tests` and `Master.Api.Tests` from dropped databases.
 
 ### Z · Done — waiting on the owner's test run
 
@@ -3756,7 +3762,7 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
 | D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
-| D-26 | Approvals: move the approval engine's configuration and chain resolution from `Hrm` (as TK-49 plans) to Master, with `Hrm` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Hrm-only engine cannot serve it (TK-33). | TK-99, TK-49 | **Master, `apr`** (owner, 2026-09-24). The state machine and step shape are in `Shared.Kernel.Approvals`; workflow configuration and chain resolution are Master's, in tenant schema `apr`; `Hrm` answers only the employee-based approver kinds. TK-99 is unblocked, and TK-49 builds on it |
+| D-26 | Approvals: move the approval engine's configuration and chain resolution from `Employee` (as TK-49 plans) to Master, with `Employee` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Employee-only engine cannot serve it (TK-33). | TK-99, TK-49 | **Master, `apr`** (owner, 2026-09-24). The state machine and step shape are in `Shared.Kernel.Approvals`; workflow configuration and chain resolution are Master's, in tenant schema `apr`; `Employee` answers only the employee-based approver kinds. TK-99 is unblocked, and TK-49 builds on it |
 | D-27 | CRM campaigns: send bulk email through a transactional email provider (Amazon SES, SendGrid, Postmark or another — which, and on whose account), or through each branch's own SMTP with a low daily cap? A branch mailbox would be rate-limited and risks blacklisting (TK-38). | TK-121 | *Open.* Raised 2026-09-24 by TK-38 |
 | D-28 | School work-order parts: a School-only customer has no Inventory. Its branches are not seeded for Inventory and `apps/school` has no item or store screens, so the part picker is empty. Options: **(a)** seed Inventory for School branches and mount the item and warehouse screens in `apps/school` under Maintenance; **(b)** let a School work order record a part as free text with a cost, with no stock kept; **(c)** issue parts only for customers who also hold RetailErp. | work-order parts for School-only customers | *Open.* Raised 2026-09-25 by TK-66, which issues through Inventory as its card says |
 

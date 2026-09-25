@@ -16,7 +16,7 @@ public enum PreventiveOutcome
     Invalid = 3,
     StateRule = 4,
 
-    /// <summary>Facility or Hrm could not be reached.</summary>
+    /// <summary>Facility or Employee could not be reached.</summary>
     Unavailable = 5,
 }
 

@@ -1,13 +1,13 @@
 import { BbSelectOption } from '@bill-book/ui-components';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 
 /** The school years (open ones, current first) and active classes, for the admission forms' pickers. */
-export async function academicOptions(sis: SisApiService): Promise<{
+export async function academicOptions(studentApi: StudentApiService): Promise<{
   years: BbSelectOption<number>[];
   classes: BbSelectOption<number>[];
   currentYearId: number | null;
 }> {
-  const [years, classes] = await Promise.all([sis.years(), sis.classes()]);
+  const [years, classes] = await Promise.all([studentApi.years(), studentApi.classes()]);
   const open = [...years].filter((y) => !y.isClosed).sort((a, b) => Number(b.isCurrent) - Number(a.isCurrent));
   return {
     years: open.map((y) => ({ value: y.academicYearId, label: y.code })),

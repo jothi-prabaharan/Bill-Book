@@ -13,8 +13,8 @@ using Xunit;
 
 namespace Admission.Api.Tests;
 
-/// <summary>Sis, as admitting sees it: idempotent on the application, like the real one (TK-61).</summary>
-internal sealed class FakeSis : ISisClient
+/// <summary>Student, as admitting sees it: idempotent on the application, like the real one (TK-61).</summary>
+internal sealed class FakeStudent : IStudentClient
 {
     private readonly Dictionary<long, AdmitStudentResponse> _byApplication = [];
 
@@ -41,7 +41,7 @@ internal sealed class FakeSis : ISisClient
         if (FailNextAdmits > 0)
         {
             FailNextAdmits--;
-            throw new HttpRequestException("Sis is down.");
+            throw new HttpRequestException("Student is down.");
         }
 
         if (!_byApplication.TryGetValue(request.SourceApplicationId, out AdmitStudentResponse? student))
@@ -84,7 +84,7 @@ internal sealed class AprilYear : IFinancialYearProvider
 }
 
 /// <summary>
-/// Applications and admitting (S2, TK-62), against a real database with Sis
+/// Applications and admitting (S2, TK-62), against a real database with Student
 /// and Master faked. The card's Done-when: admitting twice creates one student.
 /// </summary>
 [Collection(nameof(PostgresCollection))]
@@ -94,20 +94,20 @@ public sealed class AdmitTests
 
     public AdmitTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private sealed record Branch(AdmissionDbContext Db, FakeSis Sis, FakeGuardians Guardians);
+    private sealed record Branch(AdmissionDbContext Db, FakeStudent Student, FakeGuardians Guardians);
 
     private async Task<Branch> NewBranchAsync()
     {
         Guid orgId = Guid.NewGuid();
         AdmissionDbContext db = _postgres.CreateContext(Guid.NewGuid(), orgId);
         await new AdmissionSeeder(db).SeedForOrganizationAsync(orgId, default);
-        return new Branch(db, new FakeSis(), new FakeGuardians());
+        return new Branch(db, new FakeStudent(), new FakeGuardians());
     }
 
     private static ApplicationService Service(Branch b) => new(
         b.Db,
         new NumberGenerator(b.Db, Options.Create(new NumberingOptions()), new AprilYear()),
-        b.Sis,
+        b.Student,
         b.Guardians,
         NullLogger<ApplicationService>.Instance);
 
@@ -149,7 +149,7 @@ public sealed class AdmitTests
         Assert.Equal(AdmissionOutcome.Ok, first.Outcome);
         Assert.Equal(AdmissionOutcome.Ok, second.Outcome);
         Assert.Equal(((AdmitResponse)first.Body!).StudentId, ((AdmitResponse)second.Body!).StudentId);
-        Assert.Equal(1, b.Sis.StudentsCreated);
+        Assert.Equal(1, b.Student.StudentsCreated);
         Assert.Equal(1, b.Guardians.GuardiansCreated);
 
         Application row = await b.Db.Applications.AsNoTracking().SingleAsync();
@@ -165,9 +165,9 @@ public sealed class AdmitTests
         await using AdmissionDbContext _ = b.Db;
 
         long id = await OfferedAsync(Service(b), Meera());
-        b.Sis.FailNextAdmits = 1;
+        b.Student.FailNextAdmits = 1;
 
-        // The guardian is made in Master, then Sis is down.
+        // The guardian is made in Master, then Student is down.
         Assert.Equal(AdmissionOutcome.Unavailable, (await Service(b).AdmitAsync(id, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) }, default)).Outcome);
 
         // The request's transaction would have rolled the application back;
@@ -176,7 +176,7 @@ public sealed class AdmitTests
         await b.Db.Applications.Where(a => a.ApplicationId == id).ExecuteUpdateAsync(s => s.SetProperty(a => a.GuardianContactId, (long?)null));
 
         Assert.Equal(AdmissionOutcome.Ok, (await Service(b).AdmitAsync(id, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) }, default)).Outcome);
-        Assert.Equal(1, b.Sis.StudentsCreated);
+        Assert.Equal(1, b.Student.StudentsCreated);
         Assert.Equal(1, b.Guardians.GuardiansCreated);
     }
 
@@ -195,7 +195,7 @@ public sealed class AdmitTests
         await Service(b).AdmitAsync(meera, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) }, default);
         await Service(b).AdmitAsync(arun, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) }, default);
 
-        Assert.Equal(2, b.Sis.StudentsCreated);
+        Assert.Equal(2, b.Student.StudentsCreated);
         Assert.Equal(1, b.Guardians.GuardiansCreated);
     }
 
@@ -209,7 +209,7 @@ public sealed class AdmitTests
         long id = (await Service(b).SaveAsync(null, Meera(), default)).Id!.Value;
 
         Assert.Equal(AdmissionOutcome.StageRule, (await Service(b).AdmitAsync(id, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1) }, default)).Outcome);
-        Assert.Equal(0, b.Sis.StudentsCreated);
+        Assert.Equal(0, b.Student.StudentsCreated);
     }
 
     [SkippableFact]
@@ -220,7 +220,7 @@ public sealed class AdmitTests
         await using AdmissionDbContext _ = b.Db;
 
         long id = await OfferedAsync(Service(b), Meera());
-        b.Sis.SectionMatches = false;
+        b.Student.SectionMatches = false;
 
         Assert.Equal(AdmissionOutcome.Invalid,
             (await Service(b).AdmitAsync(id, new AdmitRequest { AdmissionDate = new DateOnly(2026, 6, 1), SectionId = 9 }, default)).Outcome);
@@ -234,7 +234,7 @@ public sealed class AdmitTests
         Branch b = await NewBranchAsync();
         await using AdmissionDbContext _ = b.Db;
 
-        var enquiries = new EnquiryService(b.Db, b.Sis, NullLogger<EnquiryService>.Instance);
+        var enquiries = new EnquiryService(b.Db, b.Student, NullLogger<EnquiryService>.Instance);
         long enquiry = (await enquiries.SaveAsync(null, new SaveEnquiryRequest
         {
             EnquiryDate = new DateOnly(2026, 3, 20), ChildName = "Meera", SeekingClassId = 1, AcademicYearId = 1,

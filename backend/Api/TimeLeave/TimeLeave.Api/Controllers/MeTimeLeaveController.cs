@@ -28,7 +28,7 @@ public sealed class MeTimeLeaveController : ControllerBase
     private readonly TimeLeaveDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
-    private readonly IHrmClient _hrm;
+    private readonly IEmployeeClient _hrm;
     private readonly LeaveService _leave;
     private readonly AttendanceService _attendance;
 
@@ -36,7 +36,7 @@ public sealed class MeTimeLeaveController : ControllerBase
         TimeLeaveDbContext db,
         ICurrentUser currentUser,
         ITenantContext tenant,
-        IHrmClient hrm,
+        IEmployeeClient hrm,
         LeaveService leave,
         AttendanceService attendance)
     {

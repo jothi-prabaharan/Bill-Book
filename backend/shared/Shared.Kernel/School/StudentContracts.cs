@@ -1,0 +1,247 @@
+using System.Net.Http.Json;
+using Shared.Kernel.Tenancy;
+
+namespace Shared.Kernel.School;
+
+// What other School services ask Student (TK-62 onward). Ids across services are
+// unenforced (hard rule 8), so they are checked here before they are stored.
+// Every call names the branch in its body and carries the internal key.
+
+/// <summary>Do these ids exist in the branch? Any left null is not asked about.</summary>
+public sealed class AcademicCheckRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long? AcademicYearId { get; set; }
+
+    public long? SchoolClassId { get; set; }
+
+    public long? SectionId { get; set; }
+}
+
+public sealed class AcademicCheckResponse
+{
+    public bool YearExists { get; set; }
+
+    public bool YearIsClosed { get; set; }
+
+    public bool ClassExists { get; set; }
+
+    public bool SectionExists { get; set; }
+
+    /// <summary>Whether the section is the named class's, in the named year.</summary>
+    public bool SectionMatches { get; set; }
+}
+
+/// <summary>
+/// Create the student an application admits (S2, TK-62). Idempotent on
+/// <see cref="SourceApplicationId"/>: admitting again returns the same student.
+/// </summary>
+public sealed class AdmitStudentRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long SourceApplicationId { get; set; }
+
+    public string FirstName { get; set; } = null!;
+
+    public string? LastName { get; set; }
+
+    public DateOnly DateOfBirth { get; set; }
+
+    /// <summary>By name: Male, Female, Other, NotStated.</summary>
+    public string Gender { get; set; } = "NotStated";
+
+    public DateOnly AdmissionDate { get; set; }
+
+    public long GuardianContactId { get; set; }
+
+    /// <summary>By name: Father, Mother, Guardian, Other.</summary>
+    public string GuardianRelationship { get; set; } = "Guardian";
+
+    public long AcademicYearId { get; set; }
+
+    /// <summary>Enrol straight into this section when given.</summary>
+    public long? SectionId { get; set; }
+
+    public int? RollNo { get; set; }
+}
+
+public sealed class AdmitStudentResponse
+{
+    public long StudentId { get; set; }
+
+    public string AdmissionNo { get; set; } = null!;
+}
+
+/// <summary>Who is on a section's roll, and the school year it belongs to (S3, TK-63).</summary>
+public sealed class SectionRollRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long SectionId { get; set; }
+}
+
+public sealed class SectionRollResponse
+{
+    public bool SectionExists { get; set; }
+
+    public DateOnly YearStart { get; set; }
+
+    public DateOnly YearEnd { get; set; }
+
+    public bool YearIsClosed { get; set; }
+
+    public List<RollMember> Roll { get; set; } = [];
+}
+
+public sealed class RollMember
+{
+    public long EnrolmentId { get; set; }
+
+    public long StudentId { get; set; }
+
+    public string AdmissionNo { get; set; } = null!;
+
+    public string FullName { get; set; } = null!;
+
+    public int? RollNo { get; set; }
+}
+
+/// <summary>
+/// Enrolments with the guardian each is invoiced to (S4, TK-64): a fee run
+/// asks for a year and class, a demand screen for particular enrolments.
+/// </summary>
+public sealed class EnrolmentQueryRequest
+{
+    public Guid CustomerId { get; set; }
+
+    public Guid OrgId { get; set; }
+
+    public long? AcademicYearId { get; set; }
+
+    public long? SchoolClassId { get; set; }
+
+    public List<long> EnrolmentIds { get; set; } = [];
+
+    /// <summary>A guardian's children, for the parent portal (S9).</summary>
+    public long? GuardianContactId { get; set; }
+
+    /// <summary>With <see cref="GuardianContactId"/>: only children whose link to that guardian grants portal access (TK-69).</summary>
+    public bool PortalAccessOnly { get; set; }
+}
+
+public sealed class EnrolmentInfo
+{
+    public long EnrolmentId { get; set; }
+
+    public long StudentId { get; set; }
+
+    public string StudentName { get; set; } = null!;
+
+    public string AdmissionNo { get; set; } = null!;
+
+    public long AcademicYearId { get; set; }
+
+    public long SectionId { get; set; }
+
+    public long SchoolClassId { get; set; }
+
+    public string ClassName { get; set; } = null!;
+
+    public string SectionName { get; set; } = null!;
+
+    /// <summary>The guardian fees are invoiced to; null for a student with none marked primary.</summary>
+    public long? PrimaryGuardianContactId { get; set; }
+
+    /// <summary>The enrolment and the student are both active.</summary>
+    public bool IsActive { get; set; }
+}
+
+/// <summary>Student refused the admit; <see cref="Message"/> is its sentence, safe to show.</summary>
+public sealed class StudentRefusedException(string message) : Exception(message);
+
+public interface IStudentClient
+{
+    Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct);
+
+    Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct);
+
+    Task<AcademicCheckResponse> CheckAsync(long? academicYearId, long? schoolClassId, long? sectionId, CancellationToken ct);
+
+    /// <summary>Throws <see cref="StudentRefusedException"/> for a refusal and <see cref="HttpRequestException"/> when Student cannot be asked.</summary>
+    Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct);
+}
+
+public sealed class HttpStudentClient : IStudentClient
+{
+    private readonly HttpClient _http;
+    private readonly ITenantContext _tenant;
+
+    public HttpStudentClient(HttpClient http, ITenantContext tenant)
+    {
+        _http = http;
+        _tenant = tenant;
+    }
+
+    public async Task<AcademicCheckResponse> CheckAsync(long? academicYearId, long? schoolClassId, long? sectionId, CancellationToken ct)
+    {
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/academic-check", new AcademicCheckRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+            AcademicYearId = academicYearId,
+            SchoolClassId = schoolClassId,
+            SectionId = sectionId,
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<AcademicCheckResponse>(ct) ?? new AcademicCheckResponse();
+    }
+
+    public async Task<SectionRollResponse> RollAsync(long sectionId, CancellationToken ct)
+    {
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/sections/roll", new SectionRollRequest
+        {
+            CustomerId = _tenant.CustomerId ?? Guid.Empty,
+            OrgId = _tenant.OrgId ?? Guid.Empty,
+            SectionId = sectionId,
+        }, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<SectionRollResponse>(ct) ?? new SectionRollResponse();
+    }
+
+    public async Task<IReadOnlyList<EnrolmentInfo>> EnrolmentsAsync(EnrolmentQueryRequest query, CancellationToken ct)
+    {
+        query.CustomerId = _tenant.CustomerId ?? Guid.Empty;
+        query.OrgId = _tenant.OrgId ?? Guid.Empty;
+
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/enrolments", query, ct);
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<List<EnrolmentInfo>>(ct) ?? [];
+    }
+
+    public async Task<AdmitStudentResponse> AdmitAsync(AdmitStudentRequest request, CancellationToken ct)
+    {
+        request.CustomerId = _tenant.CustomerId ?? Guid.Empty;
+        request.OrgId = _tenant.OrgId ?? Guid.Empty;
+
+        using HttpResponseMessage response = await _http.PostAsJsonAsync("internal/sis/students/admit", request, ct);
+        if ((int)response.StatusCode is 409 or 422)
+        {
+            StudentRefusal? refusal = await response.Content.ReadFromJsonAsync<StudentRefusal>(ct);
+            throw new StudentRefusedException(refusal?.Message ?? "The student could not be admitted.");
+        }
+
+        response.EnsureSuccessStatusCode();
+        return await response.Content.ReadFromJsonAsync<AdmitStudentResponse>(ct)
+            ?? throw new HttpRequestException("Student answered without a student.");
+    }
+
+    private sealed record StudentRefusal(string? Message);
+}

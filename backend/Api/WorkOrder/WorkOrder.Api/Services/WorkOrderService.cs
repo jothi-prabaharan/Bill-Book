@@ -23,7 +23,7 @@ public enum WorkOrderOutcome
     /// <summary>Inventory refused the issue, usually for want of stock.</summary>
     StockRefused = 5,
 
-    /// <summary>Facility, Hrm or Inventory could not be reached.</summary>
+    /// <summary>Facility, Employee or Inventory could not be reached.</summary>
     Unavailable = 6,
 }
 
@@ -36,7 +36,7 @@ public sealed record WorkOrderResult(WorkOrderOutcome Outcome, long? Id = null, 
 
 /// <summary>
 /// Work orders (S6, TK-66). Where the job is — an asset or a space — is
-/// checked through Facility, the assignee through Hrm, and parts are issued
+/// checked through Facility, the assignee through Employee, and parts are issued
 /// through Inventory's guarded decrement, keyed on the work order and part so
 /// the same part is never issued twice.
 /// </summary>

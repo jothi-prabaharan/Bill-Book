@@ -102,13 +102,13 @@ public sealed class TenantSeederTests
         Assert.DoesNotContain(handler.Requests, r => r.RequestUri!.Host == $"{missing.ToLowerInvariant()}.test");
     }
 
-    /// <summary>A Payroll branch is seeded with Accounting, Hrm and Printing only, and no contacts (TK-45, TK-48).</summary>
+    /// <summary>A Payroll branch is seeded with Accounting, Employee and Printing only, and no contacts (TK-45, TK-48).</summary>
     [Fact]
     public async Task A_payroll_branch_is_seeded_with_the_employee_master_and_no_trading_services()
     {
         var handler = new RecordingHandler();
         Dictionary<string, string?> settings = AllConfigured();
-        settings["Seeding:Hrm"] = "http://hrm.test/";
+        settings["Seeding:Employee"] = "http://hrm.test/";
 
         IReadOnlyList<string> failed = await Seeder(handler, settings).SeedAsync(
             Guid.NewGuid(), Guid.NewGuid(), Shared.Kernel.Apps.App.Payroll, CancellationToken.None);

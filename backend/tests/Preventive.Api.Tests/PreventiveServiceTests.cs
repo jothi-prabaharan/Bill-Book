@@ -58,7 +58,7 @@ internal sealed class FakeWorkOrders : IWorkOrderClient
 }
 
 /// <summary>
-/// Plans and generation against a real database, with Facility, Hrm and
+/// Plans and generation against a real database, with Facility, Employee and
 /// WorkOrder faked (S7, TK-67). The card's Done-when: running generation twice
 /// raises one work order per occurrence.
 /// </summary>

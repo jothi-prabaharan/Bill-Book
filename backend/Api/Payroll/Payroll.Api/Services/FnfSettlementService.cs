@@ -12,14 +12,14 @@ public sealed class FnfSettlementService
     private readonly PayrollDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly ILedgerClient _ledgerClient;
-    private readonly IHrmClient _hrmClient;
+    private readonly IEmployeeClient _hrmClient;
     private readonly IMasterUserClient _masterUserClient;
 
     public FnfSettlementService(
         PayrollDbContext db,
         ITenantContext tenant,
         ILedgerClient ledgerClient,
-        IHrmClient hrmClient,
+        IEmployeeClient hrmClient,
         IMasterUserClient masterUserClient)
     {
         _db = db;

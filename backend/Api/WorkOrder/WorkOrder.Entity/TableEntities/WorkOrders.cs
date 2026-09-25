@@ -38,7 +38,7 @@ public class WorkOrderDocument : OrgScopedEntity
 
     public DateOnly? DueDate { get; set; }
 
-    /// <summary>Unenforced: <c>hrm.Employees</c>, checked through Hrm.</summary>
+    /// <summary>Unenforced: <c>hrm.Employees</c>, checked through Employee.</summary>
     public long? AssignedEmployeeId { get; set; }
 
     /// <summary>Unenforced: <c>amc.AmcContracts</c>; the vendor attends instead of staff.</summary>

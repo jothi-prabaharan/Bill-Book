@@ -82,7 +82,7 @@ public sealed class ResolvedStep
 }
 
 /// <summary>
-/// Asks Hrm for the approvers only it can find (D-26, TK-49):
+/// Asks Employee for the approvers only it can find (D-26, TK-49):
 /// <c>POST internal/approval-chains/resolve-employees</c>.
 /// </summary>
 public sealed class ResolveEmployeesRequest
@@ -110,7 +110,7 @@ public sealed class EmployeeApproverQuery
     public long? NamedEmployeeId { get; set; }
 }
 
-/// <summary>One level's approver as Hrm found them, or none.</summary>
+/// <summary>One level's approver as Employee found them, or none.</summary>
 public sealed class EmployeeApproverAnswer
 {
     public int Sequence { get; set; }

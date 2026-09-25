@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { FacilityApiService } from '@bill-book/facility-core';
-import { HrmApiService } from '@bill-book/hrm-core';
+import { EmployeeApiService } from '@bill-book/employee-core';
 import {
   BbSelectOption,
   ColumnDef,
@@ -68,7 +68,7 @@ const ACTION_LABELS: Record<WorkOrderAction, string> = {
 export class WorkOrdersPage implements OnInit {
   private readonly api = inject(WorkOrderApiService);
   private readonly facility = inject(FacilityApiService);
-  private readonly hrm = inject(HrmApiService);
+  private readonly employeeApi = inject(EmployeeApiService);
 
   protected readonly rows = signal<WorkOrder[]>([]);
   protected readonly messages = signal<UiMessage[]>([]);
@@ -246,7 +246,7 @@ export class WorkOrdersPage implements OnInit {
         this.assetOptions.set(assets.filter((a) => a.assetStatus !== 'Disposed').map((a) => ({ value: a.facilityAssetId, label: `${a.assetTag} ${a.name}` })))),
       this.facility.spaces().then((spaces) =>
         this.spaceOptions.set(spaces.filter((s) => s.isActive).map((s) => ({ value: s.spaceId, label: `${s.code} ${s.name}`, group: s.buildingName })))),
-      this.hrm.employees({ status: 'Active', page: 1, pageSize: 500 }).then((page) =>
+      this.employeeApi.employees({ status: 'Active', page: 1, pageSize: 500 }).then((page) =>
         this.employeeOptions.set(page.items.map((e) => ({ value: e.employeeId, label: `${e.fullName} (${e.employeeCode})` })))),
       this.api.stockItems().then((items) =>
         this.itemOptions.set(items.map((i) => ({ value: i.itemId, label: `${i.itemCode} ${i.itemName} · ${i.quantityOnHand} in stock` })))),

@@ -9,7 +9,7 @@ public enum AdmissionOutcome
     /// <summary>The move between stages is not allowed, or the application is already closed.</summary>
     StageRule = 4,
 
-    /// <summary>Sis or Master could not be asked.</summary>
+    /// <summary>Student or Master could not be asked.</summary>
     Unavailable = 5,
 }
 

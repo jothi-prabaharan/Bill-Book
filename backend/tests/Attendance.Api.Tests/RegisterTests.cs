@@ -9,8 +9,8 @@ using Xunit;
 
 namespace Attendance.Api.Tests;
 
-/// <summary>Sis's roll, as the register sees it: one section of three students in 2026-27.</summary>
-internal sealed class FakeRoll : ISisClient
+/// <summary>Student's roll, as the register sees it: one section of three students in 2026-27.</summary>
+internal sealed class FakeRoll : IStudentClient
 {
     public bool Down { get; set; }
 
@@ -20,7 +20,7 @@ internal sealed class FakeRoll : ISisClient
     {
         if (Down)
         {
-            throw new HttpRequestException("Sis is down.");
+            throw new HttpRequestException("Student is down.");
         }
 
         return Task.FromResult(sectionId != 10

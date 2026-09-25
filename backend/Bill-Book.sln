@@ -111,15 +111,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Notification.Worker.Tests",
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RateSync.Worker.Tests", "tests\RateSync.Worker.Tests\RateSync.Worker.Tests.csproj", "{BC7D6960-F032-4405-B204-394D8409B3A3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Hrm", "Hrm", "{097EE065-810B-6062-7841-F5CDF1B9D840}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Employee", "Employee", "{097EE065-810B-6062-7841-F5CDF1B9D840}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hrm.Entity", "Api\Hrm\Hrm.Entity\Hrm.Entity.csproj", "{3243BB91-6AB8-4184-BD6A-63FE738B598D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Employee.Entity", "Api\Employee\Employee.Entity\Employee.Entity.csproj", "{3243BB91-6AB8-4184-BD6A-63FE738B598D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hrm.Repository", "Api\Hrm\Hrm.Repository\Hrm.Repository.csproj", "{14D3B66B-FB73-44E6-90CE-CF9FA8082BF9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Employee.Repository", "Api\Employee\Employee.Repository\Employee.Repository.csproj", "{14D3B66B-FB73-44E6-90CE-CF9FA8082BF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hrm.Api", "Api\Hrm\Hrm.Api\Hrm.Api.csproj", "{707F83D9-F71A-4129-B85E-DB05D40A8120}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Employee.Api", "Api\Employee\Employee.Api\Employee.Api.csproj", "{707F83D9-F71A-4129-B85E-DB05D40A8120}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Hrm.Api.Tests", "tests\Hrm.Api.Tests\Hrm.Api.Tests.csproj", "{2ED54EA2-E13F-4622-8230-4F40B25D6000}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Employee.Api.Tests", "tests\Employee.Api.Tests\Employee.Api.Tests.csproj", "{2ED54EA2-E13F-4622-8230-4F40B25D6000}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Payroll", "Payroll", "{2D147B8C-B7C5-B89A-1C79-909A0A27C8A1}"
 EndProject
@@ -151,15 +151,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Api", "Api\Claims\Cl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Claims.Api.Tests", "tests\Claims.Api.Tests\Claims.Api.Tests.csproj", "{B44B7FDF-750D-477F-A7B4-E7148C60839D}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Sis", "Sis", "{5E6B3175-05D3-A70B-F8A8-3B9FC32338FB}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Student", "Student", "{5E6B3175-05D3-A70B-F8A8-3B9FC32338FB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sis.Entity", "Api\Sis\Sis.Entity\Sis.Entity.csproj", "{4A8BC729-E97E-4864-9457-557A4320C014}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Student.Entity", "Api\Student\Student.Entity\Student.Entity.csproj", "{4A8BC729-E97E-4864-9457-557A4320C014}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sis.Repository", "Api\Sis\Sis.Repository\Sis.Repository.csproj", "{AD960026-FA7B-4A16-AC54-B95FDF20629E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Student.Repository", "Api\Student\Student.Repository\Student.Repository.csproj", "{AD960026-FA7B-4A16-AC54-B95FDF20629E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sis.Api", "Api\Sis\Sis.Api\Sis.Api.csproj", "{022ACAF8-3B0B-4A90-9393-97A6F0264102}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Student.Api", "Api\Student\Student.Api\Student.Api.csproj", "{022ACAF8-3B0B-4A90-9393-97A6F0264102}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sis.Api.Tests", "tests\Sis.Api.Tests\Sis.Api.Tests.csproj", "{3B7ABB29-1B2F-4516-903F-7BAB619CF7AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Student.Api.Tests", "tests\Student.Api.Tests\Student.Api.Tests.csproj", "{3B7ABB29-1B2F-4516-903F-7BAB619CF7AD}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Admission", "Admission", "{6E96BC4C-0917-1470-56A3-E2DBED893AEB}"
 EndProject
@@ -231,15 +231,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Preventive.Api", "Api\Preve
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Preventive.Api.Tests", "tests\Preventive.Api.Tests\Preventive.Api.Tests.csproj", "{D38C4370-FEB0-4B30-A4FE-5937E1554ABA}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Amc", "Amc", "{80B25C61-D7C0-52B6-9CAF-3160D8EAD015}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "MaintenanceContract", "MaintenanceContract", "{80B25C61-D7C0-52B6-9CAF-3160D8EAD015}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amc.Entity", "Api\Amc\Amc.Entity\Amc.Entity.csproj", "{DA71CCD2-ADD5-45AD-A6DF-530455DE372B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaintenanceContract.Entity", "Api\MaintenanceContract\MaintenanceContract.Entity\MaintenanceContract.Entity.csproj", "{DA71CCD2-ADD5-45AD-A6DF-530455DE372B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amc.Repository", "Api\Amc\Amc.Repository\Amc.Repository.csproj", "{6E3A03A0-DF71-4D11-AA01-0A596826D969}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaintenanceContract.Repository", "Api\MaintenanceContract\MaintenanceContract.Repository\MaintenanceContract.Repository.csproj", "{6E3A03A0-DF71-4D11-AA01-0A596826D969}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amc.Api", "Api\Amc\Amc.Api\Amc.Api.csproj", "{EFA33835-4167-489E-B78C-B32C33BD0DCC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaintenanceContract.Api", "Api\MaintenanceContract\MaintenanceContract.Api\MaintenanceContract.Api.csproj", "{EFA33835-4167-489E-B78C-B32C33BD0DCC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Amc.Api.Tests", "tests\Amc.Api.Tests\Amc.Api.Tests.csproj", "{C17E22EB-84A8-47D3-A9C6-9C030719B2AF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MaintenanceContract.Api.Tests", "tests\MaintenanceContract.Api.Tests\MaintenanceContract.Api.Tests.csproj", "{C17E22EB-84A8-47D3-A9C6-9C030719B2AF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

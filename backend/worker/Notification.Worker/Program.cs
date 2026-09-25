@@ -88,10 +88,10 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddScoped<PaymentReminderRun>();
         services.AddHostedService<PaymentReminderWorker>();
 
-        // AMC renewal reminders (TK-68): which contracts are due, from Amc.
+        // AMC renewal reminders (TK-68): which contracts are due, from MaintenanceContract.
         services.AddHttpClient<IAmcRenewals, HttpAmcRenewals>(client =>
         {
-            client.BaseAddress = new Uri(config["Amc:BaseUrl"] ?? "http://localhost:4522/");
+            client.BaseAddress = new Uri(config["MaintenanceContract:BaseUrl"] ?? "http://localhost:4522/");
         })
             .AddHttpMessageHandler<InternalKeyHandler>();
         services.AddScoped<AmcRenewalReminderRun>();

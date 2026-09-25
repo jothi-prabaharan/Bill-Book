@@ -12,10 +12,10 @@ namespace Admission.Api.Services;
 public sealed class EnquiryService
 {
     private readonly AdmissionDbContext _db;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly ILogger<EnquiryService> _log;
 
-    public EnquiryService(AdmissionDbContext db, ISisClient sis, ILogger<EnquiryService> log)
+    public EnquiryService(AdmissionDbContext db, IStudentClient sis, ILogger<EnquiryService> log)
     {
         _db = db;
         _sis = sis;
@@ -88,8 +88,8 @@ public sealed class EnquiryService
         return AdmissionResult.Ok(enquiry.EnquiryId);
     }
 
-    /// <summary>Whether the year and class are Sis's, in this branch, with the year open. Null when fine.</summary>
-    internal static async Task<AdmissionResult?> CheckAcademicAsync(ISisClient sis, ILogger log, long yearId, long classId, CancellationToken ct)
+    /// <summary>Whether the year and class are Student's, in this branch, with the year open. Null when fine.</summary>
+    internal static async Task<AdmissionResult?> CheckAcademicAsync(IStudentClient sis, ILogger log, long yearId, long classId, CancellationToken ct)
     {
         AcademicCheckResponse check;
         try

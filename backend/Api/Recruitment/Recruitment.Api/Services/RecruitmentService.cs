@@ -14,14 +14,14 @@ public sealed class RecruitmentService
     private readonly RecruitmentDbContext _db;
     private readonly ITenantContext _tenant;
     private readonly INumberGenerator _numbers;
-    private readonly IHrmClient _hrmClient;
+    private readonly IEmployeeClient _hrmClient;
     private readonly IPayrollClient _payrollClient;
 
     public RecruitmentService(
         RecruitmentDbContext db,
         ITenantContext tenant,
         INumberGenerator numbers,
-        IHrmClient hrmClient,
+        IEmployeeClient hrmClient,
         IPayrollClient payrollClient)
     {
         _db = db;
@@ -531,7 +531,7 @@ public sealed class RecruitmentService
     }
 
     /// <summary>
-    /// Accepts an offer and provisions the employee in Hrm and salary in Payroll.
+    /// Accepts an offer and provisions the employee in Employee and salary in Payroll.
     /// Idempotency guarantee: Accepting the same offer multiple times returns
     /// the single created employee without creating duplicates.
     /// </summary>

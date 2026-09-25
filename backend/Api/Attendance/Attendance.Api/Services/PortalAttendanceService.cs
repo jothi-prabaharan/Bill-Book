@@ -13,22 +13,22 @@ public enum PortalAttendanceOutcome
     /// <summary>Not this guardian's child, or not one whose link grants portal access.</summary>
     NotFound = 2,
 
-    /// <summary>Sis could not be asked whose child it is.</summary>
+    /// <summary>Student could not be asked whose child it is.</summary>
     Unavailable = 3,
 }
 
 /// <summary>
 /// A child's attendance in the parent portal (S9, TK-69). Attendance knows
-/// enrolments, not guardians, so Sis is asked which of the child's enrolments
+/// enrolments, not guardians, so Student is asked which of the child's enrolments
 /// belong to a guardian with portal access, and only those days are shown.
 /// </summary>
 public sealed class PortalAttendanceService
 {
     private readonly AttendanceDbContext _db;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly ILogger<PortalAttendanceService> _log;
 
-    public PortalAttendanceService(AttendanceDbContext db, ISisClient sis, ILogger<PortalAttendanceService> log)
+    public PortalAttendanceService(AttendanceDbContext db, IStudentClient sis, ILogger<PortalAttendanceService> log)
     {
         _db = db;
         _sis = sis;
@@ -47,7 +47,7 @@ public sealed class PortalAttendanceService
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            _log.LogError(ex, "Sis could not say whose child student {StudentId} is.", studentId);
+            _log.LogError(ex, "Student could not say whose child student {StudentId} is.", studentId);
             return (PortalAttendanceOutcome.Unavailable, null);
         }
 

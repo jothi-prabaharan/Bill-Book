@@ -18,7 +18,7 @@ public sealed class RaiseWorkOrder
 
     public string Title { get; set; } = null!;
 
-    /// <summary>WorkOrder's source by name: <c>Preventive</c> or <c>Amc</c>.</summary>
+    /// <summary>WorkOrder's source by name: <c>Preventive</c> or <c>MaintenanceContract</c>.</summary>
     public string WorkOrderSource { get; set; } = "Preventive";
 
     public long? FacilityAssetId { get; set; }

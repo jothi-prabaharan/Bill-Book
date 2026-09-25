@@ -8,16 +8,16 @@ import {
   authGuard,
 } from '@bill-book/auth';
 import { shellRoutes } from '@bill-book/app-shell';
-import { hrmRoutes } from '@bill-book/hrm-ui';
+import { employeeRoutes } from '@bill-book/employee-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
-import { sisRoutes } from '@bill-book/sis-ui';
+import { studentRoutes } from '@bill-book/student-ui';
 import { admissionRoutes } from '@bill-book/admission-ui';
 import { studentAttendanceRoutes } from '@bill-book/student-attendance-ui';
 import { feeRoutes } from '@bill-book/fee-ui';
 import { facilityRoutes } from '@bill-book/facility-ui';
 import { workOrderRoutes } from '@bill-book/work-order-ui';
 import { preventiveRoutes } from '@bill-book/preventive-ui';
-import { amcRoutes } from '@bill-book/amc-ui';
+import { maintenanceContractRoutes } from '@bill-book/maintenance-contract-ui';
 import { HomePage } from './home/home.page';
 
 /**
@@ -46,9 +46,9 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/master-ui').then((m) => m.ContactsPage),
         data: { access: { permission: 'contacts.view' } },
       },
-      ...hrmRoutes,
+      ...employeeRoutes,
       // Students, academic setup, exams and marks (S1, TK-61).
-      ...sisRoutes,
+      ...studentRoutes,
       // Enquiries, applications and admitting (S2, TK-62).
       ...admissionRoutes,
       // The student attendance register (S3, TK-63).
@@ -59,7 +59,7 @@ export const appRoutes: Routes = [
       ...facilityRoutes,
       ...workOrderRoutes,
       ...preventiveRoutes,
-      ...amcRoutes,
+      ...maintenanceContractRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

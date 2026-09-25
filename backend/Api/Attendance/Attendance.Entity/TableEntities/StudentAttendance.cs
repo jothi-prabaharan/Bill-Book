@@ -6,7 +6,7 @@ namespace Attendance.Entity.TableEntities;
 
 /// <summary>
 /// One student's mark for one day (S3, TK-63). Student attendance only: staff
-/// attendance is HRMS's. The section and enrolment are Sis's, unenforced and
+/// attendance is HRMS's. The section and enrolment are Student's, unenforced and
 /// checked against the section's roll when the register is saved.
 /// </summary>
 public class StudentAttendance : OrgScopedEntity

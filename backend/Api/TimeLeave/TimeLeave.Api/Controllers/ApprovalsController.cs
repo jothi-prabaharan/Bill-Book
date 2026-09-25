@@ -27,14 +27,14 @@ public sealed class ApprovalsController : ControllerBase
     private readonly TimeLeaveDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
-    private readonly IHrmClient _hrm;
+    private readonly IEmployeeClient _hrm;
     private readonly LeaveService _leave;
 
     public ApprovalsController(
         TimeLeaveDbContext db,
         ICurrentUser currentUser,
         ITenantContext tenant,
-        IHrmClient hrm,
+        IEmployeeClient hrm,
         LeaveService leave)
     {
         _db = db;

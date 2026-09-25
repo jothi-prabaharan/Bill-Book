@@ -37,19 +37,19 @@ public enum ApprovalRequestKind
 /// <summary>How a level's approver is found.</summary>
 public enum ApproverKind
 {
-    /// <summary>Walks the employee's managers up <c>ReportingDepth</c> steps. Hrm answers.</summary>
+    /// <summary>Walks the employee's managers up <c>ReportingDepth</c> steps. Employee answers.</summary>
     ReportingChain = 1,
 
-    /// <summary>The person named for the employee under a relationship type ("Lead"). Hrm answers.</summary>
+    /// <summary>The person named for the employee under a relationship type ("Lead"). Employee answers.</summary>
     Relationship = 2,
 
-    /// <summary>The head of the employee's department. Hrm answers.</summary>
+    /// <summary>The head of the employee's department. Employee answers.</summary>
     DepartmentHead = 3,
 
     /// <summary>Anyone holding a role in the branch; the first to act takes the step. Master answers.</summary>
     RoleHolder = 4,
 
-    /// <summary>One fixed employee. Hrm answers.</summary>
+    /// <summary>One fixed employee. Employee answers.</summary>
     NamedEmployee = 5,
 
     /// <summary>One fixed user, for a customer with no employees (RetailErp). Master answers.</summary>

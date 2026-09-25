@@ -1254,7 +1254,7 @@ The two-step login stays. The second step says which app it is for.
   - `license_status` and `license_expiry` **from that app's licence**;
   - `permission[]` built only from roles of that app.
 - **Services check the `app` claim**, per controller, with `[RequireApp(...)]` naming the apps it
-  serves. The Hrm service's employee controllers take `App.Hrms | App.Payroll`; its recruitment and
+  serves. The Employee service's employee controllers take `App.Hrms | App.Payroll`; its recruitment and
   lifecycle controllers take `App.Hrms` alone; Master's user, role and branch controllers take all
   four. An HRMS token cannot call a RetailErp endpoint even if a permission name matched.
   `EndpointGuardAudit` gains that question: every controller names its apps.
@@ -1318,7 +1318,7 @@ a copy. A change to the users page is a change in all four apps at once.
 | Print templates | `libs/settings/print-templates` (`@bill-book/settings-print-templates`) | Master, moving to Printing (stage P) | All — payslips, Form 16, HR letters and fee receipts are templates like invoices |
 | Contacts, contact person roles | `libs/master/master-ui` — `contacts/`, `contact-person-roles-*` | Master | RetailErp and School — customers, vendors and guardians. HRMS and Payroll have employees, not trade contacts |
 | HSN/SAC codes | `libs/master/master-ui` — `hsn-sac/` | Master | RetailErp and School — GST on goods and on the rare taxable fee head |
-| **Employee master** and organisation setup (departments, designations, grades, locations) | `libs/hrm/hrm-ui` | Hrm | HRMS, Payroll and School — School's class teachers and technicians are employees, so a School licence alone shows the employee list without leave or pay |
+| **Employee master** and organisation setup (departments, designations, grades, locations) | `libs/employee/employee-ui` | Employee | HRMS, Payroll and School — School's class teachers and technicians are employees, so a School licence alone shows the employee list without leave or pay |
 
 **How the shared pages behave inside one app**, so a shared page is not a confusing one:
 
@@ -1566,7 +1566,7 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 
 | | |
 |---|---|
-| **Built** | Stage H0 (TK-42 to TK-47) and H1, the `Hrm` service with the employee master (TK-48). Not deployed yet |
+| **Built** | Stage H0 (TK-42 to TK-47) and H1, the `Employee` service with the employee master (TK-48). Not deployed yet |
 | **Planned here** | Six services, one per schema — `hrm`, `tla`, `pay`, `rec`, `prf`, `clm` — HR and payroll report sources in Reporting, and two apps, `apps/hrms` and `apps/payroll`, on the shared shell |
 | **Depends on** | The Platform section (H0); Accounting's internal posting API (built); the print templates, for letters, payslips and Form 16 |
 | **Decided** | HRMS and Payroll are two apps, each sold on its own, Payroll fully standalone; one shared employee master; built before School; one service per schema; employees are not contacts; payroll posts through Accounting and never writes GL rows; a customer without RetailErp has its journals posted to a hidden ledger and exported for their accountant |
@@ -1577,7 +1577,7 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 | Decision | Why |
 |---|---|
 | **Payroll is an app of its own, sellable without HRMS** | The owner's decision. Standalone payroll is a common purchase for a business that keeps HR on paper |
-| **One employee master, owned by the `Hrm` service, shared by HRMS, Payroll and School** | Payroll cannot run without employees, a school has to name its teachers, and a customer with several apps must not enter anyone twice. The master's permissions (`employee.*`) and menus carry all three apps' flags — see Platform § Shared master pages |
+| **One employee master, owned by the `Employee` service, shared by HRMS, Payroll and School** | Payroll cannot run without employees, a school has to name its teachers, and a customer with several apps must not enter anyone twice. The master's permissions (`employee.*`) and menus carry all three apps' flags — see Platform § Shared master pages |
 | **Payroll takes paid days from HRMS when it is licensed, and from its own monthly input when not** | One run, two sources for the same figures; the run records which it used. A customer who adds HRMS later switches source from the next unposted month |
 | **Expense claims stay in HRMS** | Paid through a payroll line when Payroll is licensed, or as a Spend Money otherwise |
 | **An employee is not a `con.Contact`** | Contacts are trade counterparties, visible across sales and purchase screens. Salary, PAN, bank details, family and date of birth are not trade data |
@@ -1598,12 +1598,12 @@ when the owner decided to sell HRMS and Payroll as separate apps.
 
 | Service | Schema | Port | Serves app | Owns | Calls |
 |---|---|---|---|---|---|
-| `Hrm` | `hrm` | 4509 | HRMS; the employee master also Payroll | Organisation setup, employees and everything about them, lifecycle (onboarding, exit), letters, assets issued, announcements | Master (user link, print templates) |
-| `TimeLeave` | `tla` | 4510 | HRMS | Holidays, shifts, rosters, weekly offs, punches, daily attendance, regularisation, overtime, comp-off, leave policy, balances, applications | Hrm (employees) |
-| `Payroll` | `pay` | 4511 | Payroll | Components, structures, salaries, revisions and arrears, one-off pay, loans, runs, payslips, statutory settings and returns, income tax, F&F, bank files, journal posting and export | Hrm, TimeLeave (when HRMS is licensed), Claims (likewise), Accounting |
-| `Recruitment` | `rec` | 4512 | HRMS | Requisitions, openings, candidates, pipeline, interviews, offers | Hrm (creates the employee), Master (print templates) |
-| `Performance` | `prf` | 4513 | HRMS | Review cycles, goals, competencies, self-evaluation, level reviews, calibration, appraisal outcomes | Hrm (employees, approval chains), Payroll (revision, when licensed) |
-| `Claims` | `clm` | 4514 | HRMS | Claim categories and limits, expense claims, approval, payout | Hrm, Payroll (payout in a run, when licensed), Accounting (payout as Spend Money) |
+| `Employee` | `hrm` | 4509 | HRMS; the employee master also Payroll | Organisation setup, employees and everything about them, lifecycle (onboarding, exit), letters, assets issued, announcements | Master (user link, print templates) |
+| `TimeLeave` | `tla` | 4510 | HRMS | Holidays, shifts, rosters, weekly offs, punches, daily attendance, regularisation, overtime, comp-off, leave policy, balances, applications | Employee (employees) |
+| `Payroll` | `pay` | 4511 | Payroll | Components, structures, salaries, revisions and arrears, one-off pay, loans, runs, payslips, statutory settings and returns, income tax, F&F, bank files, journal posting and export | Employee, TimeLeave (when HRMS is licensed), Claims (likewise), Accounting |
+| `Recruitment` | `rec` | 4512 | HRMS | Requisitions, openings, candidates, pipeline, interviews, offers | Employee (creates the employee), Master (print templates) |
+| `Performance` | `prf` | 4513 | HRMS | Review cycles, goals, competencies, self-evaluation, level reviews, calibration, appraisal outcomes | Employee (employees, approval chains), Payroll (revision, when licensed) |
+| `Claims` | `clm` | 4514 | HRMS | Claim categories and limits, expense claims, approval, payout | Employee, Payroll (payout in a run, when licensed), Accounting (payout as Spend Money) |
 
 Every cross-service id is an unenforced `long`, validated in C# through the owning service (hard
 rule 8). Each service is the usual three projects under `backend/Api/{Service}/` with a test project
@@ -2068,7 +2068,7 @@ Managerial), `ScheduledAt DateTimeOffset`, `InterviewerEmployeeId long`, `Rating
 `OfferStatus` (enum: Draft, Approved, Sent, Accepted, Declined, Revoked), approval columns. The letter
 is a print template.
 
-**Accepting an offer** creates the employee through the Hrm API (status `Onboarding`), their
+**Accepting an offer** creates the employee through the Employee API (status `Onboarding`), their
 `EmployeeSalary` through Payroll, and the onboarding checklist. It is idempotent on the application
 id, so a retry creates one employee.
 
@@ -2316,7 +2316,7 @@ The rules:
 
 ### Where it lives
 
-- **Configuration and resolution belong to `Hrm`**, which owns the employees, the reporting line and
+- **Configuration and resolution belong to `Employee`**, which owns the employees, the reporting line and
   the relationships the chain is resolved from. It serves
   `POST internal/approval-chains/resolve` (request kind, employee, amount) → the list of steps.
 - **Steps are stored by the service that owns the request** — `tla` for leave, `prf` for appraisals,
@@ -2396,9 +2396,9 @@ A person using both apps holds one role in each.
   section:
   - **`apps/hrms`**, `APP_ID = Hrms`.
   - **`apps/payroll`**, `APP_ID = Payroll`.
-- **Libs**, one pair per service: `libs/hrm/*`, `libs/time-leave/*`, `libs/payroll/*`,
+- **Libs**, one pair per service: `libs/employee/*`, `libs/time-leave/*`, `libs/payroll/*`,
   `libs/recruitment/*`, `libs/performance/*`, `libs/claims/*`. **The employee master pages live in
-  `libs/hrm/hrm-ui` and are mounted by both apps**; the menu decides which of them each app shows.
+  `libs/employee/employee-ui` and are mounted by both apps**; the menu decides which of them each app shows.
 - **Audiences, chosen by role rather than by further apps:**
   - `apps/hrms` — HR (full menus); Manager (team calendar, team attendance, approvals inbox);
     Employee (profile, leave, attendance and punch-in, claims, documents, announcements).
@@ -2458,7 +2458,7 @@ H0 is the Platform section above. Each stage says which app it belongs to. **The
 Payroll** is H0, H1, H4, H5, H6 and the settlement half of H7, plus Payroll's self-service in H8.
 **The first sellable HRMS** is H0–H3, H7 and H8.
 
-- [x] **H1 — Core HR** *(both apps: the shared employee master)*. **Built 24 September 2026 (TK-48)**: the `Hrm` service, schema `hrm`, port 4509; tests written, not yet run. Organisation setup, employee master with every child table, history,
+- [x] **H1 — Core HR** *(both apps: the shared employee master)*. **Built 24 September 2026 (TK-48)**: the `Employee` service, schema `hrm`, port 4509; tests written, not yet run. Organisation setup, employee master with every child table, history,
   documents, assets, announcements, policy documents.
 
   *Done when*: an employee is created with family, nominees and bank details, linked to a user and
@@ -2570,14 +2570,14 @@ The prompt referred to `docs/project-structure.md`, `docs/coding-standards.md` a
 
 | Service | Schema | Port | Owns | Calls |
 |---|---|---|---|---|
-| `Sis` | `sis` | 4515 | Academic years, classes, sections, subjects, students, guardians-of-student, enrolments, exams, marks | Master (guardian contact) |
-| `Admission` | `adm` | 4516 | Enquiries, applications, application documents | Sis (create student on admit), Master (create guardian contact) |
-| `Attendance` | `att` | 4517 | **Student** attendance — staff attendance is HRMS | Sis (roll of a section) |
-| `Fee` | `fee` | 4518 | Fee heads, structures, concessions, demands, receipts, allocations | Sis (enrolment), Accounting (posting), Master (guardian contact) |
+| `Student` | `sis` | 4515 | Academic years, classes, sections, subjects, students, guardians-of-student, enrolments, exams, marks | Master (guardian contact) |
+| `Admission` | `adm` | 4516 | Enquiries, applications, application documents | Student (create student on admit), Master (create guardian contact) |
+| `Attendance` | `att` | 4517 | **Student** attendance — staff attendance is HRMS | Student (roll of a section) |
+| `Fee` | `fee` | 4518 | Fee heads, structures, concessions, demands, receipts, allocations | Student (enrolment), Accounting (posting), Master (guardian contact) |
 | `Facility` | `fac` | 4519 | Buildings, spaces, facility assets | — |
-| `WorkOrder` | `wrk` | 4520 | Work orders, tasks, parts used | Facility, Inventory (parts), Hrm (assignee) |
+| `WorkOrder` | `wrk` | 4520 | Work orders, tasks, parts used | Facility, Inventory (parts), Employee (assignee) |
 | `Preventive` | `ppm` | 4521 | Maintenance plans and their schedule | Facility, WorkOrder (generates) |
-| `Amc` | `amc` | 4522 | Annual maintenance contracts, covered assets, visits | Facility, Master (vendor contact), WorkOrder (a visit may raise one) |
+| `MaintenanceContract` | `amc` | 4522 | Annual maintenance contracts, covered assets, visits | Facility, Master (vendor contact), WorkOrder (a visit may raise one) |
 
 Every id that crosses a service is an unenforced `long`, validated in C# by calling the owning
 service's API (hard rule 8). The layout is the usual three projects per service under
@@ -2833,7 +2833,7 @@ a holder of `attendance.unlock`.
 | WorkOrderNo | string(30) | Numbering series `WRK` |
 | Title | string(200) | |
 | Description | string(2000)? | |
-| WorkOrderSource | enum | Complaint, Preventive, Amc, Inspection |
+| WorkOrderSource | enum | Complaint, Preventive, MaintenanceContract, Inspection |
 | Priority | enum | Low, Medium, High, Critical |
 | FacilityAssetId / SpaceId | long? | Unenforced — `fac`. At least one of them |
 | ReportedDate | DateOnly | |
@@ -2918,7 +2918,7 @@ The modules seeded into `mst.Permissions` with `App = School` are `sis`, `admiss
 - **`apps/school`**, a new Nx app, bootstrapped like `apps/web`:
   - `libs/app-shell` as its authenticated root;
   - `libs/shared/{auth, api-client, ui-components, currency-format, theming}` for everything else.
-- **One lib pair per service**, mirroring `backend/Api/`, e.g. `libs/sis/{sis-core, sis-ui}` and
+- **One lib pair per service**, mirroring `backend/Api/`, e.g. `libs/student/{student-core, student-ui}` and
   `libs/work-order/{work-order-core, work-order-ui}`.
   - `-core` stays Ionic-compatible.
   - Pages use `.page.ts` / `.list.ts` / `.dialog.ts`, `templateUrl` + `styleUrl`, `inject()`, signals.
@@ -3007,12 +3007,12 @@ told; none of them is designed until one is picked.
 
   *Done when*: `apps/school` shows only School menus, and a guardian contact can be created and
   filtered.
-- [ ] **S1 — Sis.** Scaffold, schema, seeds, API, pages for years, classes, sections, subjects,
+- [ ] **S1 — Student.** Scaffold, schema, seeds, API, pages for years, classes, sections, subjects,
   students with guardians, and enrolment.
 
   *Done when*: a student is admitted directly, enrolled in a section and listed. RLS and the guard
   audit pass from a dropped database.
-- [ ] **S2 — Admission.** Enquiry → application → admit, creating the student through Sis.
+- [ ] **S2 — Admission.** Enquiry → application → admit, creating the student through Student.
 
   *Done when*: admitting twice creates one student.
 - [ ] **S3 — Attendance.** The daily register per section, and locking.
@@ -3030,7 +3030,7 @@ told; none of them is designed until one is picked.
 - [ ] **S7 — Preventive.** Plans, and occurrence generation by the hosted service.
 
   *Done when*: running generation twice raises one work order per occurrence.
-- [ ] **S8 — Amc.** Contracts, covered assets, visits, and renewal reminders.
+- [ ] **S8 — MaintenanceContract.** Contracts, covered assets, visits, and renewal reminders.
 - [ ] **S9 — Parent portal.** Guardian pages for demands, receipts, attendance and published marks.
 
 Every stage is built in the same order: migration, then seed, then API with field and business
@@ -3353,20 +3353,20 @@ Checked against the code on 24 September 2026:
 - **The HRMS design already has an approval engine** ("HRMS & Payroll" → Approvals, built by
   TK-49): configurable levels, approver kinds, a snapshot at submission, skip rules, send-back,
   delegation, escalation, and steps stored by the service that owns the request, all over one shared
-  shape in `Shared.Kernel.Approvals`. Its configuration and approver resolution live in **`Hrm`**,
+  shape in `Shared.Kernel.Approvals`. Its configuration and approver resolution live in **`Employee`**,
   and every approver it can find is an **employee**.
 
 ## The problem with reusing it as written
 
 RetailErp is sold without HRMS (the four-apps decision). A shop that buys only RetailErp has users
-and roles, **no employees and no `Hrm` service**. An engine whose configuration and resolution are in
-`Hrm` cannot serve it. Building a second engine for RetailErp is what the card forbids.
+and roles, **no employees and no `Employee` service**. An engine whose configuration and resolution are in
+`Employee` cannot serve it. Building a second engine for RetailErp is what the card forbids.
 
 ## Decisions this design takes
 
 | # | Decision | Why |
 |---|---|---|
-| 1 | **One engine, three parts, split by who owns what.** The state machine and step shape stay in `Shared.Kernel.Approvals` (as TK-49 plans). **Workflow configuration and chain resolution move from `Hrm` to Master**, in a new tenant schema `apr`. **`Hrm` becomes a resolver** for the approver kinds only it can answer (reporting chain, relationship, department head) | Master is the one service every app has, and it owns the users and roles a RetailErp chain resolves to. Hrm keeps what is genuinely its own: the employee graph. **This amends TK-49's plan, so it was raised as D-26. Answered by the owner on 24 September 2026: Master, `apr`** |
+| 1 | **One engine, three parts, split by who owns what.** The state machine and step shape stay in `Shared.Kernel.Approvals` (as TK-49 plans). **Workflow configuration and chain resolution move from `Employee` to Master**, in a new tenant schema `apr`. **`Employee` becomes a resolver** for the approver kinds only it can answer (reporting chain, relationship, department head) | Master is the one service every app has, and it owns the users and roles a RetailErp chain resolves to. Employee keeps what is genuinely its own: the employee graph. **This amends TK-49's plan, so it was raised as D-26. Answered by the owner on 24 September 2026: Master, `apr`** |
 | 2 | **A step's approver is a user or an employee**: the shared step carries `ApproverUserId Guid?` beside `ApproverEmployeeId long?` | A RetailErp approver is a user; an HRMS approver is an employee who has a user. One shape covers both |
 | 3 | **RetailErp adds two approver kinds**: `RoleHolder` (exists) and `NamedUser`. The employee kinds are offered only when HRMS is licensed and the requester is linked to an employee | A shop with no HRMS must be able to say "the Accountant role, then the Owner" and nothing else |
 | 4 | **A chain governs the `Draft → ReadyToPost` transition**, which is already "approve". With no workflow matching the document, the single approve action works exactly as today | No new document status, and no change for a branch that never configures a workflow |
@@ -3403,7 +3403,7 @@ that one document through. Today the credit check refuses outright.
 - the department, grade and location match columns kept for HRMS and ignored for RetailErp kinds.
 
 **Resolution**: `POST internal/approval-chains/resolve` moves to Master. It resolves `RoleHolder`
-and `NamedUser` itself, asks `Hrm`'s `POST internal/approval-chains/resolve-employees` for the
+and `NamedUser` itself, asks `Employee`'s `POST internal/approval-chains/resolve-employees` for the
 employee kinds when HRMS is licensed, applies the skip rules (requester, repeat approver,
 optional-and-unresolvable) and returns the snapshot.
 

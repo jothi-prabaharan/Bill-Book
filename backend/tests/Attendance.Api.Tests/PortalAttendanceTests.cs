@@ -9,8 +9,8 @@ using Xunit;
 
 namespace Attendance.Api.Tests;
 
-/// <summary>Sis, as the portal asks it: guardian 800 with portal access has student 1 (enrolment 1).</summary>
-internal sealed class FakeGuardians : ISisClient
+/// <summary>Student, as the portal asks it: guardian 800 with portal access has student 1 (enrolment 1).</summary>
+internal sealed class FakeGuardians : IStudentClient
 {
     public bool Down { get; set; }
 
@@ -20,7 +20,7 @@ internal sealed class FakeGuardians : ISisClient
     {
         if (Down)
         {
-            throw new HttpRequestException("Sis is down.");
+            throw new HttpRequestException("Student is down.");
         }
 
         Asked = query;

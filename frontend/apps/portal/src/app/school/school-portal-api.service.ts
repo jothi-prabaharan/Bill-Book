@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { PortalAttendance, PortalChild, PortalDemand, PortalExam, PortalReceipt } from './school-portal.models';
 
-/** The parent portal's routes (S9, TK-69): children and marks from Sis, fees from Fee, attendance from Attendance. */
+/** The parent portal's routes (S9, TK-69): children and marks from Student, fees from Fee, attendance from Attendance. */
 @Injectable({ providedIn: 'root' })
 export class SchoolPortalApi {
   private readonly http = inject(HttpClient);

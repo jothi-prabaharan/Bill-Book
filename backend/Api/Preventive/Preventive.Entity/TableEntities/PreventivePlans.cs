@@ -35,7 +35,7 @@ public class PreventivePlan : OrgScopedEntity
     [Range(0, 365, ErrorMessage = "Lead days must be between 0 and 365.")]
     public int LeadDays { get; set; }
 
-    /// <summary>Unenforced: <c>hrm.Employees</c>, checked through Hrm.</summary>
+    /// <summary>Unenforced: <c>hrm.Employees</c>, checked through Employee.</summary>
     public long? DefaultAssigneeEmployeeId { get; set; }
 
     public bool IsActive { get; set; } = true;

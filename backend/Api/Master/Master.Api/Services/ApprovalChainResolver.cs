@@ -16,7 +16,7 @@ namespace Master.Api.Services;
 /// on the submission date: one naming the requester's department, grade and
 /// location beats one naming fewer, and the latest <c>EffectiveFrom</c> breaks a tie.</item>
 /// <item><b>A level with <c>AboveAmount</c> applies only above it.</b></item>
-/// <item><b>Users and roles are Master's; employees are Hrm's</b>, asked in one call.</item>
+/// <item><b>Users and roles are Master's; employees are Employee's</b>, asked in one call.</item>
 /// <item><b>Skip rules:</b> a level whose approver is the requester, or the same
 /// person as the level before, is skipped so nobody approves twice or approves
 /// their own request; an optional level with no approver is skipped; a required
@@ -26,10 +26,10 @@ namespace Master.Api.Services;
 public sealed class ApprovalChainResolver
 {
     private readonly ContactsDbContext _db;
-    private readonly IHrmApproverClient _hrm;
+    private readonly IEmployeeApproverClient _hrm;
     private readonly ILogger<ApprovalChainResolver> _log;
 
-    public ApprovalChainResolver(ContactsDbContext db, IHrmApproverClient hrm, ILogger<ApprovalChainResolver> log)
+    public ApprovalChainResolver(ContactsDbContext db, IEmployeeApproverClient hrm, ILogger<ApprovalChainResolver> log)
     {
         _db = db;
         _hrm = hrm;
@@ -91,7 +91,7 @@ public sealed class ApprovalChainResolver
 
     /// <summary>
     /// Turns resolved levels into steps under the skip rules. Pure, and public,
-    /// so every rule is tested without a database or Hrm.
+    /// so every rule is tested without a database or Employee.
     /// </summary>
     public static ResolveChainResponse Apply(
         string workflowName,

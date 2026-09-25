@@ -20,13 +20,13 @@ public sealed class MeClaimsController : ControllerBase
     private readonly ClaimService _claimService;
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
-    private readonly IHrmClient _hrm;
+    private readonly IEmployeeClient _hrm;
 
     public MeClaimsController(
         ClaimService claimService,
         ICurrentUser currentUser,
         ITenantContext tenant,
-        IHrmClient hrm)
+        IEmployeeClient hrm)
     {
         _claimService = claimService;
         _currentUser = currentUser;

@@ -18,7 +18,7 @@ namespace Admission.Api.Services;
 /// <item><b>Stages</b> move forward to Offered, and to Rejected or Withdrawn
 /// from anywhere before; Admitted is reached only by admitting.</item>
 /// <item><b>Admitting is idempotent end to end.</b> The guardian contact is
-/// found by mobile number in Master or made; the student is made in Sis keyed
+/// found by mobile number in Master or made; the student is made in Student keyed
 /// on this application. Both are separate services, so no transaction spans
 /// them: a failure after either leaves something behind that the retry finds
 /// rather than duplicates. Admitting an application already admitted returns
@@ -29,12 +29,12 @@ public sealed class ApplicationService
 {
     private readonly AdmissionDbContext _db;
     private readonly INumberGenerator _numbers;
-    private readonly ISisClient _sis;
+    private readonly IStudentClient _sis;
     private readonly IContactDirectory _contacts;
     private readonly ILogger<ApplicationService> _log;
 
     public ApplicationService(
-        AdmissionDbContext db, INumberGenerator numbers, ISisClient sis, IContactDirectory contacts, ILogger<ApplicationService> log)
+        AdmissionDbContext db, INumberGenerator numbers, IStudentClient sis, IContactDirectory contacts, ILogger<ApplicationService> log)
     {
         _db = db;
         _numbers = numbers;
@@ -182,7 +182,7 @@ public sealed class ApplicationService
 
     /// <summary>
     /// Admits an offered application: the guardian found or made in Master,
-    /// the student made in Sis, and the application marked admitted. Calling it
+    /// the student made in Student, and the application marked admitted. Calling it
     /// again, even after a failure halfway, makes nothing twice.
     /// </summary>
     public async Task<AdmissionResult> AdmitAsync(long id, AdmitRequest request, CancellationToken ct)
@@ -254,13 +254,13 @@ public sealed class ApplicationService
                 StudentId = student.StudentId, AdmissionNo = student.AdmissionNo, GuardianContactId = application.GuardianContactId.Value,
             });
         }
-        catch (SisRefusedException refused)
+        catch (StudentRefusedException refused)
         {
             return AdmissionResult.Fail(AdmissionOutcome.Invalid, refused.Message);
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
-            _log.LogError(ex, "Admitting application {ApplicationId} could not reach Sis or Master.", id);
+            _log.LogError(ex, "Admitting application {ApplicationId} could not reach Student or Master.", id);
             return AdmissionResult.Fail(AdmissionOutcome.Unavailable);
         }
     }

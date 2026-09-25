@@ -56,8 +56,8 @@ public sealed class SelfServiceAndApprovalsTests
         });
         await db.SaveChangesAsync();
 
-        var fakeHrm = new FakeHrmLookupClient();
-        fakeHrm.AddEmployee(new EmployeeProfile
+        var fakeEmployee = new FakeEmployeeLookupClient();
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = empId,
             UserId = empUserId,
@@ -65,7 +65,7 @@ public sealed class SelfServiceAndApprovalsTests
             FullName = "Jane Doe",
             ReportsToEmployeeId = managerId
         });
-        fakeHrm.AddEmployee(new EmployeeProfile
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = managerId,
             UserId = managerUserId,
@@ -79,7 +79,7 @@ public sealed class SelfServiceAndApprovalsTests
         var leaveService = new LeaveService(db, engine);
         var attendanceService = new AttendanceService(db, engine);
 
-        var meController = new MeTimeLeaveController(db, empUser, tenant, fakeHrm, leaveService, attendanceService);
+        var meController = new MeTimeLeaveController(db, empUser, tenant, fakeEmployee, leaveService, attendanceService);
 
         // 1. Employee applies for leave
         var applyReq = new ApplyLeaveSelfRequest
@@ -102,7 +102,7 @@ public sealed class SelfServiceAndApprovalsTests
 
         // 2. Manager views pending inbox
         var managerUser = new FakeCurrentUser(managerUserId);
-        var approvalsController = new ApprovalsController(db, managerUser, tenant, fakeHrm, leaveService);
+        var approvalsController = new ApprovalsController(db, managerUser, tenant, fakeEmployee, leaveService);
 
         var pendingResult = await approvalsController.GetPendingApprovals(default);
         var pendingOk = Assert.IsType<OkObjectResult>(pendingResult);
@@ -154,14 +154,14 @@ public sealed class SelfServiceAndApprovalsTests
         });
         await db.SaveChangesAsync();
 
-        var fakeHrm = new FakeHrmLookupClient();
-        fakeHrm.AddEmployee(new EmployeeProfile
+        var fakeEmployee = new FakeEmployeeLookupClient();
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = empId,
             UserId = empUserId,
             ReportsToEmployeeId = managerId
         });
-        fakeHrm.AddEmployee(new EmployeeProfile
+        fakeEmployee.AddEmployee(new EmployeeProfile
         {
             EmployeeId = managerId,
             UserId = managerUserId
@@ -174,8 +174,8 @@ public sealed class SelfServiceAndApprovalsTests
         var leaveService = new LeaveService(db, engine);
         var attendanceService = new AttendanceService(db, engine);
 
-        var meController = new MeTimeLeaveController(db, empUser, tenant, fakeHrm, leaveService, attendanceService);
-        var approvalsController = new ApprovalsController(db, managerUser, tenant, fakeHrm, leaveService);
+        var meController = new MeTimeLeaveController(db, empUser, tenant, fakeEmployee, leaveService, attendanceService);
+        var approvalsController = new ApprovalsController(db, managerUser, tenant, fakeEmployee, leaveService);
 
         var applyResult = await meController.ApplyLeave(new ApplyLeaveSelfRequest
         {
@@ -214,9 +214,9 @@ public sealed class SelfServiceAndApprovalsTests
         Guid customerId = Guid.NewGuid(), orgId = Guid.NewGuid();
         var emptyUser = new FakeCurrentUser(null); // No UserId in token
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var fakeHrm = new FakeHrmLookupClient();
+        var fakeEmployee = new FakeEmployeeLookupClient();
 
-        var meController = new MeTimeLeaveController(null!, emptyUser, tenant, fakeHrm, null!, null!);
+        var meController = new MeTimeLeaveController(null!, emptyUser, tenant, fakeEmployee, null!, null!);
 
         var result = await meController.GetLeaveBalances(null, default);
         Assert.IsType<NotFoundObjectResult>(result);
@@ -232,16 +232,16 @@ public sealed class SelfServiceAndApprovalsTests
         Guid unlinkedUserId = Guid.NewGuid();
         var unlinkedUser = new FakeCurrentUser(unlinkedUserId);
         var tenant = new TenantContext { CustomerId = customerId, OrgId = orgId };
-        var fakeHrm = new FakeHrmLookupClient(); // empty, no employee linked to unlinkedUserId
+        var fakeEmployee = new FakeEmployeeLookupClient(); // empty, no employee linked to unlinkedUserId
 
-        var meController = new MeTimeLeaveController(null!, unlinkedUser, tenant, fakeHrm, null!, null!);
+        var meController = new MeTimeLeaveController(null!, unlinkedUser, tenant, fakeEmployee, null!, null!);
 
         var result = await meController.GetLeaveBalances(null, default);
         var notFound = Assert.IsType<NotFoundObjectResult>(result);
         Assert.NotNull(notFound.Value);
     }
 
-    private sealed class FakeHrmLookupClient : IHrmClient
+    private sealed class FakeEmployeeLookupClient : IEmployeeClient
     {
         private readonly List<EmployeeProfile> _employees = [];
 

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { FeeApiService, FeeDemand, FeeStructure, periodOf } from '@bill-book/fee-core';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 import {
   BbSelectOption,
   ColumnDef,
@@ -31,7 +31,7 @@ import {
 })
 export class DemandsPage implements OnInit {
   private readonly api = inject(FeeApiService);
-  private readonly sis = inject(SisApiService);
+  private readonly studentApi = inject(StudentApiService);
 
   protected readonly structures = signal<FeeStructure[]>([]);
   protected readonly classNames = signal<Map<number, string>>(new Map());
@@ -143,7 +143,7 @@ export class DemandsPage implements OnInit {
 
   private async start(): Promise<void> {
     try {
-      const [structures, classes] = await Promise.all([this.api.structures(), this.sis.classes()]);
+      const [structures, classes] = await Promise.all([this.api.structures(), this.studentApi.classes()]);
       this.structures.set(structures);
       this.classNames.set(new Map(classes.map((c) => [c.schoolClassId, c.name])));
     } catch (error) {

@@ -18,7 +18,7 @@ public sealed class ClaimServiceTests
 
     public ClaimServiceTests(PostgresFixture postgres) => _postgres = postgres;
 
-    private sealed class MockHrmClient : IHrmClient
+    private sealed class MockEmployeeClient : IEmployeeClient
     {
         public EmployeeProfile? Profile { get; set; }
 
@@ -73,7 +73,7 @@ public sealed class ClaimServiceTests
 
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
         await using var db = _postgres.CreateContext(tenant.CustomerId.Value, tenant.OrgId.Value);
-        var hrm = new MockHrmClient();
+        var hrm = new MockEmployeeClient();
         var acc = new MockAccountingClient();
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
@@ -121,7 +121,7 @@ public sealed class ClaimServiceTests
 
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
         await using var db = _postgres.CreateContext(tenant.CustomerId.Value, tenant.OrgId.Value);
-        var hrm = new MockHrmClient();
+        var hrm = new MockEmployeeClient();
         var acc = new MockAccountingClient();
         var pay = new MockPayrollClient();
         var num = new MockNumberGenerator();
@@ -163,7 +163,7 @@ public sealed class ClaimServiceTests
 
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
         await using var db = _postgres.CreateContext(tenant.CustomerId.Value, tenant.OrgId.Value);
-        var hrm = new MockHrmClient
+        var hrm = new MockEmployeeClient
         {
             Profile = new EmployeeProfile
             {
@@ -221,7 +221,7 @@ public sealed class ClaimServiceTests
 
         var tenant = new TenantContext { CustomerId = Guid.NewGuid(), OrgId = Guid.NewGuid() };
         await using var db = _postgres.CreateContext(tenant.CustomerId.Value, tenant.OrgId.Value);
-        var hrm = new MockHrmClient
+        var hrm = new MockEmployeeClient
         {
             Profile = new EmployeeProfile
             {

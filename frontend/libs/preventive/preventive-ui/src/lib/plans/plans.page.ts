@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective } from '@bill-book/auth';
 import { FacilityApiService } from '@bill-book/facility-core';
-import { HrmApiService } from '@bill-book/hrm-core';
+import { EmployeeApiService } from '@bill-book/employee-core';
 import {
   FREQUENCIES,
   OCCURRENCE_STATUSES,
@@ -56,7 +56,7 @@ type Tab = 'plans' | 'occurrences';
 export class PlansPage implements OnInit {
   private readonly api = inject(PreventiveApiService);
   private readonly facility = inject(FacilityApiService);
-  private readonly hrm = inject(HrmApiService);
+  private readonly employeeApi = inject(EmployeeApiService);
 
   protected readonly tab = signal<Tab>('plans');
   protected readonly plans = signal<PreventivePlan[]>([]);
@@ -187,7 +187,7 @@ export class PlansPage implements OnInit {
         this.assetOptions.set(assets.filter((a) => a.assetStatus !== 'Disposed').map((a) => ({ value: a.facilityAssetId, label: `${a.assetTag} ${a.name}` })))),
       this.facility.spaces().then((spaces) =>
         this.spaceOptions.set(spaces.filter((s) => s.isActive).map((s) => ({ value: s.spaceId, label: `${s.code} ${s.name}`, group: s.buildingName })))),
-      this.hrm.employees({ status: 'Active', page: 1, pageSize: 500 }).then((page) =>
+      this.employeeApi.employees({ status: 'Active', page: 1, pageSize: 500 }).then((page) =>
         this.employeeOptions.set(page.items.map((e) => ({ value: e.employeeId, label: `${e.fullName} (${e.employeeCode})` })))),
     ]);
   }

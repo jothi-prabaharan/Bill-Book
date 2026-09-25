@@ -12,7 +12,7 @@ using Shared.Kernel.Secrets;
 using Shared.Kernel.Security;
 using Shared.Kernel.Tenancy;
 
-// Hrm (H1, TK-48): organisation setup and the shared employee master, schema
+// Employee (H1, TK-48): organisation setup and the shared employee master, schema
 // hrm, port 4509. The scaffold is Printing's, the newest service.
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
@@ -82,9 +82,9 @@ builder.Services.AddHttpClient<ILedgerClient, LedgerClient>(client =>
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 
-builder.Services.AddHttpClient<IHrmClient, HrmClient>(client =>
+builder.Services.AddHttpClient<IEmployeeClient, EmployeeClient>(client =>
 {
-    client.BaseAddress = new Uri(builder.Configuration["Hrm:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
+    client.BaseAddress = new Uri(builder.Configuration["Employee:BaseUrl"] is { Length: > 0 } url ? url : "http://localhost:4509");
 })
     .AddHttpMessageHandler<InternalKeyHandler>();
 

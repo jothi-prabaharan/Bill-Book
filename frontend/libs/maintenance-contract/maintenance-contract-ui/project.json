@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "maintenance-contract-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/maintenance-contract/maintenance-contract-ui/src",
+  "tags": [
+    "scope:maintenance-contract",
+    "type:ui"
+  ],
+  "targets": {}
+}

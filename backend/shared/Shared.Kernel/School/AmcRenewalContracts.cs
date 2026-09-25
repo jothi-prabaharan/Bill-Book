@@ -3,7 +3,7 @@ using System.Net.Http.Json;
 namespace Shared.Kernel.School;
 
 // AMC contracts due a renewal reminder (TK-68), read by Notification.Worker from
-// Amc's internal/amc/renewals-due. The worker sends each reminder once per
+// MaintenanceContract's internal/amc/renewals-due. The worker sends each reminder once per
 // contract term, under a message id fixed by branch, contract and end date.
 
 public sealed class AmcRenewalQuery
@@ -33,7 +33,7 @@ public sealed class AmcRenewalDue
 
 public interface IAmcRenewals
 {
-    /// <summary>The branch's contracts due a reminder on <paramref name="on"/>, or null when Amc could not be read.</summary>
+    /// <summary>The branch's contracts due a reminder on <paramref name="on"/>, or null when MaintenanceContract could not be read.</summary>
     Task<IReadOnlyList<AmcRenewalDue>?> DueAsync(Guid customerId, Guid orgId, DateOnly on, CancellationToken ct);
 }
 

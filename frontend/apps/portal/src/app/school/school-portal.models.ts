@@ -1,4 +1,4 @@
-/** The parent portal's shapes (S9, TK-69), as Sis, Fee and Attendance send them. */
+/** The parent portal's shapes (S9, TK-69), as Student, Fee and Attendance send them. */
 
 export interface PortalChild {
   studentId: number;

@@ -18,7 +18,7 @@
     <ProjectReference Include="..\Master.Repository\Master.Repository.csproj" />
     <ProjectReference Include="..\..\Accounting\Accounting.Repository\Accounting.Repository.csproj" />
     <ProjectReference Include="..\..\Customer\Customer.Repository\Customer.Repository.csproj" />
-    <ProjectReference Include="..\..\Hrm\Hrm.Repository\Hrm.Repository.csproj" />
+    <ProjectReference Include="..\..\Employee\Employee.Repository\Employee.Repository.csproj" />
     <ProjectReference Include="..\..\Inventory\Inventory.Repository\Inventory.Repository.csproj" />
     <ProjectReference Include="..\..\Purchase\Purchase.Repository\Purchase.Repository.csproj" />
     <ProjectReference Include="..\..\Printing\Printing.Repository\Printing.Repository.csproj" />
@@ -26,14 +26,14 @@
     <ProjectReference Include="..\..\Sales\Sales.Repository\Sales.Repository.csproj" />
     <ProjectReference Include="..\..\Payroll\Payroll.Repository\Payroll.Repository.csproj" />
     <ProjectReference Include="..\..\TimeLeave\TimeLeave.Repository\TimeLeave.Repository.csproj" />
-    <ProjectReference Include="..\..\Amc\Amc.Repository\Amc.Repository.csproj" />
+    <ProjectReference Include="..\..\MaintenanceContract\MaintenanceContract.Repository\MaintenanceContract.Repository.csproj" />
     <ProjectReference Include="..\..\Preventive\Preventive.Repository\Preventive.Repository.csproj" />
     <ProjectReference Include="..\..\WorkOrder\WorkOrder.Repository\WorkOrder.Repository.csproj" />
     <ProjectReference Include="..\..\Facility\Facility.Repository\Facility.Repository.csproj" />
     <ProjectReference Include="..\..\Fee\Fee.Repository\Fee.Repository.csproj" />
     <ProjectReference Include="..\..\Attendance\Attendance.Repository\Attendance.Repository.csproj" />
     <ProjectReference Include="..\..\Admission\Admission.Repository\Admission.Repository.csproj" />
-    <ProjectReference Include="..\..\Sis\Sis.Repository\Sis.Repository.csproj" />
+    <ProjectReference Include="..\..\Student\Student.Repository\Student.Repository.csproj" />
   </ItemGroup>
 
 </Project>

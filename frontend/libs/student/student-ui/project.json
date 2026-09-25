@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "student-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/student/student-ui/src",
+  "tags": [
+    "scope:student",
+    "type:ui"
+  ],
+  "targets": {}
+}

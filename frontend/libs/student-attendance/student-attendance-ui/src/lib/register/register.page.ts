@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } 
 import { FormsModule } from '@angular/forms';
 import { readApiFailure } from '@bill-book/api-client';
 import { IfCanDirective, SessionContextService } from '@bill-book/auth';
-import { SisApiService } from '@bill-book/sis-core';
+import { StudentApiService } from '@bill-book/student-core';
 import {
   ATTENDANCE_MARKS,
   AttendanceStatus,
@@ -37,7 +37,7 @@ import {
 })
 export class RegisterPage implements OnInit {
   private readonly api = inject(StudentAttendanceApiService);
-  private readonly sis = inject(SisApiService);
+  private readonly studentApi = inject(StudentApiService);
   private readonly session = inject(SessionContextService);
 
   protected readonly marks = ATTENDANCE_MARKS;
@@ -155,9 +155,9 @@ export class RegisterPage implements OnInit {
 
   private async start(): Promise<void> {
     try {
-      const years = await this.sis.years();
+      const years = await this.studentApi.years();
       const current = years.find((y) => y.isCurrent);
-      const sections = await this.sis.sections(current?.academicYearId ?? null);
+      const sections = await this.studentApi.sections(current?.academicYearId ?? null);
       this.sections.set(sections.map((s) => ({ value: s.sectionId, label: `${s.className} ${s.name}` })));
     } catch (error) {
       this.fail(error);

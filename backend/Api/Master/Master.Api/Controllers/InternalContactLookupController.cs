@@ -12,8 +12,8 @@ using Shared.Kernel.Validation;
 namespace Master.Api.Controllers;
 
 /// <summary>
-/// Which contacts exist in a branch and what each is for (School, TK-61): Sis
-/// checks a student's guardians, Fee the guardian it invoices, Amc a contract's
+/// Which contacts exist in a branch and what each is for (School, TK-61): Student
+/// checks a student's guardians, Fee the guardian it invoices, MaintenanceContract a contract's
 /// vendor. The branch comes from the body, as on every internal route, and the
 /// query filter keeps the answer inside it: another branch's contact comes back
 /// missing, never named.

@@ -46,7 +46,7 @@ public sealed class RegisterController : ControllerBase
     public async Task<IActionResult> Unlock([FromBody] LockRequest request, CancellationToken ct) =>
         Answer(await _register.UnlockAsync(request, ct));
 
-    // A section outside the caller's branch is not found: Sis's query filter
+    // A section outside the caller's branch is not found: Student's query filter
     // hides it, so "another branch's" and "none" are one answer.
     private IActionResult Answer(RegisterResult result) => result.Outcome switch
     {

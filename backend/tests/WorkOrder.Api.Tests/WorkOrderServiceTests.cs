@@ -30,7 +30,7 @@ internal sealed class FakeFacility : IFacilityClient
         });
 }
 
-/// <summary>Hrm with employee 21 active and 22 exited.</summary>
+/// <summary>Employee with employee 21 active and 22 exited.</summary>
 internal sealed class FakeEmployees : IEmployeeDirectory
 {
     public Task<IReadOnlyDictionary<long, EmployeeProfile>> FindAsync(IEnumerable<long> ids, CancellationToken ct) =>
@@ -80,7 +80,7 @@ internal sealed class FakeStock : IStockClient
 }
 
 /// <summary>
-/// Work orders against a real database, with Facility, Hrm and Inventory faked
+/// Work orders against a real database, with Facility, Employee and Inventory faked
 /// (S6, TK-66). The card's Done-when: editing an Assigned work order is
 /// refused, and issuing a part moves stock.
 /// </summary>

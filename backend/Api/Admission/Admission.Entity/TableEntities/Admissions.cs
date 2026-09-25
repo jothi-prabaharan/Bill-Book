@@ -18,10 +18,10 @@ public class Enquiry : OrgScopedEntity
 
     public DateOnly? DateOfBirth { get; set; }
 
-    /// <summary>Unenforced: <c>sis.SchoolClasses</c>, checked through Sis.</summary>
+    /// <summary>Unenforced: <c>sis.SchoolClasses</c>, checked through Student.</summary>
     public long SeekingClassId { get; set; }
 
-    /// <summary>Unenforced: <c>sis.AcademicYears</c>, checked through Sis.</summary>
+    /// <summary>Unenforced: <c>sis.AcademicYears</c>, checked through Student.</summary>
     public long AcademicYearId { get; set; }
 
     [Required(ErrorMessage = "Parent's name is required.")]
@@ -46,7 +46,7 @@ public class Enquiry : OrgScopedEntity
 
 /// <summary>
 /// An application for a seat, numbered from the APL series. Admitting it makes
-/// the student in Sis and the guardian contact in Master, both idempotently:
+/// the student in Student and the guardian contact in Master, both idempotently:
 /// the student is keyed on this application, the guardian on the mobile number.
 ///
 /// The design names no guardian columns here; they are added because admit has

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "employee-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/employee/employee-ui/src",
+  "tags": [
+    "scope:employee",
+    "type:ui"
+  ],
+  "targets": {}
+}

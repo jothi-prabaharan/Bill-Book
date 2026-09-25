@@ -28,7 +28,7 @@ public sealed class OfferAcceptanceIdempotencyTests
             Task.FromResult<string?>($"{seriesCode}-peek");
     }
 
-    private sealed class FakeHrmClient : IHrmClient
+    private sealed class FakeEmployeeClient : IEmployeeClient
     {
         public int OnboardCallCount { get; private set; }
         private readonly Dictionary<string, (long Id, string Code)> _byEmail = new();
@@ -99,7 +99,7 @@ public sealed class OfferAcceptanceIdempotencyTests
 
         await using var db = _postgres.CreateContext(customerId, orgId);
 
-        var hrmClient = new FakeHrmClient();
+        var hrmClient = new FakeEmployeeClient();
         var payrollClient = new FakePayrollClient();
         var numbers = new FakeNumberGenerator();
 

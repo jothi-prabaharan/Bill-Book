@@ -29,14 +29,14 @@ public sealed class MePayrollController : ControllerBase
     private readonly PayrollDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly ITenantContext _tenant;
-    private readonly IHrmClient _hrm;
+    private readonly IEmployeeClient _hrm;
     private readonly TaxCalculationService _taxService;
 
     public MePayrollController(
         PayrollDbContext db,
         ICurrentUser currentUser,
         ITenantContext tenant,
-        IHrmClient hrm,
+        IEmployeeClient hrm,
         TaxCalculationService taxService)
     {
         _db = db;

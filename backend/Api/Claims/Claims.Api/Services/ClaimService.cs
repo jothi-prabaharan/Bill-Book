@@ -13,7 +13,7 @@ public sealed class ClaimService
 {
     private readonly ClaimsDbContext _db;
     private readonly ITenantContext _tenant;
-    private readonly IHrmClient _hrm;
+    private readonly IEmployeeClient _hrm;
     private readonly IAccountingClient _accounting;
     private readonly IPayrollClient _payroll;
     private readonly INumberGenerator _numberGenerator;
@@ -21,7 +21,7 @@ public sealed class ClaimService
     public ClaimService(
         ClaimsDbContext db,
         ITenantContext tenant,
-        IHrmClient hrm,
+        IEmployeeClient hrm,
         IAccountingClient accounting,
         IPayrollClient payroll,
         INumberGenerator numberGenerator)
