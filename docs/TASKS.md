@@ -1658,7 +1658,8 @@ The build cards each design in section E produced. Each design section in `docs/
 ("Approved designs") is the specification; a card here names the part it builds.
 
 ### TK-91 · E-invoice: tables, branch settings and the IRP gateway
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-25
+- **Issue:** [#79](https://github.com/jothi-prabaharan/Bill-Book/issues/79)
 - **Lanes:** L-SAL, L-MST, L-KERNEL · **Depends on:** TK-31 · **Decision:** D-24
 - **Where:** `docs/Modules.md`, "E-invoicing and e-way bill" (Tables, Decisions 3, 7, 8); `Sales.Repository/SalesDbContext.cs`; `Master.Entity/TableEntities/Organization.cs`; `Shared.Kernel/Secrets`.
 - **Tables:** `sal.EInvoices`, `sal.EwayBills`; `mst.Organizations.EInvoiceFrom`, `EwayBillEnabled`
