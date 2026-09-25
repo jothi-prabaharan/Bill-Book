@@ -2441,16 +2441,16 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed Claims service (Claims.Entity, Claims.Repository, Claims.Api on port 4514), EF Core migration with RLS policies, gateway reverse proxy routes, seeding of categories and CLM numbering series, general ledger payout posting, self-service employee claims, frontend libs (claims-core, claims-ui) with category/limits and claim management pages, and full unit test coverage.
 
 ### TK-57 · H10: Recruitment and onboarding (`Recruitment`, `rec`, port 4512)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-REC (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `JobRequisition`, `JobOpening`, `Candidate`, `Application`, `InterviewRound`, `Offer`.
 - **Sub-tasks:**
-  - [ ] Requisitions through the approval engine; openings; candidates and a pipeline board (ask
+  - [x] Requisitions through the approval engine; openings; candidates and a pipeline board (ask
         before building a new board component); interviews.
-  - [ ] Offer `accept` creates the employee through `Hrm`'s API, **idempotently**: the offer id
+  - [x] Offer `accept` creates the employee through `Hrm`'s API, **idempotently**: the offer id
         becomes the idempotency key.
 - **Done when:** accepting an offer twice creates one employee.
-- **Notes:**
+- **Notes:** Completed Recruitment service (Recruitment.Entity, Recruitment.Repository, Recruitment.Api on port 4512), EF Core migration with RLS policies on rec schema, gateway reverse proxy routes, REQ numbering series, idempotent employee onboarding via Hrm.Api internal endpoint with onboarding checklist creation, salary assignment via Payroll.Api, frontend libs (recruitment-core, recruitment-ui) with requisitions, openings, candidates, interactive reactive pipeline board, interviews evaluation, offers generation and acceptance flow, and test suite in Recruitment.Api.Tests.
 
 ### TK-58 · H11: Performance (`Performance`, `prf`, port 4513)
 - [ ] open

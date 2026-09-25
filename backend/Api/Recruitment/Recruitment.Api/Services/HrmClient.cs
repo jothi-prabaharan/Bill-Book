@@ -1,0 +1,74 @@
+using System.Net.Http.Json;
+using Shared.Kernel.Employees;
+
+namespace Recruitment.Api.Services;
+
+public interface IHrmClient
+{
+    Task<OnboardEmployeeResult?> OnboardEmployeeAsync(OnboardEmployeeRequest request, CancellationToken ct);
+    Task<EmployeeProfile?> FindByIdAsync(Guid customerId, Guid orgId, long employeeId, CancellationToken ct);
+    Task<EmployeeProfile?> FindByUserIdAsync(Guid customerId, Guid orgId, Guid userId, CancellationToken ct);
+}
+
+public sealed class HrmClient : IHrmClient
+{
+    private readonly HttpClient _http;
+
+    public HrmClient(HttpClient http) => _http = http;
+
+    public async Task<OnboardEmployeeResult?> OnboardEmployeeAsync(OnboardEmployeeRequest request, CancellationToken ct)
+    {
+        try
+        {
+            var res = await _http.PostAsJsonAsync("internal/employees/onboard", request, ct);
+            if (!res.IsSuccessStatusCode) return null;
+            return await res.Content.ReadFromJsonAsync<OnboardEmployeeResult>(cancellationToken: ct);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<EmployeeProfile?> FindByIdAsync(Guid customerId, Guid orgId, long employeeId, CancellationToken ct)
+    {
+        try
+        {
+            var req = new EmployeeLookupRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                EmployeeId = employeeId,
+            };
+            var res = await _http.PostAsJsonAsync("internal/employees/lookup", req, ct);
+            if (!res.IsSuccessStatusCode) return null;
+            var list = await res.Content.ReadFromJsonAsync<List<EmployeeProfile>>(cancellationToken: ct);
+            return list?.FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    public async Task<EmployeeProfile?> FindByUserIdAsync(Guid customerId, Guid orgId, Guid userId, CancellationToken ct)
+    {
+        try
+        {
+            var req = new EmployeeLookupRequest
+            {
+                CustomerId = customerId,
+                OrgId = orgId,
+                UserId = userId,
+            };
+            var res = await _http.PostAsJsonAsync("internal/employees/lookup", req, ct);
+            if (!res.IsSuccessStatusCode) return null;
+            var list = await res.Content.ReadFromJsonAsync<List<EmployeeProfile>>(cancellationToken: ct);
+            return list?.FirstOrDefault();
+        }
+        catch
+        {
+            return null;
+        }
+    }
+}

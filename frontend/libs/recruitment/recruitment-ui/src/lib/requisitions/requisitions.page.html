@@ -1,0 +1,84 @@
+<div class="page-head">
+  <h1>Job Requisitions</h1>
+  <button type="button" class="btn btn-primary" (click)="openCreate()">New Requisition</button>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showForm()" class="sheet">
+  <h3>Create Job Requisition</h3>
+  <div class="fields">
+    <label>
+      <span>Openings</span>
+      <input type="number" [(ngModel)]="form().openings" min="1" max="100" />
+    </label>
+    <label>
+      <span>Employment Type</span>
+      <select [(ngModel)]="form().employmentType">
+        <option value="Permanent">Permanent</option>
+        <option value="Probation">Probation</option>
+        <option value="Contract">Contract</option>
+        <option value="PartTime">Part Time</option>
+        <option value="Intern">Intern</option>
+      </select>
+    </label>
+    <label>
+      <span>Min CTC (₹)</span>
+      <input type="number" [(ngModel)]="form().minCtc" />
+    </label>
+    <label>
+      <span>Max CTC (₹)</span>
+      <input type="number" [(ngModel)]="form().maxCtc" />
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Justification</span>
+      <textarea rows="3" [(ngModel)]="form().justification"></textarea>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="save()">Save Requisition</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Code</th>
+        <th>Openings</th>
+        <th>Type</th>
+        <th>Budget Range</th>
+        <th>Status</th>
+        <th>Workflow</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let req of requisitions()">
+        <td><strong>{{ req.requisitionCode }}</strong></td>
+        <td>{{ req.openings }}</td>
+        <td>{{ req.employmentType }}</td>
+        <td>₹{{ req.minCtc | number }} – ₹{{ req.maxCtc | number }}</td>
+        <td>
+          <span class="badge" [ngClass]="req.approvalStatus.toLowerCase()">
+            {{ req.approvalStatus }}
+          </span>
+        </td>
+        <td>{{ req.currentStepLabel || '—' }}</td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button *ngIf="req.approvalStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-primary" (click)="submit(req.jobRequisitionId)">Submit</button>
+            <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(req.jobRequisitionId)">Approve</button>
+            <button *ngIf="req.approvalStatus === 'PendingApproval'" type="button" class="btn btn-sm btn-outline-danger" (click)="reject(req.jobRequisitionId)">Reject</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="requisitions().length === 0 && !loading()">
+        <td colspan="7" class="empty-state">No job requisitions found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

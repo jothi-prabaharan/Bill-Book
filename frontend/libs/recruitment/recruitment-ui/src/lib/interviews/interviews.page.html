@@ -1,0 +1,116 @@
+<div class="page-head">
+  <h1>Interviews</h1>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <label>Candidate Application:</label>
+    <select [ngModel]="selectedAppId()" (ngModelChange)="selectApplication($event)" style="min-width: 250px;">
+      <option *ngFor="let app of applications()" [value]="app.applicationId">
+        {{ app.candidateName }} – {{ app.openingTitle }} ({{ app.stage }})
+      </option>
+    </select>
+    <button type="button" class="btn btn-primary" (click)="openSchedule()" [disabled]="!selectedAppId()">Schedule Round</button>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showScheduleModal()" class="sheet" style="background: #f0fdf4; border-color: #bbf7d0;">
+  <h3>Schedule Interview Round</h3>
+  <div class="fields">
+    <label>
+      <span>Round Number</span>
+      <input type="number" [(ngModel)]="scheduleForm().roundNo" min="1" max="10" />
+    </label>
+    <label>
+      <span>Round Type</span>
+      <select [(ngModel)]="scheduleForm().roundKind">
+        <option value="Telephonic">Telephonic</option>
+        <option value="Technical">Technical</option>
+        <option value="Hr">HR</option>
+        <option value="Managerial">Managerial</option>
+      </select>
+    </label>
+    <label>
+      <span>Scheduled Time</span>
+      <input type="datetime-local" [(ngModel)]="scheduleForm().scheduledAt" />
+    </label>
+    <label>
+      <span>Interviewer Employee ID</span>
+      <input type="number" [(ngModel)]="scheduleForm().interviewerEmployeeId" />
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="showScheduleModal.set(false)">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="schedule()">Confirm Schedule</button>
+  </div>
+</div>
+
+<div *ngIf="showFeedbackModal()" class="sheet" style="background: #faf5ff; border-color: #e9d5ff;">
+  <h3>Interview Feedback & Evaluation</h3>
+  <div class="fields">
+    <label>
+      <span>Rating (1 to 5)</span>
+      <select [(ngModel)]="feedbackForm().rating">
+        <option [ngValue]="1">1 - Poor</option>
+        <option [ngValue]="2">2 - Below Average</option>
+        <option [ngValue]="3">3 - Average</option>
+        <option [ngValue]="4">4 - Good</option>
+        <option [ngValue]="5">5 - Excellent</option>
+      </select>
+    </label>
+    <label>
+      <span>Outcome</span>
+      <select [(ngModel)]="feedbackForm().outcome">
+        <option value="Pending">Pending</option>
+        <option value="Pass">Pass (Recommended)</option>
+        <option value="Fail">Fail</option>
+        <option value="NoShow">No Show</option>
+      </select>
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Evaluation Feedback</span>
+      <textarea rows="3" [(ngModel)]="feedbackForm().feedback" placeholder="Candidate's technical ability, strengths, weaknesses..."></textarea>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="showFeedbackModal.set(false)">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="saveFeedback()">Submit Feedback</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Round</th>
+        <th>Type</th>
+        <th>Scheduled At</th>
+        <th>Rating</th>
+        <th>Outcome</th>
+        <th>Feedback</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of interviews()">
+        <td><strong>Round {{ r.roundNo }}</strong></td>
+        <td>{{ r.roundKind }}</td>
+        <td>{{ r.scheduledAt | date:'medium' }}</td>
+        <td>{{ r.rating ? (r.rating + ' / 5') : '—' }}</td>
+        <td>
+          <span class="badge" [ngClass]="r.outcome.toLowerCase()">
+            {{ r.outcome }}
+          </span>
+        </td>
+        <td>{{ r.feedback || '—' }}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="openFeedback(r)">Evaluate</button>
+        </td>
+      </tr>
+      <tr *ngIf="interviews().length === 0 && !loading()">
+        <td colspan="7" class="empty-state">No interview rounds scheduled for this candidate application.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

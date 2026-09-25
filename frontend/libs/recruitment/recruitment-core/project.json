@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "recruitment-core",
+  "projectType": "library",
+  "sourceRoot": "libs/recruitment/recruitment-core/src",
+  "tags": [
+    "scope:recruitment",
+    "type:core"
+  ],
+  "targets": {}
+}

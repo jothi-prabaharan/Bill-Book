@@ -1,0 +1,116 @@
+<div class="page-head">
+  <h1>Candidates</h1>
+  <div style="display: flex; gap: 8px;">
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Search by name, email, phone..." (keyup.enter)="onSearch()" style="min-width: 250px;" />
+    <button type="button" class="btn btn-secondary" (click)="onSearch()">Search</button>
+    <button type="button" class="btn btn-primary" (click)="openCreate()">New Candidate</button>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showForm()" class="sheet">
+  <h3>Add Candidate</h3>
+  <div class="fields">
+    <label>
+      <span>First Name</span>
+      <input type="text" [(ngModel)]="form().firstName" />
+    </label>
+    <label>
+      <span>Last Name</span>
+      <input type="text" [(ngModel)]="form().lastName" />
+    </label>
+    <label>
+      <span>Email</span>
+      <input type="email" [(ngModel)]="form().email" />
+    </label>
+    <label>
+      <span>Phone</span>
+      <input type="text" [(ngModel)]="form().phone" />
+    </label>
+    <label>
+      <span>Current Employer</span>
+      <input type="text" [(ngModel)]="form().currentEmployer" />
+    </label>
+    <label>
+      <span>Current CTC (₹)</span>
+      <input type="number" [(ngModel)]="form().currentCtc" />
+    </label>
+    <label>
+      <span>Expected CTC (₹)</span>
+      <input type="number" [(ngModel)]="form().expectedCtc" />
+    </label>
+    <label>
+      <span>Notice Period (Days)</span>
+      <input type="number" [(ngModel)]="form().noticePeriodDays" />
+    </label>
+    <label>
+      <span>Source</span>
+      <select [(ngModel)]="form().candidateSource">
+        <option value="Portal">Portal</option>
+        <option value="Referral">Referral</option>
+        <option value="Agency">Agency</option>
+        <option value="CareersPage">Careers Page</option>
+        <option value="WalkIn">Walk In</option>
+      </select>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="save()">Save Candidate</button>
+  </div>
+</div>
+
+<div *ngIf="showApplyModal()" class="sheet" style="background: #eff6ff; border-color: #bfdbfe;">
+  <h3>Apply Candidate to Job Opening</h3>
+  <div class="fields">
+    <label style="grid-column: 1 / -1;">
+      <span>Select Active Opening</span>
+      <select [ngModel]="selectedOpeningId()" (ngModelChange)="selectedOpeningId.set($event)">
+        <option *ngFor="let op of openings()" [value]="op.jobOpeningId">
+          {{ op.title }} ({{ op.requisitionCode }})
+        </option>
+      </select>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="showApplyModal.set(false)">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="applyToOpening()">Submit Application</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Current Employer</th>
+        <th>Expected CTC</th>
+        <th>Notice Period</th>
+        <th>Applications</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of candidates()">
+        <td><strong>{{ c.fullName }}</strong></td>
+        <td>{{ c.email }}</td>
+        <td>{{ c.phone }}</td>
+        <td>{{ c.currentEmployer || '—' }}</td>
+        <td>{{ c.expectedCtc ? ('₹' + (c.expectedCtc | number)) : '—' }}</td>
+        <td>{{ c.noticePeriodDays ? (c.noticePeriodDays + ' days') : '—' }}</td>
+        <td>{{ c.applicationsCount }}</td>
+        <td>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="openApply(c.candidateId)">Apply</button>
+        </td>
+      </tr>
+      <tr *ngIf="candidates().length === 0 && !loading()">
+        <td colspan="8" class="empty-state">No candidates found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

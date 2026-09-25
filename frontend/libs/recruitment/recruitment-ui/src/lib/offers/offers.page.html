@@ -1,0 +1,93 @@
+<div class="page-head">
+  <h1>Offers & Onboarding</h1>
+  <button type="button" class="btn btn-primary" (click)="openCreate()">Generate Offer Letter</button>
+</div>
+
+<div *ngIf="successMessage()" class="alert alert-success" style="margin-bottom: 12px; color: #166534; background: #dcfce7; padding: 10px; border-radius: 4px; font-weight: 500;">
+  {{ successMessage() }}
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showForm()" class="sheet">
+  <h3>Create Candidate Offer</h3>
+  <div class="fields">
+    <label>
+      <span>Application</span>
+      <select [(ngModel)]="form().applicationId">
+        <option *ngFor="let app of applications()" [value]="app.applicationId">
+          {{ app.candidateName }} – {{ app.openingTitle }}
+        </option>
+      </select>
+    </label>
+    <label>
+      <span>Offered Annual CTC (₹)</span>
+      <input type="number" [(ngModel)]="form().offeredCtc" />
+    </label>
+    <label>
+      <span>Salary Structure ID</span>
+      <input type="number" [(ngModel)]="form().salaryStructureId" />
+    </label>
+    <label>
+      <span>Joining Date</span>
+      <input type="date" [(ngModel)]="form().joiningDate" />
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="save()">Save Draft Offer</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Offer #</th>
+        <th>Candidate</th>
+        <th>Job Opening</th>
+        <th>Offered CTC</th>
+        <th>Joining Date</th>
+        <th>Status</th>
+        <th>Employee Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let o of offers()">
+        <td><strong>#{{ o.offerId }}</strong></td>
+        <td>{{ o.candidateName }}</td>
+        <td>{{ o.openingTitle }}</td>
+        <td>₹{{ o.offeredCtc | number }}</td>
+        <td>{{ o.joiningDate }}</td>
+        <td>
+          <span class="badge" [ngClass]="o.offerStatus.toLowerCase()">
+            {{ o.offerStatus }}
+          </span>
+        </td>
+        <td>
+          <span *ngIf="o.createdEmployeeId" style="color: #166534; font-weight: 600;">
+            Employee #{{ o.createdEmployeeId }}
+          </span>
+          <span *ngIf="!o.createdEmployeeId" style="color: #64748b;">
+            Not onboarded
+          </span>
+        </td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button *ngIf="o.offerStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="approve(o.offerId)">Approve</button>
+            <button *ngIf="o.offerStatus === 'Approved'" type="button" class="btn btn-sm btn-outline-primary" (click)="send(o.offerId)">Send</button>
+            <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-success" (click)="accept(o.offerId)">Accept & Onboard</button>
+            <button *ngIf="o.offerStatus === 'Sent'" type="button" class="btn btn-sm btn-outline-danger" (click)="decline(o.offerId)">Decline</button>
+            <button *ngIf="o.offerStatus !== 'Accepted' && o.offerStatus !== 'Declined' && o.offerStatus !== 'Revoked'" type="button" class="btn btn-sm btn-outline-secondary" (click)="revoke(o.offerId)">Revoke</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="offers().length === 0 && !loading()">
+        <td colspan="8" class="empty-state">No offers generated yet.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

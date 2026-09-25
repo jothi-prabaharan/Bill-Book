@@ -1,0 +1,80 @@
+<div class="page-head">
+  <h1>Job Openings</h1>
+  <button type="button" class="btn btn-primary" (click)="openCreate()">New Job Opening</button>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showForm()" class="sheet">
+  <h3>Create Job Opening</h3>
+  <div class="fields">
+    <label>
+      <span>Job Requisition</span>
+      <select [(ngModel)]="form().jobRequisitionId">
+        <option *ngFor="let req of requisitions()" [value]="req.jobRequisitionId">
+          {{ req.requisitionCode }} ({{ req.employmentType }} - {{ req.openings }} openings)
+        </option>
+      </select>
+    </label>
+    <label>
+      <span>Title</span>
+      <input type="text" [(ngModel)]="form().title" placeholder="e.g. Senior Frontend Engineer" />
+    </label>
+    <label>
+      <span>Status</span>
+      <select [(ngModel)]="form().openingStatus">
+        <option value="Draft">Draft</option>
+        <option value="Open">Open</option>
+        <option value="OnHold">On Hold</option>
+      </select>
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Job Description</span>
+      <textarea rows="4" [(ngModel)]="form().description" placeholder="Requirements, responsibilities..."></textarea>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button type="button" class="btn btn-secondary" (click)="cancelForm()">Cancel</button>
+    <button type="button" class="btn btn-primary" (click)="save()">Save Opening</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Requisition</th>
+        <th>Status</th>
+        <th>Applications</th>
+        <th>Published Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let op of openings()">
+        <td><strong>{{ op.title }}</strong></td>
+        <td>{{ op.requisitionCode }}</td>
+        <td>
+          <span class="badge" [ngClass]="op.openingStatus.toLowerCase()">
+            {{ op.openingStatus }}
+          </span>
+        </td>
+        <td>{{ op.applicationsCount }}</td>
+        <td>{{ op.publishedDate || '—' }}</td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button *ngIf="op.openingStatus === 'Draft'" type="button" class="btn btn-sm btn-outline-success" (click)="changeStatus(op.jobOpeningId, 'Open')">Publish</button>
+            <button *ngIf="op.openingStatus === 'Open'" type="button" class="btn btn-sm btn-outline-warning" (click)="changeStatus(op.jobOpeningId, 'OnHold')">Hold</button>
+            <button *ngIf="op.openingStatus === 'Open' || op.openingStatus === 'OnHold'" type="button" class="btn btn-sm btn-outline-danger" (click)="changeStatus(op.jobOpeningId, 'Closed')">Close</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="openings().length === 0 && !loading()">
+        <td colspan="6" class="empty-state">No job openings found.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

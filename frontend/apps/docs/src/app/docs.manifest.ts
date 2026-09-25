@@ -60,6 +60,7 @@ export const DOCS: DocSection[] = [
     pages: [
       { slug: 'people', title: 'Employees', status: 'partial' },
       { slug: 'payroll', title: 'Payroll', status: 'built' },
+      { slug: 'recruitment', title: 'Recruitment', status: 'built' },
     ],
   },
   {

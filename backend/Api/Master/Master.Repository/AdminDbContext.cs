@@ -665,6 +665,9 @@ public class AdminDbContext : DbContext
         // H9 (TK-56). Appended after School rather than beside leave, so the
         // School permissions TK-60 migrated keep their ids.
         "claims",
+
+        // H10, H11 (TK-57, TK-58).
+        "recruitment", "performance",
     };
 
     /// <summary>
@@ -735,8 +738,8 @@ public class AdminDbContext : DbContext
         // that employ people on the books: HRMS, Payroll and School (TK-48).
         "employee" => App.Hrms | App.Payroll | App.School,
 
-        // Lifecycle, letters, assets, announcements, leave and claims are HRMS's own.
-        "hrm" or "leave" or "claims" => App.Hrms,
+        // Lifecycle, letters, assets, announcements, leave, claims, recruitment and performance are HRMS's own.
+        "hrm" or "leave" or "claims" or "recruitment" or "performance" => App.Hrms,
 
         // Staff attendance in HRMS, student attendance in School (TK-60). A
         // role belongs to one app and a token carries one app, so the shared

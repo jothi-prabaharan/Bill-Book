@@ -68,6 +68,8 @@
       "@bill-book/time-leave-ui": ["libs/time-leave/time-leave-ui/src/index.ts"],
       "@bill-book/claims-core": ["libs/claims/claims-core/src/index.ts"],
       "@bill-book/claims-ui": ["libs/claims/claims-ui/src/index.ts"],
+      "@bill-book/recruitment-core": ["libs/recruitment/recruitment-core/src/index.ts"],
+      "@bill-book/recruitment-ui": ["libs/recruitment/recruitment-ui/src/index.ts"],
       "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
       "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"]
     }

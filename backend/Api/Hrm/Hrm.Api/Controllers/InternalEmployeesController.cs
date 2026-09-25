@@ -44,4 +44,12 @@ public sealed class InternalEmployeesController : ControllerBase
         _tenant.OrgId = request.OrgId;
         return Ok(await _services.GetRequiredService<EmployeeProfileService>().FindAsync(request, ct));
     }
+
+    [HttpPost("employees/onboard")]
+    public async Task<IActionResult> Onboard([FromBody] OnboardEmployeeRequest request, CancellationToken ct)
+    {
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+        return Ok(await _services.GetRequiredService<EmployeeProfileService>().OnboardAsync(request, ct));
+    }
 }

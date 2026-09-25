@@ -11,6 +11,7 @@ import { shellRoutes } from '@bill-book/app-shell';
 import { hrmRoutes } from '@bill-book/hrm-ui';
 import { timeLeaveRoutes } from '@bill-book/time-leave-ui';
 import { claimsRoutes } from '@bill-book/claims-ui';
+import { recruitmentRoutes } from '@bill-book/recruitment-ui';
 import { sharedSettingsRoutes } from '@bill-book/settings-shared-routes';
 import { HomePage } from './home/home.page';
 
@@ -36,6 +37,7 @@ export const appRoutes: Routes = [
       ...hrmRoutes,
       ...timeLeaveRoutes,
       ...claimsRoutes,
+      ...recruitmentRoutes,
       ...sharedSettingsRoutes,
       { path: '**', component: HomePage, data: { access: { signedIn: true } } },
     ],

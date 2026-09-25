@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "recruitment-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/recruitment/recruitment-ui/src",
+  "tags": [
+    "scope:recruitment",
+    "type:ui"
+  ],
+  "targets": {}
+}

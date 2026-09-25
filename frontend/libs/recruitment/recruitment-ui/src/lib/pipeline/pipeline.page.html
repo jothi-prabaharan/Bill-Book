@@ -1,0 +1,56 @@
+<div class="page-head">
+  <h1>Recruitment Pipeline Board</h1>
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <label>Filter by Opening:</label>
+    <select (change)="onOpeningChange($any($event.target).value)" style="min-width: 220px;">
+      <option value="">All Openings</option>
+      <option *ngFor="let op of openings()" [value]="op.jobOpeningId">
+        {{ op.title }} ({{ op.openingStatus }})
+      </option>
+    </select>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 12px; color: #991b1b; background: #fee2e2; padding: 8px; border-radius: 4px;">
+  {{ errorMessage() }}
+</div>
+
+<div class="pipeline-board">
+  <div class="pipeline-column" *ngFor="let stage of stages">
+    <div class="column-header">
+      <span>{{ stage }}</span>
+      <span class="badge" [ngClass]="stage.toLowerCase()">{{ appsInStage(stage).length }}</span>
+    </div>
+
+    <div class="card-list">
+      <div class="pipeline-card" *ngFor="let app of appsInStage(stage)">
+        <div class="card-title">{{ app.candidateName }}</div>
+        <div class="card-sub">{{ app.openingTitle }}</div>
+        <div class="card-sub">{{ app.candidatePhone }} &bull; {{ app.candidateEmail }}</div>
+
+        <div *ngIf="stage === 'Interview'" class="card-sub" style="color: #4338ca;">
+          Rounds scheduled: {{ app.interviewRoundsCount }}
+        </div>
+
+        <div *ngIf="stage === 'Offer'" class="card-sub" style="color: #065f46;">
+          Offer status: {{ app.offerStatus || 'Not Created' }}
+        </div>
+
+        <div *ngIf="stage === 'Rejected' && app.rejectionReason" class="card-sub" style="color: #991b1b;">
+          Reason: {{ app.rejectionReason }}
+        </div>
+
+        <div class="card-actions">
+          <button *ngIf="stage === 'Applied'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Screening')">&rarr; Screen</button>
+          <button *ngIf="stage === 'Screening'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Interview')">&rarr; Interview</button>
+          <button *ngIf="stage === 'Interview'" type="button" class="btn btn-sm btn-outline-primary" (click)="advanceStage(app, 'Offer')">&rarr; Offer</button>
+          <button *ngIf="stage !== 'Rejected' && stage !== 'Hired'" type="button" class="btn btn-sm btn-outline-danger" (click)="rejectApplication(app)">&times;</button>
+        </div>
+      </div>
+
+      <div *ngIf="appsInStage(stage).length === 0" class="empty-state" style="padding: 16px 8px; font-size: 0.8125rem;">
+        No applications
+      </div>
+    </div>
+  </div>
+</div>
