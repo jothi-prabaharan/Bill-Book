@@ -1,0 +1,54 @@
+<header class="page-head">
+  <h1>Buildings and spaces</h1>
+  <button *bbIfCan="'facility.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ Add</button>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Buildings and spaces">
+  <button type="button" role="tab" [attr.aria-selected]="tab() === 'buildings'" (click)="choose('buildings')">Buildings</button>
+  <button type="button" role="tab" [attr.aria-selected]="tab() === 'spaces'" (click)="choose('spaces')">Spaces</button>
+</nav>
+
+<bb-message-box [messages]="messages()" />
+
+@if (tab() === 'buildings') {
+  <bb-data-grid [gridCode]="'FAC_BUILDINGS'" [columns]="buildingColumns" [data]="buildings()">
+    <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <button *bbIfCan="'facility.edit'" type="button" class="link" (click)="editBuilding(row)">Edit</button>
+    </ng-template>
+  </bb-data-grid>
+} @else {
+  <bb-data-grid [gridCode]="'FAC_SPACES'" [columns]="spaceColumns" [data]="spaces()">
+    <ng-template bbCellTemplate="floor" let-row>{{ floorLabel(row.floor) }}</ng-template>
+    <ng-template bbCellTemplate="isActive" let-row>{{ row.isActive ? 'Active' : 'Inactive' }}</ng-template>
+    <ng-template bbCellTemplate="actions" let-row>
+      <button *bbIfCan="'facility.edit'" type="button" class="link" (click)="editSpace(row)">Edit</button>
+    </ng-template>
+  </bb-data-grid>
+}
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="fac-sheet-title">
+    <h2 id="fac-sheet-title">{{ editingId() === null ? 'New' : 'Edit' }} {{ tab() === 'buildings' ? 'building' : 'space' }}</h2>
+    <div class="fields">
+      @if (tab() === 'buildings') {
+        <bb-text-input label="Code" [(ngModel)]="buildingForm.code" maxlength="20" [uppercase]="true" />
+        <bb-text-input label="Name" [(ngModel)]="buildingForm.name" maxlength="100" />
+        <bb-number-input label="Floors" [(ngModel)]="buildingForm.floors" />
+        <bb-checkbox text="Active" [(ngModel)]="buildingForm.isActive" />
+      } @else {
+        <bb-select label="Building" [options]="buildingOptions()" [(ngModel)]="spaceForm.buildingId" [clearable]="false" />
+        <bb-text-input label="Code" placeholder="B1-204" [(ngModel)]="spaceForm.code" maxlength="20" [uppercase]="true" />
+        <bb-text-input label="Name" [(ngModel)]="spaceForm.name" maxlength="100" />
+        <bb-select label="Kind" [options]="kinds" [(ngModel)]="spaceForm.spaceKind" [clearable]="false" />
+        <bb-number-input label="Floor" hint="0 is the ground floor; a basement is negative." [(ngModel)]="spaceForm.floor" />
+        <bb-number-input label="Capacity" [(ngModel)]="spaceForm.capacity" />
+        <bb-checkbox text="Active" [(ngModel)]="spaceForm.isActive" />
+      }
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="cancel()">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

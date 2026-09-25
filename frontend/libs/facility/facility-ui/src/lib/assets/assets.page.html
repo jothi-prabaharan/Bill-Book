@@ -1,0 +1,44 @@
+<header class="page-head">
+  <h1>Facility assets</h1>
+  <button *bbIfCan="'facility.create'" type="button" class="btn btn-primary" (click)="startAdd()" [disabled]="busy()">+ New asset</button>
+</header>
+
+<div class="fields">
+  <bb-text-input label="Search" placeholder="Tag or name" [(ngModel)]="search" (keyup.enter)="load()" />
+  <bb-select label="Status" placeholder="Every status" [options]="statuses" [(ngModel)]="status" (ngModelChange)="load()" />
+</div>
+
+<bb-message-box [messages]="messages()" />
+
+<bb-data-grid [gridCode]="'FAC_ASSETS'" [columns]="columns" [data]="rows()">
+  <ng-template bbCellTemplate="assetTag" let-row><code>{{ row.assetTag }}</code></ng-template>
+  <ng-template bbCellTemplate="spaceName" let-row>{{ row.spaceName ? row.buildingName + ' · ' + row.spaceName : '—' }}</ng-template>
+  <ng-template bbCellTemplate="warrantyUntil" let-row>{{ row.warrantyUntil ? (row.isUnderWarranty ? 'Until ' : 'Ended ') + row.warrantyUntil : '—' }}</ng-template>
+  <ng-template bbCellTemplate="assetStatus" let-row>{{ statusLabel(row.assetStatus) }}</ng-template>
+  <ng-template bbCellTemplate="actions" let-row>
+    <button *bbIfCan="'facility.edit'" type="button" class="link" (click)="edit(row)">Edit</button>
+  </ng-template>
+</bb-data-grid>
+
+@if (editingId() !== undefined) {
+  <section class="sheet" aria-labelledby="asset-sheet-title">
+    <h2 id="asset-sheet-title">{{ editingId() === null ? 'New asset' : 'Edit asset' }}</h2>
+    <div class="fields">
+      <bb-text-input label="Tag" [(ngModel)]="form.assetTag" maxlength="30" [uppercase]="true" />
+      <bb-text-input label="Name" placeholder="Split AC 1.5T" [(ngModel)]="form.name" maxlength="200" />
+      <bb-select label="Category" [options]="categories" [(ngModel)]="form.assetCategory" [clearable]="false" />
+      <bb-select label="Space" placeholder="Not placed" [options]="spaceOptions()" [(ngModel)]="form.spaceId" />
+      <bb-text-input label="Make" [(ngModel)]="form.make" maxlength="100" />
+      <bb-text-input label="Model" [(ngModel)]="form.model" maxlength="100" />
+      <bb-text-input label="Serial number" [(ngModel)]="form.serialNo" maxlength="100" />
+      <bb-date-input label="Purchased" [(ngModel)]="form.purchaseDate" />
+      <bb-date-input label="Warranty until" [(ngModel)]="form.warrantyUntil" />
+      <bb-money-input label="Cost" [(ngModel)]="form.purchaseCost" />
+      <bb-select label="Status" [options]="statuses" [(ngModel)]="form.assetStatus" [clearable]="false" />
+    </div>
+    <div class="sheet-actions">
+      <button type="button" class="btn btn-ghost" (click)="editingId.set(undefined)">Cancel</button>
+      <button type="button" class="btn btn-primary" (click)="save()" [disabled]="busy()">Save</button>
+    </div>
+  </section>
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "facility-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/facility/facility-ui/src",
+  "tags": [
+    "scope:facility",
+    "type:ui"
+  ],
+  "targets": {}
+}

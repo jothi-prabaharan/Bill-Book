@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "facility-core",
+  "projectType": "library",
+  "sourceRoot": "libs/facility/facility-core/src",
+  "tags": [
+    "scope:facility",
+    "type:core"
+  ],
+  "targets": {}
+}

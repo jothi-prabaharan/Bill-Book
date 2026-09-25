@@ -1,6 +1,6 @@
 # School
 
-**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions, student attendance and fees are built. Maintenance is added as each stage is built.
+**Status: partial.** The School app, its roles, guardian contacts, students, academic setup, exams, marks, admissions, student attendance, fees, and buildings, spaces and assets are built. Work orders, preventive maintenance and AMC contracts are added as each stage is built.
 
 School is sold on its own, like RetailErp, HRMS and Payroll. One customer can hold any of them, with the same branches and users across all of them. A branch is one campus.
 
@@ -102,6 +102,14 @@ Student attendance is separate from staff attendance, which is HRMS's.
 Raised demands are drafts. **Post** numbers them from the **FDM** series and posts them to the accounts. The guardian's receivable is debited with the net amount, each fee's income account is credited with the full fee, and any concession is debited to **Discount Given**. A posted demand is never changed. It can be voided, with a reason, only while nothing has been received against it.
 
 **Fees › Fee receipts** takes a payment from a guardian: the amount, how it was paid, and the bank or cash account it went into. It settles the guardian's open demands, the oldest first unless you choose. Anything left over is kept as the guardian's advance. The receipt is numbered from the **FRC** series and posted: the bank is debited, and the guardian's receivable is credited with what it settled, with the rest going to their advance. So the guardian's receivable always equals their open demands. Voiding a receipt reopens the demands it settled.
+
+## Buildings, spaces and assets
+
+**Maintenance › Buildings and spaces** records the campus: each **building** with its number of floors, and each **space** in it, such as a classroom, a lab, an office or the playground, with its floor and capacity. Floor 0 is the ground floor, and a basement is a negative floor. Codes are unique in a branch, such as B1 for a building and B1-204 for a room.
+
+**Maintenance › Facility assets** records what is maintained: an AC, a pump, a projector, a bench. Each asset has a tag, a category, the space it is in, its make, model and serial number, and its purchase date, warranty and cost. The list shows whether each warranty is still running.
+
+Nothing here is deleted, because work orders, preventive plans and AMC contracts refer to it. A space is **deactivated**, and a building only once its spaces are. An asset is **disposed**, and a disposed asset stays disposed.
 
 ## Exams and marks
 
