@@ -2104,6 +2104,17 @@ The build cards each design in section E produced. Each design section in `docs/
   - [ ] Test: per service, a request body with an enum by name binds (a `WebApplicationFactory` test, or a test of the shared extension's options).
 - **Done when:** a purchase bill saved from its screen is accepted.
 
+### TK-125 · Name the Sis, Amc and Hrm services after what they own
+- [~] working (Claude Opus 5.5) — since 2026-09-25
+- **Issue:** [#78](https://github.com/jothi-prabaharan/Bill-Book/issues/78)
+- **Lanes:** L-SIS, L-AMC, L-HRM, L-MST, L-KERNEL, the school and HR libs · **Depends on:** — · **Decision:** —
+- **Why:** the owner's request of 25 September 2026: a service is named for what it is, not for its schema. `Sis` becomes `Student`, `Amc` becomes `MaintenanceContract`, `Hrm` becomes `Employee`.
+- **Sub-tasks:**
+  - [ ] Folders, projects, namespaces, DbContexts, seeders, clients, configuration keys, test projects and their `*_TEST_DB` variables, the solution, and the docs.
+  - [ ] Frontend libs `libs/student`, `libs/maintenance-contract`, `libs/employee`, with their aliases and Nx project names.
+  - [ ] Kept as they are, because they are stored data or public contracts: the Postgres schemas, migration ids, URL routes, permission and menu codes, and the AMC domain entities.
+- **Done when:** nothing in code or config names a service by its schema, and the backend and all app builds are clean.
+
 ### TK-41 · POS receipt, ESC/POS (T7.3)
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#52](https://github.com/jothi-prabaharan/Bill-Book/issues/52)
