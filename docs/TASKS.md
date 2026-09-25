@@ -2646,7 +2646,7 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
   - Tests written, not run (as per protocol §0.5): `PerformanceSchemaTests.cs`, `EndpointGuardTests.cs`, `PerformanceApprovalRoutingTests.cs` (covers all 4 "Done when" requirements).
 
 ### TK-59 · H12: HRMS and Payroll reports
-- [ ] open
+- [~] working (Antigravity) — since 2026-09-25
 - **Lanes:** L-RPT · **Depends on:** TK-51 · **Decision:** —
 - **Where:** `docs/Modules.md` HRMS § Reports (line 2217) lists the groups: People, Time, Leave,
   Pay, Statutory, Recruitment and Claims.
