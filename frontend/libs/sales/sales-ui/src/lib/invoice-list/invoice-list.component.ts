@@ -11,7 +11,13 @@ import {
   readApiFailure,
 } from '@bill-book/api-client';
 import { FormatSettingsService } from '@bill-book/currency-format';
-import { InvoiceListItem, InvoiceService } from '@bill-book/sales-core';
+import {
+  E_INVOICE_STATUS_LABELS,
+  EInvoiceStatus,
+  eInvoiceNeedsAttention,
+  InvoiceListItem,
+  InvoiceService,
+} from '@bill-book/sales-core';
 import {
   AllocationModalComponent,
   AllocationRow,
@@ -92,6 +98,9 @@ export class InvoiceListComponent implements OnInit {
   protected search = '';
   protected overdueOnly = false;
 
+  /** Only invoices whose IRN was refused or is still pending (TK-92). */
+  protected eInvoiceAttention = false;
+
   protected readonly statuses: readonly { value: string; label: string }[] = [
     { value: '', label: 'All statuses' },
     { value: 'Draft', label: 'Draft' },
@@ -108,6 +117,7 @@ export class InvoiceListComponent implements OnInit {
     { field: 'totalAmount', header: 'Amount', align: 'right', dataType: 'money' },
     { field: 'settlementStatus', header: 'Payment', isTemplate: true },
     { field: 'status', header: 'Status', isTemplate: true },
+    { field: 'eInvoiceStatus', header: 'E-invoice', isTemplate: true },
   ];
 
   protected readonly isEmpty = computed(() => !this.loading() && this.rows().length === 0);
@@ -142,6 +152,7 @@ export class InvoiceListComponent implements OnInit {
         status: this.status || undefined,
         search: this.search.trim() || undefined,
         overdueOnly: this.overdueOnly || undefined,
+        eInvoiceAttention: this.eInvoiceAttention || undefined,
       });
 
       this.rows.set(result.rows);
@@ -324,6 +335,15 @@ export class InvoiceListComponent implements OnInit {
   }
 
   /** The tag class a status wears, from the shared set in `_tags.scss`. */
+  protected eInvoiceLabel(status: EInvoiceStatus): string {
+    return E_INVOICE_STATUS_LABELS[status] ?? status;
+  }
+
+  /** Refused and pending stand out: until the IRN is issued it is not a valid tax invoice. */
+  protected eInvoiceTag(status: EInvoiceStatus): string {
+    return eInvoiceNeedsAttention(status) ? 'badge expired' : 'chip';
+  }
+
   protected statusTag(status: string): string {
     switch (status) {
       case 'Posted':

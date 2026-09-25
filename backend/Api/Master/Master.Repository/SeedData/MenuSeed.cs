@@ -726,5 +726,8 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 439, MenuId = 1124, PermissionCode = "amc.view", Action = "view", Module = "amc" },
         new MenuPermission { MenuPermissionId = 440, MenuId = 1124, PermissionCode = "amc.create", Action = "create", Module = "amc" },
         new MenuPermission { MenuPermissionId = 441, MenuId = 1124, PermissionCode = "amc.edit", Action = "edit", Module = "amc" },
+        // The manual e-invoice actions on invoices and credit notes (TK-92).
+        new MenuPermission { MenuPermissionId = 442, MenuId = 1019, PermissionCode = "sales.einvoice", Action = "einvoice", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 443, MenuId = 1020, PermissionCode = "sales.einvoice", Action = "einvoice", Module = "sales" },
     ];
 }

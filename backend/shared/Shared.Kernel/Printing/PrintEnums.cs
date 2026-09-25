@@ -12,6 +12,13 @@ public enum PlaceholderType
     Date = 3,
     Image = 4,
     RichText = 5,
+
+    /// <summary>
+    /// Text the renderer draws as a QR code: the e-invoice's signed QR payload
+    /// (TK-92). The payload carries the text, never an image, so no data URI
+    /// crosses the wire and the template sanitiser's rule against them stands.
+    /// </summary>
+    QrCode = 6,
 }
 
 /// <summary>

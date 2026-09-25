@@ -43,6 +43,15 @@
       (ngModelChange)="onFilterChange()"
     />
 
+    <bb-checkbox
+      id="inv-einvoice"
+      class="inv-list__check"
+      text="E-invoice needs attention"
+      name="eInvoiceAttention"
+      [(ngModel)]="eInvoiceAttention"
+      (ngModelChange)="onFilterChange()"
+    />
+
     <button type="submit" class="btn btn-secondary inv-list__apply">Search</button>
   </form>
 
@@ -83,6 +92,14 @@
           @if (row.settlementStatus === 'PartPaid' && row.outstandingAmount !== undefined) {
             <span class="chip tabular-nums">{{ row.outstandingAmount | number: '1.2-2' }} due</span>
           }
+        } @else {
+          <span class="inv-list__muted">—</span>
+        }
+      </ng-template>
+
+      <ng-template bbCellTemplate="eInvoiceStatus" let-row>
+        @if (row.eInvoiceStatus) {
+          <span [class]="eInvoiceTag(row.eInvoiceStatus)">{{ eInvoiceLabel(row.eInvoiceStatus) }}</span>
         } @else {
           <span class="inv-list__muted">—</span>
         }

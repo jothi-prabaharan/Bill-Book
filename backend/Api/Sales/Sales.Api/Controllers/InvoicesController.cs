@@ -55,10 +55,11 @@ public sealed class InvoicesController : ControllerBase
         [FromQuery] int take = DefaultPageSize,
         [FromQuery] string? status = null,
         [FromQuery] string? search = null,
-        [FromQuery] bool overdueOnly = false)
+        [FromQuery] bool overdueOnly = false,
+        [FromQuery] bool eInvoiceAttention = false)
     {
         InvoiceListPage page = await _service.ListPageAsync(
-            skip, take, status, search, from, to, overdueOnly, ct);
+            skip, take, status, search, from, to, overdueOnly, eInvoiceAttention, ct);
 
         return Ok(page);
     }
@@ -175,6 +176,29 @@ public sealed class InvoicesController : ControllerBase
             : Respond(result);
     }
 
+    /// <summary>The invoice's registration at the IRP (TK-92). Not found when it has none.</summary>
+    [HttpGet("{id:long}/e-invoice")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> EInvoice(
+        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+    {
+        EInvoiceStateView? state = await actions.GetAsync(Sales.Entity.Enums.EInvoiceSource.Invoice, id, ct);
+        return state is null ? NotFound() : Ok(state);
+    }
+
+    /// <summary>
+    /// Registers the invoice at the IRP again now (TK-92): after a refusal was
+    /// fixed, or instead of waiting for the retry worker. Needs sales.einvoice.
+    /// </summary>
+    [HttpPost("{id:long}/e-invoice/retry")]
+    [PermissionAction("einvoice")]
+    public async Task<IActionResult> RetryEInvoice(
+        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+    {
+        EInvoiceStateView? state = await actions.RetryAsync(Sales.Entity.Enums.EInvoiceSource.Invoice, id, ct);
+        return state is null ? NotFound() : Ok(state);
+    }
+
     private IActionResult Respond(InvoiceResult result) =>
         result.Outcome switch
         {
@@ -225,6 +249,10 @@ public sealed class InvoicesController : ControllerBase
             InvoiceOutcome.StockRefused => BadRequest(new MessageResponse
             {
                 Message = result.Detail ?? "Stock issue failed."
+            }),
+            InvoiceOutcome.EInvoiceRefused => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "The invoice's IRN stops it being voided."
             }),
             InvoiceOutcome.AlreadyCredited => Conflict(new MessageResponse
             {

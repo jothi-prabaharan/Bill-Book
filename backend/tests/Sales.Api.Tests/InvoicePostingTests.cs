@@ -675,7 +675,7 @@ public sealed class InvoicePostingTests
                 storage,
                 pdf,
                 orgIdentity,
-                new StubUqcLookup());
+                new StubUqcLookup(), new StubEInvoicing());
 
             return new Harness(db, invoices, inventory, ledger, tenant, pdf, storage);
         }

@@ -1702,19 +1702,49 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-92 · E-invoice: IRN on post, cancel on void, retry, QR on print
-- [~] working (Claude Opus 5.5) — since 2026-09-25
+- [x] completed (Claude Opus 5.5) — 2026-09-25 · tests written, not run
 - **Issue:** [#80](https://github.com/jothi-prabaharan/Bill-Book/issues/80)
 - **Lanes:** L-SAL, L-PRT, L-SAL-UI · **Depends on:** TK-91 · **Decision:** —
 - **Where:** `InvoiceService.PostAsync` / `VoidAsync`, `CreditNoteService`, `InvoicePrintService`, `Shared.Kernel.Printing.PlaceholderCatalog`.
 - **Sub-tasks:**
-  - [ ] Insert the `Pending` row inside the posting transaction; register once after the commit; answer 200 with the e-invoice state.
-  - [ ] A hosted retry worker in Sales with backoff; permanent IRP errors stay `Failed` and are written to `sal.ErrorLogs` with `FollowUpStatus = Open`.
-  - [ ] Duplicate-IRN recovery through "get IRN by document details" (design, decision 6).
-  - [ ] Void cancels the IRN inside 24 hours and is refused after, naming the credit note as the fix.
-  - [ ] Print: `Irn`, `AckNo`, `AckDate`, `QrImage` tags; `IRN PENDING` stamp until registered.
-  - [ ] The invoice list gains an e-invoice status column and a "needs attention" filter.
-  - [ ] Test: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped.
+  - [x] Insert the `Pending` row inside the posting transaction; register once after the commit; answer 200 with the e-invoice state.
+  - [x] A hosted retry worker in Sales with backoff; permanent IRP errors stay `Failed` and are written to `sal.ErrorLogs` with `FollowUpStatus = Open`.
+  - [x] Duplicate-IRN recovery through "get IRN by document details" (design, decision 6).
+  - [x] Void cancels the IRN inside 24 hours and is refused after, naming the credit note as the fix.
+  - [x] Print: `Irn`, `AckNo`, `AckDate`, `QrImage` tags; `IRN PENDING` stamp until registered.
+  - [x] The invoice list gains an e-invoice status column and a "needs attention" filter.
+  - [x] Test: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped.
 - **Done when:** posting a B2B invoice on an e-invoicing branch prints it with its IRN and QR, and voiding it the same day cancels the IRN.
+- **As built:**
+  - **After commit.** `Shared.Kernel.Persistence.IAfterCommit` (`AfterCommitQueue`, registered by `AddBillBookReliability`): `TransactionFilter` runs the queued work after it commits and before the response is written, and drops it on rollback. `EInvoicePosting.OnPostedAsync` writes the Pending row at the end of `InvoiceService.PostAsync` and `CreditNoteService.PostAsync`, and queues one `EInvoiceRegistrar.RegisterAsync`. That call fills in the `EInvoiceStateView` the posting returns, so the 200 carries the IRP's answer. Work queued where no request transaction runs never runs from the queue; the retry worker covers it.
+  - **Which documents get a row.** POS sales never do. The branch must e-invoice from the document's date, and the buyer must have a GSTIN on the document or, looked up in Master, be SEZ or overseas. When the lookup fails the row is written provisionally, and the registrar deletes it if the builder then says the document doesn't apply.
+  - **`EInvoiceRegistrar`:**
+    - A guarded `ExecuteUpdate` claim holds `NextAttemptAt` for two minutes, and its row count is the answer.
+    - It builds and validates the document. A validation refusal is `Failed` with the problems as the message.
+    - Duplicate IRN `2150` is recovered through get-by-document.
+    - A transient problem is `Pending` with backoff: 1, 5 and 15 minutes, then 1, 3, 6 and 12 hours.
+    - A permanent refusal is `Failed`.
+    - Every `Failed` goes to `sal.ErrorLogs` through `IWorkerErrorAuditor` (`AddBillBookWorkerErrorAudit<SalesDbContext>`) with `FollowUpStatus = Open`, job reference `EInvoice:{id} {Source}:{id}`.
+  - **`EInvoiceRetryWorker`** is a hosted service in Sales. Every 5 minutes it walks `ITenantEnumerator`'s branches, each in its own scope, taking up to 50 due Pending rows per branch. It leaves Failed rows alone.
+  - **Void.** `BeforeVoidAsync` runs right after the lifecycle check, before the ledger is withdrawn, so a refusal changes nothing (decision 5).
+    - Registered and within 24 hours: cancelled at the IRP with the void's reason as the remark and `VoidInvoiceRequest.CancelReason`, `Other` when not given.
+    - Past 24 hours, or refused by the IRP: `InvoiceOutcome.EInvoiceRefused` / `CreditNoteOutcome.EInvoiceRefused`, answered with a 409 that names the credit note.
+    - Pending or Failed: marked Cancelled.
+    - If the IRP cancels and the ledger withdrawal then fails, the IRN stays cancelled on a posted invoice. That is the design's order, noted rather than solved.
+  - **Endpoints:**
+    - `GET …/invoices|credit-notes/{id}/e-invoice` (`sales.view`).
+    - `POST …/{id}/e-invoice/retry` (`sales.einvoice`, via `[PermissionAction("einvoice")]`). `sales.einvoice` is `ExtraPermissions` id 10003, granted to Owner, Administrator and Sales with fixed ids `900,000,000 + 100,000 × role + id`. Extras are now left out of the sequential grants, so nothing was renumbered. Migration `SalesEInvoicePermission` is inserts only, with menu rows 442 and 443.
+    - The invoice list takes `eInvoiceAttention` (Failed or Pending) and returns `EInvoiceStatus`.
+  - **Print:**
+    - `PlaceholderType.QrCode` and the `EInvoice.Irn`, `AckNo`, `AckDate` and `QrImage` tags, for INV and CRN.
+    - Printing draws the QR itself from the signed text with **QRCoder 1.8.0** (MIT, managed PNG, new in `Directory.Packages.props`). The template sanitiser still refuses a template's own `data:` URIs.
+    - `EInvoiceStrip` adds the IRN block to the header of a registered invoice whose template places no `EInvoice.` tag.
+    - `InvoicePrintService` stamps `IRN PENDING` on a posted invoice whose e-invoice is Pending or Failed.
+  - **UI:** the invoice screen's E-invoice panel shows the status, IRN and acknowledgement, the message, **Retry now**, and the 24-hour note. The invoice list gets an **E-invoice** column and an **E-invoice needs attention** checkbox. The credit note screen has no panel yet; its endpoints exist.
+  - **Specs:**
+    - `EInvoiceRegistrationTests`: post registers once; a lost answer followed by a duplicate stores the existing IRN; void at 23 h cancels and at 25 h is refused; a pending invoice prints stamped; validation fails and is audited; transient backoff; claim; manual retry.
+    - `Printing.Api.Tests.EInvoicePrintTests`, `Shared.Kernel.Tests.AfterCommitQueueTests`, `Master.Api.Tests.SalesEInvoicePermissionTests`, `sales-core/e-invoice.spec.ts`.
+  - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and both Master contexts. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-93 · E-way bill: by IRN and standalone for challans
 - [ ] open

@@ -213,3 +213,20 @@
     cursor: not-allowed;
   }
 }
+
+// The e-invoice panel (TK-92). The IRN is 64 characters with no spaces, so it
+// has to be allowed to break or it pushes the page wider than a phone.
+.inv-form__einvoice {
+  padding: var(--space-3, 12px);
+  margin-bottom: var(--space-3, 12px);
+  display: grid;
+  gap: var(--space-2, 8px);
+
+  p {
+    margin: 0;
+  }
+}
+
+.inv-form__irn span {
+  word-break: break-all;
+}

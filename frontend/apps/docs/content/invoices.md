@@ -107,9 +107,40 @@ A problem is named in plain words, such as "Line 3 has no GST unit (UQC)", so it
 Each line's GST unit is copied from its unit of measure when the invoice or credit note posts. This
 is also the unit the sales register and GSTR-1's HSN summary report.
 
-**Not live yet.** Registering at posting, the IRN and QR on the printed invoice, and cancelling
-within 24 hours come next. The portal provider is still to be chosen, so an installation has no
-live connection to the IRP yet.
+### Registering, and what happens when the IRP says no
+
+**Posting** a B2B, export or SEZ invoice on an e-invoicing branch registers it at the IRP straight
+after the posting is saved. Posting never waits on the IRP and never fails because of it: the
+invoice is posted either way, and its **E-invoice** panel says where it stands.
+
+- **IRN issued**: the panel shows the IRN and the acknowledgement. The printed invoice carries
+  them and the signed QR code, even if the print template does not place them itself.
+- **IRN pending**: the IRP could not be reached. It is tried again automatically: after a minute,
+  then after 5 and 15 minutes, then every few hours. Until then the invoice prints stamped
+  **IRN PENDING**, because without its IRN it is not a valid tax invoice.
+- **IRN refused**: something about the invoice or the branch needs fixing, and the panel says what,
+  such as "The PIN code of the customer must be six digits". Fix it and press **Retry now**. Retrying
+  needs the **e-invoice** permission, which Owner, Administrator and Sales have. A refused invoice
+  also prints stamped IRN PENDING and is listed in the error log for follow-up.
+
+If a registration went through but its answer was lost, the retry fetches the IRN that was already
+issued instead of failing on the duplicate.
+
+The invoice list has an **E-invoice** column and an **E-invoice needs attention** filter, which
+lists every invoice whose IRN is pending or refused.
+
+### Voiding an e-invoice
+
+**Voiding** a registered invoice cancels its IRN first. This is allowed for **24 hours** from the
+acknowledgement. After that the void is refused, and the correction is a credit note. If the IRP
+refuses the cancellation, the void is refused too and nothing changes. An invoice whose IRN was
+never issued is simply voided, and its pending registration is dropped.
+
+Credit notes against B2B, export and SEZ supplies are registered and cancelled the same way.
+
+**The portal provider is still to be chosen.** Until it is, an installation cannot reach the real
+IRP, and a branch that switches e-invoicing on sees its invoices refused with "No e-invoicing
+provider is configured".
 
 ## POS sales
 

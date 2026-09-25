@@ -110,6 +110,39 @@
     </div>
   }
 
+  @if (eInvoice(); as einv) {
+    <section class="card inv-form__einvoice" aria-label="E-invoice">
+      <p>
+        <strong>E-invoice:</strong>
+        <span [class]="canRetryEInvoice() ? 'badge expired' : 'chip'">{{ eInvoiceLabel() }}</span>
+      </p>
+
+      @if (einv.irn) {
+        <p class="inv-form__irn"><strong>IRN</strong> <span class="tabular-nums">{{ einv.irn }}</span></p>
+        <p><strong>Ack No</strong> {{ einv.ackNo }} · <strong>Ack date</strong> {{ einv.ackDate | date: 'medium' }}</p>
+      }
+
+      @if (einv.message) {
+        <p class="field-error" role="alert">{{ einv.message }}</p>
+      }
+
+      @if (einv.status === 'Pending' && einv.nextAttemptAt) {
+        <p>Tried {{ einv.attempts }} time(s). The next attempt is due {{ einv.nextAttemptAt | date: 'shortTime' }}.</p>
+      }
+
+      @if (canRetryEInvoice()) {
+        <p>Until the IRN is issued the invoice prints stamped IRN PENDING and is not a valid tax invoice.</p>
+        <button type="button" class="btn btn-secondary" [disabled]="saving()" (click)="retryEInvoice()">
+          Retry now
+        </button>
+      }
+
+      @if (irnLocked()) {
+        <p>The IRN was issued more than 24 hours ago, so it can no longer be cancelled. To correct this invoice, raise a credit note.</p>
+      }
+    </section>
+  }
+
   @if (canVoid()) {
     <form class="field inv-form__void" [formGroup]="voidForm">
       <bb-text-input

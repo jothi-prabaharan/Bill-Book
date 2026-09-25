@@ -86,10 +86,14 @@ public sealed class PrintRenderer
         var unknown = new List<string>();
         Dictionary<PrintSegment, string> resolved = [];
 
+        // A registered e-invoice prints its IRN and QR whatever the template
+        // holds, the way a draft prints PROFORMA (TK-92).
+        PrintContent content = EInvoiceStrip.Ensure(request.Content, request.Payload);
+
         foreach (PrintSegment segment in PrintSegments.InOrder)
         {
             SubstitutionResult result = PrintSubstitution.Resolve(
-                PrintSegments.Html(request.Content, segment),
+                PrintSegments.Html(content, segment),
                 request.DocumentTypeCode,
                 request.Payload,
                 request.Format,
@@ -515,6 +519,10 @@ public sealed class PrintRenderer
         + ".pt-page table{width:100%;border-collapse:collapse}"
         + ".pt-watermark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);"
         + "font-size:72pt;font-weight:bold;letter-spacing:0.1em;opacity:0.12;white-space:nowrap;pointer-events:none;z-index:1}"
+        + ".pt-qr{width:32mm;height:32mm;image-rendering:pixelated}"
+        + ".pt-einvoice{margin-bottom:3mm;font-size:8pt}"
+        + ".pt-einvoice td{vertical-align:top;word-break:break-all}"
+        + ".pt-einvoice-qr{width:34mm;text-align:right}"
         + "</style>";
 
     /// <summary>One indivisible piece of the flow.</summary>

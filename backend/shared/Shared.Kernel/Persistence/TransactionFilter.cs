@@ -85,9 +85,18 @@ public sealed class TransactionFilter : IAsyncActionFilter
                 {
                     await unit.CommitAsync(ct);
                 }
+
+                // Before the result is written, so work that updates the
+                // response (an invoice's e-invoice state) is seen by the caller.
+                if (context.HttpContext.RequestServices.GetService(typeof(AfterCommitQueue)) is AfterCommitQueue queue
+                    && queue.Count > 0)
+                {
+                    await queue.RunAsync(_logger, ct);
+                }
             }
             else
             {
+                (context.HttpContext.RequestServices.GetService(typeof(AfterCommitQueue)) as AfterCommitQueue)?.Clear();
                 await RollbackAsync(started, ct);
 
                 if (executed.Exception is not null && !executed.ExceptionHandled)

@@ -437,3 +437,31 @@ internal sealed class StubUqcLookup : Shared.Kernel.Stock.IUqcLookup
         return Task.FromResult(found);
     }
 }
+
+/// <summary>
+/// E-invoicing that records what posting and voiding asked of it (TK-92).
+/// Needs no IRN by default; <see cref="VoidRefusal"/> makes a void refused.
+/// </summary>
+internal sealed class StubEInvoicing : Sales.Api.Services.EInvoicing.IEInvoicePosting
+{
+    public List<(Sales.Entity.Enums.EInvoiceSource Source, long Id)> Posted { get; } = [];
+
+    public List<(Sales.Entity.Enums.EInvoiceSource Source, long Id, string Reason)> Voided { get; } = [];
+
+    public string? VoidRefusal { get; set; }
+
+    public Task<Sales.Entity.Models.EInvoiceStateView?> OnPostedAsync(
+        Sales.Entity.Enums.EInvoiceSource source, long sourceId, DocumentHeaderBase document, CancellationToken ct)
+    {
+        Posted.Add((source, sourceId));
+        return Task.FromResult<Sales.Entity.Models.EInvoiceStateView?>(null);
+    }
+
+    public Task<string?> BeforeVoidAsync(
+        Sales.Entity.Enums.EInvoiceSource source, long sourceId, string reason,
+        Sales.Entity.Enums.EInvoiceCancelReason? cancelReason, CancellationToken ct)
+    {
+        Voided.Add((source, sourceId, reason));
+        return Task.FromResult(VoidRefusal);
+    }
+}

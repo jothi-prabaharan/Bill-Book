@@ -58,6 +58,10 @@ public static class SamplePayload
         // a branch that has not uploaded a logo.
         PlaceholderType.Image => null,
         PlaceholderType.RichText => $"<div>{placeholder.Description}</div>",
+
+        // A real-looking code, so the editor shows the space a registered
+        // invoice's QR takes.
+        PlaceholderType.QrCode => "SAMPLE E-INVOICE QR",
         _ => Sample(placeholder, row),
     };
 

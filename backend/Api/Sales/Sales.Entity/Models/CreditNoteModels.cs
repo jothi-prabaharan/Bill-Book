@@ -178,6 +178,9 @@ public class VoidCreditNoteRequest
     [Required(ErrorMessage = "Say why this credit note is being voided.")]
     [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
     public string Reason { get; set; } = null!;
+
+    /// <summary>The IRP's reason code when the void cancels an IRN (TK-92).</summary>
+    public Sales.Entity.Enums.EInvoiceCancelReason? CancelReason { get; set; }
 }
 
 /// <summary>Why a credit note was refused. Every value is something a user can act on.</summary>
@@ -212,7 +215,10 @@ public enum CreditNoteOutcome
 
     /// <summary>The ledger refused the posting or its withdrawal.</summary>
     PostingRefused = 10,
+
+    /// <summary>The IRN stands in the way of a void (TK-92). <c>Detail</c> says why.</summary>
+    EInvoiceRefused = 11,
 }
 
 public sealed record CreditNoteResult(
-    CreditNoteOutcome Outcome, long CreditNoteId = 0, string? Detail = null);
+    CreditNoteOutcome Outcome, long CreditNoteId = 0, string? Detail = null, EInvoiceStateView? EInvoice = null);

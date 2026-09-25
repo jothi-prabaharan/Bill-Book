@@ -274,7 +274,7 @@ public sealed class InvoiceLineEditTests
                 new StubDocumentStorage(),
                 new StubInvoicePdf(),
                 new StubOrgIdentity(),
-                new StubUqcLookup());
+                new StubUqcLookup(), new StubEInvoicing());
 
             return new Harness(db, invoices, tenant);
         }

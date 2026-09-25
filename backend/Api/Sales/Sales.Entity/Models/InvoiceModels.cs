@@ -250,9 +250,20 @@ public enum InvoiceOutcome
 
     /// <summary>Downstream credit note prevents voiding.</summary>
     AlreadyCredited = 14,
+
+    /// <summary>
+    /// The IRN stands in the way (TK-92): it is past its 24-hour cancel
+    /// window, or the IRP refused to cancel it. <c>Detail</c> says which.
+    /// </summary>
+    EInvoiceRefused = 15,
 }
 
-public sealed record InvoiceResult(InvoiceOutcome Outcome, long InvoiceId = 0, string? Detail = null);
+/// <param name="EInvoice">
+/// The document's registration at the IRP, when it has one (TK-92). Posting
+/// answers 200 whatever the IRP said, with the state here.
+/// </param>
+public sealed record InvoiceResult(
+    InvoiceOutcome Outcome, long InvoiceId = 0, string? Detail = null, EInvoiceStateView? EInvoice = null);
 
 /// <summary>An Invoice on the list screen. Contact name resolved in a batch, never stored.</summary>
 public class InvoiceListItem
@@ -294,6 +305,9 @@ public class InvoiceListItem
     public int DaysOverdue { get; set; }
 
     public string? PaymentMode { get; set; }
+
+    /// <summary>Where the invoice stands at the IRP, or null when it needs no IRN (TK-92).</summary>
+    public Sales.Entity.Enums.EInvoiceStatus? EInvoiceStatus { get; set; }
 
     /// <summary>
     /// What has been received against this invoice, from Accounting's ledger.
@@ -486,6 +500,12 @@ public class VoidInvoiceRequest
     [Required(ErrorMessage = "Say why this invoice is being voided.")]
     [MaxLength(300, ErrorMessage = "Reason cannot exceed 300 characters.")]
     public string Reason { get; set; } = null!;
+
+    /// <summary>
+    /// The IRP's reason code when the void cancels an IRN (TK-92). Other when
+    /// not given; the reason above goes with it as the remark.
+    /// </summary>
+    public Sales.Entity.Enums.EInvoiceCancelReason? CancelReason { get; set; }
 }
 
 /// <summary>GL breakdown preview before finalizing an invoice.</summary>

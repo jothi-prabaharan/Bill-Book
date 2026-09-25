@@ -690,6 +690,11 @@ public class AdminDbContext : DbContext
 
         // Closing a work order, which is terminal (S6).
         (10_002, "workorder", "close", App.School),
+
+        // The manual e-invoice actions: retrying a registration, and generating
+        // or cancelling an e-way bill (TK-92). Posting still needs
+        // sales.approve and cancelling an IRN rides on sales.void.
+        (10_003, "sales", "einvoice", App.RetailErp),
     ];
 
     /// <summary>
@@ -892,7 +897,14 @@ public class AdminDbContext : DbContext
         // The five system roles are RetailErp's, so they hold RetailErp's
         // permissions only (the grant rule, TK-42). Today that is every one; a
         // module another app adds later is not RetailErp's and stays out.
-        List<Permission> retail = nonPlatform.Where(p => p.Apps.HasFlag(App.RetailErp)).ToList();
+        //
+        // The extras (ids from 10,000) are left out of these sequential grants
+        // and granted below with fixed ids: appended here they would renumber
+        // every grant after them, and a migration of that many updates collided
+        // on the unique role-permission index before (TK-70).
+        List<Permission> retail = nonPlatform
+            .Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId < 10_000)
+            .ToList();
 
         Grant(owner, retail);
         Grant(administrator, retail);
@@ -921,6 +933,28 @@ public class AdminDbContext : DbContext
         Grant(sales, retail.Where(p =>
             salesAlsoReads.Contains(p.Module)
             && p.Code.EndsWith(".view", StringComparison.Ordinal)));
+
+        // RetailErp's extra permissions, to the roles that hold their module:
+        // 900,000,000 + 100,000 × the role + the permission id, clear of the
+        // sequential ids above and of the per-app ranges below.
+        foreach (Permission extra in nonPlatform.Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId >= 10_000))
+        {
+            foreach (int roleId in new[] { owner, administrator, accountant, sales })
+            {
+                bool holds = roleId is owner or administrator
+                    || (roleId == accountant && accountantModules.Contains(extra.Module))
+                    || (roleId == sales && salesModules.Contains(extra.Module));
+                if (holds)
+                {
+                    grants.Add(new RolePermission
+                    {
+                        RolePermissionId = 900_000_000L + (100_000L * roleId) + extra.PermissionId,
+                        RoleId = roleId,
+                        PermissionId = extra.PermissionId,
+                    });
+                }
+            }
+        }
 
         // Each other app's Owner holds every permission its app may hold
         // (TK-45). Each grant's id is fixed by its app and its permission,

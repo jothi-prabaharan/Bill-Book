@@ -46,6 +46,7 @@ public sealed class CreditNoteService
     private readonly ILedgerClient _ledgerClient;
     private readonly Sales.Api.Services.Pdf.SalesDocumentArchive _archive;
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
+    private readonly EInvoicing.IEInvoicePosting _eInvoicing;
 
     public CreditNoteService(
         SalesDbContext db,
@@ -61,7 +62,8 @@ public sealed class CreditNoteService
         IInventoryClient inventoryClient,
         ILedgerClient ledgerClient,
         Sales.Api.Services.Pdf.SalesDocumentArchive archive,
-        Shared.Kernel.Stock.IUqcLookup uqc)
+        Shared.Kernel.Stock.IUqcLookup uqc,
+        EInvoicing.IEInvoicePosting eInvoicing)
     {
         _db = db;
         _tenant = tenant;
@@ -77,6 +79,7 @@ public sealed class CreditNoteService
         _ledgerClient = ledgerClient;
         _archive = archive;
         _uqc = uqc;
+        _eInvoicing = eInvoicing;
     }
 
     public async Task<IReadOnlyList<CreditNoteListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
@@ -620,7 +623,13 @@ public sealed class CreditNoteService
             ct);
 
         await _db.SaveChangesAsync(ct);
-        return new CreditNoteResult(CreditNoteOutcome.Ok, creditNoteId);
+
+        // A credit note against a B2B, export or SEZ supply is registered like
+        // the invoice it corrects (TK-92).
+        Sales.Entity.Models.EInvoiceStateView? eInvoice = await _eInvoicing.OnPostedAsync(
+            EInvoiceSource.CreditNote, creditNoteId, creditNote, ct);
+
+        return new CreditNoteResult(CreditNoteOutcome.Ok, creditNoteId, EInvoice: eInvoice);
     }
 
     /// <summary>
@@ -636,7 +645,7 @@ public sealed class CreditNoteService
     /// challan follows.
     /// </summary>
     public async Task<CreditNoteResult> VoidAsync(
-        long creditNoteId, string reason, CancellationToken ct)
+        long creditNoteId, string reason, CancellationToken ct, EInvoiceCancelReason? cancelReason = null)
     {
         var (customerId, orgId) = _tenant.Require();
 
@@ -663,6 +672,12 @@ public sealed class CreditNoteService
         {
             return new CreditNoteResult(
                 CreditNoteOutcome.LifecycleRefused, creditNoteId, transition.Detail);
+        }
+
+        // The IRN first: refused past 24 hours or by the IRP, and then nothing moves (TK-92).
+        if (await _eInvoicing.BeforeVoidAsync(EInvoiceSource.CreditNote, creditNoteId, reason, cancelReason, ct) is string refusal)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.EInvoiceRefused, creditNoteId, refusal);
         }
 
         if (posted)

@@ -96,6 +96,11 @@ public static class PlaceholderCatalog
             all.AddRange(PaymentLines);
         }
 
+        if (EInvoiceTypes.Contains(profile.Code))
+        {
+            all.AddRange(EInvoice);
+        }
+
         return all;
     }
 
@@ -212,6 +217,21 @@ public static class PlaceholderCatalog
         List("Payment.Mode", "Payment", "Cash, bank or card", PlaceholderType.Text, 20),
         List("Payment.Reference", "Payment", "Cheque or transaction reference", PlaceholderType.Text, 30),
         List("Payment.Amount", "Payment", "Amount", PlaceholderType.Amount, 40, AmountFormat),
+    ];
+
+    /// <summary>The document types that can carry an IRN: invoices and credit notes (TK-92).</summary>
+    public static readonly IReadOnlySet<string> EInvoiceTypes = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "INV", "CRN" };
+
+    /// <summary>
+    /// The IRP's answer, printed on a registered e-invoice (TK-92). Empty on a
+    /// document that was never registered, so a template may carry them always.
+    /// </summary>
+    private static readonly PlaceholderDefinition[] EInvoice =
+    [
+        Single("EInvoice.Irn", "EInvoice", "Invoice reference number from the IRP", PlaceholderType.Text, 10),
+        Single("EInvoice.AckNo", "EInvoice", "IRP acknowledgement number", PlaceholderType.Text, 20),
+        Single("EInvoice.AckDate", "EInvoice", "IRP acknowledgement date", PlaceholderType.Date, 30, DateFormat),
+        Single("EInvoice.QrImage", "EInvoice", "Signed QR code from the IRP", PlaceholderType.QrCode, 40),
     ];
 
     private static readonly PlaceholderDefinition[] Totals =

@@ -239,6 +239,13 @@ public static class PrintSubstitution
                     anyMarkup = true;
                     return sanitizer.Sanitize($"<img src=\"{Escape(url)}\" alt=\"\">");
 
+                case PlaceholderType.QrCode:
+                    // Built here from the text, never taken from the payload as
+                    // markup, so it needs no sanitising (see QrImages).
+                    string qr = QrImages.Img(value as string);
+                    anyMarkup |= qr.Length > 0;
+                    return qr;
+
                 case PlaceholderType.RichText:
                     string markup = sanitizer.Sanitize(value as string ?? string.Empty);
                     anyMarkup |= markup.Length > 0;

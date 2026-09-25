@@ -197,6 +197,21 @@ builder.Services.AddScoped<InvoicePrintService>();
 // builder that turns a posted document into INV-01. Sandbox in Development,
 // refusing everywhere else until the provider is chosen (D-24).
 builder.Services.AddEInvoiceGateway(builder.Configuration, builder.Environment);
+builder.Services.AddScoped<EInvoiceRegistrar>();
+builder.Services.AddScoped<IEInvoicePosting, EInvoicePosting>();
+builder.Services.AddScoped<EInvoiceActions>();
+
+// Refused e-invoices go to sal.ErrorLogs with FollowUpStatus Open (TK-92).
+builder.Services.AddBillBookWorkerErrorAudit<SalesDbContext>();
+
+// The retry worker walks every branch Master lists, each in its own scope
+// with its tenant set, the way the payment reminders do (TK-92).
+builder.Services.AddHttpClient<ITenantEnumerator, HttpTenantEnumerator>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHostedService<EInvoiceRetryWorker>();
 
 // Numbering. The series table belongs to Accounting, but the generator runs
 // against this service's own DbContext so a document number is allocated inside the

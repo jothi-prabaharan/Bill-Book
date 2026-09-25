@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Sales.Entity.Enums;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
 using Shared.Kernel.Documents;
@@ -72,15 +73,47 @@ public sealed class InvoicePrintService
 
         PrintPayload payload = InvoicePrintPayload.Build(invoice, seller, customerName, itemNames);
 
+        // The IRP's answer, when the invoice was registered (TK-92). Printing
+        // puts the IRN and the QR code on it even where the template does not.
+        EInvoice? eInvoice = await _db.EInvoices.AsNoTracking()
+            .FirstOrDefaultAsync(e => e.SourceType == EInvoiceSource.Invoice && e.SourceId == invoiceId, ct);
+        AddEInvoice(payload, eInvoice);
+
         return await _printing.RenderAsync(
             invoice.TransactionTypeCode?.Trim() is { Length: 3 } code && DocumentTypeCatalog.IsPrintable(code)
                 ? code
                 : "INV",
             invoice.PrintTemplateId,
             payload,
-            Watermark(invoice.Status),
+            Watermark(invoice.Status, eInvoice?.Status),
             ct);
     }
+
+    /// <summary>The IRN, acknowledgement and signed QR payload, on a registered e-invoice only.</summary>
+    public static void AddEInvoice(PrintPayload payload, EInvoice? eInvoice)
+    {
+        if (eInvoice is not { Status: EInvoiceStatus.Registered })
+        {
+            return;
+        }
+
+        payload.Singles["EInvoice.Irn"] = eInvoice.Irn;
+        payload.Singles["EInvoice.AckNo"] = eInvoice.AckNo;
+        payload.Singles["EInvoice.AckDate"] = eInvoice.AckDate is DateTimeOffset ack
+            ? DateOnly.FromDateTime(ack.ToOffset(TimeSpan.FromHours(5.5)).DateTime)
+            : null;
+        payload.Singles["EInvoice.QrImage"] = eInvoice.SignedQrCode;
+    }
+
+    /// <summary>
+    /// A posted invoice that needs an IRN and has none yet prints stamped
+    /// IRN PENDING (TK-92, design decision 4): without its IRN it is not a
+    /// valid tax invoice, and a buyer must not be handed it as one.
+    /// </summary>
+    public static string? Watermark(DocumentStatus status, EInvoiceStatus? eInvoice) =>
+        status == DocumentStatus.Posted && eInvoice is EInvoiceStatus.Pending or EInvoiceStatus.Failed
+            ? "IRN PENDING"
+            : Watermark(status);
 
     /// <summary>
     /// Only a posted invoice is a tax invoice. A draft still prints — somebody

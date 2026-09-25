@@ -76,6 +76,7 @@ public sealed class InvoiceService : IInvoiceService
     /// </summary>
     private readonly IOrgIdentityProvider _orgIdentity;
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
+    private readonly EInvoicing.IEInvoicePosting _eInvoicing;
 
     public InvoiceService(
         SalesDbContext db,
@@ -94,7 +95,8 @@ public sealed class InvoiceService : IInvoiceService
         Shared.Kernel.Storage.IFileStorage storage,
         Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer,
         IOrgIdentityProvider orgIdentity,
-        Shared.Kernel.Stock.IUqcLookup uqc)
+        Shared.Kernel.Stock.IUqcLookup uqc,
+        EInvoicing.IEInvoicePosting eInvoicing)
     {
         _db = db;
         _tenant = tenant;
@@ -113,6 +115,7 @@ public sealed class InvoiceService : IInvoiceService
         _pdfRenderer = pdfRenderer;
         _orgIdentity = orgIdentity;
         _uqc = uqc;
+        _eInvoicing = eInvoicing;
     }
 
     /// <summary>
@@ -1028,6 +1031,7 @@ public sealed class InvoiceService : IInvoiceService
         DateOnly? from,
         DateOnly? to,
         bool overdueOnly,
+        bool eInvoiceAttentionOnly,
         CancellationToken ct)
     {
         int safeSkip = Math.Max(skip, 0);
@@ -1067,6 +1071,16 @@ public sealed class InvoiceService : IInvoiceService
                 x.Status == DocumentStatus.Posted && x.DueDate.HasValue && x.DueDate.Value < today);
         }
 
+        // The e-invoices a person has to look at (TK-92): refused, or still not
+        // registered. These are the invoices that are not yet valid tax invoices.
+        if (eInvoiceAttentionOnly)
+        {
+            query = query.Where(x => _db.EInvoices.Any(e =>
+                e.SourceType == EInvoiceSource.Invoice
+                && e.SourceId == x.InvoiceId
+                && (e.Status == EInvoiceStatus.Failed || e.Status == EInvoiceStatus.Pending)));
+        }
+
         // Counted before paging: the screen has to say how many matched, not how
         // many fitted on the page.
         int total = await query.CountAsync(ct);
@@ -1095,6 +1109,10 @@ public sealed class InvoiceService : IInvoiceService
                     ? Math.Max(0, today.DayNumber - x.DueDate.Value.DayNumber)
                     : 0,
                 PaymentMode = x.PaymentMode,
+                EInvoiceStatus = _db.EInvoices
+                    .Where(e => e.SourceType == EInvoiceSource.Invoice && e.SourceId == x.InvoiceId)
+                    .Select(e => (EInvoiceStatus?)e.Status)
+                    .FirstOrDefault(),
             })
             .ToListAsync(ct);
 
@@ -1832,7 +1850,14 @@ public sealed class InvoiceService : IInvoiceService
         await _storage.SaveAsync(objectKey, new MemoryStream(pdfBytes), "application/pdf", FileWriteMode.Replace, ct);
 
         await _db.SaveChangesAsync(ct);
-        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+
+        // A B2B, export or SEZ invoice on an e-invoicing branch gets a Pending
+        // e-invoice in this transaction and one registration attempt after it
+        // commits (TK-92). The posting answers 200 whatever the IRP says.
+        Sales.Entity.Models.EInvoiceStateView? eInvoice = await _eInvoicing.OnPostedAsync(
+            EInvoiceSource.Invoice, invoice.InvoiceId, invoice, ct);
+
+        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId, EInvoice: eInvoice);
     }
 
     /// <summary>
@@ -1902,6 +1927,14 @@ public sealed class InvoiceService : IInvoiceService
                 : new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // The IRN is cancelled first, before anything else changes: if the IRP
+        // refuses, or the 24 hours have passed, the void is refused and nothing
+        // moves (TK-92, design decision 5).
+        if (await _eInvoicing.BeforeVoidAsync(
+                EInvoiceSource.Invoice, invoice.InvoiceId, request.Reason, request.CancelReason, ct) is string refusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.EInvoiceRefused, invoice.InvoiceId, refusal);
+        }
 
         invoice.Status = DocumentStatus.Void;
         invoice.VoidedAt = _clock.GetUtcNow();

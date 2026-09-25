@@ -62,6 +62,49 @@ export interface InvoiceLineRequest extends ApiDocumentLine {
 
 export interface VoidInvoiceRequest {
   reason: string;
+  /** The IRP's reason code when the void cancels an IRN (TK-92); Other when not given. */
+  cancelReason?: EInvoiceCancelReason;
+}
+
+// ---- E-invoicing (TK-92) ----
+
+export type EInvoiceStatus = 'Pending' | 'Registered' | 'Failed' | 'Cancelled';
+
+export type EInvoiceCancelReason = 'Duplicate' | 'DataEntryMistake' | 'OrderCancelled' | 'Other';
+
+/** A document's registration at the IRP. */
+export interface EInvoiceState {
+  eInvoiceId: number;
+  status: EInvoiceStatus;
+  irn?: string | null;
+  ackNo?: string | null;
+  ackDate?: string | null;
+  attempts: number;
+  /** What went wrong, for the operator; null when nothing did. */
+  message?: string | null;
+  /** When the next automatic attempt is due, while still pending. */
+  nextAttemptAt?: string | null;
+}
+
+/** The words a status is shown in. */
+export const E_INVOICE_STATUS_LABELS: Record<EInvoiceStatus, string> = {
+  Pending: 'IRN pending',
+  Registered: 'IRN issued',
+  Failed: 'IRN refused',
+  Cancelled: 'IRN cancelled',
+};
+
+/** Refused, or not yet registered: not yet a valid tax invoice, so somebody should look. */
+export function eInvoiceNeedsAttention(status: EInvoiceStatus | null | undefined): boolean {
+  return status === 'Failed' || status === 'Pending';
+}
+
+/** An IRN can be cancelled for 24 hours from its acknowledgement; after that only a credit note corrects it. */
+export function irnCancellable(state: EInvoiceState | null | undefined, now: Date = new Date()): boolean {
+  if (!state || state.status !== 'Registered' || !state.ackDate) {
+    return false;
+  }
+  return now.getTime() - new Date(state.ackDate).getTime() <= 24 * 60 * 60 * 1000;
 }
 
 /** Invoicing a confirmed sales order. The lines come from the order. */
@@ -94,6 +137,9 @@ export interface InvoiceListItem {
   /** Zero unless the invoice is posted and past its due date. */
   daysOverdue: number;
   paymentMode?: string;
+
+  /** Where the invoice stands at the IRP; absent when it needs no IRN (TK-92). */
+  eInvoiceStatus?: EInvoiceStatus | null;
 
   /**
    * What has been received against it, from Accounting's ledger.
@@ -195,6 +241,8 @@ export interface InvoiceListQuery {
   from?: string;
   to?: string;
   overdueOnly?: boolean;
+  /** Only invoices whose IRN was refused or is still pending (TK-92). */
+  eInvoiceAttention?: boolean;
 }
 
 // ---- Service ----
@@ -231,6 +279,9 @@ export class InvoiceService {
     }
     if (query.overdueOnly) {
       params = params.set('overdueOnly', 'true');
+    }
+    if (query.eInvoiceAttention) {
+      params = params.set('eInvoiceAttention', 'true');
     }
 
     return firstValueFrom(this.http.get<InvoiceListPage>(this.apiUrl, { params }));
@@ -295,6 +346,23 @@ export class InvoiceService {
   /** Posts the double entry, issues the stock, and freezes the invoice. */
   async post(invoiceId: number): Promise<void> {
     return firstValueFrom(this.http.post<void>(`${this.apiUrl}/${invoiceId}/post`, {}));
+  }
+
+  /** The invoice's e-invoice, or null when it has none (TK-92). */
+  async eInvoice(invoiceId: number): Promise<EInvoiceState | null> {
+    try {
+      return await firstValueFrom(this.http.get<EInvoiceState>(`${this.apiUrl}/${invoiceId}/e-invoice`));
+    } catch (error: unknown) {
+      if ((error as { status?: number })?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
+  }
+
+  /** Registers the invoice at the IRP again now; needs `sales.einvoice`. */
+  async retryEInvoice(invoiceId: number): Promise<EInvoiceState> {
+    return firstValueFrom(this.http.post<EInvoiceState>(`${this.apiUrl}/${invoiceId}/e-invoice/retry`, {}));
   }
 
   async voidInvoice(invoiceId: number, request: VoidInvoiceRequest): Promise<void> {

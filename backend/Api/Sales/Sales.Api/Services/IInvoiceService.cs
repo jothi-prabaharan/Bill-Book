@@ -38,6 +38,7 @@ public interface IInvoiceService
         DateOnly? from,
         DateOnly? to,
         bool overdueOnly,
+        bool eInvoiceAttentionOnly,
         CancellationToken ct);
     Task<List<InvoiceListItem>> ListAsync(CancellationToken ct);
     Task<InvoiceResult> PostAsync(long invoiceId, CancellationToken ct);

@@ -56,6 +56,10 @@ public static class ReliabilityRegistration
         }
 
         services.AddScoped<TransactionFilter>();
+
+        // Work to run once the request's transaction has committed (TK-92).
+        services.TryAddScoped<AfterCommitQueue>();
+        services.TryAddScoped<IAfterCommit>(sp => sp.GetRequiredService<AfterCommitQueue>());
         services.Configure<MvcOptions>(options =>
             options.Filters.Add<TransactionFilter>());
 

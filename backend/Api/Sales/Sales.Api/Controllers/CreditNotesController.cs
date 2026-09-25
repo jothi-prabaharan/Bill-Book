@@ -83,8 +83,31 @@ public sealed class CreditNotesController : ControllerBase
     [PermissionAction("void")]
     public async Task<IActionResult> Void(long id, [FromBody] VoidCreditNoteRequest request, CancellationToken ct)
     {
-        CreditNoteResult result = await _service.VoidAsync(id, request.Reason, ct);
+        CreditNoteResult result = await _service.VoidAsync(id, request.Reason, ct, request.CancelReason);
         return result.Outcome == CreditNoteOutcome.Ok ? Ok(result) : Respond(result);
+    }
+
+    /// <summary>The credit note's registration at the IRP (TK-92). Not found when it has none.</summary>
+    [HttpGet("{id:long}/e-invoice")]
+    [PermissionAction("view")]
+    public async Task<IActionResult> EInvoice(
+        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+    {
+        EInvoiceStateView? state = await actions.GetAsync(Sales.Entity.Enums.EInvoiceSource.CreditNote, id, ct);
+        return state is null ? NotFound() : Ok(state);
+    }
+
+    /// <summary>
+    /// Registers the credit note at the IRP again now (TK-92): after a refusal was
+    /// fixed, or instead of waiting for the retry worker. Needs sales.einvoice.
+    /// </summary>
+    [HttpPost("{id:long}/e-invoice/retry")]
+    [PermissionAction("einvoice")]
+    public async Task<IActionResult> RetryEInvoice(
+        long id, [FromServices] Sales.Api.Services.EInvoicing.EInvoiceActions actions, CancellationToken ct)
+    {
+        EInvoiceStateView? state = await actions.RetryAsync(Sales.Entity.Enums.EInvoiceSource.CreditNote, id, ct);
+        return state is null ? NotFound() : Ok(state);
     }
 
     private IActionResult Respond(CreditNoteResult result) =>
@@ -93,7 +116,7 @@ public sealed class CreditNotesController : ControllerBase
             CreditNoteOutcome.NotFound => NotFound(),
             CreditNoteOutcome.LifecycleRefused or CreditNoteOutcome.OverReturned
                 or CreditNoteOutcome.AllocationRefused or CreditNoteOutcome.StockRefused
-                or CreditNoteOutcome.PostingRefused => Conflict(Message(result)),
+                or CreditNoteOutcome.PostingRefused or CreditNoteOutcome.EInvoiceRefused => Conflict(Message(result)),
             CreditNoteOutcome.RatesUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable, Message(result)),
             _ => UnprocessableEntity(Message(result)),

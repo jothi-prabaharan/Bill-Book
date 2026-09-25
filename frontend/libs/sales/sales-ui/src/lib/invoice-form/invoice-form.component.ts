@@ -14,6 +14,10 @@ import {
   toApiLine,
   toGridLine,
   SalesLookupService,
+  E_INVOICE_STATUS_LABELS,
+  EInvoiceState,
+  eInvoiceNeedsAttention,
+  irnCancellable,
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
@@ -167,6 +171,23 @@ export class InvoiceFormComponent implements OnInit {
 
   protected readonly canVoid = computed(() => this.isEdit() && this.status() !== 'Void');
 
+  /** The invoice's registration at the IRP, when it needs one (TK-92). */
+  protected readonly eInvoice = signal<EInvoiceState | null>(null);
+
+  protected readonly eInvoiceLabel = computed(() => {
+    const state = this.eInvoice();
+    return state ? E_INVOICE_STATUS_LABELS[state.status] : '';
+  });
+
+  /** Refused, or still pending: a person can ask for another attempt now. */
+  protected readonly canRetryEInvoice = computed(() => eInvoiceNeedsAttention(this.eInvoice()?.status));
+
+  /** A registered IRN past its 24 hours: voiding is refused, and only a credit note corrects it. */
+  protected readonly irnLocked = computed(() => {
+    const state = this.eInvoice();
+    return state?.status === 'Registered' && !irnCancellable(state);
+  });
+
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
 
@@ -186,6 +207,10 @@ export class InvoiceFormComponent implements OnInit {
     try {
       const invoice = await this.invoices.get(id);
       this.apply(invoice);
+      // Only a posted or voided invoice can have been registered.
+      this.eInvoice.set(invoice.status === 'Draft' || invoice.status === 'ReadyToPost'
+        ? null
+        : await this.invoices.eInvoice(id));
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
@@ -402,6 +427,32 @@ export class InvoiceFormComponent implements OnInit {
       await this.invoices.voidInvoice(id, { reason: this.voidForm.controls.reason.value.trim() });
       this.voidForm.reset();
       await this.load();
+    } catch (error) {
+      const failure = readApiFailure(error);
+      this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  /** Registers the invoice at the IRP again now (TK-92). */
+  protected async retryEInvoice(): Promise<void> {
+    const id = this.invoiceId();
+    if (id === null) {
+      return;
+    }
+
+    this.saving.set(true);
+    this.messages.set([]);
+
+    try {
+      const state = await this.invoices.retryEInvoice(id);
+      this.eInvoice.set(state);
+      this.messages.set([
+        state.status === 'Registered'
+          ? { tone: 'success', text: 'The IRP issued the IRN. The invoice now prints with it and its QR code.' }
+          : { tone: 'warning', text: state.message ?? 'The IRN has not been issued yet.' },
+      ]);
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
