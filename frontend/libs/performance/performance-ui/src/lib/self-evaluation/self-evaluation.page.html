@@ -1,0 +1,129 @@
+<div class="page-head">
+  <h1>My Performance Appraisals & Self-Evaluation</h1>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="successMessage()" class="alert alert-success" style="margin-bottom: 1rem; color: #16a34a;">
+  {{ successMessage() }}
+</div>
+
+<div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;" *ngIf="myReviews().length > 0">
+  <label>
+    <span>Select Appraisal Cycle: </span>
+    <select [ngModel]="selectedReviewId()" (ngModelChange)="selectReview($event)">
+      <option *ngFor="let r of myReviews()" [value]="r.performanceReviewId">
+        {{ r.cycleName }} (Status: {{ r.reviewStatus }})
+      </option>
+    </select>
+  </label>
+</div>
+
+<div *ngIf="myReviews().length === 0 && !loading()" style="padding: 24px; text-align: center; color: #64748b;">
+  No active appraisal reviews assigned to you.
+</div>
+
+<!-- If review is released: show outcome & acknowledgement option -->
+<div *ngIf="currentReview()?.reviewStatus === 'Released' || currentReview()?.reviewStatus === 'Acknowledged'" class="sheet" style="background: #f0fdf4; border-color: #86efac;">
+  <h2>Appraisal Outcome: {{ currentReview()?.cycleName }}</h2>
+  <div style="display: flex; gap: 24px; margin: 16px 0;">
+    <div>Final Rating: <strong>{{ currentReview()?.finalRatingLabel || ('Score ' + currentReview()?.finalScore) }}</strong></div>
+    <div *ngIf="currentReview()?.recommendedIncreasePercent">Salary Increment: <strong>{{ currentReview()?.recommendedIncreasePercent }}%</strong></div>
+    <div *ngIf="currentReview()?.isPromotionRecommended">Promotion: <strong>Recommended</strong></div>
+  </div>
+
+  <div *ngIf="currentReview()?.reviewStatus === 'Released'">
+    <label>
+      <span>Employee Acknowledgement Comment (Optional):</span>
+      <textarea [(ngModel)]="ackComment" rows="2" style="width: 100%;" placeholder="Acknowledge outcome or record feedback..."></textarea>
+    </label>
+    <div style="margin-top: 8px;">
+      <button class="btn btn-primary" (click)="acknowledge()">Acknowledge Appraisal</button>
+    </div>
+  </div>
+  <div *ngIf="currentReview()?.reviewStatus === 'Acknowledged'" style="color: #16a34a; font-weight: 600;">
+    ✓ Acknowledged on {{ currentReview()?.acknowledgedAt | date:'medium' }}
+    <p *ngIf="currentReview()?.employeeAcknowledgementComment"><em>"{{ currentReview()?.employeeAcknowledgementComment }}"</em></p>
+  </div>
+</div>
+
+<!-- Self-Evaluation Form -->
+<div *ngIf="currentReview()" class="sheet">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Self-Evaluation ({{ currentReview()?.cycleName }})</h2>
+    <span class="badge" [ngClass]="'badge-' + currentReview()?.reviewStatus?.toLowerCase()">{{ currentReview()?.reviewStatus }}</span>
+  </div>
+
+  <div *ngIf="isLocked()" style="padding: 8px 12px; background: #fef3c7; color: #92400e; border-radius: 4px; margin: 12px 0;">
+    🔒 Your self-evaluation is submitted and locked. Approvers can view your submission but cannot alter your words.
+  </div>
+
+  <div class="fields">
+    <label style="grid-column: 1 / -1;">
+      <span>What did you achieve this period? (Required) *</span>
+      <textarea [(ngModel)]="form().achievements" [disabled]="isLocked()" rows="4" style="width: 100%;" placeholder="Describe key achievements, projects delivered, and quantifiable impact..."></textarea>
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>What challenges did you face and how did you overcome them?</span>
+      <textarea [(ngModel)]="form().challenges" [disabled]="isLocked()" rows="3" style="width: 100%;"></textarea>
+    </label>
+    <label>
+      <span>Key Strengths</span>
+      <textarea [(ngModel)]="form().strengths" [disabled]="isLocked()" rows="2" style="width: 100%;"></textarea>
+    </label>
+    <label>
+      <span>Areas to Improve</span>
+      <textarea [(ngModel)]="form().areasToImprove" [disabled]="isLocked()" rows="2" style="width: 100%;"></textarea>
+    </label>
+    <label>
+      <span>Training Needs</span>
+      <textarea [(ngModel)]="form().trainingNeeds" [disabled]="isLocked()" rows="2" style="width: 100%;" placeholder="Skills, certifications, or workshops..."></textarea>
+    </label>
+    <label>
+      <span>Career Aspirations</span>
+      <textarea [(ngModel)]="form().careerAspirations" [disabled]="isLocked()" rows="2" style="width: 100%;" placeholder="Short-term & long-term career goals..."></textarea>
+    </label>
+  </div>
+
+  <!-- Goals Assessment -->
+  <div *ngIf="selfEval()?.goals?.length" style="margin-top: 24px;">
+    <h3>Goals Self-Assessment</h3>
+    <div *ngFor="let g of selfEval()?.goals" style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+      <div style="display: flex; justify-content: space-between;">
+        <strong>{{ g.goalTitle }}</strong>
+        <span>Weightage: {{ g.weightage }}%</span>
+      </div>
+      <div style="margin-top: 8px; display: flex; gap: 16px;">
+        <label>
+          <span>Achievement %: </span>
+          <input type="number" [(ngModel)]="g.achievementPercent" [disabled]="isLocked()" style="width: 70px;" />
+        </label>
+        <label style="flex: 1;">
+          <span>Self Comments: </span>
+          <input type="text" [(ngModel)]="g.comments" [disabled]="isLocked()" style="width: 100%;" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Competencies Assessment -->
+  <div *ngIf="selfEval()?.competencies?.length" style="margin-top: 24px;">
+    <h3>Competencies Self-Assessment</h3>
+    <div *ngFor="let c of selfEval()?.competencies" style="border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; margin-bottom: 8px;">
+      <div><strong>{{ c.competencyName }}</strong> ({{ c.groupName }})</div>
+      <div style="margin-top: 8px;">
+        <label>
+          <span>Comments: </span>
+          <input type="text" [(ngModel)]="c.comments" [disabled]="isLocked()" style="width: 100%;" />
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <div class="sheet-actions" *ngIf="!isLocked()">
+    <button class="btn btn-outline" (click)="save(false)">Save Draft</button>
+    <button class="btn btn-primary" (click)="save(true)">Submit & Freeze Self-Evaluation</button>
+  </div>
+</div>

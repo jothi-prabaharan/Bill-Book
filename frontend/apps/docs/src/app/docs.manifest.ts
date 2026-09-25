@@ -61,6 +61,7 @@ export const DOCS: DocSection[] = [
       { slug: 'people', title: 'Employees', status: 'partial' },
       { slug: 'payroll', title: 'Payroll', status: 'built' },
       { slug: 'recruitment', title: 'Recruitment', status: 'built' },
+      { slug: 'performance', title: 'Performance', status: 'built' },
     ],
   },
   {

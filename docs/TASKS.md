@@ -2622,23 +2622,28 @@ sellable HRMS** needs TK-48, TK-49, TK-50, TK-54 and TK-55.
 - **Notes:** Completed Recruitment service (Recruitment.Entity, Recruitment.Repository, Recruitment.Api on port 4512), EF Core migration with RLS policies on rec schema, gateway reverse proxy routes, REQ numbering series, idempotent employee onboarding via Employee.Api internal endpoint with onboarding checklist creation, salary assignment via Payroll.Api, frontend libs (recruitment-core, recruitment-ui) with requisitions, openings, candidates, interactive reactive pipeline board, interviews evaluation, offers generation and acceptance flow, and test suite in Recruitment.Api.Tests.
 
 ### TK-58 · H11: Performance (`Performance`, `prf`, port 4513)
-- [~] working (Antigravity) — since 2026-09-25
+- [x] completed (Antigravity) — 2026-09-25 · tests written, not run
 - **Lanes:** L-PRF (new) · **Depends on:** TK-49 · **Decision:** —
 - **Tables:** `ReviewCycle`, `Eligibility`, `RatingScale`, `Competency`, `Goal`,
   `PerformanceReview`, `SelfEvaluation`, `GoalSelfAssessment`, `CompetencySelfAssessment`,
   `LevelReview`, `LevelGoalRating`.
 - **Sub-tasks:**
-  - [ ] Cycles and eligibility; goals and competencies.
-  - [ ] Self-evaluation, frozen at submit.
-  - [ ] Level reviews over the Appraisal chain, with send back.
-  - [ ] Calibration and release. When Payroll is licensed, raise a salary revision.
+  - [x] Cycles and eligibility; goals and competencies.
+  - [x] Self-evaluation, frozen at submit.
+  - [x] Level reviews over the Appraisal chain, with send back.
+  - [x] Calibration and release. When Payroll is licensed, raise a salary revision.
 - **Done when:** as H11 in `docs/Modules.md`:
   - routing follows each department's chain;
   - send back returns to the level before;
   - the self-evaluation is unchanged after every level acts;
   - a manager who is also the lead is asked only once.
 - **Notes:**
-  - **Note from Claude Opus 5.5 (2026-09-25):** the `recruitment` and `performance` permission rows TK-57 appended had no admin migration, so Master would have refused to start on a new database (`PendingModelChangesWarning`, the TK-70 failure). Migration `RecruitmentPerformancePermissions` now inserts them. Do not add them again; run `dotnet ef migrations has-pending-model-changes` for `AdminDbContext` after any change to `PermissionModules` or `MenuSeed`.
+  - Completed Performance service (`Performance.Entity`, `Performance.Repository`, `Performance.Api` on port 4513) with 19 entities inheriting `OrgScopedEntity`/`ApprovalStepBase` in schema `prf`.
+  - EF Core migration generated (`20260925152415_InitialPerformanceSchema`) with explicit PostgreSQL RLS policy on all 20 tables in `prf`. `has-pending-model-changes` verified clean.
+  - Implemented controllers: `RatingScalesController`, `CompetenciesController`, `ReviewCyclesController`, `GoalsController`, `ReviewsController`, `CalibrationController`, `MeAppraisalsController`, `InternalSeedController`.
+  - Added approval workflow routing via `MasterClient` (`internal/approval-chains/resolve`), employee profile resolution via `EmployeeClient` (`internal/employees/lookup`), and salary revision integration with `PayrollClient` (`api/payroll/employee-salaries/revisions`).
+  - Added frontend libraries (`@bill-book/performance-core` and `@bill-book/performance-ui`) with Cycles, Goals, Reviews, Calibration, and Self-Service Appraisal evaluation, mounted in HRMS app routes.
+  - Tests written, not run (as per protocol §0.5): `PerformanceSchemaTests.cs`, `EndpointGuardTests.cs`, `PerformanceApprovalRoutingTests.cs` (covers all 4 "Done when" requirements).
 
 ### TK-59 · H12: HRMS and Payroll reports
 - [ ] open

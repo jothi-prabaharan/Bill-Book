@@ -1,0 +1,162 @@
+<div class="page-head">
+  <h1>Performance Reviews & Approvals</h1>
+  <div style="display: flex; gap: 8px;">
+    <button class="btn btn-outline" (click)="releaseDepartment()">Release Eligible Reviews</button>
+  </div>
+</div>
+
+<div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+  <div>
+    <label>
+      <span>Cycle: </span>
+      <select [(ngModel)]="selectedCycleId" (change)="loadReviews()">
+        <option [ngValue]="undefined">All Cycles</option>
+        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
+  {{ errorMessage() }}
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Cycle</th>
+        <th>Status</th>
+        <th>Current Step</th>
+        <th>Final Score</th>
+        <th>Recommended Increment</th>
+        <th>Promotion</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of reviews()">
+        <td>
+          <strong>{{ r.employeeName }}</strong><br />
+          <small style="color: #64748b;">{{ r.employeeCode }}</small>
+        </td>
+        <td>{{ r.cycleName }}</td>
+        <td>
+          <span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span>
+        </td>
+        <td>{{ r.currentStepLabel || '—' }}</td>
+        <td>{{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}</td>
+        <td>{{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}</td>
+        <td>{{ r.isPromotionRecommended ? 'Yes' : 'No' }}</td>
+        <td>
+          <button class="btn btn-sm" (click)="openReview(r)">View / Act</button>
+        </td>
+      </tr>
+      <tr *ngIf="reviews().length === 0 && !loading()">
+        <td colspan="8" style="text-align: center; color: #64748b; padding: 24px;">No reviews found for this filter.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Review Detail Sheet -->
+<div *ngIf="activeReview()" class="sheet" style="border-top: 4px solid var(--color-primary, #0284c7);">
+  <div style="display: flex; justify-content: space-between; align-items: center;">
+    <h2>Review: {{ activeReview()?.employeeName }} ({{ activeReview()?.cycleName }})</h2>
+    <button class="btn btn-sm" (click)="closeDetail()">Close</button>
+  </div>
+
+  <div style="margin: 12px 0; display: flex; gap: 16px;">
+    <span>Status: <strong class="badge" [ngClass]="'badge-' + activeReview()?.reviewStatus?.toLowerCase()">{{ activeReview()?.reviewStatus }}</strong></span>
+    <span>Current Step: <strong>{{ activeReview()?.currentStepLabel || 'Completed' }}</strong></span>
+  </div>
+
+  <!-- Employee Self-Evaluation (Immutable, preserved whole) -->
+  <div style="background: #f8fafc; padding: 16px; border-radius: 6px; margin: 16px 0; border: 1px solid #e2e8f0;">
+    <h3 style="margin-top: 0; color: #1e293b;">Employee Self-Evaluation</h3>
+    <div *ngIf="activeSelfEval(); else noSelfEval">
+      <p><strong>Achievements:</strong> {{ activeSelfEval()?.achievements }}</p>
+      <p *ngIf="activeSelfEval()?.challenges"><strong>Challenges:</strong> {{ activeSelfEval()?.challenges }}</p>
+      <p *ngIf="activeSelfEval()?.strengths"><strong>Strengths:</strong> {{ activeSelfEval()?.strengths }}</p>
+      <p *ngIf="activeSelfEval()?.areasToImprove"><strong>Areas to Improve:</strong> {{ activeSelfEval()?.areasToImprove }}</p>
+      <p *ngIf="activeSelfEval()?.trainingNeeds"><strong>Training Needs:</strong> {{ activeSelfEval()?.trainingNeeds }}</p>
+      <p *ngIf="activeSelfEval()?.careerAspirations"><strong>Career Aspirations:</strong> {{ activeSelfEval()?.careerAspirations }}</p>
+
+      <div *ngIf="activeSelfEval()?.goals?.length" style="margin-top: 12px;">
+        <strong>Goal Self-Ratings:</strong>
+        <ul>
+          <li *ngFor="let g of activeSelfEval()?.goals">
+            {{ g.goalTitle }}: <strong>{{ g.selfRatingLabel || 'Not Rated' }}</strong> (Achievement: {{ g.achievementPercent || 0 }}%)
+            <span *ngIf="g.comments"> - <em>"{{ g.comments }}"</em></span>
+          </li>
+        </ul>
+      </div>
+
+      <div *ngIf="activeSelfEval()?.competencies?.length" style="margin-top: 12px;">
+        <strong>Competency Self-Ratings:</strong>
+        <ul>
+          <li *ngFor="let c of activeSelfEval()?.competencies">
+            {{ c.competencyName }} ({{ c.groupName }}): <strong>{{ c.selfRatingLabel || 'Not Rated' }}</strong>
+            <span *ngIf="c.comments"> - <em>"{{ c.comments }}"</em></span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <ng-template #noSelfEval>
+      <p style="color: #64748b;">No self-evaluation submitted yet.</p>
+    </ng-template>
+  </div>
+
+  <!-- Level Reviews History -->
+  <div *ngIf="activeLevels().length > 0" style="margin: 16px 0;">
+    <h3>Approval Level Reviews History</h3>
+    <div *ngFor="let lvl of activeLevels()" style="border-left: 3px solid #0284c7; padding-left: 12px; margin-bottom: 12px;">
+      <div><strong>Step {{ lvl.sequence }}: {{ lvl.label }}</strong> — <span class="badge" [ngClass]="'badge-' + lvl.decision.toLowerCase()">{{ lvl.decision }}</span></div>
+      <div>Reviewer: {{ lvl.reviewerName || 'Employee #' + lvl.reviewerEmployeeId }} on {{ lvl.actedAt | date:'medium' }}</div>
+      <div *ngIf="lvl.increasePercent">Recommended Increment: <strong>{{ lvl.increasePercent }}%</strong></div>
+      <div *ngIf="lvl.isPromotionRecommended">Promotion Recommended: <strong>Yes</strong></div>
+      <div>Comments: <em>"{{ lvl.comments }}"</em></div>
+    </div>
+  </div>
+
+  <!-- Act on Step Button -->
+  <div style="margin-top: 16px;" *ngIf="activeReview()?.reviewStatus === 'InApproval'">
+    <button class="btn btn-primary" (click)="openActModal()">Act on Current Step ({{ activeReview()?.currentStepLabel }})</button>
+  </div>
+</div>
+
+<!-- Action Modal / Sheet -->
+<div *ngIf="showActionModal()" class="sheet" style="background: #fff; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);">
+  <h2>Level Review Decision</h2>
+  <div class="fields">
+    <label>
+      <span>Decision</span>
+      <select [(ngModel)]="actionForm().decision" style="width: 100%;">
+        <option value="Approved">Approve & Advance</option>
+        <option value="SentBack">Send Back (Returns to level before / employee)</option>
+        <option value="Rejected">Reject</option>
+      </select>
+    </label>
+    <label>
+      <span>Rating Level (1-5)</span>
+      <input type="number" [(ngModel)]="actionForm().ratingLevelId" placeholder="Scale Level Id" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Recommended Increase (%)</span>
+      <input type="number" [(ngModel)]="actionForm().increasePercent" placeholder="e.g. 10" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Recommend Promotion?</span>
+      <input type="checkbox" [(ngModel)]="actionForm().isPromotionRecommended" style="margin-top: 8px;" />
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Comments (Required)</span>
+      <textarea [(ngModel)]="actionForm().comments" rows="3" placeholder="State reasons and appraisal feedback" style="width: 100%;"></textarea>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" (click)="showActionModal.set(false)">Cancel</button>
+    <button class="btn btn-primary" (click)="submitLevelAction()">Submit Action</button>
+  </div>
+</div>

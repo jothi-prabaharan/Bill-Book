@@ -82,6 +82,8 @@
       "@bill-book/claims-ui": ["libs/claims/claims-ui/src/index.ts"],
       "@bill-book/recruitment-core": ["libs/recruitment/recruitment-core/src/index.ts"],
       "@bill-book/recruitment-ui": ["libs/recruitment/recruitment-ui/src/index.ts"],
+      "@bill-book/performance-core": ["libs/performance/performance-core/src/index.ts"],
+      "@bill-book/performance-ui": ["libs/performance/performance-ui/src/index.ts"],
       "@bill-book/theming": ["libs/shared/theming/src/index.ts"],
       "@bill-book/ui-components": ["libs/shared/ui-components/src/index.ts"]
     }

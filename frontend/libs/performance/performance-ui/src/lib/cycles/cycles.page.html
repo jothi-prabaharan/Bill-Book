@@ -1,0 +1,111 @@
+<div class="page-head">
+  <h1>Performance Review Cycles</h1>
+  <div>
+    <button class="btn btn-primary" (click)="openCreate()">New Review Cycle</button>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
+  {{ errorMessage() }}
+</div>
+
+<!-- Create Cycle Modal/Sheet -->
+<div *ngIf="showForm()" class="sheet">
+  <h2>New Review Cycle</h2>
+  <div class="fields">
+    <label>
+      <span>Cycle Name</span>
+      <input type="text" [(ngModel)]="form().name" placeholder="e.g. FY 2026-27 Annual Review" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Period From</span>
+      <input type="date" [(ngModel)]="form().periodFrom" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Period To</span>
+      <input type="date" [(ngModel)]="form().periodTo" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Rating Scale</span>
+      <select [(ngModel)]="form().ratingScaleId" style="width: 100%;">
+        <option *ngFor="let s of ratingScales()" [value]="s.ratingScaleId">{{ s.name }}</option>
+      </select>
+    </label>
+    <label>
+      <span>Goal Weight (%)</span>
+      <input type="number" [(ngModel)]="form().goalWeightPercent" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Competency Weight (%)</span>
+      <input type="number" [(ngModel)]="form().competencyWeightPercent" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Self Evaluation Due Date</span>
+      <input type="date" [(ngModel)]="form().selfEvaluationDueDate" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Review Due Date</span>
+      <input type="date" [(ngModel)]="form().reviewDueDate" style="width: 100%;" />
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" (click)="cancelCreate()">Cancel</button>
+    <button class="btn btn-primary" (click)="saveCycle()">Create Cycle</button>
+  </div>
+</div>
+
+<!-- Enroll Sheet -->
+<div *ngIf="showEnroll()" class="sheet">
+  <h2>Enroll Employees into Cycle</h2>
+  <div class="fields">
+    <label>
+      <span>Joined Before Date</span>
+      <input type="date" [(ngModel)]="enrollForm().joinedBeforeDate" style="width: 100%;" />
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" (click)="showEnroll.set(false)">Cancel</button>
+    <button class="btn btn-primary" (click)="enroll()">Enroll Eligible</button>
+  </div>
+</div>
+
+<!-- Table of Cycles -->
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Cycle Name</th>
+        <th>Period</th>
+        <th>Kind</th>
+        <th>Rating Scale</th>
+        <th>Status</th>
+        <th>Weights (Goal/Comp)</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let c of cycles()">
+        <td><strong>{{ c.name }}</strong></td>
+        <td>{{ c.periodFrom }} to {{ c.periodTo }}</td>
+        <td>{{ c.cycleKind }}</td>
+        <td>{{ c.ratingScaleName }}</td>
+        <td>
+          <span class="badge" [ngClass]="'badge-' + c.cycleStatus.toLowerCase()">{{ c.cycleStatus }}</span>
+        </td>
+        <td>{{ c.goalWeightPercent }}% / {{ c.competencyWeightPercent }}%</td>
+        <td>
+          <div style="display: flex; gap: 6px;">
+            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'Draft'" (click)="setStatus(c.reviewCycleId, 'GoalSetting')">Open Goals</button>
+            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'GoalSetting'" (click)="setStatus(c.reviewCycleId, 'SelfEvaluation')">Open Self-Eval</button>
+            <button class="btn btn-sm" *ngIf="c.cycleStatus === 'SelfEvaluation'" (click)="setStatus(c.reviewCycleId, 'InReview')">Start Reviews</button>
+            <button class="btn btn-sm btn-outline" (click)="openEnroll(c.reviewCycleId)">Enroll</button>
+            <button class="btn btn-sm btn-danger" *ngIf="c.cycleStatus !== 'Closed'" (click)="closeCycle(c.reviewCycleId)">Close Cycle</button>
+          </div>
+        </td>
+      </tr>
+      <tr *ngIf="cycles().length === 0 && !loading()">
+        <td colspan="7" style="text-align: center; color: #64748b; padding: 24px;">No review cycles found. Click 'New Review Cycle' to create one.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

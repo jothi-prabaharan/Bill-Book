@@ -1,0 +1,90 @@
+<div class="page-head">
+  <h1>Goals & Objectives</h1>
+  <div>
+    <button class="btn btn-primary" (click)="openCreate()">Add Goal</button>
+  </div>
+</div>
+
+<div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+  <div>
+    <label>
+      <span>Cycle: </span>
+      <select [(ngModel)]="selectedCycleId" (change)="loadGoals()">
+        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
+      </select>
+    </label>
+  </div>
+  <div>
+    <label>
+      <span>Employee ID: </span>
+      <input type="number" [(ngModel)]="employeeId" (change)="loadGoals()" style="width: 80px;" />
+    </label>
+  </div>
+  <div style="margin-left: auto; font-weight: 600;">
+    Total Weightage: <span [style.color]="totalWeightage() === 100 ? '#16a34a' : '#d97706'">{{ totalWeightage() }}% / 100%</span>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
+  {{ errorMessage() }}
+</div>
+
+<div *ngIf="showForm()" class="sheet">
+  <h2>New Performance Goal</h2>
+  <div class="fields">
+    <label style="grid-column: 1 / -1;">
+      <span>Title</span>
+      <input type="text" [(ngModel)]="form().title" placeholder="Key objective or deliverable" style="width: 100%;" />
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Description</span>
+      <textarea [(ngModel)]="form().description" rows="3" style="width: 100%;"></textarea>
+    </label>
+    <label>
+      <span>Weightage (%)</span>
+      <input type="number" [(ngModel)]="form().weightage" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Measure / Metric</span>
+      <input type="text" [(ngModel)]="form().measure" placeholder="e.g. 99.9% uptime" style="width: 100%;" />
+    </label>
+    <label>
+      <span>Target</span>
+      <input type="text" [(ngModel)]="form().target" placeholder="Target date or value" style="width: 100%;" />
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" (click)="showForm.set(false)">Cancel</button>
+    <button class="btn btn-primary" (click)="saveGoal()">Save Goal</button>
+  </div>
+</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Title</th>
+        <th>Description</th>
+        <th>Weightage</th>
+        <th>Measure</th>
+        <th>Target</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let g of goals()">
+        <td><strong>{{ g.title }}</strong></td>
+        <td>{{ g.description || '—' }}</td>
+        <td>{{ g.weightage }}%</td>
+        <td>{{ g.measure || '—' }}</td>
+        <td>{{ g.target || '—' }}</td>
+        <td>
+          <span class="badge" [ngClass]="'badge-' + g.goalStatus.toLowerCase()">{{ g.goalStatus }}</span>
+        </td>
+      </tr>
+      <tr *ngIf="goals().length === 0 && !loading()">
+        <td colspan="6" style="text-align: center; color: #64748b; padding: 24px;">No goals defined for this employee in this cycle.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,81 @@
+<div class="page-head">
+  <h1>Rating Calibration & Bell-Curve</h1>
+</div>
+
+<div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+  <div>
+    <label>
+      <span>Cycle: </span>
+      <select [(ngModel)]="selectedCycleId" (change)="loadCalibration()">
+        <option *ngFor="let c of cycles()" [value]="c.reviewCycleId">{{ c.name }}</option>
+      </select>
+    </label>
+  </div>
+</div>
+
+<div *ngIf="errorMessage()" class="alert alert-danger" style="margin-bottom: 1rem; color: #dc2626;">
+  {{ errorMessage() }}
+</div>
+
+<div class="card-grid">
+  <div *ngFor="let d of calibrations()" class="perf-card">
+    <h3>{{ d.departmentName }} (Total: {{ d.totalReviews }})</h3>
+    <div *ngFor="let b of d.buckets" style="margin-bottom: 6px;">
+      <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+        <span>{{ b.label }}</span>
+        <span>{{ b.count }} ({{ b.percentage }}%)</span>
+      </div>
+      <div style="background: #e2e8f0; height: 10px; border-radius: 4px; overflow: hidden; margin-top: 2px;">
+        <div [style.width.%]="b.percentage" style="background: #0284c7; height: 100%;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Table of Department Reviews for Calibration -->
+<h2 style="margin-top: 2rem;">Reviews in this Cycle</h2>
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>Employee</th>
+        <th>Status</th>
+        <th>Final Score</th>
+        <th>Final Rating</th>
+        <th>Recommended Increment</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let r of reviews()">
+        <td><strong>{{ r.employeeName }}</strong> ({{ r.employeeCode }})</td>
+        <td><span class="badge" [ngClass]="'badge-' + r.reviewStatus.toLowerCase()">{{ r.reviewStatus }}</span></td>
+        <td>{{ r.finalScore ? (r.finalScore + ' / 5') : '—' }}</td>
+        <td><strong>{{ r.finalRatingLabel || ('Level ' + r.finalRatingLevelId) || '—' }}</strong></td>
+        <td>{{ r.recommendedIncreasePercent ? (r.recommendedIncreasePercent + '%') : '—' }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline" (click)="openAdjust(r.performanceReviewId)">Calibrate / Adjust</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Adjust Modal -->
+<div *ngIf="showAdjustModal()" class="sheet">
+  <h2>Calibration Rating Adjustment</h2>
+  <div class="fields">
+    <label>
+      <span>New Rating Level</span>
+      <input type="number" [(ngModel)]="adjustForm().toRatingLevelId" placeholder="1 to 5" style="width: 100%;" />
+    </label>
+    <label style="grid-column: 1 / -1;">
+      <span>Reason for Calibration Adjustment</span>
+      <textarea [(ngModel)]="adjustForm().reason" rows="3" placeholder="Provide committee calibration rationale" style="width: 100%;"></textarea>
+    </label>
+  </div>
+  <div class="sheet-actions">
+    <button class="btn" (click)="showAdjustModal.set(false)">Cancel</button>
+    <button class="btn btn-primary" (click)="submitAdjust()">Save Adjustment</button>
+  </div>
+</div>

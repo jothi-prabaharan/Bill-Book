@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "performance-core",
+  "projectType": "library",
+  "sourceRoot": "libs/performance/performance-core/src",
+  "tags": [
+    "scope:performance",
+    "type:core"
+  ],
+  "targets": {}
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "name": "performance-ui",
+  "projectType": "library",
+  "sourceRoot": "libs/performance/performance-ui/src",
+  "tags": [
+    "scope:performance",
+    "type:ui"
+  ],
+  "targets": {}
+}
