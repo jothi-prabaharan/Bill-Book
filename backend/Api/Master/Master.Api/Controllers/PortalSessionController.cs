@@ -1,6 +1,8 @@
 using System.ComponentModel.DataAnnotations;
 using Master.Api.Services;
 using Master.Entity.Models;
+using Master.Repository;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -51,9 +53,19 @@ public sealed class PortalSessionController : ControllerBase
         _tenant.CustomerId = customerId;
         _tenant.OrgId = orgId;
 
+        // The customer's code goes in the token, as on a staff token: stored
+        // files are foldered by it, and the portal reads the invoice's PDF (TK-95).
+        string? customerCode = await _services.GetRequiredService<AdminDbContext>().Customers
+            .AsNoTracking()
+            .Where(c => c.CustomerId == customerId)
+            .Select(c => c.CustomerCode)
+            .FirstOrDefaultAsync(ct);
+
+        _tenant.CustomerCode = customerCode;
+
         PortalSessionToken? session = await _services
             .GetRequiredService<PortalAccessService>()
-            .ExchangeAsync(request.Code!, ct);
+            .ExchangeAsync(request.Code!, ct, customerCode);
 
         if (session is null)
         {

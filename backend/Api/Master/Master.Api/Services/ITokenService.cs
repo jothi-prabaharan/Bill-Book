@@ -24,8 +24,13 @@ public interface ITokenService
     /// refuse it, and carries <c>portal_grant</c> so every service can tell it
     /// from the 30-day links that came before.
     /// </summary>
+    /// <remarks>
+    /// <paramref name="customerCode"/> goes in as <c>customer_code</c>, as on a
+    /// staff token, because a stored file is keyed by it: the portal's invoice
+    /// PDF is read from the same archive folder staff read (TK-95).
+    /// </remarks>
     (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp);
+        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp, string? customerCode = null);
 }
 
 public sealed class AccessTokenRequest

@@ -1,39 +1,56 @@
-<main class="statement-container">
-  <header class="statement-header">
-    <h1>Account Ledger</h1>
-    <p>Your detailed transaction history</p>
-  </header>
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/invoices">Invoices</a>
+  </nav>
 
-  <div class="bb-card">
-    <div class="statement-info" *ngIf="statement() as data">
-      <div class="info-row">
-        <span>Opening Balance:</span>
-        <strong>{{ data.openingBalance | number:'1.2-2' }}</strong>
-      </div>
-    </div>
+  <h1>Statement</h1>
 
-    <bb-data-grid
-      [data]="transactions()"
-      [columns]="columns"
-      gridCode="portal-statement"
-      [pageSize]="25"
-      [totalCount]="transactions().length"
-    >
-      <ng-template bbCellTemplate="actions" let-row="row">
-        <button 
-          *ngIf="canDownload(row)"
-          class="bb-btn bb-btn-secondary" 
-          (click)="downloadDocument(row)">
-          Download
-        </button>
-      </ng-template>
-    </bb-data-grid>
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
 
-    <div class="statement-info footer-info" *ngIf="statement() as data">
-      <div class="info-row">
-        <span>Closing Balance:</span>
-        <strong>{{ data.closingBalance | number:'1.2-2' }}</strong>
-      </div>
-    </div>
-  </div>
+  @if (statement(); as s) {
+    <ng-template #side let-side let-title="title" let-balanceLabel="balanceLabel">
+      <section>
+        <h2>{{ title }}</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Document</th>
+              <th class="num">Debit</th>
+              <th class="num">Credit</th>
+              <th class="num">{{ balanceLabel }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (t of side.transactions; track $index) {
+              <tr>
+                <td data-label="Date">{{ t.ledgerDate | date: 'mediumDate' }}</td>
+                <td data-label="Document">
+                  @if (invoiceLink(t); as id) {
+                    <a class="link" [routerLink]="['/invoices', id]">{{ t.documentNo }}</a>
+                  } @else {
+                    {{ t.documentNo }}
+                  }
+                </td>
+                <td class="num" data-label="Debit">{{ t.debit ? (t.debit | number: '1.2-2') : '' }}</td>
+                <td class="num" data-label="Credit">{{ t.credit ? (t.credit | number: '1.2-2') : '' }}</td>
+                <td class="num" [attr.data-label]="balanceLabel">{{ t.balance | number: '1.2-2' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="5" class="muted">No transactions.</td></tr>
+            }
+          </tbody>
+        </table>
+        <p class="row"><strong>{{ balanceLabel }}</strong><strong>{{ side.closingBalance | number: '1.2-2' }}</strong></p>
+      </section>
+    </ng-template>
+
+    <ng-container *ngTemplateOutlet="side; context: { $implicit: s.receivable, title: 'What you owe', balanceLabel: 'Balance owed' }" />
+    @if (s.payable; as payable) {
+      <ng-container *ngTemplateOutlet="side; context: { $implicit: payable, title: 'What we owe you', balanceLabel: 'Balance due to you' }" />
+    }
+  }
 </main>

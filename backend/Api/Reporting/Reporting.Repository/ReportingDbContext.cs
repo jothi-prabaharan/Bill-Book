@@ -83,6 +83,7 @@ public class ReportingDbContext : TenantDbContext
     public DbSet<ContactLicenceRead> ContactLicences => Set<ContactLicenceRead>();
 
     public DbSet<InvoiceRead> Invoices => Set<InvoiceRead>();
+    public DbSet<CreditNoteRead> CreditNotes => Set<CreditNoteRead>();
     public DbSet<BillRead> Bills => Set<BillRead>();
     public DbSet<InvoiceDetailTaxRead> InvoiceDetailTaxes => Set<InvoiceDetailTaxRead>();
 
@@ -267,6 +268,7 @@ public class ReportingDbContext : TenantDbContext
         MapRead<SalesRegisterRead>(modelBuilder, "SalesRegisters", "sal", e => e.SalesRegisterId);
 
         MapRead<InvoiceRead>(modelBuilder, "Invoices", "sal", e => e.InvoiceId);
+        MapRead<CreditNoteRead>(modelBuilder, "CreditNotes", "sal", e => e.CreditNoteId);
         MapRead<BillRead>(modelBuilder, "Bills", "pur", e => e.BillId);
         MapRead<InvoiceDetailTaxRead>(modelBuilder, "InvoiceDetailTaxes", "sal", e => e.InvoiceDetailTaxId);
         MapRead<SalesOrderRead>(modelBuilder, "SalesOrders", "sal", e => e.SalesOrderId);
@@ -297,6 +299,19 @@ public class ReportingDbContext : TenantDbContext
 
         modelBuilder.Entity<FixedAssetRead>()
             .Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
+
+        // A sales or purchase document's status is stored as its name
+        // (DocumentModelConfiguration), so the read has to convert it too. Read
+        // as the enum's integer, every report touching one of these statuses
+        // failed on the first row (found by TK-95).
+        modelBuilder.Entity<InvoiceRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<CreditNoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<QuoteRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<SalesOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<DeliveryChallanRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<BillRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<PurchaseOrderRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+        modelBuilder.Entity<GoodsReceiptRead>().Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
         modelBuilder.Entity<DepreciationScheduleRead>()
             .Property(e => e.ScheduleType).HasConversion<string>().HasMaxLength(20);
         modelBuilder.Entity<DepreciationScheduleRead>()

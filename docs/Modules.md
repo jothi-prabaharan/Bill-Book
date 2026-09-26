@@ -3305,6 +3305,13 @@ quotes**; **raise and follow support tickets**.
 
 Every page works at 360px: lists become cards, the pay screen is one column.
 
+**Built (TK-95, 26 September 2026):**
+- The dashboard, invoices, invoice PDF and the two-sided statement.
+- Outstanding counts the contact's receivable sub-accounts (the Asset-type ones).
+- Overdue is capped at outstanding.
+- Trade value uses `TotalAmountBase`.
+- The statement returns `{ receivable, payable? }`.
+
 ## Online payment (Accounting)
 
 **`acc.OnlinePayments`** (tenant-scoped, RLS)

@@ -47,11 +47,17 @@ export const DOCS: DocSection[] = [
     pages: [
       { slug: 'quotes', title: 'Quotes', status: 'built' },
       { slug: 'sales-orders', title: 'Sales orders', status: 'built' },
-      // Partial: a sale challan's clearing-account posting is not built.
+      // Partial: the order is chosen by number, and returns make no e-way bill.
       { slug: 'delivery-challans', title: 'Delivery challans', status: 'partial' },
       { slug: 'invoices', title: 'Invoices', status: 'built' },
       { slug: 'credit-notes', title: 'Credit notes', status: 'built' },
     ],
+  },
+  {
+    title: 'Customer portal',
+    // Partial: online payment, quote answers and tickets are still to come
+    // (TK-96 to TK-98).
+    pages: [{ slug: 'portal', title: 'Customer portal', status: 'partial' }],
   },
   {
     title: 'People',

@@ -1,0 +1,37 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/statement">Statement</a>
+  </nav>
+
+  <h1>Invoices</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (!loading() && invoices().length === 0 && !error()) {
+    <p class="muted">No invoices yet.</p>
+  }
+
+  <div class="cards">
+    @for (i of invoices(); track i.invoiceId) {
+      <a class="card" [routerLink]="['/invoices', i.invoiceId]">
+        <span class="row">
+          <strong>{{ i.documentNo }}</strong>
+          <span [class]="'tone-' + statusTone(i.status)">{{ statusLabel(i.status) }}</span>
+        </span>
+        <span class="row muted">
+          <span>{{ i.documentDate | date: 'mediumDate' }}@if (i.dueDate) { · due {{ i.dueDate | date: 'mediumDate' }} }</span>
+          <span>{{ i.currencyCode }} {{ i.totalAmount | number: '1.2-2' }}</span>
+        </span>
+        @if (i.outstandingAmount !== null && i.status !== 'Paid' && i.status !== 'Void') {
+          <span>Still owed: {{ i.outstandingAmount | number: '1.2-2' }}</span>
+        }
+      </a>
+    }
+  </div>
+</main>

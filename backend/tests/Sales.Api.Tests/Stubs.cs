@@ -176,10 +176,21 @@ public sealed class RecordingLedger : ILedgerClient
         long contactId, int ledgerTypeId, CancellationToken ct) =>
         Task.FromResult(new List<OutstandingBalanceView>());
 
+    /// <summary>What Accounting says each document has settled, by type code and id. Empty by default.</summary>
+    public Dictionary<(string Code, long Id), Settlement> Settlements { get; } = [];
+
+    /// <summary>Every settlement question asked, in order.</summary>
+    public List<SettlementQueryRequest> SettlementQueries { get; } = [];
+
     public Task<IReadOnlyDictionary<long, Settlement>> GetSettlementsAsync(
-        SettlementQueryRequest request, CancellationToken ct) =>
-        Task.FromResult<IReadOnlyDictionary<long, Settlement>>(
-            new Dictionary<long, Settlement>());
+        SettlementQueryRequest request, CancellationToken ct)
+    {
+        SettlementQueries.Add(request);
+        return Task.FromResult<IReadOnlyDictionary<long, Settlement>>(
+            request.TransactionIds
+                .Where(id => Settlements.ContainsKey((request.TransactionTypeCode, id)))
+                .ToDictionary(id => id, id => Settlements[(request.TransactionTypeCode, id)]));
+    }
 }
 
 /// <summary>The credit check, which says yes unless a test tells it otherwise.</summary>

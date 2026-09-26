@@ -1,40 +1,61 @@
-<main class="dashboard-container">
-  <header class="dashboard-header">
-    <h1>Dashboard</h1>
-    <p>Overview of your account status</p>
-  </header>
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/invoices">Invoices</a>
+    <a class="link" routerLink="/statement">Statement</a>
+  </nav>
 
-  <div class="summary-cards" *ngIf="statement() as data">
-    <div class="bb-card summary-card">
-      <h3>Opening Balance</h3>
-      <p class="amount">{{ data.openingBalance | number:'1.2-2' }}</p>
+  <h1>Your account</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (summary(); as s) {
+    <div class="figures">
+      <div class="figure">
+        <span class="muted">Outstanding</span>
+        <strong>{{ s.outstanding | number: '1.2-2' }}</strong>
+        <span class="muted">after any advance you have paid</span>
+      </div>
+      <div class="figure">
+        <span class="muted">Overdue</span>
+        <strong [class.tone-danger]="s.overdue > 0">{{ s.overdue | number: '1.2-2' }}</strong>
+      </div>
+      <div class="figure">
+        <span class="muted">Traded this year</span>
+        <strong>{{ s.tradeValueThisYear | number: '1.2-2' }}</strong>
+        <span class="muted">since {{ s.financialYearStart | date: 'mediumDate' }}</span>
+      </div>
+      <div class="figure">
+        <span class="muted">Traded in all</span>
+        <strong>{{ s.tradeValueAllTime | number: '1.2-2' }}</strong>
+      </div>
     </div>
-    
-    <div class="bb-card summary-card">
-      <h3>Total Billed</h3>
-      <p class="amount text-error">{{ totalBilled() | number:'1.2-2' }}</p>
-    </div>
 
-    <div class="bb-card summary-card">
-      <h3>Total Paid</h3>
-      <p class="amount text-success">{{ totalPaid() | number:'1.2-2' }}</p>
-    </div>
-
-    <div class="bb-card summary-card highlight">
-      <h3>Outstanding Balance</h3>
-      <p class="amount">{{ data.closingBalance | number:'1.2-2' }}</p>
-    </div>
-  </div>
-
-  <div *ngIf="loading()" class="loading-state">
-    <p>Loading your dashboard...</p>
-  </div>
-  
-  <div *ngIf="error()" class="error-message">
-    {{ error() }}
-  </div>
-
-  <div class="actions">
-    <a routerLink="/statement" class="bb-btn bb-btn-primary">View Detailed Statement</a>
-  </div>
+    <section>
+      <h2>Recent documents</h2>
+      @if (s.recent.length === 0) {
+        <p class="muted">Nothing yet.</p>
+      } @else {
+        <div class="cards">
+          @for (d of s.recent; track d.kind + d.id) {
+            @if (d.kind === 'Invoice') {
+              <a class="card" [routerLink]="['/invoices', d.id]">
+                <span class="row"><strong>{{ d.documentNo }}</strong><span>{{ d.totalAmount | number: '1.2-2' }}</span></span>
+                <span class="muted">Invoice · {{ d.documentDate | date: 'mediumDate' }}</span>
+              </a>
+            } @else {
+              <div class="card">
+                <span class="row"><strong>{{ d.documentNo }}</strong><span>{{ d.totalAmount | number: '1.2-2' }}</span></span>
+                <span class="muted">Credit note · {{ d.documentDate | date: 'mediumDate' }}</span>
+              </div>
+            }
+          }
+        </div>
+      }
+    </section>
+  }
 </main>

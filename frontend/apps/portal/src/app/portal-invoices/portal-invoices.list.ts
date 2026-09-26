@@ -2,27 +2,25 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PortalApi } from '../retail/portal-api.service';
-import { PortalSummary } from '../retail/portal.models';
+import { PortalInvoiceItem, statusLabel, statusTone } from '../retail/portal.models';
 
-/**
- * The customer portal's dashboard (TK-95): what is owed and how much of it is
- * overdue, what has been traded this financial year and in all, and the last
- * few documents.
- */
+/** The contact's invoices (TK-95): posted and voided, newest first, one card each. */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
-  selector: 'bb-portal-dashboard',
+  selector: 'bb-portal-invoices',
   standalone: true,
   imports: [DatePipe, DecimalPipe, RouterLink],
-  templateUrl: './portal-dashboard.page.html',
+  templateUrl: './portal-invoices.list.html',
   styleUrl: '../retail/retail-portal.scss',
 })
-export class PortalDashboardPage implements OnInit {
+export class PortalInvoicesList implements OnInit {
   private readonly api = inject(PortalApi);
 
-  protected readonly summary = signal<PortalSummary | null>(null);
+  protected readonly invoices = signal<PortalInvoiceItem[]>([]);
   protected readonly error = signal<string | null>(null);
   protected readonly loading = signal(true);
+  protected readonly statusLabel = statusLabel;
+  protected readonly statusTone = statusTone;
 
   ngOnInit(): void {
     void this.load();
@@ -30,9 +28,9 @@ export class PortalDashboardPage implements OnInit {
 
   private async load(): Promise<void> {
     try {
-      this.summary.set(await this.api.summary());
+      this.invoices.set(await this.api.invoices());
     } catch {
-      this.error.set('Your account could not be loaded. Try again in a moment.');
+      this.error.set('Your invoices could not be loaded. Try again in a moment.');
     } finally {
       this.loading.set(false);
     }

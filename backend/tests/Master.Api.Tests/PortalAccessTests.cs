@@ -70,7 +70,7 @@ public sealed class PortalAccessTests
         Harness h = await Harness.CreateAsync(_postgres);
         PortalLink link = (await h.Portal.CreateLinkAsync(h.ContactId, App.School, default))!;
 
-        PortalSessionToken session = (await h.Portal.ExchangeAsync(link.Code, default))!;
+        PortalSessionToken session = (await h.Portal.ExchangeAsync(link.Code, default, "0000000042"))!;
 
         JwtSecurityToken token = new JwtSecurityTokenHandler().ReadJwtToken(session.Token);
         PortalGrant grant = await h.Db.PortalGrants.AsNoTracking().SingleAsync();
@@ -79,6 +79,9 @@ public sealed class PortalAccessTests
         Assert.Equal(grant.PortalGrantId.ToString(), token.Claims.Single(c => c.Type == RequirePortalAccessAttribute.GrantClaim).Value);
         Assert.Equal("School", token.Claims.Single(c => c.Type == RequireAppAttribute.ClaimType).Value);
         Assert.DoesNotContain(token.Claims, c => c.Type == "permission");
+
+        // Stored files are foldered by it, so the portal can read the invoice PDF (TK-95).
+        Assert.Equal("0000000042", token.Claims.Single(c => c.Type == "customer_code").Value);
         Assert.Equal(App.School, session.App);
         Assert.Equal(h.Clock.GetUtcNow().AddHours(1), session.ExpiresAt);
         Assert.Equal(h.Clock.GetUtcNow(), grant.LastUsedAt);

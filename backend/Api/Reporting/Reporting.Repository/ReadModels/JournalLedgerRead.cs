@@ -59,6 +59,9 @@ public class JournalLedgerRead : OrgScopedEntity
 
     public string? TransactionDesc { get; set; }
 
+    /// <summary>The number on the document's face, set at post time. Null on rows posted before the column existed.</summary>
+    public string? DocumentNo { get; set; }
+
     public long? JournalId { get; set; }
 }
 

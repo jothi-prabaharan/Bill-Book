@@ -128,7 +128,7 @@ public sealed class JwtTokenService : ITokenService
     public static readonly TimeSpan PortalSessionLifetime = TimeSpan.FromHours(1);
 
     public (string Token, DateTimeOffset ExpiresAt) CreatePortalToken(
-        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp)
+        Guid customerId, Guid orgId, long contactId, long grantId, App app = App.RetailErp, string? customerCode = null)
     {
         var claims = new List<Claim>
         {
@@ -138,6 +138,11 @@ public sealed class JwtTokenService : ITokenService
             new(RequirePortalAccessAttribute.AccessClaim, "true"),
             new(RequirePortalAccessAttribute.GrantClaim, grantId.ToString()),
         };
+
+        if (!string.IsNullOrEmpty(customerCode))
+        {
+            claims.Add(new Claim("customer_code", customerCode));
+        }
 
         // A RetailErp token keeps its old shape, with no app claim, which reads as
         // RetailErp. Any other app is named, so its portal routes accept the token

@@ -1,3 +1,4 @@
+using Shared.Kernel.Numbering;
 using Shared.Kernel.Security;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -80,6 +81,15 @@ builder.Services.AddHttpClient<IBaseCurrencyProvider, HttpBaseCurrencyProvider>(
 // Every report, registered as an IReportSource. The catalog service discovers
 // them from DI, so adding a report is adding a line here and a seed entry —
 // there is no registry to keep in step.
+// The branch's financial year, for the portal's trade value this year (TK-95).
+builder.Services.AddHttpClient<IFinancialYearProvider, HttpFinancialYearProvider>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddScoped<IPortalAccountData, ReportingPortalAccountData>();
+builder.Services.AddScoped<PortalAccountService>();
+
 builder.Services.AddHttpClient<BatchedNameResolver>(client =>
 {
     client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));

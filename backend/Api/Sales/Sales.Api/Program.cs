@@ -87,6 +87,7 @@ builder.Services.AddScoped<SalesSeeder>();
 builder.Services.AddScoped<QuoteService>();
 builder.Services.AddScoped<SalesOrderService>();
 builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<PortalInvoiceService>();
 builder.Services.AddScoped<PosSaleService>();
 builder.Services.AddScoped<OutstandingService>();
 

@@ -1837,18 +1837,36 @@ The build cards each design in section E produced. Each design section in `docs/
     - Existing portal links stop working at deploy; send contacts new ones.
     - Set `Portal:BaseUrl` so the contact screen shows a full link.
 ### TK-95 · Portal: dashboard figures and invoices with PDF
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#84](https://github.com/jothi-prabaharan/Bill-Book/issues/84)
 - **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —
 - **Where:** `PortalStatementsController`; `SalesDocumentArchive.OpenAsync` (TK-22); `apps/portal/src/app/portal-dashboard`.
 - **Sub-tasks:**
-  - [ ] `GET api/portal/summary` (Reporting): outstanding net of advances, overdue, trade value this year and all time.
-  - [ ] `GET api/portal/invoices`, `/{id}`, `/{id}/pdf` (Sales), posted and voided only, filtered by the token's contact.
-  - [ ] Fix the statement: `DocumentNo` instead of `{code}-{id}`; both sides for a contact who is customer and vendor.
-  - [ ] Dashboard and invoice pages in `apps/portal`, at 360px.
-  - [ ] Test: another contact's invoice id is 404; a draft never appears; the summary matches the ledger for a seeded contact.
+  - [x] `GET api/portal/summary` (Reporting): outstanding net of advances, overdue, trade value this year and all time.
+  - [x] `GET api/portal/invoices`, `/{id}`, `/{id}/pdf` (Sales), posted and voided only, filtered by the token's contact.
+  - [x] Fix the statement: `DocumentNo` instead of `{code}-{id}`; both sides for a contact who is customer and vendor.
+  - [x] Dashboard and invoice pages in `apps/portal`, at 360px.
+  - [x] Test: another contact's invoice id is 404; a draft never appears; the summary matches the ledger for a seeded contact.
 - **Done when:** a contact signs in by link and downloads their own invoice PDF, and cannot reach another contact's.
-
+- **As built (2026-09-26):**
+  - **Reporting:** `PortalAccountService` sits over an `IPortalAccountData` seam, so the arithmetic is tested over lists. `GET api/portal/summary`:
+    - Outstanding is the contact's receivable sub-accounts (Asset type) net of advances.
+    - Overdue is each past-due posted invoice's own control-leg balance, capped at the outstanding.
+    - Trade value is posted invoices' `TotalAmountBase` less posted credit notes', for this financial year (branch start month, via `HttpFinancialYearProvider`) and in all.
+    - The last five documents.
+  - **Statement:** `api/portal/statements` now returns `{ receivable, payable? }`, each side with its own running balance (payable as credit less debit). Lines carry `DocumentNo`, with a `{code}-{id}` fallback for old rows.
+  - **Read models:** `DocumentNo` on the ledger, `TotalAmountBase` on invoices, a new `CreditNoteRead`, and a snapshot-only migration `PortalReadModels`.
+  - **Found and fixed:** all eight sales and purchase document read models read `Status` as an integer where the column stores the name, so any report reading one failed on the first row. They now convert.
+  - **Sales:** `PortalInvoiceService` and `api/portal/invoices`, `/{id}` and `/{id}/pdf`. Only invoices with `PostedAt` set, posted or voided, and only the token's contact; anything else is 404. Status is Open, PartPaid, Paid, Overdue or Void, from `internal/ledger/settlements`, asked per type code (INV and POS). The PDF is the TK-22 archive copy.
+  - **Master:** the portal session token now carries `customer_code`, because the archive is foldered by it.
+  - **Gateway:** routes `sales-portal-invoices` and `reporting-portal-summary`.
+  - **Frontend:** `apps/portal` has a dashboard (figures and recent documents), an invoice list, an invoice page with **Download PDF**, and a two-sided statement. All are one column, and tables become labelled cards under 600px. The old statement's download (a staff route) is gone.
+  - **Tests:**
+    - `Reporting.Api.Tests.PortalAccountServiceTests`: outstanding net of advances; other contacts ignored; overdue; overdue capped; trade value by year; recent documents; financial-year start; statement opening and running balance; document number fallback; payable side; customer-only contact.
+    - `Sales.Api.Tests.PortalInvoiceTests`: status rules; the list excludes drafts and other contacts; another contact's or a draft invoice is 404 as invoice and as PDF; own invoice lines and PDF.
+    - `PortalAccessTests`: the `customer_code` claim.
+    - `retail/portal.models.spec.ts`.
+  - **Owner step:** run the Reporting, Sales and Master suites and the portal specs. "The summary matches the ledger for a seeded contact" is covered over lists, not against a database, because Reporting's fixture has no `acc` or `sal` tables.
 ### TK-96 · Portal: accept or reject a quote
 - [ ] open
 - **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —

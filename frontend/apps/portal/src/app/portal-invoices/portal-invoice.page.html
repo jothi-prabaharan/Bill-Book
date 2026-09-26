@@ -1,0 +1,65 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/invoices">All invoices</a>
+    <a class="link" routerLink="/dashboard">Your account</a>
+  </nav>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (detail(); as d) {
+    <div class="row">
+      <h1>{{ d.invoice.documentNo }}</h1>
+      <span [class]="'tone-' + statusTone(d.invoice.status)">{{ statusLabel(d.invoice.status) }}</span>
+    </div>
+    <p class="muted">
+      {{ d.invoice.documentDate | date: 'mediumDate' }}
+      @if (d.invoice.dueDate) { · due {{ d.invoice.dueDate | date: 'mediumDate' }} }
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Item</th>
+          <th class="num">Quantity</th>
+          <th class="num">Rate</th>
+          <th class="num">Tax</th>
+          <th class="num">Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (l of d.lines; track l.lineNumber) {
+          <tr>
+            <td data-label="Item">{{ l.description }}</td>
+            <td class="num" data-label="Quantity">{{ l.quantity | number: '1.0-4' }}</td>
+            <td class="num" data-label="Rate">{{ l.unitPrice | number: '1.2-2' }}</td>
+            <td class="num" data-label="Tax">{{ l.taxAmount | number: '1.2-2' }}</td>
+            <td class="num" data-label="Amount">{{ l.lineTotal | number: '1.2-2' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <section class="cards">
+      <span class="row"><span>Subtotal</span><span>{{ d.subTotal | number: '1.2-2' }}</span></span>
+      @if (d.discountAmount) {
+        <span class="row"><span>Discount</span><span>−{{ d.discountAmount | number: '1.2-2' }}</span></span>
+      }
+      <span class="row"><span>Tax</span><span>{{ d.taxAmount | number: '1.2-2' }}</span></span>
+      @if (d.roundOffAmount) {
+        <span class="row"><span>Rounding</span><span>{{ d.roundOffAmount | number: '1.2-2' }}</span></span>
+      }
+      <span class="row"><strong>Total</strong><strong>{{ d.invoice.currencyCode }} {{ d.invoice.totalAmount | number: '1.2-2' }}</strong></span>
+      @if (d.invoice.outstandingAmount !== null && d.invoice.status !== 'Void') {
+        <span class="row"><span>Still owed</span><span>{{ d.invoice.outstandingAmount | number: '1.2-2' }}</span></span>
+      }
+    </section>
+
+    <section>
+      <button type="button" class="button" (click)="download()" [disabled]="downloading()">
+        {{ downloading() ? 'Downloading…' : 'Download PDF' }}
+      </button>
+    </section>
+  }
+</main>

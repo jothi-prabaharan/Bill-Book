@@ -37,6 +37,16 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./school/school-child.page').then(m => m.SchoolChildPage)
   },
   {
+    path: 'invoices',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-invoices/portal-invoices.list').then(m => m.PortalInvoicesList)
+  },
+  {
+    path: 'invoices/:id',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-invoices/portal-invoice.page').then(m => m.PortalInvoicePage)
+  },
+  {
     path: 'statement',
     canActivate: [portalSessionGuard],
     loadComponent: () => import('./portal-statement-list/portal-statement.list').then(m => m.PortalStatementList)

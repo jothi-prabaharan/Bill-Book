@@ -171,7 +171,7 @@ public sealed class PortalAccessService
     /// four are not told apart, so the answer says nothing about which codes
     /// exist. The tenant must already be the code's (<see cref="TryReadCode"/>).
     /// </summary>
-    public async Task<PortalSessionToken?> ExchangeAsync(string code, CancellationToken ct)
+    public async Task<PortalSessionToken?> ExchangeAsync(string code, CancellationToken ct, string? customerCode = null)
     {
         string hash = HashUtil.Sha256(code);
         DateTimeOffset now = _clock.GetUtcNow();
@@ -192,7 +192,7 @@ public sealed class PortalAccessService
         await scope.CommitAsync(ct);
 
         (string token, DateTimeOffset expires) = _tokens.CreatePortalToken(
-            grant.CustomerId, grant.OrgId, grant.ContactId, grant.PortalGrantId, grant.App);
+            grant.CustomerId, grant.OrgId, grant.ContactId, grant.PortalGrantId, grant.App, customerCode);
 
         // Never past the grant: a session opened in a link's last minutes ends with it.
         return new PortalSessionToken(token, expires < grant.ExpiresAt ? expires : grant.ExpiresAt, grant.App);

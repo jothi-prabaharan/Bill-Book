@@ -1,83 +1,38 @@
-import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
-import { DataGridComponent, DataGridCellTemplateDirective, ColumnDef } from '@bill-book/ui-components';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
+import { DatePipe, DecimalPipe, NgTemplateOutlet } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { PortalApi } from '../retail/portal-api.service';
+import { PortalStatement, invoiceLink } from '../retail/portal.models';
 
-interface StatementTransaction {
-  ledgerDate: string;
-  transactionNo: string;
-  reference: string;
-  description: string;
-  debit: number;
-  credit: number;
-  balance: number;
-}
-
-interface StatementResponse {
-  openingBalance: number;
-  transactions: StatementTransaction[];
-  closingBalance: number;
-}
-
+/**
+ * The contact's statement (TK-95): what they owe, and — for a contact who is
+ * also a vendor — what they are owed, each with its own running balance.
+ * Documents show their own numbers, and an invoice opens in the portal.
+ */
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-portal-statement-list',
   standalone: true,
-  imports: [CommonModule, DataGridComponent, DataGridCellTemplateDirective],
+  imports: [DatePipe, DecimalPipe, NgTemplateOutlet, RouterLink],
   templateUrl: './portal-statement.list.html',
-  styleUrl: './portal-statement.list.scss'
+  styleUrl: '../retail/retail-portal.scss',
 })
 export class PortalStatementList implements OnInit {
-  private readonly http = inject(HttpClient);
+  private readonly api = inject(PortalApi);
 
-  readonly statement = signal<StatementResponse | null>(null);
-  readonly transactions = signal<StatementTransaction[]>([]);
+  protected readonly statement = signal<PortalStatement | null>(null);
+  protected readonly error = signal<string | null>(null);
+  protected readonly invoiceLink = invoiceLink;
 
-  readonly columns: ColumnDef[] = [
-    { field: 'ledgerDate', title: 'Date', dataType: 'date' },
-    { field: 'transactionNo', title: 'Transaction #', dataType: 'string' },
-    { field: 'reference', title: 'Reference', dataType: 'string' },
-    { field: 'debit', title: 'Debit (Billed)', dataType: 'money', align: 'right' },
-    { field: 'credit', title: 'Credit (Paid)', dataType: 'money', align: 'right' },
-    { field: 'balance', title: 'Running Balance', dataType: 'money', align: 'right' },
-    { field: 'actions', title: 'Actions', isTemplate: true }
-  ];
-
-  ngOnInit() {
-    void this.fetchData();
+  ngOnInit(): void {
+    void this.load();
   }
 
-  async fetchData() {
+  private async load(): Promise<void> {
     try {
-      const response = await this.http.get<StatementResponse>('/api/portal/statements').toPromise();
-      if (response) {
-        this.statement.set(response);
-        this.transactions.set(response.transactions);
-      }
-    } catch (err) {
-      console.error('Error fetching statement', err);
+      this.statement.set(await this.api.statement());
+    } catch {
+      this.error.set('Your statement could not be loaded. Try again in a moment.');
     }
-  }
-
-  canDownload(row: StatementTransaction): boolean {
-    return !!(row.transactionNo && row.transactionNo.startsWith('SIN-'));
-  }
-
-  downloadDocument(row: StatementTransaction) {
-    if (!this.canDownload(row)) return;
-    
-    const id = row.transactionNo.split('-')[1];
-    if (!id) return;
-
-    this.http.get(`/api/sales/invoices/${id}/print`, { responseType: 'blob' }).subscribe((blob: Blob) => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Invoice-${id}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    });
   }
 }
