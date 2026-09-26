@@ -2029,7 +2029,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `AccountingApprovalTests` and `ApprovalChainTests`.
 
 ### TK-102 · Approvals: credit notes and the two overrides
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#90](https://github.com/jothi-prabaharan/Bill-Book/issues/90)
 - **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
