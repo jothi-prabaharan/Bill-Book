@@ -2053,14 +2053,27 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `SalesApprovalTests`, the new cases in `StockAdjustmentServiceTests`, `DiscountLimitSettingTests` and `limit-refusal.spec.ts`.
 
 ### TK-103 · Approvals: the inbox and Settings › Approval workflows
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#91](https://github.com/jothi-prabaharan/Bill-Book/issues/91)
 - **Lanes:** L-UI, L-WEB, L-DEPS · **Depends on:** TK-100 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
-  - [ ] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
-  - [ ] Menu rows and routes; docs page and release note.
+  - [x] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
+  - [x] The Approvals inbox, merging every service's `GET api/approvals/mine`, with inline actions, at 360px.
+  - [x] Menu rows and routes; docs page and release note.
 - **Done when:** an approver sees a waiting purchase order in the inbox and approves it there.
+- **As built:**
+  - **Settings page:** `@bill-book/settings-approval-workflows` is mounted from `sharedSettingsRoutes` at `/settings/approval-workflows`, so every app has it. It lists workflows and edits them over Master's existing `api/approval-workflows`, which reads enums as numbers.
+    - Levels reorder by CDK drag or by arrow buttons.
+    - A RetailErp kind offers only role-holder or named-user approvers.
+    - The page is read-only without `settings.edit`.
+  - **Inbox:** `@bill-book/approvals` is at `/approvals` in `apps/web` (signed-in only). It asks every inbox route in parallel: `api/purchase/approvals/mine`, `api/sales/approvals/mine`, `api/journals/…`, `api/spend-money/…` and `api/stock-adjustments/…`. The gateway routes by prefix, so there is no single merged endpoint.
+    - It merges the answers oldest first.
+    - A 403 or 404 source is skipped silently; any other failure is named at the top.
+    - Approve, send back and reject go to each document's own approval route (`actionUrl`), with a comment required for the last two. Cards stack at 360px.
+  - **Menus** (Admin migration `ApprovalMenus`): Settings › Organisation › Approval workflows (1125, every app). A new Approvals rail (14 › 122 › 1126 "Waiting for me", RetailErp), shown to holders of any of `purchase|sales|accounting|banking|inventory.view`.
+  - **Fixed a TK-100 defect:** `DocumentApprovalActionRequest.Action` carries its own `JsonStringEnumConverter`. Purchase, Accounting and Inventory read enums as numbers, so every approve, reject and send-back the panel sent by name had been a 400.
+  - **Known gaps** (named on the docs page): no notification to the approver, escalation days stored but not acted on, and a delegate's inbox does not list their principal's documents.
+  - **Tests:** `approval-workflows.model.spec.ts`, `approvals-inbox.model.spec.ts`, `DocumentApprovalActionRequestTests`, and the menu assertions in `AppGrantRuleTests`.
 
 ### TK-104 · Projects: masters and the `ProjectId` ledger dimension
 - [ ] open

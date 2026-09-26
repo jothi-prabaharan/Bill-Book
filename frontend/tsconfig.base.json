@@ -43,6 +43,8 @@
       "@bill-book/settings-currencies": ["libs/settings/currencies/src/index.ts"],
       "@bill-book/settings-configuration": ["libs/settings/configuration/src/index.ts"],
       "@bill-book/settings-smtp": ["libs/settings/smtp/src/index.ts"],
+      "@bill-book/settings-approval-workflows": ["libs/settings/approval-workflows/src/index.ts"],
+      "@bill-book/approvals": ["libs/approvals/src/index.ts"],
       "@bill-book/settings-api-clients": ["libs/settings/api-clients/src/index.ts"],
       "@bill-book/settings-print-templates": ["libs/settings/print-templates/src/index.ts"],
       "@bill-book/settings-numbering-series": ["libs/settings/numbering-series/src/index.ts"],

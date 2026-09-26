@@ -25,6 +25,14 @@ export const appRoutes: Routes = [
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       { path: 'dashboard', component: DashboardPage, data: { access: { signedIn: true } } },
+      // Every document waiting on the signed-in user (TK-103). Signed-in only:
+      // each service answers for its own module, and one the user cannot read
+      // is left out rather than refused.
+      {
+        path: 'approvals',
+        loadComponent: () => import('@bill-book/approvals').then((m) => m.ApprovalsInboxPage),
+        data: { access: { signedIn: true } },
+      },
       // Users, roles, branches, organization settings, currencies,
       // configuration, email, API keys, print templates, numbering and
       // applications: the pages every app shares, from one lib (TK-47).

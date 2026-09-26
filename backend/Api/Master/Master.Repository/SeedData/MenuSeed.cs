@@ -45,6 +45,7 @@ public static class MenuSeed
         1,                                              // Home
         9,                                              // Settings rail
         114, 1079, 1080, 1081, 1082, 1083, 1084, 1085,  // Organisation
+        1125,                                           // Approval workflows (TK-103)
         115, 1086, 1087, 1088, 1089, 1090, 1106,        // Users and access
     };
 
@@ -220,6 +221,8 @@ public static class MenuSeed
         new Menu { MenuId = 1083, ParentId = 114, Type = MenuType.Item, Code = "ocu", Name = "Organisation currencies", Icon = "coins", Module = "settings", RoutePath = "/settings/currencies", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 5, IsActive = true },
         new Menu { MenuId = 1084, ParentId = 114, Type = MenuType.Item, Code = "smtp", Name = "Email and SMTP", Icon = "mail", Module = "settings", RoutePath = "/settings/email", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 6, IsActive = true },
         new Menu { MenuId = 1085, ParentId = 114, Type = MenuType.Item, Code = "lic", Name = "Applications", Icon = "badge-check", Module = "settings", RoutePath = "/settings/applications", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 7, IsActive = true },
+        // Every app's approval chains, configured in one place (TK-103).
+        new Menu { MenuId = 1125, ParentId = 114, Type = MenuType.Item, Code = "apw", Name = "Approval workflows", Icon = "list-checks", Module = "settings", RoutePath = "/settings/approval-workflows", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 8, IsActive = true },
         new Menu { MenuId = 115, ParentId = 9, Type = MenuType.Group, Code = "settings-g2", Name = "Users and access", Icon = "users-round", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
         new Menu { MenuId = 1086, ParentId = 115, Type = MenuType.Item, Code = "usr", Name = "Users", Icon = "users-round", Module = "settings", RoutePath = "/settings/users", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
         new Menu { MenuId = 1087, ParentId = 115, Type = MenuType.Item, Code = "rol", Name = "Roles", Icon = "shield", Module = "settings", RoutePath = "/settings/roles", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 2, IsActive = true },
@@ -273,6 +276,10 @@ public static class MenuSeed
         new Menu { MenuId = 1122, ParentId = 121, Type = MenuType.Item, Code = "wko", Name = "Work orders", Icon = "wrench", Module = "workorder", RoutePath = "/work-orders", IsSearchable = false, CanCreate = true, SingularName = "Work order", DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1123, ParentId = 121, Type = MenuType.Item, Code = "ppm", Name = "Preventive plans", Icon = "calendar-clock", Module = "preventive", RoutePath = "/preventive/plans", IsSearchable = false, CanCreate = true, SingularName = "Plan", DisplayOrder = 4, IsActive = true },
         new Menu { MenuId = 1124, ParentId = 121, Type = MenuType.Item, Code = "amc", Name = "AMC contracts", Icon = "file-signature", Module = "amc", RoutePath = "/amc/contracts", IsSearchable = false, CanCreate = true, SingularName = "AMC contract", DisplayOrder = 5, IsActive = true },
+        // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
+        new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
+        new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
+        new Menu { MenuId = 1126, ParentId = 122, Type = MenuType.Item, Code = "inbox", Name = "Waiting for me", Icon = "inbox", Module = null, RoutePath = "/approvals", IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
     ];
 
     /// <summary>
@@ -729,5 +736,15 @@ public static class MenuSeed
         // The manual e-invoice actions on invoices and credit notes (TK-92).
         new MenuPermission { MenuPermissionId = 442, MenuId = 1019, PermissionCode = "sales.einvoice", Action = "einvoice", Module = "sales" },
         new MenuPermission { MenuPermissionId = 443, MenuId = 1020, PermissionCode = "sales.einvoice", Action = "einvoice", Module = "sales" },
+        // Approval workflows (TK-103): read on settings.view, saved on settings.edit.
+        new MenuPermission { MenuPermissionId = 444, MenuId = 1125, PermissionCode = "settings.view", Action = "view", Module = "settings" },
+        new MenuPermission { MenuPermissionId = 445, MenuId = 1125, PermissionCode = "settings.edit", Action = "edit", Module = "settings" },
+        // The approvals inbox (TK-103): shown to anyone who can read a module
+        // that has approvals. Each service still answers only for its own.
+        new MenuPermission { MenuPermissionId = 446, MenuId = 1126, PermissionCode = "purchase.view", Action = "view", Module = "purchase" },
+        new MenuPermission { MenuPermissionId = 447, MenuId = 1126, PermissionCode = "sales.view", Action = "view", Module = "sales" },
+        new MenuPermission { MenuPermissionId = 448, MenuId = 1126, PermissionCode = "accounting.view", Action = "view", Module = "accounting" },
+        new MenuPermission { MenuPermissionId = 449, MenuId = 1126, PermissionCode = "banking.view", Action = "view", Module = "banking" },
+        new MenuPermission { MenuPermissionId = 450, MenuId = 1126, PermissionCode = "inventory.view", Action = "view", Module = "inventory" },
     ];
 }

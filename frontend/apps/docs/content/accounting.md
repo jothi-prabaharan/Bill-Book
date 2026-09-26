@@ -610,7 +610,7 @@ compared against the journal's debit total, or the payment's amount in base curr
 - Where no workflow applies, **Post** works as it always has. If the approval rules cannot be read,
   posting is refused rather than let through.
 
-Setting up workflows and the approvals inbox come in a later release (TK-103).
+Workflows are set up under **Settings › Approval workflows**, and an approver finds what waits on them under **Approvals › Waiting for me**. See [Approvals](#/approvals).
 
 ## Isolation
 

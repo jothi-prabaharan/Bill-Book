@@ -72,6 +72,13 @@ export const sharedSettingsRoutes: Routes = [
     loadComponent: () => import('@bill-book/settings-numbering-series').then((m) => m.NumberingSeriesPage),
     data: { access: { permission: 'settings.view' } },
   },
+  // Every app's approval chains (TK-103). Read-only without settings.edit.
+  {
+    path: 'settings/approval-workflows',
+    loadComponent: () =>
+      import('@bill-book/settings-approval-workflows').then((m) => m.ApprovalWorkflowsPage),
+    data: { access: { permission: 'settings.view' } },
+  },
   {
     path: 'settings/applications',
     loadComponent: () => import('@bill-book/settings-applications').then((m) => m.ApplicationsPage),

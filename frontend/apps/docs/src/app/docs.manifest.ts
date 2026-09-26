@@ -54,6 +54,10 @@ export const DOCS: DocSection[] = [
     ],
   },
   {
+    title: 'Approvals',
+    pages: [{ slug: 'approvals', title: 'Approvals', status: 'built' }],
+  },
+  {
     title: 'Customer portal',
     // Partial: online payment runs on the sandbox gateway until D-25 names one.
     pages: [{ slug: 'portal', title: 'Customer portal', status: 'partial' }],

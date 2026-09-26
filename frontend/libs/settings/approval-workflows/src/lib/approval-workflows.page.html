@@ -1,0 +1,154 @@
+<h1>Approval workflows</h1>
+<p class="hint">
+  Which documents and requests need approval, and who approves them, level by level. A request no
+  workflow covers is approved or posted as usual.
+</p>
+
+@if (message(); as text) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
+}
+
+@if (editing(); as draft) {
+  <form class="editor" (ngSubmit)="save()">
+    <div class="row">
+      <div class="field grow">
+        <bb-text-input label="Name" name="name" [(ngModel)]="draft.name" required [disabled]="!canEdit()" />
+      </div>
+      <div class="field grow">
+        <bb-select
+          label="Applies to"
+          name="requestKind"
+          [options]="kindOptions"
+          [clearable]="false"
+          [(ngModel)]="draft.requestKind"
+          (ngModelChange)="kindChanged($event)"
+          [disabled]="!canEdit()"
+        />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <bb-date-input label="Effective from" name="effectiveFrom" [(ngModel)]="draft.effectiveFrom" [disabled]="!canEdit()" />
+      </div>
+      <div class="field align-end">
+        <bb-checkbox text="Active" name="isActive" [(ngModel)]="draft.isActive" [disabled]="!canEdit()" />
+      </div>
+    </div>
+
+    <h2>Levels</h2>
+    <p class="hint">
+      Levels run top to bottom. Drag one by its handle, or use its arrows, to reorder. A level with an
+      amount applies only to requests above it.
+    </p>
+
+    <ol class="levels" cdkDropList [cdkDropListDisabled]="!canEdit()" (cdkDropListDropped)="dropped($event)">
+      @for (level of levels(); track $index; let i = $index; let last = $last) {
+        <li class="level" cdkDrag>
+          <div class="level__head">
+            <span class="level__handle" cdkDragHandle aria-hidden="true">⠿</span>
+            <strong>Level {{ i + 1 }}</strong>
+            @if (canEdit()) {
+              <span class="level__tools">
+                <button type="button" class="secondary" (click)="move(i, i - 1)" [disabled]="i === 0" aria-label="Move up">↑</button>
+                <button type="button" class="secondary" (click)="move(i, i + 1)" [disabled]="last" aria-label="Move down">↓</button>
+                <button type="button" class="secondary" (click)="removeLevel(i)" aria-label="Remove level">✕</button>
+              </span>
+            }
+          </div>
+
+          <div class="row">
+            <div class="field grow">
+              <bb-text-input label="Label" [name]="'label' + i" [(ngModel)]="level.label" (ngModelChange)="touched()" placeholder="Accountant" [disabled]="!canEdit()" />
+            </div>
+            <div class="field grow">
+              <bb-select
+                label="Approved by"
+                [name]="'kind' + i"
+                [options]="approverKindOptions(draft.requestKind)"
+                [clearable]="false"
+                [(ngModel)]="level.approverKind"
+                (ngModelChange)="touched()"
+                [disabled]="!canEdit()"
+              />
+            </div>
+          </div>
+
+          <div class="row">
+            @switch (level.approverKind) {
+              @case (approverKinds.roleHolder) {
+                <div class="field grow">
+                  <bb-select label="Role" [name]="'role' + i" [options]="roleOptions()" [(ngModel)]="level.roleId" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+                </div>
+              }
+              @case (approverKinds.namedUser) {
+                <div class="field grow">
+                  <bb-select label="User" [name]="'user' + i" [options]="userOptions()" [(ngModel)]="level.userId" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+                </div>
+              }
+              @case (approverKinds.reportingChain) {
+                <div class="field">
+                  <bb-number-input label="Levels up" [name]="'depth' + i" [(ngModel)]="level.reportingDepth" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+                </div>
+              }
+              @case (approverKinds.relationship) {
+                <div class="field">
+                  <bb-number-input label="Relationship type id" [name]="'rel' + i" [(ngModel)]="level.relationshipTypeId" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+                </div>
+              }
+              @case (approverKinds.namedEmployee) {
+                <div class="field">
+                  <bb-number-input label="Employee id" [name]="'emp' + i" [(ngModel)]="level.employeeId" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+                </div>
+              }
+            }
+            <div class="field">
+              <bb-number-input label="Only above amount" [name]="'above' + i" [(ngModel)]="level.aboveAmount" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+            </div>
+          </div>
+
+          <div class="row checks">
+            <bb-checkbox text="Comment required" [name]="'comment' + i" [(ngModel)]="level.isCommentRequired" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+            <bb-checkbox text="Optional" [name]="'optional' + i" [(ngModel)]="level.isOptional" (ngModelChange)="touched()" [disabled]="!canEdit()" />
+          </div>
+        </li>
+      }
+    </ol>
+
+    <div class="actions">
+      @if (canEdit()) {
+        <button type="button" class="secondary" (click)="addLevel()">+ Add a level</button>
+        <button type="submit" [disabled]="busy()">Save workflow</button>
+      }
+      <button type="button" class="secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
+    </div>
+  </form>
+} @else {
+  @if (canEdit()) {
+    <div class="actions">
+      <button type="button" (click)="openNew()">+ New workflow</button>
+    </div>
+  }
+
+  @if (workflows().length === 0) {
+    <p class="empty">No workflows yet. Every request is approved or posted as usual.</p>
+  } @else {
+    <ul class="cards">
+      @for (workflow of workflows(); track workflow.approvalWorkflowId) {
+        <li class="card" (click)="open(workflow)" (keydown.enter)="open(workflow)" tabindex="0">
+          <div class="card__title">
+            <strong>{{ workflow.name }}</strong>
+            @if (!workflow.isActive) {
+              <span class="pill">Inactive</span>
+            }
+          </div>
+          <div class="card__meta">
+            <span>{{ requestKindLabel(workflow.requestKind) }}</span>
+            <span>{{ levelSummary(workflow) }}</span>
+            <span>From {{ workflow.effectiveFrom }}</span>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}

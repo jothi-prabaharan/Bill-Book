@@ -1,0 +1,59 @@
+<h1>Waiting for me</h1>
+<p class="hint">
+  Documents waiting on your approval, from every part of the product, oldest first. Open one to read
+  it in full before you decide.
+</p>
+
+@if (message(); as text) {
+  <p class="ok">{{ text }}</p>
+}
+
+@if (unavailable().length > 0) {
+  <p class="warn">
+    Could not read {{ unavailable().join(', ') }}. What waits there is not shown.
+    <button type="button" class="link" (click)="load()">Try again</button>
+  </p>
+}
+
+@if (loading()) {
+  <p class="hint">Loading…</p>
+} @else if (items().length === 0) {
+  <p class="empty">Nothing is waiting for you.</p>
+} @else {
+  <ul class="cards">
+    @for (item of items(); track itemKey(item)) {
+      <li class="card">
+        <div class="card__head">
+          <span class="kind">{{ kindLabel(item.requestKind) }}</span>
+          <a class="docno" [routerLink]="documentRoute(item)">{{ item.documentNo }}</a>
+          <span class="amount">{{ formats.formatMoney(item.amount) }}</span>
+        </div>
+        <div class="card__meta">
+          <span>{{ formats.formatDate(item.documentDate) }}</span>
+          <span>Waiting at: {{ item.label }}</span>
+        </div>
+
+        <label class="comment">
+          Comment
+          <textarea
+            rows="2"
+            maxlength="2000"
+            [name]="'comment-' + itemKey(item)"
+            [(ngModel)]="comments[itemKey(item)]"
+            placeholder="Needed to reject or send back"
+          ></textarea>
+        </label>
+
+        @if (errors()[itemKey(item)]; as error) {
+          <p class="error">{{ error }}</p>
+        }
+
+        <div class="actions">
+          <button type="button" class="primary" (click)="act(item, 'Approve')" [disabled]="busyKey() !== null">Approve</button>
+          <button type="button" (click)="act(item, 'SendBack')" [disabled]="busyKey() !== null">Send back</button>
+          <button type="button" class="danger" (click)="act(item, 'Reject')" [disabled]="busyKey() !== null">Reject</button>
+        </div>
+      </li>
+    }
+  </ul>
+}

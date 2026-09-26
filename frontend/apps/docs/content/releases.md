@@ -30,6 +30,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Approvals › Waiting for me.** Every document waiting on your approval, from purchase, sales, accounts, banking and inventory, in one list, oldest first. You can approve, send back or reject each one there, with a comment. See [Approvals](approvals#approving).
+- **Added**: **Settings › Approval workflows.** Choose which documents and requests need approval and who approves them, level by level. Levels can be reordered by dragging, and a level can apply only above an amount. The page is the same in every app. See [Approvals](approvals#setting-up-a-workflow).
+- **Fixed**: Approving, rejecting or sending back a purchase document, a manual journal, a payment or a stock adjustment from its **Approval** panel was refused as an invalid request. It now goes through.
 - **Added**: **Credit-limit and discount overrides on invoices and sales orders.** A save past the customer's credit limit, or with a line discounted past the limit, is refused and offers **Request approval**. The draft then waits on the approver, and it cannot be posted or confirmed until they agree. The approval covers that one document, and editing it ends the approval. The discount limit is the customer's **Max discount %**, else the branch's new **Maximum Line Discount (%)** setting, which ships at 100 (no limit). See [Invoices](invoices#credit-and-discount-limits).
 - **Added**: **Approval chains for credit notes and stock adjustments.** Where a workflow covers one, it is submitted for approval and **Post** is refused until every level approves. See [Credit notes](credit-notes#approval-workflows) and [Stock adjustments](masters#approval-workflows).
 - **Changed**: **The credit limit and the Max discount % on a contact are now enforced** on invoices and sales orders, where before they were only stored.

@@ -108,7 +108,7 @@ are configured per document kind, with levels that apply above an amount.
 - While a workflow covers a document, the plain **Approve**, **Issue to vendor** and **Post** are
   refused until the chain approves it. A document no workflow covers works exactly as before.
 
-Setting up workflows and the approvals inbox come in a later release (TK-103).
+Workflows are set up under **Settings › Approval workflows**, and an approver finds what waits on them under **Approvals › Waiting for me**. See [Approvals](#/approvals).
 
 ## Withdrawing one
 

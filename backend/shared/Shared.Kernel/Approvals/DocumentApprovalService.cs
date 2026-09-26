@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Tenancy;
@@ -428,6 +429,13 @@ public abstract class DocumentApprovalService<TStep>
 /// </summary>
 public sealed class DocumentApprovalActionRequest
 {
+    /// <summary>
+    /// Read as its name ("Approve", "Reject", "SendBack") or its number. The
+    /// converter is on the property because Purchase, Accounting and Inventory
+    /// read enums as numbers everywhere else, and the approval panel and the
+    /// inbox send the name — without it their every action was a 400.
+    /// </summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     [EnumDataType(typeof(ApprovalAction), ErrorMessage = "Choose approve, reject or send back.")]
     public ApprovalAction Action { get; set; } = ApprovalAction.Approve;
 

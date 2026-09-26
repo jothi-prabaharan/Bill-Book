@@ -1,0 +1,11 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "approvals",
+  "projectType": "library",
+  "sourceRoot": "libs/approvals/src",
+  "tags": [
+    "scope:shared",
+    "type:ui"
+  ],
+  "targets": {}
+}

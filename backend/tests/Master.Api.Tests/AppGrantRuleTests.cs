@@ -139,6 +139,10 @@ public sealed class AppGrantRuleTests
         Assert.Equal(App.All, menus.Single(m => m.Code == "settings" && m.ParentId is null).Apps);
         Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "inv").Apps);
         Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "tax").Apps);
+
+        // Every app configures its chains on one page; the inbox is RetailErp's documents (TK-103).
+        Assert.Equal(App.All, menus.Single(m => m.Code == "apw").Apps);
+        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "inbox").Apps);
     }
 }
 
