@@ -1891,7 +1891,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `Sales.Api.Tests.PortalQuoteTests` covers accept once, lapsed refused, another contact's quote and a draft not found, and converted refused. The portal spec covers `quoteState`.
   - **Owner step:** run the Sales suite and the portal specs.
 ### TK-97 · Portal: support tickets
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#86](https://github.com/jothi-prabaharan/Bill-Book/issues/86)
 - **Lanes:** L-CUS, L-CUS-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
 - **Where:** `TicketsController`, `cus.TicketMessages`; design "Client portal" → Tickets.
 - **Sub-tasks:**
