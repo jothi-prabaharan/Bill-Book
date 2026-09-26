@@ -1868,7 +1868,8 @@ The build cards each design in section E produced. Each design section in `docs/
     - `retail/portal.models.spec.ts`.
   - **Owner step:** run the Reporting, Sales and Master suites and the portal specs. "The summary matches the ledger for a seeded contact" is covered over lists, not against a database, because Reporting's fixture has no `acc` or `sal` tables.
 ### TK-96 · Portal: accept or reject a quote
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#85](https://github.com/jothi-prabaharan/Bill-Book/issues/85)
 - **Lanes:** L-SAL, L-SAL-UI, L-PTL · **Depends on:** TK-94 · **Decision:** —
 - **Where:** `sal.Quotes`, `QuoteService`; design "Client portal" → Quotes.
 - **Sub-tasks:**
