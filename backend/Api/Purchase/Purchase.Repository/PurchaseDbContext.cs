@@ -70,6 +70,9 @@ public class PurchaseDbContext : TenantDbContext
 
     public DbSet<DebitNoteDetailTax> DebitNoteDetailTaxes => Set<DebitNoteDetailTax>();
 
+    /// <summary>Approval chains of purchase orders, bills and debit notes (TK-100).</summary>
+    public DbSet<PurchaseApprovalStep> ApprovalSteps => Set<PurchaseApprovalStep>();
+
     /// <summary>Mapped, not migrated — Accounting owns the table.</summary>
     public DbSet<NumberingSeries> NumberingSeries => Set<NumberingSeries>();
 
@@ -327,6 +330,20 @@ public class PurchaseDbContext : TenantDbContext
         // OnModelCreating this way. SalesDbContext does not, which is why `sal`
         // has neither of the two isolation layers it is supposed to have — see
         // the note in docs/Purchase.md §11.
+        modelBuilder.Entity<PurchaseApprovalStep>(b =>
+        {
+            b.ToTable("ApprovalSteps");
+            b.HasKey(e => e.PurchaseApprovalStepId);
+            b.HasIndex(e => new { e.OrgId, e.RequestKind, e.RequestId, e.Round, e.Sequence }).IsUnique();
+
+            // The inbox: whatever waits on a user or a role.
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.ApproverUserId });
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.RoleId });
+
+            b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
         base.OnModelCreating(modelBuilder);
     }
 }

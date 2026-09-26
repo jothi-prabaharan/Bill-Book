@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
@@ -54,6 +55,9 @@ public sealed class DebitNoteService
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
+    /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
+    private readonly PurchaseApprovalService? _approvals;
+
     public DebitNoteService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -66,8 +70,10 @@ public sealed class DebitNoteService
         IInventoryClient inventory,
         ILedgerClient ledger,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        PurchaseApprovalService? approvals = null)
     {
+        _approvals = approvals;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -142,6 +148,10 @@ public sealed class DebitNoteService
                 DebitNoteOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // An approval approves what was seen: an edit sends it back (TK-100).
+        bool returned = _approvals is not null
+            && await _approvals.ReturnToDraftAsync(ApprovalRequestKind.DebitNote, debitNoteId, note, ct);
+
         if (request.CurrencyCode is not null)
         {
             note.CurrencyCode = request.CurrencyCode;
@@ -166,7 +176,7 @@ public sealed class DebitNoteService
         }
 
         await _db.SaveChangesAsync(ct);
-        return new DebitNoteResult(DebitNoteOutcome.Ok, note.DebitNoteId);
+        return new DebitNoteResult(DebitNoteOutcome.Ok, note.DebitNoteId, returned ? "Edited while under approval, so it is a draft again. Submit it for approval once more." : null);
     }
 
     private async Task<DebitNoteResult> ApplyAsync(
@@ -371,6 +381,13 @@ public sealed class DebitNoteService
         {
             return new DebitNoteResult(
                 DebitNoteOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // A debit note has no separate approve step, so posting a draft is gated (TK-100).
+        if (_approvals is not null && note.Status == DocumentStatus.Draft
+            && await _approvals.GateAsync(ApprovalRequestKind.DebitNote, note, ct) is string gated)
+        {
+            return new DebitNoteResult(DebitNoteOutcome.LifecycleRefused, Detail: gated);
         }
 
         (Guid customerId, Guid orgId) = _tenant.Require();

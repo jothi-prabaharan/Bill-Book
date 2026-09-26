@@ -231,6 +231,15 @@
         }
       </footer>
 
+      @if (purchaseOrderId(); as id) {
+        <!-- The document's approval chain, when a workflow covers it (TK-100). -->
+        <bb-approval-panel
+          [basePath]="'/api/purchase/purchase-orders/' + id"
+          [documentStatus]="status()"
+          (changed)="load(id)"
+        />
+      }
+
       @if (voidOpen()) {
         <section class="card card--void">
           <h2 class="card__title">Void this order</h2>

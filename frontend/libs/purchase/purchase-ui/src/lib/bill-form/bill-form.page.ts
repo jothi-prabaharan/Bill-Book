@@ -14,6 +14,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   recalculate,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import {
   BillService,
@@ -43,6 +44,7 @@ type Picker = 'none' | 'vendor' | 'item' | 'receipt';
   selector: 'bb-bill-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     CommonModule,
     FormsModule,
     RouterModule,

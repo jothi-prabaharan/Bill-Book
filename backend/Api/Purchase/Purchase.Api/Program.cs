@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Security;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -66,6 +67,14 @@ builder.Services.AddDbContext<PurchaseDbContext>((sp, options) =>
 
 builder.Services.AddScoped<PurchaseSeeder>();
 builder.Services.AddScoped<PurchaseOrderService>();
+
+// Approval chains (TK-100): Master resolves them, this service stores the steps.
+builder.Services.AddScoped<PurchaseApprovalService>();
+builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<GoodsReceiptService>();
 builder.Services.AddScoped<BillService>();
 builder.Services.AddScoped<DebitNoteService>();

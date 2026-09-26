@@ -48,7 +48,10 @@ public sealed class BillsController : ControllerBase
         long billId, [FromBody] SaveBillRequest request, CancellationToken ct)
     {
         BillResult result = await _bills.UpdateAsync(billId, request, ct);
-        return result.Outcome == BillOutcome.Ok ? NoContent() : Respond(result);
+
+        // A detail on success says the edit returned it from approval (TK-100).
+        return result.Outcome != BillOutcome.Ok ? Respond(result)
+            : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
     }
 
     /// <summary>Clears the clearing account, or brings the goods in — and always owes the vendor.</summary>

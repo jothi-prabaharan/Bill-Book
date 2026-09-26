@@ -16,6 +16,7 @@ import {
   SelectComponent,
   TextInputComponent,
   TextareaComponent,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 
 import {
@@ -70,6 +71,7 @@ interface ReturnLine {
   selector: 'bb-debit-note-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     DataGridComponent,
     CommonModule,
     FormsModule,

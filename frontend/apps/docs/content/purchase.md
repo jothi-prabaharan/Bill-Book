@@ -88,6 +88,27 @@ keying the paperwork, and a clerk who raises orders is precisely the person who
 should not also be able to issue them. A branch that does not want the review
 step can issue straight from draft.
 
+## Approval workflows
+
+A branch can require purchase orders, bills and debit notes to pass an **approval chain** before
+they are issued or posted, for example "the Accountant, then the Owner above ₹1,00,000". The chains
+are configured per document kind, with levels that apply above an amount.
+
+- On a draft covered by a workflow, the **Approval** panel offers **Submit for approval**. The
+  document then waits on the first level; the panel shows who it waits on.
+- Each level's approver **approves**, **rejects** or **sends back**, with a comment. Only that
+  level's approver, any holder of its role, or their delegate can act. Being the approver is the
+  authority; no extra permission is needed.
+- The last approval makes the document ready to issue or post. Issuing and posting still need the
+  **purchase.approve** permission.
+- **Editing** a document that is in approval, or already approved, returns it to draft and ends the
+  chain. The approvals given stay on record. Submitting again starts over, because an approval
+  approves what was seen.
+- While a workflow covers a document, the plain **Approve**, **Issue to vendor** and **Post** are
+  refused until the chain approves it. A document no workflow covers works exactly as before.
+
+Setting up workflows and the approvals inbox come in a later release (TK-103).
+
 ## Withdrawing one
 
 **Orders are never deleted.** The number was spent when the order was created, so

@@ -69,3 +69,5 @@ export * from './lib/number-input/number-input.component';
 export * from './lib/search-input/search-input.component';
 export * from './lib/text-input/text-input.component';
 export * from './lib/master-select/master-select.component';
+export * from './lib/approval-panel/approval-panel.model';
+export * from './lib/approval-panel/approval-panel.component';

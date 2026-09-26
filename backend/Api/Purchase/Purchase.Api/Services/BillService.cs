@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Models;
 using Purchase.Entity.TableEntities;
@@ -63,6 +64,9 @@ public sealed class BillService
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
+    /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
+    private readonly PurchaseApprovalService? _approvals;
+
     public BillService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -77,8 +81,10 @@ public sealed class BillService
         IPaymentTermClient paymentTerms,
         IFixedAssetClient fixedAssets,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        PurchaseApprovalService? approvals = null)
     {
+        _approvals = approvals;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -159,6 +165,10 @@ public sealed class BillService
             return new BillResult(BillOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // An approval approves what was seen: an edit sends it back (TK-100).
+        bool returned = _approvals is not null
+            && await _approvals.ReturnToDraftAsync(ApprovalRequestKind.PurchaseBill, billId, bill, ct);
+
         if (await VendorNumberTakenAsync(request, billId, ct))
         {
             return new BillResult(
@@ -191,7 +201,7 @@ public sealed class BillService
         }
 
         await _db.SaveChangesAsync(ct);
-        return new BillResult(BillOutcome.Ok, bill.BillId);
+        return new BillResult(BillOutcome.Ok, bill.BillId, returned ? "Edited while under approval, so it is a draft again. Submit it for approval once more." : null);
     }
 
     /// <summary>
@@ -544,6 +554,13 @@ public sealed class BillService
         if (!transition.IsAllowed)
         {
             return new BillResult(BillOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // A bill has no separate approve step, so posting a draft is gated (TK-100).
+        if (_approvals is not null && bill.Status == DocumentStatus.Draft
+            && await _approvals.GateAsync(ApprovalRequestKind.PurchaseBill, bill, ct) is string gated)
+        {
+            return new BillResult(BillOutcome.LifecycleRefused, Detail: gated);
         }
 
         (Guid customerId, Guid orgId) = _tenant.Require();

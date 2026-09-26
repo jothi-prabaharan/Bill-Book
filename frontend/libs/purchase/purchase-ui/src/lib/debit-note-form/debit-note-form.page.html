@@ -218,6 +218,15 @@
           </span>
         }
       </footer>
+
+      @if (debitNoteId(); as id) {
+        <!-- The document's approval chain, when a workflow covers it (TK-100). -->
+        <bb-approval-panel
+          [basePath]="'/api/purchase/debit-notes/' + id"
+          [documentStatus]="status()"
+          (changed)="load(id)"
+        />
+      }
     }
   }
 

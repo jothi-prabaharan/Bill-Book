@@ -47,7 +47,10 @@ public sealed class DebitNotesController : ControllerBase
         long debitNoteId, [FromBody] SaveDebitNoteRequest request, CancellationToken ct)
     {
         DebitNoteResult result = await _notes.UpdateAsync(debitNoteId, request, ct);
-        return result.Outcome == DebitNoteOutcome.Ok ? NoContent() : Respond(result);
+
+        // A detail on success says the edit returned it from approval (TK-100).
+        return result.Outcome != DebitNoteOutcome.Ok ? Respond(result)
+            : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
     }
 
     /// <summary>Sends the goods back when the reason says so, and always reduces what is owed.</summary>

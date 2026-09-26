@@ -1,0 +1,48 @@
+<section class="approval">
+  <header class="approval__head">
+    <h3>Approval</h3>
+    @if (chain()?.approvalStatus; as status) {
+      <span class="pill">{{ status === 'InApproval' ? 'In approval' : status }}</span>
+    }
+  </header>
+
+  @if (error(); as text) {
+    <p class="approval__error">{{ text }}</p>
+  }
+  @if (message(); as text) {
+    <p class="approval__note">{{ text }}</p>
+  }
+
+  @if (chain()?.steps?.length) {
+    <ol class="approval__steps">
+      @for (step of chain()!.steps; track step.sequence) {
+        <li [class.is-current]="step.status === 'Pending'">
+          <span class="approval__label">{{ step.label }}</span>
+          <span class="approval__status">{{ stepStatusLabel(step.status) }}</span>
+          @if (step.actedAt) {
+            <span class="approval__when">{{ step.actedAt | date: 'medium' }}</span>
+          }
+          @if (step.comments) {
+            <span class="approval__comment">“{{ step.comments }}”</span>
+          }
+        </li>
+      }
+    </ol>
+  }
+
+  @if (chain()?.canAct) {
+    <label class="approval__comments">
+      Comment
+      <textarea [(ngModel)]="comments" rows="2" maxlength="2000"></textarea>
+    </label>
+    <div class="approval__actions">
+      <button type="button" class="btn btn--primary" (click)="act('Approve')" [disabled]="busy()">Approve</button>
+      <button type="button" class="btn" (click)="act('SendBack')" [disabled]="busy()">Send back</button>
+      <button type="button" class="btn btn--danger" (click)="act('Reject')" [disabled]="busy()">Reject</button>
+    </div>
+  } @else if (canSubmit()) {
+    <div class="approval__actions">
+      <button type="button" class="btn" (click)="submit()" [disabled]="busy()">Submit for approval</button>
+    </div>
+  }
+</section>

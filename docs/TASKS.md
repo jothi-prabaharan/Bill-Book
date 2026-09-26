@@ -1977,16 +1977,37 @@ The build cards each design in section E produced. Each design section in `docs/
   - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
 
 ### TK-100 · Approvals: purchase orders, bills and debit notes
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#88](https://github.com/jothi-prabaharan/Bill-Book/issues/88)
 - **Lanes:** L-PUR, L-PUR-UI · **Depends on:** TK-99 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `pur.ApprovalSteps`; summary columns on the purchase documents.
-  - [ ] Submit, act, edit-sends-back, per the design's Flow; the ordinary approve action when no workflow matches.
-  - [ ] `GET api/approvals/mine` for Purchase; the chain shown on each document.
-  - [ ] Test: a PO over the threshold waits for both levels; editing it mid-chain returns it to Draft; a user who is not the approver is refused.
+  - [x] `pur.ApprovalSteps`; summary columns on the purchase documents.
+  - [x] Submit, act, edit-sends-back, per the design's Flow; the ordinary approve action when no workflow matches.
+  - [x] `GET api/approvals/mine` for Purchase; the chain shown on each document.
+  - [x] Test: a PO over the threshold waits for both levels; editing it mid-chain returns it to Draft; a user who is not the approver is refused.
 - **Done when:** a purchase order above the limit reaches `ReadyToPost` only after both levels approve.
-
+- **As built (2026-09-26):**
+  - **Shared.Kernel:**
+    - `DocumentHeaderBase` gains `ApprovalStatus?` (stored as its name), `CurrentStepLabel`, `CurrentApproverUserId` and `CurrentApproverRoleId`. Every sales and purchase header carries them, so the Sales migration `DocumentApprovalSummary` ships here for TK-102 to use.
+    - `IApprovalChainClient` / `HttpApprovalChainClient` call Master's `internal/approval-chains` (resolve, delegate-check).
+    - `DocumentApproval` builds a round's steps, keeps the header summary, and gives the refusal while a document is under approval.
+  - **Purchase:**
+    - `pur.ApprovalSteps` (`PurchaseApprovalStep` plus `Round`; migration `PurchaseApprovals`, with the RLS block).
+    - `PurchaseApprovalService` handles submit (NoWorkflow, Unresolvable or a new round), act (approver, role holder or delegate), the chain, the inbox, the gate and return-to-draft.
+    - **The gate:** the ordinary approve, and confirming or posting a *draft*, are refused while a chain is open or rejected, or when a workflow applies. Master unreachable is a refusal.
+    - **Editing** returns the document to Draft, cancels the round's open steps, and says so in the update response.
+    - The three services take the approval service as an optional constructor parameter, so existing test harnesses are unchanged.
+  - **Routes:** `api/purchase/{purchase-orders|bills|debit-notes}/{id}/submit` (`purchase.edit`), `…/approval` GET/POST (`purchase.view`), and `api/purchase/approvals/mine`. The inbox path is per service, not one `api/approvals/mine`, because the gateway routes by prefix and one path cannot reach three services; TK-103 asks each.
+  - **UI:** a shared `bb-approval-panel` (ui-components) on the purchase order, bill and debit note forms.
+  - **Tests:**
+    - `Purchase.Api.Tests.PurchaseApprovalTests`:
+      - Chain behaviour: above the limit, both levels before ReadyToPost; below it, one level; a non-approver refused; reject needs a comment.
+      - Editing mid-chain returns the document to Draft and cancels open steps, and a new round starts on resubmit.
+      - The gate: approve and confirm refused under a workflow; the ordinary approve with no workflow; Master unreachable refuses.
+      - The inbox by user and role.
+    - `approval-panel.model.spec.ts`.
+  - **Not built:** notifying the approver (design flow step 1, TK-19) and escalation. Delegates can act, but their inbox does not list their principal's items.
+  - **Owner step:** run the Purchase and Sales suites and the ui-components spec. Configure a workflow through `api/approval-workflows` until TK-103 gives it a screen.
 ### TK-101 · Approvals: spend money and manual journals
 - [ ] open
 - **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —

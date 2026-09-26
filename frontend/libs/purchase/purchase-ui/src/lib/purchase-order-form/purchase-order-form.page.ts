@@ -14,6 +14,7 @@ import {
   TextInputComponent,
   TextareaComponent,
   recalculate,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import {
   PurchaseLookupService,
@@ -53,6 +54,7 @@ type Picker = 'none' | 'vendor' | 'item';
   selector: 'bb-purchase-order-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     CommonModule,
     FormsModule,
     RouterModule,

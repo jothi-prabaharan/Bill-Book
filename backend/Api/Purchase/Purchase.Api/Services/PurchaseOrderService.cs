@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Microsoft.EntityFrameworkCore;
 using Purchase.Entity.Enums;
 using Purchase.Entity.Models;
@@ -36,6 +37,9 @@ public sealed class PurchaseOrderService
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
 
+    /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
+    private readonly PurchaseApprovalService? _approvals;
+
     public PurchaseOrderService(
         PurchaseDbContext db,
         INumberGenerator numbering,
@@ -45,8 +49,10 @@ public sealed class PurchaseOrderService
         IContactNameLookup contactNames,
         IItemNameLookup itemNames,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        PurchaseApprovalService? approvals = null)
     {
+        _approvals = approvals;
         _db = db;
         _numbering = numbering;
         _baseCurrency = baseCurrency;
@@ -118,6 +124,10 @@ public sealed class PurchaseOrderService
                 PurchaseOrderOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // An approval approves what was seen: an edit sends it back (TK-100).
+        bool returned = _approvals is not null
+            && await _approvals.ReturnToDraftAsync(ApprovalRequestKind.PurchaseOrder, purchaseOrderId, order, ct);
+
         if (request.CurrencyCode is not null)
         {
             order.CurrencyCode = request.CurrencyCode;
@@ -145,7 +155,8 @@ public sealed class PurchaseOrderService
         }
 
         await _db.SaveChangesAsync(ct);
-        return new PurchaseOrderResult(PurchaseOrderOutcome.Ok, order.PurchaseOrderId);
+        return new PurchaseOrderResult(PurchaseOrderOutcome.Ok, order.PurchaseOrderId,
+            returned ? "Edited while under approval, so it is a draft again. Submit it for approval once more." : null);
     }
 
     /// <summary>
@@ -362,6 +373,13 @@ public sealed class PurchaseOrderService
                 PurchaseOrderOutcome.LifecycleRefused, Detail: transition.Detail);
         }
 
+        // The single approve is for documents no workflow covers (TK-100).
+        if (_approvals is not null
+            && await _approvals.GateAsync(ApprovalRequestKind.PurchaseOrder, order, ct) is string gated)
+        {
+            return new PurchaseOrderResult(PurchaseOrderOutcome.LifecycleRefused, Detail: gated);
+        }
+
         order.Status = DocumentStatus.ReadyToPost;
         await _db.SaveChangesAsync(ct);
 
@@ -394,6 +412,13 @@ public sealed class PurchaseOrderService
         {
             return new PurchaseOrderResult(
                 PurchaseOrderOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // Confirming a draft skips the approve step, so it is gated the same way (TK-100).
+        if (_approvals is not null && order.Status == DocumentStatus.Draft
+            && await _approvals.GateAsync(ApprovalRequestKind.PurchaseOrder, order, ct) is string gated)
+        {
+            return new PurchaseOrderResult(PurchaseOrderOutcome.LifecycleRefused, Detail: gated);
         }
 
         order.Status = DocumentStatus.Posted;

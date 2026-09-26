@@ -63,7 +63,9 @@ public sealed class PurchaseOrdersController : ControllerBase
     {
         PurchaseOrderResult result = await _orders.UpdateAsync(purchaseOrderId, request, ct);
 
-        return result.Outcome == PurchaseOrderOutcome.Ok ? NoContent() : Respond(result);
+        // A detail on success says the edit returned it from approval (TK-100).
+        return result.Outcome != PurchaseOrderOutcome.Ok ? Respond(result)
+            : result.Detail is null ? NoContent() : Ok(new MessageResponse { Message = result.Detail });
     }
 
     /// <summary>Draft → ReadyToPost. The review step, for branches that want one.</summary>

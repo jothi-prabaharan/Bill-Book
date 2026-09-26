@@ -155,6 +155,26 @@ public abstract class DocumentHeaderBase : OrgScopedEntity
 
     public DocumentStatus Status { get; set; } = DocumentStatus.Draft;
 
+    // ---- Approval (TK-100, design "Workflow approvals for RetailErp
+    // documents"). A summary of the owning service's own steps, kept here so a
+    // list can say what a document waits on without reading every step.
+
+    /// <summary>
+    /// Where the document stands in an approval chain. Null when no workflow
+    /// has been involved: the ordinary approve action applies.
+    /// </summary>
+    public Approvals.ApprovalStatus? ApprovalStatus { get; set; }
+
+    /// <summary>The level the document waits on, as the workflow labels it.</summary>
+    [MaxLength(50, ErrorMessage = "The step label cannot exceed 50 characters.")]
+    public string? CurrentStepLabel { get; set; }
+
+    /// <summary>Who the document waits on, when that level names a user.</summary>
+    public Guid? CurrentApproverUserId { get; set; }
+
+    /// <summary>The role the document waits on, when any holder of it may approve.</summary>
+    public int? CurrentApproverRoleId { get; set; }
+
     /// <summary>
     /// Set if and only if the document ever reached the books. It is also what
     /// tells a void draft from a void posting, which is why there is no separate
