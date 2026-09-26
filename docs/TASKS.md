@@ -1917,7 +1917,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `Customer.Api.Tests.PortalTicketTests` covers internal notes never reaching the portal, the database refusing a contact's internal note, another contact's ticket, the SLA from policy, reopening a resolved ticket and a closed ticket refusing. The portal spec covers the status label.
   - **Owner step:** run the Customer suite and the portal specs.
 ### TK-98 · Portal: pay online
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#87](https://github.com/jothi-prabaharan/Bill-Book/issues/87)
 - **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25
 - **Where:** `ReceiveMoneyService`; design "Client portal" → Online payment.
 - **Tables:** `acc.OnlinePayments`
