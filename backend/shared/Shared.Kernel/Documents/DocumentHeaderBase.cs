@@ -22,7 +22,7 @@ namespace Shared.Kernel.Documents;
 /// See <c>SALES.md</c> §3 and <c>PURCHASE.md</c> for the column list this
 /// implements and the decisions behind it.
 /// </summary>
-public abstract class DocumentHeaderBase : OrgScopedEntity
+public abstract class DocumentHeaderBase : OrgScopedEntity, Approvals.IApprovalSummary
 {
     /// <summary>
     /// From <c>mst.TransactionTypes</c>, stored as its code with no FK because

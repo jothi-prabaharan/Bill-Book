@@ -2009,14 +2009,24 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not built:** notifying the approver (design flow step 1, TK-19) and escalation. Delegates can act, but their inbox does not list their principal's items.
   - **Owner step:** run the Purchase and Sales suites and the ui-components spec. Configure a workflow through `api/approval-workflows` until TK-103 gives it a screen.
 ### TK-101 · Approvals: spend money and manual journals
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#89](https://github.com/jothi-prabaharan/Bill-Book/issues/89)
 - **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —
 - **Sub-tasks:**
-  - [ ] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
-  - [ ] The same flow; `GET api/approvals/mine` for Accounting.
-  - [ ] Test: a journal is approved by two levels; the second approver cannot be the first.
+  - [x] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
+  - [x] The same flow; `GET api/approvals/mine` for Accounting.
+  - [x] Test: a journal is approved by two levels; the second approver cannot be the first.
 - **Done when:** a manual journal configured for two levels posts only after both.
+- **As built:**
+  - **One flow for every service.** The document flow moved out of Purchase into `Shared.Kernel.Approvals.DocumentApprovalService<TStep>`: submit, act, chain, gate, return to draft and inbox. Purchase and Accounting each supply only how to find their documents and steps. `DocumentApprovalActionRequest` is the shared request body, and the amount hook is asynchronous because a journal's amount is the sum of its saved lines.
+  - **`acc.ApprovalSteps`** (`AccountingApprovalStep`, with `Round`) has RLS. `Journal` and `SpendMoney` carry the four summary columns (migration `AccountingApprovals`).
+  - **Neither document has ReadyToPost**, so approval changes only the summary: `Post` is gated (`SaveJournalOutcome.AwaitingApproval = 14`, `MoneyDocumentOutcome.AwaitingApproval = 16`, both 409). Only the public `JournalService.PostAsync` is gated; `PostSystemAsync` (the fixed asset register's journals) is not. An edit mid-chain returns the draft and the PUT answers 200 with a message.
+  - **Routes:**
+    - `api/journals/{id}/submit|approval` under `accounting`, and `api/spend-money/{id}/submit|approval` under `banking`.
+    - Each has an inbox at `…/approvals/mine`, filtered to its own kind so a banking-only user never sees journals. These sit under the gateway's existing prefixes; TK-103 merges them.
+  - **Nobody approves two levels of one round** (`ApprovalRefusal.ApprovedEarlierLevel`). This is enforced for every document service, Purchase included. HRMS requests are untouched and keep relying on Master's skip rules.
+  - **UI:** `bb-approval-panel` sits under the journal and spend-money draft forms.
+  - **Tests:** `AccountingApprovalTests` and `ApprovalChainTests`.
 
 ### TK-102 · Approvals: credit notes and the two overrides
 - [ ] open

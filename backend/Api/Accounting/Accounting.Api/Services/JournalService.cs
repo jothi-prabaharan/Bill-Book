@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
@@ -53,6 +54,7 @@ public sealed class JournalService
     private readonly ICurrentUser _user;
     private readonly ITenantContext _tenant;
     private readonly TimeProvider _clock;
+    private readonly AccountingApprovalService? _approvals;
 
     public JournalService(
         AccountingDbContext db,
@@ -62,7 +64,8 @@ public sealed class JournalService
         IBaseCurrencyProvider baseCurrency,
         ICurrentUser user,
         ITenantContext tenant,
-        TimeProvider clock)
+        TimeProvider clock,
+        AccountingApprovalService? approvals = null)
     {
         _db = db;
         _postings = postings;
@@ -72,6 +75,7 @@ public sealed class JournalService
         _user = user;
         _tenant = tenant;
         _clock = clock;
+        _approvals = approvals;
     }
 
     public async Task<IReadOnlyList<JournalListItem>> ListAsync(
@@ -293,10 +297,16 @@ public sealed class JournalService
         // time and fail on a row count of zero.
         Forget(journalId);
 
+        // An edit to a journal in approval, or approved, sends it back: an
+        // approval approves what the approver saw (TK-101).
+        bool returned = _approvals is not null
+            && await _approvals.ReturnToDraftAsync(ApprovalRequestKind.ManualJournal, journalId, journal, ct);
+
         _db.JournalDetails.AddRange(BuildLines(journal, request.Lines));
         await _db.SaveChangesAsync(ct);
 
-        return new SaveJournalResult(SaveJournalOutcome.Ok, journalId);
+        return new SaveJournalResult(SaveJournalOutcome.Ok, journalId,
+            returned ? "Saved. The journal was taken out of approval and must be submitted again." : null);
     }
 
     /// <summary>Deletes a draft. A posted entry is reversed, never deleted.</summary>
@@ -329,9 +339,21 @@ public sealed class JournalService
     /// guarded update that joins whatever transaction is open, so a post that
     /// fails anywhere gives the number back rather than leaving a hole in a
     /// series an auditor will ask about.
+    ///
+    /// <b>A hand-written journal passes the approval gate first</b> (TK-101); a
+    /// module's own system journal does not, because no person wrote it.
     /// </summary>
-    public Task<SaveJournalResult> PostAsync(long journalId, CancellationToken ct) =>
-        PostCoreAsync(journalId, JournalLedgerSource, ct);
+    public async Task<SaveJournalResult> PostAsync(long journalId, CancellationToken ct)
+    {
+        if (_approvals is not null
+            && await _db.Journals.FirstOrDefaultAsync(j => j.JournalId == journalId, ct) is { Status: JournalStatus.Draft } draft
+            && await _approvals.GateAsync(ApprovalRequestKind.ManualJournal, draft, ct) is string awaiting)
+        {
+            return new SaveJournalResult(SaveJournalOutcome.AwaitingApproval, journalId, awaiting);
+        }
+
+        return await PostCoreAsync(journalId, JournalLedgerSource, ct);
+    }
 
     private async Task<SaveJournalResult> PostCoreAsync(
         long journalId, int ledgerSourceId, CancellationToken ct)

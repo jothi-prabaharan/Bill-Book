@@ -178,6 +178,13 @@ public enum MoneyDocumentOutcome
     /// bill and overpaying against it are two different purposes and remain legal.
     /// </summary>
     MappingRepeated = 15,
+
+    /// <summary>
+    /// An approval workflow applies and has not approved the document (TK-101):
+    /// it is waiting, was rejected, or was never submitted — or whether one
+    /// applies could not be established.
+    /// </summary>
+    AwaitingApproval = 16,
 }
 
 public sealed record MoneyDocumentResult(

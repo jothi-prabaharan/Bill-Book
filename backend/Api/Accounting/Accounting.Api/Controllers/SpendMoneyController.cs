@@ -55,8 +55,15 @@ public sealed class SpendMoneyController : ControllerBase
 
     [HttpPut("{id:long}")]
     public async Task<IActionResult> Update(
-        long id, [FromBody] SaveMoneyDocumentRequest request, CancellationToken ct) =>
-        Respond(await _documents.UpdateAsync(id, request, ct), NoContent);
+        long id, [FromBody] SaveMoneyDocumentRequest request, CancellationToken ct)
+    {
+        MoneyDocumentResult result = await _documents.UpdateAsync(id, request, ct);
+
+        // An edit that took the payment out of approval says so (TK-101).
+        return Respond(result, () => result.Detail is string detail
+            ? Ok(new MessageResponse { Message = detail })
+            : NoContent());
+    }
 
     [HttpPost("{id:long}/post")]
     public async Task<IActionResult> Post(long id, CancellationToken ct) =>
@@ -106,6 +113,11 @@ public sealed class SpendMoneyController : ControllerBase
             // A line pointing at the wrong kind of document, or at one another
             // line already settles. 409 rather than 400: the document is
             // well-formed, it just contradicts itself about what it pays.
+            MoneyDocumentOutcome.AwaitingApproval => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "This payment needs approval before it can be posted.",
+            }),
+
             MoneyDocumentOutcome.MappingNotSettleable
                 or MoneyDocumentOutcome.MappingRepeated => Conflict(new MessageResponse
                 {

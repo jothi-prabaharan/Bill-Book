@@ -12,6 +12,7 @@ import {
   MoneyInputComponent,
   SelectComponent,
   TextInputComponent,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 
 interface JournalListItem {
@@ -100,6 +101,7 @@ interface LineForm {
     TextInputComponent,
     MoneyInputComponent,
     SelectComponent,
+    ApprovalPanelComponent,
   ],
   templateUrl: './journals.page.html',
   styleUrl: './journals.page.scss',

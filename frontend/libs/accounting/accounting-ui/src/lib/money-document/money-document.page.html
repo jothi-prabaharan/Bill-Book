@@ -200,6 +200,11 @@
         Post
       </button>
     </div>
+
+    @if (direction() === 'spend' && editingId; as id) {
+      <!-- The payment's approval chain, when a workflow covers it (TK-101). -->
+      <bb-approval-panel [basePath]="'/api/spend-money/' + id" documentStatus="Draft" (changed)="open(id)" />
+    }
   </section>
 }
 

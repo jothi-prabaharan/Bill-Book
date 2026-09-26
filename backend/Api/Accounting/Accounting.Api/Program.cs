@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Accounting.Api.Services.Payments;
 using Shared.Kernel.Security;
 using System.Text;
@@ -77,6 +78,15 @@ builder.Services.AddScoped<BankLedgerService>();
 builder.Services.AddScoped<LedgerPostingService>();
 builder.Services.AddScoped<PeriodLockService>();
 builder.Services.AddScoped<JournalService>();
+
+// Approval chains for spend money and manual journals (TK-101): Master
+// resolves them, this service stores the steps.
+builder.Services.AddScoped<AccountingApprovalService>();
+builder.Services.AddHttpClient<IApprovalChainClient, HttpApprovalChainClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<LedgerReportService>();
 builder.Services.AddScoped<OpeningBalanceService>();
 builder.Services.AddScoped<DepreciationService>();

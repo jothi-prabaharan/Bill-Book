@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Purchase.Api.Services;
@@ -43,7 +42,7 @@ public sealed class PurchaseApprovalsController : ControllerBase
 
     [HttpPost(Documents + "/{id:long}/approval")]
     [PermissionAction("view")]
-    public async Task<IActionResult> Act(string document, long id, [FromBody] ApprovalActionRequest request, CancellationToken ct) =>
+    public async Task<IActionResult> Act(string document, long id, [FromBody] DocumentApprovalActionRequest request, CancellationToken ct) =>
         Respond(await _approvals.ActAsync(
             PurchaseApprovalService.KindOf(document)!.Value, id, request.Action, request.Comments, ct));
 
@@ -55,22 +54,13 @@ public sealed class PurchaseApprovalsController : ControllerBase
     [PermissionAction("view")]
     public async Task<IActionResult> Mine(CancellationToken ct) => Ok(await _approvals.MineAsync(ct));
 
-    private IActionResult Respond(PurchaseApprovalResult result) => result.Outcome switch
+    private IActionResult Respond(ApprovalResult result) => result.Outcome switch
     {
-        PurchaseApprovalOutcome.Ok => Ok(new { approvalStatus = result.ApprovalStatus }),
-        PurchaseApprovalOutcome.NotFound => NotFound(),
-        PurchaseApprovalOutcome.NoWorkflow => Ok(new { approvalStatus = (string?)null, message = result.Detail }),
-        PurchaseApprovalOutcome.NotTheApprover => StatusCode(StatusCodes.Status403Forbidden, new MessageResponse { Message = result.Detail! }),
-        PurchaseApprovalOutcome.Unavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = result.Detail! }),
+        ApprovalResultOutcome.Ok => Ok(new { approvalStatus = result.ApprovalStatus }),
+        ApprovalResultOutcome.NotFound => NotFound(),
+        ApprovalResultOutcome.NoWorkflow => Ok(new { approvalStatus = (string?)null, message = result.Detail }),
+        ApprovalResultOutcome.NotTheApprover => StatusCode(StatusCodes.Status403Forbidden, new MessageResponse { Message = result.Detail! }),
+        ApprovalResultOutcome.Unavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = result.Detail! }),
         _ => Conflict(new MessageResponse { Message = result.Detail ?? "That move is not open." }),
     };
-}
-
-public sealed class ApprovalActionRequest
-{
-    [EnumDataType(typeof(ApprovalAction), ErrorMessage = "Choose approve, reject or send back.")]
-    public ApprovalAction Action { get; set; } = ApprovalAction.Approve;
-
-    [MaxLength(2000, ErrorMessage = "Comments cannot exceed 2000 characters.")]
-    public string? Comments { get; set; }
 }

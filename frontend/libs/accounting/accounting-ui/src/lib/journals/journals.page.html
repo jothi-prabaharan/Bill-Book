@@ -136,6 +136,11 @@
         Post
       </button>
     </div>
+
+    @if (editingId; as id) {
+      <!-- The journal's approval chain, when a workflow covers it (TK-101). -->
+      <bb-approval-panel [basePath]="'/api/journals/' + id" documentStatus="Draft" (changed)="open(id)" />
+    }
   </section>
 }
 

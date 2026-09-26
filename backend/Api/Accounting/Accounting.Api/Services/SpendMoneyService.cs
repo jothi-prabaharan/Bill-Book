@@ -3,6 +3,7 @@ using Accounting.Entity.Models;
 using Accounting.Entity.TableEntities;
 using Accounting.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tenancy;
@@ -36,6 +37,7 @@ public sealed class SpendMoneyService
     private readonly IBaseCurrencyProvider _baseCurrency;
     private readonly ICurrentUser _user;
     private readonly TimeProvider _clock;
+    private readonly AccountingApprovalService? _approvals;
 
     public SpendMoneyService(
         AccountingDbContext db,
@@ -43,7 +45,8 @@ public sealed class SpendMoneyService
         INumberGenerator numbers,
         IBaseCurrencyProvider baseCurrency,
         ICurrentUser user,
-        TimeProvider clock)
+        TimeProvider clock,
+        AccountingApprovalService? approvals = null)
     {
         _db = db;
         _ledger = ledger;
@@ -51,6 +54,7 @@ public sealed class SpendMoneyService
         _baseCurrency = baseCurrency;
         _user = user;
         _clock = clock;
+        _approvals = approvals;
     }
 
     public async Task<IReadOnlyList<MoneyDocumentListItem>> ListAsync(
@@ -221,10 +225,16 @@ public sealed class SpendMoneyService
             stale.State = EntityState.Detached;
         }
 
+        // An edit to a payment in approval, or approved, sends it back: an
+        // approval approves what the approver saw (TK-101).
+        bool returned = _approvals is not null
+            && await _approvals.ReturnToDraftAsync(ApprovalRequestKind.SpendMoney, id, document, ct);
+
         _db.SpendMoneyDetails.AddRange(BuildLines(document, request.Lines));
         await _db.SaveChangesAsync(ct);
 
-        return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id);
+        return new MoneyDocumentResult(MoneyDocumentOutcome.Ok, id,
+            returned ? "Saved. The payment was taken out of approval and must be submitted again." : null);
     }
 
     public async Task<MoneyDocumentResult> DeleteAsync(long id, CancellationToken ct)
@@ -270,6 +280,12 @@ public sealed class SpendMoneyService
         if (document.Status != MoneyDocumentStatus.Draft)
         {
             return new MoneyDocumentResult(MoneyDocumentOutcome.NotDraft);
+        }
+
+        if (_approvals is not null
+            && await _approvals.GateAsync(ApprovalRequestKind.SpendMoney, document, ct) is string awaiting)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.AwaitingApproval, id, awaiting);
         }
 
         List<SpendMoneyDetail> lines = await _db.SpendMoneyDetails

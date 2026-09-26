@@ -84,7 +84,7 @@ public static class DocumentApproval
         })];
 
     /// <summary>Copies where the chain stands onto the document: its status and who it waits on.</summary>
-    public static void Summarize<T>(Documents.DocumentHeaderBase document, ApprovalStatus? status, IEnumerable<T> steps)
+    public static void Summarize<T>(IApprovalSummary document, ApprovalStatus? status, IEnumerable<T> steps)
         where T : ApprovalStepBase
     {
         T? current = status == ApprovalStatus.InApproval ? ApprovalChain.Current(steps) : null;
@@ -96,7 +96,7 @@ public static class DocumentApproval
     }
 
     /// <summary>The refusal a lifecycle action gives while a document is under approval, or null.</summary>
-    public static string? Blocks(Documents.DocumentHeaderBase document) => document.ApprovalStatus switch
+    public static string? Blocks(IApprovalSummary document) => document.ApprovalStatus switch
     {
         ApprovalStatus.InApproval => "This document is waiting for approval.",
         ApprovalStatus.Rejected => "This document was rejected. Edit it and submit it for approval again.",

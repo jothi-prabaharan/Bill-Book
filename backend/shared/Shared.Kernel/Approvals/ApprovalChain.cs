@@ -21,6 +21,13 @@ public enum ApprovalRefusal
 
     /// <summary>The level requires a comment, or the action always does (reject, send back).</summary>
     CommentRequired = 3,
+
+    /// <summary>
+    /// The actor approved an earlier level of the same round. A document's
+    /// levels are separate pairs of eyes (TK-101), so a person who holds the
+    /// role of two levels takes only one of them.
+    /// </summary>
+    ApprovedEarlierLevel = 4,
 }
 
 /// <summary>The outcome of one action on a chain.</summary>
@@ -50,8 +57,13 @@ public static class ApprovalChain
         ApprovalRefusal.NotInApproval => "This request is not waiting for an approval.",
         ApprovalRefusal.NotTheApprover => "This request is waiting for someone else's approval.",
         ApprovalRefusal.CommentRequired => "Add a comment to say why.",
+        ApprovalRefusal.ApprovedEarlierLevel => "You approved an earlier level of this request. Another approver must take this one.",
         _ => string.Empty,
     };
+
+    /// <summary>Whether <paramref name="actor"/> approved a level of this round already.</summary>
+    public static bool ApprovedEarlier<T>(IEnumerable<T> steps, Guid actor) where T : ApprovalStepBase =>
+        steps.Any(s => s.StepStatus == ApprovalStepStatus.Approved && s.ActedByUserId == actor);
 
     /// <summary>The step that is Pending now, or null.</summary>
     public static T? Current<T>(IEnumerable<T> steps) where T : ApprovalStepBase =>

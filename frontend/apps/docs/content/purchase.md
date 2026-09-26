@@ -99,6 +99,7 @@ are configured per document kind, with levels that apply above an amount.
 - Each level's approver **approves**, **rejects** or **sends back**, with a comment. Only that
   level's approver, any holder of its role, or their delegate can act. Being the approver is the
   authority; no extra permission is needed.
+  Nobody approves two levels of one chain, even holding both levels' role.
 - The last approval makes the document ready to issue or post. Issuing and posting still need the
   **purchase.approve** permission.
 - **Editing** a document that is in approval, or already approved, returns it to draft and ends the

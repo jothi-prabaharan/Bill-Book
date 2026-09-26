@@ -38,12 +38,12 @@ public sealed class PurchaseApprovalTests
         Harness h = await Harness.CreateAsync(_pg);
         long order = await h.OrderAsync(unitPrice: 1_000m, quantity: 150m); // ₹1,50,000 + GST
 
-        Assert.Equal(PurchaseApprovalOutcome.Ok, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
+        Assert.Equal(ApprovalResultOutcome.Ok, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
         Assert.Equal(ApprovalStatus.InApproval, (await h.ReadAsync(order)).ApprovalStatus);
         Assert.Equal("Accountant", (await h.ReadAsync(order)).CurrentStepLabel);
 
         h.User.Become(Accountant, AccountantRole);
-        Assert.Equal(PurchaseApprovalOutcome.Ok, (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Approve, null, default)).Outcome);
+        Assert.Equal(ApprovalResultOutcome.Ok, (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Approve, null, default)).Outcome);
 
         PurchaseOrder halfway = await h.ReadAsync(order);
         Assert.Equal(DocumentStatus.Draft, halfway.Status);
@@ -51,7 +51,7 @@ public sealed class PurchaseApprovalTests
         Assert.Equal(Owner, halfway.CurrentApproverUserId);
 
         h.User.Become(Owner, role: 1);
-        Assert.Equal(PurchaseApprovalOutcome.Ok, (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Approve, null, default)).Outcome);
+        Assert.Equal(ApprovalResultOutcome.Ok, (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Approve, null, default)).Outcome);
 
         PurchaseOrder approved = await h.ReadAsync(order);
         Assert.Equal(DocumentStatus.ReadyToPost, approved.Status);
@@ -81,10 +81,10 @@ public sealed class PurchaseApprovalTests
         await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default);
 
         h.User.Become(Guid.NewGuid(), role: 5);
-        PurchaseApprovalResult result = await h.Approvals.ActAsync(
+        ApprovalResult result = await h.Approvals.ActAsync(
             ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Approve, null, default);
 
-        Assert.Equal(PurchaseApprovalOutcome.NotTheApprover, result.Outcome);
+        Assert.Equal(ApprovalResultOutcome.NotTheApprover, result.Outcome);
         Assert.Equal(ApprovalStatus.InApproval, (await h.ReadAsync(order)).ApprovalStatus);
     }
 
@@ -135,7 +135,7 @@ public sealed class PurchaseApprovalTests
         Harness h = await Harness.CreateAsync(_pg, new FakeChains { NoWorkflow = true });
         long order = await h.OrderAsync(unitPrice: 100m, quantity: 10m);
 
-        Assert.Equal(PurchaseApprovalOutcome.NoWorkflow, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
+        Assert.Equal(ApprovalResultOutcome.NoWorkflow, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
         Assert.Equal(PurchaseOrderOutcome.Ok, (await h.Orders.ApproveAsync(order, default)).Outcome);
         Assert.Equal(DocumentStatus.ReadyToPost, (await h.ReadAsync(order)).Status);
     }
@@ -147,7 +147,7 @@ public sealed class PurchaseApprovalTests
         long order = await h.OrderAsync(unitPrice: 100m, quantity: 10m);
 
         Assert.Equal(PurchaseOrderOutcome.LifecycleRefused, (await h.Orders.ApproveAsync(order, default)).Outcome);
-        Assert.Equal(PurchaseApprovalOutcome.Unavailable, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
+        Assert.Equal(ApprovalResultOutcome.Unavailable, (await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default)).Outcome);
     }
 
     [SkippableFact]
@@ -158,9 +158,9 @@ public sealed class PurchaseApprovalTests
         await h.Approvals.SubmitAsync(ApprovalRequestKind.PurchaseOrder, order, default);
         h.User.Become(Accountant, AccountantRole);
 
-        Assert.Equal(PurchaseApprovalOutcome.Refused,
+        Assert.Equal(ApprovalResultOutcome.Refused,
             (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Reject, null, default)).Outcome);
-        Assert.Equal(PurchaseApprovalOutcome.Ok,
+        Assert.Equal(ApprovalResultOutcome.Ok,
             (await h.Approvals.ActAsync(ApprovalRequestKind.PurchaseOrder, order, ApprovalAction.Reject, "Wrong vendor", default)).Outcome);
 
         PurchaseOrder rejected = await h.ReadAsync(order);

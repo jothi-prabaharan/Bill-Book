@@ -85,6 +85,8 @@ public class AccountingDbContext : TenantDbContext
     /// </summary>
     public DbSet<SpendMoney> SpendMoney => Set<SpendMoney>();
 
+    public DbSet<AccountingApprovalStep> ApprovalSteps => Set<AccountingApprovalStep>();
+
     public DbSet<SpendMoneyDetail> SpendMoneyDetails => Set<SpendMoneyDetail>();
 
     /// <summary>Money in. The mirror of <see cref="SpendMoney"/>.</summary>
@@ -972,6 +974,32 @@ public class AccountingDbContext : TenantDbContext
                 "chk_transactionratio_amount",
                 "\"Amount\" > 0"
             ));
+        });
+
+        // ---- Approvals (TK-101) ------------------------------------------
+
+        modelBuilder.Entity<Journal>(b =>
+        {
+            b.Property(e => e.ApprovalStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<SpendMoney>(b =>
+        {
+            b.Property(e => e.ApprovalStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<AccountingApprovalStep>(b =>
+        {
+            b.ToTable("ApprovalSteps");
+            b.HasKey(e => e.AccountingApprovalStepId);
+            b.HasIndex(e => new { e.OrgId, e.RequestKind, e.RequestId, e.Round, e.Sequence }).IsUnique();
+
+            // The inbox: whatever waits on a user or a role.
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.ApproverUserId });
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.RoleId });
+
+            b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
         });
 
         base.OnModelCreating(modelBuilder);

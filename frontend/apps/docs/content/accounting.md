@@ -294,6 +294,8 @@ A number is taken at **post**, not at save, so drafts you abandon leave the sequ
 
 If the books are closed to you for that date, posting is refused and the screen says so. Voiding is refused too — a void changes what the ledger says about that date just as much as a post does. Dating the document after the lock, or having the lock moved, is what unblocks it.
 
+A spend money payment covered by an approval workflow posts only once the chain has approved it. See [Approval workflows](#approval-workflows).
+
 ## Transfers
 
 Both ends are your own accounts, so there is no contact, nothing to allocate, and no counterparty balance involved: the transfer debits one account and credits the other and stops there.
@@ -586,6 +588,29 @@ Balances are held internally in debit terms and turned the right way up for disp
 **Trial balance** — every account with a balance, grouped by account type, each in the single column its net actually falls on. The two column totals agreeing is the one number that says the whole system is sound; when they disagree the page says so at the top rather than showing a tidy table with the discrepancy buried in it.
 
 Neither screen is a database view. A view that omitted `security_invoker` would run as its owner and read straight past row-level security, handing one branch another branch's general ledger — and the join it would have saved is a few lines of LINQ.
+
+## Approval workflows
+
+A branch can require **manual journals** and **spend money** payments to pass an **approval chain**
+before they post, for example "an Accountant, then the Owner above ₹50,000". The level amounts are
+compared against the journal's debit total, or the payment's amount in base currency.
+
+- On a saved draft covered by a workflow, the **Approval** panel under the form offers **Submit for
+  approval**. The draft then waits on the first level, and the panel shows who that is.
+- Each level's approver **approves**, **rejects** or **sends back**, with a comment. Only that
+  level's approver, a holder of its role, or their delegate can act. **Nobody approves two levels
+  of one chain**: someone who approved the first level cannot take the second, even if they hold
+  its role.
+- **Post** is refused until the last level approves. Posting a payment still needs the
+  **banking** permission, and a journal the **accounting** permission.
+- **Editing** a draft in approval, or already approved, ends the chain. The approvals given stay on
+  record, and submitting again starts over.
+- A journal the product writes for itself (a fixed asset disposal, say) is never held for approval.
+  Nobody keyed it by hand, so there is nothing for anyone to check.
+- Where no workflow applies, **Post** works as it always has. If the approval rules cannot be read,
+  posting is refused rather than let through.
+
+Setting up workflows and the approvals inbox come in a later release (TK-103).
 
 ## Isolation
 

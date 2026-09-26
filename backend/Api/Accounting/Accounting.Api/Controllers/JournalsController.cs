@@ -57,8 +57,15 @@ public sealed class JournalsController : ControllerBase
 
     [HttpPut("{journalId:long}")]
     public async Task<IActionResult> Update(
-        long journalId, [FromBody] SaveJournalRequest request, CancellationToken ct) =>
-        Respond(await _journals.UpdateAsync(journalId, request, ct), NoContent);
+        long journalId, [FromBody] SaveJournalRequest request, CancellationToken ct)
+    {
+        SaveJournalResult result = await _journals.UpdateAsync(journalId, request, ct);
+
+        // An edit that took the journal out of approval says so (TK-101).
+        return Respond(result, () => result.Detail is string detail
+            ? Ok(new MessageResponse { Message = detail })
+            : NoContent());
+    }
 
     [HttpPost("{journalId:long}/post")]
     public async Task<IActionResult> Post(long journalId, CancellationToken ct) =>
@@ -115,6 +122,11 @@ public sealed class JournalsController : ControllerBase
             SaveJournalOutcome.PeriodClosed => Conflict(new MessageResponse
             {
                 Message = result.Detail ?? "The books are closed for that date.",
+            }),
+
+            SaveJournalOutcome.AwaitingApproval => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "This entry needs approval before it can be posted.",
             }),
 
             // Transient, and the caller should come back rather than assume a

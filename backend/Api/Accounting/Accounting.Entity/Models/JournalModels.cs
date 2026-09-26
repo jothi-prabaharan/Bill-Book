@@ -193,6 +193,13 @@ public enum SaveJournalOutcome
     /// it.
     /// </summary>
     PeriodClosed = 13,
+
+    /// <summary>
+    /// An approval workflow applies and has not approved the journal (TK-101):
+    /// it is waiting, was rejected, or was never submitted — or whether one
+    /// applies could not be established.
+    /// </summary>
+    AwaitingApproval = 14,
 }
 
 public sealed record SaveJournalResult(

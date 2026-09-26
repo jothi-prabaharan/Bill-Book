@@ -17,6 +17,7 @@ import {
   SelectComponent,
   TextInputComponent,
   UiMessage,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import {
   AllocationApiService,
@@ -144,6 +145,7 @@ interface LineForm {
     AllocationFormComponent,
     AllocationModalComponent,
     SelectComponent,
+    ApprovalPanelComponent,
   ],
   templateUrl: './money-document.page.html',
   styleUrl: './money-document.page.scss',

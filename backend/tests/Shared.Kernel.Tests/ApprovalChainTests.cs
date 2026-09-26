@@ -220,6 +220,17 @@ public sealed class ApprovalChainTests
     }
 
     [Fact]
+    public void Approved_earlier_names_only_an_approver_of_this_round()
+    {
+        List<Step> steps = TwoLevels();
+        ApprovalChain.Start(steps);
+        ApprovalChain.Act(steps, ApprovalAction.Approve, Manager, true, null, Now);
+
+        Assert.True(ApprovalChain.ApprovedEarlier(steps, Manager));
+        Assert.False(ApprovalChain.ApprovedEarlier(steps, Hr));
+    }
+
+    [Fact]
     public void Every_refusal_has_a_sentence()
     {
         foreach (ApprovalRefusal refusal in Enum.GetValues<ApprovalRefusal>().Where(r => r != ApprovalRefusal.None))

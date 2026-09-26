@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Accounting.Entity.Enums;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Tenancy;
 
 namespace Accounting.Entity.TableEntities;
@@ -25,7 +26,7 @@ namespace Accounting.Entity.TableEntities;
 /// meaning belongs to each <see cref="SpendMoneyDetail"/> rather than to the
 /// document.
 /// </summary>
-public class SpendMoney : OrgScopedEntity
+public class SpendMoney : OrgScopedEntity, IApprovalSummary
 {
     public long SpendMoneyId { get; set; }
 
@@ -127,4 +128,20 @@ public class SpendMoney : OrgScopedEntity
     /// unprintable.
     /// </summary>
     public long? PrintTemplateId { get; set; }
+
+    // ---- Approval (TK-101). A summary of acc.ApprovalSteps, so a list can say
+    // what the document waits on without reading every step.
+
+    /// <summary>Where it stands in an approval chain. Null when no workflow has been involved.</summary>
+    public ApprovalStatus? ApprovalStatus { get; set; }
+
+    /// <summary>The level it waits on, as the workflow labels it.</summary>
+    [MaxLength(50, ErrorMessage = "The step label cannot exceed 50 characters.")]
+    public string? CurrentStepLabel { get; set; }
+
+    /// <summary>Who it waits on, when that level names a user.</summary>
+    public Guid? CurrentApproverUserId { get; set; }
+
+    /// <summary>The role it waits on, when any holder of it may approve.</summary>
+    public int? CurrentApproverRoleId { get; set; }
 }
