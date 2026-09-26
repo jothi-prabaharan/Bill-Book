@@ -2053,7 +2053,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `SalesApprovalTests`, the new cases in `StockAdjustmentServiceTests`, `DiscountLimitSettingTests` and `limit-refusal.spec.ts`.
 
 ### TK-103 · Approvals: the inbox and Settings › Approval workflows
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#91](https://github.com/jothi-prabaharan/Bill-Book/issues/91)
 - **Lanes:** L-UI, L-WEB, L-DEPS · **Depends on:** TK-100 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `libs/settings/approval-workflows`: workflows per kind, levels with drag reorder.
