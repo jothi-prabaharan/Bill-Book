@@ -58,6 +58,10 @@ A save that breaches either is refused, and the screen offers **Request approval
 - If no workflow covers overrides, approval cannot be asked for and the save is refused. Ask an administrator to set one up.
 - If the discount limit cannot be read, the save is refused rather than let through.
 
+## Projects
+
+Each line can name a **project**. Posting splits the revenue across the projects the lines name. If every line names the same project, the receivable, tax and rounding carry it too. A line naming a project that is completed, cancelled or not this branch's cannot be saved. See [Projects](#/accounting) on the Accounts page.
+
 ## From a sales order
 
 **From an order** lists every confirmed sales order with something left to bill, and turns the one you pick into an invoice for what is left.

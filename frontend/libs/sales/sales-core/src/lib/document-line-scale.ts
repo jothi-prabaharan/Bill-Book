@@ -54,6 +54,8 @@ export interface ApiDocumentLine {
   lineType?: string | null;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
 }
@@ -105,6 +107,7 @@ export function toGridLine(line: ApiDocumentLine, lineNumber: number): DocumentL
     lineType: (line.lineType ?? 'Stock') as DocumentLine['lineType'],
     accountId: line.accountId ?? null,
     fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
+    projectId: line.projectId ?? null,
     lineTotal: 0,
     itemBatchId: line.itemBatchId ?? null,
     lineNotes: line.lineNotes ?? null,
@@ -138,6 +141,7 @@ export function toApiLine(line: DocumentLine): ApiDocumentLine {
     lineType: line.lineType,
     accountId: line.accountId ?? undefined,
     fixedAssetCategoryId: line.fixedAssetCategoryId ?? undefined,
+    projectId: line.projectId ?? undefined,
     itemBatchId: line.itemBatchId ?? undefined,
     lineNotes: line.lineNotes ?? undefined,
   };

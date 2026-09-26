@@ -70,3 +70,46 @@ public sealed class HttpProjectDirectory : IProjectDirectory
         return found.ToDictionary(p => p.ProjectId);
     }
 }
+
+/// <summary>Why the projects a document's lines name may not be stored, or null (TK-105).</summary>
+public static class ProjectCheck
+{
+    /// <summary>
+    /// Null when every project named is the branch's and still open, or when
+    /// none is named. "Could not ask" is a refusal, never a pass: a line saved
+    /// against a project nobody checked would only be refused later, at post.
+    /// </summary>
+    public static async Task<string?> RefusalAsync(IProjectDirectory? directory, IEnumerable<long?> projectIds, CancellationToken ct)
+    {
+        List<long> ids = [.. projectIds.Where(id => id is not null).Select(id => id!.Value).Distinct()];
+        if (directory is null || ids.Count == 0)
+        {
+            return null;
+        }
+
+        IReadOnlyDictionary<long, ProjectSummary> found;
+        try
+        {
+            found = await directory.FindAsync(ids, ct);
+        }
+        catch (HttpRequestException)
+        {
+            return "The projects on these lines could not be checked. Nothing was saved; try again in a moment.";
+        }
+
+        foreach (long id in ids)
+        {
+            if (!found.TryGetValue(id, out ProjectSummary? project))
+            {
+                return $"Project {id} is not a project of this branch.";
+            }
+
+            if (!project.IsPostable)
+            {
+                return $"Project {project.ProjectCode} is {project.Status.ToLowerInvariant()}, so nothing more can be charged to it.";
+            }
+        }
+
+        return null;
+    }
+}

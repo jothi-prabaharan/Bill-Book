@@ -162,6 +162,41 @@ public sealed class ProjectLedgerTests
     }
 
     /// <summary>
+    /// A replacement that names no project keeps the one its key carried
+    /// (TK-105): the costing worker settles an invoice line's cost of sales on
+    /// the line's key and knows nothing of projects.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_replacement_without_a_project_keeps_the_one_its_key_carried()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        long project = await h.ProjectAsync("Job");
+
+        PostLedgerRequest Cost(decimal amount, long? projectId) => new()
+        {
+            CustomerId = h.Tenant.CustomerId!.Value,
+            OrgId = h.Tenant.OrgId!.Value,
+            TransactionTypeCode = "INV",
+            TransactionId = 777,
+            LedgerDate = new DateOnly(2026, 8, 1),
+            Legs =
+            [
+                new LedgerLegRequest { LedgerTypeId = 4, LedgerSourceId = 3, TransactionDetailId = 5, AccountId = h.RentId, DebitAmount = amount, ProjectId = projectId },
+                new LedgerLegRequest { LedgerTypeId = 4, LedgerSourceId = 3, TransactionDetailId = 5, AccountId = h.CashId, CreditAmount = amount, ProjectId = projectId },
+            ],
+        };
+
+        Assert.Equal(PostLedgerOutcome.Ok, (await h.Postings.PostAsync(Cost(100m, project), default)).Outcome);
+        Assert.Equal(PostLedgerOutcome.Ok, (await h.Postings.PostAsync(Cost(120m, null), default)).Outcome);
+
+        h.Db.ChangeTracker.Clear();
+        List<JournalLedger> rows = await h.Db.JournalLedger.AsNoTracking().Where(l => l.TransactionId == 777).ToListAsync();
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, r => Assert.Equal(project, r.ProjectId));
+        Assert.Equal(120m, rows.Sum(r => r.DebitAmountBase));
+    }
+
+    /// <summary>
     /// Ledger type 7 (GDNI, TK-90) passes the request's validation. The range
     /// said six, which refused every delivery challan's posting at the door.
     /// </summary>

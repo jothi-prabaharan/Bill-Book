@@ -87,6 +87,7 @@
 
   <div class="line-grid-container">
     <bb-document-line-grid
+      [projects]="projectOptions()"
       [lines]="lines"
       [context]="context"
       (linesChange)="onLinesChange($event)"

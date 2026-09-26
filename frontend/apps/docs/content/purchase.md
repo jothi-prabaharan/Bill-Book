@@ -88,6 +88,10 @@ keying the paperwork, and a clerk who raises orders is precisely the person who
 should not also be able to issue them. A branch that does not want the review
 step can issue straight from draft.
 
+## Projects
+
+Each purchase order, goods receipt, bill and debit note line can name a **project**. A line's own ledger leg carries it, so what a job spent on materials and services lands on the job. The payable and the tax carry the project only when every line names the same one. See [Projects](#/accounting) on the Accounts page.
+
 ## Approval workflows
 
 A branch can require purchase orders, bills and debit notes to pass an **approval chain** before

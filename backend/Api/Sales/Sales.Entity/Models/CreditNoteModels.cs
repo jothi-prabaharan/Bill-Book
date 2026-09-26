@@ -65,6 +65,9 @@ public class CreditNoteLineView
 {
     public long CreditNoteDetailId { get; set; }
     public long InvoiceDetailId { get; set; }
+
+    /// <summary>The project, taken from the invoice line it credits (TK-105).</summary>
+    public long? ProjectId { get; set; }
     public long? ItemId { get; set; }
     public string? ItemLabel { get; set; }
     public string? HsnSacCode { get; set; }

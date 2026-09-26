@@ -19,6 +19,8 @@ import {
   TextInputComponent,
   TextareaComponent,
   recalculate,
+  ProjectOption,
+  ProjectOptionsService,
 } from '@bill-book/ui-components';
 
 import {
@@ -148,7 +150,12 @@ export class GoodsReceiptFormPage {
     this.receiving().reduce((sum, row) => sum + (row.rejectedQuantity || 0), 0),
   );
 
+  /** The branch's open projects, for tagging a line (TK-105). Empty for a user who cannot read them. */
+  protected readonly projectOptions = signal<readonly ProjectOption[]>([]);
+  private readonly projectSource = inject(ProjectOptionsService);
+
   constructor() {
+    void this.projectSource.load().then((options) => this.projectOptions.set(options));
     void this.loadReferenceData();
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -245,6 +252,7 @@ export class GoodsReceiptFormPage {
           lineType: line.lineType as DocumentLine['lineType'],
           accountId: line.accountId ?? null,
           fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
+          projectId: line.projectId ?? null,
           lineTotal: Math.round(line.lineTotal * PAISE),
           itemBatchId: line.itemBatchId ?? null,
           lineNotes: line.lineNotes ?? null,
@@ -514,6 +522,7 @@ export class GoodsReceiptFormPage {
           lineType: 'Stock' as const,
           accountId: null,
           fixedAssetCategoryId: null,
+          projectId: null,
           lineTotal: 0,
           itemBatchId: null,
           lineNotes: null,
@@ -674,6 +683,7 @@ export class GoodsReceiptFormPage {
         lineType: line.lineType,
         accountId: line.accountId,
         fixedAssetCategoryId: line.fixedAssetCategoryId,
+        projectId: line.projectId,
         itemBatchId: line.itemBatchId,
         batchNumber: row?.batchNumber || null,
         batchExpiryDate: row?.batchExpiryDate || null,

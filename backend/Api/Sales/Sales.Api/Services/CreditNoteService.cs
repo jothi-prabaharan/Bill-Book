@@ -174,6 +174,7 @@ public sealed class CreditNoteService
             {
                 CreditNoteDetailId = l.CreditNoteDetailId,
                 InvoiceDetailId = l.InvoiceDetailId,
+                ProjectId = l.ProjectId,
                 ItemId = l.ItemId,
                 ItemLabel = l.ItemId.HasValue && itemNames.TryGetValue(l.ItemId.Value, out var itemName) ? itemName.Name : null,
                 HsnSacCode = l.HsnSacCode,
@@ -361,6 +362,9 @@ public sealed class CreditNoteService
                 LineNumber = i + 1,
                 InvoiceDetailId = reqLine.InvoiceDetailId,
                 ItemId = reqLine.ItemId,
+
+                // A credit reverses revenue on the job the invoice line billed (TK-105).
+                ProjectId = invoiceLine.ProjectId,
                 HsnSacCode = invoiceLine.HsnSacCode,
                 Description = invoiceLine.Description,
                 Quantity = reqLine.Quantity,
@@ -829,18 +833,25 @@ public sealed class CreditNoteService
             TransactionDesc = "Credited to customer",
         });
 
+        // Split by the project each credited line billed (TK-105), the mirror
+        // of the invoice's revenue.
         decimal returned = creditNote.SubTotal - creditNote.DiscountAmount;
         if (returned > 0)
         {
-            postRequest.Legs.Add(new LedgerLegRequest
+            foreach ((long? project, decimal amount) in Shared.Kernel.Projects.ProjectLegs.Split(
+                returned, creditNote.Lines.Select(l => (l.ProjectId, l.TaxableAmount))))
             {
-                LedgerTypeId = ItemLedgerType,
-                LedgerSourceId = TransactionLedgerSource,
-                TransactionDetailId = 0,
-                AccountSystemName = SalesReturnsAccount,
-                DebitAmount = returned,
-                TransactionDesc = "Sales returned or reduced",
-            });
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ItemLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = 0,
+                    AccountSystemName = SalesReturnsAccount,
+                    DebitAmount = amount,
+                    TransactionDesc = "Sales returned or reduced",
+                    ProjectId = project,
+                });
+            }
         }
 
         // Grouped the way the invoice groups its own, so each reverses the
@@ -884,6 +895,7 @@ public sealed class CreditNoteService
             });
         }
 
+        postRequest.TagProjects(creditNote.Lines.Select(l => (l.CreditNoteDetailId, l.ProjectId)));
         return postRequest;
     }
 

@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Projects on sales and purchase lines.** Every line of a quote, order, challan, invoice, purchase order, goods receipt, bill or debit note can name a project from a **Project** row in the line grid. Posting carries the project to the ledger. An invoice's revenue is split across the projects its lines name. The receivable or payable carries a project only when every line agrees. A credit note follows the invoice lines it credits. See [Accounts](accounting#projects).
 - **Added**: **Accounting › Projects.** Set up the jobs the branch does, with a client, a billing method, tasks, milestones and a cost budget. Tag a manual journal line, or a spend or receive money line, with a project. Its ledger row then counts towards that project, and the project shows every row tagged with it. A completed or cancelled project takes no postings. See [Accounts](accounting#projects).
 - **Fixed**: **Delivery challans can post again.** The ledger refused the goods-delivered-not-invoiced posting a challan makes, so posting a challan was refused.
 - **Fixed**: **Settings › Approval workflows now loads when the product is reached through its gateway.** The gateway had no route to it.

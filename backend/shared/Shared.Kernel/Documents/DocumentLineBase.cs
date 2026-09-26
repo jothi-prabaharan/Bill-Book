@@ -135,6 +135,14 @@ public abstract class DocumentLineBase : OrgScopedEntity
     /// <summary>Required when <see cref="LineType"/> is Capital. The category owns the GL mapping, not the asset.</summary>
     public long? FixedAssetCategoryId { get; set; }
 
+    /// <summary>
+    /// The project the line belongs to (TK-105), or null. An unenforced id:
+    /// projects are Accounting's, checked through its internal API. Every
+    /// ledger leg built from this line carries it (design "Project accounting",
+    /// decision 4).
+    /// </summary>
+    public long? ProjectId { get; set; }
+
     /// <summary><see cref="TaxableAmount"/> plus <see cref="TaxAmount"/>.</summary>
     public decimal LineTotal { get; set; }
 

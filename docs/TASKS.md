@@ -2101,15 +2101,22 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
 
 ### TK-105 · Projects: sales and purchase lines carry the project to the ledger
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#93](https://github.com/jothi-prabaharan/Bill-Book/issues/93)
 - **Lanes:** L-KERNEL, L-SAL, L-PUR, L-SAL-UI, L-PUR-UI · **Depends on:** TK-104 · **Decision:** —
 - **Where:** `DocumentLineBase`; every `sal`/`pur` poster that builds `PostLedgerRequest` legs.
 - **Sub-tasks:**
-  - [ ] `ProjectId` on `DocumentLineBase` (migrations in `sal` and `pur`), validated through Accounting.
-  - [ ] Line legs carry the line's project; header legs carry it only when every line agrees (design, decision 4).
-  - [ ] A project picker in the shared line grid.
-  - [ ] Test: an invoice with two projects posts revenue to each and an untagged receivable; one with a single project tags the receivable too.
+  - [x] `ProjectId` on `DocumentLineBase` (migrations in `sal` and `pur`), validated through Accounting.
+  - [x] Line legs carry the line's project; header legs carry it only when every line agrees (design, decision 4).
+  - [x] A project picker in the shared line grid.
+  - [x] Test: an invoice with two projects posts revenue to each and an untagged receivable; one with a single project tags the receivable too.
+- **As built:**
+  - **Lines and saves:** `DocumentLineBase.ProjectId` (migrations `LineProjects` in `sal` and `pur`) is on every sales and purchase line request and view, and on the conversions that copy lines. A credit note line takes its invoice line's project.
+  - **Save check:** invoice, bill and debit note saves check projects through `Shared.Kernel.Projects.ProjectCheck` over `HttpProjectDirectory` (Accounting's `internal/projects/exists`). An unknown, completed or cancelled project is refused as `LineInvalid`, and so is an Accounting that cannot be asked. Other documents are enforced at post by Accounting.
+  - **Tagging legs:** `ProjectTagging.TagProjects` (Sales and Purchase) gives each line-level leg its line's project, and each header leg (detail id 0) `ProjectLegs.Common`. The invoice's one revenue leg and the credit note's one returns leg are split per project by `ProjectLegs.Split`, weighted by line taxable value, with the last part absorbing rounding so the posting still balances. Tagged posters: invoice, credit note, delivery challan (GDNI), bill, debit note, goods receipt.
+  - **Settled cost keeps its project:** `LedgerPostingService` carries a replaced key's project onto an untagged replacement (`CarryProjectsAsync`), so the costing worker's settled cost of sales keeps the line's project.
+  - **UI:** `bb-document-line-grid` takes an optional `projects` input and then shows a Project row per line. `ProjectOptionsService` loads the open projects, or none for a user without `projects.view`. It is wired into the quote, sales order, challan, invoice, purchase order, goods receipt and bill forms.
+  - **Tests:** `InvoiceProjectTests` (the card's two cases, untagged invoice, completed and foreign projects refused at save), `ProjectLegsTests`, the carry-on-replace case in `ProjectLedgerTests`, and `project-options.service.spec.ts`.
 - **Done when:** an invoice's revenue lands on the project its lines name.
 
 ### TK-106 · Projects: timesheets and billing time, expenses and milestones

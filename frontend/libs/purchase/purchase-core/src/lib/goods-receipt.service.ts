@@ -52,6 +52,8 @@ export interface SaveGoodsReceiptLineRequest {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   itemBatchId?: number | null;
   batchNumber?: string | null;
   batchExpiryDate?: string | null;
@@ -135,6 +137,8 @@ export interface GoodsReceiptLineView {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   lineTotal: number;
   itemBatchId?: number | null;
   lineNotes?: string | null;

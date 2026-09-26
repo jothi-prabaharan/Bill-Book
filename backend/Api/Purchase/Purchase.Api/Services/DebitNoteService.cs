@@ -58,6 +58,9 @@ public sealed class DebitNoteService
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
     private readonly PurchaseApprovalService? _approvals;
 
+    /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
+
     public DebitNoteService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -71,8 +74,10 @@ public sealed class DebitNoteService
         ILedgerClient ledger,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null)
+        PurchaseApprovalService? approvals = null,
+        Shared.Kernel.Projects.IProjectDirectory? projects = null)
     {
+        _projects = projects;
         _approvals = approvals;
         _db = db;
         _tenant = tenant;
@@ -230,6 +235,11 @@ public sealed class DebitNoteService
         note.Notes = request.Notes;
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new DebitNoteResult(DebitNoteOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
         List<TaxLineResult> taxLines = new(request.Lines.Count);
 
         // What each bill line has left, decremented as this note's own lines are
@@ -320,6 +330,7 @@ public sealed class DebitNoteService
                 LineType = lineReq.LineType,
                 AccountId = lineReq.AccountId ?? billLine.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId ?? billLine.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -458,7 +469,7 @@ public sealed class DebitNoteService
                 LedgerDate = note.DocumentDate,
                 ContactId = note.ContactId,
                 SourceDocumentId = note.DebitNoteId,
-                Legs = BuildLegs(note, returnedValue),
+                Legs = BuildLegs(note, returnedValue).TagProjects(note.Lines.Select(l => (l.DebitNoteDetailId, l.ProjectId))),
             },
             ct);
 
@@ -753,6 +764,7 @@ public sealed class DebitNoteService
                         LineType = l.LineType.ToString(),
                         AccountId = l.AccountId,
                         FixedAssetCategoryId = l.FixedAssetCategoryId,
+                        ProjectId = l.ProjectId,
                         LineTotal = l.LineTotal,
                         ItemBatchId = l.ItemBatchId,
                         LineNotes = l.LineNotes,

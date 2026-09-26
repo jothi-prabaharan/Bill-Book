@@ -35,6 +35,12 @@ const RATE_SCALE = 10_000;
  *
  * At ~360px the grid becomes a card per line, per the house rule.
  */
+/** A project a line may name, as the picker offers it (TK-105). */
+export interface ProjectOption {
+  value: number;
+  label: string;
+}
+
 @Component({
   changeDetection: ChangeDetectionStrategy.OnPush,
   selector: 'bb-document-line-grid',
@@ -74,6 +80,13 @@ export class DocumentLineGridComponent {
    * turn it on.
    */
   readonly showLineType = input(false);
+
+  /**
+   * The projects a line may be tagged with (TK-105). Empty by default, so a
+   * caller that passes none keeps the grid exactly as it was; given some,
+   * each line gets a project row.
+   */
+  readonly projects = input<readonly ProjectOption[]>([]);
 
   /** Emitted whenever a line changes, already recalculated. */
   readonly linesChange = output<readonly DocumentLine[]>();
@@ -136,6 +149,7 @@ export class DocumentLineGridComponent {
       lineType: 'Stock',
       accountId: null,
       fixedAssetCategoryId: null,
+      projectId: null,
       lineTotal: 0,
       itemBatchId: null,
       lineNotes: null,

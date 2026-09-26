@@ -144,6 +144,7 @@
       <h2 class="card__title">What was delivered</h2>
 
       <bb-document-line-grid
+      [projects]="projectOptions()"
         [lines]="lines()"
         [context]="gridContext()"
         [taxGroups]="taxGroups()"

@@ -181,6 +181,7 @@
       <h2 class="card__title">Lines</h2>
 
       <bb-document-line-grid
+      [projects]="projectOptions()"
         [lines]="lines()"
         [context]="gridContext()"
         [taxGroups]="taxGroups()"

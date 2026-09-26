@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Purchase.Repository;
@@ -11,9 +12,11 @@ using Purchase.Repository;
 namespace Purchase.Repository.Migrations.Tenant
 {
     [DbContext(typeof(PurchaseDbContext))]
-    partial class PurchaseDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260926081104_LineProjects")]
+    partial class LineProjects
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -162,6 +162,7 @@ public sealed class DeliveryChallanService
             Lines = deliveryChallan.Lines.Select(l => new DeliveryChallanLineView
             {
                 DeliveryChallanDetailId = l.DeliveryChallanDetailId,
+                ProjectId = l.ProjectId,
                 SalesOrderDetailId = l.SalesOrderDetailId,
                 ItemId = l.ItemId,
                 ItemLabel = l.ItemId.HasValue && itemNames.TryGetValue(l.ItemId.Value, out var itemName) ? itemName.Name : null,
@@ -346,6 +347,7 @@ public sealed class DeliveryChallanService
                 LineNumber = i + 1,
                 SalesOrderDetailId = reqLine.SalesOrderDetailId,
                 ItemId = reqLine.ItemId,
+                ProjectId = reqLine.ProjectId,
                 Quantity = reqLine.Quantity,
                 ConversionFactor = 1m,
                 BaseQuantity = computed.BaseQuantity,
@@ -620,6 +622,8 @@ public sealed class DeliveryChallanService
                 TransactionDesc = "Inventory relief (provisional)",
             });
         }
+
+        request.TagProjects(challan.Lines.Select(l => (l.DeliveryChallanDetailId, l.ProjectId)));
 
         PostLedgerOutcomeResult result = await _ledger.PostAsync(request, ct);
         return result.Posted ? null : result.Detail ?? "Accounting refused the challan's posting.";

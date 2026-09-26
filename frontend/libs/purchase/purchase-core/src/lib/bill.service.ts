@@ -51,6 +51,8 @@ export interface SaveBillLineRequest {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
 }
@@ -134,6 +136,8 @@ export interface BillLineView {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   lineTotal: number;
   itemBatchId?: number | null;
   lineNotes?: string | null;

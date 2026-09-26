@@ -341,6 +341,11 @@ public sealed class LedgerPostingService
             }
         }
 
+        // A replacement that names no project keeps the one its key already
+        // carried (TK-105): the costing worker settles an invoice line's cost
+        // of sales on the line's key, and knows nothing of projects.
+        await CarryProjectsAsync(request, typeCode, rows, ct);
+
         int replaced = await ReplaceAsync(request, typeCode, rows, ct);
 
         // ExecuteDelete goes straight to the database and the change tracker
@@ -413,6 +418,46 @@ public sealed class LedgerPostingService
         }
 
         return replaced;
+    }
+
+    /// <summary>
+    /// Fills an untagged row's project from the rows its key is about to
+    /// replace, when they carried exactly one. A key whose old rows named no
+    /// project, or several, is left as the caller sent it.
+    /// </summary>
+    private async Task CarryProjectsAsync(
+        PostLedgerRequest request, string typeCode, List<JournalLedger> rows, CancellationToken ct)
+    {
+        List<JournalLedger> untagged = [.. rows.Where(r => r.ProjectId is null)];
+        if (untagged.Count == 0)
+        {
+            return;
+        }
+
+        List<int> types = [.. untagged.Select(r => r.LedgerTypeId).Distinct()];
+        List<long> details = [.. untagged.Select(r => r.TransactionDetailId).Distinct()];
+
+        var existing = await _db.JournalLedger.AsNoTracking()
+            .Where(l => l.TransactionTypeCode == typeCode
+                && l.TransactionId == request.TransactionId
+                && l.ProjectId != null
+                && types.Contains(l.LedgerTypeId)
+                && details.Contains(l.TransactionDetailId))
+            .Select(l => new { l.LedgerTypeId, l.TransactionDetailId, l.ProjectId })
+            .Distinct()
+            .ToListAsync(ct);
+
+        foreach (JournalLedger row in untagged)
+        {
+            List<long?> carried = [.. existing
+                .Where(e => e.LedgerTypeId == row.LedgerTypeId && e.TransactionDetailId == row.TransactionDetailId)
+                .Select(e => e.ProjectId)];
+
+            if (carried.Count == 1)
+            {
+                row.ProjectId = carried[0];
+            }
+        }
     }
 
     /// <summary>

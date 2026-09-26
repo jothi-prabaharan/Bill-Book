@@ -51,6 +51,8 @@ export interface DocumentLine {
   lineType: LineType;
   accountId: number | null;
   fixedAssetCategoryId: number | null;
+  /** The project the line belongs to (TK-105); its ledger legs carry it. */
+  projectId?: number | null;
 
   /** Paise. `taxableAmount + taxAmount` — computed. */
   lineTotal: number;

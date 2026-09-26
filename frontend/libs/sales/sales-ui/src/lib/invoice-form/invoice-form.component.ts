@@ -37,6 +37,8 @@ import {
   UiMessage,
   NumberInputComponent,
   ApprovalPanelComponent,
+  ProjectOption,
+  ProjectOptionsService,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
@@ -207,7 +209,12 @@ export class InvoiceFormComponent implements OnInit {
     return state?.status === 'Registered' && !irnCancellable(state);
   });
 
+  /** The branch's open projects, for tagging a line (TK-105). Empty for a user who cannot read them. */
+  protected readonly projectOptions = signal<readonly ProjectOption[]>([]);
+  private readonly projectSource = inject(ProjectOptionsService);
+
   ngOnInit(): void {
+    void this.projectSource.load().then((options) => this.projectOptions.set(options));
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {

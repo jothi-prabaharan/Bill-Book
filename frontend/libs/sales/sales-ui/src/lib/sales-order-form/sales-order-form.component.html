@@ -255,6 +255,7 @@
 
   <div class="sor-form__lines">
     <bb-document-line-grid
+      [projects]="projectOptions()"
       [lines]="lines()"
       [context]="context()"
       (linesChange)="onLinesChange($event)"

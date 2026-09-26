@@ -626,7 +626,7 @@ The query filter is the first line of defence, not the last: it is a property of
 
 # Projects
 
-**Status: partial.** The project master is built, and so is the project tag on manual journal and money-document lines. Sales and purchase lines, timesheets and billing, and the project reports come in later releases.
+**Status: partial.** The project master is built, and so is the project tag on manual journal, money-document, sales and purchase lines. Timesheets and billing, and the project reports, come in later releases.
 
 **Accounting › Projects** lists the branch's projects. A project is a job the branch does, for a client or for itself, and it takes its code from the **PRJ** number series (PRJ-0001, PRJ-0002 and so on).
 
@@ -648,6 +648,16 @@ A project is never deleted, because the ledger rows tagged with it name it.
 ## Tagging a posting
 
 A **manual journal** line and a **spend** or **receive money** line can each name a project. A journal line's project is carried onto its own ledger row. A money line's project goes on the row for the balance it settles, and not on the bank row, because the cash belongs to no job.
+
+Every **sales and purchase document line** can name a project as well: quotes, sales orders, delivery challans, invoices, purchase orders, goods receipts, bills and debit notes. The line grid shows a **Project** row under each line to anyone who can read projects. A credit note line takes the project of the invoice line it credits.
+
+When such a document posts:
+
+- **A leg built from one line** carries that line's project: an expense or stock line on a bill, a delivered-goods or cost line on an invoice.
+- **An invoice's revenue**, which posts as one total, is split across the projects its lines name in proportion to each line's value. The parts add up to the revenue exactly. A credit note's returns split the same way.
+- **The receivable or payable, the tax and the rounding** carry a project only when **every line names the same one**. Otherwise they carry none, because splitting a customer's balance across jobs would invent balances nobody collects.
+
+When the costing engine later settles a line's cost of sales, the settled rows keep the line's project.
 
 The project is checked when the line is saved and again when it posts. The posting is refused if the project is not this branch's, or if it is completed or cancelled. A posting to a closed job would change a profit figure someone has already signed off.
 

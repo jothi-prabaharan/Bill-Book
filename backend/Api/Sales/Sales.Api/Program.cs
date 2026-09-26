@@ -276,6 +276,13 @@ builder.Services.AddAuthorization(options =>
 
 builder.Services.AddHostedService<DatabaseMigrationService>();
 
+// Which projects a line may name (TK-105): Accounting owns them.
+builder.Services.AddHttpClient<Shared.Kernel.Projects.IProjectDirectory, Shared.Kernel.Projects.HttpProjectDirectory>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Accounting:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+
 WebApplication app = builder.Build();
 
 if (app.Environment.IsDevelopment())

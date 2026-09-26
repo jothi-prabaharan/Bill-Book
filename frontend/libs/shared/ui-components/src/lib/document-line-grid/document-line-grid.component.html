@@ -221,6 +221,29 @@
             </td>
           </tr>
         }
+
+        @if (projects().length > 0) {
+          <!-- The project the line's ledger legs carry (TK-105). -->
+          <tr class="sub">
+            <td></td>
+            <td colspan="9">
+              <label class="muted project">
+                Project
+                <select
+                  [name]="'project' + i"
+                  [(ngModel)]="line.projectId"
+                  [disabled]="context().readonly"
+                  (ngModelChange)="touch(i)"
+                >
+                  <option [ngValue]="null">None</option>
+                  @for (project of projects(); track project.value) {
+                    <option [ngValue]="project.value">{{ project.label }}</option>
+                  }
+                </select>
+              </label>
+            </td>
+          </tr>
+        }
       } @empty {
         <tr class="empty">
           <td [attr.colspan]="7 + components().length">No lines yet.</td>

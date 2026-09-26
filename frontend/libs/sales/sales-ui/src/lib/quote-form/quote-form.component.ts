@@ -15,6 +15,8 @@ import {
   TextareaComponent,
   TextInputComponent,
   totalsOf,
+  ProjectOption,
+  ProjectOptionsService,
 } from '@bill-book/ui-components';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SalesPicker } from '../sales-picker';
@@ -86,7 +88,12 @@ export class QuoteFormComponent implements OnInit {
     return totalsOf(this.lines);
   }
 
+  /** The branch's open projects, for tagging a line (TK-105). Empty for a user who cannot read them. */
+  protected readonly projectOptions = signal<readonly ProjectOption[]>([]);
+  private readonly projectSource = inject(ProjectOptionsService);
+
   ngOnInit() {
+    void this.projectSource.load().then((options) => this.projectOptions.set(options));
     const id = this.route.snapshot.paramMap.get('id');
     if (id && id !== 'new') {
       this.isEdit = true;

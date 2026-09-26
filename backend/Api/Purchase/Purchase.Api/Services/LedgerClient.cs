@@ -89,6 +89,12 @@ public sealed class PostLedgerRequest
 
 public sealed class LedgerLegRequest
 {
+    /// <summary>
+    /// The project this leg belongs to (TK-105), or null. Set by
+    /// <see cref="ProjectTagging.TagProjects"/> from the document's lines.
+    /// </summary>
+    public long? ProjectId { get; set; }
+
     /// <summary>1 ITEM, 2 TAX, 3 CONTROL, 4 COGS, 5 FX, 6 ROUNDOFF.</summary>
     public int LedgerTypeId { get; set; }
 
@@ -137,4 +143,32 @@ public sealed class LedgerLegRequest
     public decimal CreditAmount { get; set; }
 
     public string? TransactionDesc { get; set; }
+}
+
+/// <summary>
+/// Hands a document's line projects to its ledger legs (TK-105): a line-level
+/// leg takes its line's project, a header-level leg the project every line
+/// shares, and a leg already tagged — a revenue part split by project — keeps
+/// its own.
+/// </summary>
+public static class ProjectTagging
+{
+    public static void TagProjects(this PostLedgerRequest request, IEnumerable<(long LineId, long? ProjectId)> lines) =>
+        request.Legs.TagProjects(lines);
+
+    public static List<LedgerLegRequest> TagProjects(this List<LedgerLegRequest> legs, IEnumerable<(long LineId, long? ProjectId)> lines)
+    {
+        List<(long LineId, long? ProjectId)> all = [.. lines];
+        long? common = Shared.Kernel.Projects.ProjectLegs.Common(all.Select(l => l.ProjectId));
+        Dictionary<long, long?> byLine = all.GroupBy(l => l.LineId).ToDictionary(g => g.Key, g => g.First().ProjectId);
+
+        foreach (LedgerLegRequest leg in legs.Where(l => l.ProjectId is null))
+        {
+            leg.ProjectId = leg.TransactionDetailId == 0
+                ? common
+                : byLine.GetValueOrDefault(leg.TransactionDetailId);
+        }
+
+        return legs;
+    }
 }

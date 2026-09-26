@@ -44,6 +44,8 @@ export interface SavePurchaseOrderLineRequest {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   itemBatchId?: number | null;
   lineNotes?: string | null;
 }
@@ -120,6 +122,8 @@ export interface PurchaseOrderLineView {
   lineType: string;
   accountId?: number | null;
   fixedAssetCategoryId?: number | null;
+  /** The project the line belongs to (TK-105). */
+  projectId?: number | null;
   lineTotal: number;
   itemBatchId?: number | null;
   lineNotes?: string | null;

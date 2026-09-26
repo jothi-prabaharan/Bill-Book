@@ -151,6 +151,7 @@
            showLineType is on: purchase is where Stock, Expense and Capital are
            all used. There is no reservation column — an order holds no stock. -->
       <bb-document-line-grid
+      [projects]="projectOptions()"
         [lines]="lines()"
         [context]="gridContext()"
         [taxGroups]="taxGroups()"

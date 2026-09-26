@@ -32,6 +32,8 @@ import {
   totalsOf,
   UiMessage,
   ApprovalPanelComponent,
+  ProjectOption,
+  ProjectOptionsService,
 } from '@bill-book/ui-components';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
@@ -242,7 +244,12 @@ export class SalesOrderFormComponent implements OnInit {
     ),
   );
 
+  /** The branch's open projects, for tagging a line (TK-105). Empty for a user who cannot read them. */
+  protected readonly projectOptions = signal<readonly ProjectOption[]>([]);
+  private readonly projectSource = inject(ProjectOptionsService);
+
   ngOnInit(): void {
+    void this.projectSource.load().then((options) => this.projectOptions.set(options));
     const id = this.route.snapshot.paramMap.get('id');
 
     if (id && id !== 'new') {

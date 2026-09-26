@@ -89,6 +89,9 @@ public sealed class InvoiceService : IInvoiceService
     /// <summary>Credit and discount overrides (TK-102). Null in tests that do not exercise them.</summary>
     private readonly InvoiceOverrideService? _overrides;
 
+    /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
+
     public InvoiceService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -109,8 +112,10 @@ public sealed class InvoiceService : IInvoiceService
         Shared.Kernel.Stock.IUqcLookup uqc,
         EInvoicing.IEInvoicePosting eInvoicing,
         IDiscountLimitClient? discountLimits = null,
-        InvoiceOverrideService? overrides = null)
+        InvoiceOverrideService? overrides = null,
+        Shared.Kernel.Projects.IProjectDirectory? projects = null)
     {
+        _projects = projects;
         _discountLimits = discountLimits;
         _overrides = overrides;
         _db = db;
@@ -404,6 +409,7 @@ public sealed class InvoiceService : IInvoiceService
                     LineType = x.Line.LineType,
                     AccountId = x.Line.AccountId,
                     FixedAssetCategoryId = x.Line.FixedAssetCategoryId,
+                    ProjectId = x.Line.ProjectId,
                     ItemBatchId = x.Line.ItemBatchId,
                     LineNotes = x.Line.LineNotes,
 
@@ -484,6 +490,11 @@ public sealed class InvoiceService : IInvoiceService
             Status = DocumentStatus.Draft,
         };
 
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
@@ -559,6 +570,7 @@ public sealed class InvoiceService : IInvoiceService
                 LineType = lineReq.LineType,
                 AccountId = lineReq.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -720,6 +732,11 @@ public sealed class InvoiceService : IInvoiceService
         invoice.Lines.Clear();
         await _db.SaveChangesAsync(ct);
 
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new InvoiceResult(InvoiceOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
         var taxLines = new List<TaxLineResult>(request.Lines.Count);
         var newDetails = new List<InvoiceDetail>(request.Lines.Count);
 
@@ -796,6 +813,7 @@ public sealed class InvoiceService : IInvoiceService
                 LineType = lineReq.LineType,
                 AccountId = lineReq.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -1074,6 +1092,7 @@ public sealed class InvoiceService : IInvoiceService
                 LineType = line.LineType.ToString(),
                 AccountId = line.AccountId,
                 FixedAssetCategoryId = line.FixedAssetCategoryId,
+                ProjectId = line.ProjectId,
                 LineTotal = line.LineTotal,
                 ItemBatchId = line.ItemBatchId,
                 LineNotes = line.LineNotes,
@@ -1724,18 +1743,25 @@ public sealed class InvoiceService : IInvoiceService
             });
         }
 
-        // Credit Sales Revenue (ITEM leg, type 1)
+        // Credit Sales Revenue (ITEM leg, type 1). One leg per project the lines
+        // name, in proportion to each line's taxable value (TK-105), so each
+        // job's revenue lands on it; the parts add up to the revenue exactly.
         if (totalRevenue > 0)
         {
-            postRequest.Legs.Add(new LedgerLegRequest
+            foreach ((long? project, decimal revenue) in Shared.Kernel.Projects.ProjectLegs.Split(
+                totalRevenue, invoice.Lines.Select(l => (l.ProjectId, l.TaxableAmount))))
             {
-                LedgerTypeId = ItemLedgerType,
-                LedgerSourceId = TransactionLedgerSource,
-                TransactionDetailId = 0,
-                AccountSystemName = SalesRevenueAccount,
-                CreditAmount = totalRevenue,
-                TransactionDesc = "Sales revenue",
-            });
+                postRequest.Legs.Add(new LedgerLegRequest
+                {
+                    LedgerTypeId = ItemLedgerType,
+                    LedgerSourceId = TransactionLedgerSource,
+                    TransactionDetailId = 0,
+                    AccountSystemName = SalesRevenueAccount,
+                    CreditAmount = revenue,
+                    TransactionDesc = "Sales revenue",
+                    ProjectId = project,
+                });
+            }
         }
 
         // Credit Tax Payable (TAX legs, type 2)
@@ -1865,6 +1891,10 @@ public sealed class InvoiceService : IInvoiceService
         {
             postRequest.ProvisionalLedgerTypeIds = [CogsLedgerType];
         }
+
+        // The receivable, tax and round-off carry the project every line shares;
+        // cost legs carry their own line's (TK-105).
+        postRequest.TagProjects(invoice.Lines.Select(l => (l.InvoiceDetailId, l.ProjectId)));
 
         var result = await _ledgerClient.PostAsync(postRequest, ct);
         if (!result.Posted)

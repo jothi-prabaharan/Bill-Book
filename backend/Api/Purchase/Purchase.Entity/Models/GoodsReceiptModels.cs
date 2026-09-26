@@ -132,6 +132,9 @@ public class SaveGoodsReceiptLineRequest
 
     public long? FixedAssetCategoryId { get; set; }
 
+    /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
+    public long? ProjectId { get; set; }
+
     // ---- Batch, expiry and serial. Captured here because they are what the
     // person unpacking the carton can see, and nowhere else.
 
@@ -326,6 +329,9 @@ public class GoodsReceiptLineView
     public long? AccountId { get; set; }
 
     public long? FixedAssetCategoryId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
+    public long? ProjectId { get; set; }
 
     public decimal LineTotal { get; set; }
 

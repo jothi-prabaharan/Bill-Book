@@ -233,6 +233,7 @@
 
   <div class="dlc-form__lines">
     <bb-document-line-grid
+      [projects]="projectOptions()"
       [lines]="lines()"
       [context]="context()"
       (linesChange)="onLinesChange($event)"

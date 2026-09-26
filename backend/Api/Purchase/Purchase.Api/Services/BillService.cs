@@ -67,6 +67,9 @@ public sealed class BillService
     /// <summary>Approval chains (TK-100). Null in tests that do not exercise them.</summary>
     private readonly PurchaseApprovalService? _approvals;
 
+    /// <summary>Checks a line's project through Accounting (TK-105). Null in tests that do not exercise it.</summary>
+    private readonly Shared.Kernel.Projects.IProjectDirectory? _projects;
+
     public BillService(
         PurchaseDbContext db,
         ITenantContext tenant,
@@ -82,8 +85,10 @@ public sealed class BillService
         IFixedAssetClient fixedAssets,
         ICurrentUser user,
         TimeProvider clock,
-        PurchaseApprovalService? approvals = null)
+        PurchaseApprovalService? approvals = null,
+        Shared.Kernel.Projects.IProjectDirectory? projects = null)
     {
+        _projects = projects;
         _approvals = approvals;
         _db = db;
         _tenant = tenant;
@@ -318,6 +323,11 @@ public sealed class BillService
         bill.TermsAndConditions = request.TermsAndConditions;
 
         TaxContext taxContext = new(pos.IsInterState, settings.DiscountBeforeTax);
+        if (await Shared.Kernel.Projects.ProjectCheck.RefusalAsync(_projects, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new BillResult(BillOutcome.LineInvalid, Detail: projectRefusal);
+        }
+
         List<TaxLineResult> taxLines = new(request.Lines.Count);
 
         for (int i = 0; i < request.Lines.Count; i++)
@@ -426,6 +436,7 @@ public sealed class BillService
                 LineType = lineReq.LineType,
                 AccountId = lineReq.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -615,7 +626,10 @@ public sealed class BillService
             }
         }
 
-        List<LedgerLegRequest> legs = BuildLegs(bill, againstReceipt);
+        // Each line's leg carries its project, the payable and tax the project
+        // every line shares (TK-105).
+        List<LedgerLegRequest> legs = BuildLegs(bill, againstReceipt)
+            .TagProjects(bill.Lines.Select(l => (l.BillDetailId, l.ProjectId)));
 
         PostLedgerOutcomeResult posted = await _ledger.PostAsync(
             new PostLedgerRequest
@@ -976,6 +990,7 @@ public sealed class BillService
                         LineType = l.LineType.ToString(),
                         AccountId = l.AccountId,
                         FixedAssetCategoryId = l.FixedAssetCategoryId,
+                        ProjectId = l.ProjectId,
                         LineTotal = l.LineTotal,
                         ItemBatchId = l.ItemBatchId,
                         LineNotes = l.LineNotes,

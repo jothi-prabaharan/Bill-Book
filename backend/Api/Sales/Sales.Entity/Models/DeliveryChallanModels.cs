@@ -74,6 +74,9 @@ public class DeliveryChallanLineView
 
     /// <summary>The order line this delivers against. Null on a challan raised without an order.</summary>
     public long? SalesOrderDetailId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-105), or null. Its GDNI legs carry it.</summary>
+    public long? ProjectId { get; set; }
     public long? ItemId { get; set; }
     public string? ItemLabel { get; set; }
     public string? HsnSacCode { get; set; }
@@ -185,6 +188,9 @@ public class SaveDeliveryChallanLineRequest
     /// stock and left the order exactly as it was.
     /// </summary>
     public long? SalesOrderDetailId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-105), or null. Its GDNI legs carry it.</summary>
+    public long? ProjectId { get; set; }
 }
 
 /// <summary>

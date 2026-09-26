@@ -351,6 +351,7 @@ public sealed class GoodsReceiptService
                 LineType = lineReq.LineType,
                 AccountId = lineReq.AccountId,
                 FixedAssetCategoryId = lineReq.FixedAssetCategoryId,
+                ProjectId = lineReq.ProjectId,
                 LineTotal = computed.LineTotal,
                 ItemBatchId = lineReq.ItemBatchId,
                 LineNotes = lineReq.LineNotes,
@@ -500,6 +501,8 @@ public sealed class GoodsReceiptService
                 CreditAmount = receivedValue,
                 TransactionDesc = "Goods received not invoiced",
             });
+
+            legs.TagProjects(stockLines.Select(l => (l.GoodsReceiptDetailId, l.ProjectId)));
 
             PostLedgerOutcomeResult posted = await _ledger.PostAsync(
                 new PostLedgerRequest
@@ -725,6 +728,7 @@ public sealed class GoodsReceiptService
                         LineType = l.LineType.ToString(),
                         AccountId = l.AccountId,
                         FixedAssetCategoryId = l.FixedAssetCategoryId,
+                        ProjectId = l.ProjectId,
                         LineTotal = l.LineTotal,
                         ItemBatchId = l.ItemBatchId,
                         LineNotes = l.LineNotes,

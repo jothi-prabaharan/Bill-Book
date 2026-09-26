@@ -15,6 +15,8 @@ import {
   TextareaComponent,
   recalculate,
   ApprovalPanelComponent,
+  ProjectOption,
+  ProjectOptionsService,
 } from '@bill-book/ui-components';
 import {
   BillService,
@@ -121,7 +123,12 @@ export class BillFormPage {
     currencyDecimals: 2,
   }));
 
+  /** The branch's open projects, for tagging a line (TK-105). Empty for a user who cannot read them. */
+  protected readonly projectOptions = signal<readonly ProjectOption[]>([]);
+  private readonly projectSource = inject(ProjectOptionsService);
+
   constructor() {
+    void this.projectSource.load().then((options) => this.projectOptions.set(options));
     void this.loadReferenceData();
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -221,6 +228,7 @@ export class BillFormPage {
           lineType: line.lineType as DocumentLine['lineType'],
           accountId: line.accountId ?? null,
           fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
+          projectId: line.projectId ?? null,
           lineTotal: Math.round(line.lineTotal * PAISE),
           itemBatchId: line.itemBatchId ?? null,
           lineNotes: line.lineNotes ?? null,
@@ -407,6 +415,7 @@ export class BillFormPage {
               lineType: line.lineType as DocumentLine['lineType'],
               accountId: line.accountId ?? null,
               fixedAssetCategoryId: line.fixedAssetCategoryId ?? null,
+              projectId: line.projectId ?? null,
               lineTotal: 0,
               itemBatchId: line.itemBatchId ?? null,
               lineNotes: line.lineNotes ?? null,
@@ -559,6 +568,7 @@ export class BillFormPage {
       lineType: line.lineType,
       accountId: line.accountId,
       fixedAssetCategoryId: line.fixedAssetCategoryId,
+      projectId: line.projectId,
       itemBatchId: line.itemBatchId,
       lineNotes: line.lineNotes,
     }));

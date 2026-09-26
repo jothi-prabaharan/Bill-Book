@@ -106,6 +106,9 @@ public class SaveDebitNoteLineRequest
 
     public long? FixedAssetCategoryId { get; set; }
 
+    /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
+    public long? ProjectId { get; set; }
+
     public long? ItemBatchId { get; set; }
 
     [MaxLength(300, ErrorMessage = "Line notes cannot exceed 300 characters.")]
@@ -259,6 +262,9 @@ public class DebitNoteLineView
     public long? AccountId { get; set; }
 
     public long? FixedAssetCategoryId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-105), or null. Checked through Accounting.</summary>
+    public long? ProjectId { get; set; }
 
     public decimal LineTotal { get; set; }
 
