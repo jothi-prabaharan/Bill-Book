@@ -2101,7 +2101,8 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
 
 ### TK-105 · Projects: sales and purchase lines carry the project to the ledger
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#93](https://github.com/jothi-prabaharan/Bill-Book/issues/93)
 - **Lanes:** L-KERNEL, L-SAL, L-PUR, L-SAL-UI, L-PUR-UI · **Depends on:** TK-104 · **Decision:** —
 - **Where:** `DocumentLineBase`; every `sal`/`pur` poster that builds `PostLedgerRequest` legs.
 - **Sub-tasks:**
