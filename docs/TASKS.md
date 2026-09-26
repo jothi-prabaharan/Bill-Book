@@ -763,7 +763,8 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
       (`A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key`).
 
 ### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#82](https://github.com/jothi-prabaharan/Bill-Book/issues/82)
 - **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
 - **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
   `InvoiceService.cs` (the challan branch and the aggregate Dr COGS / Cr GDNI at line 0),
@@ -3823,7 +3824,7 @@ into the queue with the failure under its Notes.
 These aren't tasks, and an agent never answers one itself. When a decision is made, record the
 answer and the date here, then change the blocked cards to `- [ ] open`.
 
-**D-01 to D-21 were answered by 25 September 2026.** A new question gets the next number (D-22).
+**D-01 to D-21 were answered by 25 September 2026.** A new question gets the next number (D-30).
 
 | ID | Question | Blocks | Answer |
 |---|---|---|---|
@@ -3851,7 +3852,8 @@ answer and the date here, then change the blocked cards to `- [ ] open`.
 | D-22 | Archived PDFs: how to reach PDF/A-2b, and render from the print template? PDFsharp 6.1.1 (D-11's pin) has no PDF/A API and cannot lay out HTML. Options: **(a)** move to a later PDFsharp with PDF/A support and keep the fixed layout; **(b)** hand-build PDF/A (XMP metadata, sRGB output intent, embedded fonts) on 6.1.1; **(c)** add an HTML-to-PDF engine to Printing so the archive is the template's own output | TK-22 | *Open.* Raised 2026-09-24 by TK-22 |
 | D-23 | Does a **General** branch get the metal purities? The `Vertical` enum and master.md 5.14 say yes (General is the everything branch); TK-30's card asks that a General branch get none. | TK-30 | *Open.* Raised 2026-09-24 by TK-30, which kept the recorded answer (General gets everything) |
 | D-24 | E-invoicing and e-way bill: reach the IRP through a GST Suvidha Provider (which one), or NIC's direct API? The design (TK-31) is written against an interface either can fill. | TK-91 | *Open.* Raised 2026-09-24 by TK-31 |
-| D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open.* Raised 2026-09-24 by TK-32 |
+| D-25 | Client portal online payments: which gateway — Paytm (named in the roadmap), Razorpay, PayU, Cashfree or another? The design (TK-32) records a receipt only on the gateway's verified callback, whichever it is. | TK-98 | *Open for the real provider.* Raised 2026-09-24 by TK-32. **Owner, 2026-09-26: build TK-98 now against a sandbox `IPaymentGateway`**, the way e-invoicing waits on D-24; the real provider is added when this is answered |
+| D-29 | Which discount limit raises a `SalesDiscountOverride` (TK-102)? The design says "the branch's limit", but no branch has one; the only limit is `Contact.MaxDiscountPercent`, which Sales never enforced. | TK-102 | **The contact's, else the branch's** (owner, 2026-09-26): a branch setting for the maximum line discount %, overridden by the contact's `MaxDiscountPercent` when that is set. Sales enforces both, and a save past the limit offers "request approval" |
 | D-26 | Approvals: move the approval engine's configuration and chain resolution from `Employee` (as TK-49 plans) to Master, with `Employee` answering only the employee-based approver kinds? RetailErp is sold without HRMS and has no employees, so a Employee-only engine cannot serve it (TK-33). | TK-99, TK-49 | **Master, `apr`** (owner, 2026-09-24). The state machine and step shape are in `Shared.Kernel.Approvals`; workflow configuration and chain resolution are Master's, in tenant schema `apr`; `Employee` answers only the employee-based approver kinds. TK-99 is unblocked, and TK-49 builds on it |
 | D-27 | CRM campaigns: send bulk email through a transactional email provider (Amazon SES, SendGrid, Postmark or another — which, and on whose account), or through each branch's own SMTP with a low daily cap? A branch mailbox would be rate-limited and risks blacklisting (TK-38). | TK-121 | *Open.* Raised 2026-09-24 by TK-38 |
 | D-28 | School work-order parts: a School-only customer has no Inventory. Its branches are not seeded for Inventory and `apps/school` has no item or store screens, so the part picker is empty. Options: **(a)** seed Inventory for School branches and mount the item and warehouse screens in `apps/school` under Maintenance; **(b)** let a School work order record a part as free text with a cost, with no stock kept; **(c)** issue parts only for customers who also hold RetailErp. | work-order parts for School-only customers | *Open.* Raised 2026-09-25 by TK-66, which issues through Inventory as its card says |
