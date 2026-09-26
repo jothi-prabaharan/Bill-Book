@@ -2120,7 +2120,8 @@ The build cards each design in section E produced. Each design section in `docs/
 - **Done when:** an invoice's revenue lands on the project its lines name.
 
 ### TK-106 · Projects: timesheets and billing time, expenses and milestones
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#94](https://github.com/jothi-prabaharan/Bill-Book/issues/94)
 - **Lanes:** L-ACC, L-ACC-UI, L-SAL, L-SAL-UI, L-PUR · **Depends on:** TK-105 · **Decision:** —
 - **Tables:** `acc.TimeEntries`; `IsBillable`, `MarkupPercent`, `BilledInvoiceId` on bill and spend-money lines
 - **Sub-tasks:**
