@@ -1797,7 +1797,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Checks: the backend builds with `-warnaserror`. `has-pending-model-changes` is clean for Sales and Master. Frontend typecheck and lint pass, and the web build is clean.
 
 ### TK-94 · Portal: revocable access and one-hour sessions
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#83](https://github.com/jothi-prabaharan/Bill-Book/issues/83)
 - **Lanes:** L-CON, L-MST, L-PTL, L-KERNEL · **Depends on:** TK-32 · **Decision:** —
 - **Where:** `ContactService.GeneratePortalLinkAsync`, `JwtTokenService.CreatePortalToken`, `ContactsController` (`portal-link`), `apps/portal`; design "Client portal" → Access.
 - **Tables:** `con.PortalGrants`
