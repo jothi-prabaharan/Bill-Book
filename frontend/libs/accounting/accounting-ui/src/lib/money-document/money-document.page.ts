@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { ProjectListItem, loadProjects, projectOptions } from '../projects/project-options';
 import {
   AllocationModalComponent,
   AllocationRow,
@@ -77,6 +78,7 @@ interface MoneyLineView {
   amount: number;
   amountBase: number;
   lineMemo: string | null;
+  projectId?: number | null;
 }
 
 interface MoneyDocumentListItem {
@@ -109,6 +111,8 @@ interface LineForm {
   mappingTransactionId: string;
   amount: string;
   lineMemo: string;
+  /** The project the line belongs to (TK-104). */
+  projectId: number | null;
 }
 
 /**
@@ -159,6 +163,7 @@ export class MoneyDocumentPage implements OnInit {
     { field: 'source', header: 'What this is for' },
     { field: 'postsTo', header: 'Posts to' },
     { field: 'settles', header: 'Settles' },
+    { field: 'project', header: 'Project' },
     { field: 'memo', header: 'Memo' },
     { field: 'amount', header: 'Amount' },
     { field: 'actions', header: 'Actions' }
@@ -256,6 +261,12 @@ export class MoneyDocumentPage implements OnInit {
    */
   protected readonly lines = signal<LineForm[]>([]);
 
+  /** The branch's projects, for tagging a line (TK-104). Empty for a user who cannot read them. */
+  protected readonly projects = signal<ProjectListItem[]>([]);
+  protected readonly projectOptions = computed<BbSelectOption<number>[]>(() =>
+    projectOptions(this.projects(), this.lines().map((l) => l.projectId)),
+  );
+
   protected readonly sources = computed<readonly MoneySource[]>(() =>
     this.direction() === 'spend' ? SPEND_SOURCES : RECEIVE_SOURCES,
   );
@@ -346,6 +357,7 @@ export class MoneyDocumentPage implements OnInit {
         ]);
         this.bankAccounts.set(accounts);
         this.contacts.set(contacts);
+        this.projects.set(await loadProjects(this.http));
       }
     } catch {
       this.show(`Could not load ${this.title().toLowerCase()} documents.`, true);
@@ -473,6 +485,7 @@ export class MoneyDocumentPage implements OnInit {
         mappingTransactionId: l.mappingTransactionId === null ? '' : String(l.mappingTransactionId),
         amount: String(l.amount),
         lineMemo: l.lineMemo ?? '',
+        projectId: l.projectId ?? null,
       })),
     );
     this.editing.set(true);
@@ -587,6 +600,7 @@ export class MoneyDocumentPage implements OnInit {
             : '',
         amount: rest.toFixed(2),
         lineMemo: '',
+        projectId: null,
       },
     ]);
   }
@@ -620,6 +634,7 @@ export class MoneyDocumentPage implements OnInit {
           mappingTransactionId: this.reference(l.mappingTransactionId),
           amount: this.money(l.amount),
           lineMemo: l.lineMemo || null,
+          projectId: l.projectId,
         })),
       };
 
@@ -735,6 +750,7 @@ export class MoneyDocumentPage implements OnInit {
       mappingTransactionId: '',
       amount: '',
       lineMemo: '',
+      projectId: null,
     };
   }
 

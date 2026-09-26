@@ -714,7 +714,21 @@ public class AdminDbContext : DbContext
 
         // H10, H11 (TK-57, TK-58).
         "recruitment", "performance",
+
+        // Project accounting (TK-104). RetailErp's, but granted with fixed ids
+        // (see FixedGrantModules) so no existing grant is renumbered.
+        "projects",
     };
+
+    /// <summary>
+    /// RetailErp modules appended after the system roles' grants were first
+    /// numbered (TK-104). Their grants take fixed ids — 910,000,000 plus
+    /// 100,000 × the role plus the permission id — because appended to the
+    /// sequential grants they would renumber every grant after them, and a
+    /// migration of that many updates collided on the unique role-permission
+    /// index before (TK-70).
+    /// </summary>
+    public static readonly IReadOnlySet<string> FixedGrantModules = new HashSet<string> { "projects" };
 
     /// <summary>
     /// Permissions outside the module × action grid (TK-60): a verb only one
@@ -942,7 +956,7 @@ public class AdminDbContext : DbContext
         // every grant after them, and a migration of that many updates collided
         // on the unique role-permission index before (TK-70).
         List<Permission> retail = nonPlatform
-            .Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId < 10_000)
+            .Where(p => p.Apps.HasFlag(App.RetailErp) && p.PermissionId < 10_000 && !FixedGrantModules.Contains(p.Module))
             .ToList();
 
         Grant(owner, retail);
@@ -992,6 +1006,27 @@ public class AdminDbContext : DbContext
                         PermissionId = extra.PermissionId,
                     });
                 }
+            }
+        }
+
+        // Projects (TK-104): Owner, Administrator and Accountant run them; Sales
+        // and Viewer read them. Fixed ids, so nothing above moves.
+        foreach (Permission permission in nonPlatform.Where(p => FixedGrantModules.Contains(p.Module) && p.PermissionId < 10_000))
+        {
+            bool isView = permission.Code.EndsWith(".view", StringComparison.Ordinal);
+            foreach (int roleId in new[] { owner, administrator, accountant, sales, viewer })
+            {
+                if (roleId is sales or viewer && !isView)
+                {
+                    continue;
+                }
+
+                grants.Add(new RolePermission
+                {
+                    RolePermissionId = 910_000_000L + (100_000L * roleId) + permission.PermissionId,
+                    RoleId = roleId,
+                    PermissionId = permission.PermissionId,
+                });
             }
         }
 

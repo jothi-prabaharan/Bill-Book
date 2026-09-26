@@ -105,6 +105,7 @@ public sealed class ReceiveMoneyService
                 Amount = l.Amount,
                 AmountBase = l.AmountBase,
                 LineMemo = l.LineMemo,
+                ProjectId = l.ProjectId,
             })
             .ToListAsync(ct);
 
@@ -118,6 +119,11 @@ public sealed class ReceiveMoneyService
         if (invalid is not null)
         {
             return invalid;
+        }
+
+        if (await ProjectRules.RefusalAsync(_db, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.ProjectRefused, Detail: projectRefusal);
         }
 
         if (await ResolveBankAsync(request.BankAccountId, ct) is null)
@@ -190,6 +196,11 @@ public sealed class ReceiveMoneyService
         if (invalid is not null)
         {
             return invalid;
+        }
+
+        if (await ProjectRules.RefusalAsync(_db, request.Lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new MoneyDocumentResult(MoneyDocumentOutcome.ProjectRefused, Detail: projectRefusal);
         }
 
         (string? currency, decimal rate) = await ResolveCurrencyAsync(request, ct);
@@ -335,9 +346,11 @@ public sealed class ReceiveMoneyService
             // line, so each pair balances on its own and every row carries the
             // source that produced it — an overpayment's two halves stay
             // distinguishable in the ledger.
+            // The line's project rides on its control leg (TK-104); the bank
+            // leg is the branch's cash, which belongs to no job.
             legs.Add(MoneyPosting.Control(
                 line.LineNumber, line.LedgerSourceId, target, document.ContactId,
-                debit: 0m, credit: line.Amount, line.LineMemo, settledRate));
+                debit: 0m, credit: line.Amount, line.LineMemo, settledRate) with { ProjectId = line.ProjectId });
 
             legs.Add(MoneyPosting.Bank(
                 line.LineNumber, line.LedgerSourceId, bankAccountId.Value,
@@ -502,6 +515,7 @@ public sealed class ReceiveMoneyService
             Amount = line.Amount,
             AmountBase = MoneyPosting.Base(line.Amount, document.ExchangeRate),
             LineMemo = line.LineMemo,
+            ProjectId = line.ProjectId,
         });
 
     private IQueryable<MoneyDocumentListItem> Summarize(IQueryable<ReceiveMoney> documents) =>

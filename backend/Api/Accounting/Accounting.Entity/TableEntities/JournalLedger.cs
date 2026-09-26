@@ -140,4 +140,10 @@ public class JournalLedger : OrgScopedEntity
 
     /// <summary>The bank statement line this ledger row was reconciled against.</summary>
     public long? BankStatementLineId { get; set; }
+
+    /// <summary>
+    /// The project this row belongs to (TK-104), or null. A ledger dimension:
+    /// profit by project is a query over these rows.
+    /// </summary>
+    public long? ProjectId { get; set; }
 }

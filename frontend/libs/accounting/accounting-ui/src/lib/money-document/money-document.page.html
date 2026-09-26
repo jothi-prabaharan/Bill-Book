@@ -126,6 +126,21 @@
         }
       </ng-template>
 
+      <ng-template bbCellTemplate="project" let-row let-index="index">
+        @if (projectOptions().length > 0) {
+          <bb-select
+            ariaLabel="Project"
+            placeholder="—"
+            [options]="projectOptions()"
+            [name]="'project' + index"
+            [(ngModel)]="row.projectId"
+            (ngModelChange)="touch()"
+          />
+        } @else {
+          <span class="none">—</span>
+        }
+      </ng-template>
+
       <ng-template bbCellTemplate="memo" let-row let-index="index">
         <bb-text-input
           

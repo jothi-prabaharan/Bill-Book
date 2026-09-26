@@ -80,6 +80,9 @@ public class SaveMoneyLineRequest
 
     [MaxLength(300, ErrorMessage = "Line memo cannot exceed 300 characters.")]
     public string? LineMemo { get; set; }
+
+    /// <summary>The project the line belongs to (TK-104), or null. Carried to its control leg.</summary>
+    public long? ProjectId { get; set; }
 }
 
 /// <summary>A transfer between the organization's own accounts. No contact, no lines.</summary>
@@ -185,6 +188,9 @@ public enum MoneyDocumentOutcome
     /// applies could not be established.
     /// </summary>
     AwaitingApproval = 16,
+
+    /// <summary>A line names a project that is not the branch's, or is completed or cancelled (TK-104).</summary>
+    ProjectRefused = 17,
 }
 
 public sealed record MoneyDocumentResult(
@@ -242,6 +248,9 @@ public class MoneyDocumentView : MoneyDocumentListItem
 public class MoneyLineView
 {
     public long DetailId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-104), or null.</summary>
+    public long? ProjectId { get; set; }
 
     public int LineNumber { get; set; }
 

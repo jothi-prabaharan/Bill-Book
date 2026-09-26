@@ -1,0 +1,197 @@
+<h1>Projects</h1>
+<p class="hint">
+  Jobs the branch does, for a client or for itself. Tag a journal or payment line with a project and
+  its ledger row counts towards what the job earned and cost.
+</p>
+
+@if (message(); as text) {
+  <p [class]="messageIsError() ? 'error' : 'ok'">{{ text }}</p>
+}
+
+@if (editing()) {
+  <form class="editor" (ngSubmit)="save()">
+    <h2>{{ editingId === null ? 'New project' : projectCode + ' · ' + form.projectName }}</h2>
+
+    <div class="row">
+      <div class="field grow">
+        <bb-text-input label="Name" name="projectName" [(ngModel)]="form.projectName" required maxlength="150" [disabled]="!canEdit()" />
+      </div>
+      <div class="field grow">
+        <bb-select label="Client" name="contactId" placeholder="Internal project" [options]="contactOptions()" [(ngModel)]="form.contactId" [disabled]="!canEdit()" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field grow">
+        <bb-select label="Billing" name="billingMethod" [options]="billingOptions" [clearable]="false" [(ngModel)]="form.billingMethod" [disabled]="!canEdit()" />
+      </div>
+      @if (form.billingMethod === 'TimeAndMaterials') {
+        <div class="field grow">
+          <bb-select label="Hourly rate from" name="rateBasis" [options]="rateOptions" [clearable]="false" [(ngModel)]="form.rateBasis" [disabled]="!canEdit()" />
+        </div>
+        @if (form.rateBasis === 'ProjectRate') {
+          <div class="field">
+            <bb-number-input label="Hourly rate" name="hourlyRate" [(ngModel)]="form.hourlyRate" [disabled]="!canEdit()" />
+          </div>
+        }
+      }
+      @if (form.billingMethod === 'FixedFee') {
+        <div class="field">
+          <bb-number-input label="Fixed fee" name="fixedFee" [(ngModel)]="form.fixedFee" [disabled]="!canEdit()" />
+        </div>
+      }
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <bb-number-input label="Cost budget" name="budgetAmount" [(ngModel)]="form.budgetAmount" [disabled]="!canEdit()" />
+      </div>
+      <div class="field">
+        <bb-date-input label="Starts" name="startDate" [(ngModel)]="form.startDate" [disabled]="!canEdit()" />
+      </div>
+      <div class="field">
+        <bb-date-input label="Ends" name="endDate" [(ngModel)]="form.endDate" [disabled]="!canEdit()" />
+      </div>
+      <div class="field">
+        <bb-select label="Status" name="status" [options]="statusOptions" [clearable]="false" [(ngModel)]="form.status" [disabled]="!canEdit()" />
+      </div>
+    </div>
+
+    @if (form.status === 'Completed' || form.status === 'Cancelled') {
+      <p class="note">A {{ statusLabel(form.status).toLowerCase() }} project takes no more postings. Set it back to active to post to it again.</p>
+    }
+
+    <div class="field">
+      <bb-text-input label="Description" name="description" [(ngModel)]="form.description" maxlength="1000" [disabled]="!canEdit()" />
+    </div>
+
+    <h3>Tasks</h3>
+    @if (tasks().length === 0) {
+      <p class="hint">No tasks yet. Time will be logged against tasks.</p>
+    }
+    <ul class="sublist">
+      @for (task of tasks(); track $index; let i = $index) {
+        <li class="subrow" [class.inactive]="!task.isActive">
+          <div class="grow">
+            <bb-text-input ariaLabel="Task name" [name]="'task' + i" [(ngModel)]="task.taskName" (ngModelChange)="touch()" placeholder="Task name" [disabled]="!canEdit()" />
+          </div>
+          <div class="narrow">
+            <bb-number-input ariaLabel="Budget hours" [name]="'hours' + i" [(ngModel)]="task.budgetHours" (ngModelChange)="touch()" placeholder="Hours" [disabled]="!canEdit()" />
+          </div>
+          @if (form.rateBasis === 'TaskRate') {
+            <div class="narrow">
+              <bb-number-input ariaLabel="Hourly rate" [name]="'taskRate' + i" [(ngModel)]="task.hourlyRate" (ngModelChange)="touch()" placeholder="Rate" [disabled]="!canEdit()" />
+            </div>
+          }
+          <bb-checkbox text="Billable" [name]="'billable' + i" [(ngModel)]="task.isBillable" (ngModelChange)="touch()" [disabled]="!canEdit()" />
+          <bb-checkbox text="Active" [name]="'active' + i" [(ngModel)]="task.isActive" (ngModelChange)="touch()" [disabled]="!canEdit()" />
+          @if (canEdit() && task.projectTaskId === null) {
+            <button type="button" class="secondary" (click)="removeTask(i)" aria-label="Remove task">✕</button>
+          }
+        </li>
+      }
+    </ul>
+    @if (canEdit()) {
+      <button type="button" class="secondary" (click)="addTask()">+ Add a task</button>
+    }
+
+    @if (form.billingMethod === 'FixedFee') {
+      <h3>Milestones</h3>
+      <ul class="sublist">
+        @for (milestone of milestones(); track $index; let i = $index) {
+          <li class="subrow">
+            <div class="grow">
+              <bb-text-input ariaLabel="Milestone" [name]="'ms' + i" [(ngModel)]="milestone.name" (ngModelChange)="touch()" placeholder="Milestone" [disabled]="!canEdit() || !!milestone.invoiceId" />
+            </div>
+            <div class="narrow">
+              <bb-number-input ariaLabel="Amount" [name]="'msAmount' + i" [(ngModel)]="milestone.amount" (ngModelChange)="touch()" placeholder="Amount" [disabled]="!canEdit() || !!milestone.invoiceId" />
+            </div>
+            <div class="narrow">
+              <bb-date-input ariaLabel="Due" [name]="'msDue' + i" [(ngModel)]="milestone.dueDate" (ngModelChange)="touch()" [disabled]="!canEdit() || !!milestone.invoiceId" />
+            </div>
+            @if (milestone.invoiceId) {
+              <span class="pill">Billed</span>
+            } @else if (canEdit()) {
+              <button type="button" class="secondary" (click)="removeMilestone(i)" aria-label="Remove milestone">✕</button>
+            }
+          </li>
+        }
+      </ul>
+      @if (canEdit()) {
+        <button type="button" class="secondary" (click)="addMilestone()">+ Add a milestone</button>
+      }
+    }
+
+    <div class="actions">
+      @if (canEdit()) {
+        <button type="submit" [disabled]="busy()">Save project</button>
+      }
+      <button type="button" class="secondary" (click)="close()">{{ canEdit() ? 'Cancel' : 'Close' }}</button>
+    </div>
+
+    @if (editingId !== null) {
+      <h3>Ledger</h3>
+      @if (ledger().length === 0) {
+        <p class="hint">Nothing has been posted to this project yet.</p>
+      } @else {
+        <ul class="ledger">
+          @for (row of ledger(); track row.ledgerId) {
+            <li>
+              <span class="date">{{ formats.formatDate(row.ledgerDate) }}</span>
+              <span class="account">{{ row.accountCode }} {{ row.accountName }}</span>
+              <span class="doc">{{ row.documentNo ?? row.transactionTypeCode + '-' + row.transactionId }}</span>
+              <span class="amount">
+                @if (row.debit > 0) {
+                  Dr {{ formats.formatMoney(row.debit) }}
+                } @else {
+                  Cr {{ formats.formatMoney(row.credit) }}
+                }
+              </span>
+            </li>
+          }
+        </ul>
+        <p class="net">Net debit: {{ formats.formatMoney(ledgerNet()) }}</p>
+      }
+    }
+  </form>
+} @else {
+  <div class="toolbar">
+    <label class="filter">
+      Status
+      <select [(ngModel)]="statusFilter" name="statusFilter" (ngModelChange)="load()">
+        <option value="">All</option>
+        @for (option of statusOptions; track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
+        }
+      </select>
+    </label>
+    @if (canEdit()) {
+      <button type="button" (click)="startNew()">+ New project</button>
+    }
+  </div>
+
+  @if (rows().length === 0) {
+    <p class="empty">No projects yet.</p>
+  } @else {
+    <ul class="cards">
+      @for (project of rows(); track project.projectId) {
+        <li class="card" tabindex="0" (click)="open(project.projectId)" (keydown.enter)="open(project.projectId)">
+          <div class="card__title">
+            <strong>{{ project.projectCode }}</strong>
+            <span>{{ project.projectName }}</span>
+            <span class="pill" [class.closed]="project.status === 'Completed' || project.status === 'Cancelled'">{{ statusLabel(project.status) }}</span>
+          </div>
+          <div class="card__meta">
+            <span>{{ billingLabel(project.billingMethod) }}</span>
+            @if (project.budgetAmount !== null) {
+              <span>Budget {{ formats.formatMoney(project.budgetAmount) }}</span>
+            }
+            @if (project.endDate) {
+              <span>Ends {{ formats.formatDate(project.endDate) }}</span>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+}

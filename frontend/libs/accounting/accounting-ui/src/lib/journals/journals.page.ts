@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ProjectListItem, loadProjects, projectOptions } from '../projects/project-options';
 import {
   BbSelectOption,
   ColumnDef,
@@ -45,6 +46,7 @@ interface JournalLineView {
   debitAmount: number;
   creditAmount: number;
   lineMemo: string | null;
+  projectId?: number | null;
   reversesJournalDetailId: number | null;
   reversedByJournalDetailId: number | null;
 }
@@ -74,6 +76,8 @@ interface SubAccountOption {
 interface LineForm {
   accountId: number | null;
   subAccountId: number | null;
+  /** The project the line belongs to (TK-104). */
+  projectId: number | null;
   debit: string;
   credit: string;
   lineMemo: string;
@@ -151,6 +155,7 @@ export class JournalsPage implements OnInit {
     { field: 'lineNumber', header: '#' },
     { field: 'account', header: 'Account' },
     { field: 'subAccount', header: 'Sub-account' },
+    { field: 'project', header: 'Project' },
     { field: 'memo', header: 'Memo' },
     { field: 'debit', header: 'Debit' },
     { field: 'credit', header: 'Credit' },
@@ -168,6 +173,12 @@ export class JournalsPage implements OnInit {
   protected readonly rows = signal<JournalListItem[]>([]);
   protected readonly accounts = signal<AccountOption[]>([]);
   protected readonly subAccounts = signal<SubAccountOption[]>([]);
+
+  /** The branch's projects, for tagging a line (TK-104). Empty for a user who cannot read them. */
+  protected readonly projects = signal<ProjectListItem[]>([]);
+  protected readonly projectOptions = computed<BbSelectOption<number>[]>(() =>
+    projectOptions(this.projects(), this.lines().map((l) => l.projectId)),
+  );
   protected readonly editing = signal(false);
   protected readonly viewing = signal<JournalDetailView | null>(null);
   protected readonly busy = signal(false);
@@ -244,6 +255,7 @@ export class JournalsPage implements OnInit {
         ]);
         this.accounts.set(accounts);
         this.subAccounts.set(subs);
+        this.projects.set(await loadProjects(this.http));
       }
 
       if (openId !== null) {
@@ -288,6 +300,7 @@ export class JournalsPage implements OnInit {
         journal.lines.map((l) => ({
           accountId: l.accountId,
           subAccountId: l.subAccountId,
+          projectId: l.projectId ?? null,
           debit: l.debitAmount ? String(l.debitAmount) : '',
           credit: l.creditAmount ? String(l.creditAmount) : '',
           lineMemo: l.lineMemo ?? '',
@@ -364,6 +377,7 @@ export class JournalsPage implements OnInit {
           .map((l) => ({
             accountId: l.accountId,
             subAccountId: l.subAccountId,
+            projectId: l.projectId,
             debitAmount: this.amount(l.debit),
             creditAmount: this.amount(l.credit),
             lineMemo: l.lineMemo || null,
@@ -449,7 +463,7 @@ export class JournalsPage implements OnInit {
   }
 
   private blankLine(): LineForm {
-    return { accountId: null, subAccountId: null, debit: '', credit: '', lineMemo: '' };
+    return { accountId: null, subAccountId: null, projectId: null, debit: '', credit: '', lineMemo: '' };
   }
 
   private reason(err: unknown, fallback: string): string {

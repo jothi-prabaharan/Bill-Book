@@ -96,7 +96,9 @@ public sealed record LedgerPostingLeg(
     /// </summary>
     string? CurrencyCode = null,
 
-    decimal? ExchangeRate = null);
+    decimal? ExchangeRate = null,
+
+    long? ProjectId = null);
 
 /// <summary>What came back from a posting attempt.</summary>
 public enum LedgerPostOutcome
@@ -244,6 +246,7 @@ public sealed class InProcessAccountingLedger : IAccountingLedger
                     CurrencyCode = l.CurrencyCode,
                     ExchangeRate = l.ExchangeRate,
                     TransactionDesc = l.TransactionDesc,
+                    ProjectId = l.ProjectId,
                 }),
             ],
         };

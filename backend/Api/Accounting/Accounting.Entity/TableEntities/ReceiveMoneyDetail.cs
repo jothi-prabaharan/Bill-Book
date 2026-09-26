@@ -50,4 +50,10 @@ public class ReceiveMoneyDetail : OrgScopedEntity
 
     [MaxLength(300, ErrorMessage = "Line memo cannot exceed 300 characters.")]
     public string? LineMemo { get; set; }
+
+    /// <summary>
+    /// The project this row belongs to (TK-104), or null. A ledger dimension:
+    /// profit by project is a query over these rows.
+    /// </summary>
+    public long? ProjectId { get; set; }
 }

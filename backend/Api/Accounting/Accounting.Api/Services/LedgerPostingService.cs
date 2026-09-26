@@ -92,6 +92,14 @@ public sealed class LedgerPostingService
                 "A withdrawal has no legs to infer its leg types from, so it has to name them.");
         }
 
+        // A project dimension is refused, not dropped, when the project is not
+        // the branch's or its job is over (TK-104): a posting to a closed job
+        // would move a profit figure somebody already signed off.
+        if (await ProjectRules.RefusalAsync(_db, request.Legs.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new PostLedgerResult(PostLedgerOutcome.ProjectRefused, 0, 0, projectRefusal);
+        }
+
         string typeCode = request.TransactionTypeCode.ToUpperInvariant();
         var rows = new List<JournalLedger>(request.Legs.Count);
 
@@ -253,6 +261,7 @@ public sealed class LedgerPostingService
                 TransactionDesc = leg.TransactionDesc,
                 DocumentNo = request.DocumentNo,
                 JournalId = request.JournalId,
+                ProjectId = leg.ProjectId,
             });
 
             // First use freezes the account's nature. Set in the same

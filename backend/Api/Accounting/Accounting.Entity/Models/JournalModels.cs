@@ -53,6 +53,9 @@ public class SaveJournalLineRequest
 
     [MaxLength(300, ErrorMessage = "Line memo cannot exceed 300 characters.")]
     public string? LineMemo { get; set; }
+
+    /// <summary>The project the line belongs to (TK-104), or null. Carried to the ledger row.</summary>
+    public long? ProjectId { get; set; }
 }
 
 /// <summary>A journal on the list screen. Totals included so the list can show the imbalance.</summary>
@@ -103,6 +106,9 @@ public class JournalDetailView : JournalListItem
 public class JournalLineView
 {
     public long JournalDetailId { get; set; }
+
+    /// <summary>The project the line belongs to (TK-104), or null.</summary>
+    public long? ProjectId { get; set; }
 
     public int LineNumber { get; set; }
 
@@ -200,6 +206,9 @@ public enum SaveJournalOutcome
     /// applies could not be established.
     /// </summary>
     AwaitingApproval = 14,
+
+    /// <summary>A line names a project that is not the branch's, or is completed or cancelled (TK-104).</summary>
+    ProjectRefused = 15,
 }
 
 public sealed record SaveJournalResult(

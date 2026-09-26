@@ -62,4 +62,10 @@ public class JournalDetail : OrgScopedEntity
 
     /// <summary>Set on the <b>reversed</b> line: the line that offset it.</summary>
     public long? ReversedByJournalDetailId { get; set; }
+
+    /// <summary>
+    /// The project this row belongs to (TK-104), or null. A ledger dimension:
+    /// profit by project is a query over these rows.
+    /// </summary>
+    public long? ProjectId { get; set; }
 }

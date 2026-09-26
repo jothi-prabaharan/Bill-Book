@@ -2076,17 +2076,28 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `approval-workflows.model.spec.ts`, `approvals-inbox.model.spec.ts`, `DocumentApprovalActionRequestTests`, and the menu assertions in `AppGrantRuleTests`.
 
 ### TK-104 · Projects: masters and the `ProjectId` ledger dimension
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#92](https://github.com/jothi-prabaharan/Bill-Book/issues/92)
 - **Lanes:** L-ACC, L-ACC-UI, L-MST · **Depends on:** TK-34 · **Decision:** —
 - **Where:** design "Project accounting"; `acc.JournalLedger`, `acc.JournalDetail`, `LedgerPostingService`, `PostLedgerRequest`.
 - **Tables:** `acc.Projects`, `acc.ProjectTasks`, `acc.ProjectMembers`, `acc.ProjectMilestones`
 - **Sub-tasks:**
-  - [ ] The four tables with RLS; the `PRJ` numbering series; the `projects` permission module (Master seed).
-  - [ ] `ProjectId` on ledger, journal lines, spend- and receive-money lines; `PostLedgerRequest` legs carry it; the posting API refuses another branch's or a completed project.
-  - [ ] `internal/projects/exists` for the other services; project list and form pages.
-  - [ ] Test: a leg with a completed project is refused; the manual journal carries a project to the ledger; RlsAudit.
-  - Standard delivery sub-tasks (section 5).
+  - [x] The four tables with RLS; the `PRJ` numbering series; the `projects` permission module (Master seed).
+  - [x] `ProjectId` on ledger, journal lines, spend- and receive-money lines; `PostLedgerRequest` legs carry it; the posting API refuses another branch's or a completed project.
+  - [x] `internal/projects/exists` for the other services; project list and form pages.
+  - [x] Test: a leg with a completed project is refused; the manual journal carries a project to the ledger; RlsAudit.
+  - [x] Standard delivery sub-tasks (section 5).
+- **As built:**
+  - **Tables:** the four tables have RLS (migration `Projects`). `ProjectId` (FK, Restrict) is on `JournalLedger` (filtered index), `JournalDetails`, `SpendMoneyDetails` and `ReceiveMoneyDetails`.
+  - **Numbering:** `PRJ` is a master series (`PRJ-0001`, never reset). Existing branches get it from the idempotent branch seed.
+  - **Posting check:** `ProjectRules.RefusalAsync` refuses a project the query filter cannot see, or one that is Completed or Cancelled. It runs in `LedgerPostingService.PostAsync` (`PostLedgerOutcome.ProjectRefused`), at journal save (`SaveJournalOutcome.ProjectRefused`) and at money-document save (`MoneyDocumentOutcome.ProjectRefused`). On-hold projects still take postings. Reversing a posting to a completed project needs the project set back to active first.
+  - **Journal and money lines:** a journal line's project rides its own leg, and reversals copy it. A money line's project rides its control leg only; the bank leg belongs to no job.
+  - **Service:** `ProjectService` saves the project, tasks, members and milestones as one form. A dropped task is deactivated, never deleted (TK-106 will log time against tasks), a billed milestone is untouched, and projects are never deleted. Routes are `api/projects` (list, get, `{id}/ledger`, create, update) and `internal/projects/exists`, with the contract and `HttpProjectDirectory` in `Shared.Kernel.Projects` for TK-105.
+  - **Permissions:** the `projects` module has fixed-id grants (910,000,000 + 100,000 × role + permission), so no existing grant is renumbered. Owner, Administrator and Accountant get everything; Sales and Viewer get `projects.view`. Menu row 1127 sits under Accounting (Admin migration `ProjectsPermissions`).
+  - **Gateway:** `/api/projects` added. `/api/approval-workflows` was also missing (TK-99 and TK-103); added.
+  - **UI:** the projects page in `accounting-ui` covers the list, the form with tasks and milestones, and the ledger rows with their net. The journal and money-document line grids gain a project picker, hidden for a user who cannot read projects.
+  - **Fixed a TK-90 defect:** `LedgerLegRequest.LedgerTypeId` was `[Range(1, 6)]`, so the GDNI leg (type 7) failed model validation and every delivery challan's posting was refused. The range is now 1 to 7, with a test.
+  - **Tests:** `ProjectLedgerTests` (done-when, completed refusal, foreign project, cancelled at save, PRJ code and task deactivation, billed milestone, internal lookup, GDNI validation, postable statuses), the projects grants in `AppGrantRuleTests`, and `project-options.spec.ts`. RlsAudit covers the new tables through the linked audit.
 - **Done when:** a manual journal line tagged with a project appears on that project's ledger rows.
 
 ### TK-105 · Projects: sales and purchase lines carry the project to the ledger

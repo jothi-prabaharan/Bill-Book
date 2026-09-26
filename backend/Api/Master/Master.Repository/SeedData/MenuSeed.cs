@@ -276,6 +276,8 @@ public static class MenuSeed
         new Menu { MenuId = 1122, ParentId = 121, Type = MenuType.Item, Code = "wko", Name = "Work orders", Icon = "wrench", Module = "workorder", RoutePath = "/work-orders", IsSearchable = false, CanCreate = true, SingularName = "Work order", DisplayOrder = 3, IsActive = true },
         new Menu { MenuId = 1123, ParentId = 121, Type = MenuType.Item, Code = "ppm", Name = "Preventive plans", Icon = "calendar-clock", Module = "preventive", RoutePath = "/preventive/plans", IsSearchable = false, CanCreate = true, SingularName = "Plan", DisplayOrder = 4, IsActive = true },
         new Menu { MenuId = 1124, ParentId = 121, Type = MenuType.Item, Code = "amc", Name = "AMC contracts", Icon = "file-signature", Module = "amc", RoutePath = "/amc/contracts", IsSearchable = false, CanCreate = true, SingularName = "AMC contract", DisplayOrder = 5, IsActive = true },
+        // Project accounting (TK-104): the project master, under Accounting.
+        new Menu { MenuId = 1127, ParentId = 106, Type = MenuType.Item, Code = "prj", Name = "Projects", Icon = "briefcase", Module = "projects", RoutePath = "/accounting/projects", IsSearchable = true, CanCreate = true, SingularName = "Project", DisplayOrder = 20, IsActive = true },
         // ---- Approvals (TK-103): what waits on the signed-in user, across RetailErp's services ----
         new Menu { MenuId = 14, ParentId = null, Type = MenuType.Rail, Code = "approvals", Name = "Approvals", Icon = "check-circle", Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 14, IsActive = true },
         new Menu { MenuId = 122, ParentId = 14, Type = MenuType.Group, Code = "approvals-g1", Name = null, Icon = null, Module = null, RoutePath = null, IsSearchable = false, CanCreate = false, SingularName = null, DisplayOrder = 1, IsActive = true },
@@ -746,5 +748,9 @@ public static class MenuSeed
         new MenuPermission { MenuPermissionId = 448, MenuId = 1126, PermissionCode = "accounting.view", Action = "view", Module = "accounting" },
         new MenuPermission { MenuPermissionId = 449, MenuId = 1126, PermissionCode = "banking.view", Action = "view", Module = "banking" },
         new MenuPermission { MenuPermissionId = 450, MenuId = 1126, PermissionCode = "inventory.view", Action = "view", Module = "inventory" },
+        // Projects (TK-104).
+        new MenuPermission { MenuPermissionId = 451, MenuId = 1127, PermissionCode = "projects.view", Action = "view", Module = "projects" },
+        new MenuPermission { MenuPermissionId = 452, MenuId = 1127, PermissionCode = "projects.create", Action = "create", Module = "projects" },
+        new MenuPermission { MenuPermissionId = 453, MenuId = 1127, PermissionCode = "projects.edit", Action = "edit", Module = "projects" },
     ];
 }

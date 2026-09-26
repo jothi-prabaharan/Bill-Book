@@ -1,0 +1,44 @@
+.hint { color: #6a6f80; font-size: .9rem; }
+.note { background: #fff7e6; border-left: 3px solid #d68a00; padding: .5rem .75rem; font-size: .875rem; }
+.error { color: #c0392b; }
+.ok { color: #187a4b; }
+.empty { color: #6a6f80; }
+h2 { font-size: 1.1rem; margin: 0; }
+h3 { font-size: 1rem; margin: 1rem 0 .25rem; }
+
+.editor { display: grid; gap: .8rem; max-width: 56rem; margin-top: 1rem; }
+.row { display: flex; flex-wrap: wrap; gap: .75rem; }
+.grow { flex: 1; min-width: 12rem; }
+.narrow { width: 8rem; }
+.actions, .toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: .75rem; margin: 1rem 0; }
+.filter { display: grid; gap: .25rem; font-size: .85rem; }
+select { padding: .45rem; border: 1px solid #cdd1dc; border-radius: 6px; font: inherit; }
+
+button { padding: .55rem 1rem; border: 0; border-radius: 6px; background: #3557d6; color: #fff; font: inherit; cursor: pointer; justify-self: start; }
+button.secondary { background: #eceef3; color: #33384a; }
+button:disabled { opacity: .6; cursor: default; }
+
+.sublist { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.subrow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.subrow.inactive { opacity: .6; }
+
+.cards { list-style: none; margin: 0; padding: 0; display: grid; gap: .6rem; max-width: 56rem; }
+.card { border: 1px solid #dde1ea; border-radius: 8px; padding: .75rem 1rem; cursor: pointer; background: #fff; }
+.card:hover, .card:focus-visible { border-color: #3557d6; outline: none; }
+.card__title { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.card__meta { display: flex; flex-wrap: wrap; gap: .25rem 1rem; color: #6a6f80; font-size: .85rem; margin-top: .25rem; }
+.pill { background: #e7f5ee; color: #187a4b; border-radius: 999px; padding: .05rem .5rem; font-size: .75rem; }
+.pill.closed { background: #eceef3; color: #33384a; }
+
+.ledger { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; }
+.ledger li { display: grid; grid-template-columns: 7rem 1fr 9rem 9rem; gap: .5rem; font-size: .9rem; padding: .35rem 0; border-bottom: 1px solid #eef0f4; }
+.ledger .amount, .net { text-align: right; font-variant-numeric: tabular-nums; }
+.net { font-weight: 600; max-width: 56rem; }
+
+// A phone: fields stack and each ledger row wraps onto two lines.
+@media (max-width: 600px) {
+  .row { flex-direction: column; }
+  .grow, .narrow { width: 100%; min-width: 0; }
+  .ledger li { grid-template-columns: 1fr auto; }
+  .ledger .account { grid-column: 1 / -1; }
+}

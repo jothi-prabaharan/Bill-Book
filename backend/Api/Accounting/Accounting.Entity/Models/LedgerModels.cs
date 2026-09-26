@@ -133,7 +133,11 @@ public class PostLedgerRequest
 /// </summary>
 public class LedgerLegRequest
 {
-    [Range(1, 6, ErrorMessage = "Ledger type must be one of the six leg types.")]
+    /// <summary>
+    /// From <c>mst.LedgerTypes</c>. Seven since TK-90 added GDNI; the range
+    /// said six until TK-104, which refused every delivery challan's posting.
+    /// </summary>
+    [Range(1, 7, ErrorMessage = "Ledger type must be one of the seven leg types.")]
     public int LedgerTypeId { get; set; }
 
     /// <summary>
@@ -216,6 +220,12 @@ public class LedgerLegRequest
     /// payable line.
     /// </summary>
     public long? SubAccountId { get; set; }
+
+    /// <summary>
+    /// The project this leg belongs to (TK-104), or null. Refused when the
+    /// project is not the branch's, or is completed or cancelled.
+    /// </summary>
+    public long? ProjectId { get; set; }
 
     [Range(typeof(decimal), "0", "79228162514264337593543950335",
         ErrorMessage = "Debit amount cannot be negative.")]
@@ -318,6 +328,9 @@ public enum PostLedgerOutcome
     /// from, so the request says nothing about what should be removed.
     /// </summary>
     WithdrawalTypesMissing = 8,
+
+    /// <summary>A leg names a project that is not the branch's, or is completed or cancelled (TK-104).</summary>
+    ProjectRefused = 9,
 }
 
 public sealed record PostLedgerResult(

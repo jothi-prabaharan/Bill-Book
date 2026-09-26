@@ -27,6 +27,10 @@ public static class NumberingSeriesSeed
         Master(orgId, 30, "ITEM", "Item Code", "ITM", 5),
         Master(orgId, 40, "WAREHOUSE", "Warehouse Code", "WH", 3),
         Master(orgId, 50, "BANK", "Bank Code", "BNK", 3),
+
+        // Projects (TK-104): a master code, never reset — a job keeps its code
+        // for as long as it runs, across years.
+        Master(orgId, 60, "PRJ", "Project Code", "PRJ", 4),
         Document(orgId, 100, "JRN", "Journal Number", "JV"),
 
         // A series that will only ever issue one number, because a branch has one

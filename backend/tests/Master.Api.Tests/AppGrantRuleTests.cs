@@ -68,6 +68,32 @@ public sealed class AppGrantRuleTests
                 $"Grant {g["RolePermissionId"]} breaks the grant rule."));
     }
 
+    /// <summary>
+    /// Projects (TK-104): Owner, Administrator and Accountant run them, Sales and
+    /// Viewer only read them, and the grants take fixed ids so no earlier grant
+    /// was renumbered.
+    /// </summary>
+    [Fact]
+    public void Projects_are_run_by_the_accounts_side_and_read_by_sales()
+    {
+        using AdminDbContext db = Model();
+        Dictionary<int, string> codes = Seed<Permission>(db).ToDictionary(p => (int)p["PermissionId"]!, p => (string)p["Code"]!);
+        List<IDictionary<string, object?>> grants = Seed<RolePermission>(db)
+            .Where(g => codes[(int)g["PermissionId"]!].StartsWith("projects.", StringComparison.Ordinal))
+            .ToList();
+
+        HashSet<string> Held(int roleId) =>
+            [.. grants.Where(g => (int)g["RoleId"]! == roleId).Select(g => codes[(int)g["PermissionId"]!])];
+
+        Assert.Contains("projects.edit", Held(1));
+        Assert.Contains("projects.edit", Held(2));
+        Assert.Contains("projects.edit", Held(3));
+        Assert.Equal(["projects.view"], Held(4));
+        Assert.Equal(["projects.view"], Held(5));
+        Assert.All(grants, g => Assert.True((long)g["RolePermissionId"]! >= 910_000_000L));
+        Assert.Contains("projects", AdminDbContext.PermissionModules);
+    }
+
     [Fact]
     public void Every_seeded_role_names_one_app_and_settings_belong_to_every_app()
     {
@@ -139,6 +165,9 @@ public sealed class AppGrantRuleTests
         Assert.Equal(App.All, menus.Single(m => m.Code == "settings" && m.ParentId is null).Apps);
         Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "inv").Apps);
         Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "tax").Apps);
+
+        // Projects sit under Accounting, in RetailErp (TK-104).
+        Assert.Equal(App.RetailErp, menus.Single(m => m.Code == "prj").Apps);
 
         // Every app configures its chains on one page; the inbox is RetailErp's documents (TK-103).
         Assert.Equal(App.All, menus.Single(m => m.Code == "apw").Apps);

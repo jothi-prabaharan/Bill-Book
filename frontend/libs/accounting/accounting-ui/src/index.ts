@@ -3,6 +3,8 @@ export * from './lib/sub-accounts/sub-accounts.page';
 export * from './lib/tax-master/tax-master.page';
 export * from './lib/payment-terms/payment-terms.page';
 export * from './lib/journals/journals.page';
+export * from './lib/projects/project-options';
+export * from './lib/projects/projects.page';
 export * from './lib/account-ledger/account-ledger.page';
 export * from './lib/trial-balance/trial-balance.page';
 export * from './lib/opening-balance/opening-balance.page';

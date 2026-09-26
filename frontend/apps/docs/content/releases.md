@@ -30,6 +30,9 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Accounting › Projects.** Set up the jobs the branch does, with a client, a billing method, tasks, milestones and a cost budget. Tag a manual journal line, or a spend or receive money line, with a project. Its ledger row then counts towards that project, and the project shows every row tagged with it. A completed or cancelled project takes no postings. See [Accounts](accounting#projects).
+- **Fixed**: **Delivery challans can post again.** The ledger refused the goods-delivered-not-invoiced posting a challan makes, so posting a challan was refused.
+- **Fixed**: **Settings › Approval workflows now loads when the product is reached through its gateway.** The gateway had no route to it.
 - **Added**: **Approvals › Waiting for me.** Every document waiting on your approval, from purchase, sales, accounts, banking and inventory, in one list, oldest first. You can approve, send back or reject each one there, with a comment. See [Approvals](approvals#approving).
 - **Added**: **Settings › Approval workflows.** Choose which documents and requests need approval and who approves them, level by level. Levels can be reordered by dragging, and a level can apply only above an amount. The page is the same in every app. See [Approvals](approvals#setting-up-a-workflow).
 - **Fixed**: Approving, rejecting or sending back a purchase document, a manual journal, a payment or a stock adjustment from its **Approval** panel was refused as an invalid request. It now goes through.

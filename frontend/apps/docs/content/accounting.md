@@ -624,6 +624,39 @@ The query filter is the first line of defence, not the last: it is a property of
 
 
 
+# Projects
+
+**Status: partial.** The project master is built, and so is the project tag on manual journal and money-document lines. Sales and purchase lines, timesheets and billing, and the project reports come in later releases.
+
+**Accounting › Projects** lists the branch's projects. A project is a job the branch does, for a client or for itself, and it takes its code from the **PRJ** number series (PRJ-0001, PRJ-0002 and so on).
+
+## What a project holds
+
+- **Client**. Leave it empty for an internal job.
+- **Billing**, which is one of three:
+  - **Time and materials**: hours at a rate, which comes from the project, each task or each person.
+  - **Fixed fee**: invoiced by **milestone**.
+  - **Non-billable**: an internal job, where cost is tracked and nothing is billed.
+- **Cost budget**, and start and end dates.
+- **Tasks**, which time will be logged against, each with its budget hours. A task you remove is made inactive, never deleted, so the time logged against it keeps its task.
+- **Status**:
+  - **Active** and **On hold** jobs take postings.
+  - **Completed** and **Cancelled** jobs take none. Set a job back to active to post to it again, for example to reverse a mistake.
+
+A project is never deleted, because the ledger rows tagged with it name it.
+
+## Tagging a posting
+
+A **manual journal** line and a **spend** or **receive money** line can each name a project. A journal line's project is carried onto its own ledger row. A money line's project goes on the row for the balance it settles, and not on the bank row, because the cash belongs to no job.
+
+The project is checked when the line is saved and again when it posts. The posting is refused if the project is not this branch's, or if it is completed or cancelled. A posting to a closed job would change a profit figure someone has already signed off.
+
+## A project's ledger
+
+Opening a project shows every ledger row tagged with it, with its account, its document and whether it is a debit or a credit, and the net at the bottom. That is what the job earned and cost so far. A proper profitability report is to come.
+
+Reading projects needs **projects.view**, and creating and saving them need **projects.create** and **projects.edit**. Owner, Administrator and Accountant hold all three; Sales and Viewer can read.
+
 # Opening balances
 
 **Accounting › Opening balances**

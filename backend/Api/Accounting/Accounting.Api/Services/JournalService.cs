@@ -129,6 +129,7 @@ public sealed class JournalService
             select new JournalLineView
             {
                 JournalDetailId = d.JournalDetailId,
+                ProjectId = d.ProjectId,
                 LineNumber = d.LineNumber,
                 AccountId = d.AccountId,
                 AccountCode = a.AccountCode,
@@ -534,6 +535,7 @@ public sealed class JournalService
             DebitAmountBase = l.CreditAmountBase,
             CreditAmountBase = l.DebitAmountBase,
             LineMemo = l.LineMemo,
+            ProjectId = l.ProjectId,
             ReversesJournalDetailId = l.JournalDetailId,
         }).ToList();
 
@@ -602,6 +604,7 @@ public sealed class JournalService
                 TransactionDetailId = l.LineNumber,
                 AccountId = l.AccountId,
                 SubAccountId = l.SubAccountId,
+                ProjectId = l.ProjectId,
                 DebitAmount = l.DebitAmount,
                 CreditAmount = l.CreditAmount,
                 TransactionDesc = l.LineMemo ?? journal.Reference ?? journal.Memo,
@@ -641,6 +644,7 @@ public sealed class JournalService
             DebitAmountBase = Base(line.DebitAmount, journal.ExchangeRate),
             CreditAmountBase = Base(line.CreditAmount, journal.ExchangeRate),
             LineMemo = line.LineMemo,
+            ProjectId = line.ProjectId,
         });
 
     /// <summary>
@@ -694,6 +698,14 @@ public sealed class JournalService
                     SaveJournalOutcome.LineNotExclusive, 0,
                     "An amount is negative. A reversal is an offsetting entry, not a negative one.");
             }
+        }
+
+        // A project on a line must be the branch's and still open (TK-104).
+        // Checked at save as well as at post, so a draft never names a job it
+        // could not post to.
+        if (await ProjectRules.RefusalAsync(_db, lines.Select(l => l.ProjectId), ct) is string projectRefusal)
+        {
+            return new SaveJournalResult(SaveJournalOutcome.ProjectRefused, 0, projectRefusal);
         }
 
         List<long> accountIds = [.. lines.Select(l => l.AccountId).Distinct()];

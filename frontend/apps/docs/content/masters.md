@@ -246,6 +246,7 @@ The module is the one that **owns the data**, not the menu the screen sits under
 |---|---|
 | Chart of accounts, sub-accounts, tax rates, payment terms, numbering series | `accounting.*` |
 | Banks, bank accounts | `banking.*` |
+| Projects | `projects.*` — Owner, Administrator and Accountant run them; Sales and Viewer read them |
 | Contacts, contact roles, contact documents | `contacts.*` |
 | Items, categories, stock, warehouses, units, purities | `inventory.*` |
 | Users, roles, branches, currencies, configuration, email | `settings.*` |

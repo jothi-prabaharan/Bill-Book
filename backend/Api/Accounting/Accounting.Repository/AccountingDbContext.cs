@@ -87,6 +87,14 @@ public class AccountingDbContext : TenantDbContext
 
     public DbSet<AccountingApprovalStep> ApprovalSteps => Set<AccountingApprovalStep>();
 
+    public DbSet<Project> Projects => Set<Project>();
+
+    public DbSet<ProjectTask> ProjectTasks => Set<ProjectTask>();
+
+    public DbSet<ProjectMember> ProjectMembers => Set<ProjectMember>();
+
+    public DbSet<ProjectMilestone> ProjectMilestones => Set<ProjectMilestone>();
+
     public DbSet<SpendMoneyDetail> SpendMoneyDetails => Set<SpendMoneyDetail>();
 
     /// <summary>Money in. The mirror of <see cref="SpendMoney"/>.</summary>
@@ -975,6 +983,66 @@ public class AccountingDbContext : TenantDbContext
                 "\"Amount\" > 0"
             ));
         });
+
+        // ---- Projects (TK-104) --------------------------------------------
+
+        modelBuilder.Entity<Project>(b =>
+        {
+            b.HasKey(e => e.ProjectId);
+            b.HasIndex(e => new { e.OrgId, e.ProjectCode }).IsUnique();
+            b.HasIndex(e => new { e.OrgId, e.Status });
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            b.Property(e => e.BillingMethod).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.RateBasis).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.HourlyRate).HasColumnType("decimal(18,2)");
+            b.Property(e => e.FixedFee).HasColumnType("decimal(18,2)");
+            b.Property(e => e.BudgetAmount).HasColumnType("decimal(18,2)");
+        });
+
+        modelBuilder.Entity<ProjectTask>(b =>
+        {
+            b.HasKey(e => e.ProjectTaskId);
+            b.HasIndex(e => new { e.OrgId, e.ProjectId });
+            b.Property(e => e.HourlyRate).HasColumnType("decimal(18,2)");
+            b.Property(e => e.BudgetHours).HasColumnType("decimal(10,2)");
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProjectMember>(b =>
+        {
+            b.HasKey(e => e.ProjectMemberId);
+            b.HasIndex(e => new { e.OrgId, e.ProjectId, e.UserId }).IsUnique();
+            b.Property(e => e.HourlyRate).HasColumnType("decimal(18,2)");
+            b.Property(e => e.CostRate).HasColumnType("decimal(18,2)");
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ProjectMilestone>(b =>
+        {
+            b.HasKey(e => e.ProjectMilestoneId);
+            b.HasIndex(e => new { e.OrgId, e.ProjectId });
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        // The project dimension on the ledger and the lines that feed it.
+        // Restrict, so a project with postings is never deleted from under them.
+        modelBuilder.Entity<JournalLedger>(b =>
+        {
+            b.HasIndex(e => new { e.OrgId, e.ProjectId }).HasFilter("\"ProjectId\" IS NOT NULL");
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<JournalDetail>(b =>
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict));
+
+        modelBuilder.Entity<SpendMoneyDetail>(b =>
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict));
+
+        modelBuilder.Entity<ReceiveMoneyDetail>(b =>
+            b.HasOne<Project>().WithMany().HasForeignKey(e => e.ProjectId).OnDelete(DeleteBehavior.Restrict));
 
         // ---- Approvals (TK-101) ------------------------------------------
 

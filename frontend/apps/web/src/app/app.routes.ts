@@ -56,6 +56,17 @@ export const appRoutes: Routes = [
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.JournalsPage),
         data: { access: { permission: 'accounting.view' } },
       },
+      // Project accounting (TK-104): the project master and each project's ledger rows.
+      {
+        path: 'accounting/projects',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
+        data: { access: { permission: 'projects.view' } },
+      },
+      {
+        path: 'accounting/projects/:projectId',
+        loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.ProjectsPage),
+        data: { access: { permission: 'projects.view' } },
+      },
       {
         path: 'accounting/opening-balance',
         loadComponent: () => import('@bill-book/accounting-ui').then((m) => m.OpeningBalancePage),
