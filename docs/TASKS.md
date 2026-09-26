@@ -1837,7 +1837,8 @@ The build cards each design in section E produced. Each design section in `docs/
     - Existing portal links stop working at deploy; send contacts new ones.
     - Set `Portal:BaseUrl` so the contact screen shows a full link.
 ### TK-95 · Portal: dashboard figures and invoices with PDF
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#84](https://github.com/jothi-prabaharan/Bill-Book/issues/84)
 - **Lanes:** L-RPT, L-SAL, L-PTL · **Depends on:** TK-94, TK-22 · **Decision:** —
 - **Where:** `PortalStatementsController`; `SalesDocumentArchive.OpenAsync` (TK-22); `apps/portal/src/app/portal-dashboard`.
 - **Sub-tasks:**
