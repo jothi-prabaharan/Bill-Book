@@ -2009,7 +2009,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Not built:** notifying the approver (design flow step 1, TK-19) and escalation. Delegates can act, but their inbox does not list their principal's items.
   - **Owner step:** run the Purchase and Sales suites and the ui-components spec. Configure a workflow through `api/approval-workflows` until TK-103 gives it a screen.
 ### TK-101 · Approvals: spend money and manual journals
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#89](https://github.com/jothi-prabaharan/Bill-Book/issues/89)
 - **Lanes:** L-ACC, L-ACC-UI · **Depends on:** TK-99 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `acc.ApprovalSteps`; summary columns on `SpendMoney` and `Journal`.
