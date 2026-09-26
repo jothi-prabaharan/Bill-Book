@@ -24,6 +24,8 @@ export interface PrintedDocument {
 }
 
 export interface SaveInvoiceRequest {
+  /** Save despite the credit or discount limit and send it to an approver (TK-102). */
+  requestApproval?: boolean;
   documentDate: string;
   contactId: number;
   quoteId?: number;
@@ -175,6 +177,10 @@ export interface InvoiceListPage {
 }
 
 export interface InvoiceView extends InvoiceListItem {
+  /** Where a credit-limit override stands; null when none was needed (TK-102). */
+  creditOverrideStatus?: 'Draft' | 'InApproval' | 'Approved' | 'Rejected' | null;
+  /** Where a discount-limit override stands; null when none was needed (TK-102). */
+  discountOverrideStatus?: 'Draft' | 'InApproval' | 'Approved' | 'Rejected' | null;
   transportMode?: 'Road' | 'Rail' | 'Air' | 'Ship' | null;
   vehicleNo?: string | null;
   transporterId?: string | null;

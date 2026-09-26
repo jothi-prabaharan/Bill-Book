@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
@@ -48,6 +49,9 @@ public sealed class CreditNoteService
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
     private readonly EInvoicing.IEInvoicePosting _eInvoicing;
 
+    /// <summary>Approval chains (TK-102). Null in tests that do not exercise them.</summary>
+    private readonly CreditNoteApprovalService? _approvals;
+
     public CreditNoteService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -63,8 +67,10 @@ public sealed class CreditNoteService
         ILedgerClient ledgerClient,
         Sales.Api.Services.Pdf.SalesDocumentArchive archive,
         Shared.Kernel.Stock.IUqcLookup uqc,
-        EInvoicing.IEInvoicePosting eInvoicing)
+        EInvoicing.IEInvoicePosting eInvoicing,
+        CreditNoteApprovalService? approvals = null)
     {
+        _approvals = approvals;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -215,6 +221,12 @@ public sealed class CreditNoteService
             }
 
             creditNote = existing;
+
+            // An approval approves what was seen: an edit sends it back (TK-102).
+            if (_approvals is not null)
+            {
+                await _approvals.ReturnToDraftAsync(ApprovalRequestKind.CreditNote, existing.CreditNoteId, existing, ct);
+            }
         }
         else
         {
@@ -446,6 +458,13 @@ public sealed class CreditNoteService
         if (!post.IsAllowed)
         {
             return new CreditNoteResult(CreditNoteOutcome.LifecycleRefused, creditNoteId, post.Detail);
+        }
+
+        // A credit note has no separate approve step, so posting a draft is gated (TK-102).
+        if (_approvals is not null && creditNote.Status == DocumentStatus.Draft
+            && await _approvals.GateAsync(ApprovalRequestKind.CreditNote, creditNote, ct) is string gated)
+        {
+            return new CreditNoteResult(CreditNoteOutcome.LifecycleRefused, creditNoteId, gated);
         }
 
         // Read again rather than trusted from the save: the invoice may have been

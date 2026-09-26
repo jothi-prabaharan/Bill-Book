@@ -17,6 +17,13 @@ namespace Sales.Entity.Models;
 /// </summary>
 public class SaveInvoiceRequest
 {
+    /// <summary>
+    /// Save even though the sale is past the customer's credit limit or the
+    /// discount limit, and send it to an approver (TK-102). Without it such a
+    /// save is refused, saying approval can be asked for.
+    /// </summary>
+    public bool RequestApproval { get; set; }
+
 
     /// <summary>
     /// The print template this document should use. Null means the branch's
@@ -275,6 +282,18 @@ public enum InvoiceOutcome
     /// window, or the IRP refused to cancel it. <c>Detail</c> says which.
     /// </summary>
     EInvoiceRefused = 15,
+
+    /// <summary>A line is discounted past the limit (D-29), and approval was not asked for (TK-102).</summary>
+    DiscountLimitExceeded = 16,
+
+    /// <summary>An override the invoice asked for is open or was refused, so it cannot post yet (TK-102).</summary>
+    AwaitingApproval = 17,
+
+    /// <summary>Approval was asked for but cannot be given: no workflow covers the override, or it was refused.</summary>
+    OverrideRefused = 18,
+
+    /// <summary>A limit or the approval rules could not be read. Transient.</summary>
+    LimitsUnavailable = 19,
 }
 
 /// <param name="EInvoice">
@@ -361,6 +380,12 @@ public class InvoiceSummary : InvoiceListItem
 /// <summary>An Invoice with its lines and their tax rows.</summary>
 public class InvoiceView : InvoiceListItem
 {
+    /// <summary>Where a credit-limit override stands, or null when none was needed (TK-102).</summary>
+    public string? CreditOverrideStatus { get; set; }
+
+    /// <summary>Where a discount-limit override stands, or null when none was needed (TK-102).</summary>
+    public string? DiscountOverrideStatus { get; set; }
+
     public string? ContactGstin { get; set; }
 
     public Sales.Entity.Enums.TransportMode? TransportMode { get; set; }

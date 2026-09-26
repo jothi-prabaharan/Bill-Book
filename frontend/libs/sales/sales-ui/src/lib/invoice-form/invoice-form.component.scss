@@ -230,3 +230,12 @@
 .inv-form__irn span {
   word-break: break-all;
 }
+
+// "Request approval" beside a save refused at a limit (TK-102). Stacks at 360px.
+.approval-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  margin: var(--space-2, 0.5rem) 0;
+}

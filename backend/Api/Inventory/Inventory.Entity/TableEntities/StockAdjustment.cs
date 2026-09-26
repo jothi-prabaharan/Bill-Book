@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using Inventory.Entity.Enums;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Tenancy;
 
 namespace Inventory.Entity.TableEntities;
@@ -28,7 +29,7 @@ namespace Inventory.Entity.TableEntities;
 /// column that repeats another column is the same mistake as a BranchId beside
 /// an OrgId.
 /// </summary>
-public class StockAdjustment : OrgScopedEntity
+public class StockAdjustment : OrgScopedEntity, IApprovalSummary
 {
     public long StockAdjustmentId { get; set; }
 
@@ -86,4 +87,20 @@ public class StockAdjustment : OrgScopedEntity
     /// document you can see the other without searching for it.
     /// </summary>
     public long? ReversesStockAdjustmentId { get; set; }
+
+    // ---- Approval (TK-102). A summary of inv.ApprovalSteps, so a list can say
+    // what the sheet waits on without reading every step.
+
+    /// <summary>Where it stands in an approval chain. Null when no workflow has been involved.</summary>
+    public ApprovalStatus? ApprovalStatus { get; set; }
+
+    /// <summary>The level it waits on, as the workflow labels it.</summary>
+    [MaxLength(50, ErrorMessage = "The step label cannot exceed 50 characters.")]
+    public string? CurrentStepLabel { get; set; }
+
+    /// <summary>Who it waits on, when that level names a user.</summary>
+    public Guid? CurrentApproverUserId { get; set; }
+
+    /// <summary>The role it waits on, when any holder of it may approve.</summary>
+    public int? CurrentApproverRoleId { get; set; }
 }

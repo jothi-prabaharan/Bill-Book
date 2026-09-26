@@ -215,6 +215,15 @@
       <button type="button" class="link" (click)="editing.set(null)">Cancel</button>
     </div>
     <span class="sr-only">{{ sheet.stockAdjustmentId }}</span>
+
+    @if (sheet.stockAdjustmentId > 0) {
+      <!-- The sheet's approval chain, when a workflow covers it (TK-102). -->
+      <bb-approval-panel
+        [basePath]="'/api/stock-adjustments/' + sheet.stockAdjustmentId"
+        documentStatus="Draft"
+        (changed)="edit(sheet)"
+      />
+    }
   </div>
 }
 

@@ -5,7 +5,9 @@ using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
+using Shared.Kernel.Tenancy;
 using Shared.Kernel.Numbering;
 using Xunit;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -267,6 +269,51 @@ public class StockAdjustmentServiceTests
         Assert.Single(await h.Adjustments.ListAsync("Posted", ct));
     }
 
+    /// <summary>A sheet a workflow covers posts only once the chain approves it (TK-102).</summary>
+    [SkippableFact]
+    public async Task A_sheet_under_a_workflow_posts_only_after_approval()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres, new StorekeeperChain());
+        CancellationToken ct = CancellationToken.None;
+        long item = await h.Item("WIDGET-A", onHand: 10m);
+
+        StockAdjustmentResult draft = await h.Adjustments.SaveAsync(null, h.WriteOff(item, 2m), ct);
+        long id = draft.StockAdjustmentId!.Value;
+
+        Assert.Equal(StockAdjustmentOutcome.AwaitingApproval, (await h.Adjustments.PostAsync(id, ct)).Outcome);
+        Assert.Equal(10m, await h.OnHand(item));
+
+        Assert.Equal(ApprovalResultOutcome.Ok, (await h.Approvals!.SubmitAsync(ApprovalRequestKind.StockAdjustment, id, ct)).Outcome);
+        Assert.Equal(StockAdjustmentOutcome.AwaitingApproval, (await h.Adjustments.PostAsync(id, ct)).Outcome);
+
+        h.User.Become(Guid.NewGuid(), StorekeeperChain.StorekeeperRole);
+        Assert.Equal(ApprovalResultOutcome.Ok,
+            (await h.Approvals.ActAsync(ApprovalRequestKind.StockAdjustment, id, ApprovalAction.Approve, null, ct)).Outcome);
+
+        Assert.Equal(StockAdjustmentOutcome.Ok, (await h.Adjustments.PostAsync(id, ct)).Outcome);
+        Assert.Equal(8m, await h.OnHand(item));
+    }
+
+    [SkippableFact]
+    public async Task Editing_a_sheet_in_approval_returns_it_to_draft()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres, new StorekeeperChain());
+        CancellationToken ct = CancellationToken.None;
+        long item = await h.Item("WIDGET-A", onHand: 10m);
+
+        StockAdjustmentResult draft = await h.Adjustments.SaveAsync(null, h.WriteOff(item, 2m), ct);
+        long id = draft.StockAdjustmentId!.Value;
+        await h.Approvals!.SubmitAsync(ApprovalRequestKind.StockAdjustment, id, ct);
+
+        await h.Adjustments.SaveAsync(id, h.WriteOff(item, 3m), ct);
+
+        h.Db.ChangeTracker.Clear();
+        StockAdjustment sheet = await h.Db.StockAdjustments.AsNoTracking().SingleAsync(a => a.StockAdjustmentId == id, ct);
+        Assert.Null(sheet.ApprovalStatus);
+        Assert.Equal(ApprovalStepStatus.Cancelled,
+            (await h.Db.ApprovalSteps.AsNoTracking().SingleAsync(ct)).StepStatus);
+    }
+
     private sealed class Harness : IAsyncDisposable
     {
         public required InventoryDbContext Db { get; init; }
@@ -324,12 +371,18 @@ public class StockAdjustmentServiceTests
             return item.ItemId;
         }
 
-        public static async Task<Harness> CreateAsync(PostgresFixture postgres)
+        /// <summary>Set when the harness was built with an approval workflow (TK-102).</summary>
+        public InventoryApprovalService? Approvals { get; private init; }
+
+        public SwitchableUser User { get; private init; } = new();
+
+        public static async Task<Harness> CreateAsync(PostgresFixture postgres, IApprovalChainClient? chains = null)
         {
             Skip.If(postgres.SkipReason is not null, postgres.SkipReason ?? string.Empty);
 
             var orgId = Guid.NewGuid();
-            InventoryDbContext db = postgres.CreateContext(Guid.NewGuid(), orgId);
+            var customerId = Guid.NewGuid();
+            InventoryDbContext db = postgres.CreateContext(customerId, orgId);
 
             var uomType = new UomType
             {
@@ -368,15 +421,23 @@ public class StockAdjustmentServiceTests
             var costing = new CostingService(db);
             var stock = new StockService(db, costing, clock);
 
+            var user = new SwitchableUser();
+            InventoryApprovalService? approvals = chains is null
+                ? null
+                : new InventoryApprovalService(
+                    db, chains, new TenantContext { CustomerId = customerId, OrgId = orgId }, user, clock);
+
             return new Harness
             {
                 Db = db,
                 OrgId = orgId,
                 UomTypeId = uomType.UomTypeId,
                 UomId = uom.UomId,
+                User = user,
+                Approvals = approvals,
                 Adjustments = new StockAdjustmentService(
-                    db, stock, numbers, new StubCurrentUser(), clock,
-                    NullLogger<StockAdjustmentService>.Instance),
+                    db, stock, numbers, user, clock,
+                    NullLogger<StockAdjustmentService>.Instance, approvals),
             };
         }
 
@@ -386,6 +447,40 @@ public class StockAdjustmentServiceTests
     private sealed class StubFinancialYear : IFinancialYearProvider
     {
         public Task<int> GetStartMonthAsync(CancellationToken ct = default) => Task.FromResult(4);
+    }
+
+    /// <summary>A user whose identity a test can change between calls.</summary>
+    private sealed class SwitchableUser : ICurrentUser
+    {
+        public Guid? UserId { get; private set; } = Guid.NewGuid();
+
+        public Guid? CustomerId => null;
+
+        public Guid? OrgId => null;
+
+        public int? RoleId { get; private set; } = 5;
+
+        public void Become(Guid userId, int role)
+        {
+            UserId = userId;
+            RoleId = role;
+        }
+    }
+
+    /// <summary>Master's resolver: a stock adjustment goes to the storekeeper role (TK-102).</summary>
+    private sealed class StorekeeperChain : IApprovalChainClient
+    {
+        public const int StorekeeperRole = 7;
+
+        public Task<ResolveChainResponse?> ResolveAsync(ResolveChainRequest request, CancellationToken ct) =>
+            Task.FromResult<ResolveChainResponse?>(new ResolveChainResponse
+            {
+                Outcome = ResolveChainOutcome.Resolved,
+                WorkflowName = "Stock adjustments",
+                Steps = [new ResolvedStep { Sequence = 1, Label = "Storekeeper", RoleId = StorekeeperRole }],
+            });
+
+        public Task<bool> IsDelegateAsync(DelegateCheckRequest request, CancellationToken ct) => Task.FromResult(false);
     }
 
     private sealed class StubCurrentUser : ICurrentUser

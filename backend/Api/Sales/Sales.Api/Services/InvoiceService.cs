@@ -3,6 +3,8 @@ using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
+using Shared.Kernel.Approvals;
+using Shared.Kernel.Contacts;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
@@ -81,6 +83,12 @@ public sealed class InvoiceService : IInvoiceService
     private readonly Shared.Kernel.Stock.IUqcLookup _uqc;
     private readonly EInvoicing.IEInvoicePosting _eInvoicing;
 
+    /// <summary>The discount limit (D-29). Null in tests that do not exercise it.</summary>
+    private readonly IDiscountLimitClient? _discountLimits;
+
+    /// <summary>Credit and discount overrides (TK-102). Null in tests that do not exercise them.</summary>
+    private readonly InvoiceOverrideService? _overrides;
+
     public InvoiceService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -99,8 +107,12 @@ public sealed class InvoiceService : IInvoiceService
         Sales.Api.Services.Pdf.IInvoicePdfRenderer pdfRenderer,
         IOrgIdentityProvider orgIdentity,
         Shared.Kernel.Stock.IUqcLookup uqc,
-        EInvoicing.IEInvoicePosting eInvoicing)
+        EInvoicing.IEInvoicePosting eInvoicing,
+        IDiscountLimitClient? discountLimits = null,
+        InvoiceOverrideService? overrides = null)
     {
+        _discountLimits = discountLimits;
+        _overrides = overrides;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -582,11 +594,11 @@ public sealed class InvoiceService : IInvoiceService
         invoice.TotalAmount = totals.TotalAmount + invoice.RoundOffAmount;
         invoice.TotalAmountBase = invoice.TotalAmount * invoice.ExchangeRate;
 
-        var eval = await _creditCheckClient.EvaluateAsync(
-            invoice.ContactId, invoice.TotalAmountBase, ct);
-        if (!eval.Allowed)
+        SalesLimitCheck limits = await SalesLimits.CheckAsync(
+            _creditCheckClient, _discountLimits, invoice.ContactId, invoice.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is InvoiceResult refusedAtLimit)
         {
-            return new InvoiceResult(InvoiceOutcome.CreditLimitExceeded, Detail: eval.Reason);
+            return refusedAtLimit;
         }
 
         var detailLines = invoice.Lines.ToList();
@@ -614,7 +626,8 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         invoice.Lines.AddRange(detailLines);
-        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+        return await RequestOverridesAsync(invoice, limits, ct)
+            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
     }
 
     public async Task<InvoiceResult> UpdateAsync(
@@ -818,11 +831,18 @@ public sealed class InvoiceService : IInvoiceService
         invoice.TotalAmount = totals.TotalAmount + invoice.RoundOffAmount;
         invoice.TotalAmountBase = invoice.TotalAmount * invoice.ExchangeRate;
 
-        var eval = await _creditCheckClient.EvaluateAsync(
-            invoice.ContactId, invoice.TotalAmountBase, ct);
-        if (!eval.Allowed)
+        // An edit ends any override the invoice had: an approval approves what
+        // the approver saw, so the check below decides afresh (TK-102).
+        if (_overrides is not null)
         {
-            return new InvoiceResult(InvoiceOutcome.CreditLimitExceeded, Detail: eval.Reason);
+            await _overrides.ResetAsync(invoice, ct);
+        }
+
+        SalesLimitCheck limits = await SalesLimits.CheckAsync(
+            _creditCheckClient, _discountLimits, invoice.ContactId, invoice.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is InvoiceResult refusedAtLimit)
+        {
+            return refusedAtLimit;
         }
 
         await _db.SaveChangesAsync(ct);
@@ -846,7 +866,61 @@ public sealed class InvoiceService : IInvoiceService
         }
 
         invoice.Lines.AddRange(newDetails);
-        return new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+        return await RequestOverridesAsync(invoice, limits, ct)
+            ?? new InvoiceResult(InvoiceOutcome.Ok, invoice.InvoiceId);
+    }
+
+    /// <summary>
+    /// The refusal a save gets at the credit or discount limit (TK-102), or null
+    /// when it may go on: nothing breached, or approval was asked for.
+    /// </summary>
+    private InvoiceResult? LimitRefusal(SalesLimitCheck limits, bool requestApproval)
+    {
+        if (limits.Unavailable)
+        {
+            return new InvoiceResult(InvoiceOutcome.LimitsUnavailable,
+                Detail: "The discount limit could not be read. Nothing was saved; try again in a moment.");
+        }
+
+        if (!limits.Breached || (requestApproval && _overrides is not null))
+        {
+            return null;
+        }
+
+        return new InvoiceResult(
+            limits.CreditBreach is not null ? InvoiceOutcome.CreditLimitExceeded : InvoiceOutcome.DiscountLimitExceeded,
+            Detail: limits.Refusal());
+    }
+
+    /// <summary>
+    /// Sends each breached limit to its approvers, once the invoice is saved
+    /// (TK-102). A refusal here comes after the save, so it is returned as a
+    /// failure and the request's transaction takes the save back with it.
+    /// </summary>
+    private async Task<InvoiceResult?> RequestOverridesAsync(Invoice invoice, SalesLimitCheck limits, CancellationToken ct)
+    {
+        if (!limits.Breached || _overrides is null)
+        {
+            return null;
+        }
+
+        foreach (ApprovalRequestKind kind in limits.Kinds())
+        {
+            ApprovalResult asked = await _overrides.SubmitAsync(kind, invoice.InvoiceId, ct);
+            switch (asked.Outcome)
+            {
+                case ApprovalResultOutcome.Ok:
+                    continue;
+                case ApprovalResultOutcome.Unavailable:
+                    return new InvoiceResult(InvoiceOutcome.LimitsUnavailable, invoice.InvoiceId, asked.Detail);
+                case ApprovalResultOutcome.NoWorkflow:
+                    return new InvoiceResult(InvoiceOutcome.OverrideRefused, invoice.InvoiceId, SalesLimitCheck.NoWorkflow(kind));
+                default:
+                    return new InvoiceResult(InvoiceOutcome.OverrideRefused, invoice.InvoiceId, asked.Detail);
+            }
+        }
+
+        return null;
     }
 
     public async Task<InvoiceResult> SaveAsync(
@@ -902,6 +976,8 @@ public sealed class InvoiceService : IInvoiceService
         var view = new InvoiceView
         {
             InvoiceId = invoice.InvoiceId,
+            CreditOverrideStatus = invoice.CreditOverrideStatus?.ToString(),
+            DiscountOverrideStatus = invoice.DiscountOverrideStatus?.ToString(),
             TransportMode = invoice.TransportMode,
             VehicleNo = invoice.VehicleNo,
             TransporterId = invoice.TransporterId,
@@ -1452,6 +1528,12 @@ public sealed class InvoiceService : IInvoiceService
         if (!transition.IsAllowed)
         {
             return new InvoiceResult(InvoiceOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // An override the invoice asked for must be approved first (TK-102).
+        if (SalesOverrideService<Invoice>.Blocks(invoice) is string awaiting)
+        {
+            return new InvoiceResult(InvoiceOutcome.AwaitingApproval, invoiceId, awaiting);
         }
 
         // The order lines this invoice bills, checked before anything moves.

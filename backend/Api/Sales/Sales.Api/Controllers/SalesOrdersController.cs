@@ -169,7 +169,9 @@ public sealed class SalesOrdersController : ControllerBase
             InvoiceOutcome.AlreadyFulfilled => Conflict(new MessageResponse { Message = result.Detail ?? "There is nothing left to bill on this sales order." }),
             InvoiceOutcome.LineInvalid => BadRequest(new MessageResponse { Message = result.Detail ?? "One or more lines are invalid." }),
             InvoiceOutcome.InsufficientStock => Conflict(new MessageResponse { Message = result.Detail ?? "Insufficient stock to fulfill the Sales Order." }),
-            InvoiceOutcome.CreditLimitExceeded => BadRequest(new MessageResponse { Message = result.Detail ?? "Credit limit exceeded or account on hold." }),
+            InvoiceOutcome.CreditLimitExceeded or InvoiceOutcome.DiscountLimitExceeded => BadRequest(new LimitRefusalResponse { Message = result.Detail ?? "Credit limit exceeded or account on hold." }),
+            InvoiceOutcome.AwaitingApproval or InvoiceOutcome.OverrideRefused => Conflict(new MessageResponse { Message = result.Detail ?? "This invoice waits on an approval." }),
+            InvoiceOutcome.LimitsUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = result.Detail ?? "Please try again in a moment." }),
             InvoiceOutcome.DueDateMissing => BadRequest(new MessageResponse { Message = result.Detail ?? "An invoice requires a due date." }),
             InvoiceOutcome.PlaceOfSupplyRefused => BadRequest(new MessageResponse { Message = result.Detail ?? "Place of supply could not be determined." }),
             InvoiceOutcome.RatesUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = result.Detail ?? "Tax rates or base currency are temporarily unavailable." }),
@@ -191,7 +193,10 @@ public sealed class SalesOrdersController : ControllerBase
             SalesOrderOutcome.RatesUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = detail ?? "Tax rates or base currency are temporarily unavailable." }),
             SalesOrderOutcome.AlreadyFulfilled => Conflict(new MessageResponse { Message = "This Sales Order has already been fulfilled." }),
             SalesOrderOutcome.InsufficientStock => Conflict(new MessageResponse { Message = detail ?? "Insufficient stock to reserve." }),
-            SalesOrderOutcome.CreditLimitExceeded => BadRequest(new MessageResponse { Message = detail ?? "Credit limit exceeded or account on hold." }),
+            // A limit refusal says approval can be asked for; the screen offers it (TK-102).
+            SalesOrderOutcome.CreditLimitExceeded or SalesOrderOutcome.DiscountLimitExceeded => BadRequest(new LimitRefusalResponse { Message = detail ?? "Credit limit exceeded or account on hold." }),
+            SalesOrderOutcome.AwaitingApproval or SalesOrderOutcome.OverrideRefused => Conflict(new MessageResponse { Message = detail ?? "This order waits on an approval." }),
+            SalesOrderOutcome.LimitsUnavailable => StatusCode(StatusCodes.Status503ServiceUnavailable, new MessageResponse { Message = detail ?? "Please try again in a moment." }),
             SalesOrderOutcome.QuoteNotConvertible => Conflict(new MessageResponse { Message = detail ?? "This quote cannot be converted to a sales order." }),
             _ => StatusCode(StatusCodes.Status500InternalServerError)
         };

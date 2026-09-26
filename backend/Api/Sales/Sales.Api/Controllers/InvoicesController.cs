@@ -276,10 +276,18 @@ public sealed class InvoicesController : ControllerBase
             {
                 Message = result.Detail ?? "Insufficient stock to issue."
             }),
-            InvoiceOutcome.CreditLimitExceeded => BadRequest(new MessageResponse
+            // A limit refusal says approval can be asked for; the screen offers it (TK-102).
+            InvoiceOutcome.CreditLimitExceeded or InvoiceOutcome.DiscountLimitExceeded => BadRequest(new LimitRefusalResponse
             {
                 Message = result.Detail ?? "Credit limit exceeded or account on hold."
             }),
+            InvoiceOutcome.AwaitingApproval or InvoiceOutcome.OverrideRefused => Conflict(new MessageResponse
+            {
+                Message = result.Detail ?? "This invoice waits on an approval."
+            }),
+            InvoiceOutcome.LimitsUnavailable => StatusCode(
+                StatusCodes.Status503ServiceUnavailable,
+                new MessageResponse { Message = result.Detail ?? "Please try again in a moment." }),
             InvoiceOutcome.SourceInvalid => BadRequest(new MessageResponse
             {
                 Message = result.Detail ?? "Source document is invalid or not in expected state."

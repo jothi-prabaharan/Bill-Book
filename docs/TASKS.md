@@ -2029,14 +2029,28 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `AccountingApprovalTests` and `ApprovalChainTests`.
 
 ### TK-102 · Approvals: credit notes and the two overrides
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#90](https://github.com/jothi-prabaharan/Bill-Book/issues/90)
-- **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** —
+- **Lanes:** L-SAL, L-SAL-UI, L-INV · **Depends on:** TK-99 · **Decision:** D-29
 - **Sub-tasks:**
-  - [ ] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
-  - [ ] `SalesDiscountOverride` and `CreditLimitOverride`: a save that the discount limit or the credit check would refuse offers "request approval" instead, and an approved override lets that one document through.
-  - [ ] Test: a sale past the credit limit is refused without an approved override and accepted with one; the override does not carry to another document.
+  - [x] `sal.ApprovalSteps` and `inv.ApprovalSteps`; summary columns on sales documents and stock adjustments.
+  - [x] `SalesDiscountOverride` and `CreditLimitOverride`: a save that the discount limit or the credit check would refuse offers "request approval" instead, and an approved override lets that one document through.
+  - [x] Test: a sale past the credit limit is refused without an approved override and accepted with one; the override does not carry to another document.
 - **Done when:** a credit-limit breach can be approved by the Owner and the invoice then posts.
+- **As built:**
+  - **The discount limit (D-29)** is resolved by Master on `internal/contacts/discount-limit`: the contact's `MaxDiscountPercent`, else the branch's new `sales.maxLineDiscountPercent` configuration (seeded at 100, meaning no limit; Admin migration `SalesDiscountLimitSetting`). The contract is `Shared.Kernel.Contacts.IDiscountLimitClient`. A line breaches when its discount exceeds that share of its gross value. If the limit cannot be read, the save is refused (`LimitsUnavailable`, 503).
+  - **Overrides apply to invoices and sales orders**, the two documents that already ran the credit check. `SalesLimits` runs both checks at save.
+    - A breach without `requestApproval` is refused (`CreditLimitExceeded` / `DiscountLimitExceeded`) with `canRequestApproval: true` in the body.
+    - With it, the draft saves and each breached kind is submitted as its own chain.
+    - If no workflow covers the override (`OverrideRefused`), or Master is unreachable, the save fails after writing, and the request's transaction takes it back.
+  - **Where override state lives:** each override's status is its own column on the document (`CreditOverrideStatus`, `DiscountOverrideStatus`). What it waits on goes in the shared summary columns.
+  - **Gating:** post (invoice) and confirm (order) are refused while an override is open, rejected or sent back (`AwaitingApproval`). An edit cancels both overrides and the check runs again, so an approval never carries to changed figures or to another document. An invoice raised from an approved order is checked afresh.
+  - **Step storage:** `sal.ApprovalSteps` carries a `DocumentType` (`INV`, `SOR`, `CRN`), because an invoice and an order can share an id. There is one service per type (`InvoiceOverrideService`, `SalesOrderOverrideService`, `CreditNoteApprovalService`) over a shared `SalesApprovalService`.
+  - **Credit notes** have a document chain like purchase: approval makes them ReadyToPost, and posting a draft is gated.
+  - **Stock adjustments** have `inv.ApprovalSteps` and summary columns on `StockAdjustment` (migration `StockAdjustmentApprovals`), and posting is gated. A sheet's amount is the value of its costed lines; write-offs carry no cost until they post.
+  - **Routes:** `api/sales/credit-notes/{id}/submit|approval`, `api/sales/{invoices|sales-orders}/{id}/overrides/{credit-limit|discount}/approval`, `api/sales/approvals/mine`, `api/stock-adjustments/{id}/submit|approval` and `api/stock-adjustments/approvals/mine`. All tables have RLS (migrations `SalesApprovals`, `StockAdjustmentApprovals`).
+  - **UI:** the invoice and sales-order forms offer **Request approval** after a limit refusal and show an override panel for each override in play. `bb-approval-panel` gains `heading` and `allowSubmit`. The credit note form and the stock adjustment sheet carry the panel.
+  - **Tests:** `SalesApprovalTests`, the new cases in `StockAdjustmentServiceTests`, `DiscountLimitSettingTests` and `limit-refusal.spec.ts`.
 
 ### TK-103 · Approvals: the inbox and Settings › Approval workflows
 - [ ] open

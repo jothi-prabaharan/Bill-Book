@@ -7,6 +7,7 @@ import {
   NumberInputComponent,
   SelectComponent,
   TextInputComponent,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import { HttpClient } from '@angular/common/http';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
@@ -106,6 +107,7 @@ const REASONS: readonly { value: string; label: string }[] = [
     TextInputComponent,
     NumberInputComponent,
     SelectComponent,
+    ApprovalPanelComponent,
   ],
   templateUrl: './stock-adjustments.page.html',
   styleUrl: './stock-adjustments.page.scss',

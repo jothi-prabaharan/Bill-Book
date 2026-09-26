@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using System.ComponentModel.DataAnnotations;
 using Sales.Entity.Enums;
 using Shared.Kernel.Documents;
@@ -13,7 +14,7 @@ namespace Sales.Entity.TableEntities;
 /// else. Without that, an order confirmed and not yet shipped leaves stock fully
 /// available and it can be promised twice.
 /// </summary>
-public class SalesOrder : DocumentHeaderBase
+public class SalesOrder : DocumentHeaderBase, ISalesOverrides
 {
     public long SalesOrderId { get; set; }
 
@@ -46,4 +47,13 @@ public class SalesOrder : DocumentHeaderBase
     public string? ShortCloseReason { get; set; }
 
     public List<SalesOrderDetail> Lines { get; set; } = [];
+
+    // ---- Overrides (TK-102). Null when the document never needed one; an
+    // approved override lets this document, and no other, through.
+
+    /// <summary>Where a request to go past the customer's credit limit stands.</summary>
+    public ApprovalStatus? CreditOverrideStatus { get; set; }
+
+    /// <summary>Where a request to go past the line discount limit stands.</summary>
+    public ApprovalStatus? DiscountOverrideStatus { get; set; }
 }

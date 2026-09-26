@@ -72,6 +72,43 @@ public sealed class InternalContactLookupController : ControllerBase
     }
 
     /// <summary>
+    /// The most a sales line may be discounted for a contact (D-29, TK-102): the
+    /// contact's <c>MaxDiscountPercent</c> when set, else the branch's
+    /// <c>sales.maxLineDiscountPercent</c>, else no limit. A contact another
+    /// branch holds is not found rather than named.
+    /// </summary>
+    [HttpPost("discount-limit")]
+    public async Task<IActionResult> DiscountLimit([FromBody] DiscountLimitRequest request, CancellationToken ct)
+    {
+        switch (InternalTenant.Apply(_tenant, request.CustomerId, request.OrgId))
+        {
+            case InternalTenantOutcome.Missing:
+                return BadRequest(new MessageResponse { Message = "A customer and an organization are required to read a discount limit." });
+            case InternalTenantOutcome.Mismatch:
+                return Forbid();
+        }
+
+        var db = _services.GetRequiredService<ContactsDbContext>();
+        var contact = await db.Contacts.AsNoTracking()
+            .Where(c => c.ContactId == request.ContactId)
+            .Select(c => new { c.MaxDiscountPercent })
+            .FirstOrDefaultAsync(ct);
+        if (contact is null)
+        {
+            return NotFound();
+        }
+
+        if (contact.MaxDiscountPercent is decimal own)
+        {
+            return Ok(new DiscountLimitResponse { LimitPercent = own, Source = "Contact" });
+        }
+
+        decimal branch = await _services.GetRequiredService<IDiscountLimitSetting>()
+            .PercentAsync(request.OrgId, ct);
+        return Ok(new DiscountLimitResponse { LimitPercent = branch, Source = "Branch" });
+    }
+
+    /// <summary>
     /// The guardian with this mobile number, or a new one (School admissions,
     /// TK-62). Matching on the mobile number is what makes an admit retried
     /// after a lost reply, or a second child of the same parent, reuse the

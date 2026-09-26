@@ -69,6 +69,8 @@ public class SalesDbContext : TenantDbContext
     /// <summary>Invoices and POS sales both. A POS sale is a row here, not a table.</summary>
     public DbSet<Invoice> Invoices => Set<Invoice>();
 
+    public DbSet<SalesApprovalStep> ApprovalSteps => Set<SalesApprovalStep>();
+
     public DbSet<InvoiceDetail> InvoiceDetails => Set<InvoiceDetail>();
 
     public DbSet<InvoiceDetailTax> InvoiceDetailTaxes => Set<InvoiceDetailTax>();
@@ -396,6 +398,35 @@ public class SalesDbContext : TenantDbContext
             // A document may have had an earlier bill cancelled, so this is not unique.
             b.HasIndex(e => new { e.OrgId, e.SourceType, e.SourceId });
             b.HasIndex(e => e.EwbNo).IsUnique().HasFilter("\"EwbNo\" IS NOT NULL");
+        });
+
+        // ---- Approvals (TK-102) ------------------------------------------
+
+        modelBuilder.Entity<Invoice>(b =>
+        {
+            b.Property(e => e.CreditOverrideStatus).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.DiscountOverrideStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<SalesOrder>(b =>
+        {
+            b.Property(e => e.CreditOverrideStatus).HasConversion<string>().HasMaxLength(12);
+            b.Property(e => e.DiscountOverrideStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<SalesApprovalStep>(b =>
+        {
+            b.ToTable("ApprovalSteps");
+            b.HasKey(e => e.SalesApprovalStepId);
+            b.HasIndex(e => new { e.OrgId, e.DocumentType, e.RequestKind, e.RequestId, e.Round, e.Sequence }).IsUnique()
+                .HasDatabaseName("IX_ApprovalSteps_Request");
+
+            // The inbox: whatever waits on a user or a role.
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.ApproverUserId });
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.RoleId });
+
+            b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it

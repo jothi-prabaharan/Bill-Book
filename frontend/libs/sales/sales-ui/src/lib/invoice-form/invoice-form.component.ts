@@ -18,6 +18,7 @@ import {
   EInvoiceState,
   eInvoiceNeedsAttention,
   irnCancellable,
+  canRequestApproval,
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
@@ -35,6 +36,7 @@ import {
   totalsOf,
   UiMessage,
   NumberInputComponent,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import { OrderToInvoiceDialogComponent } from '../order-to-invoice/order-to-invoice.dialog';
 import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
@@ -67,6 +69,7 @@ import { EwayBillPanel } from '../eway-bill/eway-bill.panel';
   selector: 'bb-invoice-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
     CommonModule,
@@ -99,6 +102,13 @@ export class InvoiceFormComponent implements OnInit {
   protected readonly glPreview = signal<GlPreviewResult | null>(null);
 
   protected readonly status = signal('Draft');
+
+  /** Set when a save was refused at the credit or discount limit and may be sent to an approver (TK-102). */
+  protected readonly approvalOffered = signal(false);
+
+  /** Where the document's credit-limit and discount overrides stand, if it needed either (TK-102). */
+  protected readonly creditOverride = signal<string | null>(null);
+  protected readonly discountOverride = signal<string | null>(null);
   protected readonly documentNo = signal('');
   protected readonly salesOrderId = signal<number | null>(null);
   protected readonly daysOverdue = signal(0);
@@ -227,6 +237,8 @@ export class InvoiceFormComponent implements OnInit {
   }
 
   private apply(invoice: InvoiceView): void {
+    this.creditOverride.set(invoice.creditOverrideStatus ?? null);
+    this.discountOverride.set(invoice.discountOverrideStatus ?? null);
     this.status.set(invoice.status);
     this.documentNo.set(invoice.documentNo);
     this.salesOrderId.set(invoice.salesOrderId ?? null);
@@ -311,9 +323,10 @@ export class InvoiceFormComponent implements OnInit {
     }
   }
 
-  protected async save(): Promise<void> {
+  protected async save(requestApproval = false): Promise<void> {
     this.form.markAllAsTouched();
     this.messages.set([]);
+    this.approvalOffered.set(false);
 
     if (this.form.invalid) {
       return;
@@ -351,6 +364,7 @@ export class InvoiceFormComponent implements OnInit {
       transportDistanceKm: value.transportDistanceKm || undefined,
       transportMode: value.vehicleNo || value.transporterId ? 'Road' : undefined,
       lines: priced.map(toApiLine),
+      requestApproval,
     };
 
     try {
@@ -367,6 +381,7 @@ export class InvoiceFormComponent implements OnInit {
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+      this.approvalOffered.set(canRequestApproval(error));
     } finally {
       this.saving.set(false);
     }

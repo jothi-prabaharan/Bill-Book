@@ -3,6 +3,8 @@ using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
+using Shared.Kernel.Approvals;
+using Shared.Kernel.Contacts;
 using Shared.Kernel.Documents;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Tax;
@@ -27,6 +29,12 @@ public sealed class SalesOrderService
     private readonly IInventoryClient _inventoryClient;
     private readonly ICreditCheckClient _creditCheckClient;
 
+    /// <summary>The discount limit (D-29). Null in tests that do not exercise it.</summary>
+    private readonly IDiscountLimitClient? _discountLimits;
+
+    /// <summary>Credit and discount overrides (TK-102). Null in tests that do not exercise them.</summary>
+    private readonly SalesOrderOverrideService? _overrides;
+
     public SalesOrderService(
         SalesDbContext db,
         ITenantContext tenant,
@@ -39,8 +47,12 @@ public sealed class SalesOrderService
         ICurrentUser user,
         TimeProvider clock,
         IInventoryClient inventoryClient,
-        ICreditCheckClient creditCheckClient)
+        ICreditCheckClient creditCheckClient,
+        IDiscountLimitClient? discountLimits = null,
+        SalesOrderOverrideService? overrides = null)
     {
+        _discountLimits = discountLimits;
+        _overrides = overrides;
         _db = db;
         _tenant = tenant;
         _numbering = numbering;
@@ -200,10 +212,11 @@ public sealed class SalesOrderService
         SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
         SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
 
-        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
-        if (!eval.Allowed)
+        SalesLimitCheck limits = await SalesLimits.CheckAsync(
+            _creditCheckClient, _discountLimits, SalesOrder.ContactId, SalesOrder.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is SalesOrderResult refusedAtLimit)
         {
-            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+            return refusedAtLimit;
         }
 
         // A new order is a draft and nothing more. It used to be stamped
@@ -216,7 +229,8 @@ public sealed class SalesOrderService
         _db.SalesOrders.Add(SalesOrder);
         await _db.SaveChangesAsync(ct);
 
-        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+        return await RequestOverridesAsync(SalesOrder, limits, ct)
+            ?? new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
     }
 
     public async Task<SalesOrderResult> UpdateAsync(long SalesOrderId, SaveSalesOrderRequest request, CancellationToken ct)
@@ -382,15 +396,77 @@ public sealed class SalesOrderService
         SalesOrder.TotalAmount = totals.TotalAmount + SalesOrder.RoundOffAmount;
         SalesOrder.TotalAmountBase = SalesOrder.TotalAmount * SalesOrder.ExchangeRate;
 
-        var eval = await _creditCheckClient.EvaluateAsync(SalesOrder.ContactId, SalesOrder.TotalAmountBase, ct);
-        if (!eval.Allowed)
+        // An edit ends any override the order had: an approval approves what
+        // the approver saw, so the check below decides afresh (TK-102).
+        if (_overrides is not null)
         {
-            return new SalesOrderResult(SalesOrderOutcome.CreditLimitExceeded, Detail: eval.Reason);
+            await _overrides.ResetAsync(SalesOrder, ct);
+        }
+
+        SalesLimitCheck limits = await SalesLimits.CheckAsync(
+            _creditCheckClient, _discountLimits, SalesOrder.ContactId, SalesOrder.TotalAmountBase, taxLines, ct);
+        if (LimitRefusal(limits, request.RequestApproval) is SalesOrderResult refusedAtLimit)
+        {
+            return refusedAtLimit;
         }
 
         await _db.SaveChangesAsync(ct);
 
-        return new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+        return await RequestOverridesAsync(SalesOrder, limits, ct)
+            ?? new SalesOrderResult(SalesOrderOutcome.Ok, SalesOrder.SalesOrderId);
+    }
+
+    /// <summary>
+    /// The refusal a save gets at the credit or discount limit (TK-102), or null
+    /// when it may go on: nothing breached, or approval was asked for.
+    /// </summary>
+    private SalesOrderResult? LimitRefusal(SalesLimitCheck limits, bool requestApproval)
+    {
+        if (limits.Unavailable)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.LimitsUnavailable,
+                Detail: "The discount limit could not be read. Nothing was saved; try again in a moment.");
+        }
+
+        if (!limits.Breached || (requestApproval && _overrides is not null))
+        {
+            return null;
+        }
+
+        return new SalesOrderResult(
+            limits.CreditBreach is not null ? SalesOrderOutcome.CreditLimitExceeded : SalesOrderOutcome.DiscountLimitExceeded,
+            Detail: limits.Refusal());
+    }
+
+    /// <summary>
+    /// Sends each breached limit to its approvers, once the order is saved
+    /// (TK-102). A refusal here comes after the save, so it is returned as a
+    /// failure and the request's transaction takes the save back with it.
+    /// </summary>
+    private async Task<SalesOrderResult?> RequestOverridesAsync(SalesOrder order, SalesLimitCheck limits, CancellationToken ct)
+    {
+        if (!limits.Breached || _overrides is null)
+        {
+            return null;
+        }
+
+        foreach (ApprovalRequestKind kind in limits.Kinds())
+        {
+            ApprovalResult asked = await _overrides.SubmitAsync(kind, order.SalesOrderId, ct);
+            switch (asked.Outcome)
+            {
+                case ApprovalResultOutcome.Ok:
+                    continue;
+                case ApprovalResultOutcome.Unavailable:
+                    return new SalesOrderResult(SalesOrderOutcome.LimitsUnavailable, order.SalesOrderId, asked.Detail);
+                case ApprovalResultOutcome.NoWorkflow:
+                    return new SalesOrderResult(SalesOrderOutcome.OverrideRefused, order.SalesOrderId, SalesLimitCheck.NoWorkflow(kind));
+                default:
+                    return new SalesOrderResult(SalesOrderOutcome.OverrideRefused, order.SalesOrderId, asked.Detail);
+            }
+        }
+
+        return null;
     }
 
     public async Task<SalesOrderResult> VoidAsync(long SalesOrderId, VoidSalesOrderRequest request, CancellationToken ct)
@@ -496,6 +572,12 @@ public sealed class SalesOrderService
         if (!transition.IsAllowed)
         {
             return new SalesOrderResult(SalesOrderOutcome.LifecycleRefused, Detail: transition.Detail);
+        }
+
+        // An override the order asked for must be approved first (TK-102).
+        if (SalesOverrideService<SalesOrder>.Blocks(SalesOrder) is string awaiting)
+        {
+            return new SalesOrderResult(SalesOrderOutcome.AwaitingApproval, SalesOrderId, awaiting);
         }
 
         var reserveReq = new ReserveStockRequest
@@ -780,6 +862,8 @@ public sealed class SalesOrderService
             .Select(q => new { q.OrgId, View = new SalesOrderView
             {
                 SalesOrderId = q.SalesOrderId,
+                CreditOverrideStatus = q.CreditOverrideStatus == null ? null : q.CreditOverrideStatus.ToString(),
+                DiscountOverrideStatus = q.DiscountOverrideStatus == null ? null : q.DiscountOverrideStatus.ToString(),
                 DocumentNo = q.DocumentNo,
                 DocumentDate = q.DocumentDate,
                 DeliveryDate = q.DeliveryDate,

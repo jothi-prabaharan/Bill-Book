@@ -43,6 +43,15 @@ export class ApprovalPanelComponent implements OnChanges {
   /** The document's lifecycle status: only a draft can be submitted. */
   @Input() documentStatus = 'Draft';
 
+  /**
+   * False for a chain the save starts, such as a sales override (TK-102),
+   * which has no submit route of its own.
+   */
+  @Input() allowSubmit = true;
+
+  /** The panel's heading, e.g. "Credit limit override". */
+  @Input() heading = 'Approval';
+
   /** Raised after a submit or an action, so the host reloads the document. */
   @Output() readonly changed = new EventEmitter<void>();
 
@@ -58,7 +67,7 @@ export class ApprovalPanelComponent implements OnChanges {
   }
 
   protected canSubmit(): boolean {
-    return canSubmitForApproval(this.documentStatus, this.chain());
+    return this.allowSubmit && canSubmitForApproval(this.documentStatus, this.chain());
   }
 
   protected async submit(): Promise<void> {

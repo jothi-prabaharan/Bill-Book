@@ -69,6 +69,15 @@ builder.Services.AddScoped<ItemCategoryService>();
 builder.Services.AddScoped<MetalPurityService>();
 builder.Services.AddScoped<InventorySeeder>();
 builder.Services.AddScoped<StockAdjustmentService>();
+
+// Approval chains for stock adjustments (TK-102): Master resolves them, this
+// service stores the steps.
+builder.Services.AddScoped<InventoryApprovalService>();
+builder.Services.AddHttpClient<Shared.Kernel.Approvals.IApprovalChainClient, Shared.Kernel.Approvals.HttpApprovalChainClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<WarehouseService>();
 builder.Services.AddScoped<ItemService>();
 builder.Services.AddScoped<CostingService>();

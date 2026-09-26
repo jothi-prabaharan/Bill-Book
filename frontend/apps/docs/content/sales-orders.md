@@ -69,6 +69,10 @@ If there is not enough of something, the order is **not** confirmed — it stays
 
 Because the reservation is taken before the status moves, there is no state in which the screen says an order is committed and the shelf says its stock is free.
 
+## Credit and discount limits
+
+A sales order is held to the same two limits as an invoice when it is saved: the customer's credit limit and the line discount limit. A save that breaches either offers **Request approval**. The order is then saved as a draft and waits on an override, and **Confirm & reserve** is refused until the override is approved. The approval covers this order only, not the invoice raised from it. See [Credit and discount limits](#/invoices) on the invoice page.
+
 ## From a quote
 
 **From a quote** on a new order lists every quote that has been approved and not already converted, and turns the one you pick into an order.

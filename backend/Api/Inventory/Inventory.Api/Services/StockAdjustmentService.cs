@@ -3,6 +3,7 @@ using Inventory.Entity.Models;
 using Inventory.Entity.TableEntities;
 using Inventory.Repository;
 using Microsoft.EntityFrameworkCore;
+using Shared.Kernel.Approvals;
 using Shared.Kernel.Interfaces;
 using Shared.Kernel.Numbering;
 using Shared.Kernel.Persistence;
@@ -37,14 +38,19 @@ public sealed class StockAdjustmentService
     private readonly TimeProvider _clock;
     private readonly ILogger<StockAdjustmentService> _logger;
 
+    /// <summary>Approval chains (TK-102). Null in tests that do not exercise them.</summary>
+    private readonly InventoryApprovalService? _approvals;
+
     public StockAdjustmentService(
         InventoryDbContext db,
         StockService stock,
         INumberGenerator numbers,
         ICurrentUser user,
         TimeProvider clock,
-        ILogger<StockAdjustmentService> logger)
+        ILogger<StockAdjustmentService> logger,
+        InventoryApprovalService? approvals = null)
     {
+        _approvals = approvals;
         _db = db;
         _stock = stock;
         _numbers = numbers;
@@ -260,6 +266,12 @@ public sealed class StockAdjustmentService
                     "The sheet has posted, so its stock has already moved. Reverse it instead.");
             }
 
+            // An approval approves what was seen: an edit sends it back (TK-102).
+            if (_approvals is not null)
+            {
+                await _approvals.ReturnToDraftAsync(ApprovalRequestKind.StockAdjustment, existingId, document, ct);
+            }
+
             await _db.StockAdjustmentLines
                 .Where(l => l.StockAdjustmentId == existingId)
                 .ExecuteDeleteAsync(ct);
@@ -400,6 +412,12 @@ public sealed class StockAdjustmentService
         {
             return new StockAdjustmentResult(
                 StockAdjustmentOutcome.NotDraft, id, "The sheet has already posted.");
+        }
+
+        if (_approvals is not null
+            && await _approvals.GateAsync(ApprovalRequestKind.StockAdjustment, document, ct) is string awaiting)
+        {
+            return new StockAdjustmentResult(StockAdjustmentOutcome.AwaitingApproval, id, awaiting);
         }
 
         List<StockAdjustmentLine> lines = await _db.StockAdjustmentLines

@@ -498,11 +498,11 @@ Three limits, all optional:
 
 - **Credit limit** — the most this contact may owe.
 - **Max outstanding days** — how far past **the due date** an invoice may go before new documents are blocked. Counted from the due date, not the invoice date, so a Net 60 customer does not trip a 45-day limit while still perfectly within terms.
-- **Max discount %** — the ceiling on a line or document discount.
+- **Max discount %** — the most any one line may be discounted, as a share of the line's value before discount. Left blank, the branch's **Maximum Line Discount (%)** under **Settings › Configuration** applies instead. The shipped value is 100, which means no limit.
 
-Breaching one **blocks** the document. A user holding the override permission can push it through, and the override is recorded against the document.
+**Invoices and sales orders enforce the credit limit and the discount limit when they are saved.** A save that breaches either is refused. The screen then offers **Request approval**, which saves the draft and sends it to the approver the branch's workflow names. The document cannot be posted or confirmed until they approve, and their approval covers that one document only. Editing the document ends the approval, and the check runs again. See [Invoices](#/invoices) and [Sales orders](#/sales-orders).
 
-These are enforced when Sales and Purchase are built. Until then they are stored and not applied.
+Max outstanding days, and all three limits on purchase documents, are stored but not yet applied.
 
 ## What happens when you save
 
@@ -930,9 +930,15 @@ Posting does both at once: the stock moves and the number is taken. The number c
 
 **The whole sheet or none of it.** If any line cannot post — writing off more than is on hand, most often — nothing on the sheet posts, and it stays a draft with no number spent. A half-posted count is worse than one that did not post, because only the second is obvious.
 
+## Approval workflows
+
+A branch can require stock adjustments to pass an **approval chain** before they post. On a saved draft covered by a workflow, the **Approval** panel offers **Submit for approval**. Each level's approver approves, rejects or sends it back, and **Post** is refused until the last level approves. Editing the sheet in approval ends the chain, and it must be submitted again. Where no workflow applies, posting works as described below.
+
+A workflow's amount levels compare against the value of the sheet's stock coming in, at the costs keyed. Stock going out is valued only when the sheet posts, so a sheet of write-offs counts as zero. Use a level with no minimum to catch every write-off.
+
 ## Who authorised it
 
-There is no separate approver field, and that is deliberate: **whoever posted it is the approver**. The sheet already records who created it and who posted it, so a count keyed by one person and posted by another shows exactly that — which is the segregation of duties an adjustment needs. A third column repeating one of the first two would only be a second place to disagree.
+Without a workflow there is no separate approver field, and that is deliberate: **whoever posted it is the approver**. The sheet already records who created it and who posted it, so a count keyed by one person and posted by another shows exactly that — which is the segregation of duties an adjustment needs. A third column repeating one of the first two would only be a second place to disagree.
 
 ## Reversing, because there is no void
 

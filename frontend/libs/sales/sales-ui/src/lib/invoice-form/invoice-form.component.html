@@ -64,6 +64,35 @@
        constraints live on their fields, below. -->
   <bb-message-box [messages]="messages()" />
 
+  @if (approvalOffered()) {
+    <!-- Past the credit or discount limit: an approver may let this one invoice through (TK-102). -->
+    <div class="approval-offer">
+      <button type="button" class="btn btn--primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
+      <span>Saves the invoice as a draft and sends it to the approver. It cannot be posted until they agree.</span>
+    </div>
+  }
+
+  @if (invoiceId(); as overrideId) {
+    @if (creditOverride()) {
+      <bb-approval-panel
+        heading="Credit limit override"
+        [basePath]="'/api/sales/invoices/' + overrideId + '/overrides/credit-limit'"
+        [allowSubmit]="false"
+        [documentStatus]="status()"
+        (changed)="load()"
+      />
+    }
+    @if (discountOverride()) {
+      <bb-approval-panel
+        heading="Discount override"
+        [basePath]="'/api/sales/invoices/' + overrideId + '/overrides/discount'"
+        [allowSubmit]="false"
+        [documentStatus]="status()"
+        (changed)="load()"
+      />
+    }
+  }
+
   @if (glPreview(); as preview) {
     <!-- Read from the server, by the same code that will do the posting. A
          preview drawn from a second implementation would eventually disagree

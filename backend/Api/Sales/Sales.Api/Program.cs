@@ -99,6 +99,23 @@ builder.Services.AddScoped<OutstandingService>();
 builder.Services.AddScoped<IInvoiceService>(sp => sp.GetRequiredService<InvoiceService>());
 builder.Services.AddScoped<DeliveryChallanService>();
 builder.Services.AddScoped<CreditNoteService>();
+
+// Approval chains (TK-102): credit notes, and the credit-limit and discount
+// overrides on invoices and orders. Master resolves the chains and answers
+// the discount limit (D-29); this service stores the steps.
+builder.Services.AddScoped<CreditNoteApprovalService>();
+builder.Services.AddScoped<InvoiceOverrideService>();
+builder.Services.AddScoped<SalesOrderOverrideService>();
+builder.Services.AddHttpClient<Shared.Kernel.Approvals.IApprovalChainClient, Shared.Kernel.Approvals.HttpApprovalChainClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
+builder.Services.AddHttpClient<Shared.Kernel.Contacts.IDiscountLimitClient, Shared.Kernel.Contacts.HttpDiscountLimitClient>(client =>
+{
+    client.BaseAddress = new Uri(RequiredSetting("Master:BaseUrl"));
+})
+    .AddHttpMessageHandler<InternalKeyHandler>();
 builder.Services.AddScoped<Sales.Api.Services.Pdf.IInvoicePdfRenderer, Sales.Api.Services.Pdf.PdfSharpInvoiceRenderer>();
 builder.Services.AddScoped<Sales.Api.Services.Pdf.ISalesDocumentPdfRenderer, Sales.Api.Services.Pdf.PdfSharpSalesDocumentRenderer>();
 builder.Services.AddScoped<Sales.Api.Services.Pdf.SalesDocumentArchive>();

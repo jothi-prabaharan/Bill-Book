@@ -43,6 +43,21 @@ Once posted:
 - **It can still be voided**, with a reason, which posts a reversing entry rather than deleting anything
 - **A credit note against it blocks the void.** Undo the credit note first; voiding underneath it would leave the note pointing at something that was withdrawn
 
+## Credit and discount limits
+
+Saving an invoice checks two limits:
+
+- **The customer's credit limit**, against what they already owe.
+- **The discount limit** on each line. This is the customer's **Max discount %** when it is set, and otherwise the branch's **Maximum Line Discount (%)**.
+
+A save that breaches either is refused, and the screen offers **Request approval**. That saves the draft and sends an **override** to the approver the branch's workflow names. The invoice then shows a **Credit limit override** or **Discount override** panel, with who it waits on.
+
+- **Post** is refused until the override is approved. A rejected or sent-back override also blocks it.
+- The approval covers **this invoice only**. The next invoice for the same customer is checked afresh.
+- **Editing** the invoice ends the override. The check runs again, and approval must be asked for again if the invoice still breaches.
+- If no workflow covers overrides, approval cannot be asked for and the save is refused. Ask an administrator to set one up.
+- If the discount limit cannot be read, the save is refused rather than let through.
+
 ## From a sales order
 
 **From an order** lists every confirmed sales order with something left to bill, and turns the one you pick into an invoice for what is left.

@@ -11,6 +11,8 @@ import { ApiDocumentLine } from './document-line-scale';
  * would be free to save a document whose foot disagrees with its body.
  */
 export interface SaveSalesOrderRequest {
+  /** Save despite the credit or discount limit and send it to an approver (TK-102). */
+  requestApproval?: boolean;
   documentDate: string;
   contactId: number;
   quoteId?: number;
@@ -112,6 +114,10 @@ export interface SalesOrderListPage {
 }
 
 export interface SalesOrderView extends SalesOrderListItem {
+  /** Where a credit-limit override stands; null when none was needed (TK-102). */
+  creditOverrideStatus?: 'Draft' | 'InApproval' | 'Approved' | 'Rejected' | null;
+  /** Where a discount-limit override stands; null when none was needed (TK-102). */
+  discountOverrideStatus?: 'Draft' | 'InApproval' | 'Approved' | 'Rejected' | null;
   contactGstin?: string;
   placeOfSupplyStateId: number;
   billingAddress?: string;

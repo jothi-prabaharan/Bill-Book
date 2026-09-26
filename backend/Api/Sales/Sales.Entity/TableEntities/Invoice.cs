@@ -1,3 +1,4 @@
+using Shared.Kernel.Approvals;
 using Sales.Entity.Enums;
 using System.ComponentModel.DataAnnotations;
 using Shared.Kernel.Documents;
@@ -16,7 +17,7 @@ namespace Sales.Entity.TableEntities;
 /// <see cref="DocumentHeaderBase.TransactionTypeCode"/> holds which it is, and
 /// the POS columns below are null on an ordinary invoice.
 /// </summary>
-public class Invoice : DocumentHeaderBase
+public class Invoice : DocumentHeaderBase, ISalesOverrides
 {
     public long InvoiceId { get; set; }
 
@@ -71,4 +72,13 @@ public class Invoice : DocumentHeaderBase
     public int? TransportDistanceKm { get; set; }
 
     public List<InvoiceDetail> Lines { get; set; } = [];
+
+    // ---- Overrides (TK-102). Null when the document never needed one; an
+    // approved override lets this document, and no other, through.
+
+    /// <summary>Where a request to go past the customer's credit limit stands.</summary>
+    public ApprovalStatus? CreditOverrideStatus { get; set; }
+
+    /// <summary>Where a request to go past the line discount limit stands.</summary>
+    public ApprovalStatus? DiscountOverrideStatus { get; set; }
 }

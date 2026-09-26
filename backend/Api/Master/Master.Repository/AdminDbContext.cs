@@ -658,6 +658,23 @@ public class AdminDbContext : DbContext
                 Value = "90",
                 Category = "Portal",
                 IsSystem = true,
+            },
+
+            // The most a sales line may be discounted, as a percentage of its
+            // gross value (D-29, TK-102). A contact's own MaxDiscountPercent
+            // wins when set; 100 is no limit. A save past it may request an
+            // approved override.
+            new Configuration
+            {
+                ConfigId = Guid.Parse("a0000000-0000-0000-0000-000000000007"),
+                OrgId = null,
+                Code = "sales.maxLineDiscountPercent",
+                Name = "Maximum Line Discount (%)",
+                Description = "The most a sales line may be discounted without an approved override. A contact's own limit wins; 100 is no limit",
+                DataType = ConfigDataType.Number,
+                Value = "100",
+                Category = "Sales",
+                IsSystem = true,
             });
     }
 

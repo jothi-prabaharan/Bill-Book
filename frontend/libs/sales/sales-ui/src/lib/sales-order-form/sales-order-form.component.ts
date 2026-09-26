@@ -14,6 +14,7 @@ import {
   toApiLine,
   toGridLine,
   SalesLookupService,
+  canRequestApproval,
 } from '@bill-book/sales-core';
 import { SalesPicker } from '../sales-picker';
 import {
@@ -30,6 +31,7 @@ import {
   TextInputComponent,
   totalsOf,
   UiMessage,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 import { QuoteToOrderDialogComponent } from '../quote-to-order/quote-to-order.dialog';
 import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-availability.drawer';
@@ -62,6 +64,7 @@ import { StockAvailabilityDrawerComponent } from '../stock-availability/stock-av
   selector: 'bb-sales-order-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
     CommonModule,
@@ -96,6 +99,13 @@ export class SalesOrderFormComponent implements OnInit {
 
   /** Draft / ReadyToPost / Posted / Void, as the server last said. */
   protected readonly status = signal('Draft');
+
+  /** Set when a save was refused at the credit or discount limit and may be sent to an approver (TK-102). */
+  protected readonly approvalOffered = signal(false);
+
+  /** Where the document's credit-limit and discount overrides stand, if it needed either (TK-102). */
+  protected readonly creditOverride = signal<string | null>(null);
+  protected readonly discountOverride = signal<string | null>(null);
   protected readonly documentNo = signal('');
   protected readonly fulfilment = signal('Open');
 
@@ -258,6 +268,8 @@ export class SalesOrderFormComponent implements OnInit {
   }
 
   private apply(order: SalesOrderView): void {
+    this.creditOverride.set(order.creditOverrideStatus ?? null);
+    this.discountOverride.set(order.discountOverrideStatus ?? null);
     this.status.set(order.status);
     this.documentNo.set(order.documentNo);
     this.fulfilment.set(order.fulfilmentStatus);
@@ -332,9 +344,10 @@ export class SalesOrderFormComponent implements OnInit {
     }
   }
 
-  protected async save(): Promise<void> {
+  protected async save(requestApproval = false): Promise<void> {
     this.form.markAllAsTouched();
     this.messages.set([]);
+    this.approvalOffered.set(false);
 
     if (this.form.invalid) {
       return;
@@ -366,6 +379,7 @@ export class SalesOrderFormComponent implements OnInit {
       notes: value.notes || undefined,
       termsAndConditions: value.termsAndConditions || undefined,
       lines: priced.map(toApiLine),
+      requestApproval,
     };
 
     try {
@@ -382,6 +396,7 @@ export class SalesOrderFormComponent implements OnInit {
     } catch (error) {
       const failure = readApiFailure(error);
       this.messages.set([{ tone: 'error', text: failure.text, detail: failure.detail }]);
+      this.approvalOffered.set(canRequestApproval(error));
     } finally {
       this.saving.set(false);
     }

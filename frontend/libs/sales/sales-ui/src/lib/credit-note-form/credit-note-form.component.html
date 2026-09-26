@@ -185,6 +185,15 @@
     </div>
   </form>
 
+  @if (creditNoteId(); as approvalId) {
+    <!-- The credit note's approval chain, when a workflow covers it (TK-102). -->
+    <bb-approval-panel
+      [basePath]="'/api/sales/credit-notes/' + approvalId"
+      [documentStatus]="status()"
+      (changed)="load()"
+    />
+  }
+
   @if (editable() && allocationRows().length > 0) {
     <!-- The customer's open invoices. Allocating to one of them loads it. -->
     <div class="crn-form__allocation">

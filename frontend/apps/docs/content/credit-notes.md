@@ -52,6 +52,10 @@ Posting is refused, with the reason, when:
 
 A refusal leaves the note as a draft with nothing moved, so it can be fixed and posted again.
 
+## Approval workflows
+
+A branch can require credit notes to pass an **approval chain** before they post. On a saved draft covered by a workflow, the **Approval** panel offers **Submit for approval**. The note then waits on each level in turn. The last approval makes it ready to post, and **Post** is refused before then. Editing the note in approval, or once approved, returns it to draft and ends the chain. Where no workflow applies, posting works as before.
+
 ## Voiding one
 
 The reason is required, always.

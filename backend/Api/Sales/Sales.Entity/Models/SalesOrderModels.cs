@@ -17,6 +17,13 @@ namespace Sales.Entity.Models;
 /// </summary>
 public class SaveSalesOrderRequest
 {
+    /// <summary>
+    /// Save even though the sale is past the customer's credit limit or the
+    /// discount limit, and send it to an approver (TK-102). Without it such a
+    /// save is refused, saying approval can be asked for.
+    /// </summary>
+    public bool RequestApproval { get; set; }
+
 
     /// <summary>
     /// The print template this document should use. Null means the branch's
@@ -173,6 +180,18 @@ public enum SalesOrderOutcome
 
     /// <summary>The quote named cannot become an order — wrong status, or already converted.</summary>
     QuoteNotConvertible = 11,
+
+    /// <summary>A line is discounted past the limit (D-29), and approval was not asked for (TK-102).</summary>
+    DiscountLimitExceeded = 12,
+
+    /// <summary>An override the order asked for is open or was refused, so it cannot be confirmed yet (TK-102).</summary>
+    AwaitingApproval = 13,
+
+    /// <summary>Approval was asked for but cannot be given: no workflow covers the override, or it was refused.</summary>
+    OverrideRefused = 14,
+
+    /// <summary>A limit or the approval rules could not be read. Transient.</summary>
+    LimitsUnavailable = 15,
 }
 
 public sealed record SalesOrderResult(SalesOrderOutcome Outcome, long SalesOrderId = 0, string? Detail = null);
@@ -288,6 +307,12 @@ public class SalesOrderListItem
 /// <summary>A SalesOrder with its lines and their tax rows.</summary>
 public class SalesOrderView : SalesOrderListItem
 {
+    /// <summary>Where a credit-limit override stands, or null when none was needed (TK-102).</summary>
+    public string? CreditOverrideStatus { get; set; }
+
+    /// <summary>Where a discount-limit override stands, or null when none was needed (TK-102).</summary>
+    public string? DiscountOverrideStatus { get; set; }
+
     public string? ContactGstin { get; set; }
 
     public int PlaceOfSupplyStateId { get; set; }

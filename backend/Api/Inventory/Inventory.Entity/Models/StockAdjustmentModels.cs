@@ -179,6 +179,13 @@ public enum StockAdjustmentOutcome
 
     /// <summary>The STA series is missing, so no number could be taken.</summary>
     SeriesMissing = 9,
+
+    /// <summary>
+    /// An approval workflow applies and has not approved the sheet (TK-102): it
+    /// is waiting, was rejected, or was never submitted — or whether one applies
+    /// could not be established.
+    /// </summary>
+    AwaitingApproval = 10,
 }
 
 public sealed record StockAdjustmentResult(

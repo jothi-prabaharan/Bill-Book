@@ -1,6 +1,6 @@
 <section class="approval">
   <header class="approval__head">
-    <h3>Approval</h3>
+    <h3>{{ heading }}</h3>
     @if (chain()?.approvalStatus; as status) {
       <span class="pill">{{ status === 'InApproval' ? 'In approval' : status }}</span>
     }

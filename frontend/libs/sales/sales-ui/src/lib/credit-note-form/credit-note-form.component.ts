@@ -38,6 +38,7 @@ import {
   TextInputComponent,
   totalsOf,
   UiMessage,
+  ApprovalPanelComponent,
 } from '@bill-book/ui-components';
 
 /**
@@ -64,6 +65,7 @@ type CreditNoteGridLine = DocumentLine & { invoiceDetailId?: number | null };
   selector: 'bb-credit-note-form',
   standalone: true,
   imports: [
+    ApprovalPanelComponent,
     FormFieldComponent,
     LookupDialogComponent,
     CommonModule,

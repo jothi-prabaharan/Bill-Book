@@ -77,6 +77,11 @@ public sealed class StockAdjustmentsController : ControllerBase
             StatusCodes.Status409Conflict,
             new MessageResponse { Message = result.Detail ?? "The STA series is missing." }),
 
+        StockAdjustmentOutcome.AwaitingApproval => Conflict(new MessageResponse
+        {
+            Message = result.Detail ?? "This sheet needs approval before it can be posted.",
+        }),
+
         _ => BadRequest(new MessageResponse
         {
             Message = result.Detail ?? $"The sheet was refused: {result.Outcome}.",

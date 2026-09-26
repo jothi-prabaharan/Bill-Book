@@ -65,6 +65,35 @@
        constraints live on their fields, below. -->
   <bb-message-box [messages]="messages()" />
 
+  @if (approvalOffered()) {
+    <!-- Past the credit or discount limit: an approver may let this one order through (TK-102). -->
+    <div class="approval-offer">
+      <button type="button" class="btn btn--primary" (click)="save(true)" [disabled]="saving()">Request approval</button>
+      <span>Saves the order as a draft and sends it to the approver. It cannot be confirmed until they agree.</span>
+    </div>
+  }
+
+  @if (salesOrderId(); as overrideId) {
+    @if (creditOverride()) {
+      <bb-approval-panel
+        heading="Credit limit override"
+        [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/credit-limit'"
+        [allowSubmit]="false"
+        [documentStatus]="status()"
+        (changed)="load()"
+      />
+    }
+    @if (discountOverride()) {
+      <bb-approval-panel
+        heading="Discount override"
+        [basePath]="'/api/sales/sales-orders/' + overrideId + '/overrides/discount'"
+        [allowSubmit]="false"
+        [documentStatus]="status()"
+        (changed)="load()"
+      />
+    }
+  }
+
   @if (canVoid()) {
     <form class="field sor-form__void" [formGroup]="voidForm">
       <bb-text-input

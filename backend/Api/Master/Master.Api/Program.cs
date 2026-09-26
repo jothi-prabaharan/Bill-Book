@@ -170,6 +170,7 @@ builder.Services.AddScoped<ContactService>();
 // Revocable portal links and the one-hour sessions they open (TK-94).
 builder.Services.AddScoped<PortalAccessService>();
 builder.Services.AddScoped<IPortalLinkLifetime, ConfigurationPortalLinkLifetime>();
+builder.Services.AddScoped<IDiscountLimitSetting, ConfigurationDiscountLimitSetting>();
 builder.Services.AddPortalRateLimit();
 builder.Services.AddScoped<ContactPersonRoleService>();
 builder.Services.AddScoped<ContactAttachmentService>();

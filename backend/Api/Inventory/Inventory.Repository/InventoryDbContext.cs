@@ -58,6 +58,8 @@ public class InventoryDbContext : TenantDbContext
     /// </summary>
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
 
+    public DbSet<InventoryApprovalStep> ApprovalSteps => Set<InventoryApprovalStep>();
+
     public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
 
     /// <summary>
@@ -771,6 +773,27 @@ public class InventoryDbContext : TenantDbContext
                     "chk_adjustment_line_cost",
                     "\"UnitCost\" IS NULL OR \"Direction\" = 'In'");
             });
+        });
+
+        // ---- Approvals (TK-102) ------------------------------------------
+
+        modelBuilder.Entity<StockAdjustment>(b =>
+        {
+            b.Property(e => e.ApprovalStatus).HasConversion<string>().HasMaxLength(12);
+        });
+
+        modelBuilder.Entity<InventoryApprovalStep>(b =>
+        {
+            b.ToTable("ApprovalSteps");
+            b.HasKey(e => e.InventoryApprovalStepId);
+            b.HasIndex(e => new { e.OrgId, e.RequestKind, e.RequestId, e.Round, e.Sequence }).IsUnique();
+
+            // The inbox: whatever waits on a user or a role.
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.ApproverUserId });
+            b.HasIndex(e => new { e.OrgId, e.StepStatus, e.RoleId });
+
+            b.Property(e => e.RequestKind).HasConversion<string>().HasMaxLength(30);
+            b.Property(e => e.StepStatus).HasConversion<string>().HasMaxLength(12);
         });
 
         // Base class applies query filters, OrgId indexes and xmin last so it
