@@ -90,8 +90,23 @@ A challan at or under the limit needs no e-way bill, and asking for one is refus
 Only one e-way bill is live at a time: cancel it before generating another. Generating, changing and
 cancelling need the **e-invoice** permission.
 
+## What it posts to the accounts
+
+A **sale** challan moves the goods' cost out of stock and into **Goods Delivered Not Invoiced** when
+it is posted: `Dr Goods Delivered Not Invoiced / Cr Inventory`, one entry per line. The cost is not
+cost of sales yet, because nothing has been sold on paper. The invoice that bills the goods moves it
+on into cost of sales, beside the revenue it earned.
+
+- The figure posted at dispatch is provisional. Once stock costing settles what the goods really
+  cost, it replaces the challan's entry with the settled figure.
+- The invoice clears the account at what the goods cost **when the invoice is posted**. If a
+  backdated purchase restates the challan's cost after the invoice, the difference stays in Goods
+  Delivered Not Invoiced as a small balance. Nothing reverses it automatically.
+- **Job work, approval, branch transfer and sample challans post nothing.** The goods are still the
+  business's own. If goods sent on approval are then invoiced, the invoice takes their cost out of
+  Inventory directly.
+
 ## What it does not do yet
 
-- **A sale challan does not yet post to *Goods Delivered Not Invoiced*.** The goods' cost reaches the accounts through stock costing, as it does for any other issue, and lands in cost of sales at dispatch. Holding it in a clearing account until the invoice is raised is designed and not yet built
 - **The order is chosen by its number**, not from a lookup. The customer and the items are picked by name
 - **Returns** (goods coming back on a credit note) do not generate e-way bills yet

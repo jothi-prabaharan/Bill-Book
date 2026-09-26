@@ -28,6 +28,15 @@ public static class StockLedgerMapping
 
     public const string OpeningBalanceEquity = "Opening Balance Equity";
 
+    /// <summary>
+    /// Where a sale challan's goods wait for their invoice (TK-90). The invoice
+    /// moves them on into cost of sales; this worker never does.
+    /// </summary>
+    public const string GoodsDeliveredNotInvoiced = "Goods Delivered Not Invoiced";
+
+    /// <summary>The delivery challan's transaction type code.</summary>
+    public const string DeliveryChallanCode = "DLC";
+
     /// <summary>Cost of goods sold. Both legs of a stock posting are that leg of the document.</summary>
     public const int CogsLedgerType = 4;
 
@@ -47,6 +56,13 @@ public static class StockLedgerMapping
     /// </summary>
     public static StockPosting? For(StockMovement movement)
     {
+        // The document said so: goods out on job work, approval, transfer or
+        // sample are still the branch's own, so nothing moves in the ledger.
+        if (movement.LedgerExempt)
+        {
+            return null;
+        }
+
         // A transfer changes where stock is, not what the branch owns. Posting
         // it would move value between two accounts that are the same account.
         if (movement.MovementType is StockMovementType.TransferIn or StockMovementType.TransferOut)
@@ -83,6 +99,14 @@ public static class StockLedgerMapping
             // The sale. This posting is the entire reason gross profit exists:
             // revenue is Income and this is Expense, and a report can only
             // subtract one from the other because they are different types.
+            //
+            // Except goods out on a sale challan: sold, but not yet invoiced, so
+            // their cost waits in Goods Delivered Not Invoiced until the invoice
+            // moves it into cost of sales beside its revenue (TK-90). Only sale
+            // challans reach here; the other kinds issue exempt.
+            StockMovementType.Issue when movement.SourceType == DeliveryChallanCode =>
+                (GoodsDeliveredNotInvoiced, Inventory, SourceTransaction),
+
             StockMovementType.Issue =>
                 (CostOfGoodsSold, Inventory, sourced ? SourceTransaction : SourceStockAdjustment),
 

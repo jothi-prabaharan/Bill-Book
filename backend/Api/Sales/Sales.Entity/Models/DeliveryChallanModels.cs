@@ -228,6 +228,9 @@ public enum DeliveryChallanOutcome
 
     /// <summary>Inventory refused the issue — usually not enough on hand.</summary>
     StockRefused = 8,
+
+    /// <summary>Accounting refused the challan's posting to Goods Delivered Not Invoiced (TK-90).</summary>
+    PostingRefused = 9,
 }
 
 public sealed record DeliveryChallanResult(

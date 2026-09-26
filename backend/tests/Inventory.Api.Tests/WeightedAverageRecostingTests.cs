@@ -111,6 +111,42 @@ public class WeightedAverageRecostingTests
         Assert.Equal(1, result.StockOutsRequeuedForPosting);
     }
 
+    /// <summary>
+    /// A job-work or sample challan's issue is exempt from the ledger (TK-90).
+    /// Its cost is restated like any other stock-out, but it is never put back
+    /// in the ledger queue — while a zero-cost movement, NotApplicable for the
+    /// other reason, is, once it has a value to post.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_exempt_stock_out_is_revalued_but_never_requeued_for_the_ledger()
+    {
+        await using Harness h = await Harness.CreateAsync(_postgres);
+        CancellationToken ct = CancellationToken.None;
+
+        long item = await h.Item(onHand: 13m, average: 15m);
+        await h.In(item, 10m, 10m, Day1);
+
+        long exempt = await h.Out(item, 5m, Day1.AddDays(5), unitCost: 10m, ledger: LedgerStatus.NotApplicable);
+        await h.Db.StockMovements
+            .Where(m => m.StockMovementId == exempt)
+            .ExecuteUpdateAsync(m => m.SetProperty(x => x.LedgerExempt, true), ct);
+
+        long zeroCost = await h.Out(item, 1m, Day1.AddDays(6), unitCost: 0m, ledger: LedgerStatus.NotApplicable);
+
+        await h.In(item, 10m, 20m, Day1.AddDays(2));
+        WeightedAverageRecostResult result = await h.Recosting.RecalculateAsync(item, null, ct);
+
+        StockMovement Row(long id) => h.Db.StockMovements.AsNoTracking().Single(m => m.StockMovementId == id);
+
+        Assert.NotEqual(50.00m, Row(exempt).TotalCost);
+        Assert.Equal(LedgerStatus.NotApplicable, Row(exempt).LedgerStatus);
+
+        Assert.NotEqual(0m, Row(zeroCost).TotalCost);
+        Assert.Equal(LedgerStatus.Pending, Row(zeroCost).LedgerStatus);
+
+        Assert.Equal(1, result.StockOutsRequeuedForPosting);
+    }
+
     [SkippableFact]
     public async Task A_stock_out_in_a_closed_period_is_not_touched()
     {

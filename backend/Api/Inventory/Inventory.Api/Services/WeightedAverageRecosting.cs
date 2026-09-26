@@ -79,6 +79,7 @@ public sealed class WeightedAverageRecosting
                 m.TotalCost,
                 m.ResultingWeightedAverageCost,
                 m.LedgerStatus,
+                m.LedgerExempt,
             })
             .ToListAsync(ct);
 
@@ -141,7 +142,11 @@ public sealed class WeightedAverageRecosting
             // its unit cost moved in the twelfth decimal. A line still waiting
             // to be posted will post the new figure when it gets there, so it
             // is left where it is.
-            bool repost = valueChanged && before.LedgerStatus != LedgerStatus.Pending;
+            // An exempt movement (a job-work or sample challan, TK-90) is never
+            // requeued: it owes the ledger nothing, whatever it now costs.
+            bool repost = valueChanged
+                && before.LedgerStatus != LedgerStatus.Pending
+                && !before.LedgerExempt;
 
             if (repost)
             {

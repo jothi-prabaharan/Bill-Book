@@ -209,6 +209,9 @@ public sealed class StockLedgerPoster
         }
     }
 
+    private static bool HasItemSubAccount(string account) =>
+        account is StockLedgerMapping.Inventory or StockLedgerMapping.CostOfGoodsSold;
+
     private static LedgerPostingLeg Leg(
         StockPosting posting, long itemId, decimal amount, bool isDebit, string description)
     {
@@ -226,10 +229,11 @@ public sealed class StockLedgerPoster
             posting.TransactionDetailId,
             account,
             // Only the stock accounts have an item beneath them. Opening Balance
-            // Equity has no sub-dimension, and asking for one that was never
-            // provisioned would have Accounting refuse the whole posting.
-            account == StockLedgerMapping.OpeningBalanceEquity ? null : ItemReference,
-            account == StockLedgerMapping.OpeningBalanceEquity ? null : itemId,
+            // Equity and Goods Delivered Not Invoiced have no sub-dimension, and
+            // asking for one that was never provisioned would have Accounting
+            // refuse the whole posting.
+            HasItemSubAccount(account) ? ItemReference : null,
+            HasItemSubAccount(account) ? itemId : null,
             isDebit ? amount : 0m,
             isDebit ? 0m : amount,
             description);

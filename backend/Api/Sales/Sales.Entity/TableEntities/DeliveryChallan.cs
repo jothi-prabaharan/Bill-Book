@@ -14,11 +14,10 @@ namespace Sales.Entity.TableEntities;
 /// no ledger at all — and booking revenue on a sample is exactly the mistake the
 /// type column exists to prevent.
 ///
-/// <b>What a sale challan posts is still open</b> — see <c>SALES.md</c> §9.
-/// Issuing as <c>Dr COGS</c> at dispatch books a cost with no revenue against it,
-/// so the recommendation is a <i>Goods Delivered Not Invoiced</i> control
-/// account. Nothing here depends on the answer; the table can be built before it
-/// is settled, and T3.6 is where it has to be.
+/// <b>A sale challan posts its goods' cost to <i>Goods Delivered Not
+/// Invoiced</i></b> (TK-90): <c>Dr GDNI / Cr Inventory</c> at dispatch, moved
+/// into cost of sales by the invoice that bills the goods. Posting to COGS at
+/// dispatch would book a cost with no revenue against it.
 /// </summary>
 public class DeliveryChallan : DocumentHeaderBase
 {

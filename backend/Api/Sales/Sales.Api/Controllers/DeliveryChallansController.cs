@@ -103,7 +103,8 @@ public sealed class DeliveryChallansController : ControllerBase
         {
             DeliveryChallanOutcome.NotFound => NotFound(),
             DeliveryChallanOutcome.LifecycleRefused or DeliveryChallanOutcome.OverDelivered
-                or DeliveryChallanOutcome.StockRefused => Conflict(Message(result)),
+                or DeliveryChallanOutcome.StockRefused
+                or DeliveryChallanOutcome.PostingRefused => Conflict(Message(result)),
             DeliveryChallanOutcome.RatesUnavailable => StatusCode(
                 StatusCodes.Status503ServiceUnavailable, Message(result)),
             _ => UnprocessableEntity(Message(result)),

@@ -84,6 +84,18 @@ public sealed class InventoryClientRouteTests
         Assert.Equal("/internal/stock/availability", handler.LastPath);
     }
 
+    [Fact]
+    public async Task Reading_movement_costs_posts_to_the_movement_costs_route()
+    {
+        (InventoryClient client, RecordingHandler handler) = Build();
+
+        StockMovementCostsResponse? answer = await client.GetMovementCostsAsync(
+            new StockMovementCostsRequest { StockMovementIds = [9] }, CancellationToken.None);
+
+        Assert.Equal("/internal/stock/movement-costs", handler.LastPath);
+        Assert.NotNull(answer);
+    }
+
     private static (InventoryClient, RecordingHandler) Build()
     {
         RecordingHandler handler = new();

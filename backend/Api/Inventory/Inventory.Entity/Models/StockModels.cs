@@ -258,6 +258,12 @@ public class RecordStockMovementRequest
 
     public long SourceLineId { get; set; }
 
+    /// <summary>
+    /// The document says this movement posts nothing (TK-90): it is created
+    /// <c>NotApplicable</c> in the ledger queue and stays there through recosting.
+    /// </summary>
+    public bool LedgerExempt { get; set; }
+
     // --- Batch and serial. Required by the item's own tracking flags, checked
     // in C# because the rule lives on the item rather than on this row.
 

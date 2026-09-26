@@ -473,6 +473,94 @@ public sealed class DeliveryChallanServiceTests
 
     // ── Helpers ─────────────────────────────────────────────────────────
 
+    // ── Goods Delivered Not Invoiced (TK-90) ────────────────────────────
+
+    /// <summary>
+    /// A sale challan's goods leave stock at a provisional cost, and that cost
+    /// waits in GDNI: Dr GDNI / Cr Inventory per line, on the challan's own
+    /// line and the COGS leg type — the key the costing worker settles on — and
+    /// provisional, so the worker's figure replaces it.
+    /// </summary>
+    [SkippableFact]
+    public async Task A_sale_challan_posts_its_cost_to_gdni_provisionally_per_line()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.IssueUnitCost[7] = 45m;
+
+        long id = await h.SaveOkAsync(Request("33AAAAA0000A1Z5", [Line(10m, 100m)]));
+        Assert.Equal(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+
+        Assert.False(Assert.Single(h.Inventory.Issues).LedgerExempt);
+
+        PostLedgerRequest post = Assert.Single(h.Ledger.Posts);
+        Assert.Equal("DLC", post.TransactionTypeCode);
+        Assert.Equal(id, post.TransactionId);
+        Assert.Equal([4], post.ProvisionalLedgerTypeIds);
+
+        long lineId = await h.Db.DeliveryChallanDetails
+            .Where(l => l.DeliveryChallanId == id)
+            .Select(l => l.DeliveryChallanDetailId)
+            .SingleAsync();
+
+        LedgerLegRequest gdni = Assert.Single(post.Legs, l => l.AccountSystemName == "Goods Delivered Not Invoiced");
+        LedgerLegRequest stock = Assert.Single(post.Legs, l => l.AccountSystemName == "Inventory");
+
+        Assert.Equal(450m, gdni.DebitAmount);
+        Assert.Equal(450m, stock.CreditAmount);
+        Assert.Null(gdni.SubAccountReferenceType);
+        Assert.Equal(7, stock.SubAccountReferenceId);
+        Assert.All(post.Legs, l =>
+        {
+            Assert.Equal(4, l.LedgerTypeId);
+            Assert.Equal(lineId, l.TransactionDetailId);
+        });
+    }
+
+    [SkippableTheory]
+    [InlineData(ChallanType.JobWork)]
+    [InlineData(ChallanType.Approval)]
+    [InlineData(ChallanType.BranchTransfer)]
+    [InlineData(ChallanType.Sample)]
+    public async Task A_challan_that_is_not_a_sale_posts_nothing_and_issues_exempt(ChallanType type)
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.IssueUnitCost[7] = 45m;
+
+        SaveDeliveryChallanRequest request = Request("33AAAAA0000A1Z5", [Line(10m, 100m)]);
+        request.ChallanType = type;
+        long id = await h.SaveOkAsync(request);
+
+        Assert.Equal(DeliveryChallanOutcome.Ok, (await h.Service.PostAsync(id, default)).Outcome);
+
+        Assert.True(Assert.Single(h.Inventory.Issues).LedgerExempt);
+        Assert.Empty(h.Ledger.Posts);
+    }
+
+    [SkippableFact]
+    public async Task A_refused_gdni_posting_leaves_the_challan_a_draft()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.IssueUnitCost[7] = 45m;
+        h.Ledger.RefusePostWith = "The chart of accounts has no 'Goods Delivered Not Invoiced'.";
+
+        long id = await h.SaveOkAsync(Request("33AAAAA0000A1Z5", [Line(10m, 100m)]));
+        DeliveryChallanResult result = await h.Service.PostAsync(id, default);
+
+        Assert.Equal(DeliveryChallanOutcome.PostingRefused, result.Outcome);
+        Assert.Contains("Goods Delivered Not Invoiced", result.Detail);
+
+        h.Db.ChangeTracker.Clear();
+        Assert.Equal(
+            DocumentStatus.Draft,
+            await h.Db.DeliveryChallans.Where(c => c.DeliveryChallanId == id).Select(c => c.Status).SingleAsync());
+    }
+
     private static SaveDeliveryChallanRequest Request(
         string contactGstin, List<SaveDeliveryChallanLineRequest> lines) =>
         new()
@@ -549,7 +637,8 @@ public sealed class DeliveryChallanServiceTests
         DeliveryChallanService Service,
         SalesOrderService Orders,
         RecordingInventory Inventory,
-        RecordingDocumentStorage Storage)
+        RecordingDocumentStorage Storage,
+        RecordingLedger Ledger)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -563,6 +652,7 @@ public sealed class DeliveryChallanServiceTests
 
             StubNameLookup names = new();
             RecordingInventory inventory = new();
+            RecordingLedger ledger = new();
             NumberGenerator numbering = new(
                 db, Options.Create(new NumberingOptions()), new StubFinancialYear());
             TenantContext tenant = new() { CustomerId = customerId, OrgId = orgId, CustomerCode = "0000000042" };
@@ -580,7 +670,8 @@ public sealed class DeliveryChallanServiceTests
                 new StubCurrentUser(),
                 TimeProvider.System,
                 inventory,
-                TestArchive.For(db, tenant, storage));
+                TestArchive.For(db, tenant, storage),
+                ledger);
 
             SalesOrderService orders = new(
                 db,
@@ -596,7 +687,7 @@ public sealed class DeliveryChallanServiceTests
                 inventory,
                 new StubCreditCheck());
 
-            return new Harness(db, service, orders, inventory, storage);
+            return new Harness(db, service, orders, inventory, storage, ledger);
         }
 
         public async Task<long> SaveOkAsync(SaveDeliveryChallanRequest request)

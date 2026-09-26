@@ -27,6 +27,18 @@ public sealed class DeliveryChallanService
 
     private readonly IInventoryClient _inventoryClient;
     private readonly Sales.Api.Services.Pdf.SalesDocumentArchive _archive;
+    private readonly ILedgerClient _ledger;
+
+    /// <summary>The account a sale challan's goods wait in until invoiced (TK-90).</summary>
+    private const string GdniAccount = "Goods Delivered Not Invoiced";
+
+    private const string InventoryAccount = "Inventory";
+
+    /// <summary>Cost of goods sold — the key the costing worker settles each line on.</summary>
+    private const int CogsLedgerType = 4;
+
+    private const int DocumentLedgerSource = 1;
+    private const int ItemReference = 2;
 
     public DeliveryChallanService(
         SalesDbContext db,
@@ -40,7 +52,8 @@ public sealed class DeliveryChallanService
         ICurrentUser user,
         TimeProvider clock,
         IInventoryClient inventoryClient,
-        Sales.Api.Services.Pdf.SalesDocumentArchive archive)
+        Sales.Api.Services.Pdf.SalesDocumentArchive archive,
+        ILedgerClient ledger)
     {
         _db = db;
         _tenant = tenant;
@@ -54,6 +67,7 @@ public sealed class DeliveryChallanService
         _clock = clock;
         _inventoryClient = inventoryClient;
         _archive = archive;
+        _ledger = ledger;
     }
 
     public async Task<IReadOnlyList<DeliveryChallanListItem>> ListAsync(DateOnly? from, DateOnly? to, CancellationToken ct)
@@ -389,20 +403,19 @@ public sealed class DeliveryChallanService
     /// Dispatches the goods: issues the stock, and moves the order's delivered
     /// and reserved quantities when the challan is against one.
     ///
-    /// <b>It writes nothing to the ledger and nothing to the sales register.</b>
+    /// <b>Nothing reaches the sales register</b>, because a delivery challan is
+    /// not a supply under GST — the invoice raised from it is, and GSTR-1 and
+    /// GSTR-3B read every row of <c>sal.SalesRegister</c> with no filter on
+    /// document type.
     ///
-    /// Not the register, because a delivery challan is not a supply under GST —
-    /// the invoice raised from it is, and GSTR-1 and GSTR-3B read every row of
-    /// <c>sal.SalesRegister</c> with no filter on document type, so a challan's
-    /// rows were counted a second time beside its invoice's.
-    ///
-    /// Not the ledger, because the stock issue already reaches it: Inventory's
-    /// costing worker posts every issue movement, this one included, at the cost
-    /// it settles. The challan's own <c>Dr Goods Delivered Not Invoiced / Cr
-    /// Inventory</c> post sat beside that one, so Inventory was credited twice,
-    /// and it named an account the chart of accounts does not seed. Where a sale
-    /// challan's cost should land — GDNI rather than cost of sales — is the
-    /// worker's mapping to change, which is its own card.
+    /// <b>A sale challan posts its goods' cost to Goods Delivered Not Invoiced</b>
+    /// (TK-90): <c>Dr GDNI / Cr Inventory</c> per line, provisionally, on the key
+    /// the costing worker settles the movement on — this challan, the line, the
+    /// COGS leg type — so the worker's settled figure replaces it, and if the
+    /// worker got there first these legs are dropped. The invoice that bills the
+    /// goods moves them into cost of sales. <b>Any other kind of challan posts
+    /// nothing</b>: job work, approval, transfer and samples leave the goods the
+    /// branch's own, so their movements are issued exempt from the ledger.
     /// </summary>
     public async Task<DeliveryChallanResult> PostAsync(long deliveryChallanId, CancellationToken ct)
     {
@@ -469,6 +482,8 @@ public sealed class DeliveryChallanService
             }
         }
 
+        bool isSale = deliveryChallan.ChallanType == ChallanType.Sale;
+
         var issueRequest = new IssueStockRequest
         {
             OrgId = deliveryChallan.OrgId,
@@ -476,6 +491,10 @@ public sealed class DeliveryChallanService
             MovementDate = deliveryChallan.DocumentDate,
             SourceType = deliveryChallan.TransactionTypeCode,
             SourceId = deliveryChallan.DeliveryChallanId,
+
+            // Only a sale moves ownership; the rest post nothing, now or when
+            // recosting restates them (TK-90).
+            LedgerExempt = !isSale,
             Lines = deliveryChallan.Lines.Select(l => new IssueStockLine
             {
                 SourceLineId = l.DeliveryChallanDetailId,
@@ -504,6 +523,11 @@ public sealed class DeliveryChallanService
                 line.StockMovementId = issueLine.StockMovementId;
                 line.UnitCost = issueLine.UnitCost;
             }
+        }
+
+        if (isSale && await PostDeliveredCostAsync(deliveryChallan, customerId, issueResult, ct) is string refused)
+        {
+            return new DeliveryChallanResult(DeliveryChallanOutcome.PostingRefused, deliveryChallanId, refused);
         }
 
         if (salesOrder is not null)
@@ -541,6 +565,64 @@ public sealed class DeliveryChallanService
 
         await _db.SaveChangesAsync(ct);
         return new DeliveryChallanResult(DeliveryChallanOutcome.Ok, deliveryChallanId);
+    }
+
+    /// <summary>
+    /// A sale challan's provisional <c>Dr Goods Delivered Not Invoiced / Cr
+    /// Inventory</c>, one pair per issued line on <c>(DLC, challan, line, COGS)</c>
+    /// — exactly the rows the costing worker writes for the movement, so its
+    /// settled posting replaces these (TK-90). Null when posted, or when there
+    /// was nothing to post; otherwise Accounting's reason.
+    /// </summary>
+    private async Task<string?> PostDeliveredCostAsync(
+        DeliveryChallan challan, Guid customerId, IssueStockResponse issued, CancellationToken ct)
+    {
+        List<IssueStockLineResult> costed = [.. issued.Lines.Where(l => l.LineValue > 0m)];
+        if (costed.Count == 0)
+        {
+            return null;
+        }
+
+        var request = new PostLedgerRequest
+        {
+            CustomerId = customerId,
+            OrgId = challan.OrgId,
+            TransactionTypeCode = challan.TransactionTypeCode,
+            TransactionId = challan.DeliveryChallanId,
+            DocumentNo = challan.DocumentNo,
+            LedgerDate = challan.DocumentDate,
+            SourceDocumentId = challan.DeliveryChallanId,
+            ProvisionalLedgerTypeIds = [CogsLedgerType],
+            Legs = [],
+        };
+
+        foreach (IssueStockLineResult line in costed)
+        {
+            request.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = line.SourceLineId,
+                AccountSystemName = GdniAccount,
+                DebitAmount = line.LineValue,
+                TransactionDesc = "Goods delivered not invoiced (provisional)",
+            });
+
+            request.Legs.Add(new LedgerLegRequest
+            {
+                LedgerTypeId = CogsLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = line.SourceLineId,
+                AccountSystemName = InventoryAccount,
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = line.ItemId,
+                CreditAmount = line.LineValue,
+                TransactionDesc = "Inventory relief (provisional)",
+            });
+        }
+
+        PostLedgerOutcomeResult result = await _ledger.PostAsync(request, ct);
+        return result.Posted ? null : result.Detail ?? "Accounting refused the challan's posting.";
     }
 
     /// <summary>

@@ -269,6 +269,32 @@ public sealed class RecordingInventory : IInventoryClient
     public bool RefuseIssues { get; set; }
 
     /// <summary>
+    /// A unit cost per item (TK-90). An item here is issued as a real movement:
+    /// a fresh id, a line value at this cost, and that value recorded in
+    /// <see cref="MovementCosts"/> as what Inventory holds for it.
+    /// </summary>
+    public Dictionary<long, decimal> IssueUnitCost { get; } = [];
+
+    /// <summary>What each movement costs now. A test restating a movement edits it here.</summary>
+    public Dictionary<long, decimal> MovementCosts { get; } = [];
+
+    /// <summary>Set to answer the movement-cost read as an unreachable Inventory does.</summary>
+    public bool MovementCostsUnreachable { get; set; }
+
+    private long _nextMovementId = 70_000;
+
+    public Task<StockMovementCostsResponse?> GetMovementCostsAsync(
+        StockMovementCostsRequest request, CancellationToken ct) =>
+        Task.FromResult(MovementCostsUnreachable
+            ? null
+            : new StockMovementCostsResponse
+            {
+                Lines = [.. request.StockMovementIds
+                    .Where(MovementCosts.ContainsKey)
+                    .Select(id => new StockMovementCostLine { StockMovementId = id, TotalCost = MovementCosts[id] })],
+            });
+
+    /// <summary>
     /// Each issue succeeds and answers every line with no movement and no cost —
     /// what the stub always answered, so a suite that never looks at issues is
     /// unaffected by their being recorded.
@@ -280,15 +306,39 @@ public sealed class RecordingInventory : IInventoryClient
         return Task.FromResult(new IssueStockResponse
         {
             Success = !RefuseIssues,
-            Lines = [.. request.Lines.Select(line => new IssueStockLineResult
+            Lines = [.. request.Lines.Select(Issue)],
+        });
+
+        IssueStockLineResult Issue(IssueStockLine line)
+        {
+            if (RefuseIssues || !IssueUnitCost.TryGetValue(line.ItemId, out decimal unitCost))
+            {
+                return new IssueStockLineResult
+                {
+                    SourceLineId = line.SourceLineId,
+                    ItemId = line.ItemId,
+                    RequestedQuantity = line.Quantity,
+                    Success = !RefuseIssues,
+                    Outcome = RefuseIssues ? "InsufficientStock" : "Ok",
+                };
+            }
+
+            long movementId = Interlocked.Increment(ref _nextMovementId);
+            decimal value = Math.Round(line.Quantity * unitCost, 2, MidpointRounding.AwayFromZero);
+            MovementCosts[movementId] = value;
+
+            return new IssueStockLineResult
             {
                 SourceLineId = line.SourceLineId,
                 ItemId = line.ItemId,
                 RequestedQuantity = line.Quantity,
-                Success = !RefuseIssues,
-                Outcome = RefuseIssues ? "InsufficientStock" : "Ok",
-            })],
-        });
+                Success = true,
+                Outcome = "Ok",
+                StockMovementId = movementId,
+                UnitCost = unitCost,
+                LineValue = value,
+            };
+        }
     }
 
     /// <summary>Every receipt asked for, in order — a credit note's returns among them.</summary>

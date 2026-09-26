@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Sales.Api.Services;
+using Sales.Entity.Enums;
 using Sales.Entity.Models;
 using Sales.Entity.TableEntities;
 using Sales.Repository;
@@ -230,24 +231,23 @@ public sealed class InvoicePostingTests
         Assert.False(issueCall.Lines.Single().ReleaseReservation);
     }
 
-    [SkippableFact]
-    public async Task Posting_invoice_from_delivery_challan_does_not_issue_stock_and_credits_gdni()
+    /// <summary>
+    /// A posted challan for ten of the item, delivered on movement
+    /// <paramref name="movementId"/> at a provisional 45 each.
+    /// </summary>
+    private static async Task<long> PostedChallanAsync(Harness h, long movementId, ChallanType type = ChallanType.Sale)
     {
-        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
-
-        Harness h = await Harness.CreateAsync(_pg);
-
-        // Create and save delivery challan
-        (Guid customerId, Guid orgId) = h.Tenant.Require();
+        (_, Guid orgId) = h.Tenant.Require();
         var challan = new DeliveryChallan
         {
             OrgId = orgId,
             TransactionTypeCode = "DLC",
-            DocumentNo = "DC/26/00001",
+            DocumentNo = $"DC/26/{movementId:00000}",
             DocumentDate = new DateOnly(2026, 6, 1),
             ContactId = ContactId,
             CurrencyCode = "INR",
             ExchangeRate = 1m,
+            ChallanType = type,
             Status = DocumentStatus.Posted,
             PostedAt = DateTimeOffset.UtcNow,
             PostedBy = Guid.NewGuid(),
@@ -256,7 +256,7 @@ public sealed class InvoicePostingTests
         h.Db.DeliveryChallans.Add(challan);
         await h.Db.SaveChangesAsync();
 
-        var challanDetail = new DeliveryChallanDetail
+        h.Db.DeliveryChallanDetails.Add(new DeliveryChallanDetail
         {
             DeliveryChallanId = challan.DeliveryChallanId,
             OrgId = orgId,
@@ -266,33 +266,133 @@ public sealed class InvoicePostingTests
             BaseQuantity = 10m,
             ConversionFactor = 1m,
             UnitCost = 45m,
-            StockMovementId = 9999,
+            StockMovementId = movementId,
             UnitPrice = 100m,
             GrossAmount = 1000m,
             TaxableAmount = 1000m,
             TaxAmount = 0m,
             LineTotal = 1000m,
-        };
-        h.Db.DeliveryChallanDetails.Add(challanDetail);
+        });
         await h.Db.SaveChangesAsync();
-        challan.Lines.Add(challanDetail);
+        return challan.DeliveryChallanId;
+    }
 
-        var req = Request(lines: [Line(quantity: 10m, unitPrice: 100m)]);
-        req.DeliveryChallanId = challan.DeliveryChallanId;
+    private static async Task<InvoiceResult> InvoiceChallanAsync(Harness h, long challanId, decimal quantity = 10m)
+    {
+        var req = Request(lines: [Line(quantity: quantity, unitPrice: 100m)]);
+        req.DeliveryChallanId = challanId;
 
         InvoiceResult created = await h.Invoices.CreateAsync(req, CancellationToken.None);
         Assert.Equal(InvoiceOutcome.Ok, created.Outcome);
 
-        InvoiceResult posted = await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
+        return await h.Invoices.PostAsync(created.InvoiceId, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// The goods left on the challan, so the invoice issues nothing and moves
+    /// their cost from GDNI into cost of sales — at what the challan's movement
+    /// costs in Inventory now (470, settled), not the challan line's provisional
+    /// 45 × 10 (TK-90, D-21 b). Its own leg type, on the invoice's line.
+    /// </summary>
+    [SkippableFact]
+    public async Task Posting_invoice_from_delivery_challan_does_not_issue_stock_and_clears_gdni_at_the_current_cost()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.MovementCosts[9999] = 470m;
+
+        long challanId = await PostedChallanAsync(h, movementId: 9999);
+        InvoiceResult posted = await InvoiceChallanAsync(h, challanId);
         Assert.Equal(InvoiceOutcome.Ok, posted.Outcome);
 
-        // Inventory client IssueAsync is NOT called because goods already left via challan
         Assert.Empty(h.Inventory.Issues);
 
-        // COGS debited (45 * 10 = 450) and GDNI credited
-        Assert.Equal(450m, h.Ledger.DebitOf(CogsAccount));
-        Assert.Equal(450m, h.Ledger.CreditOf(GdniAccount));
+        Assert.Equal(470m, h.Ledger.DebitOf(CogsAccount));
+        Assert.Equal(470m, h.Ledger.CreditOf(GdniAccount));
         Assert.Equal(0m, h.Ledger.CreditOf(InventoryAccount));
+
+        long lineId = await h.Db.Set<InvoiceDetail>()
+            .Where(l => l.InvoiceId == posted.InvoiceId)
+            .Select(l => l.InvoiceDetailId)
+            .SingleAsync();
+
+        Assert.All(
+            h.Ledger.Posts[^1].Legs.Where(l => l.AccountSystemName is CogsAccount or GdniAccount),
+            l =>
+            {
+                Assert.Equal(7, l.LedgerTypeId);
+                Assert.Equal(lineId, l.TransactionDetailId);
+            });
+    }
+
+    [SkippableFact]
+    public async Task Billing_part_of_a_challan_clears_that_part_of_its_cost()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.MovementCosts[9998] = 470m;
+
+        long challanId = await PostedChallanAsync(h, movementId: 9998);
+        Assert.Equal(InvoiceOutcome.Ok, (await InvoiceChallanAsync(h, challanId, quantity: 4m)).Outcome);
+
+        // Four of ten: 188 of 470.
+        Assert.Equal(188m, h.Ledger.CreditOf(GdniAccount));
+    }
+
+    [SkippableFact]
+    public async Task An_unreachable_inventory_refuses_the_invoice_rather_than_guess_the_cost()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.MovementCostsUnreachable = true;
+
+        long challanId = await PostedChallanAsync(h, movementId: 9997);
+        InvoiceResult posted = await InvoiceChallanAsync(h, challanId);
+
+        Assert.Equal(InvoiceOutcome.StockRefused, posted.Outcome);
+        Assert.Empty(h.Ledger.Posts);
+    }
+
+    /// <summary>
+    /// Goods out on approval posted nothing when they left, so the invoice the
+    /// customer's keeping them turns into takes their cost out of Inventory
+    /// directly — GDNI never held it.
+    /// </summary>
+    [SkippableFact]
+    public async Task Invoicing_an_approval_challan_takes_the_cost_from_inventory_not_gdni()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.MovementCosts[9996] = 470m;
+
+        long challanId = await PostedChallanAsync(h, movementId: 9996, ChallanType.Approval);
+        Assert.Equal(InvoiceOutcome.Ok, (await InvoiceChallanAsync(h, challanId)).Outcome);
+
+        Assert.Equal(470m, h.Ledger.DebitOf(CogsAccount));
+        Assert.Equal(470m, h.Ledger.CreditOf(InventoryAccount));
+        Assert.Equal(0m, h.Ledger.CreditOf(GdniAccount));
+    }
+
+    [SkippableFact]
+    public async Task Voiding_a_challan_invoice_withdraws_its_gdni_clearing()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.MovementCosts[9995] = 470m;
+
+        long challanId = await PostedChallanAsync(h, movementId: 9995);
+        InvoiceResult posted = await InvoiceChallanAsync(h, challanId);
+
+        InvoiceResult voided = await h.Invoices.VoidAsync(
+            posted.InvoiceId, new VoidInvoiceRequest { Reason = "Billed the wrong customer" }, CancellationToken.None);
+
+        Assert.Equal(InvoiceOutcome.Ok, voided.Outcome);
+        Assert.Contains(7, h.Ledger.Posts[^1].WithdrawLedgerTypeIds);
     }
 
     [SkippableFact]
@@ -722,6 +822,23 @@ public sealed class InvoicePostingTests
 
         public Task<ReceiveStockResponse> ReceiveAsync(ReceiveStockRequest request, CancellationToken ct) =>
             Task.FromResult(new ReceiveStockResponse { Success = true });
+
+        /// <summary>What each movement costs now, as Inventory would answer (TK-90).</summary>
+        public Dictionary<long, decimal> MovementCosts { get; } = [];
+
+        /// <summary>Set to answer as an unreachable Inventory does.</summary>
+        public bool MovementCostsUnreachable { get; set; }
+
+        public Task<StockMovementCostsResponse?> GetMovementCostsAsync(
+            StockMovementCostsRequest request, CancellationToken ct) =>
+            Task.FromResult(MovementCostsUnreachable
+                ? null
+                : new StockMovementCostsResponse
+                {
+                    Lines = [.. request.StockMovementIds
+                        .Where(MovementCosts.ContainsKey)
+                        .Select(id => new StockMovementCostLine { StockMovementId = id, TotalCost = MovementCosts[id] })],
+                });
     }
 
     private sealed class RecordingLedger : ILedgerClient

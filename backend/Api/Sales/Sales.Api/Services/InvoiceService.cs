@@ -40,6 +40,9 @@ public sealed class InvoiceService : IInvoiceService
     private const int ControlLedgerType = 3;
     private const int CogsLedgerType = 4;
     private const int RoundOffLedgerType = 6;
+
+    /// <summary>Goods delivered not invoiced clearing: <c>mst.LedgerTypes</c> 7 (TK-90).</summary>
+    private const int GdniLedgerType = 7;
     private const int TransactionLedgerSource = 3;
 
     private const int ContactReference = 1;
@@ -1464,11 +1467,14 @@ public sealed class InvoiceService : IInvoiceService
         // named challan, nothing is issued at all.
         Dictionary<long, decimal> issued = IssueQuantities(invoice, order);
 
-        decimal totalCogs = 0;
-
         // Each issued line's cost as the request path valued it: provisional,
         // until the costing worker settles the movement behind it (TK-10).
         List<(long LineId, long ItemId, decimal Value)> provisionalCogs = [];
+
+        // Goods a challan already took out, billed here and issued never: which
+        // challan line delivered each invoice line, and whether that challan was
+        // a sale (TK-90).
+        List<(InvoiceDetail Line, DeliveryChallanDetail ChallanLine, bool Sale)> namedDeliveries = [];
 
         if (invoice.DeliveryChallanId.HasValue)
         {
@@ -1478,7 +1484,6 @@ public sealed class InvoiceService : IInvoiceService
 
             if (challan is not null)
             {
-                
                 foreach (var line in invoice.Lines)
                 {
                     var challanLine = challan.Lines.FirstOrDefault(l => l.ItemId == line.ItemId);
@@ -1486,11 +1491,10 @@ public sealed class InvoiceService : IInvoiceService
                     {
                         line.UnitCost = challanLine.UnitCost;
                         line.StockMovementId = challanLine.StockMovementId;
-                        totalCogs += line.UnitCost * line.Quantity;
                         challanLine.InvoicedQuantity += line.Quantity;
+                        namedDeliveries.Add((line, challanLine, challan.ChallanType == ChallanType.Sale));
                     }
                 }
-
             }
         }
         else
@@ -1564,9 +1568,15 @@ public sealed class InvoiceService : IInvoiceService
                         provisionalCogs.Add((issueLine.SourceLineId, issueLine.ItemId, issueLine.LineValue));
                     }
                 }
-
-                totalCogs = issueResult.TotalValue;
             }
+        }
+
+        // What the delivered goods cost, as Inventory holds it now (D-21 b).
+        (List<DeliveredCost>? deliveredCosts, string? costRefusal) =
+            await DeliveredCostsAsync(invoice, customerId, namedDeliveries, issued, ct);
+        if (deliveredCosts is null)
+        {
+            return new InvoiceResult(InvoiceOutcome.StockRefused, Detail: costRefusal);
         }
 
         // 2. Post Ledger
@@ -1696,29 +1706,38 @@ public sealed class InvoiceService : IInvoiceService
             });
         }
 
-        if (invoice.DeliveryChallanId.HasValue && totalCogs > 0)
+        // Goods a challan delivered move from Goods Delivered Not Invoiced into
+        // cost of sales now that they are billed: Dr COGS / Cr GDNI per line, at
+        // the cost Inventory holds for the challan's movement today (TK-90,
+        // D-21 b). Filed under their own leg type, because the COGS type is the
+        // key the costing worker replaces per line, and an invoice line can
+        // both clear delivered goods and issue more. Goods a non-sale challan
+        // took out (approval, say) never left Inventory in the ledger, so their
+        // credit is Inventory itself.
+        foreach (DeliveredCost delivered in deliveredCosts)
         {
-            // Against a challan, unchanged by TK-10 and left to TK-90: the owner kept the challan's
-            // postings out of that card, and GDNI is still not seeded, so this is
-            // refused whenever it is non-zero, as it was before.
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = CogsLedgerType,
-                LedgerSourceId = TransactionLedgerSource,
-                TransactionDetailId = 0,
+                LedgerTypeId = GdniLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = delivered.LineId,
                 AccountSystemName = CogsAccount,
-                DebitAmount = totalCogs,
-                TransactionDesc = "Cost of goods sold",
+                SubAccountReferenceType = ItemReference,
+                SubAccountReferenceId = delivered.ItemId,
+                DebitAmount = delivered.Value,
+                TransactionDesc = "Cost of goods sold (delivered on challan)",
             });
 
             postRequest.Legs.Add(new LedgerLegRequest
             {
-                LedgerTypeId = ControlLedgerType,
-                LedgerSourceId = TransactionLedgerSource,
-                TransactionDetailId = 0,
-                AccountSystemName = GdniAccount,
-                CreditAmount = totalCogs,
-                TransactionDesc = "Inventory relief",
+                LedgerTypeId = GdniLedgerType,
+                LedgerSourceId = DocumentLedgerSource,
+                TransactionDetailId = delivered.LineId,
+                AccountSystemName = delivered.FromGdni ? GdniAccount : InventoryAccount,
+                SubAccountReferenceType = delivered.FromGdni ? null : ItemReference,
+                SubAccountReferenceId = delivered.FromGdni ? null : delivered.ItemId,
+                CreditAmount = delivered.Value,
+                TransactionDesc = delivered.FromGdni ? "Goods delivered not invoiced cleared" : "Inventory relief",
             });
         }
 
@@ -1993,7 +2012,9 @@ public sealed class InvoiceService : IInvoiceService
                     LedgerDate = invoice.DocumentDate,
                     ContactId = invoice.ContactId,
                     SourceDocumentId = invoice.InvoiceId,
-                    WithdrawLedgerTypeIds = [ItemLedgerType, TaxLedgerType, ControlLedgerType, CogsLedgerType, RoundOffLedgerType],
+                    // GDNI too: the void puts delivered goods' cost back where the
+                    // challan left it, delivered and not invoiced (TK-90).
+                    WithdrawLedgerTypeIds = [ItemLedgerType, TaxLedgerType, ControlLedgerType, CogsLedgerType, RoundOffLedgerType, GdniLedgerType],
                     Legs = [],
                 },
                 ct);
@@ -2111,6 +2132,124 @@ public sealed class InvoiceService : IInvoiceService
 
         return (order, null);
     }
+
+    /// <summary>One invoice line's delivered goods, and what they cost now (TK-90).</summary>
+    private sealed record DeliveredCost(long LineId, long ItemId, decimal Value, bool FromGdni);
+
+    /// <summary>
+    /// What the goods this invoice bills without issuing cost, as Inventory
+    /// holds them now — decision D-21 (b): no record of which challan lines were
+    /// cleared, the cost the challan's movement carries today (TK-90).
+    ///
+    /// <b>Against a named challan</b>, each line takes its challan line's
+    /// movement cost in proportion to the quantity billed. <b>Against an order</b>,
+    /// the part of a line an earlier sale challan delivered (what
+    /// <see cref="IssueQuantities"/> did not issue) takes the average cost of
+    /// every posted sale challan line against that order line, so the invoices
+    /// that bill it all clear, between them, what the challans put in.
+    ///
+    /// Null, with the reason, when Inventory cannot be asked: posting a cost it
+    /// does not have would leave GDNI wrong with nothing saying so.
+    /// </summary>
+    private async Task<(List<DeliveredCost>? Costs, string? Refusal)> DeliveredCostsAsync(
+        Invoice invoice,
+        Guid customerId,
+        List<(InvoiceDetail Line, DeliveryChallanDetail ChallanLine, bool Sale)> named,
+        Dictionary<long, decimal> issued,
+        CancellationToken ct)
+    {
+        // Order lines this invoice bills beyond what it issues: the delivered part.
+        List<(InvoiceDetail Line, decimal Covered)> ordered = invoice.DeliveryChallanId.HasValue
+            ? []
+            : [.. invoice.Lines
+                .Where(l => l.LineType == DocumentLineType.Stock && l.ItemId.HasValue && l.SalesOrderDetailId.HasValue)
+                .Select(l => (Line: l, Covered: l.Quantity - issued.GetValueOrDefault(l.InvoiceDetailId, l.Quantity)))
+                .Where(x => x.Covered > 0m)];
+
+        List<long> orderLineIds = [.. ordered.Select(o => o.Line.SalesOrderDetailId!.Value).Distinct()];
+
+        List<DeliveryChallanDetail> delivering = orderLineIds.Count == 0
+            ? []
+            : await _db.DeliveryChallans
+                .AsNoTracking()
+                .Where(c => c.Status == DocumentStatus.Posted && c.ChallanType == ChallanType.Sale)
+                .SelectMany(c => c.Lines)
+                .Where(d => d.SalesOrderDetailId != null
+                    && orderLineIds.Contains(d.SalesOrderDetailId.Value)
+                    && d.StockMovementId != null)
+                .ToListAsync(ct);
+
+        List<long> movementIds = [.. named.Select(n => n.ChallanLine.StockMovementId)
+            .Concat(delivering.Select(d => d.StockMovementId))
+            .OfType<long>()
+            .Distinct()];
+
+        if (movementIds.Count == 0)
+        {
+            return ([], null);
+        }
+
+        StockMovementCostsResponse? answer = await _inventoryClient.GetMovementCostsAsync(
+            new StockMovementCostsRequest
+            {
+                CustomerId = customerId,
+                OrgId = invoice.OrgId,
+                StockMovementIds = movementIds,
+            },
+            ct);
+
+        if (answer is null || movementIds.Any(id => answer.Lines.All(l => l.StockMovementId != id)))
+        {
+            return (null, "Inventory could not say what the delivered goods cost, so nothing was posted. Try again.");
+        }
+
+        Dictionary<long, decimal> movementCost = answer.Lines.ToDictionary(l => l.StockMovementId, l => l.TotalCost);
+        List<DeliveredCost> costs = [];
+
+        foreach ((InvoiceDetail line, DeliveryChallanDetail challanLine, bool sale) in named)
+        {
+            if (challanLine.StockMovementId is not long movementId)
+            {
+                continue;
+            }
+
+            decimal delivered = BaseQuantity(challanLine);
+            decimal value = delivered == 0m
+                ? 0m
+                : Money(movementCost[movementId] * BaseQuantity(line) / delivered);
+
+            if (value > 0m)
+            {
+                costs.Add(new DeliveredCost(line.InvoiceDetailId, line.ItemId!.Value, value, sale));
+            }
+        }
+
+        foreach ((InvoiceDetail line, decimal covered) in ordered)
+        {
+            List<DeliveryChallanDetail> against = [.. delivering.Where(d => d.SalesOrderDetailId == line.SalesOrderDetailId)];
+            decimal quantity = against.Sum(BaseQuantity);
+            if (quantity == 0m)
+            {
+                continue;
+            }
+
+            decimal rate = against.Sum(d => movementCost[d.StockMovementId!.Value]) / quantity;
+            decimal value = Money(rate * covered * (line.ConversionFactor == 0m ? 1m : line.ConversionFactor));
+
+            if (value > 0m)
+            {
+                costs.Add(new DeliveredCost(line.InvoiceDetailId, line.ItemId!.Value, value, true));
+            }
+        }
+
+        return (costs, null);
+    }
+
+    /// <summary>A line's quantity in the item's inventory unit.</summary>
+    private static decimal BaseQuantity(DocumentLineBase line) =>
+        line.BaseQuantity > 0m ? line.BaseQuantity : line.Quantity * (line.ConversionFactor == 0m ? 1m : line.ConversionFactor);
+
+    private static decimal Money(decimal value) => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 
     /// <summary>
     /// How much of each stock line this invoice issues, by invoice line.

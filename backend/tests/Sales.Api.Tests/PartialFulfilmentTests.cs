@@ -180,6 +180,49 @@ public sealed class PartialFulfilmentTests
         Assert.Equal(InvoiceOutcome.LineInvalid, result.Outcome);
     }
 
+    /// <summary>
+    /// An invoice billing an order's delivered goods without naming the challan
+    /// still moves their cost out of GDNI (TK-90): the challan put 4 × 45 there,
+    /// Inventory has since restated that movement to 190, and the invoice clears
+    /// at 190 — decision D-21 (b), the cost Inventory holds when it posts. Its
+    /// void withdraws the clearing, which puts the cost back in GDNI.
+    /// </summary>
+    [SkippableFact]
+    public async Task An_order_billed_invoice_of_delivered_goods_clears_gdni_and_its_void_restores_it()
+    {
+        Skip.If(_pg.SkipReason is not null, _pg.SkipReason ?? string.Empty);
+
+        Harness h = await Harness.CreateAsync(_pg);
+        h.Inventory.IssueUnitCost[7] = 45m;
+
+        (long orderId, long lineId) = await h.ConfirmOrderAsync(10m);
+        await h.DeliverAsync(orderId, lineId, 4m);
+
+        PostLedgerRequest challan = h.Ledger.Posts.Single(p => p.TransactionTypeCode == "DLC");
+        Assert.Equal(180m, challan.Legs.Where(l => l.AccountSystemName == "Goods Delivered Not Invoiced").Sum(l => l.DebitAmount));
+
+        long movementId = h.Inventory.MovementCosts.Keys.Single();
+        h.Inventory.MovementCosts[movementId] = 190m;
+        int issuesBefore = h.Inventory.Issues.Count;
+
+        InvoiceResult invoice = await h.InvoiceAsync(orderId, lineId, 4m);
+        Assert.Equal(InvoiceOutcome.Ok, invoice.Outcome);
+
+        // Delivered already: nothing issued a second time.
+        Assert.Equal(issuesBefore, h.Inventory.Issues.Count);
+
+        PostLedgerRequest posted = h.Ledger.Posts.Last(p => p.TransactionTypeCode == "INV" && p.Legs.Count > 0);
+        LedgerLegRequest cleared = Assert.Single(posted.Legs, l => l.AccountSystemName == "Goods Delivered Not Invoiced");
+        Assert.Equal(190m, cleared.CreditAmount);
+        Assert.Equal(7, cleared.LedgerTypeId);
+        Assert.Equal(190m, posted.Legs.Where(l => l.AccountSystemName == "Cost of Goods Sold").Sum(l => l.DebitAmount));
+
+        InvoiceResult voided = await h.Invoices.VoidAsync(
+            invoice.InvoiceId, new VoidInvoiceRequest { Reason = "Wrong price" }, default);
+        Assert.Equal(InvoiceOutcome.Ok, voided.Outcome);
+        Assert.Contains(7, h.Ledger.Posts[^1].WithdrawLedgerTypeIds);
+    }
+
     [SkippableFact]
     public async Task Voiding_a_posted_invoice_gives_back_its_billing_and_keeps_its_delivery()
     {
@@ -265,7 +308,8 @@ public sealed class PartialFulfilmentTests
         SalesOrderService Orders,
         DeliveryChallanService Challans,
         InvoiceService Invoices,
-        RecordingInventory Inventory)
+        RecordingInventory Inventory,
+        RecordingLedger Ledger)
     {
         public static async Task<Harness> CreateAsync(PostgresFixture pg)
         {
@@ -289,14 +333,14 @@ public sealed class PartialFulfilmentTests
 
             DeliveryChallanService challans = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
-                names, names, new StubCurrentUser(), TimeProvider.System, inventory, TestArchive.For(db, tenant));
+                names, names, new StubCurrentUser(), TimeProvider.System, inventory, TestArchive.For(db, tenant), ledger);
 
             InvoiceService invoices = new(
                 db, tenant, numbering, new StubBaseCurrency(), new StubBranchSettings(), new StubTaxRates(),
                 names, names, new StubCurrentUser(), TimeProvider.System, inventory, ledger,
                 new StubCreditCheck(), new StubDocumentStorage(), new StubInvoicePdf(), new StubOrgIdentity(), new StubUqcLookup(), new StubEInvoicing());
 
-            return new Harness(db, orders, challans, invoices, inventory);
+            return new Harness(db, orders, challans, invoices, inventory, ledger);
         }
 
         /// <summary>A confirmed order for item 7 to contact 42. Returns the order and its one line.</summary>

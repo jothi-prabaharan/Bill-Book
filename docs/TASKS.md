@@ -763,7 +763,7 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
       (`A_direct_invoice_posts_its_cost_per_line_provisionally_on_the_workers_key`).
 
 ### TK-90 · Sale challans post to Goods Delivered Not Invoiced, and the invoice clears it
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run
 - **Issue:** [#82](https://github.com/jothi-prabaharan/Bill-Book/issues/82)
 - **Lanes:** L-ACC, L-INV, L-SAL · **Depends on:** TK-10 · **Decision:** D-21
 - **Where:** as TK-10's Where. `ChartOfAccountsSeed.cs` (GDNI missing), `StockLedgerMapping.cs:86-87`,
@@ -787,24 +787,43 @@ Postings that are wrong today or post nothing. TK-10 comes before POS (TK-39), w
   WAC restatement of the challan's dispatch cost can leave a small residual balance in GDNI rather
   than being chased down and zeroed.
 - **Sub-tasks:**
-  - [ ] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
+  - [x] Seed GDNI (Asset, off the manual-journal picker like GRNI) with a `SystemAccount` value;
         backfill existing branches through the seeder's idempotent path; take it off
         `SalesAccountNameTests`' allow-list.
-  - [ ] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
+  - [x] Challan post: provisional Dr GDNI / Cr Inventory per line on `(DLC, challanId, lineId, 4)`
         for `ChallanType.Sale`; the worker maps a `DLC`-sourced `Issue` to Dr GDNI / Cr Inventory.
-  - [ ] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods, at
+  - [x] Invoice: Dr COGS / Cr GDNI per line, for challan-named and order-billed delivered goods, at
         Inventory's current cost when the invoice posts — no allocation record naming which challan
         lines were cleared.
-  - [ ] Test: challan then invoice leaves GDNI at zero (absent a later restatement), Inventory
+  - [x] Test: challan then invoice leaves GDNI at zero (absent a later restatement), Inventory
         credited once, COGS debited once.
-  - [ ] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
-  - [ ] Test: a job-work challan posts nothing.
-  - [ ] Test: a challan cost restatement after its invoice has posted leaves a residual GDNI balance
+  - [x] Test: an order-billed invoice of delivered goods clears GDNI, and its void restores it.
+  - [x] Test: a job-work challan posts nothing.
+  - [x] Test: a challan cost restatement after its invoice has posted leaves a residual GDNI balance
         rather than erroring — document this as the accepted cost of (b) rather than a bug.
 - **Done when:** a sale challan and the invoice raised from it leave Inventory reduced once, GDNI
   at zero, and one cost-of-sales debit.
 - **Notes:** split from TK-10 by the owner's choice of 2026-09-24.
-
+- **As built (2026-09-26):**
+  - **Accounting:** `SystemAccount.GoodsDeliveredNotInvoiced` (25) is seeded as 1250, an Asset kept off the journal picker. An existing branch gets it from the idempotent seeder (the retry in `apps/admin`).
+  - **Master:** ledger type **7 `GDNI`** was added (migration `GdniLedgerType`). The invoice's clearing legs cannot use type 4 (COGS). That type is the key the costing worker replaces per line, so on an invoice line that both clears delivered goods and issues more, the worker's settlement would erase the clearing. Type 3 (CONTROL) was also ruled out, because allocation and aging read it per contact.
+  - **Inventory:**
+    - `StockMovement.LedgerExempt` (migration `StockMovementLedgerExempt`) marks a movement that posts nothing. It is created `NotApplicable`, `StockLedgerMapping` returns no posting for it, and neither recosting path (`CostingService` requeue, `WeightedAverageRecosting`) puts it back in the ledger queue.
+    - A flag was needed because the poster already uses `NotApplicable` for a zero-cost movement, and that movement must still be requeued once recosting gives it a value.
+    - A `DLC`-sourced `Issue` maps to Dr GDNI / Cr Inventory, with no item sub-account on GDNI.
+    - New endpoint `POST internal/stock/movement-costs` returns a movement's current `TotalCost`.
+  - **Sales, challan:** a sale challan posts provisional Dr GDNI / Cr Inventory per line on `(DLC, challan, line, 4)` with `ProvisionalLedgerTypeIds = [4]`. If the ledger refuses, the result is `DeliveryChallanOutcome.PostingRefused` (409) and the challan stays a draft. Every other challan type is issued with `LedgerExempt`.
+  - **Sales, invoice:**
+    - Posts Dr COGS / Cr GDNI per line under type 7, at the challan movement's current cost. For a named challan the cost is taken in proportion to the quantity billed. For order-billed delivered goods it is the average cost of every posted sale challan line against the order line.
+    - A named non-sale challan (approval, say) credits Inventory instead, because its goods never left Inventory in the ledger.
+    - If Inventory cannot be reached, the result is `StockRefused` and nothing is posted.
+    - Void withdraws type 7, which puts the cost back in GDNI.
+  - **Tests:**
+    - `Accounting.Api.Tests.GdniClearingTests`: the seed row; challan, worker, then invoice leaves GDNI at zero; void restores GDNI; a restatement leaves a residue rather than failing; the worker's settlement of a line leaves its clearing alone.
+    - `Inventory.Api.Tests`: `StockLedgerMappingTests` covers DLC to GDNI and exempt movements posting nothing. `WeightedAverageRecostingTests` covers an exempt movement that is revalued but not requeued, while a zero-cost one is requeued.
+    - `Sales.Api.Tests`: challan posting per line, non-sale challans (four types), ledger refusal, clearing at current cost, partial billing, Inventory unreachable, approval challan, void, the order-billed path in `PartialFulfilmentTests`, and the client route. The GDNI entry is off `SalesAccountNameTests`' allow-list.
+  - **Found, not fixed:** an order-billed invoice after a *voided direct invoice* posts no cost for the re-billed goods. Those goods were issued by the voided invoice, not a challan, so there is no challan movement to read. This is TK-10's "void leaves stock issued with no Inventory credit" gap, still open.
+  - **Owner step:** run the Accounting, Inventory and Sales suites from dropped databases. Branches that already exist need the admin retry to get GDNI before their next sale challan posts. Until then, the challan's post is refused with Accounting's reason.
 ### TK-11 · Fixed assets: a service layer, guards and tests
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Issue:** [#24](https://github.com/jothi-prabaharan/Bill-Book/issues/24)

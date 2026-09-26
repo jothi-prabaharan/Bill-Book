@@ -471,6 +471,12 @@ public class AdminDbContext : DbContext
             (4, "COGS", "Cost of goods sold"),
             (5, "FX", "Realized exchange gain or loss"),
             (6, "ROUNDOFF", "Rounding"),
+
+            // An invoice moving delivered goods' cost from Goods Delivered Not
+            // Invoiced into cost of sales (TK-90). Its own type because COGS (4)
+            // is the key the costing worker replaces per line: filed there, the
+            // worker's settled posting for the same line would erase it.
+            (7, "GDNI", "Goods delivered not invoiced clearing"),
         };
 
         modelBuilder.Entity<LedgerType>().HasData(

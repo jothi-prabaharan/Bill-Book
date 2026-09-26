@@ -3,6 +3,7 @@ using Inventory.Entity.Models;
 using Inventory.Repository;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Shared.Kernel.Internal;
 using Shared.Kernel.Tenancy;
 using Shared.Kernel.Persistence;
@@ -161,6 +162,47 @@ public sealed class InternalStockController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// What a batch of movements cost, as Inventory holds it now: the settled
+    /// figure once the costing worker has run, the request path's provisional
+    /// one until then (TK-90). An invoice billing goods a sale challan delivered
+    /// reads this to clear Goods Delivered Not Invoiced at the cost the challan's
+    /// movement carries today — decision D-21 (b). A movement of another branch
+    /// is simply absent: the query filter hides it.
+    /// </summary>
+    [HttpPost("movement-costs")]
+    public async Task<IActionResult> MovementCosts(
+        [FromBody] StockMovementCostsRequest request, CancellationToken ct)
+    {
+        if (request.CustomerId == Guid.Empty || request.OrgId == Guid.Empty)
+        {
+            return BadRequest(new MessageResponse
+            {
+                Message = "A customer and an organization are required.",
+            });
+        }
+
+        _tenant.CustomerId = request.CustomerId;
+        _tenant.OrgId = request.OrgId;
+
+        var db = _services.GetRequiredService<InventoryDbContext>();
+        List<long> ids = [.. request.StockMovementIds.Distinct()];
+
+        List<StockMovementCostLine> lines = await db.StockMovements
+            .AsNoTracking()
+            .Where(m => ids.Contains(m.StockMovementId))
+            .Select(m => new StockMovementCostLine
+            {
+                StockMovementId = m.StockMovementId,
+                Quantity = m.Quantity,
+                TotalCost = m.TotalCost ?? 0m,
+                CostingStatus = m.CostingStatus.ToString(),
+            })
+            .ToListAsync(ct);
+
+        return Ok(new StockMovementCostsResponse { Lines = lines });
+    }
+
     [HttpPost("reserve")]
     public async Task<IActionResult> Reserve(
         [FromBody] ReserveStockRequest request, CancellationToken ct)
@@ -292,7 +334,8 @@ public sealed class InternalStockController : ControllerBase
                     WarehouseId = line.WarehouseId,
                     SourceType = request.SourceType,
                     SourceId = request.SourceId,
-                    SourceLineId = line.SourceLineId
+                    SourceLineId = line.SourceLineId,
+                    LedgerExempt = request.LedgerExempt,
                 },
                 ct);
 

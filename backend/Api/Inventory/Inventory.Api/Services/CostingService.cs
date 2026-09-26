@@ -291,9 +291,14 @@ public sealed class CostingService
             // be wrong. Posting the same key again replaces them, which is why
             // this is a status reset rather than a correcting entry to compose
             // here — the restatement is recorded in its own right below.
-            issue.LedgerStatus = LedgerStatus.Pending;
-            issue.LedgerPostedAt = null;
-            issue.LedgerAttempts = 0;
+            // Except a movement the document exempted (TK-90): it owes the
+            // ledger nothing whatever it costs.
+            if (!issue.LedgerExempt)
+            {
+                issue.LedgerStatus = LedgerStatus.Pending;
+                issue.LedgerPostedAt = null;
+                issue.LedgerAttempts = 0;
+            }
 
             // Held so the replay can report what the cost was before it ran.
             _db.RecostingAdjustments.Add(new RecostingAdjustment

@@ -16,6 +16,41 @@ public interface IInventoryClient
     /// </summary>
     Task<StockAvailabilityResponse> GetAvailabilityAsync(
         StockAvailabilityRequest request, CancellationToken ct);
+
+    /// <summary>
+    /// What a batch of stock movements cost as Inventory holds it now (TK-90).
+    /// Null when Inventory could not be asked — the caller refuses rather than
+    /// post a cost it does not have.
+    /// </summary>
+    Task<StockMovementCostsResponse?> GetMovementCostsAsync(
+        StockMovementCostsRequest request, CancellationToken ct);
+}
+
+/// <summary>Asks Inventory what a batch of stock movements cost (TK-90).</summary>
+public sealed class StockMovementCostsRequest
+{
+    public Guid OrgId { get; set; }
+
+    public Guid CustomerId { get; set; }
+
+    public List<long> StockMovementIds { get; set; } = [];
+}
+
+public sealed class StockMovementCostsResponse
+{
+    public List<StockMovementCostLine> Lines { get; set; } = [];
+}
+
+/// <summary>One movement's quantity in the item's inventory unit, and its total cost now.</summary>
+public sealed class StockMovementCostLine
+{
+    public long StockMovementId { get; set; }
+
+    public decimal Quantity { get; set; }
+
+    public decimal TotalCost { get; set; }
+
+    public string CostingStatus { get; set; } = string.Empty;
 }
 
 /// <summary>Asks Inventory what a batch of items has available.</summary>
@@ -149,6 +184,31 @@ public sealed class InventoryClient : IInventoryClient
             return new StockAvailabilityResponse();
         }
     }
+
+    public async Task<StockMovementCostsResponse?> GetMovementCostsAsync(
+        StockMovementCostsRequest request, CancellationToken ct)
+    {
+        if (request.StockMovementIds.Count == 0)
+        {
+            return new StockMovementCostsResponse();
+        }
+
+        try
+        {
+            var response = await _http.PostAsJsonAsync("internal/stock/movement-costs", request, ct);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await response.Content.ReadFromJsonAsync<StockMovementCostsResponse>(cancellationToken: ct);
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+    }
 }
 
 // Request and Response shapes expected by the InternalStockController
@@ -213,6 +273,10 @@ public sealed record IssueStockRequest
     public DateOnly MovementDate { get; init; }
     public string SourceType { get; init; } = null!;
     public long SourceId { get; init; }
+
+    /// <summary>The movements post nothing: a non-sale challan's goods stay the branch's own (TK-90).</summary>
+    public bool LedgerExempt { get; init; }
+
     public List<IssueStockLine> Lines { get; init; } = [];
 }
 

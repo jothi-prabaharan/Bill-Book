@@ -28,7 +28,6 @@ public sealed class SalesAccountNameTests
     /// </summary>
     private static readonly Dictionary<string, string> NotSeededYet = new()
     {
-        ["Goods Delivered Not Invoiced"] = "TK-90 (split from TK-10): the invoice against a challan clears it",
         ["Cash"] = "POS (TK-39): a till sale's cash account is a child of Cash in Hand, which is locked",
     };
 

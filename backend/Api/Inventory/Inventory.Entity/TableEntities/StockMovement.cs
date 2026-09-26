@@ -138,6 +138,16 @@ public class StockMovement : OrgScopedEntity
     public string? LedgerError { get; set; }
 
     /// <summary>
+    /// The movement owes the ledger nothing, by the document's say-so: goods
+    /// leaving on a job-work, approval, branch-transfer or sample challan are
+    /// still the branch's own (TK-90). Created
+    /// <see cref="LedgerStatus.NotApplicable"/>, and never put back in the ledger
+    /// queue by recosting — which a zero-cost movement, also NotApplicable, must
+    /// be once its cost is known. The flag is what tells the two apart.
+    /// </summary>
+    public bool LedgerExempt { get; set; }
+
+    /// <summary>
     /// The issue this movement returns, when it is a return. Without it a
     /// return has no way to find the layers the stock originally left on, and
     /// falls back to the running average — which is what makes buy-sell-return

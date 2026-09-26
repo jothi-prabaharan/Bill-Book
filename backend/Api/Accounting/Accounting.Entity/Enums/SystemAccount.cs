@@ -126,6 +126,19 @@ public enum SystemAccount
     /// deposit. A refundable fee head credits it instead of income.
     /// </summary>
     RefundableDeposits = 24,
+
+    /// <summary>
+    /// Goods a sale challan has dispatched and no invoice has billed yet — an
+    /// Asset, and the mirror of <see cref="GoodsReceivedNotInvoiced"/>.
+    ///
+    /// The challan moves the goods' cost out of stock (<c>Dr GDNI / Cr
+    /// Inventory</c>), and the invoice moves it into cost of sales (<c>Dr COGS /
+    /// Cr GDNI</c>), so the cost meets its revenue in the same period. A balance
+    /// here is goods at the customer's door that nobody has invoiced. Under D-21
+    /// (b) the invoice clears at the cost Inventory holds when it posts, so a
+    /// later restatement of the challan's cost can leave a small residue (TK-90).
+    /// </summary>
+    GoodsDeliveredNotInvoiced = 25,
 }
 
 /// <summary>
@@ -161,6 +174,7 @@ public static class SystemAccountNames
         SystemAccount.FeeIncome => "Fee Income",
         SystemAccount.DiscountGiven => "Discount Given",
         SystemAccount.RefundableDeposits => "Refundable Deposits",
+        SystemAccount.GoodsDeliveredNotInvoiced => "Goods Delivered Not Invoiced",
         _ => throw new ArgumentOutOfRangeException(nameof(account), account, "Unknown system account."),
     };
 }

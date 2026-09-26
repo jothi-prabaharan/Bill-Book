@@ -484,7 +484,7 @@ Columns: `SourceId` (no FK — fed by `Invoices` and `CreditNotes`), `DocumentNo
 
 ## 9. Open — answer before the stage that needs them
 
-- **What a delivery challan posts.** Issuing as `Dr COGS` at dispatch books cost with no revenue against it. *Recommendation: a `Goods Delivered Not Invoiced` control account — `Dr GDNI / Cr Inventory` on the challan, `Dr COGS / Cr GDNI` on the invoice.* Job work, approval, branch transfer and sample post nothing at all. Mirrors the GRNI question in `PURCHASE.md`.
+- ~~**What a delivery challan posts.**~~ **Built (TK-90, 26 September 2026).** GDNI is seeded (1250, Asset, off the journal picker). A sale challan posts a provisional `Dr GDNI / Cr Inventory` per line on `(DLC, challan, line, COGS)`, which the costing worker replaces with the settled cost. The invoice posts `Dr COGS / Cr GDNI` per line under ledger type 7 (`GDNI`), because the COGS type is the key the worker replaces. It clears at the cost Inventory holds for the challan's movement when the invoice posts (D-21 b, `internal/stock/movement-costs`). Order-billed delivered goods take the average cost of the order line's posted sale challan lines. Job work, approval, branch transfer and sample issue with `LedgerExempt`, post nothing, and are never requeued by recosting. An invoice for goods on a non-sale challan credits Inventory rather than GDNI.
 - **Jewellery line columns** — making charge, wastage, metal rate. A 1:0..1 extension like `inv.ItemJewelleryDetails`, or columns on every line. Settle before the first pair is built.
 - **Can a user override `TaxTreatment` on a line?** Default no — it is a property of the goods. But an SEZ or export customer needs `ZeroRated` on a normally-taxable item, and that is driven by the *customer*, not the item.
 

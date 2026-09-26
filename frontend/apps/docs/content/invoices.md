@@ -24,6 +24,13 @@ quote   order   challan  invoice  receipt
 
 Two entries rather than one, and they are separate on purpose: the first records what the customer owes and what was earned, the second records what it cost to earn it. Gross profit exists only because revenue and cost of goods sold are different accounts.
 
+**Goods already delivered on a sale challan** are not taken out of stock again. Their cost is already
+in **Goods Delivered Not Invoiced**, so the invoice posts `Dr Cost of Goods Sold / Cr Goods Delivered
+Not Invoiced` for them instead, at what the goods cost when the invoice is posted. This covers an
+invoice raised from the challan and one that bills a sales order the challan delivered against.
+Voiding the invoice puts the cost back in Goods Delivered Not Invoiced. See
+[Delivery challans](delivery-challans).
+
 ## Posting is the irreversible step
 
 Everything before it is a draft. Posting writes the ledger entry, issues the stock and freezes the document.

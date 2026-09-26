@@ -27,6 +27,11 @@ public static class ChartOfAccountsSeed
         Account(orgId, "1200", SystemAccount.Inventory, Asset),
         Account(orgId, "1300", SystemAccount.InputGst, Asset),
 
+        // Goods dispatched on a sale challan and not yet invoiced (TK-90). Off
+        // the manual-journal picker like GRNI: the invoice that bills the goods
+        // clears it, and a hand posting would leave a residue no document clears.
+        Account(orgId, "1250", SystemAccount.GoodsDeliveredNotInvoiced, Asset),
+
         // Capitalised purchases. A holding account until the fixed asset
         // register exists — see SystemAccount.FixedAsset for why a capital line
         // has to land somewhere real before its category can say where.

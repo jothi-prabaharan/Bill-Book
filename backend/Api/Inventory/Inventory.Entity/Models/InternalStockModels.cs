@@ -87,6 +87,13 @@ public sealed record IssueStockRequest
 
     public long SourceId { get; init; }
 
+    /// <summary>
+    /// Every movement this issue creates posts nothing to the ledger: the goods
+    /// leave without being sold (a job-work, approval, transfer or sample
+    /// challan), so they stay the branch's asset (TK-90).
+    /// </summary>
+    public bool LedgerExempt { get; init; }
+
     [Required]
     public List<IssueStockLine> Lines { get; init; } = [];
 }
@@ -347,4 +354,36 @@ public sealed record StockAvailabilityLine
 
     /// <summary>False when the item has no stock row at all — never counted, rather than zero.</summary>
     public bool IsTracked { get; init; }
+}
+
+/// <summary>Asks what a batch of stock movements cost as Inventory holds it now (TK-90).</summary>
+public sealed record StockMovementCostsRequest
+{
+    [Required(ErrorMessage = "An organization is required.")]
+    public Guid OrgId { get; init; }
+
+    [Required(ErrorMessage = "A customer is required.")]
+    public Guid CustomerId { get; init; }
+
+    [Required(ErrorMessage = "At least one stock movement is required.")]
+    [MaxLength(1000, ErrorMessage = "Ask for at most 1000 movements at a time.")]
+    public List<long> StockMovementIds { get; init; } = [];
+}
+
+public sealed record StockMovementCostsResponse
+{
+    public List<StockMovementCostLine> Lines { get; init; } = [];
+}
+
+/// <summary>One movement's quantity, in the item's inventory unit, and what it cost in total.</summary>
+public sealed record StockMovementCostLine
+{
+    public long StockMovementId { get; init; }
+
+    public decimal Quantity { get; init; }
+
+    public decimal TotalCost { get; init; }
+
+    /// <summary>Pending until the costing worker settles it; the cost is provisional until then.</summary>
+    public string CostingStatus { get; init; } = string.Empty;
 }

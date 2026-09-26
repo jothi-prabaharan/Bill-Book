@@ -135,6 +135,9 @@ public sealed class PosSaleTests
 
         public Task<StockAvailabilityResponse> GetAvailabilityAsync(StockAvailabilityRequest request, CancellationToken ct) =>
             Task.FromResult(new StockAvailabilityResponse());
+
+        public Task<StockMovementCostsResponse?> GetMovementCostsAsync(StockMovementCostsRequest request, CancellationToken ct) =>
+            Task.FromResult<StockMovementCostsResponse?>(new StockMovementCostsResponse());
     }
 
     private sealed record Till(SalesDbContext Db, PosSaleService Sales, RecordingLedger Ledger, InvoiceService Invoices);

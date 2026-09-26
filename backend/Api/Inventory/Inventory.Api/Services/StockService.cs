@@ -473,6 +473,8 @@ public sealed class StockService
             SourceLineId = request.SourceLineId,
             ReturnsStockMovementId = request.ReturnsStockMovementId,
             Notes = request.Notes,
+            LedgerExempt = request.LedgerExempt,
+            LedgerStatus = request.LedgerExempt ? LedgerStatus.NotApplicable : LedgerStatus.Pending,
         };
 
         _db.StockMovements.Add(movement);

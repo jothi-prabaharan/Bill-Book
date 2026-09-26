@@ -46,7 +46,7 @@ The account's **currency** is frozen with the rest of the configuration. Changin
 
 Thirteen written when an organization is created, all `IsSystemDefault`, so locked from birth:
 
-Accounts Receivable · Inventory · Input GST · Fixed Asset · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Purchase Returns · Realized FX Gain/Loss · Unrealized FX Gain/Loss
+Accounts Receivable · Inventory · Goods Delivered Not Invoiced · Input GST · Fixed Asset · Accounts Payable · Goods Received Not Invoiced · Output GST · Opening Balance Equity · Sales Revenue · Cost of Goods Sold · Purchase Returns · Realized FX Gain/Loss · Unrealized FX Gain/Loss
 
 **Purchase Returns** is a **contra** expense: goods sent back reduce what you
 bought, so a report subtracts it rather than adding a negative number. Sales
@@ -78,6 +78,8 @@ places:
 
 An asset scrapped for nothing needs neither. The register's screens aren't in
 the menu yet.
+
+**Goods Delivered Not Invoiced** is the sales mirror of the account below. A sale challan moves the goods' cost out of Inventory into it, and the invoice that bills them moves it on into Cost of Goods Sold, so the cost lands in the same period as the revenue. A balance here is goods at the customer's door that nobody has invoiced. It is off the manual-journal picker for the same reason. Branches created before it existed get it from the retry in the admin console, which only adds what a branch is missing.
 
 **Goods Received Not Invoiced** is a clearing account, not a resting place. When goods arrive before the vendor's bill does, the receipt debits Inventory and credits this; the bill then clears it and credits Accounts Payable. What is left sitting in it is stock on the shelf that nobody has invoiced yet — which is a figure worth looking at, and the reason the alternative was rejected: posting nothing until the bill arrives understates the inventory asset for however long the paperwork takes. It is off the manual-journal picker for the same reason Accounts Receivable and Accounts Payable are — a hand posting to it leaves a residue that no document can ever clear.
 

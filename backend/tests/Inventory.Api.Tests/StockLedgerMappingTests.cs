@@ -159,4 +159,44 @@ public class StockLedgerMappingTests
             }
         }
     }
+
+    // --- Delivery challans (TK-90) ---
+
+    [Fact]
+    public void Goods_out_on_a_sale_challan_wait_in_goods_delivered_not_invoiced()
+    {
+        StockPosting posting = StockLedgerMapping.For(
+            Movement(StockMovementType.Issue, sourceType: "DLC", sourceId: 31, sourceLineId: 4))!;
+
+        // Not cost of sales yet: there is no revenue until the invoice, which
+        // moves the cost on. Filed on the challan's own line and the COGS leg
+        // type, the key the challan's provisional posting uses.
+        Assert.Equal(StockLedgerMapping.GoodsDeliveredNotInvoiced, posting.DebitAccountSystemName);
+        Assert.Equal(StockLedgerMapping.Inventory, posting.CreditAccountSystemName);
+        Assert.Equal("DLC", posting.TransactionTypeCode);
+        Assert.Equal(31, posting.TransactionId);
+        Assert.Equal(4, posting.TransactionDetailId);
+    }
+
+    [Fact]
+    public void An_invoices_issue_still_goes_straight_to_cost_of_goods_sold()
+    {
+        StockPosting posting = StockLedgerMapping.For(
+            Movement(StockMovementType.Issue, sourceType: "INV", sourceId: 9, sourceLineId: 2))!;
+
+        Assert.Equal(StockLedgerMapping.CostOfGoodsSold, posting.DebitAccountSystemName);
+    }
+
+    [Theory]
+    [InlineData(StockMovementType.Issue, StockDirection.Out)]
+    [InlineData(StockMovementType.Adjustment, StockDirection.Out)]
+    public void A_movement_the_document_exempted_posts_nothing(StockMovementType type, StockDirection direction)
+    {
+        // A job-work, approval, transfer or sample challan: the goods are still
+        // the branch's own, so nothing moves in the ledger.
+        StockMovement movement = Movement(type, direction, sourceType: "DLC", sourceId: 31, sourceLineId: 4);
+        movement.LedgerExempt = true;
+
+        Assert.Null(StockLedgerMapping.For(movement));
+    }
 }
