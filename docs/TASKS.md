@@ -1977,7 +1977,8 @@ The build cards each design in section E produced. Each design section in `docs/
   - Owner step: none beyond running the tests. The workflow and delegate screens are TK-103.
 
 ### TK-100 · Approvals: purchase orders, bills and debit notes
-- [ ] open
+- [~] working (Claude Opus 5.5) — since 2026-09-26
+- **Issue:** [#88](https://github.com/jothi-prabaharan/Bill-Book/issues/88)
 - **Lanes:** L-PUR, L-PUR-UI · **Depends on:** TK-99 · **Decision:** —
 - **Sub-tasks:**
   - [ ] `pur.ApprovalSteps`; summary columns on the purchase documents.
