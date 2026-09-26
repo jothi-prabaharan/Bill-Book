@@ -62,6 +62,21 @@ export const appRoutes: Route[] = [
     loadComponent: () => import('./portal-tickets/portal-ticket.page').then(m => m.PortalTicketPage)
   },
   {
+    path: 'pay',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-pay/portal-pay.page').then(m => m.PortalPayPage)
+  },
+  {
+    path: 'pay/sandbox/:id',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-pay/portal-sandbox-checkout.page').then(m => m.PortalSandboxCheckoutPage)
+  },
+  {
+    path: 'pay/result/:id',
+    canActivate: [portalSessionGuard],
+    loadComponent: () => import('./portal-pay/portal-payment-result.page').then(m => m.PortalPaymentResultPage)
+  },
+  {
     path: 'statement',
     canActivate: [portalSessionGuard],
     loadComponent: () => import('./portal-statement-list/portal-statement.list').then(m => m.PortalStatementList)

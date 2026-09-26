@@ -65,6 +65,12 @@ public class BankAccount : OrgScopedEntity
     /// <summary>Preselected on receipts and payments. At most one per organization.</summary>
     public bool IsDefault { get; set; }
 
+    /// <summary>
+    /// Where money paid online through the client portal lands (TK-98) — usually
+    /// a clearing account the bank statement later matches. One per branch.
+    /// </summary>
+    public bool IsOnlinePaymentAccount { get; set; }
+
     public int DisplayOrder { get; set; }
 
     public bool IsActive { get; set; } = true;

@@ -1,0 +1,37 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/invoices">Invoices</a>
+  </nav>
+
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (payment(); as p) {
+    @switch (p.status) {
+      @case ('Paid') {
+        <h1>Thank you</h1>
+        <p>We received {{ p.currencyCode }} {{ p.amount | number: '1.2-2' }}.</p>
+        @if (p.receiptNo) {
+          <p>Your receipt number is <strong>{{ p.receiptNo }}</strong>.</p>
+        }
+        @if (p.note) {
+          <p class="muted">{{ p.note }}</p>
+        }
+      }
+      @case ('Failed') {
+        <h1>The payment did not go through</h1>
+        <p>Nothing was taken. You can try again from <a class="link" routerLink="/pay">Pay online</a>.</p>
+      }
+      @default {
+        <h1>Waiting for the payment</h1>
+        @if (waitedTooLong()) {
+          <p>The payment gateway has not told us the result yet. Check your invoices again in a few minutes.</p>
+        } @else {
+          <p class="muted">Checking with the payment gateway…</p>
+        }
+      }
+    }
+  }
+</main>

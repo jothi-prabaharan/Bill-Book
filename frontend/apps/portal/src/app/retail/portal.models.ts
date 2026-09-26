@@ -152,3 +152,34 @@ export function ticketStatusLabel(status: PortalTicketItem['status']): string {
       return status;
   }
 }
+
+/** An online payment as the portal shows its result (TK-98): from the server, never from the redirect. */
+export interface PortalPayment {
+  onlinePaymentId: number;
+  amount: number;
+  currencyCode: string;
+  status: 'Created' | 'Paid' | 'Failed' | 'Refunded';
+  receiptNo: string | null;
+  note: string | null;
+}
+
+/** What the payer has chosen on the pay screen. */
+export interface PaymentChoice {
+  invoiceId: number;
+  outstanding: number;
+  selected: boolean;
+  amount: number;
+}
+
+/**
+ * The payment the screen will ask for: each selected invoice's amount, and any
+ * extra on account. Null when nothing valid is chosen — an amount above what an
+ * invoice owes, or nothing above zero at all.
+ */
+export function paymentTotal(choices: PaymentChoice[], extra: number): number | null {
+  const chosen = choices.filter(c => c.selected);
+  if (chosen.some(c => !(c.amount > 0) || c.amount > c.outstanding + 0.005)) return null;
+  if (extra < 0) return null;
+  const total = Math.round((chosen.reduce((sum, c) => sum + c.amount, 0) + extra) * 100) / 100;
+  return total > 0 ? total : null;
+}

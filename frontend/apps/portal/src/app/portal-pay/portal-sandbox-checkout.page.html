@@ -1,0 +1,14 @@
+<main class="portal">
+  <h1>Test checkout</h1>
+  <p>
+    This is the test gateway. No money moves. Choose what the gateway should report, and the business
+    records it exactly as it would a real payment.
+  </p>
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+  <span class="row">
+    <button type="button" class="button" (click)="finish(true)" [disabled]="busy()">Pay</button>
+    <button type="button" class="link" (click)="finish(false)" [disabled]="busy()">Fail the payment</button>
+  </span>
+</main>

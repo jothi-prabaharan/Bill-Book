@@ -1917,19 +1917,46 @@ The build cards each design in section E produced. Each design section in `docs/
   - **Tests:** `Customer.Api.Tests.PortalTicketTests` covers internal notes never reaching the portal, the database refusing a contact's internal note, another contact's ticket, the SLA from policy, reopening a resolved ticket and a closed ticket refusing. The portal spec covers the status label.
   - **Owner step:** run the Customer suite and the portal specs.
 ### TK-98 · Portal: pay online
-- [~] working (Claude Opus 5.5) — since 2026-09-26
+- [x] completed (Claude Opus 5.5) — 2026-09-26 · tests written, not run · real gateway waits on D-25
 - **Issue:** [#87](https://github.com/jothi-prabaharan/Bill-Book/issues/87)
 - **Lanes:** L-ACC, L-ACC-UI, L-PTL · **Depends on:** TK-95 · **Decision:** D-25
 - **Where:** `ReceiveMoneyService`; design "Client portal" → Online payment.
 - **Tables:** `acc.OnlinePayments`
 - **Sub-tasks:**
-  - [ ] `acc.OnlinePayments` with RLS; the branch's settlement bank account setting.
-  - [ ] `IPaymentGateway` for the gateway D-25 names: create order, verify callback signature.
-  - [ ] `POST api/portal/payments`; `POST api/payments/{gateway}/callback` (anonymous, signature-verified) creates the `RCM` with its allocations once per `GatewayPaymentId`.
-  - [ ] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
-  - [ ] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
+  - [x] `acc.OnlinePayments` with RLS; the branch's settlement bank account setting.
+  - [x] `IPaymentGateway` for the gateway D-25 names: create order, verify callback signature.
+  - [x] `POST api/portal/payments`; `POST api/payments/{gateway}/callback` (anonymous, signature-verified) creates the `RCM` with its allocations once per `GatewayPaymentId`.
+  - [x] Portal pay screen: choose invoices or an amount, go to checkout, show the result from the server, not the redirect.
+  - [x] Test: a replayed callback creates one receipt; a bad signature creates none; the receipt settles the chosen invoices.
 - **Done when:** a sandbox payment for an invoice leaves one receipt allocated to it, however many callbacks arrive.
-
+- **As built (2026-09-26):**
+  - **`acc.OnlinePayments`** (migration `OnlinePayments`, with the RLS block) holds:
+    - `Reference` (`op_{customer}_{org}_{id}`, unique).
+    - The contact, amount and currency.
+    - `Allocations` (jsonb), and the bank account.
+    - The gateway, `GatewayOrderId` and `GatewayPaymentId` (unique per gateway: the idempotency backstop).
+    - Status (Created, Paid, Failed, Refunded), `ReceiveMoneyId`, `PaidAt` and `Note`, with check constraints: paid carries its time, and a receipt only follows a payment.
+  - **Settlement account:** `acc.BankAccounts.IsOnlinePaymentAccount`, one per branch through a filtered unique index. It is set with `PUT api/bank-accounts/{id}/online-payments` and shown as a column on the bank accounts page. It is locked against deactivation like the default.
+  - **`IPaymentGateway`** has sandbox and unconfigured versions, registered like the IRP gateway: `Payments:Gateway`, sandbox in Development and none elsewhere, and the sandbox is refused in Production. Sandbox callbacks are HMAC-SHA256 under `Payments:Sandbox:Secret`, compared in fixed time.
+  - **`OnlinePaymentService.StartAsync`:**
+    - Only the contact's own invoices (another contact's reads as not found), in base currency, and no more than is owed on the invoice's control leg.
+    - Any excess is an advance.
+    - It opens the gateway order.
+  - **`CompleteAsync`:**
+    - Only a verified callback, and the order and amount must match.
+    - Inside one transaction: a guarded claim `Created → Paid`, then a Receive Money created, posted and allocated (source 3, with source 9 for the excess), then `ReceiveMoneyId` set.
+    - If that is refused, the same again with the whole amount as an advance.
+    - If that is refused too, Paid with a note and no receipt.
+    - A replay finds nothing to claim.
+  - **Routes:**
+    - `api/portal/payments`: start, read, and a `/{id}/sandbox-checkout` that signs and sends the sandbox callback through the same path.
+    - `api/payments/{gateway}/callback`: anonymous, `[NoTransaction]`, tenant from the reference, exempted in the guard test with its reason.
+    - Gateway routes `accounting-portal-payments` and `accounting-payment-callbacks`.
+  - **Portal:** **Pay online** (choose invoices and amounts plus extra), the sandbox checkout page, and a result page that polls the server.
+  - **Tests:**
+    - `Accounting.Api.Tests.OnlinePaymentTests`: a bad signature is not read; the reference; another contact's invoice or overpaying refused; not set up or no gateway; a replayed callback makes one receipt with lines on INV (source 3) plus the advance; a failed payment makes no receipt; an amount mismatch; a refused receipt leaves Paid with a note; another contact's payment.
+    - The portal spec covers `paymentTotal`.
+  - **Owner step:** run the Accounting suite and the portal specs. Set an online payments account per branch. A real gateway is added when D-25 is answered: implement `IPaymentGateway` for it and carry the reference in its order notes.
 ### TK-99 · Approvals: the shared engine in Master, with user and role approvers
 - [x] completed (Claude Opus 5.5) — 2026-09-24 · tests written, not run
 - **Lanes:** L-KERNEL, L-CON, L-MST · **Depends on:** TK-33 · **Decision:** D-26 (answered 2026-09-24: Master, `apr`)

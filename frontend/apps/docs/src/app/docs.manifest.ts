@@ -55,7 +55,7 @@ export const DOCS: DocSection[] = [
   },
   {
     title: 'Customer portal',
-    // Partial: online payment is still to come (TK-98).
+    // Partial: online payment runs on the sandbox gateway until D-25 names one.
     pages: [{ slug: 'portal', title: 'Customer portal', status: 'partial' }],
   },
   {

@@ -45,6 +45,8 @@ interface BankAccount {
   currencyCode: string;
   odLimit: number | null;
   isDefault: boolean;
+  /** Money paid online through the client portal lands here (TK-98). */
+  isOnlinePaymentAccount: boolean;
   displayOrder: number;
   isActive: boolean;
   isLedgerLinked: boolean;
@@ -110,6 +112,7 @@ export class BankAccountsPage implements OnInit {
     { field: 'ifsc', header: 'IFSC', isTemplate: true },
     { field: 'ledger', header: 'Ledger', isTemplate: true },
     { field: 'default', header: 'Default', isTemplate: true },
+    { field: 'online', header: 'Online payments', isTemplate: true },
     { field: 'active', header: 'Active', isTemplate: true },
     { field: 'actions', header: '', isTemplate: true },
   ];
@@ -260,6 +263,14 @@ export class BankAccountsPage implements OnInit {
     await this.run(
       () => this.send('PUT', `/api/bank-accounts/${row.bankAccountId}/default`, {}),
       'Default account changed.',
+    );
+  }
+
+  /** Makes this the account the portal's online payments land in (TK-98). */
+  async makeOnlinePayments(row: BankAccount): Promise<void> {
+    await this.run(
+      () => this.send('PUT', `/api/bank-accounts/${row.bankAccountId}/online-payments`, {}),
+      'Online payments will land in this account.',
     );
   }
 

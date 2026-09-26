@@ -26,9 +26,14 @@ public sealed class EndpointGuardTests
     {
         // Compared as joined text rather than as an empty collection, so a
         // failure names every open endpoint instead of the first few.
+        //
+        // One exemption: PaymentCallbacksController, the payment gateway's
+        // server-to-server callback (TK-98). The gateway holds no token; the
+        // callback's signature is its credential, checked before anything is
+        // read, and the tenant comes from the payment's own reference.
         Assert.Equal(
             string.Empty,
-            string.Join(", ", EndpointGuardAudit.Unguarded(Service)));
+            string.Join(", ", EndpointGuardAudit.Unguarded(Service, "PaymentCallbacksController")));
     }
 
     /// <summary>

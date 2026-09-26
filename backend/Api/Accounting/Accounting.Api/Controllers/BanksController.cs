@@ -80,6 +80,12 @@ public static class BankingResponses
                 }),
             SaveBankOutcome.InvalidValue => Bad(
                 controller, "One of the selected options is not a recognised value."),
+            SaveBankOutcome.OnlinePaymentAccountLocked => Bad(
+                controller,
+                "Online payments land in this account. Choose another account for them before deactivating it."),
+            SaveBankOutcome.AccountNotUsable => Bad(
+                controller,
+                "Only an active account linked to the ledger can take online payments."),
             _ => controller.StatusCode(StatusCodes.Status500InternalServerError),
         };
 

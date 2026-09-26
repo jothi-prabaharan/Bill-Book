@@ -307,6 +307,43 @@ public sealed class BankService
     }
 
     /// <summary>
+    /// Makes this the account money paid online through the client portal lands
+    /// in (TK-98), taking the role from whichever account had it. It must be
+    /// active and linked to the ledger, or a paid order would have nowhere to post.
+    /// </summary>
+    public async Task<SaveBankOutcome> SetOnlinePaymentAccountAsync(long bankAccountId, CancellationToken ct)
+    {
+        BankAccount? account = await _db.BankAccounts
+            .FirstOrDefaultAsync(a => a.BankAccountId == bankAccountId, ct);
+
+        if (account is null)
+        {
+            return SaveBankOutcome.NotFound;
+        }
+
+        if (!account.IsActive || account.LedgerAccountId is null)
+        {
+            return SaveBankOutcome.AccountNotUsable;
+        }
+
+        List<BankAccount> previous = await _db.BankAccounts
+            .Where(a => a.IsOnlinePaymentAccount && a.BankAccountId != bankAccountId)
+            .ToListAsync(ct);
+
+        foreach (BankAccount row in previous)
+        {
+            row.IsOnlinePaymentAccount = false;
+        }
+
+        // Cleared first, so the one-per-branch index never sees two at once.
+        await _db.SaveChangesAsync(ct);
+
+        account.IsOnlinePaymentAccount = true;
+        await _db.SaveChangesAsync(ct);
+        return SaveBankOutcome.Ok;
+    }
+
+    /// <summary>
     /// Deactivates, and deactivates the GL account with it. Never deleted — the
     /// ledger account holds history and documents name it.
     /// </summary>
@@ -324,6 +361,12 @@ public sealed class BankService
         if (account.IsDefault)
         {
             return SaveBankOutcome.DefaultAccountLocked;
+        }
+
+        // Online payments would have nowhere to land (TK-98).
+        if (account.IsOnlinePaymentAccount)
+        {
+            return SaveBankOutcome.OnlinePaymentAccountLocked;
         }
 
         account.IsActive = false;
@@ -459,6 +502,7 @@ public sealed class BankService
         CurrencyCode = a.CurrencyCode,
         OdLimit = a.OdLimit,
         IsDefault = a.IsDefault,
+        IsOnlinePaymentAccount = a.IsOnlinePaymentAccount,
         DisplayOrder = a.DisplayOrder,
         IsActive = a.IsActive,
         IsLedgerLinked = a.LedgerAccountId is not null,

@@ -183,6 +183,16 @@ If Accounting is unreachable at that moment, **the account still saves** — mar
 
 One account is the default, preselected on receipts and payments. It cannot be deactivated while it holds that role — make another one the default first.
 
+## The online payments account
+
+Money customers pay on the [customer portal](portal#paying-online) lands in one account, marked
+**Receives** in the **Online payments** column. **Set** moves the role to another account. It must
+be active and linked to the ledger. Until one account has the role, the portal's **Pay online** is
+refused.
+
+Usually this is a clearing account that the gateway's settlements to your bank are matched against
+later. Like the default, it cannot be deactivated while it holds the role.
+
 
 
 # Spend, receive & transfer money

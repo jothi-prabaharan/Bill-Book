@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { invoiceLink, quoteState, statusLabel, statusTone, ticketStatusLabel, PortalQuoteItem, PortalStatementLine } from './portal.models';
+import { invoiceLink, paymentTotal, quoteState, statusLabel, statusTone, ticketStatusLabel, PortalQuoteItem, PortalStatementLine } from './portal.models';
 
 const line = (transactionTypeCode: string, transactionId = 7): PortalStatementLine => ({
   ledgerDate: '2026-09-01',
@@ -61,5 +61,24 @@ describe('portal ticket status (TK-97)', () => {
   it('reads in-progress as two words and the rest as they are', () => {
     expect(ticketStatusLabel('InProgress')).toBe('In progress');
     expect(ticketStatusLabel('Resolved')).toBe('Resolved');
+  });
+});
+
+describe('portal payment total (TK-98)', () => {
+  const choice = (amount: number, outstanding = 100, selected = true) => ({ invoiceId: 1, outstanding, selected, amount });
+
+  it('adds the selected invoices and anything extra on account', () => {
+    expect(paymentTotal([choice(60), choice(40), choice(99, 100, false)], 25.5)).toBe(125.5);
+  });
+
+  it('refuses more than an invoice owes, a nil amount, or nothing at all', () => {
+    expect(paymentTotal([choice(101)], 0)).toBeNull();
+    expect(paymentTotal([choice(0)], 0)).toBeNull();
+    expect(paymentTotal([], 0)).toBeNull();
+    expect(paymentTotal([], -5)).toBeNull();
+  });
+
+  it('allows an amount on account with no invoice chosen', () => {
+    expect(paymentTotal([], 500)).toBe(500);
   });
 });

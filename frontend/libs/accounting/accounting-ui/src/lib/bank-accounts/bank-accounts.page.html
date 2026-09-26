@@ -72,6 +72,15 @@
       }
     </div>
   </ng-template>
+  <ng-template bbCellTemplate="online" let-row>
+    <div [class.inactive]="!row.isActive">
+      @if (row.isOnlinePaymentAccount) {
+        <span class="badge" title="Money customers pay on the portal lands here">Receives</span>
+      } @else if (row.isActive && row.isLedgerLinked) {
+        <button type="button" class="link" (click)="makeOnlinePayments(row)" [disabled]="busy()">Set</button>
+      }
+    </div>
+  </ng-template>
   <ng-template bbCellTemplate="active" let-row>
     <div [class.inactive]="!row.isActive">
       {{ row.isActive ? 'Active' : 'Inactive' }}
@@ -85,7 +94,7 @@
           Link ledger
         </button>
       }
-      @if (row.isActive && !row.isDefault) {
+      @if (row.isActive && !row.isDefault && !row.isOnlinePaymentAccount) {
         <button type="button" class="link danger" (click)="deactivate(row)" [disabled]="busy()">
           Deactivate
         </button>

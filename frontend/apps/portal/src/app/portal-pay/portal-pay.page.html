@@ -1,0 +1,63 @@
+<main class="portal">
+  <nav class="portal-nav">
+    <a class="link" routerLink="/dashboard">Your account</a>
+    <a class="link" routerLink="/invoices">Invoices</a>
+  </nav>
+
+  <h1>Pay online</h1>
+
+  @if (loading()) {
+    <p class="muted">Loading…</p>
+  }
+  @if (error(); as message) {
+    <p class="error">{{ message }}</p>
+  }
+
+  @if (!loading()) {
+    @if (rows().length === 0) {
+      <p class="muted">Nothing is owed on your invoices. You can still pay an amount on account.</p>
+    }
+
+    <section class="cards">
+      @for (row of rows(); track row.invoiceId) {
+        <div class="card">
+          <label class="row">
+            <span>
+              <input type="checkbox" [ngModel]="row.selected" (ngModelChange)="toggle(row, $event)" />
+              <strong>{{ row.documentNo }}</strong>
+            </span>
+            <span class="muted">owed {{ row.outstanding | number: '1.2-2' }}</span>
+          </label>
+          @if (row.selected) {
+            <label>
+              Amount to pay
+              <input
+                type="number"
+                inputmode="decimal"
+                min="0.01"
+                [max]="row.outstanding"
+                step="0.01"
+                [ngModel]="row.amount"
+                (ngModelChange)="setAmount(row, $event)"
+              />
+            </label>
+          }
+        </div>
+      }
+    </section>
+
+    <section class="card">
+      <label>
+        Anything extra on account
+        <input type="number" inputmode="decimal" min="0" step="0.01" [ngModel]="extra()" (ngModelChange)="extra.set(+$event || 0)" />
+      </label>
+    </section>
+
+    <section class="row">
+      <strong>Total: {{ (total() ?? 0) | number: '1.2-2' }}</strong>
+      <button type="button" class="button" (click)="pay()" [disabled]="busy() || total() === null">
+        {{ busy() ? 'Opening checkout…' : 'Pay' }}
+      </button>
+    </section>
+  }
+</main>

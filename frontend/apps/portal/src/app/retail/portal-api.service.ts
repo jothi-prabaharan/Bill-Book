@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   PortalInvoiceDetail,
   PortalInvoiceItem,
+  PortalPayment,
   PortalQuoteItem,
   PortalStatement,
   PortalSummary,
@@ -59,6 +60,22 @@ export class PortalApi {
 
   replyToTicket(id: number, body: string): Promise<void> {
     return firstValueFrom(this.http.post<void>(`/api/portal/tickets/${id}/messages`, { body }));
+  }
+
+  /** Opens an online payment for chosen invoices and anything extra on account (TK-98). */
+  startPayment(invoices: { invoiceId: number; amount: number }[], amount: number): Promise<{ onlinePaymentId: number; checkoutUrl: string }> {
+    return firstValueFrom(
+      this.http.post<{ onlinePaymentId: number; checkoutUrl: string }>('/api/portal/payments', { invoices, amount }),
+    );
+  }
+
+  payment(id: number): Promise<PortalPayment> {
+    return firstValueFrom(this.http.get<PortalPayment>(`/api/portal/payments/${id}`));
+  }
+
+  /** The sandbox gateway's checkout: pays or fails the payment through the verified-callback path (D-25). */
+  sandboxCheckout(id: number, succeed: boolean): Promise<void> {
+    return firstValueFrom(this.http.post<void>(`/api/portal/payments/${id}/sandbox-checkout`, { succeed }));
   }
 
   statement(fromDate?: string, toDate?: string): Promise<PortalStatement> {

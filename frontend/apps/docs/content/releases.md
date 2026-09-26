@@ -30,6 +30,7 @@ Breaking changes are prefixed **⚠ Breaking** and say what to do about it.
 ---
 
 ## Unreleased
+- **Added**: **Customers can pay invoices online from the portal.** They choose the invoices and how much of each, plus anything extra on account. The payment is recorded only when the gateway confirms it, as a receipt in the account marked for online payments and allocated to the invoices chosen. A repeated confirmation never makes a second receipt. Set the account under **Banking › Bank accounts › Online payments**. The real gateway is still to be chosen; development installations use a test gateway that moves no money. See [Customer portal](portal#paying-online).
 - **Added**: **Support tickets on the customer portal.** A customer can raise a ticket, follow its conversation and reply. Replying to a resolved ticket reopens it. A portal ticket gets the branch's service level for Medium priority. See [Customer portal](portal#support).
 - **Added**: **Internal notes on tickets.** Tick **Internal note** in the staff ticket screen and the message stays between colleagues; the customer portal never shows it.
 - **Fixed**: The staff ticket screen could not load a ticket's messages, and every reply sent from it was recorded as the customer's. Replies are now recorded as the signed-in member of staff.

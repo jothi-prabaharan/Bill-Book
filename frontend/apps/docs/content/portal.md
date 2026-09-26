@@ -57,6 +57,28 @@ The customer's support tickets, newest first, with **New ticket** to raise one.
 **Internal notes.** In the staff ticket screen, tick **Internal note** before sending, and the
 message is kept for colleagues. The portal never shows an internal note. Only staff can write one.
 
+## Paying online
+
+**Pay online** lists the invoices with money owed on them. The customer ticks the ones they are
+paying and how much of each, adds anything extra on account, and goes to the payment gateway's
+checkout.
+
+- The money is recorded only when the **gateway itself** confirms it. Coming back to the portal
+  proves nothing. The result page asks your server until the confirmation arrives.
+- Each payment becomes an ordinary **Receive money** in the
+  [online payments account](accounting#the-online-payments-account), allocated to the invoices
+  chosen. Anything extra goes to the customer as an advance.
+- However many times the gateway repeats its confirmation, one receipt is made.
+- If the invoices can no longer be settled as chosen (staff recorded a payment in the meantime,
+  say), the money goes in as an advance instead. If no receipt can be made at all, for example
+  because the period is closed, the payment is marked paid with a note for staff to record it.
+- Gateway fees are not taken off the receipt. They are an expense when the gateway's settlement
+  reaches your bank statement.
+
+**The payment gateway is still to be chosen.** Until it is, development installations use a
+**test gateway**. Its checkout page has **Pay** and **Fail the payment** buttons and moves no money.
+It cannot be switched on in production.
+
 ## Statement
 
 The account's history with a running balance.
@@ -69,4 +91,4 @@ Each line shows the document's own number, and an invoice opens in the portal.
 
 ## Not built yet
 
-- Paying online (TK-98)
+- A real payment gateway. Which provider is still open (D-25).

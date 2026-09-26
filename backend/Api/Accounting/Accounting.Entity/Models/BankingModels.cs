@@ -67,6 +67,9 @@ public class BankAccountListItem
 
     public bool IsDefault { get; set; }
 
+    /// <summary>Money paid online through the client portal lands here (TK-98).</summary>
+    public bool IsOnlinePaymentAccount { get; set; }
+
     public int DisplayOrder { get; set; }
 
     public bool IsActive { get; set; }
@@ -132,6 +135,12 @@ public enum SaveBankOutcome
     /// <summary>Accounting could not create or find the GL account.</summary>
     LedgerUnavailable = 9,
     InvalidValue = 10,
+
+    /// <summary>The online payment account cannot be deactivated while it has the role (TK-98).</summary>
+    OnlinePaymentAccountLocked = 11,
+
+    /// <summary>An inactive account, or one with no ledger account behind it, cannot take online payments.</summary>
+    AccountNotUsable = 12,
 }
 
 /// <summary>A bank or cash account a till may take money into (TK-39).</summary>

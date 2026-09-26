@@ -43,6 +43,11 @@ public sealed class BankAccountsController : ControllerBase
     public async Task<IActionResult> SetDefault(long bankAccountId, CancellationToken ct) =>
         BankingResponses.From(this, await _banks.SetDefaultAccountAsync(bankAccountId, ct), NoContent);
 
+    /// <summary>Makes this the account online portal payments land in (TK-98). One per branch.</summary>
+    [HttpPut("{bankAccountId:long}/online-payments")]
+    public async Task<IActionResult> SetOnlinePayments(long bankAccountId, CancellationToken ct) =>
+        BankingResponses.From(this, await _banks.SetOnlinePaymentAccountAsync(bankAccountId, ct), NoContent);
+
     /// <summary>Links an account whose ledger call failed when it was created.</summary>
     [HttpPost("{bankAccountId:long}/link-ledger")]
     public async Task<IActionResult> LinkLedger(long bankAccountId, CancellationToken ct) =>

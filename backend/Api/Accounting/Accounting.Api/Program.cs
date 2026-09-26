@@ -1,3 +1,4 @@
+using Accounting.Api.Services.Payments;
 using Shared.Kernel.Security;
 using System.Text;
 using Accounting.Api.Services;
@@ -88,6 +89,9 @@ builder.Services.AddScoped<ReconciliationService>();
 builder.Services.AddScoped<BankService>();
 builder.Services.AddScoped<SpendMoneyService>();
 builder.Services.AddScoped<ReceiveMoneyService>();
+
+// Online payment from the client portal (TK-98): the sandbox until D-25 names a gateway.
+builder.Services.AddPaymentGateway(builder.Configuration, builder.Environment);
 builder.Services.AddScoped<TransferMoneyService>();
 builder.Services.AddScoped<BankStatementService>();
 

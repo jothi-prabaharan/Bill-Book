@@ -90,6 +90,9 @@ public class AccountingDbContext : TenantDbContext
     /// <summary>Money in. The mirror of <see cref="SpendMoney"/>.</summary>
     public DbSet<ReceiveMoney> ReceiveMoney => Set<ReceiveMoney>();
 
+    /// <summary>Payments contacts make online through the client portal (TK-98).</summary>
+    public DbSet<OnlinePayment> OnlinePayments => Set<OnlinePayment>();
+
     public DbSet<ReceiveMoneyDetail> ReceiveMoneyDetails => Set<ReceiveMoneyDetail>();
 
     /// <summary>
@@ -652,6 +655,37 @@ public class AccountingDbContext : TenantDbContext
                 .HasDatabaseName("IX_Banks_Order");
         });
 
+        modelBuilder.Entity<OnlinePayment>(b =>
+        {
+            b.HasKey(e => e.OnlinePaymentId);
+            b.HasIndex(e => e.Reference).IsUnique();
+            b.HasIndex(e => new { e.Gateway, e.GatewayOrderId })
+                .IsUnique()
+                .HasFilter("\"GatewayOrderId\" IS NOT NULL");
+
+            // The idempotency key: a second callback for the same payment can
+            // never make a second receipt, whatever the code above it does.
+            b.HasIndex(e => new { e.Gateway, e.GatewayPaymentId })
+                .IsUnique()
+                .HasFilter("\"GatewayPaymentId\" IS NOT NULL");
+            b.HasIndex(e => new { e.OrgId, e.ContactId });
+
+            b.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            b.Property(e => e.Allocations).HasColumnType("jsonb");
+            b.Property(e => e.Gateway).HasConversion<string>().HasMaxLength(20);
+            b.Property(e => e.Status).HasConversion<string>().HasMaxLength(12);
+
+            b.HasOne<BankAccount>().WithMany().HasForeignKey(e => e.BankAccountId).OnDelete(DeleteBehavior.Restrict);
+            b.HasOne<ReceiveMoney>().WithMany().HasForeignKey(e => e.ReceiveMoneyId).OnDelete(DeleteBehavior.Restrict);
+
+            // Paid carries when; a receipt only ever follows a payment.
+            b.ToTable(t =>
+            {
+                t.HasCheckConstraint("chk_onlinepayments_paid_stamp", "(\"Status\" IN ('Paid', 'Refunded')) = (\"PaidAt\" IS NOT NULL)");
+                t.HasCheckConstraint("chk_onlinepayments_receipt_paid", "\"ReceiveMoneyId\" IS NULL OR \"Status\" IN ('Paid', 'Refunded')");
+            });
+        });
+
         modelBuilder.Entity<BankAccount>(b =>
         {
             b.HasKey(e => e.BankAccountId);
@@ -666,6 +700,12 @@ public class AccountingDbContext : TenantDbContext
                 .IsUnique()
                 .HasFilter("\"LedgerAccountId\" IS NOT NULL")
                 .HasDatabaseName("IX_BankAccounts_Ledger");
+
+            // One account per branch takes online payments (TK-98).
+            b.HasIndex(e => e.OrgId)
+                .IsUnique()
+                .HasFilter("\"IsOnlinePaymentAccount\"")
+                .HasDatabaseName("IX_BankAccounts_OnlinePayments");
 
             b.HasIndex(e => e.OrgId)
                 .IsUnique()
